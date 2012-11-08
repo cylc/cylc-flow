@@ -1,6 +1,6 @@
 #!/usr/bin/env
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -37,17 +37,20 @@ class MyDotWindow2( xdot.DotWindow ):
             <toolitem action="ZoomOut"/>
             <toolitem action="ZoomFit"/>
             <toolitem action="Zoom100"/>
+            <separator name="LandscapeSep"/>
+            <toolitem action="Landscape"/>
             <separator expand="true"/> 
             <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, outfile=None ):
+    def __init__(self, suite, suiterc, watch, outfile=None, orientation="TB" ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.watch = []
+        self.orientation = orientation
 
         gtk.Window.__init__(self)
 
@@ -92,12 +95,18 @@ class MyDotWindow2( xdot.DotWindow ):
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
+        actiongroup.add_toggle_actions((
+            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+        ))
 
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
 
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
+
+        landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
+        landscape_toolitem.set_active(self.orientation == "LR")
 
         # Create a Toolbar
 
@@ -154,6 +163,7 @@ class MyDotWindow2( xdot.DotWindow ):
     def get_graph( self ):
         title = self.suite + ' runtime namespace inheritance graph'
         graph = CGraphPlain( title )
+        graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
             if self.inherit[ns]:
                 attr = {}
@@ -174,6 +184,19 @@ class MyDotWindow2( xdot.DotWindow ):
             except IOError, x:
                 print >> sys.stderr, x
                 self.disable_output_image = True
+
+    def on_landscape( self, toolitem ):
+        if toolitem.get_active():
+            self.set_orientation( "LR" )  # Left to right ordering of nodes
+        else:
+            self.set_orientation( "TB" )  # Top to bottom (default) ordering
+
+    def set_orientation( self, orientation="TB" ):
+        """Set the orientation of the graph node ordering."""
+        if orientation == self.orientation:
+            return False
+        self.orientation = orientation
+        self.get_graph()
 
     def update(self):
         # if any suite config file has changed, reparse the graph
@@ -213,12 +236,15 @@ class MyDotWindow( xdot.DotWindow ):
             <toolitem action="Zoom100"/>
             <toolitem action="Group"/>
             <toolitem action="UnGroup"/>
+            <separator name="LandscapeSep"/>
+            <toolitem action="Landscape"/>
             <separator expand="true"/> 
             <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None ):
+    def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None,
+                 orientation="TB" ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
@@ -227,6 +253,7 @@ class MyDotWindow( xdot.DotWindow ):
         self.raw = raw
         self.stop_after = stop_after
         self.watch = []
+        self.orientation = orientation
 
         gtk.Window.__init__(self)
 
@@ -272,12 +299,18 @@ class MyDotWindow( xdot.DotWindow ):
             ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
+        actiongroup.add_toggle_actions((
+            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+        ))
 
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
 
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
+
+        landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
+        landscape_toolitem.set_active(self.orientation == "LR")
 
         # Create a Toolbar
 
@@ -355,6 +388,8 @@ class MyDotWindow( xdot.DotWindow ):
                 ungroup_recursive=ungroup_recursive, 
                 group_all=group_all, ungroup_all=ungroup_all )
 
+        graph.graph_attr['rankdir'] = self.orientation
+
         for node in graph.nodes():
             name, tag = node.get_name().split('%')
             if name in family_nodes:
@@ -370,6 +405,19 @@ class MyDotWindow( xdot.DotWindow ):
             except IOError, x:
                 print >> sys.stderr, x
                 self.disable_output_image = True
+
+    def on_landscape( self, toolitem ):
+        if toolitem.get_active():
+            self.set_orientation( "LR" )  # Left to right ordering of nodes
+        else:
+            self.set_orientation( "TB" )  # Top to bottom (default) ordering
+
+    def set_orientation( self, orientation="TB" ):
+        """Set the orientation of the graph node ordering."""
+        if orientation == self.orientation:
+            return False
+        self.orientation = orientation
+        self.get_graph()
 
     def update(self):
         # if any suite config file has changed, reparse the graph
@@ -466,12 +514,17 @@ class xdot_widgets(object):
     def set_filter(self, filter):
         self.widget.set_filter(filter)
 
-    def set_dotcode(self, dotcode, filename='<stdin>'):
+    def set_dotcode(self, dotcode, filename='<stdin>', no_zoom=False):
+        if no_zoom:
+            old_zoom_func = self.widget.zoom_image
+            self.widget.zoom_image = lambda *a, **b: self.widget.queue_draw()
         if self.widget.set_dotcode(dotcode, filename):
             #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             # disable automatic zoom-to-fit on update
             #self.widget.zoom_to_fit()
             pass
+        if no_zoom:
+            self.widget.zoom_image = old_zoom_func
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):
         if self.widget.set_xdotcode(xdotcode):

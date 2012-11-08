@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
         p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
     except OSError,x:
         # git not found, 
-        print sys.stderr, 'WARNING: failed to get repository pseudo version tag:'
+        cylc_version = "(DEV)"
     else:
         retcode = p.wait()
         if retcode != 0:

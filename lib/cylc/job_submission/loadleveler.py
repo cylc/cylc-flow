@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -27,9 +27,9 @@ Loadleveler job submission.
     COMMAND_TEMPLATE = "llsubmit %s"
 
     def set_directives( self ):
-        self.directive_prefix = "# @"
-        self.directive_connector = " = "
-        self.final_directive  = "# @ queue"
+        self.jobconfig['directive prefix'] = "# @"
+        self.jobconfig['directive connector'] = " = "
+        self.jobconfig['directive final'] = "# @ queue"
 
         defaults = {}
         defaults[ 'job_name' ] = self.task_id
@@ -54,12 +54,13 @@ Loadleveler job submission.
         # the 'initialdir' directive to fix this.
 
         # In case the user wants to override the above defaults:
-        for d in self.directives:
-            defaults[ d ] = self.directives[ d ]
-        self.directives = defaults
+        for d,val in self.jobconfig['directives'].items():
+            defaults[ d ] = val
+        self.jobconfig['directives'] = defaults
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
-            command_template = self.COMMAND_TEMPLATE
+            command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
+

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -55,12 +55,12 @@ def main(name, start):
             print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
     except:
-        # ?catch 'sys.exit(1)' and 'raise SystemExit("foo")'?
+        # (note: to catch SystemExit use "except BaseException")
         print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
         server.shutdown('!cylc error - please report!')
         raise
     else:
-        server.shutdown('Run completed normally')
+        server.shutdown('suite shutting down')
 
 def set_main_debug(mode):
     global debug

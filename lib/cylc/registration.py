@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -155,14 +155,19 @@ class regdb(object):
     def load_from_file( self ):
         if self.verbose:
             print "LOADING DATABASE " + self.file
-        try:
-            self.mtime_at_load = os.stat(self.file).st_mtime
-        except OSError:
-            # no file: no suites registered  yet
-            self.mtime_at_load = time.time()
-            return
 
+        # create an empty DB if no suites registered yet
+        if not os.path.isfile( self.file ):
+            print >> sys.stderr, "WARNING: file not found:", self.file
+            print "Creating an empty suite database:", self.file
+            self.dump_to_file()
+
+        # get file timestamp
+        self.mtime_at_load = os.stat(self.file).st_mtime
+
+        # open the database file
         input = open( self.file, 'rb' )
+
         while True:
             try:
                 self.items = pickle.load( input )
@@ -175,6 +180,10 @@ class regdb(object):
         input.close()
         # record state at load
         self.statehash = self.get_hash()
+
+    def dump( self ):
+        for i, j in self.items.items():
+            print i, j
 
     def dump_to_file( self ):
         newhash = self.get_hash()

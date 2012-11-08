@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 import gobject
 import threading, subprocess
-import os, re, time
+import os, sys, re, time
 from cylc import tail
 
 class tailer(threading.Thread):
@@ -82,7 +82,13 @@ class tailer(threading.Thread):
             #    print "File not found: " + self.logfile
             #    #print "Disconnecting from tailer thread"
             #    return
-            gen = tail.tail( open( self.logfile ))
+            try:
+                gen = tail.tail( open( self.logfile ))
+            except Exception, x:
+                # e.g. file not found
+                print >> sys.stderr, x
+                return
+
             while not self.quit:
                 if not self.freeze:
                     line = gen.next()

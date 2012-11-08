@@ -12,9 +12,9 @@ description = "EcoConnect Operation, circa August 2011"
 # make efficient use of common configuration settings.
 
 [cylc]
-    simulation mode only = True
-    [[simulation mode]]
-        clock offset = 0
+    required run mode = simulation # demo suite, taken out of context
+    [[accelerated clock]]
+        offset = 0
 
 [scheduling]
     #runahead limit = 48
@@ -50,7 +50,7 @@ description = "EcoConnect Operation, circa August 2011"
     # NZLAM (UM, OPS, VAR) 
     unpack_bgerr & unpack_obstores => OPS
     unpack_frames => make_alabc => UM_nzlam
-    OPS & VAR_ConfigureLS => VAR_AnalysePF => UM_nzlam
+    OPS:succeed-any & OPS:finish-all & VAR_ConfigureLS => VAR_AnalysePF => UM_nzlam
     UM_nzlam => get_um_output => nzlam_conv_met & nzlam_conv_tn & nzlam_conv_sls & nzlam_conv_escape
 
     # NZLAM restart and cold start
@@ -161,13 +161,13 @@ description = "EcoConnect Operation, circa August 2011"
         [[[environment]]]
             SYS = "${USER##*_}"
             ARCHIVE = /$SYS/archive/ecoconnect
-        [[[event hooks]]]
-            # note that timeout values are redefined in some tasks
-            # ALSO: event hooks are ignored by default in simulation mode.
-            script = nagios.sh
-            events = started,failed,succeeded,submission_failed,submission_timeout,execution_timeout
-            submission timeout = 2
-            execution timeout = 30
+        #[[[event hooks]]]
+        #    # note that timeout values are redefined in some tasks
+        #    # ALSO: event hooks are ignored by default in simulation mode.
+        #    script = nagios.sh
+        #    events = started,failed,succeeded,submission_failed,submission_timeout,execution_timeout
+        #    submission timeout = 2
+        #    execution timeout = 30
 
     [[UKMO]]
         description = "UK Met Office data retrieval"

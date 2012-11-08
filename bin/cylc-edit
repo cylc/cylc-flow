@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from cylc.remote import remrun
-remrun().execute()
+if remrun().execute():
+    sys.exit(0)
 
-import os, re, sys
+import os, re
 import datetime
 from shutil import copy
 import subprocess
@@ -146,7 +148,12 @@ if not options.inline:
 # read the suite.rc file
 if os.path.isfile( suiterc ):
     # back up the original
-    backup( suiterc )
+    try:
+        backup( suiterc )
+    except IOError, x:
+        # e.g. if attempting inlined edit of another user's suite.
+        print >> sys.stderr, x
+        sys.exit("Write access to suite definition directory is required.")
     # record original modtime
     modtimes[suiterc] = os.stat( suiterc ).st_mtime
     # read the file

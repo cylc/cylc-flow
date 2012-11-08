@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import string, os
+from cylc.config import config
+from cylc.CylcOptionParsers import cop
+from cylc.command_prep import prep_file
+from cylc.dump import dump_to_stdout, get_stop_state_summary
+
+parser = cop( usage = """cylc [info] cat-state [OPTIONS] REG 
+
+Print the suite state dump file directly to stdout.""" )
+
+parser.add_option( "-d", "--dump", help="Use the same display "
+        "format as the 'cylc dump' command.",
+        action="store_true", default=False, dest="dumpform" )
+
+( options, args ) = parser.parse_args()
+owner = options.db_owner
+
+suite, suiterc = prep_file( args[0], options ).execute()
+
+try:
+    config = config( suite, suiterc, owner )
+except Exception,x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+
+state_dump_file = os.path.join( config['cylc']['state dumps']['directory'], 'state' )
+
+try:
+    f = open( state_dump_file, 'rb' )
+except OSError, x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+else:
+    lines = f.readlines()
+    f.close()
+
+lines = map( str.rstrip, lines )
+
+if not options.dumpform:
+    for line in lines:
+        print line
+else:
+    [glbl, states, fam_states] = get_stop_state_summary( suite,
+            options.owner, options.host, lines )
+    dump_to_stdout( states )
+

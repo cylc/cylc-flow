@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -20,10 +20,9 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute()
+    if remrun().execute():
+        sys.exit(0)
 
-import os, re
-import socket
 from cylc.port_scan import scan
 from cylc.hostname import hostname
 from cylc.CylcOptionParsers import cop
@@ -32,9 +31,12 @@ from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 parser = cop( """cylc [discover] scan [OPTIONS]
     
 Detect (by port scanning) running cylc suites and lockservers, and 
-print the results. The simple space-delimited output format is designed
-for easy parsing: "SUITE OWNER HOST PORT".
+print the results. By default only your own running suites will be
+printed.  With --verbose you will also get "Connection Denied" from
+running suites owned by others on the same host.
 
+Simple space-delimited output format for easy parsing:
+    SUITE OWNER HOST PORT
 Here's one way to parse 'cylc scan' output by shell script: 
 ________________________________________________________________
 #!/bin/bash
@@ -47,8 +49,11 @@ IFS=$'\n'; for LINE in $( cylc scan ); do
 done
 IFS=$OFIS
 ----------------------------------------------------------------
-"Connection Denied" indicates another user's suite.""", argdoc=[])
+""", pyro=True, 
+argdoc=[])
 
+parser.remove_option("-p" ) # don't need passphrase
+parser.remove_option("-f" ) # don't need force
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
         action="store_true",default=False, dest="print_ports" )
@@ -60,5 +65,5 @@ if options.print_ports:
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
-suites = scan( options.host, verbose=True, db=options.db )
-
+suites = scan( options.host, options.db, options.pyro_timeout,
+               verbose=options.verbose )

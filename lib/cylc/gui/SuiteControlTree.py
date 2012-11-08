@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@ import gobject
 import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
+from util import EntryTempText
 
 try:
     any
@@ -37,9 +38,10 @@ class ControlTree(object):
     """
 Text Treeview suite control interface.
     """
-    def __init__(self, cfg, info_bar, get_right_click_menu, log_colors ):
+    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -55,13 +57,16 @@ Text Treeview suite control interface.
         self.tfilt = ''
         
         self.t = tupdater( self.cfg, self.ttreeview, self.ttree_paths,
-                           self.info_bar )
+                           self.info_bar, self.usercfg )
         self.t.start()
         return main_box
 
     def visible_cb(self, model, iter ):
-        # visibility determined by state matching active toggle buttons
-        # set visible if model value NOT in filter_states
+        # visibility result determined by state matching active check
+        # buttons: set visible if model value NOT in filter_states;
+        # and matching name against current name filter setting.
+        # (state result: sres; name result: nres)
+
         ctime = model.get_value(iter, 0 )
         name = model.get_value(iter, 1)
         if name is None or ctime is None:
@@ -78,18 +83,28 @@ Text Treeview suite control interface.
             state = re.sub( r'<.*?>', '', state )
         sres = state not in self.tfilter_states
 
-        nres = not self.tfilt or self.tfilt in name
+        if not self.tfilt:
+            nres = True
+        elif self.tfilt in name:
+            # tfilt is any substring of name
+            nres = True
+        elif re.search( self.tfilt, name ):
+            # full regex match
+            nres = True
+        else:
+            nres = False
 
         if model.iter_has_child( iter ):
             # Family.
             path = model.get_path( iter )
 
             sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
-            sres = sres or any([s not in self.tfilter_states for t in sub_st])
+            sres = sres or any([t not in self.tfilter_states for t in sub_st])
 
             if self.tfilt:
                 sub_nm = self.ttree_paths.get( path, {} ).get( 'names', [] )
                 nres = nres or any([self.tfilt in n for n in sub_nm])
+
         return sres and nres
 
     def check_tfilter_buttons(self, tb):
@@ -113,9 +128,9 @@ Text Treeview suite control interface.
                 return False
             self.t.should_group_families = group_on
             if group_on:
-                tip_text = "Click to ungroup families"
+                tip_text = "Tree View - Click to ungroup families"
             else:
-                tip_text = "Click to group tasks by families"
+                tip_text = "Tree View - Click to group tasks by families"
             self._set_tooltip( toggle_item, tip_text )
             self.group_menu_item.set_active( group_on )
         else:
@@ -151,7 +166,7 @@ Text Treeview suite control interface.
 
         self.sort_col_num = 0
 
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str)
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf )
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelfilter.set_visible_func(self.visible_cb)
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
@@ -162,15 +177,20 @@ Text Treeview suite control interface.
         ts.set_mode( gtk.SELECTION_SINGLE )
 
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
-
         headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
         bkgcols  = [ None, None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
+
         for n in range(1, len(headings)):
             # Skip first column (cycle time)
             cr = gtk.CellRendererText()
+            tvc = gtk.TreeViewColumn( headings[n] )
             cr.set_property( 'cell-background', bkgcols[n] )
-            #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
-            tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+            if n == 2:
+                crp = gtk.CellRendererPixbuf()
+                tvc.pack_start( crp, False )
+                tvc.set_attributes( crp, pixbuf=8 )
+            tvc.pack_start( cr, True )
+            tvc.set_attributes( cr, text=n )
             tvc.set_resizable(True)
             tvc.set_clickable(True)
          #   tvc.connect("clicked", self.change_sort_order, n - 1 )
@@ -195,8 +215,9 @@ Text Treeview suite control interface.
         labels[ 'runahead'  ] = '_runahead'
         labels[ 'queued'   ] = '_queued'
   
-        # initially filter out 'succeeded' and 'waiting' tasks
-        self.tfilter_states = [ 'waiting', 'succeeded' ]
+        # To initially filter out 'succeeded' and 'waiting' tasks:
+        #self.tfilter_states = [ 'waiting', 'succeeded' ]
+        self.tfilter_states = []
 
         for st in all_states:
             b = gtk.CheckButton( labels[st] )
@@ -246,9 +267,13 @@ Text Treeview suite control interface.
 
         task_id = name + '%' + ctime
 
-        menu = self.get_right_click_menu( task_id )
+        is_fam = (name in self.t.families)
 
-        menu.append( gtk.SeparatorMenuItem() )
+        menu = self.get_right_click_menu( task_id, task_is_family=is_fam )
+
+        sep = gtk.SeparatorMenuItem()
+        sep.show()
+        menu.append( sep )
 
         group_item = gtk.CheckMenuItem( 'Toggle Family Grouping' )
         group_item.set_active( self.t.should_group_families )
@@ -298,7 +323,8 @@ Text Treeview suite control interface.
     def get_menuitems( self ):
         """Return the menu items specific to this view."""
         items = []
-        autoex_item = gtk.MenuItem( 'Toggle _Auto-Expand Tree' )
+        autoex_item = gtk.CheckMenuItem( 'Toggle _Auto-Expand Tree' )
+        autoex_item.set_active( self.t.autoexpand )
         items.append( autoex_item )
         autoex_item.connect( 'activate', self.toggle_autoexpand )
 
@@ -321,7 +347,7 @@ Text Treeview suite control interface.
         expand_button = gtk.ToolButton()
         image = gtk.image_new_from_stock( gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR )
         expand_button.set_icon_widget( image )
-        self._set_tooltip( expand_button, "Expand all" )
+        self._set_tooltip( expand_button, "Tree View - Expand all" )
         expand_button.connect( 'clicked', lambda x: self.ttreeview.expand_all() )
         items.append( expand_button )
 
@@ -329,40 +355,27 @@ Text Treeview suite control interface.
         image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
         collapse_button.set_icon_widget( image )        
         collapse_button.connect( 'clicked', lambda x: self.ttreeview.collapse_all() )
-        self._set_tooltip( collapse_button, "Collapse all" )
+        self._set_tooltip( collapse_button, "Tree View - Collapse all" )
         items.append( collapse_button )
      
-        self.filter_entry = gtk.Entry()
-        self.filter_entry.set_width_chars( 10 )  # Reduce width in toolbar
+        self.group_toolbutton = gtk.ToggleToolButton()
+        self.group_toolbutton.set_active( self.t.should_group_families )
+        g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
+        self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
+        self._set_tooltip( self.group_toolbutton, "Tree View - Click to group tasks by families" )
+        items.append( self.group_toolbutton )
+
+        self.filter_entry = EntryTempText()
+        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
         self.filter_entry.connect( "activate", self.check_filter_entry )
+        self.filter_entry.set_temp_text( "filter" )
         filter_toolitem = gtk.ToolItem()
         filter_toolitem.add(self.filter_entry)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Filter tasks by name")
+        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name")
         items.append(filter_toolitem)
-
-        self.group_toolbutton = gtk.ToggleToolButton()
-        self.group_toolbutton.set_active( self.t.should_group_families )
-
-        ### GTK.IMAGE_NEW_FROM_FILE() REQUIRES PYGTK 2.12: 
-        ## root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        ## g_image = gtk.image_new_from_file( root_img_dir + '/group.png' )
-        ## self.group_toolbutton.set_icon_widget( g_image )
-        ## FOR BETTER PYGTK COMPATIBILITY WE CAN DO THIS:
-        # create a new stock icon for the 'group' action
-        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        factory = gtk.IconFactory()
-        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
-        iconset = gtk.IconSet(pixbuf)
-        factory.add( 'group', iconset )
-        factory.add_default()
-        g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
-        self.group_toolbutton.set_icon_widget( g_image )
- 
-        self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton, "Click to group tasks by families" )
-        items.append( self.group_toolbutton )
 
         return items
 

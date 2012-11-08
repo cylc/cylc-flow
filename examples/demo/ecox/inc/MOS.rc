@@ -20,7 +20,7 @@
         description = "mos verification and plotting for last 5 days of NZLAM forecasts."
         command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
         [[[environment]]]
-            REFERENCE_TIME = $(cylc cycletime -s 120)
+            REFERENCE_TIME = $(cylc cycletime --offset-hours=-120)
 
     [[mos_nzlam_vp_curr]]
         inherit = MOS

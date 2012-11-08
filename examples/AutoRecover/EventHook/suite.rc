@@ -12,12 +12,11 @@ Illustrates use of a task event hook script to clean up failed tasks."""
     [[dependencies]]
         [[[0,6,12,18]]]
             graph =  """A => fam
-                    fam:finish => B"""
+                    fam:finish-all & fam:succeed-any => B"""
 [runtime]
     [[fam]]
         [[[event hooks]]]
-            script = failhook.sh
-            events = failed
+            failed handler = failhook.sh
     [[m_foo]]
         inherit = fam
         command scripting = sleep 8 

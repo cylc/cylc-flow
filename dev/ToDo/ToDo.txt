@@ -5,6 +5,10 @@ further investigation before concluding there is a problem ... at which
 point the issue can be migrated to the github issue tracker.
 _______
 GENERAL
+ 
+ + with a ctrl-Z stopped suite present, gcylc takes the port scan
+ timeout time to start up. We should be able to show the window *before*
+ the updater thread does a port scan.
 
  + Python dict.get( key, default ) never returns KeyError, and seems to
  be valid right back to Python 2.4 and earlier.
@@ -25,22 +29,9 @@ VALIDITY EASIER.
  for any hardwired assumptions about ctime string length (e.g. in suite 
  log filtering - command and GUI).
 
-A MINIMUM RUNAHEAD limit SHOULD now be computed automatically by each
-cycler in a suite.  Note however that for 6-hrly tasks, for example,
-with no intercycle dependence, a limit of just 1 hour does NOT stall the
-suite (with intercycle dependence it does). => NEED TO clearly explain
-when the runahead limit can stall a suite (and automatically compute a
-true minimum below which the suite will stall?) BUT NOW I'm computing
-runahead limiting based only on old waiting (rather than unfailed) task,
-which frees up model-type suites - maybe no stallng now?
-
 * bad graph syntax crashes cylc graph (e.g. "color:blue" for
   "color=blue").
 
-* document communication mechanisms: 
-    (a) task -> suite (remote TCP/IP or ssh -> local TCP/IP)
-    (b) command -> suite (remote? or local TCP/IP)
-    
 * can validation be made to detect circular dependencies. E.g. 
 if foo is a member of FAM, then "FAM => foo" means foo will not run
 because it depends on itself.  This could be detected as a
@@ -70,9 +61,8 @@ messages such as remote error tracebacks to be sent to the handler.
   The defaultdict can be used similarly (i.e. without checking for 
   existence of an item first) but only since Python 2.5.
 
-* In simulation mode, task message stdout is not in dummy clock time.
-  To correct this would require getting the current dummy time from the
-  suite.
+* In dummy mode, task message stdout is not in dummy clock time.
+  To correct this would require getting the dummy time from the suite.
 
 * We need to be able to distinguish cycle time and async tags
   throughout, by using distinct derived classes or preprending 
@@ -162,11 +152,6 @@ messages such as remote error tracebacks to be sent to the handler.
   + port range: set sufficiently wide for large sites.
   (Consider lockservers too)
   + consider Pyro multi-threading again?
-
-* '--host' should not be allowed for intervention commands because
-  owner's username does not cross machine boundaries, generally.
-
-* what happens if we restart after suite.rc task content changed?
 
 * Check that user-defined task names do not clash with parent class
   or attribute names.
@@ -312,7 +297,6 @@ GUI
  for the GUI or the suite) in large suites?  If so, we could optionally
  allow the old method with the proviso that it would not work for remote
  controlled suites.
-
 
 * currently scans for port on every command - should store found port?
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute()
+    if remrun().execute():
+        sys.exit(0)
 
-import os
 from cylc.CylcOptionParsers import cop
 from cylc.port_scan import get_port
 from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
@@ -38,7 +38,7 @@ error status. For tasks, success means the task proxy is currently in
 the 'running' state.""",
     pyro=True,
     argdoc=[('REG', 'Suite name'), 
-            ('[TASK]', 'Task NAME%TAG (TAG is cycle time or "a:INT")')])
+            ('[TASK]', 'Task NAME%TAG (TAG is cycle time or integer)')])
 
 parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
@@ -55,7 +55,7 @@ if options.print_ports:
 
 try:
     port = get_port( suite, options.owner, options.host,
-            pphrase=pphrase, silent = not options.verbose )
+            pphrase, options.pyro_timeout, not options.verbose )
 except Exception, x:
     if options.debug:
         raise
@@ -75,7 +75,7 @@ else:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host).get_proxy( 'remote' )
+            options.host, None, options.verbose ).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

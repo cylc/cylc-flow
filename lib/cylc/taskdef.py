@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,8 @@
 
 import sys, re
 from OrderedDict import OrderedDict
-
+from copy import deepcopy
+from collections import deque
 from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
@@ -74,6 +75,7 @@ class taskdef(object):
         self.modifiers = []
         self.asyncid_pattern = None
         self.cycling = False
+        self.is_coldstart = False
 
         self.remote_host = None
         self.owner = None
@@ -82,16 +84,16 @@ class taskdef(object):
         self.remote_suite_directory = None
         self.remote_log_directory = None
 
-        self.hook_script = None
-        self.hook_events = []
-        self.submission_timeout = None
-        self.execution_timeout = None
-        self.reset_timer = None
+        self.reset_timer = False
+        self.event_handlers = {}
+        self.timeouts = {}
+        self.resurrectable = False
 
         self.intercycle = False
         self.cyclers = []
         self.logfiles = []
-        self.description = ['Task description has not been completed' ]
+        self.title = []
+        self.description = []
 
         self.follow_on_task = None
 
@@ -108,15 +110,20 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.command = None
-        self.retry_delays = []
+        self.retry_delays = deque()
         self.precommand = None
         self.postcommand = None
         self.initial_scripting = None
+        self.enviro_scripting = None
+        self.ssh_messaging = False
 
         self.environment = OrderedDict()  # var = value
         self.directives  = OrderedDict()  # var = value
 
         self.namespace_hierarchy = []
+
+        self.sim_mode_run_length = None
+        self.fail_in_sim_mode = False
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -187,16 +194,17 @@ class taskdef(object):
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
+        tclass.title = self.title
         tclass.description = self.description
 
         tclass.elapsed_times = []
         tclass.mean_total_elapsed_time = None
 
-        tclass.hook_script = self.hook_script
-        tclass.hook_events = self.hook_events
-        tclass.submission_timeout = self.submission_timeout
-        tclass.execution_timeout  = self.execution_timeout
+        tclass.event_handlers = self.event_handlers
+        tclass.timeouts = self.timeouts
         tclass.reset_timer =self.reset_timer
+
+        tclass.resurrectable = self.resurrectable
 
         tclass.remote_host = self.remote_host
         tclass.owner = self.owner
@@ -303,8 +311,19 @@ class taskdef(object):
             sself.asyncid_pattern = self.asyncid_pattern
 
             sself.initial_scripting = self.initial_scripting
+            sself.enviro_scripting = self.enviro_scripting
+            sself.ssh_messaging = self.ssh_messaging
+
             sself.command = self.command
-            sself.retry_delays = self.retry_delays
+
+            sself.sim_mode_run_length = self.sim_mode_run_length
+            sself.fail_in_sim_mode = self.fail_in_sim_mode
+
+            # deepcopy retry delays: the deque gets pop()'ed in the task
+            # proxy objects, which is no good if all instances of the
+            # same task class reference the original deque!
+            sself.retry_delays = deepcopy(self.retry_delays)
+
             sself.precommand = self.precommand
             sself.postcommand = self.postcommand
 
@@ -348,6 +367,9 @@ class taskdef(object):
                 # TO DO: TEMPORARY HACK FOR ASYNC
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state )
+
+            sself.reconfigure_me = False
+            sself.is_coldstart = self.is_coldstart
 
         tclass.__init__ = tclass_init
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -68,9 +68,13 @@ class cycler( object ):
         be assumed that T is already on sequence."""
         raise CyclerOverrideError( "next" )
 
-    def get_def_min_runahead( self ):
-        """Return the default minimum runahead limit in hours. This
-        should be greater than or equal to the largest interval between
-        members of the sequence defined by this cycler.""" 
-        raise CyclerOverrideError( "get_def_min_runahead" )
+    def get_min_cycling_interval( self ):
+        """Return the smallest cycling interval for this cycler.""" 
+        raise CyclerOverrideError( "get_min_cycling_interval" )
 
+    def adjust_state( self, offset ):
+        """Adjust the state variables that define the cycle time sequence
+        to offset the whole sequence. This is used for tasks on the left 
+        of intercycle triggers, e.g. in "A[T-6] => B" implies that task A 
+        runs at cycles 6 hours prior to the cycler sequence."""
+        raise CyclerOverrideError( "adjust_state" )

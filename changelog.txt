@@ -599,7 +599,7 @@ already. So, for instance, if a waiting task is forced to the failed
 state, it will spawn a successor.
 
 ________________________________________________________________________
-4.5.0 PENDING
+4.5.0
 
 + Bug fix: disabling the runahead limit now works (but is not advisable!)
 
@@ -608,15 +608,15 @@ now handled correctly. Previously, only one was handled as a start-up
 task (in that dependence on it should disappear after the first cycle).
 
 + Validation now fails use of start-up tasks and normal cycling tasks in
-the same conditional trigger expression, because the meaning of such a
-trigger is undefined beyond the first cycle. 
+the same conditional trigger expression (the meaning of such a trigger
+is undefined beyond the first cycle). 
 
-+ Suite visualization: node groups are now automatically defined for
++ Suite visualization node groups are now automatically defined for
 all task families so that styling can be applied to family and member
 nodes at once using the family name.
 
 + Bug fix: "release suite" now does not release tasks to run if they are
-held due to passing the suite stop time already.
+on hold because they have passed the suite stop time.
 
 + Sequential tasks now do not spawn on failure, only success, reversing
 a change in 4.2.2 (otherwise restarting a suite with a failed sequential
@@ -630,17 +630,19 @@ of a failed sequential task that cannot be re-run successfully, to force
 it to carry on into the next cycle (see previous bullet point for why 
 this should not be done automatically).
 
-+ Optional new task-to-suite communication mechansim: use of ssh to
-re-invoke messaging commands on the suite host. This may be useful at
-sites in which one or more remote task hosts do not allow access to
-network ports for cylc's normal Pyro TCP/IP communication mechanisim.
++ An alternative task-to-suite communication mechansim: optional use of
+ssh to re-invoke messaging commands on the suite host. This may be
+useful at sites in which one or more remote task hosts do not allow
+access to network ports for cylc's normal Pyro TCP/IP communication
+mechanisim.
 
 + Time offset syntax in explicit internal output messages has been changed
 from <CYLC_TASK_CYCLE_TIME+n> to [T+n]. The new syntax is the same as
-for cycle time offsets in the suite graph.
+for cycle time offsets in the suite graph. Angle brackets are now
+reserved for a few "place holder" variables in suite.rc (see User Guide).
 
 + If multiple retries are configured for a task, the task failure event
-hook script is now called only for the final definitive failure.
+hook is now activated only for the final definitive failure.
 
 + The temporary directory required by some cylc commands is now chosen 
 automatically, by default, using Python's tempfile.mkdtemp(), but users
@@ -648,23 +650,31 @@ can optionally override by setting CYLC_TMPDIR. In the default case
 the temporary directory is also cleaned up automatically after use.
 
 + GENERALIZED CYCLING: cylc's original NWP-style hours-of-the-day
-cycling mechanism, e.g. [[0,6,12,18]], has replaced with an extensible
-mechanism that currently supports hours-of-the-day, and stepped daily,
-monthly, and yearly cycling - extend. 
+cycling mechanism, e.g. [[0,6,12,18]], has been replaced with an
+extensible mechanism that currently supports hours-of-the-day, and
+stepped daily, monthly, and yearly cycling - for climate modeling. 
 
-+ More flexible specification of cycle time on the command line (in
-combination with generalized cycling, above). YYYYMMDDHH has been
-replaced with YYYY[MM[DD[HH[mm[ss]]]]] (brackets indicate optional
-digits).
++ The "cylc cycletime" utility command has been extended to handle
+daily, monthly, and yearly cycle time offsets, as well as hours.
+WARNING: this change will break any previous computation of cycle time
+offsets with this utility command, because extending the functionality
+required changing the existing command line options.
 
-+ suite.rc syntax highlighting for the emacs editor.
++ The "cylc template" filename templating utility has been removed;
+templating is now handled by the "cylc cycletime" utility.
 
-+ The task job scripting now prints out suite, task, and host ID info.
++ Flexible specification of cycle times on the command line (in
+combination with generalized cycling, above): YYYY[MM[DD[HH[mm[ss]]]]]
+(brackets indicate optional digits).
+
++ Added an emacs mode for syntax highlighting suite.rc files.
+
++ Task job scripting now prints out suite, task, and host ID info.
 
 + New graphing option: use node outline color for node labels.
 
 + The cylc scan command now reports simple space-delimited output,
-    suite owner host port
+    "suite owner host port"
 for easier parsing.
 
 + Changes to the cylc ping command:
@@ -678,59 +688,46 @@ interpolating month MM in the archive destination path.
 + Jinja2 processing leaves extra blank lines in the suite definition
 corresponding to lines that originally had only Jinja2 code. This could
 result in a non-validating suite if the line preceding the blank one
-ended in a line continuation marker. 'cylc view -p' was removing blanks
-lines, purely (it was thought) for display purposes, which made such
-non-validating suites appear to be correct. All blank lines are now
-removed following Jinja2 processing, to prevent this problem occuring. 
+ended in a line continuation marker. 'cylc view -j' (formerly '-p) was
+removing blank lines, purely (it was thought) for display purposes,
+which made such non-validating suites appear to be correct. All blank
+lines are now removed following Jinja2 processing, to prevent this.
 
-+ Fixed a bug in the "cylc show" command for retrieving live task info.
-
-+ Complete remote control of suites has been enabled, 
-
-+ Use of secure passphrases is now compulsory for all suites. This was
-provides security for remote control of runnign suites. Accordingly the
-"use secure passphrase" suite configuration item has been removed.  A
++ Complete remote control of suites has been enabled, with compulsory
+use of suite passphrases for authentication.  Accordingly the "use
+secure passphrase" suite configuration item has been removed.  A
 random passphrase is generated automatically in the suite definition
 directory when a suite is registered; it must be distributed to any
-remote task host accounts and any remote accounts from which you want to
-control the suite.
+remote task host accounts and any remote accounts from which you want 
+suite control access.
 
 + Tasks ready to run at the same time are now be submitted in the order
 in which they are first encountered in the suite graph (at least in the
-first cycle).
+first cycle...).
 
-+ The task retry mechanism has changed: "command scripting" is now a
-single item, not a list, and a new config item "retry delays" lists
-successive delays in minutes, if any, after which to resubmit the job
-with the same command scripting. When delayed prior to a retry tasks
-go into a new "retry delayed" state, coloured pink, and a new task
-execution environment variable $CYLC_TASK_TRY_NUMBER is incremented
-(starting from one in the original run); this variable can be used to
-modify task behavior in each try.
++ Task retry mechanism upgraded: "command scripting" is now a single
+item, not a list, and a new config item "retry delays" lists successive
+delays in minutes, if any, after which to resubmit the job with the same
+command scripting. When delayed prior to a retry tasks go into a new
+"retry delayed" state, coloured pink, and a new task execution
+environment variable $CYLC_TASK_TRY_NUMBER is incremented (starting from
+one in the original run); this variable can be used to modify task
+behavior in each try.
 
-+ A new config item conifiguration item:
++ A new config item:
     [runtime][[NAME]]dummy task run length = <integer> (seconds)
-  allows users to change the default dummy task run length. This sets 
-  the value of a new task execution environment variable 
-  $CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
-  sleep command in default command scripting. 
+allows users to change the default dummy task run length. This sets 
+the value of a new task execution environment variable 
+$CYLC_TASK_DUMMY_RUN_LENGTH, which is used as an argument to the
+sleep command in default command scripting. 
 
-+ Line numbers are now printed for Jinja2 syntax errors, by validate.
++ Line numbers are now printed for Jinja2 syntax errors.
 
-+ Control GUI improvements:
++ Major suite control GUI improvements:
   + The two control GUIs have been merged into a single multi-view GUI
   with a cleaner interface (still evolving)
-  + Families can now be expand and collapsed in the text tree view
-  + Family state coloring (graph view and text tree view)
-
-+ The "cylc cycletime" utility command has been extended to handle
-daily, monthly, and yearly cycle time offsets, as well as hours.
-WARNING: this change will break any previous computation of cycle time
-offsets with this utility command, because extending the functionality
-required changing the existing command line options.
-
-+ The "cylc template" filename templating utility has been removed;
-templating is now handled by the "cylc cycletime" utility.
+  + Families can now be expand and collapsed in the text view
+  + Family state coloring in the graph text views
 
 + The suite host environment can now be accessed via Jinja2, e.g.:
    #!Jinja2
@@ -743,20 +740,286 @@ argument order: 'cylc grep SUITE pattern'
 
 + Moved the lockserver commands to the 'utility' command category.
 
-+ Removed central suite database functionality.
-
-+ Suite database location has changed to $HOME/.cylc/DB
++ Removed central suite database functionality, but extended user
+database functionality to allow viewing (etc.) of suites registered in
+other databases, including suites owned by other users (see the new
+'--db=' command option. Copying suites between databases is also 
+supported, although currently by the command line interface only.
+Accordingly, the default suite database location has been changed to
+$HOME/.cylc/DB. 
 
 + Bug fix "cylc log -r N" (for viewing old rotations)
 
 + Support for Jinja2 custom filters, by which you can modify Jinja2
-variable values using custom Python functions.
+variable values with custom Python functions.
 
-+ Cylc version reinvocation (pseudo backward compatibility) now assumes 
++ Cylc version re-invocation (pseudo backward compatibility) now assumes 
 parallel cylc installations - you can no longer specify a full path to a
 required cylc version at the top of a suite definition.
 
-+ Support for alternative suite databases. Copying suites between
-databases is also supported, but currently only by the command line
-interface.
++ New network connection timeout option for commands that connect to
+running suites. Previously, with no timeout, a Ctrl-Z-stopped suite
+(or similar) could hold up its port and cause port scans to hang
+indefinitely.
+
++ The "gcylc" command is now an alias for "cylc gui" and it only invokes
+the main cylc GUI - i.e. the suite database viewer from which you can
+operate on any of your suites. The suite control GUI, which has always
+been a separate application anyway, is now invoked by the "gcontrol
+commands, which is an alias for "cylc gcontrol".  This was necessitated
+by the above remote control changes (the two commands must be handled
+differently because gcylc is not suite-connecting but gcontrol is).
+This change also resolves the ambiguity of the former "gcylc" name, which 
+could refer to either the main db-viewer or a suite control GUI. 
+
++ Bug fix: explicit outputs now work for one-off asynchronous tasks.
+
++ (missed above: In gcontrol views - graphical and text based - the task
+content of the suite is now determined and updated dynamically by
+interrogating the running suite. Previously the task content was only
+loaded once, at GUI start up, and thus did not update if the suite was
+altered while the GUI was still running. 
+
+________________________________________________________________________
+4.5.1
+
++ Task retry delays now work with clock-triggered tasks.
+
++ Cleaned up use of Pyro connection timeouts. Prior to 4.5.0 there was
+no timeout. At 4.5.0 we set a 1 seconds default, but depending on
+circumstances (network, load, etc.) this proved to be too short
+(resulting in messaging failures when tasks timed out attempting to
+communicate with their suite). So now:
+  * The timeout value passed to tasks by their parent suite can be set
+    by '[cylc]-> pyro connection timeout' and defaults to no timeout.
+  * A value specified on the command line of the run, restart, gcylc,
+    and gcontrol commands will be passed on the started suites,
+    overriding the above default.
+  * Suite-connecting commands ("cylc dump" etc.) also take a timeout
+    value on the command line but default to no timeout.
+
++ Fixed a bug in the passphrase location checking code (this would not 
+have affected running suites with the passphrase installed in the suite
+definition directory on the suite host or remote task hosts).
+
++ Stopped profilic suite logging caused by gcontrol continually checking
+for the current list of task names (as of 4.5.0 the displayed task list
+is determined dynamically).
+
++ Two new job submission methods for test purposes: background_slow
+(takes 10 seconds to complete) and fail (always fails).
+
++ Submission of tasks that become ready to run at the same time
+is now done in batches (size configurable): batch members
+are submitted in parallel, and cylc waits on all member job submissions
+(but not the submitted jobs, note) to return before continuing to the
+next batch. Cylc cannot respond to network requests while submitting 
+tasks so this should significantly improve performance for large
+ensemble suites.
+
++ gcontrol "View -> Suite Log" now works even if the suite was not
+running when the GUI started up.
+
++ the "outputs" example suite was not validating due to use of old-style 
+cycle time variable in output messages. The new release generator
+script now aborts in case of non-validating examples.
+
++ The remote task execution mechanism now automatically sources
+/etc/profile and $HOME/.profile on the remote host, if they exist.
+This may make most previous use of the "initial scripting" config item
+obsolete.
+
+________________________________________________________________________
+4.6.0
+
++ The new delayed retry feature now works properly for cycling tasks
+beyond the first cycle.
+
++ For ssh messaging, where remote messaging commands re-invoke
+themselves on the suite host, the path to cylc on the suite host is now
+transferred explicitly via the remote task job script - we no longer
+rely on the user's .profile on the suite host for this.
+
++ New 'retry' event hook - calls the event handler if a task fails when
+it has a retry lined up.
+
++ New User Guide sections under "Running Suites" to document "Automatic
+Retry On Task Failure" and "Suite And Task Event Handling".
+
++ The task environment variables $CYLC_SUITE_INITIAL_CYCLE_TIME and
+$CYLC_SUITE_FINAL_CYCLE_TIME now persist across restarts, and are 
+always defined but may have the value "None" if no value is set on the
+command line, state dump, or suite.rc file. The initial cycle time 
+variable is automatically set in a cold start, but only optionally by a
+warm start - which is really an implicit restart that does not
+reference a previous state.
+
++ Tasks that specify "enable resurrection = True" will be revived from
+the dead if they start running again (by external non-cylc means) after
+reporting failure. This can be used to handle HPC-style job preemption.
+
++ Moved the User Guide documentation of cylc version re-invocation from
+the installation section to the running suites section. 
+
++ Correct Quick Start Guide suite names (the initial component of the
+registration name hierarchy had been omitted).
+
++ Do remote request handling before shutdown check (reverses the
+original order) so suites can shutdown if requested even when a
+failing task has retries lined up with a very short delay period.
+
++ New config item "[cylc] abort if any task fails = False"; if True,
+the suite will abort with exit status 1 if any task false. The main
+intended use for this is for pre-release automated test suites (but 
+see also "reference test runs" below).
+
++ Suites can now be told to abort with error status if a shutdown handler 
+fails - to allow use of shutdown handlers as suite run diagnosis tools
+in cylc test suites (but see also "reference test runs" below).
+
++ Initial GUI text view task state filtering now shows all tasks, as
+users often forget that some task states are filtered out if they did
+not activate the filters themselves.
+
++ Removed the requirement to preface the integer TAG of an asynchronous
+task, on the command line, with 'a:'.
+
++ Suites can now be restarted after task definitions have been deleted, 
+without manually altering the suite state dump file. Undefined tasks in
+the state dump are just be ignored at start up.
+
++ WARNING for anyone overriding the default task log, work, and share
+directory config items, they have been moved up out of the "job
+submission" runtime sub-section, because they are not really properties 
+of the job submission process. 
+
++ The main cylc command interface no longer checks that Pyro is
+installed, but the commands that it do. Consequently Pyro does not have
+to be installed on a remote task host if you choose to use ssh
+messaging, and you can still work with suites - but not run them - if
+Pyro is not installed on the suite host.
+
++ Suites with intercycle connections like the following now run correctly:
+    [scheduling]
+        initial cycle time = 20110101
+        final cycle time = 20110102
+        [[dependencies]]
+            [[[ 0,12 ]]]
+                graph = "A"
+            [[[ 6,18 ]]]
+                graph  =  "A[T-6] => B"
+(previously A would run in 6,18 as well as 0,12, which it shouldn't have).
+
++ Restored runtime "resolved dependency" graphing (disabled since
+internal queues were implemented); and added optional logging of
+resolved dependencies.
+
++ The gcapture log window (used to display suite stdout) now only color-highlights 
+lines containing the strings CRITICAL, WARNING, or ERROR (not "failed"
+or "error" anymore).
+
++ Added a suite startup event hook.
+
++ Replaced original simulation mode, which submitted real dummy tasks to
+run locally after nobbling the task job script, with: (1) a proper
+simulation mode that submits not real dummy tasks, and (2) a dummy mode
+that simply dummies out command scripting but leaves job submission,
+hosting, etc. intact.
+
++ Added a simple means of creating self-diagnosing cylc test suites:
+running a suite in any run mode with '--reference-log' creates a special
+reference suite log in the suite definition directory containing
+task triggering information. Later, running with '--reference-test'
+automatically switches on "abort if any task fails", "abort if suite
+times out" (configured in [cylc][[reference test]]), and runs "cylc hook
+check-triggering" on the shutdown hook with "abort if shutdown event
+handler fails" switched on. The event handler compares triggering
+behaviour in the test run with that of the reference run, and aborts the
+test with non-zero exit status if any differences, disregarding timing
+and order, are detected (i.e. tasks triggering off different upstream
+tasks or running in different cycles).
+The intention is to create a battery of automatic tests to make it
+harder to break cylc in the future; and to make it easy for users with
+complex suites to quickly verify, in dummy mode, that changes to cylc
+will not break their suites. 
+
++ Suite definitions can now be reparsed at run time with the new "cylc
+reload" command, even in tasks have been removed or added (in the later
+case a specific instance of an added task will still have to be inserted
+manually after the reload operation). This allows task settings
+(environment variables etc.) to be changed without restarting the suite.
+
++ Higher-level family triggers (families of families) can now be used in
+the graph.
+
++ Fixed a minor bug that could, in usual circumstances, cause cylc not
+to recognize the need for another round of task processing and requiring
+a manual nudge to get the suite to continue.
+
++ Documented stepped daily, monthly, and yearly cycling.
+
++ Added a simple utility command that generates random integers on a
+given interval; used for computing random task run lengths in simulation
+and dummy mode. 
+
++ Allow running simulation and dummy mode on the real time clock.
+
++ Bug fix: Sub-suites now load their own passphrase on start-up, not
+that of their parent suite.
+
++ The gcontrol dot view now has hover-over task state information, and
+right-click menus.
+
++ Added a new "environment scripting" task runtime configuration item.
+In the task job script it fits between the cylc-defined environment 
+and the task runtime environment.
+
++ External host selection officially supported (host = selector.sh).
+
++ The runahead limit base is now the oldest non-finished task (i.e. not
+succeeded or failed); it defaults to the twice the smallest cycling
+interval in the suite; and it will not stall a suite even if set less
+than the smallest cycling.
+
++ A new command 'cylc broadcast NAME VALUE' allows tasks to broadcast
+simple information to environment variables made available to other
+tasks downstream of them. 
+
++ Fixed a problem with remote command invocation that caused the new ssh
+messaging feature to fail in some cases.
+
++ Suite info, view, log, and graphing from gcontrol View menu.
+
++ A new task run time environment variable to allow a task to determine
+whether or not it is a cold-start task: $CYLC_TASK_IS_COLDSTART ('True'
+or 'False')
+
++ Bug fix gcylc's "view suite stdout" menu item, broken since 4.5.0.
+
++ Restore job submit failure hook activation, broken in 4.5.1.
+
++ Runahead limit is now displayed in the gcontrol status bar.
+
++ gcontrol graph-view: members of collapsed families are no longer
+plotted off to the side as rectangular nodes (no longer necessary as we
+now have family state coloring and member state info in hover-over
+tool-tips).
+
++ Restore gcontrol graph-view "cycle time focus" functionality;
+accidentally broken between 4.2.2 and 4.5.1.
+
++ New more powerful and flexible family trigger expressions. All 
+family names on the left side of a trigger arrow must now 
+be of the form "fam:TRIG-all" or "fam:TRIG-any" where TRIG is 
+start, succeed, fail, or finish.  To get the old-style "family 
+finished" trigger (all members finished and at least one succeeded):
+   fam:finished-all & fam:succeeded-any => foo
+
++ A new strict validation option to protect against inadvertent creation
+of naked dummy tasks (tasks with no explicit runtime config) resulting
+from misspelled task names.
+
++ optional gcontrol landscape graph view
+
++ gcontrol graph-view redraw reduced.
 

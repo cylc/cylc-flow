@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -21,21 +21,27 @@ import gtk
 #pygtk.require('2.0')
 import gobject
 import pango
-import os, re
-import Pyro.errors
+import os, re, sys
+import socket
 import subprocess
 import helpwindow
+from cylc.hostname import is_remote_host
+from cylc.owner import is_remote_user
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
+from cylc.gui.graph import graph_suite_popup
+from cylc.gui.stateview import DotMaker
 from cylc.gui.util import get_icon, get_image_dir, get_logo
-from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
+from cylc.port_scan import SuiteIdentificationError
+from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
+from cylc.strftime import strftime
 from option_group import controlled_option_group
 from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
@@ -73,70 +79,100 @@ def run_get_stdout( command, filter=False ):
         return ( True, res )
     return (False, [])
 
+
 class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir ):
+    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout ):
         self.suite = suite
         self.pphrase = pphrase
         self.host = host
         self.port = port
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
+        else:
+            self.pyro_timeout = None
+
         self.owner = owner
         self.cylc_tmpdir = cylc_tmpdir
 
         self.imagedir = get_image_dir()
 
 
-class InfoBar(gtk.HBox):
+class InfoBar(gtk.VBox):
     """
 Class to create an information bar.
     """
 
-    def __init__( self, suite, status_changed_hook=lambda s: False ):
+    def __init__( self, host, usercfg, 
+                  status_changed_hook=lambda s: False ):
         super(InfoBar, self).__init__()
+
+        self.host = host
+
+        theme = usercfg['use theme']
+        self.dots = DotMaker( usercfg['themes'][theme] )
+
+        self._suite_states = ["empty"]
+        self.state_widget = gtk.HBox()
+        self._set_tooltip( self.state_widget, "states" )  
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
         self.status_widget = gtk.Label()
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.status_widget, "status" )
+        self._set_tooltip( self.status_widget, "status" )
 
         self._mode = "mode..."
         self.mode_widget = gtk.Label()
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.mode_widget, "mode" )
+        self._set_tooltip( self.mode_widget, "mode" )
+
+        self._runahead = ""
+        self.runahead_widget = gtk.Label()
+        self._set_tooltip( self.runahead_widget, "runahead limit" )
 
         self._time = "time..."
         self.time_widget = gtk.Label()
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.time_widget, "last update time" )
+        self._set_tooltip( self.time_widget, "last update time" )
 
         self._block = "access..."
         self.block_widget = gtk.image_new_from_stock( gtk.STOCK_DIALOG_QUESTION,
                                                       gtk.ICON_SIZE_SMALL_TOOLBAR )
 
-        eb = gtk.EventBox()
-        eb.add( self.mode_widget )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
-        self.pack_start( eb, True )
+        self.pack_start( gtk.HSeparator(), False, False )
+        
+        hbox = gtk.HBox()
+        self.pack_start( hbox, False, True )
 
         eb = gtk.EventBox()
         eb.add( self.status_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
-        self.pack_start( eb, True )
+        hbox.pack_start( eb, False )
+        
+        eb = gtk.EventBox()
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.state_widget )
+        hbox.pack_start( eb, False )
+
+        eb = gtk.EventBox()
+        eb.add( self.mode_widget )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
+        hbox.pack_start( eb, False )
+
+        eb = gtk.EventBox()
+        eb.add( self.runahead_widget )
+        hbox.pack_start( eb, False )
 
         eb = gtk.EventBox()
         eb.add( self.time_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
-        self.pack_start( eb, True )
+        hbox.pack_start( eb, False )
 
         eb = gtk.EventBox()
         eb.add( self.block_widget )
-        self.pack_end( eb, False )
+        hbox.pack_end( eb, False )
 
     def set_block( self, block ):
         """Set block or access icon."""
@@ -152,42 +188,91 @@ Class to create an information bar.
         elif "waiting" in block:
             self.block_widget.set_from_stock( gtk.STOCK_DIALOG_QUESTION,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(self.block_widget, self._block)
+        self._set_tooltip( self.block_widget, "access: " + block )
 
     def set_mode(self, mode):
         """Set mode text."""
-        text = mode.replace( "mode:", "" ).strip()
-        if text == self._mode:
+        if mode == self._mode:
             return False
-        self._mode = text
-        self.mode_widget.set_text( self._mode )
+        self._mode = mode
+        gobject.idle_add( self.mode_widget.set_markup,
+                          "  " + self._mode + "  " )
+
+    def set_runahead(self, runahead):
+        """Set runahead limit."""
+        if runahead == self._runahead:
+            return False
+        self._runahead = runahead
+        text = "runahead:" + str(runahead) + "h  "
+        if runahead is None:
+            text = ""
+        gobject.idle_add( self.runahead_widget.set_text, text )
+
+    def set_state(self, suite_states):
+        """Set state text."""
+        if suite_states == self._suite_states:
+            return False
+        self._suite_states = suite_states
+        gobject.idle_add( self._set_state_widget )
+
+    def _set_state_widget(self):
+        state_info = {}
+        for state in self._suite_states:
+            state_info.setdefault(state, 0)
+            state_info[state] += 1
+        for child in self.state_widget.get_children():
+            self.state_widget.remove(child)
+        items = state_info.items()
+        items.sort()
+        items.sort( lambda x, y: cmp(y[1], x[1]) )
+        for state, num in items:
+            icon = self.dots.get_image( state )
+            icon.show()
+            self.state_widget.pack_start( icon, False, False )
+            self._set_tooltip( icon, str(num) + " " + state )
 
     def set_status(self, status):
         """Set status text."""
-        text = status.replace( "status:", "" ).strip()
-        if text == self._status:
+        if status == self._status:
             return False
-        self._status = text
-        self.status_widget.set_text( self._status )
-        if re.search( 'STOPPED', status ):
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
-        elif re.search( 'STOP', status ):  # stopping
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff8c2a' ))
-        elif re.search( 'HELD', status ):
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ffde00' ))
-        else:
-            self.status_widget.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
-        self.notify_status_changed( self._status )
+        self._status = status
+        gobject.idle_add( self.status_widget.set_text, " " + self._status )
+        gobject.idle_add( self.notify_status_changed, self._status )
+
+    def set_stop_summary(self, summary_maps):
+        """Set various summary info."""
+        # new string format() introduced in Python 2.6
+        #o>summary = "stopped with '{0}'"
+        summary = "stopped with '%s'"
+        glob, task, fam = summary_maps
+        states = [t["state"] for t in task.values() if "state" in t]
+        suite_state = "?"
+        if states:
+            suite_state = extract_group_state(states)
+        #o>summary = summary.format(suite_state)
+        summary = summary % suite_state
+        num_failed = 0
+        for task_id in task:
+            if task[task_id].get("state") == "failed":
+                num_failed += 1
+        if num_failed:
+            #o> summary += ": {0} failed tasks".format(num_failed)
+            summary += ": %s failed tasks" % num_failed
+        self.set_status(summary)
+        self.set_time( strftime( glob["last_updated"], "%Y/%m/%d %H:%M:%S"))
 
     def set_time(self, time):
         """Set last update text."""
-        text = time.replace("state last updated at:", "").strip() 
-        if text == self._time:
+        if time == self._time:
             return False
-        self._time = text
-        self.time_widget.set_text( self._time )
+        self._time = time
+        time_for_display = time.strip().rsplit(".", 1)[0]
+        gobject.idle_add( self.time_widget.set_text, time_for_display + " " )
+
+    def _set_tooltip(self, widget, text):
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(widget, text)
 
 
 class ControlApp(object):
@@ -201,54 +286,49 @@ Main Control GUI that displays one or more views or interfaces to the suite.
               "dot": ControlLED,
               "text": ControlTree }
     VIEW_DESC = { "graph": "Dependency graph view",
-                  "dot": "DOT summary view",
+                  "dot": "Dot summary view",
                   "text": "Detailed list view" }
     VIEW_ICON_PATHS = { "graph": "/icons/tab-graph.xpm",
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
-                       
 
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir, startup_views):
+    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
+            startup_views, pyro_timeout, usercfg ):
+
         gobject.threads_init()
         
-        self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir )
+        self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
+        self.usercfg = usercfg
+
+        self.setup_icons()
 
         self.view_layout_horizontal = False
-        try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
-            self.sim_only = god.get_sim_mode_only()
-            self.initial_cycle_time, self.final_cycle_time = god.get_cycle_range()
-            self.logging_dir = god.get_logging_directory()
-            self.task_list = god.get_task_list()
-        except SuiteIdentificationError, x:
-            self.initial_cycle_time = None
-            self.final_cycle_time = None
-            self.sim_only = None
-            self.logging_dir = None
-            self.task_list = []
-            warning_dialog( x.__str__() ).warn()
-            # TO DO: ABORT HERE!!!!???
 
-        self.connection_lost = False # (not used)
+        #self.connection_lost = False # (not used)
         self.quitters = []
         self.gcapture_windows = []
 
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title( self.cfg.suite + " - gcylc" )
+        title = self.cfg.suite
+        if self.cfg.host != socket.getfqdn():
+            title += " - " + self.cfg.host
+        title += " - gcontrol"
+        self.window.set_title( title )
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
+        self._prev_status = None
         self.create_main_menu()
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
 
         self.create_tool_bar()
-        bigbox.pack_start( self.tool_bar, False )
+        bigbox.pack_start( self.tool_bar_box, False, False )
         self.create_info_bar()
 
         self.views_parent = gtk.VBox()
@@ -262,6 +342,19 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.window.add( bigbox )
         self.window.show_all()
 
+    def setup_icons( self ):
+        """Set up some extra stock icons for better PyGTK compatibility."""
+        # create a new stock icon for the 'group' action
+        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
+        grp_iconset = gtk.IconSet(pixbuf)
+        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/ungroup.png' )
+        ungrp_iconset = gtk.IconSet(pixbuf)
+        factory = gtk.IconFactory()
+        factory.add( 'group', grp_iconset )
+        factory.add( 'ungroup', ungrp_iconset )
+        factory.add_default()
+
     def setup_views( self, startup_views=[] ):
         """Create our view containers and the startup views."""
         num_views = 2
@@ -269,12 +362,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             startup_views = [ self.DEFAULT_VIEW ]
         self.view_containers = []
         self.current_views = []
-        self.current_view_menuitems = []
         self.current_view_toolitems = []
         for i in range(num_views):
             self.view_containers.append(gtk.HBox())
             self.current_views.append(None)
-            self.current_view_menuitems.append([])
             self.current_view_toolitems.append([])
         self.views_parent.pack_start( self.view_containers[0],
                                       expand=True, fill=True )
@@ -316,7 +407,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if self.current_views[0].name == item._viewname:
             return False
         self.switch_view( item._viewname )
-        # self._set_tool_bar_view0( item._viewname )
+        self._set_tool_bar_view0( item._viewname )
         return False
 
     def _set_tool_bar_view0( self, viewname ):
@@ -398,8 +489,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def _cb_change_view_align( self, widget ):
         # This is the view menu callback to toggle side-by-side layout.
-        if hasattr( widget, "get_active" ):
-            self.change_view_layout( widget.get_active() )
+        horizontal = widget.get_active()
+        if self.view_layout_horizontal == horizontal:
+            return False
+        self.change_view_layout( widget.get_active() )
+        if widget == self.layout_toolbutton:
+            self.view1_align_item.set_active( horizontal )
+        else:
+            self.layout_toolbutton.set_active( horizontal )
 
     def switch_view( self, new_viewname, view_num=0 ):
         """Remove a view instance and replace with a different one."""
@@ -427,6 +524,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname]( 
                                                    self.cfg,
+                                                   self.usercfg,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
                                                    self.log_colors )
@@ -456,37 +554,37 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container.pack_start( view_widgets,
                               expand=True, fill=True )
         # Handle menu
-        for view_menuitems in self.current_view_menuitems:
-            for item in view_menuitems:
-                self.view_menu.remove( item )
+        menu = self.views_option_menus[view_num]
+        for item in menu.get_children():
+            menu.remove( item )
         new_menuitems = view.get_menuitems()
-        if new_menuitems:
-            new_menuitems.insert( 0, gtk.SeparatorMenuItem() )
-        self.current_view_menuitems[view_num] = new_menuitems
-        for menuitems in self.current_view_menuitems:
-            for item in menuitems:
-                self.view_menu.append( item )
+        for item in new_menuitems:
+            menu.append( item )
+        self.views_option_menuitems[view_num].set_sensitive( True )
         # Handle toolbar
-        for view_toolitems in self.current_view_toolitems:
+        for view_toolitems in self.current_view_toolitems[view_num]:
             for item in view_toolitems:
-                self.tool_bar.remove( item )
+                self.tool_bars[view_num].remove( item )
         new_toolitems = view.get_toolitems()
         if new_toolitems:
-            new_toolitems.insert( 0, gtk.SeparatorToolItem() ) 
+            index = self.tool_bars[view_num].get_children().index(
+                              self.view_toolitems[view_num])
+        for toolitem in reversed(new_toolitems):
+            self.tool_bars[view_num].insert( toolitem, index + 1)
         self.current_view_toolitems[view_num] = new_toolitems
-        for toolitems in self.current_view_toolitems:
-            for item in toolitems:
-                self.tool_bar.insert( item, -1 )
         self.window.show_all()
 
     def remove_view( self, view_num ):
         """Remove a view instance."""
         self.current_views[view_num].stop()
         self.current_views[view_num] = None
-        while len(self.current_view_menuitems[view_num]):
-            self.view_menu.remove( self.current_view_menuitems[view_num].pop() )
+        menu = self.views_option_menus[view_num]
+        for item in menu.get_children():
+            menu.remove( item )
+        self.views_option_menuitems[view_num].set_sensitive( False )
         while len(self.current_view_toolitems[view_num]):
-            self.tool_bar.remove( self.current_view_toolitems[view_num].pop() )    
+            self.tool_bars[view_num].remove(
+                      self.current_view_toolitems[view_num].pop() )
         if view_num == 1:
             parent = self.view_containers[0].get_parent()
             parent.remove( self.view_containers[0] )
@@ -520,40 +618,46 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def pause_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.hold()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if result.success:
-                info_dialog( result.reason, self.window ).inform()
-            else:
+            if not result.success:
                 warning_dialog( result.reason, self.window ).warn()
+            #else:
+            #    info_dialog( result.reason, self.window ).inform()
 
     def resume_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = god.resume()
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def stopsuite_default( self, *args ):
         """Try to stop the suite (after currently running tasks...)."""
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.shutdown()
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if result.success:
-                info_dialog( result.reason, self.window ).inform()
-            else:
+            if not result.success:
                 warning_dialog( result.reason, self.window ).warn()
+            #else:
+            #    info_dialog( result.reason, self.window ).inform()
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
@@ -573,14 +677,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stoptag == '':
                 warning_dialog( "ERROR: No stop TAG entered", self.window ).warn()
                 return
-            if re.match( '^a:', stoptag ):
-                # async
-                stoptag = stoptag[2:]
-            else:
+            try:
+                ct(stoptag)
+            except CycleTimeError,x:
                 try:
-                    ct(stoptag)
-                except CycleTimeError,x:
-                    warning_dialog( str(x), self.window ).warn()
+                    int(stoptag)
+                except ValueError:
+                    warning_dialog( 'ERROR, Invalid stop tag: ' + stoptag, self.window ).warn()
                     return
 
         elif stopnow_rb.get_active():
@@ -625,7 +728,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         window.destroy()
 
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             if stop:
                 result = god.shutdown()
             elif stopat:
@@ -639,10 +744,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if result.success:
-                info_dialog( result.reason, self.window ).inform()
-            else:
+            if not result.success:
                 warning_dialog( result.reason, self.window ).warn()
+            #else:
+            #    info_dialog( result.reason, self.window ).inform()
 
     def loadctimes( self, bt, startentry, stopentry ):
         command = "cylc get-config --mark-output --host=" + \
@@ -676,7 +781,8 @@ been defined for this suite""").inform()
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
-            optgroups, hold_cb, holdtime_entry ):
+            optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
+            holdtime_entry ):
 
         command = 'cylc control run --gcylc'
         options = ''
@@ -694,6 +800,16 @@ been defined for this suite""").inform()
             command = 'cylc control restart --gcylc'
             if no_reset_cb.get_active():
                 options += ' --no-reset'
+
+        if mode_live_rb.get_active():
+            pass
+        elif mode_sim_rb.get_active():
+            command += ' --mode=simulation'
+        elif mode_dum_rb.get_active():
+            command += ' --mode=dummy'
+
+        if self.cfg.pyro_timeout:
+            command += ' --timeout=' + str(self.cfg.pyro_timeout)
 
         ctime = ''
         if method != 'restart':
@@ -749,14 +865,18 @@ been defined for this suite""").inform()
 
     def unblock_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.unblock()
         except SuiteIdentificationError, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def block_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            god = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.block()
         except SuiteIdentificationError, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
@@ -772,7 +892,7 @@ been defined for this suite""").inform()
 
         about.set_comments( 
 """
-The cylc forecast suite metascheduler.
+The Cylc Suite Engine.
 """ )
         #about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( get_logo() )
@@ -781,12 +901,13 @@ The cylc forecast suite metascheduler.
         about.destroy()
 
     def view_task_descr( self, w, task_id ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite + " " + task_id
+        command = "cylc show --host=" + self.cfg.host + " --owner=" + \
+                self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def view_task_info( self, w, task_id, jsonly ):
+    def view_task_info( self, w, task_id, choice ):
         try:
             [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
         except SuiteIdentificationError, x:
@@ -811,17 +932,11 @@ The cylc forecast suite metascheduler.
         if not view:
             warning_dialog( '\n'.join( reasons ), self.window ).warn()
         else:
-            self.popup_logview( task_id, logfiles, jsonly )
+            self.popup_logview( task_id, logfiles, choice )
 
         return False
 
-    def jobscript( self, w, suite, task ):
-        command = "cylc jobscript " + suite + " " + task
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 800 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def get_right_click_menu( self, task_id, hide_task=False ):
+    def get_right_click_menu( self, task_id, hide_task=False, task_is_family=False ):
         """Return the default menu for a task."""
         menu = gtk.Menu()
         if not hide_task:
@@ -831,9 +946,8 @@ The cylc forecast suite metascheduler.
             title_item = gtk.MenuItem( 'Task: ' + task_id.replace( "_", "__" ) )
             title_item.set_sensitive(False)
             menu.append( title_item )
-            menu.append( gtk.SeparatorMenuItem() )
 
-        menu_items = self._get_right_click_menu_items( task_id )
+        menu_items = self._get_right_click_menu_items( task_id, task_is_family )
         for item in menu_items:
             menu.append( item )
 
@@ -841,85 +955,146 @@ The cylc forecast suite metascheduler.
         return menu
 
 
-    def _get_right_click_menu_items( self, task_id ):
+    def _get_right_click_menu_items( self, task_id, task_is_family=False ):
         # Return the default menu items for a task
         name, ctime = task_id.split('%')
 
         items = []
 
-        js0_item = gtk.MenuItem( 'View Task Info' )
-        items.append( js0_item )
-        js0_item.connect( 'activate', self.view_task_descr, task_id )
+        ## This method of setting a custom menu item is not supported
+        ## pre-PyGTK 2.16 (~Python 2.65?) due to MenuItem.set_label():
+        ## cug_pdf_item = gtk.ImageMenuItem( stock_id=gtk.STOCK_EDIT )
+        ## cug_pdf_item.set_label( '_PDF User Guide' )
+        ## help_menu.append( cug_pdf_item )
+        ## cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
 
-        js_item = gtk.MenuItem( 'View The Job Script' )
-        items.append( js_item )
-        js_item.connect( 'activate', self.view_task_info, task_id, True )
-
-        js2_item = gtk.MenuItem( 'View New Job Script' )
-        items.append( js2_item )
-        js2_item.connect( 'activate', self.jobscript, self.cfg.suite, task_id )
-
-        info_item = gtk.MenuItem( 'View Task Output' )
-        items.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, False )
-
-        info_item = gtk.MenuItem( 'View Task State' )
-        items.append( info_item )
-        info_item.connect( 'activate', self.popup_requisites, task_id )
+        if task_is_family:
+            # At the moment, there are no relevant menu items.
+            return []
 
         items.append( gtk.SeparatorMenuItem() )
 
-        trigger_now_item = gtk.MenuItem( 'Trigger' )
+        view_menu = gtk.Menu()
+        view_item = gtk.ImageMenuItem( "View" )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        view_item.set_image(img)
+        view_item.set_submenu( view_menu )
+        items.append( view_item )
+ 
+        info_item = gtk.ImageMenuItem( 'stdout log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
+        view_menu.append( info_item )
+        info_item.connect( 'activate', self.view_task_info, task_id, 'stdout' )
+
+        inf_item = gtk.ImageMenuItem( 'stderr log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        inf_item.set_image(img)
+        view_menu.append( inf_item )
+        inf_item.connect( 'activate', self.view_task_info, task_id, 'stderr' )
+
+        js_item = gtk.ImageMenuItem( 'job script' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        js_item.set_image(img)
+        view_menu.append( js_item )
+        js_item.connect( 'activate', self.view_task_info, task_id, 'job script' )
+
+        info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
+        view_menu.append( info_item )
+        info_item.connect( 'activate', self.popup_requisites, task_id )
+
+        js0_item = gtk.ImageMenuItem( 'run "cylc show"' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        js0_item.set_image(img)
+        view_menu.append( js0_item )
+        js0_item.connect( 'activate', self.view_task_descr, task_id )
+
+        items.append( gtk.SeparatorMenuItem() )
+
+        trigger_now_item = gtk.ImageMenuItem( 'Trigger Now' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        trigger_now_item.set_image(img)
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Reset to "ready"' )
-        items.append( reset_ready_item )
-        reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
+        reset_menu = gtk.Menu()
+        reset_item = gtk.ImageMenuItem( "Reset State" )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_item.set_image(reset_img)
+        reset_item.set_submenu( reset_menu )
+        items.append( reset_item )
+        
+        reset_ready_item = gtk.ImageMenuItem('"ready"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_ready_item.set_image(reset_img)
+        reset_menu.append( reset_ready_item )
+        reset_ready_item.connect( 'button-press-event', self.reset_task_state, task_id, 'ready' )
 
-        reset_waiting_item = gtk.MenuItem( 'Reset to "waiting"' )
-        items.append( reset_waiting_item )
-        reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
+        reset_waiting_item = gtk.ImageMenuItem( '"waiting"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_waiting_item.set_image(reset_img)
+        reset_menu.append( reset_waiting_item )
+        reset_waiting_item.connect( 'button-press-event', self.reset_task_state, task_id, 'waiting' )
 
-        reset_succeeded_item = gtk.MenuItem( 'Reset to "succeeded"' )
-        items.append( reset_succeeded_item )
-        reset_succeeded_item.connect( 'activate', self.reset_task_state, task_id, 'succeeded' )
+        reset_succeeded_item = gtk.ImageMenuItem( '"succeeded"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_succeeded_item.set_image(reset_img)
+        reset_menu.append( reset_succeeded_item )
+        reset_succeeded_item.connect( 'button-press-event', self.reset_task_state, task_id, 'succeeded' )
 
-        reset_failed_item = gtk.MenuItem( 'Reset to "failed"' )
-        items.append( reset_failed_item )
-        reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
+        reset_failed_item = gtk.ImageMenuItem( '"failed"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_failed_item.set_image(reset_img)
+        reset_menu.append( reset_failed_item )
+        reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'failed' )
 
-        spawn_item = gtk.MenuItem( 'Force spawn' )
+        spawn_item = gtk.ImageMenuItem( 'Force spawn' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
+        spawn_item.set_image(img)
         items.append( spawn_item )
-        spawn_item.connect( 'activate', self.reset_task_state, task_id, 'spawn' )
+        spawn_item.connect( 'button-press-event', self.reset_task_state, task_id, 'spawn' )
 
         items.append( gtk.SeparatorMenuItem() )
 
-        stoptask_item = gtk.MenuItem( 'Hold' )
+        stoptask_item = gtk.ImageMenuItem( 'Hold' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU )
+        stoptask_item.set_image(img)
         items.append( stoptask_item )
         stoptask_item.connect( 'activate', self.hold_task, task_id, True )
 
-        unstoptask_item = gtk.MenuItem( 'Release' )
+        unstoptask_item = gtk.ImageMenuItem( 'Release' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        unstoptask_item.set_image(img)
         items.append( unstoptask_item )
         unstoptask_item.connect( 'activate', self.hold_task, task_id, False )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.MenuItem( 'Remove after spawning' )
+        kill_item = gtk.ImageMenuItem( 'Remove after spawning' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
+        kill_item.set_image(img)
         items.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
 
-        kill_nospawn_item = gtk.MenuItem( 'Remove without spawning' )
+        kill_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
+        kill_nospawn_item.set_image(img)
         items.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
 
-        purge_item = gtk.MenuItem( 'Remove Tree (Recursive Purge)' )
+        purge_item = gtk.ImageMenuItem( 'Remove Tree (Recursive Purge)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DELETE, gtk.ICON_SIZE_MENU )
+        purge_item.set_image(img)
         items.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        addprereq_item = gtk.MenuItem( 'Add A Prerequisite' )
+        addprereq_item = gtk.ImageMenuItem( 'Add A Prerequisite' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
+        addprereq_item.set_image(img)
         items.append( addprereq_item )
         addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
 
@@ -984,15 +1159,17 @@ The cylc forecast suite metascheduler.
                 limit = ent
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.set_runahead( limit )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
@@ -1065,15 +1242,17 @@ The cylc forecast suite metascheduler.
 
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.add_prerequisite( task_id, msg )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
@@ -1199,14 +1378,15 @@ shown here in the state they were in at the time of triggering.''' )
                 self.command_help( "control", "hold" )
             else:
                 self.command_help( "control", "release" )
-
             response = prompt.run()
 
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1216,10 +1396,10 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             result = proxy.release_task( task_id )
 
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def trigger_task_now( self, b, task_id ):
         msg = "trigger " + task_id + " now?"
@@ -1237,18 +1417,22 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.trigger_task( task_id )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
-    def reset_task_state( self, b, task_id, state ):
+    def reset_task_state( self, b, e, task_id, state ):
+        if hasattr(e, "button") and e.button != 1:
+            return False
         msg = "reset " + task_id + " to " + state +"?"
         prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
                                     gtk.MESSAGE_QUESTION,
@@ -1265,16 +1449,18 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.reset_task_state( task_id, state )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def kill_task( self, b, task_id ):
         msg = "remove " + task_id + " (after spawning)?"
@@ -1293,15 +1479,17 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.spawn_and_die( task_id )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
  
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
@@ -1319,43 +1507,49 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.die( task_id )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
@@ -1383,7 +1577,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox.pack_start (stopat_rb, True)
 
         st_box = gtk.HBox()
-        label = gtk.Label( "STOP (cycle or 'a:INT')" )
+        label = gtk.Label( "STOP (CYCLE or INT')" )
         st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(14)
@@ -1491,6 +1685,18 @@ shown here in the state they were in at the time of triggering.''' )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
+        label = gtk.Label( 'Run mode' )
+        box.pack_start(label,True)
+        mode_live_rb = gtk.RadioButton( None, "live" )
+        box.pack_start (mode_live_rb, True)
+        mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
+        box.pack_start (mode_sim_rb, True)
+        mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
+        box.pack_start (mode_dum_rb, True)
+        mode_live_rb.set_active(True)
+        vbox.pack_start( box )
+ 
+        box = gtk.HBox()
         coldstart_rb = gtk.RadioButton( None, "Cold Start" )
         box.pack_start (coldstart_rb, True)
         warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm Start" )
@@ -1507,8 +1713,6 @@ shown here in the state they were in at the time of triggering.''' )
         ic_box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(14)
-        if self.initial_cycle_time != None:
-            ctime_entry.set_text( str(self.initial_cycle_time))
         ic_box.pack_start (ctime_entry, True)
         vbox.pack_start( ic_box )
 
@@ -1517,8 +1721,6 @@ shown here in the state they were in at the time of triggering.''' )
         fc_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(14)
-        if self.final_cycle_time != None:
-            stoptime_entry.set_text( str(self.final_cycle_time))
         fc_box.pack_start (stoptime_entry, True)
         vbox.pack_start( fc_box )
 
@@ -1545,10 +1747,6 @@ shown here in the state they were in at the time of triggering.''' )
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box, no_reset_cb )
         rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
-
-        dmode_group = controlled_option_group( "Simulation Mode", option="--simulation-mode", reverse=self.sim_only )
-        dmode_group.add_entry('Fail A Task (NAME%YYYYMMDDHH)', '--fail=')
-        dmode_group.pack( vbox )
         
         hold_cb = gtk.CheckButton( "Hold on start-up" )
   
@@ -1564,10 +1762,19 @@ shown here in the state they were in at the time of triggering.''' )
 
         hold_cb.connect( "toggled", self.hold_cb_toggled, hold_box )
 
+        hbox = gtk.HBox()
         debug_group = controlled_option_group( "Debug", "--debug" )
-        debug_group.pack( vbox )
+        debug_group.pack( hbox )
 
-        optgroups = [ dmode_group, debug_group ]
+        refgen_group = controlled_option_group( "Ref-log", "--reference-log" )
+        refgen_group.pack( hbox )
+
+        reftest_group = controlled_option_group( "Ref-test", "--reference-test" )
+        reftest_group.pack( hbox )
+
+        vbox.pack_start(hbox)
+
+        optgroups = [ debug_group, refgen_group, reftest_group ]
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
@@ -1576,7 +1783,8 @@ shown here in the state they were in at the time of triggering.''' )
         start_button.connect("clicked", self.startsuite, window,
                 coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
                 ctime_entry, stoptime_entry, no_reset_cb,
-                statedump_entry, optgroups, hold_cb, holdtime_entry )
+                statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
+                mode_dum_rb, hold_cb, holdtime_entry )
 
         help_run_button = gtk.Button( "_Help Run" )
         help_run_button.connect("clicked", self.command_help, "control", "run" )
@@ -1743,19 +1951,47 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             stop = stoptag
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.insert( torg, stop )
-        if result.success:
-            info_dialog( result.reason, self.window ).inform()
-        else:
+        if not result.success:
             warning_dialog( result.reason, self.window ).warn()
+        #else:
+        #    info_dialog( result.reason, self.window ).inform()
+
+    def reload_suite( self, w ):
+        msg = """Reload the suite definition.
+This allows you change task runtime configuration and add
+or remove task definitions without restarting the suite."""
+        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
+                                    gtk.MESSAGE_QUESTION,
+                                    gtk.BUTTONS_OK_CANCEL, msg )
+
+        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
+        response = prompt.run()
+
+        while response == gtk.RESPONSE_HELP:
+            self.command_help( "control", "reload" )
+            response = prompt.run()
+
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+
+        command = "cylc reload -f --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def nudge_suite( self, w ):
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( 'remote' )
+            proxy = cylc_pyro_client.client( self.cfg.suite,
+                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
         except SuiteIdentificationError, x:
             warning_dialog( str(x), self.window ).warn()
             return False
@@ -1763,9 +1999,9 @@ shown here in the state they were in at the time of triggering.''' )
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
-    def popup_logview( self, task_id, logfiles, jsonly ):
-        # TO DO: jsonly is dirty hack to separate the task Job script from
-        # task log files; we should do this properly by storing them
+    def popup_logview( self, task_id, logfiles, choice='stdout' ):
+        # TO DO: choice is dirty hack to separate the task job script,
+        # stdout, and stderr file; we should do this properly by storing them
         # separately in the task proxy, or at least separating them in
         # the suite state summary.
         window = gtk.Window()
@@ -1776,25 +2012,30 @@ shown here in the state they were in at the time of triggering.''' )
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
         jsfound = False
+        err = []
+        out = []
         for f in logfiles:
-            if f.endswith('.err') or f.endswith('.out'):
-                logs.append(f)
+            if f.endswith('.err'):
+                err.append(f)
+            elif f.endswith('.out'):
+                out.append(f)
             else:
-                jsfound = True
                 js = f
 
+        # for re-tries this sorts in time order due to filename:
+        err.sort( reverse=True )
+        out.sort( reverse=True )
         window.set_size_request(800, 300)
-        if jsonly:
-            window.set_title( task_id + ": Task Job Submission Script" )
-            if jsfound:
-                lv = textload( task_id, js )
-            else:
-                # This should not happen anymore!
-                pass
+        if choice == 'job script':
+            window.set_title( task_id + ": Task Job Script" )
+            lv = textload( task_id, js )
 
         else:
-            # put '.out' before '.err'
-            logs.sort( reverse=True )
+            if choice == 'stdout':
+                logs = out + err
+            elif choice == 'stderr':
+                logs = err + out
+
             window.set_title( task_id + ": Task Logs" )
             lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv
@@ -1827,7 +2068,9 @@ shown here in the state they were in at the time of triggering.''' )
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'E_xit (Disconnect From Suite)' )
+        exit_item = gtk.ImageMenuItem( 'E_xit (Disconnect From Suite)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU )
+        exit_item.set_image(img)
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -1835,33 +2078,26 @@ shown here in the state they were in at the time of triggering.''' )
         view_menu_root = gtk.MenuItem( '_View' )
         view_menu_root.set_submenu( self.view_menu )
 
-        info_item = gtk.MenuItem( 'View Suite _Info' )
-        self.view_menu.append( info_item )
-        info_item.connect( 'activate', self.view_suite_info )
-
-        log_item = gtk.MenuItem( 'View _Suite Log' )
-        self.view_menu.append( log_item )
-        log_item.connect( 'activate', self.view_log )
-
-        nudge_item = gtk.MenuItem( "_Nudge Suite (update times)" )
-        self.view_menu.append( nudge_item )
-        nudge_item.connect( 'activate', self.nudge_suite  )
-
+        self.view1_align_item = gtk.CheckMenuItem( label="Toggle views _side-by-side" )
+        self._set_tooltip( self.view1_align_item, "Toggle horizontal layout of views." )
+        self.view1_align_item.connect( 'toggled', self._cb_change_view_align )
+        self.view_menu.append( self.view1_align_item )
+        
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        graph_view0_item = gtk.RadioMenuItem( label="1 - View _Graph" )
+        graph_view0_item = gtk.RadioMenuItem( label="1 - _Graph View" )
         self.view_menu.append( graph_view0_item )
         self._set_tooltip( graph_view0_item, self.VIEW_DESC["graph"] + " - primary panel" )
         graph_view0_item._viewname = "graph"
         graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
 
-        dot_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Dot" )
+        dot_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - _Dot View" )
         self.view_menu.append( dot_view0_item )
         self._set_tooltip( dot_view0_item, self.VIEW_DESC["dot"] + " - primary panel" )
         dot_view0_item._viewname = "dot"
         dot_view0_item.set_active( self.DEFAULT_VIEW == "dot" )
 
-        text_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - View _Text" )
+        text_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - _Text View" )
         self.view_menu.append( text_view0_item )
         self._set_tooltip( text_view0_item, self.VIEW_DESC["text"] + " - primary panel" )
         text_view0_item._viewname = "text"
@@ -1872,6 +2108,12 @@ shown here in the state they were in at the time of triggering.''' )
         text_view0_item.connect( 'toggled', self._cb_change_view0_menu )
         self.view_menu_views0 = [ graph_view0_item, dot_view0_item, text_view0_item ]
         
+        self.views_option_menuitems = [ gtk.MenuItem(  "1 - _Options" ) ]
+        self.views_option_menus = [gtk.Menu()]
+        self.views_option_menuitems[0].set_submenu( self.views_option_menus[0] )
+        self._set_tooltip( self.views_option_menuitems[0], "Options for primary panel" )
+        self.view_menu.append( self.views_option_menuitems[0] )
+        
         self.view_menu.append( gtk.SeparatorMenuItem() )
         
         no_view1_item = gtk.RadioMenuItem( label="2 - Off" )
@@ -1881,19 +2123,19 @@ shown here in the state they were in at the time of triggering.''' )
         no_view1_item._viewname = "None"
         no_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View Grap_h" )
+        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Grap_h View" )
         self.view_menu.append( graph_view1_item )
         self._set_tooltip( graph_view1_item, self.VIEW_DESC["graph"] + " - secondary panel" )
         graph_view1_item._viewname = "graph"
         graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View D_OT" )
+        dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Dot _View" )
         self.view_menu.append( dot_view1_item )
         self._set_tooltip( dot_view1_item, self.VIEW_DESC["dot"] + " - secondary panel" )
         dot_view1_item._viewname = "dot"
         dot_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - View Te_xt" )
+        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Te_xt View" )
         self.view_menu.append( text_view1_item )
         self._set_tooltip( text_view1_item, self.VIEW_DESC["text"] + " - secondary panel" )
         text_view1_item._viewname = "text"
@@ -1904,88 +2146,230 @@ shown here in the state they were in at the time of triggering.''' )
                                   dot_view1_item,
                                   text_view1_item ]
 
-        self.view_menu.append( gtk.SeparatorMenuItem() )
-        
-        view1_align_item = gtk.CheckMenuItem( label="Toggle views side-by-side" )
-        self._set_tooltip( view1_align_item,
-                           "Toggle horizontal layout of views." )
-        view1_align_item.connect( 'toggled', self._cb_change_view_align )
-        self.view_menu.append( view1_align_item )
+        self.views_option_menuitems.append( gtk.MenuItem(  "2 - O_ptions" ) )
+        self.views_option_menus.append( gtk.Menu() )
+        self._set_tooltip( self.views_option_menuitems[1], "Options for secondary panel" )
+        self.views_option_menuitems[1].set_submenu( self.views_option_menus[1] )
+        self.view_menu.append( self.views_option_menuitems[1] )
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( '_Control' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( '_Run Suite ... ' )
-        start_menu.append( start_item )
-        start_item.connect( 'activate', self.startsuite_popup )
+        self.run_menuitem = gtk.ImageMenuItem( '_Run Suite ... ' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        self.run_menuitem.set_image(img)
+        start_menu.append( self.run_menuitem )
+        self.run_menuitem.connect( 'activate', self.startsuite_popup )
 
-        stop_item = gtk.MenuItem( '_Stop Suite ... ' )
-        start_menu.append( stop_item )
-        stop_item.connect( 'activate', self.stopsuite_popup )
+        self.pause_menuitem = gtk.ImageMenuItem( '_Hold Suite (pause)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU )
+        self.pause_menuitem.set_image(img)
+        start_menu.append( self.pause_menuitem )
+        self.pause_menuitem.connect( 'activate', self.pause_suite )
 
-        pause_item = gtk.MenuItem( '_Hold Suite (pause)' )
-        start_menu.append( pause_item )
-        pause_item.connect( 'activate', self.pause_suite )
+        self.unpause_menuitem = gtk.ImageMenuItem( 'R_elease Suite (unpause)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
+        self.unpause_menuitem.set_image(img)
+        start_menu.append( self.unpause_menuitem )
+        self.unpause_menuitem.connect( 'activate', self.resume_suite )
 
-        resume_item = gtk.MenuItem( '_Release Suite (unpause)' )
-        start_menu.append( resume_item )
-        resume_item.connect( 'activate', self.resume_suite )
+        self.stop_menuitem = gtk.ImageMenuItem( '_Stop Suite ... ' )
+        img = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP, gtk.ICON_SIZE_MENU )
+        self.stop_menuitem.set_image(img)
+        start_menu.append( self.stop_menuitem )
+        self.stop_menuitem.connect( 'activate', self.stopsuite_popup )
 
-        insert_item = gtk.MenuItem( '_Insert Task(s) ...' )
+        start_menu.append( gtk.SeparatorMenuItem() )
+
+        nudge_item = gtk.ImageMenuItem( '_Nudge (updates times)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        nudge_item.set_image(img)
+        start_menu.append( nudge_item )
+        nudge_item.connect( 'activate', self.nudge_suite  )
+
+        reload_item = gtk.ImageMenuItem( 'Re_load Suite Definition ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CDROM, gtk.ICON_SIZE_MENU )
+        reload_item.set_image(img)
+        start_menu.append( reload_item )
+        reload_item.connect( 'activate', self.reload_suite  )
+
+        insert_item = gtk.ImageMenuItem( '_Insert Task(s) ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_PASTE, gtk.ICON_SIZE_MENU )
+        insert_item.set_image(img)
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
 
-        block_item = gtk.MenuItem( '_Block Access' )
+        start_menu.append( gtk.SeparatorMenuItem() )
+
+        block_item = gtk.ImageMenuItem( '_Block Access' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
+        block_item.set_image(img)
         start_menu.append( block_item )
         block_item.connect( 'activate', self.block_suite )
 
-        unblock_item = gtk.MenuItem( 'U_nblock Access' )
+        unblock_item = gtk.ImageMenuItem( 'Unbl_ock Access' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
+        unblock_item.set_image(img)
         start_menu.append( unblock_item )
         unblock_item.connect( 'activate', self.unblock_suite )
 
-        runahead_item = gtk.MenuItem( '_Change Runahead Limit ...' )
+        start_menu.append( gtk.SeparatorMenuItem() )
+
+        runahead_item = gtk.ImageMenuItem( '_Change Runahead Limit ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        runahead_item.set_image(img)
         start_menu.append( runahead_item )
         runahead_item.connect( 'activate', self.change_runahead_popup )
+
+        tools_menu = gtk.Menu()
+        tools_menu_root = gtk.MenuItem( '_Tools' )
+        tools_menu_root.set_submenu( tools_menu )
+
+        val_item = gtk.ImageMenuItem( 'Suite _Validate' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU )
+        val_item.set_image(img)
+        tools_menu.append( val_item )
+        val_item.connect( 'activate', self.run_suite_validate )
+
+        info_item = gtk.ImageMenuItem( 'Suite _Info' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+        info_item.set_image(img)
+        tools_menu.append( info_item )
+        info_item.connect( 'activate', self.run_suite_info )
+
+        graph_item = gtk.ImageMenuItem( 'Suite _Graph' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
+        graph_item.set_image(img)
+        tools_menu.append( graph_item )
+        graphmenu = gtk.Menu()
+        graph_item.set_submenu(graphmenu)
+
+        gtree_item = gtk.MenuItem( '_Dependencies' )
+        graphmenu.append( gtree_item )
+        gtree_item.connect( 'activate', self.run_suite_graph, False )
+
+        gns_item = gtk.MenuItem( '_Namespaces' )
+        graphmenu.append( gns_item )
+        gns_item.connect( 'activate', self.run_suite_graph, True )
+
+        list_item = gtk.ImageMenuItem( 'Suite _List' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU )
+        list_item.set_image(img)
+        tools_menu.append( list_item )
+        list_menu = gtk.Menu()
+        list_item.set_submenu( list_menu )
+ 
+        flat_item = gtk.MenuItem( '_Tasks' )
+        list_menu.append( flat_item )
+        flat_item.connect( 'activate', self.run_suite_list )
+
+        tree_item = gtk.MenuItem( '_Namespaces' )
+        list_menu.append( tree_item )
+        tree_item.connect( 'activate', self.run_suite_list, '-t' )
+
+        log_item = gtk.ImageMenuItem( 'Suite _Log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        log_item.set_image(img)
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log )
+
+        view_item = gtk.ImageMenuItem( 'Suite _View' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        view_item.set_image(img)
+        tools_menu.append( view_item )
+        subviewmenu = gtk.Menu()
+        view_item.set_submenu(subviewmenu)
+
+        rw_item = gtk.MenuItem( '_Raw' )
+        subviewmenu.append( rw_item )
+        rw_item.connect( 'activate', self.run_suite_view, 'raw' )
+ 
+        viewi_item = gtk.MenuItem( '_Inlined' )
+        subviewmenu.append( viewi_item )
+        viewi_item.connect( 'activate', self.run_suite_view, 'inlined' )
+ 
+        viewp_item = gtk.MenuItem( '_Processed' )
+        subviewmenu.append( viewp_item )
+        viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
+
+        edit_item = gtk.ImageMenuItem( 'Suite _Edit' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        edit_item.set_image(img)
+        tools_menu.append( edit_item )
+        edit_menu = gtk.Menu()
+        edit_item.set_submenu(edit_menu)
+
+        raw_item = gtk.MenuItem( '_Raw' )
+        edit_menu.append( raw_item )
+        raw_item.connect( 'activate', self.run_suite_edit, False )
+
+        inl_item = gtk.MenuItem( '_Inlined' )
+        edit_menu.append( inl_item )
+        inl_item.connect( 'activate', self.run_suite_edit, True )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        self.userguide_item = gtk.MenuItem( '_GUI Quick Guide' )
+        self.userguide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
+        self.userguide_item.set_image(img)
+        self.userguide_item.connect( 'activate', helpwindow.userguide )
         help_menu.append( self.userguide_item )
 
-        chelp_menu = gtk.MenuItem( 'Command Help' )
+        help_menu.append( gtk.SeparatorMenuItem() )
+
+        chelp_menu = gtk.ImageMenuItem( 'Command Help' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
+        chelp_menu.set_image(img)
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( '_PDF User Guide' )
+        help_menu.append( gtk.SeparatorMenuItem() )
+
+        cug_pdf_item = gtk.ImageMenuItem( '_PDF User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        cug_pdf_item.set_image(img)
         help_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
   
-        cug_html_item = gtk.MenuItem( '_Multi Page HTML User Guide' )
+        cug_html_item = gtk.ImageMenuItem( '_Multi Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
+        cug_html_item.set_image(img)
         help_menu.append( cug_html_item )
         cug_html_item.connect( 'activate', self.browse, '--html' )
 
-        cug_shtml_item = gtk.MenuItem( '_Single Page HTML User Guide' )
+        cug_shtml_item = gtk.ImageMenuItem( '_Single Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        cug_shtml_item.set_image(img)
         help_menu.append( cug_shtml_item )
         cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
 
-        cug_www_item = gtk.MenuItem( '_Internet Home Page' )
+        cug_www_item = gtk.ImageMenuItem( '_Internet Home Page' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_HOME, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
         help_menu.append( cug_www_item )
         cug_www_item.connect( 'activate', self.browse, '--www' )
  
-        cug_clog_item = gtk.MenuItem( 'Change _Log' )
+        help_menu.append( gtk.SeparatorMenuItem() )
+ 
+        cug_clog_item = gtk.ImageMenuItem( 'Change _Log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        cug_clog_item.set_image(img)
         help_menu.append( cug_clog_item )
         cug_clog_item.connect( 'activate', self.browse, '-g --log' )
  
-        about_item = gtk.MenuItem( '_About' )
+        about_item = gtk.ImageMenuItem( '_About' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU )
+        about_item.set_image(img)
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
 
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
+        self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def construct_command_menu( self, menu ):
@@ -2025,7 +2409,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def create_tool_bar( self ):
         """Create the tool bar for the control GUI."""
-        self.tool_bar = gtk.Toolbar()
+        self.tool_bars = [ gtk.Toolbar(), gtk.Toolbar() ]
         views = self.VIEWS_ORDERED
         self.tool_bar_view0 = gtk.ComboBox()
         self.tool_bar_view1 = gtk.ComboBox()
@@ -2045,8 +2429,8 @@ shown here in the state they were in at the time of triggering.''' )
         self.tool_bar_view0.set_active(0)
         self.tool_bar_view0.connect( "changed", self._cb_change_view0_tool )
         self._set_tooltip( self.tool_bar_view0, "Change primary view" )
-        view0_toolitem = gtk.ToolItem()
-        view0_toolitem.add( self.tool_bar_view0 )
+        self.view_toolitems = [ gtk.ToolItem() ]
+        self.view_toolitems[0].add( self.tool_bar_view0 )
         # Secondary view chooser
         self.tool_bar_view1.set_model( pixlist1 )
         cell_pix1 = gtk.CellRendererPixbuf()
@@ -2060,8 +2444,8 @@ shown here in the state they were in at the time of triggering.''' )
         self.tool_bar_view1.set_active(0)
         self.tool_bar_view1.connect( "changed", self._cb_change_view1_tool )
         self._set_tooltip( self.tool_bar_view1, "Change secondary view" )
-        view1_toolitem = gtk.ToolItem()
-        view1_toolitem.add( self.tool_bar_view1 )
+        self.view_toolitems.append( gtk.ToolItem() )
+        self.view_toolitems[1].add( self.tool_bar_view1 )
         # Horizontal layout toggler
         self.layout_toolbutton = gtk.ToggleToolButton()
         image1 = gtk.image_new_from_stock( gtk.STOCK_GOTO_FIRST, gtk.ICON_SIZE_MENU )
@@ -2077,46 +2461,70 @@ shown here in the state they were in at the time of triggering.''' )
         toggle_layout_toolitem = gtk.ToolItem()
         toggle_layout_toolitem.add( self.layout_toolbutton )
         # Insert the view choosers
-        self.tool_bar.insert( toggle_layout_toolitem, 0 )
-        self.tool_bar.insert( view1_toolitem, 0 )
-        self.tool_bar.insert( gtk.SeparatorToolItem(), 0 )
-        self.tool_bar.insert( view0_toolitem, 0 )
-        self.tool_bar.insert( gtk.SeparatorToolItem(), 0 )
-
+        view0_label_item = gtk.ToolItem()
+        view0_label_item.add( gtk.Label("View 1: ") )
+        self._set_tooltip( view0_label_item, "Configure primary view" )
+        view1_label_item = gtk.ToolItem()
+        view1_label_item.add( gtk.Label("View 2: ") )
+        self._set_tooltip( view1_label_item, "Configure secondary view" )
+        self.tool_bars[1].insert( self.view_toolitems[1], 0 )
+        self.tool_bars[1].insert( view1_label_item, 0 )
+        self.tool_bars[0].insert( self.view_toolitems[0], 0 )
+        self.tool_bars[0].insert( view0_label_item, 0 )
+        self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
+        self.tool_bars[0].insert( toggle_layout_toolitem, 0 )
+        self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
         stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( self.stop_toolbutton, "Stop Suite" )
+        tooltip.set_tip( self.stop_toolbutton, 
+"""Stop Suite after all running tasks finish.
+For more Stop options use the Control menu.""" )
         self.stop_toolbutton.connect( "clicked", self.stopsuite_default )
-        self.tool_bar.insert(self.stop_toolbutton, 0)
+        self.tool_bars[0].insert(self.stop_toolbutton, 0)
 
         run_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_PLAY,
                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.run_pause_toolbutton = gtk.ToolButton( icon_widget=run_icon )
-        click_func = self.startsuite_popup
+        self.run_pause_toolbutton.click_func = self.startsuite_popup
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip( self.run_pause_toolbutton, "Run Suite..." )
         self.run_pause_toolbutton.connect( "clicked", lambda w: w.click_func( w ) )
-        self.tool_bar.insert(self.run_pause_toolbutton, 0)
+        self.tool_bars[0].insert(self.run_pause_toolbutton, 0)
+        self.tool_bar_box = gtk.HPaned()
+        self.tool_bar_box.pack1( self.tool_bars[0], resize=True, shrink=True )
+        self.tool_bar_box.pack2( self.tool_bars[1], resize=True, shrink=True )
 
-    def _alter_status_tool_bar( self, new_status ):
-        # Handle changes in status for the status-sensitive tool bar items.
+    def _alter_status_toolbar_menu( self, new_status ):
+        # Handle changes in status for some toolbar/menuitems.
+        if new_status == self._prev_status:
+            return False
+        self._prev_status = new_status
         if "connected" in new_status:
             self.stop_toolbutton.set_sensitive( False )
             return False
-        self.stop_toolbutton.set_sensitive( "STOPPED" not in new_status )
-        if "running" in new_status or re.search("STOP\s", new_status):
+        run_ok = bool( "stopped" in new_status )
+        pause_ok = bool( "running" in new_status )
+        unpause_ok = bool( "held" in new_status or "stopping" in new_status )
+        stop_ok = bool( "stopped" not in new_status )
+        self.run_menuitem.set_sensitive( run_ok )
+        self.pause_menuitem.set_sensitive( pause_ok )
+        self.unpause_menuitem.set_sensitive( unpause_ok )
+        self.stop_menuitem.set_sensitive( stop_ok )
+        self.stop_toolbutton.set_sensitive( stop_ok and 
+                                            "stopping" not in new_status )
+        if pause_ok:
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
             click_func = self.pause_suite
-        elif "STOPPED" in new_status:
+        elif run_ok:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Run Suite ..."
             click_func = self.startsuite_popup
-        elif "HELD" in new_status or "STOPPING" in new_status:
+        elif unpause_ok:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Release Suite (unpause)"
             click_func = self.resume_suite
@@ -2128,13 +2536,16 @@ shown here in the state they were in at the time of triggering.''' )
                                                 gtk.ICON_SIZE_SMALL_TOOLBAR )
         icon_widget.show()
         self.run_pause_toolbutton.set_icon_widget( icon_widget )
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip( self.run_pause_toolbutton, tip_text )
+        tip_tuple = gtk.tooltips_data_get( self.run_pause_toolbutton )
+        if tip_tuple is None:
+            tips = gtk.Tooltips()
+            tips.enable()
+            tips.set_tip( self.run_pause_toolbutton, tip_text )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.suite, self._alter_status_tool_bar )
+        self.info_bar = InfoBar( self.cfg.host, self.usercfg,
+                                 self._alter_status_toolbar_menu )
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer
@@ -2155,17 +2566,108 @@ shown here in the state they were in at the time of triggering.''' )
     #    return True
 
     def get_pyro( self, object ):
-        return cylc_pyro_client.client( self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host, self.cfg.port ).get_proxy( object )
- 
-    def view_log( self, w ):
-        foo = cylc_logviewer( 'log', self.logging_dir, self.task_list)
-        self.quitters.append(foo)
+        return cylc_pyro_client.client( self.cfg.suite,
+                self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+                self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
 
-    def view_suite_info( self, w ):
-        command = "cylc show --host=" + self.cfg.host + " " + self.cfg.suite 
+    def run_suite_validate( self, w ):
+        command = ( "cylc validate -v " + self.get_remote_run_opts() + 
+                " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def run_suite_edit( self, w, inlined=False):
+        extra = ''
+        if inlined:
+            extra = '-i '
+        command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
+                    " " + extra + ' ' + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def run_suite_graph( self, w, show_ns=False ):
+        if show_ns:
+            command = ( "cylc graph --notify-completion --namespaces " +
+                        self.get_remote_run_opts() +
+                        " " + self.cfg.suite )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
+        else:
+            times = []
+            for option in ["'initial cycle time'", "'final cycle time'"]:
+                command = ( "cylc get-config" + self.get_remote_run_opts() +
+                            " " + self.cfg.suite + 
+                            " visualization " + option )
+                res, pieces = run_get_stdout( command )
+                if not res or not pieces:
+                    return False
+                times.append(pieces[0].strip())
+            graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
+                               self.get_remote_run_opts(), self.gcapture_windows,
+                               self.cfg.cylc_tmpdir, parent_window=self.window )
+
+    def run_suite_info( self, w ):
+        command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + 
+                    " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
+
+    def run_suite_list( self, w, opt='' ):
+        command = ( "cylc list " + self.get_remote_run_opts() + " " + opt +
+                    " --notify-completion " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 600 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def run_suite_log( self, w ):
+        com = False
+        if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
+            com = True
+            warning_dialog( \
+"""The full-function GUI log viewer is only available
+for local suites; I will call "cylc cat-log" instead.""" ).warn()
+            command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() +
+                        " " + self.cfg.suite )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            self.gcapture_windows.append(foo)
+            foo.run()
+            return
+
+        # just for local suites (so --host and --owner are not needed here)
+        command = "cylc get-config --mark-output " + self.cfg.suite + " cylc logging directory"
+        res, lst = run_get_stdout( command, filter=True )
+        logging_dir = lst[0]
+        command = "cylc get-config --mark-output --tasks " + self.cfg.suite
+        res, tasks = run_get_stdout( command, filter=True )
+        if res:
+            task_list = tasks
+        else:
+            task_list = []
+        foo = cylc_logviewer( 'log', logging_dir, task_list)
+        self.quitters.append(foo)
+
+    def run_suite_view( self, w, method ):
+        extra = ''
+        if method == 'inlined':
+            extra = ' -i'
+        elif method == 'processed':
+            extra = ' -j'
+
+        command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + 
+                    " " + extra + " " + self.cfg.suite )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+        return False
+
+    def get_remote_run_opts( self ):
+        return " --host=" + self.cfg.host + " --owner=" + self.cfg.owner
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option

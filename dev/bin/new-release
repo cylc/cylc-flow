@@ -3,62 +3,76 @@
 set -e; trap "echo ERROR" ERR
 
 usage() {
-    echo "USAGE: $0 [--tag] x.y.z"
-    echo "Make a release tarball from the cylc git repo in \$CYLC_DIR"
-    echo "  \$CYLC_DIR and \$TMPDIR must be set."
-    echo "If --tag is specified the repository will be tagged with"
-    echo "the new version number. The tarball ends up in \$HOME."
+    echo "USAGE: $0 [OPTIONS] x.y.z"
+    echo "Make a release tarball from the cylc git repository."
+    echo "The release tarball will be copied to \$HOME."
+    echo ""
+    echo "OPTIONS:"
+    echo "   -t  .... when done TAG the repository with x.y.z"
+    echo "   -q  .... QUICK: omit all tests (DO NOT USE PRE-RELEASE)"
+    echo "   -h  .... HELP: print this usage message."
+    echo ""
 }
+
 TAG=false
-if [[ $# == 2 ]]; then
-    if [[ $1 == '--tag' ]]; then
+QUICK=false
+while getopts qth OPT; do
+    case "$OPT" in
+        h)
+        usage
+        exit
+        ;;
+        q)
+        QUICK=true
+        echo "WARNING: OMITTING ALL TESTS"
+        ;;
+        t)
         TAG=true
-    else
+        ;;
+        \?)
         usage
         exit 1
-    fi
-    VSN=$2
-elif [[ $# == 1 ]]; then
-    VSN=$1
-else
-    echo "ERROR: too many args"
+    esac
+done
+
+shift $(( OPTIND-1 ))
+
+if [[ $# != 1 ]]; then
+    echo $@
     usage
     exit 1
 fi
+
+VSN=$1
+
+echo
+echo TAG: $TAG
+echo QUICK: $QUICK
+echo VERSION: $VSN
+echo
 
 # determine CYLC_DIR
 MYDIR=$(dirname $0)
 CYLC_DIR=$( readlink -f $MYDIR/../.. )
-echo $CYLC_DIR
-
-if [[ -z $CYLC_DIR ]]; then
-    echo "ERROR: \$CYLC_DIR required"
-    usage
-    exit 1
-fi
-
 ORIG_CYLC_DIR=$CYLC_DIR
-
-if [[ -z $TMPDIR ]]; then
-    echo "ERROR: \$TMPDIR required"
-    usage
-    exit 1
-fi
 
 REPO="cylc-${VSN}"
 TARBALL="cylc-${VSN}.tgz"
-TMP=$TMPDIR/$$
-mkdir -p $TMP
+
+TMP=$(mktemp -d)
 cd $TMP
+
 git clone $CYLC_DIR
 mv $(basename $CYLC_DIR) $REPO
 cd $REPO
 
-# CHECK EXAMPLE SUITES VALIDATE
-cylc admin check-examples
-# RUN TESTS
-cylc admin test-db
-cylc admin test-suite
+if !$QUICK; then
+    # CHECK EXAMPLE SUITES VALIDATE
+    cylc admin check-examples
+    # RUN TESTS
+    cylc admin test-db
+    cylc admin test-battery
+fi
 
 # doc/process needs access to this cylc
 export PATH=bin:$PATH

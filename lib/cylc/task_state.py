@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ dump file.
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'retry_delayed', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued', 'neutral' ]
+    allowed_status = [ 'waiting', 'retry_delayed', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued' ]
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 

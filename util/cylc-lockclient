@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -114,6 +114,10 @@ See also:
             help="Print lockserver PID, log, and state filenames.",
             action="store_true", dest="get_filenames" )
 
+    parser.add_option( "-t", "--timeout", metavar='SECONDS',
+            help="Set a network connection timeout for Pyro.",
+            action="store",default=None, dest="pyro_timeout" )
+
     #parser.add_option( "--debug",
     #        help="Print full Python exception tracebacks",
     #        action="store_true", default=False, dest="debug" )
@@ -164,7 +168,7 @@ See also:
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
-            (task_locks, suite_ex, suite_nonex ) = lockserver( hostname ).dump()
+            (task_locks, suite_ex, suite_nonex ) = lockserver( hostname, timeout=options.pyro_timeout ).dump()
 
             print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
             for suitedir in suite_ex:
@@ -182,10 +186,10 @@ See also:
                 print " - ", lock
 
         elif options.clear_all:
-            lockserver( hostname ).clear()
+            lockserver( hostname, timeout=options.pyro_timeout ).clear()
 
         elif options.get_filenames:
-            pid, log, state = lockserver( hostname ).get_filenames()
+            pid, log, state = lockserver( hostname, timeout=options.pyro_timeout ).get_filenames()
 
             print "lockserver files:"
             print "  PID ......", pid

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,24 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from cylc.remote import remrun
-remrun().execute()
+if remrun().execute():
+    sys.exit(0)
 
-import os, re, sys
-from shutil import copytree
-from cylc.CylcOptionParsers import cop
+import os, re
+import shutil
+from cylc.CylcOptionParsers import cop, db_optparse
 from cylc.mkdir_p import mkdir_p
 from cylc.registration import localdb, \
         RegistrationError, SuiteTakenError, DatabaseLockedError
 from cylc.regpath import RegPath, IllegalRegPathError 
+
+def unlock( transfer=False ):
+    if transfer:
+        targetdb.unlock()
+    else:
+        sourcedb.unlock()
 
 parser = cop( usage = """cylc [db] copy|cp [OPTIONS] REG REG2 TOPDIR
 
@@ -45,10 +53,10 @@ foo
    |-baz  "Test Suite One"  | /home/bob/one
    `-qux  "Test Suite Two"  | /home/bob/two
 
-These suites are stored in a flat directory structure under /home/bob, but
-they are organised in the suite database as a group 'foo' that contains
-the suite 'foo.bag' and a group 'foo.bar', which in turn contains the
-suites 'foo.bar.baz' and 'foo.bar.qux'.
+These suites are stored in a flat directory structure under /home/bob,
+but they are organised in the suite database as a group 'foo' that
+contains the suite 'foo.bag' and a group 'foo.bar', which in turn
+contains the suites 'foo.bar.baz' and 'foo.bar.qux'.
 
 When you copy suites with this command, the target registration names
 are determined by TARGET and the name structure underneath SOURCE, and
@@ -66,42 +74,51 @@ EXAMPLES (using the three suites above):
 
 % cylc db copy foo.bar.baz red /home/bob       # suite to suite
   Copying suite definition for red
-% cylc db print '^red'
+% cylc db print "^red"
   red | "Test Suite One" | /home/bob/red
 
 % cylc copy foo.bar.baz blue.green /home/bob   # suite to group
   Copying suite definition for blue.green
-% cylc db pr '^blue'
+% cylc db pr "^blue"
   blue.green | "Test Suite One" | /home/bob/blue/green
 
 % cylc copy foo.bar orange /home/bob           # group to group
   Copying suite definition for orange.qux
   Copying suite definition for orange.baz
-% cylc db pr '^orange'
+% cylc db pr "^orange"
   orange.qux | "Test Suite Two" | /home/bob/orange/qux
   orange.baz | "Test Suite One" | /home/bob/orange/baz""",
-  argdoc=[('REG', 'Source suite name'),
-          ('REG2', 'Target suite name'), 
-          ('TOPDIR', 'Top level target directory.')] )
-
-parser.add_option( "--db-to",
-        help="Target suite database, if not the default.",
-        metavar="FILE", action="store", default=None, dest="dbto" )
+  argdoc=[("REG", "Source suite name"),
+          ("REG2", "Target suite name"), 
+          ("TOPDIR", "Top level target directory.")] )
 
 parser.add_option( "--db-from",
-        help="Source suite database, if not the default.",
-        metavar="FILE", action="store", default=None, dest="dbfrom" )
-   
+        help="Source suite database, specified as for --db. "
+        "Use --db-to, or --db, or your default DB as the target.",
+        metavar="DB", action="store", default=None, dest="dbfrom" )
+
+parser.add_option( "--db-to",
+        help="Target suite database, specified as for --db. "
+        "Use --db-from, or --db', or your default DB as the source.",
+        metavar="DB", action="store", default=None, dest="dbto" )
+
 ( options, args ) = parser.parse_args()
 
-dbto = options.db
-dbfrom = options.db
-if options.dbto:
-    options.dbto = os.path.abspath( options.dbto )
-    dbto = options.dbto
-if options.dbfrom:
-    options.dbfrom = os.path.abspath( options.dbfrom )
-    dbfrom = options.dbfrom
+dbfrom = db_optparse( options.dbfrom ).get_db_location()
+dbto = db_optparse( options.dbto ).get_db_location()
+db = db_optparse( options.db ).get_db_location()
+
+if dbfrom:
+    if not dbto:
+        dbto = db
+else:
+    dbfrom = db
+
+if dbto:
+    if not dbfrom:
+        dbfrom = db
+else:
+    dbto = db
 
 if dbfrom != dbto:
     transfer = True
@@ -118,14 +135,19 @@ except IllegalRegPathError, x:
 arg_dir = args[2]
 
 sourcedb = localdb( file=dbfrom, verbose=options.verbose )
-targetdb = localdb( file=dbto, verbose=options.verbose )
+if transfer:
+    targetdb = localdb( file=dbto, verbose=options.verbose )
+else:
+    targetdb = sourcedb
 
 try:
-    sourcedb.lock()
-    sourcedb.load_from_file()
     if transfer:
+        sourcedb.load_from_file()
         targetdb.lock()
         targetdb.load_from_file()
+    else:
+        sourcedb.lock()
+        sourcedb.load_from_file()
 
     flist = sourcedb.get_list( '^' + arg_from + r'\b' )
     if len(flist) == 0:
@@ -156,22 +178,26 @@ try:
 
         print 'COPY', fdir, '\n  TO', tdir 
         try:
-            copytree( fdir, tdir )
+            shutil.copytree( fdir, tdir )
         except OSError, x:
             print >> sys.stderr,x
             continue
-
+        except shutil.Error, x:
+            # if one or more files could not be read
+            print 'WARNINGS:'
+            for e in x.args[0]:
+                src, trg, err = e
+                print >> sys.stderr, "  ", src, '-->', trg
+                print >> sys.stderr, "     ", err
         try:
             targetdb.register( treg, tdir )
         except SuiteTakenError, x:
             print >> sys.stderr, 'ERROR, ' + str(x)
             continue
 
+    #targetdb.dump()
     targetdb.dump_to_file()
-    targetdb.unlock()
-    if transfer:
-        # (source and transfer dbs are different)
-        sourcedb.unlock()
+    unlock(transfer)
 
 except DatabaseLockedError, x:
     if options.debug:
@@ -179,17 +205,13 @@ except DatabaseLockedError, x:
     raise SystemExit(x)
 except RegistrationError, x:
     print >> sys.stderr, x
-    targetdb.unlock()
-    if transfer:
-        sourcedb.unlock()
+    unlock()
     if options.debug:
         raise
     sys.exit(1)
 except Exception, x:
     print >> sys.stderr, 'ERROR:', x
-    targetdb.unlock()
-    if transfer:
-        sourcedb.unlock()
+    unlock()
     if options.debug:
         raise
     sys.exit(1)

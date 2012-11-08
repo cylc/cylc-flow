@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -17,15 +17,21 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.config import config
+from cylc.task_state import task_state
+from DotMaker import DotMaker
+import cylc.dump
 import inspect
 import sys, re, string
 import gobject
 import time
 import threading
 from cylc import cylc_pyro_client
+from cylc.state_summary import get_id_summary
+from cylc.strftime import strftime
 import gtk
 import pygtk
 from string import zfill
+from copy import copy
 ####pygtk.require('2.0')
 
 try:
@@ -60,28 +66,9 @@ def compare_dict_of_dict( one, two ):
     return True
 
 def markup( col, string ):
-    #return string
-    return '<span foreground="' + col + '">' + string + '</span>'
+    return string
+    #return '<span foreground="' + col + '">' + string + '</span>'
 
-def get_col( state ):
-    if state == 'waiting':
-        return '#38a'
-    if state == 'retry_delayed':
-        return '#faa'
-    elif state == 'submitted':
-        return '#f83'
-    elif state == 'running':
-        return '#0a0'
-    elif state == 'failed':
-        return '#f00'
-    elif state == 'held':
-        return '#bb0'
-    elif state == 'runahead':
-        return '#216'
-    elif state == 'queued':
-        return '#9f219a'
-    else:
-        return '#000'
 
 def get_col_priority( priority ):
     if priority == 'NORMAL':
@@ -98,7 +85,7 @@ def get_col_priority( priority ):
 
 class tupdater(threading.Thread):
 
-    def __init__(self, cfg, ttreeview, ttree_paths, info_bar ):
+    def __init__(self, cfg, ttreeview, ttree_paths, info_bar, usercfg ):
 
         super(tupdater, self).__init__()
 
@@ -106,24 +93,33 @@ class tupdater(threading.Thread):
         self.autoexpand = True
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
 
         self.state_summary = {}
         self.global_summary = {}
         self.fam_state_summary = {}
+        self.stop_summary = None
+        self.families = []
         self.god = None
-        self.mode = "mode:\nwaiting..."
-        self.dt = "state last updated at:\nwaiting..."
-        self.block = "access:\nwaiting ..."
+        self.mode = "waiting..."
+        self.dt = "waiting..."
+        self.block = "waiting ..."
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
-        self.ttree_paths = {}  # Dict of paths vs all descendant node states
+        self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
         self.should_group_families = False
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
-        self.info_bar = info_bar
+
+        theme = usercfg['use theme']
+        dotm = DotMaker( self.usercfg['themes'][theme])
+        self.dots = {}
+        for state in task_state.allowed_status:
+            self.dots[ state ] = dotm.get_icon( state )
+        self.dots['empty'] = dotm.get_icon()
 
         self.reconnect()
 
@@ -134,16 +130,25 @@ class tupdater(threading.Thread):
                     self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
+                    self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.remote = client.get_proxy( 'remote' )
         except Exception, x:
-            #print 'FAILED TO GET A CLIENT PROXY'
+            if self.stop_summary is None:
+                self.stop_summary = cylc.dump.get_stop_state_summary(
+                                                            self.cfg.suite,
+                                                            self.cfg.owner,
+                                                            self.cfg.host)
+                if self.stop_summary is not None and any(self.stop_summary):
+                    self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
             #print 'GOT A CLIENT PROXY'
-            self.status = "status:\nconnected"
+            self.stop_summary = None
+            self.status = "connected"
             self.info_bar.set_status( self.status )
+            self.families = self.remote.get_families()
             self.family_hierarchy = self.remote.get_family_hierarchy()
             self.allowed_families = self.remote.get_vis_families()
             return True
@@ -157,9 +162,13 @@ class tupdater(threading.Thread):
         # on a clock trigger - because we only update the tree after
         # changes in the state summary)
         self.state_summary = {}
+        self.fam_state_summary = {}
 
-        self.status = "status:\nSTOPPED"
+        self.status = "stopped"
+        self.info_bar.set_state( [] )
         self.info_bar.set_status( self.status )
+        if self.stop_summary is not None and any(self.stop_summary):
+            self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -175,35 +184,31 @@ class tupdater(threading.Thread):
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'status:\nSTOPPING'
+            self.status = 'stopping'
 
         elif glbl['paused']:
-            self.status = 'status:\nHELD'
+            self.status = 'held'
 
         elif glbl['will_pause_at']:
-            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'status:\nrunning'
+            self.status = 'running'
 
-        if glbl[ 'simulation_mode' ]:
-            #rate = glbl[ 'simulation_clock_rate' ]
-            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
-            #self.mode = 'SIMULATION'
-            self.mode = 'mode:\nsimulation'
-        else:
-            self.mode = 'mode:\nlive'
+        self.info_bar.set_status( self.status )
+
+        self.mode = glbl[ 'run_mode' ] 
 
         if glbl[ 'blocked' ]:
-            self.block = 'access:\nblocked'
+            self.block = 'blocked'
         else:
-            self.block = 'access:\nunblocked'
+            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
+        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -265,15 +270,15 @@ class tupdater(threading.Thread):
                     dest[ ctime ] = {}
                 state = summary[ id ].get( 'state' )
                 message = summary[ id ].get( 'latest_message', )
-                tsub = summary[ id ].get( 'submitted_time' )
-                tstt = summary[ id ].get( 'started_time' )
-                meant = summary[ id ].get( 'mean total elapsed time' )
-                tetc = summary[ id ].get( 'Tetc' )
+                tsub = _time_trim( summary[ id ].get( 'submitted_time' ) )
+                tstt = _time_trim( summary[ id ].get( 'started_time' ) )
+                meant = _time_trim( summary[ id ].get( 'mean total elapsed time' ) )
+                tetc = _time_trim( summary[ id ].get( 'Tetc' ) )
                 priority = summary[ id ].get( 'latest_message_priority' )
                 if message is not None:
                     message = markup( get_col_priority( priority ), message )
-                state = markup( get_col(state), state )
-                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
+                icon = self.dots[state]
+                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc, icon ]
 
         # print existing tree:
         #print
@@ -298,7 +303,7 @@ class tupdater(threading.Thread):
         times = new_data.keys()
         times.sort()
         for ctime in times:
-            f_data = [ None ] * 6
+            f_data = [ None ] * 7
             if "root" in new_fam_data[ctime]:
                 f_data = new_fam_data[ctime]["root"]
             piter = self.ttreestore.append(None, [ ctime, ctime ] + f_data )
@@ -322,8 +327,8 @@ class tupdater(threading.Thread):
             for named_path in task_named_paths:
                 name = named_path[-1]
                 state = new_data[ctime][name][0]
-                if state is not None:
-                    state = re.sub('<[^>]+>', '', state)
+###               if state is not None:
+###                   state = re.sub('<[^>]+>', '', state)
                 self._update_path_info( piter, state, name )
                 f_iter = piter
                 for i, fam in enumerate(named_path[:-1]):
@@ -333,13 +338,13 @@ class tupdater(threading.Thread):
                         f_iter = family_iters[fam]
                     else:
                         # Add family to tree
-                        f_data = [ None ] * 6
+                        f_data = [ None ] * 7
                         if fam in new_fam_data[ctime]:
                             f_data = new_fam_data[ctime][fam]
                         f_iter = self.ttreestore.append(
                                       f_iter, [ ctime, fam ] + f_data )
                         family_iters[fam] = f_iter
-                    self._update_path_info( f_iter, state, fam )
+                    self._update_path_info( f_iter, state, name )
                 # Add task to tree
                 self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
         if self.autoexpand:
@@ -451,10 +456,12 @@ class tupdater(threading.Thread):
         return False
 
     def update_globals( self ):
+        self.info_bar.set_runahead( 
+                          self.global_summary.get( 'runahead limit' ) )
+        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )
-        self.info_bar.set_status( self.status )
         return False
 
     def run(self):
@@ -470,43 +477,45 @@ class tupdater(threading.Thread):
             pass
             ####print "Disconnecting task state info thread"
 
-
 class lupdater(threading.Thread):
 
-    def __init__(self, cfg, treeview, info_bar ):
+    def __init__(self, cfg, treeview, info_bar, usercfg ):
 
         super(lupdater, self).__init__()
 
         self.quit = False
         self.autoexpand = True
+        self.should_hide_headings = False
+        self.should_group_families = False
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         imagedir = self.cfg.imagedir
 
         self.state_summary = {}
         self.global_summary = {}
+        self.stop_summary = None
+        self.families = []
         self.god = None
-        self.mode = "mode:\nwaiting..."
-        self.dt = "state last updated at:\nwaiting..."
-        self.block = "access:\nwaiting ..."
+        self.mode = "waiting..."
+        self.dt = "waiting..."
+        self.block = "waiting ..."
+        self.filter = ""
 
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
+        self._prev_tooltip_task_id = None
 
         self.reconnect()
 
-        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-waiting-glow.xpm" )
-        self.retry_delayed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-retry-glow.xpm" )
-        self.runahead_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-runahead-glow.xpm" )
-        self.queued_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-queued-glow.xpm" )
-        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-submitted-glow.xpm" )
-        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-running-glow.xpm" )
-        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-failed-glow.xpm" )
-        self.stopped_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-stopped-glow.xpm" )
-        self.succeeded_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-finished.xpm" )
-
-        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/lamps/led-empty.xpm" )
+        # generate task state icons
+        theme = self.usercfg['use theme']
+        dotm = DotMaker( self.usercfg['themes'][theme])
+        self.dots = {}
+        for state in task_state.allowed_status:
+            self.dots[ state ] = dotm.get_icon( state )
+        self.dots['empty'] = dotm.get_icon()
 
         self.led_digits_one = []
         self.led_digits_two = []
@@ -515,7 +524,6 @@ class lupdater(threading.Thread):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
-
     def reconnect( self ):
         try:
             client = cylc_pyro_client.client(
@@ -523,25 +531,46 @@ class lupdater(threading.Thread):
                     self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
+                    self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.rem = client.get_proxy( 'remote' )
+            self.remote = client.get_proxy( 'remote' )
         except:
+            if self.stop_summary is None:
+                self.stop_summary = cylc.dump.get_stop_state_summary(
+                                                            self.cfg.suite,
+                                                            self.cfg.owner,
+                                                            self.cfg.host)
+                if self.stop_summary is not None and any(self.stop_summary):
+                    self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            self.status = "status:\nconnected"
+            self.family_hierarchy = self.remote.get_family_hierarchy()
+            self.families = self.remote.get_families()
+            self.allowed_families = self.remote.get_vis_families()
+            self.stop_summary = None
+            self.status = "connected"
             self.info_bar.set_status( self.status )
             return True
 
+    def _set_tooltip(self, widget, tip_text):
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
+
     def connection_lost( self ):
         self.state_summary = {}
+        self.fam_state_summary = {}
 
         # comment out to show the last suite state before shutdown:
         self.led_liststore.clear()
 
-        self.status = "status:\nSTOPPED"
+        self.status = "stopped"
         if not self.quit:
+            self.info_bar.set_state( [] )
             self.info_bar.set_status( self.status )
+            if self.stop_summary is not None and any(self.stop_summary):
+                self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
@@ -550,45 +579,54 @@ class lupdater(threading.Thread):
         #print "Updating"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.rem.get_task_list()
+            self.task_list = self.god.get_task_name_list()
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
 
+        if self.should_group_families:
+            allowed_names = [i for i in self.family_hierarchy if i != "root"]
+            self.task_list = []
+            for families in self.family_hierarchy.values():
+                for name in reversed(families):
+                    if name in allowed_names:
+                        if name not in self.task_list:
+                            self.task_list.append( name )
+                        break
+
+        self.task_list.sort()
+        if self.filter:
+            self.task_list = [t for t in self.task_list if self.filter in t]
         # always update global info
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'status:\nSTOPPING'
+            self.status = 'stopping'
 
         elif glbl['paused']:
-            self.status = 'status:\nHELD'
+            self.status = 'held'
 
         elif glbl['will_pause_at']:
-            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'status:\nrunning'
+            self.status = 'running'
 
-        if glbl[ 'simulation_mode' ]:
-            #rate = glbl[ 'simulation_clock_rate' ]
-            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
-            #self.mode = 'SIMULATION'
-            self.mode = 'mode:\nsimulation'
-        else:
-            self.mode = 'mode:\nlive'
+        self.info_bar.set_status( self.status )
+
+        self.mode = glbl['run_mode']
 
         if glbl[ 'blocked' ]:
-            self.block = 'access:\nblocked'
+            self.block = 'blocked'
         else:
-            self.block = 'access:\nunblocked'
+            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" )
+        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
 
         # only update states if a change occurred
         if compare_dict_of_dict( states, self.state_summary ):
@@ -598,6 +636,7 @@ class lupdater(threading.Thread):
         else:
             #print "STATE CHANGED"
             self.state_summary = states
+            self.fam_state_summary = fam_states
             return True
 
     def digitize( self, ctin ):
@@ -624,19 +663,24 @@ class lupdater(threading.Thread):
 
         return led_ctime
 
-
     def set_led_headings( self ):
         self.led_headings = ['Tag' ] + self.task_list
         tvcs = self.led_treeview.get_columns()
         labels = []
         for n in range( 1,1+len( self.task_list) ):
-            labels.append(gtk.Label(self.led_headings[n]))
-            labels[-1].set_use_underline(False)
-            labels[-1].set_angle(90)
-            labels[-1].show()
+            text = self.led_headings[n]
+            tip = self.led_headings[n]
+            if self.should_hide_headings:
+                text = "..."
+            label = gtk.Label(text)
+            label.set_use_underline(False)
+            label.set_angle(90)
+            label.show()
+            labels.append(label)
             label_box = gtk.VBox()
-            label_box.pack_start(labels[-1], expand=False, fill=False)
+            label_box.pack_start( label, expand=False, fill=False )
             label_box.show()
+            self._set_tooltip( label_box, tip )
             tvcs[n].set_widget( label_box )
         max_pixel_length = -1
         for label in labels:
@@ -648,7 +692,7 @@ class lupdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
+        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)) + [str])
         self.led_liststore = gtk.ListStore( *types )
 
         tvcs = self.led_treeview.get_columns()
@@ -658,6 +702,14 @@ class lupdater(threading.Thread):
         self.led_treeview.set_model( self.led_liststore )
         self.led_treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
+        if hasattr(self.led_treeview, "set_has_tooltip"):
+            self.led_treeview.set_has_tooltip(True)
+            try:
+                self.led_treeview.connect('query-tooltip',
+                                          self.on_query_tooltip)
+            except TypeError:
+                # Lower PyGTK version.
+                pass
         # this is how to set background color of the entire treeview to black:
         #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
 
@@ -684,28 +736,58 @@ class lupdater(threading.Thread):
 
         self.set_led_headings()
 
+    def on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
+        """Handle a tooltip creation request."""
+        tip_context = self.led_treeview.get_tooltip_context(x, y, kbd_ctx)
+        if tip_context is None:
+            self._prev_tooltip_task_id = None
+            return False
+        x, y = self.led_treeview.convert_widget_to_bin_window_coords(x, y)
+        path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
+        col_index = self.led_treeview.get_columns().index(column)
+        ctime = self.ctimes[path[0]]
+        if col_index == 0:
+            task_id = ctime
+        else:
+            name = self.task_list[col_index - 1]
+            task_id = name + "%" + ctime
+        if task_id != self._prev_tooltip_task_id:
+            self._prev_tooltip_task_id = task_id
+            tooltip.set_text(None)
+            return False
+        if col_index == 0:
+            tooltip.set_text(task_id)
+            return True
+        text = get_id_summary( task_id, self.state_summary,
+                               self.fam_state_summary, self.families )
+        if text == task_id:
+            return False
+        tooltip.set_text(text)
+        return True
+
     def update_gui( self ):
         #print "Updating GUI"
         new_data = {}
-        for id in self.state_summary:
+        state_summary = {}
+        state_summary.update( self.state_summary )
+        state_summary.update( self.fam_state_summary )
+        for id in state_summary:
             name, ctime = id.split( '%' )
             if ctime not in new_data:
                 new_data[ ctime ] = {}
-            state = self.state_summary[ id ][ 'state' ]
-            message = self.state_summary[ id ][ 'latest_message' ]
-            tsub = self.state_summary[ id ][ 'submitted_time' ]
-            tstt = self.state_summary[ id ][ 'started_time' ]
-            meant = self.state_summary[ id ][ 'mean total elapsed time' ]
-            tetc = self.state_summary[ id ][ 'Tetc' ]
-            priority = self.state_summary[ id ][ 'latest_message_priority' ]
-            message = markup( get_col_priority( priority ), message )
-            state = markup( get_col(state), state )
+            state = state_summary[ id ].get( 'state' )
+            message = state_summary[ id ].get( 'latest_message' )
+            tsub = state_summary[ id ].get( 'submitted_time' )
+            tstt = state_summary[ id ].get( 'started_time' )
+            meant = state_summary[ id ].get( 'mean total elapsed time' )
+            tetc = state_summary[ id ].get( 'Tetc' )
+            priority = state_summary[ id ].get( 'latest_message_priority' )
             new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
 
         self.ledview_widgets()
 
         tasks = {}
-        for id in self.state_summary:
+        for id in state_summary:
             name, ctime = id.split( '%' )
             if ctime not in tasks:
                 tasks[ ctime ] = [ name ]
@@ -716,43 +798,28 @@ class lupdater(threading.Thread):
         ctimes = tasks.keys()
         ctimes.sort()
 
+        tvcs = self.led_treeview.get_columns()
+        self.ctimes = []
         for ctime in ctimes:
+            self.ctimes.append(ctime)
             tasks_at_ctime = tasks[ ctime ]
             state_list = [ ]
-
             for name in self.task_list:
                 if name in tasks_at_ctime:
-                    state = self.state_summary[ name + '%' + ctime ][ 'state' ]
-                    if state == 'waiting':
-                        state_list.append( self.waiting_led )
-                    elif state == 'retry_delayed':
-                        state_list.append( self.retry_delayed_led )
-                    elif state == 'submitted':
-                        state_list.append( self.submitted_led )
-                    elif state == 'running':
-                        state_list.append( self.running_led )
-                    elif state == 'succeeded':
-                        state_list.append( self.succeeded_led )
-                    elif state == 'failed':
-                        state_list.append( self.failed_led )
-                    elif state == 'held':
-                        state_list.append( self.stopped_led )
-                    elif state == 'runahead':
-                        state_list.append( self.runahead_led )
-                    elif state == 'queued':
-                        state_list.append( self.queued_led )
+                    state = state_summary[ name + '%' + ctime ][ 'state' ]
+                    state_list.append( self.dots[state] )
                 else:
-                    state_list.append( self.empty_led )
+                    state_list.append( self.dots['empty'] )
 
-            self.led_liststore.append( self.digitize( ctime ) + state_list )
+            self.led_liststore.append( self.digitize( ctime ) + state_list + [ctime])
 
         return False
 
     def update_globals( self ):
+        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )
-        self.info_bar.set_status( self.status )
         return False
 
     def run(self):
@@ -767,3 +834,8 @@ class lupdater(threading.Thread):
         else:
             pass
             ####print "Disconnecting task state info thread"
+
+def _time_trim(time_value):
+    if time_value is not None:
+        return time_value.rsplit(".", 1)[0]
+    return time_value

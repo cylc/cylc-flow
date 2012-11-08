@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,8 @@ set -e
 # this process on the restart.
 
 # AWAITING INCORPORATION INTO THE MAIN CYLC INTERFACE, IF USEFUL.
+
+# NOTE: NOW WE CAN ACTUALLY RELOAD THE SUITE DEFINITION AT RUN TIME.
 
 SUITE=$1
 CYLC=$(dirname $0)/cylc

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,31 @@ from owner import user
 
 """Common options for all cylc commands."""
 
+class db_optparse( object ):
+    def __init__( self, dbopt ):
+        # input is DB option spec from the cylc command line
+        self.owner = user
+        self.location = None
+        if dbopt:
+            self.parse( dbopt )
+
+    def parse( self, dbopt ):
+        # determine DB location and owner
+        if dbopt.startswith('u:'):
+            self.owner = dbopt[2:]
+            dbopt = os.path.join( '~' + self.owner, '.cylc', 'DB' )
+        if dbopt.startswith( '~' ):
+            dbopt = os.path.expanduser( dbopt )
+        else: 
+            dbopt = os.path.abspath( dbopt )
+        self.location = dbopt
+
+    def get_db_owner( self ):
+        return self.owner
+
+    def get_db_location( self ):
+        return self.location
+
 class cop( OptionParser ):
 
     def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False ):
@@ -40,6 +65,11 @@ Arguments:"""
         self.n_optional_args = 0
         self.unlimited_args = False
         self.pyro = pyro
+        maxlen = 0
+        for arg in argdoc:
+            if len(arg[0]) > maxlen:
+                maxlen = len(arg[0])
+ 
         for arg in argdoc:
             if arg[0].startswith('['):
                 self.n_optional_args += 1
@@ -49,7 +79,9 @@ Arguments:"""
                 self.unlimited_args = True
 
             args += arg[0] + " "
-            usage += "\n   " + arg[0] + "                  " + arg[1]
+
+            pad = ( maxlen - len(arg[0]) ) * ' ' + '               '
+            usage += "\n   " + arg[0] + pad + arg[1]
 
         usage = re.sub( 'ARGS', args, usage )
         
@@ -74,12 +106,13 @@ Arguments:"""
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",
-                help="Alternative suite database location.",
-                metavar="FILE", action="store", default=None,
-                dest="db" )
+                help="Suite database: 'u:USERNAME' for another user's "
+                "default database, or PATH to an explicit location. "
+                "Defaults to $HOME/.cylc/DB.",
+                metavar="DB", action="store", default=None, dest="db" )
 
-        self.add_option( "-o", "--override",
-                help="Override cylc version compatibilty checking.",
+        self.add_option( "--invoked",
+                help="Override cylc version compatibility checking.",
                 action="store_true", default=False, dest="override" )
 
         if pyro:
@@ -87,27 +120,33 @@ Arguments:"""
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
 
+            self.add_option( "--pyro-timeout", metavar='SEC',
+                    help="Set a timeout value for Pyro network connections "
+                    "to the running suite. The default is no timeout.",
+                    action="store", default=None, dest="pyro_timeout" )
+
             self.add_option( "-p", "--passphrase",
-                    help="Suite passphrase file",
+                    help="Suite passphrase file (if not in a default location)",
                     metavar="FILE", action="store", dest="pfile" )
 
-            # This is only required for commands that prompt for
-            # confirmation before interfering in a running suite,
-            # but for simplicity we add it to all suite-connecting
-            # commands (it has no affect for non-prompted ones).
             self.add_option( "-f", "--force",
-                help="Do not ask for confirmation before acting (if applicable).",
+                help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
 
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
+
         if len(args) < self.n_compulsory_args:
             self.error( "Wrong number of arguments (too few)" )
+
         elif not self.unlimited_args and \
                 len(args) > self.n_compulsory_args + self.n_optional_args:
             self.error( "Wrong number of arguments (too many)" )
-        if options.db:
-            options.db = os.path.abspath( options.db )
+
+        foo = db_optparse( options.db )
+        options.db = foo.get_db_location()
+        options.db_owner = foo.get_db_owner()
+
         if self.pyro:
             if options.pfile:
                 options.pfile = os.path.abspath( options.pfile )

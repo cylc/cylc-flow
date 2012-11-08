@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,26 @@ import sys, os, re
 import gobject
 import time
 import threading
-from cylc import cylc_pyro_client
+from cylc import cylc_pyro_client, dump
 from cylc import graphing
+from cylc.strftime import strftime
 import gtk
 import pygtk
 from cylc.cycle_time import ct
+import cylc.dump
 from cylc.mkdir_p import mkdir_p
+from cylc.state_summary import get_id_summary
 ####pygtk.require('2.0')
+
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
 
 def compare_dict_of_dict( one, two ):
     # return True if one == two, else return False.
@@ -49,38 +62,42 @@ def compare_dict_of_dict( one, two ):
     return True
 
 class xupdater(threading.Thread):
-    def __init__(self, cfg, info_bar, xdot ):
+    def __init__(self, cfg, usercfg, info_bar, xdot ):
         super(xupdater, self).__init__()
 
         self.quit = False
-        self.stop_ctime = None
+        self.focus_start_ctime = None
+        self.focus_stop_ctime = None
         self.xdot = xdot
-        self.first_update = True
+        self.first_update = False
         self.graph_disconnect = False
         self.action_required = True
         self.oldest_ctime = None
         self.newest_ctime = None
-        self.show_key = False # graph key visibility default
-        self.best_fit = False
+        self.orientation = "TB"  # Top to Bottom ordering of nodes, by default.
+        self.best_fit = False # If True, xdot will zoom to page size
+        self.normal_fit = False # if True, xdot will zoom to 1.0 scale
         self.crop = False
         self.filter_include = None
         self.filter_exclude = None
         self.state_filter = None
+        self.families = []
+        self.prev_graph_id = ()
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
+        self.stop_summary = None
 
         self.god = None
-        self.mode = "mode:\nwaiting..."
-        self.dt = "state last updated at:\nwaiting..."
-        self.block = "access:\nwaiting ..."
+        self.mode = "waiting..."
+        self.dt = "waiting..."
+        self.block = "waiting ..."
 
         self.reconnect()
         # TO DO: handle failure to get a remote proxy in reconnect()
 
         self.graph_warned = {}
-
-        self.collapse = []
 
         self.group = []
         self.ungroup = []
@@ -89,26 +106,32 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
+        self.theme = usercfg['themes'][ usercfg['use theme'] ]
 
     def reconnect( self ):
- 
-        try:
-            self.god = cylc_pyro_client.client( 
-                    self.cfg.suite,
-                    self.cfg.pphrase,
-                    self.cfg.owner,
-                    self.cfg.host,
-                    self.cfg.port ).get_proxy( 'state_summary' )
 
-            self.remote = cylc_pyro_client.client( 
+        self.prev_graph_id = ()
+        try:
+            client = cylc_pyro_client.client( 
                     self.cfg.suite,
                     self.cfg.pphrase,
                     self.cfg.owner,
                     self.cfg.host,
-                    self.cfg.port ).get_proxy( 'remote' )
+                    self.cfg.pyro_timeout,
+                    self.cfg.port )
+            self.god = client.get_proxy( 'state_summary' )
+            self.remote = client.get_proxy( 'remote' )
         except:
+            if self.stop_summary is None:
+                self.stop_summary = dump.get_stop_state_summary(
+                                                            self.cfg.suite,
+                                                            self.cfg.owner,
+                                                            self.cfg.host)
+                if self.stop_summary is not None and any(self.stop_summary):
+                    self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
+            self.stop_summary = None
             self.family_nodes = self.remote.get_family_nodes()
             self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
             self.families = self.remote.get_families()
@@ -119,14 +142,15 @@ class xupdater(threading.Thread):
                 except Exception, x:
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
-
-            self.status = "status:\nconnected"
+            self.first_update = True
+            self.status = "connected"
             self.info_bar.set_status( self.status )
             return True
 
     def connection_lost( self ):
-        self.status = "status:\nSTOPPED"
-
+        self.status = "stopped"
+        self.prev_graph_id = ()
+        self.normal_fit = True
         # Get an *empty* graph object
         # (comment out to show the last suite state before shutdown)
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
@@ -135,22 +159,17 @@ class xupdater(threading.Thread):
         self.update_xdot()
 
         if not self.quit:
+            self.info_bar.set_state( [] )
             self.info_bar.set_status( self.status )
+            if self.stop_summary is not None and any(self.stop_summary):
+                self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
         return False
 
     def get_summary( self, task_id ):
-        if task_id in self.state_summary:
-            return task_id + " " + self.state_summary[task_id]['state']
-        if task_id in self.fam_state_summary:
-            name, ctime = task_id.split("%")
-            text = task_id + " " + self.fam_state_summary[task_id]['state']
-            for child in self.families[name]:
-                child_id = child + "%" + ctime
-                text += "\n    " + self.get_summary(child_id).replace("\n", "\n    ")
-            return text
-        return task_id
+        return get_id_summary( task_id, self.state_summary,
+                               self.fam_state_summary, self.families )
 
     def update(self):
         #print "Updating"
@@ -187,35 +206,31 @@ class xupdater(threading.Thread):
         self.global_summary = glbl
 
         if glbl['stopping']:
-            self.status = 'status:\nSTOPPING'
+            self.status = 'stopping'
 
         elif glbl['paused']:
-            self.status = 'status:\nHELD'
+            self.status = 'held'
        
         elif glbl['will_pause_at']:
-            self.status = 'status:\nHOLD ' + glbl[ 'will_pause_at' ]
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
         elif glbl['will_stop_at']:
-            self.status = 'status:\nSTOP ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
         else:
-            self.status = 'status:\nrunning'
+            self.status = 'running'
 
-        if glbl[ 'simulation_mode' ]:
-            #rate = glbl[ 'simulation_clock_rate' ]
-            #self.mode = 'SIMULATION (' + str( rate ) + 's/hr)'
-            #self.mode = 'SIMULATION'
-            self.mode = 'mode:\nsimulation'
-        else:
-            self.mode = 'mode:\nlive'
+        self.info_bar.set_status( self.status )
+
+        self.mode = glbl['run_mode']
 
         if glbl[ 'blocked' ]:
-            self.block = 'access:\nblocked'
+            self.block = 'blocked'
         else:
-            self.block = 'access:\nunblocked'
+            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
-        self.dt = 'state last updated at:\n' + dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" ) 
 
         # only update states if a change occurred, or action required
         if self.action_required:
@@ -234,112 +249,41 @@ class xupdater(threading.Thread):
             return False
 
     def update_globals( self ):
+        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_block( self.block )
-        self.info_bar.set_status( self.status )
         return False
  
     def run(self):
         glbl = None
         while not self.quit:
             if self.update():
-                self.update_graph()
+                needed_no_redraw = self.update_graph()
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
                 # be unnecessary anyway (due to xdot internals?)
                 ################ gobject.idle_add( self.update_xdot )
-                self.update_xdot()
+                self.update_xdot( no_zoom=needed_no_redraw )
                 gobject.idle_add( self.update_globals )
             time.sleep(1)
         else:
             pass
             ####print "Disconnecting task state info thread"
 
-    def update_xdot(self):
+    def update_xdot(self, no_zoom=False):
         #print 'Updating xdot'
-        self.xdot.set_dotcode( self.graphw.to_string())
+        self.xdot.set_dotcode( self.graphw.to_string(),
+                               no_zoom=True )
         if self.first_update:
-            #self.xdot.widget.zoom_to_fit()
+            self.xdot.widget.zoom_to_fit()
             self.first_update = False
         elif self.best_fit:
             self.xdot.widget.zoom_to_fit()
             self.best_fit = False
-
-    def add_graph_key(self):
-        self.graphw.cylc_add_node( 'waiting', True )
-        self.graphw.cylc_add_node( 'retry_delayed', True )
-        self.graphw.cylc_add_node( 'runahead', True )
-        self.graphw.cylc_add_node( 'queued', True )
-        self.graphw.cylc_add_node( 'submitted', True )
-        self.graphw.cylc_add_node( 'running', True )
-        self.graphw.cylc_add_node( 'succeeded', True )
-        self.graphw.cylc_add_node( 'failed', True )
-        self.graphw.cylc_add_node( 'held', True )
-        self.graphw.cylc_add_node( 'base', True )
-        self.graphw.cylc_add_node( 'runtime family', True )
-        self.graphw.cylc_add_node( 'trigger family', True )
-
-        waiting = self.graphw.get_node( 'waiting' )
-        retry_delayed = self.graphw.get_node( 'retry_delayed' )
-        runahead = self.graphw.get_node( 'runahead' )
-        queued = self.graphw.get_node( 'queued' )
-        submitted = self.graphw.get_node( 'submitted' )
-        running = self.graphw.get_node( 'running' )
-        succeeded = self.graphw.get_node( 'succeeded' )
-        failed = self.graphw.get_node( 'failed' )
-        held = self.graphw.get_node( 'held' )
-        base = self.graphw.get_node( 'base' )
-        family = self.graphw.get_node( 'runtime family' )
-        grfamily = self.graphw.get_node( 'trigger family' )
-
-
-        for node in [ waiting, retry_delayed, runahead, queued, submitted, running, succeeded, failed, held, base, family, grfamily ]:
-            node.attr['style'] = 'filled'
-            node.attr['shape'] = 'ellipse'
-            node.attr['URL'] = 'KEY'
-
-        family.attr['shape'] = 'doublecircle'
-        grfamily.attr['shape'] = 'doubleoctagon'
-
-        waiting.attr['fillcolor'] = 'cadetblue2'
-        waiting.attr['color'] = 'cadetblue4'
-
-        retry_delayed.attr['fillcolor'] = 'pink'
-        retry_delayed.attr['color'] = 'red'
-
-        runahead.attr['fillcolor'] = 'cadetblue'
-        runahead.attr['color'] = 'cadetblue4'
-        queued.attr['fillcolor'] = 'purple'
-        queued.attr['color'] = 'purple'
-        submitted.attr['fillcolor'] = 'orange'
-        submitted.attr['color'] = 'darkorange3'
-        running.attr['fillcolor'] = 'green'
-        running.attr['color'] = 'darkgreen'
-        succeeded.attr['fillcolor'] = 'grey'
-        succeeded.attr['color'] = 'black'
-        failed.attr['fillcolor'] = 'red'
-        failed.attr['color'] = 'firebrick3'
-        base.attr['fillcolor'] = 'cornsilk'
-        base.attr['color'] = 'black'
-        family.attr['fillcolor'] = 'cornsilk'
-        family.attr['color'] = 'black'
-        grfamily.attr['fillcolor'] = 'cornsilk'
-        grfamily.attr['color'] = 'black'
-        held.attr['fillcolor'] = 'yellow'
-        held.attr['color'] = 'black'
-
-        self.graphw.cylc_add_edge( waiting, submitted, False, style='invis')
-        self.graphw.cylc_add_edge( submitted, running, False, style='invis')
-        self.graphw.cylc_add_edge( running, runahead, False, style='invis')
-
-        self.graphw.cylc_add_edge( succeeded, failed, False, style='invis')
-        self.graphw.cylc_add_edge( failed, held, False, style='invis')
-        self.graphw.cylc_add_edge( held, queued, False, style='invis')
-
-        self.graphw.cylc_add_edge( retry_delayed, base, False, style='invis')
-        self.graphw.cylc_add_edge( base, grfamily, False, style='invis')
-        self.graphw.cylc_add_edge( grfamily, family, False, style='invis')
+        elif self.normal_fit:
+            self.xdot.widget.zoom_image( 1.0, center=True )
+            self.normal_fit = False
 
     def set_live_node_attr( self, node, id, shape=None ):
         # override base graph URL to distinguish live tasks
@@ -348,33 +292,11 @@ class xupdater(threading.Thread):
             state = self.state_summary[id]['state']
         else:
             state = self.fam_state_summary[id]['state']
-        if state == 'submitted':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'orange'
-        elif state == 'running':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'green'
-        elif state == 'waiting':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'cadetblue2'
-        elif state == 'retry_delayed':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'pink'
-        elif state == 'succeeded':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'grey'
-        elif state == 'failed':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'red'
-        elif state == 'held':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'yellow'
-        elif state == 'runahead':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'cadetblue'
-        elif state == 'queued':
-            node.attr['style'] = 'filled'
-            node.attr['fillcolor'] = 'purple'
+
+        node.attr['style'    ] = 'bold,' + self.theme[state]['style']
+        node.attr['fillcolor'] = self.theme[state]['color']
+        node.attr['color'    ] = self.theme[state]['color' ]
+        node.attr['fontcolor'] = self.theme[state]['fontcolor']
 
         if shape:
             node.attr['shape'] = shape
@@ -385,8 +307,12 @@ class xupdater(threading.Thread):
         self.oldest_ctime = self.global_summary['oldest cycle time']
         self.newest_ctime = self.global_summary['newest cycle time']
 
-        oldest = self.oldest_ctime
-        newest = self.newest_ctime
+        if self.focus_start_ctime:
+            oldest = self.focus_start_ctime
+            newest = self.focus_stop_ctime
+        else:
+            oldest = self.oldest_ctime
+            newest = self.newest_ctime
 
         start_time = self.global_summary['start time']
 
@@ -401,34 +327,64 @@ class xupdater(threading.Thread):
 
         # TO DO: mv ct().get() out of this call (for error checking):
         # TO DO: remote connection exception handling?
-        gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
-                raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
-                ungroup_recursive=self.ungroup_recursive, 
-                group_all=self.group_all, ungroup_all=self.ungroup_all) 
+        try:
+            gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
+                    raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
+                    ungroup_recursive=self.ungroup_recursive, 
+                    group_all=self.group_all, ungroup_all=self.ungroup_all) 
+        except Exception:  # PyroError
+            return False
 
-        # Get a graph object
-        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+        extra_ids = []
 
-        # sort and then add edges in the hope that edges added in the
-        # same order each time will result in the graph layout not
-        # jumping around (does this help? -if not discard)
-        gr_edges.sort()
-        for e in gr_edges:
-            l, r, dashed, suicide, conditional = e
-            style=None
-            arrowhead='normal'
-            if dashed:
-                style='dashed'
-            if suicide:
-                style='dashed'
-                arrowhead='dot'
-            if conditional:
-                arrowhead='onormal'
-            self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+        for id in self.state_summary:
+            try:
+                node = self.graphw.get_node( id )
+            except AttributeError:
+                # No graphw yet.
+                break
+            except KeyError:
+                name, tag = id.split('%')
+                if any( [name in self.families[fam] for
+                         fam in self.graphed_family_nodes] ):
+                    # if task name is a member of a family omit it
+                    #print 'Not graphing family-collapsed node', id
+                    continue
 
-        for n in self.graphw.nodes():
+                state = self.state_summary[id]['state']
+                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
+                    if id not in extra_ids:
+                        extra_ids.append( id )
+
+        current_id = self.get_graph_id( gr_edges, extra_ids )
+        needs_redraw = current_id != self.prev_graph_id
+
+        if needs_redraw:
+            #Get a graph object
+            self.graphw = graphing.CGraphPlain( self.cfg.suite )
+
+            # sort and then add edges in the hope that edges added in the
+            # same order each time will result in the graph layout not
+            # jumping around (does this help? -if not discard)
+            gr_edges.sort()
+            for e in gr_edges:
+                l, r, dashed, suicide, conditional = e
+                style=None
+                arrowhead='normal'
+                if dashed:
+                    style='dashed'
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                if conditional:
+                    arrowhead='onormal'
+                self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+
+        for n in self.graphw.nodes(): # base node defaults
             n.attr['style'] = 'filled'
-            n.attr['fillcolor'] = 'cornsilk'
+            n.attr['color'] = '#888888'
+            n.attr['fillcolor'] = 'white'
+            n.attr['fontcolor'] = '#888888'
 
         self.group = []
         self.ungroup = []
@@ -439,60 +395,82 @@ class xupdater(threading.Thread):
         self.rem_nodes = []
 
         # FAMILIES
-        for node in self.graphw.nodes():
-            name, tag = node.get_name().split('%')
-            if name in self.family_nodes:
-                if name in self.graphed_family_nodes:
-                    node.attr['shape'] = 'doubleoctagon'
-                else:
-                    node.attr['shape'] = 'doublecircle'
-
-        # CROPPING
-        if self.crop:
+        if needs_redraw:
             for node in self.graphw.nodes():
-                #if node in self.rem_nodes:
-                #    continue
-                #if node.get_name() not in self.state_summary and \
-                    # len( self.graphw.successors( node )) == 0:
-                    # self.remove_empty_nodes( node )
-                if node.get_name() not in self.state_summary:
-                    self.rem_nodes.append(node)
-                    continue
+                name, tag = node.get_name().split('%')
+                if name in self.family_nodes:
+                    if name in self.graphed_family_nodes:
+                        node.attr['shape'] = 'doubleoctagon'
+                    else:
+                        node.attr['shape'] = 'doublecircle'
 
-        # FILTERING:
-        for node in self.graphw.nodes():
-            id = node.get_name()
-            name, ctime = id.split('%')
-            if self.filter_exclude:
-                if re.match( self.filter_exclude, name ):
-                    if node not in self.rem_nodes:
+            # CROPPING
+            if self.crop:
+                for node in self.graphw.nodes():
+                    #if node in self.rem_nodes:
+                    #    continue
+                    #if node.get_name() not in self.state_summary and \
+                        # len( self.graphw.successors( node )) == 0:
+                        # self.remove_empty_nodes( node )
+                    if node.get_name() not in self.state_summary:
                         self.rem_nodes.append(node)
-            if self.filter_include:
-                if not re.match( self.filter_include, name ):
-                    if node not in self.rem_nodes:
-                        self.rem_nodes.append(node)
-            if self.state_filter:
-                if id in self.state_summary:
-                    state = self.state_summary[id]['state']
-                    if state in self.state_filter:
+                        continue
+
+            # FILTERING:
+            for node in self.graphw.nodes():
+                id = node.get_name()
+                name, ctime = id.split('%')
+                if self.filter_exclude:
+                    if re.match( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
                             self.rem_nodes.append(node)
+                if self.filter_include:
+                    if not re.match( self.filter_include, name ):
+                        if node not in self.rem_nodes:
+                            self.rem_nodes.append(node)
+                if self.state_filter:
+                    if id in self.state_summary:
+                        state = self.state_summary[id]['state']
+                        if state in self.state_filter:
+                            if node not in self.rem_nodes:
+                                self.rem_nodes.append(node)
 
-        # remove_nodes_from( nbunch ) - nbunch is any iterable container.
-        self.graphw.remove_nodes_from( self.rem_nodes )
+            # remove_nodes_from( nbunch ) - nbunch is any iterable container.
+            self.graphw.remove_nodes_from( self.rem_nodes )
+
+        #print '____'
+        #print self.families
+        #print
+        #print self.family_nodes
+        #print 
+        #print self.graphed_family_nodes
+        #print '____'
 
         for id in self.state_summary:
+
             try:
                 node = self.graphw.get_node( id )
             except KeyError:
-                # this task is not present in the live graph
-                # TO DO: FAMILY MEMBERS NEED TO SELF-IDENTIFY IN STATE DUMP
-                #if hasattr( task, 'member_of' ):
-                    # OK: member of a family
-                    #continue
-                #else:
-                if id not in self.graph_warned or \
-                        not self.graph_warned[id]:
+                # This live task proxy is not represented in the graph.
+                # But it is live so if its state is deemed interesting
+                # plot it off to the right of the main graph.
+
+                # Tasks in this category include: members of collapsed
+                # families; tasks outside of the current focus range (if
+                # one is set), inserted tasks that are defined under
+                # [runtime] but not used in the suite graph.
+
+                # Now that we have family state coloring with family
+                # member states listed in tool-tips, don't draw
+                # off-graph family members:
+                name, tag = id.split('%')
+                if any( [name in self.families[fam] for
+                         fam in self.graphed_family_nodes] ):
+                    # if task name is a member of a family omit it
+                    #print 'Not graphing family-collapsed node', id
+                    continue
+
+                if id not in self.graph_warned or not self.graph_warned[id]:
                     print >> sys.stderr, 'WARNING: ' + id + ' is outside of the main graph.'
                     self.graph_warned[id] = True
 
@@ -501,7 +479,7 @@ class xupdater(threading.Thread):
                     if state not in extra_node_ids:
                         extra_node_ids[state] = [id] 
                     else:
-                        extra_node_ids[state].append(id) 
+                        extra_node_ids[state].append(id)
                     continue
                 else:
                     continue
@@ -515,75 +493,27 @@ class xupdater(threading.Thread):
                 continue
             self.set_live_node_attr( node, id )
 
-        for id in self.collapse:
-            try:
-                node = self.graphw.get_node( id )
-            except:
-                # node no longer in graph
-                self.collapse.remove(id)
-                continue
-
-            self.feedins = []
-            self.collapsems = []
-            for n in self.graphw.successors( id ):
-                self.remove_tree( id )
-
-            # replace collapsed node with a stand-in
-            new_node_label = 'SUBTREE:' + id
-            self.graphw.cylc_add_node( new_node_label, True )
-            new_node = self.graphw.get_node( new_node_label )
-            #new_node.attr['shape'] = 'doublecircle'
-            new_node.attr['shape'] = 'tripleoctagon'
-            new_node.attr['style'] = 'filled'
-            new_node.attr['color'] = 'magenta'
-            new_node.attr['fillcolor'] = 'yellow'
-            new_node.attr['URL'] = new_node_label
-
-            for n in self.graphw.predecessors( node ):
-                self.graphw.cylc_add_edge( n, new_node, True )
-
-            name, topctime = id.split('%')
-            for n in self.feedins:
-                #self.feedintops = []
-                #self.follow_up(n,topctime)
-                #if n not in self.collapsems and n not in self.feedintops:
-                if n not in self.collapsems:
-                    self.graphw.cylc_add_edge( n, new_node, True )
-                #for m in self.feedintops:
-                #    self.graphw.remove_node( m )
-
-            for n in self.collapsems:
-                id = n.get_name()
-                if id in self.state_summary:
-                    # (else is part of the base graph)
-                    state = self.state_summary[id]['state']
-                    if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
-                        if state not in extra_node_ids:
-                            extra_node_ids[state] = [id] 
-                        else:
-                            extra_node_ids[state].append(id) 
-                self.graphw.remove_node( n )
-
-            self.graphw.remove_node( node )
-
         # TO DO: ?optional transitive reduction:
         # self.graphw.tred()
 
-        if self.show_key:
-            self.add_graph_key()
+        self.graphw.graph_attr['rankdir'] = self.orientation
 
         # process extra nodes (important nodes outside of focus range,
         # and family members that aren't plotted in the main graph).
-        for state in extra_node_ids:
-            for id in extra_node_ids[state]:
-                self.graphw.cylc_add_node( id, True )
-                self.set_live_node_attr( self.graphw.get_node(id), id, shape='box')
-            # add invisible edges to force vertical alignment
-            for i in range( 0, len(extra_node_ids[state])):
-               if i == len(extra_node_ids[state]) -1:
-                   break
-               self.graphw.cylc_add_edge( extra_node_ids[state][i],
-                       extra_node_ids[state][i+1], True, style='invis')
+        
+        if needs_redraw:
+            for state in extra_node_ids:
+                for id in extra_node_ids[state]:
+                    self.graphw.cylc_add_node( id, True )
+                    node = self.graphw.get_node(id)
+                    self.set_live_node_attr( node, id, shape='box')
+
+                # add invisible edges to force vertical alignment
+                for i in range( 0, len(extra_node_ids[state])):
+                   if i == len(extra_node_ids[state]) -1:
+                       break
+                   self.graphw.cylc_add_edge( extra_node_ids[state][i],
+                           extra_node_ids[state][i+1], True, style='invis')
 
         self.action_required = False
 
@@ -593,50 +523,14 @@ class xupdater(threading.Thread):
                     str( self.graph_frame_count ) + '.dot' )
             self.graphw.write( arg )
 
-    #def follow_up( self, id, topctime ):
-    #    name, ctime = id.split('%')
-    #    if int(ctime) < int(topctime):
-    #        return
-    #    pred = self.graphw.predecessors( id )
-    #    if len(pred) == 0:
-    #        # id has no predecessors
-    #        self.feedintops.append(id)
-    #        return
-    #    for m in pred:
-    #        self.follow_up(m,topctime)
+        self.prev_graph_id = current_id
+        return not needs_redraw
 
-    def remove_empty_nodes( self, node ):
-        # recursively remove base graph nodes whose predecessors are
-        # also not live nodes. ABANDONED - this doesn't have the desired
-        # effect as we need to trace all branches encountered! 
-        empty = True
-        for n in self.graphw.predecessors( node ):
-            if n in self.rem_nodes:
-                continue
-            if n.get_name() in self.state_summary.keys():
-                empty = False
-            else:
-                self.remove_empty_nodes( n )
-        if empty:
-            self.rem_nodes.append(node)
-
-    def remove_tree(self, id ):
-        node = self.graphw.get_node(id)
-        for n in self.graphw.successors( id ):
-            for m in self.graphw.predecessors( n ):
-                if m != node:
-                    self.feedins.append(m)
-                #else:
-                #    print 'EQUAL'
-            self.remove_tree( n )
-            if n not in self.collapsems:
-                self.collapsems.append(n)
-
-    def get_leaves( self ):
-        od = self.graphw.out_degree(with_labels=True)
-        leaves = []
-        for id in od:
-            if od[id] == 0:
-                leaves.append(id)
-        return leaves
-
+    def get_graph_id( self, edges, extra_ids ):
+        """If any of these quantities change, the graph should be redrawn."""
+        states = self.state_filter
+        if self.state_filter:
+            states = set(self.state_filter)
+        return ( set( edges ), set( extra_ids ), self.crop,
+                 self.filter_exclude, self.filter_include, states,
+                 self.orientation )

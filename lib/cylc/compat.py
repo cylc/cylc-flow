@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
 
 import subprocess
 import os, sys, re
-#from port_scan import SuiteIdentificationError
-from cylc_pyro_client import client
+from Pyro.errors import ConnectionDeniedError
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
+from include_files import inline
 from version import cylc_version, cylc_dir
 from hostname import hostname
 
@@ -100,7 +100,7 @@ class compat( object ):
             sys.exit(retcode)
         except OSError, x:
             print >> sys.stderr, "ERROR: Failed to invoke " + new_cylc
-            print >> sys.stderr, "(Note you can FORCE USE OF THE INVOKED VERSION with '-o,--override')"
+            print >> sys.stderr, "(Note you can FORCE USE OF THE INVOKED VERSION with '--invoked')"
             sys.exit(1)
 
 class compat_explicit( compat ):
@@ -125,6 +125,9 @@ class compat_file( compat ):
             sys.exit( "ERROR: unable to open the suite.rc file." )
         flines = f.readlines()
         f.close()
+
+        # handle cylc include-files
+        flines = inline( flines, os.path.dirname( suiterc ))
 
         # Here we must process with Jinja2 before checking the first two
         # lines, to allow use of the cylc version number as a Jinja2
@@ -157,7 +160,7 @@ class compat_file( compat ):
             #    raise
             #raise SystemExit(str(x))
         except TemplateError, x:
-            print >> sys.stderr, 'Jinja2 Template Error'
+            print >> sys.stderr, 'Jinja2 Template Error:', x
             print >> sys.stderr, 'Continuing cylc version check without Jinja2'
             suiterclines = flines
             #if debug:
@@ -183,14 +186,21 @@ class compat_file( compat ):
             self.required_version = re.sub( '^.*cylc-', '', z.groups()[0] )  # e.g. 4.1.1
 
 class compat_pyro( compat ):
+
     """Determine version compatibility given a running suite name"""
 
-    def __init__( self, suite, owner, host, pphrase, verbose, debug ):
+    def __init__( self, suite, owner, host, pphrase, pyro_timeout, verbose, debug ):
+        from cylc_pyro_client import client
+
         compat.__init__( self, suite, None, verbose, debug )
 
         try:
-            proxy = client( self.suite, pphrase, owner, host).get_proxy( 'remote' )
+            proxy = client( self.suite, pphrase, owner, host, pyro_timeout ).get_proxy( 'remote' )
             self.required_version = proxy.get_cylc_version()
+        except ConnectionDeniedError,x:
+            raise SystemExit( 'ERROR, Connection Denied: ' + str(x) )
+            if debug:
+                raise
         except Exception, x:
             if debug:
                 raise

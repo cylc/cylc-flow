@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from cylc.remote import remrun
-remrun().execute()
+if remrun().execute():
+    sys.exit(0)
 
-import os, sys
+import os
 from shutil import rmtree
 from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb, RegistrationError, DatabaseLockedError
@@ -105,7 +107,11 @@ if options.obliterate and len(dirs) > 0:
     if options.force:
         really_obliterate = True
     else:
-        response = raw_input( "DO YOU REALLY WANT TO DELETE THESE SUITE DEFINITIONS? (y/n) " )
+        if len(dirs) == 1:
+            words = "THIS SUITE DEFINITION"
+        else:
+            words = "THESE SUITE DEFINITIONS"
+        response = raw_input( "DO YOU REALLY WANT TO DELETE " + words + "? (y/n) " )
         if response == 'y':
             really_obliterate = True
     if really_obliterate and len(dirs)>0:

@@ -2,6 +2,8 @@
 
 import re
 import datetime
+from cylc.cycle_time import ct, CycleTimeError
+from cylc.strftime import strftime
 
 class TaskIDError( Exception ):
     def __str__( self ):
@@ -99,7 +101,7 @@ class CycleTime( object ):
         return self.dtvalue
 
     def _str_from_datetime( self, dt ): 
-        return dt.strftime( "%Y%m%d%H%M%S" )
+        return strftime( dt, "%Y%m%d%H%M%S" )
 
     def increment( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
             microseconds=0, milliseconds=0 ): 
@@ -155,12 +157,19 @@ class TaskID(object):
  
         self.name = TaskName(name)
 
-        if tag.startswith('a:'):
-            # indicates asynchronous task
-            tag = tag[2:]
-            self.asynchronous = True
-            self.cycling = False
-            self.tag = AsyncTag(tag)
+        try:
+            ct(tag)
+        except CycleTimeError,x:
+            # nope: is it an async integer tag?
+            try:
+                int( tag )
+            except ValueError:
+                # nope: not task ID, date time, or TAG
+                raise InvalidTaskIDError, id
+            else:
+                self.asynchronous = True
+                self.cycling = False
+                self.tag = AsyncTag(tag)
         else:
             # cycling task
             self.cycling = True
@@ -190,7 +199,7 @@ if __name__ == "__main__":
 
     # GOOD
     try:
-        foo = TaskID( "foo%a:1") 
+        foo = TaskID( "foo%1") 
     except TaskIDError, x:
         print x
     else:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -35,6 +35,7 @@ from cylc import cylc_pyro_client
 from cylc.port_scan import SuiteIdentificationError
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
+from cylc.strftime import strftime
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 
@@ -44,14 +45,14 @@ parser = cop( """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
-'--align' is not used. Being a passive monitor that cannot intervene in
-a suite's operation, it is allowed to monitor suites owned by others
-and/or running on remote hosts.""", pyro=True )
+'--align' is not used.""", pyro=True )
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
         "is only useful for small suites.",
         action="store_true", default=False, dest="align_columns" )
+
+parser.remove_option("-f" ) # don't need force
 
 ( options, args ) = parser.parse_args()
 
@@ -72,7 +73,8 @@ try:
         # connect to remote state summary object
         try: 
             proxy = cylc_pyro_client.client( suite, pphrase,
-                    options.owner, options.host).get_proxy( 'state_summary' )
+                    options.owner, options.host,
+                    options.pyro_timeout, None, options.verbose ).get_proxy( 'state_summary' )
         except SecurityError, x:
             if options.debug:
                 raise
@@ -129,8 +131,8 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
-            rate = glbl[ 'simulation_clock_rate' ]
-            simulation_mode = glbl[ 'simulation_mode' ]
+            rate = glbl[ 'clock_rate' ]
+            run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
             will_pause_at = glbl['will_pause_at']
@@ -224,7 +226,7 @@ try:
             # MONITOR HEADER and CURRENT TIME
             blit = []
             blitlines = {}
-            # SUITE NAME, NUMBER OF TASKS, SIMULATION MODE
+            # SUITE NAME, NUMBER OF TASKS, RUN MODE
             foo = header
             bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
@@ -236,9 +238,9 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + strftime( dt, "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            if simulation_mode:
+            if run_mode != 'live':
                 foo = 'SIMULATION:'
                 bar = str(rate) + ' real seconds = 1 hour' 
                 baz = header

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,66 +16,86 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.remote import remrun
-remrun().execute()
-
 import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
 from cylc.config import config
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
 
-parser = cop( usage = """cylc [info] get-config REG [ITEMS...]
+def prdict( dct, level=0, indent=0, prefix='' ):
+    for key,val in dct.iteritems():
+        if isinstance( val, dict ):
+            print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
+            prdict( val, level=level+1, indent=indent+1, prefix=prefix)
+        else:
+            print prefix + '   '*indent + str(key) + ' = ' + str(val) 
 
-Print configuration items parsed from a suite definition (including any 
-defaults not explicitly set in the suite.rc file). This enables scripts
-to control suites or process their output without assuming directory
-locations and so on.
+parser = cop( usage = """cylc [info] get-config [OPTIONS] REG [ITEMS...]
 
-Config items containing spaces must be quoted. If the requested config
-item is not a single value the corresponding internal data structure (a
-nested Python dict) will be printed verbatim.
+Print configuration settings from a parsed suite definition, after
+runtime inheritance processing and including default values for items
+that are not explicitly set in the suite.rc file. This command enables,
+for example, automated handling of suites and suite output without
+assuming directory locations and the like.
 
-#________________________________________________________________EXAMPLE
-# excerpt from a suite definition registered as foo.bar.baz:
-title = local area implementation of modelX
-[cylc]
-    [[lockserver]]
-        enable = True
-[runtime]
-    [[modelX]]
-        command scripting = run-model.sh
-        [[[environment]]]
-            OUTPUT_DIR=/oper/live/modelX/output
-#_______________________________________________________________________
+Config items containing spaces must be quoted on the command line. If
+a single item is requested only its value will be printed; otherwise the 
+full nested structure below the requested config section is printed. 
 
-$ cylc get-config foo.bar.baz title
-$ local area implementation of modelX
+Example, from a suite registered as foo.bar.baz:
+|# SUITE.RC
+|[runtime]
+|    [[modelX]]
+|        [[[environment]]]
+|            FOO = foo
+|            BAR = bar
 
-$ cylc get-config foo.bar.baz cylc lockserver enable
-$ True
+$ cylc get-config foo.bar.baz runtime modelX environment FOO
+foo
 
-$ cylc get-config foo.bar.baz runtime modelX environment OUTPUT_DIR
-$ /oper/live/modelX/output""", 
+$ cylc get-config foo.bar.baz runtime modelX environment
+FOO = foo
+BAR = bar
+
+$ cylc get-config foo.bar.baz runtime modelX
+...
+work directory = $CYLC_SUITE_DEF_PATH/share
+[[[environment]]]
+    FOO = foo
+    BAR = bar
+...""",
     argdoc=[('REG', 'Suite name'), 
         ('[ITEMS...]', 'suite.rc section and item hierarchy')])
 
+parser.add_option( "-t", "--tasks",
+        help="Print configured task list.",
+        action="store_true", default=False, dest="tasks" )
+
 parser.add_option( "-d", "--directories",
-        help="Print all configured suite directory paths.",
+        help="Print configured suite directory paths.",
         action="store_true", default=False, dest="dpaths" )
 
 parser.add_option( "-m", "--mark-output",
         help="Prefix output lines with '!cylc!' to aid "
-        "in automatic parsing (output can be contaminated by "
+        "in automated parsing (output can be contaminated by "
         "stdout from login scripts, for example, for remote "
         "invocation).",
         action="store_true", default=False, dest="markoutput" )
 
+parser.add_option( "-p", "--python",
+        help="Write out the config data structure in Python native format.",
+        action="store_true", default=False, dest="pnative" )
+
 ( options, args ) = parser.parse_args()
+owner = options.db_owner
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
-    config = config( suite, suiterc )
+    config = config( suite, suiterc, owner )
 except Exception,x:
     if options.debug:
         raise
@@ -84,13 +104,13 @@ except Exception,x:
 if options.dpaths:
     print "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
     print "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
-    print "JOB SUBMISSION LOG DIRECTORIES:"
+    print "TASK LOG DIRECTORIES:"
     logdirs = {}
-    root_ldir = config['runtime']['root']['job submission']['log directory']
+    root_ldir = config['runtime']['root']['log directory']
     ldirs = [root_ldir]
     logdirs['root'] = root_ldir
     for ns in config['runtime'].keys():
-        dir = config['runtime'][ns]['job submission']['log directory']
+        dir = config['runtime'][ns]['log directory']
         if dir not in ldirs:
             ldirs.append(dir)
             logdirs[ns] = dir
@@ -101,18 +121,28 @@ if options.dpaths:
         print "  + " + ns + ":", logdirs[ns]
     sys.exit(0)
 
-res = config
-got = []
-for item in args[1:]:
-    try:
-        res = res[item]
-    except KeyError:
-        print >> sys.stderr, 'ERROR, no such item: ' + ' -> '.join( got ) + ' -> ' + item
-        sys.exit(1)
-    got.append(item)
-
 if options.markoutput:
-    print '!cylc!' + str(res)
+    prefix = '!cylc!'
 else:
-    print res
-    
+    prefix = ''
+
+if options.tasks:
+    for task in config.get_task_name_list():
+        print prefix + task
+    sys.exit(0)
+
+res = config
+try:
+    for item in args[1:]:
+        res = res[item]
+except KeyError, x:
+    raise SystemExit( 'ERROR, item not found: ' + str(x) )
+
+if isinstance( res, dict ):
+    if options.pnative:
+        print res
+    else:
+        prdict( res, level=len(args[1:]), prefix=prefix)
+else:
+    print prefix + str(res)
+

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -47,7 +47,7 @@ class InvalidPassphraseError( SecurityError ):
     pass
 
 class passphrase(object):
-    def __init__( self, suite, owner, host, verbose=False ):
+    def __init__( self, suite, owner=user, host=hostname, verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -106,7 +106,17 @@ that do not actually need the suite definition directory to be installed.
                 # if an explicit location is given, the file must exist
                 raise SecurityError, 'ERROR, file not found on ' + user + '@' + hostname + ': ' + pfile
 
-        # 2/ running tasks: suite definition directory (from the task execution environment)
+        # 2/ cylc commands with suite definition directory from local registration
+        if not self.location and suitedir:
+            pfile = os.path.join( suitedir, 'passphrase' )
+            if os.path.isfile( pfile ):
+                self.set_location( pfile )
+
+        # (2 before 3 else sub-suites load their parent suite's
+        # passphrase on start-up because the "cylc run" command runs in
+        # a parent suite task execution environment).
+
+        # 3/ running tasks: suite definition directory (from the task execution environment)
         if not self.location:
             try:
                 # Test for presence of task execution environment
@@ -147,12 +157,6 @@ that do not actually need the suite definition directory to be installed.
                         if os.path.isfile( pfile ):
                             self.set_location( pfile )
 
-        # 3/ cylc commands with suite definition directory from local registration
-        if not self.location and suitedir:
-            pfile = os.path.join( suitedir, 'passphrase' )
-            if os.path.isfile( pfile ):
-                self.set_location( pfile )
-
         # 4/ other allowed locations, as documented above
         if not self.location:
             locations = []
@@ -165,7 +169,7 @@ that do not actually need the suite definition directory to be installed.
                 locations.append( os.path.join( os.environ['HOME'], '.cylc', short_host, self.owner, self.suite, 'passphrase' ))
             locations.append( os.path.join( os.environ['HOME'], '.cylc', self.host, self.suite, 'passphrase' ))
             if short_host != self.host:
-                locations.append( os.path.join( os.environ['HOME'], '.cylc', self.short_host, self.suite, 'passphrase' ))
+                locations.append( os.path.join( os.environ['HOME'], '.cylc', short_host, self.suite, 'passphrase' ))
             locations.append( os.path.join( os.environ['HOME'], '.cylc', self.suite, 'passphrase' ))
             for pfile in locations:
                 if os.path.isfile( pfile ):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -54,11 +54,8 @@ class Daily( cycler ):
         if self.step <= 0:
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
 
-        # default minimum runahead limit in hours
-        self.minimum_runahead_limit = 24 * self.step
-
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
+    def get_min_cycling_interval( self ):
+        return self.step
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
@@ -108,3 +105,8 @@ class Daily( cycler ):
                 res = False
         return res
  
+    def adjust_state( self, offset ):
+        foo = ct( self.anchorYYYYMMDD )
+        foo.decrement( days=int(offset) )
+        self.anchorYYYYMMDD = foo.get()[0:8]
+

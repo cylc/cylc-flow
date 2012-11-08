@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import sys, re
 
 class TriggerXError( Exception ):
     def __init__( self, msg ):
@@ -73,14 +73,19 @@ where output x of foo may also have an offset:
             self.intrinsic_offset = int(offset)
     def set_type( self, type ):
         if type not in [ 'started', 'succeeded', 'failed' ]:
-            raise SystemExit( 'Illegal trigger type:' + type )
+            raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
         self.type = type
     def set_offset( self, offset ):
         self.evaluation_offset = int( offset )
     def get( self, ctime, cycler ):
         if self.async_oneoff:
             # oneoff async
-            preq = self.name + '%1' + ' ' + self.type
+            if self.msg:
+                # if oneoff async tasks declare an explicit output, it is
+                # just the given message (no cycle time offsetting to do).
+                preq = self.msg
+            else:
+                preq = self.name + '%1' + ' ' + self.type
         elif self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
@@ -93,6 +98,11 @@ where output x of foo may also have an offset:
                     ctime = cycler.offset( ctime, - self.intrinsic_offset )
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
+                # pre-4.5.0 backward compatibility:
+                if re.search( '<CYLC_TASK_CYCLE_TIME.*', preq ):
+                    print >> sys.stderr, 'ERROR, output message time format change in cylc-4.5.0:'
+                    print >> sys.stderr, '   <CYLC_TASK_CYCLE_TIME+n> should now be [T+n]'
+                    raise TriggerXError, 'Aborting (Trigger Error)'
                 preq = re.sub( '\[\s*T\s*.*?\]', ctime, preq )
             else:
                 # implicit output

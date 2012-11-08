@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -56,12 +56,15 @@ class remrun( object ):
             self.is_remote = False
 
     def execute( self, force_required=False, env={}, path=[] ):
+        # returns False if remote re-invocation is not needed,
+        # True it is is needed and executes successfully
+        # otherwise aborts.
         if not self.is_remote:
-            return
+            return False
 
         if force_required and \
                 '-f' not in sys.argv[1:] and '--force' not in sys.argv[1:]:
-           sys.exit("FORCE REQUIRED")
+                    sys.exit("ERROR: force (-f) required for non-interactive command invocation.")
 
         name = os.path.basename(sys.argv[0])[5:] # /path/to/cylc-foo => foo
 
@@ -83,10 +86,10 @@ class remrun( object ):
             path.append('$PATH')
             env['PATH'] = ':'.join(path)
 
-        print >> sys.stderr, "Remote command re-invocation for", user_at_host
+        print "Remote command re-invocation for", user_at_host
         if self.verbose:
             print '|' + ' '.join(command) + '\\'
-            print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done;' + '\\'
+            print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done;' + '\\'
             if len( env.keys() ) != 0:
                 print '|  %s ' % (' '.join( item + '=' + value for item, value in env.items())) + '\\'
             print '|  cylc %s %s' % ( name, ' '.join( '"' + arg + '"' for arg in self.args))
@@ -94,7 +97,7 @@ class remrun( object ):
         try:
             popen = subprocess.Popen( command, stdin=subprocess.PIPE )
             popen.communicate( """
-for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done
+for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done
 %s cylc %s %s""" % (' '.join( item + '=' + value for item, value in env.items()),\
             name, ' '.join( '"' + arg + '"' for arg in self.args)) )
             # above: args quoted to avoid interpretation by the shell, 
@@ -107,6 +110,6 @@ for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE; done
         except OSError, e:
             sys.exit("ERROR: remote command invocation failed %s" % str(e))
         else:
-            print >> sys.stderr, 'Remote command re-invocation done'
-            sys.exit(0)
+            print "Remote command re-invocation done"
+            return True
 

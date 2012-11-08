@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,12 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import os,sys
 from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb, RegistrationError
 
 from cylc.remote import remrun
-remrun().execute()
+if remrun().execute():
+    sys.exit(0)
 
 parser = cop( usage = """cylc [db] get-directory REG
 

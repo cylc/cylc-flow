@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    import Pyro.core
+except ImportError, x:
+    raise SystemExit("ERROR: Pyro is not installed")
+
 import sys
-import Pyro.core
 from optparse import OptionParser
 from hostname import hostname
 from time import sleep
@@ -26,25 +30,30 @@ from passphrase import passphrase
 from owner import user
 
 class client( object ):
-    def __init__( self, suite, pphrase=None, owner=user, host=hostname, port=None ):
+    def __init__( self, suite, pphrase=None, owner=user, host=hostname, pyro_timeout=None, port=None, verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
-
-        if pphrase:
-            self.pphrase = pphrase
+        self.verbose = verbose
+        if pyro_timeout:
+            self.pyro_timeout = float(pyro_timeout)
         else:
-            # TO DO: IS THIS NECESSARY - called from gcylc
-            # get the suite passphrase
-            self.pphrase = passphrase( suite, owner, host).get( None, None )
+            self.pyro_timeout = None
+
+        #if pphrase:
+        self.pphrase = pphrase
+        #else:
+        #    # TO DO: IS THIS NECESSARY - called from gcylc
+        #    # get the suite passphrase
+        #    self.pphrase = passphrase( suite, owner, host).get( None, None )
 
     def get_proxy( self, target ):
         # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, silent=True )
+            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, self.pyro_timeout, self.verbose )
         else:
-            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, silent=True )
+            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, self.pyro_timeout, self.verbose )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target

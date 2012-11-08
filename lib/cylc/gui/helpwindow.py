@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -359,9 +359,9 @@ def update_tb( tb, line, tags = None ):
     else:
         tb.insert( tb.get_end_iter(), line )
 
-def userguide( w, graph=False ):
+def userguide( w ):
     window = gtk.Window()
-    window.set_title( "Cylc Suite Control Quick Guide" )
+    window.set_title( "gcontrol Quick Guide" )
     window.set_size_request(600, 600)
     window.set_icon( get_icon() )
 
@@ -389,51 +389,37 @@ def userguide( w, graph=False ):
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-    update_tb( tb, "Suite Control GUI Quick Guide", [bold, blue] )
+    update_tb( tb, "gcontrol Suite Control GUI Quick Guide", [bold, blue] )
 
-    if not graph:
-        update_tb( tb, "\n\nThis is a real time suite control "
-            "and monitoring application for cylc, traditional interface. "
-            "See 'cylc help' for the equivalent command line functionality." )
+    update_tb( tb, "\n\nReal time cylc suite control and monitoring. "
+            "See also 'cylc help' on the command line." )
 
-        update_tb( tb, "The upper 'light panel' "
-            "provides a quick visual overview of the current state "
-            "of the suite, with colours to indicate task state: "
-            "blue=waiting, orange=submitted, green=running, "
-            "gray=succeeded, red=failed, yellow=held. "
-            "The lower panel is a cycle-time tree view "
-            "with more detail on each task. You can filter on task state or task "
-            "name to quickly find the tasks you're interested in. " )
-        update_tb( tb, 
-            "Right-click on tasks in the lower panel for task control "
+    update_tb( tb, "\n\ngcontrol can display up to two of the following "
+            "suite views at once: " )
+
+    update_tb( tb, "dot ", [bold] )
+    
+    update_tb( tb, "(a quick visual overview ordered by cycle time), " )
+    
+    update_tb( tb, "text ", [bold] )
+
+    update_tb( tb, "(with task message and timing information, and optional "
+            "collapsible task families), ")
+
+    update_tb( tb, "graph ", [bold] )
+    
+    update_tb( tb, " (showing the dependency structure of the suite, with "
+            "collapsible task families)." )
+    
+    update_tb( tb, "\n\nDifferent task colors ", [bold] )
+    
+    update_tb( tb, "represent different task states of live task proxies in the suite. "
+            "See 'gcontrol --help' for how to select or define color palettes." )
+
+    update_tb( tb, 
+            "\n\nRight-click on tasks in any view for task control "
             "and interrogation options.", [bold] )
 
-    else:
-        update_tb( tb, "\n\nThis is a real time suite control "
-            "and monitoring application for cylc, using the new dependency "
-            "graph interface. "
-            "See 'cylc help' for the equivalent command line functionality. " )
-
-        update_tb( tb, "Graph node colours indicate "
-            "task state. The configured suite dependency "
-            "graph, with off-white nodes, is used as a base for "
-            "the displayed nodes. " )
-        update_tb( tb,  "Left-click to center the graph on a "
-            "node; left-drag to pan; Zoom buttons, mouse-wheel, or "
-            "ctrl-left-drag to zoom in and out, and shift-left-drag to "
-            "zoom in on a box. "
-            "Right-click on nodes for task control "
-            "and interrogation options. ", [bold] )
-        update_tb( tb, 
-            "NOTE that small changes in the task population as the suite evolves "
-            "may cause large jumps in the graph layout, particularly for large "
-            "complex suites, because the "
-            "graphviz layout engine performs a global optimization "
-            "each time the graph is plotted. The 'DIS|REconnect' "
-            "toggle button is provided to freeze the action "
-            "temporarily. The graph timezoom and tree-collapse " 
-            "mechanism can also be used to focus on particular parts of "
-            "a suite that you are interested in." )
 
     update_tb( tb, "\n\nMenu: File > ", [bold, red] )
     update_tb( tb, "\n o Exit: ", [bold])
@@ -454,19 +440,14 @@ def userguide( w, graph=False ):
     update_tb( tb, "\n o View Suite Info: ", [bold])
     update_tb( tb, "View the suite's description and task list." )
 
-    if graph:
-        update_tb( tb, "\n o Expand All Subtrees ", [bold])
-        update_tb( tb, "Expand any graph subtrees that you have "
-                "collapsed via the right-click popup menu.")
+    update_tb( tb, "\n o (Graph View) Time Range Focus ", [bold])
+    update_tb( tb, "Restrict display to a specified range of cycle times.")
 
-        update_tb( tb, "\n o Time Range Focus ", [bold])
-        update_tb( tb, "Restrict display to a specified range of cycle times.")
+    update_tb( tb, "\n o (Graph View) Toggle Graph Key ", [bold])
+    update_tb( tb, "Show or remove the dependency graph color key.")
 
-        update_tb( tb, "\n o Toggle Graph Key ", [bold])
-        update_tb( tb, "Show or remove the dependency graph color key.")
-
-        update_tb( tb, "\n o Toggle Crop Base Graph ", [bold])
-        update_tb( tb, "This controls whether or not the suite base "
+    update_tb( tb, "\n o (Graph View) Toggle Crop Base Graph ", [bold])
+    update_tb( tb, "This controls whether or not the suite base "
                 "graph (off-white coloured nodes) is plotted for tasks "
                 "that are not currently present in the suite. Not plotting "
                 "them may result in several apparently disconnected "
@@ -474,14 +455,31 @@ def userguide( w, graph=False ):
                 "if there are tasks with widely separated cycle times "
                 "present." )
 
-    else:
-        update_tb( tb, "\n o Toggle Task Names ", [bold])
-        update_tb( tb, "Show or remove task names in the upper \"light panel\" display.")
+    update_tb( tb, "\n o Toggle Task Names ", [bold])
+    update_tb( tb, "Show or remove task names in the upper \"light panel\" display.")
 
-        update_tb( tb, "\n o Toggle Auto-Expand Tree ", [bold])
-        update_tb( tb, "If on, any cycle times containing submitted, running, or "
+    update_tb( tb, "\n o Toggle Auto-Expand Tree ", [bold])
+    update_tb( tb, "If on, any cycle times containing submitted, running, or "
                 "failed tasks will be automatically expanded whenever the suite "
                 "state is updated.")
+
+    update_tb( tb, 
+            "\n\nGraph view controls: ", [bold, red] )
+
+    update_tb( tb,  "Left-click to center the graph on a "
+            "node; left-drag to pan; Zoom buttons, mouse-wheel, or "
+            "ctrl-left-drag to zoom in and out, and shift-left-drag to "
+            "zoom in on a box. "
+            "Right-click on nodes for task control "
+            "and interrogation options. ", [bold] )
+
+    update_tb( tb, 
+            "\n\nNOTE that the graph view may jump around as the suite evolves "
+            "because the graphviz layout engine performs a new global optimization "
+            "each time the graph is plotted. The 'DIS|REconnect' "
+            "toggle button is provided to freeze the action temporarily. "
+            "Time-zoom, family grouping, and task-filtering can also be used "
+            "to focus on particular parts of a suite." )
 
     update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
     update_tb( tb, "\n o Run Suite: ", [bold])
@@ -505,50 +503,48 @@ def userguide( w, graph=False ):
     update_tb( tb, "Change the suite's configured runahead limit at "
             "run time." )
 
-    if not graph:
-        update_tb( tb, "\n\nTask Tree View Panel: Right-Click Popup Menu > ", [bold, red] )
-    else:
-        update_tb( tb, "\n\nGraph Node: Right-Click Popup Menu > ", [bold, red] )
+    update_tb( tb, "\n\nRight-Click Task Popup Menu > ", [bold, red] )
             
-        update_tb( tb, "\n o Collapse Subtree: ", [bold])
-        update_tb( tb, "Collapse everything downstream of this task into a single node." )
-
-        update_tb( tb, "\n o Focus On YYYYMMDDHH: ", [bold])
-        update_tb( tb, "Restrict the graph to just the cycle time of this node (task)." )
+    update_tb( tb, "\n o (Graph View) Focus On YYYYMMDDHH: ", [bold])
+    update_tb( tb, "Restrict the graph to just the cycle time of this node (task)." )
  
-        update_tb( tb, "\n o Focus On Range: ", [bold])
-        update_tb( tb, "Restrict the graph to a specified range of cycle times." )
+    update_tb( tb, "\n o (Graph View) Focus On Range: ", [bold])
+    update_tb( tb, "Restrict the graph to a specified range of cycle times." )
 
-        update_tb( tb, "\n o Focus Reset: ", [bold])
-        update_tb( tb, "Reset any cycle time focusing and show the whole graph." )
+    update_tb( tb, "\n o (Graph View) Focus Reset: ", [bold])
+    update_tb( tb, "Reset any cycle time focusing and show the whole graph." )
   
-    update_tb( tb, "\n o View Job Script: ", [bold])
-    update_tb( tb, "View the script used to submit this task to run." )
-    update_tb( tb, "\n o View Output: ", [bold])
-    update_tb( tb, "View task stdout and stderr logs in real time." )
-    update_tb( tb, "\n o View Task Info: ", [bold])
-    update_tb( tb, "View a task's description and the current state "
+    update_tb( tb, "\n o View ", [bold])
+    update_tb( tb, "\n     - stdout log: ", [bold])
+    update_tb( tb, "View the task's standard output log" )
+    update_tb( tb, "\n     - stderr log: ", [bold])
+    update_tb( tb, "View the task's standard error log" )
+    update_tb( tb, "\n     - job script: ", [bold])
+    update_tb( tb, "View the script generated to run this task" )
+    update_tb( tb, "\n     - prereqs & outputs: ", [bold])
+    update_tb( tb, "View task description and the current state "
             "of its prerequisites and outputs.")
-    update_tb( tb, "\n o View State: ", [bold])
-    update_tb( tb, "View the current state of a task's prerequisites "
-            "and outputs.")
+    update_tb( tb, "\n     - run 'cylc show': ", [bold])
+    update_tb( tb, "Run the 'cylc show' command on this task.")
     update_tb( tb, "\n o Trigger: ", [bold])
     update_tb( tb, "Set a task's prerequisites satisfied "
             "and, for clock-triggered tasks, ignore the trigger time. "
             "This will cause the task to trigger immediately (NOTE: "
             "if the suite is held (paused) the task will trigger when "
             "the hold is released)." )
-    update_tb( tb, "\n o Reset to 'ready': ", [bold])
+    update_tb( tb, "\n o Reset State: ", [bold])
+    update_tb( tb, "\n     - 'ready': ", [bold])
     update_tb( tb, "Set a task's prerequisites satisfied."
             "This is equivalent to 'Trigger' for non clock-triggered "
             "tasks (NOTE: if the suite is held (paused) the task will "
             "trigger when the hold is released)." )
-    update_tb( tb, "\n o Reset to 'waiting': ", [bold])
+    update_tb( tb, "\n     - 'waiting': ", [bold])
     update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
-    update_tb( tb, "\n o Reset to 'succeeded': ", [bold])
+    update_tb( tb, "\n      - 'succeeded': ", [bold])
     update_tb( tb, "Set all of a task's outputs completed." )
-    update_tb( tb, "\n o Reset to 'failed': ", [bold])
+    update_tb( tb, "\n      - 'failed': ", [bold])
     update_tb( tb, "Put the task in the 'failed' state." )
+
     update_tb( tb, "\n o Force Spawn: ", [bold])
     update_tb( tb, "Force the task to spawn a successor if it hasn't done so already." )
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -24,15 +24,17 @@ from stateview import lupdater
 from gcapture import gcapture_tmpfile
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
+from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
 
 class ControlLED(object):
     """
 LED suite control interface.
     """
-    def __init__(self, cfg, info_bar, get_right_click_menu, log_colors):
+    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors):
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -49,14 +51,111 @@ LED suite control interface.
         types = tuple( [gtk.gdk.Pixbuf]* (10 ))
         liststore = gtk.ListStore(*types)
         treeview = gtk.TreeView( liststore )
+        treeview.connect( 'button_press_event', self.on_treeview_button_pressed )
         sw.add( treeview )
 
         main_box.pack_start( sw, expand=True, fill=True )
         
-        self.t = lupdater( self.cfg, treeview, self.info_bar )
+        self.t = lupdater( self.cfg, treeview, self.info_bar, self.usercfg )
         self.t.start()
 
         return main_box
+
+    def on_treeview_button_pressed( self, treeview, event ):
+        # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
+        if event.button != 3:
+            return False
+        # the following sets selection to the position at which the
+        # right click was done (otherwise selection lags behind the
+        # right click):
+        x = int( event.x )
+        y = int( event.y )
+        time = event.time
+        pth = treeview.get_path_at_pos(x,y)
+
+        if pth is None:
+            return False
+
+        path, col, cellx, celly = pth
+        r_iter = treeview.get_model().get_iter( path )
+
+        column_index = treeview.get_columns().index(col)
+        if column_index == 0:
+            return False
+        name = self.t.task_list[column_index - 1]
+        ctime_column = treeview.get_model().get_n_columns() - 1
+        ctime = treeview.get_model().get_value( r_iter, ctime_column )
+
+        task_id = name + '%' + ctime
+
+        is_fam = (name in self.t.families)
+
+        menu = self.get_right_click_menu( task_id, task_is_family=is_fam )
+
+        sep = gtk.SeparatorMenuItem()
+        sep.show()
+        menu.append( sep )
+
+        toggle_item = gtk.CheckMenuItem( 'Toggle Hide Task Headings' )
+        toggle_item.set_active( self.t.should_hide_headings )
+        menu.append( toggle_item )
+        toggle_item.connect( 'toggled', self.toggle_headings )
+        toggle_item.show()
+
+        group_item = gtk.CheckMenuItem( 'Toggle Family Grouping' )
+        group_item.set_active( self.t.should_group_families )
+        menu.append( group_item )
+        group_item.connect( 'toggled', self.toggle_grouping )
+        group_item.show()
+        
+        menu.popup( None, None, None, event.button, event.time )
+
+        # TO DO: popup menus are not automatically destroyed and can be
+        # reused if saved; however, we need to reconstruct or at least
+        # alter ours dynamically => should destroy after each use to
+        # prevent a memory leak? But I'm not sure how to do this as yet.)
+
+        return True
+
+    def check_filter_entry( self, e ):
+        ftxt = self.filter_entry.get_text()
+        self.t.filter = self.filter_entry.get_text()
+        self.t.update()
+        self.t.update_gui()
+
+    def toggle_grouping( self, toggle_item ):
+        """Toggle grouping by visualisation families."""
+        if isinstance( toggle_item, gtk.ToggleToolButton ):
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if group_on:
+                tip_text = "Dot View - Click to ungroup families"
+            else:
+                tip_text = "Dot View - Click to group tasks by families"
+            self._set_tooltip( toggle_item, tip_text )
+            self.group_menu_item.set_active( group_on )
+        else:
+            group_on = toggle_item.get_active()
+            if group_on == self.t.should_group_families:
+                return False
+            self.t.should_group_families = group_on
+            if toggle_item != self.group_menu_item:
+                self.group_menu_item.set_active( group_on )
+            self.group_toolbutton.set_active( group_on )
+        self.t.update()           
+        self.t.update_gui()
+        return False
+
+    def toggle_headings(self, toggle_item):
+        headings_off = toggle_item.get_active()
+        if headings_off == self.t.should_hide_headings:
+            return False
+        self.t.should_hide_headings = headings_off
+        if toggle_item != self.headings_menu_item:
+            self.headings_menu_item.set_active( headings_off )
+        self.t.set_led_headings()
 
     def stop(self):
         self.t.quit = True
@@ -66,10 +165,48 @@ LED suite control interface.
         self.quitters.remove( lv )
         w.destroy()
 
+    def _set_tooltip( self, widget, tip_text ):
+        # Convenience function to add hover over text to a widget.
+        tip = gtk.Tooltips()
+        tip.enable()
+        tip.set_tip( widget, tip_text )
+
     def get_menuitems( self ):
         """Return the menuitems specific to this view."""
-        return []
+        items = []
+        self.headings_menu_item = gtk.CheckMenuItem( 'Toggle _Hide Task Headings' )
+        self.headings_menu_item.set_active( self.t.should_hide_headings )
+        items.append( self.headings_menu_item )
+        self.headings_menu_item.show()
+        self.headings_menu_item.connect( 'toggled', self.toggle_headings )
+        
+        self.group_menu_item = gtk.CheckMenuItem( 'Toggle _Family Grouping' )
+        self.group_menu_item.set_active( self.t.should_group_families )
+        items.append( self.group_menu_item )
+        self.group_menu_item.connect( 'toggled', self.toggle_grouping )
+        return items
 
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""
-        return []
+        items = []
+
+        self.group_toolbutton = gtk.ToggleToolButton()
+        self.group_toolbutton.set_active( self.t.should_group_families )
+        g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
+        self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
+        self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
+        items.append( self.group_toolbutton )
+        
+        self.filter_entry = EntryTempText()
+        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        self.filter_entry.set_temp_text( "filter" )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(self.filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name")
+        items.append(filter_toolitem)
+
+        return items

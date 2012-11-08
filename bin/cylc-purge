@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@ import sys
 if '--use-ssh' in sys.argv[1:]: 
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
-    remrun().execute( force_required=True )
+    if remrun().execute( force_required=True ):
+        sys.exit(0)
 
-import re
 from cylc.prompt import prompt
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
@@ -53,13 +53,13 @@ prerequisites get satisfied to "succeeded"; then it negotiates
 dependencies again, and so on until the stop cycle is reached or nothing
 new triggers. Finally it marks "virtually triggered" tasks for removal.
 Consequently:
- * Dependent tasks will only be identified as such if they have already
-   spawned into the root cycle, otherwise they will be missed by the
-   purge. To avoid this, wait until all tasks that depend on the root
-   have caught up to it before purging.
- * If you purge a task that has already finished, only it and its own
-   successors will be purged (other downstream tasks will already have
-   triggered if they were able to).
+ * Dependent tasks will only be identified as such, and purged, if they
+   have already spawned into the root cycle - so let them catch up first.
+ * You can't purge a tree of tasks that has already triggered, because
+   the algorithm relies on detecting new triggering.
+Note also the suite runahead limit must be large enough to bridge the
+purge gap or runahead-held tasks may prevent the purge completing fully.
+
 [development note: post cylc-3.0 we could potentially use the suite
 graph to determine downstream tasks to remove, without doing this
 internal triggering simulation.]""",
@@ -80,18 +80,18 @@ except TaskIDError, x:
     raise SystemExit(x)
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
- 
-if re.match( '^a:', stoptag ):
-    stop = stoptag[2:]
+
+stopid = 'junk%' + stoptag
+try:
+    tid = TaskID( stopid )
+except TaskIDError, x:
+    raise SystemExit( 'ERROR, invalid purge stop tag: ' + stoptag )
 else:
-    try:
-        stop = ct(stoptag).get()
-    except CycleTimeError,x:
-        raise SystemExit(x)
+    junk, stop = tid.splitstr()
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host ).get_proxy( 'remote' )
+            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

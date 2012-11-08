@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -47,27 +47,32 @@ class HoursOfTheDay( cycler ):
                 self.valid_hours.append( int(arg) )
             self.valid_hours.sort()
 
-        # default minimum runahead limit in hours: the largest interval
-        # between successive cycle times.
-        if len(self.valid_hours) == 1:
-            mrl = 24
-        else:
-            prev = self.valid_hours[0]
-            mrl = 0
-            for h in self.valid_hours[1:]:
-                diff = int(h) - int(prev)
-                prev = h
-                if diff > mrl:
-                    mrl = diff
-            # now check the interval between the last and first valid
-            # hours (i.e. crossing the day boundary).
-            diff = 24 - prev + self.valid_hours[0]
-            if diff > mrl:
-                mrl = diff
-        self.minimum_runahead_limit = mrl
+        # smallest interval between successive cycle times.
+        prev = self.valid_hours[0]
+        sml = 24
+        for h in self.valid_hours[1:]:
+            diff = int(h) - int(prev)
+            prev = h
+            if diff < sml:
+                sml = diff
+        # now check the interval between the last and first valid
+        # hours (i.e. crossing the day boundary).
+        diff = 24 - prev + self.valid_hours[0]
+        if diff < sml:
+            sml = diff
+        self.smallest_interval = sml
 
-    def get_def_min_runahead( self ):
-        return self.minimum_runahead_limit
+    def get_min_cycling_interval( self ):
+        return self.smallest_interval
+
+    def adjust_state( self, offset ):
+        adj_hours = []
+        for hour in self.valid_hours:
+            adj = hour - int(offset)
+            if adj < 0:
+                adj = 24 + adj
+            adj_hours.append( adj )
+        self.valid_hours = adj_hours
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""

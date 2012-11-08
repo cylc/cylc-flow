@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -38,12 +38,6 @@ except OSError,x:
 from cylc.version import cylc_version
 from cylc.execute import execute
 from OrderedDict import OrderedDict
-
-# check Pyro is installed
-try:
-    import Pyro.constants
-except Exception, x:
-    raise SystemExit('ERROR: Pyro is not installed (or not accessible)')
 
 class CommandError( Exception ):
     """
@@ -168,11 +162,19 @@ argv = sys.argv[1:]
 args = []
 req_ver = None
 while argv:
-    arg = argv.pop(0)
+    try:
+        arg = argv.pop(0)
+    except IndexError:
+        # this won't happen
+        sys.exit( "Command line error" )
     if arg.startswith("--Version="):
         req_ver = arg.replace("--Version=", "")
     elif arg == "-V":
-        req_ver = argv.pop(0)
+        try:
+            req_ver = argv.pop(0)
+        except IndexError:
+            # this might happen
+            sys.exit("ERROR: -V requires an argument")
     else:
         args.append(arg)
 
@@ -204,18 +206,19 @@ categories['admin'       ] = ['admin' ]
 categories['license'     ] = ['license', 'GPL' ]
  
 information_commands = OrderedDict()
-information_commands['gui'    ] = ['gui', 'gcylc' ]
+information_commands['gui'      ] = ['gui', 'gcylc' ]
 information_commands['list'     ] = ['list', 'ls' ]
 information_commands['dump'     ] = ['dump'       ]
+information_commands['cat-state'    ] = ['cat-state'      ]
 information_commands['show'     ] = ['show'       ]
-information_commands['log'      ] = ['log'        ]
+information_commands['cat-log'  ] = ['cat-log', 'log'     ]
 information_commands['documentation'   ] = ['documentation', 'browse']
 information_commands['monitor'  ] = ['monitor'  ]
-information_commands['nudge'    ] = ['nudge' ]
 information_commands['get-config'] = ['get-config' ]
 
 control_commands = OrderedDict()
-control_commands['gui'  ] = information_commands[ 'gui' ]
+control_commands['gui'      ] = information_commands[ 'gui' ]
+control_commands['gcontrol' ] = [ 'gcontrol' ]
 # NOTE: don't change 'run' to 'start' or the category [control]
 # becomes compulsory to disambiguate from 'cylc [task] started'.
 # Keeping 'start' as an alias however: 'cylc con start'.
@@ -232,6 +235,7 @@ control_commands['block'  ] = ['block' ]
 control_commands['unblock'] = ['unblock' ] 
 control_commands['reset'  ] = ['reset'  ]
 control_commands['nudge'  ] = ['nudge' ]
+control_commands['reload' ] = ['reload' ]
 control_commands['depend' ] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity' ] = ['set-verbosity' ]
@@ -239,6 +243,7 @@ control_commands['set-verbosity' ] = ['set-verbosity' ]
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars'] 
+utility_commands['random'       ] = ['random', 'rnd'] 
 utility_commands['housekeeping' ] = ['housekeeping'] 
 utility_commands['scp-transfer' ] = ['scp-transfer'] 
 utility_commands['lockserver'] = ['lockserver' ]
@@ -247,10 +252,11 @@ utility_commands['lockclient'] = ['lockclient', 'lc' ]
 hook_commands = OrderedDict()
 hook_commands['email-suite' ] = ['email-suite'] 
 hook_commands['email-task'  ] = ['email-task' ] 
+hook_commands['check-triggering'  ] = ['check-triggering' ] 
 
 admin_commands = OrderedDict()
 admin_commands['test-db'     ] = [ 'test-db']
-admin_commands['test-suite'  ] = [ 'test-suite']
+admin_commands['test-battery'  ] = [ 'test-battery']
 admin_commands['import-examples' ] = ['import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
 
@@ -259,10 +265,10 @@ license_commands['warranty'  ] = [ 'warranty']
 license_commands['conditions'] = [ 'conditions']
 
 database_commands = OrderedDict()
-database_commands['gui'     ] = information_commands['gui']
+database_commands['gui'       ] = information_commands['gui']
 database_commands['register'  ] = [ 'register' ]
 database_commands['reregister'] = [ 'reregister','rename' ]
-database_commands['alias']      = [ 'alias' ]
+database_commands['alias'     ] = [ 'alias' ]
 database_commands['unregister'] = [ 'unregister' ]
 database_commands['copy'      ] = [ 'copy', 'cp' ]
 database_commands['print'     ] = [ 'print' ]
@@ -270,7 +276,7 @@ database_commands['get-directory' ] = [ 'get-directory' ]
 database_commands['refresh'   ] = [ 'refresh' ]
 
 preparation_commands = OrderedDict()
-preparation_commands['gui'   ] = information_commands['gui']
+preparation_commands['gui'     ] = information_commands['gui']
 preparation_commands['edit'    ] = [ 'edit'    ]
 preparation_commands['view'    ] = [ 'view'    ]
 preparation_commands['validate'] = [ 'validate'    ]
@@ -285,11 +291,12 @@ discovery_commands['ping'] = [ 'ping' ]
 discovery_commands['scan'] = [ 'scan' ]
 
 task_commands = OrderedDict()
-task_commands['submit'] = [ 'submit', 'single' ]
-task_commands['started'] = [ 'started', 'task-started' ]
-task_commands['message'] = [ 'message', 'task-message' ]
+task_commands['submit'   ] = [ 'submit', 'single' ]
+task_commands['started'  ] = [ 'started', 'task-started' ]
+task_commands['message'  ] = [ 'message', 'task-message' ]
 task_commands['succeeded'] = [ 'succeeded', 'task-succeeded' ]
-task_commands['failed'] = [ 'failed', 'task-failed' ]
+task_commands['failed'   ] = [ 'failed', 'task-failed' ]
+task_commands['broadcast' ] = [ 'broadcast' ]
 
 all_commands = OrderedDict()
 for dct in [ 
@@ -306,10 +313,15 @@ for dct in [
         all_commands[com] = dct[com]
 
 general_usage = """
-Cylc is a suite engine and metascheduler for weather and climate
-forecasting and related data processing. The cylc GUI is gcylc.
+Cylc ("silk") is a suite engine and metascheduler that specializes in 
+cycling weather and climate forecasting suites and related processing
+(but it can also be used for one-off workflows of non-cycling tasks).
 
-Version: cylc-"""+cylc_version+""" 
+Version """+cylc_version+""" 
+
+This is the Command Line Interface; the Graphical User Interface is
+"gcylc" (a.k.a. "cylc gui"). Control GUIs for particular suites can be
+invoked directly with "gcontrol SUITE" (a.k.a. "cylc gcontrol SUITE"). 
 
 USAGE:
   % cylc -v,--version                   # print cylc version
@@ -322,7 +334,6 @@ USAGE:
 
   % cylc help [CATEGORY] COMMAND        # print command help
   % cylc [CATEGORY] COMMAND help,--help # (ditto)
-  % cylc [CATEGORY] COMMAND -v          # verbose (not version!)
 
   % cylc [CATEGORY] COMMAND [options] SUITE [arguments]
   % cylc [CATEGORY] COMMAND [options] SUITE TASK [arguments]"""
@@ -343,23 +354,59 @@ catsum['utility'     ]   = "Cycle arithmetic and templating, housekeeping, etc."
 
 usage = general_usage + """
 
-Commands and categories can be abbreviated; use of categories is
-optional but they can disambiguate abbreviated commands:
+Commands and categories can both be abbreviated. Use of categories is
+optional, but they organize help and disambiguate abbreviated commands:
   % cylc control trigger SUITE TASK     # trigger TASK in SUITE
   % cylc trigger SUITE TASK             # ditto
   % cylc con trig SUITE TASK            # ditto
   % cylc c t SUITE TASK                 # ditto
-(these commands target a particular TASK in a particular SUITE).
 
-Suites are addressed by hierarchical names registered in your suite
-database, e.g. nwp.test.LAM1, nwp.test.LAM2, nwp.oper.global.
+SUITE NAMES AND DATABASES
+  Suites are addressed by hierarchical names (e.g. suite1, nwp.oper,
+nwp.test.LAM2, etc.) registered in a suite database that associates
+suite the names with suite definition directory locations. Your default
+database is located at $HOME/.cylc/DB. The '--db=' command option can be
+used to work with suites registered in other databases. You should
+be able to read and graph (etc.) another user's suite definitions, from
+their default database, with the '--db=u:USER' option (access is
+governed by normal filesystem permissions). 
 
-Tasks are identified by NAME%TAG where for cycling tasks TAG is a cycle
-time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is an
-integer (just '1' for one-off asynchronous tasks) preceded on the
-command line by "a:" (a:1).
+REMOTE COMMAND RE-INVOCATION BY SSH
+  If passwordless ssh is configured appropriately use of the '--host='
+and '--owner=' command options will result in most cylc commands being
+re-invoked on another host or user account. With the '--use-ssh' flag
+this also goes for suite control commands which normally use direct
+network RPC instead of re-invocation - see below.
 
-Here's how to drill down to usage help for a particular command:
+REMOTE SUITE CONTROL BY RPC (PYRO)
+  Cylc commands, GUIs, and tasks that interact with running suites use a
+network RPC protocol (Pyro) with passphrase authentication. The '--host'
+and '--owner' command options will target a suite running on another
+host or user account. The suite passphrase, generated in the suite
+definition directory at registration time, should be installed on a
+remote control host in one of the following locations:
+  1) $HOME/.cylc/<HOST>/<OWNER>/<SUITE>/passphrase,
+  2) $HOME/.cylc/<HOST>/<SUITE>/passphrase, or
+  3) $HOME/.cylc/<SUITE>/passphrase).
+  4) Or specify the location explicitly with '--p','--passphrase='.
+A running task first looks in the suite definition directory for the
+passphrase, then the above locations. Likewise a remote task checks
+the remote suite definition directory first, if one is configured.
+
+REMOVE SUITE CONTROL BY SSH RE-INVOCATION
+  If the network ports required by Pyro are not open you can use the
+'--use-ssh' flag to re-invoke suite control commands on the suite host.
+For remote tasks the same can be achieved, in the suite definition, by:
+  [runtime]->[[NAMESPACE]]->[[[remote]]]->'ssh messaging = True'
+then the passphrase is not needed on the remote host because the RPC
+connection is only made on the suite host (ssh keys are needed though).
+
+TASK IDENTIFICATION
+  Tasks are identified by NAME%TAG where for cycling tasks TAG is a
+cycle time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is
+an integer (just '1' for one-off asynchronous tasks).
+
+HOW TO DRILL DOWN TO COMMAND USAGE HELP:
   % cylc help           # list all available categories (this page)
   % cylc help prep      # list commands in category 'preparation'
   % cylc help prep edit # command usage help for 'cylc [prep] edit'
@@ -372,8 +419,8 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum[ 'test-db'    ] = '(ADMIN) Automated suite database test'
-comsum[ 'test-suite' ] = '(ADMIN) Automated cylc scheduler test'
+comsum[ 'test-db'    ] = '(ADMIN) Run an automated suite database test'
+comsum[ 'test-battery' ] = '(ADMIN) Run a battery of self-diagnosing test suites'
 comsum[ 'check-examples' ] = '(ADMIN) Check all example suites validate'
 comsum[ 'import-examples' ] = '(ADMIN) import example suites your user database'
 # license
@@ -398,13 +445,15 @@ comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
 # information
 comsum[ 'list'       ] = 'Print suite tasks and runtime hierarchies'
 comsum[ 'dump'       ] = 'Print the state of tasks in a running suite'
+comsum[ 'cat-state'  ] = 'Print the state of tasks from the state dump'
 comsum[ 'show'       ] = 'Print task state (prerequisites and outputs etc.)'
-comsum[ 'log'        ] = 'Print or view filtered suite logs'
+comsum[ 'cat-log'        ] = 'Print or view filtered suite logs'
 comsum[ 'documentation'     ] = 'Display cylc documentation (User Guide etc.)'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'
 # control
-comsum[ 'gui'        ] = 'The cylc Graphical User Interface (a.k.a. gcylc)'
+comsum[ 'gui'        ] = 'Main Graphical User Interface (a.k.a. gcylc)'
+comsum[ 'gcontrol'   ] = 'Suite Control GUI (a.k.a. gcontrol)'
 comsum[ 'run'        ] = 'Start a suite at a given cycle time'
 comsum[ 'stop'       ] = 'Shut down running suites'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
@@ -418,6 +467,7 @@ comsum[ 'block'      ] = 'Tell suites to ignore interventions until unblocked'
 comsum[ 'unblock'    ] = 'Tell a blocked suite to resume complying with interventions'
 comsum[ 'reset'      ] = 'Manually set tasks to the waiting, ready, or succeeded states'
 comsum[ 'nudge'      ] = 'Cause the cylc task processing loop to be invoked'
+comsum[ 'reload'     ] = 'Reload the suite definition at run time'
 comsum[ 'depend'     ] = 'Add prerequisites to tasks in a running suite'
 comsum[ 'set-runahead'   ] = 'Change the runahead limit in a running suite.'
 comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
@@ -432,10 +482,12 @@ comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report progress and completion of outputs'
 comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
+comsum[ 'broadcast'  ] = 'Broadcast environment variables to other tasks'
 
 # utility
 comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
+comsum[ 'random'       ] = 'Generate a random integer within a given range'
 comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
@@ -443,6 +495,7 @@ comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
 # hook
 comsum[ 'email-task'  ] = 'A task event hook script that sends email alerts'
 comsum[ 'email-suite' ] = 'A suite event hook script that sends email alerts'
+comsum[ 'check-triggering' ] = 'A suite shutdown event hook for cylc testing'
 
 def typo( str ):
     corrected = str

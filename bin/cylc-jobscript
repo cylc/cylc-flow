@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,7 @@ for arg in $@; do
     fi
 done
 
-JOBSCRIPT=$( cylc submit --dry-run $@ | grep 'GENERATED JOB SCRIPT' | sed -e 's/.*: //' )
+JOBSCRIPT=$( cylc submit --dry-run $@ | grep 'JOB SCRIPT' | sed -e 's/.*: //' )
 if [[ -z $JOBSCRIPT ]]; then
     echo "ERROR: no jobscript generated" >&2
     exit 1

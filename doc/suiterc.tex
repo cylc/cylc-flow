@@ -22,23 +22,22 @@ and description.
 
 \subsubsection{title}
 
-The suite title is displayed in the gcylc suite database window. It can
-also be retrieved from a suite at run time with \lstinline=cylc show= 
-(or use \lstinline=cylc get-config=).
+A single line description of the suite. It is displayed in the gcylc
+suite database window and can be retrieved at run time with the
+\lstinline=cylc show= command.
 
 \begin{myitemize}
-\item {\em type:} string 
+\item {\em type:} single line string
 \item {\em default:} ``No title provided''
 \end{myitemize}
 
 \subsubsection{description}
 
-The suite description can be retrieved by gcylc right-click menu. It 
-can also be retrieved from a suite at run time with 
-\lstinline=cylc show= (or use \lstinline=cylc get-config=).
+A multi-line description of the suite. It can be retrieved by gcylc
+right-click menu, or at run time with the \lstinline=cylc show= command.
 
 \begin{myitemize}
-\item {\em type:} string
+\item {\em type:} multi-line string
 \item {\em default:} ``No description provided''
 \end{myitemize}
 
@@ -46,6 +45,19 @@ can also be retrieved from a suite at run time with
 
 This section is for suite configuration that is not specifically
 task-related.
+
+\subsubsection[required run mode]{ [cylc] $\rightarrow$ required run mode}
+
+If this item is set cylc will abort if the suite is not started in the
+specified mode. This can be used for demo suites that have to be
+run in simulation mode, for example, because they have been taken out of
+their normal operational context; or to prevent accidental submission of
+expensive real tasks during suite development. 
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} live, dummy, simulation 
+    \item {\em default:} None 
+\end{myitemize}
 
 \subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
 
@@ -60,10 +72,47 @@ logged by cylc will also be in UTC.
     \item {\em default:} False 
 \end{myitemize}
 
-\subsubsection[simulation mode only]{ [cylc] $\rightarrow$ simulation mode only}
+\subsubsection[maximum simultaneous job submissions]{[cylc] $\rightarrow$ maximum simultaneous job submissions}
 
-This prevents a suite from running in real mode - use for demo suites
-created by copying real suites out of their normal operating environment.
+This sets the maximum allowable number of simultaneous (parallel) job
+submissions. If a greater number of tasks happen to become ready to run
+at once (as in ensemble suites for instance) cylc will submit them in
+batches of this size, waiting for all batch members to return before
+proceeding to the next batch. See Section~\ref{MaxSimJobSub}.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 50
+\end{myitemize}
+
+\subsubsection[pyro connection timeout]{[cylc] $\rightarrow$ pyro connection timeout}
+
+This sets the network connection timeout for Pyro connections to a
+running suite. The default is no timeout at all. See
+Section~\ref{MaxSimJobSub} for more on why this matters.
+
+\begin{myitemize}
+    \item {\em type:} float (seconds; minimum 0.0)
+    \item {\em default:} (none)
+\end{myitemize}
+
+
+\subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
+
+Cylc does not normally abort if tasks fail, but if this item is turned
+on it will abort with exit status 1 if any task fails.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\subsubsection[log resolved dependencies]{[cylc] $\rightarrow$ log resolved dependencies}
+
+If this is turned on cylc will write the resolved dependencies of each
+task to the suite log as it becomes ready to run (a list of the IDs of
+the tasks that actually satisfied its prerequisites at run time). Mainly
+used for cylc testing and development.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -137,50 +186,89 @@ are logged by cylc.
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
 
-Cylc can call a nominated ``event handler'' script when certain suite
-events occur. This is intended to facilitate centralized alerting and
-automated handling of critical events. Event handlers can do anything
-you like, such as send emails or SMS, call pagers, or intervene in the
-operation of their parent suite with cylc commands. The command
-\lstinline=cylc [hook] email-suite= is a ready made suite event handler.
+Cylc has internal ``hooks'' to which you can attach handlers that are 
+called whenever certain events occur. This section is for configuring suite
+event hooks. See Section~\ref{TaskEventHandling} for task event hooks.
 
-A single script can be nominated to handle a list of chosen events, and
-the event name is passed to the handler to allow it to distinguish
-between them.
+Event handlers can send an email or an SMS, call a pager, and so on; or
+intervene in the operation of their own suite using cylc commands. 
+The command \lstinline=cylc [hook] email-suite= is a ready-made suite
+event handler.
 
-Custom suite event handlers can be located in the suite bin directory.
-They are passed the following arguments by cylc:
-
+Custom suite event handlers can be located in the suite bin directory,  
+in which case you will not need to modify your \lstinline=$PATH= to ensure
+they are found.  They are called by cylc with the following arguments:
 \begin{lstlisting}
-<hook-script> EVENT SUITE MESSAGE
+<handler> EVENT SUITE MESSAGE
 \end{lstlisting}
-Currently there is only one suite EVENT defined:
-\begin{myitemize}
-    \item `shutdown' - the suite stopped, normally or not. 
-\end{myitemize}
+EVENT is the event name (see below), SUITE is the suite name, and 
 MESSAGE, if provided, describes what has happened.
 
 {\em Note that event handlers are called by cylc itself} so if you wish
-to pass them additional information via the environment you must use
-[cylc] $\rightarrow$ [[environment]], not task runtime environments.
+to pass additional information to them via the environment you must use
+[cylc] $\rightarrow$ [[environment]], not task runtime environments
+(suite-level variables - \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=
+etc.\ - are exported into the cylc environment, however).
 
-See also Section~\ref{TaskEventHandling} for task event hooks.
+\paragraph[EVENT handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
 
-\paragraph[events]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ events }
-
-The list of events to handle, as documented for EVENT just above.
+The handler to call when the suite event EVENT occurs. Repeat this
+section for each of the following suite events that you wish to handle:
 \begin{myitemize}
-    \item {\em type:} list of strings
+    \item `startup' - the suite started running 
+    \item `shutdown' - the suite stopped, normally or not
+    \item `timeout' - the suite timed out
+\end{myitemize}
+
+\begin{myitemize}
+    \item {\em type:} string (the event handler)
+    \item {\em default:} None
+    \item {\em example:} \lstinline@startup handler = my-handler.sh@
+\end{myitemize}
+
+\paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
+
+If a timeout is set and the timeout event is handled, the event
+handler will be called if the suite times out before it finishes.
+The timer is set initially at suite start up. 
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[script]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ script}
+\paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
 
-The handler script to call when one of the nominated events occurs.
+If \lstinline=True= (the default) the suite timer will continually reset
+after any task changes state, so you can time out after some interval
+since the last activity occured rather than on absolute suite execution
+time.
 
 \begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} (none)
+    \item {\em type:} boolean
+    \item {\em default:} True
+\end{myitemize}
+
+\paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
+
+If a suite timer is set (above) this will cause the suite to abort with
+error status if the suite times out while still running.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\paragraph[abort if startup handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if EVENT handler fails}
+
+Cylc does not normally care whether an event handler succeeds or fails,
+but if this is turned on the EVENT handler will be executed in the
+foreground (which will block the suite while it is running) and the
+suite will abort if the handler fails.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
 \end{myitemize}
 
 \subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
@@ -265,25 +353,39 @@ parser is concerned these are normal configuration items).
         \end{myitemize}
 \end{myitemize}
 
-\subsubsection[{[[}simulation mode{]]}]{[cylc] $\rightarrow$ [[simulation mode]] }
+\subsubsection[{[[}accelerated clock{]]}]{[cylc] $\rightarrow$ [[accelerated clock]] }
+\label{ClockConfig}
 
-Items specific to running suites in simulation mode.
+Accelerated clock settings, used to speed up the wait between cycles in
+the simulation and dummy run modes. 
 
-\paragraph[clock rate]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ clock rate}
+\paragraph[disable]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ disable}
 
-This determines the speed at which the simulation mode clock runs, in 
-real seconds per simulated hour. A value of 10, for example, means it
-will take 10 real seconds to simulate one hour of operation.
+Disabling the accelerated clock makes the suite (and its log time stamps
+etc.) run on real time. Note that if the suite has clock-triggered tasks
+that catch up to the wall clock, the interval between cycles will also be
+in real time - e.g.\ six hours for a six hourly cycle.
+
+\begin{myitemize}
+    \item {\em type:} boolean 
+    \item {\em default:} False
+\end{myitemize}
+
+
+\paragraph[rate]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ rate}
+
+The rate at which the accelerated clock runs in real seconds per
+simulated hour.
 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, real seconds per simulated hour)
     \item {\em default:} $10$
 \end{myitemize}
 
-\paragraph[clock offset]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ clock offset}
+\paragraph[offset]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ offset}
 
-The clock offset determines the initial time on the simulation clock, 
-at suite startup, relative to the initial cycle time.  An offset of
+The clock offset determines the initial time on the accelerated clock, 
+at suite startup, relative to the initial cycle time. An offset of
 $0$ simulates real time operation; greater offsets simulate catch up
 from a delay and subsequent transition to real time operation.
 
@@ -292,45 +394,100 @@ from a delay and subsequent transition to real time operation.
     \item {\em default:} $24$
 \end{myitemize}
 
-\paragraph[command scripting]{ [cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ command scripting}
 
-The command scripting to execute for all tasks when running in simulation mode.
-\begin{myitemize}
-\item {\em type:} string (scripting valid in job submission shell;
-    triple quote for multiple lines)
-\item {\em default:} \lstinline=echo SIMULATION MODE $CYLC_TASK_ID; sleep 10; echo BYE=
-\end{myitemize}
+\subsubsection[{[[}reference test{]]}]{[cylc] $\rightarrow$ [[reference test]] }
+\label{ReferenceTestConfig}
 
-\paragraph[{[[[}job submission{]]]} ]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[job submission]]]} 
+Reference tests are finite-duration suite runs that abort with non-zero
+exit status if cylc fails, if any task fails, if the suite times
+out, or if a shutdown event handler that (by default) compares the test
+run with a reference run reports failure. See {\em Automated Reference Test
+Suites}, Section~\ref{AutoRefTests}.
 
-Configure job submission for simulation mode.
+\paragraph[suite shutdown event handler]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ suite shutdown event handler}
 
-\subparagraph[method]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method } 
-
-The job submission method to use for all tasks in simulation mode. Any 
-available method can be used but the default is probably sufficient for simulation mode.
+A shutdown event handler that should compare the test run with the
+reference run, exiting with zero exit status only if the test run
+verifies.
 
 \begin{myitemize}
-    \item {\em type:} string (a job submission method name - see Section~\ref{RuntimeJobSubMethods})
-    \item {\em default:} \lstinline=background=
+    \item {\em type:} string (event handler command name or path)
+    \item {\em default:} \lstinline=cylc hook check-triggering=
+\end{myitemize}
+As for any event handler, the full path can be ommited if the script is
+located somewhere in \lstinline=$PATH= or in the suite bin directory.
+
+\paragraph[required run mode]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ required run mode}
+
+If your reference test is only valid for a particular run mode, this
+setting will cause cylc to abort if a reference test is attempted 
+in another run mode.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} live, dummy, simulation
+    \item {\em default:} None
 \end{myitemize}
 
-\paragraph[{[[[}event hooks{]]]} ]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]]} 
+\paragraph[allow task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ allow task failures}
 
-Configure event hooks for simulation mode.
-
-\subparagraph[enable]{[cylc] $\rightarrow$ [[simulation mode]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ enable } 
-
-Event hooks are disabled by default in simulation mode. They can be
-enabled in order to test automated alerts, for example, without
-running the real suite tasks, but be aware that timeouts will be 
-relative to the accelerated simulation mode clock which by default runs
-very quickly.
+A reference test run will abort immediately if any task fails, unless
+this item is set, or a list of {\em expected task failures} is provided
+(below).
 
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
 \end{myitemize}
+
+\paragraph[expected task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ expected task failures}
+
+A reference test run will abort immediately if any task fails, unless
+{\em allow task failures} is set (above) or the failed task is found 
+in a list IDs of tasks that are expected to fail.
+
+\begin{myitemize}
+    \item {\em type:} list of strings (task IDs: \lstinline=name%tag=)
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline=foo%20120808, bar%20120908=
+\end{myitemize}
+
+\paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
+
+The timeout value in minutes after which the test run should be aborted
+if it has not finished, in live mode. Test runs cannot be done in live
+mode unless you define a value for this item, because it is not possible
+to arrive at a sensible default for all suites.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} None
+\end{myitemize}
+
+\paragraph[simulation mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ simulation mode suite timeout}
+
+The timeout value in minutes after which the test run should be aborted
+if it has not finished, in simulation mode. Test runs cannot be done in
+simulation mode unless you define a value for this item, because it is
+not possible to arrive at a sensible default for all suites.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} None
+\end{myitemize}
+
+\paragraph[dummy mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ dummy mode suite timeout}
+
+The timeout value in minutes after which the test run should be aborted
+if it has not finished, in dummy mode.  Test runs cannot be done in
+dummy mode unless you define a value for this item, because it is not
+possible to arrive at a sensible default for all suites.
+
+\begin{myitemize}
+    \item {\em type:} float (minutes)
+    \item {\em default:} None
+\end{myitemize}
+
 
 \subsection{[scheduling]}
 
@@ -367,16 +524,12 @@ can override it on the command line or in the gcylc suite start panel.
 
 The suite runahead limit prevents the fastest tasks in a suite from
 getting too far ahead of the slowest ones, as documented in
-Section~\ref{RunaheadLimit}. Tasks exceeding the limit will be put into
+Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
-sufficiently. The limit must be long enough to cover the minimum cycle
-time range of tasks present in the suite: a task that only runs once per
-day, for instance, needs to spawn 24 hours ahead.  Failed tasks, which
-are not automatically removed from a suite, are ignored when computing
-the runahead limit. 
+sufficiently. 
 \begin{myitemize}
     \item {\em type:} integer ($\geq 0$, hours)
-    \item {\em default:} $24$
+    \item {\em default:} (twice the minimum cycling interval in the suite)
 \end{myitemize}
 
 \subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}
@@ -593,30 +746,35 @@ below for graph string syntax, and Section~\ref{DependencyGraphs}.
  
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
-Replace \_\_VALIDITY\_\_ with a comma-separated list of integer hours, 
-$0\leq H \leq 23$,  defining the valid
-cycle times for the subsequent graph of cycling tasks, or multiple such
-subsections as required for different dependencies at different hours; 
-or with `ASYNCID:{\em pattern}', where {\em pattern} is a regular
-expression that matches an asynchronous task ID, for each graph of
-repeating asynchronous tasks.
-
+\_\_VALIDITY\_\_ section headings define the sequence of cycle times for
+which the subsequent graph section is valid. For cycling tasks use a
+comma-separated list of integer hours, $0\leq H \leq 23$ for the original 
+hours-of-the-day cycling, or reference a particular stepped daily,
+monthly, or yearly cycling module:
 \begin{myitemize}
     \item {\em examples:} 
         \begin{myitemize} 
-            \item (cycling tasks) \lstinline@[[0,6,12,18]]@ 
-            \item (repeating asynchronous tasks) \lstinline@[[ASYNCID:SAT-\d+]]@ 
+            \item hours-of-the-day cycling: \lstinline@[[[0,6,12,18]]]@ or \lstinline@[[[HoursOfTheDay(0,6,12,18)]]]@ 
+            \item stepped daily cycling: \lstinline@[[[Daily(20100823,2)]]]@ 
+            \item stepped monthly cycling: \lstinline@[[[Monthly(201008,2)]]]@ 
+            \item stepped yearly cycling: \lstinline@[[[Yearly(2010,2)]]]@ 
         \end{myitemize}
     \item {\em default:} (none)
 \end{myitemize}
-For a cycling graph with multiple validity sections for different
-hours of the day, the different sections {\em add} to generate the
-complete graph. Different graph sections can overlap (i.e.\ the same hours
-may appear in multiple section headings) and the same tasks may appear
-in multiple sections, but the individual dependencies must be unique
-across the entire graph. Duplicate dependencies will cause a run time 
-error at start-up, as documented in {\em How Multiple Graph Strings Combine} 
-(Section~\ref{HowMultipleGraphStringsCombine}).
+For repeating asynchronous tasks put `ASYNCID:{\em pattern}' in the
+section heading, where {\em pattern} is a regular expression that
+matches an asynchronous task ID:
+\begin{myitemize}
+    \item {\em examples:} 
+        \begin{myitemize} 
+            \item repeating asynchronous tasks: \lstinline@[[ASYNCID:SAT-\d+]]@ 
+        \end{myitemize}
+    \item {\em default:} (none)
+\end{myitemize}
+
+See Section~\ref{GraphTypes}, {\em Graph Types} for the meaning of the
+stepped cycler arguments, how multiple graph sections combine within a
+single suite, and so on.
 
 \subparagraph[graph]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]] $\rightarrow$ graph }
 \label{GraphDescrip}
@@ -715,56 +873,91 @@ in the root namespace.
 \item {\em default:} root
 \end{myitemize}
 
+
+\paragraph[title]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ title}
+
+A single line description of this namespace. It is displayed by the
+\lstinline=cylc list= command and can be retrieved from running tasks
+with the \lstinline=cylc show= command.
+
+\begin{myitemize}
+\item {\em type:} single line string 
+\item {\em root default:} ``No title provided''
+\end{myitemize}
+
 \paragraph[description]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ description}
 
-A description of this namespace, retrievable from running tasks via 
-\lstinline=cylc show=.
+A multi-line description of this namespace, retrievable from running tasks with the 
+\lstinline=cylc show= command.
+
 \begin{myitemize}
-\item {\em type:} string 
+\item {\em type:} multi-line string 
 \item {\em root default:} ``No description provided''
 \end{myitemize}
 
 
 \paragraph[initial scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ initial scripting}
 
-Scripting defined here is put at the top of the task job script, before the 
-task execution environment is configured, and before configuring task access
-to cylc. This can be used when there is a need for remotely hosted tasks
-to source login scripts - when Pyro has been installed locally rather
-than at system level, for example - because ssh does not do this for
-you. Use of initial scripting is not restricted to remote tasks, but 
-pre-command or command scripting, which has access to the task execution
-environment, should normally be used in preference to this item.
-
+Initial scripting is executed at the top of the task job script just
+before the \lstinline=cylc task started= message call is made, and
+before the task execution environment is configured - so it does not
+have access to any suite or task environment variables.  The original
+intention was to allow remote tasks to source login scripts before
+calling the first cylc command, e.g.\ to set \lstinline=$PYTHONPATH= if
+Pyro has been installed locally. Note however that the remote task
+invocation mechanism now automatically sources both
+\lstinline=/etc/profile= and \lstinline=$HOME/.profile= if they exist. 
+For other uses pre-command scripting should be used if possible because
+it can has access to the task execution environment.
 \begin{myitemize}
 \item {\em type:} string
 \item {\em default:} (none)
-\item {\em example:} \lstinline@initial scripting = ". $HOME/.profile"@
+\item {\em example:} \lstinline@initial scripting = "echo Hello World"@
+\end{myitemize}
+
+\paragraph[environment scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ environment scripting}
+
+Environment scripting is inserted into the task job script between
+the cylc-defined environment (suite and task identity, etc.) and the 
+user-defined task runtime environment - i.e.\ it has access to the 
+cylc environment, and the task environment has access to the results of
+this scripting.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} \lstinline@environment scripting = "echo Hello World"@
 \end{myitemize}
 
 \paragraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ command scripting}
 
 The scripting to execute when the associated task is ready to run - this
-can be a single command or a multiline string of scripting. 
+can be a single command or multiple lines of scripting. 
 
 \begin{myitemize}
-\item {\em type:} multiline string
-\item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
+\item {\em type:} string
+\item {\em root default:} \lstinline=echo "Default command scripting"; sleep 10=
 \end{myitemize}
 
+
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
+\label{RefRetries}
 
 A list of time intervals in minutes after which to resubmit the task if it 
 fails. Before each try the variable \lstinline=$CYLC_TASK_TRY_NUMBER= is
-incremented and passed to the task execution environment; this can be
-used to alter the behaviour at each try.
+incremented (starting from 1) and passed to the task execution
+environment; this can be used to alter the behaviour at each try.
 
 \begin{myitemize}
-\item {\em type:} multiline string
-\item {\em root default:} \lstinline=echo "Default command scripting: sleep 10..."; sleep 10=
+\item {\em type:} list of floats
+\item {\em example:} 1.5, 10, 10, 10
+\item {\em root default:} (none)
 \end{myitemize}
 
-
+Currently to get a task that keeps on retrying indefinitely you have to
+put a retry-and-wait loop in the task implementation itself (i.e.\ the
+task submits once and then keeps trying until it succeeds, and then
+report success, or it may eventually reports failure on some internal
+criterion, which may be some number of unsuccessful tries).
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 
@@ -817,10 +1010,137 @@ Section~\ref{DetachingTasks}).
 
 % HIDDEN \paragraph[extra log files]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ extra log files}
 
+\paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
+
+If a message is received from a failed task cylc will normally treat
+this as an error condition, issue a warning, and leave the task in the
+``failed'' state.  But if ``enable resurrection'' is switched on failed
+tasks can come back from the dead: if the same task job script is
+executed again cylc will put the task back into the running state and
+continue as normal when the started message is received. This can be
+used to handle HPC-style job preemption wherein a resource manager may
+kill a running task and reschedule it to run again later, to make way
+for a job with higher immediate priority. See also
+Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} False
+\end{myitemize}
+
+
+\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ log directory}
+\label{LocalLog}
+
+This is where task job scripts, and the stdout and stderr logs for local
+tasks, are written. The directory path may contain environment
+variables, including suite identity variables to make the path
+suite-specific (as the default value does) but {\em it may not 
+contain task identity variables such as \lstinline=$CYLC_TASK_NAME= and
+\lstinline=$CYLC_TASK_CYCLE_TIME= or any variables defined in the task
+environment section} - the directory has to be created by cylc before
+the task runs so the directory creation process does not see the task
+execution environment.
+%? Remote tasks must also define a [[[remote]]] log directory. 
+%? For owned tasks, the suite owner's home directory is replaced by the
+%? task owner's.
+The job script filename is constructed, just before job submission,
+from the task ID and {\em seconds since epoch}, and then {\em .out} and
+{\em .err} are appended to construct the stdout and stderr log names,
+respectively. These filenames are thus unique even if a task
+gets retriggered and yet will be correctly time ordered if the log
+directory is listed. The filenames are also recorded by the task proxies 
+for access via cylc commands and the suite control GUIs.
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
+\end{myitemize}
+
+\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work directory}
+\label{LocalWork}
+
+Task command scripting is executed from within a work directory created
+on the fly, if necessary, by the task's job script. In non-detaching
+tasks the work directory is automatically removed again {\em if it is
+empty} before the job script exits. The work directory can be accessed
+by tasks via the environment variable \lstinline=$CYLC_TASK_WORK_PATH=.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID=
+\end{myitemize}
+
+\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ share directory}
+\label{LocalShare}
+
+Like task work directories (above) this directory is created on the fly,
+if necessary, by the job script. It is intended as a shared data area
+for multiple tasks on the same host, but as for any task runtime config
+item it can be specialized to particular tasks or groups of tasks. 
+It can be accessed by tasks at run time via the environment variable
+\lstinline=$CYLC_SUITE_SHARE_PATH=.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
+\end{myitemize}
+
+\paragraph[{[[[}dummy mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]]}
+
+Dummy mode configuration.
+
+\subparagraph[command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ command scripting}
+
+The scripting to execute when the associated task is ready to run, {\em
+in dummy mode} - this can be a single command or a multiple lines of
+scripting. 
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em root default:} \lstinline=echo "Dummy command scripting"; sleep $(cylc rnd 1 16)=
+\end{myitemize}
+
+\subparagraph[disable pre-command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ disable pre-command scripting}
+
+This disables pre-command scripting, is likely to contain code specific
+to the real task, in dummy mode. 
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em root default:} True
+\end{myitemize}
+
+\subparagraph[disable post-command scripting]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ disable post-command scripting}
+
+This disables post-command scripting, which is likely to contain code
+specific to the real task, in dummy mode. 
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em root default:} True
+\end{myitemize}
+
+\paragraph[{[[[}simulation mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]]}
+
+Simulation mode configuration.
+
+\begin{myitemize}
+\item {\em type:} float
+\item {\em root default:} $10$
+\end{myitemize}
+
+\paragraph[run time range]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]] $\rightarrow$ run time range}
+
+This defines an interval \lstinline=[min,max)= (seconds) from within
+which the the simulation mode task run length will be randomly chosen.
+
+\begin{myitemize}
+\item {\em type:} integer list (two members)
+\item {\em root default:} $1,16$
+\end{myitemize}
+
 \paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
 
-This is where to configure the means by which cylc submits task job
-scripts to run.
+This section configures the means by which cylc submits task job scripts to run.
 
 \subparagraph[method]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method}
 \label{RuntimeJobSubMethods}
@@ -871,79 +1191,35 @@ to be modified slightly to allow use of the C shell.
 \item {\em root default:} \lstinline=/bin/bash= 
 \end{myitemize}
 
-\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ log directory}
-\label{LocalLog}
-
-This is where task job scripts, and the stdout and stderr logs for local
-tasks, are written. The directory path may contain environment
-variables, including suite identity variables to make the path
-suite-specific (as the default value does).
-%? Remote tasks must also define a [[[remote]]] log directory. 
-%? For owned tasks, the suite owner's home directory is replaced by the
-%? task owner's.
-The job script filename is constructed, just before job submission,
-from the task ID and {\em seconds since epoch}, and then {\em .out} and
-{\em .err} are appended to construct the stdout and stderr log names,
-respectively. These filenames are thus unique even if a task
-gets retriggered and yet will be correctly time ordered if the log
-directory is listed. The filenames are also recorded by the task proxies 
-for access via cylc commands and the suite control GUIs. Suite identity
-variables can be used in the path, as in the default value, but {\em not
-task identity variables} such as \lstinline=$CYLC_TASK_NAME= and
-\lstinline=$CYLC_TASK_CYCLE_TIME=, because the log directory is created
-before the task runs.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
-\end{myitemize}
-
-\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ work directory}
-\label{LocalWork}
-
-Task command scripting is executed from within a work directory created
-on the fly, if necessary, by the task's job script. In non-detaching
-tasks the work directory is automatically removed again {\em if it is
-empty} before the job script exits. The work directory can be accessed
-by tasks via the environment variable \lstinline=$CYLC_TASK_WORK_PATH=.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID=
-\end{myitemize}
-
-\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ share directory}
-\label{LocalShare}
-
-Like task work directories (above) this directory is created on the fly,
-if necessary, by the job script. It is intended as a shared data area
-for multiple tasks on the same host, but as for any task runtime config
-item it can be specialized to particular tasks or groups of tasks. 
-It can be accessed by tasks at run time via the environment variable
-\lstinline=$CYLC_SUITE_SHARE_PATH=.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
-\end{myitemize}
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Remote hosting configuration for tasks that run on hosts other than the
-suite host. If a remote host is specified cylc will attempt to execute
-the task on that host by passwordless ssh. Cylc must be installed on 
-remote task hosts, but of the external software dependencies only Pyro 
-is required there (and actually not even that - see ``ssh messaging''
-below). Passwordless ssh must be configured between the local suite
-owner on the suite host, and the task owner on the remote task host.
+Configuration for tasks that run on a different host than the one the suite 
+is running on. If a remote host is specified cylc will use passwordless
+ssh to submit the task, using the specified job submission method, on
+that host. Cylc must be installed on remote task hosts, but of the
+external software dependencies only Pyro 
+is required there (actually, not even that if {\em ssh messaging} is
+used; see below). Passwordless ssh must be configured between the local
+suite owner on the suite host, and the task owner on the remote task
+host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 
-The remote host for this task or family.
+The remote host for this task or family. A literal host name can be
+specified, or a shell back-tick expression to execute an external
+command that writes a hostname to stdout.
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
 \item {\em default:} (none)
+\item {\em examples:}
+    \begin{myitemize}
+        \item short name: \lstinline@host = foo@
+        \item fully qualified name: \lstinline@host = foo.bar.baz@
+        \item external host selector: \lstinline@host = $(host-selector.sh)@ 
+        \item external host selector: \lstinline@host = `host-selector.sh)`@ (back-tick version)
+    \end{myitemize}
 \end{myitemize}
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
@@ -1065,67 +1341,48 @@ queueing system or resource manager.
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
 
-Cylc can call a nominated ``event handler'' script when certain task
-events, such as task failure or timeout, occur.  This is intended to
-facilitate centralized alerting and automated handling of critical
-events. Event handlers can do anything you like, such as send emails or
-SMS, call pagers, or intervene in the operation of their parent suite
-with cylc commands. The command \lstinline=cylc [hook] email-task= 
-is a ready made task event handler.
+See Section~\ref{SuiteEventHandling} (Suite Event Hooks) for a general
+description of cylc event handling. This section is specific to task events. 
+The command \lstinline=cylc [hook] email-task= is a ready-made task event 
+handler. 
 
-Currently a single script can be nominated to handle a list of chosen
-events, and the event name is passed to the handler to allow it to
-distinguish between them (cylc once allowed distinct handlers for each
-event but this required verbose configuration for little gain).
-
-Custom task event handlers can be located in the suite bin directory.
-They are passed the following arguments by cylc:
-
+Custom task event handlers can be located in the suite bin directory,  
+in which case you will not need to modify your \lstinline=$PATH= to ensure
+they are found.  They are called by cylc with the following arguments:
 \begin{lstlisting}
-<hook-script> EVENT SUITE TASKID MESSAGE
+<handler> EVENT SUITE TASK MESSAGE
 \end{lstlisting}
-where EVENT is one of the following strings:
+EVENT is the event name (see below), SUITE is the suite name, TASK 
+is the task ID, and MESSAGE, if provided, describes what has happened.
+Note that {\em spaces in event names will be replaced by underscores 
+in the handler argument list} to make parsing easier in the script,
+e.g.\ ``submission failed'' becomes ``submission\_failed''.
+
+\subparagraph[EVENT handler]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ EVENT handler}
+
+The handler to call when the task event EVENT occurs. Repeat this
+section for each of the following task events that you wish to handle:
 \begin{myitemize}
     \item `submitted' - the task was submitted
     \item `started' - the task started running 
     \item `succeeded' - the task succeeded
-    \item `submission\_failed' - the task failed in job submission
-    \item `warning' - the task reported a warning message
     \item `failed' - the task failed
-    \item `submission\_timeout' - task job submission timed out
-    \item `execution\_timeout' - task execution timed out
+    \item `submission failed' - the task failed in job submission
+    \item `warning' - the task reported a warning message
+    \item `retry' - the task failed but will retry
+    \item `submission timeout' - task job submission timed out
+    \item `execution timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
 the task (\lstinline=NAME%CYCLE= for cycling tasks).
 
-To configure timeout handling, list `submission\_timeout' and/or
-`execution\_timeout' in the events to handle, and then specify 
-corresponding timeout values in minutes using the timeout config items
-below.
-
-{\em Note that event handlers are called by cylc itself, not by the 
-running tasks} so if you wish to pass them additional information via
-the environment you must use [cylc] $\rightarrow$ [[environment]],
-not task runtime environments.
-
-See also Section~\ref{SuiteEventHandling} for suite event hooks.
-
-\subparagraph[events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ events }
-
-The list of events to handle, as documented for EVENT just above.
 \begin{myitemize}
-    \item {\em type:} list of strings
-    \item {\em default:} (none)
+    \item {\em type:} string (the event handler)
+    \item {\em default:} None
+    \item {\em example:} \lstinline@failed handler = my-handler.sh@
 \end{myitemize}
 
-\subparagraph[script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ script}
-
-The handler script to call when one of the nominated events occurs.
-
-\begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} (none)
-\end{myitemize}
+To handle timeouts you must also specify a timeout value, below.
 
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
 
@@ -1396,24 +1653,24 @@ assignment.
 \end{lstlisting}
 \end{myitemize}
 
-\subsubsection[{[[}run time graph{]]}]{[visualization] $\rightarrow$ [[run time graph]]}
+\subsubsection[{[[}runtime graph{]]}]{[visualization] $\rightarrow$ [[runtime graph]]}
 
 Cylc can generate graphs of dependencies resolved at run time, i.e.\ what 
 actually triggers off what as the suite runs. This feature is retained
 mainly for development and debugging purposes. You can use simulation
-mode to generate run time graphs very quickly.
+mode or dummy mode to generate runtime graphs very quickly.
 
-\paragraph[enable]{[visualization] $\rightarrow$ [[run time graph]] $\rightarrow$ enable}
+\paragraph[enable]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ enable}
 
-Run time graphing is now disabled by default.
+Runtime graphing is disabled by default.
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
 \end{myitemize}
 
-\paragraph[cutoff]{[visualization] $\rightarrow$ [[run time graph]] $\rightarrow$ cutoff}
+\paragraph[cutoff]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ cutoff}
 
-New nodes will be added to the run time graph as the corresponding tasks
+New nodes will be added to the runtime graph as the corresponding tasks
 trigger, until their cycle time exceeds the initial cycle time by more
 than this cutoff, in hours.
 
@@ -1422,9 +1679,9 @@ than this cutoff, in hours.
     \item {\em default:} $24$
 \end{myitemize}
 
-\paragraph[directory]{[visualization] $\rightarrow$ [[run time graph]] $\rightarrow$ directory}
+\paragraph[directory]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ directory}
 
-Where to put the run time graph file, \lstinline=runtime-graph.dot=.
+Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
 
 \begin{myitemize}
     \item {\em type:} string (a valid directory path, may contain environment variables)
@@ -1465,14 +1722,14 @@ Jinja2 template processor (Section~\ref{Jinja2}).
 \subsection{Default Suite Configuration}
 \label{SuiteDefaults}
 
-Cylc provides, via the suite.rc spec file, sensible default values for
-many configuration items so that users may not need to explicitly
-configure log directories and the like. The defaults are sufficient, in
-fact, to define simple test suites by dependency graph alone
-(command scripting, for example, defaults to printing a
-simple message, sleeping for ten seconds, and then exiting). The
-following listing shows all current legal items and any default values:
+Cylc provides, via \lstinline=$CYLC_DIR/conf/suiterc.spec=, sensible
+default values for many configuration items so that most users will not
+need to explicitly configure log directories and so on. The defaults are
+sufficient, in fact, to allow test suites defined by dependency graph
+alone (command scripting, for example, defaults to printing a simple
+message, sleeping for a few seconds, and then exiting). 
 
-\lstset{language=suiterc}
-\lstinputlisting{../conf/suiterc.defaults}
-\lstset{language=transcript}
+The \lstinline=cylc get-config= command parses a suite definition and
+retrieves configuration values for individual items, sections, or entire
+suites.
+

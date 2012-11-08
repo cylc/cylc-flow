@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
-from cylc.locking.task_lock import task_lock
 
 usage = """cylc [task] started [OPTIONS]
 
@@ -52,21 +51,34 @@ parser.add_option( "-v", "--verbose",
 if len( args ) != 0:
     parser.error( "Wrong number of arguments" )
 
+debug = False
+try:
+    # from task execution environment
+    if os.environ['CYLC_DEBUG'] == 'True':
+        debug = True
+except KeyError:
+    pass
+
 # send start message
 try:
     message(verbose=options.verbose).send_started()
 except Exception, x:
+    if debug:
+        raise
     print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)
 
 # acquire a task lock if using the lockserver
 if not cylc_mode.mode().is_raw():
+    from cylc.locking.task_lock import task_lock
     try:
         if not task_lock().acquire():
-            # (don"t send task failed message - handled by trapping)
+            # (don't send task failed message - handled by trapping)
             raise SystemExit( "Failed to acquire a task lock" )
     except Exception, z:
         # (don"t send task failed message - handled by trapping)
         print >> sys.stderr, z
+        if debug:
+            raise
         raise SystemExit( "Failed to connect to the lockserver" )
 

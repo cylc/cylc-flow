@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ class result:
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
 
-    def __init__( self, config, clock, suite_dir, pool, failout_id = None ):
+    def __init__( self, config, clock, suite_dir, pool ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
 
@@ -44,7 +44,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.clock = clock
         self.suite_dir = suite_dir
         self.insert_this = None
-        self.failout_id = failout_id
 
         self.pool = pool
 
@@ -126,8 +125,6 @@ class remote_switch( Pyro.core.ObjBase ):
     def reset_task_state( self, task_id, state ):
         if self._suite_is_blocked():
             return result( False, "suite blocked" )
-        if task_id == self.failout_id:
-            self._reset_failout()
         try:
             self.pool.reset_task_state( task_id, state )
         except TaskStateError, x:
@@ -173,9 +170,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "there is no task " + ins_name + " in the suite graph." )
         ins = ins_id
         # insert a new task or task group into the suite
-        if ins == self.failout_id:
-            # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
-            self._reset_failout()
         try:
             inserted, rejected = self.pool.insertion( ins, stop_c_time )
         except Exception, x:
@@ -295,8 +289,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.info( "servicing suite info request" )
         return [ self.config['title'], self.suite_dir, user ]
 
-    def get_task_list( self ):
-        self.log.info( "servicing task list request" )
+    def get_task_list( self, logit=True ):
+        if logit:
+            self.log.info( "servicing task list request" )
         return self.config.get_task_name_list()
  
     def get_task_info( self, task_names ):
@@ -308,9 +303,6 @@ class remote_switch( Pyro.core.ObjBase ):
             else:
                 info[ name ] = ['ERROR: no such task type']
         return info
-
-    def get_sim_mode_only( self ):
-        return self.config['cylc']['simulation mode only']
 
     def get_cycle_range( self ):
         return (self.config['scheduling']['initial cycle time'], self.config['scheduling']['final cycle time'] )
@@ -332,7 +324,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
-                 self.config['visualization']['run time graph']['directory'] ) 
+                 self.config['visualization']['runtime graph']['directory'] ) 
 
     def get_family_hierarchy( self ):
         return copy.deepcopy(self.config.family_hierarchy)
@@ -341,6 +333,17 @@ class remote_switch( Pyro.core.ObjBase ):
             ungroup_recursive, group_all, ungroup_all ):
         return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
                 ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
+
+    def reconfigure( self ):
+        self.log.info( "servicing suite reconfigure request")
+        if self._suite_is_blocked():
+            return result( False, "Suite is blocked" )
+        try:
+            self.pool.reconfigure()
+        except Exception, x:
+            return result( False, str(x) )
+        else:
+            return result( True, 'OK' )
 
     def get_task_requisites( self, in_ids ):
         self.log.info( "servicing task state info request")
@@ -496,10 +499,6 @@ class remote_switch( Pyro.core.ObjBase ):
     def _warning( self, msg ):
         print
         self.log.warning( msg )
-
-    def _reset_failout( self ):
-            print "resetting failout on " + self.failout_id
-            job_submit.failout_id = None
 
     def get_live_graph( self ):
         lg = self.pool.get_live_graph()

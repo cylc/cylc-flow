@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from cylc.remote import remrun
-remrun().execute()
+if remrun().execute():
+    sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
 from cylc.version import cylc_version
@@ -30,8 +32,15 @@ Validate a suite definition against the official specification
 held in $CYLC_DIR/conf/suiterc.spec.
 
 If the suite definition uses include-files reported line numbers
-will be wrong because the parser sees an inlined version of the suite.
-Use 'cylc view -i SUITE' to see the inlined version for comparison.""" )
+will correspond to the inlined version seen by the parser; use 
+'cylc view -i,--inline SUITE' for comparison.""" )
+
+parser.add_option( "--strict", 
+        help="Fail any use of unsafe or experimental features. "
+        "Currently this just means naked dummy tasks (tasks with no "
+        "corresponding runtime section) as these may result from "
+        "unintentional typographic errors in task names.",
+        action="store_true", default=False, dest="strict" )
 
 (options, args) = parser.parse_args()
 
@@ -41,7 +50,7 @@ if options.verbose:
     print "Parsing Suite Definition"
 
 try:
-    config = config( suite, suiterc, validation=True, verbose=options.verbose )
+    config = config( suite, suiterc, validation=True, strict=options.strict, verbose=options.verbose )
 except Exception,x:
     if options.debug:
         raise

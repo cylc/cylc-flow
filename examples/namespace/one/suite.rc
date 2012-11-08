@@ -1,12 +1,13 @@
 # SUITE.RC
 title = "User Guide [runtime] example."
 [cylc]
-    simulation mode only = True # (no task implementations)
+    required run mode = simulation # (no task implementations)
 [scheduling]
     initial cycle time = 2011010106
     final cycle time = 2011010200
     [[dependencies]]
-        graph = "foo => OBS => bar"
+        graph = """foo => OBS
+             OBS:succeed-all => bar"""
 [runtime]
     [[root]] # base namespace for all tasks (defines suite-wide defaults)
         [[[job submission]]]

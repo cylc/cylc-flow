@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -24,16 +24,20 @@ from cylc.owner import user
 from cylc.port_scan import get_port, check_port
 
 class lockserver(object):
-    def __init__( self, host, owner=user, port=None ):
+    def __init__( self, host, owner=user, port=None, timeout=None ):
         self.owner = owner
         self.host = host
         self.port = port
+        if timeout:
+            self.timeout = float(timeout)
+        else:
+            self.timeout = None
 
     def get_proxy( self ):
         if self.port:
-            check_port( "lockserver", self.port, owner=self.owner, host=self.host, silent=True )
+            check_port( "lockserver", None, self.port, self.owner, self.host, self.timeout )
         else:
-            self.port = get_port( "lockserver", owner=self.owner, host=self.host, silent=True )
+            self.port = get_port( "lockserver", self.owner, self.host, None, self.timeout )
 
         # lockservers are connected to Pyro with owner name
         # see comment in bin/_lockserver. TO DO: reuse code.

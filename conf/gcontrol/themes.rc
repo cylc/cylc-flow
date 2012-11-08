@@ -1,0 +1,38 @@
+
+[themes]
+    [[classic]]
+        defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
+        waiting   = "color=#8fb8fb"
+        queued    = "color=#9f219a", "fontcolor=white"
+        submitted = "color=#d2800a"
+        running   = "color=#0ace0a"
+        succeeded = "color=#ada5a5"
+        failed    = "color=#ff0000", "fontcolor=white"
+        runahead  = "color=#215f9e", "fontcolor=white"
+        held      = "color=#fff80a"
+        retry_delayed  = "color=#ff7cee"
+
+    [[cylcy]]
+        defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
+        waiting   = "color=#8fd6e9"
+        queued    = "color=#ff00ff", "style=unfilled"
+        submitted = "color=#ffa700"
+        running   = "color=#00e000"
+        succeeded = "color=#cfcfcf"
+        failed    = "color=#ff0000", "fontcolor=white"
+        runahead  = "color=#6383c1", "style=unfilled", "fontcolor=#6383c1"
+        held      = "color=#ccc300",  "style=unfilled", "fontcolor=#ccc300"
+        retry_delayed  = "color=#ff0000", "style=unfilled", "fontcolor=#ff0000"
+
+    [[high-contrast]]
+        defaults  = "color=#bbbbbb", "style=filled", "fontcolor=white"
+        waiting   = "color=#0000aa"
+        queued    = "color=#ff00ff"
+        submitted = "color=#ff8800"
+        running   = "color=#00aa00"
+        succeeded = "color=#000000"
+        failed    = "color=#ff0000"
+        runahead  = "color=#00ffff", "fontcolor=black"
+        held      = "color=#ffff00", "fontcolor=black"
+        retry_delayed  = "color=#00aaff"
+

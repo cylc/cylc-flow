@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -27,9 +27,9 @@ PBS qsub job submission.
     COMMAND_TEMPLATE = "qsub %s"
 
     def set_directives( self ):
-        self.directive_prefix = "#PBS"
-        self.final_directive  = None
-        self.directive_connector = " "
+        self.jobconfig['directive prefix'] = "#PBS"
+        self.jobconfig['directive final']  = None
+        self.jobconfig['directive connector'] = " "
 
         defaults = {}
         defaults[ '-N' ] = self.task_id
@@ -41,17 +41,18 @@ PBS qsub job submission.
         defaults[ '-e' ] = re.sub( '\$HOME/', '', self.stderr_file )
 
         # In case the user wants to override the above defaults:
-        for d in self.directives:
-            defaults[ d ] = self.directives[ d ]
+        for d,val in self.jobconfig['directives'].items():
+            defaults[ d ] = val
         # PBS requires jobs names <= 15 characters
         # This restriction has been removed at PBS version 11
         # but truncating to 15 chars should not cause any harm.
         if len( defaults[ '-N' ] ) > 15:
             defaults[ '-N' ] = defaults[ '-N' ][:15]
-        self.directives = defaults
+        self.jobconfig['directives'] = defaults
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
-            command_template = self.COMMAND_TEMPLATE
+            command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
+

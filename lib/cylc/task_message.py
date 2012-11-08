@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,9 @@ import os, sys
 import socket
 import subprocess
 import datetime
-import cylc_pyro_client
 from remote import remrun
-from port_scan import NoSuiteFoundError, OtherSuiteFoundError, ConnectionDeniedError
-import Pyro.errors
 from cylc.passphrase import passphrase
+from cylc.strftime import strftime
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
@@ -45,65 +43,72 @@ class message(object):
         if priority in legal_priority:
             self.priority = priority
         else:
-            print >> sys.stderr, 'illegal message priority', priority
-            sys.exit(1)
+            raise Exception( 'Illegal message priority ' + priority )
 
-        if 'CYLC_MODE' in os.environ:
+        try:
             self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'submit'
-        else:
-            self.mode = 'raw'
+        except:
+            self.mode = 'raw' # direct manual execution
 
-        if 'CYLC_TASK_ID' in os.environ.keys():
+        try:
             self.task_id = os.environ[ 'CYLC_TASK_ID' ]
-        elif self.mode == 'raw':
-            self.task_id = 'CYLC_TASK_ID'
-        else:
-            print >> sys.stderr, '$CYLC_TASK_ID not defined'
-            sys.exit(1)
+        except:
+            if self.mode == 'raw':
+                self.task_id = '(CYLC_TASK_ID)'
+            else:
+                raise
 
-        if 'CYLC_SUITE_REG_NAME' in os.environ.keys():
+        try:
             self.suite = os.environ[ 'CYLC_SUITE_REG_NAME' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            print >> sys.stderr, '$CYLC_SUITE_REG_NAME not defined'
-            sys.exit(1)
+        except:
+            if self.mode == 'raw':
+                pass
+            else:
+                raise
 
-        if 'CYLC_SUITE_OWNER' in os.environ.keys():
+        try:
             self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
-            sys.exit(1)
+        except:
+            if self.mode == 'raw':
+                pass
+            else:
+                raise
 
-        if 'CYLC_SUITE_HOST' in os.environ.keys():
+        try:
             self.host = os.environ[ 'CYLC_SUITE_HOST' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            # we always define the host explicitly, but could
-            # default to localhost's fully qualified domain name.
-            print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
-            sys.exit(1)
+        except:
+            if self.mode == 'raw':
+                self.host = '(CYLC_SUITE_HOST)'
+            else:
+                raise
 
-        if 'CYLC_SUITE_PORT' in os.environ.keys():
+        try:
             self.port = os.environ[ 'CYLC_SUITE_PORT' ]
-        elif self.mode == 'raw':
-            pass
-        else:
-            print >> sys.stderr, '$CYLC_SUITE_PORT not defined'
-            sys.exit(1)
+        except:
+            if self.mode == 'raw':
+                self.port = '(CYLC_SUITE_PORT)'
+            else:
+                raise
 
         self.utc = False
-        if 'CYLC_UTC' in os.environ.keys():
+        try:
             if os.environ['CYLC_UTC'] == 'True':
                 self.utc = True
-
+        except:
+            pass
+    
         self.ssh_messaging = False
-        if 'CYLC_SSH_MESSAGING' in os.environ.keys():
-            if os.environ['CYLC_SSH_MESSAGING'] == 'True':
+        try:
+            if os.environ['CYLC_TASK_SSH_MESSAGING'] == 'True':
                 self.ssh_messaging = True
+        except:
+            pass
+            
+        try:
+            # value may be string 'None'
+            self.pyro_timeout = float(os.environ['CYLC_SUITE_PYRO_TIMEOUT'])
+        except:
+            self.pyro_timeout = None
 
     def now( self ):
         if self.utc:
@@ -115,12 +120,16 @@ class message(object):
         # get passphrase here, not in __init__, because it is not needed
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
         # it is needed, we will end up in this method). 
-        self.pphrase = passphrase( self.suite, self.owner, self.host, verbose=self.verbose ).get( None, None )
+        self.pphrase = passphrase( self.suite, self.owner, self.host,
+                verbose=self.verbose ).get( None, None )
         # this raises an exception on failure to connect:
-        return cylc_pyro_client.client( self.suite, self.pphrase, self.owner, self.host, self.port ).get_proxy( self.task_id )
+        import cylc_pyro_client
+        return cylc_pyro_client.client( self.suite, self.pphrase,
+                self.owner, self.host, self.pyro_timeout, self.port,
+                self.verbose ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
-        now = self.now().strftime( "%Y/%m/%d %H:%M:%S" )
+        now = strftime( self.now(), "%Y/%m/%d %H:%M:%S" )
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg
@@ -154,51 +163,38 @@ class message(object):
                 sys.argv.append( '-v' )
             # Some variables from the task execution environment are
             # also required by the re-invoked remote command: Note that
-            # $CYLC_SSH_MESSAGING is not passed through so the
+            # $CYLC_TASK_SSH_MESSAGING is not passed through so the
             # re-invoked command on the remote side will not end up in
             # this code block.
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
-                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
+                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 'CYLC_SUITE_PYRO_TIMEOUT', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
-                    'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC']:
+                    'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
+                    'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
+                # (no exception handling here as these variables should
+                # always be present in the task execution environment)
                 env[var] = os.environ[var]
 
-            # The path to cylc on the remote end may be required:
-            path = [ os.environ['CYLC_DIR_LOCAL'] ]
+            # The path to cylc/bin on the remote end may be required:
+            path = [ os.path.join( os.environ['CYLC_DIR_ON_SUITE_HOST'], 'bin' ) ]
 
-            # Note that remrun().execute() calls sys.exit(0) after successful
-            # remote command invocation (i.e. execution on the local
-            # side stops at that point) but if it determines that host
-            # and owner are actually local it does not do the
-            # reinvocation and just returns rather than exits. This
-            # allows us to drop straight through to local Pyro messaging
-            # (immediately below) in case of inadvertant use of
-            # "ssh messaging = True" for local tasks.
-            remrun().execute( env=env, path=path )
+            if remrun().execute( env=env, path=path ):
+                # Return here if remote re-invocation occurred,
+                # otherwise drop through to local Pyro messaging.
+                # Note: do not sys.exit(0) here as the commands do, it
+                # will cause messaging failures on the remote host. 
+                return
 
         self.print_msg( msg )
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-        try:
-            self.get_proxy().incoming( self.priority, msg )
-        except Pyro.errors.NamingError, x:
-            # suite found but task not in it
-            raise SystemExit(x)
-        except Pyro.errors.URIError, x:
-            # unknown host (ssh messaging will be no use either!)
-            raise SystemExit(x)
-        except NoSuiteFoundError, x:
-            # no suite found at this port
-            raise SystemExit(x)
-        except OtherSuiteFoundError, x:
-            # other suite found at this port
-            raise SystemExit(x)
-        except ConnectionDeniedError, x:
-            # possible network config problems
-            # (ports not opened for cylc suites?)
-            raise SystemExit(x)
+        # exceptions are handled by the messaging commands now
+        ##before = datetime.datetime.now()
+        self.get_proxy().incoming( self.priority, msg )
+        ##after = datetime.datetime.now()
+        ##print 'Pyro messaging took:', str(after - before)
 
     def send_succeeded( self ):
         self.send( self.task_id + ' succeeded' )

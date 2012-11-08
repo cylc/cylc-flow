@@ -1,6 +1,6 @@
-#!/usr/bin/pyro
+#!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,11 @@
 
 import sys
 import socket
-import Pyro
+try:
+    import Pyro
+except ImportError, x:
+    print >> sys.stderr, x
+    sys.exit( "ERROR: Pyro is not installed" )
 from passphrase import passphrase
 from hostname import hostname
 from owner import user

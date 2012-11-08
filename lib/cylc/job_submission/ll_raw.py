@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,15 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from cylc import which
 import os, re
 from job_submit import job_submit
 
+# TO DO: THIS CLASS MAY NEED UPDATING
+
 class ll_raw( job_submit ):
 
     def write_jobfile( self, JOBFILE ):
-
         # get full path of task script (it could be defined relative
         # to suite scripts dir in the taskdef file).
         orig_file = which.which( self.task )
@@ -55,3 +55,4 @@ class ll_raw( job_submit ):
 
     def construct_command( self ):
         self.command = 'llsubmit ' + self.jobfile_path
+

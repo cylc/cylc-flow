@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -17,10 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    remrun().execute()
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
 import os, gtk
 import warnings
@@ -32,32 +31,25 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
 from conf.CylcGlobals import cylc_tmpdir
 from cylc.gui.gcylc import MainApp
-from cylc.gui.SuiteControl import ControlApp
-from cylc.hostname import hostname, is_remote_host
-from cylc.owner import is_remote_user
 
-parser = cop( """cylc gui|gcylc [OPTIONS] [REG]
-gcylc [OPTIONS] [REG]
+parser = cop( """cylc gui|gcylc [OPTIONS]
+gcylc [OPTIONS]
 
-This is the cylc graphical user interface. It is functionally equivalent
-to the command line interface ('cylc help') in most respects.
+This is the cylc Graphical User Interface; it is functionally equivalent
+to the Command Line Interface in most respects (see 'cylc help').
+Right-click on suites or groups to access cylc functionality from
+suite editing and graphing through to suite control and monitoring.
 
-With no suite name argument (REG), invoke the suite database viewer:
-right-click on suites or groups to access all cylc functionality from
-editing and graphing suites through to suite control and monitoring.
+NOTE: to daemonize suites launched from the GUI use POSIX nohup command:
+    $ nohup gcylc [OPTIONS] &""", argdoc=[])
 
-With a suite name argument (REG), directly invoke a suite control GUI
-for the named suite.
-
-NOTE: daemonize important suites with the POSIX nohup command:
-    $ nohup gcylc [OPTIONS] REG &""", pyro=True,
-    argdoc=[('[REG]', 'Suite name' )])
-
-parser.add_option( "-w", "--views", metavar="VIEWS", 
-        help="Initial view panes for the suite control GUI. "
-        "choose one or two, comma separated, from 'dot', "
-        "'text', and 'graph'; the default is 'dot,text'",
-        action="store", default='dot,text', dest="gviews" )
+parser.add_option( "-t", "--timeout", metavar='SEC',
+        help="Set a timeout value for Pyro network connections. The default "
+        "is no timeout. In gcylc the timeout value is used when scanning "
+        "ports for running suites, and it is also passed on to any suite "
+        "started from a gcontrol app launched from gcylc (in which case it "
+        "will override a Pyro timeout set in the suite definition).",
+        action="store", default=None, dest="pyro_timeout" )
 
 ( options, args ) = parser.parse_args()
 
@@ -68,56 +60,6 @@ parser.add_option( "-w", "--views", metavar="VIEWS",
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-if len( args ) == 0:
-    # DATABASE VIEWER APP (only local hostname needed here)
-    app = MainApp( options.db, hostname, cylc_tmpdir )
-    gtk.main()
-    sys.exit(0)
-
-# SUITE CONTROL APP
-from cylc.registration import localdb
-from cylc.passphrase import passphrase
-
-suite = args[0]
-suitedir = None
-# dealias the suite name (an aliased name may be given for local suites)
-if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
-    db = localdb(file=options.db, verbose=options.verbose)
-    db.load_from_file()
-    try:
-        suite = db.unalias( suite )
-        suitedir = db.getdir( suite )
-    except Exception, x:
-        if options.debug:
-            raise
-        raise SystemExit(x)
-
-try:
-    pphrase = passphrase( suite, options.owner, options.host, verbose=options.verbose ).get( options.pfile, suitedir )
-except Exception, x:
-    sys.exit(str(x))
-
-gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
-gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
-gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
-
-views = (options.gviews).split(',')
-
-if len(views) > 2:
-    sys.exit( 'Too many views specified' )
-
-illegal = []
-for view in views:
-    if view not in ['dot', 'text', 'graph' ]:
-        illegal.append(view)
-if len(illegal) != 0:
-    sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
-
-try:
-    app = ControlApp( suite, pphrase, options.owner, options.host, None, cylc_tmpdir, views )
-except Exception, x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
+app = MainApp( options.db, options.db_owner, cylc_tmpdir, options.pyro_timeout )
 gtk.main()
 

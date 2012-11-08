@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.remote import remrun
-remrun().execute()
-
 import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
 import gtk, gobject
 from xdot import DotWindow
 from cylc.CylcOptionParsers import cop
@@ -105,6 +106,7 @@ GRAPH VIEWER CONTROLS:
     * Zoom buttons, mouse-wheel, or ctrl-left-drag to zoom in and out.
     * Shift-left-drag to zoom in on a box.
     * Also: "Best Fit" and "Normal Size".
+    * Landscape mode on/off.
   Family (namespace) grouping controls:
     Toolbar:
     * "group" - group all families up to root.
@@ -113,7 +115,7 @@ GRAPH VIEWER CONTROLS:
     * "group" - close this node's parent family.
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
-    argdoc = [('REG', 'Suite name'), 
+    argdoc = [('[REG]', 'Suite name'), 
         ('[START]', 'Initial cycle time to plot (default=2999010100)'),
         ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
 
@@ -134,6 +136,11 @@ parser.add_option( "-n", "--namespaces",
     "(task run time properties).",
     action="store_true", default=False, dest="namespaces" )
 
+parser.add_option( "-l", "--landscape",
+    help="Plot in landscape mode instead of portrait (the default)."
+    "Cannot be used in conjunction with -f, --file",
+    action="store_true", default=False, dest="landscape" )
+
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
@@ -146,10 +153,6 @@ parser.add_option( "--output",
     metavar="FILE", action="store", default=None, dest="outputfile" )
 
 ( options, args ) = parser.parse_args()
-
-prep = prep_file( args[0], options )
-suite, suiterc = prep.execute()
-watchers = prep.get_rcfiles()
 
 if options.filename:
     if len(args) != 0:
@@ -173,12 +176,21 @@ if options.filename:
     gtk.main()
     sys.exit(0)
 
+prep = prep_file( args[0], options )
+suite, suiterc = prep.execute()
+watchers = prep.get_rcfiles()
+
+if options.landscape:
+    orientation = "LR"
+else:
+    orientation = "TB"
+
 # parse and plot the suite.rc dependency graph
 if len(args) < 1 or len(args) > 3:
     parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 if options.namespaces:
-    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile )
+    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile, orientation )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -208,7 +220,8 @@ else:
     if options.rawstart:
         raw = True
 
-    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile )
+    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile,
+                          orientation )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 

@@ -1,0 +1,69 @@
+title = "Quick Start Example C"
+description  = "(Quick Start b plus real tasks)"
+
+# A clock-triggered data-gathering task, a warm-cycled model, and two
+# post-processing tasks (one runs every second cycle). The tasks are not
+# cylc-aware, have independently configured I/O directories, and abort
+# if their input files do not exist. This suite gets them all to run out
+# of a common I/O workspace (although the warm-cycled model uses a
+# private running directory for its restart files).
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.2 # minutes
+
+[scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
+    [[special tasks]]
+        start-up        = Prep
+        cold-start      = ColdModel
+        clock-triggered = GetData(1)
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph  = """Prep => GetData & ColdModel
+                        GetData => Model => PostA
+                        ColdModel | Model[T-6] => Model"""
+        [[[6,18]]]
+            graph = "Model => PostB"
+
+[runtime]
+    [[root]]
+        [[[environment]]]
+            TASK_EXE_SECONDS = 0
+            WORKSPACE = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
+
+    [[Prep]]
+        description = "prepare the suite workspace for a new run"
+        command scripting = clean-workspace.sh $WORKSPACE
+
+    [[GetData]]
+        description = "retrieve data for the current cycle time"
+        command scripting = GetData.sh
+        [[[environment]]]
+            GETDATA_OUTPUT_DIR = $WORKSPACE
+
+    [[Models]]
+        [[[environment]]]
+            MODEL_INPUT_DIR = $WORKSPACE
+            MODEL_OUTPUT_DIR = $WORKSPACE
+            MODEL_RUNNING_DIR = $WORKSPACE/Model
+    [[ColdModel]]
+        inherit = Models
+        description = "cold start the forecast model"
+        command scripting = Model.sh --coldstart
+    [[Model]]
+        inherit = Models
+        description = "the forecast model"
+        command scripting = Model.sh
+ 
+    [[Post]]
+        description = "post processing for model"
+        [[[environment]]]
+            INPUT_DIR  = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+    [[PostA,PostB]]
+        inherit = Post
+        command scripting = <TASK>.sh
+

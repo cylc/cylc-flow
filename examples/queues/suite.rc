@@ -13,8 +13,8 @@ active tasks at once. Run via the graph control GUI for a clear view.
             members = n, o, p, fam2, u, v, w, x, y, z
     [[dependencies]]
         graph = """
-            a => b & c => fam1 => h & i & j & k & l & m
-            n => o & p => fam2 => u & v & w & x & y & z
+            a => b & c => fam1:succeed-all => h & i & j & k & l & m
+            n => o & p => fam2:succeed-all => u & v & w & x & y & z
                 """
 [runtime]
     [[fam1,fam2]]

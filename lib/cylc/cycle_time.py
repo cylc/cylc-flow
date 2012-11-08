@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 
 import datetime
 import re
+from cylc.strftime import strftime
 
 """ 
 CYCLE TIME: YYYY[MM[DD[HH[mm[ss]]]]]
@@ -56,7 +57,7 @@ class ct( object ):
             self.parse( ctin )
 
     def _init_by_datetime( self, dtvalue ):
-        return dtvalue.strftime( "%Y%m%d%H%M%S" )
+        return strftime( dtvalue, "%Y%m%d%H%M%S" )
 
     def parse( self, strx ):
         n = len(strx)
@@ -101,7 +102,7 @@ class ct( object ):
         return self.dtvalue
 
     def _str_from_datetime( self, dt ): 
-        return dt.strftime( "%Y%m%d%H%M%S" )
+        return strftime( dt, "%Y%m%d%H%M%S" )
 
     def increment( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
             microseconds=0, milliseconds=0 ): 

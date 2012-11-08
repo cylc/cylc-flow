@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#C: THIS FILE IS PART OF THE CYLC FORECAST SUITE METASCHEDULER.
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
@@ -26,13 +26,15 @@ from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
 from gcapture import gcapture_tmpfile
 
+
 class ControlGraph(object):
     """
 Dependency graph suite control interface.
     """
-    def __init__(self, cfg, info_bar, get_right_click_menu, log_colors ):
+    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
 
         self.cfg = cfg
+        self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -45,7 +47,7 @@ Dependency graph suite control interface.
         self.last_url = None
 
     def get_control_widgets( self ):
-        self.x = xupdater( self.cfg, self.info_bar, self.xdot )
+        self.x = xupdater( self.cfg, self.usercfg, self.info_bar, self.xdot )
         self.x.start()
         return self.xdot.get()
 
@@ -70,16 +72,6 @@ Dependency graph suite control interface.
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
             return False
-        if url == 'KEY':
-            # graph key node
-            return
-
-        m = re.match( 'SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.right_click_menu( event, task_id, type='collapsed subtree' )
-            return
 
         m = re.match( 'base:(.*)', url )
         if m:
@@ -111,18 +103,6 @@ Dependency graph suite control interface.
             self.xdot.widget.set_tooltip_text(None)
             return False
         url = unicode(url.url)
-        if url == 'KEY':
-            # graph key node
-            self.xdot.widget.set_tooltip_text(url)
-            return False
-
-        m = re.match( 'SUBTREE:(.*)', url )
-        if m:
-            #print 'SUBTREE'
-            task_id = m.groups()[0]
-            self.xdot.widget.set_tooltip_text(self.x.get_summary(task_id))
-            return False
-
         m = re.match( 'base:(.*)', url )
         if m:
             #print 'BASE GRAPH'
@@ -159,54 +139,43 @@ Dependency graph suite control interface.
         timezoom_reset_item = gtk.MenuItem( 'Focus Reset' )
         timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
 
-        group_item = gtk.MenuItem( 'Group' )
+        group_item = gtk.ImageMenuItem( 'Group' )
+        img = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_MENU )
+        group_item.set_image(img)
+        group_item.set_sensitive( name not in self.x.group )
         group_item.connect( 'activate', self.grouping, name, True )
-        ungroup_item = gtk.MenuItem( 'UnGroup' )
+
+        ungroup_item = gtk.ImageMenuItem( 'UnGroup' )
+        img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
+        ungroup_item.set_image(img)
+        ungroup_item.set_sensitive( name not in self.x.ungroup )
         ungroup_item.connect( 'activate', self.grouping, name, False )
-        ungroup_rec_item = gtk.MenuItem( 'Recursive UnGroup' )
+
+        ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )
+        img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
+        ungroup_rec_item.set_image(img)
+        ungroup_rec_item.set_sensitive( not self.x.ungroup_recursive )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
-        if type == 'collapsed subtree':
-            title_item = gtk.MenuItem( 'Subtree: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
-            menu.append( gtk.SeparatorMenuItem() )
+        title_item = gtk.MenuItem( 'Task: ' + task_id.replace("_", "__") )
+        title_item.set_sensitive(False)
+        menu.append( title_item )
 
-            expand_item = gtk.MenuItem( 'Expand Subtree' )
-            menu.append( expand_item )
-            expand_item.connect( 'activate', self.expand_subtree, task_id )
-    
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
-            menu.append( timezoom_reset_item )
+        menu.append( gtk.SeparatorMenuItem() )
 
-        else:
+        menu.append( timezoom_item_direct )
+        menu.append( timezoom_item )
+        menu.append( timezoom_reset_item )
 
-            title_item = gtk.MenuItem( 'Task: ' + task_id )
-            title_item.set_sensitive(False)
-            menu.append( title_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            menu.append( timezoom_item_direct )
-            menu.append( timezoom_item )
-            menu.append( timezoom_reset_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-            menu.append( group_item )
-            menu.append( ungroup_item )
-            menu.append( ungroup_rec_item )
-
-            menu.append( gtk.SeparatorMenuItem() )
-
-            collapse_item = gtk.MenuItem( 'Collapse Subtree' )
-            menu.append( collapse_item )
-            collapse_item.connect( 'activate', self.collapse_subtree, task_id )
+        menu.append( gtk.SeparatorMenuItem() )
+        menu.append( group_item )
+        menu.append( ungroup_item )
+        menu.append( ungroup_rec_item )
 
         if type == 'live task':
-            menu.append( gtk.SeparatorMenuItem() )
-            
-            default_menu = self.get_right_click_menu( task_id, hide_task=True )
+            is_fam = (name in self.x.families)
+            default_menu = self.get_right_click_menu( task_id, hide_task=True,
+                                                      task_is_family=is_fam )
             for item in default_menu.get_children():
                 default_menu.remove( item )
                 menu.append( item )
@@ -227,21 +196,6 @@ Dependency graph suite control interface.
             self.x.group.append(name)
         else:
             self.x.ungroup.append(name)
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def collapse_subtree( self, w, id ):
-        self.x.collapse.append(id)
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def expand_subtree( self, w, id ):
-        self.x.collapse.remove(id)
-        self.x.action_required = True
-        self.x.best_fit = True
-
-    def expand_all_subtrees( self, w ):
-        del self.x.collapse[:]
         self.x.action_required = True
         self.x.best_fit = True
 
@@ -266,30 +220,35 @@ Dependency graph suite control interface.
         items.append( graph_range_item )
         graph_range_item.connect( 'activate', self.graph_timezoom_popup )
 
-        crop_item = gtk.MenuItem( 'Toggle _Crop Base Graph' )
+        crop_item = gtk.CheckMenuItem( 'Toggle _Crop Base Graph' )
         items.append( crop_item )
+        crop_item.set_active( self.x.crop )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        filter_item = gtk.MenuItem( 'Task _Filtering ...' )
-        items.append( filter_item )
-        filter_item.connect( 'activate', self.filter_popup )
+        self.menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
+        self.menu_filter_item.set_image(img)
+        items.append( self.menu_filter_item )
+        self.menu_filter_item.connect( 'activate', self.filter_popup )
 
-        expand_item = gtk.MenuItem( '_Expand All Subtrees' )
-        items.append( expand_item )
-        expand_item.connect( 'activate', self.expand_all_subtrees )
+        self.menu_group_item = gtk.ImageMenuItem( '_Group All Families' )
+        img = gtk.image_new_from_stock(  'group', gtk.ICON_SIZE_MENU )
+        self.menu_group_item.set_image(img)
+        self.menu_group_item.set_sensitive( not self.x.group_all )
+        items.append( self.menu_group_item )
+        self.menu_group_item.connect( 'activate', self.group_all_families, True )
 
-        group_item = gtk.MenuItem( '_Group All Families' )
-        items.append( group_item )
-        group_item.connect( 'activate', self.group_all_families, True )
+        self.menu_ungroup_item = gtk.ImageMenuItem( '_UnGroup All Families' )
+        img = gtk.image_new_from_stock(  'ungroup', gtk.ICON_SIZE_MENU )
+        self.menu_ungroup_item.set_image(img)
+        self.menu_ungroup_item.set_sensitive( not self.x.ungroup_all )
+        items.append( self.menu_ungroup_item )
+        self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
 
-        ungroup_item = gtk.MenuItem( '_UnGroup All Families' )
-        items.append( ungroup_item )
-        ungroup_item.connect( 'activate', self.group_all_families, False )
-
-        key_item = gtk.MenuItem( 'Toggle Graph _Key' )
-        items.append( key_item )
-        key_item.connect( 'activate', self.toggle_key )
-        
+        self.menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
+        items.append( self.menu_landscape_item )
+        self.menu_landscape_item.set_active( self.x.orientation == "LR" )
+        self.menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -307,33 +266,32 @@ Dependency graph suite control interface.
         zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
         zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
         zoomin_button.set_label( None )
-        self._set_tooltip( zoomin_button, "Zoom In" )
+        self._set_tooltip( zoomin_button, "Graph View - Zoom In" )
         items.append( zoomin_button )
 
         zoomout_button = gtk.ToolButton( gtk.STOCK_ZOOM_OUT )
         zoomout_button.connect( 'clicked', self.xdot.widget.on_zoom_out )
         zoomout_button.set_label( None )
-        self._set_tooltip( zoomout_button, "Zoom Out" )
+        self._set_tooltip( zoomout_button, "Graph View - Zoom Out" )
         items.append( zoomout_button )
         
         zoomfit_button = gtk.ToolButton( gtk.STOCK_ZOOM_FIT )
         zoomfit_button.connect('clicked', self.xdot.widget.on_zoom_fit)
         zoomfit_button.set_label( None )
-        self._set_tooltip( zoomfit_button, "Best Fit" )
+        self._set_tooltip( zoomfit_button, "Graph View - Best Fit" )
         items.append( zoomfit_button )
 
         zoom100_button = gtk.ToolButton( gtk.STOCK_ZOOM_100 )
         zoom100_button.connect('clicked', self.xdot.widget.on_zoom_100)
         zoom100_button.set_label( None )
-        self._set_tooltip( zoom100_button, "Normal Size" )
+        self._set_tooltip( zoom100_button, "Graph View - Normal Size" )
         items.append( zoom100_button )
        
         connect_button = gtk.ToggleButton()
-        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT,
-                                          gtk.ICON_SIZE_SMALL_TOOLBAR )
+        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT, gtk.ICON_SIZE_SMALL_TOOLBAR )
         connect_button.set_image( image )
         connect_button.set_relief( gtk.RELIEF_NONE )
-        self._set_tooltip( connect_button, "Click to disconnect" )
+        self._set_tooltip( connect_button, "Graph View - Click to disconnect" )
         connect_item = gtk.ToolItem()
         connect_item.add( connect_button )
         items.append( connect_item )
@@ -342,7 +300,7 @@ Dependency graph suite control interface.
         update_button.connect( 'clicked', self.graph_update )
         update_button.set_label( None )
         update_button.set_sensitive( False )
-        self._set_tooltip( update_button, "Update graph" ) 
+        self._set_tooltip( update_button, "Graph View - Update graph" ) 
         items.append( update_button )
         
         connect_button.connect( 'clicked', self.toggle_graph_disconnect, update_button )
@@ -354,15 +312,21 @@ Dependency graph suite control interface.
             self.x.group_all = True
         else:
             self.x.ungroup_all = True
+        self.menu_group_item.set_sensitive( not self.x.group_all )
+        self.menu_ungroup_item.set_sensitive( not self.x.ungroup_all )
         self.x.action_required = True
         self.x.best_fit = True
 
     def toggle_crop( self, w ):
         self.x.crop = not self.x.crop
         self.x.action_required = True
-        
-    def toggle_key( self, w ):
-        self.x.show_key = not self.x.show_key
+
+    def toggle_landscape_mode( self, w ):
+        """Change the orientation of the graph - 'portrait' or 'landscape'."""
+        if self.x.orientation == "TB":  # Top -> bottom ordering
+            self.x.orientation = "LR"  # Left -> right ordering
+        elif self.x.orientation == "LR":
+            self.x.orientation = "TB"
         self.x.action_required = True
 
     def filter_popup( self, w ):
@@ -536,8 +500,8 @@ Dependency graph suite control interface.
         window.show_all()
 
     def focused_timezoom_direct( self, w, ctime ):
-        self.x.start_ctime = ctime
-        self.x.stop_ctime = ctime
+        self.x.focus_start_ctime = ctime
+        self.x.focus_stop_ctime = ctime
         self.x.action_required = True
         self.x.best_fit = True
 
@@ -598,8 +562,8 @@ Dependency graph suite control interface.
         window.show_all()
 
     def graph_timezoom(self, w, start_e, stop_e):
-        self.x.start_ctime = start_e.get_text()
-        self.x.stop_ctime = stop_e.get_text()
+        self.x.focus_start_ctime = start_e.get_text()
+        self.x.focus_stop_ctime = stop_e.get_text()
         self.x.best_fit = True
         self.x.action_required = True
 
@@ -608,10 +572,10 @@ Dependency graph suite control interface.
         post_hours = stop_e.get_text()
         foo = ct(focus_ctime)
         foo.decrement( hours=pre_hours )
-        self.x.start_ctime = foo.get()
+        self.x.focus_start_ctime = foo.get()
         bar = ct(focus_ctime)
         bar.increment( hours=post_hours )
-        self.x.stop_ctime = bar.get()
+        self.x.focus_stop_ctime = bar.get()
         self.x.best_fit = True
         self.x.action_required = True
 
