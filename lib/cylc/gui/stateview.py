@@ -32,6 +32,7 @@ import gtk
 import pygtk
 from string import zfill
 from copy import copy
+
 ####pygtk.require('2.0')
 
 try:
@@ -597,7 +598,15 @@ class lupdater(threading.Thread):
 
         self.task_list.sort()
         if self.filter:
-            self.task_list = [t for t in self.task_list if self.filter in t]
+            try:
+                self.task_list = [
+                    t for t in self.task_list if \
+                            self.filter in t or \
+                            re.search( self.filter, t )]
+            except:
+                # bad regex (To Do: dialog warn from main thread - idle_add?)
+                self.task_list = []
+
         # always update global info
         self.global_summary = glbl
 

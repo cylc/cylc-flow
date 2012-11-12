@@ -23,6 +23,7 @@ import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
 from util import EntryTempText
+from warning_dialog import warning_dialog, info_dialog
 
 try:
     any
@@ -83,15 +84,19 @@ Text Treeview suite control interface.
             state = re.sub( r'<.*?>', '', state )
         sres = state not in self.tfilter_states
 
-        if not self.tfilt:
-            nres = True
-        elif self.tfilt in name:
-            # tfilt is any substring of name
-            nres = True
-        elif re.search( self.tfilt, name ):
-            # full regex match
-            nres = True
-        else:
+        try:
+            if not self.tfilt:
+                nres = True
+            elif self.tfilt in name:
+                # tfilt is any substring of name
+                nres = True
+            elif re.search( self.tfilt, name ):
+                # full regex match
+                nres = True
+            else:
+                nres = False
+        except:
+            warning_dialog( 'Bad filter regex? ' + self.tfilt ).warn()
             nres = False
 
         if model.iter_has_child( iter ):
@@ -374,7 +379,7 @@ Text Treeview suite control interface.
         filter_toolitem.add(self.filter_entry)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name")
+        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name\n(enter a sub-string or regex)")
         items.append(filter_toolitem)
 
         return items
