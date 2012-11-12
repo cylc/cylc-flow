@@ -1,0 +1,36 @@
+
+title = "test suite for broadcast functionality"
+
+description = """For interactive use; will be turned into a reference test"""
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time   = 2010081100
+    [[special tasks]]
+        start-up = prep
+    [[dependencies]]
+        [[[0]]]
+            graph = """
+           prep => foo => ens
+          ens:finish-all => bar
+                    """
+[runtime]
+    [[root]]
+        pre-command scripting = "echo BCAST is $BCAST"
+        [[[environment]]]
+            BCAST = ${BCAST:-(not set)}
+    [[prep]]
+        command scripting = """
+        cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_REG_NAME
+        cylc broadcast -t 2010080800 -n foo -s "[environment]BCAST = FOO" $CYLC_SUITE_REG_NAME
+        cylc bcast --display $CYLC_SUITE_REG_NAME
+                            """
+    [[ens]]
+    [[m1,m2,m3]]
+        inherit = ens
+    [[bar]]
+
+[development]
+    disable task elimination = True
+    hold before shutdown = True
+

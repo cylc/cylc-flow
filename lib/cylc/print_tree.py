@@ -71,5 +71,5 @@ def print_tree( tree, padding, unicode=False, prefix='', labels=None ):
                 else:
                     print line
             else:
-                print line + tree[item]
+                print line + str( tree[item] )
 
