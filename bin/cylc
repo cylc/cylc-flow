@@ -239,7 +239,8 @@ control_commands['reload' ] = ['reload' ]
 control_commands['depend' ] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity' ] = ['set-verbosity' ]
- 
+control_commands['broadcast'] = [ 'broadcast', 'bcast' ]
+
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars'] 
@@ -296,7 +297,6 @@ task_commands['started'  ] = [ 'started', 'task-started' ]
 task_commands['message'  ] = [ 'message', 'task-message' ]
 task_commands['succeeded'] = [ 'succeeded', 'task-succeeded' ]
 task_commands['failed'   ] = [ 'failed', 'task-failed' ]
-task_commands['broadcast'] = [ 'broadcast', 'bcast' ]
 
 all_commands = OrderedDict()
 for dct in [ 
@@ -482,7 +482,7 @@ comsum[ 'started'    ] = 'Acquire a task lock and report started'
 comsum[ 'message'    ] = 'Report progress and completion of outputs'
 comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
-comsum[ 'broadcast'  ] = 'Broadcast environment variables to other tasks'
+comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
 
 # utility
 comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'

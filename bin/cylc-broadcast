@@ -100,21 +100,23 @@ def translate( rdict ):
         # item not in rdict
         pass
 
-usage = """cylc [task] broadcast|bcast [OPTIONS] REG
+usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 
-This command overrides [runtime] settings in a running suite. Broadcast
-settings persist across suite restarts. If a task is affected by all
-cycle and single cycle broadcasts, the latter takes precedence. If a
-task is affected by broadcasts to more than one namespace in its family
-tree, the highest level (i.e. farthest from root) takes precedence.
+This command overrides [runtime] settings in a running suite.  Tasks or
+families can be targetted (if a task is affected by broadcasts to more
+than one namespace in its family tree, the level farthest from root
+takes precedence); for all cycle times or for particular cycle times 
+(the latter takes precedence). Broadcast settings persist across suite
+restarts.
 
-Note that setting names and values with internal spaces must be quoted:
-  % cylc broadcast -n NAME -s [environment]VERSE="the quick brown fox"
-  % cylc broadcast -n NAME -s "command scripting"="echo Hello", or
-  % cylc broadcast -n NAME -s "command scripting=echo Hello"
+Items with internal spaces must be quoted, e.g.:
+  % cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
   
-To unset an active broadcast value:
-  % cylc broadcast -n NAME -u 'command scripting'
+To view current active broadcasts:
+  % cylc broadcast -n NAME --display REG
+ 
+To unset an active broadcast:
+  % cylc broadcast -n NAME -u 'command scripting' REG
   
 Broadcast settings are applied to tasks at the time of job submission.
 
