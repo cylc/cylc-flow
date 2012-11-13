@@ -1027,12 +1027,10 @@ class scheduler(object):
                 RunHandler( 'shutdown', handler, self.suite, msg=message, fg=foreground )
             except Exception, x:
                 if self.options.reftest:
-                    print >> sys.stderr, '\nERROR: SUITE REFERENCE TEST FAILED' 
-                    raise SchedulerError, x
+                    sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
                 else:
                     # Note: tests suites depend on the following message:
-                    print >> sys.stderr, '\nERROR: shutdown EVENT HANDLER FAILED' 
-                    raise
+                    sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 

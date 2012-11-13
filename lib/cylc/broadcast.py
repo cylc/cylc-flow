@@ -155,6 +155,7 @@ class broadcast( Pyro.core.ObjBase ):
             # namespaces).
             if nslist:
                 self.addict( apply, self.settings[cycle][nslist[0]] )
+
         return apply
 
     def expire( self, expire=None ):

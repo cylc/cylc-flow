@@ -102,23 +102,27 @@ def translate( rdict ):
 
 usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 
-This command overrides [runtime] settings in a running suite.  Tasks or
-families can be targetted (if a task is affected by broadcasts to more
-than one namespace in its family tree, the level farthest from root
-takes precedence); for all cycle times or for particular cycle times 
-(the latter takes precedence). Broadcast settings persist across suite
-restarts.
+This command overrides [runtime] namespace settings in a running suite.
+
+For settings affected by multiple broadcasts with respect to cycle time
+and/or namespace, the precedence is as follows:
+ 1) specific cycles take precedence over all-cycle broadcasts; then
+ 2) the most specific namespace (farthest from root) takes precedence.
+
+Broadcast settings persist across suite restarts.
 
 Items with internal spaces must be quoted, e.g.:
   % cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
   
 To view current active broadcasts:
-  % cylc broadcast -n NAME --display REG
+  % cylc broadcast --display REG
+  % cylc broadcast --display-task=TASKID REG
  
-To unset an active broadcast:
+To unset active broadcast:
   % cylc broadcast -n NAME -u 'command scripting' REG
+  % cylc broadcast --clear REG # clear all broadcast settings
   
-Broadcast settings are applied to tasks at the time of job submission.
+Broadcast settings are applied to tasks just before job submission.
 
 LIMITATIONS: broadcast cannot change the runtime inheritance hierarchy.
 

@@ -1,11 +1,22 @@
 
 title = "test suite for broadcast functionality"
 
-description = """For interactive use; will be turned into a reference test"""
+description = """
+The initial prep task in this suite broadcasts an environment variable
+"BCAST" to various cycles and namespaces, then each task writes its cycle
+time, name, and its value of BCAST to a special log file. Finally, the
+shutdown event handler compares the broadcast log file with a previously
+generated reference version.
+              """
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.2
+        suite shutdown event handler = complog.py
 
 [scheduling]
     initial cycle time = 2010080800
-    final cycle time   = 2010081100
+    final cycle time   = 2010080900
     [[special tasks]]
         start-up = prep
     [[dependencies]]
@@ -16,21 +27,26 @@ description = """For interactive use; will be turned into a reference test"""
                     """
 [runtime]
     [[root]]
-        pre-command scripting = "echo BCAST is $BCAST"
+        pre-command scripting = "echo $CYLC_TASK_CYCLE_TIME $CYLC_TASK_NAME BCAST is $BCAST | tee -a $BCASTLOG"
+        command scripting = "true" # no sleep
         [[[environment]]]
             BCAST = ${BCAST:-(not set)}
+            BCASTLOG = ${CYLC_SUITE_DEF_PATH}/broadcast.log
     [[prep]]
+        pre-command scripting = "rm -f $BCASTLOG"
         command scripting = """
+    # broadcast to all cycles and namespaces:
         cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_REG_NAME
+    # broadcast to foo%2010080800:
         cylc broadcast -t 2010080800 -n foo -s "[environment]BCAST = FOO" $CYLC_SUITE_REG_NAME
+    # broadcast to all members of ens, all cycles:
+        cylc broadcast -n ens -s "[environment]BCAST = ENS" $CYLC_SUITE_REG_NAME
+    # broadcast to a single member m2 of ens, in 2010080900:
+        cylc broadcast -n m2 -t 2010080900 -s "[environment]BCAST = M2" $CYLC_SUITE_REG_NAME
+    # list the result to prep task stdout:
         cylc bcast --display $CYLC_SUITE_REG_NAME
                             """
     [[ens]]
     [[m1,m2,m3]]
         inherit = ens
-    [[bar]]
-
-[development]
-    disable task elimination = True
-    hold before shutdown = True
 
