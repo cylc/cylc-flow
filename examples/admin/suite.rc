@@ -42,7 +42,7 @@ modified unless you know what you're doing."""
                     prep => X & ColdA & ColdB & ColdC"""
 [runtime]
     [[root]]
-        command scripting = <TASK>.sh
+        command scripting = ${CYLC_TASK_NAME}.sh
         [[[environment]]]
             TASK_EXE_SECONDS = 10
             WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
@@ -51,19 +51,19 @@ modified unless you know what you're doing."""
             OUTPUT_DIR = $WORKSPACE
 
     [[Model]]
-        description = "Model task <TASK>"
+        description = "Model task"
         [[[environment]]]
-            RUNNING_DIR = $RUNNING/<TASK>
+            RUNNING_DIR = $RUNNING/$CYLC_TASK_NAME
 
     [[Cold]]
         inherit = Model
-        description = "Model cold start task <TASK>"
+        description = "Model cold start task"
       [[[environment]]]
             # Needs the corresponding model running dir
             RUNNING_DIR = "$RUNNING/${CYLC_TASK_NAME#Cold}"
 
     [[Post]]
-        description = "Post processing task <TASK>"
+        description = "Post processing task"
 
     [[prep]]
         description = "Clean out the suite workspace for a new run"

@@ -436,6 +436,19 @@ template processing:
         \newline \url{http://jinja.pocoo.org/docs}
 \end{myitemize}
 
+Finally, cylc makes heavy use of ``ordered dictionary'' data structures,
+and a significant speedup in parsing large suites can be had by
+installing the fast C-coded \lstinline=ordereddict= module by Anthon
+van der Neut:
+\begin{myitemize}
+    \item {\bf ordereddict} (latest tested 0.4.5) \newline 
+        \url{http://www.xs4all.nl/~anthon/Python/ordereddict}
+\end{myitemize}
+This module is currently packaged with cylc under
+\lstinline=$CYLC_DIR/ext=, with installation instructions. If it is
+installed cylc will automatically use it in place of a slower ordered
+dictionary implemented in Python. 
+
 \subsection{Known Version Compatibility Issues}
 
 Cylc should run ``out of the box'' on recent Linux distributions.
@@ -2959,48 +2972,11 @@ defaults for other items by explicitly configuring the root namespace.
 
 Groups of similar tasks or families that differ only in a few
 configuration details can be defined in single namespace sections
-by putting a list of names in the section heading. Potential
-applications include groups of similar obs processing tasks, and
-forecasting ensembles. Note that if the list of tasks are also 
-members of the same family then any common runtime configuration could
-equally go under the inherited family namespace.
-
-As the suite.rc file is parsed any occurrence of the special variable
-\lstinline=<NAMESPACE>= in a runtime configuration item will be replaced
-immediately with the name of the namespace in which the special variable
-appears.  Then, after inheritance processing, in each task any
-occurrence of \lstinline=<TASK>= will be replaced with the name of the
-task. If both special variables are used in a family namespace
-definition, then in inheriting member tasks \lstinline=<NAMESPACE>= will
-evaluate to the family name while \lstinline=<TASK>= will evaluate to
-the task name.
-
-The following example illustrates this:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# SUITE.RC
-[runtime]
-    [[foo]]
-    command scripting = "echo hello from <TASK> via <NAMESPACE>"
-    [[bar, baz]]
-        inherit = foo
-\end{lstlisting}
-
-\lstset{language=bash}
-\begin{lstlisting}
-% cylc get-config test runtime foo 'command scripting'
-['echo Hello from foo via foo']
-% cylc get-config test runtime bar 'command scripting'
-['echo Hello from bar via foo']
-% cylc get-config test runtime baz 'command scripting'
-['echo Hello from baz via foo']
-\end{lstlisting}
-
-Of course particular tasks can also be singled out at run time, in common
-command scripting or invoked task scripts, by testing the
+with a list of names in the section heading. Particular tasks can then
+be singled out at run time by testing the
 \lstinline=$CYLC_TASK_NAME= variable.
 
-As another example, consider a suite containing an ensemble of closely
+As an example, consider a suite containing an ensemble of closely
 related forecast tasks in which each task invokes the same external
 script but with a unique argument that reflects the task name (which 
 presumably results in the right initial conditions being used,
@@ -3011,28 +2987,14 @@ or similar):
 # SUITE.RC
 [runtime]
     [[ensemble]]
-        command scripting = "run-model.sh ic-<TASK>"
+        command scripting = "run-model.sh ic-$CYLC_TASK_NAME"
     [[m1, m2, m3]]
-        # ensemble member tasks
         inherit = ensemble
 \end{lstlisting}
-This defines a unique command line for each ensemble member task:
-\lstset{language=bash}
-\begin{lstlisting}
-% cylc get-config test runtime m2 'command scripting'
-['run-model.sh ic-m2']
-\end{lstlisting}
+
 For large ensembles Jinja2 template processing can be used to
 automatically generate the member names and associated dependencies
 (see Section~\ref{Jinja2}).
-
-Note that in the namespace scripting and environment sections, which are
-evaluated in task job scripts at run time, \lstinline=<TASK>= is
-functionally equivalent to \lstinline=$CYLC_TASK_NAME=, but in 
-runtime config items that are never interpreted by the shell
-(e.g.\ \lstinline=description=) \lstinline=<TASK>= must be used to
-specialize from the list of names in the namespace section heading to 
-the individual task name.
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
@@ -3553,7 +3515,7 @@ and related values in ensemble suites:
 \subsection{Special Placeholder Variables}
 \label{SPHV}
 
-A small number of special variables are used as placeholders in cylc suite definitions:
+A few special variables are used as placeholders in cylc suite definitions:
 
 \begin{myitemize}
     \item \lstinline=[T]= and \lstinline=[T+n]= \newline
@@ -3565,12 +3527,6 @@ A small number of special variables are used as placeholders in cylc suite defin
         for cycle time offsets in the suite graph; and they also allow
         cylc to avoid erroneously matching literal capital T's in the
         output message. 
-
-    \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
-        These are replaced with actual task or namespace names in
-        runtime settings. The difference between the two is explained in
-        Section~\ref{MultiTaskDef}, {\em Defining Multiple Namespaces At
-        Once}.
 
     \item \lstinline=<ASYNCID>=\newline
         This is replaced with the actual ``asynchronous ID'' (e.g.
@@ -3793,10 +3749,10 @@ The ``outputs'' example is a self-contained suite that illustrates use
 of internal outputs:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/outputs/suite.rc}
-Note that cycle time and task name in the output message registration
-are expressed by special placeholder variables in angle brackets (see
-Section~\ref{SPHV}) not by the corresponding environment variables in
-the task runtime environment. This is because registered output messages
+Note that cycle time in the output message registration is 
+expressed by a special placeholder variable (see
+Section~\ref{SPHV}) not by the corresponding environment variable. This
+is because registered output messages
 are held by task proxies, inside cylc, for comparison with incoming task
 messages; they are never interpreted by the shell and consequently may
 not contain environment variables. The actual messaging calls made by 

@@ -25,9 +25,12 @@
 # implications for global detection of duplicated prerequisites
 # (detection is currently disabled).
 
-import sys, re
+import sys, re, os
 from OrderedDict import OrderedDict
 from copy import deepcopy
+from collections import deque
+from mkdir_p import mkdir_p
+from envvar import expandvars
 from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
@@ -37,6 +40,9 @@ from task_output_logs import logfiles
 from outputs import outputs
 from cycle_time import ct, at
 from cycling import container
+from dictcopy import replicate, override
+from copy import copy
+from random import randrange
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -52,42 +58,64 @@ class DefinitionError( Error ):
         return repr( self.msg )
 
 class taskdef(object):
-    def __init__( self, name, rtconfig, run_mode ):
+
+    def __init__( self, name, rtdefs, rtover, run_mode ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
             raise DefinitionError, "ERROR: Illegal task name: " + name
 
+        rtcfg = {}
+        replicate( rtcfg, rtdefs.odict()  ) # copy [runtime] default dict
+        override( rtcfg, rtover )    # override with suite [runtime] settings
+
         self.run_mode = run_mode
+        self.rtconfig = rtcfg
 
-        self.name = name
-        self.rtconfig = rtconfig
+        self.process_directories( rtcfg )
 
-        self.type = 'free'
-
-        self.modifiers = []
-        self.asyncid_pattern = None
-        self.cycling = False
-        self.is_coldstart = False
-
+        # some defaults
         self.intercycle = False
+        self.cycling = False
+        self.asyncid_pattern = None
+        self.modifiers = []
+        self.is_coldstart = False
         self.cyclers = []
 
         self.follow_on_task = None
-
         self.clocktriggered_offset = None
-
+        self.namespace_hierarchy = []
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = OrderedDict()
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = OrderedDict()
-
         self.outputs = [] # list of explicit internal outputs; change to
                           # OrderedDict() if need to vary per cycle.
-
         self.loose_prerequisites = [] # asynchronous tasks
 
-        self.namespace_hierarchy = []
+        self.name = name
+        self.type = 'free'
+
+    def process_directories( self, rtcfg ):
+        # Allow use of suite, BUT NOT TASK, identity variables.
+        logd = rtcfg['log directory']
+        if logd.find( '$CYLC_TASK_' ) != -1:
+            print >> sys.stderr, 'runtime -> log directory =', logd
+            raise DefinitionError, 'ERROR: log directories cannot be task-specific'
+
+        # Local job sub log directories: interpolate all environment variables.
+        rtcfg['log directory'] = expandvars( rtcfg['log directory'])
+        # Remote log directories: just suite identity - local variables aren't relevant.
+        if rtcfg['remote']['log directory']:
+            for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
+                rtcfg['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], rtcfg['remote']['log directory'])
+                rtcfg['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], rtcfg['remote']['log directory'])
+        d = rtcfg['log directory']
+        try:
+            mkdir_p( d )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise DefinitionError, 'ERROR, illegal dir? ' + d
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:

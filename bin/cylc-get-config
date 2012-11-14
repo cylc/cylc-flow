@@ -89,9 +89,16 @@ parser.add_option( "-p", "--python",
         help="Write out the config data structure in Python native format.",
         action="store_true", default=False, dest="pnative" )
 
+parser.add_option( "-s", "--sparse",
+        help="Only report [runtime] items  explicitly set in the suite.rc "
+        "file, not underlying default settings.",
+        action="store_true", default=False, dest="sparse" )
+
 ( options, args ) = parser.parse_args()
 owner = options.db_owner
 
+### To Do: check if owner should be/ is passed through to taskdefs 
+### since the config-optimization changes.
 suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
@@ -106,11 +113,11 @@ if options.dpaths:
     print "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
     print "TASK LOG DIRECTORIES:"
     logdirs = {}
-    root_ldir = config['runtime']['root']['log directory']
+    root_ldir = config.get_config(['runtime','root','log directory'])
     ldirs = [root_ldir]
     logdirs['root'] = root_ldir
     for ns in config['runtime'].keys():
-        dir = config['runtime'][ns]['log directory']
+        dir = config.get_config(['runtime',ns,'log directory'])
         if dir not in ldirs:
             ldirs.append(dir)
             logdirs[ns] = dir
@@ -131,12 +138,7 @@ if options.tasks:
         print prefix + task
     sys.exit(0)
 
-res = config
-try:
-    for item in args[1:]:
-        res = res[item]
-except KeyError, x:
-    raise SystemExit( 'ERROR, item not found: ' + str(x) )
+res = config.get_config( args[1:], options.sparse )
 
 if isinstance( res, dict ):
     if options.pnative:

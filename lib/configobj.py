@@ -1360,7 +1360,6 @@ class ConfigObj(Section):
         else:
             self._handle_configspec(configspec)
     
-    
     def _initialise(self, options=None):
         if options is None:
             options = OPTION_DEFAULTS

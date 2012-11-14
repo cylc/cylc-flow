@@ -59,7 +59,7 @@ To see the effect, examine task job scripts generated with the
     [[baz]]
     [[bar1,bar2]]
         inherit = baz
-        description = "Task <TASK> of baz"
+        description = "member of baz"
     [[atovs_post]]
         inherit = OPS
         description = "OPS ATOVS postprocessing"

@@ -495,9 +495,9 @@ class task( Pyro.core.ObjBase ):
             return
         current_time = task.clock.get_datetime()
         if self.submission_timer_start != None and not self.state.is_running():
-            cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
+            cutoff = self.submission_timer_start + datetime.timedelta( minutes=float(timeout) )
             if current_time > cutoff:
-                msg = 'task submitted ' + str( timeout ) + ' minutes ago, but has not started'
+                msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
                 RunHandler( 'submission_timeout', handler, self.__class__.suite, self.id, msg )
                 self.submission_timer_start = None
@@ -512,12 +512,12 @@ class task( Pyro.core.ObjBase ):
             return
         current_time = task.clock.get_datetime()
         if self.execution_timer_start != None and self.state.is_running():
-            cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
+            cutoff = self.execution_timer_start + datetime.timedelta( minutes=float(timeout) )
             if current_time > cutoff:
                 if self.reset_timer:
-                    msg = 'last message ' + str( timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'last message ' + timeout + ' minutes ago, but has not succeeded'
                 else:
-                    msg = 'task started ' + str( timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
                 RunHandler( 'execution_timeout', handler, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None

@@ -9,7 +9,7 @@
 [runtime]
     [[foo]]
         command scripting = """
-cylc message -p WARNING "WARNING - shit happens!"
+cylc message -p WARNING "WARNING - this is just a test!"
 """
         [[[remote]]]
             # divorce us from the cylc server environment
@@ -25,5 +25,4 @@ cylc message -p WARNING "WARNING - shit happens!"
 
             execution timeout handler = handler.sh
             execution timeout = 0.001
-
 

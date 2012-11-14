@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from TaskID import TaskID, AsyncTag
 
 class GraphvizError( Exception ):
     """
@@ -169,4 +170,65 @@ class CGraph( CGraphPlain ):
                 edge.attr['color'] = nl.attr['fillcolor']
             else:
                 edge.attr['color'] = nl.attr['color']
+
+
+class edge( object):
+    def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
+        """contains qualified node names, e.g. 'foo[T-6]:out1'"""
+        self.left = l
+        self.right = r
+        self.cyclr = cyclr
+        self.sasl = sasl
+        self.suicide = suicide
+        self.conditional = conditional
+
+    def get_right( self, intag, not_first_cycle, raw, startup_only, exclude ):
+        tag = str(intag)
+        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
+        if self.right in exclude:
+            return None
+        if self.right == None:
+            return None
+        first_cycle = not not_first_cycle
+        if self.right in startup_only:
+            if not first_cycle or raw:
+                return None
+
+        # strip off special outputs
+        self.right = re.sub( ':\w+', '', self.right )
+
+        return TaskID( self.right, tag )
+
+    def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
+        tag = str(intag)
+        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
+        if self.left in exclude:
+            return None
+
+        first_cycle = not not_first_cycle
+
+        # strip off special outputs
+        left = re.sub( ':\w+', '', self.left )
+
+        if re.search( '\[\s*T\s*-\d+\s*\]', left ) and first_cycle:
+            # ignore intercycle deps in first cycle
+            return None
+
+        if left in startup_only:
+            if not first_cycle or raw:
+                return None
+
+        if self.sasl:
+            # left node is asynchronous, so override the cycler
+            tag = '1'
+        else:
+            m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
+            if m: 
+                left, sign, offset = m.groups()
+                tag = self.cyclr.__class__.offset( tag, offset )
+            else:
+                tag = tag
+
+        return TaskID( left, tag )
+
 
