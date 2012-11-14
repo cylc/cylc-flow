@@ -853,9 +853,7 @@ other namespaces inherit from it).
 \end{myitemize}
 
 If multiple names are listed, the subsequent namespace configuration
-items apply to each member, but any instance of \lstinline=<TASK>= 
-in any value will be replaced by cylc with the actual namespace name.
-This can be used to define many tasks that are almost identical.
+items apply to each member. 
 
 All namespaces inherit initially from {\em root}, which you can
 explicitly configure to override or provide default runtime settings for
@@ -1694,7 +1692,7 @@ Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
 
 \subsection{Special Placeholder Variables}
 
-A small number of special variables are used as placeholders in cylc suite definitions:
+A few special variables are used as placeholders in cylc suite definitions:
 
 \begin{myitemize}
     \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
@@ -1703,12 +1701,6 @@ A small number of special variables are used as placeholders in cylc suite defin
         optional computed offset) in the message strings registered for
         explicit internal (pre-completion) task outputs. They correspond to 
         \lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment.
-
-    \item \lstinline=<TASK>= and \lstinline=<NAMESPACE>= \newline
-        These placeholder variables are replaced with actual task or
-        namespace names in runtime settings. The difference between 
-        the two is explained in Section~\ref{MultiTaskDef}, 
-        {\em Defining Multiple Namespaces At Once}.
 
     \item \lstinline=<ASYNCID>=\newline
         This placeholder variable is replaced with the actual ``asynchronous

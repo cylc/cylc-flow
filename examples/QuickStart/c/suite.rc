@@ -60,7 +60,7 @@ description  = "(Quick Start b plus real tasks)"
             OUTPUT_DIR = $WORKSPACE
     [[PostA,PostB]]
         inherit = Post
-        command scripting = <TASK>.sh
+        command scripting = ${CYLC_TASK_NAME}.sh
 
 [visualization]
     default node attributes = "shape=ellipse"

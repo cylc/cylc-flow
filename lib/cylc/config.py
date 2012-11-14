@@ -366,7 +366,6 @@ class config( CylcConfigObj ):
     def famtree( self ):
         for label in self['runtime']:
             hierarchy = []
-            self.interpolate( label, self['runtime'][label], '<NAMESPACE>' )
             if label == 'root':
                 self.family_hierarchy['root'] = ['root']
                 continue
@@ -682,28 +681,6 @@ class config( CylcConfigObj ):
                 expandvars( self['cylc']['state dumps']['directory'], self.owner)
         self['visualization']['runtime graph']['directory'] = \
                 expandvars( self['visualization']['runtime graph']['directory'], self.owner)
-
-    def interpolate( self, name, source, pattern ):
-        # replace pattern with name in all items in the source tree
-        for item in source:
-            if isinstance( source[item], str ):
-                # single source item
-                source[item] = re.sub( pattern, name, source[item] )
-            elif isinstance( source[item], list ):
-                # a list of values 
-                newlist = []
-                for mem in source[item]:
-                    if isinstance( mem, str ):
-                        newlist.append( re.sub( pattern, name, mem ))
-                    else:
-                        newlist.append( mem )
-                source[item] = newlist
-            elif isinstance( source[item], Section ):
-                # recursive call for to handle a sub-section
-                self.interpolate( name, source[item], pattern )
-            else:
-                # boolean or None values
-                continue
 
     def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         trig = triggerx(task_name)
@@ -1561,11 +1538,6 @@ class config( CylcConfigObj ):
             taskcfg = self['runtime'][name]
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
-
-        # Interpolate <TASK> here (doing it earlier like <NAMESPACE>
-        # fails to catch dummy tasks that are defined only by graph
-        # (otherwise they would inherit root with <TASK>=root).
-        self.interpolate( name, taskcfg, '<TASK>' )
 
         taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode )
 

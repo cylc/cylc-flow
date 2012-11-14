@@ -19,13 +19,13 @@ messaging, is entirely contained within the suite definition)."""
 echo HELLO
 sleep 10 
 # use task runtime environment variables here
-cylc message "$CYLC_TASK_NAME uploaded file set 1 for $CYLC_TASK_CYCLE_TIME"
+cylc message "foo uploaded file set 1 for $CYLC_TASK_CYCLE_TIME"
 sleep 10
-cylc message "$CYLC_TASK_NAME uploaded file set 2 for $CYLC_TASK_CYCLE_TIME"
+cylc message "foo $CYLC_TASK_NAME uploaded file set 2 for $CYLC_TASK_CYCLE_TIME"
 sleep 10
 echo BYE"""
         [[[outputs]]]
             # use cylc placeholder variables here
-            out1 = "<TASK> uploaded file set 1 for [T]"
-            out2 = "<TASK> uploaded file set 2 for [T]"
+            out1 = "foo uploaded file set 1 for [T]"
+            out2 = "foo uploaded file set 2 for [T]"
 
