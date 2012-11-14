@@ -94,6 +94,11 @@ parser.add_option( "-s", "--sparse",
         "file, not underlying default settings.",
         action="store_true", default=False, dest="sparse" )
 
+parser.add_option( "-a", "--all-tasks",
+        help="For [runtime] items, report values for all tasks. "
+        "Results are prefixed by task name.",
+        action="store_true", default=False, dest="alltasks" )
+
 ( options, args ) = parser.parse_args()
 owner = options.db_owner
 
@@ -107,6 +112,16 @@ except Exception,x:
     if options.debug:
         raise
     raise SystemExit(x)
+
+if options.alltasks:
+    if args[1] == 'runtime':
+        raise SystemExit( "ERROR: --all-tasks is only for items below '[runtime][NAME]' as first argument" )
+    data = config.get_config_all_tasks( args[1:], options.sparse )
+    tasks = data.keys()
+    tasks.sort()
+    for key in tasks:
+        print key, data[key]
+    sys.exit(0)
 
 if options.dpaths:
     print "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
