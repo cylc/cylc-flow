@@ -114,7 +114,6 @@ class task( Pyro.core.ObjBase ):
 
         class_vars = {}
         self.state = task_state.task_state( state )
-        self.launcher = None
         self.trigger_now = False
 
         # Count instances of each top level object derived from task.
@@ -471,10 +470,10 @@ class task( Pyro.core.ObjBase ):
                 'extra log files'        : self.logfiles,
                 }
 
-        self.launcher = launcher_class( self.id, jobconfig, xconfig )
+        launcher = launcher_class( self.id, jobconfig, xconfig )
 
         try:
-            p = self.launcher.submit( dry_run, debug )
+            p = launcher.submit( dry_run, debug )
         except Exception, x:
             # a bug was activated in cylc job submission code
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
