@@ -366,7 +366,7 @@ class task( Pyro.core.ObjBase ):
             self.reset_timer = False
 
 
-    def submit( self, bcvars={}, dry_run=False, debug=False, overrides={} ):
+    def submit( self, dry_run=False, debug=False, overrides={} ):
         # TO DO: REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
@@ -448,7 +448,6 @@ class task( Pyro.core.ObjBase ):
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
-                'broadcast environment'  : bcvars,
                 'pre-command scripting'  : precommand,
                 'command scripting'      : command,
                 'post-command scripting' : postcommand,
