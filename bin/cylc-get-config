@@ -21,7 +21,7 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-from cylc.config import config
+from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
 
@@ -94,6 +94,11 @@ parser.add_option( "-s", "--sparse",
         "file, not underlying default settings.",
         action="store_true", default=False, dest="sparse" )
 
+parser.add_option( "-a", "--all-tasks",
+        help="For [runtime] items, report values for all tasks. "
+        "Results are prefixed by task name.",
+        action="store_true", default=False, dest="alltasks" )
+
 ( options, args ) = parser.parse_args()
 owner = options.db_owner
 
@@ -108,6 +113,19 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
+if options.alltasks:
+    if args[1] == 'runtime':
+        raise SystemExit( "ERROR: --all-tasks is only for items below '[runtime][NAME]' as first argument" )
+    try:
+        data = config.get_config_all_tasks( args[1:], options.sparse )
+    except SuiteConfigError, x:
+        raise SystemExit(x)
+    tasks = data.keys()
+    tasks.sort()
+    for key in tasks:
+        print key, data[key]
+    sys.exit(0)
+
 if options.dpaths:
     print "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
     print "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
@@ -117,7 +135,10 @@ if options.dpaths:
     ldirs = [root_ldir]
     logdirs['root'] = root_ldir
     for ns in config['runtime'].keys():
-        dir = config.get_config(['runtime',ns,'log directory'])
+        try:
+            dir = config.get_config(['runtime',ns,'log directory'])
+        except SuiteConfigError, x:
+            raise SystemExit(x)
         if dir not in ldirs:
             ldirs.append(dir)
             logdirs[ns] = dir
@@ -138,7 +159,10 @@ if options.tasks:
         print prefix + task
     sys.exit(0)
 
-res = config.get_config( args[1:], options.sparse )
+try:
+    res = config.get_config( args[1:], options.sparse )
+except SuiteConfigError, x:
+    raise SystemExit(x)
 
 if isinstance( res, dict ):
     if options.pnative:

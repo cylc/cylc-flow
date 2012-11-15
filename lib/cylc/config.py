@@ -506,10 +506,16 @@ class config( CylcConfigObj ):
 
         return dense
 
+    def get_config_all_tasks( self, args, sparse=False ):
+        res = {}
+        for t in self.get_task_name_list():
+            res[t] = self.get_config( [ 'runtime', t ] + args, sparse )
+        return res
+
     def get_config( self, args, sparse=False ):
         if len(args) == 0 or len(args) == 1:
             # don't populate [runtime] with all default settings
-            print >> sys.stderr, "WARNING: get_config is sparse for full structure!"
+            print >> sys.stderr, "WARNING: returning sparse [runtime]!"
             target = self
             keys = args
         elif sparse:
