@@ -16,35 +16,32 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: document use foo[T-6]:out1, not foo:out1 with
-# <CYLC_TASK_CYCLE_TIME-6> in the output message.
-
 # NOTE: configobj.reload() apparently does not revalidate (list-forcing
 # is not done, for example, on single value lists with no trailing
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
+import re, os, sys, logging
 import taskdef
-from copy import deepcopy
+from envvar import check_varnames, expandvars
+from copy import deepcopy, copy
 from collections import deque
 from OrderedDict import OrderedDict
 from cycle_time import ct, CycleTimeError
-import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
-from configobj import get_extra_values, flatten_errors, Section
+from output import outputx
+from configobj import get_extra_values, flatten_errors, Section, ConfigObj
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
-from output import outputx
-from TaskID import TaskID, AsyncTag
 from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline
-from random import randrange
+from dictcopy import replicate, override
 
 try:
     import graphing
@@ -67,70 +64,18 @@ class SuiteConfigError( Exception ):
 class TaskNotDefinedError( SuiteConfigError ):
     pass
 
-class edge( object):
-    def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
-        """contains qualified node names, e.g. 'foo[T-6]:out1'"""
-        self.left = l
-        self.right = r
-        self.cyclr = cyclr
-        self.sasl = sasl
-        self.suicide = suicide
-        self.conditional = conditional
+# To Do: separate config for run and non-run purposes?
 
-    def get_right( self, intag, not_first_cycle, raw, startup_only, exclude ):
-        tag = str(intag)
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        if self.right in exclude:
-            return None
-        if self.right == None:
-            return None
-        first_cycle = not not_first_cycle
-        if self.right in startup_only:
-            if not first_cycle or raw:
-                return None
-
-        # strip off special outputs
-        self.right = re.sub( ':\w+', '', self.right )
-
-        return TaskID( self.right, tag )
-
-    def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
-        tag = str(intag)
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        if self.left in exclude:
-            return None
-
-        first_cycle = not not_first_cycle
-
-        # strip off special outputs
-        left = re.sub( ':\w+', '', self.left )
-
-        if re.search( '\[\s*T\s*-\d+\s*\]', left ) and first_cycle:
-            # ignore intercycle deps in first cycle
-            return None
-
-        if left in startup_only:
-            if not first_cycle or raw:
-                return None
-
-        if self.sasl:
-            # left node is asynchronous, so override the cycler
-            tag = '1'
-        else:
-            m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
-            if m: 
-                left, sign, offset = m.groups()
-                tag = self.cyclr.__class__.offset( tag, offset )
-            else:
-                tag = tag
-
-        return TaskID( left, tag )
+# To Do: this module could use some clean-up and re-organisation.
 
 class config( CylcConfigObj ):
+    """Parse and validate a suite definition, and compute everything
+    needed to create task proxy classes, the suite graph structure,
+    etc."""
 
     def __init__( self, suite, suiterc, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False,
-            pyro_timeout=None, collapsed=[] ):
+            pyro_timeout=None, collapsed=[], only=None ):
 
         self.run_mode = run_mode
         self.verbose = verbose
@@ -152,6 +97,7 @@ class config( CylcConfigObj ):
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
+        self.members = {}
         self.family_hierarchy = {}
         self.families_used_in_graph = []
 
@@ -159,16 +105,12 @@ class config( CylcConfigObj ):
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
 
+        self.only = only # validate a list of tasks
+
         self.owner = owner
-        if owner:
-            self.homedir = os.path.expanduser( '~' + owner )
-        else:
-            self.homedir = os.environ[ 'HOME' ]
 
         if not os.path.isfile( self.file ):
             raise SuiteConfigError, 'File not found: ' + self.file
-
-        self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         if self.verbose:
             print "Loading suite.rc"
@@ -195,57 +137,56 @@ class config( CylcConfigObj ):
         # handle cylc continuation lines
         suiterc = join( suiterc )
 
+        # parse the file into a sparse data structure
         try:
-            CylcConfigObj.__init__( self, suiterc, configspec=self.spec )
+            CylcConfigObj.__init__( self, suiterc )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
-        if self.verbose:
-            print "Validating against the suite.rc spec"
-        # validate and convert to correct types
-        val = Validator()
-        test = self.validate( val, preserve_errors=True )
-        if test != True:
-            # Validation failed
-            failed_items = flatten_errors( self, test )
-            # Always print reason for validation failure
-            for item in failed_items:
-                sections, key, result = item
-                print >> sys.stderr, ' ',
-                for sec in sections:
-                    print >> sys.stderr, sec, '->',
-                print >> sys.stderr, key
-                if result == False:
-                    print >> sys.stderr, "Required item missing."
-                else:
-                    print >> sys.stderr, result
-            raise SuiteConfigError, "ERROR: suite.rc validation failed"
-        
-        extras = []
-        for sections, name in get_extra_values(self):
-            # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
-            ### this code gets the extra values themselves
-            ##the_section = self
-            ##for section in sections:
-            ##    the_section = self[section]   #<------!!! KeyError !!!
-            ### the_value may be a section or a value
-            ##the_value = the_section[name]
-            ##section_or_value = 'value'
-            ##if isinstance(the_value, dict):
-            ##    # Sections are subclasses of dict
-            ##    section_or_value = 'section'
-          
-            ##section_string = ', '.join(sections) or "top level"
-            ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
-            extra = ' '
-            for sec in sections:
-                extra += sec + ' -> '
-            extras.append( extra + name )
+        # now validate and load defaults for each section in turn
+        # (except [runtime] - see below).
+        head = {}
+        for key, val in self.items():
+            if key == 'cylc' or \
+                    key == 'scheduling' or \
+                    key == 'runtime' or \
+                    key == 'visualization' or \
+                    key == 'development':
+                        continue
+            head[key] = val
 
-        if len(extras) != 0:
-            for extra in extras:
-                print >> sys.stderr, '  ERROR: Illegal entry:', extra 
-            raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
+        for item, val in self.validate_section( head, 'suiterc-head.spec' ).items():
+            self[item] = val
+
+        for sec in [ 'cylc', 'scheduling', 'visualization', 'development' ]:
+            if sec in self:
+                cfg = self[sec]
+            else:
+                cfg = OrderedDict()
+            for item, val in self.validate_section( {sec:cfg}, 'suiterc-' + sec + '.spec' ).items():
+                self[item] = val
+
+        if 'runtime' not in self.keys():
+            self['runtime'] = OrderedDict()
+
+        # [runtime] validation: this loads the complete defaults dict
+        # into every namespace, so we just do it as a validity check
+        # during validation.  
+        if self.validation:
+            for name in self['runtime']:
+                if self.only != None and name not in self.only:
+                    continue
+                cfg = OrderedDict()
+                replicate( cfg, self['runtime'][name].odict())
+                self.validate_section( { 'runtime': { name: cfg }}, 'suiterc-runtime.spec' )
+
+        if 'root' not in self['runtime']:
+            self['runtime']['root'] = OrderedDict()
+
+        # load defaults into one namespace dict
+        cfg = OrderedDict()
+        dense = self.validate_section( { 'runtime': { 'defaults': cfg }}, 'suiterc-runtime.spec' )
+        self.runtime_defaults = dense['runtime']['defaults']
 
         if self.verbose:
             print "Parsing clock-triggered tasks"
@@ -279,47 +220,16 @@ class config( CylcConfigObj ):
                 # create a new task config section
                 tconfig = OrderedDict()
                 # replicate the actual task config
-                self.replicate( name, tconfig, self['runtime'][item] )
+                replicate( tconfig, self['runtime'][item].odict() )
                 # record it under the task name
                 self['runtime'][name] = tconfig
-
             # delete the original multi-task section
             del self['runtime'][item]
 
-        self.members = {}
-        if self.verbose:
-            print "Parsing the runtime namespace hierarchy"
+        self.check_env()
+        self.famtree()
 
-        # RUNTIME INHERITANCE
-        for label in self['runtime']:
-            hierarchy = []
-            name = label
-            self.interpolate( name, self['runtime'][name], '<NAMESPACE>' )
-            while True:
-                hierarchy.append( name )
-                inherit = self['runtime'][name]['inherit']
-                if inherit:
-                    if inherit not in self['runtime']:
-                        raise SuiteConfigError, 'Undefined parent runtime: ' + inherit
-                        # To allow familes defined implicitly by use in the graph and member
-                        # runtime inheritance: 1/ add name to runtime and inherit from root;
-                        # 2/ set the hierarchy for name to [name,root]; 3/ add members to
-                        # self.members[name]; 4/ add each member to self.members[root].
-                    name = inherit
-                    if name not in self.members:
-                        self.members[name] = []
-                    self.members[name].append(label)
-                else:
-                    #if hierarchy[-1] != 'root':
-                    #    hierarchy.append('root')
-                    break
-            self.family_hierarchy[label] = deepcopy(hierarchy)
-            hierarchy.pop() # remove 'root'
-            hierarchy.reverse()
-            taskconf = self['runtime']['root'].odict()
-            for item in hierarchy:
-                self.inherit( taskconf, self['runtime'][item] )
-            self['runtime'][label] = taskconf
+        self.inheritance()
 
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -372,9 +282,6 @@ class config( CylcConfigObj ):
 
         self.process_directories()
 
-        if self.verbose:
-            print 'Parsing the dependency graph'
-        self.graph_found = False
         self.load_graph()
         if len( self.naked_dummy_tasks ) > 0:
             if self.strict or self.verbose:
@@ -388,43 +295,14 @@ class config( CylcConfigObj ):
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
-        # Compute runahead limit
-        # 1/ take the smallest of the default limits from each graph section
-        if len(self.cyclers) != 0:
-            # runahead limit is only relevant for cycling sections
-            mrls = []
-            mrl = None
-            crl = None
-            for cyc in self.cyclers:
-                rahd = cyc.get_min_cycling_interval()
-                if rahd:
-                    mrls.append(rahd)
-            if len(mrls) > 0:
-                mrl = min(mrls)
-                if self.verbose:
-                    print "Smallest cycling interval:", mrl, "hours"
-
-            # 2/ or if there is a configured runahead limit, use it.
-            rl = self['scheduling']['runahead limit']
-            if rl:
-                if self.verbose:
-                    print "Configured runahead limit: ", rl, "hours"
-                crl = rl
-            elif mrl:
-                crl = 2 * mrl
-                if self.verbose:
-                    print "Runahead limit defaulting to:", crl, "hours"
-            else:
-                if self.verbose:
-                    print "No runahead limit (no cycling tasks)"
-            self['scheduling']['runahead limit'] = crl
+        self.compute_runahead_limit()
 
         self.family_tree = {}
         self.task_runtimes = {}
         self.define_inheritance_tree( self.family_tree, self.family_hierarchy )
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
-        self.process_queues()
+        self.configure_queues()
         if self.validation:
             self.check_tasks()
 
@@ -467,6 +345,200 @@ class config( CylcConfigObj ):
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
 
+    def check_env( self ):
+        # check environment variables now to avoid checking inherited
+        # variables multiple times.
+         bad = {}
+         for label in self['runtime']:
+             res = []
+             if 'environment' in self['runtime'][label]:
+                 res = check_varnames( self['runtime'][label]['environment'] )
+             if res:
+                 bad[label] = res
+         if bad:
+             print >> sys.stderr, "ERROR, bad env variable names:"
+             for label, vars in bad.items():
+                 print 'Namespace:', label
+                 for var in vars:
+                     print >> sys.stderr, "  ", var
+             raise SuiteConfigError("Illegal env variable name(s) detected" )
+
+    def famtree( self ):
+        for label in self['runtime']:
+            hierarchy = []
+            if label == 'root':
+                self.family_hierarchy['root'] = ['root']
+                continue
+            name = label
+            while True:
+                hierarchy.append(name) 
+                if name == 'root':
+                    break
+                if 'inherit' in self['runtime'][name]:
+                    inherit = self['runtime'][name]['inherit']
+                else:
+                    # implicit inheritance from root
+                    inherit = 'root'
+                if inherit not in self['runtime']:
+                    raise SuiteConfigError, 'Undefined parent runtime: ' + inherit
+                name = inherit
+                if name not in self.members:
+                    self.members[name] = []
+                self.members[name].append(label)
+            self.family_hierarchy[label] = copy(hierarchy)
+
+    def inheritance( self ):
+        """This works through the inheritance hierarchy from root, for
+        each namespace. For future reference, I did attempt flattening
+        each namespace dict prior to inheritance processing, and
+        expanding again after, to allow copy-and-override of shallow
+        rather than nested dicts, but got no appreciable speedup."""
+
+        if self.verbose:
+            print "Parsing the runtime namespace hierarchy"
+
+        inherited = ['root']
+        for label in self['runtime']:
+            if label == 'root':
+                continue
+
+            if self.only != None:
+                # only do inheritance where it affects tasks in self.only
+                skip = True
+                for so in self.only:
+                    if so in hierarchy:
+                        skip = False
+                if skip:
+                    continue
+
+            hierarchy = self.family_hierarchy[label]
+            prev = 0
+            taskconf = OrderedDict()
+            for i in range(len(hierarchy)-1,-1,-1):
+                if hierarchy[i] in inherited:
+                    # we've already actioned this inheritance
+                    continue
+                #print label, ': replicating', hierarchy[j]
+                j = i + 1
+                replicate( taskconf, self['runtime'][hierarchy[j]].odict())
+                inherited.append( hierarchy[j] )
+
+            # (we have to do a final replicate and replace here to
+            #  get the ordering of inherited variables right.)
+            replicate( taskconf, self['runtime'][label].odict() )
+            self['runtime'][label] = taskconf
+
+    def compute_runahead_limit( self ):
+        # 1/ take the smallest of the default limits from each graph section
+        if len(self.cyclers) != 0:
+            # runahead limit is only relevant for cycling sections
+
+            self.runahead_limit = self['scheduling']['runahead limit']
+            if self.runahead_limit:
+                if self.verbose:
+                    print "Configured runahead limit: ", rl, "hours"
+            else:
+                rls = []
+                rl = None
+                for cyc in self.cyclers:
+                    rahd = cyc.get_min_cycling_interval()
+                    if rahd:
+                        rls.append(rahd)
+                if len(rls) > 0:
+                    # twice the minimum cycling internal in the suite
+                    rl = 2 * min(rls)
+                    if self.verbose:
+                        print "Computed runahead limit:", mrl, "hours"
+
+    def get_runahead_limit( self ):
+        # may be None (no cycling tasks)
+        return self.runahead_limit
+
+    def validate_section( self, cfg, spec ):
+
+        spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', spec )
+
+        dense = ConfigObj( cfg, configspec=spec )
+        # validate and convert to correct types
+        val = Validator()
+        test = dense.validate( val, preserve_errors=True )
+        if test != True:
+            # Validation failed
+            failed_items = flatten_errors( dense, test )
+            # Always print reason for validation failure
+            for item in failed_items:
+                sections, key, result = item
+                print >> sys.stderr, ' ',
+                for sec in sections:
+                    print >> sys.stderr, sec, '->',
+                print >> sys.stderr, key
+                if result == False:
+                    print >> sys.stderr, "Required item missing."
+                else:
+                    print >> sys.stderr, result
+            raise SuiteConfigError, "ERROR: suite.rc validation failed"
+        
+        extras = []
+        for sections, name in get_extra_values(dense):
+            # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
+            ### this code gets the extra values themselves
+            ##the_section = dense
+            ##for section in sections:
+            ##    the_section = dense[section]   #<------!!! KeyError !!!
+            ### the_value may be a section or a value
+            ##the_value = the_section[name]
+            ##section_or_value = 'value'
+            ##if isinstance(the_value, dict):
+            ##    # Sections are subclasses of dict
+            ##    section_or_value = 'section'
+          
+            ##section_string = ', '.join(sections) or "top level"
+            ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
+            extra = ' '
+            for sec in sections:
+                extra += sec + ' -> '
+            extras.append( extra + name )
+
+        if len(extras) != 0:
+            for extra in extras:
+                print >> sys.stderr, '  ERROR: Illegal entry:', extra 
+            raise SuiteConfigError, "ERROR: Illegal suite.rc entry(s) found"
+
+        return dense
+
+    def get_config_all_tasks( self, args, sparse=False ):
+        res = {}
+        for t in self.get_task_name_list():
+            res[t] = self.get_config( [ 'runtime', t ] + args, sparse )
+        return res
+
+    def get_config( self, args, sparse=False ):
+        if len(args) == 0 or len(args) == 1:
+            # don't populate [runtime] with all default settings
+            print >> sys.stderr, "WARNING: returning sparse [runtime]!"
+            target = self
+            keys = args
+        elif sparse:
+            target = self
+            keys = args
+        elif args[0] == 'runtime':
+            # load and override runtime defaults
+            rtcfg = {}
+            replicate( rtcfg, self.runtime_defaults )
+            override( rtcfg, self['runtime'][args[1]] )
+            target = rtcfg
+            keys = args[2:]
+
+        res = target
+        try:
+            for key in keys:
+                res = res[key]
+        except KeyError, x:
+            raise SuiteConfigError( 'ERROR, key not found: ' + str(x) )
+
+        return res
+
+
     def adopt_orphans( self, orphans ):
         # Called by the scheduler after reloading the suite definition
         # at run time and finding any live task proxies whose
@@ -478,7 +550,10 @@ class config( CylcConfigObj ):
             self.family_hierarchy[orphan] = [ orphan, 'root' ]
             queues['default']['members'].append( orphan )
 
-    def process_queues( self ):
+    def configure_queues( self ):
+        """ Replace family names with members, in internal queues,
+         and remove assigned members from the default queue. """
+
         # TO DO: user input consistency checking (e.g. duplicate queue
         # assignments and non-existent task names)
 
@@ -508,6 +583,7 @@ class config( CylcConfigObj ):
         #    print queue, queues[queue]['members']
 
     def get_inheritance( self ):
+        # used by cylc_xdot
         inherit = {}
         for ns in self['runtime']:
             #if 'inherit' in self['runtime'][ns]:
@@ -520,7 +596,7 @@ class config( CylcConfigObj ):
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:
-            hier = deepcopy(hierarchy[rt])
+            hier = copy(hierarchy[rt])
             hier.reverse()
             foo = tree
             for item in hier:
@@ -537,11 +613,13 @@ class config( CylcConfigObj ):
             if len( skeys ) > 0:
                 self.prune_inheritance_tree(tree[item], runtimes)
             else:
-                title = self['runtime'][item]['title']
-                dlines = re.split( '\n', title )
-                dline1 = dlines[0]
-                if len(dlines) > 1:
-                    dline1 += '...'
+                ### TO DO: title may now come from root, inheritance from which is now deferred
+                ###title = self['runtime'][item]['title']
+                ###dlines = re.split( '\n', title )
+                ###dline1 = dlines[0]
+                ###if len(dlines) > 1:
+                ###    dline1 += '...'
+                dline1 = "(To Do: title)"
                 tree[item] = dline1
                 runtimes[item] = self['runtime'][item]
 
@@ -559,12 +637,13 @@ class config( CylcConfigObj ):
                 if not re.search( filter, task ):
                     continue
             # print task title
-            title = self['runtime'][task]['title']
-            dlines = re.split( '\n', title )
-            dline1 = dlines[0]
-            if len(dlines) > 1:
-                dline1 += '...'
-            print task + padding[ len(task): ] + dline1
+            ###title = self['runtime'][task]['title']
+            ###dlines = re.split( '\n', title )
+            ###dline1 = dlines[0]
+            ###if len(dlines) > 1:
+            ###   dline1 += '...'
+            ###print task + padding[ len(task): ] + dline1
+            print task
 
     def print_inheritance_tree( self, filter=None, labels=None, pretty=False ):
         # determine padding for alignment of task titles
@@ -586,7 +665,7 @@ class config( CylcConfigObj ):
 
         maxlen = 0
         for rt in fh:
-            items = deepcopy(fh[rt])
+            items = copy(fh[rt])
             items.reverse()
             for i in range(0,len(items)):
                 tmp = 2*i + 1 + len(items[i])
@@ -597,85 +676,17 @@ class config( CylcConfigObj ):
         padding = (maxlen+1) * ' '
         print_tree( ft, padding=padding, unicode=pretty, labels=labels )
 
-    def expandvars( self, item ):
-        # first replace '$HOME' with actual home dir
-        item = item.replace( '$HOME', self.homedir )
-        # now expand any other environment variable or tilde-username
-        item = os.path.expandvars( os.path.expanduser( item ))
-        return item
-
     def process_directories(self):
         # Environment variable interpolation in directory paths.
-        # Allow use of suite, BUT NOT TASK, identity variables.
-        for item in self['runtime']:
-            logd = self['runtime'][item]['log directory']
-            if logd.find( '$CYLC_TASK_' ) != -1:
-                print >> sys.stderr, 'runtime -> log directory =', logd
-                raise SuiteConfigError, 'ERROR: log directories cannot be task-specific'
-
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['cylc']['logging']['directory'] = \
-                self.expandvars( self['cylc']['logging']['directory'])
+                expandvars( self['cylc']['logging']['directory'], self.owner)
         self['cylc']['state dumps']['directory'] =  \
-                self.expandvars( self['cylc']['state dumps']['directory'])
+                expandvars( self['cylc']['state dumps']['directory'], self.owner)
         self['visualization']['runtime graph']['directory'] = \
-                self.expandvars( self['visualization']['runtime graph']['directory'])
-
-        for item in self['runtime']:
-            # Local job sub log directories: interpolate all environment variables.
-            self['runtime'][item]['log directory'] = self.expandvars( self['runtime'][item]['log directory'])
-            # Remote log directories: just suite identity - local variables aren't relevant.
-            if self['runtime'][item]['remote']['log directory']:
-                for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
-                    self['runtime'][item]['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], self['runtime'][item]['remote']['log directory'])
-                    self['runtime'][item]['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], self['runtime'][item]['remote']['log directory'])
-
-    def inherit( self, target, source ):
-        for item in source:
-            if isinstance( source[item], Section ):
-                # recurse into nested section
-                self.inherit( target[item], source[item] )
-            elif source[item] != None and source[item] != []:
-                # override if source is not None or an empty list
-                # (don't use 'if source[item]:' because of boolean values)
-                target[item] = deepcopy(source[item])  # deepcopy for list values
-            else:
-                pass
-
-    def replicate( self, name, target, source ):
-        # recursively replicate a generator task config section
-        for item in source:
-            if isinstance( source[item], Section ):
-                # recursive call for to handle a sub-section
-                if item not in target:
-                    target[item] = OrderedDict()
-                self.replicate( name, target[item], source[item] )
-            else:
-                target[item] = source[item]
-
-    def interpolate( self, name, source, pattern ):
-        # replace pattern with name in all items in the source tree
-        for item in source:
-            if isinstance( source[item], str ):
-                # single source item
-                source[item] = re.sub( pattern, name, source[item] )
-            elif isinstance( source[item], list ):
-                # a list of values 
-                newlist = []
-                for mem in source[item]:
-                    if isinstance( mem, str ):
-                        newlist.append( re.sub( pattern, name, mem ))
-                    else:
-                        newlist.append( mem )
-                source[item] = newlist
-            elif isinstance( source[item], Section ):
-                # recursive call for to handle a sub-section
-                self.interpolate( name, source[item], pattern )
-            else:
-                # boolean or None values
-                continue
+                expandvars( self['visualization']['runtime graph']['directory'], self.owner)
 
     def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         trig = triggerx(task_name)
@@ -774,6 +785,8 @@ class config( CylcConfigObj ):
             # for each graph section
             for name in self.tasks_by_cycler[cyclr]:
                 # instantiate one of each task appearing in this section
+                if self.only != None and name not in self.only:
+                    continue
                 type = self.taskdefs[name].type
                 if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
                     tag = cyclr.initial_adjust_up( '2999010100' )
@@ -794,6 +807,7 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, '(inconsistent use of special tasks?)' 
                 except Exception, x:
                     print >> sys.stderr, x
+                    raise
                     raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
                 # force trigger evaluation now
                 try:
@@ -806,17 +820,6 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
                 tag = itask.next_tag()
             #print "OK:", itask.id
-
-        # TASK INSERTION GROUPS DISABLED - WILL USE RUNTIME GROUPS FOR INSERTION ETC.
-        ### check task insertion groups contain valid tasks
-        ##for group in self['task insertion groups']:
-        ##    for name in self['task insertion groups'][group]:
-        ##        if name not in self['runtime'] and name not in self.taskdefs:
-        ##            # This is not an error because it could be caused by
-        ##            # temporary commenting out of a task in the graph,
-        ##            # and it won't cause catastrophic failure of the
-        ##            # insert command.
-        ##            print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
 
         # TO DO: check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
@@ -860,10 +863,6 @@ class config( CylcConfigObj ):
     def create_directories( self, task=None ):
         # Create suite log, state, and local job log directories.
         dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
-        for item in self['runtime']:
-            d = self['runtime'][item]['log directory']
-            if d not in dirs:
-                dirs.append(d)
         for d in dirs:
             try:
                 mkdir_p( d )
@@ -985,7 +984,7 @@ class config( CylcConfigObj ):
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.members:
-            members = deepcopy(self.members[fam])
+            members = copy(self.members[fam])
             for member in members:
                 # remove family names from the member list, leave just tasks
                 # (allows using higher-level family names in the graph)
@@ -1106,7 +1105,19 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, ' ', ', '.join(bad)
                     raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
 
+            if self.only != None:
+                rnames = []
+                for r in rights:
+                    rr = r.replace( '!', '' )
+                    rrr = re.sub( ':.*$', '', rr )
+                    rnames.append(rrr)
+                for so in self.only:
+                    if so not in lnames and so not in rnames:
+                        return
+                        
             for rt in rights:
+                if self.only != None and rt not in self.only:
+                    continue
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
                 if rt and rt.startswith('!'):
@@ -1134,7 +1145,8 @@ class config( CylcConfigObj ):
                             m = re.match( '^ASYNCID:(.*)$', section )
                             asyncid_pattern = m.groups()[0]
                
-                self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
+                if self.only == None and not self.validation:
+                    self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
                 self.generate_taskdefs( orig_line, lnames, r, ttype, section, cyclr, asyncid_pattern )
                 self.generate_triggers( lexpression, lnames, r, cyclr, asyncid_pattern, suicide )
 
@@ -1149,7 +1161,7 @@ class config( CylcConfigObj ):
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
-            e = edge( left, right, cyclr, sasl, suicide, conditional )
+            e = graphing.edge( left, right, cyclr, sasl, suicide, conditional )
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
@@ -1217,11 +1229,10 @@ class config( CylcConfigObj ):
 
             if self.run_mode == 'live':
                 # register any explicit internal outputs
-                taskconfig = self['runtime'][name]
-                for lbl in taskconfig['outputs']:
-                    msg = taskconfig['outputs'][lbl]
-                    outp = outputx(msg,cyclr)
-                    self.taskdefs[ name ].outputs.append( outp )
+                if 'outputs' in self['runtime'][name]:
+                    for lbl,msg in self['runtime'][name]['outputs'].items():
+                        outp = outputx(msg,cyclr)
+                        self.taskdefs[ name ].outputs.append( outp )
 
             # collate which tasks appear in each section
             # (used in checking conditional trigger expressions)
@@ -1314,7 +1325,7 @@ class config( CylcConfigObj ):
                 if node in self.closed_families:
                     self.closed_families.remove(node)
                 if ungroup_recursive:
-                    for fam in deepcopy(self.closed_families):
+                    for fam in copy(self.closed_families):
                         if fam in self.members[node]:
                             self.closed_families.remove(fam)
 
@@ -1464,7 +1475,7 @@ class config( CylcConfigObj ):
             nr = nrid.getstr(formatted)
 
         # for nested families, only consider the outermost one
-        clf = deepcopy( self.closed_families )
+        clf = copy( self.closed_families )
         for i in self.closed_families:
             for j in self.closed_families:
                 if i in self.members[j]:
@@ -1488,6 +1499,10 @@ class config( CylcConfigObj ):
         return nl, nr
 
     def load_graph( self ):
+        if self.verbose:
+            print "Parsing the dependency graph"
+
+        self.graph_found = False
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
                 # asynchronous graph
@@ -1523,8 +1538,16 @@ class config( CylcConfigObj ):
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
-        taskd = taskdef.taskdef( name )
 
+        # get the task runtime
+        try:
+            taskcfg = self['runtime'][name]
+        except KeyError:
+            raise SuiteConfigError, "Task not found: " + name
+
+        taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode )
+
+        # TO DO: put all taskd.foo items in a single config dict
         # SET ONE-OFF AND COLD-START TASK INDICATORS
         if name in self['scheduling']['special tasks']['cold-start']:
             taskd.modifiers.append( 'oneoff' )
@@ -1550,178 +1573,12 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        # get the task runtime
-        try:
-            taskconfig = self['runtime'][name]
-        except KeyError:
-            raise SuiteConfigError, "Task not found: " + name
-
-        # Interpolate <TASK> here (doing it earlier like <NAMESPACE>
-        # fails to catch dummy tasks that are defined only by graph
-        # (otherwise they would inherit root with <TASK>=root).
-        self.interpolate( name, taskconfig, '<TASK>' )
-
-        taskd.title = taskconfig['title']
-        taskd.description = taskconfig['description']
-
-        taskd.owner = taskconfig['remote']['owner']
-        taskd.job_submit_method = taskconfig['job submission']['method']
-
-        taskd.command = taskconfig['command scripting']
-        if self.run_mode == 'dummy':
-            taskd.command = taskconfig['dummy mode']['command scripting']
-            if taskconfig['dummy mode']['disable pre-command scripting']:
-                taskd.precommand = None
-            if taskconfig['dummy mode']['disable post-command scripting']:
-                taskd.postcommand = None
-        else:
-            taskd.precommand = taskconfig['pre-command scripting'] 
-            taskd.postcommand = taskconfig['post-command scripting'] 
-
-        if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable retries'] ) or \
-                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable retries'] ):
-            taskd.retry_delays = deque( taskconfig['retry delays'])
-
-        # check retry delay type (must be float):
-        for i in taskd.retry_delays:
-            try:
-                float(i)
-            except ValueError:
-                raise SuiteConfigError, "ERROR, retry delay values must be floats: " + str(i)
-
-        rrange = taskconfig['simulation mode']['run time range']
-        ok = True
-        if len(rrange) != 2:
-            ok = False
-        try:
-            res = [ int( rrange[0] ), int( rrange[1] ) ]
-        except:
-            ok = False
-        if not ok:
-            raise SuiteConfigError, "ERROR, " + taskd.name + ": simulation mode run time range must be 'int, int'" 
-        try:
-            taskd.sim_mode_run_length = randrange( res[0], res[1] )
-        except Exception, x:
-            print >> sys.stderr, x
-            raise SuiteConfigError, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
-        taskd.fail_in_sim_mode = taskconfig['simulation mode']['simulate failure']
-
-        taskd.initial_scripting = taskconfig['initial scripting'] 
-        taskd.enviro_scripting = taskconfig['environment scripting'] 
-
-        taskd.ssh_messaging = str(taskconfig['remote']['ssh messaging'])
-
-        taskd.job_submission_shell = taskconfig['job submission']['shell']
-
-        taskd.job_submit_command_template = taskconfig['job submission']['command template']
-
-        taskd.job_submit_log_directory = taskconfig['log directory']
-        taskd.job_submit_share_directory = taskconfig['share directory']
-        taskd.job_submit_work_directory = taskconfig['work directory']
-
-        if taskconfig['remote']['host'] or taskconfig['remote']['owner']:
-            # Remote task hosting
-            taskd.remote_host = taskconfig['remote']['host']
-            taskd.remote_shell_template = taskconfig['remote']['remote shell template']
-            taskd.remote_cylc_directory = taskconfig['remote']['cylc directory']
-            taskd.remote_suite_directory = taskconfig['remote']['suite definition directory']
-            if taskconfig['remote']['log directory']:
-                # (Unlike for the work and share directories below, we
-                # need to retain local and remote log directory paths - 
-                # the local one is still used for the task job script). 
-                taskd.remote_log_directory  = taskconfig['remote']['log directory']
-            else:
-                # Use local log directory path, but replace home dir
-                # (if present) with literal '$HOME' for interpretation
-                # on the remote host.
-                taskd.remote_log_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_log_directory )
-
-            if taskconfig['remote']['work directory']:
-                # Replace local work directory.
-                taskd.job_submit_work_directory  = taskconfig['remote']['work directory']
-            else:
-                # Use local work directory path, but replace home dir
-                # (if present) with literal '$HOME' for interpretation
-                # on the remote host.
-                taskd.job_submit_work_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_work_directory )
-
-            if taskconfig['remote']['share directory']:
-                # Replace local share directory.
-                taskd.job_submit_share_directory  = taskconfig['remote']['share directory']
-            else:
-                # Use local share directory path, but replace home dir
-                # (if present) with literal '$HOME' for interpretation
-                # on the remote host.
-                taskd.job_submit_share_directory  = re.sub( self.homedir, '$HOME', taskd.job_submit_share_directory )
-
-        taskd.manual_messaging = taskconfig['manual completion']
-        if self.run_mode == 'dummy':
-            print >> sys.stderr, "WARNING: unsetting manual completion (dummy tasks don't detach)" 
-            taskd.manual_messaging = False
-
-        # task event hooks
-        if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not taskconfig['simulation mode']['disable task event hooks'] ) or \
-                ( self.run_mode == 'dummy' and not taskconfig['dummy mode']['disable task event hooks'] ):
-            taskd.event_handlers = {
-                'submitted' : taskconfig['event hooks']['submitted handler'],
-                'started'   : taskconfig['event hooks']['started handler'],
-                'succeeded' : taskconfig['event hooks']['succeeded handler'],
-                'failed'    : taskconfig['event hooks']['failed handler'],
-                'warning'   : taskconfig['event hooks']['warning handler'],
-                'retry'     : taskconfig['event hooks']['retry handler'],
-                'submission failed'  : taskconfig['event hooks']['submission failed handler'],
-                'submission timeout' : taskconfig['event hooks']['submission timeout handler'],
-                'execution timeout'  : taskconfig['event hooks']['execution timeout handler']
-                }
-            taskd.timeouts = {
-                'submission' : taskconfig['event hooks']['submission timeout'],
-                'execution'  : taskconfig['event hooks']['execution timeout']
-                }
-            taskd.reset_timer = taskconfig['event hooks']['reset timer']
-        else:
-            taskd.event_handlers = {
-                'submitted' : None,
-                'started'   : None,
-                'succeeded' : None,
-                'failed'    : None,
-                'warning'   : None,
-                'retry'     : None,
-                'submission failed'  : None,
-                'submission timeout' : None,
-                'execution timeout'  : None
-                }
-            taskd.timeouts = {
-                'submission' : None,
-                'execution'  : None
-                }
-            taskd.reset_timer = False
-
-        taskd.logfiles    = taskconfig[ 'extra log files' ]
-        taskd.resurrectable = taskconfig[ 'enable resurrection' ]
-
-        taskd.environment = taskconfig[ 'environment' ]
-        self.check_environment( taskd.name, taskd.environment )
-
-        taskd.directives  = taskconfig[ 'directives' ]
-
-        foo = deepcopy(self.family_hierarchy[ name ])
+        foo = copy(self.family_hierarchy[ name ])
         foo.reverse()
         taskd.namespace_hierarchy = foo
 
         return taskd
-
-    def check_environment( self, name, env ):
-        bad = []
-        for varname in env:
-            if not re.match( '^[a-zA-Z_][\w]*$', varname ):
-                bad.append(varname)
-        if len(bad) != 0:
-            for item in bad:
-                print >> sys.stderr, " ", item
-            raise SuiteConfigError("ERROR: illegal environment variable name(s) detected in namespace " + name )
-    
+   
     def get_task_proxy( self, name, ctime, state, stopctime, startup ):
         try:
             tdef = self.taskdefs[name]
@@ -1750,3 +1607,4 @@ class config( CylcConfigObj ):
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
+

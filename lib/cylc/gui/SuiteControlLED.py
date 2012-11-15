@@ -25,7 +25,6 @@ from gcapture import gcapture_tmpfile
 from cylc.port_scan import SuiteIdentificationError
 from cylc import cylc_pyro_client
 from util import EntryTempText
-from warning_dialog import warning_dialog, info_dialog
 
 class ControlLED(object):
     """
@@ -206,7 +205,7 @@ LED suite control interface.
         filter_toolitem.add(self.filter_entry)
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name")
+        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name\n(enter a sub-string or regex)")
         items.append(filter_toolitem)
 
         return items

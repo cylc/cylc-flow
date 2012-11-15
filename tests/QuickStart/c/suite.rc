@@ -11,7 +11,7 @@ description  = "(Quick Start b plus real tasks)"
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.2 # minutes
+       live mode suite timeout = 0.3 # minutes
 
 [scheduling]
     initial cycle time = 2011010106
@@ -65,5 +65,5 @@ description  = "(Quick Start b plus real tasks)"
             OUTPUT_DIR = $WORKSPACE
     [[PostA,PostB]]
         inherit = Post
-        command scripting = <TASK>.sh
+        command scripting = ${CYLC_TASK_NAME}.sh
 

@@ -266,35 +266,17 @@ the remote host before starting the suite."""
         
         # broadcast variables (universal):
         index += 1
-        if lines[index].rstrip() == 'Begin broadcast variables, universal':
-            while True:
-                index += 1
-                line = lines[index].rstrip()
-                if line == 'End broadcast variables, universal':
-                    break
-                m = re.match( '^(.*?)=(.*)$', line )
-                if m:
-                    var, val = m.groups()
-                    self.wireless.receive( var, val, load=True )
-                else:
-                    sys.exit("ERROR, illegal state dump line: " + line )
+        
+        pickled = ""
+        while True:
+            pickled += lines[index]
+            if pickled.endswith(".\n"):
+                # every pickle stream ends with a period
+                break
             index += 1
-        # broadcast variables (targetted):
-        for ttype in [ 'id', 'name', 'tag' ]:
-            if lines[index].rstrip() == 'Begin broadcast variables, targetted by ' + ttype:
-                while True:
-                    index += 1
-                    line = lines[index].rstrip()
-                    if line == 'End broadcast variables, targetted by ' + ttype:
-                        break
-                    m = re.match( '^(.*) (.*?)=(.*)$', line )
-                    if m:
-                        targ, var, val = m.groups()
-                        self.wireless.receive( var, val, targ, load=True )
-                    else:
-                        sys.exit("ERROR, illegal state dump line for broadcast target " + ttype + ": "  + line )
-                index += 1
+        self.wireless.load( pickled )
 
+        index += 1
         line = lines[index].rstrip() 
         if line != 'Begin task states':
             sys.exit("ERROR, illegal state dump line (expected 'Begin task states'): " + line )

@@ -45,7 +45,7 @@ from CylcError import TaskNotFoundError, TaskStateError
 from RuntimeGraph import rGraph
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
-from receiver import receiver
+from broadcast import broadcast
 
 class SchedulerError( Exception ):
     """
@@ -66,6 +66,7 @@ class pool(object):
         self.verbose = verbose
         self.debug = debug
         self.qconfig = config['scheduling']['queues'] 
+        self.config = config
         self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
         self.assign()
         self.wireless = wireless
@@ -202,11 +203,12 @@ class pool(object):
         for itask in tasks:
             print
             print 'TASK READY:', itask.id 
-            p = itask.submit( self.wireless.get(itask.id), debug=self.debug )
+            p = itask.submit( debug=self.debug, overrides=self.wireless.get(itask.id) )
             if p:
                 ps.append( (itask,p) ) 
             else:
                 n_fail += 1
+
         print
         print 'WAITING ON JOB SUBMISSIONS'
         n_succ = 0
@@ -234,7 +236,8 @@ class pool(object):
         print 'JOB SUBMISSIONS COMPLETED:'
         print "  Time taken: " + str( after - before )
         print " ", n_succ, "of", n_tasks, "job submissions succeeded" 
-        print " ", n_fail, "of", n_tasks, "job submissions failed" 
+        if n_fail != 0:
+            print " ", n_fail, "of", n_tasks, "job submissions failed" 
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
@@ -349,12 +352,12 @@ class scheduler(object):
 
         self.banner[ 'Final Cycle' ] = self.stop_tag
 
-        self.runahead_limit = self.config['scheduling']['runahead limit']
+        self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         # RECEIVER FOR BROADCAST VARIABLES
-        self.wireless = receiver()
-        self.pyro.connect( self.wireless, 'receiver')
+        self.wireless = broadcast( self.config.family_hierarchy )
+        self.pyro.connect( self.wireless, 'broadcast_receiver')
 
         self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose, self.options.debug )
 
@@ -435,7 +438,7 @@ class scheduler(object):
         # adjust the new suite config to handle the orphans
         self.config.adopt_orphans( self.orphans )
  
-        self.runahead_limit = self.config['scheduling']['runahead limit']
+        self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         self.pool.qconfig = self.config['scheduling']['queues']
         self.pool.n_max_sub = self.config['cylc']['maximum simultaneous job submissions']
@@ -519,6 +522,7 @@ class scheduler(object):
         self.config = config( self.suite, self.suiterc, run_mode=self.run_mode,
                 verbose=self.verbose, pyro_timeout=self.options.pyro_timeout )
         self.config.create_directories()
+        self.hold_before_shutdown = self.config['development']['hold before shutdown']
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
         self.logging_dir = self.config['cylc']['logging']['directory']
@@ -766,7 +770,8 @@ class scheduler(object):
                 submitted = self.pool.process()
                 self.process_resolved( submitted )
 
-                self.cleanup()
+                if not self.config['development']['disable task elimination']:
+                    self.cleanup()
                 self.spawn()
                 self.dump_state()
 
@@ -842,8 +847,12 @@ class scheduler(object):
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
 
             if stop_now:
-                self.log.warning( "ALL TASKS FINISHED OR HELD" )
-                break
+                if self.hold_before_shutdown:
+                    self.log.warning( "ALL RUNNING TASKS FINISHED but HOLD-BEFORE-SHUTDOWN is ON" )
+                    self.hold_suite()
+                else:
+                    self.log.warning( "ALL TASKS FINISHED OR HELD" )
+                    break
 
             if self.remote.halt and self.no_tasks_running():
                 self.log.warning( "ALL RUNNING TASKS FINISHED" )
@@ -1018,12 +1027,10 @@ class scheduler(object):
                 RunHandler( 'shutdown', handler, self.suite, msg=message, fg=foreground )
             except Exception, x:
                 if self.options.reftest:
-                    print >> sys.stderr, '\nERROR: SUITE REFERENCE TEST FAILED' 
-                    raise SchedulerError, x
+                    sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
                 else:
                     # Note: tests suites depend on the following message:
-                    print >> sys.stderr, '\nERROR: shutdown EVENT HANDLER FAILED' 
-                    raise
+                    sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 

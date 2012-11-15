@@ -16,10 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# THIS MODULE HANDLES DYNAMIC DEFINITION OF TASK PROXY CLASSES according
-# to information parsed from the suite.rc file via config.py. It could
-# probably do with some refactoring to make it more transparent ...
-
 # TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
 # automatically from the dependency graph?
 
@@ -29,10 +25,12 @@
 # implications for global detection of duplicated prerequisites
 # (detection is currently disabled).
 
-import sys, re
+import sys, re, os
 from OrderedDict import OrderedDict
 from copy import deepcopy
 from collections import deque
+from mkdir_p import mkdir_p
+from envvar import expandvars
 from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
@@ -42,6 +40,9 @@ from task_output_logs import logfiles
 from outputs import outputs
 from cycle_time import ct, at
 from cycling import container
+from dictcopy import replicate, override
+from copy import copy
+from random import randrange
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -57,73 +58,64 @@ class DefinitionError( Error ):
         return repr( self.msg )
 
 class taskdef(object):
-    def __init__( self, name ):
+
+    def __init__( self, name, rtdefs, rtover, run_mode ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
             raise DefinitionError, "ERROR: Illegal task name: " + name
 
-        self.name = name
-        self.type = 'free'
-        self.job_submit_method = None
-        self.job_submission_shell = None
-        self.job_submit_command_template = None
-        self.job_submit_log_directory = None
-        self.job_submit_share_directory = None
-        self.job_submit_work_directory = None
-        self.manual_messaging = False
-        self.modifiers = []
-        self.asyncid_pattern = None
-        self.cycling = False
-        self.is_coldstart = False
+        rtcfg = {}
+        replicate( rtcfg, rtdefs.odict()  ) # copy [runtime] default dict
+        override( rtcfg, rtover )    # override with suite [runtime] settings
 
-        self.remote_host = None
-        self.owner = None
-        self.remote_shell_template = None
-        self.remote_cylc_directory = None
-        self.remote_suite_directory = None
-        self.remote_log_directory = None
+        self.run_mode = run_mode
+        self.rtconfig = rtcfg
 
-        self.reset_timer = False
-        self.event_handlers = {}
-        self.timeouts = {}
-        self.resurrectable = False
+        self.process_directories( rtcfg )
 
+        # some defaults
         self.intercycle = False
+        self.cycling = False
+        self.asyncid_pattern = None
+        self.modifiers = []
+        self.is_coldstart = False
         self.cyclers = []
-        self.logfiles = []
-        self.title = []
-        self.description = []
 
         self.follow_on_task = None
-
         self.clocktriggered_offset = None
-
+        self.namespace_hierarchy = []
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = OrderedDict()
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = OrderedDict()
-
         self.outputs = [] # list of explicit internal outputs; change to
                           # OrderedDict() if need to vary per cycle.
-
         self.loose_prerequisites = [] # asynchronous tasks
 
-        self.command = None
-        self.retry_delays = deque()
-        self.precommand = None
-        self.postcommand = None
-        self.initial_scripting = None
-        self.enviro_scripting = None
-        self.ssh_messaging = False
+        self.name = name
+        self.type = 'free'
 
-        self.environment = OrderedDict()  # var = value
-        self.directives  = OrderedDict()  # var = value
+    def process_directories( self, rtcfg ):
+        # Allow use of suite, BUT NOT TASK, identity variables.
+        logd = rtcfg['log directory']
+        if logd.find( '$CYLC_TASK_' ) != -1:
+            print >> sys.stderr, 'runtime -> log directory =', logd
+            raise DefinitionError, 'ERROR: log directories cannot be task-specific'
 
-        self.namespace_hierarchy = []
-
-        self.sim_mode_run_length = None
-        self.fail_in_sim_mode = False
+        # Local job sub log directories: interpolate all environment variables.
+        rtcfg['log directory'] = expandvars( rtcfg['log directory'])
+        # Remote log directories: just suite identity - local variables aren't relevant.
+        if rtcfg['remote']['log directory']:
+            for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
+                rtcfg['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], rtcfg['remote']['log directory'])
+                rtcfg['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], rtcfg['remote']['log directory'])
+        d = rtcfg['log directory']
+        try:
+            mkdir_p( d )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise DefinitionError, 'ERROR, illegal dir? ' + d
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -174,10 +166,8 @@ class taskdef(object):
         if m:
             [ hrs ] = m.groups()
             if hours:
-                #return str( float(hrs) )
                 return float(hrs)
             else:
-                #return str( float(hrs)*60.0 )
                 return float(hrs)*60.0
 
     def get_task_class( self ):
@@ -191,35 +181,20 @@ class taskdef(object):
             base_types.append( getattr( mod, foo ) )
 
         tclass = type( self.name, tuple( base_types), dict())
+
+        # set class variables here
+        tclass.title = self.rtconfig['title']
+        tclass.description = self.rtconfig['description']
+
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
-        tclass.title = self.title
-        tclass.description = self.description
+       
+        tclass.rtconfig = self.rtconfig
+        tclass.run_mode = self.run_mode
 
         tclass.elapsed_times = []
         tclass.mean_total_elapsed_time = None
-
-        tclass.event_handlers = self.event_handlers
-        tclass.timeouts = self.timeouts
-        tclass.reset_timer =self.reset_timer
-
-        tclass.resurrectable = self.resurrectable
-
-        tclass.remote_host = self.remote_host
-        tclass.owner = self.owner
-        tclass.remote_shell_template = self.remote_shell_template
-        tclass.remote_cylc_directory = self.remote_cylc_directory
-        tclass.remote_suite_directory = self.remote_suite_directory
-        tclass.remote_log_directory = self.remote_log_directory
-
-        tclass.job_submit_method = self.job_submit_method
-        tclass.job_submission_shell = self.job_submission_shell
-        tclass.job_submit_command_template = self.job_submit_command_template
-        tclass.job_submit_log_directory = self.job_submit_log_directory
-        tclass.job_submit_share_directory = self.job_submit_share_directory
-        tclass.job_submit_work_directory = self.job_submit_work_directory
-        tclass.manual_messaging = self.manual_messaging
 
         tclass.intercycle = self.intercycle
         tclass.follow_on = self.follow_on_task
@@ -310,23 +285,6 @@ class taskdef(object):
 
             sself.asyncid_pattern = self.asyncid_pattern
 
-            sself.initial_scripting = self.initial_scripting
-            sself.enviro_scripting = self.enviro_scripting
-            sself.ssh_messaging = self.ssh_messaging
-
-            sself.command = self.command
-
-            sself.sim_mode_run_length = self.sim_mode_run_length
-            sself.fail_in_sim_mode = self.fail_in_sim_mode
-
-            # deepcopy retry delays: the deque gets pop()'ed in the task
-            # proxy objects, which is no good if all instances of the
-            # same task class reference the original deque!
-            sself.retry_delays = deepcopy(self.retry_delays)
-
-            sself.precommand = self.precommand
-            sself.postcommand = self.postcommand
-
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
@@ -336,7 +294,7 @@ class taskdef(object):
             sself.add_prerequisites( startup, sself.cycon, sself.tag )
 
             sself.logfiles = logfiles()
-            for lfile in self.logfiles:
+            for lfile in self.rtconfig[ 'extra log files' ]:
                 sself.logfiles.add_path( lfile )
 
             # outputs
@@ -346,16 +304,6 @@ class taskdef(object):
                 if not sself.outputs.exists( msg ):
                     sself.outputs.add( msg )
             sself.outputs.register()
-
-            sself.env_vars = OrderedDict()
-            for var in self.environment:
-                val = self.environment[ var ]
-                sself.env_vars[ var ] = val
-
-            sself.directives = OrderedDict()
-            for var in self.directives:
-                val = self.directives[ var ]
-                sself.directives[ var ] = val
 
             if 'catchup_clocktriggered' in self.modifiers:
                 catchup_clocktriggered.__init__( sself )
@@ -370,7 +318,9 @@ class taskdef(object):
 
             sself.reconfigure_me = False
             sself.is_coldstart = self.is_coldstart
+            sself.set_from_rtconfig()
 
         tclass.__init__ = tclass_init
 
         return tclass
+

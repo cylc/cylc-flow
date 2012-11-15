@@ -27,9 +27,11 @@
 
 # TASK PROXY BASE CLASS:
 
-import sys, re
-from copy import deepcopy
+import os, sys, re
 import datetime
+from copy import deepcopy
+from random import randrange
+from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
@@ -46,31 +48,6 @@ def displaytd( td ):
     else:
         res = str(td)
     return res
-
-# NOTE ON TASK STATE INFORMATION---------------------------------------
-
-# task attributes required for a system cold start are:
-#  state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')
-
-# The 'state' variable is initialised by the base class, and written to
-# the state dump file by the base class dump_state() method.
-
-# For a restart from previous state some tasks may require additional
-# state information to be stored in the state dump file.
-
-# To handle this difference in initial state information (between normal
-# start and restart) task initialisation must use a default value of
-# 'None' for the additional variables, and for a restart the task
-# manager must instantiate each task with a flattened list of all the
-# state values found in the state dump file.
-
-# NOTE ON EXECUTION OF EVENT HANDLERS:
-# These have to be executed in the background because (a) they could
-# take a long time to execute, or (b) they could try to operate on the
-# suite in some way (e.g. to remove a failed task automatically) - this
-# would create a deadlock if cylc waited on them to complete before
-# carrying on. Consequently cylc cannot to detect failure of a handler
-# (not easily at least ...)
 
 class task( Pyro.core.ObjBase ):
 
@@ -217,7 +194,7 @@ class task( Pyro.core.ObjBase ):
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
-        handler = self.__class__.event_handlers['submitted']
+        handler = self.event_handlers['submitted']
         if handler:
             RunHandler( 'submitted', handler, self.__class__.suite, self.id, 'task submitted' )
 
@@ -226,7 +203,7 @@ class task( Pyro.core.ObjBase ):
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
-        handler = self.__class__.event_handlers['started']
+        handler = self.event_handlers['started']
         if handler:
             RunHandler( 'started', handler, self.__class__.suite, self.id, 'task started' )
 
@@ -240,21 +217,21 @@ class task( Pyro.core.ObjBase ):
         # (set_succeeded() is used by remote switch)
         print '\n' + self.id + " SUCCEEDED"
         self.state.set_status( 'succeeded' )
-        handler = self.__class__.event_handlers['succeeded']
+        handler = self.event_handlers['succeeded']
         if handler:
             RunHandler( 'succeeded', handler, self.__class__.suite, self.id, 'task succeeded' )
 
     def set_failed( self, reason='task failed' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
-        handler = self.__class__.event_handlers['failed']
+        handler = self.event_handlers['failed']
         if handler:
             RunHandler( 'failed', handler, self.__class__.suite, self.id, reason )
 
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
-        handler = self.__class__.event_handlers['submission failed']
+        handler = self.event_handlers['submission failed']
         if handler:
             RunHandler( 'submission_failed', handler, self.__class__.suite, self.id, reason )
 
@@ -296,15 +273,113 @@ class task( Pyro.core.ObjBase ):
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
 
-    def submit( self, bcvars={}, dry_run=False, debug=False ):
+    def override( self, target, sparse ):
+        for key,val in sparse.items():
+            if isinstance( val, dict ):
+                self.override( target[key], val )
+            else:
+                target[key] = val
+
+    def set_from_rtconfig( self, cfg={} ):
+        # [runtime] settings that are not involved in job submission may
+        # also be overridden by a broadcast:
+        if cfg:
+            rtconfig = cfg
+        else:
+            rtconfig = self.__class__.rtconfig
+
+        # note: we currently only access the class variable with describe():
+        self.title = rtconfig['title']
+        self.description = rtconfig['description']
+
+        if self.try_number == 1:
+            # configure retry delays before the first try
+            if self.__class__.run_mode == 'live' or \
+                ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable retries'] ) or \
+                ( self.__class__.run_mode == 'dummy' and not rtconfig['dummy mode']['disable retries'] ):
+            # deepcopy retry delays: the deque gets pop()'ed in the task
+            # proxy objects, which is no good if all instances of the
+            # same task class reference the original deque! (deepcopy not
+            # required now due to deepcopy of rtconfig above)
+                self.retry_delays = deque( rtconfig['retry delays'] )
+            else:
+                self.retry_delays = deque()
+
+            # check retry delay type (must be float):
+            for i in self.retry_delays:
+                try:
+                    float(i)
+                except ValueError:
+                    raise SystemExit( "ERROR, retry delay values must be floats: " + str(i) )
+
+        rrange = rtconfig['simulation mode']['run time range']
+        ok = True
+        if len(rrange) != 2:
+            ok = False
+        try:
+            res = [ int( rrange[0] ), int( rrange[1] ) ]
+        except:
+            ok = False
+        if not ok:
+            raise SystemExit, "ERROR, " + self.name + ": simulation mode run time range must be 'int, int'" 
+        try:
+            self.sim_mode_run_length = randrange( res[0], res[1] )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise SystemExit, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
+
+        if self.run_mode == 'live' or \
+                ( self.run_mode == 'simulation' and not rtconfig['simulation mode']['disable task event hooks'] ) or \
+                ( self.run_mode == 'dummy' and not rtconfig['dummy mode']['disable task event hooks'] ):
+            self.event_handlers = {
+                'submitted' : rtconfig['event hooks']['submitted handler'],
+                'started'   : rtconfig['event hooks']['started handler'],
+                'succeeded' : rtconfig['event hooks']['succeeded handler'],
+                'failed'    : rtconfig['event hooks']['failed handler'],
+                'warning'   : rtconfig['event hooks']['warning handler'],
+                'retry'     : rtconfig['event hooks']['retry handler'],
+                'submission failed'  : rtconfig['event hooks']['submission failed handler'],
+                'submission timeout' : rtconfig['event hooks']['submission timeout handler'],
+                'execution timeout'  : rtconfig['event hooks']['execution timeout handler']
+                }
+            self.timeouts = {
+                'submission' : rtconfig['event hooks']['submission timeout'],
+                'execution'  : rtconfig['event hooks']['execution timeout']
+                }
+            self.reset_timer = rtconfig['event hooks']['reset timer']
+        else:
+            self.event_handlers = {
+                'submitted' : None,
+                'started'   : None,
+                'succeeded' : None,
+                'failed'    : None,
+                'warning'   : None,
+                'retry'     : None,
+                'submission failed'  : None,
+                'submission timeout' : None,
+                'execution timeout'  : None
+                }
+            self.timeouts = {
+                'submission' : None,
+                'execution'  : None
+                }
+            self.reset_timer = False
+
+
+    def submit( self, bcvars={}, dry_run=False, debug=False, overrides={} ):
+        # TO DO: REPLACE DEEPCOPY():
+        rtconfig = deepcopy( self.__class__.rtconfig )
+        self.override( rtconfig, overrides )
+        self.set_from_rtconfig( rtconfig )
+
         self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
 
         # dynamic instantiation - don't know job sub method till run time.
-        module_name = self.job_submit_method
-        class_name  = self.job_submit_method
+        module_name = rtconfig['job submission']['method']
+        class_name  = module_name
         # NOTE: not using__import__() keyword arguments:
         #mod = __import__( module_name, fromlist=[class_name] )
         # as these were only introduced in Python 2.5.
@@ -321,43 +396,80 @@ class task( Pyro.core.ObjBase ):
 
         launcher_class = getattr( mod, class_name )
 
-        # To Do: most of the following could be class variables?
-        # To Do: should cylc_env just be a task instance variable?
-        # (it has to be deepcopy'd below as as may be modified by task
-        # instances when writing the jobfile).
+        command = rtconfig['command scripting']
+        manual = rtconfig['manual completion']
+        if self.__class__.run_mode == 'dummy':
+            # (dummy tasks don't detach)
+            manual = False
+            command = rtconfig['dummy mode']['command scripting']
+            if rtconfig['dummy mode']['disable pre-command scripting']:
+                precommand = None
+            if rtconfig['dummy mode']['disable post-command scripting']:
+                postcommand = None
+        else:
+            precommand = rtconfig['pre-command scripting'] 
+            postcommand = rtconfig['post-command scripting'] 
+
+        share_dir = rtconfig['share directory']
+        work_dir  = rtconfig['work directory']
+        remote_log_dir = rtconfig['remote']['log directory']
+        if rtconfig['remote']['host'] or rtconfig['remote']['owner']:
+            # remote task
+            if rtconfig['remote']['work directory']:
+                # Replace local work directory.
+                work_dir  = rtconfig['remote']['work directory']
+            else:
+                # Use local work directory path, but replace suite
+                # owner's home dir (if present) with literal '$HOME' for
+                # interpretation on the remote host.
+                work_dir  = re.sub( os.environ['HOME'], '$HOME', work_dir )
+
+            if rtconfig['remote']['share directory']:
+                # Replace local share directory.
+                share_dir  = rtconfig['remote']['share directory']
+            else:
+                # (as for work dir)
+                share_dir  = re.sub( os.environ['HOME'], '$HOME', share_dir )
+
+            # We need to retain local and remote log directory paths -
+            # the local one is used for the local task job script before
+            # it is copied to the remote host. 
+            if not remote_log_dir:
+                # (as for work dir)
+                remote_log_dir = re.sub( os.environ['HOME'], '$HOME', rtconfig['log directory'] )
 
         jobconfig = {
-                'directives' : self.directives,
-                'directive prefix' : None,
-                'directive final' : None,
-                'directive connector' : ' ',
-                'initial scripting' : self.initial_scripting,
-                'cylc environment' : deepcopy( task.cylc_env ),
-                'environment scripting' : self.enviro_scripting,
-                'runtime environment' : self.env_vars,
-                'broadcast environment' : bcvars,
-                'pre-command scripting' : self.precommand,
-                'command scripting' : self.command,
-                'post-command scripting' : self.postcommand,
-                'namespace hierarchy' : self.namespace_hierarchy,
-                'use ssh messaging' : self.ssh_messaging,
-                'use manual completion' : self.manual_messaging,
-                'try number' : self.try_number,
-                'is cold-start' : self.is_coldstart,
-                'remote cylc path' : self.__class__.remote_cylc_directory,
-                'remote suite path' : self.__class__.remote_suite_directory,
-                'share path' : self.__class__.job_submit_share_directory,
-                'work path' : self.__class__.job_submit_work_directory,
-                'job script shell' :  self.__class__.job_submission_shell,
+                'directives'             : rtconfig['directives'],
+                'initial scripting'      : rtconfig['initial scripting'],
+                'environment scripting'  : rtconfig['environment scripting'],
+                'runtime environment'    : rtconfig['environment'],
+                'use ssh messaging'      : rtconfig['remote']['ssh messaging'],
+                'remote cylc path'       : rtconfig['remote']['cylc directory'],
+                'remote suite path'      : rtconfig['remote']['suite definition directory'],
+                'job script shell'       : rtconfig['job submission']['shell'],
+                'use manual completion'  : manual,
+                'broadcast environment'  : bcvars,
+                'pre-command scripting'  : precommand,
+                'command scripting'      : command,
+                'post-command scripting' : postcommand,
+                'namespace hierarchy'    : self.namespace_hierarchy,
+                'try number'             : self.try_number,
+                'is cold-start'          : self.is_coldstart,
+                'share path'             : share_dir, 
+                'work path'              : work_dir,
+                'cylc environment'       : deepcopy( task.cylc_env ),
+                'directive prefix'       : None,
+                'directive final'        : "# FINAL DIRECTIVE",
+                'directive connector'    : " ",
                 }
         xconfig = {
-                'owner' : self.__class__.owner,
-                'host' : self.__class__.remote_host,
-                'log path' : self.__class__.job_submit_log_directory,
-                'extra log files' : self.logfiles,
-                'remote shell template' : self.__class__.remote_shell_template,
-                'remote log path' : self.__class__.remote_log_directory,
-                'job submission command template' : self.__class__.job_submit_command_template,
+                'owner'                  : rtconfig['remote']['owner'],
+                'host'                   : rtconfig['remote']['host'],
+                'log path'               : rtconfig['log directory'],
+                'remote shell template'  : rtconfig['remote']['remote shell template'],
+                'job submission command template' : rtconfig['job submission']['command template'],
+                'remote log path'        : remote_log_dir,
+                'extra log files'        : self.logfiles,
                 }
 
         self.launcher = launcher_class( self.id, jobconfig, xconfig )
@@ -374,8 +486,8 @@ class task( Pyro.core.ObjBase ):
             return p
 
     def check_submission_timeout( self ):
-        handler = self.__class__.event_handlers['submission timeout']
-        timeout = self.__class__.timeouts['submission']
+        handler = self.event_handlers['submission timeout']
+        timeout = self.timeouts['submission']
         if not handler or not timeout:
             return
         if not self.state.is_submitted() and not self.state.is_running():
@@ -383,16 +495,16 @@ class task( Pyro.core.ObjBase ):
             return
         current_time = task.clock.get_datetime()
         if self.submission_timer_start != None and not self.state.is_running():
-            cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
+            cutoff = self.submission_timer_start + datetime.timedelta( minutes=float(timeout) )
             if current_time > cutoff:
-                msg = 'task submitted ' + str( timeout ) + ' minutes ago, but has not started'
+                msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
                 RunHandler( 'submission_timeout', handler, self.__class__.suite, self.id, msg )
                 self.submission_timer_start = None
 
     def check_execution_timeout( self ):
-        handler = self.__class__.event_handlers['execution timeout']
-        timeout = self.__class__.timeouts['execution']
+        handler = self.event_handlers['execution timeout']
+        timeout = self.timeouts['execution']
         if not handler or not timeout:
             return
         if not self.state.is_submitted() and not self.state.is_running():
@@ -400,12 +512,12 @@ class task( Pyro.core.ObjBase ):
             return
         current_time = task.clock.get_datetime()
         if self.execution_timer_start != None and self.state.is_running():
-            cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
+            cutoff = self.execution_timer_start + datetime.timedelta( minutes=float(timeout) )
             if current_time > cutoff:
                 if self.reset_timer:
-                    msg = 'last message ' + str( timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'last message ' + timeout + ' minutes ago, but has not succeeded'
                 else:
-                    msg = 'task started ' + str( timeout ) + ' minutes ago, but has not succeeded'
+                    msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
                 RunHandler( 'execution_timeout', handler, self.__class__.suite, self.id, msg )
                 self.execution_timer_start = None
@@ -416,7 +528,7 @@ class task( Pyro.core.ObjBase ):
         timeout = self.started_time_real + \
                 datetime.timedelta( seconds=self.sim_mode_run_length )
         if datetime.datetime.now() > timeout:
-            if self.fail_in_sim_mode:
+            if self.__class__.rtconfig['simulation mode']['simulate failure']:
                 self.incoming( 'CRITICAL', self.id + ' failed' )
             else:
                 self.incoming( 'NORMAL', self.id + ' succeeded' )
@@ -440,7 +552,7 @@ class task( Pyro.core.ObjBase ):
 
     def reject_if_failed( self, message ):
         if self.state.is_failed():
-            if self.__class__.resurrectable:
+            if self.__class__.rtconfig['enable resurrection']:
                 self.log( 'WARNING', 'message receive while failed: I am returning from the dead!' )
                 return False
             else:
@@ -466,7 +578,7 @@ class task( Pyro.core.ObjBase ):
         task.progress_msg_rec = False
 
         # Handle warning events
-        handler = self.__class__.event_handlers['warning']
+        handler = self.event_handlers['warning']
         if priority == 'WARNING' and handler:
             RunHandler( 'warning', handler, self.__class__.suite, self.id, message )
 
@@ -506,7 +618,7 @@ class task( Pyro.core.ObjBase ):
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
-                handler = self.__class__.event_handlers['retry']
+                handler = self.event_handlers['retry']
                 if handler:
                     RunHandler( 'retry', handler, self.__class__.suite, self.id, 'task retrying' )
 

@@ -1,70 +1,52 @@
 
+title = "test suite for broadcast functionality"
+
+description = """
+The initial prep task in this suite broadcasts an environment variable
+"BCAST" to various cycles and namespaces, then each task writes its cycle
+time, name, and its value of BCAST to a special log file. Finally, the
+shutdown event handler compares the broadcast log file with a previously
+generated reference version.
+              """
+
 [cylc]
     [[reference test]]
-        # increase this time if using 'sleep 10' below:
-        live mode suite timeout = 0.5
+        live mode suite timeout = 0.2
+        suite shutdown event handler = complog.py
 
 [scheduling]
-    initial cycle time = 2010080100
-    final cycle time = 2010080200
+    initial cycle time = 2010080800
+    final cycle time   = 2010080900
+    [[special tasks]]
+        start-up = prep
     [[dependencies]]
-        graph = "prep"
         [[[0]]]
-            graph = "prep => foo => bar"
-
+            graph = """
+           prep => foo => ens
+          ens:finish-all => bar
+                    """
 [runtime]
-    [[prep]]
-        command scripting = """
-cylc broadcast PREP_TO_ALL "the quick brown"
-cylc broadcast PREP_TO_FOO "fox jumps" foo
-cylc broadcast PREP_TO_2010080200 "over the" 2010080200
-cylc broadcast PREP_TO_BAR_2010080200 "lazy dog" bar%2010080200
-                            """
-    [[cyc]]
-        pre-command scripting = """
-#sleep 10
-echo "PREP_TO_ALL: $PREP_TO_ALL"
-                                """
+    [[root]]
+        pre-command scripting = "echo $CYLC_TASK_CYCLE_TIME $CYLC_TASK_NAME BCAST is $BCAST | tee -a $BCASTLOG"
+        command scripting = "true" # no sleep
         [[[environment]]]
-            PREP_TO_ALL            = ${PREP_TO_ALL:-UNDEFINED}
-            PREP_TO_FOO            = ${PREP_TO_FOO:-UNDEFINED}
-            PREP_TO_2010080200     = ${PREP_TO_2010080200:-UNDEFINED}
-            PREP_TO_BAR_2010080200 = ${PREP_TO_BAR_2010080200:-UNDEFINED}
-            
-    [[foo]]
-        inherit = cyc
+            BCAST = ${BCAST:-(not set)}
+            BCASTLOG = ${CYLC_SUITE_DEF_PATH}/broadcast.log
+    [[prep]]
+        pre-command scripting = "rm -f $BCASTLOG"
         command scripting = """
-echo "PREP_TO_FOO: $PREP_TO_FOO"
-if [[ $CYLC_TASK_CYCLE_TIME = 2010080200 ]]; then
-    echo "PREP_TO_2010080200: $PREP_TO_2010080200"
-elif [[ $PREP_TO_2010080200 != UNDEFINED ]]; then
-    echo "PREP_TO_2010080200: $PREP_TO_2010080200"
-    echo "ERROR: PREP_TO_2010080200 should not be defined here"
-    /bin/false
-fi
-if [[ $PREP_TO_BAR_2010080200 != UNDEFINED ]]; then 
-    echo "PREP_TO_BAR_2010080200: $PREP_TO_BAR_2010080200"
-    echo "ERROR: PREP_TO_BAR_2010080200 should not be defined here"
-    /bin/false
-fi
+    # broadcast to all cycles and namespaces:
+        cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_REG_NAME
+    # broadcast to foo%2010080800:
+        cylc broadcast -t 2010080800 -n foo -s "[environment]BCAST = FOO" $CYLC_SUITE_REG_NAME
+    # broadcast to all members of ens, all cycles:
+        cylc broadcast -n ens -s "[environment]BCAST = ENS" $CYLC_SUITE_REG_NAME
+    # broadcast to a single member m2 of ens, in 2010080900:
+        cylc broadcast -n m2 -t 2010080900 -s "[environment]BCAST = M2" $CYLC_SUITE_REG_NAME
+    # list the result to prep task stdout:
+        cylc bcast --display $CYLC_SUITE_REG_NAME
                             """
-    [[bar]]
-        inherit = cyc
-        command scripting = """
-if [[ $CYLC_TASK_CYCLE_TIME = 2010080200 ]]; then
-    echo "PREP_TO_2010080200: $PREP_TO_2010080200"
-    echo "PREP_TO_BAR_2010080200: $PREP_TO_BAR_2010080200"
-else
-    if [[ $PREP_TO_2010080200 != UNDEFINED ]]; then
-        echo "PREP_TO_2010080200: $PREP_TO_2010080200"
-        echo "ERROR: PREP_TO_2010080200 should not be defined here"
-        /bin/false
-    fi
-    if [[ $PREP_TO_BAR_2010080200 != UNDEFINED ]]; then 
-        echo "PREP_TO_BAR_2010080200: $PREP_TO_BAR_2010080200"
-        echo "ERROR: PREP_TO_BAR_2010080200 should not be defined here"
-        /bin/false
-    fi
-fi
-                            """
+    [[ens]]
+    [[m1,m2,m3]]
+        inherit = ens
 

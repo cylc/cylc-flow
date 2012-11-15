@@ -907,7 +907,9 @@ The Cylc Suite Engine.
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def view_task_info( self, w, task_id, choice ):
+    def view_task_info( self, w, e, task_id, choice ):
+        if hasattr(e, "button") and e.button != 1:
+            return False
         try:
             [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
         except SuiteIdentificationError, x:
@@ -981,35 +983,38 @@ The Cylc Suite Engine.
         view_item.set_submenu( view_menu )
         items.append( view_item )
  
+        # NOTE: we have to respond to 'button-press-event' rather than
+        # 'activate' in order for sub-menus to work in the graph-view.
+
         info_item = gtk.ImageMenuItem( 'stdout log' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         info_item.set_image(img)
         view_menu.append( info_item )
-        info_item.connect( 'activate', self.view_task_info, task_id, 'stdout' )
+        info_item.connect( 'button-press-event', self.view_task_info, task_id, 'stdout' )
 
         inf_item = gtk.ImageMenuItem( 'stderr log' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         inf_item.set_image(img)
         view_menu.append( inf_item )
-        inf_item.connect( 'activate', self.view_task_info, task_id, 'stderr' )
+        inf_item.connect( 'button-press-event', self.view_task_info, task_id, 'stderr' )
 
         js_item = gtk.ImageMenuItem( 'job script' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         js_item.set_image(img)
         view_menu.append( js_item )
-        js_item.connect( 'activate', self.view_task_info, task_id, 'job script' )
+        js_item.connect( 'button-press-event', self.view_task_info, task_id, 'job script' )
 
         info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
         info_item.set_image(img)
         view_menu.append( info_item )
-        info_item.connect( 'activate', self.popup_requisites, task_id )
+        info_item.connect( 'button-press-event', self.popup_requisites, task_id )
 
         js0_item = gtk.ImageMenuItem( 'run "cylc show"' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
         js0_item.set_image(img)
         view_menu.append( js0_item )
-        js0_item.connect( 'activate', self.view_task_descr, task_id )
+        js0_item.connect( 'button-press-event', self.view_task_descr, task_id )
 
         items.append( gtk.SeparatorMenuItem() )
 
