@@ -353,7 +353,6 @@ class scheduler(object):
         self.banner[ 'Final Cycle' ] = self.stop_tag
 
         self.runahead_limit = self.config.get_runahead_limit()
-        print self.runahead_limit, '<<<<<<<<<<<<<<<<<<<<<<<<<'
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         # RECEIVER FOR BROADCAST VARIABLES
