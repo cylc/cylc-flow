@@ -429,17 +429,17 @@ class config( CylcConfigObj ):
             self['runtime'][label] = taskconf
 
     def compute_runahead_limit( self ):
-        # 1/ take the smallest of the default limits from each graph section
+        # take the smallest of the default limits from each graph section
+        rl = None
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
 
-            self.runahead_limit = self['scheduling']['runahead limit']
-            if self.runahead_limit:
+            rl = self['scheduling']['runahead limit']
+            if rl:
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
             else:
                 rls = []
-                rl = None
                 for cyc in self.cyclers:
                     rahd = cyc.get_min_cycling_interval()
                     if rahd:
@@ -448,7 +448,8 @@ class config( CylcConfigObj ):
                     # twice the minimum cycling internal in the suite
                     rl = 2 * min(rls)
                     if self.verbose:
-                        print "Computed runahead limit:", mrl, "hours"
+                        print "Computed runahead limit:", rl, "hours"
+        self.runahead_limit = rl
 
     def get_runahead_limit( self ):
         # may be None (no cycling tasks)
