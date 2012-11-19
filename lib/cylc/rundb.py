@@ -70,8 +70,8 @@ class CylcRuntimeDAO(object):
     def create(self):
         """Create the database tables."""
         c = self.conn.cursor()
-        for key, cols in self.TABLES.items():
-            s = "CREATE TABLE " + key + "("
+        for table, cols in self.TABLES.items():
+            s = "CREATE TABLE " + table + "("
             not_first = False
             for col in cols:
                 if not_first:
@@ -89,7 +89,7 @@ class CylcRuntimeDAO(object):
         s_fmt = "INSERT INTO %(table)s VALUES(?, ?, ?%(cols)s)"
         args = [name, cycle, datetime.now()]
         cols = ""
-        while len(args) < len(TABLES[table]):
+        while len(args) < len(self.TABLES[table]):
             args.append(None)
             cols += ", ?"
         c = self.conn.cursor()
@@ -109,6 +109,8 @@ class CylcRuntimeDAO(object):
             not_first = True
             cols += k + "=?"
             args.append(v)
+        args.append(name)
+        args.append(cycle)
         c = self.conn.cursor()
         c.execute(s_fmt % {"table": table, "cols": cols}, args)
         self.conn.commit()

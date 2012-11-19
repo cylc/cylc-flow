@@ -37,6 +37,7 @@ from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
 import logging
 import Pyro.core
+import cylc.rundb
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -140,6 +141,8 @@ class task( Pyro.core.ObjBase ):
         self.to_go = None
         self.try_number = 1
         self.retry_delay_timer_start = None
+        
+        self.db = cylc.rundb.CylcRuntimeDAO(new_mode=True)
 
     def plog( self, message ):
         # print and log a low priority message
@@ -197,6 +200,7 @@ class task( Pyro.core.ObjBase ):
         handler = self.event_handlers['submitted']
         if handler:
             RunHandler( 'submitted', handler, self.__class__.suite, self.id, 'task submitted' )
+        self.db.insert("TASK_EVENTS", self.id, "001")
 
     def set_running( self ):
         self.state.set_status( 'running' )
@@ -215,7 +219,7 @@ class task( Pyro.core.ObjBase ):
 
     def set_succeeded_handler( self ):
         # (set_succeeded() is used by remote switch)
-        print '\n' + self.id + " SUCCEEDED"
+        print '\n' + self.id + " SUCCEEDED with ANDY"
         self.state.set_status( 'succeeded' )
         handler = self.event_handlers['succeeded']
         if handler:
