@@ -757,12 +757,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #    info_dialog( result.reason, self.window ).inform()
 
     def loadctimes( self, bt, startentry, stopentry ):
-        command = "cylc get-config --mark-output --host=" + \
-                self.cfg.host + " --owner=" + self.cfg.owner + \
+        item1 = " -i [scheduling]['initial cycle time']"
+        item2 = " -i [scheduling]['final cycle time']"
+        command = "cylc get-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
+                " --owner=" + self.cfg.owner + item1 + item2 + " " + \
                 self.cfg.suite 
-        item1 = " scheduling 'initial cycle time'"
-        item2 = " scheduling 'final cycle time'"
         res1 = run_get_stdout( command + item1, filter=True ) # (T/F,[lines])
         res2 = run_get_stdout( command + item2, filter=True )
 
@@ -2617,8 +2617,7 @@ For more Stop options use the Control menu.""" )
             for option in ["'initial cycle time'", "'final cycle time'"]:
                 command = ( "cylc get-config" + self.get_remote_run_opts() + \
                             " " + self.cfg.template_vars_opts + \
-                            " " + self.cfg.suite + \
-                            " visualization " + option )
+                            " -i [visualization]" + option + " " + self.cfg.suite )
                 res, pieces = run_get_stdout( command )
                 if not res or not pieces:
                     return False
@@ -2658,11 +2657,10 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
             return
 
         # just for local suites (so --host and --owner are not needed here)
-        command = "cylc get-config --mark-output " + " " + \
-                self.cfg.template_vars_opts + " " + self.cfg.suite + " cylc logging directory"
+        command = "cylc get-config --mark-up -i [cylc][logging][directory] " + self.cfg.template_vars_opts + " " + self.cfg.suite 
         res, lst = run_get_stdout( command, filter=True )
         logging_dir = lst[0]
-        command = "cylc get-config --mark-output --tasks " + self.cfg.template_vars_opts + " " + self.cfg.suite
+        command = "cylc get-config --mark-up --tasks " + self.cfg.template_vars_opts + " " + self.cfg.suite
         res, tasks = run_get_stdout( command, filter=True )
         if res:
             task_list = tasks

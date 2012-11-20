@@ -1540,8 +1540,8 @@ The Cylc Suite Engine.
         foo.run()
 
     def describe_suite( self, w, name ):
-        command = """echo '> TITLE:'; cylc get-config """ + self.dbopt + " " + name + """ title; echo
-echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion " + name + " description"
+        command = """echo '> TITLE:'; cylc get-config """ + self.dbopt + " -i title " + name + """; echo
+echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion -i description " + name 
         foo = gcapture_tmpfile( command, self.tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

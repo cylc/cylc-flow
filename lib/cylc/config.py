@@ -521,10 +521,7 @@ class config( CylcConfigObj ):
     def get_config( self, args, sparse=False ):
         target = self
         keys = args
-        if len(args) == 0 or len(args) == 1 or sparse:
-            # don't populate [runtime] with all default settings
-            print >> sys.stderr, "WARNING: returning sparse [runtime]!"
-        elif args[0] == 'runtime':
+        if args[0] == 'runtime' and not sparse:
             # load and override runtime defaults
             rtcfg = {}
             replicate( rtcfg, self.runtime_defaults )

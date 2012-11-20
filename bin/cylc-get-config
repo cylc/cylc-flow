@@ -21,6 +21,7 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
+import re
 from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
@@ -33,19 +34,17 @@ def prdict( dct, level=0, indent=0, prefix='' ):
         else:
             print prefix + '   '*indent + str(key) + ' = ' + str(val) 
 
-parser = cop( usage = """cylc [info] get-config [OPTIONS] REG [ITEMS...]
+parser = cop( usage = """cylc [info] get-config [OPTIONS] REG
 
-Print configuration settings from a parsed suite definition, after
+Print configuration settings parsed from a suite definition, after
 runtime inheritance processing and including default values for items
-that are not explicitly set in the suite.rc file. This command enables,
-for example, automated handling of suites and suite output without
-assuming directory locations and the like.
+that are not explicitly set in the suite.rc file.
 
 Config items containing spaces must be quoted on the command line. If
 a single item is requested only its value will be printed; otherwise the 
 full nested structure below the requested config section is printed. 
 
-Example, from a suite registered as foo.bar.baz:
+Example, from a suite registered as foo.bar:
 |# SUITE.RC
 |[runtime]
 |    [[modelX]]
@@ -53,22 +52,25 @@ Example, from a suite registered as foo.bar.baz:
 |            FOO = foo
 |            BAR = bar
 
-$ cylc get-config foo.bar.baz runtime modelX environment FOO
+$ cylc get-config --item=[runtime][modelX][environment]FOO foo.bar
 foo
 
-$ cylc get-config foo.bar.baz runtime modelX environment
+$ cylc get-config --item=[runtime][modelX][environment] foo.bar 
 FOO = foo
 BAR = bar
 
-$ cylc get-config foo.bar.baz runtime modelX
+$ cylc get-config --item=[runtime][modelX] foo.bar 
 ...
 work directory = $CYLC_SUITE_DEF_PATH/share
 [[[environment]]]
     FOO = foo
     BAR = bar
-...""",
-    argdoc=[('REG', 'Suite name'), 
-        ('[ITEMS...]', 'suite.rc section and item hierarchy')])
+...""" )
+
+parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+        help="Set a runtime item by broadcast. Can be used multiple "
+        "times to broadcast several settings at once.",
+        action="append", dest="item", default=[] )
 
 parser.add_option( "-t", "--tasks",
         help="Print configured task list.",
@@ -78,7 +80,7 @@ parser.add_option( "-d", "--directories",
         help="Print configured suite directory paths.",
         action="store_true", default=False, dest="dpaths" )
 
-parser.add_option( "-m", "--mark-output",
+parser.add_option( "-m", "--mark-up",
         help="Prefix output lines with '!cylc!' to aid "
         "in automated parsing (output can be contaminated by "
         "stdout from login scripts, for example, for remote "
@@ -94,9 +96,15 @@ parser.add_option( "--sparse",
         "file, not underlying default settings.",
         action="store_true", default=False, dest="sparse" )
 
+parser.add_option( "-o", "--one-line", 
+        help="Combine the result from multiple --item requests onto "
+        "one line, with internal spaces replaced by the '*' character. "
+        "For single-value items only.",
+        action="store_true", default=False, dest="oneline" )
+
 parser.add_option( "-a", "--all-tasks",
-        help="For [runtime] items, report values for all tasks. "
-        "Results are prefixed by task name.",
+        help="For [runtime] items (e.g. --item='command scripting') report "
+        "values for all tasks prefixed by task name.",
         action="store_true", default=False, dest="alltasks" )
 
 ( options, args ) = parser.parse_args()
@@ -116,23 +124,20 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
-if options.alltasks:
-    if args[1] == 'runtime':
-        raise SystemExit( "ERROR: --all-tasks is only for items below '[runtime][NAME]' as first argument" )
-    try:
-        data = config.get_config_all_tasks( args[1:], options.sparse )
-    except SuiteConfigError, x:
-        raise SystemExit(x)
-    tasks = data.keys()
-    tasks.sort()
-    for key in tasks:
-        print key, data[key]
+if options.markoutput:
+    prefix = '!cylc!'
+else:
+    prefix = ''
+
+if options.tasks:
+    for task in config.get_task_name_list():
+        print prefix + task
     sys.exit(0)
 
 if options.dpaths:
-    print "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
-    print "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
-    print "TASK LOG DIRECTORIES:"
+    print prefix + "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
+    print prefix + "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
+    print prefix + "TASK LOG DIRECTORIES:"
     logdirs = {}
     root_ldir = config.get_config(['runtime','root','log directory'])
     ldirs = [root_ldir]
@@ -145,33 +150,68 @@ if options.dpaths:
         if dir not in ldirs:
             ldirs.append(dir)
             logdirs[ns] = dir
-    print "  + root:", root_ldir
+    print prefix + "  + root:", root_ldir
     for ns in logdirs.keys():
         if ns == "root":
             continue
-        print "  + " + ns + ":", logdirs[ns]
+        print prefix + "  + " + ns + ":", logdirs[ns]
     sys.exit(0)
 
-if options.markoutput:
-    prefix = '!cylc!'
-else:
-    prefix = ''
+get_these = []
+for i in options.item:
+    # construct lists in item nest ordering from --item inputs, i.e.:
+    # "[runtime][foo]command scripting" -> [runtime, foo, "command scripting"
+    i = i.lstrip('[')
+    i = i.rstrip(']')
+    j = re.split( '\]\[*', i )
+    get_these.append(j)
 
-if options.tasks:
-    for task in config.get_task_name_list():
-        print prefix + task
+if options.alltasks:
+    data = []
+    for i in get_these:
+        if i[0] == 'runtime':
+            raise SystemExit( "ERROR: --all-tasks is only for items below '[runtime][NAME]'" )
+        try:
+            data.append( config.get_config_all_tasks( i, options.sparse ))
+        except SuiteConfigError, x:
+            raise SystemExit(x)
+
+    tasks = data[0].keys()
+
+    tasks.sort()
+
+    for task in tasks:
+        if options.oneline:
+            try:
+                print prefix + task, ' '.join( [ d[task].replace(' ','*') for d in data ] )
+            except AttributeError:
+                raise SystemExit( "ERROR: -o is compatible with single-value items only" )
+        else:
+            for d in data:
+                print prefix + task, d[task]
     sys.exit(0)
 
-try:
-    res = config.get_config( args[1:], options.sparse )
-except SuiteConfigError, x:
-    raise SystemExit(x)
+data = []
+for i in get_these:
+    try:
+        data.append( config.get_config( i, options.sparse ))
+    except SuiteConfigError, x:
+        raise SystemExit(x)
 
-if isinstance( res, dict ):
-    if options.pnative:
-        print res
+if options.oneline:
+    try:
+        line = ' '.join( d.replace( ' ', '*' ) for d in data )
+    except AttributeError, x:
+        raise SystemExit( "ERROR: -o is compatible with single-value items only" )
     else:
-        prdict( res, level=len(args[1:]), prefix=prefix)
+        print line
 else:
-    print prefix + str(res)
+    for d in data:
+        if isinstance( d, dict ):
+            if options.pnative:
+                print prefix + d
+            else:
+                prdict( d, level=len(args[1:]), prefix=prefix)
+        else:
+            print prefix + str(d)
 
