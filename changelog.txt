@@ -1025,3 +1025,5 @@ owner may manually change any runtime settings for any family or
 cycle time; (2) tasks may communicate environment variables to 
 downstream tasks. 
 
++ Abort on undefined Jinja2 variables.
+

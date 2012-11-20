@@ -20,7 +20,7 @@ import os, sys, re
 import glob
 
 try:
-    from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError
+    from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError, StrictUndefined
 except ImportError:
     jinja2_loaded = False
 else:
@@ -37,7 +37,7 @@ def Jinja2Process( flines, dir, verbose ):
             raise TemplateError( 'Aborting (Jinja2 required).')
         if verbose:
             print "Processing the suite with Jinja2"
-        env = Environment( loader=FileSystemLoader(dir) )
+        env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined )
 
         # Load any custom Jinja2 filters in the suite definition directory
         # Example: a filter to pad integer values some fill character:
