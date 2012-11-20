@@ -136,9 +136,13 @@ suite2, suite2rc = prep2.get_suite()
 
 try:
     print "Parsing", suite1
-    config1 = config( suite1, suite1rc )
+    config1 = config( suite1, suite1rc,
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file )
     print "Parsing", suite2
-    config2 = config( suite2, suite2rc )
+    config2 = config( suite2, suite2rc,
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file )
 except Exception,x:
     if options.debug:
         raise

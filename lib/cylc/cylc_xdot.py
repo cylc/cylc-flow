@@ -44,13 +44,16 @@ class MyDotWindow2( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, outfile=None, orientation="TB" ):
+    def __init__(self, suite, suiterc, template_vars,
+            template_vars_file, watch, outfile=None, orientation="TB" ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.watch = []
         self.orientation = orientation
+        self.template_vars = template_vars
+        self.template_vars_file = template_vars_file
 
         gtk.Window.__init__(self)
 
@@ -147,15 +150,22 @@ class MyDotWindow2( xdot.DotWindow ):
         if reload:
             print 'Reloading the suite.rc file.'
             try:
-                self.suiterc = config.config( self.suite, self.file, collapsed=self.suiterc.closed_families )
-            except:
+                self.suiterc = config.config( self.suite, self.file,
+                        template_vars=self.template_vars,
+                        template_vars_file=self.template_vars_file,
+                        collapsed=self.suiterc.closed_families )
+            except Exception, x:
                 print >> sys.stderr, "Failed to reload suite.rc file (parsing error?)."
+                print >> sys.stderr, x
                 return False
         else:
             try:
-                self.suiterc = config.config( self.suite, self.file )
-            except:
+                self.suiterc = config.config( self.suite, self.file,
+                        template_vars=self.template_vars,
+                        template_vars_file=self.template_vars_file )
+            except Exception, x:
                 print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
+                print >> sys.stderr, x
                 return False
         self.inherit = self.suiterc.get_inheritance()
         return True
@@ -243,8 +253,9 @@ class MyDotWindow( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, watch, ctime, stop_after, raw, outfile=None,
-                 orientation="TB" ):
+    def __init__(self, suite, suiterc, template_vars,
+            template_vars_file,  watch, ctime, stop_after, raw,
+            outfile=None, orientation="TB" ):
         self.outfile = outfile
         self.disable_output_image = False
         self.suite = suite
@@ -254,6 +265,8 @@ class MyDotWindow( xdot.DotWindow ):
         self.stop_after = stop_after
         self.watch = []
         self.orientation = orientation
+        self.template_vars = template_vars
+        self.template_vars_file = template_vars_file
 
         gtk.Window.__init__(self)
 
@@ -351,15 +364,22 @@ class MyDotWindow( xdot.DotWindow ):
         if reload:
             print 'Reloading the suite.rc file.'
             try:
-                self.suiterc = config.config( self.suite, self.file, collapsed=self.suiterc.closed_families )
-            except:
-                print >> sys.stderr, "Failed to reload suite.rc file (parsing error?)."
+                self.suiterc = config.config( self.suite, self.file, 
+                        template_vars=self.template_vars,
+                        template_vars_file=self.template_vars_file,
+                        collapsed=self.suiterc.closed_families )
+            except Exception, x:
+                print >> sys.stderr, "Failed to reload suite.rc file (parsing error?):"
+                print >> sys.stderr, x
                 return False
         else:
             try:
-                self.suiterc = config.config( self.suite, self.file )
-            except:
-                print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
+                self.suiterc = config.config( self.suite, self.file,
+                        template_vars=self.template_vars,
+                        template_vars_file=self.template_vars_file )
+            except Exception, x:
+                print >> sys.stderr, "Failed to load suite.rc file (parsing error?):"
+                print >> sys.stderr, x
                 return False
         return True
 

@@ -53,7 +53,10 @@ suite, suiterc = prep_file( args[0], options ).execute()
 owner = options.db_owner
 
 try:
-    filename = os.path.join( config( suite, suiterc, owner )['cylc']['logging']['directory'], 'log' )
+    filename = os.path.join( config( suite, suiterc, 
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file,
+        owner=owner, verbose=options.verbose )['cylc']['logging']['directory'], 'log' )
 except Exception, x:
     if options.debug:
         raise

@@ -3511,6 +3511,118 @@ and related values in ensemble suites:
 {% endfor %}
 \end{lstlisting}
 
+\subsubsection{Associative Arrays In Jinja2}
+
+Associative arrays ({\em dicts} in Python) can be very useful. Here's an
+example, from \lstinline=$CYLC_DIR/examples/jinja2/dict=: 
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+{% set obs_types = ['airs', 'iasi'] %}
+{% set resource = { 'airs':'ncpus=9', 'iasi':'ncpus=20' } %}
+
+[scheduling]
+    [[dependencies]]
+        graph = "obs"
+[runtime]
+    [[obs]]
+        [[[job submission]]]
+            method = pbs
+    {% for i in obs_types %}
+    [[ {{i}} ]]
+        inherit = obs
+        [[[directives]]]
+             -I = {{ resource[i] }}
+     {% endfor %}
+ \end{lstlisting}
+
+Here's the result:
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc get-config SUITE runtime airs directives
+-I = ncpus=9
+\end{lstlisting}
+
+\subsubsection{Jinja2 Default Values And Template Inputs}
+
+The values of Jinja2 variables can be passed in from the cylc command
+line rather than hardwired in the suite definition. Here's an example,
+from \lstinline=$CYLC_DIR/examples/jinja2/defaults=:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+
+title = "Jinja2 example: use of defaults and external input"
+
+description = """
+The template variable FIRST_TASK must be given on the cylc command line
+using --set or --set-file=FILE; two other variables, LAST_TASK and
+N_MEMBERS can be set similarly, but if not they have default values.""" 
+
+{% set LAST_TASK = LAST_TASK | default( 'baz' ) %}
+{% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
+
+{# input of FIRST_TASK is required - no default #}
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time   = 2010081600
+    [[dependencies]]
+        [[[0]]]
+            graph = """{{ FIRST_TASK }} => ens
+                 ens:succeed-all => {{ LAST_TASK }}"""
+[runtime]
+    [[ens]]
+{% for I in range( 0, N_MEMBERS ) %}
+    [[ mem_{{ I }} ]]
+        inherit = ens
+{% endfor %}
+\end{lstlisting}
+
+Here's the result:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc list SUITE
+Jinja2 Template Error
+'FIRST_TASK' is undefined
+cylc-list -t foo  failed:  1
+
+% cylc list --set FIRST_TASK=bob foo
+bob
+baz
+mem_2
+mem_1
+mem_0
+
+% cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
+bob
+alice
+mem_2
+mem_1
+mem_0
+
+list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
+mem_9
+mem_8
+mem_7
+mem_6
+mem_5
+mem_4
+mem_3
+mem_2
+mem_1
+mem_0
+baz
+bob
+\end{lstlisting}
+
+\lstset{language=suiterc}
+Note also that 
+\lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
+suite with Jinja2 variables worked out.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}

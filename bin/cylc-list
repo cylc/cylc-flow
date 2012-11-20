@@ -43,7 +43,9 @@ parser.add_option( "-b", "--box",
 suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
-    config = config( suite, suiterc )
+    config = config( suite, suiterc,
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file )
 except Exception,x:
     if options.debug:
         raise

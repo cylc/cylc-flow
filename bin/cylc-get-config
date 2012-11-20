@@ -89,7 +89,7 @@ parser.add_option( "-p", "--python",
         help="Write out the config data structure in Python native format.",
         action="store_true", default=False, dest="pnative" )
 
-parser.add_option( "-s", "--sparse",
+parser.add_option( "--sparse",
         help="Only report [runtime] items  explicitly set in the suite.rc "
         "file, not underlying default settings.",
         action="store_true", default=False, dest="sparse" )
@@ -107,7 +107,10 @@ owner = options.db_owner
 suite, suiterc = prep_file( args[0], options ).execute()
 
 try:
-    config = config( suite, suiterc, owner )
+    config = config( suite, suiterc, 
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file,
+            owner=owner )
 except Exception,x:
     if options.debug:
         raise

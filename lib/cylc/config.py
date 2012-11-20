@@ -73,7 +73,8 @@ class config( CylcConfigObj ):
     needed to create task proxy classes, the suite graph structure,
     etc."""
 
-    def __init__( self, suite, suiterc, owner=None, run_mode='live',
+    def __init__( self, suite, suiterc, template_vars=[],
+            template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False,
             pyro_timeout=None, collapsed=[], only=None ):
 
@@ -124,7 +125,8 @@ class config( CylcConfigObj ):
 
         # handle Jinja2 expressions
         try:
-            suiterc = Jinja2Process( flines, self.dir, self.verbose )
+            suiterc = Jinja2Process( flines, self.dir, template_vars,
+                    template_vars_file, self.verbose )
         except TemplateSyntaxError, x:
             lineno = x.lineno + 1  # (flines array starts from 0)
             print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
@@ -132,6 +134,9 @@ class config( CylcConfigObj ):
             raise SystemExit(str(x))
         except TemplateError, x:
             print >> sys.stderr, 'Jinja2 Template Error'
+            raise SystemExit(x)
+        except TypeError, x:
+            print >> sys.stderr, 'Jinja2 Type Error'
             raise SystemExit(x)
 
         # handle cylc continuation lines
