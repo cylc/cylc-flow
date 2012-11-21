@@ -1,0 +1,11 @@
+
+# configobj specification for the cylc site configuration file
+# (cylc global parameters that users cannot override)
+
+www homepage url = string( default="http://cylc.github.com/cylc/" )
+www documentation url = string( default="http://cylc.github.com/cylc/" )
+
+[pyro]
+    base port number = integer( default=7766 )
+    maximum number of ports = integer( default=100 )
+

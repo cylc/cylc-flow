@@ -25,6 +25,7 @@ import os, re
 import datetime
 from shutil import copy
 import subprocess
+from cylc.global_config import globalcfg
 from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_editing, \
     split_file, backup, backups, newfiles, cleanup, modtimes
@@ -65,18 +66,11 @@ the editor, to allow recovery in case of accidental corruption of the
 include-file boundary markers in the inlined file.
 
 The edit process is spawned in the foreground as follows:
-  $(G)EDITOR suite.rc
-$GEDITOR or $EDITOR, and $TMDPIR, must be in your environment. 
+  % <editor> suite.rc
+Where <editor> is defined in the cylc site and user config files
+($CYLC_DIR/conf/globals/cylc.rc and $HOME/.cylc/cylc.rc).
 
-Examples:
-   export EDITOR=vim
-   export GEDITOR='gvim -f'      # -f: do not detach from parent shell!!
-   export EDITOR='xterm -e vim'  # for gcylc, if gvim is not available
-   export GEDITOR=emacs
-   export EDITOR='emacs -nw'
-You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
-$GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
-of a non-GUI editor, if you want to spawn editing sessions via gcylc.""")
+See also 'cylc [prep] view'.""")
 
 parser.add_option( "--inline", "-i", 
         help="Edit with include-files inlined as described above.",
@@ -95,15 +89,11 @@ parser.add_option( "--gui", "-g",
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
+globals = globalcfg()
 if options.geditor:
-    edvar = 'GEDITOR'
+    editor = globals.cfg['gui suite editor']
 else:
-    edvar = 'EDITOR'
-
-try:
-    editor = os.environ[edvar]
-except KeyError:
-    raise SystemExit( 'export $' + edvar + ' before using this command' )
+    editor = globals.cfg['suite editor']
 
 suitedir = os.path.dirname(suiterc)
 
@@ -182,7 +172,7 @@ for file in backups:
     dst = re.sub( suitedir + '/', '', backups[file] )
     print ' + ' + src + ' ---> ' + dst
 
-# in case $EDITOR has options, e.g. 'emacs -nw':
+# in case editor has options, e.g. 'emacs -nw':
 command_list = re.split( ' ', editor )
 command_list.append( suiterc )
 command = ' '.join( command_list )

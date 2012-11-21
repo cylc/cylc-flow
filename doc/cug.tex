@@ -554,24 +554,24 @@ Cylc typically installs into a normal user account; just unpack
 the release tarball in the desired location - which will be referred to
 below as  \lstinline=$CYLC_DIR=.
 
-\subsection{Configure Your Environment}
-\label{ConfiguringYourEnvironmentForCylc}
+\subsection{Site And User Configuration}
+\label{SiteAndUserConfiguration}
 
-The file \lstinline=$CYLC_DIR/cylc.profile= documents the environment
-configuration required for interactive cylc usage:
-
-\lstset{language=bash}
-\lstinputlisting{../cylc.profile}
-\lstset{language=transcript}
-
-Copy this into your \lstinline=.profile= login script and adapt
-appropriately for your environment. After sourcing your modified login
-script, or logging in again, you should be able to run cylc:
+Cylc uses site and user configuration files to set some important
+global parameters such as the range of network ports, and which editor
+to use for editing suite definitions:
 
 \begin{lstlisting}
-% cylc --version
-x.y.z
+$CYLC_DIR/conf/site/site.rc  # site config file
+$CYLC_DIR/conf/user/cylc.rc  # default user config file
+$HOME/.cylc/cylc.rc          # private user config file
 \end{lstlisting}
+
+The site config file should be adapted by the cylc admin user at
+installation time; settings in it cannot be overridden by users. The
+default user config file, held centrally, contains global settings that 
+users can override, if necessary, after copying it to make a private
+user config file.
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
@@ -710,10 +710,8 @@ under \lstinline=external/installed/=, e.g.:
 \begin{lstlisting}
 $HOME/external/installed/lib64/python2.6/site-packages/
 \end{lstlisting}
-The exact path will depend on your local Python environment.
-Configure your login script for the cylc environment as described in 
-Section~\ref{ConfiguringYourEnvironmentForCylc} above and add in 
-this new installation path; for example:
+The exact path will depend on your local Python environment. Add the
+following to your login scripts:
 \begin{lstlisting}
 # .profile
 PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
@@ -891,13 +889,6 @@ to you):
      |-c        Quick Start Example C | /tmp/oliverh/examples/QuickStart/c
      `-z        Quick Start Example Z | /tmp/oliverh/examples/QuickStart/z
 \end{lstlisting}
-
-\subsection{Configure Your Environment}
-
-To get access to cylc you just need to set a few environment variables
-in your login script, as described in
-Section~\ref{ConfiguringYourEnvironmentForCylc}.
-
 
 \subsection{View The examples.QuickStart.a Suite Definition}
 

@@ -29,7 +29,7 @@ from cylc.CylcOptionParsers import cop
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
-from conf.CylcGlobals import cylc_tmpdir
+from cylc.global_config import globalcfg
 from cylc.gui.gcylc import MainApp
 
 parser = cop( """cylc gui|gcylc [OPTIONS]
@@ -59,6 +59,9 @@ parser.add_option( "-t", "--timeout", metavar='SEC',
 # gcylc is running, subprocesses spawned by gcylc will fail when they
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
+
+globals = globalcfg()
+cylc_tmpdir = globals.cfg['temporary directory']
 
 app = MainApp( options.db, options.db_owner, cylc_tmpdir, options.pyro_timeout )
 gtk.main()

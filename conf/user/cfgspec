@@ -1,0 +1,11 @@
+
+# configobj specification for cylc user configuration files
+
+suite editor = string( default=None )
+gui suite editor = string( default=None )
+
+pdf reader = string( default=None )
+html reader = string( default=None )
+
+temporary directory = string( default=None )
+

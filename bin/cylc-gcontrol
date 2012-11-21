@@ -33,8 +33,8 @@ from copy import copy
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
-from conf.CylcGlobals import cylc_tmpdir
 from cylc.gui.SuiteControl import ControlApp
+from cylc.global_config import globalcfg
 from cylc.hostname import hostname, is_remote_host
 from cylc.owner import user, is_remote_user
 from cylc.registration import localdb
@@ -240,6 +240,9 @@ parser.add_option( "-l", "--list-themes",
 parser.remove_option("-f" ) # don't need force (To Do: a read-only GUI)
 
 ( options, args ) = parser.parse_args()
+
+globals = globalcfg()
+cylc_tmpdir = globals.cfg['temporary directory']
 
 # Make current working directory be $HOME. Otherwise (1) if the user
 # attempts to start gcylc from a CWD that has been removed, Pyro will

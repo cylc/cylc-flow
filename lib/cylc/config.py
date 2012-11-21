@@ -110,11 +110,11 @@ class config( CylcConfigObj ):
 
         self.owner = owner
 
-        if not os.path.isfile( self.file ):
-            raise SuiteConfigError, 'File not found: ' + self.file
-
         if self.verbose:
             print "Loading suite.rc"
+
+        if not os.path.isfile( self.file ):
+            raise SuiteConfigError, 'File not found: ' + self.file
 
         f = open( self.file )
         flines = f.readlines()

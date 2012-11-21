@@ -1,0 +1,14 @@
+
+# THIS IS THE CYLC SITE CONFIGURATION FILE FOR PARAMETERS THAT USERS
+# CANNOT OVERRIDE. See also $CYLC_DIR/conf/user/cylc.rc.
+
+# Legal site config items are defined by $CYLC_DIR/conf/site/cfgspec
+
+# This file is currently shipped empty. It only needs to be modified if
+# you need to change the default values set in the cfgspec file.
+
+# Example, to change the pyro port range:
+#[pyro]
+#    base port number = 7766
+#    maximum number of ports = 200
+
