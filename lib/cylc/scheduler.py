@@ -519,7 +519,9 @@ class scheduler(object):
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
-        self.config = config( self.suite, self.suiterc, run_mode=self.run_mode,
+        self.config = config( self.suite, self.suiterc,
+                self.options.templatevars,
+                self.options.templatevars_file, run_mode=self.run_mode,
                 verbose=self.verbose, pyro_timeout=self.options.pyro_timeout )
         self.config.create_directories()
         self.hold_before_shutdown = self.config['development']['hold before shutdown']

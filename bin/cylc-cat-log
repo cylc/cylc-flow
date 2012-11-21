@@ -31,7 +31,7 @@ Print and filter cylc suite (not task) log files.""" )
 
 parser.add_option( "-l", "--location", 
         help="Print the suite log file location and exit. This is "
-        "equivalent to 'cylc get-config SUITE cylc logging directory'.",
+        "equivalent to 'cylc get-config -i [cylc][logging][directory] SUITE'.",
         action="store_true", default=False, dest="print_location" )
 
 parser.add_option( "-t", "--task", 
@@ -53,7 +53,10 @@ suite, suiterc = prep_file( args[0], options ).execute()
 owner = options.db_owner
 
 try:
-    filename = os.path.join( config( suite, suiterc, owner )['cylc']['logging']['directory'], 'log' )
+    filename = os.path.join( config( suite, suiterc, 
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file,
+        owner=owner, verbose=options.verbose )['cylc']['logging']['directory'], 'log' )
 except Exception, x:
     if options.debug:
         raise

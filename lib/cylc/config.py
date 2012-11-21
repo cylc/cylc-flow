@@ -73,7 +73,8 @@ class config( CylcConfigObj ):
     needed to create task proxy classes, the suite graph structure,
     etc."""
 
-    def __init__( self, suite, suiterc, owner=None, run_mode='live',
+    def __init__( self, suite, suiterc, template_vars=[],
+            template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False,
             pyro_timeout=None, collapsed=[], only=None ):
 
@@ -124,7 +125,8 @@ class config( CylcConfigObj ):
 
         # handle Jinja2 expressions
         try:
-            suiterc = Jinja2Process( flines, self.dir, self.verbose )
+            suiterc = Jinja2Process( flines, self.dir, template_vars,
+                    template_vars_file, self.verbose )
         except TemplateSyntaxError, x:
             lineno = x.lineno + 1  # (flines array starts from 0)
             print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
@@ -132,6 +134,9 @@ class config( CylcConfigObj ):
             raise SystemExit(str(x))
         except TemplateError, x:
             print >> sys.stderr, 'Jinja2 Template Error'
+            raise SystemExit(x)
+        except TypeError, x:
+            print >> sys.stderr, 'Jinja2 Type Error'
             raise SystemExit(x)
 
         # handle cylc continuation lines
@@ -429,17 +434,17 @@ class config( CylcConfigObj ):
             self['runtime'][label] = taskconf
 
     def compute_runahead_limit( self ):
-        # 1/ take the smallest of the default limits from each graph section
+        # take the smallest of the default limits from each graph section
+        rl = None
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
 
-            self.runahead_limit = self['scheduling']['runahead limit']
-            if self.runahead_limit:
+            rl = self['scheduling']['runahead limit']
+            if rl:
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
             else:
                 rls = []
-                rl = None
                 for cyc in self.cyclers:
                     rahd = cyc.get_min_cycling_interval()
                     if rahd:
@@ -448,7 +453,8 @@ class config( CylcConfigObj ):
                     # twice the minimum cycling internal in the suite
                     rl = 2 * min(rls)
                     if self.verbose:
-                        print "Computed runahead limit:", mrl, "hours"
+                        print "Computed runahead limit:", rl, "hours"
+        self.runahead_limit = rl
 
     def get_runahead_limit( self ):
         # may be None (no cycling tasks)
@@ -513,28 +519,22 @@ class config( CylcConfigObj ):
         return res
 
     def get_config( self, args, sparse=False ):
-        if len(args) == 0 or len(args) == 1:
-            # don't populate [runtime] with all default settings
-            print >> sys.stderr, "WARNING: returning sparse [runtime]!"
-            target = self
-            keys = args
-        elif sparse:
-            target = self
-            keys = args
-        elif args[0] == 'runtime':
+        target = self
+        keys = args
+        so_far = []
+        if args[0] == 'runtime' and not sparse:
             # load and override runtime defaults
             rtcfg = {}
             replicate( rtcfg, self.runtime_defaults )
             override( rtcfg, self['runtime'][args[1]] )
             target = rtcfg
             keys = args[2:]
+            so_far = args[:2]
 
         res = target
-        try:
-            for key in keys:
-                res = res[key]
-        except KeyError, x:
-            raise SuiteConfigError( 'ERROR, key not found: ' + str(x) )
+        for key in keys:
+            so_far.append(key)
+            res = res[key]
 
         return res
 
@@ -586,9 +586,10 @@ class config( CylcConfigObj ):
         # used by cylc_xdot
         inherit = {}
         for ns in self['runtime']:
-            #if 'inherit' in self['runtime'][ns]:
-            parent = self['runtime'][ns]['inherit']
-            if ns != "root" and not parent:
+            parent = None
+            if 'inherit' in self['runtime'][ns]:
+                parent = self['runtime'][ns]['inherit']
+            elif ns != "root":
                 parent = "root"
             inherit[ns] = parent
         return inherit

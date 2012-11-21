@@ -1008,7 +1008,7 @@ configured in the example suite, so it defaults, for all tasks, to the
 {\em dummy task} scripting inherited from the {\em root namespace} (see
 Section~\ref{SuiteDefinition}):
 \begin{lstlisting}
-% cylc get-config examples.QuickStart.a runtime GetData 'command scripting'
+% cylc get-config -i [runtime][GetData]'command scripting' examples.QuickStart.a 
 ['echo Dummy command scripting; sleep 10']
 \end{lstlisting}
 The command arguments above reflect suite definition section nesting. 
@@ -1324,7 +1324,7 @@ the suite.rc {\em job submission log directory}, default location
 variable \lstinline=$CYLC_SUITE_REG_NAME= evalutes to the registered
 suite name hierarchy, e.g.\ foo.bar.baz): 
 \begin{lstlisting}
-% get-config examples.QuickStart.a runtime GetData 'job submission' 'log directory'
+% get-config -i '[runtime][GetData][job submission][log directory]' examples.QuickStart.a 
 /home/oliverh/cylc-run/QuickStart.a/log/job
 \end{lstlisting}
 (or use the \lstinline=--directories= argument as shown just above).
@@ -3329,39 +3329,6 @@ right-clicking on tasks in the suite control GUI graph view.}
 \end{figure} 
 
 
-%%\subsection{An Example}
-%%
-%%The following suite.rc file defines a default job
-%%submission method (and an environment variable \lstinline=$COLOR=) for
-%%all tasks; and a family called {\em obs} that contains the tasks {\em
-%%land} and {\em ship}, each of which add to or override some of their
-%%inherited properties.
-%%\lstset{language=suiterc}
-%%\lstinputlisting{../examples/ToDo/appendix/suite.rc}
-%%\lstset{language=transcript}
-%%You can use \lstinline=cylc get-config= to look at the final value 
-%%of any item:
-%%\begin{lstlisting}
-%%% cylc db reg $CYLC_DIR/examples/appendix appx
-%%% cylc get-config appx runtime land environment RUNNING_DIR
-%%$HOME/running/$CYLC_TASK_NAME
-%%\end{lstlisting}
-%%
-%%Using \lstinline=cylc jobscript= you can generate job scripts (used by cylc
-%%to run tasks) showing the complete runtime configuration, resulting from 
-%%namespace inheritance, for a task. The namespace hierarchy itself can be
-%%printed with \lstinline=cylc list --tree=:
-%%
-%%\begin{lstlisting}
-%%% cylc list -t appx
-%%root      
-%% |-obs    
-%% | |-land land obs processing
-%% | `-ship ship obs processing
-%% |-prep   No description provided
-%% `-prod   No description provided
-%%\end{lstlisting}
-
 \subsection{Jinja2 Suite Templates}
 \label{Jinja2}
 
@@ -3511,6 +3478,118 @@ and related values in ensemble suites:
 {% endfor %}
 \end{lstlisting}
 
+\subsubsection{Associative Arrays In Jinja2}
+
+Associative arrays ({\em dicts} in Python) can be very useful. Here's an
+example, from \lstinline=$CYLC_DIR/examples/jinja2/dict=: 
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+{% set obs_types = ['airs', 'iasi'] %}
+{% set resource = { 'airs':'ncpus=9', 'iasi':'ncpus=20' } %}
+
+[scheduling]
+    [[dependencies]]
+        graph = "obs"
+[runtime]
+    [[obs]]
+        [[[job submission]]]
+            method = pbs
+    {% for i in obs_types %}
+    [[ {{i}} ]]
+        inherit = obs
+        [[[directives]]]
+             -I = {{ resource[i] }}
+     {% endfor %}
+ \end{lstlisting}
+
+Here's the result:
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc get-config -i [runtime][airs]directives SUITE 
+-I = ncpus=9
+\end{lstlisting}
+
+\subsubsection{Jinja2 Default Values And Template Inputs}
+
+The values of Jinja2 variables can be passed in from the cylc command
+line rather than hardwired in the suite definition. Here's an example,
+from \lstinline=$CYLC_DIR/examples/jinja2/defaults=:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+
+title = "Jinja2 example: use of defaults and external input"
+
+description = """
+The template variable FIRST_TASK must be given on the cylc command line
+using --set or --set-file=FILE; two other variables, LAST_TASK and
+N_MEMBERS can be set similarly, but if not they have default values.""" 
+
+{% set LAST_TASK = LAST_TASK | default( 'baz' ) %}
+{% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
+
+{# input of FIRST_TASK is required - no default #}
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time   = 2010081600
+    [[dependencies]]
+        [[[0]]]
+            graph = """{{ FIRST_TASK }} => ens
+                 ens:succeed-all => {{ LAST_TASK }}"""
+[runtime]
+    [[ens]]
+{% for I in range( 0, N_MEMBERS ) %}
+    [[ mem_{{ I }} ]]
+        inherit = ens
+{% endfor %}
+\end{lstlisting}
+
+Here's the result:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+% cylc list SUITE
+Jinja2 Template Error
+'FIRST_TASK' is undefined
+cylc-list -t foo  failed:  1
+
+% cylc list --set FIRST_TASK=bob foo
+bob
+baz
+mem_2
+mem_1
+mem_0
+
+% cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
+bob
+alice
+mem_2
+mem_1
+mem_0
+
+list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
+mem_9
+mem_8
+mem_7
+mem_6
+mem_5
+mem_4
+mem_3
+mem_2
+mem_1
+mem_0
+baz
+bob
+\end{lstlisting}
+
+\lstset{language=suiterc}
+Note also that 
+\lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
+suite with Jinja2 variables worked out.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}

@@ -115,7 +115,6 @@ class task( Pyro.core.ObjBase ):
 
         class_vars = {}
         self.state = task_state.task_state( state )
-        self.launcher = None
         self.trigger_now = False
 
         # Count instances of each top level object derived from task.
@@ -387,7 +386,7 @@ class task( Pyro.core.ObjBase ):
             self.reset_timer = False
 
 
-    def submit( self, bcvars={}, dry_run=False, debug=False, overrides={} ):
+    def submit( self, dry_run=False, debug=False, overrides={} ):
         # TO DO: REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
@@ -472,7 +471,6 @@ class task( Pyro.core.ObjBase ):
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
-                'broadcast environment'  : bcvars,
                 'pre-command scripting'  : precommand,
                 'command scripting'      : command,
                 'post-command scripting' : postcommand,
@@ -496,10 +494,10 @@ class task( Pyro.core.ObjBase ):
                 'extra log files'        : self.logfiles,
                 }
 
-        self.launcher = launcher_class( self.id, jobconfig, xconfig )
+        launcher = launcher_class( self.id, jobconfig, xconfig )
 
         try:
-            p = self.launcher.submit( dry_run, debug )
+            p = launcher.submit( dry_run, debug )
         except Exception, x:
             # a bug was activated in cylc job submission code
             print >> sys.stderr, 'ERROR: cylc job submission bug?'

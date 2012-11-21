@@ -1025,3 +1025,9 @@ owner may manually change any runtime settings for any family or
 cycle time; (2) tasks may communicate environment variables to 
 downstream tasks. 
 
++ Abort on undefined Jinja2 variables.
+
++ Ability to set Jinja2 template variables on the command line:
+  --set VAR=VALUE or --set-file=FILE where FILE contains VAR=VALUE
+  pairs.
+
