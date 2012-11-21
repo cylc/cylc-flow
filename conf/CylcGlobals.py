@@ -35,10 +35,6 @@ pyro_base_port = 7766   # (7766 is the Pyro default)
   # max number of ports starting from base port
 pyro_port_range = 100 # (100 is the Pyro default)
 
-# SUITE REGISTRATION DATABASE LOCATION #################################
-  # Local registrations, user-specific
-local_regdb_path = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
-
 # CYLC TEMPORARY DIRECTORY #############################################
 try:
     cylc_tmpdir = os.environ['CYLC_TMPDIR']
