@@ -112,7 +112,8 @@ class compat_explicit( compat ):
 class compat_file( compat ):
     """Determine version compatibility given a suite.rc file"""
 
-    def __init__( self, suite, suiterc, verbose, debug ):
+    def __init__( self, suite, suiterc, template_vars,
+            template_vars_file, verbose, debug ):
         # (suite arg required by derived class compat_reg)
 
         compat.__init__( self, suite, suiterc, verbose, debug )
@@ -147,7 +148,8 @@ class compat_file( compat ):
 
         try:
             # (this will do nothing for non Jinja2 suites)
-            suiterclines = Jinja2Process( flines, os.path.dirname(suiterc), False )
+            suiterclines = Jinja2Process( flines, os.path.dirname(suiterc), 
+                    template_vars, template_vars_file, verbose=False )
             # if this fails due to a Jinja2 error, carry on in order to
             # prevent commands such as edit from working...
         except TemplateSyntaxError, x:
@@ -163,6 +165,11 @@ class compat_file( compat ):
             print >> sys.stderr, 'Jinja2 Template Error:', x
             print >> sys.stderr, 'Continuing cylc version check without Jinja2'
             suiterclines = flines
+        except TypeError, x:
+            print >> sys.stderr, 'Jinja2 Type Error:', x
+            print >> sys.stderr, 'Continuing cylc version check without Jinja2'
+            suiterclines = flines
+ 
             #if debug:
             #    raise
             #raise SystemExit(x)

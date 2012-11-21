@@ -84,7 +84,8 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout ):
+    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
+            pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
         self.pphrase = pphrase
         self.host = host
@@ -99,6 +100,11 @@ Class to hold initialisation data.
 
         self.imagedir = get_image_dir()
 
+        self.template_vars_opts = ""
+        for tv in template_vars:
+            self.template_vars_opts += " --set " + tv
+        if template_vars_file:
+            self.template_vars_opts += " --set-file " + template_vars_file
 
 class InfoBar(gtk.VBox):
     """
@@ -293,11 +299,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "text": "/icons/tab-tree.xpm" }
 
     def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
-            startup_views, pyro_timeout, usercfg ):
+            startup_views, pyro_timeout, usercfg, template_vars, template_vars_file ):
 
         gobject.threads_init()
         
-        self.cfg = InitData( suite, pphrase, owner, host, port, cylc_tmpdir, pyro_timeout )
+        self.cfg = InitData( suite, pphrase, owner, host, port,
+                cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
         self.usercfg = usercfg
 
         self.setup_icons()
@@ -751,7 +758,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def loadctimes( self, bt, startentry, stopentry ):
         command = "cylc get-config --mark-output --host=" + \
-                self.cfg.host + " --owner=" + self.cfg.owner + " " + \
+                self.cfg.host + " --owner=" + self.cfg.owner + \
+                " " + self.cfg.template_vars_opts + " " + \
                 self.cfg.suite 
         item1 = " scheduling 'initial cycle time'"
         item2 = " scheduling 'final cycle time'"
@@ -784,7 +792,7 @@ been defined for this suite""").inform()
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
 
-        command = 'cylc control run --gcylc'
+        command = 'cylc control run --gcylc ' + self.cfg.template_vars_opts
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -797,7 +805,7 @@ been defined for this suite""").inform()
             options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
-            command = 'cylc control restart --gcylc'
+            command = 'cylc control restart --gcylc ' + self.cfg.template_vars_opts
             if no_reset_cb.get_active():
                 options += ' --no-reset'
 
@@ -2576,8 +2584,9 @@ For more Stop options use the Control menu.""" )
                 self.cfg.pyro_timeout, self.cfg.port ).get_proxy( object )
 
     def run_suite_validate( self, w ):
-        command = ( "cylc validate -v " + self.get_remote_run_opts() + 
-                " --notify-completion " + self.cfg.suite )
+        command = ( "cylc validate -v " + self.get_remote_run_opts() + \
+                " --notify-completion " + self.cfg.template_vars_opts + \
+                " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2587,7 +2596,8 @@ For more Stop options use the Control menu.""" )
         extra = ''
         if inlined:
             extra = '-i '
-        command = ( "cylc edit --notify-completion -g" + self.get_remote_run_opts() + 
+        command = ( "cylc edit --notify-completion -g" + " " + \
+                self.cfg.template_vars_opts + " " + self.get_remote_run_opts() + \
                     " " + extra + ' ' + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
         self.gcapture_windows.append(foo)
@@ -2596,8 +2606,8 @@ For more Stop options use the Control menu.""" )
 
     def run_suite_graph( self, w, show_ns=False ):
         if show_ns:
-            command = ( "cylc graph --notify-completion --namespaces " +
-                        self.get_remote_run_opts() +
+            command = ( "cylc graph --notify-completion --namespaces " + \
+                        self.cfg.template_vars_opts + " " + self.get_remote_run_opts() + \
                         " " + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
@@ -2605,8 +2615,9 @@ For more Stop options use the Control menu.""" )
         else:
             times = []
             for option in ["'initial cycle time'", "'final cycle time'"]:
-                command = ( "cylc get-config" + self.get_remote_run_opts() +
-                            " " + self.cfg.suite + 
+                command = ( "cylc get-config" + self.get_remote_run_opts() + \
+                            " " + self.cfg.template_vars_opts + \
+                            " " + self.cfg.suite + \
                             " visualization " + option )
                 res, pieces = run_get_stdout( command )
                 if not res or not pieces:
@@ -2614,18 +2625,20 @@ For more Stop options use the Control menu.""" )
                 times.append(pieces[0].strip())
             graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
                                self.get_remote_run_opts(), self.gcapture_windows,
-                               self.cfg.cylc_tmpdir, parent_window=self.window )
+                               self.cfg.cylc_tmpdir,
+                               self.cfg.template_vars_opts,
+                               parent_window=self.window )
 
     def run_suite_info( self, w ):
-        command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + 
+        command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + \
                     " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
 
     def run_suite_list( self, w, opt='' ):
-        command = ( "cylc list " + self.get_remote_run_opts() + " " + opt +
-                    " --notify-completion " + self.cfg.suite )
+        command = ( "cylc list " + self.get_remote_run_opts() + " " + opt + \
+                    " --notify-completion " + " " + self.cfg.template_vars_opts + " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2637,7 +2650,7 @@ For more Stop options use the Control menu.""" )
             warning_dialog( \
 """The full-function GUI log viewer is only available
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
-            command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() +
+            command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
                         " " + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
@@ -2645,10 +2658,11 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
             return
 
         # just for local suites (so --host and --owner are not needed here)
-        command = "cylc get-config --mark-output " + self.cfg.suite + " cylc logging directory"
+        command = "cylc get-config --mark-output " + " " + \
+                self.cfg.template_vars_opts + " " + self.cfg.suite + " cylc logging directory"
         res, lst = run_get_stdout( command, filter=True )
         logging_dir = lst[0]
-        command = "cylc get-config --mark-output --tasks " + self.cfg.suite
+        command = "cylc get-config --mark-output --tasks " + self.cfg.template_vars_opts + " " + self.cfg.suite
         res, tasks = run_get_stdout( command, filter=True )
         if res:
             task_list = tasks
@@ -2664,8 +2678,8 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
         elif method == 'processed':
             extra = ' -j'
 
-        command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + 
-                    " " + extra + " " + self.cfg.suite )
+        command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + \
+                    " " + extra + " " + self.cfg.template_vars_opts + " " + self.cfg.suite )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

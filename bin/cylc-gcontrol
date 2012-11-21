@@ -218,7 +218,7 @@ adapt to your needs. To see what color themes are available, including
 your own, type 'gcontrol -l|--list-themes'.
 
 NOTE: daemonize important suites with the POSIX nohup command:
-    $ nohup gcontrol [OPTIONS] [REG] &""", pyro=True,
+    $ nohup gcontrol [OPTIONS] [REG] &""", pyro=True, gcontrol=True,
     argdoc=[('[REG]', 'Suite name' )])
 
 parser.add_option( "-w", "--views", metavar="VIEWS", 
@@ -290,7 +290,8 @@ if len(illegal) != 0:
 
 try:
     app = ControlApp( suite, pphrase, options.owner, options.host, None,
-            cylc_tmpdir, views, options.pyro_timeout, usercfg.cfg )
+            cylc_tmpdir, views, options.pyro_timeout, usercfg.cfg,
+            options.templatevars, options.templatevars_file )
 except Exception, x:
     if options.debug:
         raise

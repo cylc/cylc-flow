@@ -73,7 +73,7 @@ parser.add_option( "--label", "-l",
         "Line numbers will not correspond to those reported by the parser.",
         action="store_true", default=False, dest="label" )
 
-parser.add_option( "--single", "-s", 
+parser.add_option( "--single",
         help="(With '-i') Inline only the first instances of any "
         "multiply-included files. Line numbers will not correspond to "
         "those reported by the parser.",
@@ -121,7 +121,13 @@ if os.path.isfile( suiterc ):
         lines = inline_for_viewing( suitedir, lines, options.mark, options.single, options.label )
 
     if options.process:
-        lines = Jinja2Process( lines, suitedir, False )
+        try:
+            lines = Jinja2Process( lines, suitedir,
+                options.templatevars,
+                options.templatevars_file,
+                verbose=False )
+        except Exception, x:
+            raise SystemExit(x)
 
     if not options.nojoin:
         # join any continuation lines

@@ -70,7 +70,8 @@ class prep_file( prep ):
     def __init__( self, suite, options ):
         prep.__init__( self, suite, options )
         self.compat = compat_file( self.suite, self.suiterc,
-                self.options.verbose, self.options.debug)
+                options.templatevars, options.templatevars_file,
+                options.verbose, options.debug)
 
     def get_version( self ):
         return self.compat.get_version()

@@ -190,7 +190,9 @@ if len(args) < 1 or len(args) > 3:
     parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 if options.namespaces:
-    window = MyDotWindow2( suite, suiterc, watchers, options.outputfile, orientation )
+    window = MyDotWindow2( suite, suiterc, options.templatevars,
+            options.templatevars_file, watchers, options.outputfile,
+            orientation )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -220,8 +222,10 @@ else:
     if options.rawstart:
         raw = True
 
-    window = MyDotWindow( suite, suiterc, watchers, start_ctime, stop_ctime, raw, options.outputfile,
-                          orientation )
+    window = MyDotWindow( suite, suiterc, options.templatevars,
+            options.templatevars_file, watchers, start_ctime,
+            stop_ctime, raw, options.outputfile,
+            orientation )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 

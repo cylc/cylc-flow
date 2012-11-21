@@ -1,0 +1,21 @@
+#!Jinja2
+
+{% set obs_types = ['airs', 'iasi'] %}
+
+{% set resource = { 'airs':'ncpus=9', 
+                    'iasi':'ncpus=20' } %}
+
+[scheduling]
+    [[dependencies]]
+        graph = "obs"
+[runtime]
+    [[obs]]
+        [[[job submission]]]
+            method = pbs
+    {% for i in obs_types %}
+    [[ {{i}} ]]
+        inherit = obs
+        [[[directives]]]
+             -I = {{ resource[i] }}
+     {% endfor %}
+

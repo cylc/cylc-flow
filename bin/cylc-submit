@@ -100,7 +100,10 @@ else:
 
 # load suite config
 try:
-    config = config( suite, suiterc, verbose=options.verbose )
+    config = config( suite, suiterc,
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file,
+            verbose=options.verbose )
     config.create_directories( task_name )
 except Exception,x:
     if options.debug:
