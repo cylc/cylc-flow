@@ -589,9 +589,10 @@ class config( CylcConfigObj ):
         # used by cylc_xdot
         inherit = {}
         for ns in self['runtime']:
-            #if 'inherit' in self['runtime'][ns]:
-            parent = self['runtime'][ns]['inherit']
-            if ns != "root" and not parent:
+            parent = None
+            if 'inherit' in self['runtime'][ns]:
+                parent = self['runtime'][ns]['inherit']
+            elif ns != "root":
                 parent = "root"
             inherit[ns] = parent
         return inherit
