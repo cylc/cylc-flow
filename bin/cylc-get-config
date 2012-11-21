@@ -183,7 +183,7 @@ if options.alltasks:
     for task in tasks:
         if options.oneline:
             try:
-                print prefix + task, ' '.join( [ d[task].replace(' ','*') for d in data ] )
+                print prefix + task, ' '.join( [ str(d[task]).replace(' ','*') for d in data ] )
             except AttributeError:
                 raise SystemExit( "ERROR: -o is compatible with single-value items only" )
         else:
@@ -200,7 +200,7 @@ for i in get_these:
 
 if options.oneline:
     try:
-        line = ' '.join( d.replace( ' ', '*' ) for d in data )
+        line = ' '.join( str(d).replace( ' ', '*' ) for d in data )
     except AttributeError, x:
         raise SystemExit( "ERROR: -o is compatible with single-value items only" )
     else:
