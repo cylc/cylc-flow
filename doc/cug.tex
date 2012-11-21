@@ -1878,8 +1878,8 @@ configuration items grouped under several top level section headings:
 \label{Validation}
 
 Cylc suite.rc files are automatically validated against a specification
-file that defines all legal entries, values, options, and defaults 
-(\lstinline=$CYLC_DIR/conf/suiterc.spec=). This detects any formatting
+that defines all legal entries, values, options, and defaults 
+(held in \lstinline=$CYLC_DIR/conf/suiterc/=). This detects any formatting
 errors, typographic errors, illegal items and illegal values prior to 
 run time. Some values are complex strings that require further parsing
 by cylc to determine their correctness (this is also done during
@@ -1903,7 +1903,7 @@ If the suite.rc file contains include-files you can use
 
 Validation does not check the validity of chosen job submission methods;
 this is to allow users to extend cylc with their own job submission 
-methods, which are by definition unknown to the suiterc.spec file.
+methods, which are by definition unknown to the suite.rc spec.
 
 
 \subsection{Scheduling - Dependency Graphs}

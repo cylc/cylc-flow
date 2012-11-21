@@ -160,7 +160,7 @@ class config( CylcConfigObj ):
                         continue
             head[key] = val
 
-        for item, val in self.validate_section( head, 'suiterc-head.spec' ).items():
+        for item, val in self.validate_section( head, 'head.spec' ).items():
             self[item] = val
 
         for sec in [ 'cylc', 'scheduling', 'visualization', 'development' ]:
@@ -168,7 +168,7 @@ class config( CylcConfigObj ):
                 cfg = self[sec]
             else:
                 cfg = OrderedDict()
-            for item, val in self.validate_section( {sec:cfg}, 'suiterc-' + sec + '.spec' ).items():
+            for item, val in self.validate_section( {sec:cfg}, sec + '.spec' ).items():
                 self[item] = val
 
         if 'runtime' not in self.keys():
@@ -183,14 +183,14 @@ class config( CylcConfigObj ):
                     continue
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
-                self.validate_section( { 'runtime': { name: cfg }}, 'suiterc-runtime.spec' )
+                self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
 
         if 'root' not in self['runtime']:
             self['runtime']['root'] = OrderedDict()
 
         # load defaults into one namespace dict
         cfg = OrderedDict()
-        dense = self.validate_section( { 'runtime': { 'defaults': cfg }}, 'suiterc-runtime.spec' )
+        dense = self.validate_section( { 'runtime': { 'defaults': cfg }}, 'runtime.spec' )
         self.runtime_defaults = dense['runtime']['defaults']
 
         if self.verbose:
@@ -344,7 +344,7 @@ class config( CylcConfigObj ):
                 ng[fam] = [fam] + self.members[fam]
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in suiterc.spec
+        # because putting default attributes for root in the suite.rc spec
         # results in root appearing last in the ordered dict of node
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
@@ -462,7 +462,7 @@ class config( CylcConfigObj ):
 
     def validate_section( self, cfg, spec ):
 
-        spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', spec )
+        spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', spec )
 
         dense = ConfigObj( cfg, configspec=spec )
         # validate and convert to correct types
