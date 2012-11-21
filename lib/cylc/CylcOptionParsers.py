@@ -50,7 +50,7 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False ):
+    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, gcontrol=False ):
 
         # commands that interact with a running suite ("controlcom=True")
         # normally get remote access via Pyro RPC; but optionally
@@ -65,6 +65,7 @@ Arguments:"""
         self.n_optional_args = 0
         self.unlimited_args = False
         self.pyro = pyro
+        self.gcontrol = gcontrol
         maxlen = 0
         for arg in argdoc:
             if len(arg[0]) > maxlen:
@@ -132,7 +133,8 @@ Arguments:"""
             self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
-        else:
+
+        if gcontrol or not pyro:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
                 help="Pass a template variable value to the suite definition. "
                 "Can be used multiple times to set multiple variables. ",
@@ -160,6 +162,10 @@ Arguments:"""
         if self.pyro:
             if options.pfile:
                 options.pfile = os.path.abspath( options.pfile )
+
+        if self.gcontrol or not self.pyro:
+            if options.templatevars_file:
+                options.templatevars_file = os.path.abspath( options.templatevars_file )
 
         return ( options, args )
 
