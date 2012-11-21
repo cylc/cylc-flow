@@ -295,7 +295,7 @@ class scheduler(object):
                 "(for use by gcylc only).",
                 action="store_true", default=False, dest="gcylc" )
 
-        self.parse_commandline()
+        self.parse_commandline()         # this sets the self.load_tasks method via cylc-run
         self.check_not_running_already()
 
         self.configure_suite()

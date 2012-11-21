@@ -142,8 +142,15 @@ class task( Pyro.core.ObjBase ):
         self.try_number = 1
         self.retry_delay_timer_start = None
         
-        self.db = cylc.rundb.CylcRuntimeDAO(new_mode=True)
-
+        path_to_db = os.getcwd()
+        # ensure not in the log directory
+        if path_to_db.endswith("log"):
+            path_to_db = path_to_db.split("/")
+            path_to_db.pop(-1)
+            path_to_db = ("/").join(path_to_db)
+            
+        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=path_to_db)
+        
     def plog( self, message ):
         # print and log a low priority message
         print self.id + ':', message
@@ -194,16 +201,17 @@ class task( Pyro.core.ObjBase ):
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
+        self.db.record_event(self.name, self.c_time, event="submitted", message="task submitted")
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         handler = self.event_handlers['submitted']
         if handler:
             RunHandler( 'submitted', handler, self.__class__.suite, self.id, 'task submitted' )
-        self.db.insert("TASK_EVENTS", self.id, "001")
-
+        
     def set_running( self ):
         self.state.set_status( 'running' )
+        self.db.record_event(self.name, self.c_time, event="started", message="task started")
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
@@ -214,19 +222,22 @@ class task( Pyro.core.ObjBase ):
     def set_succeeded( self ):
         self.outputs.set_all_completed()
         self.state.set_status( 'succeeded' )
+        self.db.record_event(self.name, self.c_time, event="succeeded", message="succeeded")
         self.succeeded_time = task.clock.get_datetime()
         # don't update mean total elapsed time if set_succeeded() was called
 
     def set_succeeded_handler( self ):
         # (set_succeeded() is used by remote switch)
-        print '\n' + self.id + " SUCCEEDED with ANDY"
+        print '\n' + self.id + " SUCCEEDED"
+        self.db.record_event(self.name, self.c_time, event="succeeded", message="task succeeded")
         self.state.set_status( 'succeeded' )
         handler = self.event_handlers['succeeded']
         if handler:
             RunHandler( 'succeeded', handler, self.__class__.suite, self.id, 'task succeeded' )
-
+        
     def set_failed( self, reason='task failed' ):
         self.state.set_status( 'failed' )
+        self.db.record_event(self.name, self.c_time, event="failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
         if handler:
@@ -234,6 +245,7 @@ class task( Pyro.core.ObjBase ):
 
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
+        self.db.record_event(self.name, self.c_time, event="failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
@@ -248,6 +260,7 @@ class task( Pyro.core.ObjBase ):
 
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
+        # add hook to db here
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -255,6 +268,7 @@ class task( Pyro.core.ObjBase ):
     def reset_state_waiting( self ):
         # waiting and all prerequisites UNsatisified.
         self.state.set_status( 'waiting' )
+        # add hook to db here
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -262,6 +276,7 @@ class task( Pyro.core.ObjBase ):
     def reset_state_succeeded( self ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
+        # add hook to db here
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_completed()
@@ -269,6 +284,7 @@ class task( Pyro.core.ObjBase ):
     def reset_state_failed( self ):
         # all prerequisites satisified and no outputs complete
         self.state.set_status( 'failed' )
+        # add hook to db here
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
@@ -276,6 +292,7 @@ class task( Pyro.core.ObjBase ):
 
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
+        # add hook to db here
 
     def override( self, target, sparse ):
         for key,val in sparse.items():
@@ -377,6 +394,9 @@ class task( Pyro.core.ObjBase ):
         self.set_from_rtconfig( rtconfig )
 
         self.log( 'DEBUG', 'submitting task job script' )
+        # add hook to db here
+        
+        
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.

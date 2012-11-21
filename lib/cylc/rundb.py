@@ -29,30 +29,31 @@ class CylcRuntimeDAO(object):
     TASK_EVENTS = "task_events"
     TASK_STATES = "task_states"
     TABLES = {
-            TASK_EVENTS: [
+            TASK_EVENTS: [                      # each task event gets a row
                     "name TEXT",
-                    "cycle TEXT",
-                    "time INTEGER",
+                    "cycle TEXT",               # current cycle time of the task
+                    "time INTEGER",             # actual time
                     "submit_num INTEGER",
                     "event TEXT",
                     "message TEXT"],
-            TASK_STATES: [
+            TASK_STATES: [                      # each task gets a status entry that is updated
                     "name TEXT",
                     "cycle TEXT",
-                    "time_created TEXT",
-                    "time_updated TEXT",
-                    "submit_num INTEGER",
-                    "is_manual_submit INTEGER", # boolean
-                    "try_num INTEGER",
-                    "host TEXT",
-                    "submit_method TEXT",
-                    "submit_method_id TEXT",
+                    "time_created TEXT",        # actual serverside time
+                    "time_updated TEXT",        # actual serverside time
+                    "submit_num INTEGER",       # NOT part of key
+                    "is_manual_submit INTEGER", # boolean - user related or auto?
+                    "try_num INTEGER",          # auto-resubmit generates this
+                    "host TEXT",                # ?empty?
+                    "submit_method TEXT",       # taken from loadleveller id/process is
+                    "submit_method_id TEXT",    # empty at the moment
                     "status TEXT",
                     # TODO: "rc TEXT",
                     # TODO: "auth_key TEXT",
                     ]}
-    PRIMARY_KEY_OF = {TASK_EVENTS: None, TASK_STATES: "name, cycle"}
-                            
+    PRIMARY_KEY_OF = {TASK_EVENTS: None, 
+                      TASK_STATES: "name, cycle"}
+
 
     def __init__(self, suite_dir=None, new_mode=False):
         if suite_dir is None:
@@ -63,6 +64,8 @@ class CylcRuntimeDAO(object):
                 shutil.rmtree(self.db_file_name)
             else:
                 os.unlink(self.db_file_name)
+        if not os.path.exists(self.db_file_name):
+            new_mode = True
         self.conn = sqlite3.connect(self.db_file_name)
         if new_mode:
             self.create()
@@ -84,15 +87,42 @@ class CylcRuntimeDAO(object):
             c.execute(s)
         self.conn.commit()
 
+    def record_event(self, name, cycle, submit_num=None, event=None, message=None):
+        """Insert a row to the events table"""
+        s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
+        args = [name, cycle, datetime.now(), submit_num, event, message]
+        print s_fmt, args
+        c = self.conn.cursor()
+        c.execute(s_fmt, args)
+        self.conn.commit()
+
+    def record_state(self, name, cycle, time_created=datetime.now(), time_updated=None,
+                     submit_num=None, is_manual_submit=None, try_num=None,
+                     host=None, submit_method=None, submit_method_id=None,
+                     status=None):
+        """Insert a new row into the states table"""
+        s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        args = [name, cycle, time_created, time_updated, submit_num, 
+                is_manual_submit, try_num, host, submit_method, 
+                submit_method_id, status]
+        print s_fmt, args
+        c = self.conn.cursor()
+        c.execute(s_fmt, args)
+        self.conn.commit()
+
     def insert(self, table, name, cycle, **kwargs):
         """Insert a row to a table."""
         s_fmt = "INSERT INTO %(table)s VALUES(?, ?, ?%(cols)s)"
         args = [name, cycle, datetime.now()]
         cols = ""
+        for k,v in kwargs.items():
+            args.append(v)
+            cols += ", ?"
         while len(args) < len(self.TABLES[table]):
             args.append(None)
             cols += ", ?"
         c = self.conn.cursor()
+        print s_fmt % {"table": table, "cols": cols}, args
         c.execute(s_fmt % {"table": table, "cols": cols}, args)
         self.conn.commit()
 
