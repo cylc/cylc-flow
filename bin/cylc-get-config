@@ -177,7 +177,6 @@ if options.alltasks:
             raise SystemExit(x)
 
     tasks = data[0].keys()
-
     tasks.sort()
 
     for task in tasks:
@@ -197,6 +196,10 @@ for i in get_these:
         data.append( config.get_config( i, options.sparse ))
     except SuiteConfigError, x:
         raise SystemExit(x)
+    except KeyError, x:
+        print >> sys.stderr, 'ERROR:', x
+        raise SystemExit( 'ERROR, item not found: ' + ' -> '.join(i) )
+
 
 if options.oneline:
     try:

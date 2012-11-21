@@ -521,6 +521,7 @@ class config( CylcConfigObj ):
     def get_config( self, args, sparse=False ):
         target = self
         keys = args
+        so_far = []
         if args[0] == 'runtime' and not sparse:
             # load and override runtime defaults
             rtcfg = {}
@@ -528,13 +529,12 @@ class config( CylcConfigObj ):
             override( rtcfg, self['runtime'][args[1]] )
             target = rtcfg
             keys = args[2:]
+            so_far = args[:2]
 
         res = target
-        try:
-            for key in keys:
-                res = res[key]
-        except KeyError, x:
-            raise SuiteConfigError( 'ERROR, key not found: ' + str(x) )
+        for key in keys:
+            so_far.append(key)
+            res = res[key]
 
         return res
 
