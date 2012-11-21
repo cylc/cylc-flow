@@ -180,7 +180,9 @@ class job_submit(object):
         # write the job file
         jf.write( self.local_jobfile_path )
         # make it executable
-        os.chmod( self.local_jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+        mode = ( os.stat(self.local_jobfile_path).st_mode |
+                 stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH )
+        os.chmod( self.local_jobfile_path, mode )
 
         # this is needed by the 'cylc jobscript' command:
         print "JOB SCRIPT: " + self.local_jobfile_path
