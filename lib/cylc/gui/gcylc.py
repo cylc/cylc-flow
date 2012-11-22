@@ -54,6 +54,8 @@ debug = False
 # into suite-specific log files rather than have it all come out with
 # the gcylc stdout and stderr streams.
 
+# To Do: factor out help menus for gcontrol and gcylc
+
 class db_updater(threading.Thread):
     count = 0
     def __init__(self, regd_treestore, db, filtr=None, pyro_timeout=None ):
@@ -395,35 +397,80 @@ class MainApp(object):
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        guide_item = gtk.MenuItem( '_GUI Quick Guide' )
+        guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
+        guide_item.set_image(img)
         help_menu.append( guide_item )
         guide_item.connect( 'activate', helpwindow.main )
 
-        chelp_menu = gtk.MenuItem( '_Command Help' )
+        doc_menu = gtk.Menu()
+        doc_item = gtk.ImageMenuItem( "_Documentation" )
+        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
+        doc_item.set_image(img)
+        doc_item.set_submenu( doc_menu )
+        help_menu.append(doc_item)
+
+        item = gtk.ImageMenuItem( 'Print document locations' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
+        item.set_image(img)
+        doc_menu.append( item )
+        item.connect( 'activate', self.browse, '' )
+ 
+        doc_menu.append( gtk.SeparatorMenuItem() )
+ 
+        cug_html_item = gtk.ImageMenuItem( '(file://) HTML Documentation Index' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        cug_html_item.set_image(img)
+        doc_menu.append( cug_html_item )
+        cug_html_item.connect( 'activate', self.browse, '--file=html-multi' )
+
+        cug_pdf_item = gtk.ImageMenuItem( '(file://) PDF User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        cug_pdf_item.set_image(img)
+        doc_menu.append( cug_pdf_item )
+        cug_pdf_item.connect( 'activate', self.browse, '--file=pdf' )
+  
+        cug_html_item = gtk.ImageMenuItem( '(file://) _Multi Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
+        cug_html_item.set_image(img)
+        doc_menu.append( cug_html_item )
+        cug_html_item.connect( 'activate', self.browse, '--file=html-multi' )
+
+        cug_shtml_item = gtk.ImageMenuItem( '(file://) _Single Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        cug_shtml_item.set_image(img)
+        doc_menu.append( cug_shtml_item )
+        cug_shtml_item.connect( 'activate', self.browse, '--file=html-single' )
+
+        doc_menu.append( gtk.SeparatorMenuItem() )
+
+        cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
+        doc_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.browse, '--url=local-index' )
+ 
+        cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
+        doc_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.browse, '--url=www-homepage' )
+ 
+        cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
+        doc_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.browse, '--url=www-index' )
+
+        chelp_menu = gtk.ImageMenuItem( '_Command Help' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
+        chelp_menu.set_image(img)
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        cug_pdf_item = gtk.MenuItem( '_PDF User Guide' )
-        help_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
-  
-        cug_html_item = gtk.MenuItem( '_Multi Page HTML User Guide' )
-        help_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--html' )
-
-        cug_shtml_item = gtk.MenuItem( '_Single Page HTML User Guide' )
-        help_menu.append( cug_shtml_item )
-        cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
-
-        cug_www_item = gtk.MenuItem( '_Internet Home Page' )
-        help_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--www' )
- 
-        cug_clog_item = gtk.MenuItem( 'Change _Log' )
-        help_menu.append( cug_clog_item )
-        cug_clog_item.connect( 'activate', self.browse, '-g --log' )
- 
-        about_item = gtk.MenuItem( '_About' )
+        about_item = gtk.ImageMenuItem( '_About' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU )
+        about_item.set_image(img)
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
  
@@ -1179,7 +1226,7 @@ The Cylc Suite Engine.
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
-        foo = gcapture_tmpfile( command, self.tmpdir, 400 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 800 )
         self.gcapture_windows.append(foo)
         foo.run()
 

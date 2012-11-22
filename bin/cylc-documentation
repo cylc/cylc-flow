@@ -16,110 +16,76 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os, re
-import tempfile
+import sys, os, re
 import subprocess
-from cylc.CylcOptionParsers import cop
+from optparse import OptionParser
+from cylc.global_config import globalcfg
 
-parser = cop( """cylc [info] documentation|browse [OPTIONS]
+parser = OptionParser( """cylc [info] documentation|browse [OPTIONS]
 
-Display cylc documentation:
- 1/ The User Guide in PDF format (default)
- 2/ The User Guide in HTML format
- 3/ The change log (plain text format)
- 4/ The cylc internet homepage.
- 
-Required environment variables:
-  $PDF_READER    (e.g. evince)
-  $HTML_READER   (e.g. firefox)
-  $EDITOR        (e.g. vim)
-  $GEDITOR       (e.g. 'gvim -f')""", argdoc=[])
+This command provides easy access to cylc documentation. By default 
+it just lists documentation file locations and URLs; use the command 
+options to actually launch configured document viewers.""" )
 
-parser.add_option( "--pdf",
-        help="Display the PDF User Guide (DEFAULT).",
-        action="store_true", default=False, dest="pdf" )
+globals = globalcfg()
 
-parser.add_option( "--html",
-        help="Display the multi-page HTML User Guide.",
-        action="store_true", default=False, dest="html" )
+# translate simplifed command option to globals.cfg['urls'] key:
+doc_urls = {
+        'www-homepage' : 'internet homepage',
+        'www-index' : 'internet documentation index',
+        'local-index' : 'local documentation index' }
 
-parser.add_option( "--html-single",
-        help="Display the single page HTML User Guide.",
-        action="store_true", default=False, dest="htmlsingle" )
+# translate simplifed command option to globals.cfg['files'] key:
+doc_files =  {
+        'html-index' : 'html documentation index',
+        'pdf' : 'pdf user guide',
+        'html-multi' : 'multi-page html user guide',
+        'html-single' : 'single-page html user guide' }
 
-parser.add_option( "--www",
-        help="Display the cylc internet homepage.",
-        action="store_true", default=False, dest="www" )
+parser.add_option( "--file",
+        help="Open the Cylc User Guide with a configured document viewer. "
+        "DOC can be: " + ', '.join(doc_files.keys()) + ".", metavar='DOC',
+        action="store", default=None, dest="viewfile" )
 
-parser.add_option( "--log",
-        help="Display the cylc repository change log.",
-        action="store_true", default=False, dest="log" )
-
-parser.add_option( "-g",
-        help="Use $GEDITOR instead of $EDITOR to view the change log.",
-        action="store_true", default=False, dest="geditor" )
+parser.add_option( "--url",
+        help="Open a cylc documentation URL in the configured html viewer. "
+        "DOC can be: " + ', '.join(doc_urls.keys()) + ".", metavar='DOC',
+        action="store", default=None, dest="viewurl" )
 
 ( options, args ) = parser.parse_args()
 
-if options.log:
-    if options.geditor:
-        edvar = 'GEDITOR'
+if not options.viewfile and not options.viewurl:
+    print 'Files:'
+    for key, val, in doc_files.items():
+        print '  ', val, '=', globals.cfg['files'][val]
+    print 'URLs:'
+    for key, val in doc_urls.items():
+        print '  ', val, '=', globals.cfg['urls'][val]
+    print "Use --file=DOC or --url=DOC to launch a document viewer"
+    sys.exit(0)
+
+if options.viewfile:
+    if options.viewfile not in doc_files:
+        parser.error( "ERROR, illegal --file value: " + options.viewfile )
+    if options.viewfile.startswith('html'):
+        viewer = globals.cfg['document viewers']['html']
     else:
-        edvar = 'EDITOR'
-    try:
-        appl = os.environ[edvar]
-    except KeyError:
-        raise SystemExit( 'ERROR: $' + edvar + ' is not defined' )
+        viewer = globals.cfg['document viewers']['pdf']
+    target = globals.cfg['files'][ doc_files[options.viewfile] ]
 
-elif options.www or options.html or options.htmlsingle:
-    try:
-        appl = os.environ['HTML_READER']
-    except KeyError:
-        raise SystemExit( "ERROR: $HTML_READER is not defined" )
-else:
-    try:
-        appl = os.environ['PDF_READER']
-    except KeyError:
-        raise SystemExit( "ERROR: $PDF_READER is not defined" )
+elif options.viewurl:
+    if options.viewurl not in doc_urls:
+        parser.error( "ERROR, illegal --url value: " + options.viewurl )
+    viewer = globals.cfg['document viewers']['html']
+    target = globals.cfg['urls'][ doc_urls[options.viewurl] ]
 
-if options.www:
-    file = "http://hjoliver.github.com/cylc"
-else:
-    try:
-        cdir = os.environ['CYLC_DIR']
-    except KeyError:
-        raise SystemExit( "ERROR: $CYLC_DIR is not defined" )
+if not target:
+    print 'Sorry, this item has not been configured'
+    sys.exit(0)
 
-    if options.html:
-        file = os.path.join( cdir, 'doc', 'cug-html.html' )
-    elif options.htmlsingle:
-        file = os.path.join( cdir, 'doc', 'single', 'cug-html.html' )
-    elif options.log:
-        file = os.path.join( cdir, 'changelog.txt' )
-    else:
-        if not options.pdf:
-            print "No option chosen: defaulting to --pdf"
-            options.pdf = True
-        file = os.path.join( cdir, 'doc', 'CylcUserGuide.pdf' )
-
-    if not os.path.isfile( file ):
-        print >> sys.stderr, "ERROR, File not found:", file
-        if not options.pdf:
-            sys.exit(1)
-        else:
-           file = os.path.join( cdir, 'doc', 'cug-pdf.pdf' )
-           if not os.path.isfile( file ):
-               print >> sys.stderr, "ERROR, File not found:", file
-               sys.exit(1)
-
-# in case $EDITOR has options, e.g. 'emacs -nw':
-command_list = re.split( ' ', appl )
-command_list.append( file )
+# viewer may have spaces (e.g. 'firefox --no-remote'):
+command_list = re.split( ' ', viewer )
+command_list.append( target )
 command = ' '.join( command_list )
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES

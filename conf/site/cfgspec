@@ -1,9 +1,19 @@
 
-# configobj specification for the cylc site configuration file
-# (cylc global parameters that users cannot override)
+#_______________________________________________________________________
+# configobj specification for the cylc site configuration file.
+# These are global settings that cannot be overridden by users.
+#-----------------------------------------------------------------------
 
-www homepage url = string( default="http://cylc.github.com/cylc/" )
-www documentation url = string( default="http://cylc.github.com/cylc/" )
+[files]
+    # files under $CYLC_DIR should not need to be overridden at sites
+    html documentation index = string( default="$CYLC_DIR/doc/index.html" )
+    pdf user guide = string( default="$CYLC_DIR/doc/CylcUserGuide.pdf" )
+    multi-page html user guide = string( default="$CYLC_DIR/doc/cug-html.html" )
+    single-page html user guide = string( default="$CYLC_DIR/doc/single/cug-html.html" )
+
+[urls]
+    internet homepage = string( default="http://cylc.github.com/cylc/" )
+    internet documentation index = string( default="http://cylc.github.com/cylc/#documentation" )
 
 [pyro]
     base port number = integer( default=7766 )

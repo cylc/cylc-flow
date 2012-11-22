@@ -1,11 +1,20 @@
 
-# configobj specification for cylc user configuration files
+#_______________________________________________________________________
+# configobj specification for the cylc user configuration file.
+# These are global settings that can be overridden by users.
+#-----------------------------------------------------------------------
 
-suite editor = string( default=None )
-gui suite editor = string( default=None )
+[directories]
+    temporary = string( default=None )
 
-pdf reader = string( default=None )
-html reader = string( default=None )
+[urls]
+    local documentation index = string( default=None )
 
-temporary directory = string( default=None )
+[document viewers]
+    pdf = string( default=None )
+    html = string( default=None )
+
+[editors]
+    non-gui = string( default=None )
+    gui     = string( default=None )
 

@@ -81,8 +81,7 @@ parser.add_option( "--cleanup",
         action="store_true", default=False, dest="cleanup" )
 
 parser.add_option( "--gui", "-g", 
-        help="Use GUI editor $GEDITOR instead of $EDITOR. This option is "
-        "automatically used when an editing session is spawned by gcylc.",
+        help="Force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor" )
 
 ( options, args ) = parser.parse_args()
@@ -91,9 +90,9 @@ suite, suiterc = prep_file( args[0], options ).execute()
 
 globals = globalcfg()
 if options.geditor:
-    editor = globals.cfg['gui suite editor']
+    editor = globals.cfg['editors']['gui']
 else:
-    editor = globals.cfg['suite editor']
+    editor = globals.cfg['editors']['non-gui']
 
 suitedir = os.path.dirname(suiterc)
 
@@ -116,7 +115,7 @@ if not options.inline:
         print  >> sys.stderr, 'ERROR, file not found: ', suiterc
         sys.exit(1)
  
-    # in case $EDITOR has options, e.g. 'emacs -nw':
+    # in case editor has options, e.g. 'emacs -nw':
     command_list = re.split( ' ', editor )
     command_list.append( suiterc )
     command = ' '.join( command_list )

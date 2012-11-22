@@ -1,24 +1,36 @@
 
+########################################################################
 # Cylc user configuration file. This copy should contain sensible values
 # for your site - it is loaded by cylc to set defaults that users can
 # override in their own copy of the file, in $HOME/.cylc/cylc.rc 
+########################################################################
 
-# EDITORS
-# examples:
-#    vim           # non-GUI
-#    gvim -f       # -f: do not detach from parent shell!!
-#    xterm -e vim  # GUI-launched non-gui 
-#    emacs         # GUI
-#    emacs -nw     # non-GUI
-# You can set both editor items to a GUI editor if you like, but the gui
-# one at least *must* be a GUI editor or an in-terminal invocation of a
-# non-GUI editor, in order to spawn edit sessions from gcylc or gcontrol.
+[directories]
+    temporary = $TMPDIR/cylc
 
-suite editor = vim
-gui suite editor = gvim -f
+[urls]
+    # local doc URL is in user, not site, config, to allow users to 
+    # copy the cylc docs to their own public_html space if
+    # necessary (if if was not published during cylc installation).
 
-pdf reader = evince
-html reader = firefox
+    ## local documentation index = "http://bob.niwa.co.nz/cylc-x.y.z"
 
-temporary directory = $TMPDIR
+[document viewers]
+    pdf = evince
+    html = firefox
+
+[editors]
+    # EDITOR examples:
+    #    vim           # non-GUI
+    #    gvim -f       # -f: do not detach from parent shell!!
+    #    xterm -e vim  # GUI-launched non-gui 
+    #    emacs         # GUI
+    #    emacs -nw     # non-GUI
+    # You can set both editor items to a GUI editor if you like, but the gui
+    # one at least *must* be a GUI editor or an in-terminal invocation of a
+    # non-GUI editor, in order to spawn edit sessions from gcylc or gcontrol.
+
+    non-gui = vim
+    gui = gvim -f
+
 
