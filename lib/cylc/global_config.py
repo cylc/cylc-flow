@@ -89,7 +89,7 @@ class globalcfg( object ):
         self.cfg = dusr_cfg
 
         # process temporary directory
-        cylc_tmpdir = self.cfg['directories']['temporary']
+        cylc_tmpdir = self.cfg['temporary directory']
         if not cylc_tmpdir:
             # use tempfile.mkdtemp() to create a new temp directory
             cylc_tmpdir = mkdtemp(prefix="cylc-")
@@ -104,11 +104,14 @@ class globalcfg( object ):
                 print >> sys.stderr, 'ERROR, illegal temporary directory?', cylc_tmpdir
                 sys.exit(1)
         # now replace the original item
-        self.cfg['directories']['temporary'] = cylc_tmpdir
+        self.cfg['temporary directory'] = cylc_tmpdir
 
         # expand out environment variables and ~user in file paths
-        for key,val in self.cfg['files'].items():
-            self.cfg['files'][key] = os.path.expanduser( os.path.expandvars( val ))
+        for key,val in self.cfg['documentation'].items():
+            if not key.endswith( 'file' ):
+                continue
+            else:
+                self.cfg['documentation'][key] = os.path.expanduser( os.path.expandvars( val ))
 
     def inherit( self, target, source ):
         for item in source:

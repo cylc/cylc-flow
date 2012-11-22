@@ -5,10 +5,9 @@
 # override in their own copy of the file, in $HOME/.cylc/cylc.rc 
 ########################################################################
 
-[directories]
-    temporary = $TMPDIR/cylc
+temporary directory = $TMPDIR/cylc
 
-[urls]
+[documentation]
     # local doc URL is in user, not site, config, to allow users to 
     # copy the cylc docs to their own public_html space if
     # necessary (if if was not published during cylc installation).
@@ -32,5 +31,4 @@
 
     non-gui = vim
     gui = gvim -f
-
 

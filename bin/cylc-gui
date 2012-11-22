@@ -61,7 +61,7 @@ parser.add_option( "-t", "--timeout", metavar='SEC',
 os.chdir(os.environ['HOME'])
 
 globals = globalcfg()
-cylc_tmpdir = globals.cfg['directories']['temporary']
+cylc_tmpdir = globals.cfg['temporary directory']
 
 app = MainApp( options.db, options.db_owner, cylc_tmpdir, options.pyro_timeout )
 gtk.main()

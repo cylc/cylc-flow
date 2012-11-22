@@ -88,7 +88,7 @@ parser.add_option( "--stdout",
 suite, suiterc = prep_file( args[0], options ).execute()
 
 globals = globalcfg()
-cylc_tmpdir = globals.cfg['directories']['temporary']
+cylc_tmpdir = globals.cfg['temporary directory']
 if options.geditor:
     editor = globals.cfg['editors']['gui']
 else:

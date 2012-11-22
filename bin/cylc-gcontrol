@@ -242,7 +242,7 @@ parser.remove_option("-f" ) # don't need force (To Do: a read-only GUI)
 ( options, args ) = parser.parse_args()
 
 globals = globalcfg()
-cylc_tmpdir = globals.cfg['directories']['temporary']
+cylc_tmpdir = globals.cfg['temporary directory']
 
 # Make current working directory be $HOME. Otherwise (1) if the user
 # attempts to start gcylc from a CWD that has been removed, Pyro will

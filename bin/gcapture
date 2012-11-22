@@ -68,7 +68,7 @@ else:
     ignore_command = False
 
 globals = globalcfg()
-cylc_tmpdir = globals.cfg['directories']['temporary'] 
+cylc_tmpdir = globals.cfg['temporary directory']
 
 gobject.threads_init()
 if options.filep:
