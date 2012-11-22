@@ -91,7 +91,8 @@ class CylcRuntimeDAO(object):
         """Insert a row to the events table"""
         s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
         args = [name, cycle, datetime.now(), submit_num, event, message]
-        print s_fmt, args
+        #print s_fmt, args
+        #print self.db_file_name
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         self.conn.commit()
@@ -110,21 +111,21 @@ class CylcRuntimeDAO(object):
         c.execute(s_fmt, args)
         self.conn.commit()
 
-    def insert(self, table, name, cycle, **kwargs):
-        """Insert a row to a table."""
-        s_fmt = "INSERT INTO %(table)s VALUES(?, ?, ?%(cols)s)"
-        args = [name, cycle, datetime.now()]
-        cols = ""
-        for k,v in kwargs.items():
-            args.append(v)
-            cols += ", ?"
-        while len(args) < len(self.TABLES[table]):
-            args.append(None)
-            cols += ", ?"
-        c = self.conn.cursor()
-        print s_fmt % {"table": table, "cols": cols}, args
-        c.execute(s_fmt % {"table": table, "cols": cols}, args)
-        self.conn.commit()
+    #def insert(self, table, name, cycle, **kwargs):
+    #    """Insert a row to a table."""
+    #    s_fmt = "INSERT INTO %(table)s VALUES(?, ?, ?%(cols)s)"
+    #    args = [name, cycle, datetime.now()]
+    #    cols = ""
+    #    for k,v in kwargs.items():
+    #        args.append(v)
+    #        cols += ", ?"
+    #    while len(args) < len(self.TABLES[table]):
+    #        args.append(None)
+    #        cols += ", ?"
+    #    c = self.conn.cursor()
+    #    print s_fmt % {"table": table, "cols": cols}, args
+    #    c.execute(s_fmt % {"table": table, "cols": cols}, args)
+    #    self.conn.commit()
 
     def update(self, table, name, cycle, **kwargs):
         """Update a row in a table."""
