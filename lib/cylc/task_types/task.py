@@ -141,10 +141,10 @@ class task( Pyro.core.ObjBase ):
         self.try_number = 1
         self.retry_delay_timer_start = None
         
-        remote_log_dir = os.environ['CYLC_SUITE_DEF_PATH']
+        suite_path = os.environ['CYLC_SUITE_DEF_PATH']
         #print "log dir is: %s"%remote_log_dir        
         
-        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=remote_log_dir)
+        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=suite_path)
         
     def plog( self, message ):
         # print and log a low priority message
