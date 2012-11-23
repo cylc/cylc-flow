@@ -8,6 +8,7 @@ from mkdir_p import mkdir_p
 import atexit
 import shutil
 from tempfile import mkdtemp
+from mkdir_p import mkdir_p
 
 class globalcfg( object ):
 
@@ -112,6 +113,14 @@ class globalcfg( object ):
                 continue
             else:
                 self.cfg['documentation'][key] = os.path.expanduser( os.path.expandvars( val ))
+
+        # expand out $HOME in ports file directory
+        self.cfg['location of suite port files'] = os.path.expandvars( self.cfg['location of suite port files'] )
+        try:
+            mkdir_p( self.cfg['location of suite port files'] )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise SuiteConfigError, 'ERROR, illegal dir? ' + self.cfg['location of suite port files']
 
     def inherit( self, target, source ):
         for item in source:

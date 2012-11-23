@@ -4,6 +4,8 @@
 # These are global settings that cannot be overridden by users.
 #-----------------------------------------------------------------------
 
+location of suite port files = string( default='$HOME/.cylc/ports/' )
+
 [documentation]
     # files under $CYLC_DIR do not need to be overridden at sites
     html documentation index file = string( default="$CYLC_DIR/doc/index.html" )

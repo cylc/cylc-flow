@@ -47,11 +47,10 @@ class PortFileExistsError( PortFileError ):
     pass
 
 class port_file( object ):
-    def __init__(self, suite, port, fpath=None, verbose=False):
+    def __init__(self, suite, port, location, verbose=False):
         self.verbose = verbose
         self.suite = suite 
-        if not fpath:
-            fpath=os.path.join(os.environ['HOME'], '.cylc', suite, 'port' )
+        fpath=os.path.join( location, suite )
         try:
             self.port = str(int(port))
         except ValueError, x:
@@ -84,13 +83,13 @@ class port_file( object ):
             raise PortFileError( "ERROR, cannot remove port file: " + self.fpath )
 
 class port_retriever( object ):
-    def __init__(self, suite, host, owner, verbose=False):
+    def __init__(self, suite, host, owner, location, verbose=False):
         self.verbose = verbose
         self.suite = suite
         self.host = host
         self.owner = owner
         self.port = None
-        self.fpath = os.path.join( '.cylc', self.suite, 'port' )
+        self.fpath = os.path.join( location, suite )
 
     def get_local( self ):
         fpath = os.path.join( os.environ['HOME'], self.fpath )

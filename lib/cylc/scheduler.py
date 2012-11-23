@@ -589,7 +589,9 @@ class scheduler(object):
 
         self.banner[ 'PORT' ] = self.port
         try:
-            self.port_file = port_file( self.suite, self.port, self.verbose )
+            self.port_file = port_file( self.suite, self.port,
+                    self.globals.cfg['location of suite port files'],
+                    self.verbose )
         except PortFileExistsError,x:
             print >> sys.stderr, x
             raise SchedulerError( 'ERROR: suite already running? (if not, delete the port file)' )

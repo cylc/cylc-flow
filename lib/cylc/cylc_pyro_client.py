@@ -28,6 +28,7 @@ from time import sleep
 from passphrase import passphrase
 from owner import user
 from port_file import port_retriever
+from global_config import globalcfg
 
 class client( object ):
     def __init__( self, suite, pphrase=None, owner=user, host=hostname,
@@ -44,12 +45,15 @@ class client( object ):
 
         self.pphrase = pphrase
 
+        self.globals = globalcfg()
+
     def get_proxy( self, target ):
         if self.port:
             if self.verbose:
                 print "Port number given:", self.port
         else:
-            self.port = port_retriever( self.suite, self.host, self.owner, self.verbose ).get()
+            self.port = port_retriever( self.suite, self.host, self.owner,
+                    self.globals.cfg['location of suite port files'], self.verbose ).get()
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
