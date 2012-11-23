@@ -26,15 +26,12 @@ except ImportError, x:
 from passphrase import passphrase
 from hostname import hostname
 from owner import user
-from cylc.global_config import globalcfg
 
 class pyro_server( object ):
-    def __init__( self, suite, suitedir, user=user ):
+    def __init__( self, suite, suitedir, base_port, max_n_ports, user=user ):
 
         self.suite = suite
         self.owner = user
-
-        globals = globalcfg()
 
         # SINGLE THREADED PYRO
         Pyro.config.PYRO_MULTITHREADED = 0
@@ -43,9 +40,9 @@ class pyro_server( object ):
         Pyro.config.PYRO_DNS_URI = True
 
         # base (lowest allowed) Pyro socket number
-        Pyro.config.PYRO_PORT = globals.cfg['pyro']['base port number']
+        Pyro.config.PYRO_PORT = base_port
         # max number of sockets starting at base
-        Pyro.config.PYRO_PORT_RANGE = globals.cfg['pyro']['maximum number of ports']
+        Pyro.config.PYRO_PORT_RANGE = max_n_ports
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()

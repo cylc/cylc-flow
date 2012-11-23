@@ -37,6 +37,7 @@ from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
+from global_config import globalcfg
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from version import cylc_version
@@ -298,6 +299,9 @@ class scheduler(object):
         self.parse_commandline()
         self.check_not_running_already()
 
+        # global config
+        self.globals = globalcfg()
+        # parse the suite definition
         self.configure_suite()
 
         reqmode = self.config['cylc']['required run mode']
@@ -591,7 +595,9 @@ class scheduler(object):
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
         suite_id = identifier( self.suite, self.owner )
         if not reconfigure:
-            self.pyro = pyro_server( suitename, self.suite_dir )
+            self.pyro = pyro_server( suitename, self.suite_dir, 
+                    self.globals.cfg['pyro']['base port number'],
+                    self.globals.cfg['pyro']['maximum number of ports'] )
             self.port = self.pyro.get_port()
             self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
