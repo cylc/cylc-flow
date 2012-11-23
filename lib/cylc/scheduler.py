@@ -376,21 +376,6 @@ class scheduler(object):
         self.add_to_banner() # must be before configure_environments for self.ict
         self.configure_environments()
 
-        handler = self.config.event_handlers['startup']
-        if handler:
-            # we have to wait until the suite is configured before doing
-            # this; and also after configuring the suite environment
-            if self.config.abort_if_startup_handler_fails:
-                foreground = True
-            else:
-                foreground = False
-            try:
-                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
-            except Exception, x:
-                # Note: test suites depends on this message:
-                print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
-                raise SchedulerError, x
-
         self.already_timed_out = False
         if self.config.suite_timeout:
             self.set_suite_timer()
@@ -752,6 +737,19 @@ class scheduler(object):
         else:
             print "\nSTARTING"
 
+        handler = self.config.event_handlers['startup']
+        if handler:
+            if self.config.abort_if_startup_handler_fails:
+                foreground = True
+            else:
+                foreground = False
+            try:
+                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
+            except Exception, x:
+                # Note: test suites depends on this message:
+                print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
+                raise SchedulerError, x
+
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
@@ -1012,11 +1010,12 @@ class scheduler(object):
 
         if self.pyro:
             self.pyro.shutdown()
-            try:
-                self.port_file.unlink()
-            except PortFileError, x:
-                # port file may have been deleted
-                print >> sys.stderr, x
+
+        try:
+            self.port_file.unlink()
+        except PortFileError, x:
+            # port file may have been deleted
+            print >> sys.stderr, x
 
         if self.config['visualization']['runtime graph']['enable']:
             self.runtime_graph.finalize()
