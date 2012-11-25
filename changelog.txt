@@ -1031,3 +1031,5 @@ downstream tasks.
   --set VAR=VALUE or --set-file=FILE where FILE contains VAR=VALUE
   pairs.
 
++ new site and user config files (see cylc get-global-config --help). 
+

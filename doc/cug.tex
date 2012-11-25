@@ -554,24 +554,36 @@ Cylc typically installs into a normal user account; just unpack
 the release tarball in the desired location - which will be referred to
 below as  \lstinline=$CYLC_DIR=.
 
-\subsection{Site And User Configuration}
+\subsection{Site And User Configuration Files}
 \label{SiteAndUserConfiguration}
 
 Cylc uses site and user configuration files to set some important
-global parameters such as the range of network ports, and which editor
-to use for editing suite definitions:
+global parameters such as the range of network ports, and the editor
+to use on suite definitions, 
 
 \begin{lstlisting}
-$CYLC_DIR/conf/site/site.rc  # site config file
-$CYLC_DIR/conf/user/cylc.rc  # default user config file
-$HOME/.cylc/cylc.rc          # private user config file
+$CYLC_DIR/conf/site/site.rc  # site config file for global settings
+$HOME/.cylc/user.rc          # user config file for global settings
 \end{lstlisting}
 
-The site config file should be adapted by the cylc admin user at
-installation time; settings in it cannot be overridden by users. The
-default user config file, held centrally, contains global settings that 
-users can override, if necessary, after copying it to make a private
-user config file.
+Site and user config files can be auto-generated, with all settings
+intially commented out, by running this command:
+\begin{lstlisting}
+% cylc get-global-config --write-site/--write-user
+\end{lstlisting}
+
+The content of both of these config files, in terms of legal items and
+default values, is defined by the {\em ConfigObj configspec} file,
+\begin{lstlisting}
+$CYLC_DIR/conf/site/cfgspec 
+\end{lstlisting}
+
+The site config file should be adapted to set sensible defaults for all
+users when cylc is installed.  Users can then override most settings in
+their own user config file, if necessary. Some settings can not be 
+overridden by users (this is determined by \lstinline=# SITE ONLY=
+comments in the configspec file, which are passed through to the config
+files). 
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}

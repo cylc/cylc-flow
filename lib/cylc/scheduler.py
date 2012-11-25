@@ -567,7 +567,7 @@ class scheduler(object):
         suite_id = identifier( self.suite, self.owner )
         if not reconfigure:
             self.pyro = pyro_server( suitename, self.suite_dir, 
-                    self.globals.cfg['pyro']['base port number'],
+                    self.globals.cfg['pyro']['base port'],
                     self.globals.cfg['pyro']['maximum number of ports'] )
             self.port = self.pyro.get_port()
             self.pyro.connect( suite_id, 'cylcid', qualified = False )
@@ -575,7 +575,7 @@ class scheduler(object):
         self.banner[ 'PORT' ] = self.port
         try:
             self.port_file = port_file( self.suite, self.port,
-                    self.globals.cfg['location of suite port files'],
+                    self.globals.cfg['pyro']['ports directory'],
                     self.verbose )
         except PortFileExistsError,x:
             print >> sys.stderr, x

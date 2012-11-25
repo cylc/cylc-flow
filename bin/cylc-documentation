@@ -20,6 +20,7 @@ import sys, os, re
 import subprocess
 from optparse import OptionParser
 from cylc.global_config import globalcfg
+from OrderedDict import OrderedDict
 
 parser = OptionParser( """cylc [info] documentation|browse [OPTIONS]
 
@@ -30,36 +31,48 @@ options to actually launch configured document viewers.""" )
 globals = globalcfg()
 
 # translate simplifed command option to globals.cfg['documentation'] keys:
-docs = {
-        'www-homepage' : 'internet homepage url',
-        'www-index'    : 'internet documentation index url',
-        'local-index'  : 'local documentation index url',
-        'html-index'   : 'html documentation index file',
-        'pdf'          : 'pdf user guide file',
-        'html-multi'   : 'multi-page html user guide file',
-        'html-single'  : 'single-page html user guide file' }
+docs = OrderedDict()
+docs['files'] = {
+        'html-index'   : 'html index',
+        'pdf'          : 'pdf user guide',
+        'html-multi'   : 'multi-page html user guide',
+        'html-single'  : 'single-page html user guide' }
+
+
+docs['urls'] = {
+        'www-homepage' : 'internet homepage',
+        'local-index'  : 'local index' }
 
 parser.add_option( "--view",
         help="Open a document with a configured document viewer. "
-        "DOC can be: " + ', '.join(docs.keys()) + ".", metavar='DOC',
+        "DOC can be: " + ', '.join(docs['files'].keys()) + ", " + \
+                ', '.join(docs['urls'].keys()) + ".", metavar='DOC',
         action="store", default=None, dest="view" )
 
 ( options, args ) = parser.parse_args()
 
 if not options.view:
-    for key, val, in docs.items():
-        print '  ', val, '=', globals.cfg['documentation'][val]
+    for dtype in docs.keys():
+        print dtype + ':'
+        for key, val, in docs[dtype].items():
+            print '  ', val, '=', globals.cfg['documentation'][dtype][val]
+
     print "Use --view=DOC to launch a document viewer"
     sys.exit(0)
 
 if options.view:
-    if options.view not in docs:
+    if options.view not in docs['files'].keys() + docs['urls'].keys():
         parser.error( "ERROR, illegal --view value: " + options.view )
     if options.view == 'pdf':
         viewer = globals.cfg['document viewers']['pdf']
     else:
         viewer = globals.cfg['document viewers']['html']
-    target = globals.cfg['documentation'][ docs[options.view] ]
+    if options.view in docs['urls']:
+        dtype = 'urls'
+    else:
+        dtype = 'files'
+    key = docs[dtype][options.view]
+    target = globals.cfg['documentation'][dtype][key] 
 
 if not target:
     print 'Sorry, this item has not been configured'

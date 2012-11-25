@@ -128,7 +128,7 @@ def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None,
     # Scan ports until a particular suite is found.
 
     globals = globalcfg()
-    pyro_base_port = globals.cfg['pyro']['base port number']
+    pyro_base_port = globals.cfg['pyro']['base port']
     pyro_port_range = globals.cfg['pyro']['maximum number of ports']
 
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
@@ -218,7 +218,7 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
     # scan all cylc Pyro ports for cylc suites
 
     globals = globalcfg()
-    pyro_base_port = globals.cfg['pyro']['base port number']
+    pyro_base_port = globals.cfg['pyro']['base port']
     pyro_port_range = globals.cfg['pyro']['maximum number of ports']
 
     # In non-verbose mode print nothing (scan is used by gcylc).

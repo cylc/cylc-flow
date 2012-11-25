@@ -53,7 +53,7 @@ class client( object ):
                 print "Port number given:", self.port
         else:
             self.port = port_retriever( self.suite, self.host, self.owner,
-                    self.globals.cfg['location of suite port files'], self.verbose ).get()
+                    self.globals.cfg['pyro']['ports directory'], self.verbose ).get()
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target

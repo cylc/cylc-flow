@@ -1,94 +1,133 @@
 #!/usr/bin/env python
 
-import os, sys
+import os, sys, re
 from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
 from validate import Validator
 from print_cfg import print_cfg
 from mkdir_p import mkdir_p
+from copy import deepcopy
 import atexit
 import shutil
 from tempfile import mkdtemp
 from mkdir_p import mkdir_p
 
+try:
+    any
+except NameError:
+    # any() appeared in Python 2.5
+    def any(iterable):
+        for entry in iterable:
+            if entry:
+                return True
+        return False
+
 class globalcfg( object ):
 
     def __init__( self ):
-        # site config file
-        site_cfg_spec = os.path.join( os.environ['CYLC_DIR'], 'conf', 'site', 'cfgspec' )
-        site_cfg_file = os.path.join( os.environ['CYLC_DIR'], 'conf', 'site', 'site.rc' )
-        # user config files (default and user overide)
-        user_cfg_spec   = os.path.join( os.environ['CYLC_DIR'], 'conf', 'user', 'cfgspec' )
-        dusr_cfg_file = os.path.join( os.environ['CYLC_DIR'], 'conf', 'user', 'cylc.rc' )
-        ousr_cfg_file   = os.path.join( os.environ['HOME'], '.cylc', 'cylc.rc' )
 
-        site_cfg = {}
-        dusr_cfg = {}
-        ousr_cfg = {}
+        cfgspec = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'cfgspec' )
 
-        to_validate = {}
-        if os.path.isfile( site_cfg_file ):
-            try:
-                site_cfg = ConfigObj( infile=site_cfg_file, configspec=site_cfg_spec )
-            except ConfigObjError, x:
-                print >> sys.stderr, x
-                raise SystemExit( "ERROR, failed to load site config file: " + site_cfg_file )
-            else:
-                to_validate['site'] = site_cfg
+        self.rcfiles = {}
+        self.rcfiles['site'] = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' )
+        self.rcfiles['user'] = os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )
 
-        if os.path.isfile( dusr_cfg_file ):
-            try:
-                dusr_cfg = ConfigObj( infile=dusr_cfg_file, configspec=user_cfg_spec )
-            except ConfigObjError, x:
-                print >> sys.stderr, x
-                raise SystemExit( "ERROR, failed to load default user config file: " + dusr_cfg_file )
-            else:
-                to_validate['default user'] = dusr_cfg
+        self.sepcfg= {}
 
-        if os.path.isfile( ousr_cfg_file ):
-            try:
-                ousr_cfg = ConfigObj( infile=ousr_cfg_file, configspec=user_cfg_spec )
-            except ConfigObjError, x:
-                print >> sys.stderr, x
-                raise SystemExit( "ERROR, failed to load your user config file: " + ousr_cfg_file )
-            else:
-                to_validate['user'] = ousr_cfg 
+        rc = self.rcfiles['site']
+        try:
+            self.sepcfg['site'] = ConfigObj( infile=rc, configspec=cfgspec, _inspec=False )
+        except ConfigObjError, x:
+            print >> sys.stderr, x
+            raise SystemExit( "ERROR, failed to load site config file: " + rc )
 
-        # validate and load defaults
-        for key, cfg in to_validate.items():
-            val = Validator()
-            test = cfg.validate( val, preserve_errors=False )
-            if test != True:
-                # Validation failed
-                failed_items = flatten_errors( cfg, test )
-                # Always print reason for validation failure
-                for item in failed_items:
-                    sections, key, result = item
-                    print >> sys.stderr, ' ',
-                    for sec in sections:
-                        print >> sys.stderr, sec, ' / ',
-                    print >> sys.stderr, key
-                    if result == False:
-                        print >> sys.stderr, "ERROR, required item missing."
-                    else:
-                        print >> sys.stderr, result
-                raise SystemExit( "ERROR gcontrol.rc validation failed")
-            extras = []
-            for sections, name in get_extra_values( cfg ):
-                extra = ' '
-                for sec in sections:
-                    extra += sec + ' / '
-                extras.append( extra + name )
-            if len(extras) != 0:
-                for extra in extras:
-                    print >> sys.stderr, '  ERROR, illegal entry:', extra 
-                raise SystemExit( "ERROR illegal gcontrol.rc entry(s) found" )
+        # validate site file and load defaults for anything not set
+        self.validate( self.sepcfg['site'] )
 
-        # combine site and user config into a global config
-        if ousr_cfg:
-            self.inherit( dusr_cfg, ousr_cfg ) # user overrides defaults
-        self.inherit( dusr_cfg, site_cfg )     # add in site items 
-        self.cfg = dusr_cfg
+        rc = self.rcfiles['user']
+        try:
+            self.sepcfg['user'] = ConfigObj( infile=rc, configspec=cfgspec )
+        except ConfigObjError, x:
+            print >> sys.stderr, x
+            raise SystemExit( "ERROR, failed to load user config file: " + rc )
 
+        # validate user file without loading defaults for anything not set
+        self.validate( deepcopy( self.sepcfg['user'] ) )
+
+        self.block_user_cfg( self.sepcfg['user'], self.sepcfg['site'], self.sepcfg['site'].comments )
+
+        # combined site and user configs (user takes precedence)
+        self.cfg = {}
+        self.inherit( self.cfg, self.sepcfg['site'] )
+        self.inherit( self.cfg, self.sepcfg['user'] )
+
+        # expand out environment variables etc.
+        self.process()
+
+    def write_rc( self, ftype=None ):
+        if ftype not in [ 'site', 'user' ]:
+            raise SystemExit( "ERROR, illegal file type for write_rc(): " + ftype )
+
+        target = self.rcfiles[ ftype ] 
+
+        if os.path.exists( target ):
+            raise SystemExit( "ERROR, file already exists: " + target )
+
+        # cfgobj.write() will write a config file directly, but we want
+        # add a file header, filter out some lines, and comment out all
+        # the default settings ... so read into a string and process.
+
+        if target == 'site':
+            preamble = """
+#_______________________________________________________________________
+#       This is your cylc site configuration file, generated by:
+#               'cylc get-global-config --write-site'
+#-----------------------------------------------------------------------
+#    Users can override these settings in $HOME/.cylc/user.rc, see:
+#               'cylc get-global-config --write-user'
+#-----------------------------------------------------------------------
+# At the time of writing this file contained all available config items,
+# commented out with '#==>', with initial values determined by the cylc
+# system defaults in $CYLC_DIR/conf/site/cfgspec.
+#-----------------------------------------------------------------------
+# ** TO CUSTOMIZE, UNCOMMENT AND MODIFY SPECIFIC SETTINGS AS REQUIRED **
+#          (just the items whose values you need to change)
+#-----------------------------------------------------------------------
+"""
+        else:
+            preamble = """
+#_______________________________________________________________________
+#       This is your cylc user configuration file, generated by:
+#               'cylc get-global-config --write-user'
+#-----------------------------------------------------------------------
+# At the time of writing this file contained all available config items,
+# commented out with '#==>', with initial values determined by the local
+# site config file $CYLC_DIR/conf/site/siter.rc, or by the cylc system
+# defaults in $CYLC_DIR/conf/site/cfgspec.
+#-----------------------------------------------------------------------
+# ** TO CUSTOMIZE, UNCOMMENT AND MODIFY SPECIFIC SETTINGS AS REQUIRED **
+#          (just the items whose values you need to change)
+#-----------------------------------------------------------------------
+"""
+        cfg = deepcopy( self.sepcfg['site'] )
+
+        outlines = preamble.split('\n')
+        cfg.filename = None
+        for line in cfg.write():
+            if line.startswith( "#>" ):
+                # omit comments specific to the spec file
+                continue
+            line = re.sub( '^(\s*)([^[#]+)$', '\g<1>#==> \g<2>', line )
+            outlines.append(line)
+
+        f = open( target, 'w' )
+        for line in outlines:
+            print >> f, line
+        f.close()
+
+        print "File written:", target
+        print "See inside the file for usage instructions."
+
+    def process( self ):
         # process temporary directory
         cylc_tmpdir = self.cfg['temporary directory']
         if not cylc_tmpdir:
@@ -115,12 +154,42 @@ class globalcfg( object ):
                 self.cfg['documentation'][key] = os.path.expanduser( os.path.expandvars( val ))
 
         # expand out $HOME in ports file directory
-        self.cfg['location of suite port files'] = os.path.expandvars( self.cfg['location of suite port files'] )
+        self.cfg['pyro']['ports directory'] = os.path.expandvars( self.cfg['pyro']['ports directory'] )
         try:
-            mkdir_p( self.cfg['location of suite port files'] )
+            mkdir_p( self.cfg['pyro']['ports directory'] )
         except Exception, x:
             print >> sys.stderr, x
-            raise SuiteConfigError, 'ERROR, illegal dir? ' + self.cfg['location of suite port files']
+            raise SuiteConfigError, 'ERROR, illegal dir? ' + self.cfg['pyro']['ports directory']
+
+    def validate( self, cfg ):
+        # validate against the cfgspec and load defaults
+        val = Validator()
+        test = cfg.validate( val, preserve_errors=False, copy=True )
+        if test != True:
+            # Validation failed
+            failed_items = flatten_errors( cfg, test )
+            # Always print reason for validation failure
+            for item in failed_items:
+                sections, key, result = item
+                print >> sys.stderr, ' ',
+                for sec in sections:
+                    print >> sys.stderr, sec, ' / ',
+                print >> sys.stderr, key
+                if result == False:
+                    print >> sys.stderr, "ERROR, required item missing."
+                else:
+                    print >> sys.stderr, result
+            raise SystemExit( "ERROR global config validation failed")
+        extras = []
+        for sections, name in get_extra_values( cfg ):
+            extra = ' '
+            for sec in sections:
+                extra += sec + ' / '
+            extras.append( extra + name )
+        if len(extras) != 0:
+            for extra in extras:
+                print >> sys.stderr, '  ERROR, illegal entry:', extra 
+            raise SystemExit( "ERROR illegal global config entry(s) found" )
 
     def inherit( self, target, source ):
         for item in source:
@@ -129,8 +198,25 @@ class globalcfg( object ):
                     target[item] = {}
                 self.inherit( target[item], source[item] )
             else:
-                if source[item]:
-                    target[item] = source[item]
+                target[item] = source[item]
+
+    def block_user_cfg( self, usercfg, sitecfg, comments={}, sec_blocked=False ):
+        for item in usercfg:
+            # iterate through sparse user config and check for attempts
+            # to override any items marked '# SITE ONLY' in the spec.
+            if isinstance( usercfg[item], dict ):
+                if any( re.match( '^\s*# SITE ONLY\s*$', mem ) for mem in comments[item]):
+                    # section blocked, but see if user actually attempts
+                    # to set any items in it before aborting.
+                    sb = True
+                else:
+                    sb = False
+                self.block_user_cfg( usercfg[item], sitecfg[item], sitecfg[item].comments, sb )
+            else:
+                if any( re.match( '^\s*# SITE ONLY\s*$', mem ) for mem in comments[item]):
+                    raise SystemExit( 'ERROR, item blocked from user override: ' + item )
+                elif sec_blocked:
+                    raise SystemExit( 'ERROR, section blocked from user override, item: ' + item )
 
     def dump( self, cfg_in=None ):
         if cfg_in:

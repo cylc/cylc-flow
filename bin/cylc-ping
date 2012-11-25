@@ -48,7 +48,7 @@ parser.add_option( "--print-ports",
 
 if options.print_ports:
     globals = globalcfg()
-    base = globals.cfg['pyro']['base port number']
+    base = globals.cfg['pyro']['base port']
     range = globals.cfg['pyro']['maximum number of ports']
     print base, '<= port <=', base + range
     sys.exit(0)
