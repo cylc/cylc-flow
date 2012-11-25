@@ -144,7 +144,7 @@ class config( CylcConfigObj ):
 
         # parse the file into a sparse data structure
         try:
-            CylcConfigObj.__init__( self, suiterc )
+            CylcConfigObj.__init__( self, suiterc, interpolation=False )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
@@ -464,7 +464,7 @@ class config( CylcConfigObj ):
 
         spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', spec )
 
-        dense = ConfigObj( cfg, configspec=spec )
+        dense = ConfigObj( cfg, interpolation=False, configspec=spec )
         # validate and convert to correct types
         val = Validator()
         test = dense.validate( val, preserve_errors=True )
