@@ -141,13 +141,18 @@ Arguments:"""
 
         if gcylc or not pyro:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
-                help="Pass a template variable value to the suite definition. "
-                "Can be used multiple times to set multiple variables. ",
+                help="Set the value of a template variable in the suite "
+                "definition; can be used multiple times to set multiple "
+                "variables.  WARNING: these settings do not persist "
+                "across restarts, you have to set them again on the "
+                "\"cylc restart\" command line.",
                 action="append", default=[], dest="templatevars" )
 
             self.add_option( "--set-file", metavar="FILE",
-                help="Pass template variable values to the suite definition, "
-                "from a file containing NAME=VALUE pairs (one per line).", 
+                help="Set the value of template variables in the suite "
+                "definition from a file containing NAME=VALUE pairs (one per line). "
+                "WARNING: these settings do not persist across restarts, you "
+                "have to set them again on the \"cylc restart\" command line.",
                 action="store", default=None, dest="templatevars_file" )
 
     def parse_args( self ):

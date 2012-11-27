@@ -3591,7 +3591,11 @@ bob
 \lstset{language=suiterc}
 Note also that 
 \lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
-suite with Jinja2 variables worked out.
+suite with the Jinja2 variables as set.
+
+{\em Warning:} suites started with template variables set on the command
+line do not currently {\em restart} with the same settings - you have to 
+set them again on the \lstinline=cylc restart= command line.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}
