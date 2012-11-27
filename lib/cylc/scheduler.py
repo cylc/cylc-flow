@@ -572,14 +572,14 @@ class scheduler(object):
             self.port = self.pyro.get_port()
             self.pyro.connect( suite_id, 'cylcid', qualified = False )
 
-        self.banner[ 'PORT' ] = self.port
-        try:
-            self.port_file = port_file( self.suite, self.port,
+            self.banner[ 'PORT' ] = self.port
+            try:
+                self.port_file = port_file( self.suite, self.port,
                     self.globals.cfg['pyro']['ports directory'],
                     self.verbose )
-        except PortFileExistsError,x:
-            print >> sys.stderr, x
-            raise SchedulerError( 'ERROR: suite already running? (if not, delete the port file)' )
+            except PortFileExistsError,x:
+                print >> sys.stderr, x
+                raise SchedulerError( 'ERROR: suite already running? (if not, delete the port file)' )
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination']
