@@ -1033,3 +1033,10 @@ downstream tasks.
 
 + new site and user config files (see cylc get-global-config --help). 
 
++ GUI PROGRAMS RENAMED:
+    + the former "gcylc" has now been demoted to "cylc dbviewer"
+    + the former "gcontrol" is now "gcylc"
+  In the future gcylc (formerly gcontrol" will get the ability to 
+  switch between suites, thus becoming *the* cylc GUI, at which point
+  "cylc dbviewer" will be dropped.
+

@@ -293,9 +293,9 @@ class scheduler(object):
                 "Turn on main task processing loop timing.",
                 action="store_true", default=False, dest="timing" )
 
-        self.parser.add_option( "--gcylc", help=\
-                "(for use by gcylc only).",
-                action="store_true", default=False, dest="gcylc" )
+        self.parser.add_option( "--from-gui", help=\
+                "(do not use).",
+                action="store_true", default=False, dest="from_gui" )
 
         self.parse_commandline()
 
@@ -370,7 +370,7 @@ class scheduler(object):
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime, self.gcylc )
+        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime, self.from_gui )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         self.add_to_banner() # must be before configure_environments for self.ict
@@ -487,10 +487,10 @@ class scheduler(object):
         else:
             self.logging_level = logging.INFO
 
-        if self.options.gcylc:
-            self.gcylc = True
+        if self.options.from_gui:
+            self.from_gui = True
         else:
-            self.gcylc = False
+            self.from_gui = False
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE

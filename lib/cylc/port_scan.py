@@ -221,7 +221,7 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
     pyro_base_port = globals.cfg['pyro']['base port']
     pyro_port_range = globals.cfg['pyro']['maximum number of ports']
 
-    # In non-verbose mode print nothing (scan is used by gcylc).
+    # In non-verbose mode print nothing (scan is used by cylc db viewer).
 
     # load my suite passphrases 
     reg = localdb(db)
@@ -265,7 +265,7 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
             raise
         else:
             if not silent:
-                # used by gcylc scanning for running suites
+                # used by cylc db viewer scanning for running suites
                 print name, owner, host, port
             if verbose:
                 after = datetime.datetime.now()

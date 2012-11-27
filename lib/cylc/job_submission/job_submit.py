@@ -89,7 +89,7 @@ class job_submit(object):
             # Used in command construction:
             self.jobfile_path = self.remote_jobfile_path
 
-            # Record paths of remote log files for access by gcylc
+            # Record paths of remote log files for access by gui
             if True:
                 # by ssh URL
                 url_prefix = self.task_owner + '@' + self.remote_host
@@ -105,7 +105,7 @@ class job_submit(object):
                 # (b) we'd need to consider how the log directory can be
                 # specified (for example use of '$HOME' as for remote
                 # task use would not work here as log file access is by
-                # gcylc under the suite owner account.
+                # gui under the suite owner account.
                 self.logfiles.add_path( self.stdout_file )
                 self.logfiles.add_path( self.stderr_file )
         else:
@@ -119,7 +119,7 @@ class job_submit(object):
             self.stdout_file = self.local_jobfile_path + ".out"
             self.stderr_file = self.local_jobfile_path + ".err"
 
-            # Record paths of local log files for access by gcylc
+            # Record paths of local log files for access by gui
             self.logfiles.add_path( self.stdout_file)
             self.logfiles.add_path( self.stderr_file)
 
