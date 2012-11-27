@@ -147,11 +147,8 @@ class globalcfg( object ):
         self.cfg['temporary directory'] = cylc_tmpdir
 
         # expand out environment variables and ~user in file paths
-        for key,val in self.cfg['documentation'].items():
-            if not key.endswith( 'file' ):
-                continue
-            else:
-                self.cfg['documentation'][key] = os.path.expanduser( os.path.expandvars( val ))
+        for key,val in self.cfg['documentation']['files'].items():
+            self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))
 
         # expand out $HOME in ports file directory
         self.cfg['pyro']['ports directory'] = os.path.expandvars( self.cfg['pyro']['ports directory'] )
