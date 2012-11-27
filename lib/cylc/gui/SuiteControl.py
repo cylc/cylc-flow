@@ -320,7 +320,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         title = self.cfg.suite
         if self.cfg.host != socket.getfqdn():
             title += " - " + self.cfg.host
-        title += " - gcontrol"
+        title += " - gcylc"
         self.window.set_title( title )
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
@@ -791,7 +791,7 @@ been defined for this suite""").inform()
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
 
-        command = 'cylc control run --gcylc ' + self.cfg.template_vars_opts
+        command = 'cylc control run --from-gui ' + self.cfg.template_vars_opts
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -804,7 +804,7 @@ been defined for this suite""").inform()
             options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
-            command = 'cylc control restart --gcylc ' + self.cfg.template_vars_opts
+            command = 'cylc control restart --from-gui ' + self.cfg.template_vars_opts
             if no_reset_cb.get_active():
                 options += ' --no-reset'
 
@@ -2349,25 +2349,25 @@ or remove task definitions without restarting the suite."""
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         cug_html_item.set_image(img)
         doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--file=html-multi' )
+        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
 
         cug_pdf_item = gtk.ImageMenuItem( '(file://) PDF User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
         cug_pdf_item.set_image(img)
         doc_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse, '--file=pdf' )
+        cug_pdf_item.connect( 'activate', self.browse, '--view=pdf' )
   
         cug_html_item = gtk.ImageMenuItem( '(file://) _Multi Page HTML User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
         cug_html_item.set_image(img)
         doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--file=html-multi' )
+        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
 
         cug_shtml_item = gtk.ImageMenuItem( '(file://) _Single Page HTML User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         cug_shtml_item.set_image(img)
         doc_menu.append( cug_shtml_item )
-        cug_shtml_item.connect( 'activate', self.browse, '--file=html-single' )
+        cug_shtml_item.connect( 'activate', self.browse, '--view=html-single' )
 
         doc_menu.append( gtk.SeparatorMenuItem() )
 
@@ -2375,19 +2375,19 @@ or remove task definitions without restarting the suite."""
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--url=local-index' )
+        cug_www_item.connect( 'activate', self.browse, '--view=local-index' )
  
         cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--url=www-homepage' )
+        cug_www_item.connect( 'activate', self.browse, '--view=www-homepage' )
  
-        cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--url=www-index' )
+        #cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
+        #img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        #cug_www_item.set_image(img)
+        #doc_menu.append( cug_www_item )
+        #cug_www_item.connect( 'activate', self.browse, '--view=www-index' )
 
         chelp_menu = gtk.ImageMenuItem( '_Command Help' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
@@ -2610,7 +2610,7 @@ For more Stop options use the Control menu.""" )
         command = ( "cylc validate -v " + self.get_remote_run_opts() + \
                 " --notify-completion " + self.cfg.template_vars_opts + \
                 " " + self.cfg.suite )
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
@@ -2711,7 +2711,7 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
 

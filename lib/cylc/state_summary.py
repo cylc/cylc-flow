@@ -23,9 +23,9 @@ import logging
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
 
-    def __init__( self, config, run_mode, start_time, gcylc=False ):
+    def __init__( self, config, run_mode, start_time, from_gui=False ):
         Pyro.core.ObjBase.__init__(self)
-        self.gcylc = gcylc
+        self.from_gui = from_gui
         self.task_summary = {}
         self.global_summary = {}
         # external monitors should access config via methods in this
@@ -90,7 +90,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary[ 'stopping' ] = stopping
         self.global_summary[ 'will_pause_at' ] = will_pause_at
         self.global_summary[ 'will_stop_at' ] = will_stop_at
-        self.global_summary[ 'started by gcylc' ] = self.gcylc
+        self.global_summary[ 'started from gui' ] = self.from_gui
         self.global_summary[ 'blocked' ] = blocked
         self.global_summary[ 'runahead limit' ] = runahead
         self.global_summary[ 'states' ] = all_states

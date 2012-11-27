@@ -1863,7 +1863,7 @@ class ConfigObj(Section):
         """
         if self._inspec:
             # Parsing a configspec so don't handle comments
-            return (value, '')
+           return (value, '')
         # do we look for lists in values ?
         if not self.list_values:
             mat = self._nolistvalue.match(value)

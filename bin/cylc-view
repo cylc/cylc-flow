@@ -92,7 +92,7 @@ cylc_tmpdir = globals.cfg['temporary directory']
 if options.geditor:
     editor = globals.cfg['editors']['gui']
 else:
-    editor = globals.cfg['editors']['non-gui']
+    editor = globals.cfg['editors']['in-terminal']
 
 global suitedir
 suitedir = os.path.dirname(suiterc)

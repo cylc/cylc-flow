@@ -133,13 +133,13 @@ class helpwindow( helpwindow_base ):
 
 ##########
 def main( b ):
-    help = helpwindow( "gcylc Main Window Help", 500, """%h2 Overview
+    help = helpwindow( "cylc db viewer Main Window Help", 500, """%h2 Overview
 
-Gcylc displays your suite registration database. Using the menu bar and
-right-click menu items you can register new suites; copy, reregister,
-and unregister existing suites; start a suite control GUI to run a
-dormant suite or to connect to one that is already running; or edit,
-search, validate, and graph suite definitions.
+cylc db viewer displays your suite registration database. Using the menu
+bar and right-click menu items you can register new suites; copy,
+reregister, and unregister existing suites; start a suite control GUI to
+run a dormant suite or to connect to one that is already running; or
+edit, search, validate, and graph suite definitions.
 
 %h2 Menu Bar
 
@@ -153,8 +153,8 @@ directory chooser dialog in which you can choose or create the new suite
 definition directory.
 
 %h3 File > Exit
-Quits the gcylc application, but not any external programs you have launched
-from gcylc (such as suite edit sessions or suite control apps.
+Quits the db viewer application, but not any external programs you have
+launched from the viewer (such as suite edit sessions or gcylc apps).
 
 %h3 View > Filter
 Change which suites are visible by searching on group and name match
@@ -257,11 +257,11 @@ records, timestamped, all important events as the suite runs.
 
 %h3 Information -> View Suite Output
 This opens a new view of the suite stdout and stderr files
-$HOME/.cylc/GROUP:NAME.(out|err) used when suites are started from
-within gcylc (if you start a suite from the command line, however, what
-happens to its stdout and stderr end up is entirely up to you). The 
-suite remembers task output locations while the corresponding task
-proxies still exist in the suite (this information is not stored in 
+$HOME/.cylc/NAME.(out|err) used when suites are started from
+within cylc db viewer (if you start a suite from the command line,
+however, what happens to its stdout and stderr end up is entirely up to
+you). The suite remembers task output locations while the corresponding
+task proxies still exist in the suite (this information is not stored in 
 suite state dump files, however, so it will be lost for finished tasks
 still in the suite, if you stop and restart the suite).
 
@@ -315,10 +315,10 @@ def todo( b) :
 def capture( b ):
     help = helpwindow( "Subprocess Capture Help", 200, """
 This window captures stdout and stderr messages, in real time, from
-subprocesses spawned by the gcylc GUI. You can close this window without
+subprocesses spawned by the GUI. You can close this window without
 adversely affecting the subprocess itself, BUT [1] when the subprocess 
 ends it will leave zombie entry in the system process table until you 
-close gcylc (however, these are not real processes and do not
+close the gui (however, these are not real processes and do not
 use system resources) and [2] you will lose access to the output streams
 (except in the case of suites started from from gcylc, in which case the
 output goes to special files that can be accessed again).""")
@@ -361,7 +361,7 @@ def update_tb( tb, line, tags = None ):
 
 def userguide( w ):
     window = gtk.Window()
-    window.set_title( "gcontrol Quick Guide" )
+    window.set_title( "gcylc Quick Guide" )
     window.set_size_request(600, 600)
     window.set_icon( get_icon() )
 
@@ -389,12 +389,12 @@ def userguide( w ):
     alert = tb.create_tag( None, foreground = "red" )
     bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-    update_tb( tb, "gcontrol Suite Control GUI Quick Guide", [bold, blue] )
+    update_tb( tb, "gcylc Suite Control GUI Quick Guide", [bold, blue] )
 
     update_tb( tb, "\n\nReal time cylc suite control and monitoring. "
             "See also 'cylc help' on the command line." )
 
-    update_tb( tb, "\n\ngcontrol can display up to two of the following "
+    update_tb( tb, "\n\ngcylc can display up to two of the following "
             "suite views at once: " )
 
     update_tb( tb, "dot ", [bold] )
@@ -414,7 +414,7 @@ def userguide( w ):
     update_tb( tb, "\n\nDifferent task colors ", [bold] )
     
     update_tb( tb, "represent different task states of live task proxies in the suite. "
-            "See 'gcontrol --help' for how to select or define color palettes." )
+            "See 'gcylc --help' for how to select or define color palettes." )
 
     update_tb( tb, 
             "\n\nRight-click on tasks in any view for task control "

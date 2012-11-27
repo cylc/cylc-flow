@@ -345,10 +345,10 @@ run time.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=1.0\textwidth]{screenshots/gcylc-db.png}
+        \includegraphics[width=1.0\textwidth]{screenshots/dbviewer.png}
     \end{center}
-\caption[The gcylc GUI]{\scriptsize
-The gcylc GUI, showing one suite running on port 7766.}
+\caption[The cylc dbviewer GUI]{\scriptsize
+The cylc dbviewer GUI, showing one suite running on port 7766.}
 \label{fig-db}
 \end{figure} 
 
@@ -554,24 +554,36 @@ Cylc typically installs into a normal user account; just unpack
 the release tarball in the desired location - which will be referred to
 below as  \lstinline=$CYLC_DIR=.
 
-\subsection{Site And User Configuration}
+\subsection{Site And User Configuration Files}
 \label{SiteAndUserConfiguration}
 
 Cylc uses site and user configuration files to set some important
-global parameters such as the range of network ports, and which editor
-to use for editing suite definitions:
+global parameters such as the range of network ports, and the editor
+to use on suite definitions, 
 
 \begin{lstlisting}
-$CYLC_DIR/conf/site/site.rc  # site config file
-$CYLC_DIR/conf/user/cylc.rc  # default user config file
-$HOME/.cylc/cylc.rc          # private user config file
+$CYLC_DIR/conf/site/site.rc  # site config file for global settings
+$HOME/.cylc/user.rc          # user config file for global settings
 \end{lstlisting}
 
-The site config file should be adapted by the cylc admin user at
-installation time; settings in it cannot be overridden by users. The
-default user config file, held centrally, contains global settings that 
-users can override, if necessary, after copying it to make a private
-user config file.
+Site and user config files can be auto-generated, with all settings
+intially commented out, by running this command:
+\begin{lstlisting}
+% cylc get-global-config --write-site/--write-user
+\end{lstlisting}
+
+The content of both of these config files, in terms of legal items and
+default values, is defined by the {\em ConfigObj configspec} file,
+\begin{lstlisting}
+$CYLC_DIR/conf/site/cfgspec 
+\end{lstlisting}
+
+The site config file should be adapted to set sensible defaults for all
+users when cylc is installed.  Users can then override most settings in
+their own user config file, if necessary. Some settings can not be 
+overridden by users (this is determined by \lstinline=# SITE ONLY=
+comments in the configspec file, which are passed through to the config
+files). 
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
@@ -585,8 +597,9 @@ each one for use:
 \end{lstlisting}
 Where \lstinline=TOPDIR= is the top level directory into which the
 example suite definitions will be copied.
-To view the content of the resulting suite database, run gcylc or 
-use the \lstinline=cylc db print= command:
+To view the content of the resulting suite database, run 
+\lstinline=cylc db print= command or its GUI counterpart
+\lstinline=cylc db dbviewer=:
 
 \begin{lstlisting}
 % cylc db print --tree -x 'Auto|Quick'
@@ -679,7 +692,7 @@ cylc release, because of pre-release testing. If you find that some do
 fail, consider reporting this to cylc's maintainer or the cylc mailing
 list.
 
-\subsection{Complete Non-System-Level Installation}
+\subsection{Complete Non System-Level Installation}
 \label{LocalInstall}
 
 If you do not have root access to your host machine and cannot easily
@@ -749,14 +762,12 @@ follows:
 % make install
 \end{lstlisting}
 This installs graphviz files into the bin, include, and lib
-sub-directories of your local installation directory. The local
-installation section of \lstinline=cylc.profile= (above) provides
-access to the graphviz executables in this bin directory, although you
-will probably not need to use them. The graphviz lib and include
-locations are required when installing Pygraphviz (next).
+sub-directories of your local installation directory. The graphviz lib
+and include locations are required when installing Pygraphviz (next).
 
-Note that the graphviz build may fail on systems that do not have QT
-installed, hence the \lstinline@./configure --with-qt=no@ option above.
+Note that the graphviz build, reportedly, may fail on systems that do
+not have QT installed, hence the \lstinline@./configure --with-qt=no@
+option above.
 
 \subsubsection{Pygraphviz}
 Install Pygraphviz under \lstinline=$CYLC_DIR/external/installed= as
@@ -901,13 +912,13 @@ name and choose `Edit'; or use the edit command:
 % cylc edit examples.QuickStart.a
 \end{lstlisting}
 
-This opens the suite definition in your editor (\lstinline=$EDITOR=, or
-\lstinline=$GEDITOR= from gcylc) {\em from the suite definition
-directory so that you can easily open other suite files in the
-editor}. You can of course do this manually, but by using the cylc
-interface you don't have to remember suite definition directory
-locations. For the rare occasions that you do need to move to a 
-suite definition directory, you can do this:
+This opens the suite definition in your editor (configured in the cylc
+site or user config file - see Section~\ref{SiteAndUserConfiguration})
+{\em from the suite definition directory so that you can easily open
+other suite files in the editor}. You can of course do this manually,
+but by using the cylc interface you don't have to remember suite
+directory locations. If you do need to move to a suite definition
+directory, you can do this:
 \begin{lstlisting}
 % cd $( cylc db get-dir examples.QuickStart.a )
 \end{lstlisting}
@@ -971,7 +982,7 @@ The optional visualization section configures graph plotting.
 
 \subsection[Plotting examples.QuickStart.a]{Plotting The examples.QuickStart.a Dependency Graph}
 
-Right-click on the {\em examples.QuickStart.a} suite in gcylc and choose
+Right-click on the {\em examples.QuickStart.a} suite in the db viewer and choose
 Graph; or by command line,
 \begin{lstlisting}
 % cylc graph examples.QuickStart.a 2011052300 2011052318 &
@@ -1004,7 +1015,7 @@ Section~\ref{SuiteDefinition}):
 \end{lstlisting}
 The command arguments above reflect suite definition section nesting. 
 
-Now start a suite control GUI by right-clicking on the suite in gcylc
+Now start a suite control GUI by right-clicking on the suite in the db viewer
 and choosing Control $\rightarrow$ Graph View.  You can also open other control GUIs
 for the same suite if you like. Multiple GUIs running at the same time
 will automatically connect to the same running suite (they won't try to
@@ -1260,7 +1271,7 @@ And here, for example, is the complete implementation for the PostA task
 When cylc runs a suite it writes warnings and other informative messages,
 such as when and how each task is submitted, to the stdout stream. If 
 you start a suite at the command line you can direct this output wherever
-you like. If you start a suite via gcylc, however, the output is 
+you like. If you start a suite via the db viewer, however, the output is 
 directed to a special file,
 \lstinline=$HOME/.cylc/[SUITE].out= that can be accessed again later if
 you reconnect to the suite with a new control GUI.
@@ -1285,11 +1296,11 @@ recent back ups are kept.
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/suite-log.png}
     \end{center}
-\caption[ A cylc suite log viewed via gcylc.]{\scriptsize A cylc suite log viewed via gcylc.}
+\caption[ A cylc suite log from the db viewer.]{\scriptsize A cylc suite log from the db viewer.}
 \label{fig-suite-log}
 \end{figure}
 
-Figure~\ref{fig-suite-log} shows a suite log viewed from within gcylc. The 
+Figure~\ref{fig-suite-log} shows a suite log viewed from within db viewer. The 
 \lstinline=cylc log= command also enables viewing and filtering of suite logs
 without having to remember the actual log file location. But if you want 
 to know the location:
@@ -1366,7 +1377,7 @@ FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
    (6): cylc checkvars -c GETDATA_OUTPUT_DIR
    (11): touch $GETDATA_OUTPUT_DIR/obs-${CYLC_TASK_CYCLE_TIME}.nc
 \end{lstlisting}
-(Suite search is also available from the gcylc right-click menu).
+(Suite search is also available from the db viewer right-click menu).
 \lstset{language=transcript}
 
 \subsection{Comparing Suites}
@@ -1416,7 +1427,7 @@ Appendix~\ref{SuiteRCReference}).
 Suite validation checks for errors by parsing the suite definition,
 comparing all items against the suite.rc specification file, and then
 parsing the suite graph and attempting to instantiate all task proxy
-objects. This can be done using gcylc or \lstinline=cylc validate=:
+objects. This can be done using the cylc GUIs or \lstinline=cylc validate=:
 \lstset{language=transcript}
 \begin{lstlisting}
 % cylc validate -v foo.bar
@@ -1572,8 +1583,8 @@ client/server communication works and how to use it.
 Each user has a suite database that associates registered suite names
 with their respective suite definition directory locations. Hierarchical
 suite names stored in the database can be displayed in a tree structure.
-By right-clicking on a suite in your database, from within gcylc, or
-using cylc commands, you can:
+By right-clicking on a suite in your database, from within the db
+viewer, or using cylc commands, you can:
 \begin{myenumerate}
     \item start a suite control GUI to run the suite (or connect to a running suite),
     \item submit a single task to run, just as it would be submitted by its suite
@@ -1593,9 +1604,9 @@ using cylc commands, you can:
     \item reregister the suite or group.
 \end{myenumerate}
 
-Note that the suite title shown in gcylc is parsed from the suite.rc
+Note that the suite title shown in the db viewer is parsed from the suite.rc
 file at the time of initial registration; if you change the title (by
-editing the suite.rc file) use \lstinline=cylc db refresh= or gcylc 
+editing the suite.rc file) use \lstinline=cylc db refresh= or the db viewer's 
 View $\rightarrow$ Refresh to update the database.
 
 The user suite database file is \lstinline=$HOME/.cylc/DB=.
@@ -1631,7 +1642,7 @@ a directory tree, under the target directory, that reflects the
 registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
 The same functionality is also available by right-clicking on suites
-or suite groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
+or suite groups in the db viewer GUI, as shown in Figure~\ref{fig-db}.
 
 %\pagebreak
 \section{Suite Definition} 
@@ -5710,7 +5721,7 @@ The only compulsory content of a cylc suite definition directory is the
 suite.rc file (and you'll almost certainly have a suite
 \lstinline=bin= sub-directory too). However, you can store whatever you
 like in a suite definition directory;\footnote{If you copy a suite using
-cylc commands or gcylc, the entire suite definition directory
+cylc commands or db viewer the entire suite definition directory
 will be copied.} other files there will be ignored by cylc but
 suite tasks can access them via the
 \lstinline=$CYLC_SUITE_DEF_PATH= variable that cylc automatically 

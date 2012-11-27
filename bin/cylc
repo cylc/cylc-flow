@@ -206,7 +206,6 @@ categories['admin'       ] = ['admin' ]
 categories['license'     ] = ['license', 'GPL' ]
  
 information_commands = OrderedDict()
-information_commands['gui'      ] = ['gui', 'gcylc' ]
 information_commands['list'     ] = ['list', 'ls' ]
 information_commands['dump'     ] = ['dump'       ]
 information_commands['cat-state'    ] = ['cat-state'      ]
@@ -215,10 +214,10 @@ information_commands['cat-log'  ] = ['cat-log', 'log'     ]
 information_commands['documentation'   ] = ['documentation', 'browse']
 information_commands['monitor'  ] = ['monitor'  ]
 information_commands['get-config'] = ['get-config' ]
+information_commands['get-global-config'  ] = [ 'get-global-config']
 
 control_commands = OrderedDict()
-control_commands['gui'      ] = information_commands[ 'gui' ]
-control_commands['gcontrol' ] = [ 'gcontrol' ]
+control_commands['gui'      ] = [ 'gui' ]
 # NOTE: don't change 'run' to 'start' or the category [control]
 # becomes compulsory to disambiguate from 'cylc [task] started'.
 # Keeping 'start' as an alias however: 'cylc con start'.
@@ -260,14 +259,13 @@ admin_commands['test-db'     ] = [ 'test-db']
 admin_commands['test-battery'  ] = [ 'test-battery']
 admin_commands['import-examples' ] = ['import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
-admin_commands['get-global-config'  ] = [ 'get-global-config']
 
 license_commands = OrderedDict()
 license_commands['warranty'  ] = [ 'warranty']
 license_commands['conditions'] = [ 'conditions']
 
 database_commands = OrderedDict()
-database_commands['gui'       ] = information_commands['gui']
+database_commands['dbviewer'  ] = [ 'dbviewer' ]
 database_commands['register'  ] = [ 'register' ]
 database_commands['reregister'] = [ 'reregister','rename' ]
 database_commands['alias'     ] = [ 'alias' ]
@@ -278,7 +276,6 @@ database_commands['get-directory' ] = [ 'get-directory' ]
 database_commands['refresh'   ] = [ 'refresh' ]
 
 preparation_commands = OrderedDict()
-preparation_commands['gui'     ] = information_commands['gui']
 preparation_commands['edit'    ] = [ 'edit'    ]
 preparation_commands['view'    ] = [ 'view'    ]
 preparation_commands['validate'] = [ 'validate'    ]
@@ -320,10 +317,11 @@ cycling weather and climate forecasting suites and related processing
 
 Version """+cylc_version+""" 
 
-This is the Command Line Interface; the Graphical User Interface is
-"gcylc" (a.k.a. "cylc gui"). Control GUIs for particular suites can be
-invoked directly with "gcontrol SUITE" (a.k.a. "cylc gcontrol SUITE"). 
-
+This is the cylc Command Line Interface. The cylc Graphical User
+Interfaces are:
+    * "gcylc" (a.k.a. "cylc gui") - work on and run a specific suite.
+    * "cylc dbviewer" - view registered suites (right-click to act).
+    .
 USAGE:
   % cylc -v,--version                   # print cylc version
   % cylc help,--help,-h,?               # print this help page
@@ -424,7 +422,6 @@ comsum[ 'test-db'    ] = '(ADMIN) Run an automated suite database test'
 comsum[ 'test-battery' ] = '(ADMIN) Run a battery of self-diagnosing test suites'
 comsum[ 'check-examples' ] = '(ADMIN) Check all example suites validate'
 comsum[ 'import-examples' ] = '(ADMIN) import example suites your user database'
-comsum[ 'get-global-config' ] = '(ADMIN) print items from site and user global config'
 # license
 comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
 comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
@@ -453,9 +450,9 @@ comsum[ 'cat-log'        ] = 'Print or view filtered suite logs'
 comsum[ 'documentation'     ] = 'Display cylc documentation (User Guide etc.)'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'
+comsum[ 'get-global-config' ] = 'print or generate site and user config'
 # control
-comsum[ 'gui'        ] = 'Main Graphical User Interface (a.k.a. gcylc)'
-comsum[ 'gcontrol'   ] = 'Suite Control GUI (a.k.a. gcontrol)'
+comsum[ 'gui'        ] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
 comsum[ 'run'        ] = 'Start a suite at a given cycle time'
 comsum[ 'stop'       ] = 'Shut down running suites'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'

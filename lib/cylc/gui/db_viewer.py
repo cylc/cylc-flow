@@ -49,12 +49,7 @@ from cylc.passphrase import passphrase
 
 debug = False
 
-# WHY LAUNCH CONTROL GUIS AS STANDALONE APPS (via gcapture) rather than
-# as part of the main gcylc app: we can then capture out and err streams
-# into suite-specific log files rather than have it all come out with
-# the gcylc stdout and stderr streams.
-
-# To Do: factor out help menus for gcontrol and gcylc
+# To Do: factor out help menus for gcylc and cylc db viewer
 
 class db_updater(threading.Thread):
     count = 0
@@ -422,25 +417,25 @@ class MainApp(object):
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         cug_html_item.set_image(img)
         doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--file=html-multi' )
+        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
 
         cug_pdf_item = gtk.ImageMenuItem( '(file://) PDF User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
         cug_pdf_item.set_image(img)
         doc_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse, '--file=pdf' )
+        cug_pdf_item.connect( 'activate', self.browse, '--view=pdf' )
   
         cug_html_item = gtk.ImageMenuItem( '(file://) _Multi Page HTML User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
         cug_html_item.set_image(img)
         doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--file=html-multi' )
+        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
 
         cug_shtml_item = gtk.ImageMenuItem( '(file://) _Single Page HTML User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         cug_shtml_item.set_image(img)
         doc_menu.append( cug_shtml_item )
-        cug_shtml_item.connect( 'activate', self.browse, '--file=html-single' )
+        cug_shtml_item.connect( 'activate', self.browse, '--view=html-single' )
 
         doc_menu.append( gtk.SeparatorMenuItem() )
 
@@ -448,19 +443,19 @@ class MainApp(object):
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--url=local-index' )
+        cug_www_item.connect( 'activate', self.browse, '--view=local-index' )
  
         cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--url=www-homepage' )
+        cug_www_item.connect( 'activate', self.browse, '--view=www-homepage' )
  
-        cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--url=www-index' )
+        #cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
+        #img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        #cug_www_item.set_image(img)
+        #doc_menu.append( cug_www_item )
+        #cug_www_item.connect( 'activate', self.browse, '--view=www-index' )
 
         chelp_menu = gtk.ImageMenuItem( '_Command Help' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
@@ -818,7 +813,7 @@ The Cylc Suite Engine.
         # call quit on any remaining gcapture windows, which contain
         # tailer threads that need to be stopped). Currently we maintain
         # a list of all gcapture windows opened
-        # since gcylc started up, hence the use of 'quit_already' to
+        # since start-up, hence the use of 'quit_already' to
         # avoid calling window.destroy() on gcapture windows that have
         # already been destroyed by the user closing them (although
         # a second call to destroy() may be safe anyway?)...
@@ -936,27 +931,27 @@ The Cylc Suite Engine.
  
             con_item = gtk.MenuItem( '_Text View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'text' )
+            con_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'text' )
 
             con_item = gtk.MenuItem( '_Dot View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot' )
+            con_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'dot' )
 
             con_item = gtk.MenuItem( '_Graph View')
             ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'graph' )
+            con_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'graph' )
 
             cong_item = gtk.MenuItem( '_Dot & Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot,text' )
+            cong_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'dot,text' )
 
             cong_item = gtk.MenuItem( '_Graph & Text View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'graph,text' )
+            cong_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'graph,text' )
 
             cong_item = gtk.MenuItem( '_Dot & Graph View')
             ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_gcontrol, reg, suite_dir, state, 'dot,graph' )
+            cong_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'dot,graph' )
 
             ctrlmenu.append( gtk.SeparatorMenuItem() )
  
@@ -1226,7 +1221,7 @@ The Cylc Suite Engine.
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
-        foo = gcapture_tmpfile( command, self.tmpdir, 800 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -1463,8 +1458,9 @@ The Cylc Suite Engine.
             return
         defstartc = suiterc['visualization']['initial cycle time']
         defstopc  = suiterc['visualization']['final cycle time']
+        template_opts = ""
         graph_suite_popup( reg, self.command_help, defstartc, defstopc, " " + self.dbopt,
-                           self.gcapture_windows, self.tmpdir, parent_window=self.window )
+                           self.gcapture_windows, self.tmpdir, template_opts, parent_window=self.window )
         return False
 
     def view_suite( self, w, reg, method ):
@@ -1492,7 +1488,7 @@ The Cylc Suite Engine.
 
     def validate_suite( self, w, name ):
         command = "cylc validate -v " + self.dbopt + " --notify-completion " + name 
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
+        foo = gcapture_tmpfile( command, self.tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
 
@@ -1605,9 +1601,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_gcontrol( self, w, name, suite_dir, state, views=None ):
+    def launch_gcylc( self, w, name, suite_dir, state, views=None ):
         if not PyroInstalled:
-            warning_dialog( "Cannot run gcontrol: Pyro is not installed"  ).warn()
+            warning_dialog( "Cannot run gcylc: Pyro is not installed"  ).warn()
             return
 
         suite_dir = os.path.expanduser(suite_dir)
@@ -1616,7 +1612,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         if state != '-':
             # suite running
             running_already = True
-            # was it started by gcylc?
+            # was it started from this gui?
             try:
                 pphrase = passphrase( name ).get( suitedir=suite_dir )
             except Exception, x:
@@ -1628,20 +1624,20 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 warning_dialog( str(x), self.window ).warn()
                 return False
             [ glbl, states, fam_states ] = ssproxy.get_state_summary()
-            if glbl['started by gcylc']:
-                started_by_gcylc = True
+            if glbl['started from gui']:
+                started_from_gui = True
                 #info_dialog( "This suite is running already. It was started by "
-                #    "gcontrol which redirects suite stdout and stderr "
+                #    "gcylc which redirects suite stdout and stderr "
                 #    "to special files so we can connect a new output "
                 #    "capture window to those files.",
                 #    self.window ).inform()
             else:
-                started_by_gcylc = False
+                started_from_gui = False
                 info_dialog( "This suite is running but it was started from "
                     "the command line so we do not have access its stdout "
                     "and stderr streams.", self.window ).inform()
 
-        if running_already and started_by_gcylc or not running_already:
+        if running_already and started_from_gui or not running_already:
             # Use suite-specific special stdout and stderr files.
 
             # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
@@ -1674,7 +1670,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                         "Delete old CYLC OUTPUT from this suite?\n\n"
                         "  + " + stdoutf + "\n\n"
                         "(Deleting this file is safe - it only contains cylc stdout "
-                        "and stderr messages from previous runs launched via gcylc. "
+                        "and stderr messages from previous gui-launched runs. "
                         "Click 'Yes' to delete it and start anew, or 'No' to append "
                         "new output to the existing file).",
                         self.window ).ask()
@@ -1695,9 +1691,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 return False
 
             if views:
-                command = "gcontrol --views=" + views + " " + self.dbopt
+                command = "gcylc --views=" + views + " " + self.dbopt
             else:
-                command = "gcontrol " + self.dbopt
+                command = "gcylc " + self.dbopt
             if self.pyro_timeout:
                 command += " --timeout=" + str(self.pyro_timeout)
             command += " " + name
@@ -1710,9 +1706,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # so no point in connecting to the special stdout and stderr files.
             # User was informed of this already by a dialog above.
             if views:
-                command = "gcontrol --views=" + views + " " + self.dbopt + " " + name
+                command = "gcylc --views=" + views + " " + self.dbopt + " " + name
             else:
-                command = "gcontrol " + self.dbopt + " " + name
+                command = "gcylc " + self.dbopt + " " + name
             foo = gcapture_tmpfile( command, self.tmpdir, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
@@ -1742,7 +1738,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         if state != '-':
             # suite running
             running_already = True
-            # was it started by gcylc?
+            # was it started from gui?
             try:
                 pphrase = passphrase( name ).get( suitedir=suite_dir )
             except Exception, x:
@@ -1754,21 +1750,20 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
                 warning_dialog( str(x), self.window ).warn()
                 return False
             [ glbl, states, fam_states ] = ssproxy.get_state_summary()
-            if glbl['started by gcylc']:
-                started_by_gcylc = True
-                # The suite is running and gcontrol was started via
-                # gcylc, which redirects standard output to a file that
-                # we can reconnect to.
+            if glbl['started from gui']:
+                started_from_gui = True
+                # The suite is running and gcylc was started via gui,
+                # which redirects standard output to a file that we can reconnect to.
             else:
-                started_by_gcylc = False
-                info_dialog( "The suite is running but it was not started by a gcontrol "
-                        "instance launched by gcylc, so we cannot access its std output",
+                started_from_gui = False
+                info_dialog( "The suite is running but it was not started by a gcylc "
+                        "instance launched via cylc db viewer, so we cannot access its stdout",
                     self.window ).inform()
                 return False
         else:
             # suite not running
             info_dialog( "The suite is not running; its output log may "
-                    "contain output from the last gcylc-initiated run.",
+                    "contain output from the last cylc viewer initiated run.",
                     self.window ).inform()
 
         # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
@@ -1785,7 +1780,7 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             # open existing out and err files
             stdout = open( prefix + '.out', 'rb' )
         except IOError,x:
-            msg = '''This probably means the suite has not yet been started via gcontrol
+            msg = '''This probably means the suite has not yet been started via gcylc
 (if you start a suite on the command line stdout and stderr redirection is up to you).'''
             warning_dialog( str(x) + '\n' + msg, self.window ).warn()
             return False
