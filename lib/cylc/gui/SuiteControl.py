@@ -907,7 +907,7 @@ The Cylc Suite Engine.
         about.run()
         about.destroy()
 
-    def view_task_descr( self, w, task_id ):
+    def view_task_descr( self, w, e, task_id ):
         command = "cylc show --host=" + self.cfg.host + " --owner=" + \
                 self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
@@ -1272,7 +1272,7 @@ The Cylc Suite Engine.
         else:
             tb.insert( tb.get_end_iter(), line )
 
-    def popup_requisites( self, w, task_id ):
+    def popup_requisites( self, w, e, task_id ):
         try:
             result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
         except Exception,x:
