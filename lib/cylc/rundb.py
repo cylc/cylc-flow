@@ -87,7 +87,7 @@ class CylcRuntimeDAO(object):
             c.execute(s)
         self.conn.commit()
 
-    def record_event(self, name, cycle, submit_num=None, event=None, message=None):
+    def record_event(self, name, cycle, submit_num, event=None, message=None):
         """Insert a row to the events table"""
         s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
         args = [name, cycle, datetime.now(), submit_num, event, message]
@@ -111,6 +111,17 @@ class CylcRuntimeDAO(object):
         c.execute(s_fmt, args)
         self.conn.commit()
 
+    def get_task_submit_num(self, name, cycle):
+        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==?"
+        args = [name, cycle]
+        c = self.conn.cursor()
+        c.execute(s_fmt, args)
+        count = c.fetchone()[0]
+        self.conn.commit()
+        submit_num = count + 1 #submission numbers should start at 0
+        return submit_num
+        
+        
     #def insert(self, table, name, cycle, **kwargs):
     #    """Insert a row to a table."""
     #    s_fmt = "INSERT INTO %(table)s VALUES(?, ?, ?%(cols)s)"
