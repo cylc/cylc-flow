@@ -142,10 +142,10 @@ class task( Pyro.core.ObjBase ):
         self.retry_delay_timer_start = None
         
         suite_path = os.environ['CYLC_SUITE_DEF_PATH']
-        print "suite log dir is: %s"%suite_path
+        #print "suite log dir is: %s"%suite_path
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=suite_path)
         self.submit_num = self.db.get_task_submit_num(self.name, self.c_time)
-        print "submit num is %s"%self.submit_num
+        #print "submit num is %s"%self.submit_num
         #try to add an entry to the database for recording status
         try:
             self.db.record_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number)

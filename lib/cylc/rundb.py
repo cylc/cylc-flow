@@ -106,7 +106,7 @@ class CylcRuntimeDAO(object):
         args = [name, cycle, time_created, time_updated, submit_num, 
                 is_manual_submit, try_num, host, submit_method, 
                 submit_method_id, status]
-        print s_fmt, args
+        #print s_fmt, args
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         self.conn.commit()
