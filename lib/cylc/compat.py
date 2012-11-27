@@ -22,7 +22,7 @@ from Pyro.errors import ConnectionDeniedError
 from Jinja2Support import Jinja2Process, TemplateSyntaxError, TemplateError
 from include_files import inline
 from version import cylc_version, cylc_dir
-from hostname import hostname
+from suite_host import hostname
 
 # To ensure that users are aware of this compat processing info is 
 # always printed for suites that use it, but to stderr so as not to

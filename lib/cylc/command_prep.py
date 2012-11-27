@@ -19,7 +19,7 @@
 import os
 from cylc.passphrase import passphrase
 from cylc.registration import localdb
-from cylc.hostname import is_remote_host
+from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from cylc.compat import compat_pyro, compat_file
 

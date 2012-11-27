@@ -35,7 +35,7 @@ from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
 from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
-from cylc.hostname import hostname
+from cylc.suite_host import suite_host, hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc import pimp_my_logger
@@ -152,7 +152,7 @@ else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
 cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
 cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
-cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
+cylcenv[ 'CYLC_SUITE_HOST' ] = suite_host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'None'
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()

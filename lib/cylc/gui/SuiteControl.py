@@ -25,7 +25,7 @@ import os, re, sys
 import socket
 import subprocess
 import helpwindow
-from cylc.hostname import is_remote_host
+from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog

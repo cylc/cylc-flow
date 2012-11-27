@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from hostname import hostname
+from suite_host import hostname
 from owner import user
 from passphrase import passphrase
 from registration import localdb

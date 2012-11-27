@@ -19,7 +19,7 @@
 from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
 from prerequisites.plain_prerequisites import plain_prerequisites
-from hostname import hostname
+from suite_host import suite_host
 from owner import user
 from cycle_time import ct, CycleTimeError
 import logging
@@ -248,7 +248,7 @@ class scheduler(object):
         self.owner = user
 
         # SUITE HOST
-        self.host= hostname
+        self.host= suite_host
 
         # STARTUP BANNER
         self.banner = OrderedDict()

@@ -18,7 +18,7 @@
 
 import os, re
 from optparse import OptionParser
-from hostname import hostname
+from suite_host import hostname
 from owner import user
 
 """Common options for all cylc commands."""

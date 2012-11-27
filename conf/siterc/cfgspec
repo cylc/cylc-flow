@@ -70,3 +70,24 @@ temporary directory = string( default=None )
     # Port numbers are recorded in this directory, by suite name.
     ports directory = string( default="$HOME/.cylc/ports/" )
 
+# The suite host machine's identity, by NAME or IP ADDRESS, must be
+# determined locally by cylc and passed to task execution environments
+# as $CYLC_SUITE_HOST, so that tasks can send their messages back home.
+# If name is used, the host name determined on the suite host must
+# resolve, on the task host, to the external IP address of the suite
+# host. Otherwise the external IP address of the suite host, as seen by
+# the task host, must be determined on the suite host, which is not
+# always easy to do. Cylc requires a special "target address" to do
+# this; see documentation in $CYLC_DIR/lib/cylc/suite_host.py for why.
+# (TO DO: is it conceivable that different remote task hosts at the same
+# site might see the suite host differently? If so we would need to be
+# able to override the target in suite definitions.)
+[suite host self-identification]
+    # Method: "name", "address", or "manual"
+    method = option( "name", "address", "hardwired", default="address" ) 
+    # Target: if your suite host sees the internet a common address such
+    # as 'google.com' will do; otherwise choose a host on your intranet.
+    target = string( default="google.com" )
+    # For the hardwired method, put the host name or IP address here:
+    host = string( default=None )
+

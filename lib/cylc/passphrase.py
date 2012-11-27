@@ -21,7 +21,7 @@ from stat import *
 import random
 import string
 from mkdir_p import mkdir_p
-from hostname import hostname, is_remote_host
+from suite_host import hostname, is_remote_host
 from owner import user, is_remote_user
 
 class SecurityError( Exception ):

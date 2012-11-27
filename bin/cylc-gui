@@ -35,7 +35,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
 from cylc.gui.SuiteControl import ControlApp
 from cylc.global_config import globalcfg
-from cylc.hostname import hostname, is_remote_host
+from cylc.suite_host import is_remote_host
 from cylc.owner import user, is_remote_user
 from cylc.registration import localdb
 from cylc.passphrase import passphrase

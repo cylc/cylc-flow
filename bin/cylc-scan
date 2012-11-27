@@ -24,7 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.port_scan import scan
-from cylc.hostname import hostname
+from cylc.suite_host import hostname
 from cylc.CylcOptionParsers import cop
 from cylc.global_config import globalcfg
 

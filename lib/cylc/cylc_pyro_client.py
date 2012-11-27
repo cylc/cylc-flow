@@ -23,7 +23,7 @@ except ImportError, x:
 
 import sys
 from optparse import OptionParser
-from hostname import hostname
+from suite_host import hostname
 from time import sleep
 from passphrase import passphrase
 from owner import user

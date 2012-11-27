@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from hostname import hostname, is_remote_host
+from suite_host import is_remote_host
 from owner import user, is_remote_user
 
 """Any process that connects to a running suite (cylc server) must know
