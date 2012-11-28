@@ -41,7 +41,7 @@ class CylcRuntimeDAO(object):
                     "cycle TEXT",
                     "time_created TEXT",        # actual serverside time
                     "time_updated TEXT",        # actual serverside time
-                    "submit_num INTEGER",       # NOT part of key
+                    "submit_num INTEGER",       # included in key to track status of different submissions for a task
                     "is_manual_submit INTEGER", # boolean - user related or auto?
                     "try_num INTEGER",          # auto-resubmit generates this
                     "host TEXT",                # ?empty?
@@ -109,7 +109,7 @@ class CylcRuntimeDAO(object):
         self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==?"
+        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event=='submitted'"
         args = [name, cycle]
         c = self.conn.cursor()
         c.execute(s_fmt, args)
