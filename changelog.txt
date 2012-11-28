@@ -1043,3 +1043,7 @@ downstream tasks.
 + Optional suite host identification in task job scripts
 ($CYLC_SUITE_HOST) by IP address or hard-wiring instead of by host name.
 
++ Removed pseudo backward compatibility. A comment "#!cylc-x.y.z" at the
+top of a suite definition no longer has any effect. We will endeavor to
+have proper backward compatibility from here on.
+

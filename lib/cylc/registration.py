@@ -367,9 +367,7 @@ class regdb(object):
 
     def get_suite_title( self, suite, path=None ):
         # Attempt to determine the suite title without parsing the full
-        # suite definition file. This is quick, and it no cylc version
-        # pseudo backward compatibility checking is needed for suite 
-        # database commands.
+        # suite definition file.
         if path:
             suiterc = os.path.join( path, 'suite.rc' )
         else:

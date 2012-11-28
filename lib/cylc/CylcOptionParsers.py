@@ -112,10 +112,6 @@ Arguments:"""
                 "Defaults to $HOME/.cylc/DB.",
                 metavar="DB", action="store", default=None, dest="db" )
 
-        self.add_option( "--invoked",
-                help="Override cylc version compatibility checking.",
-                action="store_true", default=False, dest="override" )
-
         if pyro:
             self.add_option( "--port",
                 help="Suite port number on the suite host. NOTE: this is retrieved "

@@ -32,9 +32,6 @@ Tip: here's how to move to a suite definition directory:
 
 ( options, args ) = parser.parse_args()
 
-# (no need for compat reinvocation here - this command accesses
-# the suite database but not the suite defintion).
-
 reg = args[0]
 db = localdb( file=options.db, verbose=options.verbose )
 db.load_from_file()

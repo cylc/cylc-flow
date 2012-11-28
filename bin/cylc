@@ -19,10 +19,7 @@
 import os, re, sys
 import subprocess
 
-# Prepend cylc lib to python search path (appending is not sufficient if 
-# we've been called by another cylc version via 'cylc -Version=x.y.z').
-##sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
-sys.path = [os.path.dirname(os.path.abspath(__file__)) + '/../lib'] + sys.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 try:
     os.getcwd()
@@ -156,40 +153,6 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
         print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
 
 # BEGIN MAIN
-
-# first check for explicit cylc version re-invocation:
-argv = sys.argv[1:]
-args = []
-req_ver = None
-while argv:
-    try:
-        arg = argv.pop(0)
-    except IndexError:
-        # this won't happen
-        sys.exit( "Command line error" )
-    if arg.startswith("--Version="):
-        req_ver = arg.replace("--Version=", "")
-    elif arg == "-V":
-        try:
-            req_ver = argv.pop(0)
-        except IndexError:
-            # this might happen
-            sys.exit("ERROR: -V requires an argument")
-    else:
-        args.append(arg)
-
-if req_ver:
-    # only import compat here if needed; otherwise it will nobble task
-    # messaging on remote task hosts that do not have Jinja2 installed.
-    from cylc.compat import compat_explicit
-    req_ver = req_ver.replace( 'cylc-', '' )
-    sys.argv = args
-    compat = compat_explicit( req_ver )
-    if req_ver.startswith( 'avail' ):
-        compat.available()
-        sys.exit(0)
-    else:
-        compat.execute()
 
 # categories[ category ] = [ aliases ] 
 categories = OrderedDict()
@@ -325,8 +288,6 @@ Interfaces are:
 USAGE:
   % cylc -v,--version                   # print cylc version
   % cylc help,--help,-h,?               # print this help page
-  % cylc -V,--Version=avail[able]       # print available cylc versions
-  % cylc -V,--Version=x.y.z             # reinvoke with another version
 
   % cylc help CATEGORY                  # print help by category
   % cylc CATEGORY help                  # (ditto)
