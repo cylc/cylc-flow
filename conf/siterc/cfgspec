@@ -84,7 +84,7 @@ temporary directory = string( default=None )
 # able to override the target in suite definitions.)
 [suite host self-identification]
     # Method: "name", "address", or "manual"
-    method = option( "name", "address", "hardwired", default="address" ) 
+    method = option( "name", "address", "hardwired", default="name" ) 
     # Target: if your suite host sees the internet a common address such
     # as 'google.com' will do; otherwise choose a host on your intranet.
     target = string( default="google.com" )

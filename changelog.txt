@@ -1040,3 +1040,6 @@ downstream tasks.
   switch between suites, thus becoming *the* cylc GUI, at which point
   "cylc dbviewer" will be dropped.
 
++ Optional suite host identification in task job scripts
+($CYLC_SUITE_HOST) by IP address or hard-wiring instead of by host name.
+
