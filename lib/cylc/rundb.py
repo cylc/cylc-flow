@@ -45,14 +45,14 @@ class CylcRuntimeDAO(object):
                     "is_manual_submit INTEGER", # boolean - user related or auto?
                     "try_num INTEGER",          # auto-resubmit generates this
                     "host TEXT",                # ?empty?
-                    "submit_method TEXT",       # taken from loadleveller id/process is
+                    "submit_method TEXT",       # taken from loadleveller id/process
                     "submit_method_id TEXT",    # empty at the moment
                     "status TEXT",
                     # TODO: "rc TEXT",
                     # TODO: "auth_key TEXT",
                     ]}
-    PRIMARY_KEY_OF = {TASK_EVENTS: None, 
-                      TASK_STATES: "name, cycle"}
+    PRIMARY_KEY_OF = {TASK_EVENTS: None,
+                      TASK_STATES: "name, cycle, submit_num"}
 
 
     def __init__(self, suite_dir=None, new_mode=False):
@@ -91,8 +91,6 @@ class CylcRuntimeDAO(object):
         """Insert a row to the events table"""
         s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
         args = [name, cycle, datetime.now(), submit_num, event, message]
-        #print s_fmt, args
-        #print self.db_file_name
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         self.conn.commit()
@@ -106,7 +104,6 @@ class CylcRuntimeDAO(object):
         args = [name, cycle, time_created, time_updated, submit_num, 
                 is_manual_submit, try_num, host, submit_method, 
                 submit_method_id, status]
-        #print s_fmt, args
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         self.conn.commit()
@@ -121,23 +118,6 @@ class CylcRuntimeDAO(object):
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
         
-        
-    #def insert(self, table, name, cycle, **kwargs):
-    #    """Insert a row to a table."""
-    #    s_fmt = "INSERT INTO %(table)s VALUES(?, ?, ?%(cols)s)"
-    #    args = [name, cycle, datetime.now()]
-    #    cols = ""
-    #    for k,v in kwargs.items():
-    #        args.append(v)
-    #        cols += ", ?"
-    #    while len(args) < len(self.TABLES[table]):
-    #        args.append(None)
-    #        cols += ", ?"
-    #    c = self.conn.cursor()
-    #    print s_fmt % {"table": table, "cols": cols}, args
-    #    c.execute(s_fmt % {"table": table, "cols": cols}, args)
-    #    self.conn.commit()
-
     def update(self, table, name, cycle, **kwargs):
         """Update a row in a table."""
         kwargs["time_updated"] = datetime.now()
