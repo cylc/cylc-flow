@@ -83,7 +83,7 @@ temporary directory = string( default=None )
 # site might see the suite host differently? If so we would need to be
 # able to override the target in suite definitions.)
 [suite host self-identification]
-    # Method: "name", "address", or "manual"
+    # Method: "name", "address", or "hardwired"
     method = option( "name", "address", "hardwired", default="name" ) 
     # Target: if your suite host sees the internet a common address such
     # as 'google.com' will do; otherwise choose a host on your intranet.
