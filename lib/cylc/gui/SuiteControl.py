@@ -83,10 +83,9 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, suiterc, logdir, pphrase, owner, host,
+    def __init__( self, suite, logdir, pphrase, owner, host,
             port, cylc_tmpdir, pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
-        self.suiterc = suiterc
         self.pphrase = pphrase
         self.host = host
         self.port = port
@@ -301,12 +300,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
 
-    def __init__( self, suite, suiterc, logdir, pphrase, owner, host, port, cylc_tmpdir,
+    def __init__( self, suite, logdir, pphrase, owner, host, port, cylc_tmpdir,
             startup_views, pyro_timeout, usercfg, template_vars, template_vars_file ):
 
         gobject.threads_init()
         
-        self.cfg = InitData( suite, suiterc, logdir, pphrase, owner, host, port,
+        self.cfg = InitData( suite, logdir, pphrase, owner, host, port,
                 cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
         self.usercfg = usercfg
 

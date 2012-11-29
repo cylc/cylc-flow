@@ -263,7 +263,6 @@ if not options.list_themes:
         try:
             suite = db.unalias( suite )
             suitedir = db.getdir( suite )
-            suiterc = db.getrc( suite )
         except Exception, x:
             if options.debug:
                 raise
@@ -296,7 +295,7 @@ if len(illegal) != 0:
 
 logdir = suite_log( suite ).get_dir()
 try:
-    app = ControlApp( suite, suiterc, logdir, pphrase, options.owner,
+    app = ControlApp( suite, logdir, pphrase, options.owner,
             options.host, options.port, cylc_tmpdir, views,
             options.pyro_timeout, usercfg.cfg, options.templatevars,
             options.templatevars_file )
