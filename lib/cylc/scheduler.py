@@ -376,15 +376,18 @@ class scheduler(object):
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # initial cycle time
-        if self.options.warm:
-            if self.options.set_ict:
-                self.ict = self.start_tag
-            else:
-                self.ict = None
-        elif self.options.raw:
+        if self.is_restart:
             self.ict = None
         else:
-            self.ict = self.start_tag
+            if self.options.warm:
+                if self.options.set_ict:
+                    self.ict = self.start_tag
+                else:
+                    self.ict = None
+            elif self.options.raw:
+                self.ict = None
+            else:
+                self.ict = self.start_tag
 
         self.configure_environments()
 
@@ -616,6 +619,8 @@ class scheduler(object):
             self.pyro.connect( self.clock, 'clock' )
 
         self.state_dumper = dumper( self.suite, self.run_mode, self.clock, self.start_tag, self.stop_tag )
+        self.state_dump_dir = self.state_dumper.get_dir()
+        self.state_dump_filename = self.state_dumper.get_path()
 
         if not reconfigure:
             # REMOTE CONTROL INTERFACE

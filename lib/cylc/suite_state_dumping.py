@@ -23,7 +23,7 @@ from mkdir_p import mkdir_p
 
 class dumper( object ):
 
-    def __init__( self, suite, run_mode, clock=None, start_tag=None, stop_tag=None ):
+    def __init__( self, suite, run_mode='live', clock=None, start_tag=None, stop_tag=None ):
         self.run_mode = run_mode
         self.clock = clock
         self.start_tag = start_tag
