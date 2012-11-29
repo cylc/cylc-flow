@@ -42,8 +42,11 @@ class suite_output( object ):
         self.oarchive = rolling_archive( self.opath, arclen, sep='.' )
         self.earchive = rolling_archive( self.epath, arclen, sep='.' )
 
-    def get_path( self ):
-        return self.path
+    def get_path( self, stderr=False ):
+        if stderr:
+            return self.epath
+        else:
+            return self.opath
 
     def redirect( self ):
         self.roll()
