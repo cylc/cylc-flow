@@ -153,7 +153,7 @@ class pool(object):
             for itask in self.queues[queue]:
                 if n_limit:
                     # there is a limit on this queue
-                    if itask.state.is_submitted() or itask.state.is_running():
+                    if itask.state.is_currently('submitted') or itask.state.is_currently('running'):
                         # count active tasks in this queue
                         n_active += 1
                     # compute difference from the limit
@@ -443,7 +443,7 @@ class scheduler(object):
     def reload_taskdefs( self ):
         found = False
         for itask in self.pool.get_tasks():
-            if itask.state.is_running():
+            if itask.state.is_currently('running'):
                 # do not reload running tasks as some internal state
                 # (e.g. timers) not easily cloneable at the moment,
                 # and it is possible to make changes to the task config
@@ -455,7 +455,7 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_waiting() or itask.state.is_queued():
+                    if itask.state.is_currently('waiting') or itask.state.is_currently('queued'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -468,7 +468,7 @@ class scheduler(object):
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
-                    if itask.state.is_succeeded():
+                    if itask.state.is_currently('succeeded'):
                         new_task.set_succeeded()
                     self.pool.remove( itask, '(suite definition reload)' )
                     self.pool.add( new_task )
@@ -813,14 +813,14 @@ class scheduler(object):
                     stop_now = False
                 for itask in self.pool.get_tasks():
                     # find any reason not to stop
-                    if not itask.state.is_succeeded() and not itask.state.is_held():
+                    if not itask.state.is_currently('succeeded') and not itask.state.is_currently('held'):
                         # don't stop if any tasks are waiting, submitted, or running
                         stop_now = False
                         break
                 for itask in self.pool.get_tasks():
                     if not itask.is_cycling:
                         continue
-                    if itask.state.is_succeeded() and not itask.state.has_spawned():
+                    if itask.state.is_currently('succeeded') and not itask.state.has_spawned():
                         # Check for tasks that are succeeded but not spawned.
                         # If they are older than the suite stop time they
                         # must be about to spawn. Otherwise they must be 
@@ -877,7 +877,7 @@ class scheduler(object):
                 stop = True
                 for itask in self.pool.get_tasks():
                     if itask.name == name:
-                        if not itask.state.is_succeeded():
+                        if not itask.state.is_currently('succeeded'):
                             iname, itag = itask.id.split('%')
                             if int(itag) <= int(tag):
                                 stop = False
@@ -1063,7 +1063,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_queued() or itask.state.is_waiting():
+                if itask.state.is_currently('queued') or itask.state.is_currently('waiting'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.state.set_status('held')
@@ -1074,7 +1074,7 @@ class scheduler(object):
             self.hold_suite_now = False
             self.hold_time = None
         for itask in self.pool.get_tasks():
-            if itask.state.is_held():
+            if itask.state.is_currently('held'):
                 if self.stop_tag and int( itask.c_time ) > int( self.stop_tag ):
                     # this task has passed the suite stop time
                     itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
@@ -1126,7 +1126,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed() or itask.state.is_succeeded():
+            if itask.state.is_currently('failed') or itask.state.is_currently('succeeded'):
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1141,7 +1141,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
                 continue
-            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
+            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
             #    continue
             if itask.is_daemon():
                 continue
@@ -1155,7 +1155,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
+            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
             #    continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1180,7 +1180,7 @@ class scheduler(object):
     def no_tasks_running( self ):
         # return True if no REAL tasks are submitted or running
         for itask in self.pool.get_tasks():
-            if itask.state.is_running() or itask.state.is_submitted():
+            if itask.state.is_currently('running') or itask.state.is_currently('submitted'):
                 if hasattr( itask, 'is_pseudo_task' ):
                     # ignore task families -their 'running' state just
                     # indicates existence of running family members.
@@ -1192,13 +1192,13 @@ class scheduler(object):
     def get_failed_tasks( self ):
         failed = []
         for itask in self.pool.get_tasks():
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 failed.append( itask )
         return failed
 
     def any_task_failed( self ):
         for itask in self.pool.get_tasks():
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 return True
         return False
 
@@ -1230,7 +1230,7 @@ class scheduler(object):
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
                     continue
-                if itask.state.is_runahead():
+                if itask.state.is_currently('runahead'):
                     foo = ct( itask.c_time )
                     foo.decrement( hours=self.runahead_limit )
                     if int( foo.get() ) < int( ouct ):
@@ -1370,14 +1370,14 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 # EXCLUDING FAILED TASKS
                 continue
             #if itask.is_daemon():
             #   avoid daemon tasks
             #   continue
 
-            if not itask.state.is_succeeded():
+            if not itask.state.is_currently('succeeded'):
                 all_succeeded = False
                 if not earliest_unsucceeded:
                     earliest_unsucceeded = itask.c_time
@@ -1396,7 +1396,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 failed_rt[ itask.c_time ] = True
 
         # suicide
@@ -1505,7 +1505,7 @@ class scheduler(object):
                         continue
                     if t.name == itask.name and \
                             int( t.c_time ) > int( itask.c_time ) and \
-                            t.state.is_succeeded():
+                            t.state.is_currently('succeeded'):
                                 there_is = True
                                 break
                 if not there_is:

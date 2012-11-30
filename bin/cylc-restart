@@ -342,14 +342,14 @@ the remote host before starting the suite."""
                 continue
 
             # see comments above on resurrecting tasks
-            if itask.state.is_waiting() or itask.state.is_held() or itask.state.is_runahead():
+            if itask.state.is_currently('waiting') or itask.state.is_currently('held') or itask.state.is_currently('runahead'):
                 pass
 
-            elif itask.state.is_submitted() or itask.state.is_running() or itask.state.is_queued() or \
-                    itask.state.is_failed() or itask.state.is_retry_delayed():  
+            elif itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently('queued') or \
+                    itask.state.is_currently('failed') or itask.state.is_currently('retry_delayed'):  
                 itask.prerequisites.set_all_satisfied()
 
-            elif itask.state.is_succeeded():  
+            elif itask.state.is_currently('succeeded'):  
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
 

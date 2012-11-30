@@ -170,8 +170,8 @@ class task( Pyro.core.ObjBase ):
 
     def ready_to_run( self ):
         ready = False
-        if self.state.is_queued() or \
-            self.state.is_waiting() and self.prerequisites.all_satisfied():
+        if self.state.is_currently('queued') or \
+            self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
                 if self.retry_delay_timer_start:
                      diff = task.clock.get_datetime() - self.retry_delay_timer_start
                      foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
@@ -488,11 +488,11 @@ class task( Pyro.core.ObjBase ):
         timeout = self.timeouts['submission']
         if not handler or not timeout:
             return
-        if not self.state.is_submitted() and not self.state.is_running():
+        if not self.state.is_currently('submitted') and not self.state.is_currently('running'):
             # nothing to time out yet
             return
         current_time = task.clock.get_datetime()
-        if self.submission_timer_start != None and not self.state.is_running():
+        if self.submission_timer_start != None and not self.state.is_currently('running'):
             cutoff = self.submission_timer_start + datetime.timedelta( minutes=float(timeout) )
             if current_time > cutoff:
                 msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
@@ -505,11 +505,11 @@ class task( Pyro.core.ObjBase ):
         timeout = self.timeouts['execution']
         if not handler or not timeout:
             return
-        if not self.state.is_submitted() and not self.state.is_running():
+        if not self.state.is_currently('submitted') and not self.state.is_currently('running'):
             # nothing to time out yet
             return
         current_time = task.clock.get_datetime()
-        if self.execution_timer_start != None and self.state.is_running():
+        if self.execution_timer_start != None and self.state.is_currently('running'):
             cutoff = self.execution_timer_start + datetime.timedelta( minutes=float(timeout) )
             if current_time > cutoff:
                 if self.reset_timer:
@@ -521,7 +521,7 @@ class task( Pyro.core.ObjBase ):
                 self.execution_timer_start = None
 
     def sim_time_check( self ):
-        if not self.state.is_running():
+        if not self.state.is_currently('running'):
             return
         timeout = self.started_time_real + \
                 datetime.timedelta( seconds=self.sim_mode_run_length )
@@ -549,7 +549,7 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def reject_if_failed( self, message ):
-        if self.state.is_failed():
+        if self.state.is_currently('failed'):
             if self.__class__.rtconfig['enable resurrection']:
                 self.log( 'WARNING', 'message receive while failed: I am returning from the dead!' )
                 return False
@@ -588,7 +588,7 @@ class task( Pyro.core.ObjBase ):
             # Received a 'task started' message
             self.set_running()
 
-        if not self.state.is_running():
+        if not self.state.is_currently('running'):
             # Only running tasks should be sending messages
             self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
 
@@ -678,7 +678,7 @@ class task( Pyro.core.ObjBase ):
 
     def done( self ):
         # return True if task has succeeded and spawned
-        if self.state.is_succeeded() and self.state.has_spawned():
+        if self.state.is_currently('succeeded') and self.state.has_spawned():
             return True
         else:
             return False
