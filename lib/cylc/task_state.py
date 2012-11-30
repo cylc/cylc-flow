@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import re
 import sys
 
@@ -32,7 +31,10 @@ dump file.
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'retry_delayed', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued' ]
+    allowed_status = [ 'waiting', 'retry_delayed', 'submitted',
+            'running', 'succeeded', 'failed', 'held', 'runahead',
+            'queued' ]
+
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
@@ -120,6 +122,12 @@ class task_state(object):
 
     def is_queued( self ):
         if self.state[ 'status' ] == 'queued':
+            return True
+        else:
+            return False
+
+    def is_retry_delayed( self ):
+        if self.state[ 'status' ] == 'retry_delayed':
             return True
         else:
             return False
