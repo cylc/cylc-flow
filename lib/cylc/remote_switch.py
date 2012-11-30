@@ -88,6 +88,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result( True )
 
+    def ping( self ):
+        return result( True )
+
     def ping_task( self, task_id ):
         # is this task running at the moment
         found = False
