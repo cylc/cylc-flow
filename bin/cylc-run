@@ -87,12 +87,6 @@ the remote host before starting the suite."""
                 "cycle time even in a warm start (as for cold starts).",
                 action="store_true", default=False, dest="set_ict" )
 
-        self.parser.add_option( "--pyro-timeout", metavar='SEC',
-                help="Set a Pyro network connection timeout for tasks "
-                "submitted by the suite (this will override the suite "
-                "default if if one is configured).", action="store",
-                default=None, dest="pyro_timeout" )
-
         scheduler.__init__( self )
 
     def parse_commandline( self ):

@@ -75,17 +75,12 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False,
-            pyro_timeout=None, collapsed=[], only=None ):
+            verbose=False, validation=False, strict=False, collapsed=[], only=None ):
 
         self.run_mode = run_mode
         self.verbose = verbose
         self.strict = strict
         self.naked_dummy_tasks = []
-        if pyro_timeout:
-            self.pyro_timeout = float(pyro_timeout)
-        else:
-            self.pyro_timeout = None
         self.edges = []
         self.cyclers = []
         self.taskdefs = OrderedDict()
