@@ -21,11 +21,10 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-import string, os
-from cylc.config import config
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
 from cylc.dump import dump_to_stdout, get_stop_state_summary
+from cylc.suite_state_dumping import dumper
 
 parser = cop( usage = """cylc [info] cat-state [OPTIONS] REG 
 
@@ -40,17 +39,7 @@ owner = options.db_owner
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
-try:
-    config = config( suite, suiterc, 
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file,
-            owner=owner, verbose=options.verbose )
-except Exception,x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
-
-state_dump_file = os.path.join( config['cylc']['state dumps']['directory'], 'state' )
+state_dump_file = dumper( suite ).get_path()
 
 try:
     f = open( state_dump_file, 'rb' )

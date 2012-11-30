@@ -40,10 +40,10 @@ from cylc.owner import user, is_remote_user
 from cylc.registration import localdb
 from cylc.passphrase import passphrase
 from cylc.task_state import task_state
+from cylc.suite_logging import suite_log
 
 from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
 from validate import Validator
-
 
 class config( object ):
 
@@ -293,10 +293,12 @@ for view in views:
 if len(illegal) != 0:
     sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
 
+logdir = suite_log( suite ).get_dir()
 try:
-    app = ControlApp( suite, pphrase, options.owner, options.host, options.port,
-            cylc_tmpdir, views, options.pyro_timeout, usercfg.cfg,
-            options.templatevars, options.templatevars_file )
+    app = ControlApp( suite, logdir, pphrase, options.owner,
+            options.host, options.port, cylc_tmpdir, views,
+            options.pyro_timeout, usercfg.cfg, options.templatevars,
+            options.templatevars_file )
 except Exception, x:
     if options.debug:
         raise

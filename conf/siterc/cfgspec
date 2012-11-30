@@ -25,6 +25,17 @@
 # value to None to get the default system temp dir (usually $TMPDIR).
 temporary directory = string( default=None )
 
+# The top level directory for all suite and task (job) logs, etc. 
+run directory = string( default="$HOME/cylc-run" )
+
+state dump rolling archive length = integer( min=1, default=10 )
+
+# suites logs go under the suite run directory
+[suite logging]
+    roll over at start-up = boolean( default=True )
+    rolling archive length = integer( min=1, default=5 )
+    maximum size in bytes = integer( min=1000, default=1000000 )
+
 # The "cylc doc" command and GUI Help menus need the following items.
 [documentation]
     # Documentation files that come with the cylc release tarball.

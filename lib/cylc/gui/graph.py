@@ -26,7 +26,6 @@ from cylc.config import config, SuiteConfigError
 from gcapture import gcapture, gcapture_tmpfile
 from warning_dialog import warning_dialog
 
-
 def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
                        gcapture_windows, tmpdir, template_opts, parent_window=None ):
     """Popup a dialog to allow a user to configure their suite graphing."""
@@ -64,7 +63,8 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     label = gtk.Label("[START]: " )
     start_entry = gtk.Entry()
     start_entry.set_max_length(14)
-    start_entry.set_text( str(defstartc) )
+    if defstartc:
+        start_entry.set_text( str(defstartc) )
     ic_hbox = gtk.HBox()
     ic_hbox.pack_start( label )
     ic_hbox.pack_start(start_entry, True) 
@@ -73,7 +73,8 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     label = gtk.Label("[STOP]:" )
     stop_entry = gtk.Entry()
     stop_entry.set_max_length(14)
-    stop_entry.set_text( str(defstopc) )
+    if defstopc:
+        stop_entry.set_text( str(defstopc) )
     fc_hbox = gtk.HBox()
     fc_hbox.pack_start( label )
     fc_hbox.pack_start(stop_entry, True) 

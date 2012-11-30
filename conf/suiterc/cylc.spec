@@ -5,12 +5,6 @@
     maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
     log resolved dependencies = boolean( default=False )
-    [[logging]]
-        directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite' )
-        roll over at start-up = boolean( default=True )
-    [[state dumps]]
-        directory = string( default = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state' )
-        number of backups = integer( min=1, default=10 )
     [[lockserver]]
         enable = boolean( default=False )
         simultaneous instances = boolean( default=False )

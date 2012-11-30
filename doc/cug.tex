@@ -1286,11 +1286,9 @@ you reconnect to the suite with a new control GUI.
 
 \subsubsection{Suite Logs}
 
-The cylc suite log records every event that occurs (incoming messages from tasks
-and so on) along with the time of the event. The top level logging directory,
-under which a suite-specific log is written, is configurable in the suite.rc file.
-Suite logs are (optionally) rolled over at start-up and the five most
-recent back ups are kept.
+The cylc suite log, under the suite running directory (see cylc's
+site and user config files)  records every event that occurs (incoming
+messages from tasks and so on) along with the time of the event. 
 
 \begin{figure}
     \begin{center}
@@ -1320,6 +1318,7 @@ set by the root namespace).
 \subsubsection{Task stdout And stderr Logs}
 
 \lstset{language=transcript}
+
 The stdout and stderr logs generated when a task is submitted end up in
 the suite.rc {\em job submission log directory}, default location
 \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job/= (where the
