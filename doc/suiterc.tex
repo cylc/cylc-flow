@@ -877,22 +877,17 @@ can be a single command or multiple lines of scripting.
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}
 
-A list of time intervals in minutes after which to resubmit the task if it 
-fails. Before each try the variable \lstinline=$CYLC_TASK_TRY_NUMBER= is
-incremented (starting from 1) and passed to the task execution
-environment; this can be used to alter the behaviour at each try.
+A list of time intervals in minutes, after which to resubmit the task if
+it reports failure. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in
+the task execution environment is incremented each time, starting from 1
+for the original try; this can be used to vary task behavior according
+to the try number. 
 
 \begin{myitemize}
-\item {\em type:} list of floats
-\item {\em example:} 1.5, 10, 10, 10
+\item {\em type:} list of floats, optional preceded by multipliers
+\item {\em example:} \lstinline=1.5,3*10= is equivalent to \lstinline=1.5,10,10,10=
 \item {\em root default:} (none)
 \end{myitemize}
-
-Currently to get a task that keeps on retrying indefinitely you have to
-put a retry-and-wait loop in the task implementation itself (i.e.\ the
-task submits once and then keeps trying until it succeeds, and then
-report success, or it may eventually reports failure on some internal
-criterion, which may be some number of unsuccessful tries).
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 

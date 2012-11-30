@@ -296,20 +296,34 @@ class task( Pyro.core.ObjBase ):
             if self.__class__.run_mode == 'live' or \
                 ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable retries'] ) or \
                 ( self.__class__.run_mode == 'dummy' and not rtconfig['dummy mode']['disable retries'] ):
-            # deepcopy retry delays: the deque gets pop()'ed in the task
-            # proxy objects, which is no good if all instances of the
-            # same task class reference the original deque! (deepcopy not
-            # required now due to deepcopy of rtconfig above)
-                self.retry_delays = deque( rtconfig['retry delays'] )
+
+                # note that a *copy* of the retry delays list is needed
+                # so that all instances of the same task don't pop off
+                # the same deque (copy of rtconfig above solves this).
+
+                # expand out 'n*d' list items
+
+                rd = rtconfig['retry delays']
+                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
+                if not isinstance( rd, list ):
+                    rd = [ rd ]
+
+                dlist = []
+                for item in rd:
+                    try:
+                        try:
+                            mult, val = item.split('*')
+                        except ValueError:
+                            dlist.append(float(item))
+                        else:
+                            dlist += int(mult) * [float(val)]
+                    except ValueError, x:
+                        print >> sys.stderr, x
+                        raise SystemExit( "ERROR, retry delay values must be INT or INT*FLOAT" )
+
+                self.retry_delays = deque( dlist )
             else:
                 self.retry_delays = deque()
-
-            # check retry delay type (must be float):
-            for i in self.retry_delays:
-                try:
-                    float(i)
-                except ValueError:
-                    raise SystemExit( "ERROR, retry delay values must be floats: " + str(i) )
 
         rrange = rtconfig['simulation mode']['run time range']
         ok = True
