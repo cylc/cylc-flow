@@ -114,7 +114,7 @@ class task_state(object):
     def parse( self, input ):
         state = {}
 
-        if input in self.__class__.legal:
+        if self.__class__.is_legal(input):
             state[ 'status' ] = input
             # ASSUME THAT ONLY succeeded TASKS, AT STARTUP, HAVE spawned 
             # (in fact this will only be used to start tasks in 'waiting')
@@ -128,6 +128,15 @@ class task_state(object):
             pairs = input.split( ', ' )
             for pair in pairs:
                 [ item, value ] = pair.split( '=' )
+                if item not in [ 'status', 'spawned' ]:
+                    raise TaskStateError, 'ERROR, illegal task status key: ' + item
+                if item == 'status' :
+                    if not self.__class__.is_legal( value ): 
+                        raise TaskStateError, 'ERROR, illegal task state: ' + value
+                elif item == 'spawned' :
+                    if value not in [ 'true', 'false' ]:
+                        raise TaskStateError, 'ERROR, illegal task spawned status: ' + value
                 state[ item ] = value
 
         return state
+
