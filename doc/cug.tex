@@ -3716,7 +3716,7 @@ treatment is required at all:
                                echo BYE""" 
     [[baz]]
         description = a task that runs baz.sh and retries on failure
-        retry delays = 1,1
+        retry delays = 3*1 # or 1,1,1
         command scripting = """echo attempt No. $CYLC_TASK_TRY_NUMBER
                                baz.sh"""
 \end{lstlisting}
@@ -4507,7 +4507,7 @@ the real tasks) move through a series of defined states:
         delays'' item (a list of delay intervals in minutes), then if it
         fails it will be put in this state for the specified interval
         and then resubmitted after incrementing the task try number. 
-        A task only enters the final ``failed'' state if the last retry fails.
+        A task only enters the final ``failed'' state if the last try fails.
 
     \item two finished states:
         \begin{myitemize}
