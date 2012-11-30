@@ -248,15 +248,6 @@ class config( CylcConfigObj ):
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
 
-        if not self.pyro_timeout:
-            # no timeout specified on the command line
-            tmp = self['cylc']['pyro connection timeout']
-            if tmp:
-                self.pyro_timeout = float(tmp)
-
-        if self.verbose:
-            print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
-
         # suite event hooks
         if self.run_mode == 'live' or \
                 ( self.run_mode == 'simulation' and not self['cylc']['simulation mode']['disable suite event hooks'] ) or \

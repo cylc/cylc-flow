@@ -14,6 +14,8 @@
 #>       $HOME/.cylc/cylc.rc with all default settings commented out.
 #>   (2) Uncomment and modify specific configuration items as required.
 #>----------------------------------------------------------------------
+#>   NOTE THAT SITE AND/OR USER CONFIG IS REQUIRED ON TASK HOSTS TOO 
+#>----------------------------------------------------------------------
 #> Comments starting with "#>" are not passed on to generated .rc files.
 #>----------------------------------------------------------------------
 # Sections or items preceded by "# SITE ONLY" can not be set by users.
@@ -24,6 +26,19 @@
 # A temporary directory is needed by a few cylc commands. Set the
 # value to None to get the default system temp dir (usually $TMPDIR).
 temporary directory = string( default=None )
+
+# Task messaging settings apply to the "cylc task COMMAND" commands 
+# used by running tasks to communicate with their parent suite. If a
+# message send fails after the configured number of tries the task will 
+# carry on regardless.
+[task messaging]
+    retry interval in seconds = float( min=1, default=30 )
+    maximum number of tries = integer( min=1, default=10 )
+    # The timeout is the same as --pyro-timeout for user commands.
+    # It should be set to None (no timeout) or a large number (a few
+    # minutes) - until cylc has network request handling in a
+    # separate thread (see User Guide "Network Connection Timeouts").  
+    connection timeout in seconds = float( min=1, default=None )
 
 # The "cylc doc" command and GUI Help menus need the following items.
 [documentation]
