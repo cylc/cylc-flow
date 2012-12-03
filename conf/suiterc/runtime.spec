@@ -31,6 +31,12 @@
 #   GOOD: foo = string_list( default=list('foo','bar'))
 #   BAD:  bar = string_list( default=list('foo','bar' ))
 
+# WARNING: RUNTIME ITEMS ARE NO LONGER VALIDATED AS A MATTER OF COURSE,
+# BECAUSE VALIDATION FLESHES OUT THE FULL DATA STRUCTURE BELOW. This
+# means force_list() does not have the intended effect, except for
+# validation (i.e. single items with no trailing comma will not be
+# coerced into a list value - we must now do this manually in the code. 
+
 [runtime]
     [[__many__]]
         inherit = string( default=None )

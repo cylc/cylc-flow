@@ -29,7 +29,7 @@ from cylc.command_prep import prep_file
 parser = cop( """cylc [prep] validate [OPTIONS] ARGS
 
 Validate a suite definition against the official specification
-held in $CYLC_DIR/conf/suiterc.spec.
+files held in $CYLC_DIR/conf/suiterc/.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use 

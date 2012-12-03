@@ -21,17 +21,17 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-import os, re
+import re
 from cylc.CylcOptionParsers import cop
-from cylc.config import config, SuiteConfigError
 from cylc.command_prep import prep_file
+from cylc.suite_logging import suite_log
+from cylc.suite_output import suite_output
 
 parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS 
 Print and filter cylc suite (not task) log files.""" )
 
 parser.add_option( "-l", "--location", 
-        help="Print the suite log file location and exit. This is "
-        "equivalent to 'cylc get-config -i [cylc][logging][directory] SUITE'.",
+        help="Print the suite log file location and exit.",
         action="store_true", default=False, dest="print_location" )
 
 parser.add_option( "-t", "--task", 
@@ -47,20 +47,25 @@ parser.add_option( "-r", "--rotation",
         help="Rotation number (to view older, rotated logs)",
         metavar="INT", action="store", default="0", dest="rotation" )
 
+parser.add_option( "-o", "--stdout", 
+        help="Print the suite stdout log (the default is the suite event log).",
+        action="store_true", default=False, dest="print_stdout" )
+
+parser.add_option( "-e", "--stderr", 
+        help="Print the suite stderr log (the default is the suite event log).",
+        action="store_true", default=False, dest="print_stderr" )
+
 ( options, args ) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
 owner = options.db_owner
 
-try:
-    filename = os.path.join( config( suite, suiterc, 
-        template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file,
-        owner=owner, verbose=options.verbose )['cylc']['logging']['directory'], 'log' )
-except Exception, x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
+if options.print_stdout:
+    filename = suite_output( suite ).get_path()
+elif options.print_stderr:
+    filename = suite_output( suite ).get_path(True)
+else:
+    filename = suite_log( suite ).get_path()
  
 if options.rotation != "0":
     filename = filename + '.' + options.rotation

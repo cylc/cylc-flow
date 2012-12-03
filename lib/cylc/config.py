@@ -110,11 +110,11 @@ class config( CylcConfigObj ):
 
         self.owner = owner
 
-        if not os.path.isfile( self.file ):
-            raise SuiteConfigError, 'File not found: ' + self.file
-
         if self.verbose:
             print "Loading suite.rc"
+
+        if not os.path.isfile( self.file ):
+            raise SuiteConfigError, 'File not found: ' + self.file
 
         f = open( self.file )
         flines = f.readlines()
@@ -144,7 +144,7 @@ class config( CylcConfigObj ):
 
         # parse the file into a sparse data structure
         try:
-            CylcConfigObj.__init__( self, suiterc )
+            CylcConfigObj.__init__( self, suiterc, interpolation=False )
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
@@ -160,7 +160,7 @@ class config( CylcConfigObj ):
                         continue
             head[key] = val
 
-        for item, val in self.validate_section( head, 'suiterc-head.spec' ).items():
+        for item, val in self.validate_section( head, 'head.spec' ).items():
             self[item] = val
 
         for sec in [ 'cylc', 'scheduling', 'visualization', 'development' ]:
@@ -168,7 +168,7 @@ class config( CylcConfigObj ):
                 cfg = self[sec]
             else:
                 cfg = OrderedDict()
-            for item, val in self.validate_section( {sec:cfg}, 'suiterc-' + sec + '.spec' ).items():
+            for item, val in self.validate_section( {sec:cfg}, sec + '.spec' ).items():
                 self[item] = val
 
         if 'runtime' not in self.keys():
@@ -183,14 +183,14 @@ class config( CylcConfigObj ):
                     continue
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
-                self.validate_section( { 'runtime': { name: cfg }}, 'suiterc-runtime.spec' )
+                self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
 
         if 'root' not in self['runtime']:
             self['runtime']['root'] = OrderedDict()
 
         # load defaults into one namespace dict
         cfg = OrderedDict()
-        dense = self.validate_section( { 'runtime': { 'defaults': cfg }}, 'suiterc-runtime.spec' )
+        dense = self.validate_section( { 'runtime': { 'defaults': cfg }}, 'runtime.spec' )
         self.runtime_defaults = dense['runtime']['defaults']
 
         if self.verbose:
@@ -344,7 +344,7 @@ class config( CylcConfigObj ):
                 ng[fam] = [fam] + self.members[fam]
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in suiterc.spec
+        # because putting default attributes for root in the suite.rc spec
         # results in root appearing last in the ordered dict of node
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
@@ -462,9 +462,9 @@ class config( CylcConfigObj ):
 
     def validate_section( self, cfg, spec ):
 
-        spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', spec )
+        spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', spec )
 
-        dense = ConfigObj( cfg, configspec=spec )
+        dense = ConfigObj( cfg, interpolation=False, configspec=spec )
         # validate and convert to correct types
         val = Validator()
         test = dense.validate( val, preserve_errors=True )
@@ -620,7 +620,7 @@ class config( CylcConfigObj ):
                 ###dline1 = dlines[0]
                 ###if len(dlines) > 1:
                 ###    dline1 += '...'
-                dline1 = "(To Do: title)"
+                dline1 = "" # To Do: task title here (see comment just above)
                 tree[item] = dline1
                 runtimes[item] = self['runtime'][item]
 
@@ -682,12 +682,12 @@ class config( CylcConfigObj ):
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
-        self['cylc']['logging']['directory'] = \
-                expandvars( self['cylc']['logging']['directory'], self.owner)
-        self['cylc']['state dumps']['directory'] =  \
-                expandvars( self['cylc']['state dumps']['directory'], self.owner)
-        self['visualization']['runtime graph']['directory'] = \
-                expandvars( self['visualization']['runtime graph']['directory'], self.owner)
+        self['visualization']['runtime graph']['directory'] = expandvars( self['visualization']['runtime graph']['directory'], self.owner)
+
+        # suite config dir is not user-configurable as some processes
+        # need to know where it is without parsing the suite definition:
+        self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
+
 
     def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         trig = triggerx(task_name)
@@ -862,8 +862,7 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, ''
  
     def create_directories( self, task=None ):
-        # Create suite log, state, and local job log directories.
-        dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'] ]
+        dirs = [ self.suite_config_dir ]
         for d in dirs:
             try:
                 mkdir_p( d )

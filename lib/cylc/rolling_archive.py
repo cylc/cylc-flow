@@ -22,14 +22,16 @@
 import os
 
 class rolling_archive(object):
-    def __init__( self, filename, archive_length=10 ):
+
+    def __init__( self, filename, archive_length=10, sep='-' ):
+        self.sep = sep
         self.base_filename = filename
         self.archive_length = archive_length
 
     def __filename( self, index ):
-        return self.base_filename + '-' + str( index )
+        return self.base_filename + self.sep + str( index )
 
-    def roll_open( self ):
+    def roll( self ):
         # roll the archive
 
         if os.path.exists( self.__filename( self.archive_length )):

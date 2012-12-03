@@ -21,7 +21,7 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-import os, logging
+import os
 import subprocess
 from time import sleep
 from OrderedDict import OrderedDict
@@ -35,11 +35,11 @@ from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
 from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
-from cylc.hostname import hostname
+from cylc.suite_host import suite_host, hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
-from cylc import pimp_my_logger
 from cylc.command_prep import prep_file
+from cylc.suite_logging import suite_log
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -110,16 +110,6 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
-# modify logging dir for single task submit so as not to alter suite logs
-logging_dir = os.path.join( config['cylc']['logging']['directory'], 'submit' ) 
-
-# create logging dir if necessary
-try:
-    mkdir_p( logging_dir )
-except Exception,x:
-    print >> sys.stderr, x
-    print >> sys.stderr, 'ERROR, illegal logging directory?', logging_dir
-    sys.exit(1)
 
 use_lockserver = False
 if config['cylc']['lockserver']['enable']:
@@ -143,6 +133,17 @@ if config['cylc']['lockserver']['enable']:
 utc = config['cylc']['UTC mode']
 dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
+task.task.clock = dclock
+clocktriggered.clocktriggered.clock = dclock
+task.task.suite = suite
+
+# create the suite log, with a modified directory path ending in
+# 'submit' so that we don't overwrite logs from a proper suite run.
+slog = suite_log( suite, 'submit' )
+slog.pimp( clock=dclock )
+log = slog.get_log()
+logging_dir = slog.get_dir()
+
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
 cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
@@ -152,7 +153,7 @@ else:
     cylcenv[ 'CYLC_MODE' ] = 'submit'
 cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
 cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
-cylcenv[ 'CYLC_SUITE_HOST' ] = hostname
+cylcenv[ 'CYLC_SUITE_HOST' ] = suite_host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'None'
 cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
@@ -169,7 +170,7 @@ cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
 cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( config.pyro_timeout )
-cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = config['cylc']['logging']['directory']
+cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = logging_dir
 
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for alert scripts executed
@@ -182,16 +183,6 @@ for var in senv:
 # Also put cylcenv variables in the scheduler environment
 for var in cylcenv:
     os.environ[var] = cylcenv[var]
-
-task.task.clock = dclock
-clocktriggered.clocktriggered.clock = dclock
-task.task.suite = suite
-
-# create the log
-log = logging.getLogger( "main" )
-pimp_my_logger.pimp_it( log, logging_dir, \
-        config['cylc']['logging']['roll over at start-up'], \
-        logging.INFO, dclock )
 
 task.task.cylc_env = cylcenv
 

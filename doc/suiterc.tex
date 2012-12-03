@@ -22,8 +22,8 @@ and description.
 
 \subsubsection{title}
 
-A single line description of the suite. It is displayed in the gcylc
-suite database window and can be retrieved at run time with the
+A single line description of the suite. It is displayed in the db viewer 
+window and can be retrieved at run time with the
 \lstinline=cylc show= command.
 
 \begin{myitemize}
@@ -33,7 +33,7 @@ suite database window and can be retrieved at run time with the
 
 \subsubsection{description}
 
-A multi-line description of the suite. It can be retrieved by gcylc
+A multi-line description of the suite. It can be retrieved by the db viewer 
 right-click menu, or at run time with the \lstinline=cylc show= command.
 
 \begin{myitemize}
@@ -119,69 +119,6 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}logging{]]} ]{[cylc] $\rightarrow$ [[logging]]}
-
-This section configures cylc's logging functionality, which records
-time-stamped events to a special log file. 
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
-
-The cylc log and its backups are stored in this directory. If you change
-the directory make sure it remains suite-specific by using suite
-identity environment variables in the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
-\end{myitemize}
-
-\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
-
-Suite logs roll over (start anew) automatically when they reach a
-certain size - currently hardwired to 1MB in
-\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
-They can also be rolled automatically whenever a
-suite is started or restarted.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
-\end{myitemize}
-
-\subsubsection[{[[}state dumps{]]}]{ [cylc] $\rightarrow$ [[state dumps]] }
-
- State dump files allow cylc to restart suites from previous states of
- operation. 
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[state dumps]] $\rightarrow$ directory}
-
- The rolling archive of suite state dump files, backups of the default 
- state dump, and any special pre-intervention state dumps, are stored
- under this directory.  If you change this directory make sure it
- remains suite-specific by using suite identity environment variables in
- the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state=
-\end{myitemize}
-
-\paragraph[number of backups]{[cylc] $\rightarrow$ [[state dumps]] $\rightarrow$ number of backups}
-
-This is the length, in number of changes, of the automatic rolling
-archive of state dump files that allows you to restart a suite from a
-previous state.  Every time a task changes state cylc updates the state
-dump and rolls previous states back one on the archive.  You'll probably
-only ever need the latest (most recent) state dump, which is
-automatically used in a restart, but any previous state still in the
-archive can be used.  Additionally, special labeled state dumps are
-written out prior to actioning any suite intervention - their filenames
-are logged by cylc.
-
-\begin{myitemize}
-    \item {\em type:} integer ($\geq 1$)
-    \item {\em default:} $10$
-\end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
@@ -510,10 +447,10 @@ override it on the command line or in the gcylc suite start panel.
 
 \subsubsection[final cycle time]{[scheduling] $\rightarrow$ final cycle time}
 
-Cycling tasks are held (i.e.\ not allowed to spawn a successor) once they
-pass the final cycle time, if one is specified. Once all tasks have
-achieved this state the suite will shut down. If this item is provided you 
-can override it on the command line or in the gcylc suite start panel.
+Cycling tasks are held once they pass the final cycle time, if one is
+specified. Once all tasks have achieved this state the suite will shut
+down. If this item is provided you can override it on the command line
+or in the gcylc suite start panel.
 
 \begin{myitemize}
     \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
@@ -726,7 +663,7 @@ tasks, may be required.
 
 The suite dependency graph is defined under this section.  You can plot
 the dependency graph as you work on it, with \lstinline=cylc graph= or
-by right clicking on the suite in gcylc.  See also 
+by right clicking on the suite in the db viewer.  See also 
 Section~\ref{DependencyGraphs}.
 
 \paragraph[graph]{ [scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ graph }
@@ -940,22 +877,17 @@ can be a single command or multiple lines of scripting.
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}
 
-A list of time intervals in minutes after which to resubmit the task if it 
-fails. Before each try the variable \lstinline=$CYLC_TASK_TRY_NUMBER= is
-incremented (starting from 1) and passed to the task execution
-environment; this can be used to alter the behaviour at each try.
+A list of time intervals in minutes, after which to resubmit the task if
+it reports failure. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in
+the task execution environment is incremented each time, starting from 1
+for the original try; this can be used to vary task behavior according
+to the try number. 
 
 \begin{myitemize}
-\item {\em type:} list of floats
-\item {\em example:} 1.5, 10, 10, 10
+\item {\em type:} list of floats, optional preceded by multipliers
+\item {\em example:} \lstinline=1.5,3*10= is equivalent to \lstinline=1.5,10,10,10=
 \item {\em root default:} (none)
 \end{myitemize}
-
-Currently to get a task that keeps on retrying indefinitely you have to
-put a retry-and-wait loop in the task implementation itself (i.e.\ the
-task submits once and then keeps trying until it succeeds, and then
-report success, or it may eventually reports failure on some internal
-criterion, which may be some number of unsuccessful tries).
 
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 
@@ -1714,7 +1646,7 @@ Jinja2 template processor (Section~\ref{Jinja2}).
 \subsection{Default Suite Configuration}
 \label{SuiteDefaults}
 
-Cylc provides, via \lstinline=$CYLC_DIR/conf/suiterc.spec=, sensible
+Cylc provides, via \lstinline=$CYLC_DIR/conf/suiterc/*.spec=, sensible
 default values for many configuration items so that most users will not
 need to explicitly configure log directories and so on. The defaults are
 sufficient, in fact, to allow test suites defined by dependency graph

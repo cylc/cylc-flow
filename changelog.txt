@@ -1031,3 +1031,19 @@ downstream tasks.
   --set VAR=VALUE or --set-file=FILE where FILE contains VAR=VALUE
   pairs.
 
++ new site and user config files (see cylc get-global-config --help). 
+
++ GUI PROGRAMS RENAMED:
+    + the former "gcylc" has now been demoted to "cylc dbviewer"
+    + the former "gcontrol" is now "gcylc"
+  In the future gcylc (formerly gcontrol" will get the ability to 
+  switch between suites, thus becoming *the* cylc GUI, at which point
+  "cylc dbviewer" will be dropped.
+
++ Optional suite host identification in task job scripts
+($CYLC_SUITE_HOST) by IP address or hard-wiring instead of by host name.
+
++ Removed pseudo backward compatibility. A comment "#!cylc-x.y.z" at the
+top of a suite definition no longer has any effect. We will endeavor to
+have proper backward compatibility from here on.
+

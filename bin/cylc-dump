@@ -77,10 +77,9 @@ if options.tasks_only:
     display_global = False
 
 try:
-    proxy = cylc_pyro_client.client(
-                 suite, pphrase, options.owner,
-                 options.host, options.pyro_timeout, None,
-                 options.verbose).get_proxy('state_summary' )
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, options.port,
+            options.verbose).get_proxy('state_summary' )
 except Exception, x:
     if options.debug:
         raise

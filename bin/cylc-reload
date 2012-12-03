@@ -31,18 +31,23 @@ from cylc.prompt import prompt
 
 parser = cop( """cylc [control] reload [OPTIONS] ARGS 
 
-Reload the suite definition at run time. All settings including task
-definitions, with the exception of suite log configuration, can be
-changed on reload. Note that defined tasks can be be added to or removed
-from a running suite with the 'cylc insert' and 'cylc remove' commands,
-without reloading. This command also allows addition and removal of
-actual task definitions, and therefore insertion of tasks that were not
-defined at all when the suite started (you will still need to manually
-insert a particular instance of a newly defined task). Live task proxies
-that are orphaned by a reload (i.e. their task definitions have been
-removed) will be removed from the task pool if they have not started
-running yet. Changes to task definitions take effect immediately, unless
-a task is already running at reload time.
+Tell a suite to reload its definition at run time. All settings
+including task definitions, with the exception of suite log
+configuration, can be changed on reload. Note that defined tasks can be
+be added to or removed from a running suite with the 'cylc insert' and
+'cylc remove' commands, without reloading. This command also allows
+addition and removal of actual task definitions, and therefore insertion
+of tasks that were not defined at all when the suite started (you will
+still need to manually insert a particular instance of a newly defined
+task). Live task proxies that are orphaned by a reload (i.e. their task
+definitions have been removed) will be removed from the task pool if
+they have not started running yet. Changes to task definitions take
+effect immediately, unless a task is already running at reload time.
+
+If the suite was started with Jinja2 template variables set on the
+command line (cylc run --set FOO=bar REG) the same template settings
+apply to the reload (only changes to the suite.rc file itself are
+reloaded).
 
 If the modified suite definition does not parse, failure to reload will
 be reported but no harm will be done to the running suite.""", pyro=True )
@@ -51,11 +56,12 @@ be reported but no harm will be done to the running suite.""", pyro=True )
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-prompt( 'Reconfigure ' + suite, options.force )
+prompt( 'Reload ' + suite, options.force )
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+            options.host, options.pyro_timeout, options.port,
+            options.verbose ).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise

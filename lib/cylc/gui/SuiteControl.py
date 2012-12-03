@@ -25,7 +25,7 @@ import os, re, sys
 import socket
 import subprocess
 import helpwindow
-from cylc.hostname import is_remote_host
+from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
@@ -36,7 +36,6 @@ from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotMaker
 from cylc.gui.util import get_icon, get_image_dir, get_logo
 from cylc import cylc_pyro_client
-from cylc.port_scan import SuiteIdentificationError
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
@@ -47,7 +46,7 @@ from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
 from datetime import datetime
-from gcapture import gcapture_tmpfile
+from gcapture import gcapture, gcapture_tmpfile
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -84,12 +83,13 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
-            pyro_timeout, template_vars, template_vars_file ):
+    def __init__( self, suite, logdir, pphrase, owner, host,
+            port, cylc_tmpdir, pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
         self.pphrase = pphrase
         self.host = host
         self.port = port
+        self.logdir = logdir
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -105,6 +105,8 @@ Class to hold initialisation data.
             self.template_vars_opts += " --set " + tv
         if template_vars_file:
             self.template_vars_opts += " --set-file " + template_vars_file
+        self.template_vars = template_vars
+        self.template_vars_file = template_vars_file
 
 class InfoBar(gtk.VBox):
     """
@@ -298,12 +300,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
 
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
+    def __init__( self, suite, logdir, pphrase, owner, host, port, cylc_tmpdir,
             startup_views, pyro_timeout, usercfg, template_vars, template_vars_file ):
 
         gobject.threads_init()
         
-        self.cfg = InitData( suite, pphrase, owner, host, port,
+        self.cfg = InitData( suite, logdir, pphrase, owner, host, port,
                 cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
         self.usercfg = usercfg
 
@@ -321,7 +323,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         title = self.cfg.suite
         if self.cfg.host != socket.getfqdn():
             title += " - " + self.cfg.host
-        title += " - gcontrol"
+        title += " - gcylc"
         self.window.set_title( title )
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
@@ -629,7 +631,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.hold()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
             if not result.success:
@@ -642,7 +644,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             god = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = god.resume()
@@ -658,7 +660,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             result = god.shutdown()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
             if not result.success:
@@ -748,7 +750,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 result = god.set_stop( stopclock_time, 'stop after clock time' )
             elif stoptask:
                 result = god.set_stop( stoptask_id, 'stop after task' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
             if not result.success:
@@ -792,7 +794,7 @@ been defined for this suite""").inform()
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
 
-        command = 'cylc control run --gcylc ' + self.cfg.template_vars_opts
+        command = 'cylc control run --from-gui ' + self.cfg.template_vars_opts
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -805,7 +807,7 @@ been defined for this suite""").inform()
             options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
-            command = 'cylc control restart --gcylc ' + self.cfg.template_vars_opts
+            command = 'cylc control restart --from-gui ' + self.cfg.template_vars_opts
             if no_reset_cb.get_active():
                 options += ' --no-reset'
 
@@ -877,7 +879,7 @@ been defined for this suite""").inform()
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.unblock()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def block_suite( self, bt ):
@@ -886,7 +888,7 @@ been defined for this suite""").inform()
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
             god.block()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def about( self, bt ):
@@ -908,7 +910,7 @@ The Cylc Suite Engine.
         about.run()
         about.destroy()
 
-    def view_task_descr( self, w, task_id ):
+    def view_task_descr( self, w, e, task_id ):
         command = "cylc show --host=" + self.cfg.host + " --owner=" + \
                 self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
@@ -920,7 +922,7 @@ The Cylc Suite Engine.
             return False
         try:
             [ glbl, states, fam_states ] = self.get_pyro( 'state_summary').get_state_summary()
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( str(x), self.window ).warn()
             return
         view = True
@@ -1175,7 +1177,7 @@ The Cylc Suite Engine.
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.set_runahead( limit )
@@ -1258,7 +1260,7 @@ The Cylc Suite Engine.
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.add_prerequisite( task_id, msg )
@@ -1273,10 +1275,10 @@ The Cylc Suite Engine.
         else:
             tb.insert( tb.get_end_iter(), line )
 
-    def popup_requisites( self, w, task_id ):
+    def popup_requisites( self, w, e, task_id ):
         try:
             result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
-        except SuiteIdentificationError,x:
+        except Exception,x:
             warning_dialog(str(x), self.window).warn()
             return
 
@@ -1400,7 +1402,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1433,7 +1435,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1465,7 +1467,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
@@ -1495,7 +1497,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.spawn_and_die( task_id )
@@ -1523,7 +1525,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.die( task_id )
@@ -1539,7 +1541,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
@@ -1555,7 +1557,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         result = proxy.purge( task_id, stop )
@@ -1967,7 +1969,7 @@ shown here in the state they were in at the time of triggering.''' )
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         result = proxy.insert( torg, stop )
@@ -2005,7 +2007,7 @@ or remove task definitions without restarting the suite."""
             proxy = cylc_pyro_client.client( self.cfg.suite,
                     self.cfg.pphrase, self.cfg.owner, self.cfg.host,
                     self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-        except SuiteIdentificationError, x:
+        except Exception, x:
             warning_dialog( str(x), self.window ).warn()
             return False
         result = proxy.nudge()
@@ -2281,11 +2283,23 @@ or remove task definitions without restarting the suite."""
         list_menu.append( tree_item )
         tree_item.connect( 'activate', self.run_suite_list, '-t' )
 
+        log_item = gtk.ImageMenuItem( 'Suite Std_out' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        log_item.set_image(img)
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log, 'out' )
+
+        out_item = gtk.ImageMenuItem( 'Suite Std_err' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        out_item.set_image(img)
+        tools_menu.append( out_item )
+        out_item.connect( 'activate', self.run_suite_log, 'err' )
+
         log_item = gtk.ImageMenuItem( 'Suite _Log' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         log_item.set_image(img)
         tools_menu.append( log_item )
-        log_item.connect( 'activate', self.run_suite_log )
+        log_item.connect( 'activate', self.run_suite_log, 'log' )
 
         view_item = gtk.ImageMenuItem( 'Suite _View' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
@@ -2325,54 +2339,78 @@ or remove task definitions without restarting the suite."""
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        self.userguide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
+        guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
-        self.userguide_item.set_image(img)
-        self.userguide_item.connect( 'activate', helpwindow.userguide )
-        help_menu.append( self.userguide_item )
+        guide_item.set_image(img)
+        help_menu.append( guide_item )
+        guide_item.connect( 'activate', helpwindow.userguide )
 
-        help_menu.append( gtk.SeparatorMenuItem() )
+        doc_menu = gtk.Menu()
+        doc_item = gtk.ImageMenuItem( "_Documentation" )
+        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
+        doc_item.set_image(img)
+        doc_item.set_submenu( doc_menu )
+        help_menu.append(doc_item)
 
-        chelp_menu = gtk.ImageMenuItem( 'Command Help' )
+        item = gtk.ImageMenuItem( 'Print document locations' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
+        item.set_image(img)
+        doc_menu.append( item )
+        item.connect( 'activate', self.browse, '' )
+ 
+        doc_menu.append( gtk.SeparatorMenuItem() )
+ 
+        cug_html_item = gtk.ImageMenuItem( '(file://) HTML Documentation Index' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        cug_html_item.set_image(img)
+        doc_menu.append( cug_html_item )
+        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
+
+        cug_pdf_item = gtk.ImageMenuItem( '(file://) PDF User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
+        cug_pdf_item.set_image(img)
+        doc_menu.append( cug_pdf_item )
+        cug_pdf_item.connect( 'activate', self.browse, '--view=pdf' )
+  
+        cug_html_item = gtk.ImageMenuItem( '(file://) _Multi Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
+        cug_html_item.set_image(img)
+        doc_menu.append( cug_html_item )
+        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
+
+        cug_shtml_item = gtk.ImageMenuItem( '(file://) _Single Page HTML User Guide' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        cug_shtml_item.set_image(img)
+        doc_menu.append( cug_shtml_item )
+        cug_shtml_item.connect( 'activate', self.browse, '--view=html-single' )
+
+        doc_menu.append( gtk.SeparatorMenuItem() )
+
+        cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
+        doc_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.browse, '--view=local-index' )
+ 
+        cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        cug_www_item.set_image(img)
+        doc_menu.append( cug_www_item )
+        cug_www_item.connect( 'activate', self.browse, '--view=www-homepage' )
+ 
+        #cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
+        #img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+        #cug_www_item.set_image(img)
+        #doc_menu.append( cug_www_item )
+        #cug_www_item.connect( 'activate', self.browse, '--view=www-index' )
+
+        chelp_menu = gtk.ImageMenuItem( '_Command Help' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
         chelp_menu.set_image(img)
         help_menu.append( chelp_menu )
         self.construct_command_menu( chelp_menu )
 
-        help_menu.append( gtk.SeparatorMenuItem() )
 
-        cug_pdf_item = gtk.ImageMenuItem( '_PDF User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
-        cug_pdf_item.set_image(img)
-        help_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
-  
-        cug_html_item = gtk.ImageMenuItem( '_Multi Page HTML User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
-        cug_html_item.set_image(img)
-        help_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--html' )
-
-        cug_shtml_item = gtk.ImageMenuItem( '_Single Page HTML User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        cug_shtml_item.set_image(img)
-        help_menu.append( cug_shtml_item )
-        cug_shtml_item.connect( 'activate', self.browse, '--html-single' )
-
-        cug_www_item = gtk.ImageMenuItem( '_Internet Home Page' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_HOME, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        help_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--www' )
- 
-        help_menu.append( gtk.SeparatorMenuItem() )
- 
-        cug_clog_item = gtk.ImageMenuItem( 'Change _Log' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
-        cug_clog_item.set_image(img)
-        help_menu.append( cug_clog_item )
-        cug_clog_item.connect( 'activate', self.browse, '-g --log' )
- 
         about_item = gtk.ImageMenuItem( '_About' )
         img = gtk.image_new_from_stock(  gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU )
         about_item.set_image(img)
@@ -2587,7 +2625,7 @@ For more Stop options use the Control menu.""" )
         command = ( "cylc validate -v " + self.get_remote_run_opts() + \
                 " --notify-completion " + self.cfg.template_vars_opts + \
                 " " + self.cfg.suite )
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
@@ -2613,16 +2651,12 @@ For more Stop options use the Control menu.""" )
             self.gcapture_windows.append(foo)
             foo.run()
         else:
-            times = []
-            for option in ["'initial cycle time'", "'final cycle time'"]:
-                command = ( "cylc get-config" + self.get_remote_run_opts() + \
-                            " " + self.cfg.template_vars_opts + \
-                            " -i [visualization]" + option + " " + self.cfg.suite )
-                res, pieces = run_get_stdout( command )
-                if not res or not pieces:
-                    return False
-                times.append(pieces[0].strip())
-            graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
+            # don't bother getting [visualization] start and stop cycles
+            # from the suite definition to insert in the popup. The
+            # suite has to be parsed again for the graph and doing that
+            # twice is bad for very large suites. (We could provide a
+            # load button as the suite start popup does).
+            graph_suite_popup( self.cfg.suite, self.command_help, None, None,
                                self.get_remote_run_opts(), self.gcapture_windows,
                                self.cfg.cylc_tmpdir,
                                self.cfg.template_vars_opts,
@@ -2642,31 +2676,28 @@ For more Stop options use the Control menu.""" )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def run_suite_log( self, w ):
-        com = False
+    def run_suite_log( self, w, type='log' ):
         if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
-            com = True
+            if type == 'out':
+                xopts = ' --stdout '
+            elif type == 'err':
+                xopts == ' --stderr '
+            else:
+                xopts = ' '
+
             warning_dialog( \
 """The full-function GUI log viewer is only available
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
-                        " " + self.cfg.suite )
+                        xopts + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
             return
 
-        # just for local suites (so --host and --owner are not needed here)
-        command = "cylc get-config --mark-up -i [cylc][logging][directory] " + self.cfg.template_vars_opts + " " + self.cfg.suite 
-        res, lst = run_get_stdout( command, filter=True )
-        logging_dir = lst[0]
-        command = "cylc get-config --mark-up --tasks " + self.cfg.template_vars_opts + " " + self.cfg.suite
-        res, tasks = run_get_stdout( command, filter=True )
-        if res:
-            task_list = tasks
-        else:
-            task_list = []
-        foo = cylc_logviewer( 'log', logging_dir, task_list)
+        task_name_list = [] # To Do
+        # assumes suite out, err, and log are in the same location:
+        foo = cylc_logviewer( type, self.cfg.logdir, task_name_list )
         self.quitters.append(foo)
 
     def run_suite_view( self, w, method ):
@@ -2688,7 +2719,7 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
 
     def browse( self, b, option='' ):
         command = 'cylc documentation ' + option
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
 

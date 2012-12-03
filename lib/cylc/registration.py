@@ -19,7 +19,6 @@
 import os, sys, re
 import pickle
 import datetime, time
-from conf.CylcGlobals import local_regdb_path
 from regpath import RegPath
 from owner import user
 
@@ -30,6 +29,9 @@ from owner import user
 # cylc suite directory) too long for hardwired limits in the
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
+
+# location of the suite registration database:
+regdb_path = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
 
 class RegistrationError( Exception ):
     """
@@ -365,9 +367,7 @@ class regdb(object):
 
     def get_suite_title( self, suite, path=None ):
         # Attempt to determine the suite title without parsing the full
-        # suite definition file. This is quick, and it no cylc version
-        # pseudo backward compatibility checking is needed for suite 
-        # database commands.
+        # suite definition file.
         if path:
             suiterc = os.path.join( path, 'suite.rc' )
         else:
@@ -425,15 +425,17 @@ class regdb(object):
         return rcfiles
 
 class localdb( regdb ):
+    # TO DO: REABSORB THIS BACK INTO THE MAIN regdb CLASS
+    # (it dates back to when we had a central db as well).
+
     """
     Local (user-specific) suite registration database.
     """
 
-    # TO DO: REABSORB BACK INTO regdb CLASS
-
     def __init__( self, file=None, verbose=False):
+        global regdb_path
         if not file:
-            file = local_regdb_path
+            file = regdb_path
         dir = os.path.dirname( file )
         regdb.__init__(self, dir, file, verbose)
 

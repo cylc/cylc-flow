@@ -88,6 +88,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result( True )
 
+    def ping( self ):
+        return result( True )
+
     def ping_task( self, task_id ):
         # is this task running at the moment
         found = False
@@ -465,7 +468,6 @@ class remote_switch( Pyro.core.ObjBase ):
             self._warning( "Illegal logging level: " + level )
             return result( False, "Illegal logging level: " + level)
 
-        self.config[ 'logging level' ] = new_level
         self.log.setLevel( new_level )
         return result(True, 'OK')
 

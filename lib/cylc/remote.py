@@ -19,7 +19,7 @@
 import os, sys
 import subprocess
 
-from hostname import is_remote_host
+from suite_host import is_remote_host
 from owner import is_remote_user
 
 class remrun( object ):

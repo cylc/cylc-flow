@@ -18,7 +18,7 @@
 
 import re
 
-# Recursively pretty-print a nested dict tree structure.
+# Recursively pretty-print a nested dict as a tree
 
 # Plain ASCII tree characters
 a_hbar = '-'

@@ -22,17 +22,10 @@ if remrun().execute():
     sys.exit(0)
 
 import re
+from cylc.print_cfg import print_cfg
 from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
-
-def prdict( dct, level=0, indent=0, prefix='' ):
-    for key,val in dct.iteritems():
-        if isinstance( val, dict ):
-            print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
-            prdict( val, level=level+1, indent=indent+1, prefix=prefix)
-        else:
-            print prefix + '   '*indent + str(key) + ' = ' + str(val) 
 
 parser = cop( usage = """cylc [info] get-config [OPTIONS] REG
 
@@ -135,9 +128,8 @@ if options.tasks:
     sys.exit(0)
 
 if options.dpaths:
-    print prefix + "SUITE LOG DIRECTORY:\n ", config['cylc']['logging']['directory']
-    print prefix + "SUITE STATE DUMP DIRECTORY:\n ", config['cylc']['state dumps']['directory']
-    print prefix + "TASK LOG DIRECTORIES:"
+    print "SUITE RUN DIRECTORY:\n ", config['cylc']['suite run directory']
+    print "TASK LOG DIRECTORIES:"
     logdirs = {}
     root_ldir = config.get_config(['runtime','root','log directory'])
     ldirs = [root_ldir]
@@ -214,7 +206,7 @@ else:
             if options.pnative:
                 print prefix + d
             else:
-                prdict( d, level=len(args[1:]), prefix=prefix)
+                print_cfg( d, level=len(args[1:]), prefix=prefix)
         else:
             print prefix + str(d)
 

@@ -345,10 +345,10 @@ run time.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=1.0\textwidth]{screenshots/gcylc-db.png}
+        \includegraphics[width=1.0\textwidth]{screenshots/dbviewer.png}
     \end{center}
-\caption[The gcylc GUI]{\scriptsize
-The gcylc GUI, showing one suite running on port 7766.}
+\caption[The cylc dbviewer GUI]{\scriptsize
+The cylc dbviewer GUI, showing one suite running on port 7766.}
 \label{fig-db}
 \end{figure} 
 
@@ -554,24 +554,36 @@ Cylc typically installs into a normal user account; just unpack
 the release tarball in the desired location - which will be referred to
 below as  \lstinline=$CYLC_DIR=.
 
-\subsection{Configure Your Environment}
-\label{ConfiguringYourEnvironmentForCylc}
+\subsection{Site And User Configuration Files}
+\label{SiteAndUserConfiguration}
 
-The file \lstinline=$CYLC_DIR/cylc.profile= documents the environment
-configuration required for interactive cylc usage:
-
-\lstset{language=bash}
-\lstinputlisting{../cylc.profile}
-\lstset{language=transcript}
-
-Copy this into your \lstinline=.profile= login script and adapt
-appropriately for your environment. After sourcing your modified login
-script, or logging in again, you should be able to run cylc:
+Cylc uses site and user configuration files to set some important
+global parameters such as the range of network ports, and the editor
+to use on suite definitions, 
 
 \begin{lstlisting}
-% cylc --version
-x.y.z
+$CYLC_DIR/conf/site/site.rc  # site config file for global settings
+$HOME/.cylc/user.rc          # user config file for global settings
 \end{lstlisting}
+
+Site and user config files can be auto-generated, with all settings
+intially commented out, by running this command:
+\begin{lstlisting}
+% cylc get-global-config --write-site/--write-user
+\end{lstlisting}
+
+The content of both of these config files, in terms of legal items and
+default values, is defined by the {\em ConfigObj configspec} file,
+\begin{lstlisting}
+$CYLC_DIR/conf/site/cfgspec 
+\end{lstlisting}
+
+The site config file should be adapted to set sensible defaults for all
+users when cylc is installed.  Users can then override most settings in
+their own user config file, if necessary. Some settings can not be 
+overridden by users (this is determined by \lstinline=# SITE ONLY=
+comments in the configspec file, which are passed through to the config
+files). 
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
@@ -585,8 +597,9 @@ each one for use:
 \end{lstlisting}
 Where \lstinline=TOPDIR= is the top level directory into which the
 example suite definitions will be copied.
-To view the content of the resulting suite database, run gcylc or 
-use the \lstinline=cylc db print= command:
+To view the content of the resulting suite database, run 
+\lstinline=cylc db print= command or its GUI counterpart
+\lstinline=cylc db dbviewer=:
 
 \begin{lstlisting}
 % cylc db print --tree -x 'Auto|Quick'
@@ -679,7 +692,7 @@ cylc release, because of pre-release testing. If you find that some do
 fail, consider reporting this to cylc's maintainer or the cylc mailing
 list.
 
-\subsection{Complete Non-System-Level Installation}
+\subsection{Complete Non System-Level Installation}
 \label{LocalInstall}
 
 If you do not have root access to your host machine and cannot easily
@@ -710,10 +723,8 @@ under \lstinline=external/installed/=, e.g.:
 \begin{lstlisting}
 $HOME/external/installed/lib64/python2.6/site-packages/
 \end{lstlisting}
-The exact path will depend on your local Python environment.
-Configure your login script for the cylc environment as described in 
-Section~\ref{ConfiguringYourEnvironmentForCylc} above and add in 
-this new installation path; for example:
+The exact path will depend on your local Python environment. Add the
+following to your login scripts:
 \begin{lstlisting}
 # .profile
 PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
@@ -751,14 +762,12 @@ follows:
 % make install
 \end{lstlisting}
 This installs graphviz files into the bin, include, and lib
-sub-directories of your local installation directory. The local
-installation section of \lstinline=cylc.profile= (above) provides
-access to the graphviz executables in this bin directory, although you
-will probably not need to use them. The graphviz lib and include
-locations are required when installing Pygraphviz (next).
+sub-directories of your local installation directory. The graphviz lib
+and include locations are required when installing Pygraphviz (next).
 
-Note that the graphviz build may fail on systems that do not have QT
-installed, hence the \lstinline@./configure --with-qt=no@ option above.
+Note that the graphviz build, reportedly, may fail on systems that do
+not have QT installed, hence the \lstinline@./configure --with-qt=no@
+option above.
 
 \subsubsection{Pygraphviz}
 Install Pygraphviz under \lstinline=$CYLC_DIR/external/installed= as
@@ -892,13 +901,6 @@ to you):
      `-z        Quick Start Example Z | /tmp/oliverh/examples/QuickStart/z
 \end{lstlisting}
 
-\subsection{Configure Your Environment}
-
-To get access to cylc you just need to set a few environment variables
-in your login script, as described in
-Section~\ref{ConfiguringYourEnvironmentForCylc}.
-
-
 \subsection{View The examples.QuickStart.a Suite Definition}
 
 Cylc suites are defined by {\em suite.rc files}, discussed at length in
@@ -910,13 +912,13 @@ name and choose `Edit'; or use the edit command:
 % cylc edit examples.QuickStart.a
 \end{lstlisting}
 
-This opens the suite definition in your editor (\lstinline=$EDITOR=, or
-\lstinline=$GEDITOR= from gcylc) {\em from the suite definition
-directory so that you can easily open other suite files in the
-editor}. You can of course do this manually, but by using the cylc
-interface you don't have to remember suite definition directory
-locations. For the rare occasions that you do need to move to a 
-suite definition directory, you can do this:
+This opens the suite definition in your editor (configured in the cylc
+site or user config file - see Section~\ref{SiteAndUserConfiguration})
+{\em from the suite definition directory so that you can easily open
+other suite files in the editor}. You can of course do this manually,
+but by using the cylc interface you don't have to remember suite
+directory locations. If you do need to move to a suite definition
+directory, you can do this:
 \begin{lstlisting}
 % cd $( cylc db get-dir examples.QuickStart.a )
 \end{lstlisting}
@@ -980,7 +982,7 @@ The optional visualization section configures graph plotting.
 
 \subsection[Plotting examples.QuickStart.a]{Plotting The examples.QuickStart.a Dependency Graph}
 
-Right-click on the {\em examples.QuickStart.a} suite in gcylc and choose
+Right-click on the {\em examples.QuickStart.a} suite in the db viewer and choose
 Graph; or by command line,
 \begin{lstlisting}
 % cylc graph examples.QuickStart.a 2011052300 2011052318 &
@@ -1013,7 +1015,7 @@ Section~\ref{SuiteDefinition}):
 \end{lstlisting}
 The command arguments above reflect suite definition section nesting. 
 
-Now start a suite control GUI by right-clicking on the suite in gcylc
+Now start a suite control GUI by right-clicking on the suite in the db viewer
 and choosing Control $\rightarrow$ Graph View.  You can also open other control GUIs
 for the same suite if you like. Multiple GUIs running at the same time
 will automatically connect to the same running suite (they won't try to
@@ -1269,7 +1271,7 @@ And here, for example, is the complete implementation for the PostA task
 When cylc runs a suite it writes warnings and other informative messages,
 such as when and how each task is submitted, to the stdout stream. If 
 you start a suite at the command line you can direct this output wherever
-you like. If you start a suite via gcylc, however, the output is 
+you like. If you start a suite via the db viewer, however, the output is 
 directed to a special file,
 \lstinline=$HOME/.cylc/[SUITE].out= that can be accessed again later if
 you reconnect to the suite with a new control GUI.
@@ -1284,21 +1286,19 @@ you reconnect to the suite with a new control GUI.
 
 \subsubsection{Suite Logs}
 
-The cylc suite log records every event that occurs (incoming messages from tasks
-and so on) along with the time of the event. The top level logging directory,
-under which a suite-specific log is written, is configurable in the suite.rc file.
-Suite logs are (optionally) rolled over at start-up and the five most
-recent back ups are kept.
+The cylc suite log, under the suite running directory (see cylc's
+site and user config files)  records every event that occurs (incoming
+messages from tasks and so on) along with the time of the event. 
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{screenshots/suite-log.png}
     \end{center}
-\caption[ A cylc suite log viewed via gcylc.]{\scriptsize A cylc suite log viewed via gcylc.}
+\caption[ A cylc suite log from the db viewer.]{\scriptsize A cylc suite log from the db viewer.}
 \label{fig-suite-log}
 \end{figure}
 
-Figure~\ref{fig-suite-log} shows a suite log viewed from within gcylc. The 
+Figure~\ref{fig-suite-log} shows a suite log viewed from within db viewer. The 
 \lstinline=cylc log= command also enables viewing and filtering of suite logs
 without having to remember the actual log file location. But if you want 
 to know the location:
@@ -1318,6 +1318,7 @@ set by the root namespace).
 \subsubsection{Task stdout And stderr Logs}
 
 \lstset{language=transcript}
+
 The stdout and stderr logs generated when a task is submitted end up in
 the suite.rc {\em job submission log directory}, default location
 \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job/= (where the
@@ -1375,7 +1376,7 @@ FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
    (6): cylc checkvars -c GETDATA_OUTPUT_DIR
    (11): touch $GETDATA_OUTPUT_DIR/obs-${CYLC_TASK_CYCLE_TIME}.nc
 \end{lstlisting}
-(Suite search is also available from the gcylc right-click menu).
+(Suite search is also available from the db viewer right-click menu).
 \lstset{language=transcript}
 
 \subsection{Comparing Suites}
@@ -1425,7 +1426,7 @@ Appendix~\ref{SuiteRCReference}).
 Suite validation checks for errors by parsing the suite definition,
 comparing all items against the suite.rc specification file, and then
 parsing the suite graph and attempting to instantiate all task proxy
-objects. This can be done using gcylc or \lstinline=cylc validate=:
+objects. This can be done using the cylc GUIs or \lstinline=cylc validate=:
 \lstset{language=transcript}
 \begin{lstlisting}
 % cylc validate -v foo.bar
@@ -1581,8 +1582,8 @@ client/server communication works and how to use it.
 Each user has a suite database that associates registered suite names
 with their respective suite definition directory locations. Hierarchical
 suite names stored in the database can be displayed in a tree structure.
-By right-clicking on a suite in your database, from within gcylc, or
-using cylc commands, you can:
+By right-clicking on a suite in your database, from within the db
+viewer, or using cylc commands, you can:
 \begin{myenumerate}
     \item start a suite control GUI to run the suite (or connect to a running suite),
     \item submit a single task to run, just as it would be submitted by its suite
@@ -1602,12 +1603,12 @@ using cylc commands, you can:
     \item reregister the suite or group.
 \end{myenumerate}
 
-Note that the suite title shown in gcylc is parsed from the suite.rc
+Note that the suite title shown in the db viewer is parsed from the suite.rc
 file at the time of initial registration; if you change the title (by
-editing the suite.rc file) use \lstinline=cylc db refresh= or gcylc 
+editing the suite.rc file) use \lstinline=cylc db refresh= or the db viewer's 
 View $\rightarrow$ Refresh to update the database.
 
-The default user suite database file is \lstinline=$HOME/.cylc/DB=.
+The user suite database file is \lstinline=$HOME/.cylc/DB=.
 
 \subsection{Database Operations}
 
@@ -1640,7 +1641,7 @@ a directory tree, under the target directory, that reflects the
 registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
 The same functionality is also available by right-clicking on suites
-or suite groups in the gcylc GUI, as shown in Figure~\ref{fig-db}.
+or suite groups in the db viewer GUI, as shown in Figure~\ref{fig-db}.
 
 %\pagebreak
 \section{Suite Definition} 
@@ -1878,8 +1879,8 @@ configuration items grouped under several top level section headings:
 \label{Validation}
 
 Cylc suite.rc files are automatically validated against a specification
-file that defines all legal entries, values, options, and defaults 
-(\lstinline=$CYLC_DIR/conf/suiterc.spec=). This detects any formatting
+that defines all legal entries, values, options, and defaults 
+(held in \lstinline=$CYLC_DIR/conf/suiterc/=). This detects any formatting
 errors, typographic errors, illegal items and illegal values prior to 
 run time. Some values are complex strings that require further parsing
 by cylc to determine their correctness (this is also done during
@@ -1903,7 +1904,7 @@ If the suite.rc file contains include-files you can use
 
 Validation does not check the validity of chosen job submission methods;
 this is to allow users to extend cylc with their own job submission 
-methods, which are by definition unknown to the suiterc.spec file.
+methods, which are by definition unknown to the suite.rc spec.
 
 
 \subsection{Scheduling - Dependency Graphs}
@@ -3589,7 +3590,11 @@ bob
 \lstset{language=suiterc}
 Note also that 
 \lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
-suite with Jinja2 variables worked out.
+suite with the Jinja2 variables as set.
+
+{\em Warning:} suites started with template variables set on the command
+line do not currently {\em restart} with the same settings - you have to 
+set them again on the \lstinline=cylc restart= command line.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}
@@ -3710,7 +3715,7 @@ treatment is required at all:
                                echo BYE""" 
     [[baz]]
         description = a task that runs baz.sh and retries on failure
-        retry delays = 1,1
+        retry delays = 3*1 # or 1,1,1
         command scripting = """echo attempt No. $CYLC_TASK_TRY_NUMBER
                                baz.sh"""
 \end{lstlisting}
@@ -4501,7 +4506,7 @@ the real tasks) move through a series of defined states:
         delays'' item (a list of delay intervals in minutes), then if it
         fails it will be put in this state for the specified interval
         and then resubmitted after incrementing the task try number. 
-        A task only enters the final ``failed'' state if the last retry fails.
+        A task only enters the final ``failed'' state if the last try fails.
 
     \item two finished states:
         \begin{myitemize}
@@ -4565,7 +4570,7 @@ with running suites (cylc servers):
         occurs on the suite host.
 \end{myenumerate}
 For the Pyro connection method to work the right network ports must be
-open (cylc starts grabbing ports at port 7766 by default.\footnote{The
+open (cylc starts grabbing ports at number 7766 by default.\footnote{The
 Pyro port range is configured in
 \lstinline=$CYLC_DIR/conf/CylcGlobals.py=.}) and there must be network
 routing between the involved hosts.
@@ -4643,6 +4648,27 @@ would then presumably be impossible, but:
     \item It has been suggested that some kind of network {\em port
         forwarding} could provide a possible solution ...
 \end{myitemize}
+
+
+
+\subsection{Determining The Suite Network Port}
+
+All Pyro communication with a running suite requires knowing the network
+port on which the suite is listening. Running tasks know their own
+suite's port number because the suite puts it in the task execution
+environment, but user commands must determine the port number somehow.
+Through to the 4.5.1 release, inclusive, cylc used port scanning to find
+the target port, but this could potentially cause delays on hosts
+with a large number of suites running at once. Consequently suites now
+write their own port number to \lstinline=$HOME/.cylc/ports/<SUITE>= at
+start-up, and commands issued on the suite host read this file to get
+the port number. Commands issued on a remote host use passwordless ssh 
+to the suite owner account to retrieve the port number. Alternatively,
+if passwordless ssh is not configured to the suite host the port number
+can be given on the command line with the \lstinline=--port= option. 
+If you accidentally delete a suite's port file while the suite is still
+running, use \lstinline=cylc scan= to determine the port number to 
+use on the command line.
 
 
 \subsection{Job Submission, Ensemble Suites, And Network Timeouts}
@@ -5016,107 +5042,6 @@ cycle, and because no actual previous state is referenced
 \lstinline=None=. After a cold-start, however, the value of the 
 environment variable does persist across restarts because the original
 cold-start cycle time is stored in suite state dump files. 
-
-\subsection{Cylc Version Re-invocation (Pseudo Backward Compatibility)}
-\label{compat}
-
-It may not be convenient for users to upgrade all of their suites at
-once when a new cylc release is installed. As of cylc-4.2.0 any installed
-version of cylc can act as a transparent front end to any other installed
-version that is installed in parallel (i.e. in the same location) with
-the invoked version. Technically this also provides pseudo forward
-compatibility.  New-version suites can therefore be worked on at the
-same time as older suites that have yet to be upgraded, without the user 
-reconfiguring his environment or having to explicitly invoke different
-cylc versions for different suites. Since \lstinline=cylc-4.5.0= this
-applies to commands that connect to running suites as well as those that
-parse suite definitions.
-
-The required cylc version must be specified on the {\em first line} of a
-non-Jinja2 suite definition:
-\lstset{language=suiterc}
-\begin{lstlisting}
-#!cylc-4.2.0
-# suite definition follows ...
-\end{lstlisting}
-or on the {\em second line} for Jinja2 suites:
-\begin{lstlisting}
-#!Jinja2
-#!cylc-4.2.0
-# suite definition follows ...
-\end{lstlisting}
-This results in the right cylc version being used for any
-suite-referencing command, e.g.:
-\lstset{language=transcript}
-\begin{lstlisting}
-% cylc validate foo
---------------------------------------------------------
-Cylc version re-invocation:
-  Invoked version: cylc-4.2.0 (/home/oliverh/cylc-4.2.0)
-  Suite requires:  cylc-4.2.1
-(assuming parallel cylc installations)
-=> Re-issuing command using /home/oliverh/cylc-4.2.1
---------------------------------------------------------
-Suite foo is valid for cylc-4.2.1
-\end{lstlisting}
-Note that non suite-referencing commands necessarily execute exactly as
-invoked. This includes all command line help so it is advisable, although 
-not strictly necessary, to keep your login environment configured for
-the latest cylc version.
-
-If the required cylc version is not installed the command will abort 
-and you will have to upgrade the suite definition for compatibility
-with an installed version: use \lstinline=cylc validate= and the {\em
-Suite.rc Reference} (Appendix~\ref{SuiteRCReference}) to identify
-problems, and consult the cylc change log to see what changed between
-versions.
-
-\subsubsection{Explicit Cylc Version Reinvocation}
-
-Other cylc versions can be specified explicitly on the command line,
-\lstinline=cylc -V x.y.z= (capital V). This feature works for
-versions 4.5.0 and later.
-
-\subsubsection{Available Cylc Versions}
-
-To list available cylc versions installed in parallel with the
-invoked version: \lstinline=cylc -V avail= (capital V).
-
-\subsubsection{Limitations}
-
-The top level command interface, \lstinline=$CYLC_DIR/bin/cylc=,
-determines the legality of requested sub-command names so any attempt to
-run a sub-command that no longer exists in the invoked version.
-Additionally, the command line must be parsed first by the sub-command
-of the invoked version in order to determine which command line argument
-references the suite (the suite name is always the first non-option
-argument but only sub-commands know if other options have their own
-arguments or are just logical flags, and can therefore determine which
-is the first true argument); consequently any attempt to use a command
-option that is illegal in the invoked version of cylc will also fail.
-
-Finally, note that the task messaging commands are exempt from version 
-compatibility checking, to avoid the overhead while a suite is running.
-
-\subsubsection{A Usage Suggestion}
-
-You can use the Jinja2 template processor (see Section~\ref{Jinja2}) to
-store the required cylc version in a single variable that can also be  
-used elsewhere in the suite definition - to specify the cylc version to
-use on a remote task host, for example:
-\lstset{language=suiterc}
-\begin{lstlisting}
-#!Jinja2
-{% set CYLC_VERSION = "cylc-4.2.2" %}
-#!{{CYLC_VERSION}}
-
-#...
-[runtime]
-   [[on_hpc]]
-       [[[remote]]]
-           cylc directory = /path/to/cylc/top/dir/{{CYLC_VERSION}}
-\end{lstlisting}
-\lstset{language=transcript}
 
 
 \subsection{The Simulation And Dummy Run Modes} 
@@ -5698,7 +5623,7 @@ The only compulsory content of a cylc suite definition directory is the
 suite.rc file (and you'll almost certainly have a suite
 \lstinline=bin= sub-directory too). However, you can store whatever you
 like in a suite definition directory;\footnote{If you copy a suite using
-cylc commands or gcylc, the entire suite definition directory
+cylc commands or db viewer the entire suite definition directory
 will be copied.} other files there will be ignored by cylc but
 suite tasks can access them via the
 \lstinline=$CYLC_SUITE_DEF_PATH= variable that cylc automatically 
@@ -5931,12 +5856,12 @@ direct network socket communication between client programs and their
 target suites - all suites are thus entirely isolated from one another. 
 
 
-\section{Acknowledgements}
+\section{Contributors}
 
-Bernard Miville and Phil Andrews (NIWA) for discussion, bug finding, and
-many suggestions that have improved cylc's usability and functionality;
-David Matthews and Matthew Shin (Met Office UK) for the same, and much
-code development as well.
+Significant contributions to cylc development have been made, to date,
+by the following people: Hilary Oliver, Bernard Miville and Phil Andrews
+(NIWA); Dave Matthews, Matt Shin, Ben Fitzpatrick, and Andrew Clark (Met
+Office UK); and Luis Kornblueh (MPI).
 
 \section{GNU GENERAL PUBLIC LICENSE v3.0}
 \input{gpl-3.0}

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
@@ -16,9 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This script allows gcylc to be invoked via the command line interface
-# (cylc gcylc) and thereby allows it to be incorporated into
-# the standard command line self-documentation.
+def print_cfg( dct, level=0, indent=0, prefix='' ):
+    """Recursively print a nested dict as a configobj style structure"""
+    for key,val in dct.iteritems():
+        if isinstance( val, dict ):
+            print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
+            print_cfg( val, level=level+1, indent=indent+1, prefix=prefix)
+        else:
+            print prefix + '   '*indent + str(key) + ' = ' + str(val) 
 
-echo "Note that you can invoke gcylc directly."
-gcylc $@

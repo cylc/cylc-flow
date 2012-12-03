@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cylc.hostname import hostname
+from cylc.suite_host import hostname
 from optparse import OptionParser
 from time import sleep
 from cylc.cycle_time import ct, CycleTimeError

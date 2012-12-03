@@ -50,7 +50,8 @@ if verbosity not in vchoices:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'remote' )
+            options.host, options.pyro_timeout, options.port,
+            options.verbose ).get_proxy( 'remote' )
 except Exception, x:
     if options.debug:
         raise
