@@ -118,7 +118,7 @@ class tupdater(threading.Thread):
         theme = usercfg['use theme']
         dotm = DotMaker( self.usercfg['themes'][theme])
         self.dots = {}
-        for state in task_state.allowed_status:
+        for state in task_state.legal:
             self.dots[ state ] = dotm.get_icon( state )
         self.dots['empty'] = dotm.get_icon()
 
@@ -514,7 +514,7 @@ class lupdater(threading.Thread):
         theme = self.usercfg['use theme']
         dotm = DotMaker( self.usercfg['themes'][theme])
         self.dots = {}
-        for state in task_state.allowed_status:
+        for state in task_state.legal:
             self.dots[ state ] = dotm.get_icon( state )
         self.dots['empty'] = dotm.get_icon()
 

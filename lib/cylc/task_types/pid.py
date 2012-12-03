@@ -56,8 +56,8 @@ class pid(object):
         if self.has_spawned():
             return False
 
-        if self.state.is_waiting() or self.state.is_queued() or \
-                self.state.is_submitted():
+        if self.state.is_currently('waiting') or self.state.is_currently('queued') or \
+                self.state.is_currently('submitted'):
             # Never spawn a task of this type if it hasn't started
             # running yet - the successor's restart prerequisites
             # could get satisfied by the restart outputs of an earlier
@@ -66,13 +66,13 @@ class pid(object):
             # suite operator).
             return False
 
-        if self.state.is_succeeded():
+        if self.state.is_currently('succeeded'):
             # Always spawn succeeded tasks (probably unnecessary, they
             # will have spawned already).
             return True
 
         ready = False
-        if self.state.is_running() or self.state.is_failed(): 
+        if self.state.is_currently('running') or self.state.is_currently('failed'): 
             # Failed tasks were necessarily running before failure, so
             # they will have spawned already, or not, according to
             # whether they failed before or after completing their
