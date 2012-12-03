@@ -1056,7 +1056,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
     \caption[Suite {\em examples.QuickStart.a} at start-up, 00 or 12
     hours]{\scriptsize Suite {\em examples.QuickStart.a} at start-up with an
     initial cycle time ending in 00 or 12 hours. Yellow nodes represent 
-    waiting tasks in the held state and off-white nodes are tasks from
+    waiting tasks in the held state and greyed out nodes are tasks from
     the base graph, defined in the suite.rc file, that aren't currently
     live in the suite.}
     \label{fig-QuickStartA-ControlStart00}
@@ -1066,7 +1066,7 @@ The reason for the difference in graph structure between the two figures
 is this: cylc starts up with every task present in the waiting
 state (blue) at the initial cycle time {\em or} at the first
 subsequent valid cycle time for the task - and PostB does not run at 00
-or 12. The off-white tasks are from the base graph, defined in the 
+or 12. The greyed out tasks are from the base graph, defined in the 
 suite.rc file, and aren't actually present in the suite as yet (they
 are shown in the graph in order to put the live tasks in context).
 
@@ -1153,11 +1153,12 @@ this properly shortly.
 
 \subsubsection{Suite Shut-Down And Restart}
 
-Having watched the {\em examples.QuickStart.a} suite run for a while, choose
-Stop from the Control menu, or \lstinline=cylc stop=, to shut it down.
-The default stop method waits for any tasks that are currently running
-to finish before shutting the suite down, so that the final recorded
-suite state is perfectly consistent with what actually happened.  
+After watching the {\em examples.QuickStart.a} suite run for a while
+choose Stop from the Control menu, or \lstinline=cylc stop=, to shut it
+down.  The default stop method waits for any tasks that are currently
+running to finish before shutting the suite down, so that the final
+recorded suite state is perfectly consistent with what actually
+happened.  
 
 You can restart the suite from where it left off by choosing 
 Control $\rightarrow$ Run and selecting the `restart' option, or using
@@ -1165,6 +1166,7 @@ Control $\rightarrow$ Run and selecting the `restart' option, or using
 state dump, and logs its name, prior to actioning any intervention, and
 you can also restart a suite from one of these states, rather than the 
 default most recent state.
+
 
 \subsection{examples.QuickStart.b - Handling Cold-Starts Properly}
 
@@ -4482,6 +4484,26 @@ This section may be incomplete - please see also the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
 (Section~\ref{CommandReference}), and play with the example suites.
 
+\subsection{Restarting Suites}
+
+A restarted suite (see \lstinline=cylc restart --help=) is initialized
+from a previous recorded suite state dump, so that it can carry on from
+wherever it got to before being shut down or killed.
+
+Prior to cylc-5.0 any tasks recorded in the submitted or running states
+were automatically resubmitted on restarting, on the basis that they
+might not have completed while the suite was down and so should re-run
+just to be safe. Similarly, any tasks recorded as failed were
+automatically resubmitted on the basis that whatever caused them to fail
+might have been fixed while the suite was down. 
+
+Since cylc-5.0 we no longer assume anything on restarting - task
+proxies are now loaded in exactly their recorded states and it is up to
+users to intervene in restarted suites according to their knowledge of
+what happened to the real tasks at or after suite shutdown (e.g.\ by
+re-triggering task proxies shown in the running state if the
+corresponding real tasks are actually not still running).
+
 \subsection{Task States}
 
 As a suite runs its tasks (or rather the task proxies that represent 
@@ -4551,7 +4573,7 @@ Finally, you may see references to the following pseudo states:
         of its prerequisites satisfied - i.e.\ ready to run (except 
          clock-triggered tasks, which also wait on a trigger time).
 
-    \item {\bf base} (Graph Control GUI only) - off-white base graph
+    \item {\bf base} (Graph Control GUI only) - greyed out base graph
         nodes do not represent current live task proxies in the suite,
         they just connect the current live nodes according to the
         full suite graph.
@@ -5777,7 +5799,7 @@ jumping layout problem:
     \item The disconnect button can be used to temporarily prevent the
         graph from changing as the content of the suite changes (and
         in real time operation suites evolve quite slowly anyway)
-    \item In most suites, toggling the off-white ``base graph'' nodes
+    \item In most suites, toggling the greyed-out ``base graph'' nodes
         (which do not represent current live task proxies and are just
         present to fill out the graph structure) will dramatically
         reduce the size of the graph (but it will split into several
