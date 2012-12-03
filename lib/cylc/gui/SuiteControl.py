@@ -2115,8 +2115,9 @@ or remove task definitions without restarting the suite."""
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        key_item = gtk.ImageMenuItem( "Task state key" )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
+        key_item = gtk.ImageMenuItem( "Show task state key" )
+        dots = DotMaker( self.theme )
+        img = dots.get_image( "running" )
         key_item.set_image(img)
         self._set_tooltip( key_item, "The meaning of each task state color" )
         self.view_menu.append( key_item )
@@ -2640,7 +2641,7 @@ For more Stop options use the Control menu.""" )
     def popup_key( self, b ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Task State Theme Key" )
+        window.set_title( "" )
         window.set_transient_for( self.window )
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
