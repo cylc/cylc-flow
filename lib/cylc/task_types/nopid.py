@@ -41,8 +41,8 @@ class nopid(object):
         if self.has_spawned():
             return False
 
-        if self.state.is_submitted() or self.state.is_running() or \
-                self.state.is_succeeded() or self.state.is_failed():
+        if self.state.is_currently('submitted') or self.state.is_currently('running') or \
+                self.state.is_currently('succeeded') or self.state.is_currently('failed'):
             return True
         else:
             return False
