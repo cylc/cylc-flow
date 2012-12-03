@@ -1,12 +1,18 @@
 
-# To customize your gcylc task state color palettes copy this file to
-# $HOME/.cylc/gcylc.rc and adapt to your needs. Then to see what themes 
-# are available: 'gcylc -l|--list-themes'.
+# To customize your gcylc task state color themes:
+#   1) copy this file to $HOME/.cylc/gcylc.rc
+#   2) add new named themes to it by
+#    (a) defining all colors yourself (see $CYLC_DIR/conf/gcylcrc/themes.rc)
+#      or
+#    (b) inheriting from an existing theme and overriding specific
+#     colors (see the "PinkRun" example below).
+#   3) To see what themes are available (built-in and your own) type
+#   'gcylc -l|--list-themes', or use the View  menu at run time.
 
-use theme = my_theme
+use theme = PinkRun # set the default theme to use at start-up
 
 [themes]
-    [[my_theme]] # override the 'running' color in the 'classic' theme
+    [[PinkRun]] # override the 'running' color in the 'classic' theme
         inherit = classic
         running = "color=#ff00ff" # magenta
 
