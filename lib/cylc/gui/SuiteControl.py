@@ -47,6 +47,7 @@ from cylc_logviewer import cylc_logviewer
 from textload import textload
 from datetime import datetime
 from gcapture import gcapture_tmpfile
+from cylc.task_state import task_state
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -177,7 +178,6 @@ Class to create an information bar.
         eb = gtk.EventBox()
         eb.add( self.block_widget )
         hbox.pack_end( eb, False )
-
 
     def set_theme( self, theme ):
         self.dots = DotMaker( theme )
@@ -310,6 +310,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.usercfg = usercfg
         self.theme_name = usercfg['use theme'] 
         self.theme = usercfg['themes'][ self.theme_name ]
+        self.key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
 
         self.setup_icons()
 
@@ -420,6 +421,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.switch_view( self.current_views[view_num].name, view_num, force=True )
         self.info_bar.set_theme( self.theme )
         self.info_bar._set_state_widget() # (to update info bar immediately)
+        self.set_key_liststore()
         return False
 
     def _cb_change_view0_menu( self, item ):
@@ -2113,6 +2115,13 @@ or remove task definitions without restarting the suite."""
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
+        key_item = gtk.ImageMenuItem( "Task state key" )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
+        key_item.set_image(img)
+        self._set_tooltip( key_item, "The meaning of each task state color" )
+        self.view_menu.append( key_item )
+        key_item.connect( 'activate', self.popup_key )
+
         theme_item = gtk.ImageMenuItem( 'Theme' )
         img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
         theme_item.set_image(img)
@@ -2627,6 +2636,43 @@ For more Stop options use the Control menu.""" )
     def create_info_bar( self ):
         self.info_bar = InfoBar( self.cfg.host, self.theme,
                                  self._alter_status_toolbar_menu )
+
+    def popup_key( self, b ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Task State Theme Key" )
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+
+        vbox = gtk.VBox()
+
+        treeview = gtk.TreeView( self.key_liststore )
+        treeview.set_headers_visible(False)
+        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
+        tvc = gtk.TreeViewColumn( None )
+
+        self.set_key_liststore()
+
+        cellpb = gtk.CellRendererPixbuf()
+        cell = gtk.CellRendererText()
+
+        tvc.pack_start( cellpb, False )
+        tvc.pack_start( cell, True )
+
+        tvc.set_attributes( cellpb, pixbuf=1 )
+        tvc.set_attributes( cell, text=0 )
+
+        treeview.append_column( tvc )
+
+        window.add( treeview )
+        window.show_all()
+
+    def set_key_liststore( self ):
+        dotm = DotMaker( self.theme )
+        self.key_liststore.clear()
+        for state in task_state.allowed_status:
+            dot = dotm.get_icon( state )
+            self.key_liststore.append( [ state, dot ] )
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer
