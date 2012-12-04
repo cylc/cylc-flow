@@ -21,11 +21,10 @@
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
-import re, os, sys, logging
+import re, os, sys
 import taskdef
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from collections import deque
 from OrderedDict import OrderedDict
 from cycle_time import ct, CycleTimeError
 from mkdir_p import mkdir_p
