@@ -36,15 +36,17 @@ Restart a cylc suite from a previous recorded state (to start from
 scratch see the 'cylc run' command).
 
 The most recent previous state is loaded by default, but other states
-can be specified on the command line (e.g. cylc write special state
+can be specified on the command line (e.g. cylc writes special state
 dumps and logs their filenames before actioning intervention commands).
 
-WARNING: task proxies are now loaded in *exactly* their recorded states.
-This means, in particular, that task proxies in the 'submitted'
-and 'running' states on start-up are unlikely to reflect the actual
-state of the associated real tasks. You may need to do some manual
-triggering according to your knowledge of what happened to the real
-tasks at or after suite shutdown.
+WARNING: for maximum flexibility, and to avoid automatic re-submission
+of tasks that may not need re-running, task proxies are now loaded with
+states *exactly* as recorded in the suite state dump file. This means
+that task proxies loaded in the 'submitted' and 'running' states will
+not reflect the actual states of their associated real tasks - unless
+they really are still running. You may need to do some manual state
+resetting or triggering according to your knowledge of what happened to
+the real tasks at or after suite shutdown.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     nohup cylc [con] restart SUITE > suite.out 2> suite.err &
