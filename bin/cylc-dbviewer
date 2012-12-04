@@ -30,6 +30,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
 from cylc.global_config import globalcfg
+from cylc.suite_logging import suite_log
 from cylc.gui.db_viewer import MainApp
 
 parser = cop( """cylc [db] dbviewer [OPTIONS]
@@ -57,8 +58,8 @@ parser.add_option( "--pyro-timeout", metavar='SEC',
 os.chdir(os.environ['HOME'])
 
 globals = globalcfg()
-cylc_tmpdir = globals.cfg['temporary directory']
+tmpdir = globals.cfg['temporary directory']
 
-app = MainApp( options.db, options.db_owner, cylc_tmpdir, options.pyro_timeout )
+app = MainApp( options.db, options.db_owner, tmpdir, options.pyro_timeout )
 gtk.main()
 

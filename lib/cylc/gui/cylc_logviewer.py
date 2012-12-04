@@ -30,12 +30,12 @@ class cylc_logviewer( logviewer ):
  
     def __init__( self, name, dir, task_list ):
         self.task_list = task_list
-        self.main_log = 'log'
+        self.main_log = name
         self.level = 0
         self.task_filter = None
         self.custom_filter = None
 
-        logviewer.__init__( self, name, dir, self.main_log, 
+        logviewer.__init__( self, name, dir, name, 
                 warning_re = 'WARNING', critical_re = 'CRITICAL' )
 
     def create_gui_panel( self ):

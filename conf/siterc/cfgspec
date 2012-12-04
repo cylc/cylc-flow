@@ -27,6 +27,11 @@
 # value to None to get the default system temp dir (usually $TMPDIR).
 temporary directory = string( default=None )
 
+# The top level directory for all suite and task (job) logs, etc. 
+run directory = string( default="$HOME/cylc-run" )
+
+state dump rolling archive length = integer( min=1, default=10 )
+
 # Task messaging settings apply to the "cylc task COMMAND" commands 
 # used by running tasks to communicate with their parent suite. If a
 # message send fails after the configured number of tries the task will 
@@ -39,6 +44,12 @@ temporary directory = string( default=None )
     # minutes) - until cylc has network request handling in a
     # separate thread (see User Guide "Network Connection Timeouts").  
     connection timeout in seconds = float( min=1, default=None )
+
+# suites logs go under the suite run directory
+[suite logging]
+    roll over at start-up = boolean( default=True )
+    rolling archive length = integer( min=1, default=5 )
+    maximum size in bytes = integer( min=1000, default=1000000 )
 
 # The "cylc doc" command and GUI Help menus need the following items.
 [documentation]

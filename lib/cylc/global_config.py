@@ -169,17 +169,23 @@ class globalcfg( object ):
         # now replace the original item
         self.cfg['temporary directory'] = cylc_tmpdir
 
-        # expand out environment variables and ~user in file paths
+        # expand environment variables and ~user in file paths
         for key,val in self.cfg['documentation']['files'].items():
             self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))
 
-        # expand out $HOME in ports file directory
-        self.cfg['pyro']['ports directory'] = os.path.expandvars( self.cfg['pyro']['ports directory'] )
+        # expand variables in some directory paths, and create if necessary.
+        self.cfg['run directory'] = self.proc_dir( self.cfg['run directory'] )
+        self.cfg['pyro']['ports directory'] = self.proc_dir( self.cfg['pyro']['ports directory'] )
+
+    def proc_dir( self, path ):
+        # expand environment variables and create dir if necessary.
+        path = os.path.expandvars( os.path.expanduser( path ))
         try:
-            mkdir_p( self.cfg['pyro']['ports directory'] )
+            mkdir_p( path )
         except Exception, x:
             print >> sys.stderr, x
-            raise SuiteConfigError, 'ERROR, illegal dir? ' + self.cfg['pyro']['ports directory']
+            raise SystemExit( 'ERROR, illegal path? ' + dir )
+        return path
 
     def validate( self, cfg ):
         # validate against the cfgspec and load defaults

@@ -32,16 +32,21 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [OPTIONS] ARGS
 
-Restart a cylc suite from a previous state.
-(To start a suite from a specific cycle time, see 'cylc run REG').
+Restart a cylc suite from a previous recorded state (to start from
+scratch see the 'cylc run' command).
 
-The most recent previous state is used by default but other state dumps
-can be specified on the command line (e.g. cylc writes a special state
-dump and logs its filename before actioning any intervention command).
+The most recent previous state is loaded by default, but other states
+can be specified on the command line (e.g. cylc writes special state
+dumps and logs their filenames before actioning intervention commands).
 
-By default any tasks recorded in the 'submitted', 'running', or 'failed'
-states will be automatically resubmitted on restart; and any tasks in
-the 'held' state will be released.
+WARNING: for maximum flexibility, and to avoid automatic re-submission
+of tasks that may not need re-running, task proxies are now loaded with
+states *exactly* as recorded in the suite state dump file. This means
+that task proxies loaded in the 'submitted' and 'running' states will
+not reflect the actual states of their associated real tasks - unless
+they really are still running. You may need to do some manual state
+resetting or triggering according to your knowledge of what happened to
+the real tasks at or after suite shutdown.
 
 NOTE: daemonize important suites with the POSIX nohup command:
     nohup cylc [con] restart SUITE > suite.out 2> suite.err &
@@ -58,14 +63,6 @@ the remote host before starting the suite."""
    ( "[FILE]", """Optional state dump file, assumed to reside in the
                         suite state dump directory unless an absolute path
                         is given. Defaults to the most recent suite state.""")]) 
-
-        self.parser.add_option( "--no-reset", 
-            help="Do not reset failed tasks to ready on restarting",
-            action="store_true", default=False, dest="no_reset" )
-
-        self.parser.add_option( "--no-release", 
-            help="Do not release held tasks on restarting.",
-            action="store_true", default=False, dest="no_release" )
 
         self.parser.add_option( "--ignore-final-cycle", 
             help="Ignore the final cycle time in the state dump. If one is"
@@ -88,9 +85,6 @@ the remote host before starting the suite."""
 
         self.suite_dir = os.path.dirname( self.suiterc )
 
-        self.no_reset = False
-        if self.options.no_reset:
-            self.no_reset = True
         self.restart_from = None
         if len( self.args ) == 2:
             self.restart_from = self.args[1]
@@ -106,12 +100,6 @@ the remote host before starting the suite."""
         self.verbose = self.options.verbose
 
         set_main_debug( self.options.debug )
-
-    def add_to_banner( self ):
-        if self.restart_from:
-            self.banner['RESTART'] = self.restart_from
-        else:
-            self.banner['RESTART' ] = 'previous state'
 
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
@@ -306,6 +294,26 @@ the remote host before starting the suite."""
             tasknames[name] = True
             taskstates[id] = (name, tag, state )
 
+        # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
+        # 
+        # The current state of task prerequisites and outputs is not
+        # recorded in the suite state dump. On suite restart we set them
+        # according task state.  The default state of a new task proxy
+        # is 'waiting' with prerequisites unsatisfied and no outputs
+        # completed.
+        #
+        # 'waiting'    - nothing to do
+        # 'held'       - ditto (only waiting tasks can be held)
+        # 'runahead'   - ditto (runahead tasks are waiting tasks on hold)
+        #
+        # 'submitted'  - prerequisites satisfied, outputs not completed
+        # 'running'    - ditto
+        # 'queued'     - ditto (only tasks ready to run get queued)
+        # 'failed'     - ditto (tasks must be ready to run in order to fail)
+        # 'retry_delayed' - ditto (tasks must fail in order to retry)
+        #
+        # 'succeeded'  - prerequisites satisfied, outputs completed
+
         initial_task_list = tasknames.keys()
         task_list = self.filter_initial_task_list( initial_task_list )
 
@@ -314,8 +322,8 @@ the remote host before starting the suite."""
             if name not in task_list:
                 continue
 
-            # startup=True only for cold start
             try:
+                # startup is True only for a cold start
                 itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
             except Exception, x:
                 print >> sys.stderr, x
@@ -323,35 +331,20 @@ the remote host before starting the suite."""
                 print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
                 continue
 
-            if itask.state.is_succeeded():  
-                # must have satisfied prerequisites and completed outputs
-                itask.log( 'NORMAL', "starting in SUCCEEDED state" )
+            # see comments above on resurrecting tasks
+            if itask.state.is_currently('waiting') or itask.state.is_currently('held') or itask.state.is_currently('runahead'):
+                pass
+
+            elif itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently('queued') or \
+                    itask.state.is_currently('failed') or itask.state.is_currently('retry_delayed'):  
+                itask.prerequisites.set_all_satisfied()
+
+            elif itask.state.is_currently('succeeded'):  
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
 
-            elif itask.state.is_submitted() or itask.state.is_running():  
-                # Must have satisfied prerequisites. These tasks may have
-                # finished after the suite was shut down, but as we
-                # can't know that for sure we have to re-submit them.
-                itask.log( 'NORMAL', "starting in READY state" )
-                itask.state.set_status( 'waiting' )
-                itask.prerequisites.set_all_satisfied()
-
-            elif itask.state.is_failed():
-                # Re-submit these unless the suite operator says not to. 
-                if self.no_reset:
-                    itask.log( 'WARNING', "starting in FAILED state: manual reset required" )
-                    itask.prerequisites.set_all_satisfied()
-                else:
-                    itask.log( 'NORMAL', "starting in READY state" )
-                    itask.state.set_status( 'waiting' )
-                    itask.prerequisites.set_all_satisfied()
-
-            elif itask.state.is_held() and not self.options.no_release:
-                # Release held tasks unless told not to do so. 
-                itask.log( 'NORMAL', "releasing from HELD state" )
-                itask.state.set_status( 'waiting' )
-                itask.prerequisites.set_all_unsatisfied()
+            else:
+                raise SystemExit( 'ERROR: unknown task state for ' + itask.id ) 
 
             # check stop cycle in case the user has set a very quick stop
             if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
@@ -362,3 +355,4 @@ the remote host before starting the suite."""
 
 if __name__ == '__main__':
     main("restart", restart)
+

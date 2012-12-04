@@ -26,6 +26,8 @@ import threading
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
+from cylc.suite_logging import suite_log
+from cylc.suite_logging import suite_log
 
 try:
     from cylc import cylc_pyro_client
@@ -993,13 +995,17 @@ The Cylc Suite Engine.
             infomenu.append( jobs_item )
             jobs_item.connect( 'activate', self.jobscript_popup, reg )
  
-            out_item = gtk.MenuItem( 'View Suite _Stdout')
+            out_item = gtk.MenuItem( 'View Suite Std_out')
             infomenu.append( out_item )
-            out_item.connect( 'activate', self.view_output, reg, suite_dir, state )
+            out_item.connect( 'activate', self.view_log, reg, 'out'  )
 
-            out_item = gtk.MenuItem( '_View Suite Log')
+            out_item = gtk.MenuItem( 'View Suite Std_err')
             infomenu.append( out_item )
-            out_item.connect( 'activate', self.view_log, reg )
+            out_item.connect( 'activate', self.view_log, reg, 'err' )
+
+            out_item = gtk.MenuItem( 'View Suite _Log')
+            infomenu.append( out_item )
+            out_item.connect( 'activate', self.view_log, reg, 'log' )
 
             if state != '-':
                 # suite is running
@@ -1446,21 +1452,13 @@ The Cylc Suite Engine.
         foo.run()
 
     def graph_suite_popup_driver( self, w, reg ):
-        db = localdb(self.db)
-        db.load_from_file()
-        suite, rcfile = db.get_suite(reg)
-        try:
-            suiterc = config( suite, rcfile, self.db_owner )
-        except SuiteConfigError, x:
-            warning_dialog( str(x) + \
-                    '\n\n Suite.rc parsing failed (needed\nfor default start and stop cycles.',
-                    self.window ).warn()
-            return
-        defstartc = suiterc['visualization']['initial cycle time']
-        defstopc  = suiterc['visualization']['final cycle time']
+        # don't bother extracting [visualization] start and stop cycles
+        # to insert in the popup. The suite has to be parsed again for
+        # the graph and doing that twice is bad for very large suites. 
+        # (We could provide a load button like the suite start popup does).
         template_opts = ""
-        graph_suite_popup( reg, self.command_help, defstartc, defstopc, " " + self.dbopt,
-                           self.gcapture_windows, self.tmpdir, template_opts, parent_window=self.window )
+        graph_suite_popup( reg, self.command_help, None, None, " " + self.dbopt,
+                           self.gcapture_windows, self.tmpdir, template_opts, self.window )
         return False
 
     def view_suite( self, w, reg, method ):
@@ -1606,188 +1604,27 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
             warning_dialog( "Cannot run gcylc: Pyro is not installed"  ).warn()
             return
 
-        suite_dir = os.path.expanduser(suite_dir)
-        # (we replaced home dir with '~' above for display purposes)
-        running_already = False
-        if state != '-':
-            # suite running
-            running_already = True
-            # was it started from this gui?
-            try:
-                pphrase = passphrase( name ).get( suitedir=suite_dir )
-            except Exception, x:
-                warning_dialog( str(x), self.window ).warn()
-                return False
-            try:
-                ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
-            except Exception, x:
-                warning_dialog( str(x), self.window ).warn()
-                return False
-            [ glbl, states, fam_states ] = ssproxy.get_state_summary()
-            if glbl['started from gui']:
-                started_from_gui = True
-                #info_dialog( "This suite is running already. It was started by "
-                #    "gcylc which redirects suite stdout and stderr "
-                #    "to special files so we can connect a new output "
-                #    "capture window to those files.",
-                #    self.window ).inform()
-            else:
-                started_from_gui = False
-                info_dialog( "This suite is running but it was started from "
-                    "the command line so we do not have access its stdout "
-                    "and stderr streams.", self.window ).inform()
-
-        if running_already and started_from_gui or not running_already:
-            # Use suite-specific special stdout and stderr files.
-
-            # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
-            # a hard-wired prefix makes it possible for us to 
-            # reconnect to the output of a running suite. Some
-            # non-fatal textbuffer insertion warnings may occur if several
-            # control guis are open at once both trying to write to it.
-            prefix = os.path.join( '$HOME', '.cylc', name )
-
-            # environment variables allowed
-            prefix = os.path.expandvars( prefix )
-            # make parent directory if necessary
-            pdir = os.path.dirname( prefix )
-            try:
-                mkdir_p( pdir )
-            except Exception, x:
-                warning_dialog( str(x) + '\n' + 'ERROR: Illegal directory for suite stdout? ' + pdir,
-                                self.window ).warn()
-                return False
-
-            stdoutf = prefix + '.out'
-
-            if not running_already:
-                # ask whether or not to delete existing output
-                stdout_exists = False
-                if os.path.exists( stdoutf ):
-                    stdout_exists = True
-                if stdout_exists:
-                    response = question_dialog( 
-                        "Delete old CYLC OUTPUT from this suite?\n\n"
-                        "  + " + stdoutf + "\n\n"
-                        "(Deleting this file is safe - it only contains cylc stdout "
-                        "and stderr messages from previous gui-launched runs. "
-                        "Click 'Yes' to delete it and start anew, or 'No' to append "
-                        "new output to the existing file).",
-                        self.window ).ask()
-                    if response == gtk.RESPONSE_YES:
-                        try:
-                            if stdout_exists:
-                                os.unlink( stdoutf )
-                        except OSError, x:
-                            warning_dialog( str(x), self.window ).warn()
-                            return False
-            try:
-                # open in append mode 'ab' (write mode 'wb' nukes the files
-                # with  each new open, which isn't good when multiple
-                # controllers are opened).
-                stdout = open( stdoutf, 'ab' )
-            except IOError,x:
-                warning_dialog( str(x), self.window ).warn()
-                return False
-
-            if views:
-                command = "gcylc --views=" + views + " " + self.dbopt
-            else:
-                command = "gcylc " + self.dbopt
-            if self.pyro_timeout:
-                command += " --timeout=" + str(self.pyro_timeout)
-            command += " " + name
-            foo = gcapture( command, stdout, 800, 400 )
-            self.gcapture_windows.append(foo)
-            foo.run()
-
+        if views:
+            command = "gcylc --views=" + views + " " + self.dbopt
         else:
-            # connecting a controller to a running suite started by command line
-            # so no point in connecting to the special stdout and stderr files.
-            # User was informed of this already by a dialog above.
-            if views:
-                command = "gcylc --views=" + views + " " + self.dbopt + " " + name
-            else:
-                command = "gcylc " + self.dbopt + " " + name
-            foo = gcapture_tmpfile( command, self.tmpdir, 400 )
-            self.gcapture_windows.append(foo)
-            foo.run()
+            command = "gcylc " + self.dbopt
+        if self.pyro_timeout:
+            command += " --timeout=" + str(self.pyro_timeout)
+        command += " " + name
+
+        foo = gcapture_tmpfile( command, self.tmpdir, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def close_log_window( self, w, e, window, clv ):
         window.destroy()
         clv.quit()
 
-    def view_log( self, w, reg ):
-        db = localdb( self.db )
-        db.load_from_file()
-        suite, rcfile = db.get_suite(reg)
-        try:
-            suiterc = config( suite, rcfile, self.db_owner )
-        except SuiteConfigError, x:
-            warning_dialog( str(x) + \
-                    '\n\n Suite.rc parsing failed (needed\nto determine the suite log path.',
-                    self.window ).warn()
-            return
-        logdir = os.path.join( suiterc['cylc']['logging']['directory'] )
-        cylc_logviewer( 'log', logdir, suiterc.get_task_name_list() )
-
-    def view_output( self, w, name, suite_dir, state ):
-        running_already = False
-        suite_dir = os.path.expanduser(suite_dir)
- 
-        if state != '-':
-            # suite running
-            running_already = True
-            # was it started from gui?
-            try:
-                pphrase = passphrase( name ).get( suitedir=suite_dir )
-            except Exception, x:
-                warning_dialog( str(x), self.window ).warn()
-                return False
-            try:
-                ssproxy = cylc_pyro_client.client( name, pphrase, pyro_timeout=self.pyro_timeout ).get_proxy( 'state_summary' )
-            except Exception, x:
-                warning_dialog( str(x), self.window ).warn()
-                return False
-            [ glbl, states, fam_states ] = ssproxy.get_state_summary()
-            if glbl['started from gui']:
-                started_from_gui = True
-                # The suite is running and gcylc was started via gui,
-                # which redirects standard output to a file that we can reconnect to.
-            else:
-                started_from_gui = False
-                info_dialog( "The suite is running but it was not started by a gcylc "
-                        "instance launched via cylc db viewer, so we cannot access its stdout",
-                    self.window ).inform()
-                return False
-        else:
-            # suite not running
-            info_dialog( "The suite is not running; its output log may "
-                    "contain output from the last cylc viewer initiated run.",
-                    self.window ).inform()
-
-        # TO DO: MAKE PREFIX THIS PART OF USER GLOBAL PREFS?
-        # a hard-wired prefix makes it possible for us to 
-        # reconnect to the output of a running suite. Some
-        # non-fatal textbuffer insertion warnings may occur if several
-        # control guis are open at once both trying to write to it.
-        prefix = os.path.join( '~' + self.db_owner, '.cylc', name )
-
-        # environment variables and tilde allowed
-        prefix = os.path.expanduser( os.path.expandvars( prefix ))
-
-        try:
-            # open existing out and err files
-            stdout = open( prefix + '.out', 'rb' )
-        except IOError,x:
-            msg = '''This probably means the suite has not yet been started via gcylc
-(if you start a suite on the command line stdout and stderr redirection is up to you).'''
-            warning_dialog( str(x) + '\n' + msg, self.window ).warn()
-            return False
-
-        foo = gcapture( None, stdout, width=600, height=400, ignore_command=True )
-        self.gcapture_windows.append(foo)
-        foo.run()
+    def view_log( self, w, reg, type ):
+        task_name_list = [] # To Do
+        # assumes suite out, err, and log are in the same location:
+        logdir = suite_log( reg ).get_dir()
+        cylc_logviewer( type, logdir, task_name_list )
 
     def check_entries( self, entries ):
         # note this check retrieved entry values

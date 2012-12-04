@@ -46,7 +46,7 @@ from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
 from datetime import datetime
-from gcapture import gcapture_tmpfile
+from gcapture import gcapture, gcapture_tmpfile
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -83,12 +83,13 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
-            pyro_timeout, template_vars, template_vars_file ):
+    def __init__( self, suite, logdir, pphrase, owner, host,
+            port, cylc_tmpdir, pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
         self.pphrase = pphrase
         self.host = host
         self.port = port
+        self.logdir = logdir
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -104,6 +105,8 @@ Class to hold initialisation data.
             self.template_vars_opts += " --set " + tv
         if template_vars_file:
             self.template_vars_opts += " --set-file " + template_vars_file
+        self.template_vars = template_vars
+        self.template_vars_file = template_vars_file
 
 class InfoBar(gtk.VBox):
     """
@@ -297,12 +300,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
 
-    def __init__( self, suite, pphrase, owner, host, port, cylc_tmpdir,
+    def __init__( self, suite, logdir, pphrase, owner, host, port, cylc_tmpdir,
             startup_views, pyro_timeout, usercfg, template_vars, template_vars_file ):
 
         gobject.threads_init()
         
-        self.cfg = InitData( suite, pphrase, owner, host, port,
+        self.cfg = InitData( suite, logdir, pphrase, owner, host, port,
                 cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
         self.usercfg = usercfg
 
@@ -2280,11 +2283,23 @@ or remove task definitions without restarting the suite."""
         list_menu.append( tree_item )
         tree_item.connect( 'activate', self.run_suite_list, '-t' )
 
+        log_item = gtk.ImageMenuItem( 'Suite Std_out' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        log_item.set_image(img)
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log, 'out' )
+
+        out_item = gtk.ImageMenuItem( 'Suite Std_err' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        out_item.set_image(img)
+        tools_menu.append( out_item )
+        out_item.connect( 'activate', self.run_suite_log, 'err' )
+
         log_item = gtk.ImageMenuItem( 'Suite _Log' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         log_item.set_image(img)
         tools_menu.append( log_item )
-        log_item.connect( 'activate', self.run_suite_log )
+        log_item.connect( 'activate', self.run_suite_log, 'log' )
 
         view_item = gtk.ImageMenuItem( 'Suite _View' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
@@ -2636,16 +2651,12 @@ For more Stop options use the Control menu.""" )
             self.gcapture_windows.append(foo)
             foo.run()
         else:
-            times = []
-            for option in ["'initial cycle time'", "'final cycle time'"]:
-                command = ( "cylc get-config" + self.get_remote_run_opts() + \
-                            " " + self.cfg.template_vars_opts + \
-                            " -i [visualization]" + option + " " + self.cfg.suite )
-                res, pieces = run_get_stdout( command )
-                if not res or not pieces:
-                    return False
-                times.append(pieces[0].strip())
-            graph_suite_popup( self.cfg.suite, self.command_help, times[0], times[1],
+            # don't bother getting [visualization] start and stop cycles
+            # from the suite definition to insert in the popup. The
+            # suite has to be parsed again for the graph and doing that
+            # twice is bad for very large suites. (We could provide a
+            # load button as the suite start popup does).
+            graph_suite_popup( self.cfg.suite, self.command_help, None, None,
                                self.get_remote_run_opts(), self.gcapture_windows,
                                self.cfg.cylc_tmpdir,
                                self.cfg.template_vars_opts,
@@ -2665,31 +2676,28 @@ For more Stop options use the Control menu.""" )
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def run_suite_log( self, w ):
-        com = False
+    def run_suite_log( self, w, type='log' ):
         if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
-            com = True
+            if type == 'out':
+                xopts = ' --stdout '
+            elif type == 'err':
+                xopts == ' --stderr '
+            else:
+                xopts = ' '
+
             warning_dialog( \
 """The full-function GUI log viewer is only available
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
-                        " " + self.cfg.suite )
+                        xopts + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
             return
 
-        # just for local suites (so --host and --owner are not needed here)
-        command = "cylc get-config --mark-up -i [cylc][logging][directory] " + self.cfg.template_vars_opts + " " + self.cfg.suite 
-        res, lst = run_get_stdout( command, filter=True )
-        logging_dir = lst[0]
-        command = "cylc get-config --mark-up --tasks " + self.cfg.template_vars_opts + " " + self.cfg.suite
-        res, tasks = run_get_stdout( command, filter=True )
-        if res:
-            task_list = tasks
-        else:
-            task_list = []
-        foo = cylc_logviewer( 'log', logging_dir, task_list)
+        task_name_list = [] # To Do
+        # assumes suite out, err, and log are in the same location:
+        foo = cylc_logviewer( type, self.cfg.logdir, task_name_list )
         self.quitters.append(foo)
 
     def run_suite_view( self, w, method ):
