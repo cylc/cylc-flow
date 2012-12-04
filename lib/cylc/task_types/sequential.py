@@ -41,6 +41,6 @@ class sequential(object):
     def ready_to_spawn( self ):
         if self.has_spawned():
             return False
-        if self.state.is_succeeded():
+        if self.state.is_currently('succeeded'):
             return True
 
