@@ -25,7 +25,6 @@ import os
 import subprocess
 from time import sleep
 from OrderedDict import OrderedDict
-from cylc.mkdir_p import mkdir_p
 from cylc.execute import execute
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
