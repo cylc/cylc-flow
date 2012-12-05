@@ -201,12 +201,12 @@ class task( Pyro.core.ObjBase ):
             dep.append( satby[ label ] )
         return dep
 
-    def set_submitted( self ):
+    def set_submitted( self, hostname=None ):
         self.state.set_status( 'submitted' )
         self.record_db_event(event="submitted", message="task submitted")
-        suite_owner = os.environ['CYLC_SUITE_OWNER']
-        suite_host = os.environ['CYLC_SUITE_HOST']
-        self.db.update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="submitted", host=suite_owner+"@"+suite_host)
+        self.db.update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="submitted")
+        if hostname is not None:
+            self.db.update("task_states", self.name, self.c_time, submit_num=self.submit_num, host=hostname)
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
@@ -531,7 +531,11 @@ class task( Pyro.core.ObjBase ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            self.set_submitted()
+            if launcher.local:
+                host = launcher.task_owner + "@" + os.environ['CYLC_SUITE_HOST']
+            else:
+                host = launcher.task_owner + "@" + launcher.remote_host
+            self.set_submitted(hostname=host)
             self.submission_timer_start = task.clock.get_datetime()
             return p
 
