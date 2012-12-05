@@ -2139,7 +2139,6 @@ or remove task definitions without restarting the suite."""
         thememenu.append( theme_items[theme] )
         self._set_tooltip( theme_items[theme], theme + " task state theme" )
         theme_items[theme].theme_name = theme
-        theme_items[theme].connect( 'toggled', self.set_theme )
         for theme in self.usercfg['themes']:
             if theme == "classic":
                 continue
