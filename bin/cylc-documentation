@@ -75,9 +75,17 @@ if options.view:
     target = globals.cfg['documentation'][dtype][key] 
 
 if not target:
-    print 'Sorry, this item has not been configured'
+    print >> sys.stderr, 'ERROR: this item has not been configured'
+    print >> sys.stderr, '(see your local cylc administrator)'
     sys.exit(0)
 
+if options.view in docs['files']:
+    if not os.path.isfile( target ):
+        print >> sys.stderr, "ERROR, file not found: " + target
+        print >> sys.stderr, """(if this is a repository version of cylc, the document may
+not have been generated; see your local cylc administrator)"""
+        sys.exit(1)
+        
 # viewer may have spaces (e.g. 'firefox --no-remote'):
 command_list = re.split( ' ', viewer )
 command_list.append( target )
