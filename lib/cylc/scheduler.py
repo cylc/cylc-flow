@@ -49,6 +49,7 @@ from broadcast import broadcast
 from suite_state_dumping import dumper
 from suite_logging import suite_log
 from suite_output import suite_output
+import cylc.rundb
 
 class SchedulerError( Exception ):
     """
@@ -341,6 +342,9 @@ class scheduler(object):
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.config.suite_timeout = timeout
             self.config.reset_timer = False
+
+        if not self.is_restart:     # create new suite_db file if needed
+            db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.suite_dir, new_mode=True)
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
