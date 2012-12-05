@@ -359,10 +359,10 @@ the remote suite definition directory first, if one is configured.
 REMOVE SUITE CONTROL BY SSH RE-INVOCATION
   If the network ports required by Pyro are not open you can use the
 '--use-ssh' flag to re-invoke suite control commands on the suite host.
-For remote tasks the same can be achieved, in the suite definition, by:
-  [runtime]->[[NAMESPACE]]->[[[remote]]]->'ssh messaging = True'
-then the passphrase is not needed on the remote host because the RPC
-connection is only made on the suite host (ssh keys are needed though).
+For remote tasks the same can be achieved by "use ssh messaging = True"
+via the cylc site/user configuration file, then the passphrase is not
+needed on the remote host because the RPC connection is only made on the
+suite host (ssh keys are needed though).
 
 TASK IDENTIFICATION
   Tasks are identified by NAME%TAG where for cycling tasks TAG is a

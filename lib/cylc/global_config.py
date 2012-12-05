@@ -9,7 +9,6 @@ from copy import deepcopy
 import atexit
 import shutil
 from tempfile import mkdtemp
-from mkdir_p import mkdir_p
 
 try:
     any
@@ -22,6 +21,9 @@ except NameError:
         return False
 
 class globalcfg( object ):
+    """Global (non suite-specific) site/user cylc configuration. See the
+    configspec file conf/siterc/cfgspec for all primary item names and
+    default values. """
 
     def __init__( self ):
 
@@ -135,23 +137,18 @@ class globalcfg( object ):
             cylc_tmpdir = mkdtemp(prefix="cylc-")
             # self-cleanup
             atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
+            # now replace the original item
+            self.cfg['temporary directory'] = cylc_tmpdir
         else:
-            cylc_tmpdir = os.path.expanduser( os.path.expandvars( cylc_tmpdir) )
-            try:
-                mkdir_p( cylc_tmpdir )
-            except Exception,x:
-                print >> sys.stderr, x
-                print >> sys.stderr, 'ERROR, illegal temporary directory?', cylc_tmpdir
-                sys.exit(1)
-        # now replace the original item
-        self.cfg['temporary directory'] = cylc_tmpdir
+            self.cfg['temporary directory'] = self.proc_dir( self.cfg['temporary directory'] )
 
         # expand environment variables and ~user in file paths
         for key,val in self.cfg['documentation']['files'].items():
             self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))
 
         # expand variables in some directory paths, and create if necessary.
-        self.cfg['run directory'] = self.proc_dir( self.cfg['run directory'] )
+        self.cfg['hosts']['local']['run directory'] = self.proc_dir( self.cfg['hosts']['local']['run directory'] )
+        self.cfg['hosts']['local']['workspace directory'] = self.proc_dir( self.cfg['hosts']['local']['workspace directory'] )
         self.cfg['pyro']['ports directory'] = self.proc_dir( self.cfg['pyro']['ports directory'] )
 
     def proc_dir( self, path ):
@@ -226,4 +223,59 @@ class globalcfg( object ):
             print_cfg( cfg_in, prefix='   ' )
         else:
             print_cfg( self.cfg, prefix='   ' )
+
+    def get_host_config( self, host, item ):
+        # default:
+        value = self.cfg['hosts']['local'][item]
+        # override:
+        if host in self.cfg['hosts']:
+            value = self.cfg['hosts'][host][item]
+        return value
+
+    def get_task_work_dir( self, suite, task, host=None, owner=None ):
+        # this goes under the top level workspace directory; it is
+        # created on the fly, if necessary, by task job scripts.
+        work_root = None
+        if host:
+            work_root = self.get_host_config( host, 'workspace directory' )
+        if not work_root:
+            # use local work root
+            work_root = self.cfg['hosts']['local']['workspace directory']
+        if host or owner:
+            # remote account: replace home directory with '$HOME' 
+            work_root  = re.sub( os.environ['HOME'], '$HOME', work_root )
+        return os.path.join( work_root, suite, 'work', task )
+
+    def get_suite_share_dir( self, suite, host=None, owner=None ):
+        # this goes under the top level workspace directory; it is
+        # created on the fly, if necessary, by task job scripts.
+        share_root = None
+        if host:
+            share_root = self.get_host_config( host, 'workspace directory' )
+        if not share_root:
+            share_root = self.cfg['hosts']['local']['workspace directory']
+        if host or owner:
+            # remote account: replace home directory with '$HOME' 
+            share_root  = re.sub( os.environ['HOME'], '$HOME', share_root )
+        return os.path.join( share_root, suite, 'share' )
+
+    def get_suite_log_dir( self, suite, ext='suite', create=False ):
+        path = os.path.join( self.cfg['hosts']['local']['run directory'], suite, 'log', ext )
+        if create:
+            self.proc_dir( path )
+        return path
+
+    def get_task_log_dir( self, suite, host=None, owner=None, create=False ):
+        log_root = None
+        if host:
+            log_root = self.get_host_config( host, 'run directory' )
+        if not log_root:
+            log_root = self.cfg['hosts']['local']['run directory']
+        if host or owner:
+            # remote account: replace home directory with '$HOME' 
+            log_root  = re.sub( os.environ['HOME'], '$HOME', log_root )
+        path = os.path.join( log_root, suite, 'log', 'job' )
+        if create:
+            self.proc_dir( path )
+        return path
 

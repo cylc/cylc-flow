@@ -28,7 +28,7 @@ suite running directory."""
 class suite_output( object ):
     def __init__( self, suite ):
         globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['run directory'], suite, 'log', 'suite' ) 
+        self.dir = os.path.join( globals.cfg['hosts']['local']['run directory'], suite, 'log', 'suite' ) 
         self.opath = os.path.join( self.dir, 'out' ) 
         self.epath = os.path.join( self.dir, 'err' ) 
         self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']

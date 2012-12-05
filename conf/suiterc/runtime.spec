@@ -51,9 +51,6 @@
         manual completion = boolean( default=False )
         extra log files = force_list( default=list())
         enable resurrection = boolean( default=False )
-        log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
-        share directory = string( default='$CYLC_SUITE_DEF_PATH/share' )
-        work directory = string( default='$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID' )
         [[[simulation mode]]]
             run time range = list( default=list(1,16))
             simulate failure = boolean( default=False )
@@ -72,13 +69,10 @@
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
-            cylc directory = string( default=None )
+            # This should really be host-specific in the suite
+            # definition; but currently no other items warrant a top
+            # level [host] section:
             suite definition directory = string( default=None )
-            remote shell template = string( default='ssh -oBatchMode=yes %s' )
-            log directory = string( default=None )
-            share directory = string( default=None )
-            work directory = string( default=None )
-            ssh messaging = boolean( default=False )
         [[[event hooks]]]
             submitted handler = string( default=None )
             started handler = string( default=None )

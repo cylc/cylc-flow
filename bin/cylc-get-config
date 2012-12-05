@@ -54,7 +54,6 @@ BAR = bar
 
 $ cylc get-config --item=[runtime][modelX] foo.bar 
 ...
-work directory = $CYLC_SUITE_DEF_PATH/share
 [[[environment]]]
     FOO = foo
     BAR = bar

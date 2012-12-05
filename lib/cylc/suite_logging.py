@@ -39,11 +39,13 @@ class LogFilter(logging.Filter):
 class suite_log( object ):
     def __init__( self, suite, ext='suite' ):
         globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['run directory'], suite, 'log', ext ) 
+        self.dir = globals.get_suite_log_dir( suite, ext )
         self.path = os.path.join( self.dir, 'log' ) 
         self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']
         self.n_keep = globals.cfg['suite logging']['rolling archive length']
         self.max_bytes = globals.cfg['suite logging']['maximum size in bytes']
+
+    def mkdir( self ):
         try:
             mkdir_p( self.dir )
         except Exception, x:

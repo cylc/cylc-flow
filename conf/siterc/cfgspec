@@ -21,16 +21,14 @@
 #> through from the configspec to generated config files)
 #-----------------------------------------------------------------------
 
-# A temporary directory is needed by a few cylc commands. Set the
-# value to None to get the default system temp dir (usually $TMPDIR).
+# A temporary directory is needed by a few cylc commands. Leave it unset
+# to get the default system temporary directory (usually $TMPDIR).
 temporary directory = string( default=None )
 
-# The top level directory for all suite and task (job) logs, etc. 
-run directory = string( default="$HOME/cylc-run" )
-
+# A rolling archive of suite state dumps is maintained for restart use.
 state dump rolling archive length = integer( min=1, default=10 )
 
-# suites logs go under the suite run directory
+# suites logs go under the suite run directory (see below)
 [suite logging]
     roll over at start-up = boolean( default=True )
     rolling archive length = integer( min=1, default=5 )
@@ -81,14 +79,58 @@ state dump rolling archive length = integer( min=1, default=10 )
     # Port numbers are recorded in this directory, by suite name.
     ports directory = string( default="$HOME/.cylc/ports/" )
 
-# The suite host machine's identity, by NAME or IP ADDRESS, must be
-# determined locally by cylc and passed to task execution environments
-# as $CYLC_SUITE_HOST, so that tasks can send their messages back home.
-# If name is used, the host name determined on the suite host must
-# resolve, on the task host, to the external IP address of the suite
-# host. Otherwise the external IP address of the suite host, as seen by
-# the task host, must be determined on the suite host, which is not
-# always easy to do. Cylc requires a special "target address" to do
+# The hosts section pertains to running tasks on remote hosts and on the
+# local suite host (and additionally to suite logs and state files on
+# the suite host, which go under the same run directory as task logs). 
+[hosts]
+    [[local]]
+        # Run directory:
+        #   For suite event log, and suite stdout and stderr logs:
+        #       <VALUE>/<suite-name>/log/suite/
+        #   and suite state dump files: 
+        #       <VALUE>/<suite-name>/state/
+        #   and task job scripts and stdout and stderr logs:
+        #       <VALUE>/<suite-name>/log/job/
+        #   If not set the local path will be used with your home
+        # directory path swapped for '$HOME' (to be evaluated on host)
+        run directory = string( default="$HOME/cylc-run" )
+        # Workspace directory:
+        #   For the suite share directory, a common workspace made
+        #   available to all tasks via $CYLC_SUITE_SHARE_PATH:
+        #       <VALUE>/<suite-name>/share/
+        #   and task work directories, from within which task job
+        #   scripts are executed:
+        #       <VALUE>/<suite-name>/work/<task-id>
+        #   This can be distinct from the run directory tree because of
+        #   the potential for much a greater storage requirement.
+        # If not set for remote task hosts: same as for run directory.
+        workspace directory = string( default="$HOME/cylc-run" )
+        # THE FOLLOWING THREE ITEMS ARE NOT USED FOR THE local HOST
+        # (unless you run tasks under other local user accounts)  
+        # The remote cylc location, leave unset if in $PATH on the host
+        cylc directory = string( default=None )
+        # Re-invoke task messaging commands on the suite host
+        # instead of using Pyro-based RPC across the network).
+        use ssh messaging = boolean( default=False )
+        # How to invoke commands on this host; default shown.
+        remote shell template = string( default='ssh -oBatchMode=yes %s' )
+
+    #> Here's the __many__ configspec for remote hosts:
+    [[__many__]]
+        run directory = string( default=None )
+        workspace directory = string( default=None)
+        cylc directory = string( default=None )
+        use ssh messaging = boolean( default=None )
+        remote shell template = string( default=None )
+
+# SUITE HOST SELF-IDENTIFICATION: The suite host's identity, by NAME or
+# IP ADDRESS, must be determined locally by cylc and passed to task
+# execution environments as $CYLC_SUITE_HOST so that tasks can send
+# messages back.  If name is used, the host name determined on the suite
+# host must resolve, on the task host, to the external IP address of the
+# suite host. Otherwise the external IP address of the suite host, as
+# seen by the task host, must be determined on the suite host, which is
+# not always easy to do.  Cylc requires a special "target address" to do
 # this; see documentation in $CYLC_DIR/lib/cylc/suite_host.py for why.
 # (TO DO: is it conceivable that different remote task hosts at the same
 # site might see the suite host differently? If so we would need to be

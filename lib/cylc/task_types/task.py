@@ -34,6 +34,7 @@ from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
+from cylc.global_config import globalcfg
 from cylc.RunEventHandler import RunHandler
 import logging
 import Pyro.core
@@ -423,41 +424,24 @@ class task( Pyro.core.ObjBase ):
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
 
-        share_dir = rtconfig['share directory']
-        work_dir  = rtconfig['work directory']
-        remote_log_dir = rtconfig['remote']['log directory']
-        if rtconfig['remote']['host'] or rtconfig['remote']['owner']:
-            # remote task
-            if rtconfig['remote']['work directory']:
-                # Replace local work directory.
-                work_dir  = rtconfig['remote']['work directory']
-            else:
-                # Use local work directory path, but replace suite
-                # owner's home dir (if present) with literal '$HOME' for
-                # interpretation on the remote host.
-                work_dir  = re.sub( os.environ['HOME'], '$HOME', work_dir )
+        gcfg = globalcfg()
 
-            if rtconfig['remote']['share directory']:
-                # Replace local share directory.
-                share_dir  = rtconfig['remote']['share directory']
-            else:
-                # (as for work dir)
-                share_dir  = re.sub( os.environ['HOME'], '$HOME', share_dir )
-
-            # We need to retain local and remote log directory paths -
-            # the local one is used for the local task job script before
-            # it is copied to the remote host. 
-            if not remote_log_dir:
-                # (as for work dir)
-                remote_log_dir = re.sub( os.environ['HOME'], '$HOME', rtconfig['log directory'] )
+        suite = self.__class__.suite 
+        host = rtconfig['remote']['host']
+        owner = rtconfig['remote']['owner']
+ 
+        share_dir = gcfg.get_suite_share_dir( suite, host, owner )
+        work_dir  = gcfg.get_task_work_dir( suite, self.id, host, owner )
+        local_log_dir = gcfg.get_task_log_dir( suite ) 
+        remote_log_dir = gcfg.get_task_log_dir( suite, host, owner )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use ssh messaging'      : rtconfig['remote']['ssh messaging'],
-                'remote cylc path'       : rtconfig['remote']['cylc directory'],
+                'use ssh messaging'      : gcfg.get_host_config( host, 'use ssh messaging' ),
+                'remote cylc path'       : gcfg.get_host_config( host, 'cylc directory' ),
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -477,8 +461,8 @@ class task( Pyro.core.ObjBase ):
         xconfig = {
                 'owner'                  : rtconfig['remote']['owner'],
                 'host'                   : rtconfig['remote']['host'],
-                'log path'               : rtconfig['log directory'],
-                'remote shell template'  : rtconfig['remote']['remote shell template'],
+                'log path'               : local_log_dir,
+                'remote shell template'  : gcfg.get_host_config( host, 'remote shell template'),
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,

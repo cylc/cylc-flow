@@ -306,6 +306,8 @@ class scheduler(object):
 
         # global config
         self.globals = globalcfg()
+        # create task log directory
+        self.globals.get_task_log_dir( self.suite, create=True )
         # parse the suite definition
         self.configure_suite()
 
@@ -520,8 +522,7 @@ class scheduler(object):
         self.config.create_directories()
         self.hold_before_shutdown = self.config['development']['hold before shutdown']
 
-        self.run_dir = self.globals.cfg['run directory']
-        self.banner[ 'SUITE RUN DIR' ] = self.run_dir
+        self.banner[ 'SUITE RUN DIR' ] = self.globals.cfg['hosts']['local']['run directory']
 
         self.stop_task = None
 
@@ -629,6 +630,7 @@ class scheduler(object):
             self.pyro.connect( self.remote, 'remote' )
 
             slog = suite_log( self.suite )
+            slog.mkdir()
             slog.pimp( self.logging_level, self.clock )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
