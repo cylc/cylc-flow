@@ -21,11 +21,10 @@
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
-import re, os, sys, logging
+import re, os, sys
 import taskdef
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from collections import deque
 from OrderedDict import OrderedDict
 from cycle_time import ct, CycleTimeError
 from mkdir_p import mkdir_p
@@ -620,7 +619,7 @@ class config( CylcConfigObj ):
                 ###dline1 = dlines[0]
                 ###if len(dlines) > 1:
                 ###    dline1 += '...'
-                dline1 = "(To Do: title)"
+                dline1 = "" # To Do: task title here (see comment just above)
                 tree[item] = dline1
                 runtimes[item] = self['runtime'][item]
 
@@ -682,17 +681,12 @@ class config( CylcConfigObj ):
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
-        self['cylc']['logging']['directory'] = \
-                expandvars( self['cylc']['logging']['directory'], self.owner )
-        self['cylc']['state dumps']['directory'] =  \
-                expandvars( self['cylc']['state dumps']['directory'], self.owner )
+        self['visualization']['runtime graph']['directory'] = expandvars( self['visualization']['runtime graph']['directory'], self.owner)
 
         # suite config dir is not user-configurable as some processes
         # need to know where it is without parsing the suite definition:
         self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
 
-        self['visualization']['runtime graph']['directory'] = \
-                expandvars( self['visualization']['runtime graph']['directory'], self.owner)
 
     def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         trig = triggerx(task_name)
@@ -867,8 +861,7 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, ''
  
     def create_directories( self, task=None ):
-        # Create suite log, state, and local job log directories.
-        dirs = [ self['cylc']['logging']['directory'], self['cylc']['state dumps']['directory'], self.suite_config_dir ]
+        dirs = [ self.suite_config_dir ]
         for d in dirs:
             try:
                 mkdir_p( d )

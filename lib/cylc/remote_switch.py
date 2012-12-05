@@ -88,6 +88,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result( True )
 
+    def ping( self ):
+        return result( True )
+
     def ping_task( self, task_id ):
         # is this task running at the moment
         found = False
@@ -95,7 +98,7 @@ class remote_switch( Pyro.core.ObjBase ):
         for itask in self.pool.get_tasks():
             if itask.id == task_id:
                 found = True
-                if itask.state.is_running():
+                if itask.state.is_currently('running'):
                     running = True
                 break
         if not found:
@@ -465,7 +468,6 @@ class remote_switch( Pyro.core.ObjBase ):
             self._warning( "Illegal logging level: " + level )
             return result( False, "Illegal logging level: " + level)
 
-        self.config[ 'logging level' ] = new_level
         self.log.setLevel( new_level )
         return result(True, 'OK')
 
@@ -521,7 +523,7 @@ class remote_switch( Pyro.core.ObjBase ):
             if itask.id == task_id:
                 found = True
                 print itask.state.state['status']
-                if itask.state.is_waiting() or itask.state.is_queued():
+                if itask.state.is_currently('waiting') or itask.state.is_currently('queued'):
                     was_waiting = True
                     itask.state.set_status( 'held' )
                 break

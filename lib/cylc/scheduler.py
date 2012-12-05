@@ -22,13 +22,11 @@ from prerequisites.plain_prerequisites import plain_prerequisites
 from suite_host import suite_host
 from owner import user
 from cycle_time import ct, CycleTimeError
-import logging
 import datetime
 import port_scan
-import pimp_my_logger
 import accelerated_clock 
+import logging
 import re, os, sys, shutil
-from rolling_archive import rolling_archive
 from state_summary import state_summary
 from remote_switch import remote_switch
 from passphrase import passphrase
@@ -48,6 +46,9 @@ from RuntimeGraph import rGraph
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
 from broadcast import broadcast
+from suite_state_dumping import dumper
+from suite_logging import suite_log
+from suite_output import suite_output
 
 class SchedulerError( Exception ):
     """
@@ -153,7 +154,7 @@ class pool(object):
             for itask in self.queues[queue]:
                 if n_limit:
                     # there is a limit on this queue
-                    if itask.state.is_submitted() or itask.state.is_running():
+                    if itask.state.is_currently('submitted') or itask.state.is_currently('running'):
                         # count active tasks in this queue
                         n_active += 1
                     # compute difference from the limit
@@ -297,6 +298,10 @@ class scheduler(object):
                 "(do not use).",
                 action="store_true", default=False, dest="from_gui" )
 
+        self.parser.add_option( "--no-redirect", help=\
+                "Do not redirect stdout and stderr to file.",
+                action="store_true", default=False, dest="noredirect" )
+
         self.parse_commandline()
 
         # global config
@@ -309,7 +314,6 @@ class scheduler(object):
             if reqmode != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite requires the ' + reqmode + ' run mode'
         
-        self.logfile = os.path.join(self.logging_dir,'log')
         self.reflogfile = os.path.join(self.config.dir,'reference.log')
 
         if self.options.genref:
@@ -354,8 +358,6 @@ class scheduler(object):
         if self.stop_tag:
             self.stop_tag = self.ctexpand( self.stop_tag)
 
-        self.banner[ 'Final Cycle' ] = self.stop_tag
-
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
@@ -373,7 +375,20 @@ class scheduler(object):
         self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime, self.from_gui )
         self.pyro.connect( self.suite_state, 'state_summary')
 
-        self.add_to_banner() # must be before configure_environments for self.ict
+        # initial cycle time
+        if self.is_restart:
+            self.ict = None
+        else:
+            if self.options.warm:
+                if self.options.set_ict:
+                    self.ict = self.start_tag
+                else:
+                    self.ict = None
+            elif self.options.raw:
+                self.ict = None
+            else:
+                self.ict = self.start_tag
+
         self.configure_environments()
 
         self.already_timed_out = False
@@ -381,6 +396,10 @@ class scheduler(object):
             self.set_suite_timer()
 
         self.print_banner()
+
+        self.suite_outputer = suite_output( self.suite )
+        if not self.options.noredirect:
+            self.suite_outputer.redirect()
 
         if self.config['visualization']['runtime graph']['enable']:
             self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
@@ -443,7 +462,7 @@ class scheduler(object):
     def reload_taskdefs( self ):
         found = False
         for itask in self.pool.get_tasks():
-            if itask.state.is_running():
+            if itask.state.is_currently('running'):
                 # do not reload running tasks as some internal state
                 # (e.g. timers) not easily cloneable at the moment,
                 # and it is possible to make changes to the task config
@@ -455,7 +474,7 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_waiting() or itask.state.is_queued():
+                    if itask.state.is_currently('waiting') or itask.state.is_currently('queued'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -468,7 +487,7 @@ class scheduler(object):
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
-                    if itask.state.is_succeeded():
+                    if itask.state.is_currently('succeeded'):
                         new_task.set_succeeded()
                     self.pool.remove( itask, '(suite definition reload)' )
                     self.pool.add( new_task )
@@ -501,14 +520,8 @@ class scheduler(object):
         self.config.create_directories()
         self.hold_before_shutdown = self.config['development']['hold before shutdown']
 
-        # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES
-        self.logging_dir = self.config['cylc']['logging']['directory']
-        self.state_dump_dir = self.config['cylc']['state dumps']['directory'] 
-
-        self.banner[ 'LOG DIR' ] = self.logging_dir
-        self.banner[ 'STATE DIR' ] = self.state_dump_dir
-        # state dump file
-        self.state_dump_filename = os.path.join( self.state_dump_dir, 'state' )
+        self.run_dir = self.globals.cfg['run directory']
+        self.banner[ 'SUITE RUN DIR' ] = self.run_dir
 
         self.stop_task = None
 
@@ -605,20 +618,21 @@ class scheduler(object):
             clocktriggered.clocktriggered.clock = self.clock
             self.pyro.connect( self.clock, 'clock' )
 
-        # STATE DUMP ROLLING ARCHIVE
-        arclen = self.config[ 'cylc']['state dumps']['number of backups' ]
-        self.state_dump_archive = rolling_archive( self.state_dump_filename, arclen )
+        self.state_dumper = dumper( self.suite, self.run_mode, self.clock, self.start_tag, self.stop_tag )
+        self.state_dump_dir = self.state_dumper.get_dir()
+        self.state_dump_filename = self.state_dumper.get_path()
 
         if not reconfigure:
             # REMOTE CONTROL INTERFACE
             # (note: passing in self to give access to task pool methods is a bit clunky?).
             self.remote = remote_switch( self.config, self.clock, self.suite_dir, self )
             self.pyro.connect( self.remote, 'remote' )
-            # PIMP THE SUITE LOG
-            self.log = logging.getLogger( 'main' )
-            pimp_my_logger.pimp_it( self.log, self.logging_dir,
-               self.config['cylc']['logging']['roll over at start-up'], 
-               self.logging_level, self.clock )
+
+            slog = suite_log( self.suite )
+            slog.pimp( self.logging_level, self.clock )
+            self.log = slog.get_log()
+            self.logfile = slog.get_path()
+            self.logdir = slog.get_dir()
         else:
             self.remote.config = self.config
 
@@ -641,7 +655,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
-        cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logging_dir
+        cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logdir
         task.task.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by
@@ -704,19 +718,6 @@ class scheduler(object):
         for item in self.banner.keys():
             print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( self.banner[ item ] )
 
-    def back_up_statedump_file( self ):
-        # TO DO: THIS IS NO LONGER USED - SHOULD IT BE?
-        # back up the configured state dump (i.e. the one that will be used
-        # by the suite, but not necessarily the initial one). 
-        if os.path.exists( self.state_dump_filename ):
-            backup = self.state_dump_filename + '.' + self.clock.get_datetime().isoformat()
-            print "Backing up the state dump file:"
-            print "  " + self.state_dump_filename + " --> " + backup
-            try:
-                shutil.copyfile( self.state_dump_filename, backup )
-            except:
-                raise SchedulerError( "ERROR: State dump file copy failed" )
-
     def run( self ):
         if self.use_lockserver:
             suitename = self.suite
@@ -772,7 +773,7 @@ class scheduler(object):
                 if not self.config['development']['disable task elimination']:
                     self.cleanup()
                 self.spawn()
-                self.dump_state()
+                self.state_dumper.dump( self.pool.get_tasks(), self.wireless, self.wireless )
 
                 self.update_state_summary()
 
@@ -813,14 +814,14 @@ class scheduler(object):
                     stop_now = False
                 for itask in self.pool.get_tasks():
                     # find any reason not to stop
-                    if not itask.state.is_succeeded() and not itask.state.is_held():
+                    if not itask.state.is_currently('succeeded') and not itask.state.is_currently('held'):
                         # don't stop if any tasks are waiting, submitted, or running
                         stop_now = False
                         break
                 for itask in self.pool.get_tasks():
                     if not itask.is_cycling:
                         continue
-                    if itask.state.is_succeeded() and not itask.state.has_spawned():
+                    if itask.state.is_currently('succeeded') and not itask.state.has_spawned():
                         # Check for tasks that are succeeded but not spawned.
                         # If they are older than the suite stop time they
                         # must be about to spawn. Otherwise they must be 
@@ -877,7 +878,7 @@ class scheduler(object):
                 stop = True
                 for itask in self.pool.get_tasks():
                     if itask.name == name:
-                        if not itask.state.is_succeeded():
+                        if not itask.state.is_currently('succeeded'):
                             iname, itag = itask.id.split('%')
                             if int(itag) <= int(tag):
                                 stop = False
@@ -993,7 +994,7 @@ class scheduler(object):
     def shutdown( self, message='' ):
         # called by main command
         print "\nSUITE SHUTTING DOWN"
-        self.dump_state()
+        self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
         if self.use_lockserver:
             # do this last
             suitename = self.suite
@@ -1039,6 +1040,9 @@ class scheduler(object):
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 
+        if not self.options.noredirect:
+            self.suite_outputer.restore()
+
     def get_tasks( self ):
         return self.pool.get_tasks()
 
@@ -1055,7 +1059,6 @@ class scheduler(object):
         self.stop_task = taskid
 
     def hold_suite( self, ctime = None ):
-        #self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
         if ctime:
             self.log.warning( "Setting suite hold cycle time: " + ctime )
             self.hold_time = ctime
@@ -1063,7 +1066,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_queued() or itask.state.is_waiting():
+                if itask.state.is_currently('queued') or itask.state.is_currently('waiting'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.state.set_status('held')
@@ -1074,7 +1077,7 @@ class scheduler(object):
             self.hold_suite_now = False
             self.hold_time = None
         for itask in self.pool.get_tasks():
-            if itask.state.is_held():
+            if itask.state.is_currently('held'):
                 if self.stop_tag and int( itask.c_time ) > int( self.stop_tag ):
                     # this task has passed the suite stop time
                     itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
@@ -1126,7 +1129,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed() or itask.state.is_succeeded():
+            if itask.state.is_currently('failed') or itask.state.is_currently('succeeded'):
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1141,7 +1144,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
                 continue
-            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
+            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
             #    continue
             if itask.is_daemon():
                 continue
@@ -1155,7 +1158,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
+            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
             #    continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1180,7 +1183,7 @@ class scheduler(object):
     def no_tasks_running( self ):
         # return True if no REAL tasks are submitted or running
         for itask in self.pool.get_tasks():
-            if itask.state.is_running() or itask.state.is_submitted():
+            if itask.state.is_currently('running') or itask.state.is_currently('submitted'):
                 if hasattr( itask, 'is_pseudo_task' ):
                     # ignore task families -their 'running' state just
                     # indicates existence of running family members.
@@ -1192,13 +1195,13 @@ class scheduler(object):
     def get_failed_tasks( self ):
         failed = []
         for itask in self.pool.get_tasks():
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 failed.append( itask )
         return failed
 
     def any_task_failed( self ):
         for itask in self.pool.get_tasks():
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 return True
         return False
 
@@ -1230,7 +1233,7 @@ class scheduler(object):
                 if not itask.is_cycling():
                     # TO DO: this test is not needed?
                     continue
-                if itask.state.is_runahead():
+                if itask.state.is_currently('runahead'):
                     foo = ct( itask.c_time )
                     foo.decrement( hours=self.runahead_limit )
                     if int( foo.get() ) < int( ouct ):
@@ -1293,44 +1296,6 @@ class scheduler(object):
             self.pool.add( new_task )
             return new_task
 
-    def dump_state( self, new_file = False ):
-        if new_file:
-            filename = self.state_dump_filename + '.' + self.clock.dump_to_str()
-            FILE = open( filename, 'w' )
-        else:
-            filename = self.state_dump_filename 
-            FILE = self.state_dump_archive.roll_open()
-
-        # suite time
-        if self.run_mode != 'live':
-            FILE.write( 'simulation time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
-        else:
-            FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
-
-        if self.start_tag:
-            FILE.write( 'initial cycle : ' + self.start_tag + '\n' )
-        else:
-            FILE.write( 'initial cycle : (none)\n' )
-
-        if self.stop_tag:
-            FILE.write( 'final cycle : ' + self.stop_tag + '\n' )
-        else:
-            FILE.write( 'final cycle : (none)\n' )
-
-        self.wireless.dump(FILE)
-
-        FILE.write( 'Begin task states\n' )
-
-        for itask in self.pool.get_tasks():
-            # TO DO: CHECK THIS STILL WORKS 
-            itask.dump_class_vars( FILE )
-            # task instance variables
-            itask.dump_state( FILE )
-
-        FILE.close()
-        # return the filename (minus path)
-        return os.path.basename( filename )
-
     def earliest_unspawned( self ):
         all_spawned = True
         earliest_unspawned = '99998877665544'
@@ -1370,14 +1335,14 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 # EXCLUDING FAILED TASKS
                 continue
             #if itask.is_daemon():
             #   avoid daemon tasks
             #   continue
 
-            if not itask.state.is_succeeded():
+            if not itask.state.is_currently('succeeded'):
                 all_succeeded = False
                 if not earliest_unsucceeded:
                     earliest_unsucceeded = itask.c_time
@@ -1396,7 +1361,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_failed():
+            if itask.state.is_currently('failed'):
                 failed_rt[ itask.c_time ] = True
 
         # suicide
@@ -1505,7 +1470,7 @@ class scheduler(object):
                         continue
                     if t.name == itask.name and \
                             int( t.c_time ) > int( itask.c_time ) and \
-                            t.state.is_succeeded():
+                            t.state.is_currently('succeeded'):
                                 there_is = True
                                 break
                 if not there_is:
@@ -1631,7 +1596,7 @@ class scheduler(object):
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
         # dump state
-        self.log.warning( 'pre-trigger state dump: ' + self.dump_state( new_file = True ))
+        self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
         itask.plog( "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
@@ -1651,8 +1616,7 @@ class scheduler(object):
 
         itask.plog( "resetting to " + state + " state" )
 
-        # dump state
-        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
+        self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
 
         if state == 'ready':
             itask.reset_state_ready()
@@ -1747,7 +1711,7 @@ class scheduler(object):
                     to_insert.append(itask)
 
         if len( to_insert ) > 0:
-            self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
+            self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
             for jtask in to_insert:
                 self.pool.add( jtask )
         return ( inserted, rejected )
@@ -1780,7 +1744,7 @@ class scheduler(object):
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
 
-        self.log.warning( 'pre-purge state dump: ' + self.dump_state( new_file = True ))
+        self.log.warning( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
 
         # Purge is an infrequently used power tool, so print 
         # comprehensive information on what it does to stdout.
@@ -1886,7 +1850,7 @@ class scheduler(object):
         # TO DO: clean up use of spawn_and_die (the keyword args are clumsy)
 
         if dump_state:
-            self.log.warning( 'pre-spawn-and-die state dump: ' + self.dump_state( new_file = True ))
+            self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
 
         for id in task_ids:
             # find the task
@@ -1928,7 +1892,7 @@ class scheduler(object):
     def kill( self, task_ids, dump_state=True ):
         # kill without spawning all tasks in task_ids
         if dump_state:
-            self.log.warning( 'pre-kill state dump: ' + self.dump_state( new_file = True ))
+            self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
         for id in task_ids:
             # find the task
             found = False

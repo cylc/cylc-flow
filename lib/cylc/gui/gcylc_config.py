@@ -141,7 +141,7 @@ class config( object ):
                 if item in [ 'inherit', 'defaults' ]:
                     continue
                 state = item
-                if state not in task_state.allowed_status:
+                if state not in task_state.legal:
                     raise SystemExit( 'ERROR, illegal task state:' + theme + ' -> ' + state )
                 # reverse inherit (override)
                 tcfg = deepcopy(defs)

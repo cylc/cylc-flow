@@ -36,6 +36,7 @@ from cylc.gui.SuiteControl import ControlApp
 from cylc.gui.gcylc_config import config
 from cylc.global_config import globalcfg
 from cylc.suite_host import is_remote_host
+from cylc.suite_logging import suite_log
 from cylc.owner import user, is_remote_user
 from cylc.registration import localdb
 from cylc.passphrase import passphrase
@@ -130,10 +131,12 @@ for view in views:
 if len(illegal) != 0:
     sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
 
+logdir = suite_log( suite ).get_dir()
 try:
-    app = ControlApp( suite, pphrase, options.owner, options.host, options.port,
-            cylc_tmpdir, views, options.pyro_timeout, usercfg.cfg,
-            options.templatevars, options.templatevars_file )
+    app = ControlApp( suite, logdir, pphrase, options.owner,
+            options.host, options.port, cylc_tmpdir, views,
+            options.pyro_timeout, usercfg.cfg, options.templatevars,
+            options.templatevars_file )
 except Exception, x:
     if options.debug:
         raise
