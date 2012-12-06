@@ -669,7 +669,7 @@ class task( Pyro.core.ObjBase ):
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'retry_delayed' )
-                #self.db.update("task_states", self.name, self.c_time, try_num=self.try_number, status="retry_delayed")
+                self.db.update("task_states", self.name, self.c_time, try_num=self.try_number, status="retry_delayed")
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events

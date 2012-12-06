@@ -90,7 +90,7 @@ class CylcRuntimeDAO(object):
     def record_event(self, name, cycle, submit_num, event=None, message=None):
         """Insert a row to the events table"""
         s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
-        args = [name, cycle, datetime.now(), submit_num, event, message]
+        args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message]
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         self.conn.commit()
@@ -101,7 +101,9 @@ class CylcRuntimeDAO(object):
                      status=None):
         """Insert a new row into the states table"""
         s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        args = [name, cycle, time_created, time_updated, submit_num, 
+        if time_updated is not None:
+            time_updated = time_updated.strftime("%Y-%m-%dT%H:%M:%S")
+        args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"), time_updated, submit_num, 
                 is_manual_submit, try_num, host, submit_method, 
                 submit_method_id, status]
         c = self.conn.cursor()
@@ -120,7 +122,7 @@ class CylcRuntimeDAO(object):
         
     def update(self, table, name, cycle, **kwargs):
         """Update a row in a table."""
-        kwargs["time_updated"] = datetime.now()
+        kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
         cols = ""
         args = []
