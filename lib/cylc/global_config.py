@@ -22,48 +22,67 @@ except NameError:
         return False
 
 class globalcfg( object ):
+    """Handle global (all suites) site and user configuration for cylc.
+    Legal items and default values are defined in a single configspec
+    file.  Special comments in the configspec file denote items that can
+    only be overridden by a site config file; otherwise a user config
+    file can override site values (which override the defaults)."""
 
     def __init__( self ):
+        """Load defaults, site, and user config files (in reverse order
+        of precedence) to generate the global config structure; validate
+        to catch errors; disallow user config of site-only items; expand
+        environment variables, and create directories.""" 
 
+        # location of the configspec file
         cfgspec = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'cfgspec' )
 
-        self.rcfiles = {}
-        self.rcfiles['site'] = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' )
-        self.rcfiles['user'] = os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )
+        # location of the site and user config files
+        self.rcfiles = {
+                'site' : os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' ),
+                'user' : os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )}
 
-        self.sepcfg= {}
-
-        rc = self.rcfiles['site']
-        try:
-            self.sepcfg['site'] = ConfigObj( infile=rc, configspec=cfgspec, _inspec=False )
-        except ConfigObjError, x:
-            print >> sys.stderr, x
-            raise SystemExit( "ERROR, failed to load site config file: " + rc )
-
-        # validate site file and load defaults for anything not set
-        self.validate( self.sepcfg['site'] )
-
+        # load the user file
         rc = self.rcfiles['user']
         try:
-            self.sepcfg['user'] = ConfigObj( infile=rc, configspec=cfgspec )
+            self.usercfg = ConfigObj( infile=rc, configspec=cfgspec )
         except ConfigObjError, x:
+            # (a non-existent user file does not trigger this exception)
             print >> sys.stderr, x
-            raise SystemExit( "ERROR, failed to load user config file: " + rc )
+            raise SystemExit( "ERROR loading config file: " + rc )
 
-        # validate user file without loading defaults for anything not set
-        self.validate( deepcopy( self.sepcfg['user'] ) )
+        # generate a configobj with all defaults loaded from the configspec
+        # (and call it self.cfg as we re-use it below for the final result)
+        self.cfg = ConfigObj( configspec=cfgspec )
+        self.validate( self.cfg ) # (validation loads the default settings)
+        # check the user file for any attempt to override site-onlyitems
+        self.block_user_cfg( self.usercfg, self.cfg, self.cfg.comments )
 
-        self.block_user_cfg( self.sepcfg['user'], self.sepcfg['site'], self.sepcfg['site'].comments )
+        # load the site file
+        rc = self.rcfiles['site']
+        try:
+            self.sitecfg = ConfigObj( infile=rc, configspec=cfgspec, _inspec=False )
+        except ConfigObjError, x:
+            # (a non-existent site file does not trigger this exception)
+            print >> sys.stderr, x
+            raise SystemExit( "ERROR loading config file: " + rc )
 
-        # combined site and user configs (user takes precedence)
-        self.cfg = {}
-        self.inherit( self.cfg, self.sepcfg['site'] )
-        self.inherit( self.cfg, self.sepcfg['user'] )
+        # merge site config into defaults (site takes precedence)
+        self.cfg.merge( self.sitecfg )
+        # now merge user config for final result (user takes precedence) 
+        self.cfg.merge( self.usercfg )
 
-        # expand out environment variables etc.
+        # now validate the final result to catch any errors
+        self.validate( self.cfg )
+
+        # expand out environment variables, create directories, etc.
         self.process()
 
     def write_rc( self, ftype=None ):
+        """Generate initial site or user config files containing all
+        available settings commented out.  In the user case the default
+        values are obtained by any site settings into the configspec 
+        defaults."""
         if ftype not in [ 'site', 'user' ]:
             raise SystemExit( "ERROR, illegal file type for write_rc(): " + ftype )
 
@@ -108,8 +127,12 @@ class globalcfg( object ):
 #          (just the items whose values you need to change)
 #-----------------------------------------------------------------------
 """
-        cfg = deepcopy( self.sepcfg['site'] )
+        # start with a copy of the site config
+        cfg = deepcopy( self.sitecfg )
+        # validate to load defaults for items not set in site config
+        self.validate( cfg )
 
+        # write out all settings, commented out.
         outlines = preamble.split('\n')
         cfg.filename = None
         for line in cfg.write():
@@ -194,16 +217,8 @@ class globalcfg( object ):
                 print >> sys.stderr, '  ERROR, illegal entry:', extra 
             raise SystemExit( "ERROR illegal global config entry(s) found" )
 
-    def inherit( self, target, source ):
-        for item in source:
-            if isinstance( source[item], dict ):
-                if item not in target:
-                    target[item] = {}
-                self.inherit( target[item], source[item] )
-            else:
-                target[item] = source[item]
-
     def block_user_cfg( self, usercfg, sitecfg, comments={}, sec_blocked=False ):
+        """Check the comments for each item for the user exclusion indicator."""
         for item in usercfg:
             # iterate through sparse user config and check for attempts
             # to override any items marked '# SITE ONLY' in the spec.

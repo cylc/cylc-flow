@@ -123,8 +123,10 @@ Arguments:"""
                     action="store_true", default=False, dest="use_ssh" )
 
             self.add_option( "--pyro-timeout", metavar='SEC',
-                    help="Set a timeout value for Pyro network connections "
-                    "to the running suite. The default is no timeout.",
+                    help="Set a timeout for network connections "
+                    "to the running suite. The default is no timeout. "
+                    "For task messaging connections see "
+                    "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
             self.add_option( "-p", "--passphrase",

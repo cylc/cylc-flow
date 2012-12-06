@@ -85,18 +85,6 @@ proceeding to the next batch. See Section~\ref{MaxSimJobSub}.
     \item {\em default:} 50
 \end{myitemize}
 
-\subsubsection[pyro connection timeout]{[cylc] $\rightarrow$ pyro connection timeout}
-
-This sets the network connection timeout for Pyro connections to a
-running suite. The default is no timeout at all. See
-Section~\ref{MaxSimJobSub} for more on why this matters.
-
-\begin{myitemize}
-    \item {\em type:} float (seconds; minimum 0.0)
-    \item {\em default:} (none)
-\end{myitemize}
-
-
 \subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
 
 Cylc does not normally abort if tasks fail, but if this item is turned

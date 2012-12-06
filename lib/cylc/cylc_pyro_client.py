@@ -62,7 +62,8 @@ class client( object ):
         # callers need to check for Pyro.NamingError if target object not found:
         proxy = Pyro.core.getProxyForURI(uri)
 
-        # set passphrase if necessary:
+        proxy._setTimeout(self.pyro_timeout)
+
         if self.pphrase:
             proxy._setIdentification( self.pphrase )
 
