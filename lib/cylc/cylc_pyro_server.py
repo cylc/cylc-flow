@@ -34,7 +34,7 @@ class pyro_server( object ):
         self.owner = user
 
         # SINGLE THREADED PYRO
-        Pyro.config.PYRO_MULTITHREADED = 0
+        Pyro.config.PYRO_MULTITHREADED = 1
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
         # (see the Userguide "Networking Issues" section).
         Pyro.config.PYRO_DNS_URI = True
