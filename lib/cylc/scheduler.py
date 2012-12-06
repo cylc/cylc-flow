@@ -303,7 +303,7 @@ class scheduler(object):
                 "Do not redirect stdout and stderr to file.",
                 action="store_true", default=False, dest="noredirect" )
 
-        self.parse_commandline()         # this sets the self.load_tasks method via cylc-run
+        self.parse_commandline()
 
         # global config
         self.globals = globalcfg()
