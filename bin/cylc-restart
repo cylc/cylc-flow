@@ -75,12 +75,6 @@ the remote host before starting the suite."""
             "restart this is only used to set $CYLC_SUITE_INITIAL_CYCLE_TIME.",
             action="store_true", default=False, dest="ignore_startcycle" )
 
-        self.parser.add_option( "--pyro-timeout", metavar='SEC',
-                help="Set a Pyro network connection timeout for tasks "
-                "submitted by the suite (this will override the suite "
-                "default if one is configured).", action="store",
-                default=None, dest="pyro_timeout" )
-
         self.start_tag = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self, is_restart=True )
 
