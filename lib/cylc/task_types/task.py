@@ -420,9 +420,6 @@ class task( Pyro.core.ObjBase ):
         self.set_from_rtconfig( rtconfig )
 
         self.log( 'DEBUG', 'submitting task job script' )
-        # add hook to db here
-        
-        
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
