@@ -68,7 +68,7 @@ def run_get_stdout( command, filter=False ):
         # output is a single string with newlines; but we return a list of
         # lines filtered (optionally) for a special '!cylc!' prefix.
         res = []
-        for line in out.split():
+        for line in out.split('\n'):
             line.strip()
             if filter:
                 if line.startswith( '!cylc!' ):
@@ -759,18 +759,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #    info_dialog( result.reason, self.window ).inform()
 
     def loadctimes( self, bt, startentry, stopentry ):
-        item1 = " -i [scheduling]['initial cycle time']"
-        item2 = " -i [scheduling]['final cycle time']"
+        item1 = " -i '[scheduling]initial cycle time'"
+        item2 = " -i '[scheduling]final cycle time'"
         command = "cylc get-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
-                " --owner=" + self.cfg.owner + item1 + item2 + " " + \
+                " --owner=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
                 self.cfg.suite 
-        res1 = run_get_stdout( command + item1, filter=True ) # (T/F,[lines])
-        res2 = run_get_stdout( command + item2, filter=True )
+        res = run_get_stdout( command, filter=True ) # (T/F,['ct ct'])
 
-        if res1[0] and res2[0]:
-            out1 = res1[1][0]
-            out2 = res2[1][0]
+        if res[0]:
+            out1, out2 = res[1][0].split()
             if out1 == "None" and out2 == "None":  # (default value from suite.rc spec)
                 info_dialog( """Initial and final cycle times have not
 been defined for this suite""").inform()
