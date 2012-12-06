@@ -74,17 +74,12 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False,
-            pyro_timeout=None, collapsed=[], only=None ):
+            verbose=False, validation=False, strict=False, collapsed=[], only=None ):
 
         self.run_mode = run_mode
         self.verbose = verbose
         self.strict = strict
         self.naked_dummy_tasks = []
-        if pyro_timeout:
-            self.pyro_timeout = float(pyro_timeout)
-        else:
-            self.pyro_timeout = None
         self.edges = []
         self.cyclers = []
         self.taskdefs = OrderedDict()
@@ -246,15 +241,6 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
-
-        if not self.pyro_timeout:
-            # no timeout specified on the command line
-            tmp = self['cylc']['pyro connection timeout']
-            if tmp:
-                self.pyro_timeout = float(tmp)
-
-        if self.verbose:
-            print "Pyro connection timeout for tasks in this suite:", self.pyro_timeout, "seconds"
 
         # suite event hooks
         if self.run_mode == 'live' or \

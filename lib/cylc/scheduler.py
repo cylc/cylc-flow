@@ -520,7 +520,7 @@ class scheduler(object):
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, pyro_timeout=self.options.pyro_timeout )
+                verbose=self.verbose )
         self.config.create_directories()
         self.hold_before_shutdown = self.config['development']['hold before shutdown']
 
@@ -658,7 +658,6 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
-        cylcenv[ 'CYLC_SUITE_PYRO_TIMEOUT' ] = str( self.config.pyro_timeout )
         cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logdir
         task.task.cylc_env = cylcenv
 
