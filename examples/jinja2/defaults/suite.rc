@@ -1,0 +1,29 @@
+#!Jinja2
+
+title = "Jinja2 example: use of defaults and external input"
+
+description = """
+The template variable FIRST_TASK must be given on the cylc command line
+using --set or --set-file=FILE; two other variables, LAST_TASK and
+N_MEMBERS can be set similarly, but if not they have default values.""" 
+
+{% set LAST_TASK = LAST_TASK | default( 'baz' ) %}
+{% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
+
+{# input of FIRST_TASK is required - no default #}
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time   = 2010081600
+    [[dependencies]]
+        [[[0]]]
+            graph = """{{ FIRST_TASK }} => ens
+                 ens:succeed-all => {{ LAST_TASK }}"""
+
+[runtime]
+    [[ens]]
+{% for I in range( 0, N_MEMBERS ) %}
+    [[ mem_{{ I }} ]]
+        inherit = ens
+{% endfor %}
+

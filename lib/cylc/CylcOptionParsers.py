@@ -18,7 +18,7 @@
 
 import os, re
 from optparse import OptionParser
-from hostname import hostname
+from suite_host import hostname
 from owner import user
 
 """Common options for all cylc commands."""
@@ -50,7 +50,7 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False ):
+    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, gcylc=False ):
 
         # commands that interact with a running suite ("controlcom=True")
         # normally get remote access via Pyro RPC; but optionally
@@ -65,6 +65,7 @@ Arguments:"""
         self.n_optional_args = 0
         self.unlimited_args = False
         self.pyro = pyro
+        self.gcylc = gcylc
         maxlen = 0
         for arg in argdoc:
             if len(arg[0]) > maxlen:
@@ -111,18 +112,21 @@ Arguments:"""
                 "Defaults to $HOME/.cylc/DB.",
                 metavar="DB", action="store", default=None, dest="db" )
 
-        self.add_option( "--invoked",
-                help="Override cylc version compatibility checking.",
-                action="store_true", default=False, dest="override" )
-
         if pyro:
+            self.add_option( "--port",
+                help="Suite port number on the suite host. NOTE: this is retrieved "
+                "automatically if passwordless ssh is configured to the suite host.",
+                metavar="INT", action="store", default=None, dest="port" )
+
             self.add_option( "--use-ssh",
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
 
             self.add_option( "--pyro-timeout", metavar='SEC',
-                    help="Set a timeout value for Pyro network connections "
-                    "to the running suite. The default is no timeout.",
+                    help="Set a timeout for network connections "
+                    "to the running suite. The default is no timeout. "
+                    "For task messaging connections see "
+                    "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
             self.add_option( "-p", "--passphrase",
@@ -132,6 +136,22 @@ Arguments:"""
             self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
+
+        if gcylc or not pyro:
+            self.add_option( "-s", "--set", metavar="NAME=VALUE",
+                help="Set the value of a template variable in the suite "
+                "definition; can be used multiple times to set multiple "
+                "variables.  WARNING: these settings do not persist "
+                "across restarts, you have to set them again on the "
+                "\"cylc restart\" command line.",
+                action="append", default=[], dest="templatevars" )
+
+            self.add_option( "--set-file", metavar="FILE",
+                help="Set the value of template variables in the suite "
+                "definition from a file containing NAME=VALUE pairs (one per line). "
+                "WARNING: these settings do not persist across restarts, you "
+                "have to set them again on the \"cylc restart\" command line.",
+                action="store", default=None, dest="templatevars_file" )
 
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
@@ -150,6 +170,10 @@ Arguments:"""
         if self.pyro:
             if options.pfile:
                 options.pfile = os.path.abspath( options.pfile )
+
+        if self.gcylc or not self.pyro:
+            if options.templatevars_file:
+                options.templatevars_file = os.path.abspath( options.templatevars_file )
 
         return ( options, args )
 

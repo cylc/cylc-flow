@@ -24,8 +24,8 @@ if remrun().execute():
 import os, re
 import tempfile
 import subprocess
+from cylc.global_config import globalcfg
 from cylc.CylcOptionParsers import cop
-from cylc.conf.CylcGlobals import cylc_tmpdir
 from cylc.continuation_lines import join
 from cylc.Jinja2Support import Jinja2Process
 from cylc.include_files import inline_for_viewing
@@ -37,18 +37,9 @@ View a read-only temporary copy of suite NAME's suite.rc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
-  $(G)EDITOR suite.rc
-$GEDITOR or $EDITOR, and $TMDPIR, must be in your environment. 
-
-Examples:
-   export EDITOR=vim
-   export GEDITOR='gvim -f'      # -f: do not detach from parent shell!!
-   export EDITOR='xterm -e vim'  # for gcylc, if gvim is not available
-   export GEDITOR=emacs
-   export EDITOR='emacs -nw'
-You can set both $GEDITOR and $EDITOR to a GUI editor if you like, but
-$GEDITOR at least *must* be a GUI editor, or an in-terminal invocation 
-of a non-GUI editor, if you want to spawn editing sessions via gcylc.
+  % <editor> suite.rc
+Where <editor> is defined in the cylc site and user config files
+($CYLC_DIR/conf/globals/cylc.rc and $HOME/.cylc/cylc.rc).
 
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
@@ -73,7 +64,7 @@ parser.add_option( "--label", "-l",
         "Line numbers will not correspond to those reported by the parser.",
         action="store_true", default=False, dest="label" )
 
-parser.add_option( "--single", "-s", 
+parser.add_option( "--single",
         help="(With '-i') Inline only the first instances of any "
         "multiply-included files. Line numbers will not correspond to "
         "those reported by the parser.",
@@ -85,8 +76,7 @@ parser.add_option( "--nojoin", "-n",
         action="store_true", default=False, dest="nojoin" )
 
 parser.add_option( "--gui", "-g", 
-        help="Use GUI editor $GEDITOR instead of $EDITOR. This option is "
-        "automatically used when an editing session is spawned by gcylc.",
+        help="Force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor" )
 
 parser.add_option( "--stdout", 
@@ -97,15 +87,12 @@ parser.add_option( "--stdout",
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
+globals = globalcfg()
+cylc_tmpdir = globals.cfg['temporary directory']
 if options.geditor:
-    edvar = 'GEDITOR'
+    editor = globals.cfg['editors']['gui']
 else:
-    edvar = 'EDITOR'
-
-try:
-    editor = os.environ[edvar]
-except KeyError:
-    raise SystemExit( 'export $' + edvar + ' before using this command' )
+    editor = globals.cfg['editors']['in-terminal']
 
 global suitedir
 suitedir = os.path.dirname(suiterc)
@@ -121,7 +108,13 @@ if os.path.isfile( suiterc ):
         lines = inline_for_viewing( suitedir, lines, options.mark, options.single, options.label )
 
     if options.process:
-        lines = Jinja2Process( lines, suitedir, False )
+        try:
+            lines = Jinja2Process( lines, suitedir,
+                options.templatevars,
+                options.templatevars_file,
+                verbose=False )
+        except Exception, x:
+            raise SystemExit(x)
 
     if not options.nojoin:
         # join any continuation lines
@@ -155,7 +148,7 @@ os.chmod( viewfile, 0444 )
 # and overrides the readonly mode.
 modtime1 = os.stat( viewfile ).st_mtime
 
-# in case $EDITOR has options, e.g. 'emacs -nw':
+# in case editor has options, e.g. 'emacs -nw':
 command_list = re.split( ' ', editor )
 command_list.append( viewfile )
 command = ' '.join( command_list )

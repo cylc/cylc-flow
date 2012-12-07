@@ -10,7 +10,7 @@
 cylc unreg $REG
 cylc reg $REG $DEF
 echo "Sub-suite log file is: $PWD/$LOG"
-if cylc run $REG > $LOG 2>&1; then 
+if cylc run --no-redirect $REG > $LOG 2>&1; then 
     echo "ERROR: sub-suite did not abort as planned"
     exit 1
 else
@@ -23,10 +23,10 @@ else
 fi
 cylc unreg $REG"""
         [[[environment]]]
-            DEF = $CYLC_SUITE_DEF_PATH/hidden/<TASK>
-            REG = ${CYLC_SUITE_REG_NAME}-<TASK>
+            DEF = $CYLC_SUITE_DEF_PATH/hidden/${CYLC_TASK_NAME}
+            REG = ${CYLC_SUITE_REG_NAME}-${CYLC_TASK_NAME}
             LOG = ${CYLC_TASK_NAME}.log
-            GREP = "ERROR: <TASK> EVENT HANDLER FAILED"
+            GREP = "ERROR: ${CYLC_TASK_NAME} EVENT HANDLER FAILED"
         [[[remote]]]
             # divorce sub-suites from the task execution environments
             # that launch them

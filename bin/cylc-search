@@ -52,7 +52,8 @@ Search for pattern matches in suite definitions and any files in the
 suite bin directory. Matches are reported by line number and suite
 section. An unquoted list of PATTERNs will be converted to an OR'd
 pattern. Note that the order of command line arguments conforms to
-normal cylc command usage ('command SUITE ARGS') not shell grep usage.
+normal cylc command usage (suite name first) not that of the grep
+command.
 
 Note that this command performs a text search on the suite definition,
 it does not search the data structure that results from parsing the
@@ -61,7 +62,7 @@ suite definition - so it will not report implicit default settings.
 For case insenstive matching use '(?i)PATTERN'.""",
     argdoc = [('REG', 'Suite name'), 
         ('PATTERN', 'Python-style regular expression'),
-        ('[PATTERN2...]', 'Addtional search patterns')])
+        ('[PATTERN2...]', 'Additional search patterns')])
 
 parser.add_option( "-x", help="Do not search in the suite bin directory",
         action="store_false", default=True, dest="search_bin" )

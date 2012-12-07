@@ -64,7 +64,6 @@ class jobfile(object):
         self.write_suite_bin_access()
 
         self.write_environment_2()
-        self.write_bc_environment()
         self.write_task_started()
 
         self.write_work_directory_create()
@@ -122,19 +121,6 @@ class jobfile(object):
             BUFFER = self.FILE
         BUFFER.write( "\n\n# ENVIRONMENT SCRIPTING:\n" )
         BUFFER.write( escr )
-
-    def write_bc_environment( self, BUFFER=None ):
-        env = self.jobconfig['broadcast environment']
-        if len( env.keys() ) == 0:
-            return
-        if not BUFFER:
-            BUFFER = self.FILE
-        BUFFER.write( "\n\n# BROADCAST VARIABLES FROM OTHER TASKS:" )
-        for var, val in env.items():
-            BUFFER.write( self.get_var_assign(var,val))
-        BUFFER.write( "\nexport" )
-        for var in env:
-            BUFFER.write( " " + var )
 
     def write_environment_1( self, BUFFER=None ):
         if not BUFFER:
@@ -279,7 +265,6 @@ cd $CYLC_TASK_WORK_PATH""" )
         self.write_initial_scripting( strio )
         self.write_environment_1( strio )
         self.write_cylc_access( strio )
-        self.write_bc_environment( strio )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()

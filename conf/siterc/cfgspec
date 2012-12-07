@@ -1,0 +1,119 @@
+#>______________________________________________________________________
+#> This is a ConfigObj configspec for cylc site and user configuration.
+#> All legal configuration items and default values are defined below. 
+#>----------------------------------------------------------------------
+#> HOW TO CUSTOMIZE SETTINGS FOR YOUR SITE:
+#>   *** Do not modify this configspec file ***
+#>   (1) Run "cylc get-global-config --write-site" to generate the file
+#>       $CYLC_DIR/conf/site.rc with all default settings commented out.
+#>   (2) Uncomment and modify specific configuration items as required.
+#>----------------------------------------------------------------------
+#> HOW TO CUSTOMIZE SETTINGS FOR AN INDIVIDUAL USER:
+#>   *** Do not modify this configspec file ***
+#>   (1) Run "cylc get-global-config --write-user" to generate the file 
+#>       $HOME/.cylc/cylc.rc with all default settings commented out.
+#>   (2) Uncomment and modify specific configuration items as required.
+#>----------------------------------------------------------------------
+#>   NOTE THAT SITE AND/OR USER CONFIG IS REQUIRED ON TASK HOSTS TOO 
+#>----------------------------------------------------------------------
+#> Comments starting with "#>" are not passed on to generated .rc files.
+#>----------------------------------------------------------------------
+# Sections or items preceded by "# SITE ONLY" can not be set by users.
+#> (trailing comments would be better markers but they don't get passed
+#> through from the configspec to generated config files)
+#-----------------------------------------------------------------------
+
+# A temporary directory is needed by a few cylc commands. Set the
+# value to None to get the default system temp dir (usually $TMPDIR).
+temporary directory = string( default=None )
+
+# The top level directory for all suite and task (job) logs, etc. 
+run directory = string( default="$HOME/cylc-run" )
+
+state dump rolling archive length = integer( min=1, default=10 )
+
+# Task messaging settings apply to the "cylc task COMMAND" commands 
+# used by running tasks to communicate with their parent suite. If a
+# message send fails after the configured number of tries the task will 
+# carry on regardless.
+[task messaging]
+    retry interval in seconds = float( min=1, default=30 )
+    maximum number of tries = integer( min=1, default=10 )
+    # The timeout is the same as --pyro-timeout for user commands.
+    # It should be set to None (no timeout) or a large number (a few
+    # minutes) - until cylc has network request handling in a
+    # separate thread (see User Guide "Network Connection Timeouts").  
+    connection timeout in seconds = float( min=1, default=None )
+
+# suites logs go under the suite run directory
+[suite logging]
+    roll over at start-up = boolean( default=True )
+    rolling archive length = integer( min=1, default=5 )
+    maximum size in bytes = integer( min=1000, default=1000000 )
+
+# The "cylc doc" command and GUI Help menus need the following items.
+[documentation]
+    # Documentation files that come with the cylc release tarball.
+# SITE ONLY
+    [[files]]
+        html index = string( default="$CYLC_DIR/doc/index.html" )
+        pdf user guide = string( default="$CYLC_DIR/doc/CylcUserGuide.pdf" )
+        multi-page html user guide = string( default="$CYLC_DIR/doc/cug-html.html" )
+        single-page html user guide = string( default="$CYLC_DIR/doc/single/cug-html.html" )
+    # Documentation URLs:
+    [[urls]]
+        # The cylc homepage links to documentation for the latest release.
+# SITE ONLY
+        internet homepage = string( default="http://cylc.github.com/cylc/" )
+        # You may want to copy the docs for access via a local web server.
+        local index = string( default=None )
+
+# PDF and HTML viewers can be launched by cylc to view documentation.
+[document viewers]
+    pdf = string( default="evince" )
+    html = string( default="firefox" )
+
+# Configure your favourite text editor for editing suite definitions.
+[editors]
+    # Examples:
+    #  + vim           # vim in-terminal
+    #  + gvim -f       # (-f is required for "cylc edit --inline")
+    #  + xterm -e vim  # in-terminal as a proxy for a GUI editor
+    #  + emacs         # emacs GUI
+    #  + emacs -nw     # emacs in-terminal 
+    in-terminal = string( default="vim" )
+    gui         = string( default="gvim -f" )
+
+# Pyro is used by cylc for network communications.
+[pyro]
+    # Each suite listens on a dedicated network port.
+    # Servers bind on the first port available from the base port up:
+# SITE ONLY
+    base port = integer( default=7766 )
+    # This sets the maximum number of suites that can run at once.
+# SITE ONLY
+    maximum number of ports = integer( default=100 )
+    # Port numbers are recorded in this directory, by suite name.
+    ports directory = string( default="$HOME/.cylc/ports/" )
+
+# The suite host machine's identity, by NAME or IP ADDRESS, must be
+# determined locally by cylc and passed to task execution environments
+# as $CYLC_SUITE_HOST, so that tasks can send their messages back home.
+# If name is used, the host name determined on the suite host must
+# resolve, on the task host, to the external IP address of the suite
+# host. Otherwise the external IP address of the suite host, as seen by
+# the task host, must be determined on the suite host, which is not
+# always easy to do. Cylc requires a special "target address" to do
+# this; see documentation in $CYLC_DIR/lib/cylc/suite_host.py for why.
+# (TO DO: is it conceivable that different remote task hosts at the same
+# site might see the suite host differently? If so we would need to be
+# able to override the target in suite definitions.)
+[suite host self-identification]
+    # Method: "name", "address", or "hardwired"
+    method = option( "name", "address", "hardwired", default="name" ) 
+    # Target: if your suite host sees the internet a common address such
+    # as 'google.com' will do; otherwise choose a host on your intranet.
+    target = string( default="google.com" )
+    # For the hardwired method, put the host name or IP address here:
+    host = string( default=None )
+

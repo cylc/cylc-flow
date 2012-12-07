@@ -18,7 +18,7 @@
 
 import re
 
-# Recursively pretty-print a nested dict tree structure.
+# Recursively pretty-print a nested dict as a tree
 
 # Plain ASCII tree characters
 a_hbar = '-'
@@ -71,5 +71,5 @@ def print_tree( tree, padding, unicode=False, prefix='', labels=None ):
                 else:
                     print line
             else:
-                print line + tree[item]
+                print line + str( tree[item] )
 

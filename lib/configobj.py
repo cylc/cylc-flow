@@ -1360,7 +1360,6 @@ class ConfigObj(Section):
         else:
             self._handle_configspec(configspec)
     
-    
     def _initialise(self, options=None):
         if options is None:
             options = OPTION_DEFAULTS
@@ -1864,7 +1863,7 @@ class ConfigObj(Section):
         """
         if self._inspec:
             # Parsing a configspec so don't handle comments
-            return (value, '')
+           return (value, '')
         # do we look for lists in values ?
         if not self.list_values:
             mat = self._nolistvalue.match(value)

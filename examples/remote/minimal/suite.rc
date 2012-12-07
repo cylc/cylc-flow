@@ -11,9 +11,9 @@ the remote config section below for host address and cylc location."""
 [runtime]
     [[root]]
         command scripting = """
-echo HELLO from <TASK> on $(hostname)
+echo HELLO from $CYLC_TASK_NAME on $(hostname)
 sleep 10
-echo GOODBYE from <TASK> on $(hostname)"""
+echo GOODBYE from $CYLC_TASK_NAME on $(hostname)"""
         [[[remote]]]
             # the remote host name:
             host = wrh-1.hpcf.niwa.co.nz

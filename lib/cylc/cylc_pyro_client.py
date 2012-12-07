@@ -23,14 +23,16 @@ except ImportError, x:
 
 import sys
 from optparse import OptionParser
-from hostname import hostname
+from suite_host import hostname
 from time import sleep
-from port_scan import get_port, check_port
 from passphrase import passphrase
 from owner import user
+from port_file import port_retriever
+from global_config import globalcfg
 
 class client( object ):
-    def __init__( self, suite, pphrase=None, owner=user, host=hostname, pyro_timeout=None, port=None, verbose=False ):
+    def __init__( self, suite, pphrase=None, owner=user, host=hostname,
+            pyro_timeout=None, port=None, verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -41,19 +43,17 @@ class client( object ):
         else:
             self.pyro_timeout = None
 
-        #if pphrase:
         self.pphrase = pphrase
-        #else:
-        #    # TO DO: IS THIS NECESSARY - called from gcylc
-        #    # get the suite passphrase
-        #    self.pphrase = passphrase( suite, owner, host).get( None, None )
+
+        self.globals = globalcfg()
 
     def get_proxy( self, target ):
-        # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            check_port( self.suite, self.pphrase, self.port, self.owner, self.host, self.pyro_timeout, self.verbose )
+            if self.verbose:
+                print "Port number given:", self.port
         else:
-            self.port = get_port( self.suite, self.owner, self.host, self.pphrase, self.pyro_timeout, self.verbose )
+            self.port = port_retriever( self.suite, self.host, self.owner,
+                    self.globals.cfg['pyro']['ports directory'], self.verbose ).get()
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
@@ -62,7 +62,8 @@ class client( object ):
         # callers need to check for Pyro.NamingError if target object not found:
         proxy = Pyro.core.getProxyForURI(uri)
 
-        # set set passphrase if necessary:
+        proxy._setTimeout(self.pyro_timeout)
+
         if self.pphrase:
             proxy._setIdentification( self.pphrase )
 

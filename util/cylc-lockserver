@@ -22,11 +22,11 @@ import os, sys, pwd, re
 import socket, pickle
 import logging, logging.handlers
 from optparse import OptionParser
-from cylc.conf.CylcGlobals import pyro_base_port, pyro_port_range
 import Pyro.core, Pyro.errors, Pyro.naming
 from Pyro.ext.daemonizer import Daemonizer
 from ConfigParser import SafeConfigParser
 from cylc.suite_id import identifier
+from cylc.global_config import globalcfg
 import logging
 
 class ServerDaemon( Daemonizer ):
@@ -75,10 +75,14 @@ class LServer( object ):
         #Pyro.config.PYRO_STDLOGGING = True
         #Pyro.config.PYRO_TRACELEVEL = 3
 
+        globals = globalcfg()
+        base = globals.cfg['pyro']['base port']
+        range = globals.cfg['pyro']['maximum number of ports']
+
         # base (lowest allowed) Pyro socket number
-        Pyro.config.PYRO_PORT = pyro_base_port
+        Pyro.config.PYRO_PORT = base
         # max number of sockets starting at base
-        Pyro.config.PYRO_PORT_RANGE = pyro_port_range
+        Pyro.config.PYRO_PORT_RANGE = range
 
         Pyro.core.initServer()
 

@@ -26,14 +26,16 @@ from cylc.version import cylc_version
 from cylc.config import config
 from cylc.command_prep import prep_file
 
-parser = cop( """cylc [prep] validate [OPTIONS] REG 
+parser = cop( """cylc [prep] validate [OPTIONS] ARGS
 
 Validate a suite definition against the official specification
-held in $CYLC_DIR/conf/suiterc.spec.
+files held in $CYLC_DIR/conf/suiterc/.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use 
-'cylc view -i,--inline SUITE' for comparison.""" )
+'cylc view -i,--inline SUITE' for comparison.""",
+    argdoc=[('REG', 'Suite name'),
+            ('[TASK]', 'Task NAME%TAG: validate one task definition' )])
 
 parser.add_option( "--strict", 
         help="Fail any use of unsafe or experimental features. "
@@ -49,8 +51,17 @@ suite, suiterc = prep_file( args[0], options ).execute()
 if options.verbose:
     print "Parsing Suite Definition"
 
+if len(args) == 2:
+    only = [args[1]]
+else:
+    only = None
+
 try:
-    config = config( suite, suiterc, validation=True, strict=options.strict, verbose=options.verbose )
+    config( suite, suiterc, 
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file,
+            validation=True, strict=options.strict,
+            verbose=options.verbose, only=only )
 except Exception,x:
     if options.debug:
         raise

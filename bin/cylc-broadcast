@@ -23,58 +23,159 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute( force_required=True ):
         sys.exit(0)
 
-import os
+import os, re
 from cylc.CylcOptionParsers import cop
 from cylc.task_message import message
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
 from cylc.cycle_time import ct, CycleTimeError
+from cylc.print_tree import print_tree
 
-usage = """cylc [task] broadcast [OPTIONS] ARGS
+def get_padding( settings, level=0, padding=0 ):
+    level += 1
+    for key,val in settings.items():
+        tmp = level*2 + len(key)
+        if tmp > padding:
+            padding = tmp
+        if isinstance( val, dict ):
+            padding = get_padding( val, level, padding )
+    return padding
 
-This command, normally used by running tasks, broadcasts environment
-variables (name=value) to the execution environments of subsequent
-tasks. Note this is achieved by writing broadcast variables to
-task job scripts, not by normal shell-to-subshell environment
-inheritance, so receiving tasks can even be on other hosts. Broadcast
-variables override existing variables of the same name in the task
-execution environment. It is up to the user to ensure that variable
-names do not clash and that the intended use of broadcast variables is
-consistent with the suite dependency structure (receiving tasks must be
-downstream of the broadcasting task, obviously).
+def get_rdict( left, right=None ): 
+    # left is [section]item, or just item
+    rdict = {}
+    m = re.match( '^\[(.*)\](.*)$', left )
+    if m:
+        # [sect]item = right
+        sect, var = m.groups()
+        if not var:
+            rdict = { sect : right }
+        else:
+            rdict = { sect : { var : right }}
+    else:
+        # item = right
+        rdict = { left : right }
+    return rdict
+ 
+def str2list( st ):
+    return re.split( '[, ]+', st )
 
-Broadcast variables persist across suite restarts.
+def str2bool( st ):
+    return st.lower() in ( 'true' )
 
-Task job scripts abort on use of unset environment variables so
-receiving tasks should supply a default value if the upstream broadcast
-can not be relied on: FOO=${BROADCAST:-default}.
+def translate( rdict ):
+    try:
+        # translate list values from string
+        for item in [
+            'retry delays',
+            'extra log files',
+            ( 'simulation mode', 'run time range' ) ]:
+        
+            if isinstance( item, list ):
+                rdict[item[0]][item[1]] = str2list( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2list( rdict[item] )
 
-Suite identity is normally determined from the task execution
-environment supplied by the suite. Export CYLC_SUITE_REG_NAME before
-manual use on the command line.
+        # translate bool values from string
+        for item in [
+            'manual completion',
+            'enable resurrection',
+            ( 'simulation mode', 'simulate failure' ),
+            ( 'simulation mode', 'disable task event hooks' ),
+            ( 'dummy mode', 'disable pre-command scripting' ),
+            ( 'dummy mode', 'disable post-command scripting' ),
+            ( 'dummy mode', 'disable task event hooks' ),
+            ( 'dummy mode', 'disable retries' ),
+            ( 'remote', 'ssh messaging' ),
+            ( 'event hooks', 'reset timer' ) ]:
 
-Broadcast variables targetted at a specific task ID or cycle time expire
-and are forgotten as the suite moves on. Untargetted variables and those
-targetted at a task name persist throughout the suite run and so should
-be used sparingly. 
+            if isinstance( item, list ):
+                rdict[item[0]][item[1]] = strbool( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2bool( rdict[item] )
 
-Note that variable values with internal spaces must be quoted, e.g.:
- % cylc broadcast MYVAR "the quick brown fox"
-Within scripting sections in the suite.rc file single quotes can be used
-inside triple-quoted multi-line strings so long as there is a space
-before the closing triple quotes."""
+        # floats?
+                 
+    except KeyError:
+        # item not in rdict
+        pass
 
-parser = cop( usage, pyro=True, 
-        argdoc = [ ("NAME", "Variable name"), ("VALUE", "Variable value"),
-            ("[TARGET]", 
-                "Broadcast only to a target task ID, name, or cycle.")])
+usage = """cylc [control] broadcast|bcast [OPTIONS] REG
+
+This command overrides [runtime] namespace settings in a running suite.
+
+For settings affected by multiple broadcasts with respect to cycle time
+and/or namespace, the precedence is as follows:
+ 1) specific cycles take precedence over all-cycle broadcasts; then
+ 2) the most specific namespace (farthest from root) takes precedence.
+
+Broadcast settings persist across suite restarts.
+
+Items with internal spaces must be quoted, e.g.:
+  % cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
+  
+To view current active broadcasts:
+  % cylc broadcast --display REG
+  % cylc broadcast --display-task=TASKID REG
+ 
+To unset active broadcast:
+  % cylc broadcast -n NAME -u 'command scripting' REG
+  % cylc broadcast --clear REG # clear all broadcast settings
+  
+Broadcast settings are applied to tasks just before job submission.
+
+LIMITATIONS: broadcast cannot change the runtime inheritance hierarchy.
+
+See also 'cylc reload' - reload a modified suite definition at run time."""
+
+parser = cop( usage, pyro=True )
+
+parser.add_option( "-n", "--namespace", metavar="NAME", 
+        help="Target runtime namespace, default root; can be used "
+        "multiple times to target several namespaces at once.", 
+        action="append", dest="namespaces", default=[] )
+
+parser.add_option( "-t", "--tag", metavar="TAG",
+        help="Cycle time or integer tag: target tasks with just this "
+        "tag; can be used multiple times to target several cycles.", 
+        action="append", dest="tags", default=[] )
+
+parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE", 
+        help="Set a runtime item by broadcast. Can be used multiple "
+        "times to broadcast several settings at once.",
+        action="append", dest="set", default=[] )
+
+parser.add_option( "-u", "--unset", metavar="[SEC]ITEM", 
+        help="Unset an active broadcast item. Can be used multiple "
+        "times to broadcast several settings at once.",
+        action="append", dest="unset", default=[] )
+
+parser.add_option( "-c", "--clear", 
+        help="clear all current broadcast settings.",
+        action="store_true", dest="clear", default=False )
+
+parser.add_option( "-d", "--display", 
+        help="Display current active broadcast settings.",
+        action="store_true", default=False, dest="show" )
+
+parser.add_option( "-k", "--display-task", metavar="TASKID",
+        help="Print current active broadcast for a particular task "
+        "(NAME%TAG).", action="store", default=None, dest="showtask" )
+
+parser.add_option( "-b", "--box",
+        help="Use unicode box characters with the show options.",
+        action="store_true", default=False, dest="unicode" )
+
+parser.add_option( "-r", "--raw",
+        help="With -s|--show, print in raw Python format",
+        action="store_true", default=False, dest="raw" )
 
 ( options, args ) = parser.parse_args()
 
-try:
-   suite = os.environ['CYLC_SUITE_REG_NAME']
-except KeyError, x:
-    raise SystemExit(x)
+if len(args) != 1:
+    parser.error("Wrong number of argumetns")
+
+suite = args[0]
 
 suite, pphrase = prep_pyro( suite, options ).execute()
 
@@ -89,23 +190,67 @@ else:
     except KeyError:
         pass
 
-varname = args[0]
-value = args[1]
-if len(args) == 3:
-    target = args[2]
-else:
-    target = None
-
-# target validation is done by the receiver
-
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, None, options.verbose ).get_proxy( 'receiver' )
-    success, msg = proxy.receive( varname, value, target )
+            options.host, options.pyro_timeout, options.port,
+            options.verbose ).get_proxy( 'broadcast_receiver' )
 except Exception, x:
     if debug:
         raise
     raise SystemExit(x)
 
+if options.show or options.showtask:
+    if options.showtask:
+        try:
+            name, tag = options.showtask.split('%')
+        except ValueError:
+            parser.error( "TASKID must be NAME%TAG" )
+    settings = proxy.get( options.showtask )
+    padding = get_padding(settings) * ' '
+    if options.raw:
+        print str( settings )
+    else:
+        print_tree( settings, padding, options.unicode )
+    sys.exit(0)
+
+if options.clear:
+    settings = proxy.clear()
+    sys.exit(0)
+
+if len( options.set ) == 0 and len( options.unset ) == 0:
+    parser.error( "No items to set or unset!" )
+
+namespaces = options.namespaces
+if not namespaces:
+    namespaces = ["root"]
+
+tags = options.tags
+if not tags:
+    tags = ["all"]
+
+settings = []
+for s in options.set:
+    try:
+        # left = val
+        left, val = s.split('=')
+        left = left.strip()
+        val = val.strip()
+        if left == 'inherit':
+            raise SystemExit( "ERROR: Inheritance cannot be changed by broadcast" )
+    except ValueError:
+        raise SystemExit( "ERROR: --set requires a value" )
+    rdict = get_rdict( left, val )
+    translate( rdict )
+    settings.append( rdict )
+
+for u in options.unset:
+    if u == 'inherit':
+        raise SystemExit( "ERROR: Inheritance cannot be changed by broadcast" )
+    if '=' in u:
+        raise SystemExit( "ERROR: --unset does not take a value" )
+    settings.append( get_rdict( u ) )
+
+success, msg = proxy.put( namespaces, tags, settings )
 if not success:
     raise SystemExit( msg )
+

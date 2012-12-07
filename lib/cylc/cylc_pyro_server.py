@@ -24,12 +24,11 @@ except ImportError, x:
     print >> sys.stderr, x
     sys.exit( "ERROR: Pyro is not installed" )
 from passphrase import passphrase
-from hostname import hostname
+from suite_host import hostname
 from owner import user
-from conf.CylcGlobals import pyro_base_port, pyro_port_range
 
 class pyro_server( object ):
-    def __init__( self, suite, suitedir, user=user ):
+    def __init__( self, suite, suitedir, base_port, max_n_ports, user=user ):
 
         self.suite = suite
         self.owner = user
@@ -41,9 +40,9 @@ class pyro_server( object ):
         Pyro.config.PYRO_DNS_URI = True
 
         # base (lowest allowed) Pyro socket number
-        Pyro.config.PYRO_PORT = pyro_base_port
+        Pyro.config.PYRO_PORT = base_port
         # max number of sockets starting at base
-        Pyro.config.PYRO_PORT_RANGE = pyro_port_range
+        Pyro.config.PYRO_PORT_RANGE = max_n_ports
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()

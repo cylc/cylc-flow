@@ -20,13 +20,12 @@ import gtk
 import gobject
 import os, sys
 from optparse import OptionParser
-from cylc.conf.CylcGlobals import cylc_tmpdir
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
+from cylc.global_config import globalcfg
 from cylc.gui.warning_dialog import warning_dialog
 from cylc.gui.gcapture import gcapture, gcapture_tmpfile
-from cylc.mkdir_p import mkdir_p
 
 # This is a unit test for $CYLC_DIR/lib/cylc/gui/gcapture.py
 # but it may be more generally useful.
@@ -63,11 +62,13 @@ if options.other and not options.filep:
 
 command = ' '.join(args)
 
-
 if options.other:
     ignore_command = True
 else:
     ignore_command = False
+
+globals = globalcfg()
+cylc_tmpdir = globals.cfg['temporary directory']
 
 gobject.threads_init()
 if options.filep:

@@ -17,13 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from hostname import hostname
+from suite_host import hostname
 from owner import user
 from passphrase import passphrase
 from registration import localdb
 import datetime
 import Pyro.errors, Pyro.core
-from conf.CylcGlobals import pyro_base_port, pyro_port_range
+from global_config import globalcfg
 
 class SuiteIdentificationError( Exception ):
     """
@@ -106,8 +106,8 @@ class port_interrogator(object):
 
 def warn_timeout( host, port, timeout ):
     print >> sys.stderr, "WARNING: connection timed out (" + str(timeout) + "s) at", portid( host, port )
-    print >> sys.stderr, '  This could mean a Ctrl-Z stopped suite or similar is holding up the port,'
-    print >> sys.stderr, '  or your pyro connection timeout needs to be longer than', str(timeout), 'seconds.'
+    #print >> sys.stderr, '  This could mean a Ctrl-Z stopped suite or similar is holding up the port,'
+    #print >> sys.stderr, '  or your pyro connection timeout needs to be longer than', str(timeout), 'seconds.'
 
 def portid( host, port ):
     return host + ":" + str(port)
@@ -126,6 +126,10 @@ def cylcid_uri( host, port ):
 
 def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None, verbose=False ):
     # Scan ports until a particular suite is found.
+
+    globals = globalcfg()
+    pyro_base_port = globals.cfg['pyro']['base port']
+    pyro_port_range = globals.cfg['pyro']['maximum number of ports']
 
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         uri = cylcid_uri( host, port )
@@ -213,7 +217,11 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 
-    # In non-verbose mode print nothing (scan is used by gcylc).
+    globals = globalcfg()
+    pyro_base_port = globals.cfg['pyro']['base port']
+    pyro_port_range = globals.cfg['pyro']['maximum number of ports']
+
+    # In non-verbose mode print nothing (scan is used by cylc db viewer).
 
     # load my suite passphrases 
     reg = localdb(db)
@@ -257,7 +265,7 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
             raise
         else:
             if not silent:
-                # used by gcylc scanning for running suites
+                # used by cylc db viewer scanning for running suites
                 print name, owner, host, port
             if verbose:
                 after = datetime.datetime.now()

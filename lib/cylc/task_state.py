@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import re
 import sys
 
@@ -28,13 +27,29 @@ variables that will automatically be written to and read from the state
 dump file.
 """
 
-# TO DO: need some exception handling in here
+class TaskStateError( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
 
 class task_state(object):
 
-    allowed_status = [ 'waiting', 'retry_delayed', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued' ]
-    # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
-    allowed_bool = [ 'true', 'false' ]
+    legal = [ 'waiting',
+              'retry_delayed',
+              'submitted',
+              'running',
+              'succeeded',
+              'failed',
+              'held',
+              'runahead',
+              'queued' ]
+
+    @classmethod
+    def is_legal( cls, state ):
+        return state in cls.legal
+
+    # Note: internal to this class, task spawned status is string 'true' or 'false'
 
     def __init__( self, initial_state ):
 
@@ -50,18 +65,11 @@ class task_state(object):
             self.state = self.parse( initial_state )
             self.check()
 
-    def has_key( self, key ):
-        if key in self.state.keys():
-            return True
+    def set_status( self, state ):
+        if self.__class__.is_legal( state ):
+            self.state[ 'status' ] = state
         else:
-            return False
-
-    def set_status( self, value ):
-        if value in task_state.allowed_status:
-            self.state[ 'status' ] = value
-            return True
-        else:
-            return False
+            raise TaskStateError, 'Illegal task state: ' + state
 
     def get_status( self ):
         return self.state[ 'status' ]
@@ -70,59 +78,10 @@ class task_state(object):
         self.state[ 'spawned' ] = 'true'
 
     def has_spawned( self ):
-        if self.state[ 'spawned' ] == 'true':
-            return True
-        else:
-            return False
+        return self.state[ 'spawned' ] == 'true'
 
-    def is_succeeded( self ):
-        if self.state[ 'status' ] == 'succeeded':
-            return True
-        else:
-            return False
-
-    def is_failed( self ):
-        if self.state[ 'status' ] == 'failed':
-            return True
-        else:
-            return False
-
-    def is_waiting( self ):
-        if self.state[ 'status' ] == 'waiting' or \
-        self.state[ 'status' ] == 'retry_delayed':
-            return True
-        else:
-            return False
-
-    def is_submitted( self ):
-        if self.state[ 'status' ] == 'submitted':
-            return True
-        else:
-            return False
-
-    def is_running( self ):
-        if self.state[ 'status' ] == 'running':
-            return True
-        else:
-            return False
-
-    def is_held( self ):
-        if self.state[ 'status' ] == 'held':
-            return True
-        else:
-            return False
-
-    def is_runahead( self ):
-        if self.state[ 'status' ] == 'runahead':
-            return True
-        else:
-            return False
-
-    def is_queued( self ):
-        if self.state[ 'status' ] == 'queued':
-            return True
-        else:
-            return False
+    def is_currently( self, state ):
+        return state == self.state[ 'status' ]
 
     # generic set for special dumpable state required by some tasks.
     def set( self, item, value ):
@@ -135,19 +94,13 @@ class task_state(object):
     def check( self ):
         # check compulsory items have been defined correctly
         if 'status' not in self.state:
-            print 'ERROR, run status not defined'
-            sys.exit(1)
-
-        if self.state[ 'status' ] not in task_state.allowed_status:
-            print 'ERROR, illegal run status:', self.state[ 'status' ]
-            sys.exit(1)
-
+            raise TaskStateError, 'ERROR, run status not defined'
+        if not self.__class__.is_legal( self.state[ 'status' ] ):
+            raise TaskStateError, 'ERROR, illegal run status: ' + str( self.state[ 'status' ])
         if 'spawned' not in self.state:
-            print 'ERROR, abdication status not defined'
-            sys.exit(1)
-
-        if self.state[ 'spawned' ] not in task_state.allowed_bool:
-            print 'ERROR, illegal abdication status:', self.state[ 'spawned' ]
+            raise TaskStateError, 'ERROR, task spawned status not defined'
+        if self.state[ 'spawned' ] not in [ 'true', 'false' ]:
+            raise TaskStateError, 'ERROR, illegal task spawned status: ' + str( self.state[ 'spawned' ])
             sys.exit(1)
 
     def dump( self ):
@@ -161,7 +114,7 @@ class task_state(object):
     def parse( self, input ):
         state = {}
 
-        if input in task_state.allowed_status:
+        if self.__class__.is_legal(input):
             state[ 'status' ] = input
             # ASSUME THAT ONLY succeeded TASKS, AT STARTUP, HAVE spawned 
             # (in fact this will only be used to start tasks in 'waiting')
@@ -175,6 +128,15 @@ class task_state(object):
             pairs = input.split( ', ' )
             for pair in pairs:
                 [ item, value ] = pair.split( '=' )
+                if item not in [ 'status', 'spawned' ]:
+                    raise TaskStateError, 'ERROR, illegal task status key: ' + item
+                if item == 'status' :
+                    if not self.__class__.is_legal( value ): 
+                        raise TaskStateError, 'ERROR, illegal task state: ' + value
+                elif item == 'spawned' :
+                    if value not in [ 'true', 'false' ]:
+                        raise TaskStateError, 'ERROR, illegal task spawned status: ' + value
                 state[ item ] = value
 
         return state
+

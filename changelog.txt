@@ -981,10 +981,6 @@ succeeded or failed); it defaults to the twice the smallest cycling
 interval in the suite; and it will not stall a suite even if set less
 than the smallest cycling.
 
-+ A new command 'cylc broadcast NAME VALUE' allows tasks to broadcast
-simple information to environment variables made available to other
-tasks downstream of them. 
-
 + Fixed a problem with remote command invocation that caused the new ssh
 messaging feature to fail in some cases.
 
@@ -1022,4 +1018,40 @@ from misspelled task names.
 + optional gcontrol landscape graph view
 
 + gcontrol graph-view redraw reduced.
+
++ A new command 'cylc broadcast' can be used to override [runtime] 
+settings on the fly in a running suite. Example usage: (1) suite 
+owner may manually change any runtime settings for any family or 
+cycle time; (2) tasks may communicate environment variables to 
+downstream tasks. 
+
++ Abort on undefined Jinja2 variables.
+
++ Ability to set Jinja2 template variables on the command line:
+  --set VAR=VALUE or --set-file=FILE where FILE contains VAR=VALUE
+  pairs.
+
++ new site and user config files (see cylc get-global-config --help). 
+
++ GUI PROGRAMS RENAMED:
+    + the former "gcylc" has now been demoted to "cylc dbviewer"
+    + the former "gcontrol" is now "gcylc"
+  In the future gcylc (formerly gcontrol" will get the ability to 
+  switch between suites, thus becoming *the* cylc GUI, at which point
+  "cylc dbviewer" will be dropped.
+
++ Optional suite host identification in task job scripts
+($CYLC_SUITE_HOST) by IP address or hard-wiring instead of by host name.
+
++ Removed pseudo backward compatibility. A comment "#!cylc-x.y.z" at the
+top of a suite definition no longer has any effect. We will endeavor to
+have proper backward compatibility from here on.
+
++ Change in suite restart behavior: cylc no longer automatically
+retriggers tasks that were recorded in the submitted, running, or failed
+states - because that is not always desirable. For the moment you can do
+manual triggering as required according to your knowledge of what
+happened to the real tasks while the suite was down. Soon new task
+status files will enable cylc to automatically determine this
+information and set these problem task states automatically.
 

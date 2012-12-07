@@ -20,13 +20,45 @@ import os, sys, re
 import glob
 
 try:
-    from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError
+    from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError, StrictUndefined
 except ImportError:
     jinja2_loaded = False
 else:
     jinja2_loaded = True
 
-def Jinja2Process( flines, dir, verbose ):
+def load_template_vars( pairs, pairs_file, verbose=False ):
+    res = {}
+    if pairs_file:
+        if os.path.isfile( pairs_file ):
+            tvf = open( pairs_file, 'r' )
+            lines = tvf.readlines()
+            for line in lines:
+                # remove trailing comments:
+                line = re.sub( '#.*$', '', line )
+                line = line.strip()
+                if re.match( '^\s*$', line ):
+                    # skip blank lines:
+                    continue
+                var, val = line.split('=')
+                var = var.strip()
+                val = val.strip()
+                res[var] = val
+            tvf.close()
+        else:
+            raise TemplateError, "ERROR: template vars file not found: " + pairs_file
+    for i in pairs:
+        var, val = i.split('=')
+        var = var.strip()
+        val = val.strip()
+        res[var] = val
+    if verbose:
+        print 'Setting Jinja2 template variables:'
+        for var, val in res.items():
+            print '    + ', var, '=', val
+
+    return res
+
+def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
     # check first line of file for template engine directive
     # (check for new empty suite.rc files - zero lines - first)
     if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
@@ -37,7 +69,7 @@ def Jinja2Process( flines, dir, verbose ):
             raise TemplateError( 'Aborting (Jinja2 required).')
         if verbose:
             print "Processing the suite with Jinja2"
-        env = Environment( loader=FileSystemLoader(dir) )
+        env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined )
 
         # Load any custom Jinja2 filters in the suite definition directory
         # Example: a filter to pad integer values some fill character:
@@ -67,18 +99,23 @@ def Jinja2Process( flines, dir, verbose ):
         # load file lines into a template, excluding '#!jinja2' so
         # that '#!cylc-x.y.z' rises to the top.
         # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
-       # try:
+        # try:
         template = env.from_string( ''.join(flines[1:]) )
-       # except Exception, x:
-       #     # This happens if we use an unknown Jinja2 filter, for example.
-       ##     # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
-       #     raise TemplateError( x )
+        # except Exception, x:
+        #     # This happens if we use an unknown Jinja2 filter, for example.
+        ##     # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
+        #     raise TemplateError( x )
 
+        try:
+            template_vars = load_template_vars( inputs, inputs_file, verbose )
+        except Exception, x:
+            raise TemplateError( x )
         
         # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
+        # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
         # (converting unicode to plain string; configobj doesn't like?)
         #try:
-        rendered = str( template.render() )
+        rendered = str( template.render( template_vars ) )
         #except Exception, x:
         #    raise TemplateError( x )
 
