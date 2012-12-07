@@ -18,6 +18,7 @@
 
 import os, sys
 import subprocess
+from textwrap import TextWrapper
 
 from suite_host import is_remote_host
 from owner import is_remote_user
@@ -77,31 +78,33 @@ class remrun( object ):
             user_at_host += 'localhost'
 
         # ssh command and options (X forwarding):
-        command = ["ssh", "-oBatchMode=yes", "-Y" ]
-        # target URL and explicit bash shell
-        command += [ user_at_host, "/usr/bin/env", "bash"]
+        command = ["ssh", "-oBatchMode=yes", "-Y", user_at_host]
 
-        if len(path) != 0:
-            # add to remote $PATH before running command
-            path.append('$PATH')
-            env['PATH'] = ':'.join(path)
+        remote_cylc_environment = """/bin/bash \\
+                [ -f /etc/profile ] && source /etc/profile > /dev/null; \\
+                [ -f ~/.profile ] && source ~/.profile > /dev/null; \\
+        """
+
+        if path != []:
+            remote_cylc_command = '/'.join(path+["cylc"])
+        else:
+            remote_cylc_command = "cylc"
+
+        command += [remote_cylc_environment, remote_cylc_command]
+        command += [name]
+        for var,val in env.iteritems():
+            command += ["--env=%s=%s"%(var,val)]
+        for arg in self.args:
+            command += ["'"+arg+"'"]
+            # above: args quoted to avoid interpretation by the shell, 
+            # e.g. for match patterns such as '.*' on the command line.
 
         print "Remote command re-invocation for", user_at_host
         if self.verbose:
-            print '|' + ' '.join(command) + '\\'
-            print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done;' + '\\'
-            if len( env.keys() ) != 0:
-                print '|  %s ' % (' '.join( item + '=' + value for item, value in env.items())) + '\\'
-            print '|  cylc %s %s' % ( name, ' '.join( '"' + arg + '"' for arg in self.args))
+            print '\n'.join(TextWrapper(subsequent_indent='\t').wrap(' '.join(command)))
 
         try:
-            popen = subprocess.Popen( command, stdin=subprocess.PIPE )
-            popen.communicate( """
-for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done
-%s cylc %s %s""" % (' '.join( item + '=' + value for item, value in env.items()),\
-            name, ' '.join( '"' + arg + '"' for arg in self.args)) )
-            # above: args quoted to avoid interpretation by the shell, 
-            # e.g. for match patterns such as '.*' on the command line.
+            popen = subprocess.Popen( command )
             res = popen.wait()
             if res < 0:
                 sys.exit("ERROR: remote command terminated by signal %d" % res)
