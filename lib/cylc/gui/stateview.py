@@ -86,7 +86,7 @@ def get_col_priority( priority ):
 
 class tupdater(threading.Thread):
 
-    def __init__(self, cfg, ttreeview, ttree_paths, info_bar, usercfg ):
+    def __init__(self, cfg, ttreeview, ttree_paths, info_bar, theme ):
 
         super(tupdater, self).__init__()
 
@@ -94,7 +94,7 @@ class tupdater(threading.Thread):
         self.autoexpand = True
 
         self.cfg = cfg
-        self.usercfg = usercfg
+        self.theme = theme
         self.info_bar = info_bar
 
         self.state_summary = {}
@@ -115,8 +115,7 @@ class tupdater(threading.Thread):
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
 
-        theme = usercfg['use theme']
-        dotm = DotMaker( self.usercfg['themes'][theme])
+        dotm = DotMaker( theme )
         self.dots = {}
         for state in task_state.legal:
             self.dots[ state ] = dotm.get_icon( state )
@@ -480,7 +479,7 @@ class tupdater(threading.Thread):
 
 class lupdater(threading.Thread):
 
-    def __init__(self, cfg, treeview, info_bar, usercfg ):
+    def __init__(self, cfg, treeview, info_bar, theme ):
 
         super(lupdater, self).__init__()
 
@@ -490,7 +489,7 @@ class lupdater(threading.Thread):
         self.should_group_families = False
 
         self.cfg = cfg
-        self.usercfg = usercfg
+        self.theme = theme
         self.info_bar = info_bar
         imagedir = self.cfg.imagedir
 
@@ -511,8 +510,7 @@ class lupdater(threading.Thread):
         self.reconnect()
 
         # generate task state icons
-        theme = self.usercfg['use theme']
-        dotm = DotMaker( self.usercfg['themes'][theme])
+        dotm = DotMaker( theme )
         self.dots = {}
         for state in task_state.legal:
             self.dots[ state ] = dotm.get_icon( state )

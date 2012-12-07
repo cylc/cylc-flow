@@ -62,7 +62,7 @@ def compare_dict_of_dict( one, two ):
     return True
 
 class xupdater(threading.Thread):
-    def __init__(self, cfg, usercfg, info_bar, xdot ):
+    def __init__(self, cfg, theme, info_bar, xdot ):
         super(xupdater, self).__init__()
 
         self.quit = False
@@ -85,7 +85,7 @@ class xupdater(threading.Thread):
         self.prev_graph_id = ()
 
         self.cfg = cfg
-        self.usercfg = usercfg
+        self.theme = theme
         self.info_bar = info_bar
         self.stop_summary = None
 
@@ -106,7 +106,6 @@ class xupdater(threading.Thread):
         self.ungroup_all = False
 
         self.graph_frame_count = 0
-        self.theme = usercfg['themes'][ usercfg['use theme'] ]
 
     def reconnect( self ):
 

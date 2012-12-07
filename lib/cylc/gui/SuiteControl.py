@@ -46,7 +46,8 @@ from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
 from datetime import datetime
-from gcapture import gcapture, gcapture_tmpfile
+from gcapture import gcapture_tmpfile
+from cylc.task_state import task_state
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -113,14 +114,13 @@ class InfoBar(gtk.VBox):
 Class to create an information bar.
     """
 
-    def __init__( self, host, usercfg, 
+    def __init__( self, host, theme, 
                   status_changed_hook=lambda s: False ):
         super(InfoBar, self).__init__()
 
         self.host = host
 
-        theme = usercfg['use theme']
-        self.dots = DotMaker( usercfg['themes'][theme] )
+        self.set_theme( theme )
 
         self._suite_states = ["empty"]
         self.state_widget = gtk.HBox()
@@ -181,6 +181,9 @@ Class to create an information bar.
         eb = gtk.EventBox()
         eb.add( self.block_widget )
         hbox.pack_end( eb, False )
+
+    def set_theme( self, theme ):
+        self.dots = DotMaker( theme )
 
     def set_block( self, block ):
         """Set block or access icon."""
@@ -308,6 +311,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.cfg = InitData( suite, logdir, pphrase, owner, host, port,
                 cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
         self.usercfg = usercfg
+        self.theme_name = usercfg['use theme'] 
+        self.theme = usercfg['themes'][ self.theme_name ]
+        self.key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
 
         self.setup_icons()
 
@@ -409,6 +415,18 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         top_parent.pack_start( new_pane, expand=True, fill=True )
         self.window.show_all()
 
+    def set_theme( self, item ):
+        """Change self.theme and then replace each view with itself"""
+        if not item.get_active():
+            return False
+        self.theme = self.usercfg['themes'][item.theme_name]
+        for view_num in range( 0, len(self.current_views)):
+            self.switch_view( self.current_views[view_num].name, view_num, force=True )
+        self.info_bar.set_theme( self.theme )
+        self.info_bar._set_state_widget() # (to update info bar immediately)
+        self.set_key_liststore()
+        return False
+
     def _cb_change_view0_menu( self, item ):
         # This is the view menu callback for the primary view.
         if not item.get_active():
@@ -507,14 +525,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         else:
             self.layout_toolbutton.set_active( horizontal )
 
-    def switch_view( self, new_viewname, view_num=0 ):
+    def switch_view( self, new_viewname, view_num=0, force=False ):
         """Remove a view instance and replace with a different one."""
         if new_viewname not in self.VIEWS:
             self.remove_view( view_num )
             return False
         old_position = -1
         if self.current_views[view_num] is not None:
-            if self.current_views[view_num].name == new_viewname:
+            if not force and self.current_views[view_num].name == new_viewname:
                 return False
             if view_num == 1:
                 old_position = self.views_parent.get_children()[0].get_position()
@@ -533,7 +551,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname]( 
                                                    self.cfg,
-                                                   self.usercfg,
+                                                   self.theme,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
                                                    self.log_colors )
@@ -2095,7 +2113,43 @@ or remove task definitions without restarting the suite."""
         self._set_tooltip( self.view1_align_item, "Toggle horizontal layout of views." )
         self.view1_align_item.connect( 'toggled', self._cb_change_view_align )
         self.view_menu.append( self.view1_align_item )
-        
+
+        self.view_menu.append( gtk.SeparatorMenuItem() )
+
+        key_item = gtk.ImageMenuItem( "Show task state key" )
+        dots = DotMaker( self.theme )
+        img = dots.get_image( "running" )
+        key_item.set_image(img)
+        self._set_tooltip( key_item, "The meaning of each task state color" )
+        self.view_menu.append( key_item )
+        key_item.connect( 'activate', self.popup_key )
+
+        theme_item = gtk.ImageMenuItem( 'Theme' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
+        theme_item.set_image(img)
+        self.view_menu.append( theme_item )
+        thememenu = gtk.Menu()
+        theme_item.set_submenu(thememenu)
+
+        theme_items = {}
+        theme = "classic"
+        theme_items[theme] = gtk.RadioMenuItem( label=theme )
+        thememenu.append( theme_items[theme] )
+        self._set_tooltip( theme_items[theme], theme + " task state theme" )
+        theme_items[theme].theme_name = theme
+        for theme in self.usercfg['themes']:
+            if theme == "classic":
+                continue
+            theme_items[theme] = gtk.RadioMenuItem( group=theme_items['classic'], label=theme )
+            thememenu.append( theme_items[theme] )
+            self._set_tooltip( theme_items[theme], theme + " task state theme" )
+            theme_items[theme].theme_name = theme
+
+        # set_active then connect, to avoid causing an unnecessary toggle now.
+        theme_items[ self.theme_name ].set_active(True)
+        for theme in self.usercfg['themes']:
+            theme_items[theme].connect( 'toggled', self.set_theme )
+
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
         graph_view0_item = gtk.RadioMenuItem( label="1 - _Graph View" )
@@ -2593,8 +2647,45 @@ For more Stop options use the Control menu.""" )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.host, self.usercfg,
+        self.info_bar = InfoBar( self.cfg.host, self.theme,
                                  self._alter_status_toolbar_menu )
+
+    def popup_key( self, b ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "" )
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+
+        vbox = gtk.VBox()
+
+        treeview = gtk.TreeView( self.key_liststore )
+        treeview.set_headers_visible(False)
+        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
+        tvc = gtk.TreeViewColumn( None )
+
+        self.set_key_liststore()
+
+        cellpb = gtk.CellRendererPixbuf()
+        cell = gtk.CellRendererText()
+
+        tvc.pack_start( cellpb, False )
+        tvc.pack_start( cell, True )
+
+        tvc.set_attributes( cellpb, pixbuf=1 )
+        tvc.set_attributes( cell, text=0 )
+
+        treeview.append_column( tvc )
+
+        window.add( treeview )
+        window.show_all()
+
+    def set_key_liststore( self ):
+        dotm = DotMaker( self.theme )
+        self.key_liststore.clear()
+        for state in task_state.legal:
+            dot = dotm.get_icon( state )
+            self.key_liststore.append( [ state, dot ] )
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer
