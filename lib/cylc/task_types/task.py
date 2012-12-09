@@ -36,8 +36,7 @@ from cylc import task_state
 from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
 import logging
-import Pyro.core
-import Queue
+from cylc.task_receiver import msgqueue
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -50,7 +49,7 @@ def displaytd( td ):
         res = str(td)
     return res
 
-class task( Pyro.core.ObjBase ):
+class task( object ):
 
     clock = None
     intercycle = False
@@ -125,8 +124,6 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count += 1
         self.__class__.upward_instance_count += 1
 
-        Pyro.core.ObjBase.__init__(self)
-
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
 
@@ -141,7 +138,7 @@ class task( Pyro.core.ObjBase ):
         self.try_number = 1
         self.retry_delay_timer_start = None
 
-        self.message_queue = Queue.Queue()
+        self.message_queue = msgqueue()
 
     def plog( self, message ):
         # print and log a low priority message
@@ -582,9 +579,10 @@ class task( Pyro.core.ObjBase ):
         self.message_queue.put( (priority, message) )
 
     def process_incoming_messages( self ):
-        while self.message_queue.qsize() > 0:
-            self.process_incoming_message( self.message_queue.get() )
-            self.message_queue.task_done()
+        queue = self.message_queue.get_queue() 
+        while queue.qsize() > 0:
+            self.process_incoming_message( queue.get() )
+            queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
         if self.reject_if_failed( message ):

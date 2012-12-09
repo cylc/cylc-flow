@@ -113,7 +113,7 @@ class pool(object):
 
     def add( self, itask ):
         try:
-            self.pyro.connect( itask, itask.id )
+            self.pyro.connect( itask.message_queue, itask.id )
         except NamingError, x:
             # Attempted insertion of a task that already exists.
             print >> sys.stderr, x
@@ -136,7 +136,7 @@ class pool(object):
     def remove( self, task, reason ):
         # remove a task from the pool
         try:
-            self.pyro.disconnect( task )
+            self.pyro.disconnect( task.message_queue )
         except NamingError, x:
             # Attempted removal of a task that does not exist.
             print >> sys.stderr, x
