@@ -259,7 +259,6 @@ class scheduler(object):
 
         self.lock_acquired = False
 
-        self.blocked = True 
         self.is_restart = is_restart
 
         self.graph_warned = {}
@@ -560,9 +559,6 @@ class scheduler(object):
             self.hold_time = ct( self.options.hold_time ).get()
             #    self.parser.error( "invalid cycle time: " + self.hold_time )
             self.banner[ 'Pausing at' ] = self.hold_time
-
-        # start in unblocked state
-        self.blocked = False
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['cylc']['lockserver']['enable']
@@ -904,7 +900,7 @@ class scheduler(object):
         self.suite_state.update( self.pool.get_tasks(), self.clock,
                 self.get_oldest_c_time(), self.get_newest_c_time(), self.paused(),
                 self.will_pause_at(), self.remote.halt,
-                self.will_stop_at(), self.blocked, self.runahead_limit )
+                self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what at run time).
