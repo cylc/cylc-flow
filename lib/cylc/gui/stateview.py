@@ -133,7 +133,7 @@ class tupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
         except Exception, x:
             if self.stop_summary is None:
                 self.stop_summary = cylc.dump.get_stop_state_summary(
@@ -148,9 +148,9 @@ class tupdater(threading.Thread):
             self.stop_summary = None
             self.status = "connected"
             self.info_bar.set_status( self.status )
-            self.families = self.remote.get_families()
-            self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.allowed_families = self.remote.get_vis_families()
+            self.families = self.sinfo.get('families' )
+            self.family_hierarchy = self.sinfo.get('family hierarchy' )
+            self.allowed_families = self.sinfo.get('vis families' )
             return True
 
     def connection_lost( self ):
@@ -533,7 +533,7 @@ class lupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = cylc.dump.get_stop_state_summary(
@@ -544,9 +544,9 @@ class lupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.families = self.remote.get_families()
-            self.allowed_families = self.remote.get_vis_families()
+            self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
+            self.families = self.sinfo.get( 'families' )
+            self.allowed_families = self.sinfo.get( 'vis families' )
             self.stop_summary = None
             self.status = "connected"
             self.info_bar.set_status( self.status )

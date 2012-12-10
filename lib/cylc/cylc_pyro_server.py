@@ -49,7 +49,6 @@ class pyro_server( object ):
         self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get(suitedir=suitedir)] )
 
     def shutdown( self ):
-        print "Pyro daemon shutdown"
         self.daemon.shutdown(True)
         # If a suite shuts down via 'stop --now' or # Ctrl-C, etc.,
         # any existing client end connections will hang for a long time

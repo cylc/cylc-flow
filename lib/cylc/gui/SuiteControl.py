@@ -645,46 +645,37 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def pause_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-            result = god.hold()
+            result = self.get_pyro( 'command-interface' ).put( 'hold suite' )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if not result.success:
-                warning_dialog( result.reason, self.window ).warn()
+            if not result[0]:
+                warning_dialog( result[1], self.window ).warn()
             #else:
-            #    info_dialog( result.reason, self.window ).inform()
+            #    info_dialog( result[1], self.window ).inform()
 
     def resume_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'release suite' )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        result = god.resume()
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def stopsuite_default( self, *args ):
         """Try to stop the suite (after currently running tasks...)."""
         try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-            result = god.shutdown()
+            result = self.get_pyro( 'command-interface' ).put( 'stop cleanly' )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if not result.success:
-                warning_dialog( result.reason, self.window ).warn()
+            if not result[0]:
+                warning_dialog( result[1], self.window ).warn()
             #else:
-            #    info_dialog( result.reason, self.window ).inform()
+            #    info_dialog( result[1], self.window ).inform()
 
     def stopsuite( self, bt, window,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
@@ -755,26 +746,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         window.destroy()
 
         try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            god = self.get_pyro( 'command-interface' )
             if stop:
-                result = god.shutdown()
+                result = god.put( 'stop cleanly' )
             elif stopat:
-                result = god.set_stop( stoptag, 'stop after TAG' )
+                result = god.put( 'stop after tag', stoptag )
             elif stopnow:
-                result = god.shutdown_now()
+                result = god.put( 'stop now' )
             elif stopclock:
-                result = god.set_stop( stopclock_time, 'stop after clock time' )
+                result = god.put( 'stop after clock time', stopclock_time )
             elif stoptask:
-                result = god.set_stop( stoptask_id, 'stop after task' )
+                result = god.put( 'stop after task', stoptask_id )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
-            if not result.success:
-                warning_dialog( result.reason, self.window ).warn()
+            if not result[0]:
+                warning_dialog( result[1], self.window ).warn()
             #else:
-            #    info_dialog( result.reason, self.window ).inform()
+            #    info_dialog( result[1], self.window ).inform()
 
     def loadctimes( self, bt, startentry, stopentry ):
         item1 = " -i '[scheduling]initial cycle time'"
@@ -891,19 +880,13 @@ been defined for this suite""").inform()
 
     def unblock_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-            god.unblock()
+            self.get_pyro( 'command-interface' ).block( False )
         except Exception, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def block_suite( self, bt ):
         try:
-            god = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
-            god.block()
+            self.get_pyro( 'command-interface' ).block( True )
         except Exception, x:
             warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
@@ -1190,17 +1173,14 @@ The Cylc Suite Engine.
                 limit = ent
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'set runahead', limit )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        result = proxy.set_runahead( limit )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
@@ -1273,17 +1253,14 @@ The Cylc Suite Engine.
 
         window.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'add prerequisite', task_id, msg )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        result = proxy.add_prerequisite( task_id, msg )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def update_tb( self, tb, line, tags = None ):
         if tags:
@@ -1293,7 +1270,7 @@ The Cylc Suite Engine.
 
     def popup_requisites( self, w, e, task_id ):
         try:
-            result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
+            result = self.get_pyro( 'suite-info' ).get( 'task requisites', [ task_id ] )
         except Exception,x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1415,22 +1392,19 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
+            if stop:
+                result = self.get_pyro( 'command-interface' ).put( 'hold task', task_id )
+            else:
+                result = self.get_pyro( 'command-interface' ).put( 'release task', task_id )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        if stop:
-            result = proxy.hold_task( task_id )
-        else:
-            result = proxy.release_task( task_id )
 
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def trigger_task_now( self, b, task_id ):
         msg = "trigger " + task_id + " now?"
@@ -1448,18 +1422,15 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'trigger task', task_id )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        result = proxy.trigger_task( task_id )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def reset_task_state( self, b, e, task_id, state ):
         if hasattr(e, "button") and e.button != 1:
@@ -1480,18 +1451,15 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'reset task state', task_id, state )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        result = proxy.reset_task_state( task_id, state )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def kill_task( self, b, task_id ):
         msg = "remove " + task_id + " (after spawning)?"
@@ -1510,17 +1478,14 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface'  ). put( 'kill task', True, task_id )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
-        result = proxy.spawn_and_die( task_id )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
  
     def kill_task_nospawn( self, b, task_id ):
         msg = "remove " + task_id + " (without spawning)?"
@@ -1538,49 +1503,40 @@ shown here in the state they were in at the time of triggering.''' )
         if response != gtk.RESPONSE_OK:
             return
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'kill task', False, task_id )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
-        result = proxy.die( task_id )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'purge tree', task_id, stop )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
-        result = proxy.purge( task_id, stop )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def purge_cycle_button( self, b, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'purge tree', task_id, stop )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
-        result = proxy.purge( task_id, stop )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
@@ -1982,17 +1938,14 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             stop = stoptag
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'insert task', torg, stop )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
-        result = proxy.insert( torg, stop )
-        if not result.success:
-            warning_dialog( result.reason, self.window ).warn()
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
         #else:
-        #    info_dialog( result.reason, self.window ).inform()
+        #    info_dialog( result[1], self.window ).inform()
 
     def reload_suite( self, w ):
         msg = """Reload the suite definition.
@@ -2020,13 +1973,10 @@ or remove task definitions without restarting the suite."""
 
     def nudge_suite( self, w ):
         try:
-            proxy = cylc_pyro_client.client( self.cfg.suite,
-                    self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-                    self.cfg.pyro_timeout, self.cfg.port ).get_proxy( 'remote' )
+            result = self.get_pyro( 'command-interface' ).put( 'nudge suite' )
         except Exception, x:
             warning_dialog( str(x), self.window ).warn()
             return False
-        result = proxy.nudge()
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 

@@ -46,16 +46,16 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command-interface' )
 except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
 
-result = proxy.nudge()
+result = proxy.put( 'nudge' )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    sys.exit( 'ERROR: ' + result.reason )
+    sys.exit( result[1] )
 

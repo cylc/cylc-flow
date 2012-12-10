@@ -119,7 +119,7 @@ class xupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
@@ -131,10 +131,10 @@ class xupdater(threading.Thread):
             return False
         else:
             self.stop_summary = None
-            self.family_nodes = self.remote.get_family_nodes()
-            self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
-            self.families = self.remote.get_families()
-            self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
+            self.family_nodes = self.sinfo.get( 'family nodes' )
+            self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
+            self.families = self.sinfo.get( 'families' )
+            self.live_graph_movie, self.live_graph_dir = self.sinfo.do_live_graph_movie()
             if self.live_graph_movie:
                 try:
                     mkdir_p( self.live_graph_dir )
@@ -327,7 +327,7 @@ class xupdater(threading.Thread):
         # TO DO: mv ct().get() out of this call (for error checking):
         # TO DO: remote connection exception handling?
         try:
-            gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
+            gr_edges = self.sinfo.get( 'graph raw', ct(oldest).get(), ct(newest).get(),
                     raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
                     ungroup_recursive=self.ungroup_recursive, 
                     group_all=self.group_all, ungroup_all=self.ungroup_all) 
