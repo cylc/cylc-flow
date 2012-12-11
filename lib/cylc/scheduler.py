@@ -344,7 +344,7 @@ class scheduler(object):
             self.config.reset_timer = False
 
         if not self.is_restart:     # create new suite_db file if needed
-            db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.suite_dir, new_mode=True)
+            db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite, new_mode=True)
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -659,6 +659,7 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logdir
+        cylcenv[ 'CYLC_SUITE_RUN_DIR' ] = self.run_dir
         task.task.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by

@@ -63,7 +63,10 @@ class CylcRuntimeDAO(object):
             if os.path.isdir(self.db_file_name):
                 shutil.rmtree(self.db_file_name)
             else:
-                os.unlink(self.db_file_name)
+                try:
+                    os.unlink(self.db_file_name)
+                except:
+                    pass
         if not os.path.exists(self.db_file_name):
             new_mode = True
         self.conn = sqlite3.connect(self.db_file_name)

@@ -141,15 +141,6 @@ class task( Pyro.core.ObjBase ):
         self.try_number = 1
         self.retry_delay_timer_start = None
         
-        suite_path = os.environ['CYLC_SUITE_DEF_PATH']
-        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=suite_path)
-        self.submit_num = self.db.get_task_submit_num(self.name, self.c_time)
-        #try to add an entry to the database for recording status
-        try:
-            self.db.record_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number)
-        except:
-            pass
-        
     def plog( self, message ):
         # print and log a low priority message
         print self.id + ':', message
@@ -414,6 +405,16 @@ class task( Pyro.core.ObjBase ):
 
 
     def submit( self, dry_run=False, debug=False, overrides={} ):
+
+        suite_path = os.environ['CYLC_SUITE_RUN_DIR'] + "/" + os.environ['CYLC_SUITE_REG_NAME']
+        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=suite_path)
+        self.submit_num = self.db.get_task_submit_num(self.name, self.c_time)
+        #try to add an entry to the database for recording status
+        try:
+            self.db.record_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number)
+        except:
+            pass
+    
         # TO DO: REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
