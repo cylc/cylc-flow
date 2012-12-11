@@ -1055,3 +1055,7 @@ happened to the real tasks while the suite was down. Soon new task
 status files will enable cylc to automatically determine this
 information and set these problem task states automatically.
 
++ Task messaging commands now have configurable retry on failure, for
+resilience to network outages etc., and they do not abort the task even
+if the final retry fails.
+

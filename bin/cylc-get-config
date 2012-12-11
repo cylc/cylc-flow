@@ -199,12 +199,12 @@ if options.oneline:
     except AttributeError, x:
         raise SystemExit( "ERROR: -o is compatible with single-value items only" )
     else:
-        print line
+        print prefix + line
 else:
     for d in data:
         if isinstance( d, dict ):
             if options.pnative:
-                print prefix + d
+                print d
             else:
                 print_cfg( d, level=len(args[1:]), prefix=prefix)
         else:

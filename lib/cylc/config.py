@@ -504,23 +504,30 @@ class config( CylcConfigObj ):
         return res
 
     def get_config( self, args, sparse=False ):
-        target = self
-        keys = args
-        so_far = []
         if args[0] == 'runtime' and not sparse:
             # load and override runtime defaults
-            rtcfg = {}
-            replicate( rtcfg, self.runtime_defaults )
-            override( rtcfg, self['runtime'][args[1]] )
-            target = rtcfg
-            keys = args[2:]
-            so_far = args[:2]
-
+            if len(args) > 1:
+                # a single namespace
+                rtcfg = {}
+                replicate( rtcfg, self.runtime_defaults )
+                override( rtcfg, self['runtime'][args[1]] )
+                target = rtcfg
+                keys = args[2:]
+            else:
+                # all namespaces requested
+                target = {}
+                keys = []
+                for ns in self['runtime'].keys():
+                    rtcfg = {}
+                    replicate( rtcfg, self.runtime_defaults )
+                    override( rtcfg, self['runtime'][ns] )
+                    target[ns] = rtcfg
+        else:
+            target = self
+            keys = args
         res = target
         for key in keys:
-            so_far.append(key)
             res = res[key]
-
         return res
 
 

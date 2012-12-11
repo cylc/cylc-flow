@@ -31,7 +31,7 @@ def strftime( dt, template ):
     t = t.replace('%d', d )
     t = t.replace('%H', H )
     t = t.replace('%M', M )
-    t = t.replace('%S', S )
+    t = t.replace('%S', S[0:2] )
     return t
 
 if __name__ == '__main__':
