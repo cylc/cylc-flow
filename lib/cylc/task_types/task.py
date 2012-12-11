@@ -479,7 +479,7 @@ class task( Pyro.core.ObjBase ):
             else:
                raise SystemExit( "ERROR: dynamic host selection failed for task " + self.id )
 
-        if host not in gcfg.cfg['hosts']:
+        if host not in gcfg.cfg['task hosts']:
             raise SystemExit( "ERROR: no site/user configuration for host " + host )
  
         owner = rtconfig['remote']['owner']
@@ -494,8 +494,8 @@ class task( Pyro.core.ObjBase ):
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use ssh messaging'      : gcfg.cfg['hosts'][host]['use ssh messaging'],
-                'remote cylc path'       : gcfg.cfg['hosts'][host]['cylc directory'],
+                'use ssh messaging'      : gcfg.cfg['task hosts'][host]['use ssh messaging'],
+                'remote cylc path'       : gcfg.cfg['task hosts'][host]['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -516,7 +516,7 @@ class task( Pyro.core.ObjBase ):
                 'owner'                  : owner,
                 'host'                   : host,
                 'log path'               : local_log_dir,
-                'remote shell template'  : gcfg.cfg['hosts'][host]['remote shell template'],
+                'remote shell template'  : gcfg.cfg['task hosts'][host]['remote shell template'],
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,

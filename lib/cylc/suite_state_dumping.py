@@ -29,7 +29,7 @@ class dumper( object ):
         self.start_tag = start_tag
         self.stop_tag = stop_tag
         globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['hosts']['local']['run directory'], suite, 'state' ) 
+        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
         self.path = os.path.join( self.dir, 'state' ) 
         try:
             mkdir_p( self.dir )

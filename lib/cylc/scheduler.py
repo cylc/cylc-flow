@@ -522,7 +522,7 @@ class scheduler(object):
         self.config.create_directories()
         self.hold_before_shutdown = self.config['development']['hold before shutdown']
 
-        self.banner[ 'SUITE RUN DIR' ] = self.globals.cfg['hosts']['local']['run directory']
+        self.banner[ 'SUITE RUN DIR' ] = self.globals.cfg['task hosts']['local']['run directory']
 
         self.stop_task = None
 

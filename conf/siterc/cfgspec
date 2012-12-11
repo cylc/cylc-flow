@@ -79,10 +79,17 @@ state dump rolling archive length = integer( min=1, default=10 )
     # Port numbers are recorded in this directory, by suite name.
     ports directory = string( default="$HOME/.cylc/ports/" )
 
-# The hosts section pertains to running tasks on remote hosts and on the
-# local suite host (and additionally to suite logs and state files on
-# the suite host, which go under the same run directory as task logs). 
-[hosts]
+# The [task hosts] section configures items needed to run tasks on
+# specific hosts at your site, including 'local' for the suite host.
+# The local sub-section also provides default values for directory paths
+# on remote task hosts wherein the local home directory path, if
+# present, will be replaced with literal '$HOME' for evaluation on the
+# remote host. A 'task hosts' sub-section is required for all remote
+# task hosts that can be used by suites running on this machine. A
+# remote host section can be empty (i.e. just the sub-section heading)
+# in which case the local defaults will be used with $HOME replaced.
+[task hosts]
+    # The default task host is the suite host, called 'local' here:
     [[local]]
         # Run directory:
         #   For suite event log, and suite stdout and stderr logs:
@@ -92,7 +99,7 @@ state dump rolling archive length = integer( min=1, default=10 )
         #   and task job scripts and stdout and stderr logs:
         #       <VALUE>/<suite-name>/log/job/
         #   If not set the local path will be used with your home
-        # directory path swapped for '$HOME' (to be evaluated on host)
+        #   directory path swapped for '$HOME' (to be evaluated on host)
         run directory = string( default="$HOME/cylc-run" )
         # Workspace directory:
         #   For the suite share directory, a common workspace made
@@ -103,19 +110,21 @@ state dump rolling archive length = integer( min=1, default=10 )
         #       <VALUE>/<suite-name>/work/<task-id>
         #   This can be distinct from the run directory tree because of
         #   the potential for much a greater storage requirement.
-        # If not set for remote task hosts: same as for run directory.
+        #   If not set for remote task hosts: same as for run directory.
         workspace directory = string( default="$HOME/cylc-run" )
-        # THE FOLLOWING THREE ITEMS ARE NOT USED FOR THE local HOST
-        # (unless you run tasks under other local user accounts)  
-        # The remote cylc location, leave unset if in $PATH on the host
+
+        # THE FOLLOWING THREE ITEMS ARE NOT USED FOR THE LOCAL HOST
+        # unless you run tasks under other local user accounts, but  
+        # they still provide default settings for remote hosts.
+        # Cylc location on the host, leave unset if cylc is in $PATH:
         cylc directory = string( default=None )
         # Re-invoke task messaging commands on the suite host
-        # instead of using Pyro-based RPC across the network).
+        # instead of using Pyro-based RPC across the network:
         use ssh messaging = boolean( default=False )
-        # How to invoke commands on this host; default shown.
+        # How to invoke commands on this host; default shown:
         remote shell template = string( default='ssh -oBatchMode=yes %s' )
 
-    #> Here's the __many__ configspec for remote hosts:
+    #> Here's the __many__ configspec for available remote task hosts:
     [[__many__]]
         run directory = string( default=None )
         workspace directory = string( default=None)
