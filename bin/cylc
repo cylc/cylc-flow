@@ -325,29 +325,30 @@ optional, but they organize help and disambiguate abbreviated commands:
   % cylc c t SUITE TASK                 # ditto
 
 SUITE NAMES AND DATABASES
+
   Suites are addressed by hierarchical names (e.g. suite1, nwp.oper,
-nwp.test.LAM2, etc.) registered in a suite database that associates
-suite the names with suite definition directory locations. Your default
-database is located at $HOME/.cylc/DB. The '--db=' command option can be
-used to work with suites registered in other databases. You should
-be able to read and graph (etc.) another user's suite definitions, from
-their default database, with the '--db=u:USER' option (access is
-governed by normal filesystem permissions). 
+nwp.test.LAM2, etc.) registered in a database that associates suite
+names with suite definition locations. Your default database is located
+at $HOME/.cylc/DB. The '--db=' command option can be used to work with
+suites registered in other databases. You should be able to read and
+graph (etc.) another user's suite definitions, from their default
+database, with the '--db=u:USER' option (access is governed by normal
+filesystem permissions). 
 
 REMOTE COMMAND RE-INVOCATION BY SSH
-  If passwordless ssh is configured appropriately use of the '--host='
-and '--owner=' command options will result in most cylc commands being
-re-invoked on another host or user account. With the '--use-ssh' flag
-this also goes for suite control commands which normally use direct
-network RPC instead of re-invocation - see below.
+
+  If passwordless ssh is configured the '--host=' and '--owner=' command
+options result in most cylc commands being re-invoked on other hosts or
+user accounts. The '--use-ssh' flag results in the same for suite
+control commands that normally RPC across the network instead (below).
 
 REMOTE SUITE CONTROL BY RPC (PYRO)
   Cylc commands, GUIs, and tasks that interact with running suites use a
 network RPC protocol (Pyro) with passphrase authentication. The '--host'
-and '--owner' command options will target a suite running on another
-host or user account. The suite passphrase, generated in the suite
-definition directory at registration time, should be installed on a
-remote control host in one of the following locations:
+and '--owner' command options target a suite running on another host or
+user account. The suite passphrase, generated in the suite definition
+directory at registration time, should be installed on a remote control
+host in one of the following locations:
   1) $HOME/.cylc/<HOST>/<OWNER>/<SUITE>/passphrase,
   2) $HOME/.cylc/<HOST>/<SUITE>/passphrase, or
   3) $HOME/.cylc/<SUITE>/passphrase).
@@ -356,7 +357,7 @@ A running task first looks in the suite definition directory for the
 passphrase, then the above locations. Likewise a remote task checks
 the remote suite definition directory first, if one is configured.
 
-REMOVE SUITE CONTROL BY SSH RE-INVOCATION
+REMOTE SUITE CONTROL BY SSH RE-INVOCATION
   If the network ports required by Pyro are not open you can use the
 '--use-ssh' flag to re-invoke suite control commands on the suite host.
 For remote tasks the same can be achieved by "use ssh messaging = True"

@@ -4693,68 +4693,47 @@ running, use \lstinline=cylc scan= to determine the port number to
 use on the command line.
 
 
-\subsection{Job Submission, Ensemble Suites, And Network Timeouts}
+\subsection{Ensemble Suites, Job Submission, and Network Timeouts}
 \label{MaxSimJobSub}
 
-From a high level perspective cylc works like this: the scheduling
-algorithm determines which tasks, if any, are ready to run; these tasks
-are submitted to run; then cylc processes network requests (running
-tasks reporting state changes back to the suite, for instance) before
-repeating the whole process. Prior to cylc-4.5.1 any tasks ready at the
-same time were submitted sequentially and success or failure of each job
-submission subprocess was checked before continuing to the next one. For
-ensemble suites in which a large number of tasks are submitted at once
-this could take quite some time, especially if submitting jobs to a
-remote host, and cylc was unable to respond to network requests during
-this period (the control GUI was likewise unable to obtain information
-from the suite until the job submissions completed). This created a problem 
-when network connection timeouts were introduced in cylc-4.5.0:
-submitting many tasks at once, in sequence, could take quite some time
-and the earlier tasks to begin running (while others in the same batch
-were still being submitted) could fail because of messaging timeouts.
+Cylc's main scheduling loop currently determines which tasks are ready
+to run; then submits them to run; then processes network requests
+(incoming task messages, etc.); and then repeats the whole process. {\em
+In the near future we plan to have continuous request handling and job
+submission in background worker threads} but in the meantime if you have
+a large ensemble of tasks that all need to submit at once to a remote
+host, no request handling can be done until the entire batch has
+submitted. For large task ensembles that need to submit all at once 
+this means the first tasks to submit may have to wait a while for their
+``task started'' message calls to hang up, as they may start executing 
+before all ensemble members are submitted. 
 
-\subsubsection{Parallel Submission Of Jobs Ready At The Same Time}
-
-From cylc-4.5.1 all tasks ready at the same time can be submitted at
-once, or rather - to avoid swamping the host system as each job
-submission occurs in its own spawned subprocess - in batches whose
-members are submitted in parallel. The default batch size of 50 can be
-overridden in suite definitions: \begin{lstlisting}
+Since cylc-4.5.1 tasks ready at the same time can be processed in
+sequential batches whose members are submitted in parallel. The default
+batch size of 50 can be overridden in the suite definition:
+\begin{lstlisting}
 # SUITE.RC
 [cylc]
     maximum number of simultaneous job submissions = 50
-\end{lstlisting} A 120 task ensemble, for example, would be submitted in
-two batches of 50 followed by one of 20, with cylc waiting on all member
-job submissions to return before going on to the next batch. Note that
-we are waiting on the {\em job submission process} to return here, not the
-submitted job itself. Typically local job submission will take a small
-fraction of a second, but for remote tasks it may take on the order of a
-second to open the ssh tunnel, create remote log directories if
-necessary, transmit the task job script over, and run the remote job
-submission. 
+\end{lstlisting}
+A 120 task ensemble, for example, would be submitted in two batches of
+50 followed by one of 20 (note that cylc waits on the {\em job
+submission process} to return, not the submitted job itself).
+It may take a second or two to complete the job submission process for a
+single remote task. 
 
 \subsubsection{Network Connection Timeouts}
 
-Parallel job submission greatly reduces the amount of time during which
-cylc cannot respond to network requests when running large ensemble
-suites, but to be safe we have
-reverted to setting no network connection timeout by default. A timeout
-can be configured in the suite definition if you like though (in which
-case it applies to connections initiated by the suite's tasks)
-or on the command line (to override a suite timeout for suite start-up
-commands, and for one-off connections by user-invoked suite-connecting
-commands). The downside of setting no connection timeout is that certain
-exceptional conditions can result in connection processes hanging
-indefinitely (to see this try hitting Ctrl-Z to stop a running
-suite and then attempt a \lstinline=cylc scan= or 
-\lstinline=cylc dump SUITE= etc. - first with no timeout, then
-with a timeout set using the \lstinline@-t,--timeout=@ command option).
-The downside of configuring a timeout in the suite is that you have to
-ensure it is long enough to handle the legitimate communication delays
-experienced when cylc is in the dependency negotation and job submission
-sections of its main loop.  It is probably sensible not to set a timeout
-and just be aware of what the likely cause is if you do occasionally
-strike a hung port. 
+A connection timeout can be set in site/user config files (see 
+Section~\ref{SiteAndUserConfiguration}) so that messaging commands
+cannot hang indefinitely (this can be caused by suspending a suite with
+Ctrl-Z) and prevent a task from completing. But any such timeout must
+be sufficiently long to cover the interval required for job submission
+and scheduling (above) before cylc gets back to request handling 
+{\em just until we plan to have continuous request handling and job
+submission in background worker threads}.  The same can be done on the
+command line for suite-connecting user commands, with the
+\lstinline=--pyro-timeout= option.
 
 \subsection{Internal Queues And The Runahead Limit}
 
