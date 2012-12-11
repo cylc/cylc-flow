@@ -36,8 +36,31 @@ from cylc import task_state
 from cylc.strftime import strftime
 from cylc.global_config import globalcfg
 from cylc.RunEventHandler import RunHandler
+import subprocess
 import logging
 import Pyro.core
+
+def run_get_stdout( command ):
+    try:
+        popen = subprocess.Popen( command, shell=True,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE )
+        out = popen.stdout.read()
+        err = popen.stderr.read()
+        res = popen.wait()
+        if res < 0:
+            warning_dialog( "ERROR: command terminated by signal %d\n%s" % (res, err) ).warn()
+            return (False, [])
+        elif res > 0:
+            warning_dialog("ERROR: command failed %d\n%s" % (res,err)).warn()
+            return (False, [])
+    except OSError, e:
+        warning_dialog("ERROR: command invocation failed %s\n%s" % (str(e),err)).warn()
+        return (False, [])
+    else:
+        # output is a string with newlines
+        res = out.strip()
+        return ( True, res )
+    return (False, None )
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -427,9 +450,40 @@ class task( Pyro.core.ObjBase ):
         gcfg = globalcfg()
 
         suite = self.__class__.suite 
+
+        # host may be None (= run task on suite host)
         host = rtconfig['remote']['host']
-        owner = rtconfig['remote']['owner']
+        host_selector = rtconfig['remote']['host selection command']
+
+        if host:
+            # check for old-style dynamic host section:
+            #   host = $( host-select-command )
+            # or
+            #   host = ` host-select-command `
+
+            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
+            if m:
+                print >> sys.stderr, "WARNING, " + self.id + ": old-style dynamic host selection is deprecated."
+                print >> sys.stderr, "Please use '[remote]host selection command' instead."
+                if not host_selector:
+                    host_selector = m.groups()[1]
+                else:
+                    raise SystemExit( "ERROR: 'host' and 'host selection command' conflict" )
+
+        # use dynamic host selection if requested:
+        if host_selector:
+            res = run_get_stdout( host_selector ) # (T/F,[lines])
+            if res[0]:
+                host = res[1]
+                print "Dynamic host selection for " + self.id + ":", host
+            else:
+               raise SystemExit( "ERROR: dynamic host selection failed for task " + self.id )
+
+        if host not in gcfg.cfg['hosts']:
+            raise SystemExit( "ERROR: no site/user configuration for host " + host )
  
+        owner = rtconfig['remote']['owner']
+
         share_dir = gcfg.get_suite_share_dir( suite, host, owner )
         work_dir  = gcfg.get_task_work_dir( suite, self.id, host, owner )
         local_log_dir = gcfg.get_task_log_dir( suite ) 
@@ -440,8 +494,8 @@ class task( Pyro.core.ObjBase ):
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use ssh messaging'      : gcfg.get_host_config( host, 'use ssh messaging' ),
-                'remote cylc path'       : gcfg.get_host_config( host, 'cylc directory' ),
+                'use ssh messaging'      : gcfg.cfg['hosts'][host]['use ssh messaging'],
+                'remote cylc path'       : gcfg.cfg['hosts'][host]['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -459,10 +513,10 @@ class task( Pyro.core.ObjBase ):
                 'directive connector'    : " ",
                 }
         xconfig = {
-                'owner'                  : rtconfig['remote']['owner'],
-                'host'                   : rtconfig['remote']['host'],
+                'owner'                  : owner,
+                'host'                   : host,
                 'log path'               : local_log_dir,
-                'remote shell template'  : gcfg.get_host_config( host, 'remote shell template'),
+                'remote shell template'  : gcfg.cfg['hosts'][host]['remote shell template'],
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,

@@ -146,10 +146,16 @@ class globalcfg( object ):
         for key,val in self.cfg['documentation']['files'].items():
             self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))
 
-        # expand variables in some directory paths, and create if necessary.
+        # expand variables in local directory paths, and create if necessary.
         self.cfg['hosts']['local']['run directory'] = self.proc_dir( self.cfg['hosts']['local']['run directory'] )
         self.cfg['hosts']['local']['workspace directory'] = self.proc_dir( self.cfg['hosts']['local']['workspace directory'] )
         self.cfg['pyro']['ports directory'] = self.proc_dir( self.cfg['pyro']['ports directory'] )
+
+        # propagate host section defaults from the 'local' section
+        for host in self.cfg['hosts']:
+            for key,val in self.cfg['hosts'][host].items():
+                if not val:
+                    self.cfg['hosts'][host][key] = self.cfg['hosts']['local'][key]
 
     def proc_dir( self, path ):
         # expand environment variables and create dir if necessary.
@@ -224,38 +230,27 @@ class globalcfg( object ):
         else:
             print_cfg( self.cfg, prefix='   ' )
 
-    def get_host_config( self, host, item ):
-        # default:
-        value = self.cfg['hosts']['local'][item]
-        # override:
-        if host in self.cfg['hosts']:
-            value = self.cfg['hosts'][host][item]
-        return value
-
     def get_task_work_dir( self, suite, task, host=None, owner=None ):
         # this goes under the top level workspace directory; it is
         # created on the fly, if necessary, by task job scripts.
-        work_root = None
         if host:
-            work_root = self.get_host_config( host, 'workspace directory' )
-        if not work_root:
-            # use local work root
+            work_root = self.cfg['hosts'][host]['workspace directory']
+        else:
             work_root = self.cfg['hosts']['local']['workspace directory']
         if host or owner:
-            # remote account: replace home directory with '$HOME' 
+            # remote account: replace local home directory with '$HOME' 
             work_root  = re.sub( os.environ['HOME'], '$HOME', work_root )
         return os.path.join( work_root, suite, 'work', task )
 
     def get_suite_share_dir( self, suite, host=None, owner=None ):
         # this goes under the top level workspace directory; it is
         # created on the fly, if necessary, by task job scripts.
-        share_root = None
         if host:
-            share_root = self.get_host_config( host, 'workspace directory' )
-        if not share_root:
+            share_root = self.cfg['hosts'][host]['workspace directory']
+        else:
             share_root = self.cfg['hosts']['local']['workspace directory']
         if host or owner:
-            # remote account: replace home directory with '$HOME' 
+            # remote account: replace local home directory, if present, with '$HOME' 
             share_root  = re.sub( os.environ['HOME'], '$HOME', share_root )
         return os.path.join( share_root, suite, 'share' )
 
@@ -268,11 +263,11 @@ class globalcfg( object ):
     def get_task_log_dir( self, suite, host=None, owner=None, create=False ):
         log_root = None
         if host:
-            log_root = self.get_host_config( host, 'run directory' )
-        if not log_root:
+            log_root = self.cfg['hosts'][host]['run directory']
+        else:
             log_root = self.cfg['hosts']['local']['run directory']
         if host or owner:
-            # remote account: replace home directory with '$HOME' 
+            # remote account: replace local home directory, if present, with '$HOME' 
             log_root  = re.sub( os.environ['HOME'], '$HOME', log_root )
         path = os.path.join( log_root, suite, 'log', 'job' )
         if create:

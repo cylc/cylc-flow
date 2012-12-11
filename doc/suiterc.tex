@@ -1134,21 +1134,22 @@ suite host, and the task owner on the remote task host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 
-The remote host for this task or family. A literal host name can be
-specified, or a shell back-tick expression to execute an external
-command that writes a hostname to stdout.
+The remote host for this task or family. The host name should have an
+entry in the cylc site or user config file, to specify parameters such
+as the location of cylc on the remote machine.
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
 \item {\em default:} (none)
-\item {\em examples:}
-    \begin{myitemize}
-        \item short name: \lstinline@host = foo@
-        \item fully qualified name: \lstinline@host = foo.bar.baz@
-        \item external host selector: \lstinline@host = $(host-selector.sh)@ 
-        \item external host selector: \lstinline@host = `host-selector.sh)`@ (back-tick version)
-    \end{myitemize}
 \end{myitemize}
+
+Note that you can specify a shell back-tick expression here to return a
+host name at the time the job submission command is executed by cylc 
+(e.g. \lstinline@host = $(host-selector.sh)@  or
+ \lstinline@host = `host-selector.sh`@); but this has been deprecated in
+ favour of the \lstinline=host selection command=  item, just
+ below, which also gives access to the site/user config file for host
+ settings that may be required.
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
@@ -1161,6 +1162,22 @@ may be defined using local environment variables
 \item {\em type:} string (a valid username on the remote host)
 \item {\em default:} (none)
 \end{myitemize}
+
+
+\subparagraph[host selection command]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host selection command}
+
+A command that prints the host name or IP address of the selected task
+host to stdout. The host selection command, if specified, will be
+executed just prior to job submission to determine the task host. The 
+selected host must have an entry in the hosts section of the cylc
+site and/or user config file (although the section may be empty, in
+which case the default host settings will be used).
+
+\begin{myitemize}
+\item {\em type:} string (a command name)
+\item {\em default:} (none)
+\end{myitemize}
+
 
 \subparagraph[suite definition directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$  suite definition directory}
 
