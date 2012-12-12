@@ -772,7 +772,7 @@ class scheduler(object):
                 if not self.config['development']['disable task elimination']:
                     self.cleanup()
                 self.spawn()
-                self.state_dumper.dump( self.pool.get_tasks(), self.wireless, self.wireless )
+                self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
                 self.update_state_summary()
 
@@ -1595,7 +1595,7 @@ class scheduler(object):
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
         # dump state
-        self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+        self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         itask.plog( "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
@@ -1615,7 +1615,7 @@ class scheduler(object):
 
         itask.plog( "resetting to " + state + " state" )
 
-        self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+        self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         if state == 'ready':
             itask.reset_state_ready()
@@ -1710,7 +1710,7 @@ class scheduler(object):
                     to_insert.append(itask)
 
         if len( to_insert ) > 0:
-            self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+            self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
             for jtask in to_insert:
                 self.pool.add( jtask )
         return ( inserted, rejected )
@@ -1743,7 +1743,7 @@ class scheduler(object):
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
 
-        self.log.warning( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+        self.log.warning( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         # Purge is an infrequently used power tool, so print 
         # comprehensive information on what it does to stdout.
@@ -1849,7 +1849,7 @@ class scheduler(object):
         # TO DO: clean up use of spawn_and_die (the keyword args are clumsy)
 
         if dump_state:
-            self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+            self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         for id in task_ids:
             # find the task
@@ -1891,7 +1891,7 @@ class scheduler(object):
     def kill( self, task_ids, dump_state=True ):
         # kill without spawning all tasks in task_ids
         if dump_state:
-            self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+            self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for id in task_ids:
             # find the task
             found = False
