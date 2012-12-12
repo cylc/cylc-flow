@@ -1,0 +1,48 @@
+#!jinja2
+
+title = "Dave's evil load test"
+description """This is the suite that motivated the move to
+(a) multi-threaded Pyro daemon; (b) continuous request handling in a 
+background thread; (c) job submission in a background worker thread."""
+
+{% set N_LOCAL = 10 %}
+{% set N_REMOTE_PER_LOCAL = 2 %}
+[cylc]
+    [[job submission]]
+        delay between batches = 0
+[scheduling]
+    initial cycle time = 20120101
+    final cycle time   = 20120110
+    runahead limit     = 100
+    [[special tasks]]
+        cold-start = cold_start
+    [[dependencies]]
+        [[[0]]]
+            graph = """
+                {% for X in range( 1, N_LOCAL + 1 ) %}
+                  local_{{ X }}[T-24] | cold_start => local_{{ X }}
+                  {% for Y in range( 1, N_REMOTE_PER_LOCAL + 1 ) %}
+                    local_{{ X }} => remote_{{ X }}_{{ Y }}
+                  {% endfor %}
+                {% endfor %}
+            """
+[runtime]
+    [[root]]
+        environment scripting = "PS4='$(date): ';set -x"
+        command scripting = "echo Running on $(hostname) in $PWD; sleep 5"
+        [[[event hooks]]]
+            #succeeded handler = "rose task-hook --mail-if=submission_failed,submission_timeout,execution_timeout"
+    [[REMOTE]]
+        [[[job submission]]]
+            method = at
+        [[[remote]]]
+            #host = els003
+            host = $(sleep 5; echo oliverh-33586DL.greta.niwa.co.nz)
+            #host = `rose host-select --rank-method=random`
+{% for X in range( 1, N_LOCAL + 1 ) %}
+  {% for Y in range( 1, N_REMOTE_PER_LOCAL + 1 ) %}
+    [[remote_{{ X }}_{{ Y }}]]
+        inherit = REMOTE
+  {% endfor %}
+{% endfor %}
+
