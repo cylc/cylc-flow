@@ -123,6 +123,8 @@ class tupdater(threading.Thread):
         self.reconnect()
 
     def reconnect( self ):
+        # set debug here to see how reconnection works
+        debug = False
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
@@ -134,6 +136,8 @@ class tupdater(threading.Thread):
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
         except Exception, x:
+            if debug:
+                print ".",
             if self.stop_summary is None:
                 self.stop_summary = cylc.dump.get_stop_state_summary(
                                                             self.cfg.suite,
@@ -143,13 +147,25 @@ class tupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            #print 'GOT A CLIENT PROXY'
-            self.stop_summary = None
-            self.status = "connected"
+            if debug:
+                print "connected"
+
+        # On reconnection, retrieve static suite info
+        self.stop_summary = None
+        self.status = "connected"
+        try:
+            # connection may fail during retrieval
             self.info_bar.set_status( self.status )
             self.families = self.sinfo.get('families' )
             self.family_hierarchy = self.sinfo.get('family hierarchy' )
             self.allowed_families = self.sinfo.get('vis families' )
+        except:
+            if debug:
+                print 'connection failed'
+            return False
+        else:
+            if debug:
+                print "retrieved suite info"
             return True
 
     def connection_lost( self ):
@@ -166,10 +182,13 @@ class tupdater(threading.Thread):
         self.status = "stopped"
         self.info_bar.set_state( [] )
         self.info_bar.set_status( self.status )
+
         if self.stop_summary is not None and any(self.stop_summary):
             self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
+
         self.reconnect()
+
         return False
 
     def update(self):
@@ -542,13 +561,18 @@ class lupdater(threading.Thread):
                 if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
-        else:
+
+        # On reconnection, retrieve static suite info
+        self.stop_summary = None
+        self.status = "connected"
+        try:
             self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
             self.families = self.sinfo.get( 'families' )
             self.allowed_families = self.sinfo.get( 'vis families' )
-            self.stop_summary = None
-            self.status = "connected"
             self.info_bar.set_status( self.status )
+        except:
+            return False
+        else:
             return True
 
     def _set_tooltip(self, widget, tip_text):

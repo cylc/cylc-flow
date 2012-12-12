@@ -132,21 +132,26 @@ class xupdater(threading.Thread):
                 if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
-        else:
-            self.stop_summary = None
+
+        # On reconnection, retrieve static suite info
+        self.stop_summary = None
+        self.status = "connected"
+        try:
             self.family_nodes = self.sinfo.get( 'family nodes' )
             self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
             self.families = self.sinfo.get( 'families' )
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
+        except:
+            return False
+        else:
+            self.first_update = True
+            self.info_bar.set_status( self.status )
             if self.live_graph_movie:
                 try:
                     mkdir_p( self.live_graph_dir )
                 except Exception, x:
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
-            self.first_update = True
-            self.status = "connected"
-            self.info_bar.set_status( self.status )
             return True
 
     def connection_lost( self ):
