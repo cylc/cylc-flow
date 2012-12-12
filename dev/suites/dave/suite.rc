@@ -1,7 +1,7 @@
 #!jinja2
 
 title = "Dave's evil load test"
-description """This is the suite that motivated the move to
+description = """This is the suite that motivated the move to
 (a) multi-threaded Pyro daemon; (b) continuous request handling in a 
 background thread; (c) job submission in a background worker thread."""
 
