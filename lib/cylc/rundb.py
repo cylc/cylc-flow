@@ -44,8 +44,8 @@ class CylcRuntimeDAO(object):
                     "submit_num INTEGER",       # included in key to track status of different submissions for a task
                     "is_manual_submit INTEGER", # boolean - user related or auto?
                     "try_num INTEGER",          # auto-resubmit generates this
-                    "host TEXT",                # ?empty?
-                    "submit_method TEXT",       # to be taken from loadleveller id/process
+                    "host TEXT",                # host for the task
+                    "submit_method TEXT",       # to be taken from loadleveller id/process - empty at the moment
                     "submit_method_id TEXT",    # empty at the moment
                     "status TEXT",
                     # TODO: "rc TEXT",
