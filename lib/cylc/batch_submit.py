@@ -89,7 +89,7 @@ class batcher( threading.Thread ):
         for itask in batch:
             self.log.info( 'TASK READY: ' + itask.id )
             itask.incoming( 'NORMAL', itask.id + ' submitted' )
-            p = itask.submit( self.wireless.get(itask.id) )
+            p = itask.submit( overrides=self.wireless.get(itask.id) )
             if p:
                 ps.append( (itask,p) ) 
         self.log.info( 'WAITING ON ' + str( len(ps) ) + ' JOB SUBMISSIONS' )
