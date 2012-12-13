@@ -114,7 +114,7 @@ class CylcRuntimeDAO(object):
         self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event=='submitted'"
+        s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
         args = [name, cycle]
         c = self.conn.cursor()
         c.execute(s_fmt, args)
@@ -123,10 +123,10 @@ class CylcRuntimeDAO(object):
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
         
-    def update(self, table, name, cycle, **kwargs):
+    def update(self, table, name, cycle, submit_num, **kwargs):
         """Update a row in a table."""
         kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
+        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==? AND submit_num==?"
         cols = ""
         args = []
         not_first = False
@@ -138,6 +138,7 @@ class CylcRuntimeDAO(object):
             args.append(v)
         args.append(name)
         args.append(cycle)
+        args.append(submit_num)
         c = self.conn.cursor()
         c.execute(s_fmt % {"table": table, "cols": cols}, args)
         self.conn.commit()

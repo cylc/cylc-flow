@@ -659,7 +659,6 @@ class scheduler(object):
         cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logdir
-        cylcenv[ 'CYLC_SUITE_RUN_DIR' ] = self.run_dir
         task.task.cylc_env = cylcenv
 
         # Put suite identity variables (for event handlers executed by
