@@ -36,6 +36,7 @@ from cylc import task_state
 from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
 import logging
+import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 
 def displaytd( td ):
@@ -54,8 +55,6 @@ class task( object ):
     clock = None
     intercycle = False
     suite = None
-    state_changed = True
-    progress_msg_rec = True
 
     # set by the back door at startup:
     cylc_env = {}
@@ -542,7 +541,7 @@ class task( object ):
                 self.incoming( 'CRITICAL', self.id + ' failed' )
             else:
                 self.incoming( 'NORMAL', self.id + ' succeeded' )
-            task.state_changed = True
+            flags.pflag = True
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -591,9 +590,9 @@ class task( object ):
         self.latest_message_priority = priority
 
         # Set this to stimulate task processing
-        task.state_changed = True
+        flags.pflag = True
         # Set this to stimulate suite state summary update even if not task processing.
-        task.progress_msg_rec = False
+        flags.iflag = False
 
         # Handle warning events
         handler = self.event_handlers['warning']
@@ -666,14 +665,14 @@ class task( object ):
                 # Currently this is treated as an error condition
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
-                task.state_changed = False
+                flags.pflag = False
 
         else:
             # A general unregistered progress message: log with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-            task.progress_msg_rec = True
-            task.state_changed = False
+            flags.iflag = True
+            flags.pflag = False
 
     def update( self, reqs ):
         for req in reqs.get_list():

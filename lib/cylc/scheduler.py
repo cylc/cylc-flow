@@ -55,6 +55,7 @@ from suite_cmd_interface import comqueue
 from suite_info_interface import info_interface
 from TaskID import TaskID, TaskIDError
 from task_pool import pool
+import flags
 
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -136,10 +137,6 @@ class scheduler(object):
         self.parser.add_option( "--reference-test", 
                 help="Do a test run against a previously generated reference log.",
                 action="store_true", default=False, dest="reftest" )
-
-        self.parser.add_option( "--timing", help=\
-                "Turn on main task processing loop timing.",
-                action="store_true", default=False, dest="timing" )
 
         self.parser.add_option( "--from-gui", help=\
                 "(do not use).",
@@ -1028,9 +1025,7 @@ class scheduler(object):
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
                 raise SchedulerError, x
 
-        count = 0
         while True: # MAIN LOOP
-            count += 1
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
@@ -1038,11 +1033,11 @@ class scheduler(object):
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
 
+            
             if self.process_tasks():
-                self.log.debug( "ENTERING TASK PROCESSING" )
-                if self.options.timing:
-                    # loop timing: use real clock even in sim mode
-                    main_loop_start_time = datetime.datetime.now()
+                self.log.debug( "BEGIN TASK PROCESSING" )
+                # loop timing: use real clock even in sim mode
+                main_loop_start_time = datetime.datetime.now()
 
                 self.negotiate()
 
@@ -1059,10 +1054,9 @@ class scheduler(object):
                 # expire old broadcast variables
                 self.wireless.expire( self.get_oldest_c_time() )
 
-                if self.options.timing:
-                    delta = datetime.datetime.now() - main_loop_start_time
-                    seconds = delta.seconds + float(delta.microseconds)/10**6
-                    print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
+                delta = datetime.datetime.now() - main_loop_start_time
+                seconds = delta.seconds + float(delta.microseconds)/10**6
+                self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
             time.sleep(1)
 
@@ -1074,8 +1068,8 @@ class scheduler(object):
             self.process_command_queue()
 
             #print '<Pyro'
-            if task.task.progress_msg_rec:
-                task.task.progress_msg_rec = False
+            if flags.iflag:
+                flags.iflag = False
                 self.update_state_summary()
 
             if self.config.suite_timeout:
@@ -1227,9 +1221,9 @@ class scheduler(object):
             for itask in self.pool.get_tasks():
                     itask.sim_time_check()
 
-        if task.task.state_changed:
+        if flags.pflag:
             process = True
-            task.task.state_changed = False
+            flags.pflag = False
             # a task changing state indicates new suite activity
             # so reset the suite timer.
             if self.config.suite_timeout and self.config.reset_timer:
@@ -1244,13 +1238,13 @@ class scheduler(object):
             process = True
 
         ##if not process:
-        ##    # If we neglect to set task.state_changed on some event that 
+        ##    # If we neglect to set flags.pflag on some event that 
         ##    # makes re-negotiation of dependencies necessary then if
         ##    # that event ever happens in isolation the suite could stall
         ##    # unless manually nudged ("cylc nudge SUITE").  If this
         ##    # happens turn on debug logging to see what happens
-        ##    # immediately before the stall, then set task.state_changed
-        ##    # = True in the corresponding code section. Alternatively,
+        ##    # immediately before the stall, then set flags.pflag = True in
+        ##    # the corresponding code section. Alternatively,
         ##    # for an undiagnosed stall you can uncomment this section to 
         ##    # stimulate task processing every few seconds even during
         ##    # lulls in activity.  THIS SHOULD NOT BE NECESSARY, HOWEVER.

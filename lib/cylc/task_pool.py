@@ -19,6 +19,7 @@
 import Queue
 from batch_submit import batcher
 from task_types import task
+import flags
 
 class pool(object):
     def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose, debug=False ):
@@ -86,7 +87,7 @@ class pool(object):
             self.queues[queue] = [itask]
         else:
             self.queues[queue].append(itask)
-        task.task.state_changed = True
+        flags.pflag = True
         itask.log('DEBUG', "task proxy inserted" )
 
     def remove( self, task, reason ):
