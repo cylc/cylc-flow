@@ -36,3 +36,20 @@
         held      = "color=#ffff00", "fontcolor=black"
         retry_delayed  = "color=#00aaff"
 
+    [[color-blind]]
+         # Ten colors that are apparently distinguishable by people with
+         # most forms of color-blindness:
+         #   http://safecolors.rigdenage.com/colourchoice.html
+         # We can also style=filled/unfilled to help discrimate states.
+        defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
+        waiting   = "color=#00ccff" # blue
+        running   = "color=#66ff33" # lime green
+        submitted = "color=#ff9933" # orange
+        failed    = "color=#ff3333" # red
+        queued    = "color=#336600" # moss green
+        succeeded = "color=#cccccc" # grey
+        held      = "color=#9900cc" # purple
+        runahead  = "color=#cc9999" # dusky pink
+        retry_delayed = "color=#009999" # turquoise
+        # (10th color: black)
+

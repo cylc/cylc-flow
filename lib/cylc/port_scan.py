@@ -106,8 +106,8 @@ class port_interrogator(object):
 
 def warn_timeout( host, port, timeout ):
     print >> sys.stderr, "WARNING: connection timed out (" + str(timeout) + "s) at", portid( host, port )
-    print >> sys.stderr, '  This could mean a Ctrl-Z stopped suite or similar is holding up the port,'
-    print >> sys.stderr, '  or your pyro connection timeout needs to be longer than', str(timeout), 'seconds.'
+    #print >> sys.stderr, '  This could mean a Ctrl-Z stopped suite or similar is holding up the port,'
+    #print >> sys.stderr, '  or your pyro connection timeout needs to be longer than', str(timeout), 'seconds.'
 
 def portid( host, port ):
     return host + ":" + str(port)

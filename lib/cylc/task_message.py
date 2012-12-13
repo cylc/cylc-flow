@@ -22,12 +22,19 @@ import os, sys
 import socket
 import subprocess
 import datetime
+from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
+from cylc.global_config import globalcfg
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
+
+        globals = globalcfg()
+        self.retry_seconds = globals.cfg['task messaging']['retry interval in seconds']
+        self.max_tries = globals.cfg['task messaging']['maximum number of tries']
+        self.try_timeout = globals.cfg['task messaging']['connection timeout in seconds']
 
         self.msg = msg
         self.verbose = verbose
@@ -104,12 +111,6 @@ class message(object):
         except:
             pass
             
-        try:
-            # value may be string 'None'
-            self.pyro_timeout = float(os.environ['CYLC_SUITE_PYRO_TIMEOUT'])
-        except:
-            self.pyro_timeout = None
-
     def now( self ):
         if self.utc:
             return datetime.datetime.utcnow()
@@ -122,10 +123,10 @@ class message(object):
         # it is needed, we will end up in this method). 
         self.pphrase = passphrase( self.suite, self.owner, self.host,
                 verbose=self.verbose ).get( None, None )
-        # this raises an exception on failure to connect:
+
         import cylc_pyro_client
         return cylc_pyro_client.client( self.suite, self.pphrase,
-                self.owner, self.host, self.pyro_timeout, self.port,
+                self.owner, self.host, self.try_timeout, self.port,
                 self.verbose ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
@@ -168,7 +169,7 @@ class message(object):
             # this code block.
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
-                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 'CYLC_SUITE_PYRO_TIMEOUT', 
+                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
                     'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
@@ -190,11 +191,28 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-        # exceptions are handled by the messaging commands now
-        ##before = datetime.datetime.now()
-        self.get_proxy().incoming( self.priority, msg )
-        ##after = datetime.datetime.now()
-        ##print 'Pyro messaging took:', str(after - before)
+
+        # get a proxy for the remote object (this succeeds even if the
+        # suite isn't actually running -it is just addressing.
+        proxy = self.get_proxy()
+        
+        print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
+        sent = False
+        for itry in range( 1, self.max_tries+1 ):
+            print '  ', "Try", itry, "of", self.max_tries, "...",  
+            try:
+                proxy.incoming( self.priority, msg )
+            except Exception, x:
+                print "failed:", str(x)
+                print "   retry in", self.retry_seconds, "seconds ..."
+                sleep( self.retry_seconds )
+            else:
+                print "succeeded"
+                sent = True
+                break
+        if not sent:
+            # issue a warning and let the task carry on
+            print >> sys.stderr, 'WARNING: MESSAGE SEND FAILED'
 
     def send_succeeded( self ):
         self.send( self.task_id + ' succeeded' )
