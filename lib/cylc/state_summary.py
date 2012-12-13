@@ -36,8 +36,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.start_time = start_time
  
     def update( self, tasks, clock, oldest, newest,
-            paused, will_pause_at, stopping, will_stop_at, blocked, 
-            runahead ):
+            paused, will_pause_at, stopping, will_stop_at, runahead ):
 
         task_name_list = []
         task_summary = {}
@@ -92,7 +91,6 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'will_pause_at' ] = will_pause_at
         global_summary[ 'will_stop_at' ] = will_stop_at
         global_summary[ 'started from gui' ] = self.from_gui
-        global_summary[ 'blocked' ] = blocked
         global_summary[ 'runahead limit' ] = runahead
         global_summary[ 'states' ] = all_states
 

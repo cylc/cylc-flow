@@ -26,11 +26,8 @@ class comqueue( Pyro.core.ObjBase ):
         Pyro.core.ObjBase.__init__(self)
         self.legal = legal_commands
         self.queue = Queue()
-        self.blocked = False
 
     def put( self, command, *args ):
-        if self.blocked:
-            return ( False, "Suite blocked" )
         res = ( True, 'Command queued' )
         if command not in self.legal:
             res = ( False, 'ERROR: Illegal command: ' + str(command) )
@@ -41,8 +38,4 @@ class comqueue( Pyro.core.ObjBase ):
 
     def get_queue( self ):
         return self.queue
-
-    def block( self, value=False ):
-        self.blocked = value
-        return ( True, "Suite blocked" )
 

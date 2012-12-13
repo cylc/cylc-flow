@@ -1175,7 +1175,7 @@ class scheduler(object):
         self.suite_state.update( self.pool.get_tasks(), self.clock,
                 self.get_oldest_c_time(), self.get_newest_c_time(), self.paused(),
                 self.will_pause_at(), self.suite_halt,
-                self.will_stop_at(), self.command_queue.blocked, self.runahead_limit )
+                self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what at run time).

@@ -143,10 +143,6 @@ Class to create an information bar.
         self.time_widget = gtk.Label()
         self._set_tooltip( self.time_widget, "last update time" )
 
-        self._block = "access..."
-        self.block_widget = gtk.image_new_from_stock( gtk.STOCK_DIALOG_QUESTION,
-                                                      gtk.ICON_SIZE_SMALL_TOOLBAR )
-
         self.pack_start( gtk.HSeparator(), False, False )
         
         hbox = gtk.HBox()
@@ -178,28 +174,8 @@ Class to create an information bar.
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
         hbox.pack_start( eb, False )
 
-        eb = gtk.EventBox()
-        eb.add( self.block_widget )
-        hbox.pack_end( eb, False )
-
     def set_theme( self, theme ):
         self.dots = DotMaker( theme )
-
-    def set_block( self, block ):
-        """Set block or access icon."""
-        if block == self._block:
-            return False
-        self._block = block
-        if "unblocked" in block:
-            self.block_widget.set_from_stock( gtk.STOCK_DIALOG_AUTHENTICATION,
-                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
-        elif "blocked" in block:
-            self.block_widget.set_from_stock( gtk.STOCK_DIALOG_ERROR,
-                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
-        elif "waiting" in block:
-            self.block_widget.set_from_stock( gtk.STOCK_DIALOG_QUESTION,
-                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
-        self._set_tooltip( self.block_widget, "access: " + block )
 
     def set_mode(self, mode):
         """Set mode text."""
@@ -645,7 +621,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def pause_suite( self, bt ):
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'hold suite' )
+            result = self.get_pyro( 'command-interface' ).put( 'hold suite now' )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
         else:
@@ -877,18 +853,6 @@ been defined for this suite""").inform()
             warning_dialog( 'Error: failed to start ' + self.cfg.suite,
                     self.window ).warn()
             success = False
-
-    def unblock_suite( self, bt ):
-        try:
-            self.get_pyro( 'command-interface' ).block( False )
-        except Exception, x:
-            warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
-
-    def block_suite( self, bt ):
-        try:
-            self.get_pyro( 'command-interface' ).block( True )
-        except Exception, x:
-            warning_dialog( 'ERROR: ' + str(x), self.window ).warn()
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -1395,7 +1359,7 @@ shown here in the state they were in at the time of triggering.''' )
             return
         try:
             if stop:
-                result = self.get_pyro( 'command-interface' ).put( 'hold task', task_id )
+                result = self.get_pyro( 'command-interface' ).put( 'hold task now', task_id )
             else:
                 result = self.get_pyro( 'command-interface' ).put( 'release task', task_id )
         except Exception, x:
@@ -2218,20 +2182,6 @@ or remove task definitions without restarting the suite."""
         insert_item.set_image(img)
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
-
-        start_menu.append( gtk.SeparatorMenuItem() )
-
-        block_item = gtk.ImageMenuItem( '_Block Access' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
-        block_item.set_image(img)
-        start_menu.append( block_item )
-        block_item.connect( 'activate', self.block_suite )
-
-        unblock_item = gtk.ImageMenuItem( 'Unbl_ock Access' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_MENU )
-        unblock_item.set_image(img)
-        start_menu.append( unblock_item )
-        unblock_item.connect( 'activate', self.unblock_suite )
 
         start_menu.append( gtk.SeparatorMenuItem() )
 
