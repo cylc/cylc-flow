@@ -1064,10 +1064,6 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
-            # incoming task messages set task.task.state_changed to True
-            #print 'Pyro>'
-            #self.pyro.handleRequests(timeout=1)
-
             time.sleep(1)
 
             # process queued task messages
