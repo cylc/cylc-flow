@@ -105,7 +105,6 @@ class tupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
-        self.block = "waiting ..."
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
@@ -201,11 +200,6 @@ class tupdater(threading.Thread):
         self.info_bar.set_status( self.status )
 
         self.mode = glbl[ 'run_mode' ] 
-
-        if glbl[ 'blocked' ]:
-            self.block = 'blocked'
-        else:
-            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
         self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
@@ -461,7 +455,6 @@ class tupdater(threading.Thread):
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
-        self.info_bar.set_block( self.block )
         return False
 
     def run(self):
@@ -500,7 +493,6 @@ class lupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
-        self.block = "waiting ..."
         self.filter = ""
 
         self.led_treeview = treeview
@@ -626,11 +618,6 @@ class lupdater(threading.Thread):
         self.info_bar.set_status( self.status )
 
         self.mode = glbl['run_mode']
-
-        if glbl[ 'blocked' ]:
-            self.block = 'blocked'
-        else:
-            self.block = 'unblocked'
 
         dt = glbl[ 'last_updated' ]
         self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
@@ -826,7 +813,6 @@ class lupdater(threading.Thread):
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
-        self.info_bar.set_block( self.block )
         return False
 
     def run(self):
