@@ -219,10 +219,11 @@ hook_commands['email-task'  ] = ['email-task' ]
 hook_commands['check-triggering'  ] = ['check-triggering' ] 
 
 admin_commands = OrderedDict()
-admin_commands['test-db'     ] = [ 'test-db']
-admin_commands['test-battery'  ] = [ 'test-battery']
-admin_commands['import-examples' ] = ['import-examples']
+admin_commands['test-db'         ] = [ 'test-db']
+admin_commands['test-battery'    ] = [ 'test-battery']
+admin_commands['import-examples' ] = [ 'import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
+admin_commands['make-release'    ] = [ 'make-release']
 
 license_commands = OrderedDict()
 license_commands['warranty'  ] = [ 'warranty']
@@ -381,10 +382,11 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum[ 'test-db'    ] = '(ADMIN) Run an automated suite database test'
-comsum[ 'test-battery' ] = '(ADMIN) Run a battery of self-diagnosing test suites'
-comsum[ 'check-examples' ] = '(ADMIN) Check all example suites validate'
-comsum[ 'import-examples' ] = '(ADMIN) import example suites your user database'
+comsum[ 'test-db'    ] = 'Run an automated suite database test'
+comsum[ 'test-battery' ] = 'Run a battery of self-diagnosing test suites'
+comsum[ 'check-examples' ] = 'Check all example suites validate'
+comsum[ 'import-examples' ] = 'Import example suites your user database'
+comsum[ 'make-release' ] = 'Generate a cylc release tarball'
 # license
 comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
 comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
