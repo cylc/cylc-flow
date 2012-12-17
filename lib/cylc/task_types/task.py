@@ -457,6 +457,7 @@ class task( Pyro.core.ObjBase ):
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
                 'use ssh messaging'      : rtconfig['remote']['ssh messaging'],
+                'use login shell'        : rtconfig['remote']['use login shell'],
                 'remote cylc path'       : rtconfig['remote']['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
