@@ -35,6 +35,7 @@ from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
+from OrderedDict import OrderedDict
 import logging
 import Pyro.core
 
@@ -384,6 +385,11 @@ class task( Pyro.core.ObjBase ):
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
         self.set_from_rtconfig( rtconfig )
+
+        if len(self.env_vars) > 0:
+            # Add in any instance-specific environment variables
+            # (currently only used by async_repeating tasks)
+            rtconfig['environment'].update( self.env_vars )
 
         self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
