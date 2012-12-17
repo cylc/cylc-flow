@@ -79,6 +79,7 @@
             share directory = string( default=None )
             work directory = string( default=None )
             ssh messaging = boolean( default=False )
+            use login shell = boolean( default=True )
         [[[event hooks]]]
             submitted handler = string( default=None )
             started handler = string( default=None )

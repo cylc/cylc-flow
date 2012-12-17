@@ -110,6 +110,13 @@ class message(object):
                 self.ssh_messaging = True
         except:
             pass
+
+        self.ssh_login_shell = True
+        try:
+            if os.environ['CYLC_TASK_SSH_LOGIN_SHELL'] == 'False':
+                self.ssh_login_shell = False
+        except:
+            pass
             
     def now( self ):
         if self.utc:
@@ -162,6 +169,12 @@ class message(object):
             sys.argv.append( '--host=' + self.host )
             if self.verbose:
                 sys.argv.append( '-v' )
+
+            if self.ssh_login_shell:
+                sys.argv.append('--login')
+            else:
+                sys.argv.append('--no-login')
+
             # Some variables from the task execution environment are
             # also required by the re-invoked remote command: Note that
             # $CYLC_TASK_SSH_MESSAGING is not passed through so the
