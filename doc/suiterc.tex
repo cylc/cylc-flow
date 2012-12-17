@@ -1256,6 +1256,18 @@ tasks that are local as far as cylc is concerned, but which end up
 running on the affected remote host due to the action of the local batch
 queueing system or resource manager.
 
+\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ use login shell}
+
+By default Cylc will submit remote ssh commands using a login shell, which
+sources a user's ~/.profile settings. For security reasons some institutions do
+not allow unattended commands to start login shells, setting this item to
+false will disable that behaviour.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} True
+\end{myitemize}
+
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
 
