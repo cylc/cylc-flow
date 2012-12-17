@@ -34,6 +34,7 @@ class remrun( object ):
     def __init__( self ):
         self.owner = None
         self.host = None
+        self.ssh_login_shell = True
 
         if '-v' in sys.argv or '--verbose' in sys.argv:
             self.verbose = True
@@ -49,6 +50,10 @@ class remrun( object ):
                 self.owner = arg.replace("--owner=", "")
             elif arg.startswith("--host="):
                 self.host = arg.replace("--host=", "")
+            elif arg == "--login":
+                self.ssh_login_shell = True
+            elif arg == "--no-login":
+                self.ssh_login_shell = False
             else:
                 self.args.append(arg)
 
@@ -80,8 +85,7 @@ class remrun( object ):
 
         # Build the remote command
         command = []
-        ssh_login_shell = True
-        if ssh_login_shell:
+        if self.ssh_login_shell:
             # A login shell will always source /etc/profile and the user's bash profile file.
             # To avoid having to quote the entire remote command it is passed as arguments to
             # the bash script.

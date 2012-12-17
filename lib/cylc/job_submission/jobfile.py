@@ -150,6 +150,7 @@ class jobfile(object):
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(self.jobconfig['use login shell']) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
         BUFFER.write( "\n# Note the suite share path may actually be family- or task-specific:" )
         BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
