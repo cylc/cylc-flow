@@ -35,7 +35,6 @@ from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
 from cylc.RunEventHandler import RunHandler
-from OrderedDict import OrderedDict
 import logging
 import Pyro.core
 
