@@ -122,7 +122,16 @@ class CylcRuntimeDAO(object):
         self.conn.commit()
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
-        
+    
+    def get_task_current_submit_num(self, name, cycle):
+        s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
+        args = [name, cycle]
+        c = self.conn.cursor()
+        c.execute(s_fmt, args)
+        count = c.fetchone()[0]
+        self.conn.commit()
+        return count
+    
     def update(self, table, name, cycle, submit_num, **kwargs):
         """Update a row in a table."""
         kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")

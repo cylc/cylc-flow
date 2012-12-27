@@ -144,7 +144,15 @@ class task( Pyro.core.ObjBase ):
 
         gcfg = globalcfg()
         suite_name = os.environ['CYLC_SUITE_REG_NAME']
-        self.db_path = os.path.join( gcfg.cfg['run directory'], suite_name )
+        self.db_path = os.path.join(gcfg.cfg['run directory'], suite_name)
+        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
+        
+        # sets submit num for restarts or when triggering state prior to submission
+        submits = self.db.get_task_current_submit_num(self.name, self.c_time)
+        if submits > 0:
+            self.submit_num = submits
+        else:
+            self.submit_num = 1
         
     def plog( self, message ):
         # print and log a low priority message
@@ -411,8 +419,6 @@ class task( Pyro.core.ObjBase ):
 
     def submit( self, dry_run=False, debug=False, overrides={} ):
 
-        #suite_path = os.environ['CYLC_SUITE_RUN_DIR'] + "/" + os.environ['CYLC_SUITE_REG_NAME']
-        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
         self.submit_num = self.db.get_task_submit_num(self.name, self.c_time)
         #try to add an entry to the database for recording status
         try:
