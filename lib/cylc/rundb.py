@@ -114,8 +114,8 @@ class CylcRuntimeDAO(object):
         self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        args = [name, cycle]
+        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
+        args = [name, cycle, "submitted"]
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         count = c.fetchone()[0]
@@ -124,8 +124,8 @@ class CylcRuntimeDAO(object):
         return submit_num
     
     def get_task_current_submit_num(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        args = [name, cycle]
+        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
+        args = [name, cycle, "submitted"]
         c = self.conn.cursor()
         c.execute(s_fmt, args)
         count = c.fetchone()[0]
