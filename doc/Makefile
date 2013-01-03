@@ -18,7 +18,7 @@
 
 CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
-.PHONY: all clean multi pdf
+.PHONY: all clean html html-multi html-single pdf
 
 all: index.html
 
@@ -26,10 +26,12 @@ clean:
 	rm -rf *.aux\
         command-usage\
         commands.tex\
+        cug.html\
+        cug1.html\
         cug-html.{4ct,4tc,aux,css,dvi,idv,lg,log,tmp,toc,xref}\
         cug-html*.html\
         cug-pdf.{lof,log,out,pdf,toc}\
-        CylcUserGuide.pdf\
+        cug.pdf\
         cylc-version.txt\
         index.html\
         single
@@ -63,11 +65,17 @@ command-usage:
 command-usage/help.txt: command-usage
 	$(CYLC) help >$@
 
-cug-html.html: commands.tex
+cug.html: commands.tex
 	htlatex cug-html.tex "cug-html.cfg,xhtml,3,next";
+	mv cug-html.html $@
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 
-CylcUserGuide.pdf: commands.tex
+cug1.html: commands.tex
+	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" ""
+	mv cug-html.html $@
+	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
+
+cug.pdf: commands.tex
 	pdflatex cug-pdf.tex;
 	pdflatex cug-pdf.tex;
 	pdflatex cug-pdf.tex;
@@ -77,23 +85,23 @@ CylcUserGuide.pdf: commands.tex
 cylc-version.txt:
 	$(CYLC) -v >$@
 
-index.html: cug-html.html CylcUserGuide.pdf single
+index.html: cug.html cug1.html cug.pdf
 	{\
         echo '<html>';\
         echo '<head><title>Cylc Documentation</title></head>';\
         echo '<body>';\
         echo '<h1>Cylc Documentation</h1>';\
-        echo '<p><a href="cug-html.html">Multi-page HTML</a></p>';\
-        echo '<p><a href="single/cug-html.html">Single-page HTML</a></p>';\
-        echo '<p><a href="CylcUserGuide.pdf">PDF</a></p>';\
+        echo '<p><a href="cug.html">Multi-page HTML</a></p>';\
+        echo '<p><a href="cug1.html">Single-page HTML</a></p>';\
+        echo '<p><a href="cug.pdf">PDF</a></p>';\
         echo '</body>';\
         echo '</html>';\
     } >$@
 
-multi: cug-html.html
+html: html-multi html-single
 
-pdf: CylcUserGuide.pdf
+html-multi: cug.html
 
-single: commands.tex
-	mkdir -p $@
-	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" "" -d$@/
+html-single: cug1.html
+
+pdf: cug.pdf
