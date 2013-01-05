@@ -82,8 +82,8 @@ mkdir -p $RELEASE
 git archive $BRANCH | tar -x -C $RELEASE
 cd $RELEASE
 
-echo " + running tests (to watch: \"tail -F $LOG\")"
 if $RUN_TESTS; then
+    echo " + running tests (to watch: \"tail -F $LOG\")"
     echo "   - checking all example suites validate ..."
     cylc admin check-examples > $LOG 2>&1
     # run tests
@@ -91,6 +91,8 @@ if $RUN_TESTS; then
     cylc admin test-db >> $LOG 2>&1
     echo "   - suite test battery ..."
     cylc admin test-battery >> $LOG 2>&1
+else
+    echo "(WARNING: OMITING CODE TESTS BY REQUEST)"
 fi
 
 echo " + setting version tag"
@@ -99,24 +101,26 @@ perl -pi -e "s/VERSION-TEMPLATE/$VERSION/" README
 
 if $RUN_LATEX; then
     echo " + generating User Guide (to watch: \"tail -F $LOG\")"
+    # move to doc sub-directory
+    cd doc
     if $RUN_HTML; then 
-        doc/process >> $LOG 2>&1
+        make >> $LOG 2>&1
     else
         echo "   - (WARNING: PDF only, HTML disabled)"
-        doc/process -p >> $LOG 2>&1
+        make pdf >> $LOG 2>&1
     fi
-    echo " + deleting documentation source"
-    # copy and restore generated documents from doc.
-    mkdir tmpdoc
-    cp doc/cug-pdf.pdf tmpdoc
-    cp doc/*.html tmpdoc
-    cp doc/*.css tmpdoc
-    cp -r doc/images tmpdoc
-    cp -r doc/screenshots tmpdoc
-    cp -r doc/single/ tmpdoc
-    rm -r doc
-    mv tmpdoc doc
-    mv doc/cug-pdf.pdf doc/CylcUserGuide.pdf
+    echo " + cleaning documentation directory"
+    mkdir tmp
+    mv *.html *.css *.pdf images screenshots niwa-colour.png tmp/
+    make clean
+    mv tmp/* .
+    rmdir tmp
+    rm Makefile *.tex
+    rm -r titlepic*
+    # make a link to CylcUserGuide.pdf (for historical reasons)
+    ln -s cug.pdf CylcUserGuide.pdf
+    # move back to cylc top level
+    cd ..
 else
     echo " + WARNING: User Guide processing disabled"
     rm -rf doc
