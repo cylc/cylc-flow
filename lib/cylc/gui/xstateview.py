@@ -16,20 +16,19 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os, re
-import gobject
-import time
-import threading
-from cylc import cylc_pyro_client, dump
-from cylc import graphing
-from cylc.strftime import strftime
-import gtk
-import pygtk
+from cylc import cylc_pyro_client, dump, graphing
 from cylc.cycle_time import ct
-import cylc.dump
+from cylc.gui.stateview import compare_dict_of_dict, PollSchd
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
-####pygtk.require('2.0')
+from cylc.strftime import strftime
+import gobject
+import os
+import re
+import sys
+import threading
+from time import sleep
+
 
 try:
     any
@@ -41,25 +40,6 @@ except NameError:
                 return True
         return False
 
-def compare_dict_of_dict( one, two ):
-    # return True if one == two, else return False.
-    for key in one:
-        if key not in two:
-            return False
-        for subkey in one[ key ]:
-            if subkey not in two[ key ]:
-                return False
-            if one[key][subkey] != two[key][subkey]:
-                return False
-    for key in two:
-        if key not in one:
-            return False
-        for subkey in two[ key ]:
-            if subkey not in one[ key ]:
-                return False
-            if two[key][subkey] != one[key][subkey]:
-                return False
-    return True
 
 class xupdater(threading.Thread):
     def __init__(self, cfg, theme, info_bar, xdot ):
@@ -92,6 +72,8 @@ class xupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
+        self.status = None
+        self.poll_schd = PollSchd()
 
         # empty graphw object:
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
@@ -151,10 +133,15 @@ class xupdater(threading.Thread):
                 except Exception, x:
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
+            self.first_update = True
+            self.status = "connected"
+            self.poll_schd.stop()
+            self.info_bar.set_status( self.status )
             return True
 
     def connection_lost( self ):
         self.status = "stopped"
+        self.poll_schd.start()
         self.prev_graph_id = ()
         self.normal_fit = True
         # Get an *empty* graph object
@@ -258,7 +245,7 @@ class xupdater(threading.Thread):
     def run(self):
         glbl = None
         while not self.quit:
-            if self.update():
+            if self.poll_schd.ready() and self.update():
                 needed_no_redraw = self.update_graph()
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
@@ -266,7 +253,7 @@ class xupdater(threading.Thread):
                 ################ gobject.idle_add( self.update_xdot )
                 self.update_xdot( no_zoom=needed_no_redraw )
                 gobject.idle_add( self.update_globals )
-            time.sleep(1)
+            sleep(1)
         else:
             pass
             ####print "Disconnecting task state info thread"
