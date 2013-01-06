@@ -409,6 +409,11 @@ class task( Pyro.core.ObjBase ):
         self.override( rtconfig, overrides )
         self.set_from_rtconfig( rtconfig )
 
+        if len(self.env_vars) > 0:
+            # Add in any instance-specific environment variables
+            # (currently only used by async_repeating tasks)
+            rtconfig['environment'].update( self.env_vars )
+
         self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will

@@ -259,7 +259,6 @@ class scheduler(object):
 
         self.lock_acquired = False
 
-        self.blocked = True 
         self.is_restart = is_restart
 
         self.graph_warned = {}
@@ -562,9 +561,6 @@ class scheduler(object):
             #    self.parser.error( "invalid cycle time: " + self.hold_time )
             self.banner[ 'Pausing at' ] = self.hold_time
 
-        # start in unblocked state
-        self.blocked = False
-
         # USE LOCKSERVER?
         self.use_lockserver = self.config['cylc']['lockserver']['enable']
         self.lockserver_port = None
@@ -774,7 +770,7 @@ class scheduler(object):
                 if not self.config['development']['disable task elimination']:
                     self.cleanup()
                 self.spawn()
-                self.state_dumper.dump( self.pool.get_tasks(), self.wireless, self.wireless )
+                self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
                 self.update_state_summary()
 
@@ -906,7 +902,7 @@ class scheduler(object):
         self.suite_state.update( self.pool.get_tasks(), self.clock,
                 self.get_oldest_c_time(), self.get_newest_c_time(), self.paused(),
                 self.will_pause_at(), self.remote.halt,
-                self.will_stop_at(), self.blocked, self.runahead_limit )
+                self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what at run time).
@@ -1597,7 +1593,7 @@ class scheduler(object):
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
         # dump state
-        self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+        self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         itask.plog( "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
@@ -1617,7 +1613,7 @@ class scheduler(object):
 
         itask.plog( "resetting to " + state + " state" )
 
-        self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+        self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         if state == 'ready':
             itask.reset_state_ready()
@@ -1712,7 +1708,7 @@ class scheduler(object):
                     to_insert.append(itask)
 
         if len( to_insert ) > 0:
-            self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+            self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
             for jtask in to_insert:
                 self.pool.add( jtask )
         return ( inserted, rejected )
@@ -1745,7 +1741,7 @@ class scheduler(object):
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
 
-        self.log.warning( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+        self.log.warning( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         # Purge is an infrequently used power tool, so print 
         # comprehensive information on what it does to stdout.
@@ -1851,7 +1847,7 @@ class scheduler(object):
         # TO DO: clean up use of spawn_and_die (the keyword args are clumsy)
 
         if dump_state:
-            self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+            self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         for id in task_ids:
             # find the task
@@ -1893,7 +1889,7 @@ class scheduler(object):
     def kill( self, task_ids, dump_state=True ):
         # kill without spawning all tasks in task_ids
         if dump_state:
-            self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file = True ))
+            self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for id in task_ids:
             # find the task
             found = False

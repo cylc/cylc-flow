@@ -51,23 +51,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         self.halt_now = False
 
-    def block( self ):
-        if self.pool.blocked:
-            return result( True, "(the suite is already blocked)" )
-        self.pool.blocked = True
-        self.process_tasks = True # to update monitor
-        return result( True, "the suite has been blocked" )
-
-    def unblock( self ):
-        if not self.pool.blocked:
-            return result( True, "(the suite is not blocked)" )
-        self.pool.blocked = False
-        self.process_tasks = True # to update monitor
-        return result( True, "the suite has been unblocked" )
-
     def set_runahead( self, hours=None ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         # change the suite maximum runahead limit
         self.log.info( "setting runahead limit to " + str(hours) )
         if hours:
@@ -80,8 +64,6 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Action succeeded" )
 
     def nudge( self ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         # cause the task processing loop to be invoked
         self.log.info( "servicing suite nudge request" )
         # just set the "process tasks" indicator
@@ -109,8 +91,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True, task_id + " is currently running" )
 
     def trigger_task( self, task_id ):
-        if self._suite_is_blocked():
-            return result( False, "suite blocked" )
         try:
             self.pool.trigger_task( task_id )
         except TaskNotFoundError, x:
@@ -126,8 +106,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True )
 
     def reset_task_state( self, task_id, state ):
-        if self._suite_is_blocked():
-            return result( False, "suite blocked" )
         try:
             self.pool.reset_task_state( task_id, state )
         except TaskStateError, x:
@@ -146,8 +124,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True )
 
     def add_prerequisite( self, task_id, message ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         try:
             self.pool.add_prerequisite( task_id, message )
         except TaskNotFoundError, x:
@@ -163,8 +139,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True )
 
     def insert( self, ins_id, stop_c_time=None ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         ins_name = self._name_from_id( ins_id )
         if not self._task_type_exists( ins_name ):
             # TASK INSERTION GROUPS TEMPORARILY DISABLED
@@ -204,8 +178,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True, msg )
 
     def hold( self ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         if self.pool.paused():
             return result( True, "(the suite is already paused)" )
 
@@ -215,8 +187,6 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Tasks that are ready to run will not be submitted" )
 
     def resume( self ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         #if not self.pool.paused() and not self.pool.stopping():
         #    return result( True, "(the suite is not paused)" )
         self.pool.release_suite()
@@ -228,8 +198,6 @@ class remote_switch( Pyro.core.ObjBase ):
     def set_stop( self, arg, method ):
         # first clear any existing stop times
         self.pool.clear_stop_times()
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         if method == 'stop after TAG':
             # ASSUME VALIDITY OF TAG TESTED ON INPUT
             self.pool.set_stop_ctime( arg )
@@ -258,16 +226,12 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "The suite will shutdown when requested: " + arg )
 
     def set_hold_time( self, ctime ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         self.pool.hold_suite( ctime )
         # process, to update state summary
         self.process_tasks = True
         return result( True, "The suite will pause when all tasks have passed " + ctime )
 
     def shutdown( self ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         self.hold()
         self.halt = True
         # process, to update state summary
@@ -276,8 +240,6 @@ class remote_switch( Pyro.core.ObjBase ):
                 "The suite will shut down after currently running tasks have finished" )
 
     def shutdown_now( self ):
-        if self._suite_is_blocked():
-            return result( False, "Suite Blocked" )
         self.pool.hold_suite()
         self.halt_now = True
         # process, to update state summary
@@ -339,8 +301,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def reconfigure( self ):
         self.log.info( "servicing suite reconfigure request")
-        if self._suite_is_blocked():
-            return result( False, "Suite is blocked" )
         try:
             self.pool.reconfigure()
         except Exception, x:
@@ -394,9 +354,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return dump
     
     def purge( self, task_id, stop ):
-        if self._suite_is_blocked():
-            return result( False, "Suite is blocked" )
-
         if not self._task_type_exists( task_id ):
             return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
@@ -406,9 +363,6 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "OK" )
 
     def die( self, task_id ):
-        if self._suite_is_blocked():
-            return result(False, "Suite is blocked")
-
         if not self._task_type_exists( task_id ):
             return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
@@ -418,18 +372,12 @@ class remote_switch( Pyro.core.ObjBase ):
         return result(True, "OK")
 
     def die_cycle( self, tag ):
-        if self._suite_is_blocked():
-            return result(False, "Suite is blocked")
-
         self.log.info( "servicing task removal request: " + tag )
         self.pool.kill_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
 
     def spawn_and_die( self, task_id ):
-        if self._suite_is_blocked():
-            return result(False, "Suite is blocked")
-
         if not self._task_type_exists( task_id ):
             return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
 
@@ -439,17 +387,12 @@ class remote_switch( Pyro.core.ObjBase ):
         return result(True, "OK")
 
     def spawn_and_die_cycle( self, tag ):
-        if self._suite_is_blocked():
-            return result(False, "Suite is blocked")
         self.log.info( "servicing task spawn and die request: " + tag )
         self.pool.spawn_and_die_cycle( tag )
         self.process_tasks = True
         return result(True, "OK")
 
     def set_verbosity( self, level ):
-        if self._suite_is_blocked():
-            return result(False, "Suite is blocked")
-
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
         self.log.info( "servicing suite verbosity change request " + level )
@@ -484,13 +427,6 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
-    def _suite_is_blocked( self ):
-        if self.pool.blocked:
-            self._warning( "Refusing remote request (suite blocked)" )
-            return True
-        else:
-            return False
-
     def _name_from_id( self, task_id ):
         if '%' in task_id:
             name, tag = task_id.split('%')
@@ -510,9 +446,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return None
 
     def hold_task( self, task_id ):
-        if self._suite_is_blocked():
-            return result( False, "Suite is blocked" )
-
         if not self._task_type_exists( task_id ):
             return result(  False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph."  )
 
@@ -537,9 +470,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( False, "Task not found" )
 
     def release_task( self, task_id ):
-        if self._suite_is_blocked():
-            return result( False, "Suite is blocked" )
-
         if not self._task_type_exists( task_id ):
             return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph."  )
 

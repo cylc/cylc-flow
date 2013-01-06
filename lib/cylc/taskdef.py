@@ -156,6 +156,10 @@ class taskdef(object):
         tclass.title = self.rtconfig['title']
         tclass.description = self.rtconfig['description']
 
+        # For any instance-specific environment variables (note that
+        # [runtime][TASK][enviroment] is now held in a class variable).
+        tclass.env_vars = OrderedDict()
+
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
