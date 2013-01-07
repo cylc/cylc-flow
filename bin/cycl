@@ -22,4 +22,4 @@
 echo >&2
 echo "TYPO ALERT: it's \"cylc\", not \"cycl\"!" >&2
 echo >&2
-$(dirname $0)/cylc "$@"
+exec $(dirname $0)/cylc "$@"
