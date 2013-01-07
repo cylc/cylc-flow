@@ -648,7 +648,6 @@ if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' 
     command = re.sub( '^task-', '', command )
 
 try:
-    #os.execv( [ 'cylc-' + command ] + args, notify=notify )
     cmd = 'cylc-' + command
     os.execvp( cmd, [ cmd ] + args )
 except OSError, x:
