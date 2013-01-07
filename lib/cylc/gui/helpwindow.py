@@ -495,10 +495,6 @@ def userguide( w ):
     update_tb( tb, "Resume submitting tasks that are ready to run.")
     update_tb( tb, "\n o Insert Task(s): ", [bold])
     update_tb( tb, "Insert a task or task group into a running suite." )
-    update_tb( tb, "\n o Block Access: ", [bold])
-    update_tb( tb, "Refuse to comply with subsequent intervention commands." )
-    update_tb( tb, "\n o Unblock Access: ", [bold])
-    update_tb( tb, "Comply with subsequent intervention commands." )
     update_tb( tb, "\n o Change Runahead Limit: ", [bold])
     update_tb( tb, "Change the suite's configured runahead limit at "
             "run time." )

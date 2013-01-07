@@ -747,7 +747,7 @@ since updating PYTHONPATH.
 which downloads and installs python packages in one shot.}
 
 At this point you should have access to all cylc functionality except
-for suite graphing and the graph control GUI view.  For example
+for suite graphing and the gcontrol graph view.  For example
 
 \subsubsection{Graphviz}
 
@@ -4517,6 +4517,11 @@ the real tasks) move through a series of defined states:
         satisfied) but temporarily held back  by an internal
         cylc queue (see Section~\ref{InternalQueues}). 
 
+    \item {\bf presub} - a task that is ready to run is briefly set to
+        this state in the background job submission thread, and then to
+        {\em submitted} as soon as its job submission process returns.
+        This normally happens too quickly to be seen.
+
     \item {\bf submitted} - submitted to be executed by the specified 
         job submission method, but not yet running (it may be waiting in
         an external batch scheduler queue, for example).
@@ -4566,24 +4571,27 @@ In addition, there are two held (paused) task states:
 
 \end{myitemize}
 
-Finally, you may see references to the following pseudo states:
+And a pseudo-state displayed by the gcontrol graph view:
 
 \begin{myitemize}
-    \item {\bf ready} - to set a task to {\em ready} means to set all
-        of its prerequisites satisfied - i.e.\ ready to run (except 
-         clock-triggered tasks, which also wait on a trigger time).
-
     \item {\bf base} (Graph Control GUI only) - greyed out base graph
         nodes do not represent current live task proxies in the suite,
         they just connect the current live nodes according to the
         full suite graph.
 \end{myitemize}
 
+And a pseudo-state for task reset purposes:
+\begin{myitemize}
+    \item {\bf ready} - to set a task to {\em ready} is to to set it to
+        {\em waiting} and to set all of its prerequisites satisfied.
+\end{myitemize}
+
+
 \subsection{Secure Passphrases, Remote Control, And Task Messaging}
 \label{passphrases}
 
 There are two ways in which suite interrogation and control commands,
-suite control GUIs, and running tasks (cylc clients) can communicate
+the suite control GUI, and running tasks (cylc clients) can communicate
 with running suites (cylc servers):
 \begin{myenumerate}
     \item Pyro RPC (remote procedure call) over the network, or
@@ -4696,21 +4704,13 @@ use on the command line.
 \subsection{Ensemble Suites, Job Submission, and Network Timeouts}
 \label{MaxSimJobSub}
 
-Cylc's main scheduling loop currently determines which tasks are ready
-to run; then submits them to run; then processes network requests
-(incoming task messages, etc.); and then repeats the whole process. {\em
-In the near future we plan to have continuous request handling and job
-submission in background worker threads} but in the meantime if you have
-a large ensemble of tasks that all need to submit at once to a remote
-host, no request handling can be done until the entire batch has
-submitted. For large task ensembles that need to submit all at once 
-this means the first tasks to submit may have to wait a while for their
-``task started'' message calls to hang up, as they may start executing 
-before all ensemble members are submitted. 
+\subsubsection{Parallel Submission Of Jobs Ready At The Same Time}
 
-Since cylc-4.5.1 tasks ready at the same time can be processed in
-sequential batches whose members are submitted in parallel. The default
-batch size of 50 can be overridden in the suite definition:
+From cylc-4.5.1 all tasks ready at the same time can be submitted at
+once, or rather - to avoid swamping the host system as each job
+submission occurs in its own spawned subprocess - in batches whose
+members are submitted in parallel. The default batch size of 50 can be
+overridden in suite definitions:
 \begin{lstlisting}
 # SUITE.RC
 [cylc]
