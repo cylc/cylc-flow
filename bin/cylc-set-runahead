@@ -51,7 +51,7 @@ if len(args) == 2:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command-interface' )
 except Exception, x:
     if options.debug:
         raise
@@ -63,13 +63,13 @@ else:
     prompt( 'Change runahead limit in ' + suite + ' to NO LIMIT', options.force )
 
 if runahead:
-    result = proxy.set_runahead( hours=runahead )
+    result = proxy.put( 'set runahead', runahead )
 else:
     # no limit!
-    result = proxy.set_runahead( hours=None )
+    result = proxy.put( 'set runahead' )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    sys.exit( 'ERROR: ' + result.reason )
+    sys.exit( result[1] )
 

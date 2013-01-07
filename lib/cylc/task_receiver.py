@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -16,10 +16,23 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Catch a common command line typo: 'cycl'. This could be done by shell
-# alias, but we're relieving the user of the burden.
+import Pyro.core
+from Queue import Queue
 
-echo >&2
-echo "TYPO ALERT: it's \"cylc\", not \"cycl\"!" >&2
-echo >&2
-exec $(dirname $0)/cylc "$@"
+class msgqueue( Pyro.core.ObjBase ):
+    """Pyro-connected class to queue incoming task messages"""
+
+    def __init__( self ):
+        Pyro.core.ObjBase.__init__(self)
+        self.queue = Queue()
+
+    def incoming( self, priority, message ):
+        res = ( True, 'Message queued' )
+        # To Do: check for legal logging priority?
+        # queue incoming messages for this task
+        self.queue.put( (priority, message) )
+        return res
+
+    def get_queue( self ):
+        return self.queue
+

@@ -20,5 +20,5 @@
 echo >&2
 echo "TYPO ALERT: it's \"gcylc\", not \"gcycl\"!" >&2
 echo >&2
-$(dirname $0)/cylc gui "$@"
+exec $(dirname $0)/cylc gui "$@"
 

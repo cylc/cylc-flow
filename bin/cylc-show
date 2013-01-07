@@ -67,23 +67,23 @@ else:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'suite-info' )
 except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
 
-title, defdir, username = proxy.get_suite_info()
+title, username = proxy.get( 'suite info' )
 
 if prnt_suite:
-    print suite + ' (' + options.owner + ') --> ' + defdir
+    print suite + ' (' + options.owner + ')'
     print title
 
-    for task in proxy.get_task_list():
+    for task in proxy.get( 'task list' ):
         print ' + ', task
 
 if prnt_name or prnt_id:
-    info = proxy.get_task_info( [ name ] )
+    info = proxy.get( 'task info', [ name ] )
     idx = name
     if prnt_id:
         idx = task_id
@@ -93,7 +93,7 @@ if prnt_name or prnt_id:
 
 if prnt_id:
     # PREREQUISITES AND OUTPUTS
-    result = proxy.get_task_requisites( [ task_id ] )
+    result = proxy.get( 'task requisites', [ task_id ] )
 
     if not result or task_id not in result:
         print "\nTask " + task_id + " not found in " + suite

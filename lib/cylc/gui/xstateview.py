@@ -16,20 +16,19 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os, re
-import gobject
-import time
-import threading
-from cylc import cylc_pyro_client, dump
-from cylc import graphing
-from cylc.strftime import strftime
-import gtk
-import pygtk
+from cylc import cylc_pyro_client, dump, graphing
 from cylc.cycle_time import ct
-import cylc.dump
+from cylc.gui.stateview import compare_dict_of_dict, PollSchd
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
-####pygtk.require('2.0')
+from cylc.strftime import strftime
+import gobject
+import os
+import re
+import sys
+import threading
+from time import sleep
+
 
 try:
     any
@@ -41,25 +40,6 @@ except NameError:
                 return True
         return False
 
-def compare_dict_of_dict( one, two ):
-    # return True if one == two, else return False.
-    for key in one:
-        if key not in two:
-            return False
-        for subkey in one[ key ]:
-            if subkey not in two[ key ]:
-                return False
-            if one[key][subkey] != two[key][subkey]:
-                return False
-    for key in two:
-        if key not in one:
-            return False
-        for subkey in two[ key ]:
-            if subkey not in one[ key ]:
-                return False
-            if two[key][subkey] != one[key][subkey]:
-                return False
-    return True
 
 class xupdater(threading.Thread):
     def __init__(self, cfg, theme, info_bar, xdot ):
@@ -92,8 +72,12 @@ class xupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
-        self.block = "waiting ..."
+        self.status = None
+        self.poll_schd = PollSchd()
 
+        # empty graphw object:
+        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+ 
         self.reconnect()
         # TO DO: handle failure to get a remote proxy in reconnect()
 
@@ -119,7 +103,7 @@ class xupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
@@ -129,12 +113,20 @@ class xupdater(threading.Thread):
                 if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
+
+        # On reconnection, retrieve static suite info
+        self.stop_summary = None
+        self.status = "connected"
+        try:
+            self.family_nodes = self.sinfo.get( 'family nodes' )
+            self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
+            self.families = self.sinfo.get( 'families' )
+            self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
+        except:
+            return False
         else:
-            self.stop_summary = None
-            self.family_nodes = self.remote.get_family_nodes()
-            self.graphed_family_nodes = self.remote.get_graphed_family_nodes()
-            self.families = self.remote.get_families()
-            self.live_graph_movie, self.live_graph_dir = self.remote.do_live_graph_movie()
+            self.first_update = True
+            self.info_bar.set_status( self.status )
             if self.live_graph_movie:
                 try:
                     mkdir_p( self.live_graph_dir )
@@ -143,11 +135,13 @@ class xupdater(threading.Thread):
                     raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
             self.first_update = True
             self.status = "connected"
+            self.poll_schd.stop()
             self.info_bar.set_status( self.status )
             return True
 
     def connection_lost( self ):
         self.status = "stopped"
+        self.poll_schd.start()
         self.prev_graph_id = ()
         self.normal_fit = True
         # Get an *empty* graph object
@@ -223,11 +217,6 @@ class xupdater(threading.Thread):
 
         self.mode = glbl['run_mode']
 
-        if glbl[ 'blocked' ]:
-            self.block = 'blocked'
-        else:
-            self.block = 'unblocked'
-
         dt = glbl[ 'last_updated' ]
         self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" ) 
 
@@ -251,13 +240,12 @@ class xupdater(threading.Thread):
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
-        self.info_bar.set_block( self.block )
         return False
  
     def run(self):
         glbl = None
         while not self.quit:
-            if self.update():
+            if self.poll_schd.ready() and self.update():
                 needed_no_redraw = self.update_graph()
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
@@ -265,7 +253,7 @@ class xupdater(threading.Thread):
                 ################ gobject.idle_add( self.update_xdot )
                 self.update_xdot( no_zoom=needed_no_redraw )
                 gobject.idle_add( self.update_globals )
-            time.sleep(1)
+            sleep(1)
         else:
             pass
             ####print "Disconnecting task state info thread"
@@ -327,10 +315,9 @@ class xupdater(threading.Thread):
         # TO DO: mv ct().get() out of this call (for error checking):
         # TO DO: remote connection exception handling?
         try:
-            gr_edges = self.remote.get_graph_raw( ct(oldest).get(), ct(newest).get(),
-                    raw=rawx, group_nodes=self.group, ungroup_nodes=self.ungroup,
-                    ungroup_recursive=self.ungroup_recursive, 
-                    group_all=self.group_all, ungroup_all=self.ungroup_all) 
+            gr_edges = self.sinfo.get( 'graph raw', ct(oldest).get(), ct(newest).get(),
+                    rawx, self.group, self.ungroup, self.ungroup_recursive, 
+                    self.group_all, self.ungroup_all) 
         except Exception:  # PyroError
             return False
 

@@ -108,7 +108,6 @@ class outputs( object ):
 
     def register( self ):
         # automatically define special 'started' and 'succeeded' outputs
-        # TO DO: just use two calls to add()?
-        message = self.owner_id + ' started'
-        self.not_completed[ message ] = self.owner_id
+        self.add( self.owner_id + ' started' )
         self.add( self.owner_id + ' succeeded' )
+

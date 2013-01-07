@@ -59,8 +59,8 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose).get_proxy( 'remote' )
-    proxy.ping()
+            options.verbose).get_proxy( 'suite-info' )
+    proxy.get( 'ping suite' )
 except Exception, x:
     if options.debug:
         raise
@@ -78,7 +78,7 @@ except TaskIDError,x:
 else:
     task_id = tid.getstr()
 
-result = proxy.ping_task( task_id )
+result = proxy.get( 'ping task', task_id )
 
 if not result.success:
     sys.exit( 'ERROR: ' + result.reason )
