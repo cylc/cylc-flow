@@ -85,7 +85,7 @@ else:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command-interface' )
 except Exception, x:
     if options.debug:
         raise
@@ -94,19 +94,19 @@ except Exception, x:
 if kill_tag:
     prompt( 'Kill ALL tasks with tag ' + target + ' in ' + suite, options.force )
     if options.no_spawn:
-        result = proxy.die_cycle( target )
+        result = proxy.put( 'kill cycle', False, target ) # die_cycle( target )
     else:
-        result = proxy.spawn_and_die_cycle( target )
+        result = proxy.put( 'kill cycle', True, target ) # spawn_and_die_cycle( target )
 
 if kill_task:
     prompt( 'Kill task ' + target + ' in ' + suite, options.force )
     if options.no_spawn:
-       result = proxy.die( target )
+       result = proxy.put( 'kill task', False, target ) # die( target )
     else:
-       result = proxy.spawn_and_die( target )
+       result = proxy.put( 'kill task', True, target ) # spawn_and_die( target )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    sys.exit( 'ERROR: ' + result.reason )
+    sys.exit( result[1] )
 

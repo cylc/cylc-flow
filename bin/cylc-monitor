@@ -35,6 +35,7 @@ from cylc import cylc_pyro_client
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
 from cylc.strftime import strftime
+from cylc.task_state import task_state
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 
@@ -57,11 +58,15 @@ parser.remove_option("-f" ) # don't need force
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-header = 'waiting retry runahead queued submitted running succeeded held failed'
-header = '                                                                     '
+states = task_state.legal
+key = ' '.join(states)
+header = ' ' * len(key)
 
-ctrl_end = "\033[0m"
-key = "\033[1;37;43mheld\033[0m \033[1;36mwaiting \033[1;35mretry \033[1;37;44mrunahead\033[0m \033[1;38;44mqueued\033[0m\033[1;32m submitted \033[1;37;42mrunning\033[0m succeeded \033[1;37;41mfailed" + ctrl_end 
+
+for state in states:
+    ctrl = task_state.ctrl[state] 
+    ctrl_end = task_state.ctrl_end
+    key = re.sub( state, ctrl + state + ctrl_end, key )
 
 alerted = False
 alerted2 = False
@@ -197,26 +202,7 @@ try:
                     abd = ' '
 
                 # color displayed info according to run status
-                if state == "submitted":
-                    ctrl_start = "\033[1;32m"
-                elif state == "running":
-                    ctrl_start = "\033[1;37;42m"
-                elif state == "waiting":
-                    ctrl_start = "\033[1;36m"
-                elif state == "retry_delayed":
-                    ctrl_start = "\033[1;35m"
-                elif state == "failed":
-                    ctrl_start = "\033[1;37;41m"
-                elif state == "held":
-                    ctrl_start = "\033[1;37;43m"
-                elif state == "runahead":
-                    ctrl_start = "\033[1;37;44m"
-                elif state == "queued":
-                    ctrl_start = "\033[1;38;44m"
-                else:
-                    # succeeded
-                    ctrl_start = ""
-
+                ctrl_start = task_state.ctrl[state]
                 # construct the display string for this task
                 task_info[ ctime ][ name ] = ctrl_start + name + asyncid + ctrl_end + abd
 
@@ -237,7 +223,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:              ' + '\033[1;38m' + strftime( dt, "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:                            ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             if run_mode != 'live':
                 foo = 'SIMULATION:'
@@ -248,15 +234,15 @@ try:
                 blit.append( baz )
 
             if stopping:
-                foo = '______________________________________________________S_T_O_P_P_I_N_G'
+                foo = '____________________________________________________________________S_T_O_P_P_I_N_G'
             elif paused:
-                foo = '__________________________________________________________P_A_U_S_E_D'
+                foo = '________________________________________________________________________P_A_U_S_E_D'
             elif will_pause_at:
-                foo = '_______________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                foo = '_____________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                foo = '_____________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                foo = '___________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                foo = '________________________________________________________R_U_N_N_I_N_G'
+                foo = '______________________________________________________________________R_U_N_N_I_N_G'
          
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )

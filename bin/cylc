@@ -33,7 +33,6 @@ except OSError,x:
     raise SystemExit( 'ERROR: your current working directory does not exist!')
 
 from cylc.version import cylc_version
-from cylc.execute import execute
 from OrderedDict import OrderedDict
 
 class CommandError( Exception ):
@@ -649,6 +648,8 @@ if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' 
     command = re.sub( '^task-', '', command )
 
 try:
-    execute( [ 'cylc-' + command ] + args, notify=notify )
-except KeyboardInterrupt:
-    pass
+    cmd = 'cylc-' + command
+    os.execvp( cmd, [ cmd ] + args )
+except OSError, x:
+    raise SystemExit(x)
+

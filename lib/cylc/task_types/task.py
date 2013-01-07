@@ -38,7 +38,8 @@ from cylc.global_config import globalcfg
 from cylc.RunEventHandler import RunHandler
 import subprocess
 import logging
-import Pyro.core
+import cylc.flags as flags
+from cylc.task_receiver import msgqueue
 
 def run_get_stdout( command ):
     try:
@@ -73,13 +74,11 @@ def displaytd( td ):
         res = str(td)
     return res
 
-class task( Pyro.core.ObjBase ):
+class task( object ):
 
     clock = None
     intercycle = False
     suite = None
-    state_changed = True
-    progress_msg_rec = True
 
     # set by the back door at startup:
     cylc_env = {}
@@ -148,8 +147,6 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count += 1
         self.__class__.upward_instance_count += 1
 
-        Pyro.core.ObjBase.__init__(self)
-
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
 
@@ -163,6 +160,8 @@ class task( Pyro.core.ObjBase ):
         self.to_go = None
         self.try_number = 1
         self.retry_delay_timer_start = None
+
+        self.message_queue = msgqueue()
 
     def plog( self, message ):
         # print and log a low priority message
@@ -536,8 +535,6 @@ class task( Pyro.core.ObjBase ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            self.set_submitted()
-            self.submission_timer_start = task.clock.get_datetime()
             return p
 
     def check_submission_timeout( self ):
@@ -587,7 +584,7 @@ class task( Pyro.core.ObjBase ):
                 self.incoming( 'CRITICAL', self.id + ' failed' )
             else:
                 self.incoming( 'NORMAL', self.id + ' succeeded' )
-            task.state_changed = True
+            flags.pflag = True
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -618,8 +615,16 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def incoming( self, priority, message ):
-        # Receive incoming messages for this task
+        # queue incoming messages for this task
+        self.message_queue.incoming( priority, message )
 
+    def process_incoming_messages( self ):
+        queue = self.message_queue.get_queue() 
+        while queue.qsize() > 0:
+            self.process_incoming_message( queue.get() )
+            queue.task_done()
+
+    def process_incoming_message( self, (priority, message) ):
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
@@ -628,9 +633,9 @@ class task( Pyro.core.ObjBase ):
         self.latest_message_priority = priority
 
         # Set this to stimulate task processing
-        task.state_changed = True
+        flags.pflag = True
         # Set this to stimulate suite state summary update even if not task processing.
-        task.progress_msg_rec = False
+        flags.iflag = False
 
         # Handle warning events
         handler = self.event_handlers['warning']
@@ -645,9 +650,13 @@ class task( Pyro.core.ObjBase ):
             # Received a 'task started' message
             self.set_running()
 
-        if not self.state.is_currently('running'):
-            # Only running tasks should be sending messages
-            self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
+        ## now the message queue is also by the job submission worker thread
+        ##if not self.state.is_currently('running'):
+        ##    # Only running tasks should be sending messages
+        ##    self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
+
+        if message == self.id + ' submitted':
+            self.set_submitted()
 
         if message == self.id + ' failed':
             # Received a 'task failed' message
@@ -663,13 +672,13 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
                 # (this also calls the task failure handler):
-                self.set_failed()
+                self.set_failed( message )
             else:
                 # There is a retry lined up
                 self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
-                self.state.set_status( 'retry_delayed' )
+                self.state.set_status( 'retrying' )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
@@ -699,14 +708,14 @@ class task( Pyro.core.ObjBase ):
                 # Currently this is treated as an error condition
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
-                task.state_changed = False
+                flags.pflag = False
 
         else:
             # A general unregistered progress message: log with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-            task.progress_msg_rec = True
-            task.state_changed = False
+            flags.iflag = True
+            flags.pflag = False
 
     def update( self, reqs ):
         for req in reqs.get_list():

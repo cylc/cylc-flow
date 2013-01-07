@@ -55,9 +55,9 @@ state dump rolling archive length = integer( min=1, default=10 )
 # SITE ONLY
     [[files]]
         html index = string( default="$CYLC_DIR/doc/index.html" )
-        pdf user guide = string( default="$CYLC_DIR/doc/CylcUserGuide.pdf" )
-        multi-page html user guide = string( default="$CYLC_DIR/doc/cug-html.html" )
-        single-page html user guide = string( default="$CYLC_DIR/doc/single/cug-html.html" )
+        pdf user guide = string( default="$CYLC_DIR/doc/cug.pdf" )
+        multi-page html user guide = string( default="$CYLC_DIR/doc/cug.html" )
+        single-page html user guide = string( default="$CYLC_DIR/doc/cug1.html" )
     # Documentation URLs:
     [[urls]]
         # The cylc homepage links to documentation for the latest release.
