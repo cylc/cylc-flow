@@ -852,13 +852,14 @@ class scheduler(object):
 
         # CONFIGURE SUITE PYRO SERVER
         suitename = self.suite
-        # REMOTELY ACCESSIBLE SUITE IDENTIFIER
-        self.suite_id = identifier( self.suite, self.owner )
         if not reconfigure:
             self.pyro = pyro_server( suitename, self.suite_dir, 
                     self.globals.cfg['pyro']['base port'],
                     self.globals.cfg['pyro']['maximum number of ports'] )
             self.port = self.pyro.get_port()
+
+            # REMOTELY ACCESSIBLE SUITE IDENTIFIER
+            self.suite_id = identifier( self.suite, self.owner )
             self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
 
             self.banner[ 'PORT' ] = self.port
@@ -1263,8 +1264,7 @@ class scheduler(object):
     def shutdown( self, message='' ):
         print "\nSHUTTING DOWN NOW"
 
-        print " * disconnecting network-connected objects"
-        # is this needed?:
+        print " * disconnecting pyro-connected objects"
         self.pyro.disconnect( self.clock )
         self.pyro.disconnect( self.wireless )
         self.pyro.disconnect( self.suite_id )
