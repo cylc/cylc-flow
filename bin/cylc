@@ -652,9 +652,5 @@ try:
     cmd = 'cylc-' + command
     os.execvp( cmd, [ cmd ] + args )
 except OSError, x:
-    raise
     raise SystemExit(x)
-except KeyboardInterrupt:
-    # huh?
-    pass
 
