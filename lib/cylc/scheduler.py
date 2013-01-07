@@ -517,7 +517,6 @@ class scheduler(object):
                 self.options.templatevars_file, run_mode=self.run_mode,
                 verbose=self.verbose )
         self.config.create_directories()
-        self.hold_before_shutdown = self.config['development']['hold before shutdown']
 
         self.run_dir = self.globals.cfg['run directory']
         self.banner[ 'SUITE RUN DIR' ] = self.run_dir
@@ -799,90 +798,23 @@ class scheduler(object):
             if self.config.suite_timeout:
                 self.check_suite_timer()
 
-            # SHUT DOWN IF ALL TASKS ARE SUCCEEDED OR HELD
-            stop_now = True  # assume stopping
+            # initiate normal suite shutdown?
+            if self.check_suite_shutdown():
+                break
 
-            #if stop_now:                 
-            if True:
-                if self.hold_suite_now or self.hold_time:
-                    # don't stop if the suite is held
-                    stop_now = False
-                for itask in self.pool.get_tasks():
-                    # find any reason not to stop
-                    if not itask.state.is_currently('succeeded') and not itask.state.is_currently('held'):
-                        # don't stop if any tasks are waiting, submitted, or running
-                        stop_now = False
-                        break
-                for itask in self.pool.get_tasks():
-                    if not itask.is_cycling:
-                        continue
-                    if itask.state.is_currently('succeeded') and not itask.state.has_spawned():
-                        # Check for tasks that are succeeded but not spawned.
-                        # If they are older than the suite stop time they
-                        # must be about to spawn. Otherwise they must be 
-                        # stalled at the runahead limit, in which case we
-                        # can stop.
-                        if self.stop_tag:
-                            if int(itask.tag) < int(self.stop_tag):
-                                stop_now = False
-                                break
-                        else:
-                            stop_now = False
-                            break
-
+            # hard abort? (To Do: will a normal shutdown suffice here?)
+            # 1) "abort if any task fails" is set, and one or more tasks failed
             if self.config['cylc']['abort if any task fails']:
                 if self.any_task_failed():
-                    raise SchedulerError( 'One or more tasks failed, and this suite sets "abort if any task fails"' )
+                    raise SchedulerError( 'One or more tasks failed and "abort if any task fails" is set' )
 
+            # 4) the run is a reference test, and any disallowed failures occured
             if self.options.reftest:
                 if len( self.ref_test_allowed_failures ) > 0:
                     for itask in self.get_failed_tasks():
                         if itask.id not in self.ref_test_allowed_failures:
                             print >> sys.stderr, itask.id
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
-
-            if stop_now:
-                if self.hold_before_shutdown:
-                    self.log.warning( "ALL RUNNING TASKS FINISHED but HOLD-BEFORE-SHUTDOWN is ON" )
-                    self.hold_suite()
-                else:
-                    self.log.warning( "ALL TASKS FINISHED OR HELD" )
-                    break
-
-            if self.remote.halt and self.no_tasks_running():
-                self.log.warning( "ALL RUNNING TASKS FINISHED" )
-                break
-
-            if self.remote.halt_now:
-                if not self.no_tasks_running():
-                    self.log.warning( "STOPPING NOW: some running tasks will be orphaned" )
-                break
-
-            if self.stop_clock_time:
-                now = self.clock.get_datetime()
-                if now > self.stop_clock_time:
-                    self.log.warning( "SUITE STOP TIME REACHED: " + self.stop_clock_time.isoformat() )
-                    self.hold_suite()
-                    self.remote.halt = True
-                    # now reset self.stop_clock_time so we don't do this check again.
-                    self.stop_clock_time = None
-
-            if self.stop_task:
-                name, tag = self.stop_task.split('%')
-                # shut down if task type name has entirely passed task
-                stop = True
-                for itask in self.pool.get_tasks():
-                    if itask.name == name:
-                        if not itask.state.is_currently('succeeded'):
-                            iname, itag = itask.id.split('%')
-                            if int(itag) <= int(tag):
-                                stop = False
-                if stop:
-                    self.log.warning( "No unfinished STOP TASK (" + name + ") older than " + tag + " remains" )
-                    self.hold_suite()
-                    self.remote.halt = True
-                    # now reset self.stop_task so we don't do this check again.
-                    self.stop_task = None
 
             self.check_timeouts()
             self.release_runahead()
@@ -1175,16 +1107,10 @@ class scheduler(object):
                 newest = itask.c_time
         return newest
 
-    def no_tasks_running( self ):
-        # return True if no REAL tasks are submitted or running
+    def no_tasks_submitted_or_running( self ):
         for itask in self.pool.get_tasks():
             if itask.state.is_currently('running') or itask.state.is_currently('submitted'):
-                if hasattr( itask, 'is_pseudo_task' ):
-                    # ignore task families -their 'running' state just
-                    # indicates existence of running family members.
-                    continue
-                else:
-                    return False
+                return False
         return True
 
     def get_failed_tasks( self ):
@@ -1914,4 +1840,74 @@ class scheduler(object):
                     continue
             outlist.append( name ) 
         return outlist
+
+    def check_suite_shutdown( self ):
+
+        # 1) shutdown requested NOW
+        if self.remote.halt_now:
+            if not self.no_tasks_submitted_or_running():
+                self.log.warning( "STOPPING NOW: some running tasks will be orphaned" )
+            return True
+
+        # 2) normal shutdown requested and no tasks  submitted or running
+        if self.remote.halt and self.no_tasks_submitted_or_running():
+            self.log.info( "No tasks still to complete" )
+            return True
+
+        # 3) all tasks passed the suite stop cycle, if set.
+        # (tasks beyond the stop cycle will be put in the held state)
+        if self.stop_tag:
+            stop = True
+            for itask in self.pool.get_tasks():
+                if int( itask.c_time ) <= int( self.stop_tag ):
+                    # don't stop if any task is still to pass the stop cycle
+                    stop = False
+                    break
+            if stop:
+                self.log.info( "All tasks have passed the suite stop cycle " + self.stop_tag )
+                return True
+
+        # 4) if a suite stop time (wall clock) is set and has gone by,
+        # get 2) above to finish when current tasks have completed.
+        if self.stop_clock_time:
+            now = self.clock.get_datetime()
+            if now > self.stop_clock_time:
+                self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
+                if self.no_tasks_submitted_or_running():
+                    return True
+                else:
+                    # reset self.stop_clock_time and delegate to 2) above
+                    # To Do: rationalize use of hold_suite and remote.halt?
+                    self.log.info( "The suite will shutdown when all running tasks have finished" )
+                    self.hold_suite()
+                    self.remote.halt = True
+                    self.stop_clock_time = None
+
+        # 5) if a suite stop task is set and has completed, 
+        # get 2) above to finish when current tasks have completed.
+        if self.stop_task:
+            name, tag = self.stop_task.split('%')
+            stop = True
+            for itask in self.pool.get_tasks():
+                if itask.name == name:
+                    # To Do: the task must still be present in the pool
+                    # (this should be OK; but the potential loophole
+                    # will be closed by the upcoming task event databse).
+                    if not itask.state.is_currently('succeeded'):
+                        iname, itag = itask.id.split('%')
+                        if int(itag) <= int(tag):
+                            stop = False
+                            break
+            if stop:
+                self.log.warning( "Stop task " + name + "%" + tag + " finished" )
+                if self.no_tasks_submitted_or_running():
+                    return True
+                else:
+                    # reset self.stop_task and delegate to 2) above
+                    self.log.info( "The suite will shutdown when all running tasks have finished" )
+                    self.hold_suite()
+                    self.remote.halt = True
+                    self.stop_task = None
+
+        return False
 
