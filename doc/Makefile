@@ -20,7 +20,7 @@ CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
 .PHONY: all clean html html-multi html-single pdf
 
-all: index.html
+all: cug.html cug1.html cug.pdf
 
 clean:
 	rm -rf *.aux\
@@ -33,7 +33,6 @@ clean:
         cug-pdf.{lof,log,out,pdf,toc}\
         cug.pdf\
         cylc-version.txt\
-        index.html\
         single
 
 commands.tex: cylc-version.txt command-usage/help.txt
@@ -84,19 +83,6 @@ cug.pdf: commands.tex
 
 cylc-version.txt:
 	$(CYLC) -v >$@
-
-index.html: cug.html cug1.html cug.pdf
-	{\
-        echo '<html>';\
-        echo '<head><title>Cylc Documentation</title></head>';\
-        echo '<body>';\
-        echo '<h1>Cylc Documentation</h1>';\
-        echo '<p><a href="cug.html">Multi-page HTML</a></p>';\
-        echo '<p><a href="cug1.html">Single-page HTML</a></p>';\
-        echo '<p><a href="cug.pdf">PDF</a></p>';\
-        echo '</body>';\
-        echo '</html>';\
-    } >$@
 
 html: html-multi html-single
 
