@@ -41,7 +41,7 @@ one, that reports that message as an output).
 
 Prerequisites added on the fly are not propagated to the successors
 of TASK, and they will not persist in TASK across a suite restart.""",
-    pyro=True, argdoc = [ ('REG', 'Suite name'), 
+    pyro=True, argdoc = [ ( 'REG', 'Suite name' ), 
                           ( 'TASK', 'Target task' ),
                           ( 'DEP', 'New dependency' )] )
 
@@ -73,17 +73,17 @@ else:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command receiver' )
 except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
 
 prompt( 'Add new prerequisite to ' + task_id + ' in ' + suite, options.force )
-result = proxy.add_prerequisite( task_id, msg )
+result = proxy.put( 'add prerequisite', task_id, msg )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    sys.exit( 'ERROR: ' + result.reason )
+    sys.exit( result[1] )
 

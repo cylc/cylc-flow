@@ -37,19 +37,20 @@ class state_summary( Pyro.core.ObjBase ):
  
     def update( self, tasks, clock, oldest, newest,
             paused, will_pause_at, stopping, will_stop_at, runahead ):
-        self.task_name_list = []
-        self.task_summary = {}
-        self.global_summary = {}
-        self.family_summary = {}
+
+        task_name_list = []
+        task_summary = {}
+        global_summary = {}
+        family_summary = {}
         task_states = {}
 
         for task in tasks:
-            self.task_summary[ task.id ] = task.get_state_summary()
+            task_summary[ task.id ] = task.get_state_summary()
             name, ctime = task.id.split('%')
             task_states.setdefault(ctime, {})
-            task_states[ctime][name] = self.task_summary[task.id]['state']
-            if name not in self.task_name_list:
-                self.task_name_list.append(name)
+            task_states[ctime][name] = task_summary[task.id]['state']
+            if name not in task_name_list:
+                task_name_list.append(name)
 
         fam_states = {}
         all_states = []
@@ -73,25 +74,32 @@ class state_summary( Pyro.core.ObjBase ):
                 state = extract_group_state(child_states)
                 if state is None:
                     continue
-                self.family_summary[f_id] = {'name': fam,
+                family_summary[f_id] = {'name': fam,
                                              'label': ctime,
                                              'state': state}
         
         all_states.sort()
 
-        self.global_summary[ 'start time' ] = self.start_time
-        self.global_summary[ 'oldest cycle time' ] = oldest
-        self.global_summary[ 'newest cycle time' ] = newest
-        self.global_summary[ 'last_updated' ] = clock.get_datetime()
-        self.global_summary[ 'run_mode' ] = self.run_mode
-        self.global_summary[ 'clock_rate' ] = clock.get_rate()
-        self.global_summary[ 'paused' ] = paused
-        self.global_summary[ 'stopping' ] = stopping
-        self.global_summary[ 'will_pause_at' ] = will_pause_at
-        self.global_summary[ 'will_stop_at' ] = will_stop_at
-        self.global_summary[ 'started from gui' ] = self.from_gui
-        self.global_summary[ 'runahead limit' ] = runahead
-        self.global_summary[ 'states' ] = all_states
+        global_summary[ 'start time' ] = self.start_time
+        global_summary[ 'oldest cycle time' ] = oldest
+        global_summary[ 'newest cycle time' ] = newest
+        global_summary[ 'last_updated' ] = clock.get_datetime()
+        global_summary[ 'run_mode' ] = self.run_mode
+        global_summary[ 'clock_rate' ] = clock.get_rate()
+        global_summary[ 'paused' ] = paused
+        global_summary[ 'stopping' ] = stopping
+        global_summary[ 'will_pause_at' ] = will_pause_at
+        global_summary[ 'will_stop_at' ] = will_stop_at
+        global_summary[ 'started from gui' ] = self.from_gui
+        global_summary[ 'runahead limit' ] = runahead
+        global_summary[ 'states' ] = all_states
+
+        # replace the originals
+        self.task_name_list = task_name_list
+        self.task_summary = task_summary
+        self.global_summary = global_summary
+        self.family_summary = family_summary
+        task_states = {}
 
     def get_task_name_list( self ):
         self.task_name_list.sort()
@@ -104,8 +112,8 @@ class state_summary( Pyro.core.ObjBase ):
 def extract_group_state( child_states ):
     """Summarise child states as a group."""
     ordered_states = ['failed', 'held', 'running', 'submitted',
-                        'retry_delayed', 'queued', 'waiting', 'runahead',
-                        'succeeded']
+            'submitting', 'retrying', 'queued', 'waiting',
+            'runahead', 'succeeded']
     for state in ordered_states:
         if state in child_states:
             return state

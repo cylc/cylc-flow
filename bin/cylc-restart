@@ -310,7 +310,7 @@ the remote host before starting the suite."""
         # 'running'    - ditto
         # 'queued'     - ditto (only tasks ready to run get queued)
         # 'failed'     - ditto (tasks must be ready to run in order to fail)
-        # 'retry_delayed' - ditto (tasks must fail in order to retry)
+        # 'retrying'   - ditto (tasks must fail in order to retry)
         #
         # 'succeeded'  - prerequisites satisfied, outputs completed
 
@@ -336,7 +336,7 @@ the remote host before starting the suite."""
                 pass
 
             elif itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently('queued') or \
-                    itask.state.is_currently('failed') or itask.state.is_currently('retry_delayed'):  
+                    itask.state.is_currently('failed') or itask.state.is_currently('retrying'):  
                 itask.prerequisites.set_all_satisfied()
 
             elif itask.state.is_currently('succeeded'):  

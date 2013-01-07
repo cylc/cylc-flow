@@ -7,7 +7,7 @@ Model post processing triggers off model or recovery tasks."""
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.2
+        live mode suite timeout = 0.5
         expected task failures = model%2011010112
         
 [scheduling]
