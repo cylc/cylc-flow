@@ -119,7 +119,6 @@ def compare_dict_of_dict( one, two ):
 def markup( col, s ):
     return s
 
-
 def get_col_priority( priority ):
     if priority == 'NORMAL':
         return '#006'
@@ -175,6 +174,8 @@ class tupdater(threading.Thread):
         self.reconnect()
 
     def reconnect( self ):
+        # set debug here to see how reconnection works
+        debug = False
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
@@ -184,8 +185,10 @@ class tupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
         except Exception, x:
+            if debug:
+                print ".",
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
                                                        self.cfg.suite,
@@ -195,14 +198,14 @@ class tupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            #print 'GOT A CLIENT PROXY'
             self.stop_summary = None
             self.status = "connected"
             self.poll_schd.stop()
+
             self.info_bar.set_status( self.status )
-            self.families = self.remote.get_families()
-            self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.allowed_families = self.remote.get_vis_families()
+            self.families = self.sinfo.get('families' )
+            self.family_hierarchy = self.sinfo.get('family hierarchy' )
+            self.allowed_families = self.sinfo.get('vis families' )
             return True
 
     def connection_lost( self ):
@@ -220,10 +223,13 @@ class tupdater(threading.Thread):
         self.poll_schd.start()
         self.info_bar.set_state( [] )
         self.info_bar.set_status( self.status )
+
         if self.stop_summary is not None and any(self.stop_summary):
             self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
+
         self.reconnect()
+
         return False
 
     def update(self):
@@ -581,7 +587,7 @@ class lupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
@@ -592,13 +598,12 @@ class lupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.families = self.remote.get_families()
-            self.allowed_families = self.remote.get_vis_families()
+            self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
+            self.families = self.sinfo.get( 'families' )
+            self.allowed_families = self.sinfo.get( 'vis families' )
             self.stop_summary = None
             self.status = "connected"
             self.poll_schd.stop()
-            self.info_bar.set_status( self.status )
             return True
 
     def _set_tooltip(self, widget, tip_text):
@@ -890,3 +895,4 @@ def _time_trim(time_value):
     if time_value is not None:
         return time_value.rsplit(".", 1)[0]
     return time_value
+

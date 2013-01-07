@@ -60,7 +60,7 @@ def main(name, start):
         server.shutdown('!cylc error - please report!')
         raise
     else:
-        server.shutdown('suite shutting down')
+        server.shutdown('DONE')
 
 def set_main_debug(mode):
     global debug
