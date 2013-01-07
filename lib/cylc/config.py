@@ -546,6 +546,9 @@ class config( CylcConfigObj ):
         """ Replace family names with members, in internal queues,
          and remove assigned members from the default queue. """
 
+        if self.verbose:
+            print "Configuring internal queues"
+
         # TO DO: user input consistency checking (e.g. duplicate queue
         # assignments and non-existent task names)
 
@@ -556,20 +559,34 @@ class config( CylcConfigObj ):
         queues['default']['members'] = self.get_task_name_list()
         #print 'INITIAL default', queues['default']['members']
         for queue in queues:
+            if self.verbose:
+                print " +", queue
             if queue == 'default':
                 continue
-            # remove assigned tasks from the default queue
+            # assign tasks to queue and remove them from default
             qmembers = []
             for qmember in queues[queue]['members']:
                 if qmember in self.members:
                     # qmember is a family: replace with family members
                     for fmem in self.members[qmember]:
-                        qmembers.append( fmem )
-                        queues['default']['members'].remove( fmem )
+                        if qmember not in qmembers:
+                            try:
+                                queues['default']['members'].remove( fmem )
+                            except ValueError:
+                                if self.verbose:
+                                    print >> sys.stderr, '  WARNING: ignoring queue member ' + fmem + ' (task not used in the graph)'
+                            else:
+                                qmembers.append( fmem )
                 else:
                     # qmember is a task
-                    qmembers.append(qmember)
-                    queues['default']['members'].remove( qmember )
+                    if qmember not in qmembers:
+                        try:
+                            queues['default']['members'].remove( qmember )
+                        except ValueError:
+                            if self.verbose:
+                                print >> sys.stderr, '  WARNING: ignoring queue member ' + qmember + ' (task not used in the graph)'
+                        else:
+                            qmembers.append(qmember)
             queues[queue]['members'] = qmembers
         #for queue in queues:
         #    print queue, queues[queue]['members']
@@ -747,11 +764,12 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
 
         if self.verbose:
+            print "Checking for defined tasks not used in the graph"
             for name in self['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.members:
                         # any family triggers have have been replaced with members by now.
-                        print >> sys.stderr, 'WARNING: task "' + name + '" is not used in the graph.'
+                        print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
         self.check_for_case_errors()
 
