@@ -848,7 +848,7 @@ class scheduler(object):
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
             # (else scan etc. will hang on the partially started suite).
             # raises port_scan.SuiteNotFound error:
-            self.lockservee_port = lockserver( self.host ).get_port()
+            self.lockserver_port = lockserver( self.host ).get_port()
 
         # CONFIGURE SUITE PYRO SERVER
         suitename = self.suite
