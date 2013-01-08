@@ -275,7 +275,7 @@ class config( CylcConfigObj ):
         self.load_graph()
         if len( self.naked_dummy_tasks ) > 0:
             if self.strict or self.verbose:
-                print 'Naked dummy tasks detected:'
+                print 'Naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
                     print '    +', ndt
                 print '  WARNING: this can be caused by misspelled task names!' 
@@ -764,6 +764,8 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['runtime']:
                     raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
+                if type == 'sequential' and name in self.members:
+                    raise SuiteConfigError, 'ERROR: family names cannot be declared ' + type + ': ' + name 
 
         try:
             import Pyro.constants
