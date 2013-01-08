@@ -65,7 +65,8 @@ class catchup_clocktriggered( clocktriggered ):
         # delayed start time is up.
         ready = False
         if self.state.is_currently('queued') or \
-                self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+                self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
+                 self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
 
             if not self.catchup_status_determined:
                 try:

@@ -194,7 +194,8 @@ class task( object ):
     def ready_to_run( self ):
         ready = False
         if self.state.is_currently('queued') or \
-            self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+            self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
+             self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
                 if self.retry_delay_timer_start:
                      diff = task.clock.get_datetime() - self.retry_delay_timer_start
                      foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
