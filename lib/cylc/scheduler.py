@@ -508,7 +508,8 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.id == task_id:
                 found = True
-                if itask.state.is_currently('waiting') or itask.state.is_currently('queued'):
+                if itask.state.is_currently('waiting') or itask.state.is_currently('queued') or \
+                        itask.state.is_currently('retrying'):
                     was_waiting = True
                     itask.state.set_status( 'held' )
                 break
@@ -753,7 +754,8 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_currently('waiting') or itask.state.is_currently('queued'):
+                    if itask.state.is_currently('waiting') or itask.state.is_currently('queued') or \
+                            itask.state.is_currently('retrying'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -1350,7 +1352,8 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued') or itask.state.is_currently('waiting'):
+                if itask.state.is_currently('queued') or itask.state.is_currently('waiting') or \
+                        itask.state.is_currently('retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.state.set_status('held')
