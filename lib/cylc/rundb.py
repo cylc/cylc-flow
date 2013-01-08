@@ -73,9 +73,13 @@ class CylcRuntimeDAO(object):
         if new_mode:
             self.create()
 
+    def connect(self):
+        self.conn = sqlite3.connect(self.db_file_name)
+        return self.conn.cursor()
+
     def create(self):
         """Create the database tables."""
-        c = self.conn.cursor()
+        c = self.connect()
         for table, cols in self.TABLES.items():
             s = "CREATE TABLE " + table + "("
             not_first = False
@@ -94,7 +98,7 @@ class CylcRuntimeDAO(object):
         """Insert a row to the events table"""
         s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
         args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message]
-        c = self.conn.cursor()
+        c = self.connect()
         c.execute(s_fmt, args)
         self.conn.commit()
 
@@ -109,14 +113,14 @@ class CylcRuntimeDAO(object):
         args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"), time_updated, submit_num, 
                 is_manual_submit, try_num, host, submit_method, 
                 submit_method_id, status]
-        c = self.conn.cursor()
+        c = self.connect()
         c.execute(s_fmt, args)
         self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitted"]
-        c = self.conn.cursor()
+        c = self.connect()
         c.execute(s_fmt, args)
         count = c.fetchone()[0]
         self.conn.commit()
@@ -126,7 +130,7 @@ class CylcRuntimeDAO(object):
     def get_task_current_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitted"]
-        c = self.conn.cursor()
+        c = self.connect()
         c.execute(s_fmt, args)
         count = c.fetchone()[0]
         self.conn.commit()
@@ -148,6 +152,6 @@ class CylcRuntimeDAO(object):
         args.append(name)
         args.append(cycle)
         args.append(submit_num)
-        c = self.conn.cursor()
+        c = self.connect()
         c.execute(s_fmt % {"table": table, "cols": cols}, args)
         self.conn.commit()

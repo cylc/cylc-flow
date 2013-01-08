@@ -139,8 +139,6 @@ class task( object ):
         self.try_number = 1
         self.retry_delay_timer_start = None
 
-        self.message_queue = msgqueue()
-
         gcfg = globalcfg()
         suite_name = os.environ['CYLC_SUITE_REG_NAME']
         self.db_path = os.path.join(gcfg.cfg['run directory'], suite_name)
@@ -152,6 +150,8 @@ class task( object ):
             self.submit_num = submits
         else:
             self.submit_num = 1
+            
+        self.message_queue = msgqueue()
 
     def plog( self, message ):
         # print and log a low priority message
