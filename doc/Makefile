@@ -64,17 +64,17 @@ command-usage:
 command-usage/help.txt: command-usage
 	$(CYLC) help >$@
 
-cug.html: commands.tex
+cug.html: commands.tex cug-html.tex cug.tex
 	htlatex cug-html.tex "cug-html.cfg,xhtml,3,next";
 	mv cug-html.html $@
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 
-cug1.html: commands.tex
+cug1.html: commands.tex cug-html.tex cug.tex
 	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" ""
 	mv cug-html.html $@
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 
-cug.pdf: commands.tex
+cug.pdf: commands.tex cug-pdf.tex cug.tex
 	pdflatex cug-pdf.tex;
 	pdflatex cug-pdf.tex;
 	pdflatex cug-pdf.tex;
