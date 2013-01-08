@@ -675,16 +675,21 @@ may take several minutes to complete. Pre-test requirements:
 
 \begin{myitemize}
     \item Some test suites require passwordless self-ssh to be
-        configured, i.e.\ 
-        \lstinline=ssh -oBatchmode=yes ssh localhost ls= should work.
+        configured, i.e.\ the following command should run successfully: 
+\begin{lstlisting}
+ssh -oBatchmode=yes ssh localhost ls
+\end{lstlisting}
     \item  Some tests require a remote task host with passwordless ssh
-        configured, i.e.\ 
-        \lstinline=ssh -oBatchmode=yes ssh <HOSTNAME> ls= should work.
-        You must specify the hostname in the environment before running
-        the tests:
-        \lstinline@export CYLC_TEST_TASK_HOST=<HOSTNAME>@.
-        If you don't have access to a remote task host, just specify
-        \lstinline=localhost= as the remote hostname.
+        configured, i.e. the following command should run successfully: 
+\begin{lstlisting}
+ssh -oBatchmode=yes ssh <HOSTNAME> ls
+\end{lstlisting}
+You must specify the hostname before running these tests:
+\begin{lstlisting}
+export CYLC_TEST_TASK_HOST=<HOSTNAME>
+\end{lstlisting}
+If you don't have access to a remote task host just use
+\lstinline=localhost= as the remote hostname.
 \end{myitemize}
 
 If these requirements are satisfied no tests should fail on an official
