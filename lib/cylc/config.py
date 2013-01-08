@@ -549,9 +549,6 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Configuring internal queues"
 
-        # TO DO: user input consistency checking (e.g. duplicate queue
-        # assignments and non-existent task names)
-
         # NOTE: this method modifies the parsed config dict itself.
 
         queues = self['scheduling']['queues']
