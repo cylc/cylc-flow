@@ -28,7 +28,7 @@ By default this command opens the cylc documentation index in your
 browser in file:// mode. Alternatively it can open the PDF Cylc User
 Guide directly, or browse the cylc internet homepage, or - if your site
 has a web server with access to the cylc documentation - an intranet
-documentation URL. The brower and PDF reader to use, and the intranet
+documentation URL. The browser and PDF reader to use, and the intranet
 URL, is determined by cylc site/user configuration - for details see
   $ cylc get-global-config --help""" )
 
