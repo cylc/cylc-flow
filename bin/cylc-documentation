@@ -60,7 +60,7 @@ elif options.www:
     http = True
     viewer = globals.cfg['document viewers']['html']
     target = globals.cfg['documentation']['urls']['internet homepage'] 
-elif options.xxx:
+elif intranet and options.xxx:
     http = True
     viewer = globals.cfg['document viewers']['html']
     target = globals.cfg['documentation']['urls']['local index'] 
