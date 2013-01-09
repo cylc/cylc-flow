@@ -2146,23 +2146,10 @@ class scheduler(object):
 
         # 2) normal shutdown requested and no tasks  submitted or running
         if self.suite_halt and self.no_tasks_submitted_or_running():
-            self.log.info( "No tasks still to complete" )
+            self.log.info( "Stopping now: all current tasks completed" )
             return True
 
-        # 3) all tasks passed the suite stop cycle, if set.
-        # (tasks beyond the stop cycle will be put in the held state)
-        if self.stop_tag:
-            stop = True
-            for itask in self.pool.get_tasks():
-                if int( itask.c_time ) <= int( self.stop_tag ):
-                    # don't stop if any task is still to pass the stop cycle
-                    stop = False
-                    break
-            if stop:
-                self.log.info( "All tasks have passed the suite stop cycle " + self.stop_tag )
-                return True
-
-        # 4) if a suite stop time (wall clock) is set and has gone by,
+        # 3) if a suite stop time (wall clock) is set and has gone by,
         # get 2) above to finish when current tasks have completed.
         if self.stop_clock_time:
             now = self.clock.get_datetime()
@@ -2178,7 +2165,7 @@ class scheduler(object):
                     self.suite_halt = True
                     self.stop_clock_time = None
 
-        # 5) if a suite stop task is set and has completed, 
+        # 4) if a suite stop task is set and has completed, 
         # get 2) above to finish when current tasks have completed.
         if self.stop_task:
             name, tag = self.stop_task.split('%')
@@ -2204,5 +2191,44 @@ class scheduler(object):
                     self.suite_halt = True
                     self.stop_task = None
 
-        return False
+        # 5) (i) all cycling tasks are held past the suite stop cycle, 
+        # and (ii) all async tasks have succeeded (failed). The suite should
+        # not shut down if any failed tasks exist, but there's no need
+        # to check for that if (i) and (ii) are satisfied.
+        stop = True
+        
+        i_cyc = False
+        i_asy = False
+        for itask in self.pool.get_tasks():
+            if itask.is_cycling():
+                i_cyc = True
+                # don't stop if a cycling task has not passed the stop cycle
+                if self.stop_tag:
+                    if int( itask.c_time ) <= int( self.stop_tag ):
+                        if itask.state.is_currently('succeeded') and itask.has_spawned():
+                            # a succeeded task that is earlier than the
+                            # stop cycle can be ignored if it has
+                            # spawned, in which case the successor matters.
+                            pass
+                        else:
+                            stop = False
+                            break
+                else:
+                    # don't stop if there are cycling tasks and no stop cycle set
+                    stop = False
+                    break
+            else:
+                i_asy = True
+                # don't stop if an async task has not succeeded yet
+                if not itask.state.is_currently('succeeded'):
+                    stop = False
+                    break
+        if stop:
+            if i_cyc:
+                self.log.info( "All cycling tasks have spawned past the final cycle " + self.stop_tag )
+            if i_asy:
+                self.log.info( "All non-cycling tasks have succeeded" )
+            return True
+        else:
+            return False
 
