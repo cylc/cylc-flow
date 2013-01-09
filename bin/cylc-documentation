@@ -24,67 +24,56 @@ from OrderedDict import OrderedDict
 
 parser = OptionParser( """cylc [info] documentation|browse [OPTIONS]
 
-This command provides easy access to cylc documentation. By default 
-it just lists documentation file locations and URLs; use the command 
-options to actually launch configured document viewers.""" )
+By default this command opens the cylc documentation index in your
+browser in file:// mode. Alternatively it can open the PDF Cylc User
+Guide directly, or browse the cylc internet homepage, or - if your site
+has a web server with access to the cylc documentation - an intranet
+documentation URL. The brower and PDF reader to use, and the intranet
+URL, is determined by cylc site/user configuration - for details see
+  $ cylc get-global-config --help""" )
 
 globals = globalcfg()
 
-# translate simplifed command option to globals.cfg['documentation'] keys:
-docs = OrderedDict()
-docs['files'] = {
-        'html-index'   : 'html index',
-        'pdf'          : 'pdf user guide',
-        'html-multi'   : 'multi-page html user guide',
-        'html-single'  : 'single-page html user guide' }
+intranet = globals.cfg['documentation']['urls']['local index']
+internet = globals.cfg['documentation']['urls']['internet homepage']
 
+parser.add_option( "-p", "--pdf",
+        help="Open the PDF User Guide directly",
+        action="store_true", default=False, dest="pdf" )
 
-docs['urls'] = {
-        'www-homepage' : 'internet homepage',
-        'local-index'  : 'local index' }
+parser.add_option( "-w", "--internet",
+        help="Browse the cylc internet homepage",
+        action="store_true", default=False, dest="www" )
 
-parser.add_option( "--view",
-        help="Open a document with a configured document viewer. "
-        "DOC can be: " + ', '.join(docs['files'].keys()) + ", " + \
-                ', '.join(docs['urls'].keys()) + ".", metavar='DOC',
-        action="store", default=None, dest="view" )
+if intranet:
+    parser.add_option( "-x", "--intranet",
+        help="Browse local cylc documentation",
+        action="store_true", default=False, dest="xxx" )
 
 ( options, args ) = parser.parse_args()
 
-if not options.view:
-    for dtype in docs.keys():
-        print dtype + ':'
-        for key, val, in docs[dtype].items():
-            print '  ', val, '=', globals.cfg['documentation'][dtype][val]
+http = False
+if options.pdf:
+    viewer = globals.cfg['document viewers']['pdf']
+    target = globals.cfg['documentation']['files']['pdf user guide'] 
+elif options.www:
+    http = True
+    viewer = globals.cfg['document viewers']['html']
+    target = globals.cfg['documentation']['urls']['internet homepage'] 
+elif options.xxx:
+    http = True
+    viewer = globals.cfg['document viewers']['html']
+    target = globals.cfg['documentation']['urls']['local index'] 
+else:
+    # default
+    viewer = globals.cfg['document viewers']['html']
+    target = globals.cfg['documentation']['files']['html index'] 
 
-    print "Use --view=DOC to launch a document viewer"
-    sys.exit(0)
-
-if options.view:
-    if options.view not in docs['files'].keys() + docs['urls'].keys():
-        parser.error( "ERROR, illegal --view value: " + options.view )
-    if options.view == 'pdf':
-        viewer = globals.cfg['document viewers']['pdf']
-    else:
-        viewer = globals.cfg['document viewers']['html']
-    if options.view in docs['urls']:
-        dtype = 'urls'
-    else:
-        dtype = 'files'
-    key = docs[dtype][options.view]
-    target = globals.cfg['documentation'][dtype][key] 
-
-if not target:
-    print >> sys.stderr, 'ERROR: this item has not been configured'
-    print >> sys.stderr, '(see your local cylc administrator)'
-    sys.exit(0)
-
-if options.view in docs['files']:
-    if not os.path.isfile( target ):
-        print >> sys.stderr, "ERROR, file not found: " + target
-        print >> sys.stderr, """(if this is a repository version of cylc, the document may
+if not http and not os.path.isfile( target ):
+    print >> sys.stderr, "ERROR, file not found: " + target
+    print >> sys.stderr, """(if your are running from a cylc repository the document 
 not have been generated; see your local cylc administrator)"""
-        sys.exit(1)
+    sys.exit(1)
         
 # viewer may have spaces (e.g. 'firefox --no-remote'):
 command_list = re.split( ' ', viewer )
