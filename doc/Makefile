@@ -32,8 +32,16 @@ clean:
         cug-html*.html\
         cug-pdf.{lof,log,out,pdf,toc}\
         cug.pdf\
+        index.html \
         cylc-version.txt\
-        single
+
+tidy:
+	rm -rf *.aux\
+        command-usage\
+        commands.tex\
+        cug-html.{4ct,4tc,aux,css,dvi,idv,lg,log,tmp,toc,xref}\
+        cug-pdf.{lof,log,out,pdf,toc}\
+        cylc-version.txt\
 
 commands.tex: cylc-version.txt command-usage/help.txt
 	{\
@@ -85,9 +93,14 @@ cylc-version.txt:
 	$(CYLC) -v >$@
 
 html: html-multi html-single
+	./make-index.sh
 
 html-multi: cug.html
+	./make-index.sh
 
 html-single: cug1.html
+	./make-index.sh
 
 pdf: cug.pdf
+	./make-index.sh
+
