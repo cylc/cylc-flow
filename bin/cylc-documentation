@@ -71,7 +71,7 @@ else:
 
 if not http and not os.path.isfile( target ):
     print >> sys.stderr, "ERROR, file not found: " + target
-    print >> sys.stderr, """(if your are running from a cylc repository the document 
+    print >> sys.stderr, """(if you are running from a cylc repository the document 
 not have been generated; see your local cylc administrator)"""
     sys.exit(1)
         
