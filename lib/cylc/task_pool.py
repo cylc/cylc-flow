@@ -125,8 +125,9 @@ class pool(object):
             for itask in self.queues[queue]:
                 if n_limit:
                     # there is a limit on this queue
-                    ###if itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently( 'submitting' ):
-                    if itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.submitting:
+                    if (itask.state.is_currently('submitted') or
+                        itask.state.is_currently('running') or
+                        itask.state.is_currently('submitting')):
                         # count active tasks in this queue
                         n_active += 1
                     # compute difference from the limit
