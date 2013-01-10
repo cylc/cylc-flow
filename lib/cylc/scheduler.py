@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -954,7 +954,7 @@ class scheduler(object):
             msg.append( "The cylc suite engine, version " + cylc_version )
             msg.append( "Home page: http://cylc.github.com/cylc" )
             msg.append( "-" )
-            msg.append( "Copyright (C) 2008-2012 Hilary Oliver, NIWA" )
+            msg.append( "Copyright (C) 2008-2013 Hilary Oliver, NIWA" )
             msg.append( "-" )
             msg.append( "This program comes with ABSOLUTELY NO WARRANTY; for details type:" )
             msg.append( " `cylc license warranty'." )
