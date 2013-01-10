@@ -233,7 +233,9 @@ class scheduler(object):
             self.config.reset_timer = False
 
         if not self.is_restart:     # create new suite_db file if needed
-            db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite, new_mode=True)
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite, new_mode=True)
+        else:
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite)
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -1073,6 +1075,12 @@ class scheduler(object):
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
+                
+                # DB TODO
+                # something here along lines of
+                # for event in itask.db_que:
+                #   db.process event...
+                
 
             # process queued commands
             self.process_command_queue()
@@ -1281,6 +1289,8 @@ class scheduler(object):
         self.pyro.disconnect( self.command_queue )
         for itask in self.pool.get_tasks():
             self.pyro.disconnect( itask.message_queue )
+            # self.pyro.disconnect( itask.eventqueue )
+            # self.pyro.disconnect( itask.statequeue )
 
         print " * terminating job submission thread"
         self.pool.worker.quit = True
@@ -1335,6 +1345,10 @@ class scheduler(object):
                     sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
+
+
+        #disconnect from suite-db/stop db queue
+        self.db.record_event("suite", 0, 0, "suite-shutdown", "shute shutdown")
 
         if not self.options.noredirect:
             self.suite_outputer.restore()

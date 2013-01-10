@@ -40,6 +40,8 @@ import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
+from Queue import Queue
+
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -139,6 +141,9 @@ class task( object ):
         self.try_number = 1
         self.retry_delay_timer_start = None
 
+        self.message_queue = msgqueue()
+        self.db_queue = []
+
         gcfg = globalcfg()
         suite_name = os.environ['CYLC_SUITE_REG_NAME']
         self.db_path = os.path.join(gcfg.cfg['run directory'], suite_name)
@@ -151,7 +156,7 @@ class task( object ):
         else:
             self.submit_num = 1
             
-        self.message_queue = msgqueue()
+
 
     def plog( self, message ):
         # print and log a low priority message
@@ -183,6 +188,23 @@ class task( object ):
 
     def record_db_event(self, event="", message=""):
         self.db.record_event(self.name, self.c_time, self.submit_num, event, message)
+        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message)
+        self.db_queue.append(call)
+    
+    def record_db_update(self, table, name, cycle, submit_num, **kwargs):
+        call = cylc.rundb.UpdateObject(table, name, cycle, submit_num, **kwargs)
+        self.db_queue.append(call)        
+
+    def record_db_state(self, name, cycle, time_created=datetime.datetime.now(), time_updated=None,
+                     submit_num=None, is_manual_submit=None, try_num=None,
+                     host=None, submit_method=None, submit_method_id=None,
+                     status=None):
+        call = cylc.rundb.RecordStateObject(name, cycle, 
+                     time_created=time_created, time_updated=time_updated,
+                     submit_num=submit_num, is_manual_submit=is_manual_submit, try_num=try_num,
+                     host=host, submit_method=submit_method, submit_method_id=submit_method_id,
+                     status=status)
+        self.db_queue.append(call)
 
     def ready_to_run( self ):
         ready = False
@@ -209,8 +231,10 @@ class task( object ):
         self.state.set_status( 'submitted' )
         self.record_db_event(event="submitted", message="task submitted")
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="submitted")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="submitted")
         if hostname is not None:
             self.db.update("task_states", self.name, self.c_time, self.submit_num, host=hostname)
+            self.record_db_update("task_states", self.name, self.c_time, self.submit_num, host=hostname)
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
@@ -222,6 +246,7 @@ class task( object ):
         self.state.set_status( 'running' )
         self.record_db_event(event="started", message="task started")
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="running")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="running")
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
@@ -233,6 +258,7 @@ class task( object ):
         self.outputs.set_all_completed()
         self.state.set_status( 'succeeded' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="succeeded")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="succeeded")
         self.record_db_event(event="succeeded", message="task succeeded")
         self.succeeded_time = task.clock.get_datetime()
         # don't update mean total elapsed time if set_succeeded() was called
@@ -243,6 +269,7 @@ class task( object ):
         self.record_db_event(event="succeeded", message="task succeeded")
         self.state.set_status( 'succeeded' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="succeeded")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="succeeded")
         handler = self.event_handlers['succeeded']
         if handler:
             RunHandler( 'succeeded', handler, self.__class__.suite, self.id, 'task succeeded' )
@@ -250,6 +277,7 @@ class task( object ):
     def set_failed( self, reason='task failed' ):
         self.state.set_status( 'failed' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="failed")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="failed")
         self.record_db_event(event="failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
@@ -259,6 +287,7 @@ class task( object ):
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="failed")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="failed")
         self.record_db_event(event="failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
@@ -275,6 +304,7 @@ class task( object ):
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.db.update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
+        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -283,6 +313,7 @@ class task( object ):
         # waiting and all prerequisites UNsatisified.
         self.state.set_status( 'waiting' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="waiting")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -291,6 +322,7 @@ class task( object ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="succeeded")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="succeeded")
         self.record_db_event(event="succeeded", message="task succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
@@ -300,6 +332,7 @@ class task( object ):
         # all prerequisites satisified and no outputs complete
         self.state.set_status( 'failed' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="failed")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="failed")
         self.record_db_event(event="failed", message="task failed")
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
@@ -309,6 +342,7 @@ class task( object ):
     def reset_state_held( self ):
         itask.state.set_status( 'held' )
         self.db.update("task_states", self.name, self.c_time, self.submit_num, status="held")
+        self.record_db_update("task_states", self.name, self.c_time, self.submit_num, status="held")
 
     def override( self, target, sparse ):
         for key,val in sparse.items():
@@ -422,7 +456,8 @@ class task( object ):
         self.submit_num = self.db.get_task_submit_num(self.name, self.c_time)
         #try to add an entry to the database for recording status
         try:
-            self.db.record_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number)
+            self.db.record_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number) #old db call
+            self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number) #queue call
         except:
             pass
     
@@ -690,6 +725,7 @@ class task( object ):
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
                 self.db.update("task_states", self.name, self.c_time, self.submit_num, try_num=self.try_number, status="retrying")
+                self.record_db_update("task_states", self.name, self.c_time, self.submit_num, try_num=self.try_number, status="retrying")
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events

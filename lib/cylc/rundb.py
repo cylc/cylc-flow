@@ -22,6 +22,51 @@ import shutil
 import sqlite3
 
 
+class UpdateObject(object):
+    """UpdateObject for using in tasks"""
+    def __init__(self, table, name, cycle, submit_num, **kwargs):
+        """Update a row in a table."""
+        kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==? AND submit_num==?"
+        cols = ""
+        args = []
+        not_first = False
+        for k, v in kwargs.items():
+            if not_first:
+                cols += ", "
+            not_first = True
+            cols += k + "=?"
+            args.append(v)
+        args.append(name)
+        args.append(cycle)
+        args.append(submit_num)
+        self.s_fmt = s_fmt % {"table": table, "cols": cols}
+        self.args = args
+
+
+class RecordEventObject(object):
+    """RecordEventObject for using in tasks"""
+    def __init__(self, name, cycle, submit_num, event=None, message=None):
+        """Records an event in the table"""
+        self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
+        self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message]
+
+
+class RecordStateObject(object):
+    """RecordEventObject for using in tasks"""
+    def __init__(self, name, cycle, time_created=datetime.now(), time_updated=None,
+                     submit_num=None, is_manual_submit=None, try_num=None,
+                     host=None, submit_method=None, submit_method_id=None,
+                     status=None):
+        """Insert a new row into the states table"""
+        self.s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        if time_updated is not None:
+            time_updated = time_updated.strftime("%Y-%m-%dT%H:%M:%S")
+        self.args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"), 
+                     time_updated, submit_num, is_manual_submit, try_num, host,
+                     submit_method, submit_method_id, status]
+
+
 class CylcRuntimeDAO(object):
     """Access object for a Cylc suite runtime database."""
 
