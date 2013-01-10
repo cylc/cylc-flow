@@ -277,7 +277,7 @@ class config( CylcConfigObj ):
             if self.strict or self.verbose:
                 print 'Naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
-                    print '    +', ndt
+                    print '  +', ndt
                 print '  WARNING: this can be caused by misspelled task names!' 
             if self.strict:
                 raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
@@ -556,21 +556,24 @@ class config( CylcConfigObj ):
         queues['default']['members'] = self.get_task_name_list()
         #print 'INITIAL default', queues['default']['members']
         for queue in queues:
-            if self.verbose:
-                print " +", queue
             if queue == 'default':
                 continue
             # assign tasks to queue and remove them from default
             qmembers = []
             for qmember in queues[queue]['members']:
                 if qmember in self.members:
-                    # qmember is a family: replace with family members
+                    # qmember is a family, so replace it with member
+                    # tasks. Note that self.members[fam] includes any
+                    # sub-family as well as task members of fam.
                     for fmem in self.members[qmember]:
                         if qmember not in qmembers:
                             try:
                                 queues['default']['members'].remove( fmem )
                             except ValueError:
-                                if self.verbose:
+                                if self.verbose and fmem not in self.members:
+                                    # family members that are themselves
+                                    # families should be ignored as we
+                                    # only need tasks in the queues.
                                     print >> sys.stderr, '  WARNING: ignoring queue member ' + fmem + ' (task not used in the graph)'
                             else:
                                 qmembers.append( fmem )
@@ -585,8 +588,12 @@ class config( CylcConfigObj ):
                         else:
                             qmembers.append(qmember)
             queues[queue]['members'] = qmembers
-        #for queue in queues:
-        #    print queue, queues[queue]['members']
+        if self.verbose:
+            if len( queues.keys() ) > 1:
+                for queue in queues:
+                    print "  +", queue, queues[queue]['members']
+            else:
+                print " + All tasks assigned to the 'default' queue"
 
     def get_inheritance( self ):
         # used by cylc_xdot
