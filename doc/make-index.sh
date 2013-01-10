@@ -23,7 +23,7 @@
 # generated (PDF and/or HTML single page and/or HTML multi-page).
 # It can however be executed manually from within the doc directory.
 
-CYLC_VERSION=$( git describe )
+CYLC_VERSION=$($(dirname $0)/../bin/cylc --version)
 INDEX=index.html
 
 cat > $INDEX <<END
