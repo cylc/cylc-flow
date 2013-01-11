@@ -1295,8 +1295,6 @@ class scheduler(object):
         self.pyro.disconnect( self.command_queue )
         for itask in self.pool.get_tasks():
             self.pyro.disconnect( itask.message_queue )
-            # self.pyro.disconnect( itask.eventqueue )
-            # self.pyro.disconnect( itask.statequeue )
 
         print " * terminating job submission thread"
         self.pool.worker.quit = True
@@ -1354,7 +1352,8 @@ class scheduler(object):
 
 
         #disconnect from suite-db/stop db queue
-
+        self.db.close()
+        print " * disconnecting from suite database"
 
         if not self.options.noredirect:
             self.suite_outputer.restore()

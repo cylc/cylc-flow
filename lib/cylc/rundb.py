@@ -20,7 +20,8 @@ from datetime import datetime
 import os
 import shutil
 import sqlite3
-
+from threading import Thread
+from Queue import Queue
 
 class UpdateObject(object):
     """UpdateObject for using in tasks"""
@@ -42,6 +43,7 @@ class UpdateObject(object):
         self.s_fmt = s_fmt % {"table": table, "cols": cols}
         self.args = args
         self.to_run = True
+
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
@@ -67,6 +69,36 @@ class RecordStateObject(object):
                      submit_method, submit_method_id, status]
         self.to_run = True
 
+class ThreadedCursor(Thread):
+    def __init__(self, db):
+        super(ThreadedCursor, self).__init__()
+        self.db=db
+        self.reqs=Queue()
+        self.start()
+    def run(self):
+        cnx = sqlite3.Connection(self.db) 
+        cursor = cnx.cursor()
+        while True:
+            req, arg, res = self.reqs.get()
+            if req=='--close--': break
+            cursor.execute(req, arg)
+            if res:
+                for rec in cursor:
+                    res.put(rec)
+                res.put('--no more--')
+            cnx.commit()
+        cnx.close()
+    def execute(self, req, arg=None, res=None):
+        self.reqs.put((req, arg or tuple(), res))
+    def select(self, req, arg=None):
+        res=Queue()
+        self.execute(req, arg, res)
+        while True:
+            rec=res.get()
+            if rec=='--no more--': break
+            yield rec
+    def close(self):
+        self.execute('--close--')
 
 class CylcRuntimeDAO(object):
     """Access object for a Cylc suite runtime database."""
@@ -115,9 +147,13 @@ class CylcRuntimeDAO(object):
                     pass
         if not os.path.exists(self.db_file_name):
             new_mode = True
-        self.conn = sqlite3.connect(self.db_file_name)
+        #self.conn = sqlite3.connect(self.db_file_name)
+        self.c = ThreadedCursor(self.db_file_name)
         if new_mode:
             self.create()
+
+    def close(self):
+        self.c.close()
 
     def connect(self):
         self.conn = sqlite3.connect(self.db_file_name)
@@ -125,7 +161,8 @@ class CylcRuntimeDAO(object):
 
     def create(self):
         """Create the database tables."""
-        c = self.connect()
+        #c = self.connect()
+        c = self.c
         for table, cols in self.TABLES.items():
             s = "CREATE TABLE " + table + "("
             not_first = False
@@ -138,80 +175,41 @@ class CylcRuntimeDAO(object):
                 s += ", PRIMARY KEY(" + self.PRIMARY_KEY_OF[table] + ")"
             s += ")"
             c.execute(s)
-        self.conn.commit()
-
-    def record_event(self, name, cycle, submit_num, event=None, message=None):
-        """Insert a row to the events table"""
-        s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
-        args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message]
-        c = self.connect()
-        c.execute(s_fmt, args)
-        self.conn.commit()
-
-    def record_state(self, name, cycle, time_created=datetime.now(), time_updated=None,
-                     submit_num=None, is_manual_submit=None, try_num=None,
-                     host=None, submit_method=None, submit_method_id=None,
-                     status=None):
-        """Insert a new row into the states table"""
-        s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        if time_updated is not None:
-            time_updated = time_updated.strftime("%Y-%m-%dT%H:%M:%S")
-        args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"), time_updated, submit_num, 
-                is_manual_submit, try_num, host, submit_method, 
-                submit_method_id, status]
-        c = self.connect()
-        c.execute(s_fmt, args)
-        self.conn.commit()
+        #self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitted"]
-        c = self.connect()
-        c.execute(s_fmt, args)
-        count = c.fetchone()[0]
-        self.conn.commit()
+        #c = self.connect()
+        #c.execute(s_fmt, args)
+        #count = c.fetchone()[0]
+        #self.conn.commit()
+        count = self.c.select(s_fmt, args).next()[0]
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
     
     def get_task_current_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitted"]
-        c = self.connect()
-        c.execute(s_fmt, args)
-        count = c.fetchone()[0]
-        self.conn.commit()
+        #c = self.connect()
+        #c.execute(s_fmt, args)
+        #count = c.fetchone()[0]
+        #self.conn.commit()
+        count = self.c.select(s_fmt, args).next()[0]
         return count
 
     def get_task_state_exists(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
         args = [name, cycle,]
-        c = self.connect()
-        c.execute(s_fmt, args)
-        count = c.fetchone()[0]
-        self.conn.commit()
+        #c = self.connect()
+        #c.execute(s_fmt, args)
+        #count = c.fetchone()[0]
+        #self.conn.commit()
+        count = self.c.select(s_fmt, args).next()[0]
         return count > 0
-    
-    def update(self, table, name, cycle, **kwargs):
-        """Update a row in a table."""
-        kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
-        cols = ""
-        args = []
-        not_first = False
-        for k, v in kwargs.items():
-            if not_first:
-                cols += ", "
-            not_first = True
-            cols += k + "=?"
-            args.append(v)
-        args.append(name)
-        args.append(cycle)
-        c = self.connect()
-        c.execute(s_fmt % {"table": table, "cols": cols}, args)
-        self.conn.commit()
 
     def run_db_op(self, db_oper):
-        c = self.connect()
-        c.execute(db_oper.s_fmt, db_oper.args)
-        self.conn.commit()
-
+        #c = self.connect()
+        self.c.execute(db_oper.s_fmt, db_oper.args)
+        #self.conn.commit()
+    

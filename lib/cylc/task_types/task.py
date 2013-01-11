@@ -40,7 +40,6 @@ import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
-from Queue import Queue
 
 
 def displaytd( td ):
@@ -53,6 +52,7 @@ def displaytd( td ):
     else:
         res = str(td)
     return res
+
 
 class task( object ):
 
@@ -162,6 +162,8 @@ class task( object ):
                 self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
             except:
                 pass
+
+        self.db.close()
 
     def plog( self, message ):
         # print and log a low priority message
