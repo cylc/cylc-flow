@@ -18,10 +18,58 @@
 
 CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
-.PHONY: all clean html html-multi html-single pdf
+.PHONY: all commands clean tidy html html-multi html-single pdf index
 
-all: cug.html cug1.html cug.pdf
+# All the main phony targets depend initially on 'commands', which
+# regenerates commands.tex only if the command usage help has changed.
+# The real targets cannot have phony prerequisites as that would make
+# them execute every time. Consequently: DO NOT USE THE REAL TARGETS
+# DIRECTLY OR commands.tex WILL NOT BE REGENERATED WHEN IT SHOULD BE.
+#   E.g. use 'make pdf' NOT 'make cug.pdf'.
+# The index is regenerated for every real target; this is OK because 
+# it is fast, and the index links to all the final documents found.
 
+all: commands pdf html
+
+html: commands html-multi html-single
+
+html-multi: commands cug.html
+
+html-single: commands cug1.html
+
+pdf: commands cug.pdf
+
+# just for standalone use: "make index"
+index:
+	./make-index.sh
+
+commands:
+	./make-commands.sh
+
+cug.html: commands.tex cug-html.tex cug.tex
+	$(CYLC) -v > cylc-version.txt
+	htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
+	mv cug-html.html $@
+	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
+	./make-index.sh
+
+cug1.html: commands.tex cug-html.tex cug.tex
+	$(CYLC) -v > cylc-version.txt
+	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" ""
+	mv cug-html.html $@
+	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
+	./make-index.sh
+
+cug.pdf: commands.tex cug-pdf.tex cug.tex
+	$(CYLC) -v > cylc-version.txt
+	pdflatex cug-pdf.tex
+	pdflatex cug-pdf.tex
+	pdflatex cug-pdf.tex
+	rm -f cug-pdf.{lof,log,out,toc}
+	mv cug-pdf.pdf $@
+	./make-index.sh
+
+# delete all generated files:
 clean:
 	rm -rf *.aux\
         command-usage\
@@ -35,6 +83,7 @@ clean:
         index.html \
         cylc-version.txt\
 
+# delete all intermediate files:
 tidy:
 	rm -rf *.aux\
         command-usage\
@@ -42,65 +91,4 @@ tidy:
         cug-html.{4ct,4tc,aux,css,dvi,idv,lg,log,tmp,toc,xref}\
         cug-pdf.{lof,log,out,pdf,toc}\
         cylc-version.txt\
-
-commands.tex: cylc-version.txt command-usage/help.txt
-	{\
-        echo "\label{help}";\
-        echo "\lstinputlisting{command-usage/help.txt}";\
-        echo "\subsection{Command Categories}";\
-        for CAT in `$(CYLC) categories`; do\
-        	echo "o $$CAT";\
-        	$(CYLC) help $$CAT >> command-usage/$$CAT.txt;\
-        	echo "\subsubsection{$$CAT}";\
-        	echo "\label{$$CAT}";\
-        	echo "\lstinputlisting{command-usage/$$CAT.txt}";\
-        done;\
-        echo "\subsection{Commands}";\
-        for COMMAND in `$(CYLC) commands`; do\
-        	echo "+ $$COMMAND";\
-        	$(CYLC) $$COMMAND --help\
-                | egrep -v '^DONE$$' >command-usage/$$COMMAND.txt;\
-        	echo "\subsubsection{$$COMMAND}";\
-        	echo "\label{$$COMMAND}";\
-        	echo "\lstinputlisting{command-usage/$$COMMAND.txt}";\
-        done\
-    } >$@
-
-command-usage:
-	mkdir -p $@
-
-command-usage/help.txt: command-usage
-	$(CYLC) help >$@
-
-cug.html: commands.tex cug-html.tex cug.tex
-	htlatex cug-html.tex "cug-html.cfg,xhtml,3,next";
-	mv cug-html.html $@
-	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
-
-cug1.html: commands.tex cug-html.tex cug.tex
-	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" ""
-	mv cug-html.html $@
-	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
-
-cug.pdf: commands.tex cug-pdf.tex cug.tex
-	pdflatex cug-pdf.tex;
-	pdflatex cug-pdf.tex;
-	pdflatex cug-pdf.tex;
-	rm -f cug-pdf.{lof,log,out,toc};
-	mv cug-pdf.pdf $@
-
-cylc-version.txt:
-	$(CYLC) -v >$@
-
-html: html-multi html-single
-	./make-index.sh
-
-html-multi: cug.html
-	./make-index.sh
-
-html-single: cug1.html
-	./make-index.sh
-
-pdf: cug.pdf
-	./make-index.sh
 
