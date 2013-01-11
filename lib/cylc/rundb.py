@@ -24,10 +24,10 @@ import sqlite3
 
 class UpdateObject(object):
     """UpdateObject for using in tasks"""
-    def __init__(self, table, name, cycle, submit_num, **kwargs):
+    def __init__(self, table, name, cycle, **kwargs):
         """Update a row in a table."""
         kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==? AND submit_num==?"
+        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
         cols = ""
         args = []
         not_first = False
@@ -39,7 +39,6 @@ class UpdateObject(object):
             args.append(v)
         args.append(name)
         args.append(cycle)
-        args.append(submit_num)
         self.s_fmt = s_fmt % {"table": table, "cols": cols}
         self.args = args
         self.to_run = True
@@ -99,7 +98,7 @@ class CylcRuntimeDAO(object):
                     # TODO: "auth_key TEXT",
                     ]}
     PRIMARY_KEY_OF = {TASK_EVENTS: None,
-                      TASK_STATES: "name, cycle, submit_num"}
+                      TASK_STATES: "name, cycle"}
 
 
     def __init__(self, suite_dir=None, new_mode=False):
@@ -182,11 +181,20 @@ class CylcRuntimeDAO(object):
         count = c.fetchone()[0]
         self.conn.commit()
         return count
+
+    def get_task_state_exists(self, name, cycle):
+        s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
+        args = [name, cycle,]
+        c = self.connect()
+        c.execute(s_fmt, args)
+        count = c.fetchone()[0]
+        self.conn.commit()
+        return count > 0
     
-    def update(self, table, name, cycle, submit_num, **kwargs):
+    def update(self, table, name, cycle, **kwargs):
         """Update a row in a table."""
         kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==? AND submit_num==?"
+        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
         cols = ""
         args = []
         not_first = False
@@ -198,7 +206,6 @@ class CylcRuntimeDAO(object):
             args.append(v)
         args.append(name)
         args.append(cycle)
-        args.append(submit_num)
         c = self.connect()
         c.execute(s_fmt % {"table": table, "cols": cols}, args)
         self.conn.commit()

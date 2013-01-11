@@ -1354,7 +1354,7 @@ class scheduler(object):
 
 
         #disconnect from suite-db/stop db queue
-        self.db.record_event("suite", 0, 0, "suite-shutdown", "shute shutdown")
+
 
         if not self.options.noredirect:
             self.suite_outputer.restore()
