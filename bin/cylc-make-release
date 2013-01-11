@@ -105,7 +105,6 @@ fi
 echo " + setting version tag"
 perl -pi -e "s/VERSION-TEMPLATE/$VERSION/" lib/cylc/version.py
 perl -pi -e "s/VERSION-TEMPLATE/$VERSION/" README
-perl -pi -e "s/VERSION-TEMPLATE/$VERSION/" doc/index.html
 
 if $RUN_LATEX; then
     echo " + generating User Guide (to watch: \"tail -F $LOG\")"

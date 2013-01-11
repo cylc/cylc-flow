@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -125,8 +125,9 @@ class pool(object):
             for itask in self.queues[queue]:
                 if n_limit:
                     # there is a limit on this queue
-                    ###if itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently( 'submitting' ):
-                    if itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.submitting:
+                    if (itask.state.is_currently('submitted') or
+                        itask.state.is_currently('running') or
+                        itask.state.is_currently('submitting')):
                         # count active tasks in this queue
                         n_active += 1
                     # compute difference from the limit
