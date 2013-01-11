@@ -23,6 +23,10 @@
 # generated (PDF and/or HTML single page and/or HTML multi-page).
 # It can however be executed manually from within the doc directory.
 
+echo
+echo "Generating document index"
+echo
+
 CYLC_VERSION=$($(dirname $0)/../bin/cylc --version)
 INDEX=index.html
 
