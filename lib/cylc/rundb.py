@@ -42,7 +42,7 @@ class UpdateObject(object):
         args.append(submit_num)
         self.s_fmt = s_fmt % {"table": table, "cols": cols}
         self.args = args
-
+        self.to_run = True
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
@@ -50,6 +50,7 @@ class RecordEventObject(object):
         """Records an event in the table"""
         self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
         self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message]
+        self.to_run = True
 
 
 class RecordStateObject(object):
@@ -65,6 +66,7 @@ class RecordStateObject(object):
         self.args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"), 
                      time_updated, submit_num, is_manual_submit, try_num, host,
                      submit_method, submit_method_id, status]
+        self.to_run = True
 
 
 class CylcRuntimeDAO(object):
@@ -200,3 +202,9 @@ class CylcRuntimeDAO(object):
         c = self.connect()
         c.execute(s_fmt % {"table": table, "cols": cols}, args)
         self.conn.commit()
+
+    def run_db_op(self, db_oper):
+        c = self.connect()
+        c.execute(db_oper.s_fmt, db_oper.args)
+        self.conn.commit()
+
