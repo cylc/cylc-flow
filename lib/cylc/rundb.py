@@ -151,9 +151,9 @@ class CylcRuntimeDAO(object):
         if not os.path.exists(self.db_file_name):
             new_mode = True
         #self.conn = sqlite3.connect(self.db_file_name)
-        self.c = ThreadedCursor(self.db_file_name)
         if new_mode:
             self.create()
+        self.c = ThreadedCursor(self.db_file_name)
 
     def close(self):
         self.c.close()
@@ -164,8 +164,7 @@ class CylcRuntimeDAO(object):
 
     def create(self):
         """Create the database tables."""
-        #c = self.connect()
-        c = self.c
+        c = self.connect()
         for table, cols in self.TABLES.items():
             s = "CREATE TABLE " + table + "("
             not_first = False
@@ -177,7 +176,8 @@ class CylcRuntimeDAO(object):
             if self.PRIMARY_KEY_OF[table]:
                 s += ", PRIMARY KEY(" + self.PRIMARY_KEY_OF[table] + ")"
             s += ")"
-            c.execute(s)
+            res = c.execute(s)
+        return
         #self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
