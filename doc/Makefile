@@ -20,14 +20,14 @@ CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
 .PHONY: all commands clean tidy html html-multi html-single pdf index
 
-# All the main phony targets start with 'commands' which regenerates
-# commands.tex only if any of the command usage help has changed.
-# The real targets cannot have a phony prerequisites as it would make
-# them execute every timer. Consequently: DO NOT USE THE REAL TARGETS
+# All the main phony targets depend initially on 'commands', which
+# regenerates commands.tex only if the command usage help has changed.
+# The real targets cannot have phony prerequisites as that would make
+# them execute every time. Consequently: DO NOT USE THE REAL TARGETS
 # DIRECTLY OR commands.tex WILL NOT BE REGENERATED WHEN IT SHOULD BE.
-# E.g. use 'make pdf' NOT 'make cug.pdf'.
-# The index is regenerated after every real target; this is ok because 
-# it is fast, and it links to whichever final documents are present.
+#   E.g. use 'make pdf' NOT 'make cug.pdf'.
+# The index is regenerated for every real target; this is OK because 
+# it is fast, and the index links to all the final documents found.
 
 all: commands pdf html
 
