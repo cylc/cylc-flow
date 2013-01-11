@@ -1075,19 +1075,13 @@ class scheduler(object):
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
-                
+
             # process queued database operations
             for itask in self.pool.get_tasks():
                 db_ops = itask.get_db_ops()
                 for d in db_ops:
                     self.db.run_db_op(d)
-
-                # DB TODO
-                # something here along lines of
-                # for event in itask.db_que:
-                #   db.process event...
                 
-
             # process queued commands
             self.process_command_queue()
 

@@ -23,6 +23,7 @@ import sqlite3
 from threading import Thread
 from Queue import Queue
 
+
 class UpdateObject(object):
     """UpdateObject for using in tasks"""
     def __init__(self, table, name, cycle, **kwargs):
@@ -69,6 +70,7 @@ class RecordStateObject(object):
                      submit_method, submit_method_id, status]
         self.to_run = True
 
+
 class ThreadedCursor(Thread):
     def __init__(self, db):
         super(ThreadedCursor, self).__init__()
@@ -99,6 +101,7 @@ class ThreadedCursor(Thread):
             yield rec
     def close(self):
         self.execute('--close--')
+
 
 class CylcRuntimeDAO(object):
     """Access object for a Cylc suite runtime database."""
