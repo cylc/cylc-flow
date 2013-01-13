@@ -95,7 +95,7 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsection[job submission]{[cylc] $\rightarrow$ job submission}
+\subsubsection[job submission]{[cylc] $\rightarrow$ job submission}
 
 Tasks ready to submit are now queued for processing in a background
 worker thread, so submitting a lot of tasks at once does not hold cylc 
@@ -112,7 +112,7 @@ selection command runs as part of the job submission command). The time
 taken for a batch of parallel job submissions to complete will be
 roughly the duration of the slowest member process. 
 
-\subsubsection[batch size]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ batch size}
+\paragraph[batch size]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ batch size}
 
 The maximum number of tasks to be submitted in a single batch, in the
 job submission thread. Cylc waits for all batch member job-submissions
@@ -123,7 +123,7 @@ to complete before proceeding to the next batch.
     \item {\em default:} 10
 \end{myitemize}
 
-\subsubsection[delay between batches]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ delay between batches}
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ delay between batches}
 
 It may cause a problem for some batch queue schedulers to submit too
 many jobs at once, so cylc allows a configurable delay between job 
