@@ -49,6 +49,8 @@ commands:
 cug.html: commands.tex cug-html.tex cug.tex
 	$(CYLC) -v > cylc-version.txt
 	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,index=2,3,next"
+	echo "Renaming cug-html.html to cug.html"
+	ls *.html | xargs -n 1 perl -pi -e 's/cug-html\.html/cug.html/g'
 	mv cug-html.html $@
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 	./make-index.sh
