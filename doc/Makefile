@@ -56,10 +56,11 @@ cug.html: commands.tex cug-html.tex cug.tex
 	./make-index.sh
 
 # htlatex generates a 'cug-html.css' style-sheet file for the single and
-# multi-page html documents, but the css differs so to avoid a clash we
-# tell htlatex to use inline css in the single-page case. However, the  
-# external htlatex still generates the external CSS so we set aside the 
-# multi-page CSS file first, if it exists, and restore it afterward.  
+# multi-page html documents, but the content differs, so to avoid a
+# clash we tell htlatex to use inline css in the single-page case.
+# However, htlatex still generates the external css file - so before
+# generating the single-page document we set aside the multi-page css
+# file, if it exists, and restore it when finished.  
 cug1.html: commands.tex cug-html.tex cug.tex
 	$(CYLC) -v > cylc-version.txt
 	[[ -f cug-html.css ]] && cp cug-html.css tmp.css
