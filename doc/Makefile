@@ -48,7 +48,7 @@ commands:
 
 cug.html: commands.tex cug-html.tex cug.tex
 	$(CYLC) -v > cylc-version.txt
-	htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
+	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,index=2,3,next"
 	mv cug-html.html $@
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 	./make-index.sh
