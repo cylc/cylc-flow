@@ -4,6 +4,7 @@ echo "Generating command help"
 
 CYLC=../bin/cylc
 
+rm -rf new-command-usage
 mkdir -p new-command-usage
 
 $CYLC help > new-command-usage/help.txt
@@ -22,19 +23,18 @@ done
 
 # regenerate commands.tex only if command usage help has changed 
 
-UPDATE=false
-diff -r new-command-usage command-usage >/dev/null || UPDATE=true
-[[ ! -f commands.tex ]] && UPDATE=true
-
-if $UPDATE; then 
-	echo "Command help changed: updating commands.tex"
+if [[ ! -f commands.tex ]]; then
+    echo "No existing command help file, generating commands.tex"
+elif ! diff -r new-command-usage command-usage >/dev/null 2>&1; then
+    # diff returns 0 if target files do not differ
+	echo "Command help changed, I will regenerate commands.tex"
 else
-	echo "Command help unchanged"
+	echo "Command help unchanged, not regenerating commands.tex"
 	exit 0
 fi
 
 rm -rf command-usage/
-mv new-command-usage/ command-usage
+cp -r new-command-usage/ command-usage
 
 cat > commands.tex <<END
 \label{help}
