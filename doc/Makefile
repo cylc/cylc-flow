@@ -48,15 +48,25 @@ commands:
 
 cug.html: commands.tex cug-html.tex cug.tex
 	$(CYLC) -v > cylc-version.txt
-	htlatex cug-html.tex "cug-html.cfg,xhtml,3,next"
+	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,index=2,3,next"
+	echo "Renaming cug-html.html to cug.html"
+	ls *.html | xargs -n 1 perl -pi -e 's/cug-html\.html/cug.html/g'
 	mv cug-html.html $@
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 	./make-index.sh
 
+# htlatex generates a 'cug-html.css' style-sheet file for the single and
+# multi-page html documents, but the content differs, so to avoid a
+# clash we tell htlatex to use inline css in the single-page case.
+# However, htlatex still generates the external css file - so before
+# generating the single-page document we set aside the multi-page css
+# file, if it exists, and restore it when finished.  
 cug1.html: commands.tex cug-html.tex cug.tex
 	$(CYLC) -v > cylc-version.txt
-	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in" ""
+	[[ -f cug-html.css ]] && cp cug-html.css tmp.css
+	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,css-in" ""
 	mv cug-html.html $@
+	[[ -f tmp.css ]] && mv tmp.css cug-html.css
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 	./make-index.sh
 
