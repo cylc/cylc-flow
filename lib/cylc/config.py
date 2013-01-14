@@ -39,7 +39,7 @@ from regpath import RegPath
 from trigger import triggerx
 from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
-from include_files import inline
+from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
 
 try:
@@ -115,7 +115,10 @@ class config( CylcConfigObj ):
         f.close()
 
         # handle cylc include-files
-        flines = inline( flines, self.dir )
+        try:
+            flines = inline( flines, self.dir )
+        except IncludeFileError, x:
+            raise SuiteConfigError( str(x) )
 
         # handle Jinja2 expressions
         try:

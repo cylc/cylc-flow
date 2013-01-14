@@ -17,12 +17,21 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, os, sys
-from cylcconfigobj import ConfigObjError
 import datetime
 from shutil import copy
 
 # To Do: the four file inclusion functions below are very similar and
 # should be combined into one.
+
+class IncludeFileError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
 
 done = []
 included = []
@@ -50,7 +59,7 @@ def inline( lines, dir ):
                 # recursive inclusion
                 outf.extend( inline( inc, dir ))
             else:
-                raise ConfigObjError, "ERROR, Include-file not found: " + inc
+                raise IncludeFileError( "ERROR, include-file not found: " + inc )
         else:
             # no match
             outf.append( line )
