@@ -63,10 +63,10 @@ cug.html: commands.tex cug-html.tex cug.tex
 # file, if it exists, and restore it when finished.  
 cug1.html: commands.tex cug-html.tex cug.tex
 	$(CYLC) -v > cylc-version.txt
-	[[ -f cug-html.css ]] && cp cug-html.css tmp.css
+	if [[ -f cug-html.css ]]; then cp cug-html.css tmp.css; fi
 	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,css-in" ""
 	mv cug-html.html $@
-	[[ -f tmp.css ]] && mv tmp.css cug-html.css
+	if [[ -f tmp.css ]]; then mv tmp.css cug-html.css; fi
 	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
 	./make-index.sh
 
@@ -83,6 +83,7 @@ cug.pdf: commands.tex cug-pdf.tex cug.tex
 clean:
 	rm -rf *.aux\
         command-usage\
+        new-command-usage\
         commands.tex\
         cug.html\
         cug1.html\
