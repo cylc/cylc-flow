@@ -4713,22 +4713,27 @@ use on the command line.
 
 \subsubsection{Parallel Submission Of Jobs Ready At The Same Time}
 
-From cylc-4.5.1 all tasks ready at the same time can be submitted at
-once, or rather - to avoid swamping the host system as each job
-submission occurs in its own spawned subprocess - in batches whose
-members are submitted in parallel. The default batch size of 50 can be
-overridden in suite definitions:
+Cylc now handles task job submission in a dedicated worker thread so
+that submission of many remote tasks at once does not impact cylc's
+performance or responsiveness.
+
+Further, for maximum efficiency, job submissions are batched inside the
+worker thread: batch members are submitted in parallel, and all members
+must complete (the job submission process, that is, not the submitted
+task) before the next batch is handled. There is a configurable delay
+between batches to avoid swamping the host system in the event that
+hundreds of tasks become ready at the same time.  The default batch size
+of 10 and delay of 15 seconds can be overridden in suite definitions:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [cylc]
-    maximum number of simultaneous job submissions = 50
+    [[job submission]]
+        batch size = 50
+        delay between batches = 30
 \end{lstlisting}
-A 120 task ensemble, for example, would be submitted in two batches of
-50 followed by one of 20 (note that cylc waits on the {\em job
-submission process} to return, not the submitted job itself).
-It may take a second or two to complete the job submission process for a
-single remote task. 
+Here a 120 task ensemble, for example, would be submitted in two batches
+of 50 followed by one of 20, with a 30 second delay between batches.
 
 \subsubsection{Network Connection Timeouts}
 
