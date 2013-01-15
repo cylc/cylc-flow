@@ -97,12 +97,11 @@ state dump rolling archive length = integer( min=1, default=10 )
 # The [task hosts] section configures items needed to run tasks on
 # specific hosts at your site, including 'local' for the suite host.
 # The local sub-section also provides default values for directory paths
-# on remote task hosts wherein the local home directory path, if
-# present, will be replaced with literal '$HOME' for evaluation on the
-# remote host. A 'task hosts' sub-section is required for all remote
-# task hosts that can be used by suites running on this machine. A
-# remote host section can be empty (i.e. just the sub-section heading)
-# in which case the local defaults will be used with $HOME replaced.
+# on remote task hosts - the local home directory path, if present, will
+# be replaced with literal '$HOME' for evaluation on the remote host. 
+# A remote host entry can be empty (i.e. just the sub-section heading)
+# or missing (i.e. no entry for a requested host) in which case the
+# local defaults will be used with $HOME replaced.
 [task hosts]
     # The default task host is the suite host, called 'local' here:
     [[local]]
@@ -130,7 +129,7 @@ state dump rolling archive length = integer( min=1, default=10 )
 
         # THE FOLLOWING THREE ITEMS ARE NOT USED FOR THE LOCAL HOST
         # unless you run tasks under other local user accounts, but  
-        # they still provide default settings for remote hosts.
+        # they can still provide default settings for remote hosts.
         # Cylc location on the host, leave unset if cylc is in $PATH:
         cylc directory = string( default=None )
         # Re-invoke task messaging commands on the suite host

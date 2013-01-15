@@ -205,6 +205,32 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
 
         if self.verbose:
+            print "Checking remote hosting"
+        for item in self['runtime']:
+            try:
+                host = self['runtime'][item]['remote']['host']
+            except KeyError:
+                host = None
+            try:
+                host_selector = self['runtime'][item]['remote']['host selection command']
+            except KeyError:
+                host_selector = None
+
+            if host and host_selector:
+                raise SuiteConfigError( "ERROR, " + item + ": use 'host' OR 'host selection command'." )
+
+            if host:
+                # check for old-style dynamic host section:
+                #   host = $( host-select-command )
+                # or
+                #   host = ` host-select-command `
+
+                m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
+                if m:
+                    print >> sys.stderr, "DEPRECATION WARNING, " + item + ": use 'host selection command' for dynamic host selection."
+                    host_selector = m.groups()[1]
+
+        if self.verbose:
             print "Parsing runtime name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. 
@@ -296,6 +322,7 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.configure_queues()
+
         if self.validation:
             self.check_tasks()
 

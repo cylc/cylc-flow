@@ -49,13 +49,13 @@ def run_get_stdout( command ):
         err = popen.stderr.read()
         res = popen.wait()
         if res < 0:
-            warning_dialog( "ERROR: command terminated by signal %d\n%s" % (res, err) ).warn()
+            print >> sys.stderr, "ERROR: command terminated by signal %d\n%s" % (res, err)
             return (False, [])
         elif res > 0:
-            warning_dialog("ERROR: command failed %d\n%s" % (res,err)).warn()
+            print >> sys.stderr, "ERROR: command failed %d\n%s" % (res,err)
             return (False, [])
     except OSError, e:
-        warning_dialog("ERROR: command invocation failed %s\n%s" % (str(e),err)).warn()
+        print >> sys.stderr, "ERROR: command invocation failed %s\n%s" % (str(e),err)
         return (False, [])
     else:
         # output is a string with newlines
@@ -456,51 +456,49 @@ class task( object ):
 
         suite = self.__class__.suite 
 
-        # host may be None (= run task on suite host)
+        # We have to determine the task host just before job submission
+        # because dynamic host selection may be used.
+
+        # host may be None (= run task on suite host); and note that 
+        # host etc have already been processed in config.py
         host = rtconfig['remote']['host']
         host_selector = rtconfig['remote']['host selection command']
 
-        if host:
-            # check for old-style dynamic host section:
-            #   host = $( host-select-command )
-            # or
-            #   host = ` host-select-command `
-
-            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
-            if m:
-                print >> sys.stderr, "WARNING, " + self.id + ": old-style dynamic host selection is deprecated."
-                print >> sys.stderr, "Please use '[remote]host selection command' instead."
-                if not host_selector:
-                    host_selector = m.groups()[1]
-                else:
-                    raise SystemExit( "ERROR: 'host' and 'host selection command' conflict" )
-
-        # use dynamic host selection if requested:
+        # do dynamic host selection if requested:
         if host_selector:
             res = run_get_stdout( host_selector ) # (T/F,[lines])
             if res[0]:
                 host = res[1]
-                print "Dynamic host selection for " + self.id + ":", host
+                self.log( "NORMAL", "Host selected for " + self.id + ":", host )
             else:
-               raise SystemExit( "ERROR: dynamic host selection failed for task " + self.id )
+                # treat this as a fatal error for the task
+                # (To Do: should we just default to local static host
+                # settings here?)
+                self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
+                self.incoming( 'CRITICAL', self.id + " failed" )
+                return
 
         if host not in gcfg.cfg['task hosts']:
-            raise SystemExit( "ERROR: no site/user configuration for host " + host )
+            self.log( 'WARNING', "No site/user config for host " + host + """
+  defaulting to 'local' host settings""" )
+            cfghost = 'local'
+        else:
+            cfghost = host
  
         owner = rtconfig['remote']['owner']
 
-        share_dir = gcfg.get_suite_share_dir( suite, host, owner )
-        work_dir  = gcfg.get_task_work_dir( suite, self.id, host, owner )
+        share_dir = gcfg.get_suite_share_dir( suite, cfghost, owner )
+        work_dir  = gcfg.get_task_work_dir( suite, self.id, cfghost, owner )
         local_log_dir = gcfg.get_task_log_dir( suite ) 
-        remote_log_dir = gcfg.get_task_log_dir( suite, host, owner )
+        remote_log_dir = gcfg.get_task_log_dir( suite, cfghost, owner )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use ssh messaging'      : gcfg.cfg['task hosts'][host]['use ssh messaging'],
-                'remote cylc path'       : gcfg.cfg['task hosts'][host]['cylc directory'],
+                'use ssh messaging'      : gcfg.cfg['task hosts'][cfghost]['use ssh messaging'],
+                'remote cylc path'       : gcfg.cfg['task hosts'][cfghost]['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -521,7 +519,7 @@ class task( object ):
                 'owner'                  : owner,
                 'host'                   : host,
                 'log path'               : local_log_dir,
-                'remote shell template'  : gcfg.cfg['task hosts'][host]['remote shell template'],
+                'remote shell template'  : gcfg.cfg['task hosts'][cfghost]['remote shell template'],
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,
