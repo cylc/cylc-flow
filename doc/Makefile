@@ -20,7 +20,7 @@ CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
 .PHONY: all commands clean tidy html html-multi html-single pdf index
 
-# All the main phony targets depend initially on 'commands', which
+# The main phony targets below depend initially on 'commands', which
 # regenerates commands.tex only if the command usage help has changed.
 # The real targets cannot have phony prerequisites as that would make
 # them execute every time. Consequently: DO NOT USE THE REAL TARGETS
@@ -33,73 +33,40 @@ all: commands pdf html
 
 html: commands html-multi html-single
 
-html-multi: commands cug.html
+html-multi: commands html/multi/cug-html.html
 
-html-single: commands cug1.html
+html-single: commands html/single/cug-html.html
 
-pdf: commands cug.pdf
+pdf: commands pdf/cug-pdf.pdf
 
 # just for standalone use: "make index"
 index:
-	./make-index.sh
+	./scripts/make-index.sh
 
 commands:
-	./make-commands.sh
+	./scripts/make-commands.sh
 
-cug.html: commands.tex cug-html.tex cug.tex
-	$(CYLC) -v > cylc-version.txt
-	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,index=2,3,next"
-	echo "Renaming cug-html.html to cug.html"
-	ls *.html | xargs -n 1 perl -pi -e 's/cug-html\.html/cug.html/g'
-	mv cug-html.html $@
-	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
-	./make-index.sh
+html/multi/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
+	./scripts/scale-images.sh
+	./scripts/make-html.sh multi
+	./scripts/make-index.sh
 
-# htlatex generates a 'cug-html.css' style-sheet file for the single and
-# multi-page html documents, but the content differs, so to avoid a
-# clash we tell htlatex to use inline css in the single-page case.
-# However, htlatex still generates the external css file - so before
-# generating the single-page document we set aside the multi-page css
-# file, if it exists, and restore it when finished.  
-cug1.html: commands.tex cug-html.tex cug.tex
-	$(CYLC) -v > cylc-version.txt
-	if [[ -f cug-html.css ]]; then cp cug-html.css tmp.css; fi
-	htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,css-in" ""
-	mv cug-html.html $@
-	if [[ -f tmp.css ]]; then mv tmp.css cug-html.css; fi
-	rm -f cug-html.{4ct,4tc,aux,dvi,idv,lg,log,tmp,toc,xref}
-	./make-index.sh
+html/single/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
+	./scripts/scale-images.sh
+	./scripts/make-html.sh single
+	./scripts/make-index.sh
 
-cug.pdf: commands.tex cug-pdf.tex cug.tex
-	$(CYLC) -v > cylc-version.txt
-	pdflatex cug-pdf.tex
-	pdflatex cug-pdf.tex
-	pdflatex cug-pdf.tex
-	rm -f cug-pdf.{lof,log,out,toc}
-	mv cug-pdf.pdf $@
-	./make-index.sh
+pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex
+	./scripts/make-pdf.sh
+	./scripts/make-index.sh
 
 # delete all generated files:
 clean:
-	rm -rf *.aux\
+	rm -rf pdf\
+		html\
         command-usage\
-        new-command-usage\
         commands.tex\
-        cug.html\
-        cug1.html\
-        cug-html.{4ct,4tc,aux,css,dvi,idv,lg,log,tmp,toc,xref}\
-        cug-html*.html\
-        cug-pdf.{lof,log,out,pdf,toc}\
-        cug.pdf\
+        graphics/png-scaled \
         index.html \
-        cylc-version.txt\
-
-# delete all intermediate files:
-tidy:
-	rm -rf *.aux\
-        command-usage\
-        commands.tex\
-        cug-html.{4ct,4tc,aux,css,dvi,idv,lg,log,tmp,toc,xref}\
-        cug-pdf.{lof,log,out,pdf,toc}\
         cylc-version.txt\
 
