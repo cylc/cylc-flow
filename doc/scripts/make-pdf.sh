@@ -36,7 +36,7 @@ $CYLC -v > cylc-version.txt
 
 cp -r *.tex cylc-version.txt titlepic.sty $DEST
 cd $DEST
-ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png@../graphics/png-scaled@g'
+ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png@../graphics/png@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../examples/@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@command-usage/@../command-usage/@g'
 

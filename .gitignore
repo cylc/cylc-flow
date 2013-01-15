@@ -9,6 +9,7 @@ doc/graphics/png-scaled/
 doc/html/
 doc/pdf/
 doc/index.html
+doc/cylc-version.txt
 
 # vim backup files
 *.swp
