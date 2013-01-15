@@ -66,6 +66,7 @@ clean:
 		html\
         command-usage\
         commands.tex\
+        graphics/png-scaled \
         index.html \
         cylc-version.txt\
 
