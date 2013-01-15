@@ -469,7 +469,7 @@ class task( object ):
             res = run_get_stdout( host_selector ) # (T/F,[lines])
             if res[0]:
                 host = res[1]
-                self.log( "NORMAL", "Host selected for " + self.id + ":", host )
+                self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
             else:
                 # treat this as a fatal error for the task
                 # (To Do: should we just default to local static host
@@ -478,13 +478,19 @@ class task( object ):
                 self.incoming( 'CRITICAL', self.id + " failed" )
                 return
 
-        if host not in gcfg.cfg['task hosts']:
-            self.log( 'WARNING', "No site/user config for host " + host + """
-  defaulting to 'local' host settings""" )
-            cfghost = 'local'
+        if host:
+            # a host was specified
+            if host not in gcfg.cfg['task hosts']:
+                # there's no specific config for this host
+                self.log( 'WARNING', "No site/user config for host " + host + """
+  defaulting to 'local' settings""" )
+                cfghost = 'local'
+            else:
+                # use host-specific settings
+                cfghost = host
         else:
-            cfghost = host
- 
+            cfghost = 'local'
+
         owner = rtconfig['remote']['owner']
 
         share_dir = gcfg.get_suite_share_dir( suite, cfghost, owner )

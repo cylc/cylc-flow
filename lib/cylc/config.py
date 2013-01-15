@@ -207,6 +207,8 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Checking remote hosting"
         for item in self['runtime']:
+
+            # 1) check that sure host and "host selection command" are not both used
             try:
                 host = self['runtime'][item]['remote']['host']
             except KeyError:
@@ -215,20 +217,21 @@ class config( CylcConfigObj ):
                 host_selector = self['runtime'][item]['remote']['host selection command']
             except KeyError:
                 host_selector = None
-
             if host and host_selector:
                 raise SuiteConfigError( "ERROR, " + item + ": use 'host' OR 'host selection command'." )
 
+            # 2) deprecate old-style dynamic host selection
             if host:
                 # check for old-style dynamic host section:
                 #   host = $( host-select-command )
                 # or
                 #   host = ` host-select-command `
-
                 m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
                 if m:
                     print >> sys.stderr, "DEPRECATION WARNING, " + item + ": use 'host selection command' for dynamic host selection."
-                    host_selector = m.groups()[1]
+                    # replace with new-style
+                    self['runtime'][item]['remote']['host selection command'] = m.groups()[1]
+                    self['runtime'][item]['remote']['host'] = None
 
         if self.verbose:
             print "Parsing runtime name lists"
