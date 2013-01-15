@@ -365,7 +365,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{graphics/png/control1.png}
     \end{center}
-\caption[The gcontrol GUI, dot and text views]{\scriptsize The gcontrol GUI, showing dot and text views.}
+\caption[gcylc dot and text views]{\scriptsize gcylc dot and text views.}
 \label{fig-control1}
 \end{figure} 
 
@@ -373,7 +373,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{graphics/png/control2.png}
     \end{center}
-\caption[The gcontrol GUI, graph and text views]{\scriptsize The gcontrol GUI, showing graph and text views.}
+\caption[gcylc graph and text views]{\scriptsize gcylc graph and text views.}
 \label{fig-control2}
 \end{figure} 
 
@@ -752,7 +752,7 @@ since updating PYTHONPATH.
 which downloads and installs python packages in one shot.}
 
 At this point you should have access to all cylc functionality except
-for suite graphing and the gcontrol graph view.  For example
+for suite graphing and the gcylc graph view.  For example
 
 \subsubsection{Graphviz}
 
@@ -1134,8 +1134,8 @@ Figure~\ref{fig-QuickStartA-ModelState}.
     \begin{center}
         \includegraphics[width=0.4\textwidth]{graphics/png/QuickStartA-ModelState.png}
     \end{center}
-    \caption[Viewing current task state in gcontrol]
-{\scriptsize Viewing current task state after right-clicking on a task in gcontrol. The
+    \caption[Viewing current task state in gcylc]
+{\scriptsize Viewing current task state after right-clicking on a task in gcylc. The
     same information is available from the \lstinline=cylc show= command.}
     \label{fig-QuickStartA-ModelState}
 \end{figure} 
@@ -4489,6 +4489,107 @@ This section may be incomplete - please see also the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
 (Section~\ref{CommandReference}), and play with the example suites.
 
+\subsection{How Tasks And Control Commands Interact With Suites}
+
+All interaction with a running suite by control commands, gcylc GUI
+instances, and messaging commands from running tasks, uses the Pyro
+network RPC (Remote Procedure Call) protocol. Each suite listens on its
+own network port; cylc starts grabbing ports at 7766 by default - 
+this is configured in the site config file
+\lstinline=$CYLC_DIR/conf/site/site.rc=, see 
+\lstinline=cylc get-global-config --help=.
+
+However, if the Pyro network ports are blocked at your site you can get
+remote control commands and remote task messaging calls to re-invoke
+themselves on the suite host using passwordless ssh, so that the
+ultimate Pyro connection to the suite only occurs on the suite host.
+
+\subsubsection{Pyro Connections And Secure Passphrases}
+\label{passphrases}
+
+All Pyro connections to a suite require passphrase authentication. The
+passphrase is just an arbitary single line of text. A secure MD5
+checksum is passed across the network, not the raw passphrase itself. 
+A random suite passhprase is generated in the suite definition directory
+when a suite is registered, but you can create your own as you wish.
+
+Passphrases currently have to be installed manually in any user account,
+local or remote, that hosts tasks from the suite, or from which you want
+to interact with the suite without using the ssh remote communication 
+method. Legal passphrase locations, in order of preference, are:
+\begin{myenumerate}
+    \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
+    \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
+    \item (or, optionally, given on the commandline with \lstinline=-p FILE=)
+\end{myenumerate}
+The locations under \lstinline=$HOME/.cylc= are suitable for remote
+suite control accounts - in which case the suite definition directory
+may not be known or accessible. On remote task hosts the suite
+definition directory defaults to the same location relative to
+\lstinline=$HOME= as on the suite host; or the remote location can be
+specified explicitly in the suite definition. 
+
+\subsubsection{Ssh-Pyro Connections}
+
+For ssh-based remote task messaging and suite control, ssh keys must be
+installed in the relevant accounts to allow passwordless ssh connections
+back to the suite host account. The suite passphrase is then only
+required on the suite host.  
+
+\subsubsection{Choosing The Communication Method}
+
+The Pyro connection method is the default because it is simpler and more
+efficient, but if your remote task host does not have the right network
+ports open, and the IT staff are reluctant to change that, then the ssh
+alternative is available {\em so long as your local system and network
+configurations do not also prevent ssh connections back to the suite
+host - in that case see Section~\ref{difficultnetworkenv} below}.
+
+To use the ssh-based method:
+\lstset{language=suiterc}
+\begin{myitemize}
+    \item For remote tasks:
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[NAME]]
+        [[[remote]]]
+            host = foo.bar.com
+            ssh messaging = True
+\end{lstlisting}
+    \item For user-invoked suite control commands, use
+        the \lstinline=--use-ssh= command line option along with the 
+        \lstinline=--host= and/or \lstinline=--owner= options. Commands
+        that normally prompt before taking action will also require use
+        of \lstinline=-f,--force=.
+\end{myitemize}
+
+\subsubsection{If You Cannot Use Pyro or Ssh Connections}
+\label{difficultnetworkenv}
+
+It has come to our attention that some HPC facilities do not have any
+networking routing back out of the compute nodes, for security reasons
+and/or to avoid network chatter that could affect performance.  Any
+kind of communication back to a cylc suite running on an external host
+would then presumably be impossible, but: 
+
+\begin{myitemize}
+    \item You may be able to run cylc itself on one of the HPC login
+        nodes. Depending on what software is installed on the HPC,
+        however, this may preclude use of the cylc GUI and suite
+        visualization tools.
+    \item You may be able to persuade your system administrators to
+        provide networking routing to a dedicated cylc server,
+        if not to the wider world.
+    \item It has been suggested that network {\em port forwarding} may 
+        provide a solution.
+    \item We plan to develop a one-way polling mechansim to track the
+        progress of remote tasks that are unable to communicate back to
+        their suite, but this has not been implemented yet.
+\end{myitemize}
+
 \subsection{Restarting Suites}
 
 A restarted suite (see \lstinline=cylc restart --help=) is initialized
@@ -4512,71 +4613,66 @@ corresponding real tasks are actually not still running).
 \subsection{Task States}
 
 As a suite runs its tasks (or rather the task proxies that represent 
-the real tasks) move through a series of defined states:
+the real tasks) may move through a number of defined states:
 
 \begin{myitemize}
-    \item {\bf waiting} - prerequisites have not yet been satisfied
+    \item {\bf waiting} - prerequisites not satisfied yet
         (clock-triggered tasks also wait on their trigger time).
 
     \item {\bf queued} - ready to be submitted (i.e.\ prerequisites
-        satisfied) but temporarily held back  by an internal
+        satisfied) but temporarily held in an internal
         cylc queue (see Section~\ref{InternalQueues}). 
 
-    \item {\bf presub} - a task that is ready to run is briefly set to
-        this state in the background job submission thread, and then to
-        {\em submitted} as soon as its job submission process returns.
-        This normally happens too quickly to be seen.
+    \item {\bf submitting} - ready to submitted (i.e.\ prerequisites
+        satisfied) and passed to the background thread that handles task
+        job submission.
 
-    \item {\bf submitted} - submitted to be executed by the specified 
-        job submission method, but not yet running (it may be waiting in
-        an external batch scheduler queue, for example).
+    \item {\bf submitted} - submitted by the configured job submission
+        method, but not yet running (may be waiting in an external batch
+        scheduler queue, for example).
 
-    \item {\bf running} - the task ``started'' message received (sent
-        when a task starts executing) but not yet finished.
+    \item {\bf running} - a ``task started'' message was received, indicating 
+        that the task is now executing.
 
-    \item {\bf retry delayed} - if a task configures the ``retry
-        delays'' item (a list of delay intervals in minutes), then if it
-        fails it will be put in this state for the specified interval
-        and then resubmitted after incrementing the task try number. 
-        A task only enters the final ``failed'' state if the last try fails.
+    \item {\bf retrying} - a ``task failed'' message was received, but the 
+        task has a configured retry lined up after some delay, during which 
+        the task proxy waits in the {\em retrying} state. See
+        Section~\ref{TaskRetries}.
 
     \item two finished states:
         \begin{myitemize}
-            \item {\bf succeeded} - a {\em succeeded } task has finished
-                successfully. It will remain in the suite so long as its
-                outputs could be needed to satisfy the prerequisites of
-                waiting tasks, and then it will be removed from the
-                suite.
-            \item {\bf failed} - a {\em failed} task has aborted after
-                reporting failure. Failed tasks are not automatically
-                removed from the suite, they must be handled by the
-                suite operator (e.g.\ by retriggering after fixing the
-                problem).
-    \end{myitemize}
+            \item {\bf succeeded} - a ``task succeeded'' message was received. 
+               The task proxy will remain in the suite in this state
+               until cylc determines its outputs are no longer needed
+               to satisfy the prerequisites of other waiting tasks.
+
+            \item {\bf failed} - a ``task failed'' message was received, or 
+                some other error condition such as job submission
+                failure occured. Task proxies in the {\em failed} state
+                are not automatically removed from the suite.
+        \end{myitemize}
+
+    \item two held (paused) states:
+        \begin{myitemize}
+            \item {\bf held} - a {\em held} task will not be submitted,
+                even if it is ready to run, until released.
+                Only waiting tasks can be held. The suite operator can
+                deliberately hold tasks, and cylc itself puts tasks on
+                hold under certain circumstances. For example, if the 
+                suite has been told to shut down after currently running 
+                tasks have finished, waiting tasks will be put on hold 
+                while any currently running tasks are finishing.
+
+            \item {\bf runahead} - a task in the {\em runahead} state has
+                exceeded the suite runahead limit, i.e.\ it has got too far
+                ahead of the slowest tasks and will be held back until 
+                they have caught up sufficiently. This state is automatically
+                managed by cylc, but the size of the limit is
+                configurable. See Section~\ref{RunaheadLimit}.
+        \end{myitemize}
 \end{myitemize}
 
-In addition, there are two held (paused) task states:
-
-\begin{myitemize}
-    \item {\bf held} - a {\em held} task will not be submitted,
-        even if it is ready to run, until it is released.
-        Tasks that are already running cannot be held. The suite
-        operator can deliberately hold tasks, and cylc itself puts
-        tasks on hold under certain circumstances. For example, if the 
-        suite has been told to ``shut down after currently running 
-        tasks have finished'' waiting tasks will be put on hold 
-        while currently running tasks are finishing.
-
-    \item {\bf runahead} - a task in the {\em runahead} state has
-        exceeded the suite runahead limit, i.e.\ it has got ``too far
-        ahead'' of the slowest tasks and will be held back until 
-        they have caught up sufficiently. This state is automatically
-        managed by cylc. See {\em
-        The Suite Runahead Limit}, Section~\ref{RunaheadLimit}.
-
-\end{myitemize}
-
-And a pseudo-state displayed by the gcontrol graph view:
+Finally, there is also a pseudo-state displayed by the gcylc graph view:
 
 \begin{myitemize}
     \item {\bf base} (Graph Control GUI only) - greyed out base graph
@@ -4587,103 +4683,9 @@ And a pseudo-state displayed by the gcontrol graph view:
 
 And a pseudo-state for task reset purposes:
 \begin{myitemize}
-    \item {\bf ready} - to set a task to {\em ready} is to to set it to
-        {\em waiting} and to set all of its prerequisites satisfied.
+    \item {\bf ready} - to reset a task to {\em ready} is to to set it to
+        the {\em waiting} state and set all of its prerequisites satisfied.
 \end{myitemize}
-
-
-\subsection{Secure Passphrases, Remote Control, And Task Messaging}
-\label{passphrases}
-
-There are two ways in which suite interrogation and control commands,
-the suite control GUI, and running tasks (cylc clients) can communicate
-with running suites (cylc servers):
-\begin{myenumerate}
-    \item Pyro RPC (remote procedure call) over the network, or
-    \item Re-invocation of cylc commands on the suite host by
-        passwordless ssh, so that the ultimate Pyro RPC connection only
-        occurs on the suite host.
-\end{myenumerate}
-For the Pyro connection method to work the right network ports must be
-open (cylc starts grabbing ports at number 7766 by default.\footnote{The
-Pyro port range is configured in
-\lstinline=$CYLC_DIR/conf/CylcGlobals.py=.}) and there must be network
-routing between the involved hosts.
-
-\subsubsection{Pyro Connections and Secure Passphrases}
-
-All Pyro connections to a suite require authentication with a secure
-passphrase.\footnote{Suite passphrases are never transferred across the
-network (a secure MD5 checksum is).} A random passphrase is generated in
-the suite definition directory when a suite is registered. It must be
-distributed to any other user account, local or remote, that hosts tasks
-from the suite, or from which you need to do Pyro-based remote suite
-monitoring or control.  Passphrases can be installed into any of the
-following locations, in order of preference:
-\begin{myenumerate}
-    \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
-    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
-    \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
-    \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
-    \item (or, optionally, given on the commandline with \lstinline=-p FILE=)
-\end{myenumerate}
-The locations under \lstinline=$HOME/.cylc= are suitable for remote
-suite control accounts - in which case the suite definition directory
-may not be known or accessible. If the suite definition directory is
-installed on a remote task host (it can be in the same location with
-respect to \lstinline=$HOME= as the suite definition directory on the
-suite host, or it can be specified explicitly in the suite definition) 
-the passphrase can go there; otherwise use one of the secondary
-locations listed above. 
-
-\subsubsection{Ssh-Pyro Connections}
-
-For ssh-based messaging and suite control, ssh keys must be installed in
-the relevant accounts to allow passwordless ssh connections back to the
-suite host account. The suite passphrase is then only required on the
-suite host.  
-
-\subsubsection{Choosing The Communication Method}
-
-The Pyro connection method is the default because it is simpler and more
-efficient, but if your remote task host does not have the right network
-ports open, and the IT staff are reluctant to change that, then the ssh
-alternative is available {\em so long as your local system and network
-configurations do not also prevent ssh connections back to the suite
-host - in that case see Section~\ref{difficultnetworkenv} below}.
-
-To use the ssh-Pyro connection method:
-\begin{myitemize}
-    \item For remote tasks, set \lstinline@ssh messaging = True@ for the
-relevant tasks or families under the suite definition.
-\lstinline=[runtime]= section.
-    \item For user-invoked suite interrogation and control commands, use
-        the \lstinline=--use-ssh= command line option. Commands that
-        normally prompt before taking action will also require use of
-        \lstinline=-f,--force=.
-\end{myitemize}
-
-\subsubsection{If You Cannot Use Pyro or Ssh Connections}
-\label{difficultnetworkenv}
-
-It has come to our attention that some HPC facilities do not have any
-networking routing back out of the compute nodes, for security reasons
-and/or to avoid network chatter that could affect performance.  Any
-kind of communication back to a cylc suite running on an external host
-would then presumably be impossible, but: 
-
-\begin{myitemize}
-    \item You may be able to run cylc itself on one of the HPC login
-        nodes. Depending on what software is installed on the HPC,
-        however, this may preclude use of the cylc GUI and suite
-        visualization tools.
-    \item You may be able to persuade your system administrators to
-        provide networking routing to a dedicated cylc server,
-        if not to the wider world.
-    \item It has been suggested that some kind of network {\em port
-        forwarding} could provide a possible solution ...
-\end{myitemize}
-
 
 
 \subsection{Determining The Suite Network Port}
@@ -4716,6 +4718,7 @@ once, or rather - to avoid swamping the host system as each job
 submission occurs in its own spawned subprocess - in batches whose
 members are submitted in parallel. The default batch size of 50 can be
 overridden in suite definitions:
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [cylc]
@@ -4751,7 +4754,7 @@ clock) will spawn rapidly into the future if not constrained somehow.
 There are two issues to be aware of here: over-burdening task host
 resources by submitting too many tasks at once, and over-burdening cylc
 itself by letting the task pool become too big (when fast tasks spawn
-ahead of the pack cylc has to keep them around in the ``succeeded''
+ahead of the pack cylc has to keep them around in the {\em succeeded}
 state until other tasks, which may depend on them, have caught up). 
 
 \subsubsection{The Suite Runahead Limit}
@@ -4776,7 +4779,7 @@ A cycling task spawns its successor when it enters the submitted state
 or, for sequential tasks, when it finishes. If a newly spawned task's
 cycle time is ahead of the oldest non-finished (succeeded or failed)
 task by more than the runahead limit it is put into the special
-``runahead held'' state until other tasks catch up sufficiently.
+{\em runahead} held state until other tasks catch up sufficiently.
 
 In cylc-4.5.1 and earlier it was possible to stall a suite by setting
 the runahead limit too low; now however it is applied in such a way
@@ -4854,7 +4857,7 @@ See also Section~\ref{RefRetries} in the {\em Suite.rc Reference}.
 
 Tasks can be configured with a list of ``retry delay'' periods, in
 minutes, such that if a task fails it will go into a temporary
-``retry\_delayed'' state and then automatically resubmit itself after
+{\em retrying} state and then automatically resubmit itself after
 the next specified delay period expires. A usage example is shown in the
 suite listed below under {\em Suite And Task Event Handling},
 Section~\ref{EventHandling}.
@@ -4904,7 +4907,7 @@ running tasks} so if you wish to pass them additional information via
 the environment you must use [cylc] $\rightarrow$ [[environment]],
 not task runtime environments.
 
-Here is an example suite that tests the ``retry'' and ``failed'' events.
+Here is an example suite that tests the {\em retry} and {\em failed} events.
 The handler in this case simply echoes its command line arguments to
 suite stdout.
 
@@ -5054,7 +5057,7 @@ cold-start cycle time is stored in suite state dump files.
 \label{SimulationMode}
 
 Since cylc-4.6.0 any cylc suite can run in {\em live}, {\em simulation},
-or {\em dummy} mode.  Prior to that release ``simulation mode'' was a
+or {\em dummy} mode.  Prior to that release simulation mode was a
 hybrid mode that replaced real tasks with local dummy tasks. This
 allowed local simulation testing of any suite, to get the scheduling
 right without running real tasks, but running dummy tasks locally does
@@ -5063,7 +5066,7 @@ submitted at all) because all job submission configuration has to be
 ignored and most task job script sections have to be cut out to avoid
 any code that could potentially be specific to the intended task host.
 So at 4.6.0 we replaced this with a pure simulation mode (task proxies
-go through the ``running'' state automatically within cylc, and no
+go through the {\em running} state automatically within cylc, and no
 dummy tasks are submitted to run) and a new dummy mode in which only the
 real task command scripting  is dummied out - each dummy task is
 submitted exactly as the task it represents on the correct host and in
@@ -5452,7 +5455,7 @@ advantages to fine-graining:
 It should be possible to rerun a task by simply resubmitting it for the
 same cycle time. In other words, failure at any point during execution
 of a task should not render a rerun impossible by corrupting the state
-of some internal-use file, or whatever. It's difficult to overstate the
+of some internal-use file, or whatever. It is difficult to overstate the
 usefulness of being able to rerun the same task multiple times,
 either outside of the suite with \lstinline=cylc submit=, or by
 retriggering it within the running suite, when debugging a problem.
@@ -5767,7 +5770,7 @@ To watch suite locks being acquired and released as a suite runs,
 \section{The Suite Control GUI Graph View}
 \label{TheGraphBasedcontrolGUI}
 
-The graph view in the gcontrol GUI has the advantage that it shows
+The graph view in the gcylc GUI has the advantage that it shows
 the structure of a suite very clearly as it evolves. It works remarkably
 well even for very large suites (up to several hundred tasks or more)
 {\em but} because the graphviz engine does a new global layout every
@@ -6031,7 +6034,7 @@ Office UK); and Luis Kornblueh (MPI).
 %    \item {\em One forecast cycle runs into the next, after a delay in
 %        operations}. This is never a problem for cylc; every task runs
 %        as soon as it can run, regardless of forecast cycle, and any
-%        task that can't run before it's predecessor has finished will
+%        task that can't run before its predecessor has finished will
 %        wait.
 %
 %    \item {\em A delayed parallel trial or case study catches up to real
