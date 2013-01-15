@@ -23,11 +23,13 @@
 # generated (PDF and/or HTML single page and/or HTML multi-page).
 # It can however be executed manually from within the doc directory.
 
+set -e
+
 echo
 echo "Generating document index"
 echo
 
-CYLC_VERSION=$($(dirname $0)/../bin/cylc --version)
+CYLC_VERSION=$($(dirname $0)/../../bin/cylc --version)
 INDEX=index.html
 
 cat > $INDEX <<END
@@ -78,9 +80,9 @@ cat >> $INDEX <<END
 <ul>
 END
 
-if [[ -f cug.pdf ]]; then
+if [[ -f pdf/cug-pdf.pdf ]]; then
     cat >> $INDEX <<END
-<li> <a href="cug.pdf">PDF format</a> </li>
+<li> <a href="pdf/cug-pdf.pdf">PDF format</a> </li>
 END
 else
     cat >> $INDEX <<END
@@ -88,9 +90,9 @@ else
 END
 fi
 
-if [[ -f cug1.html ]]; then
+if [[ -f html/single/cug-html.html ]]; then
     cat >> $INDEX <<END
-<li> <a href="cug1.html">HTML single-page</a> </li>
+<li> <a href="html/single/cug-html.html">HTML single-page</a> </li>
 END
 else
     cat >> $INDEX <<END
@@ -99,9 +101,9 @@ END
 
 fi
 
-if [[ -f cug.html ]]; then
+if [[ -f html/multi/cug-html.html ]]; then
     cat >> $INDEX <<END
-<li> <a href="cug.html">HTML multi-page</a> </li>
+<li> <a href="html/multi/cug-html.html">HTML multi-page</a> </li>
 END
 else
     cat >> $INDEX <<END
