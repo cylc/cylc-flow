@@ -1,31 +1,46 @@
 #!/bin/bash
 
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 echo "Generating command help"
 
 CYLC=../bin/cylc
 
-rm -rf new-command-usage
-mkdir -p new-command-usage
+NEWCOMMANDHELP=$( mktemp -d )
 
-$CYLC help > new-command-usage/help.txt
+$CYLC help > $NEWCOMMANDHELP/help.txt
 
 echo "Categories"
 for CAT in $( $CYLC categories ); do
 	echo " o $CAT"
-	$CYLC help $CAT > new-command-usage/${CAT}.txt
+	$CYLC help $CAT > $NEWCOMMANDHELP/${CAT}.txt
 done
 
 echo "Commands"
 for COMMAND in $( $CYLC commands ); do
 	echo " + $COMMAND"
-	$CYLC $COMMAND --help > new-command-usage/${COMMAND}.txt
+	$CYLC $COMMAND --help > $NEWCOMMANDHELP/${COMMAND}.txt
 done
 
 # regenerate commands.tex only if command usage help has changed 
 
 if [[ ! -f commands.tex ]]; then
     echo "No existing command help file, generating commands.tex"
-elif ! diff -r new-command-usage command-usage >/dev/null 2>&1; then
+elif ! diff -r $NEWCOMMANDHELP command-usage >/dev/null 2>&1; then
     # diff returns 0 if target files do not differ
 	echo "Command help changed, I will regenerate commands.tex"
 else
@@ -34,7 +49,7 @@ else
 fi
 
 rm -rf command-usage/
-cp -r new-command-usage/ command-usage
+cp -r $NEWCOMMANDHELP/ command-usage
 
 cat > commands.tex <<END
 \label{help}
