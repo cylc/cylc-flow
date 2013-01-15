@@ -95,7 +95,7 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsection[job submission]{[cylc] $\rightarrow$ job submission}
+\subsubsection[job submission]{[cylc] $\rightarrow$ job submission}
 
 Tasks ready to submit are now queued for processing in a background
 worker thread, so submitting a lot of tasks at once does not hold cylc 
@@ -112,7 +112,7 @@ selection command runs as part of the job submission command). The time
 taken for a batch of parallel job submissions to complete will be
 roughly the duration of the slowest member process. 
 
-\subsubsection[batch size]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ batch size}
+\paragraph[batch size]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ batch size}
 
 The maximum number of tasks to be submitted in a single batch, in the
 job submission thread. Cylc waits for all batch member job-submissions
@@ -123,7 +123,7 @@ to complete before proceeding to the next batch.
     \item {\em default:} 10
 \end{myitemize}
 
-\subsubsection[delay between batches]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ delay between batches}
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ delay between batches}
 
 It may cause a problem for some batch queue schedulers to submit too
 many jobs at once, so cylc allows a configurable delay between job 
@@ -132,70 +132,6 @@ submission batches.
 \begin{myitemize}
     \item {\em type:} integer (minimum 0)
     \item {\em default:} 15 seconds
-\end{myitemize}
-
-\subsubsection[{[[}logging{]]} ]{[cylc] $\rightarrow$ [[logging]]}
-
-This section configures cylc's logging functionality, which records
-time-stamped events to a special log file. 
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ directory}
-
-The cylc log and its backups are stored in this directory. If you change
-the directory make sure it remains suite-specific by using suite
-identity environment variables in the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/suite=
-\end{myitemize}
-
-\paragraph[roll over at start-up]{[cylc] $\rightarrow$ [[logging]] $\rightarrow$ roll over at start-up}
-
-Suite logs roll over (start anew) automatically when they reach a
-certain size - currently hardwired to 1MB in
-\lstinline=$CYLC_DIR/lib/cylc/pimp_my_logger.py=. 
-They can also be rolled automatically whenever a
-suite is started or restarted.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
-\end{myitemize}
-
-\subsubsection[{[[}state dumps{]]}]{ [cylc] $\rightarrow$ [[state dumps]] }
-
- State dump files allow cylc to restart suites from previous states of
- operation. 
-
-\paragraph[directory]{[cylc] $\rightarrow$ [[state dumps]] $\rightarrow$ directory}
-
- The rolling archive of suite state dump files, backups of the default 
- state dump, and any special pre-intervention state dumps, are stored
- under this directory.  If you change this directory make sure it
- remains suite-specific by using suite identity environment variables in
- the path.
-
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/state=
-\end{myitemize}
-
-\paragraph[number of backups]{[cylc] $\rightarrow$ [[state dumps]] $\rightarrow$ number of backups}
-
-This is the length, in number of changes, of the automatic rolling
-archive of state dump files that allows you to restart a suite from a
-previous state.  Every time a task changes state cylc updates the state
-dump and rolls previous states back one on the archive.  You'll probably
-only ever need the latest (most recent) state dump, which is
-automatically used in a restart, but any previous state still in the
-archive can be used.  Additionally, special labeled state dumps are
-written out prior to actioning any suite intervention - their filenames
-are logged by cylc.
-
-\begin{myitemize}
-    \item {\em type:} integer ($\geq 1$)
-    \item {\em default:} $10$
 \end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
