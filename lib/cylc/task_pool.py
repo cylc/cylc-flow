@@ -141,7 +141,8 @@ class pool(object):
                             n_release -= 1
                             readytogo.append(itask)
                         else:
-                            itask.state.set_status('queued')
+                            # (direct task state reset ok: this executes in the main thread)
+                            itask.reset_state_queued()
                     else:
                         readytogo.append(itask)
 
@@ -155,9 +156,9 @@ class pool(object):
         print n_tasks, 'TASKS READY TO BE SUBMITTED'
 
         for itask in readytogo:
-            itask.state.set_status('submitting')
+            # (direct task state reset ok: this executes in the main thread)
+            itask.reset_state_submitting()
             self.jobqueue.put( itask )
 
         return readytogo
-
 

@@ -367,8 +367,20 @@ class task( object ):
         self.outputs.add( self.id + ' failed', completed=True )
 
     def reset_state_held( self ):
-        itask.state.set_status( 'held' )
+        self.state.set_status( 'held' )
         self.record_db_update("task_states", self.name, self.c_time, status="held")
+
+    def reset_state_runahead( self ):
+        self.state.set_status( 'runahead' )
+        self.record_db_update("task_states", self.name, self.c_time, status="runahead")
+
+    def reset_state_submitting( self ):
+        self.state.set_status( 'submitting' )
+        self.record_db_update("task_states", self.name, self.c_time, status="submitting")
+
+    def reset_state_queued( self ):
+        self.state.set_status( 'queued' )
+        self.record_db_update("task_states", self.name, self.c_time, status="queued")
 
     def override( self, target, sparse ):
         for key,val in sparse.items():
@@ -733,15 +745,13 @@ class task( object ):
             # Received a 'task started' message
             self.set_running()
 
-        ## now the message queue is also by the job submission worker thread
-        ##if not self.state.is_currently('running'):
-        ##    # Only running tasks should be sending messages
-        ##    self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
-
-        if message == self.id + ' submitted':
+        elif message == self.id + ' submitted':
+            # (a faked task message from the job submission thread)
             self.set_submitted()
 
         if message == self.id + ' failed':
+            # (note not 'elif' here as started messages must go through
+            # the elif block below)
             # Received a 'task failed' message
             self.succeeded_time = task.clock.get_datetime()
             try:
