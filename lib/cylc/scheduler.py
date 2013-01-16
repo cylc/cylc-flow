@@ -1259,6 +1259,14 @@ class scheduler(object):
 
         print message
 
+        #disconnect from suite-db/stop db queue
+        self.db.close()
+        print " * disconnecting from suite database"
+
+        if not self.options.noredirect:
+            self.suite_outputer.restore()
+
+        # shutdown handler
         handler = self.config.event_handlers['shutdown']
         if handler:
             if self.config.abort_if_shutdown_handler_fails:
@@ -1275,14 +1283,6 @@ class scheduler(object):
                     sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
-
-
-        #disconnect from suite-db/stop db queue
-        self.db.close()
-        print " * disconnecting from suite database"
-
-        if not self.options.noredirect:
-            self.suite_outputer.restore()
 
     def set_stop_ctime( self, stop_tag ):
         self.log.warning( "Setting stop cycle time: " + stop_tag )
