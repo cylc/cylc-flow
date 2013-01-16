@@ -170,7 +170,7 @@ class task( object ):
 
         gcfg = globalcfg()
         suite_name = os.environ['CYLC_SUITE_REG_NAME']
-        self.db_path = os.path.join(gcfg.cfg['run directory'], suite_name)
+        self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], suite_name)
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
         
         # sets submit num for restarts or when triggering state prior to submission

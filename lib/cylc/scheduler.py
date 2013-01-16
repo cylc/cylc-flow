@@ -235,11 +235,6 @@ class scheduler(object):
             self.config.suite_timeout = timeout
             self.config.reset_timer = False
 
-        if not self.is_restart:     # create new suite_db file if needed
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite, new_mode=True)
-        else:
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite)
-
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
         self.log.critical( 'Suite starting at ' + str( datetime.datetime.now()) )
@@ -812,7 +807,13 @@ class scheduler(object):
                 verbose=self.verbose )
         self.config.create_directories()
 
-        self.banner[ 'SUITE RUN DIR' ] = self.globals.cfg['task hosts']['local']['run directory']
+        run_dir = self.globals.cfg['task hosts']['local']['run directory']
+        self.banner[ 'SUITE RUN DIR' ] = run_dir
+
+        if not self.is_restart:     # create new suite_db file if needed
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite, new_mode=True)
+        else:
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite)
 
         self.stop_task = None
 
