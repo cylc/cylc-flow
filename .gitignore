@@ -5,18 +5,11 @@
 # generated documentation
 doc/command-usage/
 doc/commands.tex
+doc/graphics/png-scaled/
+doc/html/
+doc/pdf/
 doc/index.html
-doc/cug.html
-doc/cug1.html
-doc/cug.pdf
 doc/cylc-version.txt
-doc/cug-html*.html
-doc/cug-html.css
-doc/cug-pdf.aux
-doc/cug-pdf.lof
-doc/cug-pdf.log
-doc/cug-pdf.out
-doc/cug-pdf.toc
 
 # vim backup files
 *.swp

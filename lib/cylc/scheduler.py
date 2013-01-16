@@ -56,6 +56,8 @@ from suite_info_interface import info_interface
 from TaskID import TaskID, TaskIDError
 from task_pool import pool
 import flags
+import cylc.rundb
+
 
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -63,6 +65,7 @@ class result:
         self.success = success
         self.reason = reason
         self.value = value
+
 
 class SchedulerError( Exception ):
     """
@@ -74,6 +77,7 @@ class SchedulerError( Exception ):
         self.msg = msg
     def __str__( self ):
         return repr(self.msg)
+
 
 class request_handler( threading.Thread ):
     def __init__( self, pyro, verbose ):
@@ -230,6 +234,11 @@ class scheduler(object):
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.config.suite_timeout = timeout
             self.config.reset_timer = False
+
+        if not self.is_restart:     # create new suite_db file if needed
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite, new_mode=True)
+        else:
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite)
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -1069,6 +1078,12 @@ class scheduler(object):
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
 
+            # process queued database operations
+            for itask in self.pool.get_tasks():
+                db_ops = itask.get_db_ops()
+                for d in db_ops:
+                    self.db.run_db_op(d)
+                
             # process queued commands
             self.process_command_queue()
 
@@ -1263,6 +1278,11 @@ class scheduler(object):
                     sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
+
+
+        #disconnect from suite-db/stop db queue
+        self.db.close()
+        print " * disconnecting from suite database"
 
         if not self.options.noredirect:
             self.suite_outputer.restore()

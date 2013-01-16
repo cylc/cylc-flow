@@ -323,7 +323,6 @@ optional, but they organize help and disambiguate abbreviated commands:
   % cylc c t SUITE TASK                 # ditto
 
 SUITE NAMES AND DATABASES
-
   Suites are addressed by hierarchical names (e.g. suite1, nwp.oper,
 nwp.test.LAM2, etc.) registered in a database that associates suite
 names with suite definition locations. Your default database is located
@@ -334,7 +333,6 @@ database, with the '--db=u:USER' option (access is governed by normal
 filesystem permissions). 
 
 REMOTE COMMAND RE-INVOCATION BY SSH
-
   If passwordless ssh is configured the '--host=' and '--owner=' command
 options result in most cylc commands being re-invoked on other hosts or
 user accounts. The '--use-ssh' flag results in the same for suite
