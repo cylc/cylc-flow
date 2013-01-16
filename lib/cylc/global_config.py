@@ -222,6 +222,10 @@ class globalcfg( object ):
         for item in usercfg:
             # iterate through sparse user config and check for attempts
             # to override any items marked '# SITE ONLY' in the spec.
+            if item not in comments:
+                # some items need not be in site config (e.g.
+                # user-specified task hosts).
+                break
             if isinstance( usercfg[item], dict ):
                 if any( re.match( '^\s*# SITE ONLY\s*$', mem ) for mem in comments[item]):
                     # section blocked, but see if user actually attempts
