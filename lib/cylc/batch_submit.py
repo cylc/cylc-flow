@@ -28,6 +28,11 @@ class batcher( threading.Thread ):
     on all members before proceeding to the next batch in order to avoid
     swamping the system with too many parallel job submission processes."""
 
+    # Note that task state changes as a result of job submission are
+    # queued by means of faking incoming task messages - this does not
+    # execute in the main thread so we need to avoid making direct task
+    # state changes here.
+
     def __init__( self, jobqueue, wireless, batch_size, batch_delay, run_mode, verbose ):
         threading.Thread.__init__(self)
         self.jobqueue = jobqueue
