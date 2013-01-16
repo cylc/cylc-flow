@@ -278,14 +278,14 @@ general_usage = """
 Cylc ("silk") is a suite engine and metascheduler that specializes in 
 cycling weather and climate forecasting suites and related processing
 (but it can also be used for one-off workflows of non-cycling tasks).
+For detailed documentation see the Cylc User Guide (cylc doc --help).
 
 Version """+cylc_version+""" 
 
-This is the cylc Command Line Interface. The cylc Graphical User
-Interfaces are:
-    * "gcylc" (a.k.a. "cylc gui") - work on and run a specific suite.
-    * "cylc dbviewer" - view registered suites (right-click to act).
-    .
+Cylc also has a comprehensive Graphical User Interface:
+  * "gcylc" (a.k.a. "cylc gui") - work on and run a specific suite.
+  * "cylc dbviewer" - to view registered suites; right-click to act.
+    
 USAGE:
   % cylc -v,--version                   # print cylc version
   % cylc help,--help,-h,?               # print this help page
@@ -322,46 +322,14 @@ optional, but they organize help and disambiguate abbreviated commands:
   % cylc con trig SUITE TASK            # ditto
   % cylc c t SUITE TASK                 # ditto
 
-SUITE NAMES AND DATABASES
-  Suites are addressed by hierarchical names (e.g. suite1, nwp.oper,
-nwp.test.LAM2, etc.) registered in a database that associates suite
-names with suite definition locations. Your default database is located
-at $HOME/.cylc/DB. The '--db=' command option can be used to work with
-suites registered in other databases. You should be able to read and
-graph (etc.) another user's suite definitions, from their default
-database, with the '--db=u:USER' option (access is governed by normal
-filesystem permissions). 
+CYLC SUITE NAMES AND YOUR REGISTRATION DATABASE
+  Suites are addressed by hierarchical names such as suite1, nwp.oper,
+nwp.test.LAM2, etc. in a "registration database" ($HOME/.cylc/DB) that
+simply associates names with the suite definition locations.  The
+'--db=' command option can be used to view and copy suites from other
+users, with access is governed by normal filesystem permissions. 
 
-REMOTE COMMAND RE-INVOCATION BY SSH
-  If passwordless ssh is configured the '--host=' and '--owner=' command
-options result in most cylc commands being re-invoked on other hosts or
-user accounts. The '--use-ssh' flag results in the same for suite
-control commands that normally RPC across the network instead (below).
-
-REMOTE SUITE CONTROL BY RPC (PYRO)
-  Cylc commands, GUIs, and tasks that interact with running suites use a
-network RPC protocol (Pyro) with passphrase authentication. The '--host'
-and '--owner' command options target a suite running on another host or
-user account. The suite passphrase, generated in the suite definition
-directory at registration time, should be installed on a remote control
-host in one of the following locations:
-  1) $HOME/.cylc/<HOST>/<OWNER>/<SUITE>/passphrase,
-  2) $HOME/.cylc/<HOST>/<SUITE>/passphrase, or
-  3) $HOME/.cylc/<SUITE>/passphrase).
-  4) Or specify the location explicitly with '--p','--passphrase='.
-A running task first looks in the suite definition directory for the
-passphrase, then the above locations. Likewise a remote task checks
-the remote suite definition directory first, if one is configured.
-
-REMOTE SUITE CONTROL BY SSH RE-INVOCATION
-  If the network ports required by Pyro are not open you can use the
-'--use-ssh' flag to re-invoke suite control commands on the suite host.
-For remote tasks the same can be achieved, in the suite definition, by:
-  [runtime]->[[NAMESPACE]]->[[[remote]]]->'ssh messaging = True';
-then the passphrase is not needed on the remote host because the RPC
-connection is only made on the suite host (ssh keys are needed though).
-
-TASK IDENTIFICATION
+TASK IDENTIFICATION IN CYLC SUITES
   Tasks are identified by NAME%TAG where for cycling tasks TAG is a
 cycle time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is
 an integer (just '1' for one-off asynchronous tasks).
