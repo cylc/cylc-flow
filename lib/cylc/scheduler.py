@@ -494,7 +494,7 @@ class scheduler(object):
         found = False
         for itask in self.pool.get_tasks():
             if itask.id == task_id:
-                itask.state.set_status( 'waiting' )
+                itask.reset_state_waiting()
                 found = True
                 break
         if found:
@@ -520,7 +520,7 @@ class scheduler(object):
                 if itask.state.is_currently('waiting') or itask.state.is_currently('queued') or \
                         itask.state.is_currently('retrying'):
                     was_waiting = True
-                    itask.state.set_status( 'held' )
+                    itask.reset_state_held()
                 break
         if found:
             if was_waiting:
@@ -1308,7 +1308,7 @@ class scheduler(object):
                         itask.state.is_currently('retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
-                    itask.state.set_status('held')
+                    itask.reset_state_held()
 
     def release_suite( self ):
         if self.hold_suite_now:
@@ -1325,7 +1325,7 @@ class scheduler(object):
                     itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
                 else:
                     # release this task
-                    itask.state.set_status('waiting')
+                    itask.reset_state_waiting()
  
         # TO DO: write a separate method for cancelling a stop time:
         #if self.stop_tag:
@@ -1472,27 +1472,27 @@ class scheduler(object):
                     if int( foo.get() ) < int( ouct ):
                         if self.hold_suite_now:
                             itask.log( 'DEBUG', "Releasing runahead (to held)" )
-                            itask.state.set_status('held')
+                            itask.reset_state_held()
                         else:
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
-                            itask.state.set_status('waiting')
+                            itask.reset_state_waiting()
 
     def check_hold_spawned_task( self, old_task, new_task ):
         if self.hold_suite_now:
             new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
-            new_task.state.set_status('held')
+            new_task.reset_state_held()
         elif self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
             # we've reached the suite stop time
             new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
-            new_task.state.set_status('held')
+            new_task.reset_state_held()
         elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
             # we've reached the suite hold time
             new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
-            new_task.state.set_status('held')
+            new_task.reset_state_held()
         elif old_task.stop_c_time and int( new_task.c_time ) > int( old_task.stop_c_time ):
             # this task has a stop time configured, and we've reached it
             new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
-            new_task.state.set_status('held')
+            new_task.reset_state_held()
         elif self.runahead_limit:
             ouct = self.get_runahead_base()
             foo = ct( new_task.c_time )
@@ -1500,7 +1500,7 @@ class scheduler(object):
             if int( foo.get() ) >= int( ouct ):
                 # beyond the runahead limit
                 new_task.plog( "HOLDING (runahead limit)" )
-                new_task.state.set_status('runahead')
+                new_task.reset_state_runahead()
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -1941,11 +1941,11 @@ class scheduler(object):
                 else: 
                     if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
                         itask.plog( "HOLDING at configured suite stop time " + self.stop_tag )
-                        itask.state.set_status('held')
+                        itask.reset_state_held()
                     if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
                         itask.plog( "HOLDING at configured task stop time " + itask.stop_c_time )
-                        itask.state.set_status('held')
+                        itask.reset_state_held()
                     inserted.append( itask.id )
                     to_insert.append(itask)
 
@@ -2117,7 +2117,7 @@ class scheduler(object):
                 if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
                     # we've reached the stop time
                     new_task.plog( 'HOLDING at configured suite stop time' )
-                    new_task.state.set_status('held')
+                    new_task.reset_state_held()
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
                 self.pool.add( new_task )
