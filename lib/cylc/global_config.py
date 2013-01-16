@@ -34,6 +34,16 @@ class globalcfg( object ):
         to catch errors; disallow user config of site-only items; expand
         environment variables, and create directories.""" 
 
+        try:
+            self.load()
+        except Exception, x:
+            print >> sys.stderr, x
+            print >> sys.stderr, "Failed to load load cylc site/user config:"
+            print >> sys.stderr, "  + " + self.rcfiles['site']
+            print >> sys.stderr, "  + " + self.rcfiles['user']
+            raise SystemExit("ABORTING")
+
+    def load( self ):
         # location of the configspec file
         cfgspec = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'cfgspec' )
 
@@ -42,30 +52,23 @@ class globalcfg( object ):
                 'site' : os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' ),
                 'user' : os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )}
 
-        # load the user file
+        # load the (sparse) user file
         rc = self.rcfiles['user']
-        try:
-            self.usercfg = ConfigObj( infile=rc, configspec=cfgspec )
-        except ConfigObjError, x:
-            # (a non-existent user file does not trigger this exception)
-            print >> sys.stderr, x
-            raise SystemExit( "ERROR loading config file: " + rc )
+
+        self.usercfg = ConfigObj( infile=rc, configspec=cfgspec )
+
+        # load the (sparse) site file
+        rc = self.rcfiles['site']
+
+        self.sitecfg = ConfigObj( infile=rc, configspec=cfgspec, _inspec=False )
 
         # generate a configobj with all defaults loaded from the configspec
         # (and call it self.cfg as we re-use it below for the final result)
         self.cfg = ConfigObj( configspec=cfgspec )
         self.validate( self.cfg ) # (validation loads the default settings)
+
         # check the user file for any attempt to override site-onlyitems
         self.block_user_cfg( self.usercfg, self.cfg, self.cfg.comments )
-
-        # load the site file
-        rc = self.rcfiles['site']
-        try:
-            self.sitecfg = ConfigObj( infile=rc, configspec=cfgspec, _inspec=False )
-        except ConfigObjError, x:
-            # (a non-existent site file does not trigger this exception)
-            print >> sys.stderr, x
-            raise SystemExit( "ERROR loading config file: " + rc )
 
         # merge site config into defaults (site takes precedence)
         self.cfg.merge( self.sitecfg )
@@ -148,7 +151,7 @@ class globalcfg( object ):
         f.close()
 
         print "File written:", target
-        print "See inside the file for usage instructions."
+        print "See in-file comments for customization information."
 
     def process( self ):
         # process temporary directory
@@ -164,8 +167,7 @@ class globalcfg( object ):
                 mkdir_p( cylc_tmpdir )
             except Exception,x:
                 print >> sys.stderr, x
-                print >> sys.stderr, 'ERROR, illegal temporary directory?', cylc_tmpdir
-                sys.exit(1)
+                raise Exception( 'ERROR, illegal temporary directory? ' + cylc_tmpdir )
         # now replace the original item
         self.cfg['temporary directory'] = cylc_tmpdir
 
@@ -184,7 +186,7 @@ class globalcfg( object ):
             mkdir_p( path )
         except Exception, x:
             print >> sys.stderr, x
-            raise SystemExit( 'ERROR, illegal path? ' + dir )
+            raise Exception( 'ERROR, illegal path? ' + dir )
         return path
 
     def validate( self, cfg ):
@@ -205,7 +207,7 @@ class globalcfg( object ):
                     print >> sys.stderr, "ERROR, required item missing."
                 else:
                     print >> sys.stderr, result
-            raise SystemExit( "ERROR global config validation failed")
+            raise Exception( "ERROR global config validation failed")
         extras = []
         for sections, name in get_extra_values( cfg ):
             extra = ' '
@@ -214,12 +216,16 @@ class globalcfg( object ):
             extras.append( extra + name )
         if len(extras) != 0:
             for extra in extras:
-                print >> sys.stderr, '  ERROR, illegal entry:', extra 
-            raise SystemExit( "ERROR illegal global config entry(s) found" )
+                print >> sys.stderr, '  Illegal item:', extra 
+            raise Exception( 'ERROR: illegal site/user config items detected' )
 
     def block_user_cfg( self, usercfg, sitecfg, comments={}, sec_blocked=False ):
         """Check the comments for each item for the user exclusion indicator."""
         for item in usercfg:
+            if item not in comments:
+                # => an illegal item, it will be caught by validation
+                continue
+
             # iterate through sparse user config and check for attempts
             # to override any items marked '# SITE ONLY' in the spec.
             if isinstance( usercfg[item], dict ):
@@ -232,9 +238,9 @@ class globalcfg( object ):
                 self.block_user_cfg( usercfg[item], sitecfg[item], sitecfg[item].comments, sb )
             else:
                 if any( re.match( '^\s*# SITE ONLY\s*$', mem ) for mem in comments[item]):
-                    raise SystemExit( 'ERROR, item blocked from user override: ' + item )
+                    raise Exception( 'ERROR, item blocked from user override: ' + item )
                 elif sec_blocked:
-                    raise SystemExit( 'ERROR, section blocked from user override, item: ' + item )
+                    raise Exception( 'ERROR, section blocked from user override, item: ' + item )
 
     def dump( self, cfg_in=None ):
         if cfg_in:
