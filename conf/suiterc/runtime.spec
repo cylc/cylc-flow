@@ -68,7 +68,6 @@
             shell = string( default='/bin/bash' )
         [[[remote]]]
             host = string( default=None )
-            host selection command = string( default=None )
             owner = string( default=None )
             # This should really be host-specific in the suite
             # definition; but currently no other items warrant a top

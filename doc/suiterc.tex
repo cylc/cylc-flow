@@ -1147,48 +1147,28 @@ Passwordless ssh must be configured between the local suite owner on the
 suite host, and the task owner on the remote task host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
+\label{DynamicHostSelection}
 
-The remote host for this task or family. The host name should have an
-entry in the cylc site or user config file, to specify parameters such
-as the location of cylc on the remote machine.
+The remote host for this namespace. This can be a static hostname or a
+command that prints a suitable hostname to stdout. Host selection
+commands are executed just prior to job submission. The host (static or
+dynamic) may have an entry in the cylc site or user config file to
+specify parameters such as the location of cylc on the remote machine;
+if not, the corresponding local settings (on the suite host) will be
+assumed to apply on the remote host. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
-\item {\em example:} \lstinline@host = $( host-select.sh )@ (deprecated)
-\item {\em example:} \lstinline@host = `host-select.sh`@ (deprecated)
 \item {\em default:} (none)
-
 \item {\em examples:}
     \begin{myitemize}
-        \item short name: \lstinline@host = foo@
-        \item fully qualified name: \lstinline@host = foo.bar.baz@
+        \item static host name: \lstinline@host = foo@
+        \item fully qualified: \lstinline@host = foo.bar.baz@
         \item dynamic host selection: \lstinline@host = $(host-selector.sh)@ 
         \item dynamic host selection: \lstinline@host = `host-selector.sh)`@ (back-tick version)
     \end{myitemize}
-
 \end{myitemize}
 
-Note that you can specify a shell back-tick expression here to return a
-host name at the time the job submission command is executed by cylc 
-(e.g. \lstinline@host = $(host-selector.sh)@  or
- \lstinline@host = `host-selector.sh`@); but this usage is now
- deprecated in favor of the \lstinline=host selection command= item.
-
-\subparagraph[host selection command]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host selection command}
-\label{DynamicHostSelection}
-
-A command that prints the host name or IP address of the selected task
-host to stdout. The host selection command, if specified, will be
-executed just prior to job submission to determine the task host. The 
-selected host must have an entry in the hosts section of the cylc
-site and/or user config file (although the section may be empty, in
-which case the default host settings will be used).
-
-\begin{myitemize}
-\item {\em type:} string (a command name)
-\item {\em example:} \lstinline@host selection command = host-select.sh@
-\item {\em default:} (none)
-\end{myitemize}
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 

@@ -546,34 +546,33 @@ class task( object ):
 
         suite = self.__class__.suite 
 
-        # We have to determine the task host just before job submission
+        # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
 
-        # host may be None (= run task on suite host); and note that 
-        # host etc have already been processed in config.py
+        # host may be None (= run task on suite host)
         host = rtconfig['remote']['host']
-        host_selector = rtconfig['remote']['host selection command']
-
-        # do dynamic host selection if requested:
-        if host_selector:
-            res = run_get_stdout( host_selector ) # (T/F,[lines])
-            if res[0]:
-                host = res[1]
-                self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
-            else:
-                # treat this as a fatal error for the task
-                # (To Do: should we just default to local static host
-                # settings here?)
-                self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
-                self.incoming( 'CRITICAL', self.id + " failed" )
-                return
-
         if host:
-            # a host was specified
+            # dynamic host section:
+            #   host = $( host-select-command )
+            #   host =  ` host-select-command `
+            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
+            if m:
+                # extract the command and execute it
+                hs_command = m.groups()[1]
+                res = run_get_stdout( hs_command ) # (T/F,[lines])
+                if res[0]:
+                    # host selection command succeeded
+                    host = res[1]
+                    self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
+                else:
+                    # host selection command failed
+                    self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
+                    self.incoming( 'CRITICAL', self.id + " failed" )
+                    return
+
             if host not in gcfg.cfg['task hosts']:
                 # there's no specific config for this host
-                self.log( 'WARNING', "No site/user config for host " + host + """
-  defaulting to 'local' settings""" )
+                self.log( 'NORMAL', "No explicit site/user config for host " + host )
                 cfghost = 'local'
             else:
                 # use host-specific settings
