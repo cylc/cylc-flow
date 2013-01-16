@@ -47,7 +47,7 @@ ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../../examples/@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@command-usage/@../../command-usage/@g'
 
 if [[ $TYPE == multi ]]; then
-    htlatex cug-html.tex "cug-html.cfg,xhtml,fn-in,2,next"
+    htlatex cug-html.tex "cug-html.cfg,html,fn-in,2,next"
 else
     htlatex cug-html.tex "cug-html.cfg,html,1,fn-in" ""
 fi
