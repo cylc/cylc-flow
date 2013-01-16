@@ -104,7 +104,14 @@ class xupdater(threading.Thread):
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
+
+            # on reconnection retrieve static info
+            self.family_nodes = self.sinfo.get( 'family nodes' )
+            self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
+            self.families = self.sinfo.get( 'families' )
+            self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except:
+            # connection lost
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
                                                             self.cfg.suite,
@@ -113,18 +120,9 @@ class xupdater(threading.Thread):
                 if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
-
-        # On reconnection, retrieve static suite info
-        self.stop_summary = None
-        self.status = "connected"
-        try:
-            self.family_nodes = self.sinfo.get( 'family nodes' )
-            self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
-            self.families = self.sinfo.get( 'families' )
-            self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
-        except:
-            return False
-        else:
+        else: 
+            self.stop_summary = None
+            self.status = "connected"
             self.first_update = True
             self.info_bar.set_status( self.status )
             if self.live_graph_movie:
@@ -132,7 +130,8 @@ class xupdater(threading.Thread):
                     mkdir_p( self.live_graph_dir )
                 except Exception, x:
                     print >> sys.stderr, x
-                    raise SuiteConfigError, 'ERROR, illegal dir? ' + self.live_graph_dir 
+                    print >> sys.stderr, "Disabling live graph movie"
+                    self.live_graph_movie = False
             self.first_update = True
             self.status = "connected"
             self.poll_schd.stop()

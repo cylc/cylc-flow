@@ -186,7 +186,13 @@ class tupdater(threading.Thread):
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
-        except Exception, x:
+
+            # on reconnection retrieve static info
+            self.families = self.sinfo.get('families' )
+            self.family_hierarchy = self.sinfo.get('family hierarchy' )
+            self.allowed_families = self.sinfo.get('vis families' )
+        except:
+            # connection lost
             if debug:
                 print ".",
             if self.stop_summary is None:
@@ -201,11 +207,7 @@ class tupdater(threading.Thread):
             self.stop_summary = None
             self.status = "connected"
             self.poll_schd.stop()
-
             self.info_bar.set_status( self.status )
-            self.families = self.sinfo.get('families' )
-            self.family_hierarchy = self.sinfo.get('family hierarchy' )
-            self.allowed_families = self.sinfo.get('vis families' )
             return True
 
     def connection_lost( self ):
@@ -588,6 +590,11 @@ class lupdater(threading.Thread):
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
+
+            # on reconnection retrieve static info
+            self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
+            self.families = self.sinfo.get( 'families' )
+            self.allowed_families = self.sinfo.get( 'vis families' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
@@ -598,9 +605,6 @@ class lupdater(threading.Thread):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
-            self.families = self.sinfo.get( 'families' )
-            self.allowed_families = self.sinfo.get( 'vis families' )
             self.stop_summary = None
             self.status = "connected"
             self.poll_schd.stop()
