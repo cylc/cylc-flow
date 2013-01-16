@@ -1,7 +1,6 @@
 [cylc]
     UTC mode = boolean( default=False )
     required run mode = option( 'live','dummy','simulation', default=None )
-    maximum simultaneous job submissions = integer( min=1, default=50 )
     abort if any task fails = boolean( default=False )
     log resolved dependencies = boolean( default=False )
     [[job submission]]

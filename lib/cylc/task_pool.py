@@ -30,7 +30,6 @@ class pool(object):
         self.debug = debug
         self.qconfig = config['scheduling']['queues'] 
         self.config = config
-        self.n_max_sub = config['cylc']['maximum simultaneous job submissions']
         self.assign()
         self.wireless = wireless
 
