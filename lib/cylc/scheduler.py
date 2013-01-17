@@ -155,6 +155,9 @@ class scheduler(object):
         # global config
         self.globals = globalcfg()
 
+        # create task log directory
+        self.globals.get_task_log_dir( self.suite, create=True )
+
         # read-only commands to expose directly to the network
         self.info_commands = {
                 'ping suite'        : self.info_ping,
@@ -231,11 +234,6 @@ class scheduler(object):
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.config.suite_timeout = timeout
             self.config.reset_timer = False
-
-        if not self.is_restart:     # create new suite_db file if needed
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite, new_mode=True)
-        else:
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.run_dir + "/" + self.suite)
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -809,8 +807,13 @@ class scheduler(object):
                 verbose=self.verbose )
         self.config.create_directories()
 
-        self.run_dir = self.globals.cfg['run directory']
-        self.banner[ 'SUITE RUN DIR' ] = self.run_dir
+        run_dir = self.globals.cfg['task hosts']['local']['run directory']
+        self.banner[ 'SUITE RUN DIR' ] = run_dir
+
+        if not self.is_restart:     # create new suite_db file if needed
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite, new_mode=True)
+        else:
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite)
 
         self.stop_task = None
 
@@ -917,6 +920,7 @@ class scheduler(object):
             self.pyro.connect( self.info_interface, 'suite-info' )
 
             slog = suite_log( self.suite )
+            slog.mkdir()
             slog.pimp( self.logging_level, self.clock )
             self.log = slog.get_log()
             self.logfile = slog.get_path()

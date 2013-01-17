@@ -86,7 +86,6 @@ def translate( rdict ):
             ( 'dummy mode', 'disable post-command scripting' ),
             ( 'dummy mode', 'disable task event hooks' ),
             ( 'dummy mode', 'disable retries' ),
-            ( 'remote', 'ssh messaging' ),
             ( 'event hooks', 'reset timer' ) ]:
 
             if isinstance( item, list ):
