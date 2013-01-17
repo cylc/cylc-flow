@@ -854,6 +854,12 @@ been defined for this suite""").inform()
                     self.window ).warn()
             success = False
 
+    
+        # Force the polling schedule to go back to short intervals so
+        # that the GUI can immediately connect to the started suite.
+        for v in self.current_views:
+            v.t.poll_schd.t_init = None
+
     def about( self, bt ):
         about = gtk.AboutDialog()
         if gtk.gtk_version[0] ==2:

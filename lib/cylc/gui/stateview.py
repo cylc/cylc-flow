@@ -92,7 +92,6 @@ class PollSchd(object):
         self.t_init = None
         self.t_prev = None
 
-
 def compare_dict_of_dict( one, two ):
     """Return True if one == two, else return False."""
     for key in one:
@@ -634,7 +633,7 @@ class lupdater(threading.Thread):
         return False
 
     def update(self):
-        #print "Updating"
+        #print "Attempting Update"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.god.get_task_name_list()
