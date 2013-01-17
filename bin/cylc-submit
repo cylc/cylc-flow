@@ -139,6 +139,7 @@ task.task.suite = suite
 # create the suite log, with a modified directory path ending in
 # 'submit' so that we don't overwrite logs from a proper suite run.
 slog = suite_log( suite, 'submit' )
+slog.mkdir()
 slog.pimp( clock=dclock )
 log = slog.get_log()
 logging_dir = slog.get_dir()
