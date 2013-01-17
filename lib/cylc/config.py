@@ -296,6 +296,7 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.configure_queues()
+
         if self.validation:
             self.check_tasks()
 

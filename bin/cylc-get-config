@@ -54,7 +54,6 @@ BAR = bar
 
 $ cylc get-config --item=[runtime][modelX] foo.bar 
 ...
-work directory = $CYLC_SUITE_DEF_PATH/share
 [[[environment]]]
     FOO = foo
     BAR = bar
@@ -68,10 +67,6 @@ parser.add_option( "-i", "--item", metavar="[SEC...]ITEM",
 parser.add_option( "-t", "--tasks",
         help="Print configured task list.",
         action="store_true", default=False, dest="tasks" )
-
-parser.add_option( "-d", "--directories",
-        help="Print configured suite directory paths.",
-        action="store_true", default=False, dest="dpaths" )
 
 parser.add_option( "-m", "--mark-up",
         help="Prefix output lines with '!cylc!' to aid "
@@ -125,28 +120,6 @@ else:
 if options.tasks:
     for task in config.get_task_name_list():
         print prefix + task
-    sys.exit(0)
-
-if options.dpaths:
-    print "SUITE RUN DIRECTORY:\n ", config['cylc']['suite run directory']
-    print "TASK LOG DIRECTORIES:"
-    logdirs = {}
-    root_ldir = config.get_config(['runtime','root','log directory'])
-    ldirs = [root_ldir]
-    logdirs['root'] = root_ldir
-    for ns in config['runtime'].keys():
-        try:
-            dir = config.get_config(['runtime',ns,'log directory'])
-        except SuiteConfigError, x:
-            raise SystemExit(x)
-        if dir not in ldirs:
-            ldirs.append(dir)
-            logdirs[ns] = dir
-    print prefix + "  + root:", root_ldir
-    for ns in logdirs.keys():
-        if ns == "root":
-            continue
-        print prefix + "  + " + ns + ":", logdirs[ns]
     sys.exit(0)
 
 get_these = []

@@ -34,13 +34,37 @@ from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
+from cylc.global_config import globalcfg
 from cylc.RunEventHandler import RunHandler
+import subprocess
 from cylc.global_config import globalcfg
 import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 
+
+def run_get_stdout( command ):
+    try:
+        popen = subprocess.Popen( command, shell=True,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE )
+        out = popen.stdout.read()
+        err = popen.stderr.read()
+        res = popen.wait()
+        if res < 0:
+            print >> sys.stderr, "ERROR: command terminated by signal %d\n%s" % (res, err)
+            return (False, [])
+        elif res > 0:
+            print >> sys.stderr, "ERROR: command failed %d\n%s" % (res,err)
+            return (False, [])
+    except OSError, e:
+        print >> sys.stderr, "ERROR: command invocation failed %s\n%s" % (str(e),err)
+        return (False, [])
+    else:
+        # output is a string with newlines
+        res = out.strip()
+        return ( True, res )
+    return (False, None )
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -146,7 +170,7 @@ class task( object ):
 
         gcfg = globalcfg()
         suite_name = os.environ['CYLC_SUITE_REG_NAME']
-        self.db_path = os.path.join(gcfg.cfg['run directory'], suite_name)
+        self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], suite_name)
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
         
         # sets submit num for restarts or when triggering state prior to submission
@@ -518,42 +542,58 @@ class task( object ):
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
 
-        share_dir = rtconfig['share directory']
-        work_dir  = rtconfig['work directory']
-        remote_log_dir = rtconfig['remote']['log directory']
-        
-        if rtconfig['remote']['host'] or rtconfig['remote']['owner']:
-            # remote task
-            if rtconfig['remote']['work directory']:
-                # Replace local work directory.
-                work_dir  = rtconfig['remote']['work directory']
-            else:
-                # Use local work directory path, but replace suite
-                # owner's home dir (if present) with literal '$HOME' for
-                # interpretation on the remote host.
-                work_dir  = re.sub( os.environ['HOME'], '$HOME', work_dir )
+        gcfg = globalcfg()
 
-            if rtconfig['remote']['share directory']:
-                # Replace local share directory.
-                share_dir  = rtconfig['remote']['share directory']
-            else:
-                # (as for work dir)
-                share_dir  = re.sub( os.environ['HOME'], '$HOME', share_dir )
+        suite = self.__class__.suite 
 
-            # We need to retain local and remote log directory paths -
-            # the local one is used for the local task job script before
-            # it is copied to the remote host. 
-            if not remote_log_dir:
-                # (as for work dir)
-                remote_log_dir = re.sub( os.environ['HOME'], '$HOME', rtconfig['log directory'] )
+        # Determine task host settings now, just before job submission,
+        # because dynamic host selection may be used.
+
+        # host may be None (= run task on suite host)
+        host = rtconfig['remote']['host']
+        if host:
+            # dynamic host section:
+            #   host = $( host-select-command )
+            #   host =  ` host-select-command `
+            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
+            if m:
+                # extract the command and execute it
+                hs_command = m.groups()[1]
+                res = run_get_stdout( hs_command ) # (T/F,[lines])
+                if res[0]:
+                    # host selection command succeeded
+                    host = res[1]
+                    self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
+                else:
+                    # host selection command failed
+                    self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
+                    self.incoming( 'CRITICAL', self.id + " failed" )
+                    return
+
+            if host not in gcfg.cfg['task hosts']:
+                # there's no specific config for this host
+                self.log( 'NORMAL', "No explicit site/user config for host " + host )
+                cfghost = 'local'
+            else:
+                # use host-specific settings
+                cfghost = host
+        else:
+            cfghost = 'local'
+
+        owner = rtconfig['remote']['owner']
+
+        share_dir = gcfg.get_suite_share_dir( suite, cfghost, owner )
+        work_dir  = gcfg.get_task_work_dir( suite, self.id, cfghost, owner )
+        local_log_dir = gcfg.get_task_log_dir( suite ) 
+        remote_log_dir = gcfg.get_task_log_dir( suite, cfghost, owner )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use ssh messaging'      : rtconfig['remote']['ssh messaging'],
-                'remote cylc path'       : rtconfig['remote']['cylc directory'],
+                'use ssh messaging'      : gcfg.cfg['task hosts'][cfghost]['use ssh messaging'],
+                'remote cylc path'       : gcfg.cfg['task hosts'][cfghost]['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -571,10 +611,10 @@ class task( object ):
                 'directive connector'    : " ",
                 }
         xconfig = {
-                'owner'                  : rtconfig['remote']['owner'],
-                'host'                   : rtconfig['remote']['host'],
-                'log path'               : rtconfig['log directory'],
-                'remote shell template'  : rtconfig['remote']['remote shell template'],
+                'owner'                  : owner,
+                'host'                   : host,
+                'log path'               : local_log_dir,
+                'remote shell template'  : gcfg.cfg['task hosts'][cfghost]['remote shell template'],
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,
