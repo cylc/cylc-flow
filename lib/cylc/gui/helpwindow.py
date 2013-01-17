@@ -191,26 +191,13 @@ before registering a suite 'foo:bar', for example).
 Most right-click menu items invoke cylc command line programs inside a
 wrapper that captures subprocess stdout and stderr streams and displays
 in a window that updates in real time. These output log windows can be
-closed without affecting the associated subprocess, but you will lose
-access to the output (except in the case of the stdout/stderr from cylc
-itself for suites that are started from a suite control GUI - see below).
-
-If you start a suite from the command line, what happens to cylc stdout
-and stderr is of course entirely up to you (you may want to use
-command line redirection and/or the posix nohup command).
+closed without affecting the associated subprocess.
 
 %h3 Control -> Dot or Graph Control GUI
 
 Launch a suite control GUI, with either the "dot" (LED) text treeview
 interface, or the dependency graph interface, to start a suite running,
 or to connect to a suite that is already running. 
-
-If you start the suite from within the control GUI, or if you connect to
-a suite that was started from a control GUI, the GUI subprocess output
-window will show cylc stdout and stderr as redirected to the files
-$HOME/.cylc/GROUP:NAME.(out|err). If you start a suite from the
-command line, where cylc stdout and stderr goes is up to you (use 
-output redirection and/or the posix nohup command, for instance).
 
 %h3 Control -> Submit A Task
 

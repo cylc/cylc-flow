@@ -24,7 +24,7 @@ if remrun().execute():
 import os
 from cylc.CylcOptionParsers import cop
 from cylc.scheduler import scheduler
-from cylc.run import main, set_main_debug
+from cylc.run import main
 from cylc.command_prep import prep_file
 
 class start( scheduler ):
@@ -57,9 +57,6 @@ previous run.
 In task environments, $CYLC_SUITE_FINAL_CYCLE_TIME is always set to the 
 final cycle time if one is set (by suite.rc file or command line). The 
 initial and final cycle time variables persists across suite restarts.
-
-NOTE: daemonize important suites with the POSIX nohup command:
-  $ nohup cylc [con] run SUITE [START] > suite.out 2> suite.err &
 
 NOTE: suites can be (re)started on remote hosts or other user accounts
 if passwordless ssh is set up. The ssh tunnel will remain open to
@@ -109,8 +106,6 @@ the remote host before starting the suite."""
             self.load_tasks = self.load_tasks_raw
         else:
             self.load_tasks = self.load_tasks_cold
-
-        set_main_debug( self.options.debug )
 
     def load_tasks_cold( self ):
         if self.start_tag:
