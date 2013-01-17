@@ -854,11 +854,7 @@ been defined for this suite""").inform()
                     self.window ).warn()
             success = False
 
-    
-        # Force the polling schedule to go back to short intervals so
-        # that the GUI can immediately connect to the started suite.
-        for v in self.current_views:
-            v.t.poll_schd.t_init = None
+        self.reset_connection_polling( None ) 
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -2038,11 +2034,21 @@ or remove task definitions without restarting the suite."""
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
+        poll_item = gtk.ImageMenuItem( "Reset Connection _Polling" )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        poll_item.set_image(img)
+        self._set_tooltip( poll_item, """If gcylc is not connected to a running suite 
+it tries to reconnect after increasingly long delays, to reduce network traffic.""" )
+        self.view_menu.append( poll_item )
+        poll_item.connect( 'activate', self.reset_connection_polling )
+
+        self.view_menu.append( gtk.SeparatorMenuItem() )
+
         key_item = gtk.ImageMenuItem( "Show task state key" )
         dots = DotMaker( self.theme )
         img = dots.get_image( "running" )
         key_item.set_image(img)
-        self._set_tooltip( key_item, "The meaning of each task state color" )
+        self._set_tooltip( key_item, "Describe what task states the colors represent" )
         self.view_menu.append( key_item )
         key_item.connect( 'activate', self.popup_key )
 
@@ -2382,6 +2388,12 @@ or remove task definitions without restarting the suite."""
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
+
+    def reset_connection_polling( self, bt ):
+        # Force the polling schedule to go back to short intervals so
+        # that the GUI can immediately connect to the started suite.
+        for v in self.current_views:
+            v.t.poll_schd.t_init = None
 
     def construct_command_menu( self, menu ):
         ## # JUST CONTROL COMMANDS:
