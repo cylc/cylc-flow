@@ -48,19 +48,19 @@ Dependency graph suite control interface.
         self.last_url = None
 
     def get_control_widgets( self ):
-        self.x = xupdater( self.cfg, self.usercfg, self.info_bar, self.xdot )
-        self.x.start()
+        self.t = xupdater( self.cfg, self.usercfg, self.info_bar, self.xdot )
+        self.t.start()
         return self.xdot.get()
 
     def toggle_graph_disconnect( self, w, update_button ):
         if w.get_active():
-            self.x.graph_disconnect = True
+            self.t.graph_disconnect = True
             w.set_image( gtk.image_new_from_stock( gtk.STOCK_DISCONNECT,
                                                    gtk.ICON_SIZE_SMALL_TOOLBAR ) )
             self._set_tooltip( w, "Click to reconnect" )
             update_button.set_sensitive(True)
         else:
-            self.x.graph_disconnect = False
+            self.t.graph_disconnect = False
             w.set_image( gtk.image_new_from_stock( gtk.STOCK_CONNECT,
                                                    gtk.ICON_SIZE_SMALL_TOOLBAR ) )
             self._set_tooltip( w, "Click to disconnect" )
@@ -68,7 +68,7 @@ Dependency graph suite control interface.
         return True
 
     def graph_update( self, w ):
-        self.x.action_required = True
+        self.t.action_required = True
  
     def on_url_clicked( self, widget, url, event ):
         if event.button != 3:
@@ -113,16 +113,16 @@ Dependency graph suite control interface.
             #        "This task is part of the base graph, taken from the\n"
             #        "suite config file (suite.rc) dependencies section, \n" 
             #        "but it does not currently exist in the running suite." ).warn()
-            self.xdot.widget.set_tooltip_text(self.x.get_summary(task_id))
+            self.xdot.widget.set_tooltip_text(self.t.get_summary(task_id))
             return False
 
         # URL is task ID
         #print 'LIVE TASK'
-        self.xdot.widget.set_tooltip_text(self.x.get_summary(url))
+        self.xdot.widget.set_tooltip_text(self.t.get_summary(url))
         return False
 
     def stop(self):
-        self.x.quit = True
+        self.t.quit = True
 
     def right_click_menu( self, event, task_id, type='live task' ):
         name, ctime = task_id.split('%')
@@ -143,19 +143,19 @@ Dependency graph suite control interface.
         group_item = gtk.ImageMenuItem( 'Group' )
         img = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_MENU )
         group_item.set_image(img)
-        group_item.set_sensitive( name not in self.x.group )
+        group_item.set_sensitive( name not in self.t.group )
         group_item.connect( 'activate', self.grouping, name, True )
 
         ungroup_item = gtk.ImageMenuItem( 'UnGroup' )
         img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
         ungroup_item.set_image(img)
-        ungroup_item.set_sensitive( name not in self.x.ungroup )
+        ungroup_item.set_sensitive( name not in self.t.ungroup )
         ungroup_item.connect( 'activate', self.grouping, name, False )
 
         ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )
         img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
         ungroup_rec_item.set_image(img)
-        ungroup_rec_item.set_sensitive( not self.x.ungroup_recursive )
+        ungroup_rec_item.set_sensitive( not self.t.ungroup_recursive )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
         title_item = gtk.MenuItem( 'Task: ' + task_id.replace("_", "__") )
@@ -174,7 +174,7 @@ Dependency graph suite control interface.
         menu.append( ungroup_rec_item )
 
         if type == 'live task':
-            is_fam = (name in self.x.families)
+            is_fam = (name in self.t.families)
             default_menu = self.get_right_click_menu( task_id, hide_task=True,
                                                       task_is_family=is_fam )
             for item in default_menu.get_children():
@@ -192,13 +192,13 @@ Dependency graph suite control interface.
         return True
 
     def grouping( self, w, name, group, rec=False ):
-        self.x.ungroup_recursive = rec
+        self.t.ungroup_recursive = rec
         if group:
-            self.x.group.append(name)
+            self.t.group.append(name)
         else:
-            self.x.ungroup.append(name)
-        self.x.action_required = True
-        self.x.best_fit = True
+            self.t.ungroup.append(name)
+        self.t.action_required = True
+        self.t.best_fit = True
 
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()
@@ -223,7 +223,7 @@ Dependency graph suite control interface.
 
         crop_item = gtk.CheckMenuItem( 'Toggle _Crop Base Graph' )
         items.append( crop_item )
-        crop_item.set_active( self.x.crop )
+        crop_item.set_active( self.t.crop )
         crop_item.connect( 'activate', self.toggle_crop )
 
         self.menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
@@ -235,20 +235,20 @@ Dependency graph suite control interface.
         self.menu_group_item = gtk.ImageMenuItem( '_Group All Families' )
         img = gtk.image_new_from_stock(  'group', gtk.ICON_SIZE_MENU )
         self.menu_group_item.set_image(img)
-        self.menu_group_item.set_sensitive( not self.x.group_all )
+        self.menu_group_item.set_sensitive( not self.t.group_all )
         items.append( self.menu_group_item )
         self.menu_group_item.connect( 'activate', self.group_all_families, True )
 
         self.menu_ungroup_item = gtk.ImageMenuItem( '_UnGroup All Families' )
         img = gtk.image_new_from_stock(  'ungroup', gtk.ICON_SIZE_MENU )
         self.menu_ungroup_item.set_image(img)
-        self.menu_ungroup_item.set_sensitive( not self.x.ungroup_all )
+        self.menu_ungroup_item.set_sensitive( not self.t.ungroup_all )
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
 
         self.menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
         items.append( self.menu_landscape_item )
-        self.menu_landscape_item.set_active( self.x.orientation == "LR" )
+        self.menu_landscape_item.set_active( self.t.orientation == "LR" )
         self.menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
         return items
 
@@ -310,25 +310,25 @@ Dependency graph suite control interface.
              
     def group_all_families( self, w, group ):
         if group:
-            self.x.group_all = True
+            self.t.group_all = True
         else:
-            self.x.ungroup_all = True
-        self.menu_group_item.set_sensitive( not self.x.group_all )
-        self.menu_ungroup_item.set_sensitive( not self.x.ungroup_all )
-        self.x.action_required = True
-        self.x.best_fit = True
+            self.t.ungroup_all = True
+        self.menu_group_item.set_sensitive( not self.t.group_all )
+        self.menu_ungroup_item.set_sensitive( not self.t.ungroup_all )
+        self.t.action_required = True
+        self.t.best_fit = True
 
     def toggle_crop( self, w ):
-        self.x.crop = not self.x.crop
-        self.x.action_required = True
+        self.t.crop = not self.t.crop
+        self.t.action_required = True
 
     def toggle_landscape_mode( self, w ):
         """Change the orientation of the graph - 'portrait' or 'landscape'."""
-        if self.x.orientation == "TB":  # Top -> bottom ordering
-            self.x.orientation = "LR"  # Left -> right ordering
-        elif self.x.orientation == "LR":
-            self.x.orientation = "TB"
-        self.x.action_required = True
+        if self.t.orientation == "TB":  # Top -> bottom ordering
+            self.t.orientation = "LR"  # Left -> right ordering
+        elif self.t.orientation == "LR":
+            self.t.orientation = "TB"
+        self.t.action_required = True
 
     def filter_popup( self, w ):
         window = gtk.Window()
@@ -395,10 +395,10 @@ Dependency graph suite control interface.
         window.show_all()
 
     def filter_reset( self, w):
-        self.x.filter_include = None
-        self.x.filter_exclude = None
-        self.x.state_filter = None
-        self.x.action_required = True
+        self.t.filter_include = None
+        self.t.filter_exclude = None
+        self.t.state_filter = None
+        self.t.action_required = True
 
     def filter( self, w, excl_e, incl_e, fbox ):
         excl = excl_e.get_text()
@@ -414,8 +414,8 @@ Dependency graph suite control interface.
                 re.compile( filt )
             except:
                 warning_dialog( "Bad Expression: " + filt ).warn()
-        self.x.filter_include = incl
-        self.x.filter_exclude = excl
+        self.t.filter_include = incl
+        self.t.filter_exclude = excl
 
         fstates = []
         for b in fbox.get_children():
@@ -423,11 +423,11 @@ Dependency graph suite control interface.
                 # sub '_' from button label keyboard mnemonics
                 fstates.append( re.sub('_', '', b.get_label()))
         if len(fstates) > 0:
-            self.x.state_filter = fstates
+            self.t.state_filter = fstates
         else:
-            self.x.state_filter = None
+            self.t.state_filter = None
         
-        self.x.action_required = True
+        self.t.action_required = True
 
     def focused_timezoom_popup( self, w, id ):
         window = gtk.Window()
@@ -444,8 +444,8 @@ Dependency graph suite control interface.
         name, ctime = id.split('%')
         # TO DO: do we need to check that oldeset_ctime is defined yet?
         cti = ct(ctime)
-        octi = ct( self.x.oldest_ctime )
-        ncti = ct( self.x.newest_ctime )
+        octi = ct( self.t.oldest_ctime )
+        ncti = ct( self.t.newest_ctime )
         diff_pre = cti.subtract_hrs( octi )
         diff_post = ncti.subtract_hrs( cti )
 
@@ -490,10 +490,10 @@ Dependency graph suite control interface.
         window.show_all()
 
     def focused_timezoom_direct( self, w, ctime ):
-        self.x.focus_start_ctime = ctime
-        self.x.focus_stop_ctime = ctime
-        self.x.action_required = True
-        self.x.best_fit = True
+        self.t.focus_start_ctime = ctime
+        self.t.focus_stop_ctime = ctime
+        self.t.action_required = True
+        self.t.best_fit = True
 
     def graph_timezoom_popup( self, w ):
         window = gtk.Window()
@@ -513,8 +513,8 @@ Dependency graph suite control interface.
         box.pack_start( label, True )
         start_entry = gtk.Entry()
         start_entry.set_max_length(14)
-        if self.x.oldest_ctime:
-            start_entry.set_text(self.x.oldest_ctime)
+        if self.t.oldest_ctime:
+            start_entry.set_text(self.t.oldest_ctime)
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
@@ -523,8 +523,8 @@ Dependency graph suite control interface.
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(14)
-        if self.x.newest_ctime:
-            stop_entry.set_text(self.x.newest_ctime)
+        if self.t.newest_ctime:
+            stop_entry.set_text(self.t.newest_ctime)
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 
@@ -552,22 +552,22 @@ Dependency graph suite control interface.
         window.show_all()
 
     def graph_timezoom(self, w, start_e, stop_e):
-        self.x.focus_start_ctime = start_e.get_text()
-        self.x.focus_stop_ctime = stop_e.get_text()
-        self.x.best_fit = True
-        self.x.action_required = True
+        self.t.focus_start_ctime = start_e.get_text()
+        self.t.focus_stop_ctime = stop_e.get_text()
+        self.t.best_fit = True
+        self.t.action_required = True
 
     def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
         pre_hours = start_e.get_text()
         post_hours = stop_e.get_text()
         foo = ct(focus_ctime)
         foo.decrement( hours=pre_hours )
-        self.x.focus_start_ctime = foo.get()
+        self.t.focus_start_ctime = foo.get()
         bar = ct(focus_ctime)
         bar.increment( hours=post_hours )
-        self.x.focus_stop_ctime = bar.get()
-        self.x.best_fit = True
-        self.x.action_required = True
+        self.t.focus_stop_ctime = bar.get()
+        self.t.best_fit = True
+        self.t.action_required = True
 
 class StandaloneControlGraphApp( ControlGraph ):
     # For a ControlApp not launched by the gcylc main app: 
