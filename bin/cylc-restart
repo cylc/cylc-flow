@@ -35,6 +35,9 @@ class restart( scheduler ):
 Restart a cylc suite from a previous recorded state (to start from
 scratch see the 'cylc run' command).
 
+Cylc suites run in daemon mode by default (without --debug) so it safe
+to log out from your terminal after starting a suite.
+
 The most recent previous state is loaded by default, but other states
 can be specified on the command line (e.g. cylc writes special state
 dumps and logs their filenames before actioning intervention commands).
