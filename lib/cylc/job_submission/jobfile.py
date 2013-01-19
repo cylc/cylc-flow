@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -152,7 +152,6 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(self.jobconfig['use login shell']) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
-        BUFFER.write( "\n# Note the suite share path may actually be family- or task-specific:" )
         BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
 
     def write_cylc_access( self, BUFFER=None ):

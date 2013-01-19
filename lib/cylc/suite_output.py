@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ suite running directory."""
 class suite_output( object ):
     def __init__( self, suite ):
         globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['run directory'], suite, 'log', 'suite' ) 
+        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'log', 'suite' ) 
         self.opath = os.path.join( self.dir, 'out' ) 
         self.epath = os.path.join( self.dir, 'err' ) 
         self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']

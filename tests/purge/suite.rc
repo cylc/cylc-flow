@@ -110,7 +110,8 @@ AT=$( cylc cycletime --offset-hours=18 )
 cylc insert -f $CYLC_SUITE_REG_NAME ColdA%${AT}
 # purge tasks that cannot run:
 TO=$( cylc cycletime --offset-hours=12 )
-cylc purge -f $CYLC_SUITE_REG_NAME X%$CYLC_TASK_CYCLE_TIME ${TO}"""
+cylc purge -f $CYLC_SUITE_REG_NAME X%$CYLC_TASK_CYCLE_TIME ${TO}
+echo DONE"""
 
 [visualization]
     default node attributes = "style=filled"

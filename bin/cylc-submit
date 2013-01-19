@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -139,6 +139,7 @@ task.task.suite = suite
 # create the suite log, with a modified directory path ending in
 # 'submit' so that we don't overwrite logs from a proper suite run.
 slog = suite_log( suite, 'submit' )
+slog.mkdir()
 slog.pimp( clock=dclock )
 log = slog.get_log()
 logging_dir = slog.get_dir()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -16,24 +16,19 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.config import config
+from cylc import cylc_pyro_client, dump
 from cylc.task_state import task_state
-from DotMaker import DotMaker
-import cylc.dump
-import inspect
-import sys, re, string
-import gobject
-import time
-import threading
-from cylc import cylc_pyro_client
+from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
+import gobject
 import gtk
-import pygtk
-from string import zfill
-from copy import copy
+import re
+import string
+import sys
+import threading
+from time import sleep, time
 
-####pygtk.require('2.0')
 
 try:
     any
@@ -45,7 +40,60 @@ except NameError:
                 return True
         return False
 
+
+class PollSchd(object):
+    """Keep information on whether an updater should poll or not."""
+
+    DELAYS = {(None, 5): 1, (5, 60): 5, (60, 300): 60, (300, None): 300}
+
+    def __init__(self, start=False):
+        """Return a new instance.
+
+        If start is False, the updater can always poll.
+
+        If start is True, the updater should only poll if the ready method
+        returns True.
+
+        """
+
+        self.t_init = None
+        self.t_prev = None
+        if start:
+            self.start()
+
+    def ready(self):
+        """Return True if a poll is ready."""
+        if self.t_init is None:
+            return True
+        if self.t_prev is None:
+            self.t_prev = time()
+            return True
+        dt_init = time() - self.t_init
+        dt_prev = time() - self.t_prev
+        for k, v in self.DELAYS.items():
+            lower, upper = k
+            if ((lower is None or dt_init >= lower) and
+                (upper is None or dt_init < upper)):
+                if dt_prev > v:
+                    self.t_prev = time()
+                    return True
+                else:
+                    return False
+        return True
+
+    def start(self):
+        """Start keeping track of latest poll, if not already started."""
+        if self.t_init is None:
+            self.t_init = time()
+            self.t_prev = None
+
+    def stop(self):
+        """Stop keeping track of latest poll."""
+        self.t_init = None
+        self.t_prev = None
+
 def compare_dict_of_dict( one, two ):
+    """Return True if one == two, else return False."""
     for key in one:
         if key not in two:
             return False
@@ -66,10 +114,9 @@ def compare_dict_of_dict( one, two ):
 
     return True
 
-def markup( col, string ):
-    return string
-    #return '<span foreground="' + col + '">' + string + '</span>'
 
+def markup( col, s ):
+    return s
 
 def get_col_priority( priority ):
     if priority == 'NORMAL':
@@ -83,6 +130,7 @@ def get_col_priority( priority ):
     else:
         # not needed
         return '#f0f'
+
 
 class tupdater(threading.Thread):
 
@@ -105,6 +153,8 @@ class tupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
+        self.status = None
+        self.poll_schd = PollSchd()
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
@@ -123,6 +173,8 @@ class tupdater(threading.Thread):
         self.reconnect()
 
     def reconnect( self ):
+        # set debug here to see how reconnection works
+        debug = False
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
@@ -132,24 +184,29 @@ class tupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
-        except Exception, x:
+            self.sinfo = client.get_proxy( 'suite-info' )
+
+            # on reconnection retrieve static info
+            self.families = self.sinfo.get('families' )
+            self.family_hierarchy = self.sinfo.get('family hierarchy' )
+            self.allowed_families = self.sinfo.get('vis families' )
+        except:
+            # connection lost
+            if debug:
+                print ".",
             if self.stop_summary is None:
-                self.stop_summary = cylc.dump.get_stop_state_summary(
-                                                            self.cfg.suite,
-                                                            self.cfg.owner,
-                                                            self.cfg.host)
+                self.stop_summary = dump.get_stop_state_summary(
+                                                       self.cfg.suite,
+                                                       self.cfg.owner,
+                                                       self.cfg.host)
                 if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            #print 'GOT A CLIENT PROXY'
             self.stop_summary = None
             self.status = "connected"
+            self.poll_schd.stop()
             self.info_bar.set_status( self.status )
-            self.families = self.remote.get_families()
-            self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.allowed_families = self.remote.get_vis_families()
             return True
 
     def connection_lost( self ):
@@ -164,12 +221,16 @@ class tupdater(threading.Thread):
         self.fam_state_summary = {}
 
         self.status = "stopped"
+        self.poll_schd.start()
         self.info_bar.set_state( [] )
         self.info_bar.set_status( self.status )
+
         if self.stop_summary is not None and any(self.stop_summary):
             self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
+
         self.reconnect()
+
         return False
 
     def update(self):
@@ -461,11 +522,11 @@ class tupdater(threading.Thread):
         glbl = None
         states = {}
         while not self.quit:
-            if self.update():
+            if self.poll_schd.ready() and self.update():
                 gobject.idle_add( self.update_gui )
                 # TO DO: only update globals if they change, as for tasks
                 gobject.idle_add( self.update_globals )
-            time.sleep(1)
+            sleep(1)
         else:
             pass
             ####print "Disconnecting task state info thread"
@@ -493,6 +554,8 @@ class lupdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
+        self.status = None
+        self.poll_schd = PollSchd()
         self.filter = ""
 
         self.led_treeview = treeview
@@ -525,23 +588,25 @@ class lupdater(threading.Thread):
                     self.cfg.pyro_timeout,
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
-            self.remote = client.get_proxy( 'remote' )
+            self.sinfo = client.get_proxy( 'suite-info' )
+
+            # on reconnection retrieve static info
+            self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
+            self.families = self.sinfo.get( 'families' )
+            self.allowed_families = self.sinfo.get( 'vis families' )
         except:
             if self.stop_summary is None:
-                self.stop_summary = cylc.dump.get_stop_state_summary(
-                                                            self.cfg.suite,
-                                                            self.cfg.owner,
-                                                            self.cfg.host)
+                self.stop_summary = dump.get_stop_state_summary(
+                                                       self.cfg.suite,
+                                                       self.cfg.owner,
+                                                       self.cfg.host)
                 if self.stop_summary is not None and any(self.stop_summary):
                     self.info_bar.set_stop_summary(self.stop_summary)
             return False
         else:
-            self.family_hierarchy = self.remote.get_family_hierarchy()
-            self.families = self.remote.get_families()
-            self.allowed_families = self.remote.get_vis_families()
             self.stop_summary = None
             self.status = "connected"
-            self.info_bar.set_status( self.status )
+            self.poll_schd.stop()
             return True
 
     def _set_tooltip(self, widget, tip_text):
@@ -557,6 +622,7 @@ class lupdater(threading.Thread):
         self.led_liststore.clear()
 
         self.status = "stopped"
+        self.poll_schd.start()
         if not self.quit:
             self.info_bar.set_state( [] )
             self.info_bar.set_status( self.status )
@@ -567,7 +633,7 @@ class lupdater(threading.Thread):
         return False
 
     def update(self):
-        #print "Updating"
+        #print "Attempting Update"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.god.get_task_name_list()
@@ -819,11 +885,11 @@ class lupdater(threading.Thread):
         glbl = None
         states = {}
         while not self.quit:
-            if self.update():
+            if self.poll_schd.ready() and self.update():
                 gobject.idle_add( self.update_gui )
                 # TO DO: only update globals if they change, as for tasks
                 gobject.idle_add( self.update_globals )
-            time.sleep(1)
+            sleep(1)
         else:
             pass
             ####print "Disconnecting task state info thread"
@@ -832,3 +898,4 @@ def _time_trim(time_value):
     if time_value is not None:
         return time_value.rsplit(".", 1)[0]
     return time_value
+

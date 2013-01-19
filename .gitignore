@@ -1,13 +1,18 @@
+
+# python bytecode
 *.pyc
-doc/command-usage/*
+
+# generated documentation
+doc/command-usage/
 doc/commands.tex
-doc/cylc-user-guide.aux
-doc/cylc-user-guide.lof
-doc/cylc-user-guide.log
-doc/cylc-user-guide.out
-doc/cylc-user-guide.pdf
-doc/cylc-user-guide.toc
-doc/suiterc.spec.tex
+doc/graphics/png-scaled/
+doc/html/
+doc/pdf/
+doc/index.html
+doc/cylc-version.txt
+
+# vim backup files
 *.swp
-*.dot
-CDB
+
+# emacs backup files
+*~

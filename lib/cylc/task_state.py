@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -36,20 +36,50 @@ class TaskStateError( Exception ):
 class task_state(object):
 
     legal = [ 'waiting',
-              'retry_delayed',
+              'queued',
+              'submitting',
               'submitted',
               'running',
               'succeeded',
               'failed',
+              'retrying',
               'held',
-              'runahead',
-              'queued' ]
+              'runahead' ]
 
     @classmethod
     def is_legal( cls, state ):
         return state in cls.legal
 
-    # Note: internal to this class, task spawned status is string 'true' or 'false'
+    # GUI button labels
+    labels = {
+            'waiting'    : '_waiting',
+            'queued'     : '_queued',
+            'submitting' : 'su_bmitting',
+            'submitted'  : 'sub_mitted',
+            'running'    : '_running',
+            'succeeded'  : '_succeeded',
+            'failed'     : '_failed',
+            'retrying'   : 'retr_ying',
+            'held'       : '_held',
+            'runahead'   : 'r_unahead'
+            }
+    # terminal monitor color control codes
+    ctrl = {
+            'waiting'    : "\033[1;36m",
+            'queued'     : "\033[1;38;44m",
+            'submitting' : "\033[1;32m",
+            'submitted'  : "\033[1;33m",
+            'running'    : "\033[1;37;42m",
+            'succeeded'  : "\033[0m",
+            'failed'     : "\033[1;37;41m",
+            'retrying'   : "\033[1;35m",
+            'held'       : "\033[1;37;43m",
+            'runahead'   : "\033[1;37;44m"
+            }
+    ctrl_end = "\033[0m"
+
+    # Internal to this class spawned state is a string
+    allowed_bool = [ 'true', 'false' ]
 
     def __init__( self, initial_state ):
 
@@ -68,8 +98,12 @@ class task_state(object):
     def set_status( self, state ):
         if self.__class__.is_legal( state ):
             self.state[ 'status' ] = state
+
+    def has_key( self, key ):
+        if key in self.state.keys():
+            return True
         else:
-            raise TaskStateError, 'Illegal task state: ' + state
+            return False
 
     def get_status( self ):
         return self.state[ 'status' ]
@@ -79,6 +113,42 @@ class task_state(object):
 
     def has_spawned( self ):
         return self.state[ 'spawned' ] == 'true'
+        if self.state[ 'spawned' ] == 'true':
+            return True
+        else:
+            return False
+
+    def is_succeeded( self ):
+        if self.state[ 'status' ] == 'succeeded':
+            return True
+        else:
+            return False
+
+    def is_failed( self ):
+        if self.state[ 'status' ] == 'failed':
+            return True
+        else:
+            return False
+
+    def is_waiting( self ):
+        # TO DO: check why we're identifying retrying as waiting here:
+        if self.state[ 'status' ] == 'waiting' or \
+        self.state[ 'status' ] == 'retrying':
+            return True
+        else:
+            return False
+
+    def is_submitting( self ):
+        if self.state[ 'status' ] == 'submitting':
+            return True
+        else:
+            return False
+
+    def is_submitted( self ):
+        if self.state[ 'status' ] == 'submitted':
+            return True
+        else:
+            return False
 
     def is_currently( self, state ):
         return state == self.state[ 'status' ]
@@ -97,6 +167,7 @@ class task_state(object):
             raise TaskStateError, 'ERROR, run status not defined'
         if not self.__class__.is_legal( self.state[ 'status' ] ):
             raise TaskStateError, 'ERROR, illegal run status: ' + str( self.state[ 'status' ])
+
         if 'spawned' not in self.state:
             raise TaskStateError, 'ERROR, task spawned status not defined'
         if self.state[ 'spawned' ] not in [ 'true', 'false' ]:

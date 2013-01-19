@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -27,22 +27,15 @@
 
 import sys, re, os
 from OrderedDict import OrderedDict
-from copy import deepcopy
-from collections import deque
-from mkdir_p import mkdir_p
-from envvar import expandvars
-from prerequisites.prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
 from prerequisites.plain_prerequisites import plain_prerequisites
 from prerequisites.conditionals import conditional_prerequisites
 from task_output_logs import logfiles
 from outputs import outputs
-from cycle_time import ct, at
+from cycle_time import ct
 from cycling import container
 from dictcopy import replicate, override
-from copy import copy
-from random import randrange
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -72,8 +65,6 @@ class taskdef(object):
         self.run_mode = run_mode
         self.rtconfig = rtcfg
 
-        self.process_directories( rtcfg )
-
         # some defaults
         self.intercycle = False
         self.cycling = False
@@ -95,27 +86,6 @@ class taskdef(object):
 
         self.name = name
         self.type = 'free'
-
-    def process_directories( self, rtcfg ):
-        # Allow use of suite, BUT NOT TASK, identity variables.
-        logd = rtcfg['log directory']
-        if logd.find( '$CYLC_TASK_' ) != -1:
-            print >> sys.stderr, 'runtime -> log directory =', logd
-            raise DefinitionError, 'ERROR: log directories cannot be task-specific'
-
-        # Local job sub log directories: interpolate all environment variables.
-        rtcfg['log directory'] = expandvars( rtcfg['log directory'])
-        # Remote log directories: just suite identity - local variables aren't relevant.
-        if rtcfg['remote']['log directory']:
-            for var in ['CYLC_SUITE_REG_PATH', 'CYLC_SUITE_DEF_PATH', 'CYLC_SUITE_REG_NAME']: 
-                rtcfg['remote']['log directory'] = re.sub( '\${'+var+'}'+r'\b', os.environ[var], rtcfg['remote']['log directory'])
-                rtcfg['remote']['log directory'] = re.sub( '\$'+var+r'\b',      os.environ[var], rtcfg['remote']['log directory'])
-        d = rtcfg['log directory']
-        try:
-            mkdir_p( d )
-        except Exception, x:
-            print >> sys.stderr, x
-            raise DefinitionError, 'ERROR, illegal dir? ' + d
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -185,6 +155,10 @@ class taskdef(object):
         # set class variables here
         tclass.title = self.rtconfig['title']
         tclass.description = self.rtconfig['description']
+
+        # For any instance-specific environment variables (note that
+        # [runtime][TASK][enviroment] is now held in a class variable).
+        tclass.env_vars = OrderedDict()
 
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
