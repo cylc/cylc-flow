@@ -40,7 +40,6 @@ from global_config import globalcfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
-from version import cylc_version
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 from RuntimeGraph import rGraph
@@ -49,7 +48,6 @@ from LogDiagnosis import LogSpec
 from broadcast import broadcast
 from suite_state_dumping import dumper
 from suite_logging import suite_log
-from suite_output import suite_output
 import threading
 from suite_cmd_interface import comqueue
 from suite_info_interface import info_interface
@@ -102,9 +100,6 @@ class scheduler(object):
         # SUITE HOST
         self.host= suite_host
 
-        # STARTUP BANNER
-        self.banner = OrderedDict()
-
         # DEPENDENCY BROKER
         self.broker = broker()
 
@@ -146,10 +141,6 @@ class scheduler(object):
                 "(do not use).",
                 action="store_true", default=False, dest="from_gui" )
 
-        self.parser.add_option( "--no-redirect", help=\
-                "Do not redirect stdout and stderr to file.",
-                action="store_true", default=False, dest="noredirect" )
-
         self.parse_commandline()
 
         # global config
@@ -158,6 +149,7 @@ class scheduler(object):
         # create task log directory
         self.globals.get_task_log_dir( self.suite, create=True )
 
+    def configure( self ):
         # read-only commands to expose directly to the network
         self.info_commands = {
                 'ping suite'        : self.info_ping,
@@ -199,8 +191,11 @@ class scheduler(object):
                 'add prerequisite'      : self.command_add_prerequisite,
                 }
 
-        # parse the suite definition
         self.configure_suite()
+
+        # REMOTELY ACCESSIBLE SUITE IDENTIFIER
+        self.suite_id = identifier( self.suite, self.owner )
+        self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
 
         reqmode = self.config['cylc']['required run mode']
         if reqmode:
@@ -289,12 +284,6 @@ class scheduler(object):
         self.already_timed_out = False
         if self.config.suite_timeout:
             self.set_suite_timer()
-
-        self.print_banner()
-
-        self.suite_outputer = suite_output( self.suite )
-        if not self.options.noredirect:
-            self.suite_outputer.redirect()
 
         if self.config['visualization']['runtime graph']['enable']:
             self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
@@ -722,6 +711,7 @@ class scheduler(object):
 
     def reconfigure( self ):
         # reload the suite definition while the suite runs
+        print "RELOADING the suite definition"
         old_task_list = self.config.get_task_name_list()
         self.configure_suite( reconfigure=True )
         new_task_list = self.config.get_task_name_list()
@@ -741,7 +731,6 @@ class scheduler(object):
         self.pool.assign( reload=True )
         self.suite_state.config = self.config
         self.configure_environments()
-        self.print_banner( reload=True )
         self.reconfiguring = True
         for itask in self.pool.get_tasks():
             itask.reconfigure_me = True
@@ -782,11 +771,7 @@ class scheduler(object):
         self.reconfiguring = found
 
     def parse_commandline( self ):
-        self.banner[ 'SUITE NAME' ] = self.suite
-        self.banner[ 'SUITE DEFN' ] = self.suiterc
-
         self.run_mode = self.options.run_mode
-        self.banner['RUN MODE'] = self.run_mode
 
         # LOGGING LEVEL
         if self.options.debug:
@@ -799,6 +784,21 @@ class scheduler(object):
         else:
             self.from_gui = False
 
+    def configure_pyro( self ):
+        # CONFIGURE SUITE PYRO SERVER
+        self.pyro = pyro_server( self.suite, self.suite_dir, 
+                self.globals.cfg['pyro']['base port'],
+                self.globals.cfg['pyro']['maximum number of ports'] )
+        self.port = self.pyro.get_port()
+
+        try:
+            self.port_file = port_file( self.suite, self.port,
+                self.globals.cfg['pyro']['ports directory'],
+                self.verbose )
+        except PortFileExistsError,x:
+            print >> sys.stderr, x
+            raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
+
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
         self.config = config( self.suite, self.suiterc,
@@ -808,7 +808,6 @@ class scheduler(object):
         self.config.create_directories()
 
         run_dir = self.globals.cfg['task hosts']['local']['run directory']
-        self.banner[ 'SUITE RUN DIR' ] = run_dir
 
         if not self.is_restart:     # create new suite_db file if needed
             self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite, new_mode=True)
@@ -851,7 +850,6 @@ class scheduler(object):
             # raises CycleTimeError:
             self.hold_time = ct( self.options.hold_time ).get()
             #    self.parser.error( "invalid cycle time: " + self.hold_time )
-            self.banner[ 'Pausing at' ] = self.hold_time
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['cylc']['lockserver']['enable']
@@ -863,26 +861,6 @@ class scheduler(object):
             # raises port_scan.SuiteNotFound error:
             self.lockserver_port = lockserver( self.host ).get_port()
 
-        # CONFIGURE SUITE PYRO SERVER
-        suitename = self.suite
-        if not reconfigure:
-            self.pyro = pyro_server( suitename, self.suite_dir, 
-                    self.globals.cfg['pyro']['base port'],
-                    self.globals.cfg['pyro']['maximum number of ports'] )
-            self.port = self.pyro.get_port()
-
-            # REMOTELY ACCESSIBLE SUITE IDENTIFIER
-            self.suite_id = identifier( self.suite, self.owner )
-            self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
-
-            self.banner[ 'PORT' ] = self.port
-            try:
-                self.port_file = port_file( self.suite, self.port,
-                    self.globals.cfg['pyro']['ports directory'],
-                    self.verbose )
-            except PortFileExistsError,x:
-                print >> sys.stderr, x
-                raise SchedulerError( 'ERROR: suite already running? (if not, delete the port file)' )
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination']
@@ -926,6 +904,8 @@ class scheduler(object):
             self.logfile = slog.get_path()
             self.logdir = slog.get_dir()
 
+            self.log.info( "port:" +  str( self.port ))
+
     def configure_environments( self ):
         cylcenv = OrderedDict()
         cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
@@ -959,60 +939,11 @@ class scheduler(object):
         for var in senv:
             os.environ[var] = os.path.expandvars(senv[var])
 
-
-    def print_banner( self, reload=False ):
-        msg = []
-        if not reload:
-            msg.append( "_" )
-            msg.append( "The cylc suite engine, version " + cylc_version )
-            msg.append( "Home page: http://cylc.github.com/cylc" )
-            msg.append( "-" )
-            msg.append( "Copyright (C) 2008-2013 Hilary Oliver, NIWA" )
-            msg.append( "-" )
-            msg.append( "This program comes with ABSOLUTELY NO WARRANTY; for details type:" )
-            msg.append( " `cylc license warranty'." )
-            msg.append( "This is free software, and you are welcome to redistribute it under" )
-            msg.append( "certain conditions; for details type:" )
-            msg.append( " `cylc license conditions'." )
-            msg.append( "-" )
-        else:
-            msg.append( "_" )
-            msg.append( "RELOADING THE SUITE DEFINITION AT RUNTIME" )
-            msg.append( "-" )
- 
-        lenm = 0
-        for m in msg:
-            if len(m) > lenm:
-                lenm = len(m)
-        uline = '_' * lenm
-        vline = '-' * lenm
-
-        for m in msg:
-            if m == '_':
-                print uline
-            elif m == '-':
-                print vline
-            else:
-                print m
-
-        items = self.banner.keys()
-
-        longest_item = items[0]
-        for item in items:
-            if len(item) > len(longest_item):
-                longest_item = item
-
-        template = re.sub( '.', '.', longest_item )
-
-        for item in self.banner.keys():
-            print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( self.banner[ item ] )
-
     def run( self ):
-        if self.use_lockserver:
-            suitename = self.suite
 
+        if self.use_lockserver:
             # request suite access from the lock server
-            if suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
+            if suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
                self.lock_acquired = True
             else:
                raise SchedulerError( "Failed to acquire a suite lock" )
@@ -1240,11 +1171,9 @@ class scheduler(object):
         self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
         if self.use_lockserver:
             # do this last
-            suitename = self.suite
-
             if self.lock_acquired:
                 print " * releasing suite lock"
-                lock = suite_lock( suitename, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
+                lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 try:
                     if not lock.release_suite_access():
                         print >> sys.stderr, 'WARNING failed to release suite lock!'
@@ -1266,9 +1195,6 @@ class scheduler(object):
         #disconnect from suite-db/stop db queue
         self.db.close()
         print " * disconnecting from suite database"
-
-        if not self.options.noredirect:
-            self.suite_outputer.restore()
 
         # shutdown handler
         handler = self.config.event_handlers['shutdown']

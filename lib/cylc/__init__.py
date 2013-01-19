@@ -43,8 +43,9 @@ def environ_init(argv0=None):
     environ_path_add([os.path.join(cylc_dir, 'lib')], 'PYTHONPATH')
 
     # Python output buffering delays appearance of stdout and stderr
-    # when output is not directed to a terminal - e.g. when running a
-    # suite via the posix nohup command.
+    # when output is not directed to a terminal (this occurred when
+    # running pre-5.0 cylc via the posix nohup command; is it still the
+    # case in post-5.0 daemon-mode cylc?)
     os.environ['PYTHONUNBUFFERED'] = 'true'
     
     # Export $HOSTNAME for use in the default lockserver config (see
