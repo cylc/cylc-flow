@@ -45,16 +45,25 @@ class suite_output( object ):
             return self.opath
 
     def redirect( self ):
+        """redirect the standard file descriptors to suite log files."""
+
         self.roll()
+
+        # record current standard file descriptors
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
         self.sys_stdin  = sys.stdin
 
-        # zero sized buffer so output shows up immediately
-
-        sys.stdout = open( self.opath, 'a+', 0 )
-        sys.stderr = open( self.epath, 'a+', 0 )
-        sys.stdin  = open( '/dev/null', 'r' )
+        # redirect standard file descriptors
+        # note that simply reassigning the sys streams is not sufficient
+        # if we import modules that write to stdin and stdout from C
+        # code - evidently the subprocess module is in this category!
+        sout = file( self.opath, 'a+', 0 ) # 0 => unbuffered
+        serr = file( self.epath, 'a+', 0 )
+        dvnl = file( '/dev/null', 'r' )
+        os.dup2( sout.fileno(), sys.stdout.fileno() )
+        os.dup2( serr.fileno(), sys.stderr.fileno() )
+        os.dup2( dvnl.fileno(), sys.stdin.fileno() )
 
     def restore( self ):
         # (not used)
