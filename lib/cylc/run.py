@@ -44,10 +44,12 @@ def print_blurb():
     print '*' * (mx + 2)
 
 def main(name, start):
-    print_blurb()
 
     # Parse the command line:
     server = start()
+
+    # Print copyright and license information
+    print_blurb()
 
     # Configure Pyro to get the port file, to check the suite is not
     # already running, before daemonizing.

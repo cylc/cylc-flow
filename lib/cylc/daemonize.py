@@ -51,6 +51,7 @@ def daemonize( suite, port ):
             print
             print "To run in non-daemon mode use --debug."
             print "For more information type 'cylc --help'."
+            print
             sys.exit(0) 
     except OSError, e: 
         print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
