@@ -2,7 +2,7 @@ ___________________________________________________________________
 The cylc suite engine, version 4.5.1-108-ge849147
 Home page: http://hjoliver.github.com/cylc
 -------------------------------------------------------------------
-Copyright (C) 2008-2012 Hilary Oliver, NIWA
+Copyright (C) 2008-2013 Hilary Oliver, NIWA
 -------------------------------------------------------------------
 This program comes with ABSOLUTELY NO WARRANTY; for details type:
  `cylc license warranty'.

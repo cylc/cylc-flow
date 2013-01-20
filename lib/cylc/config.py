@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ from regpath import RegPath
 from trigger import triggerx
 from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
-from include_files import inline
+from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
 
 try:
@@ -115,7 +115,10 @@ class config( CylcConfigObj ):
         f.close()
 
         # handle cylc include-files
-        flines = inline( flines, self.dir )
+        try:
+            flines = inline( flines, self.dir )
+        except IncludeFileError, x:
+            raise SuiteConfigError( str(x) )
 
         # handle Jinja2 expressions
         try:
@@ -275,9 +278,9 @@ class config( CylcConfigObj ):
         self.load_graph()
         if len( self.naked_dummy_tasks ) > 0:
             if self.strict or self.verbose:
-                print 'Naked dummy tasks detected:'
+                print 'Naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
-                    print '    +', ndt
+                    print '  +', ndt
                 print '  WARNING: this can be caused by misspelled task names!' 
             if self.strict:
                 raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
@@ -293,6 +296,7 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.configure_queues()
+
         if self.validation:
             self.check_tasks()
 
@@ -546,8 +550,8 @@ class config( CylcConfigObj ):
         """ Replace family names with members, in internal queues,
          and remove assigned members from the default queue. """
 
-        # TO DO: user input consistency checking (e.g. duplicate queue
-        # assignments and non-existent task names)
+        if self.verbose:
+            print "Configuring internal queues"
 
         # NOTE: this method modifies the parsed config dict itself.
 
@@ -558,21 +562,42 @@ class config( CylcConfigObj ):
         for queue in queues:
             if queue == 'default':
                 continue
-            # remove assigned tasks from the default queue
+            # assign tasks to queue and remove them from default
             qmembers = []
             for qmember in queues[queue]['members']:
                 if qmember in self.members:
-                    # qmember is a family: replace with family members
+                    # qmember is a family, so replace it with member
+                    # tasks. Note that self.members[fam] includes any
+                    # sub-family as well as task members of fam.
                     for fmem in self.members[qmember]:
-                        qmembers.append( fmem )
-                        queues['default']['members'].remove( fmem )
+                        if qmember not in qmembers:
+                            try:
+                                queues['default']['members'].remove( fmem )
+                            except ValueError:
+                                if self.verbose and fmem not in self.members:
+                                    # family members that are themselves
+                                    # families should be ignored as we
+                                    # only need tasks in the queues.
+                                    print >> sys.stderr, '  WARNING: ignoring queue member ' + fmem + ' (task not used in the graph)'
+                            else:
+                                qmembers.append( fmem )
                 else:
                     # qmember is a task
-                    qmembers.append(qmember)
-                    queues['default']['members'].remove( qmember )
+                    if qmember not in qmembers:
+                        try:
+                            queues['default']['members'].remove( qmember )
+                        except ValueError:
+                            if self.verbose:
+                                print >> sys.stderr, '  WARNING: ignoring queue member ' + qmember + ' (task not used in the graph)'
+                        else:
+                            qmembers.append(qmember)
             queues[queue]['members'] = qmembers
-        #for queue in queues:
-        #    print queue, queues[queue]['members']
+        if self.verbose:
+            if len( queues.keys() ) > 1:
+                for queue in queues:
+                    print "  +", queue, queues[queue]['members']
+            else:
+                print " + All tasks assigned to the 'default' queue"
 
     def get_inheritance( self ):
         # used by cylc_xdot
@@ -747,11 +772,12 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
 
         if self.verbose:
+            print "Checking for defined tasks not used in the graph"
             for name in self['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.members:
                         # any family triggers have have been replaced with members by now.
-                        print >> sys.stderr, 'WARNING: task "' + name + '" is not used in the graph.'
+                        print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
         self.check_for_case_errors()
 
@@ -764,6 +790,8 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['runtime']:
                     raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
+                if type == 'sequential' and name in self.members:
+                    raise SuiteConfigError, 'ERROR: family names cannot be declared ' + type + ': ' + name 
 
         try:
             import Pyro.constants

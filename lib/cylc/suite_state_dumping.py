@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ class dumper( object ):
         self.start_tag = start_tag
         self.stop_tag = stop_tag
         globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['run directory'], suite, 'state' ) 
+        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
         self.path = os.path.join( self.dir, 'state' ) 
         try:
             mkdir_p( self.dir )

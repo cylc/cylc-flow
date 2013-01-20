@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -65,7 +65,8 @@ class catchup_clocktriggered( clocktriggered ):
         # delayed start time is up.
         ready = False
         if self.state.is_currently('queued') or \
-                self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+                self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
+                 self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
 
             if not self.catchup_status_determined:
                 try:

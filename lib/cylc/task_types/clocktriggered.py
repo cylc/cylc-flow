@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -52,18 +52,17 @@ class clocktriggered(object):
         # not ready unless delayed start time is up too.
         ready = False
         if self.state.is_currently('queued') or \
-                self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+                self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
+                 self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
             if self.start_time_reached():
                 # We've reached the clock-trigger time
                 if self.retry_delay_timer_start:
-                    # A retry delay has been set ...
                     diff = clocktriggered.clock.get_datetime() - self.retry_delay_timer_start
                     foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
                     if diff >= foo:
                         # ... we've reached the retry delay time
                         ready = True
                 else:
-                    # no retry delay has been set
                     ready = True
             else:
                 self.log( 'DEBUG', 'prerequisites satisfied but waiting on delayed start time' )
