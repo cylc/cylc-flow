@@ -103,7 +103,7 @@ Arguments:"""
                 action="store_true", default=False, dest="verbose" )
 
         self.add_option( "--debug",
-                help="Turn on exception tracebacks.",
+                help="Run suites in non-daemon mode, and show exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",

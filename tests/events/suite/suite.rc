@@ -10,7 +10,7 @@
 cylc unreg $REG
 cylc reg $REG $DEF
 echo "Sub-suite log file is: $PWD/$LOG"
-if cylc run --no-redirect $REG > $LOG 2>&1; then 
+if cylc run --debug $REG > $LOG 2>&1; then 
     echo "ERROR: sub-suite did not abort as planned"
     exit 1
 else

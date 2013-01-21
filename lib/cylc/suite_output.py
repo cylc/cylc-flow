@@ -20,10 +20,10 @@ import os, sys
 import logging, logging.handlers
 from global_config import globalcfg
 from rolling_archive import rolling_archive
-from mkdir_p import mkdir_p
 
-"""Configure suite stdout and stderr logs, in a sub-directory of the
-suite running directory."""
+"""Configure suite stdout and stderr logs, as rolling archives, in a
+sub-directory of the suite running directory. Can also be used to simply
+get the configure log locations."""
 
 class suite_output( object ):
     def __init__( self, suite ):
@@ -31,42 +31,54 @@ class suite_output( object ):
         self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'log', 'suite' ) 
         self.opath = os.path.join( self.dir, 'out' ) 
         self.epath = os.path.join( self.dir, 'err' ) 
+
         self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']
-        try:
-            mkdir_p( self.dir )
-        except Exception, x:
-            # To Do: handle error 
-            raise 
+        self.arclen = globals.cfg['suite logging']['rolling archive length']
 
-        arclen = globals.cfg['suite logging']['rolling archive length']
-        self.oarchive = rolling_archive( self.opath, arclen, sep='.' )
-        self.earchive = rolling_archive( self.epath, arclen, sep='.' )
+    def get_dir( self ):
+        return self.dir
 
-    def get_path( self, stderr=False ):
-        if stderr:
+    def get_path( self, err=False ):
+        if err:
             return self.epath
         else:
             return self.opath
 
     def redirect( self ):
+        """redirect the standard file descriptors to suite log files."""
+
         self.roll()
-        print "\n Redirecting stdout and stderr (use --no-redirect to prevent this):"
-        print ' o stdout:', self.opath
-        print ' o stderr:', self.epath
+
+        # record current standard file descriptors
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        # zero sized buffer so output shows up immediately
-        sys.stdout = open( self.opath, 'w', 0 )
-        sys.stderr = open( self.epath, 'w', 0 )
+        self.sys_stdin  = sys.stdin
+
+        # redirect standard file descriptors
+        # note that simply reassigning the sys streams is not sufficient
+        # if we import modules that write to stdin and stdout from C
+        # code - evidently the subprocess module is in this category!
+        sout = file( self.opath, 'a+', 0 ) # 0 => unbuffered
+        serr = file( self.epath, 'a+', 0 )
+        dvnl = file( '/dev/null', 'r' )
+        os.dup2( sout.fileno(), sys.stdout.fileno() )
+        os.dup2( serr.fileno(), sys.stderr.fileno() )
+        os.dup2( dvnl.fileno(), sys.stdin.fileno() )
 
     def restore( self ):
+        # (not used)
         sys.stdout.close()
         sys.stderr.close()
         sys.stdout = self.sys_stdout
         sys.stderr = self.sys_stderr
+        sys.stdin  = self.sys_stdin
         print "\n Restored stdout and stderr to normal"
 
     def roll( self ):
-        self.oarchive.roll()
-        self.earchive.roll()
+        # roll the stdout and stderr log files
+        oarchive = rolling_archive( self.opath, self.arclen, sep='.' )
+        earchive = rolling_archive( self.epath, self.arclen, sep='.' )
+        if self.roll_at_startup:
+            oarchive.roll()
+            earchive.roll()
 
