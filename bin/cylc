@@ -443,6 +443,18 @@ def category_help(category):
     print 'COMMANDS:'
     pretty_print( comsum, coms, sort=True )
 
+def set_environment_vars(args):
+    """ 
+    Set --env=key=val arguments as environment variables & remove
+    from argument list
+    """
+    regex = re.compile('\A--env=(\S+)=(\S+)\Z')
+    for arg in args:
+        match = regex.match(arg)
+        if match == None: continue
+        os.environ[match.group(1)] = match.group(2)
+    return filter(lambda i: not regex.search(i),args)
+
 # no arguments: print help and exit
 if len(sys.argv) == 1:
     print usage
@@ -450,6 +462,9 @@ if len(sys.argv) == 1:
     sys.exit(1)
 
 args = sys.argv[1:]
+
+# Set environment variables from arguments like --env=key=val
+args = set_environment_vars(args)
 
 if '--notify-completion' in args:
     notify = True
