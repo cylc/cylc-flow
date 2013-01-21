@@ -21,6 +21,9 @@
         abort if shutdown handler fails = boolean( default=False )
         abort if timeout handler fails = boolean( default=False )
         abort on timeout = boolean( default=False )
+    [[task event handler execution]]
+        batch size = integer( min=1, default=10 )
+        delay between batches = integer( min=0, default=0 ) # seconds
     [[simulation mode]]
         disable suite event hooks = boolean( default=True )
     [[dummy mode]]
