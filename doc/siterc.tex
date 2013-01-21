@@ -3,7 +3,7 @@
 
 \lstset{language=bash}
 
-*** NOT USED YET - CUT FROM OLD SUITERC.TEX - To Be Completed ***
+*** NOT USED YET - FROM SUITE DEF ITEMS CUT FROM OLD SUITERC.TEX - To Be Completed ***
 
 \subsection[run directory]{suite run directory}
 
@@ -140,4 +140,29 @@ Note that you can use a remote section with this item in it even for
 tasks that are local as far as cylc is concerned, but which end up
 running on the affected remote host due to the action of the local batch
 queueing system or resource manager.
+
+
+\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ use login shell}
+
+By default Cylc will submit remote ssh commands using a login shell. For
+security reasons some institutions do not allow unattended commands to start
+login shells, setting this item to false will disable that behaviour.
+
+When this option is set to True Cylc will start a Bash login shell to run
+remote ssh commands, e.g. \lstinline=ssh user@host 'bash --login cylc task'=
+which will source the files \lstinline=/etc/profile= and \lstinline=~/.profile=
+in order to set up the user environment. Without the login option Cylc will be
+run directly by ssh, e.g. \lstinline=ssh user@host 'cylc task'= which will use
+the default shell on the remote machine. In this case the environment will be
+set up by sourcing the files \lstinline=~/.bashrc= or \lstinline=~/.cshrc=,
+depending on the shell type of the remote machine.
+
+In either case the PATH environment variable on the remote machine should
+include \lstinline=$CYLC_DIR/bin= in order for the Cylc executable to be
+found.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} True
+\end{myitemize}
 
