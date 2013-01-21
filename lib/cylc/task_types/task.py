@@ -188,6 +188,9 @@ class task( object ):
                 pass
 
         self.db.close()
+        self.hostname = None
+        self.owner = None
+        
 
     def plog( self, message ):
         # print and log a low priority message
@@ -265,12 +268,20 @@ class task( object ):
             dep.append( satby[ label ] )
         return dep
 
-    def set_submitted( self, hostname=None ):
+    def set_submitted( self, hostname=None, owner=None ):
         self.state.set_status( 'submitted' )
         self.record_db_event(event="submitted", message="task submitted")
         self.record_db_update("task_states", self.name, self.c_time, status="submitted")
         if hostname is not None:
-            self.record_db_update("task_states", self.name, self.c_time, host=hostname)
+            self.hostname = hostname
+        if owner is not None:
+            self.owner = owner
+        if self.hostname is not None:
+            if self.owner is not None:
+                user_at_host = self.owner + "@" + self.hostname
+            else:
+                user_at_host = os.getlogin() + "@" + self.hostname
+            self.record_db_update("task_states", self.name, self.c_time, host=user_at_host)
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
@@ -551,6 +562,9 @@ class task( object ):
 
         # host may be None (= run task on suite host)
         host = rtconfig['remote']['host']
+        self.hostname = host
+        self.owner = rtconfig['remote']['owner']
+        
         if host:
             # dynamic host section:
             #   host = $( host-select-command )
@@ -581,6 +595,8 @@ class task( object ):
             cfghost = 'local'
 
         owner = rtconfig['remote']['owner']
+        if owner is not None:
+            self.owner = owner
 
         share_dir = gcfg.get_suite_share_dir( suite, cfghost, owner )
         work_dir  = gcfg.get_task_work_dir( suite, self.id, cfghost, owner )
