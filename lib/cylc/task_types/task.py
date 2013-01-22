@@ -35,7 +35,6 @@ from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
 from cylc.global_config import globalcfg
-from cylc.RunEventHandler import RunHandler
 import subprocess
 from cylc.global_config import globalcfg
 import logging
@@ -82,7 +81,8 @@ class task( object ):
 
     clock = None
     intercycle = False
-    suite = None
+
+    event_queue = None
 
     # set by the back door at startup:
     cylc_env = {}
@@ -169,8 +169,8 @@ class task( object ):
         self.db_queue = []
 
         gcfg = globalcfg()
-        suite_name = os.environ['CYLC_SUITE_REG_NAME']
-        self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], suite_name)
+        self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
+        self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
         
         # sets submit num for restarts or when triggering state prior to submission
@@ -188,11 +188,6 @@ class task( object ):
                 pass
 
         self.db.close()
-
-    def plog( self, message ):
-        # print and log a low priority message
-        print self.id + ':', message
-        self.log( 'NORMAL', message )
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -276,7 +271,8 @@ class task( object ):
         self.submission_timer_start = self.submitted_time
         handler = self.event_handlers['submitted']
         if handler:
-            RunHandler( 'submitted', handler, self.__class__.suite, self.id, 'task submitted' )
+            self.log( 'NORMAL', "Queuing submitted event handler" )
+            self.__class__.event_queue.put( ('submitted', handler, self.id, 'task submitted') )
         
     def set_running( self ):
         self.state.set_status( 'running' )
@@ -287,7 +283,8 @@ class task( object ):
         self.execution_timer_start = self.started_time
         handler = self.event_handlers['started']
         if handler:
-            RunHandler( 'started', handler, self.__class__.suite, self.id, 'task started' )
+            self.log( 'NORMAL', "Queuing started event handler" )
+            self.__class__.event_queue.put( ('started', handler, self.id, 'task started') )
 
     def set_succeeded( self ):
         self.outputs.set_all_completed()
@@ -299,13 +296,13 @@ class task( object ):
 
     def set_succeeded_handler( self ):
         # (set_succeeded() is used by remote switch)
-        print '\n' + self.id + " SUCCEEDED"
         self.record_db_event(event="succeeded", message="task succeeded")
         self.state.set_status( 'succeeded' )
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
         handler = self.event_handlers['succeeded']
         if handler:
-            RunHandler( 'succeeded', handler, self.__class__.suite, self.id, 'task succeeded' )
+            self.log( 'NORMAL', "Queuing succeeded event handler" )
+            self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
         
     def set_failed( self, reason='task failed' ):
         self.state.set_status( 'failed' )
@@ -314,7 +311,8 @@ class task( object ):
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
         if handler:
-            RunHandler( 'failed', handler, self.__class__.suite, self.id, reason )
+            self.log( 'NORMAL', "Queuing failed event handler" )
+            self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
 
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
@@ -323,7 +321,8 @@ class task( object ):
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
-            RunHandler( 'submission_failed', handler, self.__class__.suite, self.id, reason )
+            self.log( 'NORMAL', "Queuing submission_failed event handler" )
+            self.__class__.event_queue.put( ('submission_failed', handler, self.id, reason) )
 
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
@@ -544,8 +543,6 @@ class task( object ):
 
         gcfg = globalcfg()
 
-        suite = self.__class__.suite 
-
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
 
@@ -582,10 +579,10 @@ class task( object ):
 
         owner = rtconfig['remote']['owner']
 
-        share_dir = gcfg.get_suite_share_dir( suite, cfghost, owner )
-        work_dir  = gcfg.get_task_work_dir( suite, self.id, cfghost, owner )
-        local_log_dir = gcfg.get_task_log_dir( suite ) 
-        remote_log_dir = gcfg.get_task_log_dir( suite, cfghost, owner )
+        share_dir = gcfg.get_suite_share_dir( self.suite_name, cfghost, owner )
+        work_dir  = gcfg.get_task_work_dir( self.suite_name, self.id, cfghost, owner )
+        local_log_dir = gcfg.get_task_log_dir( self.suite_name ) 
+        remote_log_dir = gcfg.get_task_log_dir( self.suite_name, cfghost, owner )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
@@ -646,7 +643,8 @@ class task( object ):
             if current_time > cutoff:
                 msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                RunHandler( 'submission_timeout', handler, self.__class__.suite, self.id, msg )
+                self.log( 'NORMAL', "Queuing submission_timeout event handler" )
+                self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
                 self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -666,7 +664,8 @@ class task( object ):
                 else:
                     msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                RunHandler( 'execution_timeout', handler, self.__class__.suite, self.id, msg )
+                self.log( 'NORMAL', "Queuing execution_timeout event handler" )
+                self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
                 self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -735,7 +734,8 @@ class task( object ):
         # Handle warning events
         handler = self.event_handlers['warning']
         if priority == 'WARNING' and handler:
-            RunHandler( 'warning', handler, self.__class__.suite, self.id, message )
+            self.log( 'NORMAL', "Queuing warning event handler" )
+            self.__class__.event_queue.put( ('warning', handler, self.id, message) )
 
         if self.reset_timer:
             # Reset execution timer on incoming messages
@@ -768,7 +768,7 @@ class task( object ):
                 self.set_failed( message )
             else:
                 # There is a retry lined up
-                self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
+                self.log( "NORMAL", "Setting retry delay: " + str(self.retry_delay) +  " minutes" )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
@@ -778,7 +778,8 @@ class task( object ):
                 # Handle retry events
                 handler = self.event_handlers['retry']
                 if handler:
-                    RunHandler( 'retry', handler, self.__class__.suite, self.id, 'task retrying' )
+                    self.log( 'NORMAL', "Queuing retry event handler" )
+                    self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
         elif self.outputs.exists( message ):
             # Received a registered internal output message

@@ -16,47 +16,59 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
 import threading
 import datetime
 import logging
 import time
 
 class batcher( threading.Thread ):
-    """A worker thread to process queued job submissions by generating
-    and submitting task job scripts in sequential batches. Within each
-    batch members are submitted as parallel sub-processes, but we wait
-    on all members before proceeding to the next batch in order to avoid
-    swamping the system with too many parallel job submission processes."""
+    """Submit queued sub-processes in batches: within a batch members
+    are submitted in parallel and we wait on all members before
+    proceeding to the next batch. This helps to avoid swamping the
+    system with too many parallel sub-processes."""
 
-    # Note that task state changes as a result of job submission are
-    # queued by means of faking incoming task messages - this does not
-    # execute in the main thread so we need to avoid making direct task
-    # state changes here.
-
-    def __init__( self, jobqueue, wireless, batch_size, batch_delay, run_mode, verbose ):
+    def __init__( self, name, jobqueue, batch_size, batch_delay, verbose ):
         threading.Thread.__init__(self)
+        self.name = name 
         self.jobqueue = jobqueue
         self.batch_size = int( batch_size )
         self.batch_delay = int( batch_delay )
 
         self.log = logging.getLogger( 'main' )
 
+        # not a daemon thread: shut down when instructed by the main thread
         self.quit = False
-        self.daemon = True
  
-        self.run_mode = run_mode
-        self.wireless = wireless
         self.verbose = verbose
         self.thread_id = str(self.getName()) 
+
+    def idprint( self, msg, err=False ):
+        if err:
+            self.log.warning(  "ERROR: " + name + ": " + msg )
+        else:
+            self.log.info( self.name + ": " + msg )
+
+    def submit_item( self, item, psinfo ):
+        """submit a job by appropriate means, then append the resulting
+        process id plus item and an info string to the psinfo list."""
+
+        self.idprint( "OVERRIDE ME IN DERIVED CLASSES" )
+ 
+    def item_failed_hook( self, item, info, msg ):
+        """warn of a failed item"""
+        self.idprint( info + " " + msg )
 
     def run( self ):
         # NOTE: Queue.get() blocks if the queue is empty
         # AND: Queue.task_done() doesn't block the producer; it is for
         # queue.join() to block until all queued data is processed.
+        self.log.info(  "Starting " + self.name + " thread" )
 
         while True:
             if self.quit:
-                self.log.info(  "Exiting job submission thread" )
+                # TODO: should we process any remaining queue jobs first?
+                self.log.info(  "Exiting " + self.name + " thread" )
                 break
             batches = []
             batch = []
@@ -69,67 +81,118 @@ class batcher( threading.Thread ):
                     batch = []
             if len(batch) > 0:
                 batches.append( batch )
+
             # submit each batch in sequence
             n = len(batches) 
             i = 0
             while len(batches) > 0:
                 i += 1
-                self.log.info(  "Submitting batch " + str(i) + " of " + str(n) )
-                self.submit( batches.pop(0) )  # index 0 => pop from left
+                self.submit( batches.pop(0), i, n )  # index 0 => pop from left
                 # only delay if there's another batch left
                 if len(batches) > 0:
-                    self.log.info(  "  batch delay " )
+                    #self.log.info(  "  batch delay " )
                     time.sleep( self.batch_delay )
             time.sleep( 1 )
 
-    def submit( self, batch ):
-        if self.run_mode == 'simulation':
-            for itask in batch:
-                self.log.info( 'TASK READY: ' + itask.id )
-                itask.incoming( 'NORMAL', itask.id + ' started' )
-            return
+    def submit( self, batch, i, n ):
 
         before = datetime.datetime.now()
-        ps = []
+        psinfo = []
+
         for itask in batch:
-            self.log.info( 'TASK READY: ' + itask.id )
-            itask.incoming( 'NORMAL', itask.id + ' submitted' )
-            p = itask.submit( overrides=self.wireless.get(itask.id) )
-            if p:
-                ps.append( (itask,p) ) 
-        self.log.info( 'WAITING ON ' + str( len(ps) ) + ' JOB SUBMISSIONS' )
+            self.submit_item( itask, psinfo )
+
+        logmsg = 'batch ' + str(i) + '/' + str(n) + ' (' + str( len(psinfo) ) + ' members):'
+        for p, item, info in psinfo:
+            logmsg += "\n + " + info
+        self.idprint( logmsg )
+
         n_succ = 0
         n_fail = 0
-        while len( ps ) > 0:
-            for itask, p in ps:
+        while len( psinfo ) > 0:
+            for data in psinfo:
+                p, item, info = data
                 res = p.poll()
                 if res is None:
-                    #self.log.info( itask.id + ' still submitting...' )
+                    #self.log.info( info + ' still waiting...' )
                     continue
                 elif res < 0:
-                    self.log.critical( "ERROR: Task " + itask.id + " job submission terminated by signal " + str(res) )
-                    itask.incoming( 'CRITICAL', itask.id + ' failed' )
+                    self.item_failed_hook( item, info, "terminated by signal " + str(res) )
                     n_fail += 1
                 elif res > 0:
-                    self.log.critical( "ERROR: Task " + itask.id + " job submission failed (" + str(res) + ")" )
-                    itask.incoming( 'CRITICAL', itask.id + ' failed' )
+                    self.item_failed_hook( item, info, "failed " + str(res) )
                     n_fail += 1
                 else:
                     n_succ += 1
-                    # set to 'submitted' state if submission succeeds
-                    # AND if the task has not already started running
-                    # (the submitted state would be skipped if the task
-                    # starts running immediately - but this should not
-                    # happen due to use of the messsage queue...).
-                    #if itask.state.is_submitting():
-                ps.remove( (itask,p) )
+                psinfo.remove( data )
                 self.jobqueue.task_done()
             time.sleep(1)
 
         after = datetime.datetime.now()
         n_tasks = len(batch)
-        self.log.info( """JOB SUBMISSION BATCH COMPLETED
-  """ + "Time taken: " + str( after - before ) + """
-  """ + str(n_succ) + " of " + str(n_tasks) + """ job submissions succeeded
-  """ + str(n_fail) + " of " + str(n_tasks) + " job submissions failed" )
+
+        msg = """batch completed
+  """ + "Time taken: " + str( after - before )
+        if n_succ == 0:
+            msg += """
+  All """ + str(n_tasks) + " items FAILED"
+        elif n_fail > 0:
+            msg += """
+  """ + str(n_succ) + " of " + str(n_tasks) + """ items succeeded
+  """ + str(n_fail) + " of " + str(n_tasks) + " items FAILED"
+        else:
+            msg += """
+  All """ + str(n_tasks) + " items succeeded"
+        self.idprint( msg )
+
+class task_batcher( batcher ):
+    """Batched submission of queued tasks"""
+
+    # Note that task state changes as a result of job submission are
+    # queued by means of faking incoming task messages - this does not
+    # execute in the main thread so we need to avoid making direct task
+    # state changes here.
+
+    def __init__( self, name, jobqueue, batch_size, batch_delay, wireless, run_mode, verbose ):
+        batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
+        self.run_mode = run_mode
+        self.wireless = wireless
+
+    def submit( self, batch, i, n ):
+        if self.run_mode == 'simulation':
+            for itask in batch:
+                self.idprint( 'TASK READY: ' + itask.id )
+                itask.incoming( 'NORMAL', itask.id + ' started' )
+            return
+        else:
+            batcher.submit( self, batch, i, n )
+
+    def submit_item( self, itask, psinfo ):
+        self.log.info( 'TASK READY: ' + itask.id )
+        itask.incoming( 'NORMAL', itask.id + ' submitted' )
+        p = itask.submit( overrides=self.wireless.get(itask.id) )
+        if p:
+            psinfo.append( (p, itask, itask.id) ) 
+
+    def item_failed_hook( self, itask, info ):
+        itask.incoming( 'CRITICAL', itask.id + ' failed' )
+        batcher.item_failed_hook( self, item, info )
+
+class event_batcher( batcher ):
+    """Batched execution of queued task event handlers"""
+
+    def __init__( self, name, jobqueue, batch_size, batch_delay, suite, verbose ):
+        batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
+        self.suite = suite
+
+    def submit_item( self, item, psinfo ):
+        event, handler, taskid, msg = item
+        command = " ".join( [handler, event, self.suite, taskid, "'" + msg + "'"] )
+        try:
+            p = subprocess.Popen( command, shell=True )
+        except OSError, e:
+            print >> sys.stderr, "ERROR:", e
+            self.idprint( "event handler submission failed", err=True )
+        else:
+            psinfo.append( (p, item, taskid + " " + event) ) 
 
