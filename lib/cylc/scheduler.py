@@ -55,7 +55,8 @@ from TaskID import TaskID, TaskIDError
 from task_pool import pool
 import flags
 import cylc.rundb
-
+from Queue import Queue
+from batch_submit import event_batcher
 
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -82,14 +83,15 @@ class request_handler( threading.Thread ):
         threading.Thread.__init__(self)
         self.pyro = pyro
         self.quit = False
+        self.log = logging.getLogger( 'main' )
+        self.log.info(  "Starting request handler thread" )
 
     def run( self ):
         while True:
             self.pyro.handleRequests(timeout=1)
             if self.quit:
                 break
-        print "REQUEST HANDLER THREAD EXIT"
-
+        self.log.info(  "Exiting request handler thread" )
 
 class scheduler(object):
     def __init__( self, is_restart=False ):
@@ -110,6 +112,18 @@ class scheduler(object):
         self.graph_warned = {}
 
         self.do_process_tasks = False
+
+        # initialize some items in case of early shutdown
+        # (required in the shutdown() method)
+        self.clock = None
+        self.wireless = None
+        self.suite_state = None
+        self.command_queue = None
+        self.pool = None
+        self.evworker = None
+        self.request_handler = None
+        self.pyro = None
+        self.state_dumper = None
 
         # COMMANDLINE OPTIONS
 
@@ -407,33 +421,33 @@ class scheduler(object):
 
         dump = {}
         found = False
-        for task in self.pool.get_tasks():
+        for itask in self.pool.get_tasks():
             # loop through the suite task list
-            task_id = task.id
+            task_id = itask.id
             if task_id in in_ids_back:
                 found = True
                 extra_info = {}
                 # extra info for clocktriggered tasks
                 try:
-                    extra_info[ 'Delayed start time reached' ] = task.start_time_reached() 
-                    extra_info[ 'Triggers at' ] = 'T+' + str(task.real_time_delay) + ' hours'
+                    extra_info[ 'Delayed start time reached' ] = itask.start_time_reached() 
+                    extra_info[ 'Triggers at' ] = 'T+' + str(itask.real_time_delay) + ' hours'
                 except AttributeError:
                     # not a clocktriggered task
                     pass
                 # extra info for catchup_clocktriggered tasks
                 try:
-                    extra_info[ task.__class__.name + ' caught up' ] = task.__class__.get_class_var( 'caughtup' )
+                    extra_info[ itask.__class__.name + ' caught up' ] = itask.__class__.get_class_var( 'caughtup' )
                 except:
                     # not a catchup_clocktriggered task
                     pass
                 # extra info for cycling tasks
                 try:
-                    extra_info[ 'Valid cycles' ] = task.valid_hours
+                    extra_info[ 'Valid cycles' ] = itask.valid_hours
                 except AttributeError:
                     # not a cycling task
                     pass
 
-                dump[ in_ids_back[ task_id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
+                dump[ in_ids_back[ task_id ] ] = [ itask.prerequisites.dump(), itask.outputs.dump(), extra_info ]
         if not found:
             self.log.warning( 'task state info request: tasks not found' )
         else:
@@ -868,9 +882,6 @@ class scheduler(object):
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']
 
-        # set suite in task class (for passing to task even hook scripts)
-        task.task.suite = self.suite
-
         # Running in UTC time? (else just use the system clock)
         self.utc = self.config['cylc']['UTC mode']
 
@@ -891,18 +902,28 @@ class scheduler(object):
         self.state_dump_filename = self.state_dumper.get_path()
 
         if not reconfigure:
-            self.command_queue = comqueue( self.control_commands.keys() )
-            self.pyro.connect( self.command_queue, 'command-interface' )
-
-            self.info_interface = info_interface( self.info_commands )
-            self.pyro.connect( self.info_interface, 'suite-info' )
-
             slog = suite_log( self.suite )
             slog.mkdir()
             slog.pimp( self.logging_level, self.clock )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
             self.logdir = slog.get_dir()
+
+            self.command_queue = comqueue( self.control_commands.keys() )
+            self.pyro.connect( self.command_queue, 'command-interface' )
+
+            self.event_queue = Queue()
+            task.task.event_queue = self.event_queue
+            self.evworker = event_batcher( 
+                    'Event Queue', self.event_queue, 
+                    self.config['cylc']['event handler execution']['batch size'],
+                    self.config['cylc']['event handler execution']['delay between batches'],
+                    self.suite,
+                    self.verbose )
+            self.evworker.start()
+
+            self.info_interface = info_interface( self.info_commands )
+            self.pyro.connect( self.info_interface, 'suite-info' )
 
             self.log.info( "port:" +  str( self.port ))
 
@@ -955,8 +976,6 @@ class scheduler(object):
         if self.options.start_held:
             self.log.warning( "Held on start-up (no tasks will be submitted)")
             self.hold_suite()
-        else:
-            print "\nSTARTING"
 
         handler = self.config.event_handlers['startup']
         if handler:
@@ -1145,30 +1164,49 @@ class scheduler(object):
 
         return process
 
-    def shutdown( self, message='' ):
-        print "\nSHUTTING DOWN NOW"
+    def shutdown( self, reason='' ):
+        print "\nMain thread shutting down ",
+        if reason != '':
+            print '(' + reason + ')'
+        else:
+            print
 
-        print " * disconnecting pyro-connected objects"
-        self.pyro.disconnect( self.clock )
-        self.pyro.disconnect( self.wireless )
-        self.pyro.disconnect( self.suite_id )
-        self.pyro.disconnect( self.suite_state )
-        self.pyro.disconnect( self.command_queue )
-        for itask in self.pool.get_tasks():
-            self.pyro.disconnect( itask.message_queue )
 
-        print " * terminating job submission thread"
-        self.pool.worker.quit = True
-        self.pool.worker.join()
-        print " * terminating request handling thread"
-        self.request_handler.quit = True
-        self.request_handler.join()
+        if self.pool:
+            print " * telling job submission thread to terminate"
+            self.pool.worker.quit = True
+            self.pool.worker.join()
+            # disconnect task message queues
+            for itask in self.pool.get_tasks():
+                if itask.message_queue:
+                    self.pyro.disconnect( itask.message_queue )
+            if self.state_dumper:
+                self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
-        print " * terminating the suite Pyro daemon"
+        if self.evworker:
+            print " * telling event handler thread to terminate"
+            self.evworker.quit = True
+            self.evworker.join()
+
+        if self.request_handler:
+            print " * telling request handling thread to terminate"
+            self.request_handler.quit = True
+            self.request_handler.join()
+        if self.command_queue:
+            self.pyro.disconnect( self.command_queue )
+        if self.clock:
+            self.pyro.disconnect( self.clock )
+        if self.wireless:
+            self.pyro.disconnect( self.wireless )
+        if self.suite_id:
+            self.pyro.disconnect( self.suite_id )
+        if self.suite_state:
+            self.pyro.disconnect( self.suite_state )
+
         if self.pyro:
+            print " * terminating the suite Pyro daemon"
             self.pyro.shutdown()
 
-        self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
         if self.use_lockserver:
             # do this last
             if self.lock_acquired:
@@ -1190,8 +1228,6 @@ class scheduler(object):
         if self.config['visualization']['runtime graph']['enable']:
             self.runtime_graph.finalize()
 
-        print message
-
         #disconnect from suite-db/stop db queue
         self.db.close()
         print " * disconnecting from suite database"
@@ -1204,7 +1240,7 @@ class scheduler(object):
             else:
                 foreground = False
             try:
-                RunHandler( 'shutdown', handler, self.suite, msg=message, fg=foreground )
+                RunHandler( 'shutdown', handler, self.suite, msg=reason, fg=foreground )
             except Exception, x:
                 if self.options.reftest:
                     sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
@@ -1213,6 +1249,8 @@ class scheduler(object):
                     sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
+
+        print "Main thread DONE"
 
     def set_stop_ctime( self, stop_tag ):
         self.log.warning( "Setting stop cycle time: " + stop_tag )
@@ -1429,7 +1467,7 @@ class scheduler(object):
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
                 # beyond the runahead limit
-                new_task.plog( "HOLDING (runahead limit)" )
+                new_task.log( "NORMAL", "HOLDING (runahead limit)" )
                 new_task.reset_state_runahead()
 
     def spawn( self ):
@@ -1766,7 +1804,7 @@ class scheduler(object):
 
         # dump state
         self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-        itask.plog( "triggering now" )
+        itask.log( "NORMAL", "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
             itask.set_trigger_now(True)
@@ -1786,7 +1824,7 @@ class scheduler(object):
             # Currently can't reset a 'submitting' task in the job submission thread!
             raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
 
-        itask.plog( "resetting to " + state + " state" )
+        itask.log( "NORMAL", "resetting to " + state + " state" )
 
         self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
@@ -1870,11 +1908,11 @@ class scheduler(object):
                     del itask
                 else: 
                     if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                        itask.plog( "HOLDING at configured suite stop time " + self.stop_tag )
+                        itask.log( "NORMAL", "HOLDING at configured suite stop time " + self.stop_tag )
                         itask.reset_state_held()
                     if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
-                        itask.plog( "HOLDING at configured task stop time " + itask.stop_c_time )
+                        itask.log( "NORMAL", "HOLDING at configured task stop time " + itask.stop_c_time )
                         itask.reset_state_held()
                     inserted.append( itask.id )
                     to_insert.append(itask)
@@ -2046,7 +2084,7 @@ class scheduler(object):
  
                 if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
                     # we've reached the stop time
-                    new_task.plog( 'HOLDING at configured suite stop time' )
+                    new_task.log( "NORMAL", 'HOLDING at configured suite stop time' )
                     new_task.reset_state_held()
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time

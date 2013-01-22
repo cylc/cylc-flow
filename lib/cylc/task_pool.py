@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import Queue
-from batch_submit import batcher
+from batch_submit import task_batcher
 from task_types import task
 import flags
 
@@ -35,13 +35,11 @@ class pool(object):
 
         self.jobqueue = Queue.Queue()
 
-        self.worker = batcher( self.jobqueue, self.wireless,
+        self.worker = task_batcher( 'Job Queue', self.jobqueue, 
                 config['cylc']['job submission']['batch size'],
                 config['cylc']['job submission']['delay between batches'],
-                self.run_mode, self.verbose )
+                self.wireless, self.run_mode, self.verbose )
 
-        if self.verbose:
-            print "Starting job submission worker thread"
         self.worker.start()
 
     def assign( self, reload=False ):

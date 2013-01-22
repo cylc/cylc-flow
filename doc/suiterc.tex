@@ -130,8 +130,41 @@ many jobs at once, so cylc allows a configurable delay between job
 submission batches.
 
 \begin{myitemize}
-    \item {\em type:} integer (minimum 0)
-    \item {\em default:} 15 seconds
+    \item {\em type:} integer seconds (minimum 0)
+    \item {\em default:} 15
+\end{myitemize}
+
+\subsubsection[event handler execution]{[cylc] $\rightarrow$ event handler execution}
+
+Task event handlers are queued to a background worker thread that limits
+the number of event handlers that can run at once, as for task job
+submissions (above), because of the potential for large suites to swamp
+the suite host with event handlers. Event handlers are currently
+executed directly as sub-processes (i.e.\ unlike task job submission you
+can't specify the ``job submission method'' to use).
+
+Note that {\em suite} event handlers are currently executed directly in
+the main scheduler thread, not queued to the task event handler worker
+thread.
+
+\paragraph[batch size]{[cylc] $\rightarrow$ [event handler execution] $\rightarrow$ batch size}
+
+The maximum number of event handlers to be executed in parallel in the
+worker thread. Cylc waits for all batch members to complete before
+proceeding on to the next batch.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 5
+\end{myitemize}
+
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [event handler execution] $\rightarrow$ delay between batches}
+
+A configurable delay between batches of task event handlers.
+
+\begin{myitemize}
+    \item {\em type:} integer seconds (minimum 0)
+    \item {\em default:} 0
 \end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}

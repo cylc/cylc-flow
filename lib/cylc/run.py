@@ -90,5 +90,5 @@ def main(name, start):
             print >> sys.stderr, "use --debug to turn on exception tracebacks)"
             sys.exit(1)
     else:
-        server.shutdown('DONE')
+        server.shutdown()
 
