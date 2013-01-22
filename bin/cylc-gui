@@ -53,10 +53,7 @@ on to the suite if it is subsequently started from the GUI
 
 Task state color themes can be changed via the View menu. To customize
 themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc
-and follow the instructions in the file.
-
-NOTE: daemonize important suites with the POSIX nohup command:
-    $ nohup gcylc [OPTIONS] [REG] &""", pyro=True, gcylc=True,
+and follow the instructions in the file.""", pyro=True, gcylc=True,
     argdoc=[('[REG]', 'Suite name' )])
 
 parser.add_option( "-w", "--views", metavar="VIEWS", 

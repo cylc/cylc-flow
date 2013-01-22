@@ -37,10 +37,7 @@ parser = cop( """cylc [db] dbviewer [OPTIONS]
 
 This command launches a GUI for viewing your database of registered
 suites. Right-click on suites or groups to operate on them (edit, copy,
-launch gcylc etc.).
-
-NOTE: to daemonize suites launched from the viewer use POSIX nohup command:
-    $ nohup cylc dbviewer [OPTIONS] &""", argdoc=[])
+launch gcylc etc.).""", argdoc=[])
 
 parser.add_option( "--pyro-timeout", metavar='SEC',
         help="Set a timeout for the network connections "

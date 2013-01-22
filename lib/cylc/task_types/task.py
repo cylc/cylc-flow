@@ -608,6 +608,7 @@ class task( object ):
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
+                'use login shell'        : gcfg.cfg['task hosts'][cfghost]['use login shell'],
                 'use ssh messaging'      : gcfg.cfg['task hosts'][cfghost]['use ssh messaging'],
                 'remote cylc path'       : gcfg.cfg['task hosts'][cfghost]['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],

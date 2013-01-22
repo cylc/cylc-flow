@@ -137,6 +137,23 @@ state dump rolling archive length = integer( min=1, default=10 )
         use ssh messaging = boolean( default=False )
         # How to invoke commands on this host; default shown:
         remote shell template = string( default='ssh -oBatchMode=yes %s' )
+        # Use a login shell or not for remote command invocation.  By
+        # default Cylc will submit remote ssh commands using a login
+        # shell. For security reasons some institutions do not allow
+        # unattended commands to start login shells, setting this item
+        # to false will disable that behaviour.  When this option is set
+        # to True Cylc will start a Bash login shell to run remote ssh
+        # commands, e.g. ssh user@host 'bash --login cylc ...' which
+        # will source the files /etc/profile and ~/.profile in order to
+        # set up the user environment. Without the login option Cylc
+        # will be run directly by ssh, e.g. ssh user@host 'cylc ...'
+        # which will use the default shell on the remote machine. In
+        # this case the environment will be set up by sourcing the files
+        # ~/.bashrc or ~/.cshrc, depending on the shell type of the
+        # remote machine.  In either case the PATH environment variable
+        # on the remote machine should include $CYLC_DIR/bin in order
+        # for the Cylc executable to be found.
+        use login shell = boolean( default=True )
 
     #> Here's the __many__ configspec for available remote task hosts:
     [[__many__]]
@@ -145,6 +162,7 @@ state dump rolling archive length = integer( min=1, default=10 )
         cylc directory = string( default=None )
         use ssh messaging = boolean( default=None )
         remote shell template = string( default=None )
+        use login shell = boolean( default=True )
 
 # SUITE HOST SELF-IDENTIFICATION: The suite host's identity, by NAME or
 # IP ADDRESS, must be determined locally by cylc and passed to task

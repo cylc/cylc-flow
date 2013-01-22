@@ -6,7 +6,7 @@ from validate import Validator
 from print_cfg import print_cfg
 from mkdir_p import mkdir_p
 from copy import deepcopy
-import atexit
+##import atexit
 import shutil
 from tempfile import mkdtemp
 
@@ -158,8 +158,9 @@ class globalcfg( object ):
         if not cylc_tmpdir:
             # use tempfile.mkdtemp() to create a new temp directory
             cylc_tmpdir = mkdtemp(prefix="cylc-")
-            # self-cleanup
-            atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
+            ## can't use atexit in daemon mode!
+            ## self-cleanup
+            ##atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
             # now replace the original item
             self.cfg['temporary directory'] = cylc_tmpdir
         else:
