@@ -271,6 +271,7 @@ class task( object ):
         self.submission_timer_start = self.submitted_time
         handler = self.event_handlers['submitted']
         if handler:
+            self.log( 'NORMAL', "Queuing submitted event handler" )
             self.__class__.event_queue.put( ('submitted', handler, self.id, 'task submitted') )
         
     def set_running( self ):
@@ -282,6 +283,7 @@ class task( object ):
         self.execution_timer_start = self.started_time
         handler = self.event_handlers['started']
         if handler:
+            self.log( 'NORMAL', "Queuing started event handler" )
             self.__class__.event_queue.put( ('started', handler, self.id, 'task started') )
 
     def set_succeeded( self ):
@@ -299,6 +301,7 @@ class task( object ):
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
         handler = self.event_handlers['succeeded']
         if handler:
+            self.log( 'NORMAL', "Queuing succeeded event handler" )
             self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
         
     def set_failed( self, reason='task failed' ):
@@ -308,6 +311,7 @@ class task( object ):
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
         if handler:
+            self.log( 'NORMAL', "Queuing failed event handler" )
             self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
 
     def set_submit_failed( self, reason='job submission failed' ):
@@ -317,6 +321,7 @@ class task( object ):
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
+            self.log( 'NORMAL', "Queuing submission_failed event handler" )
             self.__class__.event_queue.put( ('submission_failed', handler, self.id, reason) )
 
     def unfail( self ):
@@ -638,6 +643,7 @@ class task( object ):
             if current_time > cutoff:
                 msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
+                self.log( 'NORMAL', "Queuing submission_timeout event handler" )
                 self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
                 self.submission_timer_start = None
 
@@ -658,6 +664,7 @@ class task( object ):
                 else:
                     msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
+                self.log( 'NORMAL', "Queuing execution_timeout event handler" )
                 self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
                 self.execution_timer_start = None
 
@@ -727,6 +734,7 @@ class task( object ):
         # Handle warning events
         handler = self.event_handlers['warning']
         if priority == 'WARNING' and handler:
+            self.log( 'NORMAL', "Queuing warning event handler" )
             self.__class__.event_queue.put( ('warning', handler, self.id, message) )
 
         if self.reset_timer:
@@ -770,6 +778,7 @@ class task( object ):
                 # Handle retry events
                 handler = self.event_handlers['retry']
                 if handler:
+                    self.log( 'NORMAL', "Queuing retry event handler" )
                     self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
         elif self.outputs.exists( message ):
