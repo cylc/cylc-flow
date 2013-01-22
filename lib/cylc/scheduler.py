@@ -916,8 +916,8 @@ class scheduler(object):
             task.task.event_queue = self.event_queue
             self.evworker = event_batcher( 
                     'Event Queue', self.event_queue, 
-                    self.config['cylc']['task event handler execution']['batch size'],
-                    self.config['cylc']['task event handler execution']['delay between batches'],
+                    self.config['cylc']['event handler execution']['batch size'],
+                    self.config['cylc']['event handler execution']['delay between batches'],
                     self.suite,
                     self.verbose )
             self.evworker.start()

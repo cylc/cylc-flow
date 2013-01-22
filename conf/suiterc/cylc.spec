@@ -6,6 +6,9 @@
     [[job submission]]
         batch size = integer( min=1, default=10 )
         delay between batches = integer( min=0, default=15 ) # seconds
+    [[event handler execution]]
+        batch size = integer( min=1, default=5 )
+        delay between batches = integer( min=0, default=0 ) # seconds
     [[lockserver]]
         enable = boolean( default=False )
         simultaneous instances = boolean( default=False )
@@ -21,9 +24,6 @@
         abort if shutdown handler fails = boolean( default=False )
         abort if timeout handler fails = boolean( default=False )
         abort on timeout = boolean( default=False )
-    [[task event handler execution]]
-        batch size = integer( min=1, default=10 )
-        delay between batches = integer( min=0, default=0 ) # seconds
     [[simulation mode]]
         disable suite event hooks = boolean( default=True )
     [[dummy mode]]
