@@ -590,6 +590,14 @@ class task( object ):
             self.owner = user
         else:
             self.owner = owner
+            
+        if self.hostname is None:
+            res = run_get_stdout("hostname")
+            if res[0]:
+                self.hostname = res[1]
+            else:
+                self.hostname = "local"
+        
         user_at_host = self.owner + "@" + self.hostname
         
         self.submit_method = rtconfig['job submission']['method']
