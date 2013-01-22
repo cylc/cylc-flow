@@ -35,6 +35,7 @@ from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
 from cylc.global_config import globalcfg
+from cylc.owner import user
 from cylc.RunEventHandler import RunHandler
 import subprocess
 from cylc.global_config import globalcfg
@@ -190,7 +191,7 @@ class task( object ):
         self.db.close()
         self.hostname = None
         self.owner = None
-        
+        self.submit_method = None
 
     def plog( self, message ):
         # print and log a low priority message
@@ -268,20 +269,10 @@ class task( object ):
             dep.append( satby[ label ] )
         return dep
 
-    def set_submitted( self, hostname=None, owner=None ):
+    def set_submitted( self ):
         self.state.set_status( 'submitted' )
         self.record_db_event(event="submitted", message="task submitted")
         self.record_db_update("task_states", self.name, self.c_time, status="submitted")
-        if hostname is not None:
-            self.hostname = hostname
-        if owner is not None:
-            self.owner = owner
-        if self.hostname is not None:
-            if self.owner is not None:
-                user_at_host = self.owner + "@" + self.hostname
-            else:
-                user_at_host = os.getlogin() + "@" + self.hostname
-            self.record_db_update("task_states", self.name, self.c_time, host=user_at_host)
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
@@ -562,8 +553,12 @@ class task( object ):
 
         # host may be None (= run task on suite host)
         host = rtconfig['remote']['host']
-        self.hostname = host
-        self.owner = rtconfig['remote']['owner']
+        owner = rtconfig['remote']['owner']
+        if owner is None:
+            self.owner = user
+        else:
+            self.owner = owner
+        self.submit_method = rtconfig['job submission']['method']
         
         if host:
             # dynamic host section:
@@ -578,6 +573,7 @@ class task( object ):
                     # host selection command succeeded
                     host = res[1]
                     self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
+                    self.hostname = host
                 else:
                     # host selection command failed
                     self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
@@ -593,10 +589,11 @@ class task( object ):
                 cfghost = host
         else:
             cfghost = 'local'
+            self.hostname = os.environ.get("CYLC_SUITE_HOST")
 
-        owner = rtconfig['remote']['owner']
-        if owner is not None:
-            self.owner = owner
+        user_at_host = self.owner + "@" + self.hostname
+        self.record_db_update("task_states", self.name, self.c_time, 
+                              submit_method=self.submit_method, host=user_at_host)
 
         share_dir = gcfg.get_suite_share_dir( suite, cfghost, owner )
         work_dir  = gcfg.get_task_work_dir( suite, self.id, cfghost, owner )
