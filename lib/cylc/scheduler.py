@@ -1467,7 +1467,7 @@ class scheduler(object):
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
                 # beyond the runahead limit
-                new_task.plog( "HOLDING (runahead limit)" )
+                new_task.log( "NORMAL", "HOLDING (runahead limit)" )
                 new_task.reset_state_runahead()
 
     def spawn( self ):
@@ -1804,7 +1804,7 @@ class scheduler(object):
 
         # dump state
         self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-        itask.plog( "triggering now" )
+        itask.log( "NORMAL", "triggering now" )
         itask.reset_state_ready()
         if itask.is_clock_triggered():
             itask.set_trigger_now(True)
@@ -1824,7 +1824,7 @@ class scheduler(object):
             # Currently can't reset a 'submitting' task in the job submission thread!
             raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
 
-        itask.plog( "resetting to " + state + " state" )
+        itask.log( "NORMAL", "resetting to " + state + " state" )
 
         self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
@@ -1908,11 +1908,11 @@ class scheduler(object):
                     del itask
                 else: 
                     if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                        itask.plog( "HOLDING at configured suite stop time " + self.stop_tag )
+                        itask.log( "NORMAL", "HOLDING at configured suite stop time " + self.stop_tag )
                         itask.reset_state_held()
                     if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
                         # this task has a stop time configured, and we've reached it
-                        itask.plog( "HOLDING at configured task stop time " + itask.stop_c_time )
+                        itask.log( "NORMAL", "HOLDING at configured task stop time " + itask.stop_c_time )
                         itask.reset_state_held()
                     inserted.append( itask.id )
                     to_insert.append(itask)
@@ -2084,7 +2084,7 @@ class scheduler(object):
  
                 if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
                     # we've reached the stop time
-                    new_task.plog( 'HOLDING at configured suite stop time' )
+                    new_task.log( "NORMAL", 'HOLDING at configured suite stop time' )
                     new_task.reset_state_held()
                 # perpetuate the task stop time, if there is one
                 new_task.stop_c_time = itask.stop_c_time
