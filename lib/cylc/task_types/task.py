@@ -553,12 +553,6 @@ class task( object ):
 
         # host may be None (= run task on suite host)
         host = rtconfig['remote']['host']
-        owner = rtconfig['remote']['owner']
-        if owner is None:
-            self.owner = user
-        else:
-            self.owner = owner
-        self.submit_method = rtconfig['job submission']['method']
         
         if host:
             # dynamic host section:
@@ -591,7 +585,15 @@ class task( object ):
             cfghost = 'local'
             self.hostname = os.environ.get("CYLC_SUITE_HOST")
 
+        owner = rtconfig['remote']['owner']
+        if owner is None:
+            self.owner = user
+        else:
+            self.owner = owner
         user_at_host = self.owner + "@" + self.hostname
+        
+        self.submit_method = rtconfig['job submission']['method']
+        
         self.record_db_update("task_states", self.name, self.c_time, 
                               submit_method=self.submit_method, host=user_at_host)
 
