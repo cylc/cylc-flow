@@ -410,11 +410,10 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
         for network communication between server processes (cylc suites)
         and client programs (running tasks, control GUIs and commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
-    \item {\bf sqlite (a self-contained, serverless, zero-configuration,
-        transactional SQL database engine}. This is likely included in
-        your Linux distribution already. Cylc generates an sqlite
-        database for each suite as it runs, to record task events and
-        status.
+    \item {\bf sqlite (a serverless, zero-configuration, SQL database
+        engine}). This is likely included in your Linux distribution
+        already. Cylc generates an sqlite database for each suite as it
+        runs, to record task events and status.
         \newline \url{http://sqlite.org}
 \end{myitemize}
 
@@ -561,7 +560,8 @@ local (user-specific) installation instructions.
 Cylc typically installs into a normal user account; just unpack
 the release tarball in the desired location (referred to
 below as  \lstinline=$CYLC_DIR=) and see the
-\lstinline=$CYLC_DIR/INSTALL= file for instructions.
+\lstinline=$CYLC_DIR/INSTALL= file for instructions 
+(see also Section~\ref{INSTALL}.
 
 \subsection{Site And User Configuration Files}
 \label{SiteAndUserConfiguration}
@@ -3633,7 +3633,7 @@ set them again on the \lstinline=cylc restart= command line.
 \subsection{Special Placeholder Variables}
 \label{SPHV}
 
-A few special variables are used as placeholders in cylc suite definitions:
+Several special variables are used as placeholders in cylc suite definitions:
 
 \begin{myitemize}
     \item \lstinline=[T]= and \lstinline=[T+n]= \newline
@@ -5837,6 +5837,11 @@ jumping layout problem:
 
 \lstinputlisting{../README}
 
+\section{Cylc Project INSTALL File}
+\label{INSTALL}
+
+\lstinputlisting{../INSTALL}
+
 \section{Cylc Development History}
 \subsection{Pre-3.0}
 
@@ -5862,10 +5867,9 @@ dependency graphs very quickly in simulation mode).
 Version 3.0 implemented an entirely new suite design interface in which
 one defines the suite dependency graph, execution environment, and
 command scripting for each task, in a single structured, validated,
-configuration file - the suite.rc file.  This {\em really} makes suite
-structure apparent at a glance, and task prerequisites and outputs (and
-some other important parameters besides) no longer need to be specified
-by the user because they are implied by the graph.
+configuration file - the suite.rc file.  This makes suite structure
+apparent at a glance, and much important detail is now implicitly
+implied by the graph.
 
 \subsection{Version 4.0}
 
@@ -5883,6 +5887,14 @@ many refinements:
     \item The Jinja2 template engine is now supported, adding general
         programmability to cylc suite definitions.
 \end{myitemize}
+
+\subsection{Version 5.0}
+
+Version 5.0 contains some major internal changes to enhance performance
+for large suites, such as multi-threading for continuous request
+handling and task job submission. We also aim to provide backward
+compatibility for suite definitions from version 5.0 onward, wherever
+possible.
 
 \section{Pyro} 
 \label{Pyro}
