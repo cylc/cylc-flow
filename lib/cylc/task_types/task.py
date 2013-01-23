@@ -35,35 +35,12 @@ from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
 from cylc.global_config import globalcfg
-import subprocess
 from cylc.global_config import globalcfg
 import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
-
-
-def run_get_stdout( command ):
-    try:
-        popen = subprocess.Popen( command, shell=True,
-                stderr=subprocess.PIPE, stdout=subprocess.PIPE )
-        out = popen.stdout.read()
-        err = popen.stderr.read()
-        res = popen.wait()
-        if res < 0:
-            print >> sys.stderr, "ERROR: command terminated by signal %d\n%s" % (res, err)
-            return (False, [])
-        elif res > 0:
-            print >> sys.stderr, "ERROR: command failed %d\n%s" % (res,err)
-            return (False, [])
-    except OSError, e:
-        print >> sys.stderr, "ERROR: command invocation failed %s\n%s" % (str(e),err)
-        return (False, [])
-    else:
-        # output is a string with newlines
-        res = out.strip()
-        return ( True, res )
-    return (False, None )
+from cylc.run_get_stdout import run_get_stdout
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
