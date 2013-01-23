@@ -18,55 +18,63 @@
 
 CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
-.PHONY: all commands clean tidy html html-multi html-single pdf index
+.PHONY: all clean html html-multi html-single pdf
 
-# The main phony targets below depend initially on 'commands', which
-# regenerates commands.tex only if the command usage help has changed.
-# The real targets cannot have phony prerequisites as that would make
-# them execute every time. Consequently: DO NOT USE THE REAL TARGETS
-# DIRECTLY OR commands.tex WILL NOT BE REGENERATED WHEN IT SHOULD BE.
-#   E.g. use 'make pdf' NOT 'make cug.pdf'.
-# The index is regenerated for every real target; this is OK because 
-# it is fast, and the index links to all the final documents found.
+DEPS := $(shell ./scripts/get-deps.sh)
 
-all: commands pdf html
+all: $(DEPS) index.html
 
-html: commands html-multi html-single
+html: html-multi html-single
 
-html-multi: commands html/multi/cug-html.html
+html-multi: html/multi/cug-html.html
 
-html-single: commands html/single/cug-html.html
+html-single: html/single/cug-html.html
 
-pdf: commands pdf/cug-pdf.pdf
+pdf: pdf/cug-pdf.pdf
 
-# just for standalone use: "make index"
-index:
+index.html: html/multi/cug-html.html html/single/cug-html.html pdf/cug-pdf.pdf
 	./scripts/make-index.sh
 
-commands:
+cylc.txt: ../bin/cylc
+	$< --help > $@
+
+cats = $(shell ../bin/cylc categories) 
+catx = $(cats:%=categories/%.txt)
+
+cmds = $(shell ../bin/cylc commands)
+cmdx = $(cmds:%=commands/%.txt)
+
+$(cmdx): commands/%.txt: ../bin/cylc-%
+	if [[ ! -d commands ]]; then mkdir -p commands/; fi
+	$(subst cylc-,cylc ,$<) --help > $@
+
+$(catx): categories/%.txt: ../bin/cylc
+	if [[ ! -d categories ]]; then mkdir -p categories/; fi
+	cylc $(subst .txt,,$(subst categories/,,$@)) --help > $@
+
+commands.tex: $(cmdx) $(catx) cylc.txt
 	./scripts/make-commands.sh
 
 html/multi/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
 	./scripts/scale-images.sh
 	./scripts/make-html.sh multi
-	./scripts/make-index.sh
 
 html/single/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
 	./scripts/scale-images.sh
 	./scripts/make-html.sh single
-	./scripts/make-index.sh
 
 pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex
 	./scripts/make-pdf.sh
-	./scripts/make-index.sh
 
 # delete all generated files:
 clean:
 	rm -rf pdf\
-		html\
-        command-usage\
-        commands.tex\
-        graphics/png-scaled \
-        index.html \
-        cylc-version.txt\
+	html\
+	cylc.txt\
+	commands\
+	categories\
+	commands.tex\
+	graphics/png-scaled \
+	index.html \
+	cylc-version.txt
 

@@ -1,7 +1,6 @@
-
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
-#C:
+#C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -15,8 +14,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This directory is for utility scripts that are not strictly required by
-cylc suites, but which perform functions commonly needed by cylc tasks:
-cycle time arithmetic, filename templating, and file housekeeping, for 
-example. New utilities, if sufficiently general, should be made available
-via the cylc commandline 'utility' category.  See 'cylc utility help'.
+all: version docs ordereddict
+
+version:
+	admin/create-version-file
+
+docs:
+	cd doc && $(MAKE)
+
+ordereddict:
+	cd ext/ordereddict-0.4.5 && python setup.py build
+
+clean:
+	cd doc && $(MAKE) clean
+
