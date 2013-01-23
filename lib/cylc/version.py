@@ -16,32 +16,36 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Determine the cylc version string; repository or raw source distribution."""
+
 import os, sys
-import subprocess
+import run_get_stdout
 
-# auto-replaced with version tag by new-release script:
-cylc_version = "VERSION-TEMPLATE"
 cylc_dir = os.environ['CYLC_DIR']
+vfile = os.path.join( cylc_dir, 'VERSION' )
+gitd = os.path.join( cylc_dir, '.git' )
 
-if cylc_version == "VERSION-" + "TEMPLATE": # (to avoid the replacement)
-    # This must be a cylc repository, or a copy of the repository
-    # source: use git to get a qualified most recent version tag.
-    cwd = os.getcwd()
-    os.chdir( cylc_dir )
-    try:
-        p = subprocess.Popen( ['git', 'describe' ], stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-    except OSError,x:
-        # git not found, 
-        cylc_version = "(DEV)"
+if os.path.isdir( gitd ) or os.path.isfile( gitd ):
+    # We're running in a cylc git repository, so dynamically determine
+    # the cylc version string.
+    script = os.path.join( cylc_dir, 'admin', 'get-repo-version' )
+    res = run_get_stdout.run_get_stdout( script )
+    if res[0]:
+        cylc_version = res[1]
     else:
-        retcode = p.wait()
-        if retcode != 0:
-            # 'git describe' failed - this must be a copy of the
-            # repository source but not a proper clone or a release.
-            cylc_version = "(DEV)"
-        else:
-            # got a pseudo version number
-            out, err = p.communicate()
-            cylc_version = out.rstrip()
-    os.chdir(cwd)
+        raise SystemExit( "Failed to get version number!")
+ 
+else:
+    # We're running in a raw cylc source tree, so read the version
+    # file created by 'make' after unpacking the tarball.
+    try:
+        f = open( vfile )
+        cylc_version = f.readline().rstrip()
+        f.close()
+    except IOError, x:
+        print >> sys.stderr, x
+        print >> sys.stderr, "\n*** ERROR, failed to read the cylc VERSION file.***\n"
+        print >> sys.stderr, """Please inform your cylc admin user. This file should have been created
+by running 'make' or 'make version' after unpacking the cylc release tarball."""
+        sys.exit("ABORTING")
 

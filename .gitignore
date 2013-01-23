@@ -3,13 +3,18 @@
 *.pyc
 
 # generated documentation
-doc/command-usage/
+doc/commands/
+doc/categories/
+doc/cylc.txt
 doc/commands.tex
 doc/graphics/png-scaled/
 doc/html/
 doc/pdf/
 doc/index.html
 doc/cylc-version.txt
+
+# VERSION FILE
+VERSION
 
 # vim backup files
 *.swp

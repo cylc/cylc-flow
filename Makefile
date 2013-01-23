@@ -1,6 +1,6 @@
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
-#C:
+#C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -14,17 +14,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This is the Cylc Suite Engine, version: cylc -v
+all: version docs
 
-Access to cylc:
-  % export PATH=/path/to/cylc/bin:$PATH
-  % cylc help
-  % gcylc &
+version:
+	admin/create-version-file
 
-Documentation:
-  * /path/to/cylc/INSTALL
-  * Cylc User Guide:
-    - /path/to/cylc/doc/index.html
-  * Cylc Project Home Page: 
-    - http://cylc.github.com/cylc
+docs:
+	cd doc && $(MAKE)
+
+clean:
+	cd doc && $(MAKE) clean
 

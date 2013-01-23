@@ -1,6 +1,8 @@
+#!/bin/bash
+
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
-#C:
+#C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -14,17 +16,23 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This is the Cylc Suite Engine, version: cylc -v
+# This script determines the cylc version string in a repository clone
+# and echoes it to stdout. It is executed by lib/cylc/version.py when
+# cylc is run out of a repository.  The version string is returned by
+# 'git describe' and then "-dirty" is appended if the working directory
+# is not clean.
 
-Access to cylc:
-  % export PATH=/path/to/cylc/bin:$PATH
-  % cylc help
-  % gcylc &
+LF='
+'
 
-Documentation:
-  * /path/to/cylc/INSTALL
-  * Cylc User Guide:
-    - /path/to/cylc/doc/index.html
-  * Cylc Project Home Page: 
-    - http://cylc.github.com/cylc
+VN=$(git describe --abbrev=4 HEAD 2>/dev/null)
+case "$VN" in
+    *$LF*) (exit 1) ;;
+    [0-9]*)
+        # if uncommited changes exist append "-dirty"
+        git update-index -q --refresh
+        test -z "$(git diff-index --name-only HEAD --)" || VN="$VN-dirty" ;;
+esac
+# echo to stdout
+echo "$VN"
 
