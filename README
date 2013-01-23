@@ -22,9 +22,16 @@ Access to cylc:
   % gcylc &
 
 Documentation:
-  * /path/to/cylc/INSTALL
-  * Cylc User Guide:
-    - /path/to/cylc/doc/index.html
-  * Cylc Project Home Page: 
-    - http://cylc.github.com/cylc
+  * Installation: /path/to/cylc/INSTALL
+  * User Guide: /path/to/cylc/doc/index.html
+  * Project Home Page: http://cylc.github.com/cylc
+
+Code Contributors (git shortlog -s -n):
+  * Hilary Oliver
+  * Ben Fitzpatrick
+  * Matt Shin
+  * Luis Kornblueh
+  * Andrew Clark
+  * Dave Matthews 
+  * Scott Wales
 
