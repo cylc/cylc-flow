@@ -16,17 +16,17 @@ The make process does the following:
   5.1.0. This is taken from the name of the parent directory; DO NOT
   CHANGE THE NAME OF THE UNPACKED SOURCE TREE before running 'make'.
 
-  2) The "orrdereddict" Python module will be built from its C language
-  source files. This is not essential - an order dictionary implemented
-  in Python will be used if ordereddict is not built - but it gives a
-  significant speedup for parsing very large suites.
-
-  3) make descends into the doc sub-directory where another Makefile is
-  configured to build the Cylc User Guide from its LaTeX source files:
+  2) generates the Cylc User Guide from its LaTeX source files in doc/:
    * if you have pdflatex installed, a PDF version is generated, and
    * if you have tex4ht and ImageMagick convert installed, two HTML
      versions are generated, and
    * a doc/index.html file is created with links to the generated docs.
+
+  3) The "orrdereddict" Python module will be built from its C language
+  source files, in ext/ordereddict-0.4.5. This is not essential - a
+  Python implementation will be used by cylc if necessary. Currently, 
+  if the build is successful you must install the module yourself into 
+  your $PYTHONPATH.
 
 You may want to maintain successive versions of cylc under the same top
 level directory:
@@ -39,7 +39,7 @@ INSTALLING A GIT REPOSITORY CLONE:
   1) To get a clone that can track the official repository:
 
      % git clone git://github.com/cylc/cylc.git
-     % cd git
+     % cd cylc
      % make  # build orderreddict and documentation (as above)
      % #...
      % git pull origin master # update latest changes
