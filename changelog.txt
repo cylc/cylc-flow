@@ -1059,3 +1059,36 @@ information and set these problem task states automatically.
 resilience to network outages etc., and they do not abort the task even
 if the final retry fails.
 
++ A suite-specific sqlite database is now populated by cylc with task 
+event and status information. It is not currently used, but has many 
+potential uses including replacing the current primitive state dump files.
+
++ gcylc: user-configurable task state color themes.
+
++ allow (number)*(delay) notation in task "retry delays" list.
+
++ more minimal configuration of suite running directories (there's no
+need for logging and state sub-directories, for instance, to be
+individually configurable).
+
++ "cylc doc" now loads the new documentation index in your browser.
+
++ same task-specific configuration items such as "use ssh messaging"
+have been moved from the suite definition runtime hierarchy to the new
+site/user config file.
+
++ block/unblock functionality removed 
+
++ cylc is now multi-threaded: continous request handling and batched job
+submission in a background thread, and batched task event handler
+execution in a background thread. This brings huge benefits for large,
+busy, suites.
+
++ gcylc: increasingly infrequent polling for stopped suites, to reduce
+network traffic.
+
++ cylc suites now run in daemon mode - no need to use nohup anymore.
+
++ optionally disable use of login shells in ssh commands (e.g. to submit
+remote tasks)
+
