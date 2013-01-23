@@ -8,7 +8,7 @@ GetData task to trigger the first Model."""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.5 # minutes
+       live mode suite timeout = 1.0 # minutes
 
 [scheduling]
     initial cycle time = 2011010106

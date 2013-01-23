@@ -6,7 +6,7 @@ messaging, is entirely contained within the suite definition)."""
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.5
+        live mode suite timeout = 0.8
 
 [scheduling]
     initial cycle time = 2010080800

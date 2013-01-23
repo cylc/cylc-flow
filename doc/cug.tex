@@ -704,7 +704,10 @@ If you don't have access to a remote task host just use
 If these requirements are satisfied no tests should fail on an official
 cylc release, because of pre-release testing. If you find that some do
 fail, consider reporting this to cylc's maintainer or the cylc mailing
-list.
+list.  A possible exception to this is that some suite timeouts may be
+set too low if your suite host is slow or overloaded. Suite timeouts are
+intended to catch error conditions, such as unexpected task failures,
+that prevent a suite from completing and shutting down automatically.
 
 \subsection{Complete Non System-Level Installation}
 \label{LocalInstall}

@@ -11,7 +11,7 @@ title = "Cylc Admin Test Suite"
     [[reference test]]
         required run mode = live
         expected task failures = X%2010010112
-        live mode suite timeout = 3.0 # minutes
+        live mode suite timeout = 1.5 # minutes
 
 [scheduling]
     # This test suite only needs a start time;

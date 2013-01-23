@@ -11,7 +11,7 @@ generated reference version.
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.5
+        live mode suite timeout = 0.8
         suite shutdown event handler = complog.py
 
 [scheduling]
