@@ -1623,8 +1623,26 @@ On the command line, the  `database' (or `db') command category contains
 commands to implement the aforementioned operations.
 
 \lstset{language=usage}
-\lstinputlisting{command-usage/database.txt}
-\lstset{language=transcript}
+\begin{lstlisting}
+% cylc db help
+CATEGORY: db|database - Suite registration, copying, deletion, etc.
+
+HELP: cylc [db|database] COMMAND help,--help
+  You can abbreviate db|database and COMMAND.
+  The category db|database may be omitted.
+
+COMMANDS:
+  alias ............... Register an alternative name for a suite
+  copy|cp ............. Copy a suite or a group of suites
+  dbviewer ............ GUI to view registered suites and operate on them.
+  get-directory ....... Retrieve suite definition directory paths
+  print ............... Print registered suites
+  refresh ............. Report invalid registrations and update suite titles
+  register ............ Register a suite for use
+  reregister|rename ... Change the name of a suite
+  unregister .......... Unregister and optionally delete suites
+\end{lstlisting}
+
 Groups of suites (at any level in the registration hierarchy) can be deleted, 
 copied, imported, and exported; as well as individual suites.  To do this, 
 just use suite group names as source and/or target for operations, as

@@ -25,9 +25,7 @@
 
 set -e
 
-echo
-echo "Generating document index"
-echo
+echo "Updating index.html"
 
 CYLC_VERSION=$($(dirname $0)/../../bin/cylc --version)
 INDEX=index.html
