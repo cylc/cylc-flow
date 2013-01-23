@@ -40,7 +40,7 @@ import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
-import cylc.run_get_stdout
+from cylc.run_get_stdout import run_get_stdout
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -533,7 +533,7 @@ class task( object ):
             if m:
                 # extract the command and execute it
                 hs_command = m.groups()[1]
-                res = run_get_stdout.run_get_stdout( hs_command ) # (T/F,[lines])
+                res = run_get_stdout( hs_command ) # (T/F,[lines])
                 if res[0]:
                     # host selection command succeeded
                     host = res[1]
