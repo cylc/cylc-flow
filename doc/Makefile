@@ -69,12 +69,12 @@ pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex
 # delete all generated files:
 clean:
 	rm -rf pdf\
-		html\
-		cylc.txt\
-        commands\
-        categories\
-        commands.tex\
-        graphics/png-scaled \
-        index.html \
-        cylc-version.txt\
+	html\
+	cylc.txt\
+	commands\
+	categories\
+	commands.tex\
+	graphics/png-scaled \
+	index.html \
+	cylc-version.txt
 
