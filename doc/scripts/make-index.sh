@@ -65,6 +65,8 @@ cat >> $INDEX <<END
 cylc --help
 cylc COMMAND --help
 </pre>
+<h3 style="margin:10px">Changes</h3>
+<a href="changes.html">Change Log</a>
 </div>
 
 <div class="lbox">

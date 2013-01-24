@@ -394,6 +394,8 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
 \label{Requirements}
 
 \begin{myitemize}
+    \item {\bf Cylc}, the version associated with this document is: \input{cylc-version.txt}. % generated each time by doc/process
+        \newline \url{http://cylc.github.com/cylc}
     \item {\bf OS: Linux or Unix (including Mac OS X).} Cylc may assume
         Unix-style file paths in places, a tiny minority of cylc
         commands are Bash shell scripts (most are Python), and
@@ -408,13 +410,17 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
         for network communication between server processes (cylc suites)
         and client programs (running tasks, control GUIs and commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
-    \item {\bf Cylc}, this version: \input{cylc-version.txt}. % generated each time by doc/process
-        \newline \url{http://hjoliver.github.com/cylc}
+    \item {\bf sqlite (a serverless, zero-configuration, SQL database
+        engine}). This is likely included in your Linux distribution
+        already. Cylc generates an sqlite database for each suite as it
+        runs, to record task events and status.
+        \newline \url{http://sqlite.org}
 \end{myitemize}
 
 The following packages are technically optional as you can construct
 and control cylc suites without dependency graphing, the cylc GUIs, and
-template processing:
+template processing {\em but this is not recommended, and without 
+Jinja2 you will not be able to run many of the example suites}:
 
 \begin{myitemize}
     \item {\bf PyGTK}, a Python wrapper for the GTK+ GUI toolkit,
@@ -444,10 +450,11 @@ van der Neut:
     \item {\bf ordereddict} (latest tested 0.4.5) \newline 
         \url{http://www.xs4all.nl/~anthon/Python/ordereddict}
 \end{myitemize}
-This module is currently packaged with cylc under
-\lstinline=$CYLC_DIR/ext=, with installation instructions. If it is
-installed cylc will automatically use it in place of a slower ordered
-dictionary implemented in Python. 
+This module is currently included with cylc under
+\lstinline=$CYLC_DIR/ext=, and is built by the top level cylc Makefile.
+If you install the resulting library appropriately cylc will
+automatically use it in place of a slower Python implementation of 
+the ordered dictionary structure.
 
 \subsection{Known Version Compatibility Issues}
 
@@ -551,8 +558,10 @@ local (user-specific) installation instructions.
 \subsection{Install The Cylc Release}
 
 Cylc typically installs into a normal user account; just unpack
-the release tarball in the desired location - which will be referred to
-below as  \lstinline=$CYLC_DIR=.
+the release tarball in the desired location (referred to
+below as  \lstinline=$CYLC_DIR=) and see the
+\lstinline=$CYLC_DIR/INSTALL= file for instructions 
+(see also Section~\ref{INSTALL}.
 
 \subsection{Site And User Configuration Files}
 \label{SiteAndUserConfiguration}
@@ -566,13 +575,13 @@ $CYLC_DIR/conf/site/site.rc  # site config file for global settings
 $HOME/.cylc/user.rc          # user config file for global settings
 \end{lstlisting}
 
-Site and user config files can be auto-generated, with all settings
-intially commented out, by running this command:
+These files can be auto-generated with all settings
+intially commented out by running this command:
 \begin{lstlisting}
 % cylc get-global-config --write-site/--write-user
 \end{lstlisting}
 
-The content of both of these config files, in terms of legal items and
+The content of these config files, in terms of legal items and
 default values, is defined by the {\em ConfigObj configspec} file,
 \begin{lstlisting}
 $CYLC_DIR/conf/site/cfgspec 
@@ -695,7 +704,10 @@ If you don't have access to a remote task host just use
 If these requirements are satisfied no tests should fail on an official
 cylc release, because of pre-release testing. If you find that some do
 fail, consider reporting this to cylc's maintainer or the cylc mailing
-list.
+list.  A possible exception to this is that some suite timeouts may be
+set too low if your suite host is slow or overloaded. Suite timeouts are
+intended to catch error conditions, such as unexpected task failures,
+that prevent a suite from completing and shutting down automatically.
 
 \subsection{Complete Non System-Level Installation}
 \label{LocalInstall}
@@ -3624,7 +3636,7 @@ set them again on the \lstinline=cylc restart= command line.
 \subsection{Special Placeholder Variables}
 \label{SPHV}
 
-A few special variables are used as placeholders in cylc suite definitions:
+Several special variables are used as placeholders in cylc suite definitions:
 
 \begin{myitemize}
     \item \lstinline=[T]= and \lstinline=[T+n]= \newline
@@ -5828,6 +5840,11 @@ jumping layout problem:
 
 \lstinputlisting{../README}
 
+\section{Cylc Project INSTALL File}
+\label{INSTALL}
+
+\lstinputlisting{../INSTALL}
+
 \section{Cylc Development History}
 \subsection{Pre-3.0}
 
@@ -5853,10 +5870,9 @@ dependency graphs very quickly in simulation mode).
 Version 3.0 implemented an entirely new suite design interface in which
 one defines the suite dependency graph, execution environment, and
 command scripting for each task, in a single structured, validated,
-configuration file - the suite.rc file.  This {\em really} makes suite
-structure apparent at a glance, and task prerequisites and outputs (and
-some other important parameters besides) no longer need to be specified
-by the user because they are implied by the graph.
+configuration file - the suite.rc file.  This makes suite structure
+apparent at a glance, and much important detail is now implicitly
+implied by the graph.
 
 \subsection{Version 4.0}
 
@@ -5874,6 +5890,14 @@ many refinements:
     \item The Jinja2 template engine is now supported, adding general
         programmability to cylc suite definitions.
 \end{myitemize}
+
+\subsection{Version 5.0}
+
+Version 5.0 contains some major internal changes to enhance performance
+for large suites, such as multi-threading for continuous request
+handling and task job submission. We also aim to provide backward
+compatibility for suite definitions from version 5.0 onward, wherever
+possible.
 
 \section{Pyro} 
 \label{Pyro}

@@ -47,7 +47,8 @@ ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../../examples/@g'
 perl -pi -e 's@categories/@../../categories/@g' commands.tex
 perl -pi -e 's@commands/@../../commands/@g' commands.tex
 perl -pi -e 's@cylc.txt@../../cylc.txt@g' commands.tex
-perl -pi -e 's@\.\./README@../../README@g' cug.tex
+perl -pi -e 's@\.\./README@../../../README@g' cug.tex
+perl -pi -e 's@\.\./INSTALL@../../../INSTALL@g' cug.tex
 
 if [[ $TYPE == multi ]]; then
     htlatex cug-html.tex "cug-html.cfg,html,fn-in,2,next"
