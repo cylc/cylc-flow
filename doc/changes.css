@@ -1,0 +1,89 @@
+
+body { 
+		background:#bbc;
+}
+
+div.uberpage {
+		border:2px solid #bbc;
+		margin:0 auto;
+		width:800px;
+		background-image:url(images/niwa-colour-small.png);
+		background-repeat:no-repeat;
+		background-position: bottom right;
+}
+
+div.page {
+		background:#ffffff;
+		border:2px solid #0a0;
+		margin:0 auto;
+		margin-top:20px;
+		padding:50px;
+		width:700px;
+}
+
+li {
+		margin-top:1em;
+}
+
+.lbox {
+		width: 80%;
+}
+
+.rbox {
+		float:right;
+	/*	font-size:80%;*/
+}
+
+.info {
+		color:#666;
+		font-size:80%;
+}
+
+
+a:link, a:visited { 
+		font-weight:bold;
+		color: #04a;
+}
+
+h1 {
+		border-bottom:2px solid #0a0;
+		margin-top:0;
+		color:#0a0;
+}
+h2 {
+		border-bottom:2px solid #00cc00;
+		margin-right:25%;
+		margin-left:30px;
+		color:#0a0;
+}
+h3 {
+ 		border-bottom:1px solid #080;
+		color:#080;
+		margin-right:50%;
+		margin-left:60px;
+		padding-top:20px;
+}
+
+code {
+		color:#ff0033;
+    font-family: "Courier 10 Pitch", Courier, monospace; 
+		font-size: 90%;
+		font-weight:bold;
+}
+
+pre.code {
+		display:block;
+		/*color:#3e7c63;*/
+		color:#ff0033;
+		margin-top:-10px;
+		padding:10px;
+    font-family: "Courier 10 Pitch", Courier, monospace; 
+		font-size: 90%;
+		font-weight:bold;
+		white-space: pre-wrap; /* css-3 */
+		white-space: -moz-pre-wrap !important; 
+		white-space: -pre-wrap; /* Opera 4-6 */
+		white-space: -o-pre-wrap; /* Opera 7 */
+		word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+
