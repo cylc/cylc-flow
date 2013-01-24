@@ -6,7 +6,7 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.5
+        live mode suite timeout = 1.0
 
 [scheduling]
     initial cycle time = 2012010100

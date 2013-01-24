@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+		<head>
+				<title>Cylc Change Log Summary</title>
+				<link rel="stylesheet" href="changes.css">
+		</head>
+
+<body>
+
+<div class="uberpage">
+<div class="page">
+
+<h1>Cylc Change Log Summary</h1>
+
+<div class="rbox">
+<h3 style="margin:10px">Menu</h3>
+<ul>
+		<li><a href="#pre-5.0.0">pre-5.0.0</a></li>
+		<li><a href="#5.0.0">5.0.0</a></li>
+</ul>
+</div>
+
+<div class="lbox">
+<p>This document summarizes <b>major changes between cylc versions</b>.
+Minor changes and bug fixes, and routine updates to the user guide may
+not be listed here. <b>The definitive guide to changes is the repository
+		commit log</b>.  For usage details relating to a
+particular change refer to the cylc user guide, command help, or the
+cylc mailing list in the event that the documentation has not been
+brought up to date yet. <p>
+</div> <!--lbox-->
+
+<h2>pre-5.0.0</h2>
+<a name="pre-5.0.0"/>
+		<a href="changes-old.txt">(old change log)</a>
+
+
+<h2>4.5.1 - 5.0.0</h2>
+<a name="5.0.0"/>
+
+<ul>
+		<li> <b>Multi-threading</b>: cylc now does continous request
+		handling, batched task job submission, and batched event handler
+		execution, in background threads. This has big performance
+		benefits for large, busy, suites.</li>
+
+		<li> Cylc now runs in <b>daemon mode</b> - no need to use nohup
+		anymore.</li>
+
+		<li> <b>Major change in suite restart behavior</b>: tasks recorded
+		in the submitted, running, or failed states are no longer triggered
+		automatically on restarting, because that is not always desirable.</li>
+
+		<li> A new command can <b>broadcast runtime settings to tasks in
+		a running suite</b>, overriding their configured settings. One way to
+		use this: <b>tasks can communicate environment variables to other
+				tasks downstream of them</b>.  Broadcast settings persist across
+		restarts.</li> 
+
+		<li> <b>Reloading the suite definition at run time</b> is now
+		supported. Even task definitions can be added and removed without
+		stopping and restaring the suite.</li>
+
+		<li> <b>Restarting after deleting task definitions</b> now works 
+		without modifying the state dump.</li>
+
+		<li> <b>Dynamic host selection</b> is officially supported.</li>
+
+		<li> New <b>family trigger syntax</b> allows any family finish
+		semantics, with use of conditional operators.</li>
+
+		<li> Higher level <b>family triggers</b> (families of
+		families) can now be used in the graph.</li>
+
+		<li> New <b>site and user config files</b> some former suite
+		definition items, and other global settings, can now be configured 
+		globally.</li> 
+
+		<li> The <b>runahead limit</b> now automatically defaults to the
+		twice the smallest cycling interval in a suite, and setting it too
+		low can no longer stall a suite.</li>
+
+		<li> <b>Self-diagnosing test suites</b> can now be created to test
+		that cylc upgrades will not break your systems; see
+		"Reference Tests" in the User Guide.</li> 
+
+		<li> The <b>suite control GUI "gcontrol" has been renamed
+				"gcylc"</b> as it now has suite preparation capability too
+		(editing, graphing, validating, etc.); the former "gcylc" GUI is
+		still available as <code>cylc dbviewer</code>.</li>
+
+		<li> Configurable <b>gcylc task state color themes</b> common to all
+		views.</li>
+
+		<li> The <b>gcylc dot view</b> now has hover-over task state
+		information, and right-click menus.</li>
+
+		<li> The <b>gcylc graph view</b> now has:
+		<ul>
+				<li> <b>family node</b> state coloring and mouse-hover member
+				state information</li>
+				<li> <b>landscape mode</b></li>
+				<li> <b>reduced redraw</b> (i.e. the graph jumps around less)</li>
+				<li> <b>"cycle time focus"</b> now works (broken between 4.2.2 and 4.5.1)</li>
+		</ul>
+		</li>
+
+		<li> <b>gcylc: less frequent polling</b> for stopped suites, to
+		reduce network traffic. A polling reset button can be used to
+		reconnect to a restarted suite immediately.</li>
+
+		<li> <b>Undefined Jinja2 variables</b> now cause an abort.</li>
+
+		<li> <b>Set Jinja2 variables on the run command line</b>
+		(in-line or by referencing an external file).</li>
+
+		<li> <b>Removed pseudo backward compatibility</b>
+		(<code>#!cylc-x.y.z</code>).  We will endeavor
+		to provide proper backward compatibility from now on.</li>
+
+		<li> Configurable <b>task messaging retry</b> for resilience to
+		network outages etc.</li>
+		
+		<li> <b>Task messaging failure</b> no longer causes tasks to abort.</li>
+
+		<li> <b>ssh task messaging</b>: the path to cylc on the suite host
+		is now transferred via the task job script (no need to rely on 
+		login scripts).</li>
+
+		<li> A new <b>task retry event hook</b> is triggered if a task fails
+		but has a retry lined up. The <b>task failed event hook</b> is only
+		triggered on a final definitive failure.</li>
+
+		<li> Handling <b>HPC job preemption:</b> Tasks can be configured 
+		to revive from the dead if they start running again after reporting
+		failure.</li>
+
+		<li> A new config item to <b>abort a suite if any task fails</b>.</li>
+
+		<li> Removed the requirement to prefix the integer TAG of an
+		asynchronous (non-cycling) task, on the command line, with <b>a:</b>.</li>
+
+		<li> Added <b>suite event hooks</b> for suite <b>startup</b> and
+		<b>shutdown</b>.</li>
+
+		<li> Replaced the original <b>simulation mode</b> which submitted
+		real dummy tasks to run locally with a proper <b>simulation mode</b>
+		that does not even submit dummy tasks, and a <b>dummy mode</b>
+		that simply dummies out command scripting but leaves job
+		submission, hosting, etc. intact.</li>
+
+		<li> Tasks can check <b>$CYLC_TASK_IS_COLDSTART</b> to determine
+		whether or not they are cold-start tasks.</li>
+
+		<li> A new <b>strict validation</b> option protects against
+		inadvertent creation of naked dummy tasks (tasks with no explicit
+		runtime config) by misspelling task names.</li>
+
+		<li> Optional <b>suite host identification by IP address</b> instead
+		of host name.</li>
+
+		<li> A suite-specific <b>sqlite database</b> is populated by
+		cylc with task event and status information. Planned future uses
+		include retrieval of information about long-finished tasks, and
+		replacing the current primitive state dump files.</li>
+
+		<li> Allow <b>(number-of-retries)*(delay)</b> notation in task
+		<b>task retry</b> configuration.</li>
+
+		<li> The <b>cylc doc</b> command now loads a documentation index in
+		your browser.</li>
+
+		<li> Suite <b>block/unblock</b> functionality has been removed.</li>
+
+		<li> Optionally <b>disable use of a login shell</b> in
+		passwordless ssh remote command invocation (e.g. to submit
+		remote tasks). </li>
+
+		<li> The task execution environment variables
+		<b>$CYLC_SUITE_INITIAL_CYCLE_TIME</b> and
+		<b>$CYLC_SUITE_FINAL_CYCLE_TIME</b> now persist across restarts.</li>
+
+</ul>
+
+</div> <!--uberpage-->
+</div> <!--page-->
+
+</body>
+</html>
+

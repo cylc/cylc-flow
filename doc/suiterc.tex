@@ -1586,25 +1586,9 @@ Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
 % HIDDEN \subsubsection[use quick task elimination]{[development] $\rightarrow$ use quick task elimination }
 % HIDDEN     default True
 
-\subsection{Special Placeholder Variables}
+\subsection{Special Placeholder Variables In Suite Definitions}
 
-A few special variables are used as placeholders in cylc suite definitions:
-
-\begin{myitemize}
-    \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
-        \lstinline=<CYLC_TASK_CYCLE_TIME+/-offset>= \newline
-        These are replaced with the actual cycle time of the task (with
-        optional computed offset) in the message strings registered for
-        explicit internal (pre-completion) task outputs. They correspond to 
-        \lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment.
-
-    \item \lstinline=<ASYNCID>=\newline
-        This placeholder variable is replaced with the actual ``asynchronous
-        ID'' (e.g. satellite pass ID) for repeating asynchronous tasks.
-\end{myitemize}
-
-To use real (programming language) variables in suite definitions, use the 
-Jinja2 template processor (Section~\ref{Jinja2}).
+See Section~\ref{SPHV}.
 
 
 \subsection{Default Suite Configuration}
