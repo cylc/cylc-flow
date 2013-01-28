@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Syntax highlighting for cylc suite definition files, for gedit
+ and other gtksourceview programs.
+
+ = Instructions =
+ 
+ To use it, place or symlink this file in
+ ~/.local/share/gtksourceview-2.0/language-specs/ - or, if possible,
+ /usr/share/gtksourceview-2.0/language-specs/
+
+ If using gedit, gedit will need to be totally closed down and reloaded.
+
+
+ = Licensing =
+
+ Some content taken from sh.lang, which is licensed under GPLv2.
+     sh.lang author, copyright:
+     Author: Silian Della Ragione <silian87@gechi.it>
+     Copyright (C) 2005 Silian Della Ragione <silian87@gechi.it>
+     Copyright (C) 2008 Steve Frécinaux <code@istique.net>
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<language id="cylc-suite-rc" _name="cylc suite.rc" version="2.0" _section="Others">
+  <metadata>
+    <property name="mimetypes">jinja2</property>
+    <property name="globs">suite.rc</property>
+    <property name="line-comment-start">#</property>
+  </metadata>
+
+  <styles>
+    <!-- cylc-specific -->
+    <style id="floating-point" _name="Floating Point" map-to="def:floating-point"/>
+    <style id="string" _name="String" map-to="def:string"/>
+    <style id="multiline-string"  _name="Multiline string" map-to="def:string"/>
+    <style id="decimal" _name="Decimal" map-to="def:decimal"/>
+    <style id="boolean-value" _name="Boolean value" map-to="def:boolean"/>
+    <style id="builtin-object" _name="Builtin Object" map-to="def:type"/>
+    <style id="template" _name="Templating" map-to="def:preprocessor"/>
+    <style id="group" _name="Group" map-to="def:keyword"/>
+    <style id="option" _name="Option" map-to="def:identifier"/>
+    <!-- end cylc-specific -->
+    <!-- taken from sh.lang -->
+    <style id="comment"             _name="Comment"             map-to="def:comment"/>
+    <style id="shebang"             _name="Shebang"             map-to="def:shebang"/>
+    <style id="function"            _name="Function"            map-to="def:function"/>
+    <style id="string"              _name="String"              map-to="def:string"/>
+    <style id="keyword"             _name="Keyword"             map-to="def:keyword"/>
+    <style id="variable"            _name="Variable"            map-to="def:type"/> <!-- FIXME: need to sort out proper styles for variables -->
+    <style id="variable-definition" _name="Variable Definition" map-to="sh:variable"/>
+    <style id="others"              _name="Others"              map-to="def:keyword"/>
+    <style id="common-command"      _name="Common Commands"     map-to="def:keyword"/>
+    <style id="here-doc-bound"      _name="Heredoc Bound"       map-to="def:keyword"/>
+    <style id="subshell"            _name="Subshell"            map-to="def:preprocessor"/>
+    <!-- end sh.lang -->
+  </styles>
+
+  <definitions>
+    <!-- cylc-specific -->
+    <context id="cylc-section" style-ref="group">
+      <start>^ *\[+</start>
+      <end>\]+ *$</end>
+      <include>
+        <context ref="jinja2-block"/>
+        <context ref="jinja2-substitution"/>
+      </include>
+    </context>
+    <context id="cylc-options" style-ref="option">
+      <keyword>UTC mode</keyword>
+      <keyword>required run mode</keyword>
+      <keyword>maximum simultaneous job submissions</keyword>
+      <keyword>abort if any task fails</keyword>
+      <keyword>log resolved dependencies</keyword>
+      <keyword>batch size</keyword>
+      <keyword>delay between batches</keyword>
+      <keyword>enable</keyword>
+      <keyword>simultaneous instances</keyword>
+      <keyword>__many__</keyword>
+      <keyword>startup handler</keyword>
+      <keyword>timeout handler</keyword>
+      <keyword>shutdown handler</keyword>
+      <keyword>timeout</keyword>
+      <keyword>reset timer</keyword>
+      <keyword>abort if startup handler fails</keyword>
+      <keyword>abort if shutdown handler fails</keyword>
+      <keyword>abort if timeout handler fails</keyword>
+      <keyword>abort on timeout</keyword>
+      <keyword>disable suite event hooks</keyword>
+      <keyword>disable suite event hooks</keyword>
+      <keyword>disable</keyword>
+      <keyword>rate</keyword>
+      <keyword>offset</keyword>
+      <keyword>suite shutdown event handler</keyword>
+      <keyword>required run mode</keyword>
+      <keyword>allow task failures</keyword>
+      <keyword>expected task failures</keyword>
+      <keyword>live mode suite timeout</keyword>
+      <keyword>dummy mode suite timeout</keyword>
+      <keyword>simulation mode suite timeout</keyword>
+      <keyword>initial cycle time</keyword>
+      <keyword>final cycle time</keyword>
+      <keyword>cycling</keyword>
+      <keyword>runahead limit</keyword>
+      <keyword>limit</keyword>
+      <keyword>members</keyword>
+      <keyword>clock-triggered</keyword>
+      <keyword>start-up</keyword>
+      <keyword>cold-start</keyword>
+      <keyword>sequential</keyword>
+      <keyword>one-off</keyword>
+      <keyword>explicit restart outputs</keyword>
+      <keyword>exclude at start-up</keyword>
+      <keyword>include at start-up</keyword>
+      <keyword>graph</keyword>
+      <keyword>daemon</keyword>
+      <keyword>inherit</keyword>
+      <keyword>title</keyword>
+      <keyword>description</keyword>
+      <keyword>initial scripting</keyword>
+      <keyword>environment scripting</keyword>
+      <keyword>pre-command scripting</keyword>
+      <keyword>command scripting</keyword>
+      <keyword>post-command scripting</keyword>
+      <keyword>retry delays</keyword>
+      <keyword>manual completion</keyword>
+      <keyword>extra log files</keyword>
+      <keyword>enable resurrection</keyword>
+      <keyword>log directory</keyword>
+      <keyword>share directory</keyword>
+      <keyword>work directory</keyword>
+      <keyword>run time range</keyword>
+      <keyword>simulate failure</keyword>
+      <keyword>disable task event hooks</keyword>
+      <keyword>disable retries</keyword>
+      <keyword>command scripting</keyword>
+      <keyword>disable pre-command scripting</keyword>
+      <keyword>disable post-command scripting</keyword>
+      <keyword>disable task event hooks</keyword>
+      <keyword>disable retries</keyword>
+      <keyword>method</keyword>
+      <keyword>command template</keyword>
+      <keyword>shell</keyword>
+      <keyword>host</keyword>
+      <keyword>owner</keyword>
+      <keyword>cylc directory</keyword>
+      <keyword>suite definition directory</keyword>
+      <keyword>remote shell template</keyword>
+      <keyword>log directory</keyword>
+      <keyword>share directory</keyword>
+      <keyword>work directory</keyword>
+      <keyword>ssh messaging</keyword>
+      <keyword>submitted handler</keyword>
+      <keyword>started handler</keyword>
+      <keyword>succeeded handler</keyword>
+      <keyword>failed handler</keyword>
+      <keyword>submission failed handler</keyword>
+      <keyword>warning handler</keyword>
+      <keyword>retry handler</keyword>
+      <keyword>submission timeout handler</keyword>
+      <keyword>submission timeout</keyword>
+      <keyword>execution timeout handler</keyword>
+      <keyword>execution timeout</keyword>
+      <keyword>reset timer</keyword>
+      <keyword>collapsed families</keyword>
+      <keyword>use node color for edges</keyword>
+      <keyword>default node attributes</keyword>
+      <keyword>default edge attributes</keyword>
+      <keyword>enable live graph movie</keyword>
+      <keyword>enable</keyword>
+      <keyword>cutoff</keyword>
+      <keyword>directory</keyword>
+    </context>
+    <context id="cylc-subshell" style-ref="string">
+      <match>"""</match>
+    </context>
+    <context id="jinja2-comment" style-ref="template" end-at-line-end="false">
+      <start>\{#</start>
+      <end>#\}</end>
+    </context>
+    <context id="jinja2-substitution" style-ref="template">
+      <match>\{\{.*\}\}</match>
+    </context>
+    <context id="jinja2-block" style-ref="template" end-at-line-end="false">
+      <start>\{%</start>
+      <end>%\}</end>
+    </context>
+    <context id="cylc-boolean-value" style-ref="boolean-value">
+      <keyword>true</keyword>
+      <keyword>false</keyword>
+      <keyword>null</keyword>
+      <keyword>.true.</keyword>
+      <keyword>.false.</keyword>
+      <keyword>True</keyword>
+      <keyword>False</keyword>
+      <keyword>None</keyword>
+    </context>
+    <context id="integer" style-ref="decimal">
+      <match>\b[0-9]+\b</match>
+    </context>
+    <context id="decimal-number" style-ref="floating-point">
+      <match>(\b[0-9]+(\.[0-9]+)?|\.[0-9]+)([Ee][\+-]?[0-9]+)?\b</match>
+    </context>
+
+    <!-- Add 'cylc' and 'rose' (latter is a bit sneaky) -->
+    <context id="cylc-add-commands" style-ref="keyword">
+      <keyword>cylc</keyword>
+      <keyword>rose</keyword>
+    </context>
+
+    <!-- end cylc-specific -->
+
+    <!-- taken from sh.lang -->
+ 
+    <!-- we cannot use def:shell-like-comment, because
+         m4.lang needs to replace this context -->
+    <context id="line-comment" style-ref="comment" end-at-line-end="true">
+      <start>(?&lt;!\S)#</start>
+      <include>
+        <context ref="def:in-comment"/>
+      </include>
+    </context>
+
+    <context id="double-quoted-string" style-ref="string">
+      <start>"</start>
+      <end>"</end>
+      <include>
+        <context style-ref="def:special-char">
+            <match>\\[$`"\\]</match>
+        </context>
+        <context>
+            <match>\\</match>
+        </context>
+        <context ref="def:line-continue"/>
+	<context ref="variable"/>
+	<context ref="backtick-subshell"/>
+      </include>
+    </context>
+
+    <context id="single-quoted-string" style-ref="string">
+      <start>'</start>
+      <end>'</end>
+    </context>
+
+    <context id="subshell">
+      <start>\(</start>
+      <end>\)</end>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="keyword"/>
+        <context sub-pattern="0" where="end" style-ref="keyword"/>
+        <context ref="cylc-suite-rc"/>
+      </include>
+    </context>
+
+    <context id="backtick-subshell" style-ref="subshell">
+      <start>`</start>
+      <end>`</end>
+      <include>
+        <context ref="def:escape"/>
+        <context ref="def:line-continue"/>
+        <context ref="variable"/>
+        <context ref="built-in-command"/>
+        <!-- Add cylc stuff -->
+        <context ref="cylc-add-commands"/>
+        <!-- end cylc stuff -->
+        <context ref="common-command"/>
+        <context ref="single-quoted-string"/>
+        <context ref="double-quoted-string"/>
+      </include>
+    </context>
+
+    <context id="punctuator" style-ref="others">
+      <match>[;\|&amp;=&gt;&lt;/]</match>
+    </context>
+
+    <context id="function" style-ref="function">
+      <match>\b[a-zA-Z_][a-zA-Z0-9_]+[ \t]*\(\)</match>
+    </context>
+
+    <context id="redirection" style-ref="others">
+      <keyword>&gt;&amp;+[0-9]</keyword>
+      <keyword>\b[0-9]+&gt;&amp;</keyword>
+      <keyword>\b[0-9]+&gt;&amp;+[0-9]</keyword>
+      <keyword>\b[0-9]+&gt;</keyword>
+      <keyword>&gt;&gt;</keyword>
+      <keyword>\b[0-9]+&gt;&gt;</keyword>
+      <keyword>&lt;&amp;[0-9]</keyword>
+      <keyword>\b[0-9]+&lt;&amp;</keyword>
+      <keyword>\b[0-9]+&lt;&amp;[0-9]</keyword>
+      <keyword>\b[0-9]+&lt;</keyword>
+      <keyword>&lt;&lt;+[0-9]</keyword>
+      <keyword>\b[0-9]+&lt;&lt;</keyword>
+    </context>
+
+    <context id="here-doc">
+      <start extended="true" dupnames="true">
+        # (?&lt;!&lt;) and [^\s&lt;] are for not matching
+        # here-word (&lt;&lt;&lt;)
+        (?&lt;!&lt;)
+        &lt;&lt;-?\s*\\?(
+          \"(?P&lt;HDB&gt;[^\s&lt;]+)\" | # "EOF"
+          \'(?P&lt;HDB&gt;[^\s&lt;]+)\' | # 'EOF'
+          (?P&lt;HDB&gt;[^\s&lt;]+)       # EOF
+        )$
+      </start>
+      <end>^\t*\%{HDB@start}$</end>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="here-doc-bound"/>
+        <context sub-pattern="0" where="end" style-ref="here-doc-bound"/>
+      </include>
+    </context>
+
+    <context id="operator" style-ref="function">
+      <keyword>\-a\b</keyword>
+      <keyword>\-b\b</keyword>
+      <keyword>\-c\b</keyword>
+      <keyword>\-d\b</keyword>
+      <keyword>\-e\b</keyword>
+      <keyword>\-f\b</keyword>
+      <keyword>\-g\b</keyword>
+      <keyword>\-h\b</keyword>
+      <keyword>\-k\b</keyword>
+      <keyword>\-p\b</keyword>
+      <keyword>\-r\b</keyword>
+      <keyword>\-s\b</keyword>
+      <keyword>\-t\b</keyword>
+      <keyword>\-u\b</keyword>
+      <keyword>\-w\b</keyword>
+      <keyword>\-x\b</keyword>
+      <keyword>\-O\b</keyword>
+      <keyword>\-G\b</keyword>
+      <keyword>\-L\b</keyword>
+      <keyword>\-S\b</keyword>
+      <keyword>\-N\b</keyword>
+      <keyword>\-nt\b</keyword>
+      <keyword>\-ot\b</keyword>
+      <keyword>\-ef\b</keyword>
+      <keyword>\-o\b</keyword>
+      <keyword>\-z\b</keyword>
+      <keyword>\-n\b</keyword>
+      <keyword>&lt;</keyword>
+      <keyword>&gt;</keyword>
+      <keyword>\!=</keyword>
+      <keyword>\-eq\b</keyword>
+      <keyword>\-ne\b</keyword>
+      <keyword>\-lt\b</keyword>
+      <keyword>\-le\b</keyword>
+      <keyword>\-gt\b</keyword>
+      <keyword>\-ge\b</keyword>
+    </context>
+
+    <context id="variable" style-ref="variable">
+      <match>\$+[!@?*#\${a-zA-Z0-9_][}a-zA-Z0-9_]*</match>
+    </context>
+
+    <context id="variable-definition">
+      <match>(^|(?&lt;=then|else|do|export))\s*([a-zA-Z_][a-zA-Z0-9_]*)\=</match>
+      <include>
+        <context sub-pattern="2" style-ref="variable-definition"/>
+      </include>
+    </context>
+
+    <context id="built-in-command-1" style-ref="keyword">
+      <prefix></prefix>
+      <suffix></suffix>
+      <keyword>\!</keyword>
+      <keyword>\{</keyword>
+      <keyword>\}</keyword>
+      <keyword>\:</keyword>
+      <keyword>(?&lt;=\s)\.(?=\s)</keyword>
+    </context>
+
+    <context id="for-command">
+      <start>\bfor\b</start>
+      <end>\b(in|do)\b</end>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="keyword"/>
+        <context sub-pattern="0" where="end" style-ref="keyword"/>
+        <context style-ref="variable-definition" once-only="true">
+          <match>\w+</match>
+        </context>
+      </include>
+    </context>
+
+    <context id="built-in-command-2" style-ref="keyword">
+      <prefix>(?&lt;![^\s;\(\)\`])</prefix>
+      <suffix>(?![^\s;\(\)\`])</suffix>
+      <keyword>do</keyword>
+      <keyword>done</keyword>
+      <keyword>elif</keyword>
+      <keyword>else</keyword>
+      <keyword>fi</keyword>
+      <keyword>for</keyword>
+      <keyword>function</keyword>
+      <keyword>if</keyword>
+      <keyword>in</keyword>
+      <keyword>select</keyword>
+      <keyword>then</keyword>
+      <keyword>until</keyword>
+      <keyword>while</keyword>
+      <keyword>alias</keyword>
+      <keyword>bg</keyword>
+      <keyword>bind</keyword>
+      <keyword>break</keyword>
+      <keyword>builtin</keyword>
+      <keyword>cd</keyword>
+      <keyword>command</keyword>
+      <keyword>compgen</keyword>
+      <keyword>complete</keyword>
+      <keyword>continue</keyword>
+      <keyword>declare</keyword>
+      <keyword>dirs</keyword>
+      <keyword>disown</keyword>
+      <keyword>echo</keyword>
+      <keyword>enable</keyword>
+      <keyword>eval</keyword>
+      <keyword>exec</keyword>
+      <keyword>exit</keyword>
+      <keyword>export</keyword>
+      <keyword>fc</keyword>
+      <keyword>fg</keyword>
+      <keyword>getopts</keyword>
+      <keyword>hash</keyword>
+      <keyword>help</keyword>
+      <keyword>history</keyword>
+      <keyword>jobs</keyword>
+      <keyword>let</keyword>
+      <keyword>local</keyword>
+      <keyword>logout</keyword>
+      <keyword>popd</keyword>
+      <keyword>printf</keyword>
+      <keyword>pushd</keyword>
+      <keyword>read</keyword>
+      <keyword>readonly</keyword>
+      <keyword>return</keyword>
+      <keyword>set</keyword>
+      <keyword>shift</keyword>
+      <keyword>shopt</keyword>
+      <keyword>source</keyword>
+      <keyword>suspend</keyword>
+      <keyword>test</keyword>
+      <keyword>times</keyword>
+      <keyword>trap</keyword>
+      <keyword>type</keyword>
+      <keyword>typeset</keyword>
+      <keyword>ulimit</keyword>
+      <keyword>umask</keyword>
+      <keyword>unalias</keyword>
+      <keyword>unset</keyword>
+      <keyword>wait</keyword>
+    </context>
+
+    <context id="built-in-command">
+      <include>
+        <context ref="built-in-command-1"/>
+        <context ref="for-command"/>
+        <context ref="built-in-command-2"/>
+      </include>
+    </context>
+
+    <context id="common-command" style-ref="common-command">
+      <prefix>(?&lt;![\w\-\.])</prefix>
+      <suffix>(?![\w\-\.])</suffix>
+      <keyword>ar</keyword>
+      <keyword>awk</keyword>
+      <keyword>basename</keyword>
+      <keyword>bash</keyword>
+      <keyword>beep</keyword>
+      <keyword>bunzip2</keyword>
+      <keyword>bzcat</keyword>
+      <keyword>bzcmp</keyword>
+      <keyword>bzdiff</keyword>
+      <keyword>bzegrep</keyword>
+      <keyword>bzfgrep</keyword>
+      <keyword>bzgrep</keyword>
+      <keyword>bzip2recover</keyword>
+      <keyword>bzip2</keyword>
+      <keyword>bzless</keyword>
+      <keyword>bzmore</keyword>
+      <keyword>cc</keyword>
+      <keyword>cat</keyword>
+      <keyword>chattr</keyword>
+      <keyword>chgrp</keyword>
+      <keyword>chmod</keyword>
+      <keyword>chown</keyword>
+      <keyword>chroot</keyword>
+      <keyword>clear</keyword>
+      <keyword>cmp</keyword>
+      <keyword>cpp</keyword>
+      <keyword>cp</keyword>
+      <keyword>cut</keyword>
+      <keyword>date</keyword>
+      <keyword>dd</keyword>
+      <keyword>df</keyword>
+      <keyword>dialog</keyword>
+      <keyword>diff3</keyword>
+      <keyword>diff</keyword>
+      <keyword>dirname</keyword>
+      <keyword>dir</keyword>
+      <keyword>du</keyword>
+      <keyword>egrep</keyword>
+      <keyword>eject</keyword>
+      <keyword>env</keyword>
+      <keyword>expr</keyword>
+      <keyword>false</keyword>
+      <keyword>fgrep</keyword>
+      <keyword>file</keyword>
+      <keyword>find</keyword>
+      <keyword>fmt</keyword>
+      <keyword>free</keyword>
+      <keyword>ftp</keyword>
+      <keyword>funzip</keyword>
+      <keyword>fuser</keyword>
+      <keyword>gawk</keyword>
+      <keyword>gcc</keyword>
+      <keyword>getent</keyword>
+      <keyword>getopt</keyword>
+      <keyword>grep</keyword>
+      <keyword>groups</keyword>
+      <keyword>gunzip</keyword>
+      <keyword>gzip</keyword>
+      <keyword>head</keyword>
+      <keyword>hostname</keyword>
+      <keyword>id</keyword>
+      <keyword>ifconfig</keyword>
+      <keyword>info</keyword>
+      <keyword>insmod</keyword>
+      <keyword>install</keyword>
+      <keyword>join</keyword>
+      <keyword>killall</keyword>
+      <keyword>kill</keyword>
+      <keyword>lastb</keyword>
+      <keyword>last</keyword>
+      <keyword>ld</keyword>
+      <keyword>less</keyword>
+      <keyword>ln</keyword>
+      <keyword>locate</keyword>
+      <keyword>lockfile</keyword>
+      <keyword>login</keyword>
+      <keyword>logname</keyword>
+      <keyword>lp</keyword>
+      <keyword>lpr</keyword>
+      <keyword>lsattr</keyword>
+      <keyword>ls</keyword>
+      <keyword>lsmod</keyword>
+      <keyword>make</keyword>
+      <keyword>man</keyword>
+      <keyword>mkdir</keyword>
+      <keyword>mkfifo</keyword>
+      <keyword>mknod</keyword>
+      <keyword>mktemp</keyword>
+      <keyword>modprobe</keyword>
+      <keyword>more</keyword>
+      <keyword>mount</keyword>
+      <keyword>mv</keyword>
+      <keyword>namei</keyword>
+      <keyword>nawk</keyword>
+      <keyword>nice</keyword>
+      <keyword>nl</keyword>
+      <keyword>passwd</keyword>
+      <keyword>patch</keyword>
+      <keyword>perl</keyword>
+      <keyword>pgawk</keyword>
+      <keyword>pidof</keyword>
+      <keyword>ping</keyword>
+      <keyword>pkg-config</keyword>
+      <keyword>pr</keyword>
+      <keyword>ps</keyword>
+      <keyword>pwd</keyword>
+      <keyword>readlink</keyword>
+      <keyword>renice</keyword>
+      <keyword>rmdir</keyword>
+      <keyword>rm</keyword>
+      <keyword>scp</keyword>
+      <keyword>sed</keyword>
+      <keyword>seq</keyword>
+      <keyword>sh</keyword>
+      <keyword>sleep</keyword>
+      <keyword>sort</keyword>
+      <keyword>split</keyword>
+      <keyword>ssh-add</keyword>
+      <keyword>ssh-agent</keyword>
+      <keyword>ssh-keygen</keyword>
+      <keyword>ssh-keyscan</keyword>
+      <keyword>ssh</keyword>
+      <keyword>stat</keyword>
+      <keyword>sudo</keyword>
+      <keyword>sum</keyword>
+      <keyword>su</keyword>
+      <keyword>sync</keyword>
+      <keyword>tac</keyword>
+      <keyword>tail</keyword>
+      <keyword>tar</keyword>
+      <keyword>tee</keyword>
+      <keyword>tempfile</keyword>
+      <keyword>touch</keyword>
+      <keyword>true</keyword>
+      <keyword>tr</keyword>
+      <keyword>umount</keyword>
+      <keyword>uname</keyword>
+      <keyword>uniq</keyword>
+      <keyword>unlink</keyword>
+      <keyword>unzip</keyword>
+      <keyword>uptime</keyword>
+      <keyword>wall</keyword>
+      <keyword>wc</keyword>
+      <keyword>wget</keyword>
+      <keyword>whereis</keyword>
+      <keyword>which</keyword>
+      <keyword>whoami</keyword>
+      <keyword>who</keyword>
+      <keyword>write</keyword>
+      <keyword>w</keyword>
+      <keyword>xargs</keyword>
+      <keyword>xdialog</keyword>
+      <keyword>zcat</keyword>
+      <keyword>zcmp</keyword>
+      <keyword>zdiff</keyword>
+      <keyword>zegrep</keyword>
+      <keyword>zenity</keyword>
+      <keyword>zfgrep</keyword>
+      <keyword>zforce</keyword>
+      <keyword>zgrep</keyword>
+      <keyword>zip</keyword>
+      <keyword>zless</keyword>
+      <keyword>zmore</keyword>
+      <keyword>znew</keyword>
+    </context>
+
+    <context id="case">
+      <start>\bcase\b</start>
+      <end>\besac\b</end>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="keyword"/>
+        <context sub-pattern="0" where="end" style-ref="keyword"/>
+        <context ref="double-quoted-string"/>
+        <context ref="single-quoted-string"/>
+        <context style-ref="others">
+          <match>[^\)\s]+\s*\)|;;</match>
+        </context>
+        <context ref="cylc-suite-rc"/>
+      </include>
+    </context>
+    <!-- end sh.lang -->
+
+    <context id="cylc-suite-rc">
+      <include>
+        <!-- cylc-specific -->
+        <context ref="cylc-section"/>
+        <context ref="cylc-options"/>
+        <context ref="cylc-boolean-value"/>
+        <context ref="cylc-subshell"/>
+        <context ref="integer"/>
+        <context ref="decimal-number"/>
+        <context ref="jinja2-block"/>
+        <context ref="jinja2-comment"/>
+        <context ref="jinja2-substitution"/>
+        <context ref="cylc-add-commands"/>
+        <!-- end cylc-specific -->
+        <!-- taken from sh.lang -->
+        <context ref="def:shebang" style-ref="shebang"/>
+        <context ref="line-comment"/>
+        <context ref="def:escape"/>
+        <context ref="single-quoted-string"/>
+        <context ref="double-quoted-string"/>
+        <context ref="subshell"/>
+        <context ref="backtick-subshell"/>
+        <context ref="case"/>
+        <context ref="punctuator"/>
+        <context ref="function"/>
+        <context ref="here-doc"/>
+        <context ref="redirection"/>
+        <context ref="operator"/>
+        <context ref="variable"/>
+        <context ref="variable-definition"/>
+        <context ref="built-in-command"/>
+        <context ref="common-command"/>
+        <!-- end sh.lang -->
+      </include>
+    </context>
+  </definitions>
+</language>
