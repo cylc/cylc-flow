@@ -44,7 +44,7 @@ class job_submit(object):
             + " && (%(command)s)"
             + "'" )
 
-    def __init__( self, task_id, jobconfig, xconfig ):
+    def __init__( self, task_id, jobconfig, xconfig, submit_num ):
 
         self.jobconfig = jobconfig
 
@@ -57,7 +57,7 @@ class job_submit(object):
         # Local job script path: Tag with microseconds since epoch
         # (used by both local and remote tasks)
         now = time.time()
-        tag = self.task_id + "-%.6f" % now
+        tag = ('.').join(self.task_id.split('%')) + '.' + submit_num #timestring
         self.local_jobfile_path = os.path.join( xconfig['log path'], tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )

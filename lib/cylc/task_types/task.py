@@ -614,7 +614,7 @@ class task( object ):
                 'extra log files'        : self.logfiles,
                 }
 
-        launcher = launcher_class( self.id, jobconfig, xconfig )
+        launcher = launcher_class( self.id, jobconfig, xconfig, str(self.submit_num) )
 
         try:
             p = launcher.submit( dry_run, debug )
