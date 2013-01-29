@@ -13,15 +13,16 @@
 <h1>Cylc Change Log Summary</h1>
 
 <div class="rbox">
-<h3 style="margin:10px">Menu</h3>
+<h3 style="margin:10px">versions</h3>
 <ul>
-		<li><a href="#pre-5.0.0">pre-5.0.0</a></li>
+		<li><a href="#5.0.1">5.0.1</a></li>
 		<li><a href="#5.0.0">5.0.0</a></li>
+		<li><a href="#old">OLD</a></li>
 </ul>
 </div>
 
 <div class="lbox">
-<p>This document summarizes <b>major changes between cylc versions</b>.
+<p><b>This document summarizes changes between cylc versions.</b>
 Minor changes and bug fixes, and routine updates to the user guide may
 not be listed here. <b>The definitive guide to changes is the repository
 		commit log</b>.  For usage details relating to a
@@ -30,13 +31,27 @@ cylc mailing list in the event that the documentation has not been
 brought up to date yet. <p>
 </div> <!--lbox-->
 
-<h2>pre-5.0.0</h2>
-<a name="pre-5.0.0"/>
-		<a href="changes-old.txt">(old change log)</a>
+<a name="5.0.1"/>
+<a href="#" class="top">(top)</a>
+		<h2>5.0.1</h2>
 
+<ul>
+		<li> The <b>"log root"</b> used for task job script and
+		stdout and stderr logs files (<code>$CYLC_TASK_LOG_ROOT</code>
+		in task execution environments) now ends in a simple 
+		<i>submit number</i> that increments on retries and manual
+		triggering, instead of the former seconds-since-epoch time
+		string.</li>
 
-<h2>4.5.1 - 5.0.0</h2>
+		<li> Added a suite definition <b>syntax file</b> for the
+		<b>gedit</b> editor and other gtksourceview programs:
+		<code>conf/cylc.lang</code>.</li>
+
+</ul>
+
 <a name="5.0.0"/>
+<a href="#" class="top">(top)</a>
+<h2>5.0.0</h2>
 
 <ul>
 		<li> <b>Multi-threading</b>: cylc now does continous request
@@ -181,6 +196,14 @@ brought up to date yet. <p>
 		<b>$CYLC_SUITE_FINAL_CYCLE_TIME</b> now persist across restarts.</li>
 
 </ul>
+
+<a name="old"/>
+<a href="#" class="top">(top)</a>
+<h2>Old Change Log (4.5.1 and earlier)</h2>
+<ul>
+		<li>	<a href="changes-old.txt">(doc/changes-old.txt)</a> </li>
+</ul>
+
 
 </div> <!--uberpage-->
 </div> <!--page-->

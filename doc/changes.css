@@ -25,6 +25,7 @@ li {
 		margin-top:1em;
 }
 
+
 .lbox {
 		width: 80%;
 }
@@ -32,6 +33,10 @@ li {
 .rbox {
 		float:right;
 	/*	font-size:80%;*/
+}
+
+.rbox li {
+		margin-top:0;
 }
 
 .info {
@@ -44,6 +49,12 @@ a:link, a:visited {
 		font-weight:bold;
 		color: #04a;
 }
+
+.top {
+		float:left;
+		margin-left:-20px;
+}
+
 
 h1 {
 		border-bottom:2px solid #0a0;
