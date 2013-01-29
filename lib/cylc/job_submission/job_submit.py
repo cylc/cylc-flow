@@ -31,7 +31,6 @@ import stat
 from jobfile import jobfile
 import socket
 import subprocess
-import time
 from cylc.owner import user
 
 class job_submit(object):
@@ -54,10 +53,9 @@ class job_submit(object):
         self.job_submit_command_template = xconfig['job submission command template']
         self.remote_shell_template = xconfig['remote shell template']
 
-        # Local job script path: Tag with microseconds since epoch
+        # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        now = time.time()
-        tag = ('.').join(self.task_id.split('%')) + '.' + submit_num #timestring
+        tag = ('.').join(self.task_id.split('%')) + '.' + submit_num
         self.local_jobfile_path = os.path.join( xconfig['log path'], tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
