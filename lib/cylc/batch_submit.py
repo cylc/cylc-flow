@@ -174,9 +174,9 @@ class task_batcher( batcher ):
         if p:
             psinfo.append( (p, itask, itask.id) ) 
 
-    def item_failed_hook( self, itask, info ):
+    def item_failed_hook( self, itask, info, msg ):
         itask.incoming( 'CRITICAL', itask.id + ' failed' )
-        batcher.item_failed_hook( self, item, info )
+        batcher.item_failed_hook( self, item, info, msg )
 
 class event_batcher( batcher ):
     """Batched execution of queued task event handlers"""
