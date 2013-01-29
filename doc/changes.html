@@ -23,12 +23,10 @@
 
 <div class="lbox">
 <p><b>This document summarizes changes between cylc versions.</b>
-Minor changes and bug fixes, and routine updates to the user guide may
-not be listed here. <b>The definitive guide to changes is the repository
-		commit log</b>.  For usage details relating to a
-particular change refer to the cylc user guide, command help, or the
-cylc mailing list in the event that the documentation has not been
-brought up to date yet. <p>
+Minor changes and routine updates to the user guide may be omitted. 
+<b>The definitive guide to changes is the repository commit log</b>.
+For usage details relating to a particular change refer to the cylc user
+guide, command help, or post a question to the cylc mailing list. <p>
 </div> <!--lbox-->
 
 <a name="5.0.1"/>
@@ -36,12 +34,14 @@ brought up to date yet. <p>
 		<h2>5.0.1</h2>
 
 <ul>
-		<li> The <b>"log root"</b> used for task job script and
-		stdout and stderr logs files (<code>$CYLC_TASK_LOG_ROOT</code>
-		in task execution environments) now ends in a simple 
+		<li> <b>Bug fix for 5.0.0 batched job submission:</b> a job
+		submission failure would cause cylc to abort.</li>
+
+		<li> <b>Changed "log root" filenames</b> (i.e. task job script plus
+		stdout and stderr logs, and <code>$CYLC_TASK_LOG_ROOT</code>
+		in task environments): replaced seconds-since-epoch with a simple
 		<i>submit number</i> that increments on retries and manual
-		triggering, instead of the former seconds-since-epoch time
-		string.</li>
+		triggering.</li>
 
 		<li> Added a suite definition <b>syntax file</b> for the
 		<b>gedit</b> editor and other gtksourceview programs:
@@ -74,7 +74,7 @@ brought up to date yet. <p>
 
 		<li> <b>Reloading the suite definition at run time</b> is now
 		supported. Even task definitions can be added and removed without
-		stopping and restaring the suite.</li>
+		stopping and restarting the suite.</li>
 
 		<li> <b>Restarting after deleting task definitions</b> now works 
 		without modifying the state dump.</li>
