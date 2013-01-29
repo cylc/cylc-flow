@@ -1,11 +1,13 @@
 
 body { 
 		background:#bbc;
+		font-size:80%;
 }
 
 div.uberpage {
 		border:2px solid #bbc;
 		margin:0 auto;
+		margin-bottom:200px;
 		width:800px;
 		background-image:url(images/niwa-colour-small.png);
 		background-repeat:no-repeat;
@@ -25,14 +27,19 @@ li {
 		margin-top:1em;
 }
 
-
-.lbox {
-		width: 80%;
+.rbox {
+		background: #fff;
+		border: 2px solid #0a0;
+		position:fixed;
+		left:auto;
+		right:auto;
+		margin-left:710px;
+		top: 50px;
 }
 
-.rbox {
-		float:right;
-	/*	font-size:80%;*/
+.rbox h3 {
+		color:#080;
+		padding-top:0;
 }
 
 .rbox li {
@@ -49,12 +56,6 @@ a:link, a:visited {
 		font-weight:bold;
 		color: #04a;
 }
-
-.top {
-		float:left;
-		margin-left:-20px;
-}
-
 
 h1 {
 		border-bottom:2px solid #0a0;
