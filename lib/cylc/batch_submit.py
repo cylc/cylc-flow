@@ -53,10 +53,11 @@ class batcher( threading.Thread ):
         """submit a job by appropriate means, then append the resulting
         process id plus item and an info string to the psinfo list."""
 
-        self.idprint( "OVERRIDE ME IN DERIVED CLASSES" )
+        raise SystemExit( "ERROR: batcher.submit_item() must be overridden" )
  
     def item_failed_hook( self, item, info, msg ):
         """warn of a failed item"""
+        # (submitted item supplied in case needed by derived classes)
         self.idprint( info + " " + msg, err=True )
 
     def run( self ):
@@ -176,7 +177,7 @@ class task_batcher( batcher ):
 
     def item_failed_hook( self, itask, info, msg ):
         itask.incoming( 'CRITICAL', itask.id + ' failed' )
-        batcher.item_failed_hook( self, item, info, msg )
+        batcher.item_failed_hook( self, itask, info, msg )
 
 class event_batcher( batcher ):
     """Batched execution of queued task event handlers"""
