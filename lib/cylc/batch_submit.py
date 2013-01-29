@@ -45,7 +45,7 @@ class batcher( threading.Thread ):
 
     def idprint( self, msg, err=False ):
         if err:
-            self.log.warning(  "ERROR: " + name + ": " + msg )
+            self.log.warning(  "ERROR: " + self.name + ": " + msg )
         else:
             self.log.info( self.name + ": " + msg )
 
@@ -57,7 +57,7 @@ class batcher( threading.Thread ):
  
     def item_failed_hook( self, item, info, msg ):
         """warn of a failed item"""
-        self.idprint( info + " " + msg )
+        self.idprint( info + " " + msg, err=True )
 
     def run( self ):
         # NOTE: Queue.get() blocks if the queue is empty
