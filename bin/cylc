@@ -180,6 +180,7 @@ information_commands['documentation'   ] = ['documentation', 'browse']
 information_commands['monitor'  ] = ['monitor'  ]
 information_commands['get-config'] = ['get-config' ]
 information_commands['get-global-config'  ] = [ 'get-global-config']
+information_commands['suite-state'] = ['suite-state']
 
 control_commands = OrderedDict()
 control_commands['gui'      ] = [ 'gui' ]
