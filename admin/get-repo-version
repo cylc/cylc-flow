@@ -25,13 +25,19 @@
 LF='
 '
 
+# move to the repository
+cd $( dirname $0 )/..
 VN=$(git describe --abbrev=4 HEAD 2>/dev/null)
 case "$VN" in
     *$LF*) (exit 1) ;;
     [0-9]*)
-        # if uncommited changes exist append "-dirty"
-        git update-index -q --refresh
-        test -z "$(git diff-index --name-only HEAD --)" || VN="$VN-dirty" ;;
+        # If uncommited changes exist append "-dirty".
+
+        # The git update-index and diff-index expect a working tree;
+        # notably they don't work in a detached checkout from a bare
+        # repo - so send errors to /dev/null and ignore.
+        git update-index -q --refresh 2> /dev/null 
+        test -z "$(git diff-index --name-only HEAD -- 2> /dev/null)" || VN="$VN-dirty" ;;
 esac
 # echo to stdout
 echo "$VN"
