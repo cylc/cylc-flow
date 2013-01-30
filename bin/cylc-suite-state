@@ -37,12 +37,11 @@ parser.add_option( "-c", "--cycle",
 
 parser.add_option( "-d", "--run-dir", 
         help="Specify the cycle to check task states for.",
-        action="store", dest="run_dir", default="~/cylc-run" )
+        action="store", dest="run_dir", default=False )
 
 parser.add_option( "-S", "--status", 
         help="Specify a particular status to check for.",
         action="store", dest="status", default=False )
-
 
 ( options, args ) = parser.parse_args()
 
