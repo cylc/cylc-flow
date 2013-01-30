@@ -16,16 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gtk
-import gobject
 import os, sys
 from optparse import OptionParser
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 from cylc.global_config import globalcfg
-from cylc.gui.warning_dialog import warning_dialog
-from cylc.gui.gcapture import gcapture, gcapture_tmpfile
 
 # This is a unit test for $CYLC_DIR/lib/cylc/gui/gcapture.py
 # but it may be more generally useful.
@@ -56,6 +52,12 @@ parser.add_option( "--other",
     action="store_true", default=False, dest="other" )
 
 (options, args) = parser.parse_args()
+
+# import modules that require gtk now, so that a display is not needed
+# just to get command help (e.g. when running make on a post-commit hook
+# on a remote repository).
+import gtk
+import gobject
 
 if options.other and not options.filep:
     parser.error( '--other requires --prefix' )
