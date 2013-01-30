@@ -18,11 +18,14 @@
 
 CYLC=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))../bin/cylc
 
-.PHONY: all clean html html-multi html-single pdf
+.PHONY: all index clean html html-multi html-single pdf
 
 DEPS := $(shell ./scripts/get-deps.sh)
 
-all: $(DEPS) index.html
+all: index
+
+index: $(DEPS)
+	./scripts/make-index.sh
 
 html: html-multi html-single
 
@@ -32,8 +35,6 @@ html-single: html/single/cug-html.html
 
 pdf: pdf/cug-pdf.pdf
 
-index.html: html/multi/cug-html.html html/single/cug-html.html pdf/cug-pdf.pdf
-	./scripts/make-index.sh
 
 cylc.txt: ../bin/cylc
 	$< --help > $@
