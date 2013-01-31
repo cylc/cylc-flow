@@ -59,7 +59,7 @@ cp $TMPD/html/single/*.{css,html} html/single/
 cp $TMPD/html/multi/*.{css,html} html/multi/
 cp $TMPD/graphics/png/scaled/* graphics/png/scaled/
 # substitute latest version number in the homepage
-perl -pi -e "s/Current Version:.*/Current Version: $LATESTTAG ($( date +%F ))/" index.html
+perl -pi -e "s@(Current Version:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> ($( date +%F )) \2@" index.html
 
 # any changes to update?
 git update-index -q --refresh
