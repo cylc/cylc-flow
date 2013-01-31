@@ -1,0 +1,248 @@
+
+body{
+	padding: 0;
+	margin: 0;
+	font-family: "MS Trebuchet", Verdana, Geneva, Arial, Helvetica, sans-serif;	
+	font-size: 100%;
+	line-height: 135%;
+	/*background-image: url("web-graphics/bkg.gif");
+	*/
+	color:  #424242;
+	text-align: center;
+}
+
+a{
+  /*color: #f64;*/
+	color: #048;
+	font-weight: bold;
+	text-decoration: none;
+}
+a:visited{
+	/*color: #d85;*/
+  color: #26a; 
+	text-decoration: none;
+}
+a:hover{
+	text-decoration: underline;
+}
+
+h3, h4{
+	/* color: #2b9a82;*/
+	color: #0b7a62;
+	font-size: 120%;
+	margin-top: 30px;
+	margin-bottom: 0;
+	/*padding-left:25px;*/
+	position: relative;
+	/*background-image: url("web-graphics/bullet.gif");
+	background-repeat: no-repeat;
+	background-position: top left;
+	*/
+}
+
+h3 span{
+	background-color: #fff;
+}
+
+h4 {
+	font-size:100%;
+	background:none;
+	margin-top: 10px;
+	padding-left:15px;
+}
+
+p{
+	margin: 10px 0 5px 0;
+}
+
+#container{
+	position: relative;
+	/* background-image: url("web-graphics/footer.gif");
+	background-repeat: repeat-x;
+	background-position: bottom;
+	*/
+	width: 738px;
+	/*border: 1px solid	#2b9a82;*/
+	border-bottom: 0;
+	/*border-top: 0;*/
+	margin: 0 auto;
+	margin-top:30px;
+	margin-bottom:800px;
+	text-align: left;
+}
+
+#pageHeader {
+}
+
+#pageHeader h1{
+	width: 738px;
+	/*height: 88px;*/
+	/*background-image: url("web-graphics/header1.gif");
+	background-position: top left;
+	background-repeat: no-repeat;
+	*/
+	margin-top:0;
+}
+
+#pageHeader h1 span {
+	/*display: block;*/
+	/*width: 0;
+	height: 0;*/
+	/*overflow: hidden;*/
+  color: #0b7a62;
+}
+
+#pageHeader h2{
+	width: 571px;
+	height: 29px;
+	/*background-image: url("web-graphics/header2.gif");*/
+	/*margin-top:-42px;
+	margin-bottom: 30px;*/
+}
+
+#pageHeader h2 span {
+	/*display: block;
+	width: 0;
+	height: 0;
+	overflow: hidden;*/
+  color: #0b7a62;
+}
+
+#banner{
+	background-color: #2b9a82;
+	color: #fff;
+	margin-bottom: 10px;
+	line-height: 125%;
+	font-size: 110%;
+}
+
+#banner .p1{
+	position: relative;
+	padding: 20px 10px 0 20px;
+	/*background: #2b9a82 url("web-graphics/banner1.gif"); 
+	background-position: top left;
+	background-repeat: no-repeat;
+	*/
+}
+
+#banner .p2{
+	position: relative;
+/*	padding: 0 15px 25px 18px;*/  /* comment out if p2 is not used */
+	/* background: #2b9a82 url("web-graphics/banner2.gif") no-repeat bottom left
+	 * ;*/
+}
+
+#topbox{
+		position:relative;
+}
+
+#preamble{
+  float:right;
+	margin-left: 220px;
+	padding-right: 10px;
+	font-size: 90%;
+}
+
+#mainpage{
+  position:relative;
+	clear:both;
+	padding-right: 10px;
+	padding-left: 20px;
+	font-size: 90%;
+}
+
+#niwalogo{
+  float:right;
+	width:200px;
+	height:49px;
+}
+
+#tape{
+	position: relative; 
+	padding: 65px 10px 30px 80px;
+	/*background-image: url("web-graphics/tape.gif");
+	background-repeat: no-repeat;
+	background-position: 65px 55px;
+	*/
+}
+
+#navlist {
+  position:absolute;
+	left: 20px;
+	top: 20px;
+	width: 178px;
+	padding: 75px 2px 0 0;
+	font-size: 80%;
+	line-height: 140%; 
+  background: url("web-graphics/niwa-colour-small-200.png") top left no-repeat;
+}
+
+#navlist h3{
+	margin: 0;
+	height:40px;
+	padding: 10px 0 5px 10px;
+	/*text-transform: lowercase;*/
+	color: #0b7a62;
+	font-size: 100%;
+	/*background-image: url("web-graphics/listheader.gif");
+	background-repeat: repeat-x;
+	background-position: top left;
+	*/
+}
+
+#navlist h3 span{
+	background: transparent;
+}
+
+#navlist ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	padding: 0px 0px 20px 10px;
+	/*background-image: url("web-graphics/izqdaul.gif");
+	background-repeat: repeat-x;*/
+}
+
+#navlist li{
+	background: transparent url("web-graphics/navbullet.gif") 0 2px no-repeat;
+	padding-left:20px;
+	margin-bottom: 7px;	
+	color: #818181;
+}
+
+#navlist li a{
+	color: #2b9ac2;
+}
+
+p.nav a{
+	color: #2b9ac2;
+	
+}
+
+#navlist li a.c{
+	color: #818181;
+}
+
+code {
+		font-size:130%;
+}
+
+#lcode{
+	padding-bottom: 20px;
+}
+
+#footnotes{
+		font-size: 80%;
+}
+
+#footnotes h3{
+		background: none;
+}
+
+.warning {
+		background:#fff;
+		font-weight:bold;
+		color:#ff4202;
+}
+
+

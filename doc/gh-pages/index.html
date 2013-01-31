@@ -1,0 +1,552 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+	<meta name="author" content="Hilary James Oliver"/>
+	<meta name="keywords" content="cylc, forecast, suite, suite engine, metascheduler"/>
+	<meta name="description" content="The cylc suite engine home page on GitHub." />
+    <meta name="robots" content="all"/>
+    <meta name="google-site-verification" content="80O-lgcVlVkKfF1yVyn0Q05W6QuN-WjcP30UftFhmiM" /> 
+
+	<title>The Cylc MetaScheduler</title>
+
+	<!-- correct the unsightly Flash of Unstyled Content. http://www.bluerobot.com/web/css/fouc.asp -->
+    <!--<script type="text/javascript"></script>-->
+	
+	<link rel="stylesheet" type="text/css" href="cylc.css" media="screen" title="default" />
+	<link rel="alternate stylesheet" type="text/css" media="screen" title="plain" href="plain.css" />
+
+    <!--<link rel="Shortcut Icon" type="image/x-icon" href="http://foo.bar.ico"/>-->
+    <script src="styleswitcher.js" type="text/javascript">
+    </script>
+</head>
+
+<body>
+<div id="container">
+<div id="subcontainer">
+    <form id="switchform" action="" style="position:absolute; right:0px; top:-25px">
+    <div>
+        <input type="radio" name="choice" value="default" onclick="setActiveStyleSheet(this.value)" /> Gritty
+        <input type="radio" name="choice" value="plain" onclick="setActiveStyleSheet(this.value)" /> Plain
+    </div>
+    </form>
+
+		<div id="pageHeader">
+			<h1><span>Cylc</span></h1>
+			<h2><span>Suite Engine</span></h2>
+     	</div> <!--pageHeader-->
+
+    <div id="banner">
+            <p class="p1"><span>Cylc (<em>"silk"</em>) is a <b>suite
+                    engine</b> and <b>meta-scheduler</b> that
+                specializes in suites of cycling tasks for weather and
+                climate forecasting and related processing (it can
+                also be used for one-off workflows of non-cycling tasks,
+                which is a simpler problem). <b>Cylc was released
+                    by NIWA under the GNU General Public License v3 in 2011.</b>
+            </span></p> 
+
+        <p class="p2"><span>.</span></p> <!-- p2 is required to get
+        the lower banner background image, and the . is required
+        to get IE from MS Windows XP to display it for an empty
+        paragraph-->
+    </div> <!--banner-->
+
+		<div id="topbox">
+
+		<div id="preamble">
+
+            <div class="warning">
+                Current Version: REPLACE-ME
+            </div>
+
+    <p class="p1">Cylc was selected as a finalist in two categories for
+    the 2012 New Zealand Open Source Awards.</p>
+
+
+  <!--          <p class="p1"><span> Cylc was developed at 
+                <a href="http://www.niwa.co.nz">NIWA</a> 
+        (National Institute of Water &amp; Atmospheric Research,
+        New Zealand) by Dr Hilary James Oliver. 
+        It was prototyped in 2008, has controlled NIWA's
+        operational forecasting systems since 2010, and was
+        released under the GNU General Public License in 2011.</span></p>
+    -->
+
+    <a id="overview"></a>
+    <h3><span>Overview</span></h3>
+
+<!--    <p class="p1"><span>A metascheduler, in this context, is a
+        <em>control system</em> that determines when interdependent
+        tasks are <em>ready</em> (when their prerequisites have been
+        satisfied by other tasks in the suite) to be submitted to
+        a batch scheduler (normally) for execution. For <em>cycling</em>
+        tasks cylc can optimally interleave tasks from multiple forecast
+        cycles at once whenever the opportunity arises; but it can also
+        handle non-cycling (one-off) tasks and suites, and repeating
+        asynchronous tasks for processing data from successive satellite
+        passes in real time.</span></p>
+    -->     
+    <!--
+    <p class="p2"><span>
+        Dependence between tasks in different forecast cycles can
+        be ignored in real time operation, but this severely
+        restricts scheduling after delays when it should be
+        possible to run tasks from multiple cycles at once. Even  
+        <a href="intro-graphics/dep-one-cycle.png">simple suites</a> appear
+        <a href="intro-graphics/dep-multi-cycle.png">complicated</a>
+        when intercycle dependence is taken into account (a, b, and c
+        represent warm-cycled forecast models). Cylc's self-organising
+        scheduling algorithm solves this problem, and as a result it can
+        optimally interleave tasks from multiple forecast cycles
+        whenever the opportunity arises, potentially achieving 
+        <a href="intro-graphics/timeline-three.png">very fast catch up from delays</a> 
+        (cylc on top) even in resource limited operations with little
+        down time between cycles. The same goes for
+        <a href="intro-graphics/timeline-two.png">processing historical data</a>
+        (cylc on top) or running parallel test suites that start behind
+        the main operation.
+    </span></p>
+    -->
+
+    <p class="p3"><span>
+        Cylc's suite design paradigm is simple and intuitive: "draw" a
+        dependency graph in concise textual form, then configure the
+        runtime properties of each task in an efficient inheritance
+        hierarchy. This simple 
+        <a href="screenshots/simple-suiterc.png">suite definition</a>,
+        for example, defines a suite with this
+<a href="screenshots/QuickStartB-graph18.png">dependency graph</a>.
+        Large suites <a href="screenshots/ecox-1.png">like this</a> are
+        no more difficult, they just have more tasks.
+    </span></p>
+
+        <p class="p1"><span>
+                Cylc suites can interleave tasks from multiple forecast
+                cycles for fast catch up from delays, fast historical
+                case studies, and fast offset parallel trials; they
+                seamlessly transition between delayed and real time
+                operation; they flow around delayed or failed tasks
+                (which will catch up as quickly as possible once the
+                problem is addressed), and they adapt to insertion and
+                removal of tasks at run time.     </span></p>
+
+    <p class="p3"><span>
+        Cylc's lead developer is Dr Hilary James Oliver of <a
+            href="http://www.niwa.co.nz">NIWA</a> (the National
+    Institute of Water and Atmospheric Research, New Zealand).
+    </span></p>
+
+            <div id="screenshots">
+				<h4 class="foo"><span>Screen Shots</span></h4>
+				<ul>
+				  <li> <a href="screenshots/gcylc-db.png">The cylc suite database viewer, one suite running on port 7766</a></li>
+				  <li> <a href="screenshots/suiterc-jinja2.png">A cylc suite definition in the vim editor</a></li>
+				  <li> <a href="screenshots/graph-viewer.png">Interactive suite graph viewer</a></li>
+				  <li> <a href="screenshots/control1.png">The gcylc GUI, dot and text views</a></li>
+				  <li> <a href="screenshots/control2.png">The gcylc GUI, graph and text views</a></li>
+				  <li> <a href="screenshots/ecox-1.png">A large suite graphed by cylc</a></li>
+				  <li> <a href="screenshots/NZLAM-catchup.png">Tasks from multiple cycles running at once</a></li>
+				</ul>
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+
+</div> <!--screenshots-->
+
+
+    </div>  <!--preamble-->
+ 
+	<div id="navlist">
+        <h3 class="select"><span>Navigation:</span></h3>
+        <ul>
+            <li> <a href="#overview">Overview</a> </li>
+            <li> <a href="#who">Cylc Users?</a> </li>
+            <li> <a href="#features">Features</a> </li>
+            <li> <a href="#requirements">Requirements</a> </li>
+            <li> <a href="#download">Download</a> </li>
+            <li> <a href="#installation">Installation</a> </li>
+            <li> <a href="#documentation">Documentation</a> </li>
+            <li> <a href="#support">Support</a> </li>
+            <li> <a href="#development">Development</a> </li>
+            <li> <a href="#acknowledgements">Acknowledgements</a> </li>
+            <li> <a href="http://github.com/cylc/cylc">Source Repository</a></li>
+    </ul>
+</div> <!--navlist-->
+
+</div> <!--topbox-->
+               
+	<div id="mainpage">
+
+		<div id="who">
+			<h3><span>Who Is Using Cylc So Far?</span></h3>
+
+            <p class="p1"><span>
+        Cylc is (or is about to be) the official suite engine of the
+        following institutions:</span></p>
+            <ul>
+                <li> <a href="http://www.niwa.co.nz">NIWA</a> - cylc has
+                controlled NIWA's research and forecasting suites since 2010.</li>
+
+                <li> <a href="http://www.metoffice.gov.uk">Met Office</a> (UK) - 
+                cylc is used in combination with Rose (https://github.com/metomi/rose).</li>
+            </ul>
+
+            <p class="p1"><span>
+            Cylc is also used by small groups at the following
+            institutions:</span></p>
+            <ul>
+                <li> <a href="http://www.nrlmry.navy.mil">NRL Marine
+                    Meteorology Division</a> (USA)</li>
+                <li> <a href="http://www.mpimet.mpg.de">Max Planck
+                    Institute for Meteorology</a> (Germany) </li>
+                <li> <a href="http://www.bom.gov.au">Bureau of Meteorology</a> (Australia)</li>
+            </ul>
+
+            <p class="nav"><span><a href="#">(back to top)</a></span></p>
+
+          </div> <!--who-->
+
+		<div id="features">
+			<h3><span>Features</span></h3>
+
+            <p class="p1"><span>First, see the <a href="#overview">Overview</a> above.</span></p>
+				<ul>
+                        <li> Self-documenting <b>command line</b> and
+                        <b>graphical interfaces</b> covering all functionality.</li>
+
+                        <li> A multi-view suite control GUI, with
+                        collapsible task families.</li>
+
+                        <li> <b>Most tasks require no modification for use with cylc.</b> </li>
+
+                        <li> Clean separation of task <b>scheduling</b>
+                        and <b>runtime</b> configuration.</li>
+
+                        <li> Configuration of task runtime properties
+                        (environment etc.) via an inheritance
+                        hierarchy of nested <b>task families</b>.</li>
+
+                        <li> <b>Remote control</b>: from your desktop
+                        box, control a suite running on a remote server
+                        that submits tasks to other remote hosts.</li>
+
+                        <li> Extensible cycling: currently
+                        hours-of-the-day, and stepped daily, monthly,
+                        and yearly cycling.</li>
+
+                        <li> Cylc can handle <b>hundreds of tasks</b> in a single suite
+                        (beyond this the suite control GUI may struggle,
+                        but you can run very large suites via the command line tools).</li>
+
+                        <li> <b>Suites can be distributed</b> across multiple
+                        hosts on a heterogeneous network.</li>
+
+                        <li> Supports use of many <b>job submission methods</b> within a suite 
+                        (e.g. loadleveler, pbs, sge, background, at)</li>
+
+
+                        <li> <b>Suites are validated</b> against a spec
+                        to catch many errors prior to run time.</li>
+	
+                        <li> <b>Suite security:</b> access to running
+                        suites is automatically passphrase
+                        authenticated.</li>
+
+                        <li> <b>Submit single tasks</b> exactly as the suite would
+                        (including job submission method and execution environment).</li>
+
+                        <li> Suites are accessed via <b>hierarchical
+                            names</b> (which to group and organize
+                        suites) registered in a private <b>suite database</b> .</li>
+
+                        <li> A <b>lockserver</b> can be used to prevent
+                        accidental invocation of multiple instances of a
+                        suite or task at the same time (even for distributed suites).</li>
+
+                        <li> Suites <b>cold-start</b>ed, <b>warm-start</b>ed, and
+                        stopped and <b>restart</b>ed in any state of operation.</li>
+
+                        <li> Explicit <b>cold start bootstrapping</b> 
+                        to get warm-cycling suites up and running.</li>
+
+                        <!-- might just confuse readers: <li> Spin-up
+                        processing by insertion of
+                        temporary tasks and addition of new
+                        prerequisites on the fly.</li>-->
+
+                        <li> <b>Recursive purge</b>: remove sub-trees of tasks
+                        from a running suite through to some future cycle.</li>
+
+                        <li> <b>General conditional triggers</b>.</li>
+
+                        <li> <b>Task family triggers</b>.</li>
+
+                        <li> <b>Automated task failure recovery</b> (several methods supported).</li>
+
+                        <li> <b>Task and suite event hooks</b> for central alerting and timeouts.</li>
+
+                        <li> <b>Portable suites</b> are easy to
+                        construct - just copy another user's suite and
+                        run it.</li>
+
+                        <li> <b>Simulation mode</b>: get the scheduling right,
+                        on an accelerated clock, without running real tasks.</li>
+
+                        <li> <b>One-off asynchronous tasks</b> for constructing 
+                        one-off suites of non-cycling tasks.</li>
+
+                        <li> <b>Repeating asynchronous tasks</b> for parallel processing 
+                        of real time satellite datasets.</li>
+
+                        <li> <b>Jinja2 Template Processor</b> supported,
+                        for programmatic generation of suite definitions.</li>
+
+                        <li> <b>Internal Queues</b> - limit the number
+                        of active (submitted or running) tasks.</li>
+				</ul>
+
+			<!--<h4><span>Coming Soon</span></h4>
+				<ul>
+                        <li> Loose prerequisites: trigger off the "most
+                        recent available" (variable offset) instance of
+                        a slower-cycling upstream task (back-port from
+                        cylc-2).</li>
+				</ul>
+                -->
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+
+</div> <!--features-->
+
+<div id="requirements">
+
+    <h3><span>Requirements</span></h3>
+
+    <ul>
+        <li> Operating System: Linux or Unix</li>
+
+        <li> Python Version: 2.4 or later, but not Python
+        3.x as yet.
+        <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup></li>
+        
+        <li> <a href="http://www.pygtk.org">PyGTK</a>, 
+        a Python wrapper for the GTK+ graphical user
+        interface toolkit, included in most Linux Distributions.</li>
+        
+        <li> <a href="http://www.xs4all.nl/~irmen/pyro3">Pyro 3</a>
+        (Python Remote Objects) - latest version tested 3.14.
+        <sup><a href="#fn3" id="fnr3" title="click to see footnote">3</a></sup></li>
+        
+        <li> The <a href="http://www.graphviz.org">graphviz</a> graph
+        layout engine (latest version tested: 2.28.0).</li>
+
+        <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>, 
+        a python interface to graphviz (latest version tested: 1.1). </li>
+
+        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.</li>
+
+        <li> <b>LaTeX</b> (for <code>pdflatex</code>) and <b>tex4ht</b>
+        (for <code>htlatex</code>) - needed to generate PDF and HTML
+        copies of the Cylc User Guide from the LaTeX source files.</li>
+    </ul>
+
+<p class="p1"><span>
+Python and Pyro are essential. PyGTK is required by the gcylc GUI
+(but you can control and monitor cylc suites from the command line). 
+Graphviz and pygraphviz are required for dependency graphing and the
+graph-based suite control GUI (but you can also run cylc without them).
+Jinja2 can be used for advanced programmatic generation of suite
+definitions.
+</span></p>
+
+<p class="p1"><span>
+Cylc has absorbed the following software in slightly modified form (you
+do not need to install them separately): 
+</span></p>
+<ul>
+    <li> <a href="http://code.google.com/p/jrfonseca/wiki/XDot">xdot</a>, a
+    graph viewer (LGPL license)</li>
+    <li> the 
+    <a href="http://www.voidspace.org.uk/python">ConfigObj and Validate</a>
+    Python modules (BSD license)</li>
+</ul>
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+</div> <!--requirements-->
+
+<div id="download">
+<h3><span>Download</span></h3>
+
+<p class="p1"><span>
+    Go to the:
+    <a href="https://github.com/cylc/cylc/tags/">cylc repository tags page</a> and 
+    click on the latest version number to download a compressed archive 
+    of the cylc source tree.
+</span></p>
+
+<p class="p1"><span>
+    Developers can clone the cylc git repository; see <a href="#development">below</a>.
+</span></p>
+<p class="nav"><span><a href="#">(back to top)</a></span></p>
+</div> <!--download-->
+
+<div id="installation">
+<h3><span>Installation</span></h3>
+
+<p class="p1"><span>
+    Unpack the cylc tarball, follow the instructions in the INSTALL
+    file, and then consult the Cylc User Guide.
+</span></p>
+
+<p class="nav"><span><a href="#">(back to top)</a></span></p>
+</div> <!--installation-->
+
+
+<div id="documentation">
+    <h3><span>Documentation</span></h3>
+
+    <p class="p2"><span>Cylc is documented by command line help, GUI
+        help menus, and the <em>Cylc User Guide</em>.</span></p>
+        
+        <p class="p2"><span>The <b>latest version of the user guide</b> is
+            held online in HTML format:</span><p>
+
+        <ul>
+            <li> <a href="html/multi/cug-html.html">Cylc User Guide (HTML multi-page)</a> </li>
+            <li> <a href="html/single/cug-html.html">Cylc User Guide (HTML single-page)</a> </li>
+        </ul>
+
+        <p class="p2"><span>These documents, and a <b>PDF</b> version,
+            can also be generated in your local cylc installation 
+            by running <code>make</code> in the source tree. Local
+            documentation can be accessed by running the <code>cylc
+                doc</code> command.
+    </span></p>
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+
+</div> <!--documentation-->
+
+<div id="support">
+    <h3><span>Support</span></h3>
+
+    <p class="p1"><span>Please join the
+        <a href="https://groups.google.com/forum/?fromgroups#!forum/cylc-dev">cylc-dev forum</a>
+        to post usage questions or bug reports, or to participate in
+        future development planning.</span></p>
+
+            <!-- HJO: embedding the group causes the web page to jump down to the embedding location
+            <iframe id="forum_embed" 
+                src="javascript:void(0)"
+                scrolling="no"
+                frameborder="0"
+                width="700"
+                height="700">
+            </iframe>
+            <script type="text/javascript">
+                document.getElementById('forum_embed').src =
+                'https://groups.google.com/forum/embed/?place=forum/cylc-dev' + 
+                '&amp;showsearch=true&amp;showpopout=true&amp;showtabs=false' + 
+                '&amp;parenturl=' + encodeURIComponent(window.location.href);
+            </script> 
+            -->
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+
+</div> <!--support-->
+
+		<div id="development">
+            <h3><span>Development</span></h3>
+
+            <p class="p1"><span>
+                Cylc uses the powerful <a href="git-scm.com">Git</a>
+                distributed source code management system.  Git makes
+                branching and merging, forking/cloning, and pushing and
+                pulling changes between repositories very easy. The 
+                <a href="http://github.com/cylc/cylc">cylc repository</a> 
+                is hosted on <a href="http://github.com">GitHub</a>.
+            </span></p>
+
+            <p class="p2"><span>
+                We use the <em>integrator</em> or 
+                <em>fork and pull</em> model of distributed development.
+                Developers fork the master repository on GitHub, and
+                clone their fork to their local workstation.  Changes
+                are pushed to the developer fork and a pull request
+                issued to the master repository maintainer (Hilary
+                Oliver), who reviews the changes and pulls them into the
+                master repository.
+            </span></p>
+
+            <!--
+            <p class="p3"><span>
+                Ultimately, to reduce the burden of maintainance on the
+                master repository, we could have a top tier of official
+                forks that the project maintainer collaborates with 
+                directly, and others below, perhaps within specific cylc
+                sites, that interact with the official collaborators. 
+                (But note that if circumstances warrant, anybody can
+                easily and safely collaborate with anybody else using
+                git, given read access to their respective repositories).
+            </span></p>
+            -->
+
+            <!--
+            <p class="p3"><span>
+                Finally, note that it is not strictly necessary for
+                collaborators to fork cylc on github, it just makes life easier.
+            </span></p>
+            -->
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+
+</div> <!--development-->
+
+<div id="acknowledgements">
+    <h3><span>Acknowledgements</span></h3>
+
+    <p class="p1"><span>We thank the authors of Pyro, graphviz, and
+        pygraphviz, each of which cylc depends on; and of ConfigObj
+        (and Validate) and xdot, modified versions of which are used by
+        cylc.</span></p>
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+</div> <!--acknowledgements-->
+
+<div id="footnotes">
+<hr/>
+    <h3><span>footnotes</span></h3>
+
+    <ol>
+<li> <a id="fn2" href="#fnr2" title="This is a footnote; return to main
+    text.">(back)</a> Python 3 is not backward compatible with 2. As of mid
+2011, Python 2.7 is the standard for new Linux distributions.
+</li>
+
+<li> <a id="fn3" href="#fnr3" title="This is a footnote; return to main text.">(back)</a>
+Pyro 4, which is compatible with Python 3, is now recommended for
+production use, but does not yet have the connection authentication used
+by cylc (apparently it will in an upcoming release).
+</li>
+     </ol>
+
+    <p class="nav"><span><a href="#">(back to top)</a></span></p>
+ </div> <!--footnotes-->
+
+ <p>
+<a href="http://validator.w3.org/check?uri=referer">
+<img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0 Strict" height="31" width="88" /></a>
+</p>
+
+</div> <!--mainpage-->
+
+<div id="tape">
+    Cylc is free software under the GNU GPL v3 license
+</div> <!--tape-->
+
+</div> <!--subcontainer-->
+</div> <!--container-->
+
+</body>
+</html>
