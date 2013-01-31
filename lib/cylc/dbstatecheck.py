@@ -23,6 +23,9 @@ import sqlite3
 class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     DB_FILE_BASE_NAME = "cylc-suite.db"
+    STATE_ALIASES = {}
+    STATE_ALIASES['complete'] = ['failed', 'succeeded']
+    
     def __init__(self, suite_dir, suite, dbname=None): # possible to set suite_dir to system default cylc-run dir?
         suite_dir = os.path.expanduser(suite_dir)
         if dbname is not None:
@@ -32,9 +35,17 @@ class CylcSuiteDBChecker(object):
             return None #raise some sort of error
         self.conn = sqlite3.connect(self.db_address)
         self.c = self.conn.cursor()
+        
     def display_maps(self, res):
         for row in res:
             print row
+            
+    def state_lookup(self, state): #allows for multiple states to be searched via a status alias
+        if self.STATE_ALIASES.has_key(state):
+            return self.STATE_ALIASES[state]
+        else:
+            return state
+            
     def suite_state_query(self, task=None, cycle=None, status=None, mask=None):
         vals = []
         additionals = []
@@ -43,35 +54,42 @@ class CylcSuiteDBChecker(object):
             mask = "name, cycle, status"
         q_base = "select {0} from task_states".format(mask)
         if task is not None:
-            additionals.append("where name==?")
+            additionals.append("name==?")
             vals.append(task)
         if cycle is not None:
-            additionals.append("where cycle==?")
+            additionals.append("cycle==?")
             vals.append(cycle)
         if status is not None:
-            additionals.append("where status==?")
-            vals.append(status)
+            st = self.state_lookup(status)  
+            if type(st) is list:
+                add = []
+                for s in st:
+                    vals.append(s)
+                    add.append("status==?")
+                additionals.append("(" + (" OR ").join(add) + ")")
+            else:
+                additionals.append("status==?")
+                vals.append(status)
         if additionals:
-            q = q_base + " " + (" AND ").join(additionals)
+            q = q_base + " where " + (" AND ").join(additionals)
         else:
             q = q_base
+            
+        print q
+        
         self.c.execute(q,vals)
         next = self.c.fetchmany()
         while next:
-            print next[0]
             res.append(next[0])
             next = self.c.fetchmany()
         return res
+        
     def validate_mask(self, mask):
         fieldnames = ["name", "status", "cycle"] # extract from rundb.py?
         for term in mask.split(","):
             if term.strip(" ") not in fieldnames:
                 return False
         return True
-    def state_lookup(self, state):
-        
-        
-                
-            
-checker = CylcSuiteDBChecker("~/cylc-run", "mot-aa205")
+
+
 
