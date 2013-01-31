@@ -166,6 +166,8 @@ class globalcfg( object ):
         else:
             self.cfg['temporary directory'] = self.proc_dir( self.cfg['temporary directory'] )
 
+        print "TMPDIR IS", self.cfg['temporary directory'], '<<<<<<<<<<<<<<<<<<,,,'
+
         # expand environment variables and ~user in file paths
         for key,val in self.cfg['documentation']['files'].items():
             self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))
@@ -297,4 +299,6 @@ class globalcfg( object ):
         if create:
             self.proc_dir( path )
         return path
+
+gcfg = globalcfg()
 

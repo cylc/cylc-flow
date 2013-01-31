@@ -28,7 +28,7 @@ from time import sleep
 from passphrase import passphrase
 from owner import user
 from port_file import port_retriever
-from global_config import globalcfg
+from global_config import gcfg
 
 class client( object ):
     def __init__( self, suite, pphrase=None, owner=user, host=hostname,
@@ -45,7 +45,7 @@ class client( object ):
 
         self.pphrase = pphrase
 
-        self.globals = globalcfg()
+        self.globals = gcfg
 
     def get_proxy( self, target ):
         if self.port:

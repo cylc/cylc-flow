@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys, socket
-from global_config import globalcfg
+from global_config import gcfg
 
 def get_local_ip_address( target ):
     """
@@ -67,7 +67,7 @@ returning the IP address associated with this socket.
     return ipaddr
 
 
-globals = globalcfg()
+globals = gcfg
 method = globals.cfg['suite host self-identification']['method']
 target = globals.cfg['suite host self-identification']['target']
 hardwired = globals.cfg['suite host self-identification']['host']

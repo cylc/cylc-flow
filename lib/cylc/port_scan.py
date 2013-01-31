@@ -23,7 +23,7 @@ from passphrase import passphrase
 from registration import localdb
 import datetime
 import Pyro.errors, Pyro.core
-from global_config import globalcfg
+from global_config import gcfg
 
 class SuiteIdentificationError( Exception ):
     """
@@ -127,7 +127,7 @@ def cylcid_uri( host, port ):
 def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None, verbose=False ):
     # Scan ports until a particular suite is found.
 
-    globals = globalcfg()
+    globals = gcfg
     pyro_base_port = globals.cfg['pyro']['base port']
     pyro_port_range = globals.cfg['pyro']['maximum number of ports']
 
@@ -217,7 +217,7 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 
-    globals = globalcfg()
+    globals = gcfg
     pyro_base_port = globals.cfg['pyro']['base port']
     pyro_port_range = globals.cfg['pyro']['maximum number of ports']
 

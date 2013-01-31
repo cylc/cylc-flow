@@ -24,7 +24,7 @@ if remrun().execute():
 import os, re
 import tempfile
 import subprocess
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 from cylc.CylcOptionParsers import cop
 from cylc.continuation_lines import join
 from cylc.Jinja2Support import Jinja2Process
@@ -39,7 +39,7 @@ editor, after optional include-file inlining and Jinja2 preprocessing.
 The edit process is spawned in the foreground as follows:
   % <editor> suite.rc
 Where <editor> is defined in the cylc site and user config files
-($CYLC_DIR/conf/globals/cylc.rc and $HOME/.cylc/cylc.rc).
+($CYLC_DIR/conf/siterc/site.rc and $HOME/.cylc/user.rc).
 
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
@@ -87,7 +87,7 @@ parser.add_option( "--stdout",
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
-globals = globalcfg()
+globals = gcfg
 cylc_tmpdir = globals.cfg['temporary directory']
 if options.geditor:
     editor = globals.cfg['editors']['gui']
