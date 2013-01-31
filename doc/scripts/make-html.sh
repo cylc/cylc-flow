@@ -42,7 +42,7 @@ $CYLC -v > cylc-version.txt
 
 cp -r *.tex cug-html.cfg cylc-version.txt titlepic.sty $DEST
 cd $DEST
-ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png@../../graphics/png-scaled@g'
+ls *.tex | xargs -n 1 perl -pi -e 's@graphics/png/orig@../../graphics/png/scaled@g'
 ls *.tex | xargs -n 1 perl -pi -e 's@\.\./examples/@../../../examples/@g'
 perl -pi -e 's@categories/@../../categories/@g' commands.tex
 perl -pi -e 's@commands/@../../commands/@g' commands.tex
