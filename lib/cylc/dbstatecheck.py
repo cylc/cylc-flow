@@ -20,22 +20,33 @@ import os
 import sqlite3
 
 
+class DBNotFoundError(Exception):
+
+    """An exception raised when a suite is already running."""
+
+    def __str__(self):
+        return "Suite database not found at: %s" % self.args
+
+
 class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     DB_FILE_BASE_NAME = "cylc-suite.db"
     STATE_ALIASES = {}
-    STATE_ALIASES['complete'] = ['failed', 'succeeded']
-    
+    STATE_ALIASES['finish'] = ['failed', 'succeeded']
+    STATE_ALIASES['start'] = ['running', 'succeeded', 'failed', 'retrying']
+    STATE_ALIASES['fail'] = ['failed']
+    STATE_ALIASES['succeed'] = ['succeeded']
+
     def __init__(self, suite_dir, suite, dbname=None): # possible to set suite_dir to system default cylc-run dir?
         suite_dir = os.path.expanduser(suite_dir)
         if dbname is not None:
             self.DB_FILE_BASE_NAME = dbname
         self.db_address = suite_dir + "/" + suite + "/" + self.DB_FILE_BASE_NAME
         if not os.path.exists(self.db_address):
-            return None #raise some sort of error
+            raise DBNotFoundError(self.db_address)
         self.conn = sqlite3.connect(self.db_address)
         self.c = self.conn.cursor()
-        
+
     def display_maps(self, res):
         for row in res:
             print row
@@ -82,8 +93,19 @@ class CylcSuiteDBChecker(object):
         while next:
             res.append(next[0])
             next = self.c.fetchmany()
+            
         return res
-        
+
+    def task_state_getter(self, task, cycle):
+        """used to get the state of a particular task at a particular cycle"""
+        res = self.suite_state_query(task, cycle, mask="status")
+        return res[0]
+
+    def task_state_met(self, task, cycle, status):
+        """used to check if a task is in a particular state"""
+        res = self.suite_state_query(task, cycle, status)
+        return len(res) > 0
+
     def validate_mask(self, mask):
         fieldnames = ["name", "status", "cycle"] # extract from rundb.py?
         for term in mask.split(","):
