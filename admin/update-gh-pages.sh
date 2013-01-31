@@ -45,7 +45,7 @@ make html
 
 # cp online content to a temp dir
 TMPD=$( mktemp -d )
-cp -r gh-pages/ graphics/ html/ $TMPD/
+cp -r gh-pages/ graphics/ html/ changes.{css,html} $TMPD/
 
 # return to top level
 cd ..
@@ -54,6 +54,7 @@ cd ..
 git checkout gh-pages
 
 # replace the online content
+cp -r $TMPD/changes.{css,html} .
 cp -r $TMPD/gh-pages/* .
 cp $TMPD/html/single/*.{css,html} html/single/
 cp $TMPD/html/multi/*.{css,html} html/multi/
