@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-01 01:18:00"> 
+<meta name="date" content="2013-02-01 10:09:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -27,10 +27,10 @@ href="#x4-130003.2">Other Software Used Internally By Cylc</a></span>
    </div>
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 5.0.1-10-g7ddc .
-     <br class="newline" /><span class="obeylines-h"><a 
+class="cmbx-10">Cylc</span>, the version associated with this document is: 5.0.2-3-g24d79 . <br 
+class="newline" /><a 
 href="http://cylc.github.com/cylc" class="url" ><span 
-class="pcrr7t-">http://cylc.github.com/cylc</span></a></span>
+class="pcrr7t-">http://cylc.github.com/cylc</span></a>
      </li>
      <li class="itemize"><span 
 class="cmbx-10">OS: Linux or Unix (including Mac OS X). </span>Cylc may assume Unix-style file paths in places, a
@@ -41,27 +41,27 @@ class="cmbx-10">OS: Linux or Unix (including Mac OS X). </span>Cylc may assume U
 class="cmbx-10">The Python Language, v 2.4</span>+<span 
 class="cmbx-10">, preferably 2.5</span>+<span 
 class="cmbx-10">, latest tested 2.7.2</span>. Not Python 3.x yet; as of
-     mid 2011 version 2.7 is the standard for new Linux distributions.
-     <br class="newline" /><span class="obeylines-h"><a 
+     mid 2011 version 2.7 is the standard for new Linux distributions. <br 
+class="newline" /><a 
 href="http://python.org" class="url" ><span 
-class="pcrr7t-">http://python.org</span></a></span>
+class="pcrr7t-">http://python.org</span></a>
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Pyro (Python Remote Objects), version 3.10</span>+<span 
 class="cmbx-10">, latest tested 3.16</span>; not Pyro 4.x as yet. Pyro
      is used by cylc for network communication between server processes (cylc suites) and client programs
-     (running tasks, control GUIs and commands).
-     <br class="newline" /><span class="obeylines-h"><a 
+     (running tasks, control GUIs and commands). <br 
+class="newline" /><a 
 href="http://irmen.home.xs4all.nl/pyro3" class="url" ><span 
-class="pcrr7t-">http://irmen.home.xs4all.nl/pyro3</span></a></span>
+class="pcrr7t-">http://irmen.home.xs4all.nl/pyro3</span></a>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">sqlite (a serverless, zero-configuration, SQL database engine</span>). This is likely included in your
+class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</span>). This is likely included in your
      Linux distribution already. Cylc generates an sqlite database for each suite as it runs, to record task
-     events and status.
-     <br class="newline" /><span class="obeylines-h"><a 
+     events and status. <br 
+class="newline" /><a 
 href="http://sqlite.org" class="url" ><span 
-class="pcrr7t-">http://sqlite.org</span></a></span></li></ul>
+class="pcrr7t-">http://sqlite.org</span></a></li></ul>
 <!--l. 420--><p class="indent" >   The following packages are technically optional as you can construct and control cylc suites without dependency
 graphing, the cylc GUIs, and template processing <span 
 class="cmti-10">but this is not recommended, and without Jinja2 you will not be</span>
@@ -71,42 +71,42 @@ class="cmti-10">able to run many of the example suites</span>:
      <li class="itemize"><span 
 class="cmbx-10">PyGTK</span>, a Python wrapper for the GTK+ GUI toolkit, required for the cylc GUI (but you can prepare
      and control cylc suites entirely from the command line if you like). PyGTK is included in most Linux
-     Distributions.
-     <br class="newline" /><span class="obeylines-h"><a 
+     Distributions. <br 
+class="newline" /><a 
 href="http://www.pygtk.org" class="url" ><span 
-class="pcrr7t-">http://www.pygtk.org</span></a></span>
+class="pcrr7t-">http://www.pygtk.org</span></a>
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Graphviz </span>(latest tested 2.28.0) and <span 
 class="cmbx-10">Pygraphviz </span>(latest tested 1.1), a graph layout engine and a
      Python interface to it. These are required for suite dependency graphing and the graph suite control
-     GUI (but you can also run cylc without them).
-     <br class="newline" /><span class="obeylines-h"><a 
+     GUI (but you can also run cylc without them). <br 
+class="newline" /><a 
 href="http://www.graphviz.org" class="url" ><span 
-class="pcrr7t-">http://www.graphviz.org</span></a></span>
-     <br class="newline" /><span class="obeylines-h"><a 
+class="pcrr7t-">http://www.graphviz.org</span></a> <br 
+class="newline" /><a 
 href="http://networkx.lanl.gov/pygraphviz" class="url" ><span 
-class="pcrr7t-">http://networkx.lanl.gov/pygraphviz</span></a></span>
+class="pcrr7t-">http://networkx.lanl.gov/pygraphviz</span></a>
                                                                                          
 
                                                                                          
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Jinja2</span>, a template processor for Python (latest tested: 2.6). Jinja2 adds variables, conditional and
-     mathematical expressions, loop control structures, etc., to cylc suite definition files.
-     <br class="newline" /><span class="obeylines-h"><a 
+     mathematical expressions, loop control structures, etc., to cylc suite definition files. <br 
+class="newline" /><a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
-class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></span></li></ul>
+class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></li></ul>
 <!--l. 445--><p class="indent" >   Finally, cylc makes heavy use of &#8220;ordered dictionary&#8221; data structures, and a significant speedup in
 parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
 class="pcrr7t-">ordereddict</span></span> module by Anthon van der
 Neut:
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">ordereddict </span>(latest tested 0.4.5)
-     <br class="newline" /><span class="obeylines-h"><a 
+class="cmbx-10">ordereddict </span>(latest tested 0.4.5) <br 
+class="newline" /><a 
 href="http://www.xs4all.nl/~anthon/Python/ordereddict" class="url" ><span 
-class="pcrr7t-">http://www.xs4all.nl/~anthon/Python/ordereddict</span></a></span></li></ul>
+class="pcrr7t-">http://www.xs4all.nl/~anthon/Python/ordereddict</span></a></li></ul>
 <!--l. 453--><p class="noindent" >This module is currently included with cylc under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -132,9 +132,8 @@ with the new-style Python classes used in cylc. It has been reported that Ubuntu
 September 2009, suffers from this problem. Surprisingly, so does Ubuntu 11.10 (Oneiric Ocelot), released in October
 2011 - and therefore, presumably, earlier Ubuntu releases. Attempting to run a suite with Pyro 3.9 or earlier
 installed results in the following Python traceback:
-   <!--l. 483--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 483-->
+   <div class="lstlisting" id="listing-1"><span class="label"><a 
  id="x4-11001r1"></a></span><span 
 class="pcrr7t-">Traceback</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -470,8 +469,7 @@ class="pcrr7t-">failed</span><span
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span>
-
-
+   
    </div>
 <!--l. 506--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">3.1.2   </span> <a 
@@ -494,20 +492,19 @@ class="pcrr7t-">apple</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">mDNSResponder</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">plist</span></span>
-     <br class="newline" />by adding <span class="lstinline"><span 
+class="pcrr7t-">plist</span></span> <br 
+class="newline" />by adding <span class="lstinline"><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">string</span><span 
 class="pcrr7t-">&#x003E;-</span><span 
 class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 516--><div class="lstlisting">
+class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 516-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+     <div class="lstlisting" id="listing-2"><span class="label"><a 
  id="x4-12001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">key</span><span 
@@ -577,13 +574,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">array</span><span 
 class="pcrr7t-">&#x003E;</span>
-
-
+     
      </div>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 525--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 525-->
+     <div class="lstlisting" id="listing-3"><span class="label"><a 
  id="x4-12007r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -639,8 +634,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">mDNSResponder</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">plist</span>
-
-
+     
      </div>
      </li></ul>
 <!--l. 534--><p class="noindent" >
@@ -648,13 +642,13 @@ class="pcrr7t-">plist</span>
  id="x4-130003.2"></a>Other Software Used Internally By Cylc</h4>
 <!--l. 536--><p class="noindent" >Cylc has absorbed the following in modified form (no need to install these separately):
      <ul class="itemize1">
-     <li class="itemize">xdot, a graph viewer (<span class="obeylines-h"><a 
+     <li class="itemize">xdot, a graph viewer (<a 
 href="http://code.google.com/p/jrfonseca/wiki/XDot" class="url" ><span 
-class="pcrr7t-">http://code.google.com/p/jrfonseca/wiki/XDot</span></a></span>, LGPL license)
+class="pcrr7t-">http://code.google.com/p/jrfonseca/wiki/XDot</span></a>, LGPL license)
      </li>
-     <li class="itemize">ConfigObj and Validate (<span class="obeylines-h"><a 
+     <li class="itemize">ConfigObj and Validate (<a 
 href="http://www.voidspace.org.uk/python" class="url" ><span 
-class="pcrr7t-">http://www.voidspace.org.uk/python</span></a></span>, BSD license)</li></ul>
+class="pcrr7t-">http://www.voidspace.org.uk/python</span></a>, BSD license)</li></ul>
                                                                                          
 
                                                                                          

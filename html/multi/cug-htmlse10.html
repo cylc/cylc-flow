@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-01 01:18:00"> 
+<meta name="date" content="2013-02-01 10:09:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -45,9 +45,8 @@ and call its command scripting. The job script is the embodiment of all suite.rc
 submitted to run by the <span 
 class="cmti-10">job submission method </span>configured for the task. Different tasks can have different job
 submission methods. Like other runtime properties, you can set a suite default job submission method and override
-it for specific tasks or families:  <!--l. 4027--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+it for specific tasks or families:  <!--l. 4027-->
+   <div class="lstlisting" id="listing-128"><span class="label"><a 
  id="x11-123001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -157,14 +156,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">at</span>
-
-
+   
    </div>
 <!--l. 4038--><p class="indent" >   The actual command line used to submit the job script is written to stdout by cylc. In the following shell
 transcript we generate a job script for a task in the examples.QuickStart.c example suite and then examine it:
-<!--l. 4043--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4043-->
+   <div class="lstlisting" id="listing-129"><span class="label"><a 
  id="x11-123009r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -324,16 +321,14 @@ class="pcrr7t-">2011080506-1317298378.191123.</span><span
 class="pcrr7t-">err</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&amp;</span>
-
-
+   
    </div>
 <!--l. 4051--><p class="indent" >   Here is the generated job script (note that some config items not used in this suite, such as task
 <span class="lstinline"><span 
 class="pcrr7t-">initial</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">scripting</span></span> , result in extra job script sections not shown here):  <!--l. 4055--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">scripting</span></span> , result in extra job script sections not shown here):  <!--l. 4055-->
+   <div class="lstlisting" id="listing-130"><span class="label"><a 
  id="x11-123015r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1439,8 +1434,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
  id="x11-123122r108"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">EOF</span>
-
-
+   
    </div>
 <!--l. 4166--><p class="indent" >   You can also generate a job script and print it directly to stdout with <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -1481,9 +1475,8 @@ running.
 <!--l. 4193--><p class="noindent" >This job submission method submits tasks to loadleveler using the <span class="lstinline"><span 
 class="pcrr7t-">llsubmit</span></span> command. Loadleveler directives can
 be provided in the suite.rc file:
-   <!--l. 4198--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4198-->
+   <div class="lstlisting" id="listing-131"><span class="label"><a 
  id="x11-127001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1555,12 +1548,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span>
-
-
+   
    </div>
-<!--l. 4206--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4208--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4206--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4208-->
+   <div class="lstlisting" id="listing-132"><span class="label"><a 
  id="x11-127007r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1601,17 +1592,15 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">queue</span>
-
-
+   
    </div>
 <!--l. 4216--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">10.2.4   </span> <a 
  id="x11-12800010.2.4"></a>pbs</h5>
 <!--l. 4218--><p class="noindent" >This job submission method submits tasks to PBS (or Torque) using the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command. PBS directives can be
-provided in the suite.rc file:  <!--l. 4222--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+provided in the suite.rc file:  <!--l. 4222-->
+   <div class="lstlisting" id="listing-133"><span class="label"><a 
  id="x11-128001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1689,12 +1678,10 @@ class="pcrr7t-">nodes</span><span
 class="pcrr7t-">=1,</span><span 
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=00:01:00'</span>
-
-
+   
    </div>
-<!--l. 4230--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4232--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4230--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4232-->
+   <div class="lstlisting" id="listing-134"><span class="label"><a 
  id="x11-128007r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1727,8 +1714,7 @@ class="pcrro7t-">nodes</span><span
 class="pcrro7t-">=1,</span><span 
 class="pcrro7t-">walltime</span><span 
 class="pcrro7t-">=00:01:00</span>
-
-
+   
    </div>
                                                                                          
 
@@ -1738,9 +1724,8 @@ class="pcrro7t-">=00:01:00</span>
  id="x11-12900010.2.5"></a>sge</h5>
 <!--l. 4241--><p class="noindent" >This job submission method submits tasks to Sun Grid Engine using the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command. SGE directives can be
-provided in the suite.rc file:  <!--l. 4245--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+provided in the suite.rc file:  <!--l. 4245-->
+   <div class="lstlisting" id="listing-135"><span class="label"><a 
  id="x11-129001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1842,12 +1827,10 @@ class="pcrr7t-">M</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">h_rt</span><span 
 class="pcrr7t-">=24:00:00'</span>
-
-
+   
    </div>
-<!--l. 4254--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4256--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4254--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4256-->
+   <div class="lstlisting" id="listing-136"><span class="label"><a 
  id="x11-129008r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1889,8 +1872,7 @@ class="pcrro7t-">M</span><span
 class="pcrro7t-">,</span><span 
 class="pcrro7t-">h_rt</span><span 
 class="pcrro7t-">=24:00:00</span>
-
-
+   
    </div>
 <!--l. 4264--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">10.2.6   </span> <a 
@@ -1914,9 +1896,8 @@ blank space as the directive value in the suite.rc file.
  id="x11-13200010.3"></a>Task stdout And stderr Log Locations</h4>
 <!--l. 4285--><p class="noindent" >When a task is ready to run cylc generates a filename root containing the task name, cycle time, and a
 unique string of digits (seconds since epoch; so that rerunning the task won&#8217;t overwrite old output):
-<!--l. 4289--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4289-->
+   <div class="lstlisting" id="listing-137"><span class="label"><a 
  id="x11-132001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -2001,8 +1982,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">%2011080506-1317298378.191123.</span><span 
 class="pcrr7t-">err</span>
-
-
+   
    </div>
 <!--l. 4297--><p class="indent" >   (the job submission log directory is configurable in the suite.rc file).
 <!--l. 4299--><p class="indent" >   How the stdout and stderr streams are directed into these files depends on the job submission method.
@@ -2027,9 +2007,8 @@ method; just override the <span class="lstinline"><span
 class="pcrr7t-">command</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">template</span></span> in the relevant job submission sections of your suite.rc file:
-<!--l. 4322--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4322-->
+   <div class="lstlisting" id="listing-138"><span class="label"><a 
  id="x11-133001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -2153,8 +2132,7 @@ class="pcrr7t-">s</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">s</span>
-
-
+   
    </div>
 <!--l. 4331--><p class="indent" >   As explained in the suite.rc reference (Appendix&#x00A0;<a 
 href="cug-htmlse15.html#x16-181000A">A<!--tex4ht:ref: SuiteRCReference --></a>), the template&#8217;s first %s will be substituted by the job file
@@ -2165,9 +2143,8 @@ files.
  id="x11-13400010.5"></a>Defining New Job Submission Methods</h4>
 <!--l. 4339--><p class="noindent" >Defining a new job submission method requires some minimal Python programming. You can derive (in the sense of
 object oriented programming inheritance) new methods from one of the existing ones, or directly from cylc&#8217;s job
-submission base class,  <!--l. 4344--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+submission base class,  <!--l. 4344-->
+   <div class="lstlisting" id="listing-139"><span class="label"><a 
  id="x11-134001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -2181,16 +2158,14 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">job_submit</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span>
-
-
+   
    </div>
 <!--l. 4347--><p class="indent" >   using the existing methods as examples. Most often this should merely be a matter of defining the command line
 used to execute the aforementioned job scripts and using the provided stdout and stderr file paths appropriately. For
 example, here is the entire class code for the <span class="lstinline"><span 
 class="pcrr7t-">background</span></span> method:
-   <!--l. 4355--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4355-->
+   <div class="lstlisting" id="listing-140"><span class="label"><a 
  id="x11-134002r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -2234,7 +2209,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134008r7"></a></span></span><span 
+ id="x11-134008r7"></a></span><span 
 class="pcrr7t-">Run</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">the</span><span 
@@ -2256,7 +2231,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">shell</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134009r8"></a></span></span><span 
+ id="x11-134009r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2545,14 +2520,12 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">stderr_file</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">)</span>
-
-
+   
    </div>
 <!--l. 4376--><p class="indent" >   Here is the <span class="lstinline"><span 
 class="pcrr7t-">at</span></span> method:
-   <!--l. 4378--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4378-->
+   <div class="lstlisting" id="listing-141"><span class="label"><a 
  id="x11-134020r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -2596,7 +2569,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134026r7"></a></span></span><span 
+ id="x11-134026r7"></a></span><span 
 class="pcrr7t-">Submit</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">the</span><span 
@@ -2628,7 +2601,7 @@ class="pcrr7t-">'</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">daemon</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134027r8"></a></span></span><span 
+ id="x11-134027r8"></a></span><span 
 class="pcrr7t-">service</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">must</span><span 
@@ -2638,7 +2611,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">running</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134028r9"></a></span></span><span 
+ id="x11-134028r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2872,14 +2845,12 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">stderr_file</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">)</span>
-
-
+   
    </div>
 <!--l. 4399--><p class="indent" >   And here is the <span class="lstinline"><span 
 class="pcrr7t-">pbs</span></span> method:
-   <!--l. 4401--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4401-->
+   <div class="lstlisting" id="listing-142"><span class="label"><a 
  id="x11-134038r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x11-134039r2"></a></span><span 
@@ -2923,7 +2894,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134044r7"></a></span></span><span 
+ id="x11-134044r7"></a></span><span 
 class="pcrr7t-">PBS</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qsub</span><span 
@@ -2933,7 +2904,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">submission</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134045r8"></a></span></span><span 
+ id="x11-134045r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3323,8 +3294,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">jobfile_path</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">)</span>
-
-
+   
    </div>
 <!--l. 4435--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">10.5.1   </span> <a 
@@ -3337,12 +3307,11 @@ class="pcrro7t-">#</span><span
 class="pcrro7t-">PBS</span></span> to <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">QSUB</span></span>:
-   <!--l. 4441--><div class="lstlisting">
+   <!--l. 4441-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+   <div class="lstlisting" id="listing-143"><span class="label"><a 
  id="x11-135001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -3440,7 +3409,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135010r10"></a></span></span><span 
+ id="x11-135010r10"></a></span><span 
 class="pcrr7t-">This</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">is</span><span 
@@ -3467,7 +3436,7 @@ class="pcrr7t-">'#</span><span
 class="pcrr7t-">PBS</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135011r11"></a></span></span><span 
+ id="x11-135011r11"></a></span><span 
 class="pcrr7t-">directive</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">prefix</span><span 
@@ -3485,7 +3454,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">method</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135012r12"></a></span></span><span 
+ id="x11-135012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3568,16 +3537,14 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 4460--><p class="indent" >   To check that this works correctly save the new source file to <span class="lstinline"><span 
 class="pcrr7t-">qsub</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span></span> in one of the allowed locations (see just
-below), use it in a suite definition:  <!--l. 4464--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+below), use it in a suite definition:  <!--l. 4464-->
+   <div class="lstlisting" id="listing-144"><span class="label"><a 
  id="x11-135017r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -3756,12 +3723,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">'</span>
-
-
+   
    </div>
-<!--l. 4479--><p class="indent" >   and generate a job script to see the resulting directives:  <!--l. 4481--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4479--><p class="indent" >   and generate a job script to see the resulting directives:  <!--l. 4481-->
+   <div class="lstlisting" id="listing-145"><span class="label"><a 
  id="x11-135030r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3886,8 +3851,7 @@ class="pcrro7t-">QSUB</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
 class="pcrro7t-">cwd</span>
-
-
+   
    </div>
 <!--l. 4492--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">10.5.2   </span> <a 

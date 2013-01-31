@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-01 01:18:00"> 
+<meta name="date" content="2013-02-01 10:09:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -64,9 +64,8 @@ href="cug-htmlse20.html#x21-384000F">F<!--tex4ht:ref: INSTALL --></a>.
  id="x5-170004.3"></a>Site And User Configuration Files</h4>
 <!--l. 569--><p class="noindent" >Cylc uses site and user configuration files to set some important global parameters such as the range of network
 ports, and the editor to use on suite definitions,
-   <!--l. 573--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 573-->
+   <div class="lstlisting" id="listing-4"><span class="label"><a 
  id="x5-17001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -126,13 +125,11 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">global</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">settings</span>
-
-
+   
    </div>
 <!--l. 578--><p class="indent" >   These files can be auto-generated with all settings intially commented out by running this command:
-<!--l. 580--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 580-->
+   <div class="lstlisting" id="listing-5"><span class="label"><a 
  id="x5-17003r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -152,17 +149,15 @@ class="pcrr7t-">/--</span><span
 class="pcrr7t-">write</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">user</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
 <!--l. 584--><p class="indent" >   The content of these config files, in terms of legal items and default values, is defined by the <span 
 class="cmti-10">ConfigObj configspec</span>
-file, <!--l. 586--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+file, <!--l. 586-->
+   <div class="lstlisting" id="listing-6"><span class="label"><a 
  id="x5-17004r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -172,8 +167,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">site</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cfgspec</span>
-
-
+   
    </div>
 <!--l. 590--><p class="indent" >   The site config file should be adapted to set sensible defaults for all users when cylc is installed. Users can then
 override most settings in their own user config file, if necessary. Some settings can not be overridden by users (this is
@@ -188,9 +182,8 @@ files).
  id="x5-180004.4"></a>Import The Example Suites</h4>
 <!--l. 600--><p class="noindent" >Run the following command immediately after installation to copy the cylc example suites to a given destination
 directory, and registering each one for use:
-   <!--l. 604--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 604-->
+   <div class="lstlisting" id="listing-7"><span class="label"><a 
  id="x5-18001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -203,8 +196,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">examples</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">TOPDIR</span>
-
-
+   
    </div>
 <!--l. 607--><p class="indent" >   Where <span class="lstinline"><span 
 class="pcrr7t-">TOPDIR</span></span> is the top level directory into which the example suite definitions will be copied. To view
@@ -220,9 +212,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">db</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">dbviewer</span></span>:
-   <!--l. 613--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 613-->
+   <div class="lstlisting" id="listing-8"><span class="label"><a 
  id="x5-18002r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -457,8 +448,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Example</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Z</span>
-
-
+   
    </div>
 <!--l. 628--><p class="indent" >   Note that the dots in the cylc release version number are replaced with hyphens because &#8216;.&#8217; is the registration
 name delimiter. Type <span class="lstinline"><span 
@@ -476,9 +466,8 @@ order ensure uniqueness if the example suites are imported multiple times at the
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-4-5-1-1344571037</span></span>. You can re-register the example suites to get rid of this and make the names easier to
 type:
-   <!--l. 637--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 637-->
+   <div class="lstlisting" id="listing-9"><span class="label"><a 
  id="x5-18015r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -692,12 +681,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Example</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Z</span>
-
-
+   
    </div>
-<!--l. 653--><p class="indent" >   Here&#8217;s the same suite database listing in flat form: <!--l. 654--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 653--><p class="indent" >   Here&#8217;s the same suite database listing in flat form: <!--l. 654-->
+   <div class="lstlisting" id="listing-10"><span class="label"><a 
  id="x5-18028r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -855,8 +842,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">AutoRecover</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suicide</span>
-
-
+   
    </div>
                                                                                          
 
@@ -891,9 +877,8 @@ class="pcrr7t-">battery</span></span> copies, registers, and runs, the official 
 the results. Some tests may take several minutes to complete. Pre-test requirements:
      <ul class="itemize1">
      <li class="itemize">Some test suites require passwordless self-ssh to be configured, i.e.&#x00A0;the following command should run
-     successfully: <!--l. 688--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+     successfully: <!--l. 688-->
+     <div class="lstlisting" id="listing-11"><span class="label"><a 
  id="x5-20001r1"></a></span><span 
 class="pcrr7t-">ssh</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -907,14 +892,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">localhost</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ls</span>
-
-
+     
      </div>
      </li>
      <li class="itemize">Some tests require a remote task host with passwordless ssh configured, i.e. the following command should run
-     successfully: <!--l. 693--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+     successfully: <!--l. 693-->
+     <div class="lstlisting" id="listing-12"><span class="label"><a 
  id="x5-20002r1"></a></span><span 
 class="pcrr7t-">ssh</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -930,12 +913,10 @@ class="pcrr7t-">HOSTNAME</span><span
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ls</span>
-
-
+     
      </div>
-     <!--l. 696--><p class="noindent" >You must specify the hostname before running these tests: <!--l. 697--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+     <!--l. 696--><p class="noindent" >You must specify the hostname before running these tests: <!--l. 697-->
+     <div class="lstlisting" id="listing-13"><span class="label"><a 
  id="x5-20003r1"></a></span><span 
 class="pcrr7t-">export</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -943,8 +924,7 @@ class="pcrr7t-">CYLC_TEST_TASK_HOST</span><span
 class="pcrr7t-">=&#x003C;</span><span 
 class="pcrr7t-">HOSTNAME</span><span 
 class="pcrr7t-">&#x003E;</span>
-
-
+     
      </div>
      <!--l. 700--><p class="noindent" >If you don&#8217;t have access to a remote task host just use <span class="lstinline"><span 
 class="pcrr7t-">localhost</span></span> as the remote hostname.</li></ul>
@@ -983,9 +963,8 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 732--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">installed</span></span> as follows: <!--l. 732-->
+   <div class="lstlisting" id="listing-14"><span class="label"><a 
  id="x5-22001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1037,8 +1016,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">installed</span>
-
-
+   
    </div>
 <!--l. 738--><p class="indent" >   Take note of the resulting Python <span class="lstinline"><span 
 class="pcrr7t-">site</span><span 
@@ -1048,9 +1026,8 @@ class="pcrr7t-">external</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">installed</span><span 
 class="pcrr7t-">/</span></span>, e.g.:
-<!--l. 740--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 740-->
+   <div class="lstlisting" id="listing-15"><span class="label"><a 
  id="x5-22005r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -1067,13 +1044,11 @@ class="pcrr7t-">site</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">packages</span><span 
 class="pcrr7t-">/</span>
-
-
+   
    </div>
 <!--l. 743--><p class="indent" >   The exact path will depend on your local Python environment. Add the following to your login scripts:
-<!--l. 745--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 745-->
+   <div class="lstlisting" id="listing-16"><span class="label"><a 
  id="x5-22006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1115,12 +1090,10 @@ class="pcrr7t-">bin</span><span
 class="pcrr7t-">:</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PATH</span>
-
-
+   
    </div>
-<!--l. 751--><p class="indent" >   Now you should be able to get cylc to print its release version: <!--l. 752--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 751--><p class="indent" >   Now you should be able to get cylc to print its release version: <!--l. 752-->
+   <div class="lstlisting" id="listing-17"><span class="label"><a 
  id="x5-22009r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1159,8 +1132,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">y</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">z</span>
-
-
+   
    </div>
 <!--l. 757--><p class="indent" >   If this command aborts and says that Pyro is not installed or is not available, then you have either not installed
 Pyro (check the output of the installation command carefully) <span 
@@ -1185,9 +1157,8 @@ class="pcrr7t-">CYLC_DIR</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 773--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">installed</span></span> as follows: <!--l. 773-->
+   <div class="lstlisting" id="listing-18"><span class="label"><a 
  id="x5-23001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1253,8 +1224,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">make</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">install</span>
-
-
+   
    </div>
 <!--l. 781--><p class="indent" >   This installs graphviz files into the bin, include, and lib sub-directories of your local installation directory. The
 graphviz lib and include locations are required when installing Pygraphviz (next).
@@ -1281,9 +1251,8 @@ class="pcrr7t-">CYLC_DIR</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 792--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">installed</span></span> as follows: <!--l. 792-->
+   <div class="lstlisting" id="listing-19"><span class="label"><a 
  id="x5-24001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1314,12 +1283,10 @@ class="pcrr7t-">cd</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">pygraphviz</span><span 
 class="pcrr7t-">-1.1</span>
-
-
+   
    </div>
-<!--l. 797--><p class="indent" >   Now edit setup.py lines 31 and 32 to specify the graphviz lib and include directories: <!--l. 799--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 797--><p class="indent" >   Now edit setup.py lines 31 and 32 to specify the graphviz lib and include directories: <!--l. 799-->
+   <div class="lstlisting" id="listing-20"><span class="label"><a 
  id="x5-24004r1"></a></span><span 
 class="pcrr7t-">library_path</span><span 
 class="pcrr7t-">=</span><span 
@@ -1367,16 +1334,14 @@ class="pcrr7t-">include</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">graphviz</span><span 
 class="pcrr7t-">'</span>
-
-
+   
    </div>
 <!--l. 803--><p class="indent" >   Or you can just specify the absolute paths if you like, instead of using the <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span></span> environment variable.
 Check that these are the correct library and include paths by inspecting the contents of the specified directories, and
-adjust them if necessary. Finally, install pygraphviz: <!--l. 808--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+adjust them if necessary. Finally, install pygraphviz: <!--l. 808-->
+   <div class="lstlisting" id="listing-21"><span class="label"><a 
  id="x5-24006r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1410,13 +1375,11 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">installed</span>
-
-
+   
    </div>
 <!--l. 812--><p class="indent" >   This may or may not, depending on your local Python setup, install the Pygraphviz modules into the same place
-as the Pyro modules, e.g.: <!--l. 814--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+as the Pyro modules, e.g.: <!--l. 814-->
+   <div class="lstlisting" id="listing-22"><span class="label"><a 
  id="x5-24008r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1462,8 +1425,7 @@ class="pcrr7t-">.6.</span><span
 class="pcrr7t-">egg</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">info</span>
-
-
+   
    </div>
 <!--l. 818--><p class="indent" >   If not, add the correct Pyraphviz installation path to your PYTHONPATH.
 <!--l. 820--><p class="indent" >   The easiest way to check that pygraphviz has been installed properly is to start an interactive Python
@@ -1487,9 +1449,8 @@ graphviz.
 <!--l. 836--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">4.7.4   </span> <a 
  id="x5-250004.7.4"></a>Jinja2</h5>
-<!--l. 838--><p class="noindent" >You can download Jinja2 from the project web site and install it with: <!--l. 839--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 838--><p class="noindent" >You can download Jinja2 from the project web site and install it with: <!--l. 839-->
+   <div class="lstlisting" id="listing-23"><span class="label"><a 
  id="x5-25001r1"></a></span><span 
 class="pcrr7t-">python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1509,8 +1470,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">install</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">location</span>
-
-
+   
    </div>
 <!--l. 842--><p class="indent" >   or use the <span class="lstinline"><span 
 class="pcrr7t-">easy_install</span></span> command to do it all in one step. Either way the final installed package location
@@ -1519,12 +1479,11 @@ class="pcrr7t-">PYTHONPATH</span></span> variable, and you may have to arrange f
 create the installed package directory if it doesn&#8217;t exist already (if so the install will abort and print the name of the
 missing directory in the error message). Here&#8217;s how to easy_install Jinja2 into your new private python site packages
 directory:
-   <!--l. 851--><div class="lstlisting">
+   <!--l. 851-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+   <div class="lstlisting" id="listing-24"><span class="label"><a 
  id="x5-25002r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1582,8 +1541,7 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">LOCALPREFIX</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Jinja2</span>
-
-
+   
    </div>
 <!--l. 857--><p class="indent" >   Adapt the site-packages path according to your actual path, as above.
 <!--l. 859--><p class="noindent" >

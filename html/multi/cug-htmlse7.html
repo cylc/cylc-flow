@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-01 01:18:00"> 
+<meta name="date" content="2013-02-01 10:09:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -29,9 +29,8 @@ href="#x8-500007.2">Database Operations</a></span>
 class="cmti-10">suite database</span>, so that you don&#8217;t need to
 remember and continually refer to the actual location of the suite definition on disk. A suite registration name is a
 hierarchical name akin to a directory path but delimited by the &#8216;.&#8217; character; this allows suites to be organised in
-nested tree-like structures: <!--l. 1532--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+nested tree-like structures: <!--l. 1532-->
+   <div class="lstlisting" id="listing-42"><span class="label"><a 
  id="x8-47001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -154,8 +153,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">TESTING</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">Region1</span>
-
-
+   
    </div>
 <!--l. 1542--><p class="indent" >   Note that registration groups are entirely virtual, they do not need to be explicitly created before use, and they
 automatically disappear if all tasks are removed from them. From the listing above, for example, to move the suite
@@ -167,9 +165,8 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">region2</span></span> into the <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">test</span></span> group: <!--l. 1547--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">test</span></span> group: <!--l. 1547-->
+   <div class="lstlisting" id="listing-43"><span class="label"><a 
  id="x8-47008r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -278,8 +275,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region2</span>
-
-
+   
    </div>
 <!--l. 1558--><p class="indent" >   And to move <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
@@ -289,9 +285,8 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">region2</span></span> into a new group <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">para</span></span>: <!--l. 1559--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">para</span></span>: <!--l. 1559-->
+   <div class="lstlisting" id="listing-44"><span class="label"><a 
  id="x8-47017r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -405,8 +400,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region2</span>
-
-
+   
    </div>
 <!--l. 1572--><p class="indent" >   Currently you cannot explicitly indicate a group name on the command line by appending a dot character.
 Rather, in database operations such as copy, reregister, or unregister, the identity of the source item (group or suite)
@@ -518,9 +512,8 @@ class="pcrr7t-">DB</span></span>.
  id="x8-500007.2"></a>Database Operations</h4>
 <!--l. 1634--><p class="noindent" >On the command line, the &#8216;database&#8217; (or &#8216;db&#8217;) command category contains commands to implement the
 aforementioned operations.
-   <!--l. 1638--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 1638-->
+   <div class="lstlisting" id="listing-45"><span class="label"><a 
  id="x8-50001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -795,8 +788,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">delete</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suites</span>
-
-
+   
    </div>
 <!--l. 1658--><p class="indent" >   Groups of suites (at any level in the registration hierarchy) can be deleted, copied, imported, and exported; as
 well as individual suites. To do this, just use suite group names as source and/or target for operations, as
@@ -814,9 +806,8 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">qux</span></span>, you can copy
-a single suite like this: <!--l. 1664--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+a single suite like this: <!--l. 1664-->
+   <div class="lstlisting" id="listing-46"><span class="label"><a 
  id="x8-50018r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -836,13 +827,11 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suites</span>
-
-
+   
    </div>
 <!--l. 1667--><p class="indent" >   (resulting in a new suite <span class="lstinline"><span 
-class="pcrr7t-">boo</span></span>); or the group like this: <!--l. 1668--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">boo</span></span>); or the group like this: <!--l. 1668-->
+   <div class="lstlisting" id="listing-47"><span class="label"><a 
  id="x8-50019r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -860,8 +849,7 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suites</span>
-
-
+   
    </div>
 <!--l. 1671--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
@@ -869,9 +857,8 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">baz</span></span> and <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">qux</span></span>); or the group like this: <!--l. 1672--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">qux</span></span>); or the group like this: <!--l. 1672-->
+   <div class="lstlisting" id="listing-48"><span class="label"><a 
  id="x8-50020r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -887,8 +874,7 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suites</span>
-
-
+   
    </div>
 <!--l. 1675--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
