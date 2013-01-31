@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>The Suite Control GUI Graph View</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,fn-in,2,next --> 
+<meta name="src" content="cug-html.tex"> 
+<meta name="date" content="2013-02-01 00:11:00"> 
+<link rel="stylesheet" type="text/css" href="cug-html.css"> 
+</head><body 
+>
+   <!--l. 5805--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse19.html" >next</a>] [<a 
+href="cug-htmlse17.html" >prev</a>] [<a 
+href="cug-htmlse17.html#tailcug-htmlse17.html" >prev-tail</a>] [<a 
+href="#tailcug-htmlse18.html">tail</a>] [<a 
+href="cug-html.html#cug-htmlse18.html" >up</a>] </p></div>
+   <h3 class="sectionHead"><span class="titlemark">D   </span> <a 
+ id="x19-382000D"></a>The Suite Control GUI Graph View</h3>
+   <div class="sectionTOCS">
+   </div>
+<!--l. 5808--><p class="indent" >   The graph view in the gcylc GUI has the advantage that it shows the structure of a suite very clearly as it
+evolves. It works remarkably well even for very large suites (up to several hundred tasks or more) <span 
+class="cmti-10">but </span>because the
+graphviz engine does a new global layout every time the graph changes the layout is often not very stable. This
+may not be a solvable problem even in principle as it seems likely that making continual incremental
+changes to an existing graph without redoing the global layout would inevitably result in a horrible
+mess.
+<!--l. 5817--><p class="indent" >   The following features of the graph view, however, help mitigate the the jumping layout problem:
+     <ul class="itemize1">
+     <li class="itemize">The disconnect button can be used to temporarily prevent the graph from changing as the content of
+     the suite changes (and in real time operation suites evolve quite slowly anyway)
+     </li>
+     <li class="itemize">In most suites, toggling the greyed-out &#8220;base graph&#8221; nodes (which do not represent current live task
+     proxies and are just present to fill out the graph structure) will dramatically reduce the size of the
+     graph (but it will split into several disconnected sub-trees).
+     </li>
+     <li class="itemize">Right-click on a task and choose the &#8220;Focus&#8221; option to restrict the graph display to that task&#8217;s cycle
+     time. Anything interesting happening in other cycles will show up as disconnected rectangular nodes
+     to the right of the graph (and you can click on those to intantly refocus to their cycles).
+     </li>
+     <li class="itemize">Task filtering is the ultimate quick route to temporarily focusing on just the tasks you&#8217;re interested in
+     (but this will destroy the graph structure, to state the obvious).</li></ul>
+                                                                                         
+
+                                                                                         
+   <!--l. 5839--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse19.html" >next</a>] [<a 
+href="cug-htmlse17.html" >prev</a>] [<a 
+href="cug-htmlse17.html#tailcug-htmlse17.html" >prev-tail</a>] [<a 
+href="cug-htmlse18.html" >front</a>] [<a 
+href="cug-html.html#cug-htmlse18.html" >up</a>] </p></div>
+<!--l. 5839--><p class="indent" >   <a 
+ id="tailcug-htmlse18.html"></a>  
+</body></html> 

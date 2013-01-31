@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Other Topics In Brief</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,fn-in,2,next --> 
+<meta name="src" content="cug-html.tex"> 
+<meta name="date" content="2013-02-01 00:11:00"> 
+<link rel="stylesheet" type="text/css" href="cug-html.css"> 
+</head><body 
+>
+   <!--l. 5378--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse13.html" >next</a>] [<a 
+href="cug-htmlse11.html" >prev</a>] [<a 
+href="cug-htmlse11.html#tailcug-htmlse11.html" >prev-tail</a>] [<a 
+href="#tailcug-htmlse12.html">tail</a>] [<a 
+href="cug-html.html#cug-htmlse12.html" >up</a>] </p></div>
+   <h3 class="sectionHead"><span class="titlemark">12   </span> <a 
+ id="x13-16400012"></a>Other Topics In Brief</h3>
+   <div class="sectionTOCS">
+   </div>
+<!--l. 5380--><p class="indent" >   The following topics have yet to be documented in detail.
+     <ul class="itemize1">
+     <li class="itemize">The difference between cold-, warm-, raw-, and re-starting, a suite: see <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>.
+     </li>
+     <li class="itemize">Intervening in suites, e.g.&#x00A0;stopping, removing, inserting tasks: see <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">control</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>.
+     </li>
+     <li class="itemize">Interrogating     suites     and     tasks:     see     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">info</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>,     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">show</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>,     and
+     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">discovery</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>.
+     </li>
+     <li class="itemize">Understanding suite evolution, particularly in delayed/catchup operation: the <span 
+class="cmti-10">Quick Start Guide </span>helps
+     here, along with running the example suites.
+     </li>
+     <li class="itemize">Automatic state dump backups, named pre-intervention state dumps: these are used to resetart a suite
+     from a previous state of operation. They are mentioned in the <span 
+class="cmti-10">Quick Start Guide</span>. Watch the suite log
+     after intervening in a suite, to get the filenames.
+     </li>
+     <li class="itemize">Recursive purge: this is a powerful intervention but you need to understand how it works before using
+     it. See <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">purge</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span> for details.
+     </li>
+     <li class="itemize">Handling   spin-up   processes   via   temporary   tasks   and   adding   prerequisites   on-the-fly:   see
+     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">depend</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">help</span></span>, and note that when you insert a task into a running suite (a) the initial cycle
+     time can be in the past; and (b) you can give a final cycle time after which the task will be eliminated
+     from the suite.
+     </li>
+     <li class="itemize">Sub-suites: to run another suite inside a task, just invoke the subsuite, with appropriate start and end cycles
+     (probably a single cycle), in the host task&#8217;s command scripting:  <!--l. 5420--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x13-164001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x13-164002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x13-164003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">command</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">scripting</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x13-164004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">SUITE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">until</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
+class="pcrr7t-">"</span>
+
+
+     </div>
+     </li></ul>
+                                                                                         
+
+                                                                                         
+   <!--l. 5429--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse13.html" >next</a>] [<a 
+href="cug-htmlse11.html" >prev</a>] [<a 
+href="cug-htmlse11.html#tailcug-htmlse11.html" >prev-tail</a>] [<a 
+href="cug-htmlse12.html" >front</a>] [<a 
+href="cug-html.html#cug-htmlse12.html" >up</a>] </p></div>
+<!--l. 5429--><p class="indent" >   <a 
+ id="tailcug-htmlse12.html"></a>  
+</body></html> 

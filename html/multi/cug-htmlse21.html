@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Cylc Development History</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,fn-in,2,next --> 
+<meta name="src" content="cug-html.tex"> 
+<meta name="date" content="2013-02-01 00:11:00"> 
+<link rel="stylesheet" type="text/css" href="cug-html.css"> 
+</head><body 
+>
+   <!--l. 5848--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse22.html" >next</a>] [<a 
+href="cug-htmlse20.html" >prev</a>] [<a 
+href="cug-htmlse20.html#tailcug-htmlse20.html" >prev-tail</a>] [<a 
+href="#tailcug-htmlse21.html">tail</a>] [<a 
+href="cug-html.html#cug-htmlse21.html" >up</a>] </p></div>
+   <h3 class="sectionHead"><span class="titlemark">G   </span> <a 
+ id="x22-385000G"></a>Cylc Development History</h3>
+   <div class="sectionTOCS">
+   &#x00A0;<span class="subsectionToc" >G.1 <a 
+href="#x22-386000G.1">Pre-3.0</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >G.2 <a 
+href="#x22-387000G.2">Version 3.0</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >G.3 <a 
+href="#x22-388000G.3">Version 4.0</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >G.4 <a 
+href="#x22-389000G.4">Version 5.0</a></span>
+   </div>
+<!--l. 5849--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">G.1   </span> <a 
+ id="x22-386000G.1"></a>Pre-3.0</h4>
+<!--l. 5851--><p class="noindent" >Early versions of cylc were focused on developing and testing the new scheduling algorithm, and the suite design
+interface at the time was essentially the quickest route to that end. A suite was a collection of &#8220;task definition files&#8221;
+that encoded the prerequisites and outputs of each task in a direct reflection of cylc&#8217;s internal task proxies. This way
+of defining suites exposed cylc&#8217;s self-organising nature to the user, and it did have some nice properties. For instance
+a group of tasks could be transferred directly from one suite to another by simply copying the taskdef files over
+(and checking that prerequisite and output messages were consistent with the new suite). However,
+ensuring consistency of prerequisites and outputs across a large suite could be tedious; a few edge cases
+associated with suite start-up and forecast model restart dependencies were, arguably, difficult to
+understand; and the global structure of a suite was not readily apparent until run time (although to
+counter this cylc 2.x could generate run-time resolved dependency graphs very quickly in simulation
+mode).
+<!--l. 5868--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">G.2   </span> <a 
+ id="x22-387000G.2"></a>Version 3.0</h4>
+<!--l. 5870--><p class="noindent" >Version 3.0 implemented an entirely new suite design interface in which one defines the suite dependency graph,
+execution environment, and command scripting for each task, in a single structured, validated, configuration file -
+the suite.rc file. This makes suite structure apparent at a glance, and much important detail is now implicitly
+implied by the graph.
+<!--l. 5877--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">G.3   </span> <a 
+ id="x22-388000G.3"></a>Version 4.0</h4>
+<!--l. 5879--><p class="noindent" >Version 4.0 has the following major improvements over cylc-3.x, along with many refinements:
+     <ul class="itemize1">
+     <li class="itemize">Suite  registration  was  generalized  from  GROUP:NAME  to  a  hierarchy  of  arbitrary  depth,  e.g
+     foo.bar.baz, allowing suites to be organized in a tree-like structure.
+     </li>
+     <li class="itemize">The suite.rc file, which was initially somewhat haphazardly structured, was reviewed in great detail
+     and clearly organized. In particular it now defines a <span 
+class="cmti-10">namespace hierarchy </span>of families and tasks to allow
+     common runtime properties to be grouped naturally among related tasks.
+                                                                                         
+
+                                                                                         
+     </li>
+     <li class="itemize">The Jinja2 template engine is now supported, adding general programmability to cylc suite definitions.</li></ul>
+<!--l. 5894--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">G.4   </span> <a 
+ id="x22-389000G.4"></a>Version 5.0</h4>
+<!--l. 5896--><p class="noindent" >Version 5.0 contains some major internal changes to enhance performance for large suites, such as multi-threading
+for continuous request handling and task job submission. We also aim to provide backward compatibility for suite
+definitions from version 5.0 onward, wherever possible.
+                                                                                         
+
+                                                                                         
+   <!--l. 5902--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse22.html" >next</a>] [<a 
+href="cug-htmlse20.html" >prev</a>] [<a 
+href="cug-htmlse20.html#tailcug-htmlse20.html" >prev-tail</a>] [<a 
+href="cug-htmlse21.html" >front</a>] [<a 
+href="cug-html.html#cug-htmlse21.html" >up</a>] </p></div>
+<!--l. 5902--><p class="indent" >   <a 
+ id="tailcug-htmlse21.html"></a>   
+</body></html> 
