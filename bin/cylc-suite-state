@@ -16,7 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+from time import sleep
+
 from cylc.CylcOptionParsers import cop
+from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
 
 
 parser = cop( usage = """cylc suite-state [OPTIONS]
@@ -29,11 +33,11 @@ Print task states retrieved from a suite database.
 
 parser.add_option( "-t", "--task", 
         help="Specify a task to check the state of.",
-        action="store", dest="task", default=False )
+        action="store", dest="task", default=None )
 
 parser.add_option( "-c", "--cycle", 
         help="Specify the cycle to check task states for.",
-        action="store", dest="cycle", default=False )
+        action="store", dest="cycle", default=None )
 
 parser.add_option( "-d", "--run-dir", 
         help="Specify the cycle to check task states for.",
@@ -41,11 +45,19 @@ parser.add_option( "-d", "--run-dir",
 
 parser.add_option( "-S", "--status", 
         help="Specify a particular status to check for.",
-        action="store", dest="status", default=False )
+        action="store", dest="status", default=None )
+        
+parser.add_option( "-w", "--wait",
+        help="Used to wait until a task achieves a particular state before exiting.",
+        action="store_true", dest="wait", default=False )
+
+parser.add_option( "-T", "--timeout",
+        help="Specify a waiting timeout.",
+        action="store", dest="timeout", default=False )
 
 ( options, args ) = parser.parse_args()
 
-print "Args: " + args[0]
+suite = args[0]
 
 if options.task:
     print options.task
@@ -58,4 +70,40 @@ if options.run_dir:
 
 if options.status:
     print options.status
+
+if options.wait:
+    found = False
+    while not found:
+        try:    
+            checker = CylcSuiteDBChecker(options.run_dir, suite)
+            found = True
+        except DBNotFoundError:
+            sleep(1)
+else:
+    try:    
+        checker = CylcSuiteDBChecker(options.run_dir, suite)
+    except DBNotFoundError:
+        print "db not found!"
+        sys.exit(1)
+
+if options.status and options.task and options.cycle:
+    res = checker.task_state_met(options.task, options.cycle, options.status)
+    if options.wait:
+        if options.timeout:
+            try:
+                max_count=int(options.timeout)
+            except:
+                sys.exit(1) #return usage                
+        else:
+            max_count = float("inf")
+        counter = 0
+        while (counter < max_count) and not res:
+            sleep(1)
+            counter += 1
+            res = checker.task_state_met(options.task, options.cycle, options.status)
+
+    sys.exit(not res)
+else:
+    checker.display_maps(checker.suite_state_query(task=options.task, cycle=options.cycle, status=options.status))
+
 

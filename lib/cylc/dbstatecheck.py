@@ -85,9 +85,6 @@ class CylcSuiteDBChecker(object):
             q = q_base + " where " + (" AND ").join(additionals)
         else:
             q = q_base
-            
-        print q
-        
         self.c.execute(q,vals)
         next = self.c.fetchmany()
         while next:
