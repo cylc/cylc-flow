@@ -59,8 +59,7 @@ from cylc.gui.db_viewer import MainApp
 # they attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-globals = gcfg
-tmpdir = globals.cfg['temporary directory']
+tmpdir = gcfg.get_tmpdir()
 
 app = MainApp( options.db, options.db_owner, tmpdir, options.pyro_timeout )
 gtk.main()

@@ -6,7 +6,7 @@ from validate import Validator
 from print_cfg import print_cfg
 from mkdir_p import mkdir_p
 from copy import deepcopy
-##import atexit
+import atexit
 import shutil
 from tempfile import mkdtemp
 
@@ -152,22 +152,26 @@ class globalcfg( object ):
         print "File written:", target
         print "See in-file comments for customization information."
 
-    def process( self ):
-        # process temporary directory
-        cylc_tmpdir = self.cfg['temporary directory']
-        if not cylc_tmpdir:
-            # use tempfile.mkdtemp() to create a new temp directory
-            cylc_tmpdir = mkdtemp(prefix="cylc-")
-            ## can't use atexit in daemon mode!
-            ## self-cleanup
-            ##atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
-            # now replace the original item
-            self.cfg['temporary directory'] = cylc_tmpdir
+    def get_tmpdir( self ):
+        # NOTE: if the cylc server program ever needs a temporary
+        # directory, this must be called before forking to daemon mode,
+        # otherwise atexit() will delete the tmpdir when the initial
+        # process exits immediately after forking.
+
+        tdir = self.cfg['temporary directory']
+        if tdir:
+            tdir = self.proc_dir( tdir )
+            cylc_tmpdir = mkdtemp(prefix="cylc-", dir=tdir )
         else:
-            self.cfg['temporary directory'] = self.proc_dir( self.cfg['temporary directory'] )
+            cylc_tmpdir = mkdtemp(prefix="cylc-")
 
-        print "TMPDIR IS", self.cfg['temporary directory'], '<<<<<<<<<<<<<<<<<<,,,'
+        # self-cleanup
+        atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
 
+        # now replace the original item to allow direct access
+        self.cfg['temporary directory'] = cylc_tmpdir
+
+    def process( self ):
         # expand environment variables and ~user in file paths
         for key,val in self.cfg['documentation']['files'].items():
             self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))

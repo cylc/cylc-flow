@@ -81,8 +81,7 @@ warnings.filterwarnings('ignore', 'use the new', Warning)
 from cylc.gui.SuiteControl import ControlApp
 from cylc.gui.gcylc_config import config
 
-globals = gcfg
-cylc_tmpdir = globals.cfg['temporary directory']
+cylc_tmpdir = gcfg.get_tmpdir()
 
 # Make current working directory be $HOME. Otherwise (1) if the user
 # attempts to start gcylc from a CWD that has been removed, Pyro will
