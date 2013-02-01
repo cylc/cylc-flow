@@ -169,26 +169,39 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
-        self.FILE.write( '\n\n# SET ERROR TRAPPING:' )
-        self.FILE.write( '\nset -u # Fail when using an undefined variable' )
-        self.FILE.write( '\n# Define the trap handler' )
-        self.FILE.write( '\nHANDLE_TRAP() {' )
-        self.FILE.write( '\n  echo Received signal "$@"' )
-        self.FILE.write( '\n  # SEND TASK FAILED MESSAGE' )
-        self.FILE.write( '\n  cylc task failed "Task job script received signal $@"' )
-        self.FILE.write( '\n  trap "" EXIT' )
-        self.FILE.write( '\n  exit 0' )
-        self.FILE.write( '\n}' )
-        self.FILE.write( '\n# Trap signals that could cause this script to exit:' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP EXIT" EXIT' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP ERR"  ERR' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP TERM" TERM' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP XCPU" XCPU' )
+        self.FILE.write( r"""
+
+# SET ERROR TRAPPING:
+set -u # Fail when using an undefined variable
+# Define the trap handler
+SIGNALS="EXIT ERR TERM XCPU"
+function HANDLE_TRAP() {
+    local SIGNAL=$1
+    echo "Received signal $SIGNAL"
+    local S=
+    for S in $SIGNALS; do
+        trap "" $S
+    done
+    # SEND TASK FAILED MESSAGE
+    if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
+        {
+            echo "RUN_STATUS=$SIGNAL"
+            date -u +'RUN_EXIT=%FT%H:%M:%SZ'
+        } >>$CYLC_TASK_LOG_ROOT.status
+    fi
+    cylc task failed "Task job script received signal $@"
+    exit 1
+}
+# Trap signals that could cause this script to exit:
+for S in $SIGNALS; do
+    trap "HANDLE_TRAP $S" $S
+done""")
 
     def write_task_started( self ):
-        self.FILE.write( """
+        self.FILE.write( r"""
 
 # SEND TASK STARTED MESSAGE:
+date -u +'RUN_INIT=%FT%H:%M:%SZ' >>$CYLC_TASK_LOG_ROOT.status
 cylc task started""" )
 
     def write_work_directory_create( self ):
@@ -324,12 +337,22 @@ rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
         if self.jobconfig['use manual completion']:
-            self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
+            self.FILE.write( r"""
+
+echo 'JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING'
+trap '' EXIT""")
         else:
-            self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
-            self.FILE.write( '\ncylc task succeeded' )
-            self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
-        self.FILE.write( '\ntrap "" EXIT' )
+            self.FILE.write( r"""
+
+# SEND TASK SUCCEEDED MESSAGE:
+{
+    echo 'RUN_STATUS=SUCCEEDED'
+    date -u +'RUN_EXIT=%FT%H:%M:%SZ'
+} >>$CYLC_TASK_LOG_ROOT.status
+cylc task succeeded
+
+echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
+trap '' EXIT""" )
 
     def write_eof( self ):
         self.FILE.write( '\n\n#EOF' )
