@@ -21,14 +21,19 @@
 
 set -e
 
-# run in cylc doc/ sub-directory
+# The images in png/scaled/ are used in the html user guide; they are
+# created by scaling the originals in png/orig/, and may need to be
+# re-scaled if we ever change the html user guide page width.
 
-cd graphics
-mkdir -p png-scaled
-for PNG in $( ls png/ ); do
-    if [[ ! -f png-scaled/$PNG ]]; then
-        echo "scaling $PNG"
-        convert -resize '600>' png/$PNG png-scaled/$PNG
-    fi
+# The scaled images are now version controlled rather than treated as a
+# derived product, because they have to be stored in the gh-pages branch
+# for the online documentation, and re-creating them seems to result in 
+# "different" binary files each time.
+mkdir -p png/scaled
+for PNG in $( ls png/orig/ ); do
+    #if [[ ! -f png/scaled/$PNG ]]; then
+    echo "scaling $PNG"
+    convert -resize '600>' png/orig/$PNG png/scaled/$PNG
+    #fi
 done
 
