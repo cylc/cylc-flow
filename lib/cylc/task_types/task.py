@@ -34,7 +34,7 @@ from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 from cylc.owner import user
 from cylc.suite_host import hostname as suite_hostname
 import logging
@@ -146,7 +146,6 @@ class task( object ):
         self.message_queue = msgqueue()
         self.db_queue = []
 
-        gcfg = globalcfg()
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
         self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
@@ -519,8 +518,6 @@ class task( object ):
         else:
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
-
-        gcfg = globalcfg()
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.

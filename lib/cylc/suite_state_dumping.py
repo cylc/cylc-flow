@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from global_config import globalcfg
+from global_config import gcfg
 from rolling_archive import rolling_archive
 from mkdir_p import mkdir_p
 
@@ -28,7 +28,7 @@ class dumper( object ):
         self.clock = clock
         self.start_tag = start_tag
         self.stop_tag = stop_tag
-        globals = globalcfg()
+        globals = gcfg
         self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
         self.path = os.path.join( self.dir, 'state' ) 
         try:

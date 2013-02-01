@@ -25,6 +25,7 @@
 
 # A temporary directory is needed by a few cylc commands. Leave it unset
 # to get the default system temporary directory (usually $TMPDIR).
+# Cylc temporary directories are automatically cleaned up on exit.
 temporary directory = string( default=None )
 
 # A rolling archive of suite state dumps is maintained for restart use.

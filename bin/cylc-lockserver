@@ -26,7 +26,7 @@ import Pyro.core, Pyro.errors, Pyro.naming
 from Pyro.ext.daemonizer import Daemonizer
 from ConfigParser import SafeConfigParser
 from cylc.suite_id import identifier
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 import logging
 
 class ServerDaemon( Daemonizer ):
@@ -75,7 +75,7 @@ class LServer( object ):
         #Pyro.config.PYRO_STDLOGGING = True
         #Pyro.config.PYRO_TRACELEVEL = 3
 
-        globals = globalcfg()
+        globals = gcfg
         base = globals.cfg['pyro']['base port']
         range = globals.cfg['pyro']['maximum number of ports']
 
