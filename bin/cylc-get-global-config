@@ -18,7 +18,7 @@
 
 import sys
 from optparse import OptionParser
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 
 parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS] 
 
@@ -45,7 +45,7 @@ parser.add_option( "-u", "--write-user", help="Write a user "
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
-globals = globalcfg()
+globals = gcfg
 
 if options.writesite:
     globals.write_rc( 'site' )

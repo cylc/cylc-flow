@@ -26,12 +26,12 @@ from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
 
-        globals = globalcfg()
+        globals = gcfg
         self.retry_seconds = globals.cfg['task messaging']['retry interval in seconds']
         self.max_tries = globals.cfg['task messaging']['maximum number of tries']
         self.try_timeout = globals.cfg['task messaging']['connection timeout in seconds']

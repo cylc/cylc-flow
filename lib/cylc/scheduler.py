@@ -36,7 +36,7 @@ from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
-from global_config import globalcfg
+from global_config import gcfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
@@ -158,7 +158,7 @@ class scheduler(object):
         self.parse_commandline()
 
         # global config
-        self.globals = globalcfg()
+        self.globals = gcfg
 
         # create task log directory
         self.globals.get_task_log_dir( self.suite, create=True )

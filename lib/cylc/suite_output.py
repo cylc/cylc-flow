@@ -18,7 +18,7 @@
 
 import os, sys
 import logging, logging.handlers
-from global_config import globalcfg
+from global_config import gcfg
 from rolling_archive import rolling_archive
 
 """Configure suite stdout and stderr logs, as rolling archives, in a
@@ -27,7 +27,7 @@ get the configure log locations."""
 
 class suite_output( object ):
     def __init__( self, suite ):
-        globals = globalcfg()
+        globals = gcfg
         self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'log', 'suite' ) 
         self.opath = os.path.join( self.dir, 'out' ) 
         self.epath = os.path.join( self.dir, 'err' ) 
