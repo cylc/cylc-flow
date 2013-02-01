@@ -154,7 +154,7 @@ class globalcfg( object ):
 
     def get_tmpdir( self ):
         # NOTE: if the cylc server program ever needs a temporary
-        # directory, this must be called before forking to daemon mode,
+        # directory, this must be called AFTER forking to daemon mode,
         # otherwise atexit() will delete the tmpdir when the initial
         # process exits immediately after forking.
 
