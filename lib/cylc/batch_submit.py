@@ -20,6 +20,7 @@ import subprocess
 import threading
 import datetime
 import logging
+import sys
 import time
 
 class batcher( threading.Thread ):
@@ -59,6 +60,10 @@ class batcher( threading.Thread ):
         """warn of a failed item"""
         # (submitted item supplied in case needed by derived classes)
         self.idprint( info + " " + msg, err=True )
+ 
+    def item_succeeded_hook( self, *args, **kwargs ):
+        """Hook for succeeded item."""
+        pass
 
     def run( self ):
         # NOTE: Queue.get() blocks if the queue is empty
@@ -104,7 +109,7 @@ class batcher( threading.Thread ):
             self.submit_item( itask, psinfo )
 
         logmsg = 'batch ' + str(i) + '/' + str(n) + ' (' + str( len(psinfo) ) + ' members):'
-        for p, item, info in psinfo:
+        for p, item, info, more in psinfo:
             logmsg += "\n + " + info
         self.idprint( logmsg )
 
@@ -112,18 +117,25 @@ class batcher( threading.Thread ):
         n_fail = 0
         while len( psinfo ) > 0:
             for data in psinfo:
-                p, item, info = data
+                p, item, info, more = data
                 res = p.poll()
                 if res is None:
                     #self.log.info( info + ' still waiting...' )
                     continue
-                elif res < 0:
-                    self.item_failed_hook( item, info, "terminated by signal " + str(res) )
+                out, err = p.communicate()
+                if out:
+                    sys.stdout.write(out)
+                if err:
+                    sys.stderr.write(err)
+                if res < 0:
+                    self.item_failed_hook( item, info,
+                                           "terminated by signal " + str(res) )
                     n_fail += 1
                 elif res > 0:
                     self.item_failed_hook( item, info, "failed " + str(res) )
                     n_fail += 1
                 else:
+                    self.item_succeeded_hook( p, item, info, more, out, err )
                     n_succ += 1
                 psinfo.remove( data )
                 self.jobqueue.task_done()
@@ -171,13 +183,20 @@ class task_batcher( batcher ):
     def submit_item( self, itask, psinfo ):
         self.log.info( 'TASK READY: ' + itask.id )
         itask.incoming( 'NORMAL', itask.id + ' submitted' )
-        p = itask.submit( overrides=self.wireless.get(itask.id) )
+        p, launcher = itask.submit( overrides=self.wireless.get(itask.id) )
         if p:
-            psinfo.append( (p, itask, itask.id) ) 
+            psinfo.append( (p, itask, itask.id, launcher) ) 
 
     def item_failed_hook( self, itask, info, msg ):
         itask.incoming( 'CRITICAL', itask.id + ' failed' )
         batcher.item_failed_hook( self, itask, info, msg )
+ 
+    def item_succeeded_hook( self, p, itask, info, launcher, out, err ):
+        """Hook for succeeded item."""
+        if hasattr(launcher, 'get_id'):
+            submit_method_id = launcher.get_id(p.pid, out, err)
+            itask.incoming('NORMAL',
+                           itask.id + ' submit_method_id=' + submit_method_id)
 
 class event_batcher( batcher ):
     """Batched execution of queued task event handlers"""
@@ -195,5 +214,5 @@ class event_batcher( batcher ):
             print >> sys.stderr, "ERROR:", e
             self.idprint( "event handler submission failed", err=True )
         else:
-            psinfo.append( (p, item, taskid + " " + event) ) 
+            psinfo.append( (p, item, taskid + " " + event, None) ) 
 

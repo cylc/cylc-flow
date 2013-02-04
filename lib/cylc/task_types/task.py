@@ -620,7 +620,7 @@ class task( object ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            return p
+            return (p, launcher)
 
     def check_submission_timeout( self ):
         handler = self.event_handlers['submission timeout']
@@ -741,6 +741,11 @@ class task( object ):
         elif message == self.id + ' submitted':
             # (a faked task message from the job submission thread)
             self.set_submitted()
+
+        elif message.startswith(self.id + ' submit_method_id='):
+            submit_method_id = message[len(self.id + ' submit_method_id='):]
+            self.record_db_update("task_states", self.name, self.c_time,
+                                  submit_method_id=submit_method_id)
 
         if message == self.id + ' failed':
             # (note not 'elif' here as started messages must go through

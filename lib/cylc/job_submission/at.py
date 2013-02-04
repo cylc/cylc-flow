@@ -17,13 +17,19 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from job_submit import job_submit
+import re
 
 class at( job_submit ):
+
+    """Submit the task job script to the simple 'at' scheduler.
+    
+    The 'atd' daemon service must be running.
+
     """
-Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
-service must be running.
-    """
+
     COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now"
+    REC_ID = re.compile(r"\Ajob\s(?P<id>\d+)\sat")
+
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
@@ -32,3 +38,9 @@ service must be running.
                                             self.stdout_file,
                                             self.stderr_file )
 
+    def get_id( self, pid, out, err ):
+        """Parse "err" for the submit ID."""
+        for line in str(err).splitlines():
+            match = self.REC_ID.match(line)
+            if match:
+                return match.group("id")
