@@ -94,7 +94,9 @@ class config( CylcConfigObj ):
         self.tasks_by_cycler = {}
 
         self.members = {}
+        self.single_members = {}
         self.family_hierarchy = {}
+        self.single_family_hierarchy = {}
         self.families_used_in_graph = []
 
         self.suite = suite
@@ -364,10 +366,12 @@ class config( CylcConfigObj ):
         # self.family_hierarchy is now the linearized MRO.
 
         self.parents = {}
+        self.single_parents = {}
 
         for name in self['runtime']:
             if name == 'root':
                 self.parents[name] = []
+                self.single_parents[name] = []
                 continue
             if 'inherit' in self['runtime'][name]:
                 # coerce single values to list (see warning in conf/suiterc/runtime.spec)
@@ -383,11 +387,15 @@ class config( CylcConfigObj ):
                 if p not in self['runtime']:
                     raise SuiteConfigError, "ERROR, undefined parent for " + name +": " + p
             self.parents[name] = pts
+            self.single_parents[name] = [ pts[0] ]
 
         c3 = C3( self.parents )
+        print self.single_parents
+        c3_single = C3( self.single_parents )
 
         for name in self['runtime']:
             self.family_hierarchy[name] = c3.mro(name)
+            self.single_family_hierarchy[name] = c3_single.mro(name)
 
         for name in self['runtime']:
             ancestors = self.family_hierarchy[name]
@@ -396,6 +404,12 @@ class config( CylcConfigObj ):
                     self.members[p] = []
                 if name not in self.members[p]:
                     self.members[p].append(name)
+            single_ancestors = self.single_family_hierarchy[name]
+            for p in single_ancestors[1:]:
+                if p not in self.single_members: 
+                    self.single_members[p] = []
+                if name not in self.single_members[p]:
+                    self.single_members[p].append(name)
 
         #for name in self['runtime']:
         #    print name, self.family_hierarchy[name]

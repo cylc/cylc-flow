@@ -187,8 +187,8 @@ class tupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.families = self.sinfo.get('families' )
-            self.family_hierarchy = self.sinfo.get('family hierarchy' )
+            self.families = self.sinfo.get('single families' )
+            self.family_hierarchy = self.sinfo.get('single family hierarchy' )
             self.allowed_families = self.sinfo.get('vis families' )
         except:
             # connection lost

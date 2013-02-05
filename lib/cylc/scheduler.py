@@ -175,8 +175,10 @@ class scheduler(object):
                 'graphed family nodes' : self.info_get_graphed_family_nodes,
                 'vis families'      : self.info_get_vis_families,
                 'families'          : self.info_get_families,
-                'do live graph movie'   : self.info_do_live_graph_movie,
+                'single families'   : self.info_get_single_families,
+                'do live graph movie'     : self.info_do_live_graph_movie,
                 'family hierarchy'   : self.info_get_family_hierarchy,
+                'single family hierarchy' : self.info_get_single_family_hierarchy,
                 'graph raw'         : self.info_get_graph_raw,
                 'task requisites'   : self.info_get_task_requisites,
                 }
@@ -396,12 +398,20 @@ class scheduler(object):
     def info_get_families( self ):
         return deepcopy(self.config.members)
 
+    def info_get_single_families( self ):
+        # families for single-inheritance hierarchy based on first parents
+        return deepcopy(self.config.single_members)
+
     def info_do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['runtime graph']['directory'] ) 
 
     def info_get_family_hierarchy( self ):
         return deepcopy(self.config.family_hierarchy)
+
+    def info_get_single_family_hierarchy( self ):
+        # single-inheritance hierarchy based on first parents
+        return deepcopy(self.config.single_family_hierarchy)
 
     def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):
