@@ -185,8 +185,8 @@ function HANDLE_TRAP() {
     # SEND TASK FAILED MESSAGE
     if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
         {
-            echo "RUN_STATUS=$SIGNAL"
-            date -u +'RUN_EXIT=%FT%H:%M:%SZ'
+            echo "CYLC_JOB_EXIT=$SIGNAL"
+            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
         } >>$CYLC_TASK_LOG_ROOT.status
     fi
     cylc task failed "Task job script received signal $@"
@@ -201,7 +201,10 @@ done""")
         self.FILE.write( r"""
 
 # SEND TASK STARTED MESSAGE:
-date -u +'RUN_INIT=%FT%H:%M:%SZ' >>$CYLC_TASK_LOG_ROOT.status
+{
+    echo "CYLC_JOB_PID=$$"
+    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
+} >>$CYLC_TASK_LOG_ROOT.status
 cylc task started""" )
 
     def write_work_directory_create( self ):
@@ -346,8 +349,8 @@ trap '' EXIT""")
 
 # SEND TASK SUCCEEDED MESSAGE:
 {
-    echo 'RUN_STATUS=SUCCEEDED'
-    date -u +'RUN_EXIT=%FT%H:%M:%SZ'
+    echo 'CYLC_JOB_EXIT=SUCCEEDED'
+    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
 } >>$CYLC_TASK_LOG_ROOT.status
 cylc task succeeded
 
