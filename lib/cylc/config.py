@@ -41,6 +41,7 @@ from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
+from C3MRO import C3
 
 try:
     import graphing
@@ -229,6 +230,7 @@ class config( CylcConfigObj ):
             del self['runtime'][item]
 
         self.check_env()
+
         self.famtree()
 
         self.inheritance()
@@ -358,28 +360,40 @@ class config( CylcConfigObj ):
              raise SuiteConfigError("Illegal env variable name(s) detected" )
 
     def famtree( self ):
-        for label in self['runtime']:
-            hierarchy = []
-            if label == 'root':
-                self.family_hierarchy['root'] = ['root']
+        # Define self.family_hierarchy, self.members.
+        # self.family_hierarchy is now the linearized MRO.
+
+        self.parents = {}
+
+        for name in self['runtime']:
+            if name == 'root':
+                self.parents[name] = []
                 continue
-            name = label
-            while True:
-                hierarchy.append(name) 
-                if name == 'root':
-                    break
-                if 'inherit' in self['runtime'][name]:
-                    inherit = self['runtime'][name]['inherit']
-                else:
-                    # implicit inheritance from root
-                    inherit = 'root'
-                if inherit not in self['runtime']:
-                    raise SuiteConfigError, 'Undefined parent runtime: ' + inherit
-                name = inherit
-                if name not in self.members:
-                    self.members[name] = []
-                self.members[name].append(label)
-            self.family_hierarchy[label] = copy(hierarchy)
+            if 'inherit' in self['runtime'][name]:
+                pts = self['runtime'][name]['inherit']
+            else:
+                # implicit inheritance from root
+                pts = [ 'root' ]
+            for p in pts:
+                if p not in self['runtime']:
+                    raise SuiteConfigError, "ERROR, undefined parent for " + name +": " + p
+            self.parents[name] = pts
+
+        c3 = C3( self.parents )
+
+        for name in self['runtime']:
+            self.family_hierarchy[name] = c3.mro(name)
+
+        for name in self['runtime']:
+            ancestors = self.family_hierarchy[name]
+            for p in ancestors[1:]:
+                if p not in self.members: 
+                    self.members[p] = []
+                if name not in self.members[p]:
+                    self.members[p].append(name)
+
+        #for name in self['runtime']:
+        #    print name, self.family_hierarchy[name]
 
     def inheritance( self ):
         """This works through the inheritance hierarchy from root, for
@@ -388,10 +402,14 @@ class config( CylcConfigObj ):
         expanding again after, to allow copy-and-override of shallow
         rather than nested dicts, but got no appreciable speedup."""
 
+        # TODO: make this efficient by not re-doing inheritance for MRO
+        # chains already computed, as per single-inheritance cylc. It's
+        # more difficult here as the MRO can be different for different
+        # tasks.
+
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        inherited = ['root']
         for label in self['runtime']:
             if label == 'root':
                 continue
@@ -405,21 +423,20 @@ class config( CylcConfigObj ):
                 if skip:
                     continue
 
-            hierarchy = self.family_hierarchy[label]
+            hierarchy = copy(self.family_hierarchy[label])
+            hierarchy.reverse()
+
             prev = 0
             taskconf = OrderedDict()
-            for i in range(len(hierarchy)-1,-1,-1):
-                if hierarchy[i] in inherited:
-                    # we've already actioned this inheritance
-                    continue
-                #print label, ': replicating', hierarchy[j]
-                j = i + 1
-                replicate( taskconf, self['runtime'][hierarchy[j]].odict())
-                inherited.append( hierarchy[j] )
+            for name in hierarchy:
+                #print label, ': replicating', name
+                replicate( taskconf, self['runtime'][name].odict())
 
-            # (we have to do a final replicate and replace here to
-            #  get the ordering of inherited variables right.)
-            replicate( taskconf, self['runtime'][label].odict() )
+            # TODO: the single inheritance implementation noted (not needed now?):
+            ## (we have to do a final replicate and replace here to
+            ##  get the ordering of inherited variables right.)
+            ##replicate( taskconf, self['runtime'][label].odict() )
+
             self['runtime'][label] = taskconf
 
     def compute_runahead_limit( self ):
@@ -600,16 +617,7 @@ class config( CylcConfigObj ):
                 print " + All tasks assigned to the 'default' queue"
 
     def get_inheritance( self ):
-        # used by cylc_xdot
-        inherit = {}
-        for ns in self['runtime']:
-            parent = None
-            if 'inherit' in self['runtime'][ns]:
-                parent = self['runtime'][ns]['inherit']
-            elif ns != "root":
-                parent = "root"
-            inherit[ns] = parent
-        return inherit
+        return self.parents
 
     def define_inheritance_tree( self, tree, hierarchy ):
         # combine inheritance hierarchies into a tree structure.

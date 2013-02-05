@@ -175,11 +175,11 @@ class MyDotWindow2( xdot.DotWindow ):
         graph = CGraphPlain( title )
         graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
-            if self.inherit[ns]:
+            for p in self.inherit[ns]:
                 attr = {}
                 attr['color'] = 'royalblue'
-                graph.add_edge( self.inherit[ns], ns, **attr )
-                nl = graph.get_node( self.inherit[ns] )
+                graph.add_edge( p, ns, **attr )
+                nl = graph.get_node( p )
                 nr = graph.get_node( ns )
                 for n in nl, nr:
                     n.attr['shape'] = 'box'
