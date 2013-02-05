@@ -1,0 +1,46 @@
+
+title = "multiple inheritance demo suite"
+
+description = """
+Demonstrates multiple inheritance. Tasks foo and bar both inherit from
+namespaces a and b, but with different precedence order.
+
+To view the inheritance tree:
+ cylc list -tb demo  # assuming you've registered this suite as 'demo'
+ cylc graph -n demo
+
+Note that in 'cylc graph demo' and the gcylc graph view, collapsing foo
+groups foo and bar under a, and collapsing bar groups foo and bar under b.
+I think this is the expected/correct behaviour..."""
+
+[scheduling]
+    [[dependencies]]
+        graph = "go => a"
+
+[runtime]
+    [[root]]
+        [[[environment]]]
+            ROOT = root
+    [[go]]
+    [[a]] 
+        [[[environment]]]
+            A = a
+            FOO = a
+    [[b]]
+        [[[environment]]]
+            B = b
+            FOO = b
+    [[foo]]
+        inherit = a, b
+        command scripting = """
+echo "ROOT is $ROOT"
+echo "A B is $A $B"
+echo "FOO is $FOO"
+"""
+    [[bar]]
+        inherit = b, a
+        command scripting = """
+echo "A B is $A $B"
+echo "FOO is $FOO"
+"""
+
