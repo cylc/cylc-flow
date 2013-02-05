@@ -16,9 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from job_submit import job_submit
+from background import background
 
-class background_slow( job_submit ):
+class background_slow( background ):
     """
 This is a deliberately slow version of background job submission, used
 for cylc development purposes - sleep 10s before executing the task.
@@ -31,11 +31,3 @@ Change sleep time by setting $CYLC_BG_SLOW_SLEEP in [cylc][[environment]]
     # remote process to finish.
 
     COMMAND_TEMPLATE = "sleep ${CYLC_BG_SLOW_SLEEP:-60}; %s </dev/null 1>%s 2>%s &"
-    def construct_jobfile_submission_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path,
-                                            self.stdout_file,
-                                            self.stderr_file )
-

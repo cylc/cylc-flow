@@ -620,7 +620,7 @@ class task( object ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            return p
+            return (p, launcher)
 
     def check_submission_timeout( self ):
         handler = self.event_handlers['submission timeout']
@@ -712,17 +712,16 @@ class task( object ):
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
+
+        # always update the suite state summary for latest message
+        flags.iflag = True
+
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
         self.latest_message = message
         self.latest_message_priority = priority
-
-        # Set this to stimulate task processing
-        flags.pflag = True
-        # Set this to stimulate suite state summary update even if not task processing.
-        flags.iflag = False
 
         # Handle warning events
         handler = self.event_handlers['warning']
@@ -736,16 +735,23 @@ class task( object ):
 
         if message == self.id + ' started':
             # Received a 'task started' message
+            flags.pflag = True
             self.set_running()
 
         elif message == self.id + ' submitted':
             # (a faked task message from the job submission thread)
             self.set_submitted()
 
+        elif message.startswith(self.id + ' submit_method_id='):
+            submit_method_id = message[len(self.id + ' submit_method_id='):]
+            self.record_db_update("task_states", self.name, self.c_time,
+                                  submit_method_id=submit_method_id)
+
         if message == self.id + ' failed':
             # (note not 'elif' here as started messages must go through
             # the elif block below)
             # Received a 'task failed' message
+            flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
@@ -778,6 +784,7 @@ class task( object ):
             # Received a registered internal output message
             # (this includes 'task succeeded')
             if not self.outputs.is_completed( message ):
+                flags.pflag = True
                 self.log( priority,  message )
                 self.outputs.set_completed( message )
                 if message == self.id + ' succeeded':
@@ -796,14 +803,10 @@ class task( object ):
                 # Currently this is treated as an error condition
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
-                flags.pflag = False
-
         else:
             # A general unregistered progress message: log with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-            flags.iflag = True
-            flags.pflag = False
 
     def update( self, reqs ):
         for req in reqs.get_list():
