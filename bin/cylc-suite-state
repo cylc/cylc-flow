@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from time import sleep
+from time import sleep, time
 
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
@@ -48,12 +48,12 @@ parser.add_option( "-S", "--status",
         action="store", dest="status", default=None )
         
 parser.add_option( "-w", "--wait",
-        help="Used to wait until a task achieves a particular state before exiting.",
-        action="store_true", dest="wait", default=False )
+        help="Used to specify a time (in seconds) to wait until a task achieves a particular state before exiting.",
+        action="store", dest="wait", default=False )
 
-parser.add_option( "-T", "--timeout",
-        help="Specify a waiting timeout.",
-        action="store", dest="timeout", default=False )
+parser.add_option( "-i", "--interval",
+        help="Specify a polling interval for use when in wait mode (default=5).",
+        action="store", dest="interval", default=5 )
 
 ( options, args ) = parser.parse_args()
 
@@ -72,36 +72,52 @@ if options.status:
     print options.status
 
 if options.wait:
+    print options.wait
+
+starttime = time()
+
+try:
+    wait = float(options.wait)
+except:
+    print "wait must be a number"
+    sys.exit(1)
+
+try:
+    float(options.interval)
+except:
+    print "interval must be a number"
+    sys.exit(1)
+
+if options.wait:
     found = False
-    while not found:
-        try:    
+    while not found and ((time() - starttime) < wait):
+        try:
+            print "Checking"
             checker = CylcSuiteDBChecker(options.run_dir, suite)
             found = True
         except DBNotFoundError:
-            sleep(1)
+            print "Sleeping"
+            sleep(float(options.interval))
+            found = False
 else:
     try:    
         checker = CylcSuiteDBChecker(options.run_dir, suite)
     except DBNotFoundError:
-        print "db not found!"
-        sys.exit(1)
+        found = False
+
+if not found:
+    print "db not found!"
+    sys.exit(1)
+
+print "past found"
 
 if options.status and options.task and options.cycle:
     res = checker.task_state_met(options.task, options.cycle, options.status)
     if options.wait:
-        if options.timeout:
-            try:
-                max_count=int(options.timeout)
-            except:
-                sys.exit(1) #return usage                
-        else:
-            max_count = float("inf")
-        counter = 0
-        while (counter < max_count) and not res:
-            sleep(1)
-            counter += 1
+        while ((time() - starttime) < wait) and not res:
             res = checker.task_state_met(options.task, options.cycle, options.status)
-
+            if not res:
+                sleep(float(options.interval))
     sys.exit(not res)
 else:
     checker.display_maps(checker.suite_state_query(task=options.task, cycle=options.cycle, status=options.status))
