@@ -370,7 +370,12 @@ class config( CylcConfigObj ):
                 self.parents[name] = []
                 continue
             if 'inherit' in self['runtime'][name]:
-                pts = self['runtime'][name]['inherit']
+                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
+                i = self['runtime'][name]['inherit'] 
+                if not isinstance( i, list ):
+                    pts = [i]
+                else:
+                    pts = i
             else:
                 # implicit inheritance from root
                 pts = [ 'root' ]
