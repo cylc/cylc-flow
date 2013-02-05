@@ -316,6 +316,8 @@ class scheduler(object):
         n = queue.qsize()
         if n > 0:
             print 'Actioning', n, 'queued commands'
+        else:
+            return
         while queue.qsize() > 0:
             name, args = queue.get()
             try:
@@ -326,9 +328,7 @@ class scheduler(object):
             else:
                 self.log.info( 'Actioned queued command: ' + name + '(' + ','.join( [str(a) for a in args ]) + ')' )
             queue.task_done()
-
-        # To Do: incremental state summary update after each command?
-        self.update_state_summary()
+            # each command stimulates a state summary update if necessary
 
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
