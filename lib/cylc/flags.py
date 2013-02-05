@@ -16,8 +16,15 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""A few global flags used in cylc"""
+"""Some global flags used in cylc"""
 
-pflag = False  # True => do scheduling algorithm
-iflag = False  # True => update summary information
+# Set pflag = True to stimulate task dependency negotiation whenever a
+# task changes state in such a way that others could be affected. The
+# flag should only be turned off again after use in scheduler.py, to
+# ensure that dependency negotation occurs when required.
+pflag = False 
+
+# Set iflag = True to simulate an update of the suite state summary
+# structure accessed by gcylc and commands.
+iflag = False
 
