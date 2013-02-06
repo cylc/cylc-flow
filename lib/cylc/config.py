@@ -390,7 +390,6 @@ class config( CylcConfigObj ):
             self.single_parents[name] = [ pts[0] ]
 
         c3 = C3( self.parents )
-        print self.single_parents
         c3_single = C3( self.single_parents )
 
         for name in self['runtime']:
@@ -1349,10 +1348,14 @@ class config( CylcConfigObj ):
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
         actual edges for a concrete range of cycle times."""
+        members = self.single_members
+        hierarchy = self.single_family_hierarchy
+        #members = self.members
+        #hierarchy = self.family_hierarchy
 
         if group_all:
             # Group all family nodes
-            for fam in self.members:
+            for fam in members:
                 #if fam != 'root':
                 if fam not in self.closed_families:
                     self.closed_families.append( fam )
@@ -1363,7 +1366,7 @@ class config( CylcConfigObj ):
             # Group chosen family nodes
             for node in group_nodes:
                 if node != 'root':
-                    parent = self.family_hierarchy[node][1]
+                    parent = hierarchy[node][1]
                     if parent not in self.closed_families:
                         self.closed_families.append( parent )
         elif len(ungroup_nodes) > 0:
@@ -1373,7 +1376,7 @@ class config( CylcConfigObj ):
                     self.closed_families.remove(node)
                 if ungroup_recursive:
                     for fam in copy(self.closed_families):
-                        if fam in self.members[node]:
+                        if fam in members[node]:
                             self.closed_families.remove(fam)
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
@@ -1507,6 +1510,9 @@ class config( CylcConfigObj ):
         # the right of the formatted-name base graph).
         formatted=False
 
+        members = self.single_members
+        #members = self.members
+
         lname, ltag = None, None
         rname, rtag = None, None
         nr, nl = None, None
@@ -1525,21 +1531,21 @@ class config( CylcConfigObj ):
         clf = copy( self.closed_families )
         for i in self.closed_families:
             for j in self.closed_families:
-                if i in self.members[j]:
+                if i in members[j]:
                     # i is a member of j
                     if i in clf:
                         clf.remove( i )
 
         for fam in clf:
-            if lname in self.members[fam] and rname in self.members[fam]:
+            if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
                 nl,nr = fam + '%'+ltag, fam + '%'+rtag
                 break
-            elif lname in self.members[fam]:
+            elif lname in members[fam]:
                 # l is a member of fam
                 nl = fam + '%'+ltag
-            elif rname in self.members[fam]:
+            elif rname in members[fam]:
                 # r is a member of fam
                 nr = fam + '%'+rtag
 
