@@ -204,7 +204,7 @@ done""")
 {
     echo "CYLC_JOB_PID=$$"
     date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
-} >>$CYLC_TASK_LOG_ROOT.status
+} >$CYLC_TASK_LOG_ROOT.status
 cylc task started""" )
 
     def write_work_directory_create( self ):
