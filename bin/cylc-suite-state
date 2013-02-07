@@ -18,6 +18,9 @@
 
 import sys
 from time import sleep, time
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
@@ -44,7 +47,7 @@ parser.add_option( "-c", "--cycle",
         action="store", dest="cycle", default=None )
 
 parser.add_option( "-d", "--run-dir", 
-        help="Specify the cycle to check task states for.",
+        help="Specify the run directory for the suite being queried.",
         action="store", dest="run_dir", default=default_run_dir )
 
 parser.add_option( "-S", "--status", 
@@ -91,14 +94,13 @@ if options.wait:
 else:
     try:    
         checker = CylcSuiteDBChecker(options.run_dir, suite)
+        found = True
     except DBNotFoundError:
         found = False
 
 if not found:
     print "db not found!"
     sys.exit(1)
-
-print "past found"
 
 if options.status and options.task and options.cycle:
     res = checker.task_state_met(options.task, options.cycle, options.status)
