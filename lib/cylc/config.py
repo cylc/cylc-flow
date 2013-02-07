@@ -295,8 +295,10 @@ class config( CylcConfigObj ):
         self.compute_runahead_limit()
 
         self.family_tree = {}
+        self.single_family_tree = {}
         self.task_runtimes = {}
         self.define_inheritance_tree( self.family_tree, self.family_hierarchy )
+        self.define_inheritance_tree( self.single_family_tree, self.single_family_hierarchy )
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.configure_queues()
@@ -707,23 +709,30 @@ class config( CylcConfigObj ):
             ###print task + padding[ len(task): ] + dline1
             print task
 
-    def print_inheritance_tree( self, filter=None, labels=None, pretty=False ):
+    def print_inheritance_tree( self, filter=None, labels=None, pretty=False, multi=False ):
         # determine padding for alignment of task titles
+        if multi:
+            family_hierarchy = self.family_hierarchy
+            family_tree = self.family_tree
+        else:
+            family_hierarchy = self.single_family_hierarchy
+            family_tree = self.single_family_tree
+
         if filter:
             trt = {}
             ft = {}
             fh = {}
-            for item in self.family_hierarchy:
+            for item in family_hierarchy:
                 if item not in self.task_runtimes:
                     continue
                 if not re.search( filter, item ):
                     continue
-                fh[item] = self.family_hierarchy[item]
+                fh[item] = family_hierarchy[item]
             self.define_inheritance_tree( ft, fh )
             self.prune_inheritance_tree( ft, trt )
         else:
-            fh = self.family_hierarchy
-            ft = self.family_tree
+            fh = family_hierarchy
+            ft = family_tree
 
         maxlen = 0
         for rt in fh:
