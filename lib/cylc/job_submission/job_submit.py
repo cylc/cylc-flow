@@ -30,7 +30,7 @@ import pwd, sys, os
 import stat
 from jobfile import jobfile
 import socket
-import subprocess
+from subprocess import Popen, PIPE
 from cylc.owner import user
 
 class job_submit(object):
@@ -199,11 +199,10 @@ class job_submit(object):
             return None
 
         if self.local:
-            stdin = None
             command = self.command
         else:
-            stdin = subprocess.PIPE
-            command = self.__class__.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path, "command": self.command }
+            command = self.__class__.REMOTE_COMMAND_TEMPLATE % {
+                    "jobfile_path": self.jobfile_path, "command": self.command}
             destination = self.task_owner + "@" + self.remote_host
             command = self.remote_shell_template % destination + command
         # execute the local command to submit the job
@@ -218,7 +217,7 @@ class job_submit(object):
         print 'SUBMISSION:', command
 
         try:
-            popen = subprocess.Popen( command, shell=True )
+            popen = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
             # To test sequential job submission (pre cylc-4.5.1)
             # uncomment the following line (this tie cylc up for a while
             # in the event of submitting many ensemble tasks at once):
