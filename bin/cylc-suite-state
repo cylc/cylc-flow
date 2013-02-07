@@ -30,13 +30,26 @@ from cylc.global_config import globalcfg
 gcfg = globalcfg()
 default_run_dir = gcfg.cfg['task hosts']['local']['run directory']
 
-parser = cop( usage = """cylc suite-state [OPTIONS]
+parser = cop( usage = """cylc suite-state REG [OPTIONS]
 
-cylc suite-state SUITE --task= --cycle= --run-dir= --status=
+Print task states retrieved from a suite database. Can be used to query if a 
+task in a suite has reached a particular state by using the task, cycle and 
+status options.
 
-Print task states retrieved from a suite database.
+Example usage:
 
-""" )
+cylc suite-state REG --task=TASK --cycle=CYCLE --run-dir=CYLC-RUN --status=STATUS
+
+Returns 0 if task TASK at cycle CYCLE has reached status STATUS, 1 otherwise.
+
+The command can be run in polling mode by specifying a wait time in seconds 
+using the --wait option. 
+""")
+
+parser.remove_option("-s")
+parser.remove_option("--db")
+parser.remove_option("--set-file")
+parser.remove_option("--debug")
 
 parser.add_option( "-t", "--task", 
         help="Specify a task to check the state of.",
@@ -59,7 +72,7 @@ parser.add_option( "-w", "--wait",
         action="store", dest="wait", default=False )
 
 parser.add_option( "-i", "--interval",
-        help="Specify a polling interval for use when in wait mode (default=5).",
+        help="Specify a polling interval (in seconds) for use when in wait mode (default=5).",
         action="store", dest="interval", default=5 )
 
 ( options, args ) = parser.parse_args()
@@ -68,30 +81,34 @@ suite = args[0]
 
 starttime = time()
 
+"""check wait is a number"""
 try:
     wait = float(options.wait)
 except:
-    print "wait must be a number"
+    sys.stderr.write("wait must be a number\n")
     sys.exit(1)
 
+"""check interval is a number"""
 try:
     float(options.interval)
 except:
-    print "interval must be a number"
+    sys.stderr.write("interval must be a number\n")
     sys.exit(1)
 
 if options.wait:
+    """polling mode"""
     found = False
     while not found and ((time() - starttime) < wait):
         try:
-            print "Checking"
             checker = CylcSuiteDBChecker(options.run_dir, suite)
             found = True
         except DBNotFoundError:
-            print "Sleeping"
+            if options.verbose:
+                sys.stdout.write("cannot connect to suite database, retrying...\n")
             sleep(float(options.interval))
             found = False
 else:
+    """one off mode"""
     try:    
         checker = CylcSuiteDBChecker(options.run_dir, suite)
         found = True
@@ -99,10 +116,11 @@ else:
         found = False
 
 if not found:
-    print "db not found!"
+    sys.stderr.write("suite db not found!\n")
     sys.exit(1)
 
 if options.status and options.task and options.cycle:
+    """checking a task status"""
     res = checker.task_state_met(options.task, options.cycle, options.status)
     if options.wait:
         while ((time() - starttime) < wait) and not res:
@@ -111,6 +129,7 @@ if options.status and options.task and options.cycle:
                 sleep(float(options.interval))
     sys.exit(not res)
 else:
+    """displaying query results"""
     checker.display_maps(checker.suite_state_query(task=options.task, cycle=options.cycle, status=options.status))
 
 

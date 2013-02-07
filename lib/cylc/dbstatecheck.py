@@ -18,6 +18,7 @@
 
 import os
 import sqlite3
+import sys
 
 
 class DBNotFoundError(Exception):
@@ -49,7 +50,7 @@ class CylcSuiteDBChecker(object):
 
     def display_maps(self, res):
         for row in res:
-            print row
+            sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
             
     def state_lookup(self, state): #allows for multiple states to be searched via a status alias
         if self.STATE_ALIASES.has_key(state):
@@ -58,6 +59,7 @@ class CylcSuiteDBChecker(object):
             return state
             
     def suite_state_query(self, task=None, cycle=None, status=None, mask=None):
+        """run a query on the suite database"""
         vals = []
         additionals = []
         res = []
@@ -85,11 +87,16 @@ class CylcSuiteDBChecker(object):
             q = q_base + " where " + (" AND ").join(additionals)
         else:
             q = q_base
-        self.c.execute(q,vals)
-        next = self.c.fetchmany()
-        while next:
-            res.append(next[0])
+        
+        try:
+            self.c.execute(q,vals)
             next = self.c.fetchmany()
+            while next:
+                res.append(next[0])
+                next = self.c.fetchmany()
+        except:
+            sys.stderr.write("unable to query suite database\n")
+            sys.exit(1)
             
         return res
 
