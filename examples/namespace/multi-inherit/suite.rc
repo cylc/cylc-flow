@@ -1,46 +1,55 @@
 
-title = "multiple inheritance demo suite"
+title = "multiple inheritance example suite"
 
-description = """
-Demonstrates multiple inheritance. Tasks foo and bar both inherit from
-namespaces a and b, but with different precedence order.
+description = """Multiple inheritance example suite.
 
 To view the inheritance tree:
- cylc list -tb demo  # assuming you've registered this suite as 'demo'
- cylc graph -n demo
+ cylc list -tb[m] SUITE
+ cylc graph -n SUITE
 
-Note that in 'cylc graph demo' and the gcylc graph view, collapsing foo
-groups foo and bar under a, and collapsing bar groups foo and bar under b.
-I think this is the expected/correct behaviour..."""
+In dependency graphs ("cylc graph SUITE" and "gcylc -w graph SUITE") the
+node family grouping is based on first-parent single-inheritance. 
+
+RESULT:
+
+% cylc get-config --sparse --item [runtime]ops_s1 SUITE
+command scripting = run-ops.sh
+inherit = ['OPS', 'SERIAL']
+[directives]
+   job_type = serial
+
+% cylc get-config --sparse --item [runtime]var_p2 foo
+command scripting = run-var.sh
+inherit = ['VAR', 'PARALLEL']
+[directives]
+   job_type = parallel
+"""
 
 [scheduling]
     [[dependencies]]
-        graph = "go => a"
+        graph = "OPS:finish-all => VAR"
 
 [runtime]
     [[root]]
-        [[[environment]]]
-            ROOT = root
-    [[go]]
-    [[a]] 
-        [[[environment]]]
-            A = a
-            FOO = a
-    [[b]]
-        [[[environment]]]
-            B = b
-            FOO = b
-    [[foo]]
-        inherit = a, b
-        command scripting = """
-echo "ROOT is $ROOT"
-echo "A B is $A $B"
-echo "FOO is $FOO"
-"""
-    [[bar]]
-        inherit = b, a
-        command scripting = """
-echo "A B is $A $B"
-echo "FOO is $FOO"
-"""
+    [[OPS]]
+        command scripting = run-ops.sh
+    [[VAR]]
+        command scripting = run-var.sh
+    [[SERIAL]]
+        [[[directives]]]
+            job_type = serial
+    [[PARALLEL]]
+        [[[directives]]]
+            job_type = parallel
+    [[ops_s1, ops_s2]]
+        inherit = OPS, SERIAL
+
+    [[ops_p1, ops_p2]]
+        inherit = OPS, PARALLEL
+        
+    [[var_s1, var_s2]]
+        inherit = VAR, SERIAL
+
+    [[var_p1, var_p2]]
+        inherit = VAR, PARALLEL
 
