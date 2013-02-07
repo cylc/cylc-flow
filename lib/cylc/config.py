@@ -420,14 +420,11 @@ class config( CylcConfigObj ):
         expanding again after, to allow copy-and-override of shallow
         rather than nested dicts, but got no appreciable speedup."""
 
-        # TODO: make this efficient by not re-doing inheritance for MRO
-        # chains already computed, as per single-inheritance cylc. It's
-        # more difficult here as the MRO can be different for different
-        # tasks.
-
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
+        computed_already = {}
+        
         for label in self['runtime']:
             if label == 'root':
                 continue
@@ -444,18 +441,39 @@ class config( CylcConfigObj ):
             hierarchy = copy(self.family_hierarchy[label])
             hierarchy.reverse()
 
-            prev = 0
-            taskconf = OrderedDict()
+            rtns = OrderedDict()
+
+            mro = []
+            prev = None
+
+            ##print
+            ##print 'IN:', label, hierarchy
             for name in hierarchy:
-                #print label, ': replicating', name
-                replicate( taskconf, self['runtime'][name].odict())
+                mro.append( name )
+                i_mro = '*'.join( mro )
+                ##print 'MRO', i_mro
+                if i_mro in computed_already:
+                    rtns = computed_already[i_mro]
+                else:
+                    ##print 'INHERIT:',
+                    ##if len(mro) > 1:
+                    ##    print mro[:-1], mro[-1]
+                    ##else:
+                    ##    print mro[0]
 
-            # TODO: the single inheritance implementation noted (not needed now?):
-            ## (we have to do a final replicate and replace here to
-            ##  get the ordering of inherited variables right.)
-            ##replicate( taskconf, self['runtime'][label].odict() )
+                    # deep copy rtns (so not to modify computed_already)
+                    tmp = OrderedDict()
+                    replicate( tmp, rtns)
+                    # override tmp with [runtime][name]
+                    replicate( tmp, self['runtime'][name].odict())
+                    # store result for re-use
+                    computed_already[i_mro] = tmp
+                    # store for next loop
+                    rtns = tmp
+                prev = name
 
-            self['runtime'][label] = taskconf
+            self['runtime'][label] = rtns
+            ##print 'OUT:', label, taskconf.items()
 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
