@@ -391,7 +391,7 @@ class MyDotWindow( xdot.DotWindow ):
 
     def get_graph( self, group_nodes=[], ungroup_nodes=[], 
             ungroup_recursive=False, ungroup_all=False, group_all=False ):
-        family_nodes = self.suiterc.members.keys()
+        family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.families_used_in_graph
 
         if self.ctime != None and self.stop_after != None:

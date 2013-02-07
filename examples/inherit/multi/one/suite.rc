@@ -32,9 +32,9 @@ inherit = ['VAR', 'PARALLEL']
 [runtime]
     [[root]]
     [[OPS]]
-        command scripting = run-ops.sh
+        command scripting = echo "RUN: run-ops.sh"
     [[VAR]]
-        command scripting = run-var.sh
+        command scripting = echo "RUN: run-var.sh"
     [[SERIAL]]
         [[[directives]]]
             job_type = serial
