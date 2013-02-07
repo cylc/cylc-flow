@@ -34,7 +34,7 @@ from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 from cylc.owner import user
 from cylc.suite_host import hostname as suite_hostname
 import logging
@@ -146,7 +146,6 @@ class task( object ):
         self.message_queue = msgqueue()
         self.db_queue = []
 
-        gcfg = globalcfg()
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
         self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
@@ -520,8 +519,6 @@ class task( object ):
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
 
-        gcfg = globalcfg()
-
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
 
@@ -623,7 +620,7 @@ class task( object ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            return p
+            return (p, launcher)
 
     def check_submission_timeout( self ):
         handler = self.event_handlers['submission timeout']
@@ -715,17 +712,16 @@ class task( object ):
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
+
+        # always update the suite state summary for latest message
+        flags.iflag = True
+
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
         self.latest_message = message
         self.latest_message_priority = priority
-
-        # Set this to stimulate task processing
-        flags.pflag = True
-        # Set this to stimulate suite state summary update even if not task processing.
-        flags.iflag = False
 
         # Handle warning events
         handler = self.event_handlers['warning']
@@ -739,16 +735,23 @@ class task( object ):
 
         if message == self.id + ' started':
             # Received a 'task started' message
+            flags.pflag = True
             self.set_running()
 
         elif message == self.id + ' submitted':
             # (a faked task message from the job submission thread)
             self.set_submitted()
 
+        elif message.startswith(self.id + ' submit_method_id='):
+            submit_method_id = message[len(self.id + ' submit_method_id='):]
+            self.record_db_update("task_states", self.name, self.c_time,
+                                  submit_method_id=submit_method_id)
+
         if message == self.id + ' failed':
             # (note not 'elif' here as started messages must go through
             # the elif block below)
             # Received a 'task failed' message
+            flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
@@ -781,6 +784,7 @@ class task( object ):
             # Received a registered internal output message
             # (this includes 'task succeeded')
             if not self.outputs.is_completed( message ):
+                flags.pflag = True
                 self.log( priority,  message )
                 self.outputs.set_completed( message )
                 if message == self.id + ' succeeded':
@@ -799,14 +803,10 @@ class task( object ):
                 # Currently this is treated as an error condition
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
-                flags.pflag = False
-
         else:
             # A general unregistered progress message: log with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-            flags.iflag = True
-            flags.pflag = False
 
     def update( self, reqs ):
         for req in reqs.get_list():

@@ -39,7 +39,7 @@ these to drive global sea state and regional data assimilating weather
 models, which in turn drive regional sea state, storm surge, and
 catchment river models, plus tide prediction, and a large number of
 associated data collection, quality control, preprocessing,
-postprocessing, product generation, and archiving tasks.\footnote{Future
+post-processing, product generation, and archiving tasks.\footnote{Future
 plans for EcoConnect include additional deterministic regional weather
 forecasts and a statistical ensemble.} The global sea state forecast
 runs once daily. The regional weather forecast runs four times daily but
@@ -47,13 +47,13 @@ it supplies surface winds and pressure to several downstream models that
 run only twice daily, and precipitation accumulations to catchment river
 models that run on an hourly cycle assimilating real time stream flow
 observations and using the most recently available regional weather
-forecast.  EcoConnect runs on heterogenous distributed hardware,
+forecast.  EcoConnect runs on heterogeneous distributed hardware,
 including a massively parallel supercomputer and several Linux servers. 
 
 
 \subsection{Dependence Between Tasks}
 
-\subsubsection{Intracycle Dependence} 
+\subsubsection{Intra-cycle Dependence} 
 \label{IntracycleDependence}
 
 Most inter-task dependence exist within a single forecast cycle.
@@ -68,7 +68,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{graphics/png/dep-one-cycle.png} 
+        \includegraphics[width=6cm]{graphics/png/orig/dep-one-cycle.png} 
     \end{center}
     \caption[A single cycle dependency graph for a simple suite]{\scriptsize
     The dependency graph for a single forecast cycle of a simple example
@@ -81,7 +81,7 @@ upstream tasks.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{graphics/png/timeline-one.png}
+        \includegraphics[width=8cm]{graphics/png/orig/timeline-one.png}
     \end{center}
     \caption[A single cycle job schedule for real time operation]{\scriptsize
     The optimal job schedule for two consecutive cycles of our example
@@ -103,7 +103,7 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=10cm]{graphics/png/dep-two-cycles-linked.png} 
+        \includegraphics[width=10cm]{graphics/png/orig/dep-two-cycles-linked.png} 
     \end{center}
     \caption[What if the external driving data is available early?]{\scriptsize If
     the external driving data is available in advance, can we start
@@ -113,9 +113,9 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{graphics/png/timeline-one-c.png} 
+        \includegraphics[width=6cm]{graphics/png/orig/timeline-one-c.png} 
     \end{center}
-    \caption[Attempted overlap of consective single-cycle job
+    \caption[Attempted overlap of consecutive single-cycle job
     schedules]{\scriptsize A naive attempt to overlap two consecutive cycles
     using the single-cycle dependency graph. The red shaded tasks will
     fail because of dependency violations (or will not be able to run
@@ -125,10 +125,10 @@ diagrams.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{graphics/png/timeline-one-a.png} 
+        \includegraphics[width=8cm]{graphics/png/orig/timeline-one-a.png} 
     \end{center}
-    \caption[The only safe multicycle job schedule?]{\scriptsize The best
-    that can be done {\em in general} when intercycle dependence is
+    \caption[The only safe multi-cycle job schedule?]{\scriptsize The best
+    that can be done {\em in general} when inter-cycle dependence is
     ignored.} 
     \label{fig-job-no-overlap}
 \end{figure} 
@@ -148,10 +148,10 @@ dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation is even worse than this
 - imagine that task {\em b} in the first cycle is delayed for any reason
 {\em after} the second cycle has been launched? Clearly we must consider
-handling intercycle dependence explicitly or else agree not to start
+handling inter-cycle dependence explicitly or else agree not to start
 the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 
-\subsubsection{Intercycle Dependence} 
+\subsubsection{Inter-cycle Dependence} 
 \label{IntercycleDependence}
 
 Forecast models typically depend on their own most recent previous
@@ -160,18 +160,18 @@ different types of tasks in different forecast cycles can also be linked
 (in an atmospheric forecast analysis suite, for instance, the weather
 model may also generate background states for use by the observation
 processing and data-assimilation systems in the next cycle). In real
-time operation this intercycle dependence can be ignored because it is
+time operation this inter-cycle dependence can be ignored because it is
 automatically satisfied when each cycle finishes before the next one
 begins. If, on the other hand, it is explicitly accounted for, it 
 complicates the dependency graph by destroying the clean boundary
 between forecast cycles. Figure~\ref{fig-dep-multi} illustrates the
-problem for our simple example suite assuming the minimal intercycle
+problem for our simple example suite assuming the minimal inter-cycle
 dependence: the forecast models ($a$, $b$, and $c$) each depend on their
 own previous instances.
 
 For this reason, and perhaps because we tend to see forecasting suites
-as inheritently sequential (with respect to whole forecast cycles)
-other metaschedulers ignore intercycle dependence and therefore {\em
+as inherently sequential (with respect to whole forecast cycles)
+other metaschedulers ignore inter-cycle dependence and therefore {\em
 require} a series of distinct cycles at all times. While this does not
 affect normal real time operation it can be a serious impediment when
 advance availability of external driving data makes it possible, in
@@ -183,7 +183,7 @@ and, to an even greater extent, in historical case studies, and parallel
 test suites that are delayed with respect to the main operation. It is
 a serious problem, in particular, for suites that have little downtime
 between forecast cycles and therefore take many cycles to catch up
-after a delay. Without taking account of intercycle dependence, the
+after a delay. Without taking account of inter-cycle dependence, the
 best that can be done, in general, is to reduce the gap between cycles
 to zero as shown in Figure~\ref{fig-job-no-overlap}. A limited crude
 overlap of the single cycle job schedule may be possible for specific
@@ -196,11 +196,11 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{graphics/png/dep-multi-cycle.png} 
+        \includegraphics[width=8cm]{graphics/png/orig/dep-multi-cycle.png} 
     \end{center}
-    \caption[The complete multicycle dependency graph]{\scriptsize The complete
+    \caption[The complete multi-cycle dependency graph]{\scriptsize The complete
     dependency graph for the example suite, assuming the least possible
-    intercycle dependence: the forecast models ($a$, $b$, and $c$)
+    inter-cycle dependence: the forecast models ($a$, $b$, and $c$)
     depend on their own previous instances. The dashed arrows show
     connections to previous and subsequent forecast cycles.} 
     \label{fig-dep-multi}
@@ -208,32 +208,32 @@ failures) won't result in dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=6cm]{graphics/png/timeline-two-cycles-optimal.png} 
+        \includegraphics[width=6cm]{graphics/png/orig/timeline-two-cycles-optimal.png} 
     \end{center}
     \caption[The optimal two-cycle job schedule]{\scriptsize The optimal two
     cycle job schedule when the next cycle's driving data is available in
-    advance, possible in principle when intercycle dependence is
+    advance, possible in principle when inter-cycle dependence is
     handled explicitly.} 
     \label{fig-optimal-two}
 \end{figure} 
 
 Figure~\ref{fig-optimal-two} shows, in contrast to
 Figure~\ref{fig-overlap}, the optimal two cycle job schedule obtained by
-respecting all intercycle dependence.  This assumes no delays due to
+respecting all inter-cycle dependence.  This assumes no delays due to
 resource contention or otherwise - i.e.\ every task runs
 as soon as it is ready to run. The scheduler running
 this suite must be able to adapt dynamically to external conditions 
-that impact on multicycle scheduling in the presence of
-intercycle dependence or else, again, risk bringing the system down
+that impact on multi-cycle scheduling in the presence of
+inter-cycle dependence or else, again, risk bringing the system down
 with dependency violations.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=12cm]{graphics/png/timeline-three.png} 
+        \includegraphics[width=12cm]{graphics/png/orig/timeline-three.png} 
     \end{center}
     \caption[Comparison of job schedules after a delay]{\scriptsize Job
     schedules for the example suite after a delay of almost one whole
-    forecast cycle, when intercycle dependence is
+    forecast cycle, when inter-cycle dependence is
     taken into account (above the time axis), and when it is not
     (below the time axis). The colored lines indicate the time that
     each cycle is delayed, and normal ``caught up'' cycles
@@ -243,7 +243,7 @@ with dependency violations.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{graphics/png/timeline-two.png}
+        \includegraphics[width=8cm]{graphics/png/orig/timeline-two.png}
     \end{center} 
     \caption[Optimal job schedule when all external data is
     available]{\scriptsize Job schedules for the example suite in case study
@@ -251,16 +251,16 @@ with dependency violations.
     available many cycles in advance. Above the time axis is the optimal
     schedule obtained when the suite is constrained only by its true
     dependencies, as in Figure \ref{fig-dep-two-linked}, and underneath
-    is the best that can be done, in general, when intercycle
+    is the best that can be done, in general, when inter-cycle
     dependence is ignored.} 
     \label{fig-time-two}
 \end{figure} 
 
-To further illustrate the potential benefits of proper intercycle
+To further illustrate the potential benefits of proper inter-cycle
 dependency handling, Figure~\ref{fig-time-three} shows an operational
 delay of almost one whole cycle in a suite with little downtime between
 cycles. Above the time axis is the optimal schedule that is possible in
-principle when intercycle dependence is taken into account, and below it
+principle when inter-cycle dependence is taken into account, and below it
 is the only safe schedule possible {\em in general} when it is ignored.
 In the former case, even the cycle immediately after the delay
 is hardly affected, and subsequent cycles are all on time, whilst in the
@@ -275,10 +275,10 @@ for an historical case study, or when catching up after a very long
 delay; i.e.\ when the external driving data are available many cycles in
 advance.  Task {\em a}, which as the most upstream forecast model is
 likely to be a resource intensive atmosphere or ocean model, has no
-upstream dependence on cotemporal tasks and can therefore run
+upstream dependence on co-temporal tasks and can therefore run
 continuously, regardless of how much downstream processing is yet to be
 completed in its own, or any previous, forecast cycle (actually, task
-{\em a} does depend on cotemporal task {\em x} which waits on the
+{\em a} does depend on co-temporal task {\em x} which waits on the
 external driving data, but that returns immediately when the external
 data is available in advance, so the result stands). The other forecast
 models can also cycle continuously or with short gap between, and some
@@ -302,10 +302,10 @@ even more efficient job schedule.
 
 \begin{figure}
     \begin{center} 
-        \includegraphics[width=8cm]{graphics/png/task-pool.png}
+        \includegraphics[width=8cm]{graphics/png/orig/task-pool.png}
     \end{center} 
     \caption[The cylc task pool]{\scriptsize How cylc sees a suite, in
-    contrast to the multicycle dependency graph of Figure~\ref{fig-dep-multi}.
+    contrast to the multi-cycle dependency graph of Figure~\ref{fig-dep-multi}.
     Task colors represent different cycle times, and the small squares
     and circles represent different prerequisites and outputs. A task
     can run when its prerequisites are satisfied by the outputs 
@@ -320,7 +320,7 @@ of completed outputs from the real task as it runs. There is no global
 cycling mechanism to advance the suite in time; instead each individual
 task proxy has a private cycle time and spawns its own successor. Task
 proxies are self-contained - they just know their own prerequisites and
-outputs and are not aware of the wider suite context. Intercycle
+outputs and are not aware of the wider suite context. Inter-cycle
 dependencies are not treated as special, and the task pool can be
 populated with tasks from many different cycle times. 
 The cylc task pool is illustrated in Figure~\ref{fig-task-pool}. Now,
@@ -336,7 +336,7 @@ intra-cycle dependence is handled with ease.
 
 Thus without using global cycling mechanisms, and treating all
 inter-task dependence equally, cylc in effect gets a pool of tasks to
-self-organise by negotiating their own dependencies so that optimal
+self-organize by negotiating their own dependencies so that optimal
 scheduling, as described in the previous section, emerges naturally at
 run time.
 
@@ -345,7 +345,7 @@ run time.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=1.0\textwidth]{graphics/png/dbviewer.png}
+        \includegraphics[width=1.0\textwidth]{graphics/png/orig/dbviewer.png}
     \end{center}
 \caption[The cylc dbviewer GUI]{\scriptsize
 The cylc dbviewer GUI, showing one suite running on port 7766.}
@@ -354,7 +354,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[height=0.35\textheight]{graphics/png/suiterc-jinja2.png}]
+        \includegraphics[height=0.35\textheight]{graphics/png/orig/suiterc-jinja2.png}]
     \end{center}
     \caption[A cylc suite definition in the {\em vim} editor]{\scriptsize
     A cylc suite definition in the {\em vim} editor.}
@@ -363,7 +363,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/control1.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/control1.png}
     \end{center}
 \caption[gcylc dot and text views]{\scriptsize gcylc dot and text views.}
 \label{fig-control1}
@@ -371,7 +371,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/control2.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/control2.png}
     \end{center}
 \caption[gcylc graph and text views]{\scriptsize gcylc graph and text views.}
 \label{fig-control2}
@@ -379,7 +379,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/ecox-1.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/ecox-1.png}
     \end{center}
 \caption[A large suite graphed by cylc]{\scriptsize A large suite graphed by cylc.}
 \label{fig-ecox-1}
@@ -410,7 +410,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
         for network communication between server processes (cylc suites)
         and client programs (running tasks, control GUIs and commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
-    \item {\bf sqlite (a serverless, zero-configuration, SQL database
+    \item {\bf sqlite (a server-less, zero-configuration, SQL database
         engine}). This is likely included in your Linux distribution
         already. Cylc generates an sqlite database for each suite as it
         runs, to record task events and status.
@@ -1011,7 +1011,7 @@ whenever you save the file.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{graphics/png/QuickStartA-graph18.png}
+        \includegraphics[width=0.7\textwidth]{graphics/png/orig/QuickStartA-graph18.png}
     \end{center}
     \caption[The {\em examples.QuickStart.a} dependency
     graph]{\scriptsize The {\em QuickStart.a} dependency graph, plotted
@@ -1057,7 +1057,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/QuickStartA-ControlStart06.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/QuickStartA-ControlStart06.png}
     \end{center}
     \caption[Suite {\em examples.QuickStart.a} at start-up, 06 or 18 hours.]{\scriptsize
     Suite {\em examples.QuickStart:one} at start-up with an initial
@@ -1068,7 +1068,7 @@ Figure~\ref{fig-QuickStartA-ControlStart00}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/QuickStartA-ControlStart00.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/QuickStartA-ControlStart00.png}
     \end{center}
     \caption[Suite {\em examples.QuickStart.a} at start-up, 00 or 12
     hours]{\scriptsize Suite {\em examples.QuickStart.a} at start-up with an
@@ -1098,7 +1098,7 @@ and~\ref{fig-QuickStartA-ControlStalled}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/QuickStartA-ControlRunning.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/QuickStartA-ControlRunning.png}
     \end{center}
     \caption[Suite {\em examples.QuickStart.a} running.]
     {\scriptsize Suite {\em examples.QuickStart.a} running, showing several
@@ -1108,7 +1108,7 @@ and~\ref{fig-QuickStartA-ControlStalled}.
 \end{figure} 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/QuickStartA-ControlStalled.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/QuickStartA-ControlStalled.png}
     \end{center}
     \caption[ Suite {\em examples.QuickStart.a} stalled.]
     {\scriptsize Suite {\em examples.QuickStart.a} stalled after the
@@ -1144,7 +1144,7 @@ Figure~\ref{fig-QuickStartA-ModelState}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.4\textwidth]{graphics/png/QuickStartA-ModelState.png}
+        \includegraphics[width=0.4\textwidth]{graphics/png/orig/QuickStartA-ModelState.png}
     \end{center}
     \caption[Viewing current task state in gcylc]
 {\scriptsize Viewing current task state after right-clicking on a task in gcylc. The
@@ -1218,7 +1218,7 @@ ColdModel[T].
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{graphics/png/QuickStartB-graph18.png}
+        \includegraphics[width=0.7\textwidth]{graphics/png/orig/QuickStartB-graph18.png}
     \end{center}
     \caption[The {\em examples.QuickStart.b} graph with model cold-start task.]{\scriptsize
     The {\em examples.QuickStart.b} dependency graph showing a model cold
@@ -1297,7 +1297,7 @@ you reconnect to the suite with a new control GUI.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{graphics/png/suite-output.png}
+        \includegraphics[width=0.7\textwidth]{graphics/png/orig/suite-output.png}
     \end{center}
 \caption[Cylc suite stdout/stderr example.]{\scriptsize Cylc suite stdout/stderr example.}
 \label{fig-suite-output}
@@ -1311,7 +1311,7 @@ messages from tasks and so on) along with the time of the event.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.7\textwidth]{graphics/png/suite-log.png}
+        \includegraphics[width=0.7\textwidth]{graphics/png/orig/suite-log.png}
     \end{center}
 \caption[ A cylc suite log from the db viewer.]{\scriptsize A cylc suite log from the db viewer.}
 \label{fig-suite-log}
@@ -1894,7 +1894,7 @@ configuration items grouped under several top level section headings:
     \item {\bf [cylc] } - {\em non task-specific suite configuration}
     \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
-            \item tasks with special behaviour, e.g. clock-triggered tasks
+            \item tasks with special behavior, e.g. clock-triggered tasks
             \item the dependency graph, which defines the relationships
                 between tasks
         \end{myitemize}
@@ -2005,7 +2005,7 @@ A[T-6] => A  # Model A restart trigger
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/dep-eg-1.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/dep-eg-1.png}
     \end{center}
 \end{minipage}
 \caption[Example Suite]{\scriptsize Example Suite}
@@ -2206,7 +2206,7 @@ title = some one-off asynchronous tasks
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=0.25\textwidth]{graphics/png/test1.png}
+        \includegraphics[width=0.25\textwidth]{graphics/png/orig/test1.png}
     \end{center}
 \end{minipage}
 \caption[One-off Asynchronous Tasks]{\scriptsize One-off Asynchronous Tasks.}
@@ -2235,7 +2235,7 @@ title = some cycling tasks
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/test2.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/test2.png}
     \end{center}
 \end{minipage}
 \caption[Cycling Tasks]{\scriptsize Cycling Tasks.}
@@ -2355,7 +2355,7 @@ title = one-off async and cycling tasks
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/test4.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/test4.png}
     \end{center}
 \end{minipage}
 \caption[One-off Asynchronous and Cycling Tasks]{\scriptsize One-off
@@ -2385,7 +2385,7 @@ title = one-off start-up and cycling tasks
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/test5.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/test5.png}
     \end{center}
 \end{minipage}
 \caption[One-off Synchronous and Cycling Tasks]{\scriptsize One-off
@@ -2408,7 +2408,7 @@ When the daemon task proxy receives a matching message it dynamically
 registers a new output (containing the ID) that downstream tasks can
 then trigger off. The downstream tasks likewise have prerequisites
 containing the ID pattern (because they trigger off the aforementioned
-outputs) and when these get satisfied during dependency negotation the
+outputs) and when these get satisfied during dependency negotiation the
 actual ID is substituted into their own registered outputs.
 Finally, each asynchronous repeating task proxy passes the ID to its
 task execution environment as
@@ -2450,7 +2450,7 @@ title = a suite of repeating asynchronous tasks
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=0.45\textwidth]{graphics/png/test6.png}
+        \includegraphics[width=0.45\textwidth]{graphics/png/orig/test6.png}
     \end{center}
 \end{minipage}
 \caption[Repeating Asynchronous Tasks]{\scriptsize Repeating Asynchronous Tasks.}
@@ -2647,7 +2647,7 @@ D => W
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{graphics/png/conditional-triggers.png} 
+        \includegraphics[width=0.5\textwidth]{graphics/png/orig/conditional-triggers.png} 
     \end{center}
 \end{minipage}
 \caption[Conditional Triggers] {\scriptsize
@@ -2699,7 +2699,7 @@ model | recover => post
 \hfill
 \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{graphics/png/suicide.png} 
+        \includegraphics[width=0.5\textwidth]{graphics/png/orig/suicide.png} 
     \end{center}
 \end{minipage}
 \caption[Automated failure recovery via suicide triggers] {\scriptsize
@@ -3057,7 +3057,7 @@ cylc utility commands:
 [runtime]
     [[foo]]
         [[[environment]]]
-            REFERENCE_TIME = $( cylc util cycletime --add=6 )
+            REFERENCE_TIME = $( cylc util cycletime --offset-hours=6 )
 \end{lstlisting}
 
 \paragraph{User Environment Variables}
@@ -3074,7 +3074,7 @@ A task's user-defined environment results from its inherited
     [[foo]]
         [[[environment]]]
             COLOR = blue  # root override
-            TEXURE = rough # new variable
+            TEXTURE = rough # new variable
 \end{lstlisting}         
 This results in a task {\em foo} with
 \lstinline@SHAPE=circle@,
@@ -3325,37 +3325,37 @@ root
 \begin{figure}
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/inherit-2.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/inherit-2.png}
     \end{center}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/inherit-3.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/inherit-3.png}
     \end{center}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/inherit-4.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/inherit-4.png}
     \end{center}
 \end{minipage}
 
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/inherit-5.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/inherit-5.png}
     \end{center}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/inherit-6.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/inherit-6.png}
     \end{center}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}
     \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/inherit-7.png}
+        \includegraphics[width=\textwidth]{graphics/png/orig/inherit-7.png}
     \end{center}
 \end{minipage}
 \caption[{\em namespaces} example suite graphs]{\scriptsize Graphs of the {\em
@@ -3403,7 +3403,7 @@ with standard programming techniques.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=10cm]{graphics/png/jinja2-ensemble-graph.png} 
+        \includegraphics[width=10cm]{graphics/png/orig/jinja2-ensemble-graph.png} 
     \end{center}
     \caption[The Jinja2 ensemble example suite graph.]{\scriptsize
     The Jinja2 ensemble example suite graph.}
@@ -3454,7 +3454,7 @@ Figure~\ref{fig-jinja2-cities}.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=16cm]{graphics/png/jinja2-suite-graph.png} 
+        \includegraphics[width=16cm]{graphics/png/orig/jinja2-suite-graph.png} 
     \end{center}
     \caption[Jinja2 cities example suite graph.]{\scriptsize
     The Jinja2 cities example suite graph, with the 
@@ -5426,7 +5426,7 @@ The following topics have yet to be documented in detail.
 \end{myitemize}
 \lstset{language=transcript}
 
-\section{Suite Dicovery, Sharing, And Revision Control}
+\section{Suite Discovery, Sharing, And Revision Control}
 
 Until release 4.2.2 cylc had a ``central suite database'' that users
 could export to and import from, for sharing suites. It was essentially
@@ -5923,7 +5923,7 @@ target suites - all suites are thus entirely isolated from one another.
 %\subsection{Understanding Suite Evolution}
 %\label{UnderstandingSuiteEvolution}
 %
-%On a cold-start all tasks (including one-off tasks) in the sytem will be
+%On a cold-start all tasks (including one-off tasks) in the system will be
 %instantiated at the initial cycle time, or at the next subsequent valid
 %cycle time for the task. Any tasks that have no prerequisites (and, if
 %they are contact tasks, have reached their trigger time) will submit to
@@ -5934,7 +5934,7 @@ target suites - all suites are thus entirely isolated from one another.
 %Thereafter, each task will, of its own accord, submit to run as soon as
 %its prerequisites have been satisfied by other tasks already running or
 %succeeded in the suite (and trigger time etc.).  Each task spawns a
-%successor at a point in its lifecycle that depends on its type: tied
+%successor at a point in its life-cycle that depends on its type: tied
 %tasks spawn has soon as their restart prerequisites have been completed,
 %and free tasks spawn at the instant they start running.  Once a task
 %exists it is free to run as soon as its prerequisites are satisfied,
@@ -6006,7 +6006,7 @@ target suites - all suites are thus entirely isolated from one another.
 %Existing log files are automatically rotated at start-up and,
 %individually, when they reach a size of 10 MB.  This maximum file 
 %size should be configurable, but it is currently hardwired in
-%\lstinline=$CYLC_DIRsrc/pimp_my_logger.py=.
+%\lstinline=$CYLC_DIR/src/pimp_my_logger.py=.
 
 %\subsection{Diagnosing A Stalled Suite}
 %\label{DiagnosingAStalledSuite}
@@ -6097,7 +6097,7 @@ target suites - all suites are thus entirely isolated from one another.
 %    \item {\em An important external task fails, but cannot be fixed.}
 %        In this case, if the task has a lot of downstream dependants,
 %        you will presumably need omit one or more cycles of the affected
-%        tasks, and cold-start their part of the suite at a the earliest
+%        tasks, and cold-start their part of the suite at the earliest
 %        possible subsequent cycle.  To do this, insert the relevant cold
 %        start task, or task group, at the later cycle, then purge the
 %        failed task and everything that depends on it (and on them, and
@@ -6110,7 +6110,7 @@ target suites - all suites are thus entirely isolated from one another.
 %    \item {\em HELP, I attempted a drastic intervention in a complex
 %        suite, using the horrifying purge command, and this time I
 %        really screwed the pooch!} Before any operation that alters the
-%        sytem state, cylc automatically writes out a special state dump
+%        system state, cylc automatically writes out a special state dump
 %        file and reports the filename in the main log. Shut the suite
 %        down and restart it from its pre-intervention state (just
 %        cut-and-paste the state dump filename from the main log file -

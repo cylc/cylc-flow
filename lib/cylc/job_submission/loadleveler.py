@@ -20,11 +20,11 @@ import re
 from job_submit import job_submit
 
 class loadleveler( job_submit ):
-    """
-Loadleveler job submission.
-    """
+
+    """Loadleveler job submission."""
 
     COMMAND_TEMPLATE = "llsubmit %s"
+    REC_ID = re.compile(r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
 
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "# @"
@@ -64,3 +64,9 @@ Loadleveler job submission.
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
 
+    def get_id( self, pid, out, err ):
+        """Parse "out" for the submit ID."""
+        for line in str(out).splitlines():
+            match = self.REC_ID.match(line)
+            if match:
+                return match.group("id")

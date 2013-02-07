@@ -22,7 +22,7 @@ import shutil
 import sqlite3
 from threading import Thread
 from Queue import Queue
-
+from mkdir_p import mkdir_p
 
 class UpdateObject(object):
     """UpdateObject for using in tasks"""
@@ -140,6 +140,12 @@ class CylcRuntimeDAO(object):
         if suite_dir is None:
             suite_dir = os.getcwd()
         self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
+        # create the host directory if necessary
+        try:
+            mkdir_p( suite_dir )
+        except Exception, x:
+            sys.exit( str(x) )
+
         if new_mode:
             if os.path.isdir(self.db_file_name):
                 shutil.rmtree(self.db_file_name)

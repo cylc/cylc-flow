@@ -36,7 +36,7 @@ from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
-from global_config import globalcfg
+from global_config import gcfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
@@ -158,7 +158,7 @@ class scheduler(object):
         self.parse_commandline()
 
         # global config
-        self.globals = globalcfg()
+        self.globals = gcfg
 
         # create task log directory
         self.globals.get_task_log_dir( self.suite, create=True )
@@ -316,6 +316,8 @@ class scheduler(object):
         n = queue.qsize()
         if n > 0:
             print 'Actioning', n, 'queued commands'
+        else:
+            return
         while queue.qsize() > 0:
             name, args = queue.get()
             try:
@@ -326,9 +328,7 @@ class scheduler(object):
             else:
                 self.log.info( 'Actioned queued command: ' + name + '(' + ','.join( [str(a) for a in args ]) + ')' )
             queue.task_done()
-
-        # To Do: incremental state summary update after each command?
-        self.update_state_summary()
+            # each command stimulates a state summary update if necessary
 
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?

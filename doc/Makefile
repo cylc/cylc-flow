@@ -57,11 +57,9 @@ commands.tex: $(cmdx) $(catx) cylc.txt
 	./scripts/make-commands.sh
 
 html/multi/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
-	./scripts/scale-images.sh
 	./scripts/make-html.sh multi
 
 html/single/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
-	./scripts/scale-images.sh
 	./scripts/make-html.sh single
 
 pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex
@@ -75,7 +73,6 @@ clean:
 	commands \
 	categories \
 	commands.tex \
-	graphics/png-scaled \
 	index.html \
 	cylc-version.txt
 

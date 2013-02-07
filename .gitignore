@@ -21,3 +21,6 @@ VERSION
 
 # emacs backup files
 *~
+
+# ordereddict-0.4.5 build 
+ext/ordereddict-0.4.5/build

@@ -39,6 +39,7 @@ from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
+from cylc.global_config import gcfg
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -109,6 +110,8 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
+# create task log directory
+gcfg.get_task_log_dir( suite, create=True )
 
 use_lockserver = False
 if config['cylc']['lockserver']['enable']:

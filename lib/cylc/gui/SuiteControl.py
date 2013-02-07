@@ -397,7 +397,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             return False
         self.theme = self.usercfg['themes'][item.theme_name]
         for view_num in range( 0, len(self.current_views)):
-            self.switch_view( self.current_views[view_num].name, view_num, force=True )
+            if self.current_views[view_num]:
+                # (may be None if the second view pane is turned off)
+                self.switch_view( self.current_views[view_num].name, view_num, force=True )
         self.info_bar.set_theme( self.theme )
         self.info_bar._set_state_widget() # (to update info bar immediately)
         self.set_key_liststore()

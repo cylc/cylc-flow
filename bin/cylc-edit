@@ -25,7 +25,7 @@ import os, re
 import datetime
 from shutil import copy
 import subprocess
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_editing, \
     split_file, backup, backups, newfiles, cleanup, modtimes
@@ -88,7 +88,7 @@ parser.add_option( "--gui", "-g",
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
-globals = globalcfg()
+globals = gcfg
 if options.geditor:
     editor = globals.cfg['editors']['gui']
 else:
