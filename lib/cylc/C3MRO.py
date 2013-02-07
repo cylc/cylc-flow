@@ -106,7 +106,7 @@ class C3( object ):
               nothead=[s for s in nonemptyseqs if cand in s[1:]]
               if nothead: cand=None #reject candidate
               else: break
-          if not cand: raise "Inconsistent hierarchy"
+          if not cand: raise Exception( "ERROR: bad runtime namespace inheritance hierarchy.\nSee the cylc documentation on multiple inheritance." )
           res.append(cand)
           for seq in nonemptyseqs: # remove cand
               if seq[0] == cand: del seq[0]
