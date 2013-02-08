@@ -16,6 +16,8 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#pending">pending</a></li>
+		<li><a href="#5.0.3">5.0.3</a></li>
 		<li><a href="#5.0.2">5.0.2</a></li>
 		<li><a href="#5.0.1">5.0.1</a></li>
 		<li><a href="#5.0.0">5.0.0</a></li>
@@ -29,13 +31,26 @@ Minor changes and routine updates to the user guide may be omitted.
 For usage details relating to a particular change refer to the cylc user
 guide, command help, or post a question to the cylc mailing list. <p>
 
+<a name="pending"/>
+		<h2>pending (in master but not tagged yet)</h2>
+
+<ul>
+		<li>A new command <code>cylc [util] suite-state</code> queries the
+		new suite run databases for task state, and in a polling mode can be
+		used by tasks to wait on tasks in other suites.</li>
+
+		<li>New <b>task job status files</b> in the task job log directory
+		are updated by running tasks. In the future this will allow cylc to
+		determine, on restarting, what happened to running tasks that were
+		orphaned when the suite was down.</li>
+</ul>
+
+
 <a name="5.0.3"/>
 		<h2>5.0.3</h2>
 
 <ul>
 		<li><b>Create many fewer temporary directories.</b></li>
-		</li>
-
 </ul>
 
 <a name="5.0.2"/>
