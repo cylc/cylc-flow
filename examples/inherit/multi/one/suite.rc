@@ -1,29 +1,14 @@
 
-title = "multiple inheritance example suite"
+title = "multiple inheritance example"
 
-description = """Multiple inheritance example suite.
+description = """To see how multiple inheritance works:
 
-To view the inheritance tree:
- cylc list -tb[m] SUITE
- cylc graph -n SUITE
+ % cylc list -tb[m] SUITE # list namespaces
+ % cylc graph -n SUITE # graph namespaces
+ % cylc graph SUITE # dependencies, collapse on first-parent namespaces
 
-In dependency graphs ("cylc graph SUITE" and "gcylc -w graph SUITE") the
-node family grouping is based on first-parent single-inheritance. 
-
-RESULT:
-
-% cylc get-config --sparse --item [runtime]ops_s1 SUITE
-command scripting = run-ops.sh
-inherit = ['OPS', 'SERIAL']
-[directives]
-   job_type = serial
-
-% cylc get-config --sparse --item [runtime]var_p2 foo
-command scripting = run-var.sh
-inherit = ['VAR', 'PARALLEL']
-[directives]
-   job_type = parallel
-"""
+  % cylc get-config --sparse --item [runtime]ops_s1 SUITE
+  % cylc get-config --sparse --item [runtime]var_p2 foo"""
 
 [scheduling]
     [[dependencies]]
