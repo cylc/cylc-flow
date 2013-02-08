@@ -1944,7 +1944,7 @@ this is to allow users to extend cylc with their own job submission
 methods, which are by definition unknown to the suite.rc spec.
 
 
-\subsection{Configuring Scheduling}
+\subsection{Scheduling - Dependency Graphs}
 \label{ConfiguringScheduling}
  
 \lstset{language=suiterc}
@@ -2939,19 +2939,14 @@ not this is worth the effort depends on your needs.
 \end{lstlisting}
 
 
-\subsection{Configuring Task Runtime Properties}
+\subsection{Runtime - Task Configuration}
 \label{NIORP}
 
-The \lstinline=[runtime]= section of the suite.rc file configures what to
-execute (and where and how to execute it) when tasks are ready to run, in 
-{\em namespaces}\footnote{The term is used in loose analogy
-to {\em namespaces} in modern programming languages; potential future
-enhancements to cylc, such as ability to import specific items from
-other namespaces rather than just do wholesale inheritance, may tighten
-the analogy.} that form a {\em multiple inheritance hierarchy}
-culminating in the tasks of the suite. This allows all common
-configuration to factored out into namespaces and inherited
-as required.
+The \lstinline=[runtime]= section of a suite definition configures what
+to execute (and where and how to execute it) when each task is ready to
+run, in a {\em multiple inheritance hierarchy} of {\em
+namespaces} culminating in individual tasks. This allows all common
+configuration detail to be factored out and defined in one place.
 
 Any namespace can configure any or all of the items defined in the
 {\em Suite.rc Reference}, Appendix~\ref{SuiteRCReference}.
@@ -2959,13 +2954,14 @@ Any namespace can configure any or all of the items defined in the
 Namespaces that do not explicitly inherit from others automatically
 inherit from the {\em root} namespace (below).
 
-Nested namespaces also define {\em task families}, consisting of all
-inheriting tasks, that can be used in the graph as a convenient
-shorthand for member trigger expressions - see {\em Family Triggers},
-Section~\ref{FamilyTriggers}.  These namespaces can also be
+Nested namespaces define {\em task families} that can be used in the
+graph as convenient shorthand for triggering all member tasks at once,
+or for triggering other tasks off all members at once - see {\em Family
+Triggers}, Section~\ref{FamilyTriggers}.  Nested namespaces can be
 progressively expanded and collapsed in the dependency graph viewer, and
-in the gcylc graph and tree views. For namespaces with multiple parents
-only the first in the list is used for suite visualization.
+in the gcylc graph and tree views. Only the first parent of each
+namespace (as for single-inheritance) is used for suite visualization
+purposes.
 
 \subsubsection{Namespace Names}
 
@@ -2986,21 +2982,19 @@ can just change its name in the suite definition.
 
 The root namespace, at the base of the inheritance hierarchy,
 provides default configuration for all tasks in the suite. 
-
 Most root items are unset by default, but some have default values
-sufficient to allow simple test suites to be defined by dependency graph
-alone.
+sufficient to allow test suites to be defined by dependency graph alone.
 The {\em command scripting} item, for example, defaults to code that
-prints a simple message then sleeps for between 1 and 15 seconds and
+prints a message then sleeps for between 1 and 15 seconds and
 exits. Default values are documented with each item in
 Appendix~\ref{SuiteRCReference}.  You can override the defaults or
 provide your own defaults by explicitly configuring the root namespace. 
 \subsubsection{Defining Multiple Namespaces At Once}
 \label{MultiTaskDef}
 
-If a namespace section heading contains a comma-separated list of names
-then the configuration in the section applies to each list member. 
-Particular tasks can still be singled out at run time by testing the
+If a namespace section heading is a comma-separated list of names
+then the subsequent configuration applies to each list member. 
+Particular tasks can be singled out at run time using the
 \lstinline=$CYLC_TASK_NAME= variable.
 
 As an example, consider a suite containing an ensemble of closely
@@ -3024,8 +3018,7 @@ automatically generate the member names and associated dependencies
 \subsubsection{Runtime Inheritance - Single}
 
 The following listing of the {\em inherit.single.one} example suite
-illustrates basic runtime inheritance. How it works should be
-reasonable clear by inspection; if not read on.
+illustrates basic runtime inheritance with single parents.
 
 \lstset{language=suiterc}
 \lstinputlisting{../examples/inherit/single/one/suite.rc}
@@ -3050,27 +3043,34 @@ multiple inheritance:
 \lstinputlisting{../examples/inherit/multi/one/suite.rc}
 \lstset{language=transcript}
 
-\subsubsection{How Runtime Inheritance Works}
-
-For each task cylc computes the linear precedence order of its ancestors
-using the C3 algorithm. Then starting at the root namespace each config
-item is added (if new) or overridden until the top level task namespace
-is reached. Sparse data structures that hold just the items explicitly
-defined in the suite definition are used here until the final step in 
-which the full runtime structure is fleshed out by applying root
-namespace defaults wherever no overrides have been found at higher levels.
-
 \lstinline=cylc get-config= provides an easy way to check the result of
 inheritance in a suite. You can extract specific items, e.g.:
 \begin{lstlisting}
-cylc get-config --item=[runtime][foo][environment]FOO SUITE
+% cylc get-config --item '[runtime][var_p2]command scripting' inherit.multi.one
+echo ``RUN: run-var.sh''
 \end{lstlisting}
 or use the \lstinline=--sparse= option to print entire namespaces 
 without obscuring the result with the dense runtime structure obtained 
 from the root namespace: 
 \begin{lstlisting}
-cylc get-config --sparse --item=[runtime][foo] SUITE
+% cylc get-config --sparse --item '[runtime]ops_s1' inherit.multi.one
+command scripting = echo ``RUN: run-ops.sh''
+inherit = ['OPS', 'SERIAL']
+[directives]
+   job_type = serial
 \end{lstlisting}
+
+\subsubsection{How Runtime Inheritance Works}
+
+The linear precedence order of ancestors is computed for each namespace
+using the C3 algorithm. Then any runtime items that are explicitly
+configured in the suite definition are ``inherited'' up the linearized
+hierachy for each task, starting at the root namespace: if a particular
+item is defined at multiple levels in the hiearchy, the level nearest
+the final task namespace takes precedence.  Finally, root namespace
+defaults are applied for every item that has not been configured in the 
+inheritance process (this is more efficient than carrying the full dense
+namespace structure through from root from the beginning).
 
 \subsubsection{Task Execution Environment}
 \label{TaskExecutionEnvironment}
