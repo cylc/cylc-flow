@@ -648,8 +648,9 @@ class lupdater(threading.Thread):
             for families in self.ancestors.values():
                 for name in reversed(families):
                     if name in allowed_names:
-                        if name not in self.task_list:
-                            self.task_list.append( name )
+                        if name not in self.task_list and name in self.families:
+                            # (exclude non first-parent family names)
+                                self.task_list.append( name )
                         break
 
         self.task_list.sort()
