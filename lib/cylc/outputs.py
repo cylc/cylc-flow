@@ -89,9 +89,7 @@ class outputs( object ):
         # Add a new output message
         if message in self.completed or message in self.not_completed:
             # duplicate output messages are an error.
-            print >> sys.stderr, 'ERROR: output already registered: ' + message
-            # TO DO: raise an exception here
-            sys.exit(1)
+            print >> sys.stderr, 'WARNING: output already registered: ' + message
         if not completed:
             self.not_completed[message] = self.owner_id
         else:
