@@ -823,10 +823,11 @@ class scheduler(object):
 
         run_dir = self.globals.cfg['task hosts']['local']['run directory']
 
-        if not self.is_restart:     # create new suite_db file if needed
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite, new_mode=True)
-        else:
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite)
+        if not reconfigure:
+            if not self.is_restart:     # create new suite_db file if needed
+                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite, new_mode=True)
+            else:
+                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite)
 
         self.stop_task = None
 
