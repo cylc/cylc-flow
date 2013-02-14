@@ -193,7 +193,12 @@ class task( object ):
         self.__class__.instance_count -= 1
 
     def record_db_event(self, event="", message=""):
-        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message)
+    
+        if self.owner is not None and self.hostname is not None:
+            user_at_host = self.owner + "@" + self.hostname
+        else:
+            user_at_host = ""
+        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, user_at_host)
         self.db_queue.append(call)
     
     def record_db_update(self, table, name, cycle, **kwargs):

@@ -48,15 +48,15 @@ class UpdateObject(object):
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
-    def __init__(self, name, cycle, submit_num, event=None, message=None):
+    def __init__(self, name, cycle, submit_num, event=None, message=None, user_at_host=None):
         """Records an event in the table"""
-        self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?)"
-        self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message]
+        self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
+        self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message, user_at_host]
         self.to_run = True
 
 
 class RecordStateObject(object):
-    """RecordEventObject for using in tasks"""
+    """RecordStateObject for using in tasks"""
     def __init__(self, name, cycle, time_created=datetime.now(), time_updated=None,
                      submit_num=None, is_manual_submit=None, try_num=None,
                      host=None, submit_method=None, submit_method_id=None,
@@ -116,7 +116,8 @@ class CylcRuntimeDAO(object):
                     "time INTEGER",             # actual time
                     "submit_num INTEGER",
                     "event TEXT",
-                    "message TEXT"],
+                    "message TEXT",             # record the host associated with this event
+                    "host TEXT"],
             TASK_STATES: [                      # each task gets a status entry that is updated
                     "name TEXT",
                     "cycle TEXT",
@@ -156,7 +157,6 @@ class CylcRuntimeDAO(object):
                     pass
         if not os.path.exists(self.db_file_name):
             new_mode = True
-        #self.conn = sqlite3.connect(self.db_file_name)
         if new_mode:
             self.create()
         self.c = ThreadedCursor(self.db_file_name)
@@ -184,15 +184,10 @@ class CylcRuntimeDAO(object):
             s += ")"
             res = c.execute(s)
         return
-        #self.conn.commit()
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitted"]
-        #c = self.connect()
-        #c.execute(s_fmt, args)
-        #count = c.fetchone()[0]
-        #self.conn.commit()
         count = self.c.select(s_fmt, args).next()[0]
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
@@ -200,25 +195,15 @@ class CylcRuntimeDAO(object):
     def get_task_current_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitted"]
-        #c = self.connect()
-        #c.execute(s_fmt, args)
-        #count = c.fetchone()[0]
-        #self.conn.commit()
         count = self.c.select(s_fmt, args).next()[0]
         return count
 
     def get_task_state_exists(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
         args = [name, cycle,]
-        #c = self.connect()
-        #c.execute(s_fmt, args)
-        #count = c.fetchone()[0]
-        #self.conn.commit()
         count = self.c.select(s_fmt, args).next()[0]
         return count > 0
 
     def run_db_op(self, db_oper):
-        #c = self.connect()
         self.c.execute(db_oper.s_fmt, db_oper.args)
-        #self.conn.commit()
     
