@@ -51,7 +51,8 @@ class RecordEventObject(object):
     def __init__(self, name, cycle, submit_num, event=None, message=None, user_at_host=None):
         """Records an event in the table"""
         self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
-        self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), submit_num, event, message, user_at_host]
+        self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                     submit_num, event, message, user_at_host]
         self.to_run = True
 
 
@@ -116,8 +117,8 @@ class CylcRuntimeDAO(object):
                     "time INTEGER",             # actual time
                     "submit_num INTEGER",
                     "event TEXT",
-                    "message TEXT",             # record the host associated with this event
-                    "host TEXT"],
+                    "message TEXT",
+                    "host TEXT"],               # record the host associated with this event
             TASK_STATES: [                      # each task gets a status entry that is updated
                     "name TEXT",
                     "cycle TEXT",
