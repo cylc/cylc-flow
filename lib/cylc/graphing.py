@@ -67,7 +67,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.graph_attr['label'] = title
 
     def node_attr_by_taskname( self, n ):
-        name = re.sub( '%.*', '', n )
+        name = re.sub( TaskID.delim+'.*', '', n )
         if name in self.task_attr:
             return self.task_attr[name]
         else:

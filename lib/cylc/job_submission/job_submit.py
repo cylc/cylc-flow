@@ -32,6 +32,7 @@ from jobfile import jobfile
 import socket
 from subprocess import Popen, PIPE
 from cylc.owner import user
+from cylc.TaskID import TaskID
 
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
@@ -55,7 +56,7 @@ class job_submit(object):
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        tag = ('.').join(self.task_id.split('%')) + '.' + submit_num
+        tag = task_id + '.' + submit_num
         self.local_jobfile_path = os.path.join( xconfig['log path'], tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )

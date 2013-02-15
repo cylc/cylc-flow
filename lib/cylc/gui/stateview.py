@@ -18,6 +18,7 @@
 
 from cylc import cylc_pyro_client, dump
 from cylc.task_state import task_state
+from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
@@ -320,7 +321,7 @@ class tupdater(threading.Thread):
                               (self.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
             for id in summary:
-                name, ctime = id.split( '%' )
+                name, ctime = id.split( TaskID.delim )
                 if ctime not in dest:
                     dest[ ctime ] = {}
                 state = summary[ id ].get( 'state' )
@@ -810,7 +811,7 @@ class lupdater(threading.Thread):
             task_id = ctime
         else:
             name = self.task_list[col_index - 1]
-            task_id = name + "%" + ctime
+            task_id = name + TaskID.delim + ctime
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
@@ -832,7 +833,7 @@ class lupdater(threading.Thread):
         state_summary.update( self.state_summary )
         state_summary.update( self.fam_state_summary )
         for id in state_summary:
-            name, ctime = id.split( '%' )
+            name, ctime = id.split( TaskID.delim )
             if ctime not in new_data:
                 new_data[ ctime ] = {}
             state = state_summary[ id ].get( 'state' )
@@ -848,7 +849,7 @@ class lupdater(threading.Thread):
 
         tasks = {}
         for id in state_summary:
-            name, ctime = id.split( '%' )
+            name, ctime = id.split( TaskID.delim )
             if ctime not in tasks:
                 tasks[ ctime ] = [ name ]
             else:
@@ -866,7 +867,7 @@ class lupdater(threading.Thread):
             state_list = [ ]
             for name in self.task_list:
                 if name in tasks_at_ctime:
-                    state = state_summary[ name + '%' + ctime ][ 'state' ]
+                    state = state_summary[ name + TaskID.delim + ctime ][ 'state' ]
                     state_list.append( self.dots[state] )
                 else:
                     state_list.append( self.dots['empty'] )

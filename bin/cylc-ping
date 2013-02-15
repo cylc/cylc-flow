@@ -37,7 +37,7 @@ error status. For tasks, success means the task proxy is currently in
 the 'running' state.""",
     pyro=True,
     argdoc=[('REG', 'Suite name'), 
-            ('[TASK]', 'Task NAME%TAG (TAG is cycle time or integer)')])
+            ('[TASK]', 'Task NAME'+TaskID.delim+'TAG (TAG is cycle time or integer)')])
 
 parser.add_option( "--print-ports",
         help="Print the port range from the site config file "
