@@ -78,7 +78,6 @@ stoptag = args[2]
 try:
     tid = TaskID( target )
 except TaskIDError, x:
-    print "TIDErr"
     raise SystemExit(x)
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
