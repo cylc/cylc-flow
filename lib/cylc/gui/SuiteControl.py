@@ -711,7 +711,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             try:
                 tid = TaskID( stoptask_id )
             except TaskIDError,x:
-                warning_dialog( "ERROR: Bad task ID (TASK"+TaskID.delim+"YYYYMMDDHH): " + stoptask_id,
+                warning_dialog( "ERROR: Bad task ID (TASK"+TaskID.DELIM+"YYYYMMDDHH): " + stoptask_id,
                                 self.window ).warn()
                 return
             else:
@@ -938,7 +938,7 @@ The Cylc Suite Engine.
 
     def _get_right_click_menu_items( self, task_id, task_is_family=False ):
         # Return the default menu items for a task
-        name, ctime = task_id.split(TaskID.delim)
+        name, ctime = task_id.split(TaskID.DELIM)
 
         items = []
 
@@ -1173,7 +1173,7 @@ The Cylc Suite Engine.
         label = gtk.Label( 'TASK: ' + task_id )
         vbox.pack_start( label, True )
          
-        label = gtk.Label( 'DEP (NAME'+TaskID.delim+'TAG or message)' )
+        label = gtk.Label( 'DEP (NAME'+TaskID.DELIM+'TAG or message)' )
 
         entry = gtk.Entry()
 
@@ -1202,7 +1202,7 @@ The Cylc Suite Engine.
 
     def add_prerequisite( self, w, entry, window, task_id ):
         dep = entry.get_text()
-        m = re.match( '^(\w+)'+TaskID.delim+'(\w+)$', dep )
+        m = re.match( '^(\w+)'+TaskID.DELIM+'(\w+)$', dep )
         if m:
             #name, ctime = m.groups()
             msg = dep + ' succeeded'
@@ -1210,9 +1210,9 @@ The Cylc Suite Engine.
             msg = dep
 
         try:
-            (name, cycle ) = task_id.split(TaskID.delim)
+            (name, cycle ) = task_id.split(TaskID.DELIM)
         except ValueError:
-            warning_dialog( "ERROR, Task or Group ID must be NAME"+TaskID.delim+"YYYYMMDDHH",
+            warning_dialog( "ERROR, Task or Group ID must be NAME"+TaskID.DELIM+"YYYYMMDDHH",
                             self.window ).warn()
             return
         try:
@@ -1562,7 +1562,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label( 'STOP (task NAME'+TaskID.delim+'TAG)' )
+        label = gtk.Label( 'STOP (task NAME'+TaskID.DELIM+'TAG)' )
         tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)
@@ -1851,7 +1851,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox.pack_start( label, True )
  
         hbox = gtk.HBox()
-        label = gtk.Label( 'TASK (NAME'+TaskID.delim+'TAG)' )
+        label = gtk.Label( 'TASK (NAME'+TaskID.DELIM+'TAG)' )
         hbox.pack_start( label, True )
         entry_taskorgroup = gtk.Entry()
         hbox.pack_start (entry_taskorgroup, True)

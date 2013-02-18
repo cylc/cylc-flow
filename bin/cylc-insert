@@ -47,10 +47,10 @@ target = args[1]
 
 try:
     # name%tag%stoptag
-    ( name, tag, stoptag ) = target.split(TaskID.delim)
+    ( name, tag, stoptag ) = target.split(TaskID.DELIM)
 except ValueError:
     try:
-        ( name, tag ) = target.split(TaskID.delim)
+        ( name, tag ) = target.split(TaskID.DELIM)
     except ValueError:
         raise SystemExit( "ERROR: final argument must be NAME%TAG[%STOPTAG]" )
     else:
@@ -58,7 +58,7 @@ except ValueError:
 
 # check TASK is a valid task ID
 try:
-    tid = TaskID( name + TaskID.delim + tag )
+    tid = TaskID( name + TaskID.DELIM + tag )
 except TaskIDError, x:
     raise SystemExit(x)
 else:
@@ -67,7 +67,7 @@ else:
 if stoptag:
     # check if stoptag is cycling or asynchronous
     try:
-        tid = TaskID( 'junk' + TaskID.delim + stoptag )
+        tid = TaskID( 'junk' + TaskID.DELIM + stoptag )
     except TaskIDError, x:
         raise SystemExit('ERROR, invalid stop tag: ' + stoptag )
     else:
@@ -85,7 +85,7 @@ except Exception, x:
     raise SystemExit(x)
 
 prompt( 'Insert ' + target + ' in ' + suite, options.force )
-result = proxy.put( 'insert task', name + TaskID.delim + tag, stop )
+result = proxy.put( 'insert task', name + TaskID.DELIM + tag, stop )
 
 if result[0]:
     print result[1]

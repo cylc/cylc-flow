@@ -39,7 +39,7 @@ Target tasks will be forced to spawn successors before being removed if
 they have not done so already, unless you use '--no-spawn'.""",
     pyro=True,
     argdoc=[("REG", "Suite name"), 
-            ("TARGET", "NAME"+TaskID.delim+"TAG to remove a single task;" +
+            ("TARGET", "NAME"+TaskID.DELIM+"TAG to remove a single task;" +
                "CYCLE or INT to remove all tasks with the same tag.")])
 
 parser.add_option( "--no-spawn", 

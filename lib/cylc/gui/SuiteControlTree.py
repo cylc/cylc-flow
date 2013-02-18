@@ -258,7 +258,7 @@ Text Treeview suite control interface.
             # must have clicked on the top level ctime 
             return
 
-        task_id = name + TaskID.delim + ctime
+        task_id = name + TaskID.DELIM + ctime
 
         is_fam = (name in self.t.families)
 

@@ -412,7 +412,7 @@ class MyDotWindow( xdot.DotWindow ):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, tag = node.get_name().split(TaskID.delim)
+            name, tag = node.get_name().split(TaskID.DELIM)
             if name in family_nodes:
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'

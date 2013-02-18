@@ -83,7 +83,7 @@ except TaskIDError, x:
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
 
-stopid = 'junk' + TaskID.delim + stoptag
+stopid = 'junk' + TaskID.DELIM + stoptag
 try:
     tid = TaskID( stopid )
 except TaskIDError, x:

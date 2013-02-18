@@ -85,7 +85,7 @@ LED suite control interface.
         ctime_column = treeview.get_model().get_n_columns() - 1
         ctime = treeview.get_model().get_value( r_iter, ctime_column )
 
-        task_id = name + TaskID.delim + ctime
+        task_id = name + TaskID.DELIM + ctime
 
         is_fam = (name in self.t.families)
 

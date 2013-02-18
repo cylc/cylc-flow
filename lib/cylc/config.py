@@ -1508,14 +1508,14 @@ class config( CylcConfigObj ):
             if lname in self.members[fam] and rname in self.members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = fam + TaskID.delim +ltag, fam + TaskID.delim +rtag
+                nl,nr = fam + TaskID.DELIM +ltag, fam + TaskID.DELIM +rtag
                 break
             elif lname in self.members[fam]:
                 # l is a member of fam
-                nl = fam + TaskID.delim +ltag
+                nl = fam + TaskID.DELIM +ltag
             elif rname in self.members[fam]:
                 # r is a member of fam
-                nr = fam + TaskID.delim +rtag
+                nr = fam + TaskID.DELIM +rtag
 
         return nl, nr
 

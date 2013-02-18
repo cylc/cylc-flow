@@ -56,7 +56,7 @@ class job_submit(object):
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        tag = task_id + '.' + submit_num
+        tag = task_id + TaskID.DELIM + submit_num
         self.local_jobfile_path = os.path.join( xconfig['log path'], tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )

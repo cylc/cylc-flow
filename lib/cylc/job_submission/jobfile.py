@@ -31,7 +31,7 @@ class jobfile(object):
         self.task_id = task_id
         self.jobconfig = jobconfig
 
-        self.task_name, self.tag = task_id.split( TaskID.delim )
+        self.task_name, self.tag = task_id.split( TaskID.DELIM )
 
     def write( self, path ):
         ############# !!!!!!!! WARNING !!!!!!!!!!! #####################

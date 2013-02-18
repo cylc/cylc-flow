@@ -36,7 +36,7 @@ If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use 
 'cylc view -i,--inline SUITE' for comparison.""",
     argdoc=[('REG', 'Suite name'),
-            ('[TASK]', 'Task NAME'+TaskID.delim+'TAG: validate one task definition' )])
+            ('[TASK]', 'Task NAME'+TaskID.DELIM+'TAG: validate one task definition' )])
 
 parser.add_option( "--strict", 
         help="Fail any use of unsafe or experimental features. "

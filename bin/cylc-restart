@@ -285,7 +285,7 @@ the remote host before starting the suite."""
             # instance variables
             try:
                 ( id, state ) = line.split(' : ')
-                ( name, tag ) = id.split(TaskID.delim)
+                ( name, tag ) = id.split(TaskID.DELIM)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line

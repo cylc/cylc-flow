@@ -74,7 +74,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             continue
         try:
             ( task_id, info ) = line.split(' : ')
-            ( name, tag ) = task_id.split( TaskID.delim )
+            ( name, tag ) = task_id.split( TaskID.DELIM )
         except:
             continue
         task_summary.setdefault(task_id, {"name": name, "tag": tag,

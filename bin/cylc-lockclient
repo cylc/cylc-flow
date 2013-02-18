@@ -49,14 +49,14 @@ def check_task_spec( task_spec ):
     try:
         suite, task_id = task_spec.split( ':' )
     except:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.delim+"CYCLE" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
 
     check_suite_spec( suite )
 
     try:
-        (name, tag) = task_id.split( TaskID.delim )
+        (name, tag) = task_id.split( TaskID.DELIM )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.delim+"CYCLE" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
  
     try:
         cycle = ct(tag).get()
@@ -88,10 +88,10 @@ See also:
             list_all=False, get_filenames=False )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SUITE:TASK"+TaskID.delim+"CYCLE", action="store", dest="acquire" )
+            metavar="SUITE:TASK"+TaskID.DELIM+"CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SUITE:TASK"+TaskID.delim+"CYCLE", action="store", dest="release" )
+            metavar="SUITE:TASK"+TaskID.DELIM+"CYCLE", action="store", dest="release" )
 
     parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire" )

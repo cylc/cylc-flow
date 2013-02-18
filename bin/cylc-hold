@@ -37,7 +37,7 @@ until it is released.
 
 See also 'cylc [control] release'.""", pyro=True,
     argdoc=[("REG", "Suite name"), 
-            ("[TASK]", "Task to hold (NAME"+TaskID.delim+"CYCLE)")]) 
+            ("[TASK]", "Task to hold (NAME"+TaskID.DELIM+"CYCLE)")]) 
 
 # TO DO: hold after TAG etc. as per the stop command?
 

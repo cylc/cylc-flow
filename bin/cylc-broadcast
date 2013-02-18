@@ -160,7 +160,7 @@ parser.add_option( "-d", "--display",
 
 parser.add_option( "-k", "--display-task", metavar="TASKID",
         help="Print current active broadcast for a particular task "
-        "(NAME"+TaskID.delim+"TAG).", action="store", default=None, dest="showtask" )
+        "(NAME"+TaskID.DELIM+"TAG).", action="store", default=None, dest="showtask" )
 
 parser.add_option( "-b", "--box",
         help="Use unicode box characters with the show options.",
@@ -202,9 +202,9 @@ except Exception, x:
 if options.show or options.showtask:
     if options.showtask:
         try:
-            name, tag = options.showtask.split(TaskID.delim)
+            name, tag = options.showtask.split(TaskID.DELIM)
         except ValueError:
-            parser.error( "TASKID must be NAME"+TaskID.delim+"TAG" )
+            parser.error( "TASKID must be NAME"+TaskID.DELIM+"TAG" )
     settings = proxy.get( options.showtask )
     padding = get_padding(settings) * ' '
     if options.raw:

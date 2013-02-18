@@ -87,7 +87,7 @@ where output x of foo may also have an offset:
                 # just the given message (no cycle time offsetting to do).
                 preq = self.msg
             else:
-                preq = self.name + TaskID.delim + '1' + ' ' + self.type
+                preq = self.name + TaskID.DELIM + '1' + ' ' + self.type
         elif self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
@@ -110,6 +110,6 @@ where output x of foo may also have an offset:
                 # implicit output
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = self.name + TaskID.delim + ctime + ' ' + self.type
+                preq = self.name + TaskID.DELIM + ctime + ' ' + self.type
         return preq
 

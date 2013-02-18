@@ -143,17 +143,17 @@ class TaskID(object):
         2/ TaskID( "name", "tag" )
     """
 
-    delim = '.'
+    DELIM = '.'
 
     def __init__( self, *args ):
         if len(args) == 1:
             id = args[0]
         elif len(args) == 2:
-            id = args[0] + self.delim + str(args[1])
+            id = args[0] + self.DELIM + str(args[1])
         else:
             raise InvalidTaskIDError, '"' + ','.join(args) + '"'
         try:
-            name, tag = id.split( self.delim )
+            name, tag = id.split( self.DELIM )
         except ValueError:
             raise InvalidTaskIDError, id
  
@@ -180,9 +180,9 @@ class TaskID(object):
 
     def getstr( self, formatted=False ):
         if formatted:
-            return self.name.getstr() + self.delim + self.tag.getstr(formatted)
+            return self.name.getstr() + self.DELIM + self.tag.getstr(formatted)
         else:
-            return self.name.getstr() + self.delim + self.tag.getstr()
+            return self.name.getstr() + self.DELIM + self.tag.getstr()
 
     def split( self ):
         # return name and tag

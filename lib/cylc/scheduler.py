@@ -333,16 +333,16 @@ class scheduler(object):
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
-        if TaskID.delim in name_or_id:
-            name, tag = name.split(TaskID.delim)
+        if TaskID.DELIM in name_or_id:
+            name, tag = name.split(TaskID.DELIM)
         if name in self.config.get_task_name_list():
             return True
         else:
             return False
 
     def _name_from_id( self, task_id ):
-        if TaskID.delim in task_id:
-            name, tag = task_id.split(TaskID.delim)
+        if TaskID.DELIM in task_id:
+            name, tag = task_id.split(TaskID.DELIM)
         else:
             name = task_id
         return name
@@ -1860,13 +1860,13 @@ class scheduler(object):
         # TO DO: UPDATE FOR ASYCHRONOUS TASKS
 
         # for remote insertion of a new task, or task group
-        ( ins_name, ins_ctime ) = ins_id.split( TaskID.delim )
+        ( ins_name, ins_ctime ) = ins_id.split( TaskID.DELIM )
 
         #### TASK INSERTION GROUPS TEMPORARILY DISABLED
         ###if ins_name in ( self.config[ 'task insertion groups' ] ):
         ###    ids = []
         ###    for name in self.config[ 'task insertion groups' ][ins_name]:
-        ###        ids.append( name + TaskID.delim + ins_ctime )
+        ###        ids.append( name + TaskID.DELIM + ins_ctime )
         ###else:
         ids = [ ins_id ]
 
@@ -1874,7 +1874,7 @@ class scheduler(object):
         inserted = []
         to_insert = []
         for task_id in ids:
-            [ name, c_time ] = task_id.split( TaskID.delim )
+            [ name, c_time ] = task_id.split( TaskID.DELIM )
             # Instantiate the task proxy object
             gotit = False
             try:
@@ -1884,7 +1884,7 @@ class scheduler(object):
                     itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', stop_c_time, startup=False )
                 except SuiteConfigError,x:
                     self.log.warning( str(x) )
-                    rejected.append( name + TaskID.delim + c_time )
+                    rejected.append( name + TaskID.DELIM + c_time )
                 else:
                     gotit = True
             else: 
@@ -2159,7 +2159,7 @@ class scheduler(object):
         # 4) if a suite stop task is set and has completed, 
         # get 2) above to finish when current tasks have completed.
         if self.stop_task:
-            name, tag = self.stop_task.split(TaskID.delim)
+            name, tag = self.stop_task.split(TaskID.DELIM)
             stop = True
             for itask in self.pool.get_tasks():
                 if itask.name == name:
@@ -2167,12 +2167,12 @@ class scheduler(object):
                     # (this should be OK; but the potential loophole
                     # will be closed by the upcoming task event databse).
                     if not itask.state.is_currently('succeeded'):
-                        iname, itag = itask.id.split(TaskID.delim)
+                        iname, itag = itask.id.split(TaskID.DELIM)
                         if int(itag) <= int(tag):
                             stop = False
                             break
             if stop:
-                self.log.warning( "Stop task " + name + TaskID.delim + tag + " finished" )
+                self.log.warning( "Stop task " + name + TaskID.DELIM + tag + " finished" )
                 if self.no_tasks_submitted_or_running():
                     return True
                 else:

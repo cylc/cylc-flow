@@ -256,7 +256,7 @@ class taskdef(object):
 
             sself.c_time = sself.tag
 
-            sself.id = sself.name + TaskID.delim + sself.tag
+            sself.id = sself.name + TaskID.DELIM + sself.tag
 
             sself.asyncid_pattern = self.asyncid_pattern
 
