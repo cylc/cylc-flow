@@ -175,6 +175,10 @@ class broadcast( Pyro.core.ObjBase ):
     def dump( self, FILE ):
         # write broadcast variables to the suite state dump file
         FILE.write( pickle.dumps( self.settings) + '\n' )
+    
+    def get_dump( self ):
+        # return the broadcast variables as written to the suite state dump file
+        return pickle.dumps( self.settings ) + '\n'
 
     def load( self, pickled_settings ):
         self.settings = pickle.loads( pickled_settings )

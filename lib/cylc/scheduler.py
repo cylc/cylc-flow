@@ -1035,6 +1035,12 @@ class scheduler(object):
                 db_ops = itask.get_db_ops()
                 for d in db_ops:
                     self.db.run_db_op(d)
+            
+            # record any broadcast settings to be dumped out
+            if self.state_dumper:
+                db_ops = self.state_dumper.get_db_ops()
+                for d in db_ops:
+                    self.db.run_db_op(d)
                 
             # process queued commands
             self.process_command_queue()

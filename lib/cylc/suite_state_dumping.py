@@ -16,10 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 import os
 from global_config import gcfg
 from rolling_archive import rolling_archive
 from mkdir_p import mkdir_p
+from rundb import RecordBroadcastObject
+
 
 class dumper( object ):
 
@@ -30,7 +33,8 @@ class dumper( object ):
         self.stop_tag = stop_tag
         globals = gcfg
         self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
-        self.path = os.path.join( self.dir, 'state' ) 
+        self.path = os.path.join( self.dir, 'state' )
+        self.wireless_dump_queue = []
         try:
             mkdir_p( self.dir )
         except Exception, x:
@@ -71,6 +75,7 @@ class dumper( object ):
             FILE.write( 'final cycle : (none)\n' )
 
         wireless.dump(FILE)
+        self.wireless_dump_queue.append(RecordBroadcastObject(datetime.now(), wireless.get_dump()))
 
         FILE.write( 'Begin task states\n' )
 
@@ -84,3 +89,10 @@ class dumper( object ):
         # return the filename (minus path)
         return os.path.basename( filename )
 
+    def get_db_ops(self):
+        ops = []
+        for d in self.wireless_dump_queue:
+            if d.to_run:
+                ops.append(d)
+                d.to_run = False
+        return ops
