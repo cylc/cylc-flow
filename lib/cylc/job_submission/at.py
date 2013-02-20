@@ -28,7 +28,7 @@ class at( job_submit ):
     """
 
     COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now"
-    REC_ID = re.compile(r"\Ajob\s(?P<id>\d+)\sat")
+    REC_ID = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
