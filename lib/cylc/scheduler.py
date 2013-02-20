@@ -174,9 +174,9 @@ class scheduler(object):
                 'family nodes'      : self.info_get_family_nodes,
                 'graphed family nodes' : self.info_get_graphed_family_nodes,
                 'vis families'      : self.info_get_vis_families,
-                'families'          : self.info_get_families,
-                'do live graph movie'   : self.info_do_live_graph_movie,
-                'family hierarchy'   : self.info_get_family_hierarchy,
+                'first-parent ancestors'    : self.info_get_first_parent_ancestors,
+                'first-parent descendants'  : self.info_get_first_parent_descendants,
+                'do live graph movie'       : self.info_do_live_graph_movie,
                 'graph raw'         : self.info_get_graph_raw,
                 'task requisites'   : self.info_get_task_requisites,
                 }
@@ -264,7 +264,7 @@ class scheduler(object):
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         # RECEIVER FOR BROADCAST VARIABLES
-        self.wireless = broadcast( self.config.family_hierarchy )
+        self.wireless = broadcast( self.config.get_linearized_ancestors() )
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
         self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose, self.options.debug )
@@ -385,7 +385,7 @@ class scheduler(object):
         return info
 
     def info_get_family_nodes( self ):
-        return self.config.members.keys()
+        return self.config.get_first_parent_descendants().keys()
 
     def info_get_graphed_family_nodes( self ):
         return self.config.families_used_in_graph
@@ -393,15 +393,17 @@ class scheduler(object):
     def info_get_vis_families( self ):
         return self.config.vis_families
 
-    def info_get_families( self ):
-        return deepcopy(self.config.members)
+    def info_get_first_parent_descendants( self ):
+        # families for single-inheritance hierarchy based on first parents
+        return deepcopy(self.config.get_first_parent_descendants())
 
     def info_do_live_graph_movie( self ):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['runtime graph']['directory'] ) 
 
-    def info_get_family_hierarchy( self ):
-        return deepcopy(self.config.family_hierarchy)
+    def info_get_first_parent_ancestors( self ):
+        # single-inheritance hierarchy based on first parents
+        return deepcopy(self.config.get_first_parent_ancestors() )
 
     def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):

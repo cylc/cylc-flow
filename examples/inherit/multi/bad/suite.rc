@@ -1,0 +1,18 @@
+title = "Example of a bad runtime namespace multiple inheritance hierarchy"
+
+description = """This is an inheritance structure for which the C3
+linearization algorithm fails. It follows an example in the Python
+object MRI reference document. For a detailed explanation, see:
+  http://www.python.org/download/releases/2.3/mro/ 
+"""
+
+[scheduling]
+    [[dependencies]]
+        graph = g
+[runtime]
+    [[f]]
+    [[e]]
+        inherit = f
+    [[g]]
+        inherit = f,e
+

@@ -61,7 +61,12 @@ class xupdater(threading.Thread):
         self.filter_include = None
         self.filter_exclude = None
         self.state_filter = None
+
         self.families = []
+        self.family_nodes = []
+        self.graphed_family_nodes = []
+        self.live_graph_movie = False
+
         self.prev_graph_id = ()
 
         self.cfg = cfg
@@ -108,7 +113,7 @@ class xupdater(threading.Thread):
             # on reconnection retrieve static info
             self.family_nodes = self.sinfo.get( 'family nodes' )
             self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
-            self.families = self.sinfo.get( 'families' )
+            self.families = self.sinfo.get( 'first-parent descendants' )
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except:
             # connection lost

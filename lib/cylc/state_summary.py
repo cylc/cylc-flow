@@ -55,10 +55,12 @@ class state_summary( Pyro.core.ObjBase ):
         fam_states = {}
         all_states = []
         for ctime, c_task_states in task_states.items():
-            # For each cycle time, construct a family state tree           
+            # For each cycle time, construct a family state tree
+            # based on the first-parent single-inheritance tree
+
             c_fam_task_states = {}
             
-            for key, parent_list in self.config.family_hierarchy.items():
+            for key, parent_list in self.config.get_first_parent_ancestors().items():
                 state = task_states.get(ctime, {}).get(key)
                 if state is None:
                     continue

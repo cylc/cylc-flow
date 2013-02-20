@@ -2,8 +2,8 @@ title = 'inheritance example'
 
 description = """
 This suite illustrates several tiers of task runtime inheritance.
-To see the effect, examine task job scripts generated with the
-'cylc util jobscript' command."""
+To see the result, use 'cylc get-config' or examine task job scripts
+generated with 'cylc jobscript'."""
 
 [scheduling]
     initial cycle time = 2011010100

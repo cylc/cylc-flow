@@ -711,7 +711,7 @@ tasks, may be required.
 The suite dependency graph is defined under this section.  You can plot
 the dependency graph as you work on it, with \lstinline=cylc graph= or
 by right clicking on the suite in the db viewer.  See also 
-Section~\ref{DependencyGraphs}.
+Section~\ref{ConfiguringScheduling}.
 
 \paragraph[graph]{ [scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ graph }
 
@@ -722,7 +722,7 @@ then exits, or an initial suite section that completes prior to the
 cycling tasks starting (if you make the first cycling tasks depend on
 the last one-off ones). But note that synchronous {\em start-up} tasks
 can also be used for the latter purpose.  See Section~\ref{GraphDescrip}
-below for graph string syntax, and Section~\ref{DependencyGraphs}.
+below for graph string syntax, and Section~\ref{ConfiguringScheduling}.
 \begin{myitemize}
     \item {\em type:} string 
     \item {\em example:} (see Section~\ref{GraphDescrip} below)
@@ -765,7 +765,7 @@ single suite, and so on.
 
 The dependency graph for the specified validity section (described just
 above) goes here. Syntax examples follow; see also
-Sections~\ref{DependencyGraphs} ({\em Dependency Graphs})
+Sections~\ref{ConfiguringScheduling} ({\em Configuring Scheduling})
 and~\ref{TriggerTypes} ({\em Trigger Types}). 
 
 \begin{myitemize}
@@ -803,30 +803,27 @@ is associated with a particular asynchronous ID.
 
 \subsection{[runtime]}
 
-This section defines how, where, and what to execute when tasks are
-ready to run. Runtime subsections define an inheritance hierarchy of 
-{\em namespaces}, each of which represents a family of tasks or an
-individual task, as described in Section~\ref{NIORP}).
+This section is used to specify how, where, and what to execute when
+tasks are ready to run. Common
+configuration can be factored out in a multiple-inheritance hierarchy of
+runtime namespaces that culminates in the tasks of the suite. Order of
+precedence is determined by the C3 linearization algorithm as used to
+find the {\em method resolution order} in Python language class
+hiearchies. For details and examples see Section~\ref{NIORP}, {\em
+Runtime Properties}.
 
 \subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]]}
 
 Replace \_\_NAME\_\_ with a namespace name, or a comma separated list of
-names, and repeat as needed to define all tasks in the suite.
+names, and repeat as needed to define all tasks in the suite. Names may
+contain letters, digits, underscores, and hyphens. A namespace
+represents a group or family of tasks if other namespaces inherit from
+it, or a task if no others inherit from it.
 
-Namespace names may contain letters, digits, underscores, and hyphens.
-They may not contain colons (which would preclude use of directory paths
-involving the registration name in \lstinline=$PATH= variables). They 
-may not contain the `.' character (it will be interpreted 
-as the namespace hierarchy delimiter, separating groups and names). 
-{\em Task names should not be hardwired into task implementations.}
-Rather, task and suite identity should be extracted portably from the
-task execution environment supplied by cylc 
-(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
-can just change its name in the suite.rc file.
-
-A namespace represents a family if other namespaces inherit from it; it
-represents a task if it is a leaf on the inheritance tree (i.e.\ no
-other namespaces inherit from it).
+%Names may not contain colons (which would preclude use of directory paths
+%involving the registration name in \lstinline=$PATH= variables). They 
+%may not contain the `.' character (it will be interpreted as the
+%namespace hierarchy delimiter, separating groups and names -huh?). 
 
 \begin{myitemize}
 \item {\em legal values:} 
@@ -836,25 +833,21 @@ other namespaces inherit from it).
     \end{myitemize}
 \end{myitemize}
 
-If multiple names are listed, the subsequent namespace configuration
-items apply to each member. 
+If multiple names are listed the subsequent settings apply to each. 
 
-All namespaces inherit initially from {\em root}, which you can
-explicitly configure to override or provide default runtime settings for
-all tasks in the suite.
+All namespaces inherit initially from {\em root}, which can be
+explicitly configured to provide or override default settings
+for all tasks in the suite.
 
 \paragraph[inherit]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ inherit}
 
-Specify here the namepace from which this namespace should inherit all
-of its runtime configuration; specific items can then be overridden
-as required. Note that many of the available items are left undefined even
-in the root namespace.
+A list of the immediate parent(s) this namespace inherits from. If no
+parents are listed \lstinline=root= is assumed.
 
 \begin{myitemize}
-\item {\em type:} string (another namespace name)
-\item {\em default:} root
+\item {\em type:} comma-separated list of strings (other namespace names)
+\item {\em default:} \lstinline=root=
 \end{myitemize}
-
 
 \paragraph[title]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ title}
 
@@ -1433,8 +1426,8 @@ show the full suite.
 
 A list of family (namespace) names to be shown in the collapsed state
 (i.e.\ the family members will be replaced by a single family node) when
-the suite is plotted in the graph viewer or the graph-based suite
-control GUI. This item determines how family groups are shown 
+the suite is plotted in the graph viewer or the gcylc graph view. This
+item determines how family groups are shown 
 {\em initially} in the suite control GUI; subsequently you can use the
 interactive controls to group and ungroup nodes at will. For the same
 reason (presence of interactive grouping controls) this item is ignored
