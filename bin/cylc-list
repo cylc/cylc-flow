@@ -27,8 +27,12 @@ from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-Print a suite's task list or runtime namespace inheritance hierarchy.
-To graph the namespace hierarchy, see 'cylc graph'.""" )
+Print a suite task list or runtime namespace tree. By default the
+runtime tree is printed as if for single-inheritance based on
+first parents; use '-m/--multi' to print a tree based on the full  
+C3-linearized hierarchy (paths through the tree will show the full 
+precedence order of ancestral namespaces). 
+To graph the runtime namespace tree, see 'cylc graph'.""" )
 
 parser.add_option( "-t","--tree",
         help="Print the full runtime inheritance hierarchy.",
@@ -37,6 +41,11 @@ parser.add_option( "-t","--tree",
 parser.add_option( "-b", "--box",
         help="(with -t,--tree) Use unicode box characters.",
         action="store_true", default=False, dest="pretty" )
+
+parser.add_option( "-m", "--multi",
+        help="(with -t,--tree) Base the tree on the full "
+        "C3-linearized runtime hierarchy.",
+        action="store_true", default=False, dest="multi" )
 
 (options, args) = parser.parse_args()
 
@@ -52,7 +61,7 @@ except Exception,x:
     raise SystemExit(x)
 
 if options.tree or options.pretty:
-    config.print_inheritance_tree( pretty=options.pretty )
+    config.print_inheritance_tree( pretty=options.pretty, multi=options.multi )
 else:
     config.print_task_list()
 

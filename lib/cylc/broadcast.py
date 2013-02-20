@@ -32,10 +32,10 @@ class broadcast( Pyro.core.ObjBase ):
     #self.settings[ 'all' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
     #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
 
-    def __init__( self, family_hierarchy ):
+    def __init__( self, linearized_ancestors ):
         self.log = logging.getLogger('main')
         self.settings = {}
-        self.family_hierarchy = family_hierarchy
+        self.linearized_ancestors = linearized_ancestors
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', 'runtime.spec')
         Pyro.core.ObjBase.__init__(self)
 
@@ -143,11 +143,11 @@ class broadcast( Pyro.core.ObjBase ):
             if cycle not in self.settings:
                 continue
             nslist = []
-            for ns in self.family_hierarchy[name]:
+            for ns in self.linearized_ancestors[name]:
                 if ns in self.settings[cycle]:
                     nslist.append( ns )
             # nslist contains namespaces from current broadcast settings
-            # that are in the task's family tree, in family hierarchy
+            # that are in the task's family tree, in linearized ancestor
             # order, e.g. ['ops_atovs', 'OPS', 'root' ] means a
             # broadcast setting is in place for root, OPS, and
             # ops_atovs. Use the highest level one (i.e. a task specific
