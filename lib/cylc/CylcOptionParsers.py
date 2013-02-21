@@ -122,12 +122,10 @@ Arguments:"""
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
 
-            self.add_option( "--login",
-                    help="Use a login shell to run remote ssh commands.",
-                    action="store_true", default=False, dest="ssh_login" )
             self.add_option( "--no-login",
-                    help="Use a login shell to run remote ssh commands.",
-                    action="store_false", default=False, dest="ssh_login" )
+                    help="Do not use a login shell to run remote ssh commands. "
+                    "The default is to use a login shell.",
+                    action="store_false", default=True, dest="ssh_login" )
 
             self.add_option( "--pyro-timeout", metavar='SEC',
                     help="Set a timeout for network connections "
