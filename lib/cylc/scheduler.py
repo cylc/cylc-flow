@@ -700,7 +700,6 @@ class scheduler(object):
             # TO DO: return result( True, 'OK' )
 
 
-
     #___________________________________________________________________
 
     def set_suite_timer( self, reset=False ):
@@ -1121,6 +1120,7 @@ class scheduler(object):
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         if self.do_process_tasks:
+            self.do_process_tasks = False
             return True
 
         process = False
