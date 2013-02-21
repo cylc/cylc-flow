@@ -35,6 +35,8 @@ class dumper( object ):
         self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
         self.path = os.path.join( self.dir, 'state' )
         self.wireless_dump_queue = []
+        self.last_broadcast = ""
+        self.new_broadcast = False
         try:
             mkdir_p( self.dir )
         except Exception, x:
@@ -75,7 +77,12 @@ class dumper( object ):
             FILE.write( 'final cycle : (none)\n' )
 
         wireless.dump(FILE)
-        self.wireless_dump_queue.append(RecordBroadcastObject(datetime.now(), wireless.get_dump()))
+        broadcast = wireless.get_dump()
+        
+        if broadcast != self.last_broadcast:
+            self.wireless_dump_queue.append(RecordBroadcastObject(datetime.now(), broadcast))
+            self.last_broadcast = broadcast
+            self.new_broadcast = True
 
         FILE.write( 'Begin task states\n' )
 
@@ -95,4 +102,5 @@ class dumper( object ):
             if d.to_run:
                 ops.append(d)
                 d.to_run = False
+        self.new_broadcast = False
         return ops
