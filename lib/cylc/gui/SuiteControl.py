@@ -2395,7 +2395,9 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         # Force the polling schedule to go back to short intervals so
         # that the GUI can immediately connect to the started suite.
         for v in self.current_views:
-            v.t.poll_schd.t_init = None
+            if v:
+                # view may be None if one view is closed
+                v.t.poll_schd.t_init = None
 
     def construct_command_menu( self, menu ):
         ## # JUST CONTROL COMMANDS:

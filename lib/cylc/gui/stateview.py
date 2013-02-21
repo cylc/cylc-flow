@@ -188,8 +188,8 @@ class tupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.families = self.sinfo.get('families' )
-            self.family_hierarchy = self.sinfo.get('family hierarchy' )
+            self.families = self.sinfo.get('first-parent descendants' )
+            self.ancestors = self.sinfo.get('first-parent ancestors' )
             self.allowed_families = self.sinfo.get('vis families' )
         except:
             # connection lost
@@ -368,9 +368,9 @@ class tupdater(threading.Thread):
             task_named_paths = []
             for name in new_data[ ctime ].keys():
                 # The following line should filter by allowed families.
-                families = list(self.family_hierarchy[name])
-                families.sort(lambda x, y: (y in self.family_hierarchy[x]) -
-                                           (x in self.family_hierarchy[y]))
+                families = list(self.ancestors[name])
+                families.sort(lambda x, y: (y in self.ancestors[x]) -
+                                           (x in self.ancestors[y]))
                 if "root" in families:
                     families.remove("root")
                 if name in families:
@@ -592,8 +592,8 @@ class lupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.family_hierarchy = self.sinfo.get( 'family hierarchy' )
-            self.families = self.sinfo.get( 'families' )
+            self.ancestors = self.sinfo.get( 'first-parent ancestors' )
+            self.families = self.sinfo.get( 'first-parent descendants' )
             self.allowed_families = self.sinfo.get( 'vis families' )
         except:
             if self.stop_summary is None:
@@ -644,13 +644,14 @@ class lupdater(threading.Thread):
             return False
 
         if self.should_group_families:
-            allowed_names = [i for i in self.family_hierarchy if i != "root"]
+            allowed_names = [i for i in self.ancestors if i != "root"]
             self.task_list = []
-            for families in self.family_hierarchy.values():
+            for families in self.ancestors.values():
                 for name in reversed(families):
                     if name in allowed_names:
-                        if name not in self.task_list:
-                            self.task_list.append( name )
+                        if name not in self.task_list and name in self.families:
+                            # (exclude non first-parent family names)
+                                self.task_list.append( name )
                         break
 
         self.task_list.sort()

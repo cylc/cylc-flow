@@ -39,7 +39,7 @@
 
 [runtime]
     [[__many__]]
-        inherit = string( default=None )
+        inherit = force_list( default=list() )
         title = string( default="No title provided" )
         description = string( default="No description provided" )
         initial scripting = string( default=None )

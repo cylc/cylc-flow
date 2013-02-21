@@ -195,8 +195,9 @@ class task_batcher( batcher ):
         """Hook for succeeded item."""
         if hasattr(launcher, 'get_id'):
             submit_method_id = launcher.get_id(p.pid, out, err)
-            itask.incoming('NORMAL',
-                           itask.id + ' submit_method_id=' + submit_method_id)
+            if submit_method_id:
+                message = itask.id + ' submit_method_id=' + submit_method_id
+                itask.incoming('NORMAL', message)
 
 class event_batcher( batcher ):
     """Batched execution of queued task event handlers"""
