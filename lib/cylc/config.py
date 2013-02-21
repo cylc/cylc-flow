@@ -1278,8 +1278,13 @@ class config( CylcConfigObj ):
                 if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in the suite.rc)
                     self.runtime['descendants']['root'] = []
+                if 'root' not in self.runtime['first-parent descendants']:
+                    # (happens when no runtimes are defined in the suite.rc)
+                    self.runtime['first-parent descendants']['root'] = []
                 self.runtime['linearized ancestors'][name] = [name, 'root']
+                self.runtime['first-parent ancestors'][name] = [name, 'root']
                 self.runtime['descendants']['root'].append(name)
+                self.runtime['first-parent descendants']['root'].append(name)
 
             if name not in self.taskdefs:
                 try:
