@@ -45,6 +45,13 @@ class UpdateObject(object):
         self.args = args
         self.to_run = True
 
+class RecordBroadcastObject(object):
+    """RecordBroadcastObject for using in broadcast settings dumps"""
+    def __init__(self, timestamp, dumpstring):
+        """Records a dumped string in the broadcast table"""
+        self.s_fmt = "INSERT INTO broadcast_settings VALUES(?, ?)"
+        self.args = [timestamp, dumpstring]
+        self.to_run = True
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
@@ -110,6 +117,7 @@ class CylcRuntimeDAO(object):
     DB_FILE_BASE_NAME = "cylc-suite.db"
     TASK_EVENTS = "task_events"
     TASK_STATES = "task_states"
+    BROADCAST_SETTINGS = "broadcast_settings"
     TABLES = {
             TASK_EVENTS: [                      # each task event gets a row
                     "name TEXT",
@@ -133,9 +141,14 @@ class CylcRuntimeDAO(object):
                     "status TEXT",
                     # TODO: "rc TEXT",
                     # TODO: "auth_key TEXT",
+                    ],
+            BROADCAST_SETTINGS: [
+                    "timestamp TEXT",
+                    "broadcast TEXT"
                     ]}
     PRIMARY_KEY_OF = {TASK_EVENTS: None,
-                      TASK_STATES: "name, cycle"}
+                      TASK_STATES: "name, cycle",
+                      BROADCAST_SETTINGS: None}
 
 
     def __init__(self, suite_dir=None, new_mode=False):
