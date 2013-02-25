@@ -48,11 +48,6 @@ except ImportError:
 #except ValueError:
 #    raise GraphvizError, 'graphviz is not installed or not accessible'
 
-#ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
-# allow literal 'YYYYMMDDHH'
-#ddmmhh = re.compile('%(\w{4})(\w{2})(\w{2})(\w{2})')
-#tformat = r'\\n\2/\3 \4'  # MM/DD HH
-#tformat = r'\\n\1\2\3\4'  # YYYYMMDDHH
 ddmmhh = TaskID.DELIM_RE
 tformat = r'\\n'
 

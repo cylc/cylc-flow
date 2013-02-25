@@ -39,7 +39,7 @@ usage() {
     echo ""
     echo "Arguments:"
     echo "  REG         - Registered suite name."
-    echo "  TASK        - Task ID (NAME%TAG)"
+    echo "  TASK        - Task ID (NAME.TAG)"
 }
 
 for arg in $@; do

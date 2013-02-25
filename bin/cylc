@@ -327,7 +327,7 @@ CYLC SUITE NAMES AND YOUR REGISTRATION DATABASE
 nwp.test.LAM2, etc. in a "registration database" ($HOME/.cylc/DB) that
 simply associates names with the suite definition locations.  The
 '--db=' command option can be used to view and copy suites from other
-users, with access is governed by normal filesystem permissions. 
+users, with access governed by normal filesystem permissions. 
 
 TASK IDENTIFICATION IN CYLC SUITES
   Tasks are identified by NAME.TAG where for cycling tasks TAG is a

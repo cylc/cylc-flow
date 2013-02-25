@@ -37,7 +37,7 @@ as normal unless they are 'one-off' tasks.
 See also 'cylc [task] submit', for running single tasks without the scheduler.""",
     pyro=True,
     argdoc=[ ('REG', 'Suite name' ), 
-            ('TASK[%STOP]', 'Task to insert (NAME%TAG)[%STOPTAG]' )])
+            ('TASK[.STOP]', 'Task to insert (NAME.TAG)[.STOPTAG]' )])
 
 (options, args) = parser.parse_args()
 
@@ -46,13 +46,13 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 target = args[1]
 
 try:
-    # name%tag%stoptag
+    # name.tag.stoptag
     ( name, tag, stoptag ) = target.split(TaskID.DELIM)
 except ValueError:
     try:
         ( name, tag ) = target.split(TaskID.DELIM)
     except ValueError:
-        raise SystemExit( "ERROR: final argument must be NAME%TAG[%STOPTAG]" )
+        raise SystemExit( "ERROR: final argument must be NAME.TAG[.STOPTAG]" )
     else:
         stoptag = None
 

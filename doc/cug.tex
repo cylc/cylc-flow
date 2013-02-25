@@ -3160,10 +3160,10 @@ must use a different name for the parent variable:
 The task identity variables provided to tasks by cylc are:
 \lstset{language=bash}
 \begin{lstlisting}
-$CYLC_TASK_ID                    # X%2011051118 (e.g.)
+$CYLC_TASK_ID                    # X.2011051118 (e.g.)
 $CYLC_TASK_NAME                  # X
 $CYLC_TASK_CYCLE_TIME            # 2011051118
-$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X%2011051118-1317298378.191123
+$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.2011051118-1317298378.191123
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
 $CYLC_TASK_WORK_PATH             # task work directory (see below)
@@ -4078,12 +4078,12 @@ script for a task in the examples.QuickStart.c example suite and then
 examine it:
 \lstset{language=transcript}
 \begin{lstlisting}
-% cylc submit --dry-run examples.QuickStart.c Model%2011080506
-> JOB SCRIPT: ~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123
+% cylc submit --dry-run examples.QuickStart.c Model.2011080506
+> JOB SCRIPT: ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123
 > THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:
-~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123 </dev/null 
-    1> ~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
-    2> ~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.err &
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123 </dev/null 
+    1> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.out 
+    2> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.err &
 \end{lstlisting}
 Here is the generated job script (note that some config items not used in
 this suite, such as task \lstinline=initial scripting= , result in extra 
@@ -4093,7 +4093,7 @@ job script sections not shown here):
 #!/bin/bash
 
 # ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task: foo%2010080800
+# Task: foo.2010080800
 # To be submitted by method: 'background'
 
 echo "JOB SCRIPT STARTING"
@@ -4117,10 +4117,10 @@ export CYLC_SUITE_DEF_PATH=$HOME/cylc/baz
 export CYLC_SUITE_PYRO_TIMEOUT=None
 
 # CYLC TASK IDENTITY AND ENVIRONMENT:
-export CYLC_TASK_ID=foo%2010080800
+export CYLC_TASK_ID=foo.2010080800
 export CYLC_TASK_NAME=foo
 export CYLC_TASK_CYCLE_TIME=2010080800
-export CYLC_TASK_LOG_ROOT=$HOME/cylc-run/baz/log/job/foo%2010080800-1344989599.086064
+export CYLC_TASK_LOG_ROOT=$HOME/cylc-run/baz/log/job/foo.2010080800-1344989599.086064
 export CYLC_TASK_NAMESPACE_HIERARCHY="root foo"
 export CYLC_TASK_TRY_NUMBER=1
 export CYLC_TASK_SSH_MESSAGING=False
@@ -4325,11 +4325,11 @@ epoch; so that rerunning the task won't overwrite old output):
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
-~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123
 # task stdout:
-~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.out 
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.out 
 # task stderr:
-~/cylc-run/examples.QuickStart.c/log/job/Model%2011080506-1317298378.191123.err
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.err
 \end{lstlisting}
 (the job submission log directory is configurable in the suite.rc file).
 
@@ -4518,10 +4518,10 @@ and generate a job script to see the resulting directives:
 \begin{lstlisting}
 $ cylc db reg test $HOME/test
 $ cylc jobscript test a | grep QSUB 
-#QSUB -e /home/oliverh/cylc-run/pbs/log/job/a%1-1321046049.703576.err
+#QSUB -e /home/oliverh/cylc-run/pbs/log/job/a.1-1321046049.703576.err
 #QSUB -l nodes=1,walltime=00:01:00
-#QSUB -o /home/oliverh/cylc-run/pbs/log/job/a%1-1321046049.703576.out
-#QSUB -N a%1
+#QSUB -o /home/oliverh/cylc-run/pbs/log/job/a.1-1321046049.703576.out
+#QSUB -N a.1
 #QSUB -I bar=baz
 #QSUB -cwd  
 \end{lstlisting}
@@ -4967,7 +4967,7 @@ where EVENT is one of the following strings:
     \item `execution\_timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
-the task (\lstinline=NAME%CYCLE= for cycling tasks).
+the task (\lstinline=NAME.CYCLE= for cycling tasks).
 
 The retry event occurs if a task fails and has any remaining retries
 configured (see Section~\ref{TaskRetries}). 
@@ -6025,12 +6025,12 @@ target suites - all suites are thus entirely isolated from one another.
 %2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
 %2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
 %2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 succeeded
+%2010/03/28 00:33:52 INFO main.C - [2010010400] C.2010010400 completed
+%2010/03/28 00:33:52 INFO main.C - [2010010400] C.2010010400 succeeded
 %2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
 %2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 succeeded
+%2010/03/28 00:33:53 INFO main.A - [2010010412] A.2010010412 completed
+%2010/03/28 00:33:53 INFO main.A - [2010010412] A.2010010412 succeeded
 %2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS SUCCEEDED
 %\end{lstlisting}
 %
