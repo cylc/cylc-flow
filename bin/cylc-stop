@@ -38,7 +38,7 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 2/ With [STOP], shut down a suite AFTER on of the following events:
     a/ all tasks have passed the TAG STOP (cycle time or async tag)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
-    c/ the task STOP (TASK%TAG) has finished
+    c/ the task STOP (TASK.TAG) has finished
 
 3/ With [--now], shut down immediately, regardless of tasks still running.
    WARNING: beware of orphaning tasks that are still running at shutdown;

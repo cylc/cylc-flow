@@ -25,6 +25,7 @@ from gcapture import gcapture_tmpfile
 from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
 from cylc.task_state import task_state
+from cylc.TaskID import TaskID
 
 try:
     any
@@ -257,7 +258,7 @@ Text Treeview suite control interface.
             # must have clicked on the top level ctime 
             return
 
-        task_id = name + '%' + ctime
+        task_id = name + TaskID.DELIM + ctime
 
         is_fam = (name in self.t.families)
 

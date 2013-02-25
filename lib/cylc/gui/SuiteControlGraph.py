@@ -25,6 +25,7 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
 from cylc.task_state import task_state
+from cylc.TaskID import TaskID
 from gcapture import gcapture_tmpfile
 
 
@@ -125,7 +126,7 @@ Dependency graph suite control interface.
         self.t.quit = True
 
     def right_click_menu( self, event, task_id, type='live task' ):
-        name, ctime = task_id.split('%')
+        name, ctime = task_id.split(TaskID.DELIM)
 
         menu = gtk.Menu()
         menu_root = gtk.MenuItem( task_id )
@@ -441,7 +442,7 @@ Dependency graph suite control interface.
             window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
-        name, ctime = id.split('%')
+        name, ctime = id.split(TaskID.DELIM)
         # TO DO: do we need to check that oldeset_ctime is defined yet?
         cti = ct(ctime)
         octi = ct( self.t.oldest_ctime )

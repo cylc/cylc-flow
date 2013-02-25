@@ -26,6 +26,7 @@ import config
 import os, sys
 from cycle_time import ct
 from graphing import CGraphPlain
+from TaskID import TaskID
 
 class MyDotWindow2( xdot.DotWindow ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
@@ -411,7 +412,7 @@ class MyDotWindow( xdot.DotWindow ):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, tag = node.get_name().split('%')
+            name, tag = node.get_name().split(TaskID.DELIM)
             if name in family_nodes:
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'

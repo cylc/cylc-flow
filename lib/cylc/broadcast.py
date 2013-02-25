@@ -135,7 +135,7 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, tag = task_id.split('%')
+        name, tag = task_id.split( TaskID.DELIM )
 
         apply = {}
         for cycle in [ 'all', tag ]:

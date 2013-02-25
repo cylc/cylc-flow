@@ -36,6 +36,7 @@ from outputs import outputs
 from cycle_time import ct
 from cycling import container
 from dictcopy import replicate, override
+from TaskID import TaskID
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -255,7 +256,7 @@ class taskdef(object):
 
             sself.c_time = sself.tag
 
-            sself.id = sself.name + '%' + sself.tag
+            sself.id = sself.name + TaskID.DELIM + sself.tag
 
             sself.asyncid_pattern = self.asyncid_pattern
 

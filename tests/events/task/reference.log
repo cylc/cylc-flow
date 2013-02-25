@@ -3,18 +3,18 @@
 2012/08/27 01:05:21 INFO - Run mode: live
 2012/08/27 01:05:21 INFO - Start tag: None
 2012/08/27 01:05:21 INFO - Stop tag: None
-2012/08/27 01:05:21 INFO - [foo%1] -job submitted
+2012/08/27 01:05:21 INFO - [foo.1] -job submitted
 2012/08/27 01:05:21 INFO - Calling submitted handler
-2012/08/27 01:05:21 INFO - [foo%1] -triggered off []
-2012/08/27 01:05:21 WARNING - [foo%1] -submitted 0.0001 minutes ago, but has not started
+2012/08/27 01:05:21 INFO - [foo.1] -triggered off []
+2012/08/27 01:05:21 WARNING - [foo.1] -submitted 0.0001 minutes ago, but has not started
 2012/08/27 01:05:21 INFO - Calling submission_timeout handler
 2012/08/27 01:05:21 INFO - Calling started handler
-2012/08/27 01:05:21 INFO - [foo%1] -foo%1 started
-2012/08/27 01:05:21 WARNING - [foo%1] -started 0.001 minutes ago, but has not succeeded
+2012/08/27 01:05:21 INFO - [foo.1] -foo.1 started
+2012/08/27 01:05:21 WARNING - [foo.1] -started 0.001 minutes ago, but has not succeeded
 2012/08/27 01:05:21 INFO - Calling execution_timeout handler
 2012/08/27 01:05:21 INFO - Calling warning handler
-2012/08/27 01:05:21 WARNING - [foo%1] -*WARNING - shit happens!
-2012/08/27 01:05:22 INFO - [foo%1] -foo%1 succeeded
+2012/08/27 01:05:21 WARNING - [foo.1] -*WARNING - shit happens!
+2012/08/27 01:05:22 INFO - [foo.1] -foo.1 succeeded
 2012/08/27 01:05:22 INFO - Calling succeeded handler
 2012/08/27 01:05:22 WARNING - ALL TASKS FINISHED OR HELD
 2012/08/27 01:05:22 CRITICAL - Suite shutting down at 2012-08-27 01:05:22.049504

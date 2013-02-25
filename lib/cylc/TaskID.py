@@ -138,20 +138,22 @@ class TaskID(object):
     """A unique TaskID holds a task name and a tag, where the tag is an
     object holding either an integer for asynchronous tasks or a cycle
     time for cycling tasks. A task ID is initialized by string, either:
-        1/ TaskID( "name%tag")
+        1/ TaskID( "name.tag")
     or
         2/ TaskID( "name", "tag" )
     """
+
+    DELIM = '.'
 
     def __init__( self, *args ):
         if len(args) == 1:
             id = args[0]
         elif len(args) == 2:
-            id = args[0] + '%' + str(args[1])
+            id = args[0] + self.DELIM + str(args[1])
         else:
             raise InvalidTaskIDError, '"' + ','.join(args) + '"'
         try:
-            name, tag = id.split( '%' )
+            name, tag = id.split( self.DELIM )
         except ValueError:
             raise InvalidTaskIDError, id
  
@@ -178,11 +180,9 @@ class TaskID(object):
 
     def getstr( self, formatted=False ):
         if formatted:
-            # STILL USING % AS IT IS ASSUMED IN
-            # lib/cylc/cylc_xdot.py:get_graph()
-            return self.name.getstr() + '%' + self.tag.getstr(formatted)
+            return self.name.getstr() + self.DELIM + self.tag.getstr(formatted)
         else:
-            return self.name.getstr() + '%' + self.tag.getstr()
+            return self.name.getstr() + self.DELIM + self.tag.getstr()
 
     def split( self ):
         # return name and tag
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     # GOOD
     try:
-        foo = TaskID( "foo%1") 
+        foo = TaskID( "foo.1") 
     except TaskIDError, x:
         print x
     else:
@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
     # GOOD
     try:
-        bar = TaskID( "bar%2010080806")
+        bar = TaskID( "bar.2010080806")
     except TaskIDError, x:
         print x
     else:
