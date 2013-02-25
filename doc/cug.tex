@@ -3163,7 +3163,7 @@ The task identity variables provided to tasks by cylc are:
 $CYLC_TASK_ID                    # X.2011051118 (e.g.)
 $CYLC_TASK_NAME                  # X
 $CYLC_TASK_CYCLE_TIME            # 2011051118
-$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.2011051118-1317298378.191123
+$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.2011051118.1
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
 $CYLC_TASK_WORK_PATH             # task work directory (see below)
@@ -4079,11 +4079,11 @@ examine it:
 \lstset{language=transcript}
 \begin{lstlisting}
 % cylc submit --dry-run examples.QuickStart.c Model.2011080506
-> JOB SCRIPT: ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123
+> JOB SCRIPT: ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1
 > THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:
-~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123 </dev/null 
-    1> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.out 
-    2> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.err &
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1 </dev/null 
+    1> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1.out 
+    2> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1.err &
 \end{lstlisting}
 Here is the generated job script (note that some config items not used in
 this suite, such as task \lstinline=initial scripting= , result in extra 
@@ -4120,7 +4120,7 @@ export CYLC_SUITE_PYRO_TIMEOUT=None
 export CYLC_TASK_ID=foo.2010080800
 export CYLC_TASK_NAME=foo
 export CYLC_TASK_CYCLE_TIME=2010080800
-export CYLC_TASK_LOG_ROOT=$HOME/cylc-run/baz/log/job/foo.2010080800-1344989599.086064
+export CYLC_TASK_LOG_ROOT=$HOME/cylc-run/baz/log/job/foo.2010080800.1
 export CYLC_TASK_NAMESPACE_HIERARCHY="root foo"
 export CYLC_TASK_TRY_NUMBER=1
 export CYLC_TASK_SSH_MESSAGING=False
@@ -4320,16 +4320,16 @@ directive value in the suite.rc file.
 \label{WhitherStdoutAndStderr}
 
 When a task is ready to run cylc generates a filename root containing
-the task name, cycle time, and a unique string of digits (seconds since
-epoch; so that rerunning the task won't overwrite old output):
+the task name, cycle time, and a submit number that increments if the 
+same task is re-triggered multiple times:
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
-~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1
 # task stdout:
-~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.out 
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1.out 
 # task stderr:
-~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506-1317298378.191123.err
+~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1.err
 \end{lstlisting}
 (the job submission log directory is configurable in the suite.rc file).
 
@@ -4518,9 +4518,9 @@ and generate a job script to see the resulting directives:
 \begin{lstlisting}
 $ cylc db reg test $HOME/test
 $ cylc jobscript test a | grep QSUB 
-#QSUB -e /home/oliverh/cylc-run/pbs/log/job/a.1-1321046049.703576.err
+#QSUB -e /home/oliverh/cylc-run/pbs/log/job/a.1.1.err
 #QSUB -l nodes=1,walltime=00:01:00
-#QSUB -o /home/oliverh/cylc-run/pbs/log/job/a.1-1321046049.703576.out
+#QSUB -o /home/oliverh/cylc-run/pbs/log/job/a.1.1.out
 #QSUB -N a.1
 #QSUB -I bar=baz
 #QSUB -cwd  
