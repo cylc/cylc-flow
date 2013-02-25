@@ -53,7 +53,7 @@ except ImportError:
 #ddmmhh = re.compile('%(\w{4})(\w{2})(\w{2})(\w{2})')
 #tformat = r'\\n\2/\3 \4'  # MM/DD HH
 #tformat = r'\\n\1\2\3\4'  # YYYYMMDDHH
-ddmmhh = re.compile('%')
+ddmmhh = TaskID.DELIM_RE
 tformat = r'\\n'
 
 class CGraphPlain( pygraphviz.AGraph ):
