@@ -41,6 +41,7 @@ from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
+from TaskID import TaskID
 from C3MRO import C3
 
 try:
@@ -1580,14 +1581,14 @@ class config( CylcConfigObj ):
             if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = fam + '%'+ltag, fam + '%'+rtag
+                nl,nr = fam + TaskID.DELIM +ltag, fam + TaskID.DELIM +rtag
                 break
             elif lname in members[fam]:
                 # l is a member of fam
-                nl = fam + '%'+ltag
+                nl = fam + TaskID.DELIM + ltag
             elif rname in members[fam]:
                 # r is a member of fam
-                nr = fam + '%'+rtag
+                nr = fam + TaskID.DELIM + rtag
 
         return nl, nr
 

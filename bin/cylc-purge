@@ -65,7 +65,7 @@ purge gap or runahead-held tasks may prevent the purge completing fully.
 graph to determine downstream tasks to remove, without doing this
 internal triggering simulation.]""",
     pyro=True, argdoc=[("REG", "Suite name"), 
-                ("TASK", "Task (NAME%CYCLE) to start purge"),
+                ("TASK", "Task (NAME.CYCLE) to start purge"),
                 ("STOP", "Cycle (inclusive!) to stop purge")])
 
 (options, args) = parser.parse_args()
@@ -82,7 +82,7 @@ except TaskIDError, x:
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
 
-stopid = 'junk%' + stoptag
+stopid = 'junk' + TaskID.DELIM + stoptag
 try:
     tid = TaskID( stopid )
 except TaskIDError, x:

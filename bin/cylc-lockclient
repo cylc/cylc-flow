@@ -26,6 +26,7 @@ from cylc.registration import localdb, RegistrationError
 from cylc.locking.lockserver import lockserver
 from cylc.locking.task_lock import task_lock
 from cylc.locking.suite_lock import suite_lock
+from cylc.TaskID import TaskID
 
 import Pyro.core, Pyro.errors
 
@@ -44,18 +45,18 @@ def check_suite_spec( name ):
     return suite_dir
 
 def check_task_spec( task_spec ):
-    # SUITE:TASK%CYCLE
+    # SUITE:TASK.CYCLE
     try:
         suite, task_id = task_spec.split( ':' )
     except:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK%CYCLE" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
 
     check_suite_spec( suite )
 
     try:
-        (name, tag) = task_id.split( '%' )
+        (name, tag) = task_id.split( TaskID.DELIM )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK%CYCLE" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
  
     try:
         cycle = ct(tag).get()
@@ -87,10 +88,10 @@ See also:
             list_all=False, get_filenames=False )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SUITE:TASK%CYCLE", action="store", dest="acquire" )
+            metavar="SUITE:TASK"+TaskID.DELIM+"CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SUITE:TASK%CYCLE", action="store", dest="release" )
+            metavar="SUITE:TASK"+TaskID.DELIM+"CYCLE", action="store", dest="release" )
 
     parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire" )

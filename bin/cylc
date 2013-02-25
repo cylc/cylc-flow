@@ -330,7 +330,7 @@ simply associates names with the suite definition locations.  The
 users, with access is governed by normal filesystem permissions. 
 
 TASK IDENTIFICATION IN CYLC SUITES
-  Tasks are identified by NAME%TAG where for cycling tasks TAG is a
+  Tasks are identified by NAME.TAG where for cycling tasks TAG is a
 cycle time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is
 an integer (just '1' for one-off asynchronous tasks).
 

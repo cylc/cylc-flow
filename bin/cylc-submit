@@ -58,7 +58,7 @@ the same task, NAME%TAG, is not currently running in the suite)."""
 def commandline_parser():
     parser = cop( usage, 
             argdoc=[ ("REG", "Suite name"),
-                ("TASK", "Target task (NAME%TAG)")])
+                ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
 
     parser.set_defaults( sched=False, dry_run=False )
 

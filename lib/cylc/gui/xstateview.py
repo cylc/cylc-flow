@@ -22,6 +22,7 @@ from cylc.gui.stateview import compare_dict_of_dict, PollSchd
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
+from cylc.TaskID import TaskID
 import gobject
 import os
 import re
@@ -334,7 +335,7 @@ class xupdater(threading.Thread):
                 # No graphw yet.
                 break
             except KeyError:
-                name, tag = id.split('%')
+                name, tag = id.split(TaskID.DELIM)
                 if any( [name in self.families[fam] for
                          fam in self.graphed_family_nodes] ):
                     # if task name is a member of a family omit it
@@ -387,7 +388,7 @@ class xupdater(threading.Thread):
         # FAMILIES
         if needs_redraw:
             for node in self.graphw.nodes():
-                name, tag = node.get_name().split('%')
+                name, tag = node.get_name().split(TaskID.DELIM)
                 if name in self.family_nodes:
                     if name in self.graphed_family_nodes:
                         node.attr['shape'] = 'doubleoctagon'
@@ -409,7 +410,7 @@ class xupdater(threading.Thread):
             # FILTERING:
             for node in self.graphw.nodes():
                 id = node.get_name()
-                name, ctime = id.split('%')
+                name, ctime = id.split(TaskID.DELIM)
                 if self.filter_exclude:
                     if re.match( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
@@ -453,7 +454,7 @@ class xupdater(threading.Thread):
                 # Now that we have family state coloring with family
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
-                name, tag = id.split('%')
+                name, tag = id.split(TaskID.DELIM)
                 if any( [name in self.families[fam] for
                          fam in self.graphed_family_nodes] ):
                     # if task name is a member of a family omit it

@@ -39,7 +39,7 @@ from running or spawning successors, until it is released.
 
 See also 'cylc [control] hold'.""", pyro=True,
     argdoc=[("REG", 'Suite name'),
-            ("[TASK]", "Task to release (NAME%CYCLE)")])
+            ("[TASK]", "Task to release (NAME"+TaskID.DELIM+"CYCLE)")])
 
 (options, args) = parser.parse_args()
 

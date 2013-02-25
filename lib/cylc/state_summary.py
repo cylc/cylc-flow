@@ -18,6 +18,7 @@
 
 import Pyro.core
 import logging
+from TaskID import TaskID
 
 
 class state_summary( Pyro.core.ObjBase ):
@@ -46,7 +47,7 @@ class state_summary( Pyro.core.ObjBase ):
 
         for task in tasks:
             task_summary[ task.id ] = task.get_state_summary()
-            name, ctime = task.id.split('%')
+            name, ctime = task.id.split(TaskID.DELIM)
             task_states.setdefault(ctime, {})
             task_states[ctime][name] = task_summary[task.id]['state']
             if name not in task_name_list:
@@ -72,7 +73,7 @@ class state_summary( Pyro.core.ObjBase ):
                     c_fam_task_states[parent].append(state)
             
             for fam, child_states in c_fam_task_states.items():
-                f_id = fam + "%" + ctime
+                f_id = fam + TaskID.DELIM + ctime
                 state = extract_group_state(child_states)
                 if state is None:
                     continue
@@ -141,10 +142,10 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
             sub_states.setdefault( state, 0 )
             sub_states[state] += 1
         elif this_id in fam_state_summary:
-            name, ctime = this_id.split( "%" )
+            name, ctime = this_id.split( TaskID.DELIM )
             sub_text += prefix + fam_state_summary[this_id]['state']
             for child in reversed( sorted( id_family_map[name] ) ):
-                child_id = child + "%" + ctime
+                child_id = child + TaskID.DELIM + ctime
                 stack.insert( 0, ( child_id, depth + 1 ) )
         if not prefix_text:
             prefix_text = sub_text.strip()
