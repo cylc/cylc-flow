@@ -35,6 +35,12 @@ guide, command help, or post a question to the cylc mailing list. <p>
 		<h2>pending (in master but not tagged yet)</h2>
 
 <ul>
+		<li>The task ID delimiter has been changed from '%' to '.'
+		(foo%2013080800 becomes foo.2013080800) because the '%' character
+		causes trouble for web-based suite output viewers. This affects task
+		IDs on the command line, and task log filenames, but it does not affect
+		 suite definitions.</li>
+
 		<li>Multiple inheritance for the runtime namespace hierarchy.</li>
 
 		<li>A new command <code>cylc [util] suite-state</code> queries the
