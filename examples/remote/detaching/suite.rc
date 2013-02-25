@@ -1,10 +1,11 @@
 title = "a self-contained minimal suite with a remote detaching task"
+
 description = """This runs one detaching task (manual completion) on a
 remote host. It is self-contained because the task scripting below 
 generates the detaching process, with completion messaging, on the fly.
-To use it, install cylc and Pyro on the remote host and change the
-remote config section below accordingly; and change the detaching job
-submission method according to your needs (llsubmit)."""
+To use it, install cylc and Pyro on the remote host, check the host 
+config determined by cylc site/user config files, and change the
+detaching job submission method according to your needs (llsubmit)."""
 
 [scheduling]
     [[dependencies]]
@@ -34,7 +35,4 @@ cylc task message "detached now, BYE from $(hostname)"
         [[[remote]]]
             # the remote host name:
             host = wrh-1.hpcf.niwa.co.nz
-            # needed if cylc is not in PATH on the remote host
-            cylc directory = ~ecoconnect_admin/cylc-4.2.1
-
 
