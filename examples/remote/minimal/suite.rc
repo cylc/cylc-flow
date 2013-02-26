@@ -2,8 +2,9 @@ title = a minimal self-contained remote task suite
 
 description = """
 This runs one task on a remote host. To use it, install cylc (and Pyro
-OR ssh key for ssh-based remote messaging) on the remote host and adjust
-the remote config section below for host address and cylc location."""
+OR ssh key for ssh-based remote messaging) on the remote host specified
+under [[[remote]]] below.  Remote cylc location, and ssh messaging, can
+be set in host-specific sections of the cylc site/user config file."""
 
 [scheduling]
     [[dependencies]]
@@ -17,7 +18,3 @@ echo GOODBYE from $CYLC_TASK_NAME on $(hostname)"""
         [[[remote]]]
             # the remote host name:
             host = wrh-1.hpcf.niwa.co.nz
-            # needed if cylc is not in PATH on the remote host:
-            cylc directory = /home/oliverh/cylc
-            # UNCOMMENT TO USE SSH-BASED TASK MESSAGING:
-            # ssh messaging = True

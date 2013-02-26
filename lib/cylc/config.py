@@ -290,14 +290,6 @@ class config( CylcConfigObj ):
         self.process_directories()
 
         self.load_graph()
-        if len( self.naked_dummy_tasks ) > 0:
-            if self.strict or self.verbose:
-                print 'Naked dummy tasks detected (no entry under [runtime]):'
-                for ndt in self.naked_dummy_tasks:
-                    print '  +', ndt
-                print '  WARNING: this can be caused by misspelled task names!' 
-            if self.strict:
-                raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
 
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
@@ -312,6 +304,17 @@ class config( CylcConfigObj ):
         self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
 
         self.configure_queues()
+
+        # Warn or abort (if --strict) if naked dummy tasks (no runtime
+        # section) are found in graph or queue config. 
+        if len( self.naked_dummy_tasks ) > 0:
+            if self.strict or self.verbose:
+                print 'Naked dummy tasks detected (no entry under [runtime]):'
+                for ndt in self.naked_dummy_tasks:
+                    print '  +', ndt
+                print '  WARNING: this can be caused by misspelled task names!' 
+            if self.strict:
+                raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
 
         if self.validation:
             self.check_tasks()
@@ -662,19 +665,18 @@ class config( CylcConfigObj ):
             qmembers = []
             for qmember in queues[queue]['members']:
                 if qmember in self.runtime['descendants']:
-                    # qmember is a family, so replace it with member
-                    # tasks. Note that self.runtime['descendants'][fam] includes any
-                    # sub-family as well as task members of fam.
+                    # qmember is a family so replace it with member tasks. Note that 
+                    # self.runtime['descendants'][fam] includes sub-families too.
                     for fmem in self.runtime['descendants'][qmember]:
                         if qmember not in qmembers:
                             try:
                                 queues['default']['members'].remove( fmem )
                             except ValueError:
+                                # no need to check for naked dummy tasks here as
+                                # families are defined by runtime entries.
                                 if self.verbose and fmem not in self.runtime['descendants']:
-                                    # family members that are themselves
-                                    # families should be ignored as we
-                                    # only need tasks in the queues.
-                                    print >> sys.stderr, '  WARNING: ignoring queue member ' + fmem + ' (task not used in the graph)'
+                                    # family members that are themselves families should be ignored as we only need tasks in the queues.
+                                    print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + fmem + ' of family ' + qmember + ' (task not used in the graph)'
                             else:
                                 qmembers.append( fmem )
                 else:
@@ -684,7 +686,9 @@ class config( CylcConfigObj ):
                             queues['default']['members'].remove( qmember )
                         except ValueError:
                             if self.verbose:
-                                print >> sys.stderr, '  WARNING: ignoring queue member ' + qmember + ' (task not used in the graph)'
+                                print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + qmember + ' (task not used in the graph)'
+                            if qmember not in self['runtime']:
+                                self.naked_dummy_tasks.append( qmember )
                         else:
                             qmembers.append(qmember)
             queues[queue]['members'] = qmembers
