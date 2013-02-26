@@ -1000,7 +1000,13 @@ class scheduler(object):
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
 
-            
+            if self.run_mode == 'simulation':
+                for itask in self.pool.get_tasks():
+                    # set sim-mode tasks to "succeeded" after their
+                    # alotted run time (and then set flags.pflag to
+                    # stimulate task processing).
+                    itask.sim_time_check()
+
             if self.process_tasks():
                 self.log.debug( "BEGIN TASK PROCESSING" )
                 # loop timing: use real clock even in sim mode
@@ -1126,18 +1132,17 @@ class scheduler(object):
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
-        if self.do_process_tasks:
-            self.do_process_tasks = False
-            return True
 
         process = False
-        if self.run_mode == 'simulation':
-            for itask in self.pool.get_tasks():
-                    itask.sim_time_check()
+
+        if self.do_process_tasks:
+            # this flag is turned on by commands that change task state
+            process = True
+            self.do_process_tasks = False # reset
 
         if flags.pflag:
             process = True
-            flags.pflag = False
+            flags.pflag = False # reset
             # a task changing state indicates new suite activity
             # so reset the suite timer.
             if self.config.suite_timeout and self.config.reset_timer:

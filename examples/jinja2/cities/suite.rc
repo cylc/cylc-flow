@@ -34,7 +34,7 @@ generation of groups of related dependencies and runtime properties."""
     [[on_{{ HOST }} ]]
         [[[remote]]]
             host = {{ HOST }}
-            cylc directory = /path/to/cylc
+            # (remote cylc directory is set in site/user config for this host)
         [[[directives]]]
             wall_clock_limit = "00:{{ LIMIT_MINS|int() + 2 }}:00,00:{{ LIMIT_MINS }}:00"
 
