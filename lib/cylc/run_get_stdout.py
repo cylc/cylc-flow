@@ -33,7 +33,7 @@ def run_get_stdout( command ):
             print >> sys.stderr, "ERROR: command failed %d\n%s" % (res,err)
             return (False, [])
     except OSError, e:
-        print >> sys.stderr, "ERROR: command invocation failed %s\n%s" % (str(e),err)
+        print >> sys.stderr, "ERROR: command invocation failed:", command
         return (False, [])
     else:
         # output is a string with newlines
