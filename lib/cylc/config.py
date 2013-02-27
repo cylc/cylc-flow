@@ -428,77 +428,24 @@ class config( CylcConfigObj ):
         #for name in self['runtime']:
         #    print name, self.runtime['linearized ancestors'][name]
 
-    def compute_inheritance( self ):
+    def compute_inheritance( self, use_efficient_method=True ):
+
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        #SIMPLE = True
-        SIMPLE = False
-        if SIMPLE:
-            n_reps = self.compute_inheritance_simply()
-        else:
-            n_reps = self.compute_inheritance_efficiently()
-
-        if self.verbose:
-            print '  Number of namespace replications:', n_reps
-
-    def compute_inheritance_simply( self ):
-        """Do inheritance using the linearized hierarchy for each namespace."""
-
         results = OrderedDict()
         n_reps = 0
-
-        for ns in self['runtime']:
-            if ns == 'root':
-                tmp = OrderedDict()
-                replicate( tmp, self['runtime'][ns].odict() )
-                n_reps += 1
-                results['root'] = tmp
-                continue
-
-            if self.only != None:
-                # only do inheritance where it affects tasks in self.only
-                skip = True
-                for so in self.only:
-                    if so in hierarchy:
-                        skip = False
-                if skip:
-                    continue
-
-            hierarchy = copy(self.runtime['linearized ancestors'][ns])
-            hierarchy.reverse()
-
-            # compute the result of inheritance for namespace ns
-            tmp = OrderedDict()
-            mro = []
-            for name in hierarchy:
-                mro.append(name)
-                #print ' DO', mro
-                replicate( tmp, self['runtime'][name].odict() )
-                n_reps += 1
-            results[ns] = tmp
-
-        # replace each namespace with the result
-        self['runtime'] = results
-
-        return n_reps
-
-    def compute_inheritance_efficiently( self ):
-        """Do inheritance using the linearized hierarchy for each namespace.
-        This version attempts to re-use already-computed MROs, which can 
-        make a big difference to the number of inheritance computations 
-        (wherein one namespace overrides another, in all items)."""
-
-        results = OrderedDict()
         already_done = {} # to store already computed namespaces by mro
-        n_reps = 0
-
+ 
         for ns in self['runtime']:
+            # get the MRO for this namespace
+            hierarchy = copy(self.runtime['linearized ancestors'][ns])
+            hierarchy.reverse()
+
             if ns == 'root':
                 tmp = OrderedDict()
                 replicate( tmp, self['runtime'][ns].odict() )
                 n_reps += 1
-                already_done['root'] = tmp
                 results['root'] = tmp
                 continue
 
@@ -509,47 +456,50 @@ class config( CylcConfigObj ):
                     if so in hierarchy:
                         skip = False
                 if skip:
-                    continue
+                    continue 
 
-            hierarchy = copy(self.runtime['linearized ancestors'][ns])
-            hierarchy.reverse()
-            #print ns, hierarchy
-
-            mro = []
-
-            # compute the result of inheritance for namespace ns
             tmp = OrderedDict()
-            shortcut = False
-            for name in hierarchy:
-
-                mro.append(name)
-                i_mro = '*'.join(mro)
-                if i_mro in already_done:
-                    #print ' skip', i_mro
-                    # point to the already computed result
-                    stmp = already_done[i_mro]
-                    shortcut = True
-                else:
-                    #print ' DO', i_mro
-                    if shortcut:
-                        shortcut = False
-                        # copy stmp (to avoid altering already_done)
-                        tmp = OrderedDict()
-                        replicate(tmp,stmp)
-                        n_reps += 1
-                    # override name content into tmp
+            if not use_efficient_method: 
+                # this basic method is easy to understand, kept mainly for reference.
+                for name in hierarchy:
                     replicate( tmp, self['runtime'][name].odict() )
                     n_reps += 1
-                    # record this mro as already done
-                    already_done[i_mro] = tmp
+            else:
+                # this method attempts to re-use already-computed MROs,
+                # which can greatly reduce the number of whole-namespace
+                # nested dict copy-and-override operations.
+       
+                mro = []
+                prev_shortcut = False
+                for name in hierarchy:
+                    mro.append(name)
+                    i_mro = '*'.join(mro)
+                    if i_mro in already_done:
+                        # point to the already computed result
+                        stmp = already_done[i_mro]
+                        prev_shortcut = True
+                    else:
+                        if prev_shortcut:
+                            # copy stmp (to avoid altering already_done)
+                            tmp = OrderedDict()
+                            replicate(tmp,stmp)
+                            n_reps += 1
+                            prev_shortcut = False
+                        # override name content into tmp
+                        replicate( tmp, self['runtime'][name].odict() )
+                        n_reps += 1
+                        # record this mro as already done
+                        already_done[i_mro] = tmp
 
             results[ns] = tmp
-            #print
 
         # replace each namespace with the inherited result
         self['runtime'] = results
 
-        return n_reps
+        # uncomment this to compare the simple and efficient methods
+        # (along with 'time cylc val BIGSUITE')
+        # print '  Number of namespace replications:', n_reps
+
 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
