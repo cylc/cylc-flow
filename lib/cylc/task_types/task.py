@@ -113,7 +113,7 @@ class task( object ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
-        #  * self.id: unique identity (e.g. NAME%CYCLE for cycling tasks)
+        #  * self.id: unique identity (e.g. NAME.CYCLE for cycling tasks)
         #  * prerequisites and outputs
         #  * self.env_vars
 

@@ -53,7 +53,7 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (i.e. only if 
-the same task, NAME%TAG, is not currently running in the suite)."""
+the same task, NAME.TAG, is not currently running in the suite)."""
 
 def commandline_parser():
     parser = cop( usage, 

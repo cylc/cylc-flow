@@ -431,9 +431,9 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} list of strings (task IDs: \lstinline=name%tag=)
+    \item {\em type:} list of strings (task IDs: \lstinline=name.tag=)
     \item {\em default:} (none)
-    \item {\em example:} \lstinline=foo%20120808, bar%20120908=
+    \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
 
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
@@ -1261,7 +1261,7 @@ section for each of the following task events that you wish to handle:
     \item `execution timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
-the task (\lstinline=NAME%CYCLE= for cycling tasks).
+the task (\lstinline=NAME.CYCLE= for cycling tasks).
 
 \begin{myitemize}
     \item {\em type:} string (the event handler)
