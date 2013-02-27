@@ -432,8 +432,8 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        SIMPLE = True
-        #SIMPLE = False
+        #SIMPLE = True
+        SIMPLE = False
         if SIMPLE:
             n_reps = self.compute_inheritance_simply()
         else:
