@@ -21,6 +21,11 @@
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
+# For future reference, I attempted flattening each namespace dict prior
+# to inheritance processing, and expanding again after, to allow
+# copy-and-override of shallow rather than nested dicts, but got no
+# appreciable speedup.
+
 import re, os, sys
 import taskdef
 from envvar import check_varnames, expandvars
@@ -424,19 +429,16 @@ class config( CylcConfigObj ):
         #    print name, self.runtime['linearized ancestors'][name]
 
     def compute_inheritance( self ):
-        """This works through the inheritance hierarchy from root, for
-        each namespace. For future reference, I attempted flattening
-        each namespace dict prior to inheritance processing, and
-        expanding again after, to allow copy-and-override of shallow
-        rather than nested dicts, but got no appreciable speedup."""
+        """This works out the result of all inheritance using the
+        linearized hierarchy for each namespace."""
 
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        computed_already = {}
-        
-        for label in self['runtime']:
-            if label == 'root':
+        results = OrderedDict()
+
+        for ns in self['runtime']:
+            if ns == 'root':
                 continue
 
             if self.only != None:
@@ -448,42 +450,18 @@ class config( CylcConfigObj ):
                 if skip:
                     continue
 
-            hierarchy = copy(self.runtime['linearized ancestors'][label])
+            hierarchy = copy(self.runtime['linearized ancestors'][ns])
             hierarchy.reverse()
 
-            rtns = OrderedDict()
-
-            mro = []
-            prev = None
-
-            ##print
-            ##print 'IN:', label, hierarchy
+            # compute the result of inheritance for namespace ns
+            tmp = OrderedDict()
             for name in hierarchy:
-                mro.append( name )
-                i_mro = '*'.join( mro )
-                ##print 'MRO', i_mro
-                if i_mro in computed_already:
-                    rtns = computed_already[i_mro]
-                else:
-                    ##print 'INHERIT:',
-                    ##if len(mro) > 1:
-                    ##    print mro[:-1], mro[-1]
-                    ##else:
-                    ##    print mro[0]
+                replicate( tmp, self['runtime'][name].odict() )
+            results[ns] = tmp
 
-                    # deep copy rtns (so not to modify computed_already)
-                    tmp = OrderedDict()
-                    replicate( tmp, rtns)
-                    # override tmp with [runtime][name]
-                    replicate( tmp, self['runtime'][name].odict())
-                    # store result for re-use
-                    computed_already[i_mro] = tmp
-                    # store for next loop
-                    rtns = tmp
-                prev = name
-
-            self['runtime'][label] = rtns
-            ##print 'OUT:', label, taskconf.items()
+        # replace each namespace with the inherited result
+        for ns in results.keys():
+            self['runtime'][ns] = results[ns]
 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
