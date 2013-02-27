@@ -8,7 +8,7 @@ description = """To see how multiple inheritance works:
  % cylc graph SUITE # dependencies, collapse on first-parent namespaces
 
   % cylc get-config --sparse --item [runtime]ops_s1 SUITE
-  % cylc get-config --sparse --item [runtime]var_p2 SUITE"""
+  % cylc get-config --sparse --item [runtime]var_p2 foo"""
 
 [scheduling]
     [[dependencies]]

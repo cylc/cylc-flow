@@ -436,8 +436,6 @@ class config( CylcConfigObj ):
         computed_already = {}
         
         for label in self['runtime']:
-            ##print label,
-
             if label == 'root':
                 continue
 
@@ -453,47 +451,23 @@ class config( CylcConfigObj ):
             hierarchy = copy(self.runtime['linearized ancestors'][label])
             hierarchy.reverse()
 
-            ##print hierarchy
-
             rtns = OrderedDict()
 
             mro = []
             prev = None
 
-            # First inherit all excluding root. Why? Consider this:
-            #___________________
-            # [runtime]
-            #   [[root]]
-            #       [[[environment]]]
-            #           FOO = root
-            #   [[A]]
-            #       # (inherits FOO=root from root)
-            #   [[B]]
-            #       [[[environment]]]
-            #           (override FOO from root)
-            #           FOO = B
-            #   [[C]]
-            #      inherit = A,B
-            #-------------------
-            # Here A inherits FOO from root and B overrides it. When we
-            # compute the content of C, if A and B have already
-            # inherited down to root (in the sense that the content of A
-            # and B is now the result of all inheritance) then A:FOO
-            # will override B:FOO even though A:FOO has come through
-            # from root and B:FOO should take precedence. SO: we do all
-            # inheritance except root here, and just use root to supply
-            # defaults at the end.
-            for name in hierarchy[1:]:
+            ##print
+            ##print 'IN:', label, hierarchy
+            for name in hierarchy:
                 mro.append( name )
                 i_mro = '*'.join( mro )
-                ##print i_mro,
+                ##print 'MRO', i_mro
                 if i_mro in computed_already:
-                    ##print '(done)'
                     rtns = computed_already[i_mro]
                 else:
                     ##print 'INHERIT:',
-                    ###if len(mro) > 1:
-                    ###   print mro[:-1], mro[-1]
+                    ##if len(mro) > 1:
+                    ##    print mro[:-1], mro[-1]
                     ##else:
                     ##    print mro[0]
 
@@ -509,18 +483,8 @@ class config( CylcConfigObj ):
                 prev = name
 
             self['runtime'][label] = rtns
+            ##print 'OUT:', label, taskconf.items()
 
-        # Now (with refence to the comment section above) apply root
-        # wherever its items have not been overridden in the hierarchy.
-        for label in self['runtime']:
-            tmp = OrderedDict()
-            # copy root
-            replicate( tmp, self['runtime']['root'].odict())
-            # override root into tmp, and replace
-            replicate( tmp, self['runtime'][label].odict())
-            self['runtime'][label] = tmp
-
- 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
         rl = None
