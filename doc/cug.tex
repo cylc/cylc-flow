@@ -1366,43 +1366,12 @@ FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
 
 \subsection{Comparing Suites}
 
-Cylc can compare suites and report differences by suite.rc 
-section and item: 
 \lstset{language=transcript}
-\begin{lstlisting}
-% cylc diff examples.QuickStart.a examples.QuickStart.b
-\end{lstlisting}
-\lstset{language=suiterc}
-\begin{lstlisting}
-Parsing examples.QuickStart.a
-Parsing examples.QuickStart.b
-Suite definitions examples.QuickStart.a and examples.QuickStart.b differ.
-!SNIP!
-13 common items differ examples.QuickStart.a(<) examples.QuickStart.b(>)
-   (top)
- <   description = (see the Cylc User Guide)
- >   description = (Quick Start a plus a cold-start task)
- <   title = Quick Start Example A
- >   title = Quick Start Example B
 
-   [cylc] [[logging]]
- <   directory = /home/oliverh/cylc-run/examples.QuickStart.a/log/suite
- >   directory = /home/oliverh/cylc-run/examples.QuickStart.b/log/suite
-
-   [scheduling] [[dependencies]] [[[0,6,12,18]]]
- <   graph = Prep => GetData => Model => PostA
-                        Model(T-6) => Model
- >   graph = Prep => GetData & ColdModel
-                        GetData => Model => PostA
-                        ColdModel | Model(T-6) => Model
-!SNIP!
-\end{lstlisting}
-\lstset{language=transcript}
-(much of the diff output has been omitted here for the sake of brevity).
-Note that suite log directories and the like may differ even though they
-are not explicitly configured in either suite, because their default
-values are suite-registration-specific (see the {\em Suite.rc Reference},
-Appendix~\ref{SuiteRCReference}).
+The \lstinline=cylc diff= command compares suites and reports differences
+by suite.rc section and item.  Note that some differences may be due to 
+suite-name-specific defaults that are not explicitly configured in
+either suite.
 
 \subsection{Validating A Suite}
 
