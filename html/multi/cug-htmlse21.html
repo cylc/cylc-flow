@@ -1,87 +1,1010 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Cylc Development History</title> 
+<head><title>Cylc Project INSTALL File</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-04 13:03:00"> 
+<meta name="date" content="2013-03-02 09:54:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5848--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5886--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse22.html" >next</a>] [<a 
 href="cug-htmlse20.html" >prev</a>] [<a 
 href="cug-htmlse20.html#tailcug-htmlse20.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse21.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse21.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">G   </span> <a 
- id="x22-385000G"></a>Cylc Development History</h3>
+ id="x22-389000G"></a>Cylc Project INSTALL File</h3>
    <div class="sectionTOCS">
-   &#x00A0;<span class="subsectionToc" >G.1 <a 
-href="#x22-386000G.1">Pre-3.0</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >G.2 <a 
-href="#x22-387000G.2">Version 3.0</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >G.3 <a 
-href="#x22-388000G.3">Version 4.0</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >G.4 <a 
-href="#x22-389000G.4">Version 5.0</a></span>
    </div>
-<!--l. 5849--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">G.1   </span> <a 
- id="x22-386000G.1"></a>Pre-3.0</h4>
-<!--l. 5851--><p class="noindent" >Early versions of cylc were focused on developing and testing the new scheduling algorithm, and the suite design
-interface at the time was essentially the quickest route to that end. A suite was a collection of &#8220;task definition files&#8221;
-that encoded the prerequisites and outputs of each task in a direct reflection of cylc&#8217;s internal task proxies. This way
-of defining suites exposed cylc&#8217;s self-organising nature to the user, and it did have some nice properties. For instance
-a group of tasks could be transferred directly from one suite to another by simply copying the taskdef files over
-(and checking that prerequisite and output messages were consistent with the new suite). However,
-ensuring consistency of prerequisites and outputs across a large suite could be tedious; a few edge cases
-associated with suite start-up and forecast model restart dependencies were, arguably, difficult to
-understand; and the global structure of a suite was not readily apparent until run time (although to
-counter this cylc 2.x could generate run-time resolved dependency graphs very quickly in simulation
-mode).
-<!--l. 5868--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">G.2   </span> <a 
- id="x22-387000G.2"></a>Version 3.0</h4>
-<!--l. 5870--><p class="noindent" >Version 3.0 implemented an entirely new suite design interface in which one defines the suite dependency graph,
-execution environment, and command scripting for each task, in a single structured, validated, configuration file -
-the suite.rc file. This makes suite structure apparent at a glance, and much important detail is now implicitly
-implied by the graph.
-<!--l. 5877--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">G.3   </span> <a 
- id="x22-388000G.3"></a>Version 4.0</h4>
-<!--l. 5879--><p class="noindent" >Version 4.0 has the following major improvements over cylc-3.x, along with many refinements:
-     <ul class="itemize1">
-     <li class="itemize">Suite  registration  was  generalized  from  GROUP:NAME  to  a  hierarchy  of  arbitrary  depth,  e.g
-     foo.bar.baz, allowing suites to be organized in a tree-like structure.
-     </li>
-     <li class="itemize">The suite.rc file, which was initially somewhat haphazardly structured, was reviewed in great detail
-     and clearly organized. In particular it now defines a <span 
-class="cmti-10">namespace hierarchy </span>of families and tasks to allow
-     common runtime properties to be grouped naturally among related tasks.
+   <!--l. 5889--><div class="lstinputlisting">
+<a 
+ id="x22-389001"></a>
+   <span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389002r1"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389003r2"></a></span><span 
+class="pcrr7t-">Cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">can</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">from</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">raw</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">source</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tree</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">at</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">particular</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">version</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">or</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">git</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389004r3"></a></span><span 
+class="pcrr7t-">repository</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clone</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">which</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">can</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">be</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">updated</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">latest</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">version</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">at</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">will</span><span 
+class="pcrr7t-">).</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389005r4"></a></span><span 
+class="pcrr7t-">In</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">either</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">case</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">can</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">be</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">installed</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">into</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">normal</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">user</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">home</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">directory</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389006r5"></a></span><span 
+class="pcrr7t-">or</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">system</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">location</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">so</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">long</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">as</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">full</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">source</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tree</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remains</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">intact</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389007r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389008r7"></a></span><span 
+class="pcrr7t-">INSTALLING</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">A</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">SOURCE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">TARBALL</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389009r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389010r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tar</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">xzf</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">x</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">y</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">z</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">tar</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">gz</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389011r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cd</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">x</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">y</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">z</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389012r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389013r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389014r13"></a></span><span 
+class="pcrr7t-">The</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">process</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">does</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">following</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389015r14"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389016r15"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">VERSION</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">file</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">is</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">created</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">containing</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">version</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">string</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">e</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">g</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389017r16"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">5.1.0.</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">This</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">is</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">taken</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">from</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">name</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">of</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">parent</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">directory</span><span 
+class="pcrr7t-">;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">DO</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">NOT</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389018r17"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">CHANGE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">THE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">NAME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">OF</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">THE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">UNPACKED</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">SOURCE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">TREE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">before</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">running</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">'.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389019r18"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389020r19"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">generates</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">User</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Guide</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">from</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">its</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">LaTeX</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">source</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">files</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">in</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">doc</span><span 
+class="pcrr7t-">/:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389021r20"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x22C6;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">if</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">you</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">have</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pdflatex</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">installed</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">PDF</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">version</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">is</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">generated</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389022r21"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x22C6;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">if</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">you</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">have</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tex4ht</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ImageMagick</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">convert</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">installed</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">two</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">HTML</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389023r22"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">versions</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">are</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">generated</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389024r23"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x22C6;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">doc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">index</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">html</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">file</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">is</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">created</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">with</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">links</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">generated</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">docs</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389025r24"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389026r25"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">3)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">The</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">orrdereddict</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">module</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">will</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">be</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">built</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">from</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">its</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">C</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">language</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389027r26"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">source</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">files</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">in</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ext</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">ordereddict</span><span 
+class="pcrr7t-">-0.4.5.</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">This</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">is</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">not</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">essential</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389028r27"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">implementation</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">will</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">be</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">used</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">by</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">if</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">necessary</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Currently</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389029r28"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">if</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">build</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">is</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">successful</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">you</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">must</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">module</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yourself</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">into</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389030r29"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">your</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">PYTHONPATH</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389031r30"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389032r31"></a></span><span 
+class="pcrr7t-">You</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">may</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">want</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">maintain</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">successive</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">versions</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">of</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">under</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">same</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">top</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389033r32"></a></span><span 
+class="pcrr7t-">level</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">directory</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389034r33"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">TOP</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-5.1.0/</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389035r34"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">TOP</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">-5.2.3.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389036r35"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">etc</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389037r36"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389038r37"></a></span><span 
+class="pcrr7t-">INSTALLING</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">A</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">GIT</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">REPOSITORY</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">CLONE</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389039r38"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389040r39"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">To</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">get</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clone</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">that</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">can</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">track</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">official</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">repository</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389041r40"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389042r41"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">git</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clone</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">git</span><span 
+class="pcrr7t-">://</span><span 
+class="pcrr7t-">github</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">com</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">git</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389043r42"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cd</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389044r43"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">build</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">orderreddict</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">documentation</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">as</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">above</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389045r44"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#...</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389046r45"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">git</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pull</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">origin</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">master</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">update</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">latest</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">changes</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389047r46"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">remake</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">documentation</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">in</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">case</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">of</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">changes</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389048r47"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389049r48"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">To</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">participate</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">in</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">development</span><span 
+class="pcrr7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">fork</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">on</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">github</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clone</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">your</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389050r49"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">own</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">fork</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">locally</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">commit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">changes</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">in</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">feature</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">branch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">then</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">push</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">it</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389051r50"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">your</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">fork</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">issue</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pull</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">request</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">maintainer</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389052r51"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389053r52"></a></span><span 
+class="pcrr7t-">In</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">repository</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">you</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">can</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">re</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">at</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">will</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">regenerate</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389054r53"></a></span><span 
+class="pcrr7t-">documentation</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">after</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">making</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">changes</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">or</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">updating</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">repository</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Inside</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389055r54"></a></span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">doc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">directory</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">you</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">can</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">rebuild</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">specific</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">formats</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">of</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">User</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Guide</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389056r55"></a></span><span 
+class="pcrr7t-">using</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">special</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">make</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">targets</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">pdf</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">html</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">html</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">single</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x22-389057r56"></a></span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">html</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">multi</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">.</span>
+   
+   </div>
                                                                                          
 
                                                                                          
-     </li>
-     <li class="itemize">The Jinja2 template engine is now supported, adding general programmability to cylc suite definitions.</li></ul>
-<!--l. 5894--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">G.4   </span> <a 
- id="x22-389000G.4"></a>Version 5.0</h4>
-<!--l. 5896--><p class="noindent" >Version 5.0 contains some major internal changes to enhance performance for large suites, such as multi-threading
-for continuous request handling and task job submission. We also aim to provide backward compatibility for suite
-definitions from version 5.0 onward, wherever possible.
-                                                                                         
-
-                                                                                         
-   <!--l. 5902--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5891--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse22.html" >next</a>] [<a 
 href="cug-htmlse20.html" >prev</a>] [<a 
 href="cug-htmlse20.html#tailcug-htmlse20.html" >prev-tail</a>] [<a 
 href="cug-htmlse21.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse21.html" >up</a>] </p></div>
-<!--l. 5902--><p class="indent" >   <a 
- id="tailcug-htmlse21.html"></a>   
+<!--l. 5891--><p class="indent" >   <a 
+ id="tailcug-htmlse21.html"></a>  
 </body></html> 

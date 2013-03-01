@@ -8,8 +8,6 @@
 	<meta name="description" content="The cylc suite engine home page on GitHub." />
     <meta name="robots" content="all"/>
     <meta name="google-site-verification" content="80O-lgcVlVkKfF1yVyn0Q05W6QuN-WjcP30UftFhmiM" /> 
-    <meta name="viewport" content="width=768px"/>
-
 
 	<title>The Cylc MetaScheduler</title>
 
@@ -22,7 +20,7 @@
     <!--<link rel="Shortcut Icon" type="image/x-icon" href="http://foo.bar.ico"/>-->
     <script src="styleswitcher.js" type="text/javascript">
     </script>
-</head->
+</head>
 
 <body>
 <div id="container">
@@ -60,7 +58,7 @@
 		<div id="preamble">
 
             <div class="warning">
-                Current Version: <a href="#download">5.1.0</a> (2013-03-01) <a href="changes.html">changes</a>
+                Current Version: <a href="#download">5.1.0</a> (2013-03-02) <a href="changes.html">changes</a>
             </div>
 
     <p class="p1">Cylc was selected as a finalist in two categories for
@@ -115,7 +113,7 @@
     <p class="p3"><span>
         Cylc's suite design paradigm is simple and intuitive: "draw" a
         dependency graph in concise textual form, then configure the
-        runtime properties of each task in an efficient multiple inheritance
+        runtime properties of each task in an efficient inheritance
         hierarchy. This simple 
         <a href="screenshots/simple-suiterc.png">suite definition</a>,
         for example, defines a suite with this
@@ -226,8 +224,8 @@
                         and <b>runtime</b> configuration.</li>
 
                         <li> Configuration of task runtime properties
-                        (environment etc.) via a <b>multiple inheritance
-                            hierarchy</b>.</li>
+                        (environment etc.) via an inheritance
+                        hierarchy of nested <b>task families</b>.</li>
 
                         <li> <b>Remote control</b>: from your desktop
                         box, control a suite running on a remote server

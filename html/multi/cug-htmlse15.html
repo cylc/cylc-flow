@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-04 13:03:00"> 
+<meta name="date" content="2013-03-02 09:54:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,40 +18,40 @@ href="cug-htmlse14.html#tailcug-htmlse14.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse15.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse15.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">A   </span> <a 
- id="x16-181000A"></a>Suite.rc Reference</h3>
+ id="x16-184000A"></a>Suite.rc Reference</h3>
    <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >A.1 <a 
-href="#x16-182000A.1">Top Level Items</a></span>
+href="#x16-185000A.1">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.2 <a 
-href="#x16-185000A.2">[cylc]</a></span>
+href="#x16-188000A.2">[cylc]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.3 <a 
-href="#x16-220000A.3">[scheduling]</a></span>
+href="#x16-223000A.3">[scheduling]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.4 <a 
-href="#x16-242000A.4">[runtime]</a></span>
+href="#x16-245000A.4">[runtime]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.5 <a 
-href="#x16-283000A.5">[visualization]</a></span>
+href="#x16-286000A.5">[visualization]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.6 <a 
-href="#x16-300000A.6">Special Placeholder Variables In Suite Definitions</a></span>
+href="#x16-303000A.6">Special Placeholder Variables In Suite Definitions</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.7 <a 
-href="#x16-301000A.7">Default Suite Configuration</a></span>
+href="#x16-304000A.7">Default Suite Configuration</a></span>
    </div>
 <!--l. 6--><p class="indent" >   This appendix documents legal content of raw cylc suite.rc files. Many items have sensible default values, and
 most suites may only need to explicitly configure a few of them.
 <!--l. 10--><p class="indent" >   In addition to the configuration items described below, Jinja2 expressions can also be embedded
 to programmatically generate the final suite definition seen by cylc. Use of Jinja2 is documented in
 Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-1040008.6">8.6<!--tex4ht:ref: Jinja2 --></a>.
+href="cug-htmlse8.html#x9-1070008.6">8.6<!--tex4ht:ref: Jinja2 --></a>.
 <!--l. 14--><p class="indent" >   See also <span 
 class="cmti-10">Suite Definition - Suite.rc Overview </span>(Section&#x00A0;<a 
 href="cug-htmlse8.html#x9-530008.2">8.2<!--tex4ht:ref: SuiteRCFile --></a>) for a descriptive overview of suite.rc
 files.
 <!--l. 18--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.1   </span> <a 
- id="x16-182000A.1"></a>Top Level Items</h4>
+ id="x16-185000A.1"></a>Top Level Items</h4>
 <!--l. 20--><p class="noindent" >The only top level configuration items at present are the suite title and description.
 <!--l. 23--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.1.1   </span> <a 
- id="x16-183000A.1.1"></a>title</h5>
+ id="x16-186000A.1.1"></a>title</h5>
 <!--l. 25--><p class="noindent" >A single line description of the suite. It is displayed in the db viewer window and can be retrieved at run time with
 the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -65,7 +65,7 @@ class="cmti-10">type: </span>single line string
 class="cmti-10">default: </span>&#8220;No title provided&#8221;</li></ul>
 <!--l. 34--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.1.2   </span> <a 
- id="x16-184000A.1.2"></a>description</h5>
+ id="x16-187000A.1.2"></a>description</h5>
 <!--l. 36--><p class="noindent" >A multi-line description of the suite. It can be retrieved by the db viewer right-click menu, or at run time with the
 <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -80,13 +80,14 @@ class="cmti-10">type: </span>multi-line string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>&#8220;No description provided&#8221;</li></ul>
-<!--l. 44--><p class="noindent" >
+<!--l. 44--><p class="noindent" ><span 
+class="cmbx-12">]</span>
    <h4 class="subsectionHead"><span class="titlemark">A.2   </span> <a 
- id="x16-185000A.2"></a>[cylc]</h4>
+ id="x16-188000A.2"></a>[cylc]</h4>
 <!--l. 46--><p class="noindent" >This section is for suite configuration that is not specifically task-related.
 <!--l. 49--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.1   </span> <a 
- id="x16-186000A.2.1"></a> [cylc] <span 
+ id="x16-189000A.2.1"></a> [cylc] <span 
 class="cmsy-10">&#x2192; </span>required run mode</h5>
 <!--l. 51--><p class="noindent" >If this item is set cylc will abort if the suite is not started in the specified mode. This can be used for demo
 suites that have to be run in simulation mode, for example, because they have been taken out of their
@@ -103,7 +104,7 @@ class="cmti-10">legal values: </span>live, dummy, simulation
 class="cmti-10">default: </span>None</li></ul>
 <!--l. 62--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.2   </span> <a 
- id="x16-187000A.2.2"></a> [cylc] <span 
+ id="x16-190000A.2.2"></a> [cylc] <span 
 class="cmsy-10">&#x2192; </span>UTC mode</h5>
 <!--l. 64--><p class="noindent" >Cylc runs off the suite host&#8217;s system clock by default. This item allows you to run the suite in UTC even if the
 system clock is set to local time. Clock-triggered tasks will trigger when the current UTC time is
@@ -117,7 +118,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 76--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.3   </span> <a 
- id="x16-188000A.2.3"></a>[cylc] <span 
+ id="x16-191000A.2.3"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>abort if any task fails</h5>
 <!--l. 78--><p class="noindent" >Cylc does not normally abort if tasks fail, but if this item is turned on it will abort with exit status 1 if any task
 fails.
@@ -132,7 +133,7 @@ class="cmti-10">default: </span>False</li></ul>
                                                                                          
 <!--l. 86--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.4   </span> <a 
- id="x16-189000A.2.4"></a>[cylc] <span 
+ id="x16-192000A.2.4"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>log resolved dependencies</h5>
 <!--l. 88--><p class="noindent" >If this is turned on cylc will write the resolved dependencies of each task to the suite log as it becomes ready to run
 (a list of the IDs of the tasks that actually satisfied its prerequisites at run time). Mainly used for cylc testing and
@@ -145,7 +146,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 98--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.5   </span> <a 
- id="x16-190000A.2.5"></a>[cylc] <span 
+ id="x16-193000A.2.5"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>job submission</h5>
 <!--l. 100--><p class="noindent" >Tasks ready to submit are now queued for processing in a background worker thread, so submitting a lot of tasks at
 once does not hold cylc back. In the job submission thread tasks are are batched, with members of each batch being
@@ -154,12 +155,12 @@ system with too many simultaneous job submissions.
 <!--l. 107--><p class="indent" >   The time required for a single task&#8217;s job submission to complete typically depends on whether it is a remote task
 (for which an ssh connection must be established and used) and whether dynamic host selection is used
 (see&#x00A0;<a 
-href="#x16-269000A.4.1.16.1">A.4.1.16.1<!--tex4ht:ref: DynamicHostSelection --></a> (a dynamic host selection command runs as part of the job submission command). The time taken
+href="#x16-272000A.4.1.16.1">A.4.1.16.1<!--tex4ht:ref: DynamicHostSelection --></a> (a dynamic host selection command runs as part of the job submission command). The time taken
 for a batch of parallel job submissions to complete will be roughly the duration of the slowest member
 process.
 <!--l. 115--><p class="noindent" >
 <!--l. 115--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-191000A.2.5.1"></a><span 
+ id="x16-194000A.2.5.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[job submission] </span><span 
@@ -175,7 +176,7 @@ class="cmti-10">type: </span>integer (minimum 1)
 class="cmti-10">default: </span>10</li></ul>
 <!--l. 126--><p class="noindent" >
 <!--l. 126--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-192000A.2.5.2"></a><span 
+ id="x16-195000A.2.5.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[job submission] </span><span 
@@ -194,8 +195,8 @@ class="cmti-10">default: </span>15</li></ul>
                                                                                          
 <!--l. 137--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.6   </span> <a 
- id="x16-193000A.2.6"></a>[cylc] <span 
-class="cmsy-10">&#x2192; </span>event handler execution</h5>
+ id="x16-196000A.2.6"></a>[cylc] <span 
+class="cmsy-10">&#x2192; </span>[event handler execution]</h5>
 <!--l. 139--><p class="noindent" >Task event handlers are queued to a background worker thread that limits the number of event handlers that can
 run at once, as for task job submissions (above), because of the potential for large suites to swamp the suite host
 with event handlers. Event handlers are currently executed directly as sub-processes (i.e.&#x00A0;unlike task job submission
@@ -205,7 +206,7 @@ class="cmti-10">suite </span>event handlers are currently executed directly in t
 task event handler worker thread.
 <!--l. 150--><p class="noindent" >
 <!--l. 150--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-194000A.2.6.1"></a><span 
+ id="x16-197000A.2.6.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event handler execution] </span><span 
@@ -221,7 +222,7 @@ class="cmti-10">type: </span>integer (minimum 1)
 class="cmti-10">default: </span>5</li></ul>
 <!--l. 161--><p class="noindent" >
 <!--l. 161--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-195000A.2.6.2"></a><span 
+ id="x16-198000A.2.6.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event handler execution] </span><span 
@@ -236,11 +237,11 @@ class="cmti-10">type: </span>integer seconds (minimum 0)
 class="cmti-10">default: </span>0</li></ul>
 <!--l. 170--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.7   </span> <a 
- id="x16-196000A.2.7"></a>[cylc] <span 
+ id="x16-199000A.2.7"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>[[event hooks]]</h5>
 <!--l. 173--><p class="noindent" >Cylc has internal &#8220;hooks&#8221; to which you can attach handlers that are called whenever certain events occur. This
 section is for configuring suite event hooks. See Section&#x00A0;<a 
-href="#x16-272000A.4.1.17">A.4.1.17<!--tex4ht:ref: TaskEventHandling --></a> for task event hooks.
+href="#x16-275000A.4.1.17">A.4.1.17<!--tex4ht:ref: TaskEventHandling --></a> for task event hooks.
 <!--l. 177--><p class="indent" >   Event handlers can send an email or an SMS, call a pager, and so on; or intervene in the operation of their own
 suite using cylc commands. The command <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -258,8 +259,8 @@ modify your <span class="lstinline"><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PATH</span></span> to ensure they are found. They are called by cylc with the following arguments:
 <!--l. 185-->
-   <div class="lstlisting" id="listing-165"><span class="label"><a 
- id="x16-196001r1"></a></span><span 
+   <div class="lstlisting" id="listing-164"><span class="label"><a 
+ id="x16-199001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">handler</span><span 
 class="pcrr7t-">&#x003E;</span><span 
@@ -286,7 +287,7 @@ class="pcrr7t-">CYLC_SUITE_INITIAL_CYCLE_TIME</span></span> etc.&#x00A0;- are ex
 however).
 <!--l. 197--><p class="noindent" >
 <!--l. 197--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-197000A.2.7.1"></a><span 
+ id="x16-200000A.2.7.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[event hooks]] </span><span 
@@ -322,7 +323,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">sh</span></span></li></ul>
 <!--l. 213--><p class="noindent" >
 <!--l. 213--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-198000A.2.7.2"></a><span 
+ id="x16-201000A.2.7.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[event hooks]] </span><span 
@@ -338,7 +339,7 @@ class="cmti-10">type: </span>float (minutes)
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 224--><p class="noindent" >
 <!--l. 224--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-199000A.2.7.3"></a><span 
+ id="x16-202000A.2.7.3"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[event hooks]] </span><span 
@@ -359,7 +360,7 @@ class="cmti-10">default: </span>True</li></ul>
                                                                                          
 <!--l. 236--><p class="noindent" >
 <!--l. 236--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-200000A.2.7.4"></a><span 
+ id="x16-203000A.2.7.4"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[event hooks]] </span><span 
@@ -375,7 +376,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 246--><p class="noindent" >
 <!--l. 246--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-201000A.2.7.5"></a><span 
+ id="x16-204000A.2.7.5"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[event hooks]] </span><span 
@@ -392,7 +393,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 258--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.8   </span> <a 
- id="x16-202000A.2.8"></a>[cylc] <span 
+ id="x16-205000A.2.8"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>[[lockserver]]</h5>
 <!--l. 260--><p class="noindent" >The cylc lockserver brokers suite and task locks on the network (these are somewhat analagous to traditional local
 <span 
@@ -417,7 +418,7 @@ class="pcrr7t-">help</span></span> for
 occasional manual lock management requirements.
 <!--l. 269--><p class="noindent" >
 <!--l. 269--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-203000A.2.8.1"></a><span 
+ id="x16-206000A.2.8.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[lockserver]] </span><span 
@@ -432,7 +433,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 279--><p class="noindent" >
 <!--l. 279--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-204000A.2.8.2"></a><span 
+ id="x16-207000A.2.8.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[lockserver]] </span><span 
@@ -457,7 +458,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 294--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.9   </span> <a 
- id="x16-205000A.2.9"></a>[cylc] <span 
+ id="x16-208000A.2.9"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>[[environment]]</h5>
 <!--l. 296--><p class="noindent" >Variables defined here are exported into the environment in which cylc itself runs. They are then available to <span 
 class="cmti-10">local</span>
@@ -467,7 +468,7 @@ because event handlers are executed directly by cylc, not by running tasks. And 
 by cylc to invoke event handlers or to submit task job scripts could, in principle, make use of environment variables
 defined here.
 <!--l. 304--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-206000A.2.9.1"></a><span 
+ id="x16-209000A.2.9.1"></a><span 
 class="cmbx-10">Warnings</span></span>
      <ul class="itemize1">
      <li class="itemize">Cylc local variables are not available to executing tasks unless you happen to choose a local direct job
@@ -475,7 +476,7 @@ class="cmbx-10">Warnings</span></span>
 class="cmti-10">Always use task runtime environments to pass variables into the task execution</span>
      <span 
 class="cmti-10">environment (</span><a 
-href="#x16-278000A.4.1.18.1"><span 
+href="#x16-281000A.4.1.18.1"><span 
 class="cmti-10">A.4.1.18.1</span><!--tex4ht:ref: AppendixTaskExecutionEnvironment --></a><span 
 class="cmti-10">).</span>
      </li>
@@ -485,7 +486,7 @@ class="cmti-10">).</span>
 class="cmti-10">so shell variable expansion expressions cannot be used here.</span></li></ul>
 <!--l. 319--><p class="noindent" >
 <!--l. 319--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-207000A.2.9.2"></a><span 
+ id="x16-210000A.2.9.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[environment]] </span><span 
@@ -525,13 +526,13 @@ class="pcrr7t-">foo</span></span></li></ul>
                                                                                          
 <!--l. 340--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.10   </span> <a 
- id="x16-208000A.2.10"></a>[cylc] <span 
+ id="x16-211000A.2.10"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>[[accelerated clock]] </h5>
 <!--l. 343--><p class="noindent" >Accelerated clock settings, used to speed up the wait between cycles in the simulation and dummy run
 modes.
 <!--l. 346--><p class="noindent" >
 <!--l. 346--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-209000A.2.10.1"></a><span 
+ id="x16-212000A.2.10.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[accelerated clock]] </span><span 
@@ -548,7 +549,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 359--><p class="noindent" >
 <!--l. 359--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-210000A.2.10.2"></a><span 
+ id="x16-213000A.2.10.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[accelerated clock]] </span><span 
@@ -564,7 +565,7 @@ class="cmsy-10">&#x2265; </span>0, real seconds per simulated hour)
 class="cmti-10">default: </span>10</li></ul>
 <!--l. 369--><p class="noindent" >
 <!--l. 369--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-211000A.2.10.3"></a><span 
+ id="x16-214000A.2.10.3"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[accelerated clock]] </span><span 
@@ -582,19 +583,19 @@ class="cmsy-10">&#x2265; </span>0, hours behind initial cycle time)
 class="cmti-10">default: </span>24</li></ul>
 <!--l. 382--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.2.11   </span> <a 
- id="x16-212000A.2.11"></a>[cylc] <span 
+ id="x16-215000A.2.11"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>[[reference test]] </h5>
 <!--l. 385--><p class="noindent" >Reference tests are finite-duration suite runs that abort with non-zero exit status if cylc fails, if any task fails, if the
 suite times out, or if a shutdown event handler that (by default) compares the test run with a reference run reports
 failure. See <span 
 class="cmti-10">Automated Reference Test Suites</span>, Section&#x00A0;<a 
-href="cug-htmlse11.html#x12-16200011.14">11.14<!--tex4ht:ref: AutoRefTests --></a>.
+href="cug-htmlse11.html#x12-16500011.14">11.14<!--tex4ht:ref: AutoRefTests --></a>.
                                                                                          
 
                                                                                          
 <!--l. 391--><p class="noindent" >
 <!--l. 391--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-213000A.2.11.1"></a><span 
+ id="x16-216000A.2.11.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -621,7 +622,7 @@ class="pcrr7t-">PATH</span></span> or in the suite bin
 directory.
 <!--l. 404--><p class="noindent" >
 <!--l. 404--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-214000A.2.11.2"></a><span 
+ id="x16-217000A.2.11.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -640,7 +641,7 @@ class="cmti-10">legal values: </span>live, dummy, simulation
 class="cmti-10">default: </span>None</li></ul>
 <!--l. 416--><p class="noindent" >
 <!--l. 416--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-215000A.2.11.3"></a><span 
+ id="x16-218000A.2.11.3"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -658,7 +659,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 427--><p class="noindent" >
 <!--l. 427--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-216000A.2.11.4"></a><span 
+ id="x16-219000A.2.11.4"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -671,7 +672,7 @@ task is found in a list IDs of tasks that are expected to fail.
      <li class="itemize"><span 
 class="cmti-10">type: </span>list of strings (task IDs: <span class="lstinline"><span 
 class="pcrr7t-">name</span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">.</span><span 
 class="pcrr7t-">tag</span></span>)
      </li>
      <li class="itemize"><span 
@@ -683,13 +684,13 @@ class="cmti-10">default: </span>(none)
      <li class="itemize"><span 
 class="cmti-10">example: </span><span class="lstinline"><span 
 class="pcrr7t-">foo</span><span 
-class="pcrr7t-">%20120808,</span><span 
+class="pcrr7t-">.20120808,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
-class="pcrr7t-">%20120908</span></span></li></ul>
+class="pcrr7t-">.20120908</span></span></li></ul>
 <!--l. 439--><p class="noindent" >
 <!--l. 439--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-217000A.2.11.5"></a><span 
+ id="x16-220000A.2.11.5"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -706,7 +707,7 @@ class="cmti-10">type: </span>float (minutes)
 class="cmti-10">default: </span>None</li></ul>
 <!--l. 451--><p class="noindent" >
 <!--l. 451--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-218000A.2.11.6"></a><span 
+ id="x16-221000A.2.11.6"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -723,7 +724,7 @@ class="cmti-10">type: </span>float (minutes)
 class="cmti-10">default: </span>None</li></ul>
 <!--l. 463--><p class="noindent" >
 <!--l. 463--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-219000A.2.11.7"></a><span 
+ id="x16-222000A.2.11.7"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[reference test]] </span><span 
@@ -738,16 +739,17 @@ class="cmti-10">type: </span>float (minutes)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>None</li></ul>
-<!--l. 476--><p class="noindent" >
+<!--l. 476--><p class="noindent" ><span 
+class="cmbx-12">]</span>
    <h4 class="subsectionHead"><span class="titlemark">A.3   </span> <a 
- id="x16-220000A.3"></a>[scheduling]</h4>
+ id="x16-223000A.3"></a>[scheduling]</h4>
 <!--l. 478--><p class="noindent" >This section allows cylc to determine when tasks are ready to run.
                                                                                          
 
                                                                                          
 <!--l. 480--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.3.1   </span> <a 
- id="x16-221000A.3.1"></a>[scheduling] <span 
+ id="x16-224000A.3.1"></a>[scheduling] <span 
 class="cmsy-10">&#x2192; </span>initial cycle time</h5>
 <!--l. 482--><p class="noindent" >At startup each cycling task (unless specifically excluded under [special tasks]) will be inserted into the suite with
 this cycle time, or with the closest subsequent valid cycle time for the task. Note that whether or not <span 
@@ -764,7 +766,7 @@ class="cmti-10">type: </span>integer (YYYY[MM[DD[HH[mm[ss]]]]])
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 495--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.3.2   </span> <a 
- id="x16-222000A.3.2"></a>[scheduling] <span 
+ id="x16-225000A.3.2"></a>[scheduling] <span 
 class="cmsy-10">&#x2192; </span>final cycle time</h5>
 <!--l. 497--><p class="noindent" >Cycling tasks are held once they pass the final cycle time, if one is specified. Once all tasks have achieved this state
 the suite will shut down. If this item is provided you can override it on the command line or in the gcylc suite start
@@ -777,11 +779,11 @@ class="cmti-10">type: </span>integer (YYYY[MM[DD[HH[mm[ss]]]]])
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 507--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.3.3   </span> <a 
- id="x16-223000A.3.3"></a>[scheduling] <span 
+ id="x16-226000A.3.3"></a>[scheduling] <span 
 class="cmsy-10">&#x2192; </span>runahead limit</h5>
 <!--l. 509--><p class="noindent" >The suite runahead limit prevents the fastest tasks in a suite from getting too far ahead of the slowest ones, as
 documented in Section&#x00A0;<a 
-href="cug-htmlse11.html#x12-15000011.6.1">11.6.1<!--tex4ht:ref: RunaheadLimit --></a>. Tasks exceeding the limit are put into a special runahead held state until slower tasks
+href="cug-htmlse11.html#x12-15300011.6.1">11.6.1<!--tex4ht:ref: RunaheadLimit --></a>. Tasks exceeding the limit are put into a special runahead held state until slower tasks
 have caught up sufficiently.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -792,7 +794,7 @@ class="cmsy-10">&#x2265; </span>0, hours)
 class="cmti-10">default: </span>(twice the minimum cycling interval in the suite)</li></ul>
 <!--l. 519--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.3.4   </span> <a 
- id="x16-224000A.3.4"></a>[scheduling] <span 
+ id="x16-227000A.3.4"></a>[scheduling] <span 
 class="cmsy-10">&#x2192; </span>[[queues]]</h5>
 <!--l. 521--><p class="noindent" >Configuration of internal queues, by which the number of simultaneously active tasks (submitted or running) can be
 limited, per queue. By default a single queue called <span 
@@ -800,13 +802,13 @@ class="cmti-10">default </span>is defined, with all tasks assigned to it and no 
 use a single queue for the whole suite just set the limit on the <span 
 class="cmti-10">default </span>queue as required. See also
 Section&#x00A0;<a 
-href="cug-htmlse11.html#x12-15100011.6.2">11.6.2<!--tex4ht:ref: InternalQueues --></a>.
+href="cug-htmlse11.html#x12-15400011.6.2">11.6.2<!--tex4ht:ref: InternalQueues --></a>.
                                                                                          
 
                                                                                          
 <!--l. 528--><p class="noindent" >
 <!--l. 528--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-225000A.3.4.1"></a><span 
+ id="x16-228000A.3.4.1"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[queues]] </span><span 
@@ -826,7 +828,7 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>&#8220;default&#8221;</li></ul>
 <!--l. 538--><p class="noindent" >
 <!--l. 538--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-226000A.3.4.2"></a><span 
+ id="x16-229000A.3.4.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[queues]] </span><span 
@@ -847,7 +849,7 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>0 (i.e.&#x00A0;no limit)</li></ul>
 <!--l. 546--><p class="noindent" >
 <!--l. 546--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-227000A.3.4.3"></a><span 
+ id="x16-230000A.3.4.3"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[queues]] </span><span 
@@ -869,17 +871,17 @@ class="cmti-10">type: </span>list of strings
 class="cmti-10">default: </span>none for user-defined queues; all tasks for the &#8220;default&#8221; queue</li></ul>
 <!--l. 555--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.3.5   </span> <a 
- id="x16-228000A.3.5"></a>[scheduling] <span 
+ id="x16-231000A.3.5"></a>[scheduling] <span 
 class="cmsy-10">&#x2192; </span>[[special tasks]]</h5>
 <!--l. 557--><p class="noindent" >This section identifies any tasks with special behaviour. By default (i.e.&#x00A0;non &#8220;special&#8221;
 behaviour) tasks submit (or queue) as soon as their prerequisites are satisfied, and they spawn
 a successor at the next valid cycle time for the task as soon as they enter the submitted
 state<span class="footnote-mark"><a 
-href="#fn12x0" id="fn12x0-bk"><sup class="textsuperscript">12</sup></a></span><a 
- id="x16-228001f12"></a>
+href="#fn11x0" id="fn11x0-bk"><sup class="textsuperscript">11</sup></a></span><a 
+ id="x16-231001f11"></a>
 <!--l. 565--><p class="noindent" >
 <!--l. 565--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-229000A.3.5.1"></a><span 
+ id="x16-232000A.3.5.1"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -917,7 +919,7 @@ class="pcrr7t-">bar</span><span
 class="pcrr7t-">(2.25)</span></span></li></ul>
 <!--l. 583--><p class="noindent" >
 <!--l. 583--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-230000A.3.5.2"></a><span 
+ id="x16-233000A.3.5.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -936,7 +938,7 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 598--><p class="noindent" >
 <!--l. 598--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-231000A.3.5.3"></a><span 
+ id="x16-234000A.3.5.3"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -961,7 +963,7 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 620--><p class="noindent" >
 <!--l. 620--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-232000A.3.5.4"></a><span 
+ id="x16-235000A.3.5.4"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -981,8 +983,8 @@ class="cmti-10">warm cycled forecast</span>
 <span 
 class="cmti-10">models that write out restart files for multiple cycles ahead </span>(exception: see &#8220;explicit restart outputs&#8221;
 below).<span class="footnote-mark"><a 
-href="#fn13x0" id="fn13x0-bk"><sup class="textsuperscript">13</sup></a></span><a 
- id="x16-232001f13"></a>
+href="#fn12x0" id="fn12x0-bk"><sup class="textsuperscript">12</sup></a></span><a 
+ id="x16-235001f12"></a>
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>list of task names
@@ -991,7 +993,7 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 644--><p class="noindent" >
 <!--l. 644--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-233000A.3.5.5"></a><span 
+ id="x16-236000A.3.5.5"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -1010,7 +1012,7 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 656--><p class="noindent" >
 <!--l. 656--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-234000A.3.5.6"></a><span 
+ id="x16-237000A.3.5.6"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -1027,7 +1029,7 @@ class="cmti-10">restart output messages containing the word &#8220;restart&#8221
 class="cmsy-10">&#x2192; </span>[[TASK]] <span 
 class="cmsy-10">&#x2192; </span>[[[outputs]]] - see
 Section&#x00A0;<a 
-href="cug-htmlse9.html#x10-1180009.4.2">9.4.2<!--tex4ht:ref: RIOC --></a>.
+href="cug-htmlse9.html#x10-1210009.4.2">9.4.2<!--tex4ht:ref: RIOC --></a>.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>list of task names
@@ -1036,7 +1038,7 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 676--><p class="noindent" >
 <!--l. 676--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-235000A.3.5.7"></a><span 
+ id="x16-238000A.3.5.7"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -1059,7 +1061,7 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 692--><p class="noindent" >
 <!--l. 692--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-236000A.3.5.8"></a><span 
+ id="x16-239000A.3.5.8"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[special tasks]] </span><span 
@@ -1080,17 +1082,17 @@ class="cmti-10">type: </span>list of task names
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 709--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.3.6   </span> <a 
- id="x16-237000A.3.6"></a>[scheduling] <span 
+ id="x16-240000A.3.6"></a>[scheduling] <span 
 class="cmsy-10">&#x2192; </span>[[dependencies]]</h5>
 <!--l. 711--><p class="noindent" >The suite dependency graph is defined under this section. You can plot the dependency graph as you work on it,
 with <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">graph</span></span> or by right clicking on the suite in the db viewer. See also Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-610008.3">8.3<!--tex4ht:ref: DependencyGraphs --></a>.
+href="cug-htmlse8.html#x9-610008.3">8.3<!--tex4ht:ref: ConfiguringScheduling --></a>.
 <!--l. 716--><p class="noindent" >
 <!--l. 716--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-238000A.3.6.1"></a> <span 
+ id="x16-241000A.3.6.1"></a> <span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[dependencies]] </span><span 
@@ -1102,19 +1104,19 @@ completes and then exits, or an initial suite section that completes prior to th
 you make the first cycling tasks depend on the last one-off ones). But note that synchronous <span 
 class="cmti-10">start-up</span>
 tasks can also be used for the latter purpose. See Section&#x00A0;<a 
-href="#x16-240000A.3.6.2.1">A.3.6.2.1<!--tex4ht:ref: GraphDescrip --></a> below for graph string syntax, and
+href="#x16-243000A.3.6.2.1">A.3.6.2.1<!--tex4ht:ref: GraphDescrip --></a> below for graph string syntax, and
 Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-610008.3">8.3<!--tex4ht:ref: DependencyGraphs --></a>.
+href="cug-htmlse8.html#x9-610008.3">8.3<!--tex4ht:ref: ConfiguringScheduling --></a>.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span>(see Section&#x00A0;<a 
-href="#x16-240000A.3.6.2.1">A.3.6.2.1<!--tex4ht:ref: GraphDescrip --></a> below)</li></ul>
+href="#x16-243000A.3.6.2.1">A.3.6.2.1<!--tex4ht:ref: GraphDescrip --></a> below)</li></ul>
 <!--l. 731--><p class="noindent" >
 <!--l. 731--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-239000A.3.6.2"></a><span 
+ id="x16-242000A.3.6.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[dependencies]] </span><span 
@@ -1186,7 +1188,7 @@ class="cmti-10">Graph Types </span>for the meaning of the stepped cycler argumen
 combine within a single suite, and so on.
 <!--l. 763--><p class="noindent" >
 <!--l. 763--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-240000A.3.6.2.1"></a><span 
+ id="x16-243000A.3.6.2.1"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[dependencies]] </span><span 
@@ -1200,8 +1202,8 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">graph </span></span>
    The dependency graph for the specified validity section (described just above) goes here. Syntax examples follow;
 see also Sections&#x00A0;<a 
-href="cug-htmlse8.html#x9-610008.3">8.3<!--tex4ht:ref: DependencyGraphs --></a> (<span 
-class="cmti-10">Dependency Graphs</span>) and&#x00A0;<a 
+href="cug-htmlse8.html#x9-610008.3">8.3<!--tex4ht:ref: ConfiguringScheduling --></a> (<span 
+class="cmti-10">Configuring Scheduling</span>) and&#x00A0;<a 
 href="cug-htmlse8.html#x9-730008.3.4">8.3.4<!--tex4ht:ref: TriggerTypes --></a> (<span 
 class="cmti-10">Trigger Types</span>).
      <ul class="itemize1">
@@ -1210,8 +1212,8 @@ class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">examples: </span><!--l. 774-->
-     <div class="lstlisting" id="listing-166"><span class="label"><a 
- id="x16-240001r1"></a></span><span 
+     <div class="lstlisting" id="listing-165"><span class="label"><a 
+ id="x16-243001r1"></a></span><span 
 class="pcrr7t-">graph</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -1220,7 +1222,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240002r2"></a></span><span 
+ id="x16-243002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1256,7 +1258,7 @@ class="pcrr7t-">off</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240003r3"></a></span><span 
+ id="x16-243003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1296,7 +1298,7 @@ class="pcrr7t-">of</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240004r4"></a></span><span 
+ id="x16-243004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1327,7 +1329,7 @@ class="pcrr7t-">for</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240005r5"></a></span><span 
+ id="x16-243005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1366,7 +1368,7 @@ class="pcrr7t-">starts</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">executing</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240006r6"></a></span><span 
+ id="x16-243006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1404,7 +1406,7 @@ class="pcrr7t-">X</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240007r7"></a></span><span 
+ id="x16-243007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1438,7 +1440,7 @@ class="pcrr7t-">-6]</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240008r8"></a></span><span 
+ id="x16-243008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1479,7 +1481,7 @@ class="pcrr7t-">X</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">succeeds</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240009r9"></a></span><span 
+ id="x16-243009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1521,7 +1523,7 @@ class="pcrr7t-">or</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240010r10"></a></span><span 
+ id="x16-243010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1561,7 +1563,7 @@ class="pcrr7t-">or</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240011r11"></a></span><span 
+ id="x16-243011r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1596,7 +1598,7 @@ class="pcrr7t-">conditional</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">triggers</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240012r12"></a></span><span 
+ id="x16-243012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1604,7 +1606,7 @@ class="pcrr7t-">#</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">comment</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-240013r13"></a></span><span 
+ id="x16-243013r13"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1618,7 +1620,7 @@ class="pcrr7t-">"</span>
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 792--><p class="noindent" >
 <!--l. 792--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-241000A.3.6.2.2"></a><span 
+ id="x16-244000A.3.6.2.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[dependencies]] </span><span 
@@ -1644,33 +1646,28 @@ class="cmti-10">default: </span>(none)</li></ul>
                                                                                          
 
                                                                                          
-<!--l. 804--><p class="noindent" >
+<!--l. 804--><p class="noindent" ><span 
+class="cmbx-12">]</span>
    <h4 class="subsectionHead"><span class="titlemark">A.4   </span> <a 
- id="x16-242000A.4"></a>[runtime]</h4>
-<!--l. 806--><p class="noindent" >This section defines how, where, and what to execute when tasks are ready to run. Runtime subsections define an
-inheritance hierarchy of <span 
-class="cmti-10">namespaces</span>, each of which represents a family of tasks or an individual task, as described in
-Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-880008.4">8.4<!--tex4ht:ref: NIORP --></a>).
-<!--l. 811--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">A.4.1   </span> <a 
- id="x16-243000A.4.1"></a>[runtime] <span 
-class="cmsy-10">&#x2192; </span>[[__NAME__]]</h5>
-<!--l. 813--><p class="noindent" >Replace __NAME__ with a namespace name, or a comma separated list of names, and repeat as needed to define all
-tasks in the suite.
-<!--l. 816--><p class="indent" >   Namespace names may contain letters, digits, underscores, and hyphens. They may not contain colons (which
-would preclude use of directory paths involving the registration name in <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">PATH</span></span> variables). They may not contain
-the &#8216;.&#8217; character (it will be interpreted as the namespace hierarchy delimiter, separating groups and names). <span 
-class="cmti-10">Task</span>
+ id="x16-245000A.4"></a>[runtime]</h4>
+<!--l. 806--><p class="noindent" >This section is used to specify how, where, and what to execute when tasks are ready to run. Common configuration
+can be factored out in a multiple-inheritance hierarchy of runtime namespaces that culminates in the tasks of the
+suite. Order of precedence is determined by the C3 linearization algorithm as used to find the <span 
+class="cmti-10">method</span>
 <span 
-class="cmti-10">names should not be hardwired into task implementations. </span>Rather, task and suite identity should be extracted
-portably from the task execution environment supplied by cylc (Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-920008.4.4">8.4.4<!--tex4ht:ref: TaskExecutionEnvironment --></a>) - then to rename a task you can just
-change its name in the suite.rc file.
-<!--l. 827--><p class="indent" >   A namespace represents a family if other namespaces inherit from it; it represents a task if it is a leaf on the
-inheritance tree (i.e.&#x00A0;no other namespaces inherit from it).
+class="cmti-10">resolution order </span>in Python language class hiearchies. For details and examples see Section&#x00A0;<a 
+href="cug-htmlse8.html#x9-880008.4">8.4<!--tex4ht:ref: NIORP --></a>, <span 
+class="cmti-10">Runtime</span>
+<span 
+class="cmti-10">Properties</span>.
+<!--l. 815--><p class="noindent" >
+   <h5 class="subsubsectionHead"><span class="titlemark">A.4.1   </span> <a 
+ id="x16-246000A.4.1"></a>[runtime] <span 
+class="cmsy-10">&#x2192; </span>[[__NAME__]]</h5>
+<!--l. 817--><p class="noindent" >Replace __NAME__ with a namespace name, or a comma separated list of names, and repeat as needed to
+define all tasks in the suite. Names may contain letters, digits, underscores, and hyphens. A namespace
+represents a group or family of tasks if other namespaces inherit from it, or a task if no others inherit from
+it.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">legal values:</span>
@@ -1691,13 +1688,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">baz</span><span 
 class="pcrr7t-">]]</span></span></li></ul>
      </li></ul>
-<!--l. 839--><p class="indent" >   If multiple names are listed, the subsequent namespace configuration items apply to each member.
-<!--l. 842--><p class="indent" >   All namespaces inherit initially from <span 
-class="cmti-10">root</span>, which you can explicitly configure to override or provide default
-runtime settings for all tasks in the suite.
-<!--l. 846--><p class="noindent" >
-<!--l. 846--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-244000A.4.1.1"></a><span 
+<!--l. 836--><p class="indent" >   If multiple names are listed the subsequent settings apply to each.
+<!--l. 838--><p class="indent" >   All namespaces inherit initially from <span 
+class="cmti-10">root</span>, which can be explicitly configured to provide or override default
+settings for all tasks in the suite.
+<!--l. 842--><p class="noindent" >
+<!--l. 842--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-247000A.4.1.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1707,18 +1704,19 @@ class="cmbx-10">_</span><span
 class="cmbx-10">_]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">inherit</span></span>
-   Specify here the namepace from which this namespace should inherit all of its runtime configuration; specific
-items can then be overridden as required. Note that many of the available items are left undefined even in the root
-namespace.
+   A list of the immediate parent(s) this namespace inherits from. If no parents are listed <span class="lstinline"><span 
+class="pcrr7t-">root</span></span> is
+assumed.
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>string (another namespace name)
+class="cmti-10">type: </span>comma-separated list of strings (other namespace names)
      </li>
      <li class="itemize"><span 
-class="cmti-10">default: </span>root</li></ul>
-<!--l. 859--><p class="noindent" >
-<!--l. 859--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-245000A.4.1.2"></a><span 
+class="cmti-10">default: </span><span class="lstinline"><span 
+class="pcrr7t-">root</span></span></li></ul>
+<!--l. 852--><p class="noindent" >
+<!--l. 852--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-248000A.4.1.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1736,18 +1734,18 @@ from running tasks with the <span class="lstinline"><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">show</span></span> command.
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>single line string
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span>&#8220;No title provided&#8221;</li></ul>
-<!--l. 870--><p class="noindent" >
-<!--l. 870--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-246000A.4.1.3"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 863--><p class="noindent" >
+<!--l. 863--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-249000A.4.1.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1768,9 +1766,9 @@ class="cmti-10">type: </span>multi-line string
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span>&#8220;No description provided&#8221;</li></ul>
-<!--l. 881--><p class="noindent" >
-<!--l. 881--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-247000A.4.1.4"></a><span 
+<!--l. 874--><p class="noindent" >
+<!--l. 874--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-250000A.4.1.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1824,9 +1822,9 @@ class="pcrr7t-">Hello</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">"</span></span></li></ul>
-<!--l. 900--><p class="noindent" >
-<!--l. 900--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-248000A.4.1.5"></a><span 
+<!--l. 893--><p class="noindent" >
+<!--l. 893--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-251000A.4.1.5"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1861,12 +1859,9 @@ class="pcrr7t-">Hello</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">"</span></span></li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 913--><p class="noindent" >
-<!--l. 913--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-249000A.4.1.6"></a><span 
+<!--l. 906--><p class="noindent" >
+<!--l. 906--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-252000A.4.1.6"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1881,6 +1876,9 @@ lines of scripting.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
+                                                                                         
+
+                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span><span class="lstinline"><span 
@@ -1898,9 +1896,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">sleep</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">10</span></span></li></ul>
-<!--l. 924--><p class="noindent" >
-<!--l. 924--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-250000A.4.1.7"></a><span 
+<!--l. 917--><p class="noindent" >
+<!--l. 917--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-253000A.4.1.7"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1926,9 +1924,9 @@ class="pcrr7t-">1.5,10,10,10</span></span>
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span>(none)</li></ul>
-<!--l. 939--><p class="noindent" >
-<!--l. 939--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-251000A.4.1.8"></a> <span 
+<!--l. 932--><p class="noindent" >
+<!--l. 932--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-254000A.4.1.8"></a> <span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -1951,9 +1949,9 @@ class="cmti-10">type: </span>string, or a list of strings
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
-class="cmti-10">example: </span><!--l. 951-->
-     <div class="lstlisting" id="listing-167"><span class="label"><a 
- id="x16-251001r1"></a></span><span 
+class="cmti-10">example: </span><!--l. 944-->
+     <div class="lstlisting" id="listing-166"><span class="label"><a 
+ id="x16-254001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1970,7 +1968,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-251002r2"></a></span><span 
+ id="x16-254002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1984,7 +1982,7 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/.</span><span 
 class="pcrr7t-">profile</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-251003r3"></a></span><span 
+ id="x16-254003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2009,9 +2007,9 @@ class="pcrr7t-">"</span>
      
      </div>
      </li></ul>
-<!--l. 958--><p class="noindent" >
-<!--l. 958--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-252000A.4.1.9"></a> <span 
+<!--l. 951--><p class="noindent" >
+<!--l. 951--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-255000A.4.1.9"></a> <span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2021,9 +2019,6 @@ class="cmbx-10">_</span><span
 class="cmbx-10">_]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">post-command scripting</span></span>
-                                                                                         
-
-                                                                                         
    Scripting to be executed immediately <span 
 class="cmti-10">after </span>the command scripting. This would typically be used to add scripting
 to every task in a family (for individual tasks you could just incorporate the extra commands into the main
@@ -2035,9 +2030,12 @@ class="cmti-10">type: </span>string, or a list of strings
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 971--><p class="noindent" >
-<!--l. 971--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-253000A.4.1.10"></a> <span 
+                                                                                         
+
+                                                                                         
+<!--l. 964--><p class="noindent" >
+<!--l. 964--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-256000A.4.1.10"></a> <span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2052,16 +2050,16 @@ arrange for the task to automatically signal when it has succeeded or failed. In
 this configuration item to tell cylc not to arrange for automatic completion messaging, and insert
 some minimal completion messaging yourself in appropriate places in the task implementation (see
 Section&#x00A0;<a 
-href="cug-htmlse9.html#x10-1200009.4.4">9.4.4<!--tex4ht:ref: DetachingTasks --></a>).
+href="cug-htmlse9.html#x10-1230009.4.4">9.4.4<!--tex4ht:ref: DetachingTasks --></a>).
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>False</li></ul>
-<!--l. 990--><p class="noindent" >
-<!--l. 990--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-254000A.4.1.11"></a> <span 
+<!--l. 983--><p class="noindent" >
+<!--l. 983--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-257000A.4.1.11"></a> <span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2077,7 +2075,7 @@ dead: if the same task job script is executed again cylc will put the task back 
 and continue as normal when the started message is received. This can be used to handle HPC-style
 job preemption wherein a resource manager may kill a running task and reschedule it to run again
 later, to make way for a job with higher immediate priority. See also Section&#x00A0;<a 
-href="cug-htmlse11.html#x12-15500011.10">11.10<!--tex4ht:ref: PreemptionHPC --></a>, <span 
+href="cug-htmlse11.html#x12-15800011.10">11.10<!--tex4ht:ref: PreemptionHPC --></a>, <span 
 class="cmti-10">Handling Job</span>
 <span 
 class="cmti-10">Preemption</span>
@@ -2087,9 +2085,9 @@ class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>False</li></ul>
-<!--l. 1008--><p class="noindent" >
-<!--l. 1008--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-255000A.4.1.11.1"></a><span 
+<!--l. 1001--><p class="noindent" >
+<!--l. 1001--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-258000A.4.1.11.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2116,9 +2114,6 @@ class="cmti-10">seconds since epoch</span>, and then <span
 class="cmti-10">.out </span>and <span 
 class="cmti-10">.err </span>are
 appended to construct the stdout and stderr log names, respectively. These filenames are thus unique
-                                                                                         
-
-                                                                                         
 even if a task gets retriggered and yet will be correctly time ordered if the log directory is listed. The
 filenames are also recorded by the task proxies for access via cylc commands and the suite control
 GUIs.
@@ -2141,9 +2136,12 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">log</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">job</span></span></li></ul>
-<!--l. 1035--><p class="noindent" >
-<!--l. 1035--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-256000A.4.1.11.2"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 1028--><p class="noindent" >
+<!--l. 1028--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-259000A.4.1.11.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2173,9 +2171,9 @@ class="pcrr7t-">work</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_TASK_ID</span></span></li></ul>
-<!--l. 1049--><p class="noindent" >
-<!--l. 1049--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-257000A.4.1.11.3"></a><span 
+<!--l. 1042--><p class="noindent" >
+<!--l. 1042--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-260000A.4.1.11.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2201,9 +2199,9 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_DEF_PATH</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">share</span></span></li></ul>
-<!--l. 1064--><p class="noindent" >
-<!--l. 1064--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-258000A.4.1.12"></a><span 
+<!--l. 1057--><p class="noindent" >
+<!--l. 1057--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-261000A.4.1.12"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2214,9 +2212,9 @@ class="cmbx-10">_]] </span><span
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[[dummy mode]]]</span></span>
    Dummy mode configuration.
-<!--l. 1068--><p class="noindent" >
-<!--l. 1068--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-259000A.4.1.12.1"></a><span 
+<!--l. 1061--><p class="noindent" >
+<!--l. 1061--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-262000A.4.1.12.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2234,9 +2232,6 @@ command or a multiple lines of scripting.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span><span class="lstinline"><span 
@@ -2262,9 +2257,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">16)</span></span></li></ul>
-<!--l. 1079--><p class="noindent" >
-<!--l. 1079--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-260000A.4.1.12.2"></a><span 
+<!--l. 1072--><p class="noindent" >
+<!--l. 1072--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-263000A.4.1.12.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2278,15 +2273,18 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">disable pre-command scripting</span></span>
    This disables pre-command scripting, is likely to contain code specific to the real task, in dummy
 mode.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span>True</li></ul>
-<!--l. 1089--><p class="noindent" >
-<!--l. 1089--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-261000A.4.1.12.3"></a><span 
+<!--l. 1082--><p class="noindent" >
+<!--l. 1082--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-264000A.4.1.12.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2306,9 +2304,9 @@ class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span>True</li></ul>
-<!--l. 1099--><p class="noindent" >
-<!--l. 1099--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-262000A.4.1.13"></a><span 
+<!--l. 1092--><p class="noindent" >
+<!--l. 1092--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-265000A.4.1.13"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2325,9 +2323,9 @@ class="cmti-10">type: </span>float
      </li>
      <li class="itemize"><span 
 class="cmti-10">root default: </span>10</li></ul>
-<!--l. 1108--><p class="noindent" >
-<!--l. 1108--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-263000A.4.1.14"></a><span 
+<!--l. 1101--><p class="noindent" >
+<!--l. 1101--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-266000A.4.1.14"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2353,12 +2351,9 @@ class="cmti-10">type: </span>integer list (two members)
      <li class="itemize"><span 
 class="cmti-10">root default: </span>1<span 
 class="cmmi-10">,</span>16</li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 1118--><p class="noindent" >
-<!--l. 1118--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-264000A.4.1.15"></a><span 
+<!--l. 1111--><p class="noindent" >
+<!--l. 1111--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-267000A.4.1.15"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2369,9 +2364,9 @@ class="cmbx-10">_]] </span><span
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[[job submission]]]</span></span>
    This section configures the means by which cylc submits task job scripts to run.
-<!--l. 1122--><p class="noindent" >
-<!--l. 1122--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-265000A.4.1.15.1"></a><span 
+<!--l. 1115--><p class="noindent" >
+<!--l. 1115--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-268000A.4.1.15.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2385,8 +2380,11 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">method</span></span>
    See <span 
 class="cmti-10">Task Job Submission </span>(Section&#x00A0;<a 
-href="cug-htmlse10.html#x11-12200010">10<!--tex4ht:ref: TaskJobSubmission --></a>) for how job submission works, and how to define new methods. Cylc has a
+href="cug-htmlse10.html#x11-12500010">10<!--tex4ht:ref: TaskJobSubmission --></a>) for how job submission works, and how to define new methods. Cylc has a
 number of built in job submission methods:
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -2416,9 +2414,9 @@ class="pcrr7t-">qsub</span></span>, with directives defined in the suite.rc file
      <li class="itemize"><span 
 class="cmti-10">default: </span><span class="lstinline"><span 
 class="pcrr7t-">background</span></span></li></ul>
-<!--l. 1141--><p class="noindent" >
-<!--l. 1141--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-266000A.4.1.15.2"></a><span 
+<!--l. 1134--><p class="noindent" >
+<!--l. 1134--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-269000A.4.1.15.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2446,9 +2444,9 @@ class="pcrr7t-">llsubmit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">s</span></span></li></ul>
-<!--l. 1154--><p class="noindent" >
-<!--l. 1154--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-267000A.4.1.15.3"></a><span 
+<!--l. 1147--><p class="noindent" >
+<!--l. 1147--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-270000A.4.1.15.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2473,9 +2471,6 @@ class="pcrr7t-">value</span></span> - valid
 for both bash and ksh because <span class="lstinline"><span 
 class="pcrr7t-">value</span></span> is entirely user-defined - but cylc would have to be modified slightly to allow
 use of the C shell.
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -2486,9 +2481,12 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">bin</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">bash</span></span></li></ul>
-<!--l. 1172--><p class="noindent" >
-<!--l. 1172--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-268000A.4.1.16"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 1165--><p class="noindent" >
+<!--l. 1165--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-271000A.4.1.16"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2504,9 +2502,9 @@ software dependencies only Pyro is required there (actually, not even that if <s
 class="cmti-10">ssh messaging </span>is used; see below).
 Passwordless ssh must be configured between the local suite owner on the suite host, and the task owner on the
 remote task host.
-<!--l. 1182--><p class="noindent" >
-<!--l. 1182--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-269000A.4.1.16.1"></a><span 
+<!--l. 1175--><p class="noindent" >
+<!--l. 1175--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-272000A.4.1.16.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2578,9 +2576,9 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">sh</span><span 
 class="pcrr7t-">)&#8216;</span></span> (back-tick version)</li></ul>
      </li></ul>
-<!--l. 1206--><p class="noindent" >
-<!--l. 1206--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-270000A.4.1.16.2"></a><span 
+<!--l. 1199--><p class="noindent" >
+<!--l. 1199--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-273000A.4.1.16.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2599,15 +2597,12 @@ class="cmsy-10">&#x2192; </span>[[environment]]).
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (a valid username on the remote host)
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 1218--><p class="noindent" >
-<!--l. 1218--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-271000A.4.1.16.3"></a><span 
+<!--l. 1211--><p class="noindent" >
+<!--l. 1211--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-274000A.4.1.16.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2619,6 +2614,9 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">[[[remote]]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">suite definition directory</span></span>
+                                                                                         
+
+                                                                                         
    The path to the suite definition directory on the remote host, needed if remote tasks require access to files stored
 there (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -2639,9 +2637,9 @@ class="cmti-10">type: </span>string (a valid directory path on the remote host)
 class="cmti-10">default: </span>(local suite definition path with <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span></span> replaced)</li></ul>
-<!--l. 1235--><p class="noindent" >
-<!--l. 1235--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-272000A.4.1.17"></a><span 
+<!--l. 1228--><p class="noindent" >
+<!--l. 1228--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-275000A.4.1.17"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2652,7 +2650,7 @@ class="cmbx-10">_]] </span><span
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[[event hooks]]]</span></span>
    See Section&#x00A0;<a 
-href="#x16-196000A.2.7">A.2.7<!--tex4ht:ref: SuiteEventHandling --></a> (Suite Event Hooks) for a general description of cylc event handling. This section
+href="#x16-199000A.2.7">A.2.7<!--tex4ht:ref: SuiteEventHandling --></a> (Suite Event Hooks) for a general description of cylc event handling. This section
 is specific to task events. The command <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2664,13 +2662,13 @@ class="pcrr7t-">email</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">task</span></span> is a ready-made task event
 handler.
-<!--l. 1243--><p class="indent" >   Custom task event handlers can be located in the suite bin directory, in which case you will not need to
+<!--l. 1236--><p class="indent" >   Custom task event handlers can be located in the suite bin directory, in which case you will not need to
 modify your <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PATH</span></span> to ensure they are found. They are called by cylc with the following arguments:
-<!--l. 1246-->
-   <div class="lstlisting" id="listing-168"><span class="label"><a 
- id="x16-272001r1"></a></span><span 
+<!--l. 1239-->
+   <div class="lstlisting" id="listing-167"><span class="label"><a 
+ id="x16-275001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">handler</span><span 
 class="pcrr7t-">&#x003E;</span><span 
@@ -2684,15 +2682,15 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">MESSAGE</span>
    
    </div>
-<!--l. 1249--><p class="indent" >   EVENT is the event name (see below), SUITE is the suite name, TASK is the task ID, and MESSAGE, if
+<!--l. 1242--><p class="indent" >   EVENT is the event name (see below), SUITE is the suite name, TASK is the task ID, and MESSAGE, if
 provided, describes what has happened. Note that <span 
 class="cmti-10">spaces in event names will be replaced by underscores</span>
 <span 
 class="cmti-10">in the handler argument list </span>to make parsing easier in the script, e.g.&#x00A0;&#8220;submission failed&#8221; becomes
 &#8220;submission_failed&#8221;.
-<!--l. 1255--><p class="noindent" >
-<!--l. 1255--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-273000A.4.1.17.1"></a><span 
+<!--l. 1248--><p class="noindent" >
+<!--l. 1248--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-276000A.4.1.17.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2716,20 +2714,20 @@ that you wish to handle:
      <li class="itemize">&#8216;failed&#8217; - the task failed
      </li>
      <li class="itemize">&#8216;submission failed&#8217; - the task failed in job submission
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize">&#8216;warning&#8217; - the task reported a warning message
      </li>
      <li class="itemize">&#8216;retry&#8217; - the task failed but will retry
      </li>
      <li class="itemize">&#8216;submission timeout&#8217; - task job submission timed out
+                                                                                         
+
+                                                                                         
      </li>
      <li class="itemize">&#8216;execution timeout&#8217; - task execution timed out</li></ul>
-<!--l. 1270--><p class="noindent" >MESSAGE, if provided, describes what has happened, and TASKID identifies the task (<span class="lstinline"><span 
+<!--l. 1263--><p class="noindent" >MESSAGE, if provided, describes what has happened, and TASKID identifies the task (<span class="lstinline"><span 
 class="pcrr7t-">NAME</span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">.</span><span 
 class="pcrr7t-">CYCLE</span></span> for cycling
 tasks).
      <ul class="itemize1">
@@ -2752,10 +2750,10 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">handler</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span></li></ul>
-<!--l. 1279--><p class="indent" >   To handle timeouts you must also specify a timeout value, below.
-<!--l. 1281--><p class="noindent" >
-<!--l. 1281--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-274000A.4.1.17.2"></a><span 
+<!--l. 1272--><p class="indent" >   To handle timeouts you must also specify a timeout value, below.
+<!--l. 1274--><p class="noindent" >
+<!--l. 1274--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-277000A.4.1.17.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2777,9 +2775,9 @@ class="cmti-10">type: </span>float (minutes)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 1291--><p class="noindent" >
-<!--l. 1291--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-275000A.4.1.17.3"></a><span 
+<!--l. 1284--><p class="noindent" >
+<!--l. 1284--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-278000A.4.1.17.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2801,9 +2799,9 @@ class="cmti-10">type: </span>float (minutes)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 1301--><p class="noindent" >
-<!--l. 1301--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-276000A.4.1.17.4"></a><span 
+<!--l. 1294--><p class="noindent" >
+<!--l. 1294--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-279000A.4.1.17.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2818,18 +2816,18 @@ class="cmbx-10">reset timer</span></span>
    If you set an execution timeout the timer can be reset to zero every time a message is received from the running
 task (which indicates the task is still alive). Otherwise, the task will timeout if it does not finish in the alotted time
 regardless of incoming messages.
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>False</li></ul>
-<!--l. 1313--><p class="noindent" >
-<!--l. 1313--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-277000A.4.1.18"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 1306--><p class="noindent" >
+<!--l. 1306--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-280000A.4.1.18"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2844,10 +2842,10 @@ variables, which are exported earlier in the task job script, and variable assig
 commands because access to cylc is also configured earlier in the script. See also <span 
 class="cmti-10">Task Execution Environment</span>,
 Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-920008.4.4">8.4.4<!--tex4ht:ref: TaskExecutionEnvironment --></a>.
-<!--l. 1322--><p class="noindent" >
-<!--l. 1322--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-278000A.4.1.18.1"></a><span 
+href="cug-htmlse8.html#x9-950008.4.7">8.4.7<!--tex4ht:ref: TaskExecutionEnvironment --></a>.
+<!--l. 1315--><p class="noindent" >
+<!--l. 1315--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-281000A.4.1.18.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -2876,7 +2874,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">legal values: </span>depends to some extent on the task job submission shell (Section&#x00A0;<a 
-href="#x16-267000A.4.1.15.3">A.4.1.15.3<!--tex4ht:ref: JobSubShell --></a>).
+href="#x16-270000A.4.1.15.3">A.4.1.15.3<!--tex4ht:ref: JobSubShell --></a>).
      </li>
      <li class="itemize"><span 
 class="cmti-10">examples</span>, for the bash shell:
@@ -3001,9 +2999,9 @@ class="pcrro7t-">comment</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">character</span></span></li></ul>
      </li></ul>
-<!--l. 1351--><p class="noindent" >
-<!--l. 1351--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-279000A.4.1.19"></a><span 
+<!--l. 1344--><p class="noindent" >
+<!--l. 1344--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-282000A.4.1.19"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -3013,17 +3011,17 @@ class="cmbx-10">_</span><span
 class="cmbx-10">_]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[[directives]]]</span></span>
-                                                                                         
-
-                                                                                         
    Batch queue scheduler directives. Whether or not these are used depends on the job submission
 method. For the built-in loadleveler, pbs, and sge methods directives are written to the top of the
 task job script in the correct format for the method. Specifying directives individually like this allows
 use of default directives that can be individually overridden at lower levels of the runtime namespace
 hierarchy.
-<!--l. 1360--><p class="noindent" >
-<!--l. 1360--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-280000A.4.1.19.1"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 1353--><p class="noindent" >
+<!--l. 1353--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-283000A.4.1.19.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -3050,11 +3048,11 @@ class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 1370--><p class="indent" >   Example directives for the built-in job submission methods are shown in Section&#x00A0;<a 
-href="cug-htmlse10.html#x11-12400010.2">10.2<!--tex4ht:ref: AvailableMethods --></a>.
-<!--l. 1373--><p class="noindent" >
-<!--l. 1373--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-281000A.4.1.20"></a><span 
+<!--l. 1363--><p class="indent" >   Example directives for the built-in job submission methods are shown in Section&#x00A0;<a 
+href="cug-htmlse10.html#x11-12700010.2">10.2<!--tex4ht:ref: AvailableMethods --></a>.
+<!--l. 1366--><p class="noindent" >
+<!--l. 1366--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-284000A.4.1.20"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -3072,9 +3070,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">task</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">message</span></span> when the corresponding real outputs have been completed.
-<!--l. 1381--><p class="noindent" >
-<!--l. 1381--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x16-282000A.4.1.20.1"></a><span 
+<!--l. 1374--><p class="noindent" >
+<!--l. 1374--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x16-285000A.4.1.20.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[</span><span 
@@ -3106,9 +3104,9 @@ class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span></span> here.
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"> <span 
-class="cmti-10">examples: </span><!--l. 1393-->
-     <div class="lstlisting" id="listing-169"><span class="label"><a 
- id="x16-282001r1"></a></span><span 
+class="cmti-10">examples: </span><!--l. 1386-->
+     <div class="lstlisting" id="listing-168"><span class="label"><a 
+ id="x16-285001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3130,7 +3128,7 @@ class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-282002r2"></a></span><span 
+ id="x16-285002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3153,15 +3151,15 @@ class="pcrr7t-">+6&#x003E;</span><span
 class="pcrr7t-">"</span>
      
      </div>
-     <!--l. 1397--><p class="noindent" >where the item name must match the output label associated with this task in the suite dependency graph,
-     e.g.:  <!--l. 1400-->
-     <div class="lstlisting" id="listing-170"><span class="label"><a 
- id="x16-282003r1"></a></span><span 
+     <!--l. 1390--><p class="noindent" >where the item name must match the output label associated with this task in the suite dependency graph,
+     e.g.:  <!--l. 1393-->
+     <div class="lstlisting" id="listing-169"><span class="label"><a 
+ id="x16-285003r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-282004r2"></a></span><span 
+ id="x16-285004r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3170,7 +3168,7 @@ class="pcrr7t-">[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-282005r3"></a></span><span 
+ id="x16-285005r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3193,29 +3191,30 @@ class="pcrr7t-">TaskB</span>
      
      </div>
      </li></ul>
+<!--l. 1401--><p class="noindent" ><span 
+class="cmbx-12">]</span>
+   <h4 class="subsectionHead"><span class="titlemark">A.5   </span> <a 
+ id="x16-286000A.5"></a>[visualization]</h4>
+<!--l. 1403--><p class="noindent" >Configuration of suite graphing and, where explicitly stated, the graph-based suite control GUI.
                                                                                          
 
                                                                                          
-<!--l. 1408--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">A.5   </span> <a 
- id="x16-283000A.5"></a>[visualization]</h4>
-<!--l. 1410--><p class="noindent" >Configuration of suite graphing and, where explicitly stated, the graph-based suite control GUI.
-<!--l. 1413--><p class="noindent" >
+<!--l. 1406--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.1   </span> <a 
- id="x16-284000A.5.1"></a>[visualization] <span 
+ id="x16-287000A.5.1"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>initial cycle time</h5>
-<!--l. 1415--><p class="noindent" >The first cycle time to use when plotting the suite dependency graph.
+<!--l. 1408--><p class="noindent" >The first cycle time to use when plotting the suite dependency graph.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>integer
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>2999010100</li></ul>
-<!--l. 1421--><p class="noindent" >
+<!--l. 1414--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.2   </span> <a 
- id="x16-285000A.5.2"></a>[visualization] <span 
+ id="x16-288000A.5.2"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>final cycle time</h5>
-<!--l. 1423--><p class="noindent" >The last cycle time to use when plotting the suite dependency graph. Typically this should be just far enough ahead
+<!--l. 1416--><p class="noindent" >The last cycle time to use when plotting the suite dependency graph. Typically this should be just far enough ahead
 of the initial cycle to show the full suite.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -3223,12 +3222,12 @@ class="cmti-10">type: </span>integer
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>2999010123</li></ul>
-<!--l. 1432--><p class="noindent" >
+<!--l. 1425--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.3   </span> <a 
- id="x16-286000A.5.3"></a>[visualization] <span 
+ id="x16-289000A.5.3"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>collapsed families</h5>
-<!--l. 1434--><p class="noindent" >A list of family (namespace) names to be shown in the collapsed state (i.e.&#x00A0;the family members will be replaced by a
-single family node) when the suite is plotted in the graph viewer or the graph-based suite control GUI. This item
+<!--l. 1427--><p class="noindent" >A list of family (namespace) names to be shown in the collapsed state (i.e.&#x00A0;the family members will be replaced by a
+single family node) when the suite is plotted in the graph viewer or the gcylc graph view. This item
 determines how family groups are shown <span 
 class="cmti-10">initially </span>in the suite control GUI; subsequently you can use the
 interactive controls to group and ungroup nodes at will. For the same reason (presence of interactive
@@ -3241,37 +3240,37 @@ class="cmti-10">type: </span>list of family names
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 1450--><p class="noindent" >
+<!--l. 1443--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.4   </span> <a 
- id="x16-287000A.5.4"></a>[visualization] <span 
+ id="x16-290000A.5.4"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>use node color for edges</h5>
-<!--l. 1452--><p class="noindent" >Graph edges (dependency arrows) can be plotted in the same color as the upstream node (task or family) to make
+<!--l. 1445--><p class="noindent" >Graph edges (dependency arrows) can be plotted in the same color as the upstream node (task or family) to make
 paths through a complex graph easier to follow.
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>True</li></ul>
-<!--l. 1461--><p class="noindent" >
+                                                                                         
+
+                                                                                         
+<!--l. 1454--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.5   </span> <a 
- id="x16-288000A.5.5"></a>[visualization] <span 
+ id="x16-291000A.5.5"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>use node color for labels</h5>
-<!--l. 1463--><p class="noindent" >Graph node labels can be printed in the same color as the node outline.
+<!--l. 1456--><p class="noindent" >Graph node labels can be printed in the same color as the node outline.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>False</li></ul>
-<!--l. 1471--><p class="noindent" >
+<!--l. 1464--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.6   </span> <a 
- id="x16-289000A.5.6"></a>[visualization] <span 
+ id="x16-292000A.5.6"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>default node attributes</h5>
-<!--l. 1473--><p class="noindent" >Set the default attributes (color and style etc.) of graph nodes (tasks and families). Attribute pairs must be quoted
+<!--l. 1466--><p class="noindent" >Set the default attributes (color and style etc.) of graph nodes (tasks and families). Attribute pairs must be quoted
 to hide the internal <span class="lstinline"><span 
 class="pcrr7t-">=</span></span> character.
      <ul class="itemize1">
@@ -3305,11 +3304,11 @@ class="pcrr7t-">shape</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">box</span><span 
 class="pcrr7t-">'</span></span></li></ul>
-<!--l. 1482--><p class="noindent" >
+<!--l. 1475--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.7   </span> <a 
- id="x16-290000A.5.7"></a>[visualization] <span 
+ id="x16-293000A.5.7"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>default edge attributes</h5>
-<!--l. 1484--><p class="noindent" >Set the default attributes (color and style etc.) of graph edges (dependency arrows). Attribute pairs must be quoted
+<!--l. 1477--><p class="noindent" >Set the default attributes (color and style etc.) of graph edges (dependency arrows). Attribute pairs must be quoted
 to hide the internal <span class="lstinline"><span 
 class="pcrr7t-">=</span></span> character.
      <ul class="itemize1">
@@ -3331,16 +3330,13 @@ class="pcrr7t-">color</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">black</span><span 
 class="pcrr7t-">'</span></span></li></ul>
-<!--l. 1493--><p class="noindent" >
+<!--l. 1486--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.8   </span> <a 
- id="x16-291000A.5.8"></a>[visualization] <span 
+ id="x16-294000A.5.8"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>enable live graph movie</h5>
-<!--l. 1495--><p class="noindent" >If True, the graph-based suite control GUI will write out a dot-language graph file on every change; these can be
+<!--l. 1488--><p class="noindent" >If True, the graph-based suite control GUI will write out a dot-language graph file on every change; these can be
 post-processed into a movie showing how the suite evolves. The frames will be written to the run time graph
 directory (see below).
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
@@ -3348,17 +3344,20 @@ class="cmti-10">type: </span>boolean
      <li class="itemize"><span 
 class="cmti-10">default: </span><span class="lstinline"><span 
 class="pcrr7t-">False</span></span></li></ul>
-<!--l. 1505--><p class="noindent" >
+                                                                                         
+
+                                                                                         
+<!--l. 1498--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.9   </span> <a 
- id="x16-292000A.5.9"></a>[visualization] <span 
+ id="x16-295000A.5.9"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>[[node groups]]</h5>
-<!--l. 1507--><p class="noindent" >Define named groups of graph nodes (tasks and families) which can styled en masse, by name, in [visualization] <span 
+<!--l. 1500--><p class="noindent" >Define named groups of graph nodes (tasks and families) which can styled en masse, by name, in [visualization] <span 
 class="cmsy-10">&#x2192;</span>
 [[node attributes]]. Node groups are automatically defined for all task families, including root, so you can style
 family and member nodes at once by family name.
-<!--l. 1512--><p class="noindent" >
-<!--l. 1512--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-293000A.5.9.1"></a><span 
+<!--l. 1505--><p class="noindent" >
+<!--l. 1505--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-296000A.5.9.1"></a><span 
 class="cmbx-10">[visualization] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[node groups]] </span><span 
@@ -3376,9 +3375,9 @@ class="cmti-10">type: </span>comma separated list of task or family names
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
-class="cmti-10">example: </span><!--l. 1520-->
-     <div class="lstlisting" id="listing-171"><span class="label"><a 
- id="x16-293001r1"></a></span><span 
+class="cmti-10">example: </span><!--l. 1513-->
+     <div class="lstlisting" id="listing-170"><span class="label"><a 
+ id="x16-296001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3391,7 +3390,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-293002r2"></a></span><span 
+ id="x16-296002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3406,17 +3405,17 @@ class="pcrr7t-">waz</span>
      
      </div>
      </li></ul>
-<!--l. 1526--><p class="noindent" >
+<!--l. 1519--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.10   </span> <a 
- id="x16-294000A.5.10"></a>[visualization] <span 
+ id="x16-297000A.5.10"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>[[node attributes]]</h5>
-<!--l. 1528--><p class="noindent" >Here you can assign graph node attributes to specific nodes, or to all members of named groups defined in
+<!--l. 1521--><p class="noindent" >Here you can assign graph node attributes to specific nodes, or to all members of named groups defined in
 [visualization] <span 
 class="cmsy-10">&#x2192; </span>[[node groups]] (task families are automatically node groups). Group styling can be overridden for
 individual nodes or subgroups.
-<!--l. 1533--><p class="noindent" >
-<!--l. 1533--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-295000A.5.10.1"></a><span 
+<!--l. 1526--><p class="noindent" >
+<!--l. 1526--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-298000A.5.10.1"></a><span 
 class="cmbx-10">[visualization] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[node attributes]] </span><span 
@@ -3442,12 +3441,9 @@ class="cmti-10">legal values: </span>see graphviz or pygraphviz documentation
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
-class="cmti-10">example: </span>(with reference to the node groups defined above) <!--l. 1543-->
-                                                                                         
-
-                                                                                         
-     <div class="lstlisting" id="listing-172"><span class="label"><a 
- id="x16-295001r1"></a></span><span 
+class="cmti-10">example: </span>(with reference to the node groups defined above) <!--l. 1536-->
+     <div class="lstlisting" id="listing-171"><span class="label"><a 
+ id="x16-298001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3467,7 +3463,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">blue</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-295002r2"></a></span><span 
+ id="x16-298002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3481,7 +3477,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">red</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-295003r3"></a></span><span 
+ id="x16-298003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3497,16 +3493,19 @@ class="pcrr7t-">'</span>
      
      </div>
      </li></ul>
-<!--l. 1550--><p class="noindent" >
+                                                                                         
+
+                                                                                         
+<!--l. 1543--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">A.5.11   </span> <a 
- id="x16-296000A.5.11"></a>[visualization] <span 
+ id="x16-299000A.5.11"></a>[visualization] <span 
 class="cmsy-10">&#x2192; </span>[[runtime graph]]</h5>
-<!--l. 1552--><p class="noindent" >Cylc can generate graphs of dependencies resolved at run time, i.e.&#x00A0;what actually triggers off what as the suite runs.
+<!--l. 1545--><p class="noindent" >Cylc can generate graphs of dependencies resolved at run time, i.e.&#x00A0;what actually triggers off what as the suite runs.
 This feature is retained mainly for development and debugging purposes. You can use simulation mode or dummy
 mode to generate runtime graphs very quickly.
-<!--l. 1557--><p class="noindent" >
-<!--l. 1557--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-297000A.5.11.1"></a><span 
+<!--l. 1550--><p class="noindent" >
+<!--l. 1550--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-300000A.5.11.1"></a><span 
 class="cmbx-10">[visualization] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[runtime graph]] </span><span 
@@ -3519,9 +3518,9 @@ class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>False</li></ul>
-<!--l. 1565--><p class="noindent" >
-<!--l. 1565--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-298000A.5.11.2"></a><span 
+<!--l. 1558--><p class="noindent" >
+<!--l. 1558--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-301000A.5.11.2"></a><span 
 class="cmbx-10">[visualization] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[runtime graph]] </span><span 
@@ -3536,9 +3535,9 @@ class="cmsy-10">&#x2265; </span>0, hours)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>24</li></ul>
-<!--l. 1576--><p class="noindent" >
-<!--l. 1576--><p class="noindent" ><span class="paragraphHead"><a 
- id="x16-299000A.5.11.3"></a><span 
+<!--l. 1569--><p class="noindent" >
+<!--l. 1569--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x16-302000A.5.11.3"></a><span 
 class="cmbx-10">[visualization] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[[runtime graph]] </span><span 
@@ -3560,18 +3559,15 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_DEF_PATH</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">graphing</span></span></li></ul>
-<!--l. 1589--><p class="noindent" >
+<!--l. 1582--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.6   </span> <a 
- id="x16-300000A.6"></a>Special Placeholder Variables In Suite Definitions</h4>
-<!--l. 1591--><p class="noindent" >See Section&#x00A0;<a 
-href="cug-htmlse8.html#x9-1090008.7">8.7<!--tex4ht:ref: SPHV --></a>.
-                                                                                         
-
-                                                                                         
-<!--l. 1594--><p class="noindent" >
+ id="x16-303000A.6"></a>Special Placeholder Variables In Suite Definitions</h4>
+<!--l. 1584--><p class="noindent" >See Section&#x00A0;<a 
+href="cug-htmlse8.html#x9-1120008.7">8.7<!--tex4ht:ref: SPHV --></a>.
+<!--l. 1587--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.7   </span> <a 
- id="x16-301000A.7"></a>Default Suite Configuration</h4>
-<!--l. 1597--><p class="noindent" >Cylc provides, via <span class="lstinline"><span 
+ id="x16-304000A.7"></a>Default Suite Configuration</h4>
+<!--l. 1590--><p class="noindent" >Cylc provides, via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
 class="pcrr7t-">/</span><span 
@@ -3583,7 +3579,10 @@ class="pcrr7t-">spec</span></span>, sensible default values for many configurati
 that most users will not need to explicitly configure log directories and so on. The defaults are sufficient, in fact, to
 allow test suites defined by dependency graph alone (command scripting, for example, defaults to printing a simple
 message, sleeping for a few seconds, and then exiting).
-<!--l. 1604--><p class="indent" >   The <span class="lstinline"><span 
+                                                                                         
+
+                                                                                         
+<!--l. 1597--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">get</span><span 
@@ -3597,12 +3596,12 @@ items, sections, or entire suites.
 
                                                                                          
    <div class="footnotes"><!--l. 563--><p class="indent" >    <span class="footnote-mark"><a 
-href="#fn12x0-bk" id="fn12x0"><sup class="textsuperscript">12</sup></a></span><span 
+href="#fn11x0-bk" id="fn11x0"><sup class="textsuperscript">11</sup></a></span><span 
 class="cmr-8">Spawning any earlier than this brings no advantage in terms of functional parallelism and would cause uncontrolled proliferation</span>
 <span 
 class="cmr-8">of waiting tasks.</span>
 <!--l. 637--><p class="indent" >     <span class="footnote-mark"><a 
-href="#fn13x0-bk" id="fn13x0"><sup class="textsuperscript">13</sup></a></span><span 
+href="#fn12x0-bk" id="fn12x0"><sup class="textsuperscript">12</sup></a></span><span 
 class="cmr-8">This is because you don&#8217;t want Model[T] waiting around to trigger off Model[T-12] if Model[T-6] has not finished yet. If Model is</span>
 <span 
 class="cmr-8">forced to be sequential this can&#8217;t happen because Model[T] won&#8217;t exist in the suite until Model[T-6] has finished. But if Model[T-6] fails,</span>
@@ -3612,12 +3611,12 @@ class="cmti-8">then </span><span
 class="cmr-8">trigger off Model[T-12], which is the correct</span>
 <span 
 class="cmr-8">behaviour.</span>                                                                                                                                                        </div>
-<!--l. 5743--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 5764--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse16.html" >next</a>] [<a 
 href="cug-htmlse14.html" >prev</a>] [<a 
 href="cug-htmlse14.html#tailcug-htmlse14.html" >prev-tail</a>] [<a 
 href="cug-htmlse15.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse15.html" >up</a>] </p></div>
-<!--l. 5743--><p class="indent" >   <a 
+<!--l. 5764--><p class="indent" >   <a 
  id="tailcug-htmlse15.html"></a>   
 </body></html> 

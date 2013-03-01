@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-02-04 13:03:00"> 
+<meta name="date" content="2013-03-02 09:54:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 547--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 573--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse5.html" >next</a>] [<a 
 href="cug-htmlse3.html" >prev</a>] [<a 
 href="cug-htmlse3.html#tailcug-htmlse3.html" >prev-tail</a>] [<a 
@@ -21,7 +21,7 @@ href="cug-html.html#cug-htmlse4.html" >up</a>] </p></div>
  id="x5-140004"></a>Installation</h3>
    <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >4.1 <a 
-href="#x5-150004.1">Install The External Packages</a></span>
+href="#x5-150004.1">Install The External Dependencies</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.2 <a 
 href="#x5-160004.2">Install The Cylc Release</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.3 <a 
@@ -39,17 +39,234 @@ href="#x5-260004.8">What Next?</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.9 <a 
 href="#x5-270004.9">Upgrading To New Cylc Versions</a></span>
    </div>
-<!--l. 550--><p class="noindent" >
+<!--l. 576--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.1   </span> <a 
- id="x5-150004.1"></a>Install The External Packages</h4>
-<!--l. 552--><p class="noindent" >First install Pyro, graphviz, Pygraphviz, and Jinja2 on your system, following the instructions provided with each
-package. If you do not have root access on your intended cylc host machine and cannot get a sysadmin to do this at
+ id="x5-150004.1"></a>Install The External Dependencies</h4>
+<!--l. 578--><p class="noindent" >First install Pyro, graphviz, Pygraphviz, Jinja2, TeX, and ImageMagick using the package manager on your system
+if possible; otherwise download the packages manually and follow their native installation documentation. On a
+modern Linux system, this is very easy. For example, to install cylc-5.1.0 on the Fedora 18 Linux
+distribution:
+   <!--l. 584-->
+   <div class="lstlisting" id="listing-4"><span class="label"><a 
+ id="x5-15001r1"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graphviz</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">(2.28)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15002r2"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">graphviz</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">devel</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">(</span><span 
+class="pcrro7t-">for</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">pgraphviz</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">build</span><span 
+class="pcrro7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15003r3"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">python</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">devel</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">(</span><span 
+class="pcrro7t-">ditto</span><span 
+class="pcrro7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15005r5"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">TeX</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">packages</span><span 
+class="pcrro7t-">,</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">and</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">ImageMagick</span><span 
+class="pcrro7t-">,</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">for</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">generating</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">the</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">Cylc</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">User</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">Guide</span><span 
+class="pcrro7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15006r6"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">texlive</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15007r7"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">texlive</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">tex4ht</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15008r8"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">texlive</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">tocloft</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15009r9"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">texlive</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">framed</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15010r10"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">texlive</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">preprint</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15011r11"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">yum</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ImageMagick</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15012r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15013r13"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">Python</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">packages</span><span 
+class="pcrro7t-">:</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15014r14"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">easy_install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pyro</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">(3.16)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15015r15"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">easy_install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Jinja2</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">(2.6)</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15016r16"></a></span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">easy_install</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pygraphviz</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15017r17"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-15018r18"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">(</span><span 
+class="pcrro7t-">sqlite</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">3.7.13</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">already</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">installed</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">on</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">the</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">system</span><span 
+class="pcrro7t-">)</span>
+   
+   </div>
+<!--l. 605--><p class="indent" >   If you do not have root access on your intended cylc host machine and cannot get a sysadmin to do this at
 system level, see Section&#x00A0;<a 
-href="#x5-210004.7">4.7<!--tex4ht:ref: LocalInstall --></a> for local (user-specific) installation instructions.
-<!--l. 558--><p class="noindent" >
+href="#x5-210004.7">4.7<!--tex4ht:ref: LocalInstall --></a> for some tips on installing everything to a local user account.
+<!--l. 610--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.2   </span> <a 
  id="x5-160004.2"></a>Install The Cylc Release</h4>
-<!--l. 560--><p class="noindent" >Cylc typically installs into a normal user account; just unpack the release tarball in the desired location
+<!--l. 612--><p class="noindent" >Cylc typically installs into a normal user account; just unpack the release tarball in the desired location
 (referred to below as <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span></span>) and see the <span class="lstinline"><span 
@@ -58,14 +275,17 @@ class="pcrr7t-">CYLC_DIR</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">INSTALL</span></span> file for instructions (see also
 Section&#x00A0;<a 
-href="cug-htmlse20.html#x21-384000F">F<!--tex4ht:ref: INSTALL --></a>.
-<!--l. 566--><p class="noindent" >
+href="cug-htmlse21.html#x22-389000G">G<!--tex4ht:ref: INSTALL --></a>.
+<!--l. 618--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.3   </span> <a 
  id="x5-170004.3"></a>Site And User Configuration Files</h4>
-<!--l. 569--><p class="noindent" >Cylc uses site and user configuration files to set some important global parameters such as the range of network
+<!--l. 621--><p class="noindent" >Cylc uses site and user configuration files to set some important global parameters such as the range of network
 ports, and the editor to use on suite definitions,
-   <!--l. 573-->
-   <div class="lstlisting" id="listing-4"><span class="label"><a 
+   <!--l. 625-->
+                                                                                         
+
+                                                                                         
+   <div class="lstlisting" id="listing-5"><span class="label"><a 
  id="x5-17001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -127,9 +347,9 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">settings</span>
    
    </div>
-<!--l. 578--><p class="indent" >   These files can be auto-generated with all settings intially commented out by running this command:
-<!--l. 580-->
-   <div class="lstlisting" id="listing-5"><span class="label"><a 
+<!--l. 630--><p class="indent" >   These files can be auto-generated with all settings intially commented out by running this command:
+<!--l. 632-->
+   <div class="lstlisting" id="listing-6"><span class="label"><a 
  id="x5-17003r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -150,14 +370,11 @@ class="pcrr7t-">write</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">user</span>
    
-                                                                                         
-
-                                                                                         
    </div>
-<!--l. 584--><p class="indent" >   The content of these config files, in terms of legal items and default values, is defined by the <span 
+<!--l. 636--><p class="indent" >   The content of these config files, in terms of legal items and default values, is defined by the <span 
 class="cmti-10">ConfigObj configspec</span>
-file, <!--l. 586-->
-   <div class="lstlisting" id="listing-6"><span class="label"><a 
+file, <!--l. 638-->
+   <div class="lstlisting" id="listing-7"><span class="label"><a 
  id="x5-17004r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -169,7 +386,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cfgspec</span>
    
    </div>
-<!--l. 590--><p class="indent" >   The site config file should be adapted to set sensible defaults for all users when cylc is installed. Users can then
+<!--l. 642--><p class="indent" >   The site config file should be adapted to set sensible defaults for all users when cylc is installed. Users can then
 override most settings in their own user config file, if necessary. Some settings can not be overridden by users (this is
 determined by <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
@@ -177,13 +394,13 @@ class="pcrro7t-">SITE</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">ONLY</span></span> comments in the configspec file, which are passed through to the config
 files).
-<!--l. 597--><p class="noindent" >
+<!--l. 649--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.4   </span> <a 
  id="x5-180004.4"></a>Import The Example Suites</h4>
-<!--l. 600--><p class="noindent" >Run the following command immediately after installation to copy the cylc example suites to a given destination
+<!--l. 652--><p class="noindent" >Run the following command immediately after installation to copy the cylc example suites to a given destination
 directory, and registering each one for use:
-   <!--l. 604-->
-   <div class="lstlisting" id="listing-7"><span class="label"><a 
+   <!--l. 656-->
+   <div class="lstlisting" id="listing-8"><span class="label"><a 
  id="x5-18001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -198,7 +415,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">TOPDIR</span>
    
    </div>
-<!--l. 607--><p class="indent" >   Where <span class="lstinline"><span 
+<!--l. 659--><p class="indent" >   Where <span class="lstinline"><span 
 class="pcrr7t-">TOPDIR</span></span> is the top level directory into which the example suite definitions will be copied. To view
 the content of the resulting suite database, run <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -212,8 +429,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">db</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">dbviewer</span></span>:
-   <!--l. 613-->
-   <div class="lstlisting" id="listing-8"><span class="label"><a 
+   <!--l. 665-->
+   <div class="lstlisting" id="listing-9"><span class="label"><a 
  id="x5-18002r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -450,7 +667,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Z</span>
    
    </div>
-<!--l. 628--><p class="indent" >   Note that the dots in the cylc release version number are replaced with hyphens because &#8216;.&#8217; is the registration
+<!--l. 680--><p class="indent" >   Note that the dots in the cylc release version number are replaced with hyphens because &#8216;.&#8217; is the registration
 name delimiter. Type <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -466,8 +683,8 @@ order ensure uniqueness if the example suites are imported multiple times at the
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-4-5-1-1344571037</span></span>. You can re-register the example suites to get rid of this and make the names easier to
 type:
-   <!--l. 637-->
-   <div class="lstlisting" id="listing-9"><span class="label"><a 
+   <!--l. 689-->
+   <div class="lstlisting" id="listing-10"><span class="label"><a 
  id="x5-18015r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -683,8 +900,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Z</span>
    
    </div>
-<!--l. 653--><p class="indent" >   Here&#8217;s the same suite database listing in flat form: <!--l. 654-->
-   <div class="lstlisting" id="listing-10"><span class="label"><a 
+<!--l. 705--><p class="indent" >   Here&#8217;s the same suite database listing in flat form: <!--l. 706-->
+                                                                                         
+
+                                                                                         
+   <div class="lstlisting" id="listing-11"><span class="label"><a 
  id="x5-18028r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -844,13 +1064,10 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">suicide</span>
    
    </div>
-                                                                                         
-
-                                                                                         
-<!--l. 665--><p class="noindent" >
+<!--l. 717--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.5   </span> <a 
  id="x5-190004.5"></a>Automated Database Test</h4>
-<!--l. 668--><p class="noindent" >The command <span class="lstinline"><span 
+<!--l. 720--><p class="noindent" >The command <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">admin</span><span 
@@ -861,12 +1078,12 @@ class="pcrr7t-">db</span></span> gives suite registration database functionality
 the cylc example suites, registers it under a new name and then manipulates it by recopying the suite in various
 ways, and so on, before finally deleting the test registrations. This should complete without error in a few
 seconds.
-<!--l. 674--><p class="noindent" >
+<!--l. 726--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.6   </span> <a 
  id="x5-200004.6"></a>Automated Scheduler Tests</h4>
-<!--l. 677--><p class="noindent" >Cylc has a battery of self-diagnosing test suites for pre-release testing that you can also run after installation to
+<!--l. 729--><p class="noindent" >Cylc has a battery of self-diagnosing test suites for pre-release testing that you can also run after installation to
 check that everything works properly.
-<!--l. 681--><p class="indent" >   The command <span class="lstinline"><span 
+<!--l. 733--><p class="indent" >   The command <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">admin</span><span 
@@ -877,8 +1094,8 @@ class="pcrr7t-">battery</span></span> copies, registers, and runs, the official 
 the results. Some tests may take several minutes to complete. Pre-test requirements:
      <ul class="itemize1">
      <li class="itemize">Some test suites require passwordless self-ssh to be configured, i.e.&#x00A0;the following command should run
-     successfully: <!--l. 688-->
-     <div class="lstlisting" id="listing-11"><span class="label"><a 
+     successfully: <!--l. 740-->
+     <div class="lstlisting" id="listing-12"><span class="label"><a 
  id="x5-20001r1"></a></span><span 
 class="pcrr7t-">ssh</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -896,8 +1113,8 @@ class="pcrr7t-">ls</span>
      </div>
      </li>
      <li class="itemize">Some tests require a remote task host with passwordless ssh configured, i.e. the following command should run
-     successfully: <!--l. 693-->
-     <div class="lstlisting" id="listing-12"><span class="label"><a 
+     successfully: <!--l. 745-->
+     <div class="lstlisting" id="listing-13"><span class="label"><a 
  id="x5-20002r1"></a></span><span 
 class="pcrr7t-">ssh</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -915,8 +1132,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">ls</span>
      
      </div>
-     <!--l. 696--><p class="noindent" >You must specify the hostname before running these tests: <!--l. 697-->
-     <div class="lstlisting" id="listing-13"><span class="label"><a 
+     <!--l. 748--><p class="noindent" >You must specify the hostname before running these tests: <!--l. 749-->
+     <div class="lstlisting" id="listing-14"><span class="label"><a 
  id="x5-20003r1"></a></span><span 
 class="pcrr7t-">export</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -926,27 +1143,27 @@ class="pcrr7t-">HOSTNAME</span><span
 class="pcrr7t-">&#x003E;</span>
      
      </div>
-     <!--l. 700--><p class="noindent" >If you don&#8217;t have access to a remote task host just use <span class="lstinline"><span 
+     <!--l. 752--><p class="noindent" >If you don&#8217;t have access to a remote task host just use <span class="lstinline"><span 
 class="pcrr7t-">localhost</span></span> as the remote hostname.</li></ul>
-<!--l. 704--><p class="indent" >   If these requirements are satisfied no tests should fail on an official cylc release, because of pre-release testing. If
+<!--l. 756--><p class="indent" >   If these requirements are satisfied no tests should fail on an official cylc release, because of pre-release testing. If
 you find that some do fail, consider reporting this to cylc&#8217;s maintainer or the cylc mailing list. A possible exception
 to this is that some suite timeouts may be set too low if your suite host is slow or overloaded. Suite timeouts are
 intended to catch error conditions, such as unexpected task failures, that prevent a suite from completing and
 shutting down automatically.
-<!--l. 712--><p class="noindent" >
+                                                                                         
+
+                                                                                         
+<!--l. 764--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.7   </span> <a 
  id="x5-210004.7"></a>Complete Non System-Level Installation</h4>
-<!--l. 715--><p class="noindent" >If you do not have root access to your host machine and cannot easily get Pyro, graphviz, Pygraphviz, and Jinja2
+<!--l. 767--><p class="noindent" >If you do not have root access to your host machine and cannot easily get Pyro, graphviz, Pygraphviz, and Jinja2
 installed at system level, here&#8217;s how to install everything under your home directory.
-<!--l. 719--><p class="indent" >   First, cylc is already designed to be installed into a normal user account - just unpack the release tarball
+<!--l. 771--><p class="indent" >   First, cylc is already designed to be installed into a normal user account - just unpack the release tarball
 into <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span></span>. If you invoke cylc commands at this stage you will get a warning that Pyro is not
 installed.
-                                                                                         
-
-                                                                                         
-<!--l. 724--><p class="indent" >   Next, create a new sub-directory in the cylc source tree, <span class="lstinline"><span 
+<!--l. 776--><p class="indent" >   Next, create a new sub-directory in the cylc source tree, <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
 class="pcrr7t-">/</span><span 
@@ -954,17 +1171,17 @@ class="pcrr7t-">external</span></span>, and download the
 Pyro, Graphviz, and Pygraphviz source distributions to it (the URLs are given at the beginning of
 Section&#x00A0;<a 
 href="cug-htmlse3.html#x4-90003">3<!--tex4ht:ref: Requirements --></a>).
-<!--l. 729--><p class="noindent" >
+<!--l. 781--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">4.7.1   </span> <a 
  id="x5-220004.7.1"></a>Pyro</h5>
-<!--l. 731--><p class="noindent" >Install Pyro under <span class="lstinline"><span 
+<!--l. 783--><p class="noindent" >Install Pyro under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 732-->
-   <div class="lstlisting" id="listing-14"><span class="label"><a 
+class="pcrr7t-">installed</span></span> as follows: <!--l. 784-->
+   <div class="lstlisting" id="listing-15"><span class="label"><a 
  id="x5-22001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1018,7 +1235,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">installed</span>
    
    </div>
-<!--l. 738--><p class="indent" >   Take note of the resulting Python <span class="lstinline"><span 
+<!--l. 790--><p class="indent" >   Take note of the resulting Python <span class="lstinline"><span 
 class="pcrr7t-">site</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">packages</span></span> directory under <span class="lstinline"><span 
@@ -1026,8 +1243,8 @@ class="pcrr7t-">external</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">installed</span><span 
 class="pcrr7t-">/</span></span>, e.g.:
-<!--l. 740-->
-   <div class="lstlisting" id="listing-15"><span class="label"><a 
+<!--l. 792-->
+   <div class="lstlisting" id="listing-16"><span class="label"><a 
  id="x5-22005r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -1046,9 +1263,9 @@ class="pcrr7t-">packages</span><span
 class="pcrr7t-">/</span>
    
    </div>
-<!--l. 743--><p class="indent" >   The exact path will depend on your local Python environment. Add the following to your login scripts:
-<!--l. 745-->
-   <div class="lstlisting" id="listing-16"><span class="label"><a 
+<!--l. 795--><p class="indent" >   The exact path will depend on your local Python environment. Add the following to your login scripts:
+<!--l. 797-->
+   <div class="lstlisting" id="listing-17"><span class="label"><a 
  id="x5-22006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1092,8 +1309,8 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">PATH</span>
    
    </div>
-<!--l. 751--><p class="indent" >   Now you should be able to get cylc to print its release version: <!--l. 752-->
-   <div class="lstlisting" id="listing-17"><span class="label"><a 
+<!--l. 803--><p class="indent" >   Now you should be able to get cylc to print its release version: <!--l. 804-->
+   <div class="lstlisting" id="listing-18"><span class="label"><a 
  id="x5-22009r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1134,31 +1351,31 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">z</span>
    
    </div>
-<!--l. 757--><p class="indent" >   If this command aborts and says that Pyro is not installed or is not available, then you have either not installed
+<!--l. 809--><p class="indent" >   If this command aborts and says that Pyro is not installed or is not available, then you have either not installed
 Pyro (check the output of the installation command carefully) <span 
 class="cmti-10">or </span>you have not pointed to the installed
 Pyro modules in your PYTHONPATH, <span 
 class="cmti-10">or </span>you have not sourced the cylc environment since updating
 PYTHONPATH.
-<!--l. 763--><p class="indent" >   <span 
+<!--l. 815--><p class="indent" >   <span 
 class="cmti-10">Note that Pyro can also be installed with </span><span class="lstinline"><span 
 class="pcrro7t-">easy_install</span></span><span 
 class="cmti-10">, which downloads and installs python packages in one</span>
 <span 
 class="cmti-10">shot.</span>
-<!--l. 766--><p class="indent" >   At this point you should have access to all cylc functionality except for suite graphing and the gcylc graph view.
+<!--l. 818--><p class="indent" >   At this point you should have access to all cylc functionality except for suite graphing and the gcylc graph view.
 For example
-<!--l. 769--><p class="noindent" >
+<!--l. 821--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">4.7.2   </span> <a 
  id="x5-230004.7.2"></a>Graphviz</h5>
-<!--l. 771--><p class="noindent" >Install Graphviz under <span class="lstinline"><span 
+<!--l. 823--><p class="noindent" >Install Graphviz under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 773-->
-   <div class="lstlisting" id="listing-18"><span class="label"><a 
+class="pcrr7t-">installed</span></span> as follows: <!--l. 825-->
+   <div class="lstlisting" id="listing-19"><span class="label"><a 
  id="x5-23001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1225,10 +1442,13 @@ class="pcrr7t-">make</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">install</span>
    
+                                                                                         
+
+                                                                                         
    </div>
-<!--l. 781--><p class="indent" >   This installs graphviz files into the bin, include, and lib sub-directories of your local installation directory. The
+<!--l. 833--><p class="indent" >   This installs graphviz files into the bin, include, and lib sub-directories of your local installation directory. The
 graphviz lib and include locations are required when installing Pygraphviz (next).
-<!--l. 785--><p class="indent" >   Note that the graphviz build, reportedly, may fail on systems that do not have QT installed, hence the
+<!--l. 837--><p class="indent" >   Note that the graphviz build, reportedly, may fail on systems that do not have QT installed, hence the
 <span class="lstinline"><span 
 class="pcrr7t-">./</span><span 
 class="pcrr7t-">configure</span><span 
@@ -1239,20 +1459,17 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">qt</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">no</span></span> option above.
-                                                                                         
-
-                                                                                         
-<!--l. 789--><p class="noindent" >
+<!--l. 841--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">4.7.3   </span> <a 
  id="x5-240004.7.3"></a>Pygraphviz</h5>
-<!--l. 790--><p class="noindent" >Install Pygraphviz under <span class="lstinline"><span 
+<!--l. 842--><p class="noindent" >Install Pygraphviz under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">external</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 792-->
-   <div class="lstlisting" id="listing-19"><span class="label"><a 
+class="pcrr7t-">installed</span></span> as follows: <!--l. 844-->
+   <div class="lstlisting" id="listing-20"><span class="label"><a 
  id="x5-24001r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1285,8 +1502,8 @@ class="pcrr7t-">pygraphviz</span><span
 class="pcrr7t-">-1.1</span>
    
    </div>
-<!--l. 797--><p class="indent" >   Now edit setup.py lines 31 and 32 to specify the graphviz lib and include directories: <!--l. 799-->
-   <div class="lstlisting" id="listing-20"><span class="label"><a 
+<!--l. 849--><p class="indent" >   Now edit setup.py lines 31 and 32 to specify the graphviz lib and include directories: <!--l. 851-->
+   <div class="lstlisting" id="listing-21"><span class="label"><a 
  id="x5-24004r1"></a></span><span 
 class="pcrr7t-">library_path</span><span 
 class="pcrr7t-">=</span><span 
@@ -1336,12 +1553,12 @@ class="pcrr7t-">graphviz</span><span
 class="pcrr7t-">'</span>
    
    </div>
-<!--l. 803--><p class="indent" >   Or you can just specify the absolute paths if you like, instead of using the <span class="lstinline"><span 
+<!--l. 855--><p class="indent" >   Or you can just specify the absolute paths if you like, instead of using the <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span></span> environment variable.
 Check that these are the correct library and include paths by inspecting the contents of the specified directories, and
-adjust them if necessary. Finally, install pygraphviz: <!--l. 808-->
-   <div class="lstlisting" id="listing-21"><span class="label"><a 
+adjust them if necessary. Finally, install pygraphviz: <!--l. 860-->
+   <div class="lstlisting" id="listing-22"><span class="label"><a 
  id="x5-24006r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1377,9 +1594,9 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">installed</span>
    
    </div>
-<!--l. 812--><p class="indent" >   This may or may not, depending on your local Python setup, install the Pygraphviz modules into the same place
-as the Pyro modules, e.g.: <!--l. 814-->
-   <div class="lstlisting" id="listing-22"><span class="label"><a 
+<!--l. 864--><p class="indent" >   This may or may not, depending on your local Python setup, install the Pygraphviz modules into the same place
+as the Pyro modules, e.g.: <!--l. 866-->
+   <div class="lstlisting" id="listing-23"><span class="label"><a 
  id="x5-24008r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1427,8 +1644,8 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">info</span>
    
    </div>
-<!--l. 818--><p class="indent" >   If not, add the correct Pyraphviz installation path to your PYTHONPATH.
-<!--l. 820--><p class="indent" >   The easiest way to check that pygraphviz has been installed properly is to start an interactive Python
+<!--l. 870--><p class="indent" >   If not, add the correct Pyraphviz installation path to your PYTHONPATH.
+<!--l. 872--><p class="indent" >   The easiest way to check that pygraphviz has been installed properly is to start an interactive Python
 session (type <span class="lstinline"><span 
 class="pcrr7t-">python</span></span> after sourcing the cylc environment to configure your PYTHONPATH) then type
 <span class="lstinline"><span 
@@ -1446,11 +1663,11 @@ graphviz itself has not been installed properly (or if the graphviz libraries ha
 installed pygraphviz) then the initial pygraphiz import will be successful but a lower level import will fail
 when the pygraphviz modules cannot load the underlying graphviz libraries - in that case, reinstall
 graphviz.
-<!--l. 836--><p class="noindent" >
+<!--l. 888--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">4.7.4   </span> <a 
  id="x5-250004.7.4"></a>Jinja2</h5>
-<!--l. 838--><p class="noindent" >You can download Jinja2 from the project web site and install it with: <!--l. 839-->
-   <div class="lstlisting" id="listing-23"><span class="label"><a 
+<!--l. 890--><p class="noindent" >You can download Jinja2 from the project web site and install it with: <!--l. 891-->
+   <div class="lstlisting" id="listing-24"><span class="label"><a 
  id="x5-25001r1"></a></span><span 
 class="pcrr7t-">python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1471,19 +1688,19 @@ class="pcrr7t-">install</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">location</span>
    
+                                                                                         
+
+                                                                                         
    </div>
-<!--l. 842--><p class="indent" >   or use the <span class="lstinline"><span 
+<!--l. 894--><p class="indent" >   or use the <span class="lstinline"><span 
 class="pcrr7t-">easy_install</span></span> command to do it all in one step. Either way the final installed package location
 must be present in the <span class="lstinline"><span 
 class="pcrr7t-">PYTHONPATH</span></span> variable, and you may have to arrange for this first. You may also need to
 create the installed package directory if it doesn&#8217;t exist already (if so the install will abort and print the name of the
 missing directory in the error message). Here&#8217;s how to easy_install Jinja2 into your new private python site packages
 directory:
-   <!--l. 851-->
-                                                                                         
-
-                                                                                         
-   <div class="lstlisting" id="listing-24"><span class="label"><a 
+   <!--l. 903-->
+   <div class="lstlisting" id="listing-25"><span class="label"><a 
  id="x5-25002r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1543,11 +1760,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Jinja2</span>
    
    </div>
-<!--l. 857--><p class="indent" >   Adapt the site-packages path according to your actual path, as above.
-<!--l. 859--><p class="noindent" >
+<!--l. 909--><p class="indent" >   Adapt the site-packages path according to your actual path, as above.
+<!--l. 911--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.8   </span> <a 
  id="x5-260004.8"></a>What Next?</h4>
-<!--l. 861--><p class="noindent" >You should now have access to all cylc functionality. Import the example suites if you have not done so
+<!--l. 913--><p class="noindent" >You should now have access to all cylc functionality. Import the example suites if you have not done so
 already (Section&#x00A0;<a 
 href="#x5-180004.4">4.4<!--tex4ht:ref: ImportTheExampleSuites --></a>) then test your cylc installation by running the automated suite database test
 (Section&#x00A0;<a 
@@ -1556,20 +1773,20 @@ href="#x5-200004.6">4.6<!--tex4ht:ref: RTAST --></a>), then go on to the <span
 class="cmti-10">Quick Start Guide</span>
 (Section&#x00A0;<a 
 href="cug-htmlse6.html#x7-290006">6<!--tex4ht:ref: QuickStartGuide --></a>).
-<!--l. 869--><p class="noindent" >
+<!--l. 921--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.9   </span> <a 
  id="x5-270004.9"></a>Upgrading To New Cylc Versions</h4>
-<!--l. 871--><p class="noindent" >Upgrading is just a matter of unpacking the new cylc release and optionally re-importing the example suites for the
+<!--l. 923--><p class="noindent" >Upgrading is just a matter of unpacking the new cylc release and optionally re-importing the example suites for the
 new version.
                                                                                          
 
                                                                                          
-   <!--l. 875--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 927--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse5.html" >next</a>] [<a 
 href="cug-htmlse3.html" >prev</a>] [<a 
 href="cug-htmlse3.html#tailcug-htmlse3.html" >prev-tail</a>] [<a 
 href="cug-htmlse4.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse4.html" >up</a>] </p></div>
-<!--l. 875--><p class="indent" >   <a 
+<!--l. 927--><p class="indent" >   <a 
  id="tailcug-htmlse4.html"></a>   
 </body></html> 
