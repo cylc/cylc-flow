@@ -80,7 +80,7 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False, collapsed=[], only=None ):
+            verbose=False, validation=False, strict=False, collapsed=[] ):
 
         self.run_mode = run_mode
         self.verbose = verbose
@@ -117,8 +117,6 @@ class config( CylcConfigObj ):
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
-
-        self.only = only # validate a list of tasks
 
         self.owner = owner
 
@@ -194,8 +192,6 @@ class config( CylcConfigObj ):
         # during validation.  
         if self.validation:
             for name in self['runtime']:
-                if self.only != None and name not in self.only:
-                    continue
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
                 self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
@@ -428,76 +424,64 @@ class config( CylcConfigObj ):
         #for name in self['runtime']:
         #    print name, self.runtime['linearized ancestors'][name]
 
-    def compute_inheritance( self, use_efficient_method=True ):
+    def compute_inheritance( self, use_simple_method=True ):
 
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        results = OrderedDict()
+        results = {}
         n_reps = 0
+
         already_done = {} # to store already computed namespaces by mro
- 
+
         for ns in self['runtime']:
-            # get the MRO for this namespace
+            # for each namespace ...
+
             hierarchy = copy(self.runtime['linearized ancestors'][ns])
             hierarchy.reverse()
 
-            if ns == 'root':
-                tmp = OrderedDict()
-                replicate( tmp, self['runtime'][ns].odict() )
-                n_reps += 1
-                results['root'] = tmp
-                continue
+            result = OrderedDict()
 
-            if self.only != None:
-                # only do inheritance where it affects tasks in self.only
-                skip = True
-                for so in self.only:
-                    if so in hierarchy:
-                        skip = False
-                if skip:
-                    continue 
-
-            tmp = OrderedDict()
-            if not use_efficient_method: 
-                # this basic method is easy to understand, kept mainly for reference.
+            if use_simple_method:
+                # Go up the linearized MRO from root, replicating or
+                # overriding each namespace element as we go. 
                 for name in hierarchy:
-                    replicate( tmp, self['runtime'][name].odict() )
+                    replicate( result, self['runtime'][name].odict() )
                     n_reps += 1
+
             else:
-                # this method attempts to re-use already-computed MROs,
-                # which can greatly reduce the number of whole-namespace
-                # nested dict copy-and-override operations.
-       
-                mro = []
+                # As for the simple method, but store the result of each
+                # completed MRO (full or partial) as we go, and re-use
+                # these wherever possible. This ought to be a lot more
+                # efficient for big namespaces (e.g. lots of environment
+                # variables) in deep hiearchies, but results may vary...
                 prev_shortcut = False
+                mro = []
                 for name in hierarchy:
                     mro.append(name)
                     i_mro = '*'.join(mro)
                     if i_mro in already_done:
-                        # point to the already computed result
-                        stmp = already_done[i_mro]
+                        ad_result = already_done[i_mro]
                         prev_shortcut = True
                     else:
                         if prev_shortcut:
-                            # copy stmp (to avoid altering already_done)
-                            tmp = OrderedDict()
-                            replicate(tmp,stmp)
-                            n_reps += 1
                             prev_shortcut = False
+                            # copy ad_result (to avoid altering already_done)
+                            result = OrderedDict() # zero the result here...
+                            replicate(result,ad_result) # ...and use stored
+                            n_reps += 1
                         # override name content into tmp
-                        replicate( tmp, self['runtime'][name].odict() )
+                        replicate( result, self['runtime'][name].odict() )
                         n_reps += 1
                         # record this mro as already done
-                        already_done[i_mro] = tmp
+                        already_done[i_mro] = result
+    
+            results[ns] = result
 
-            results[ns] = tmp
-
-        # replace each namespace with the inherited result
+        # replace pre-inheritance namespaces with the post-inheritance result
         self['runtime'] = results
 
         # uncomment this to compare the simple and efficient methods
-        # (along with 'time cylc val BIGSUITE')
         # print '  Number of namespace replications:', n_reps
 
 
@@ -893,8 +877,6 @@ class config( CylcConfigObj ):
             # for each graph section
             for name in self.tasks_by_cycler[cyclr]:
                 # instantiate one of each task appearing in this section
-                if self.only != None and name not in self.only:
-                    continue
                 type = self.taskdefs[name].type
                 if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
                     tag = cyclr.initial_adjust_up( '2999010100' )
@@ -1212,19 +1194,7 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, ' ', ', '.join(bad)
                     raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
 
-            if self.only != None:
-                rnames = []
-                for r in rights:
-                    rr = r.replace( '!', '' )
-                    rrr = re.sub( ':.*$', '', rr )
-                    rnames.append(rrr)
-                for so in self.only:
-                    if so not in lnames and so not in rnames:
-                        return
-                        
             for rt in rights:
-                if self.only != None and rt not in self.only:
-                    continue
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
                 if rt and rt.startswith('!'):
@@ -1252,7 +1222,8 @@ class config( CylcConfigObj ):
                             m = re.match( '^ASYNCID:(.*)$', section )
                             asyncid_pattern = m.groups()[0]
                
-                if self.only == None and not self.validation:
+                if not self.validation:
+                    # edges not needed for validation
                     self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
                 self.generate_taskdefs( orig_line, lnames, r, ttype, section, cyclr, asyncid_pattern )
                 self.generate_triggers( lexpression, lnames, r, cyclr, asyncid_pattern, suicide )
