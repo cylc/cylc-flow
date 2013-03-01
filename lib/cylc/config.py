@@ -80,7 +80,7 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False, collapsed=[], only=None ):
+            verbose=False, validation=False, strict=False, collapsed=[] ):
 
         self.run_mode = run_mode
         self.verbose = verbose
@@ -117,8 +117,6 @@ class config( CylcConfigObj ):
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
-
-        self.only = only # validate a list of tasks
 
         self.owner = owner
 
@@ -194,8 +192,6 @@ class config( CylcConfigObj ):
         # during validation.  
         if self.validation:
             for name in self['runtime']:
-                if self.only != None and name not in self.only:
-                    continue
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
                 self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
@@ -437,17 +433,12 @@ class config( CylcConfigObj ):
         n_reps = 0
 
         already_done = {} # to store already computed namespaces by mro
+
         for ns in self['runtime']:
             # for each namespace ...
 
             hierarchy = copy(self.runtime['linearized ancestors'][ns])
             hierarchy.reverse()
-            if self.only != None:
-                # we're only concerned with particular namespaces
-                if not any( i in self.only for i in hierarchy ):
-                    # don't bother working out this namespace if
-                    # its hierarchy does not include an "only" one.
-                    continue
 
             result = OrderedDict()
 
@@ -886,8 +877,6 @@ class config( CylcConfigObj ):
             # for each graph section
             for name in self.tasks_by_cycler[cyclr]:
                 # instantiate one of each task appearing in this section
-                if self.only != None and name not in self.only:
-                    continue
                 type = self.taskdefs[name].type
                 if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
                     tag = cyclr.initial_adjust_up( '2999010100' )
@@ -1205,19 +1194,7 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, ' ', ', '.join(bad)
                     raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
 
-            if self.only != None:
-                rnames = []
-                for r in rights:
-                    rr = r.replace( '!', '' )
-                    rrr = re.sub( ':.*$', '', rr )
-                    rnames.append(rrr)
-                for so in self.only:
-                    if so not in lnames and so not in rnames:
-                        return
-                        
             for rt in rights:
-                if self.only != None and rt not in self.only:
-                    continue
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
                 if rt and rt.startswith('!'):
@@ -1245,7 +1222,8 @@ class config( CylcConfigObj ):
                             m = re.match( '^ASYNCID:(.*)$', section )
                             asyncid_pattern = m.groups()[0]
                
-                if self.only == None and not self.validation:
+                if not self.validation:
+                    # edges not needed for validation
                     self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
                 self.generate_taskdefs( orig_line, lnames, r, ttype, section, cyclr, asyncid_pattern )
                 self.generate_triggers( lexpression, lnames, r, cyclr, asyncid_pattern, suicide )
