@@ -442,6 +442,32 @@ Jinja2 you will not be able to run many of the example suites}:
         \newline \url{http://jinja.pocoo.org/docs}
 \end{myitemize}
 
+If installing via a Linux package manager, you may also need a couple of
+{\em devel} packages for the pygraphviz build:
+
+\begin{myitemize}
+    \item python-devel
+    \item graphviz-devel
+\end{myitemize}
+
+Since cylc-5.0 any tagged version of cylc can be downloaded and
+installed for use, but you have to generate the user guide yourself from
+the LaTeX source (by running \lstinline=make=). For this purpose, the
+following packages are also required:
+
+\begin{myitemize}
+    \item texlive
+    \item texlive-tocloft
+    \item texlive-framed
+    \item texlive-preprint (for fullpage.sty, formerly in tetex)
+\end{myitemize}
+And for HTML versions of the User Guide:
+
+\begin{myitemize}
+    \item texlive-tex4ht
+    \item ImageMagick (for image scaling)
+\end{myitemize}
+
 Finally, cylc makes heavy use of ``ordered dictionary'' data structures,
 and a significant speedup in parsing large suites can be had by
 installing the fast C-coded \lstinline=ordereddict= module by Anthon
@@ -547,13 +573,39 @@ Cylc has absorbed the following in modified form (no need to install these separ
 \section{Installation} 
 \label{Installation}
 
-\subsection{Install The External Packages}
+\subsection{Install The External Dependencies}
 
-First install Pyro, graphviz, Pygraphviz, and Jinja2 on your system,
-following the instructions provided with each package. If you do not
-have root access on your intended cylc host machine and cannot get a
-sysadmin to do this at system level, see Section~\ref{LocalInstall} for
-local (user-specific) installation instructions. 
+First install Pyro, graphviz, Pygraphviz, Jinja2, TeX, and ImageMagick
+using the package manager on your system if possible; otherwise download
+the packages manually and follow their native installation documentation.
+On a modern Linux system, this is very easy. For example, to install
+cylc-5.1.0 on the Fedora 18 Linux distribution:
+
+\begin{lstlisting}
+% yum install graphviz       # (2.28)
+% yum install graphviz-devel # (for pgraphviz build)
+% yum install python-devel   # (ditto) 
+
+# TeX packages, and ImageMagick, for generating the Cylc User Guide:
+% yum install texlive
+% yum install texlive-tex4ht
+% yum install texlive-tocloft
+% yum install texlive-framed
+% yum install texlive-preprint
+% yum install ImageMagick
+
+# Python packages:
+% easy_install pyro   # (3.16)
+% easy_install Jinja2 # (2.6)
+% easy_install pygraphviz
+	
+# (sqlite 3.7.13 already installed on the system)
+\end{lstlisting}
+
+If you do not have root access on your intended cylc host machine and
+cannot get a sysadmin to do this at system level, see
+Section~\ref{LocalInstall} for some tips on installing everything to 
+a local user account. 
 
 \subsection{Install The Cylc Release}
 
