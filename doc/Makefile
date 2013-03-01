@@ -46,11 +46,11 @@ cmds = $(shell ../bin/cylc commands)
 cmdx = $(cmds:%=commands/%.txt)
 
 $(cmdx): commands/%.txt: ../bin/cylc-%
-	if [[ ! -d commands ]]; then mkdir -p commands/; fi
+	if test ! -d commands; then mkdir -p commands/; fi
 	$(subst cylc-,cylc ,$<) --help > $@
 
 $(catx): categories/%.txt: ../bin/cylc
-	if [[ ! -d categories ]]; then mkdir -p categories/; fi
+	if test ! -d categories; then mkdir -p categories/; fi
 	cylc $(subst .txt,,$(subst categories/,,$@)) --help > $@
 
 commands.tex: $(cmdx) $(catx) cylc.txt
