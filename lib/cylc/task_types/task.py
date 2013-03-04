@@ -194,7 +194,7 @@ class task( object ):
 
     def record_db_event(self, event="", message=""):
         user_at_host = ""
-        if event == "submitted":
+        if event in ["submitted", "submit_failed"]:
             if self.owner is None:
                 self.owner = user
             if self.hostname is None:
@@ -249,7 +249,6 @@ class task( object ):
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
-        self.record_db_event(event="submitted")
         self.record_db_update("task_states", self.name, self.c_time, status="submitted")
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
@@ -302,7 +301,7 @@ class task( object ):
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
-        self.record_db_event(event="failed", message=reason)
+        self.record_db_event(event="submit failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
@@ -578,6 +577,7 @@ class task( object ):
         
         self.record_db_update("task_states", self.name, self.c_time, 
                               submit_method=self.submit_method, host=user_at_host)
+        self.record_db_event(event="submitted")
 
         share_dir = gcfg.get_suite_share_dir( self.suite_name, cfghost, owner )
         work_dir  = gcfg.get_task_work_dir( self.suite_name, self.id, cfghost, owner )
