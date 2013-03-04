@@ -10,10 +10,6 @@ USAGE update-gh-pages.sh [-p] COMMIT-MESSAGE
 Check out gh-pages, update its files from doc/ in master branch, and
 then optionally [-p] push to the cylc repository on github.
 
-Before running this you should 'make html-single' in the master doc
-directory and record any changes to the single-page html user guide or
-its css file (and any changes to doc/online/index.html).
-
 eof
 }
 
