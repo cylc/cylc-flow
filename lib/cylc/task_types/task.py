@@ -194,7 +194,7 @@ class task( object ):
 
     def record_db_event(self, event="", message=""):
         user_at_host = ""
-        if event in ["submitted", "submit_failed"]:
+        if event in ["submitted", "submit failed"]:
             if self.owner is None:
                 self.owner = user
             if self.hostname is None:
