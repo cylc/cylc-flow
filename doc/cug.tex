@@ -4790,14 +4790,10 @@ of 50 followed by one of 20, with a 30 second delay between batches.
 
 A connection timeout can be set in site/user config files (see 
 Section~\ref{SiteAndUserConfiguration}) so that messaging commands
-cannot hang indefinitely (this can be caused by suspending a suite with
-Ctrl-Z) and prevent a task from completing. But any such timeout must
-be sufficiently long to cover the interval required for job submission
-and scheduling (above) before cylc gets back to request handling 
-{\em just until we plan to have continuous request handling and job
-submission in background worker threads}.  The same can be done on the
-command line for suite-connecting user commands, with the
-\lstinline=--pyro-timeout= option.
+cannot hang indefinitely if the suite is not responding (thie can be
+caused by suspending a suite with Ctrl-Z) thereby preventing the task
+from completing. The same can be done on the command line for other
+suite-connecting user commands, with the \lstinline=--pyro-timeout= option.
 
 \subsection{Internal Queues And The Runahead Limit}
 

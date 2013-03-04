@@ -38,10 +38,10 @@ state dump rolling archive length = integer( min=1, default=10 )
 [task messaging]
     retry interval in seconds = float( min=1, default=30 )
     maximum number of tries = integer( min=1, default=10 )
-    # The timeout is the same as --pyro-timeout for user commands.
-    # It should be set to None (no timeout) or a large number (a few
-    # minutes) - until cylc has network request handling in a
-    # separate thread (see User Guide "Network Connection Timeouts").  
+    # This timeout is the same as --pyro-timeout for user commands.
+    # If set to None (no timeout) a non-responsive suite (e.g. suspended
+    # with Ctrl-Z) could cause a task to hang indefinitely when it
+    # attempts to send a message to the suite.
     connection timeout in seconds = float( min=1, default=None )
 
 # suites logs go under the suite run directory (see below)
