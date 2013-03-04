@@ -139,7 +139,7 @@ parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
 
-parser.add_option( "--output", 
+parser.add_option( "-o", "--output", 
     help="Write out an image file, format determined by file extension. "
     "The file will be rewritten if the suite definition is changed while "
     "the viewer is running.  Available formats depend on your graphviz "
