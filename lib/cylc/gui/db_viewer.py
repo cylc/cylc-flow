@@ -28,6 +28,7 @@ from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
 from cylc.suite_logging import suite_log
 from cylc.suite_logging import suite_log
+from util import EntryTempText
 
 try:
     from cylc import cylc_pyro_client
@@ -50,8 +51,6 @@ from cylc_logviewer import cylc_logviewer
 from cylc.passphrase import passphrase
 
 debug = False
-
-# To Do: factor out help menus for gcylc and cylc db viewer
 
 class db_updater(threading.Thread):
     count = 0
@@ -298,7 +297,7 @@ class db_updater(threading.Thread):
         return value == key
 
 class MainApp(object):
-    def __init__(self, db, db_owner, tmpdir, pyro_timeout ):
+    def __init__(self, parent, db, db_owner, tmpdir, pyro_timeout ):
 
         if not db:
             dbname = "(default DB)"
@@ -311,18 +310,21 @@ class MainApp(object):
         else:
             self.pyro_timeout = None
 
+        self.regname = None
+
         self.updater = None
         self.tmpdir = tmpdir
-        self.filter_window = None
         self.gcapture_windows = []
 
         gobject.threads_init()
 
         self.imagedir = get_image_dir()
 
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window = gtk.Dialog( "Choose a suite", parent, gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+        #self.window.set_modal(True)
         self.window.set_title("Registered Suites " + dbname )
-        self.window.set_size_request(600, 300)
+        self.window.set_size_request(750, 400)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
@@ -339,46 +341,23 @@ class MainApp(object):
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
         self.regd_treeview.set_search_column(0)
 
-        file_menu = gtk.Menu()
-        file_menu_root = gtk.MenuItem( '_File' )
-        file_menu_root.set_submenu( file_menu )
+        #file_menu = gtk.Menu()
+        #file_menu_root = gtk.MenuItem( '_File' )
+        #file_menu_root.set_submenu( file_menu )
 
-        self.reg_new_item = gtk.MenuItem( '_Register Existing Suite' )
-        self.reg_new_item.connect( 'activate', self.newreg_popup )
-        file_menu.append( self.reg_new_item )
+        #self.reg_new_item = gtk.MenuItem( '_Register Existing Suite' )
+        #self.reg_new_item.connect( 'activate', self.newreg_popup )
+        #file_menu.append( self.reg_new_item )
 
-        self.reg_new_item2 = gtk.MenuItem( '_Create New Suite' )
-        self.reg_new_item2.connect( 'activate', self.newreg2_popup )
-        file_menu.append( self.reg_new_item2 )
+        #self.reg_new_item2 = gtk.MenuItem( '_Create New Suite' )
+        #self.reg_new_item2.connect( 'activate', self.newreg2_popup )
+        #file_menu.append( self.reg_new_item2 )
 
-        exit_item = gtk.MenuItem( 'E_xit' )
-        exit_item.connect( 'activate', self.delete_all_event, None )
-        file_menu.append( exit_item )
+        #exit_item = gtk.MenuItem( 'E_xit' )
+        #exit_item.connect( 'activate', self.delete_all_event, None )
+        #file_menu.append( exit_item )
 
-        view_menu = gtk.Menu()
-        view_menu_root = gtk.MenuItem( '_View' )
-        view_menu_root.set_submenu( view_menu )
 
-        filter_item = gtk.MenuItem( '_Filter' )
-        view_menu.append( filter_item )
-        filter_item.connect( 'activate', self.filter_popup )
-
-        expand_item = gtk.MenuItem( 'E_xpand' )
-        view_menu.append( expand_item )
-        expand_item.connect( 'activate', self.expand_all, self.regd_treeview )
-
-        collapse_item = gtk.MenuItem( '_Collapse' )
-        view_menu.append( collapse_item )
-        collapse_item.connect( 'activate', self.collapse_all, self.regd_treeview )
-
-        refresh_item = gtk.MenuItem( '_Refresh' )
-        view_menu.append( refresh_item )
-        refresh_item.connect( 'activate', self.refresh )
-
-        reload_item = gtk.MenuItem( '_Reload' )
-        view_menu.append( reload_item )
-        reload_item.connect( 'activate', self.reload )
- 
         ## TO DO: restore ability to switch databases
         ##db_menu = gtk.Menu()
         ##db_menu_root = gtk.MenuItem( '_Database' )
@@ -390,92 +369,8 @@ class MainApp(object):
 
         #self.dblocal_item.connect( 'activate', self.localdb )
 
-        help_menu = gtk.Menu()
-        help_menu_root = gtk.MenuItem( '_Help' )
-        help_menu_root.set_submenu( help_menu )
-
-        guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
-        guide_item.set_image(img)
-        help_menu.append( guide_item )
-        guide_item.connect( 'activate', helpwindow.main )
-
-        doc_menu = gtk.Menu()
-        doc_item = gtk.ImageMenuItem( "_Documentation" )
-        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
-        doc_item.set_image(img)
-        doc_item.set_submenu( doc_menu )
-        help_menu.append(doc_item)
-
-        item = gtk.ImageMenuItem( 'Print document locations' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
-        item.set_image(img)
-        doc_menu.append( item )
-        item.connect( 'activate', self.browse, '' )
- 
-        doc_menu.append( gtk.SeparatorMenuItem() )
- 
-        cug_html_item = gtk.ImageMenuItem( '(file://) HTML Documentation Index' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        cug_html_item.set_image(img)
-        doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
-
-        cug_pdf_item = gtk.ImageMenuItem( '(file://) PDF User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
-        cug_pdf_item.set_image(img)
-        doc_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse, '--view=pdf' )
-  
-        cug_html_item = gtk.ImageMenuItem( '(file://) _Multi Page HTML User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
-        cug_html_item.set_image(img)
-        doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
-
-        cug_shtml_item = gtk.ImageMenuItem( '(file://) _Single Page HTML User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        cug_shtml_item.set_image(img)
-        doc_menu.append( cug_shtml_item )
-        cug_shtml_item.connect( 'activate', self.browse, '--view=html-single' )
-
-        doc_menu.append( gtk.SeparatorMenuItem() )
-
-        cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--view=local-index' )
- 
-        cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--view=www-homepage' )
- 
-        #cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
-        #img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        #cug_www_item.set_image(img)
-        #doc_menu.append( cug_www_item )
-        #cug_www_item.connect( 'activate', self.browse, '--view=www-index' )
-
-        chelp_menu = gtk.ImageMenuItem( '_Command Help' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
-        chelp_menu.set_image(img)
-        help_menu.append( chelp_menu )
-        self.construct_command_menu( chelp_menu )
-
-        about_item = gtk.ImageMenuItem( '_About' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU )
-        about_item.set_image(img)
-        help_menu.append( about_item )
-        about_item.connect( 'activate', self.about )
- 
-        self.menu_bar = gtk.MenuBar()
-        self.menu_bar.append( file_menu_root )
-        ##self.menu_bar.append( db_menu_root )
-        self.menu_bar.append( view_menu_root )
-        self.menu_bar.append( help_menu_root )
+        #self.menu_bar = gtk.MenuBar()
+        #self.menu_bar.append( file_menu_root )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
@@ -515,83 +410,60 @@ class MainApp(object):
         #vc.set_sort_column_id(3)
         self.regd_treeview.append_column( tvc )
 
-        vbox = gtk.VBox()
-        hbox = gtk.HBox()
-        #hbox.pack_start( self.main_label )
-        vbox.pack_start( hbox, False )
+        vbox = self.window.vbox
 
         sw.add( self.regd_treeview )
 
-        vbox.pack_start( self.menu_bar, False )
+        #vbox.pack_start( self.menu_bar, False )
+
         vbox.pack_start( sw, True )
 
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "right-click on suites or groups for options" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
-        vbox.pack_start( eb, False )
+        #eb = gtk.EventBox()
+        #eb.add( gtk.Label( "left-click to select, right-click to view" ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        #vbox.pack_start( eb, False )
 
-        self.window.add(vbox)
+        self.selected_label = gtk.Label( 'SELECTED: (none)' )
+
+        filter_entry = EntryTempText()
+        filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
+        filter_entry.connect( "activate", self.filter )
+        filter_entry.set_temp_text( "filter" )
+        filter_toolitem = gtk.ToolItem()
+        filter_toolitem.add(filter_entry)
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(filter_toolitem, "Filter suites \n(enter a sub-string or regex)")
+
+        expand_button = gtk.ToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_ADD, gtk.ICON_SIZE_SMALL_TOOLBAR )
+        expand_button.set_icon_widget( image )
+        expand_button.connect( 'clicked', lambda x: self.regd_treeview.expand_all() )
+
+        collapse_button = gtk.ToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
+        collapse_button.set_icon_widget( image )        
+        collapse_button.connect( 'clicked', lambda x: self.regd_treeview.collapse_all() )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( self.selected_label, False )
+
+        hbox.pack_start( gtk.HBox(), True )
+
+        hbox.pack_start( expand_button, False )
+        hbox.pack_start( collapse_button, False )
+
+        hbox.pack_start (filter_toolitem, False)
+ 
+        vbox.pack_start( hbox, False )
+
         self.window.show_all()
 
         self.start_updater()
 
-    def construct_command_menu( self, menu ):
-        # ALL COMMANDS
-        cat_menu = gtk.Menu()
-        menu.set_submenu( cat_menu )
-
-        cylc_help_item = gtk.MenuItem( 'cylc' )
-        cat_menu.append( cylc_help_item )
-        cylc_help_item.connect( 'activate', self.command_help )
-
-        cout = subprocess.Popen( ["cylc", "categories"], stdout=subprocess.PIPE ).communicate()[0]
-        categories = cout.rstrip().split()
-        for category in categories: 
-            foo_item = gtk.MenuItem( category )
-            cat_menu.append( foo_item )
-            com_menu = gtk.Menu()
-            foo_item.set_submenu( com_menu )
-            cout = subprocess.Popen( ["cylc", "category="+category ], stdout=subprocess.PIPE ).communicate()[0]
-            commands = cout.rstrip().split()
-            for command in commands:
-                bar_item = gtk.MenuItem( command )
-                com_menu.append( bar_item )
-                bar_item.connect( 'activate', self.command_help, category, command )
-
-    def about( self, bt ):
-        about = gtk.AboutDialog()
-        if gtk.gtk_version[0] ==2:
-            if gtk.gtk_version[1] >= 12:
-                # set_program_name() was added in PyGTK 2.12
-                about.set_program_name( "cylc" )
-        about.set_version( cylc_version )
-        about.set_copyright( "Copyright (C) 2008-2013 Hilary Oliver, NIWA" )
-#
-        about.set_comments( 
-"""
-The Cylc Suite Engine.
-""" )
-        #about.set_website( "http://www.niwa.co.nz" )
-        about.set_logo( get_logo() )
-        about.run()
-        about.destroy()
-
-    def command_help( self, w, cat='', com='' ):
-        command = "cylc " + cat + " " + com + " help"
-        foo = gcapture_tmpfile( command, self.tmpdir, 700, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def expand_all( self, w, view ):
-        view.expand_all()
-
-    def collapse_all( self, w, view ):
-        view.collapse_all()
-
     def start_updater(self, filtr=None ):
         db = localdb(self.db)
         #self.db_button.set_label( "_Local/Central DB" )
-        #self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
         self.updater = db_updater( self.regd_treestore, db, filtr, self.pyro_timeout )
@@ -731,84 +603,25 @@ The Cylc Suite Engine.
         foo.run()
         w.destroy()
 
-    def reload( self, w ):
-        # tell updated to reconstruct the treeview from scratch
-        self.updater.reload = True
+    # TODO: a button to do this?
+    #def reload( self, w ):
+    #    # tell updated to reconstruct the treeview from scratch
+    #    self.updater.reload = True
 
-    def refresh( self, w ):
-        command = "cylc refresh " + self.dbopt + " --notify-completion"
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def filter(self, w, filtr_e ):
+    def filter(self, filtr_e ):
+        if filtr_e == "":
+            # reset
+            self.start_updater()
+            return
         filtr = filtr_e.get_text()
         try:
             re.compile( filtr )
         except:
-            warning_dialog( "Bad Expression: " + filt, self.window ).warn()
-            self.filtr_reset( w, filtr_e )
+            warning_dialog( "Bad Regular Expression: " + filtr, self.window ).warn()
+            filtr_e.set_text("")
+            self.start_updater()
             return
         self.start_updater( filtr )
-
-    def filter_reset(self, w, filtr_e ):
-        filtr_e.set_text('')
-        self.start_updater()
-
-    def filter_popup(self, w):
-        self.filter_window = gtk.Window()
-        self.filter_window.set_border_width(5)
-        self.filter_window.set_title( "FILTER" )
-        self.filter_window.set_transient_for( self.window )
-        self.filter_window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-        vbox = gtk.VBox()
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Filter' )
-        box.pack_start( label, True )
-        filter_entry = gtk.Entry()
-        box.pack_start (filter_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: self.filter_window.destroy() )
-
-        apply_button = gtk.Button( "_Apply" )
-        apply_button.connect("clicked", self.filter, filter_entry )
-
-        reset_button = gtk.Button( "_Reset" )
-        reset_button.connect("clicked", self.filter_reset, filter_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.filter )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( apply_button, False )
-        hbox.pack_start( reset_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        self.filter_window.add( vbox )
-        self.filter_window.show_all()
-
-    #def localdb( self, w ):
-    #    # switch to local db
-    #    # TO DO: THIS WAS USED WHEN WE HAD A CENTRAL DATABASE
-    #    # MAY LATER BE CO-OPTED TO VIEW OTHER USER DATABASES?
-    #    self.window.set_title("Registered Suites" )
-    #    w.set_sensitive(False)
-    #    self.dbopt = ''
-    #    if self.filter_window:
-    #        self.filter_window.destroy()
-    #    # Note treeview.modify_base() doesn't seem to have same effect
-    #    # on all platforms. It either colours the full background or
-    #    # just inside (behind the treeeview?) the expander triangles.
-    #    #self.regd_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#bdf" ))
-    #    # Setting base color to None should return it to the default.
-    #    self.regd_treeview.modify_base( gtk.STATE_NORMAL, None)
-    #    self.reg_new_item.set_sensitive( True )
-    #    self.start_updater()
 
     def delete_all_event( self, w, e ):
         self.updater.quit = True
@@ -823,21 +636,9 @@ The Cylc Suite Engine.
             if not gwindow.quit_already:
                 gwindow.quit( None, None )
 
-        gtk.main_quit()      
-        # Uncommenting the following makes the window stay around until
-        # all updater threads have exited (put a 5s sleep in scan_my_ports
-        # to slow them down so you can see this). Otherwise, the window
-        # and threads seem to be killed instantly when this method
-        # returns.
-        #while True:
-        #    print  self.updater.__class__.count
-        #    if self.updater.__class__.count == 0:
-        #        break
-        #    time.sleep(1)
-        #print 'BYE'
-
     def on_suite_select( self, treeview, event ):
         # popup menu on right click or 'Return' key only
+        do_menu = True
         try:
             event.button
         except AttributeError:
@@ -865,8 +666,10 @@ The Cylc Suite Engine.
                         return False
         else:
             # called by button click
-            if event.button != 3:
+
+            if event.button != 1:
                 return False
+
             # the following sets selection to the position at which the
             # right click was done (otherwise selection lags behind the
             # right click):
@@ -890,11 +693,6 @@ The Cylc Suite Engine.
         else:
             group_clicked = False
  
-        menu = gtk.Menu()
-
-        menu_root = gtk.MenuItem( 'foo' )
-        menu_root.set_submenu( menu )
-
         def get_reg( item, iter ):
             reg = item
             if iter:
@@ -905,6 +703,21 @@ The Cylc Suite Engine.
             return reg
 
         reg = get_reg( item, iter )
+        if not group_clicked:
+            self.regname = reg
+            self.selected_label.set_text( 'SELECTED: ' + reg )
+        else:
+            self.regname = None
+            self.selected_label.set_text( 'SELECTED: (none)' )
+
+        #if not do_menu:
+        #return True
+        return False
+
+        menu = gtk.Menu()
+
+        menu_root = gtk.MenuItem( 'foo' )
+        menu_root.set_submenu( menu )
 
         if group_clicked:
             group = reg
@@ -927,40 +740,6 @@ The Cylc Suite Engine.
             infomenu = gtk.Menu()
             infomenu_item.set_submenu(infomenu)
  
-            ctrlmenu_item = gtk.MenuItem( '_Control' )
-            ctrlmenu = gtk.Menu()
-            ctrlmenu_item.set_submenu(ctrlmenu)
- 
-            con_item = gtk.MenuItem( '_Text View')
-            ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'text' )
-
-            con_item = gtk.MenuItem( '_Dot View')
-            ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'dot' )
-
-            con_item = gtk.MenuItem( '_Graph View')
-            ctrlmenu.append( con_item )
-            con_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'graph' )
-
-            cong_item = gtk.MenuItem( '_Dot & Text View')
-            ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'dot,text' )
-
-            cong_item = gtk.MenuItem( '_Graph & Text View')
-            ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'graph,text' )
-
-            cong_item = gtk.MenuItem( '_Dot & Graph View')
-            ctrlmenu.append( cong_item )
-            cong_item.connect( 'activate', self.launch_gcylc, reg, suite_dir, state, 'dot,graph' )
-
-            ctrlmenu.append( gtk.SeparatorMenuItem() )
- 
-            subm_item = gtk.MenuItem( '_Submit a Task')
-            ctrlmenu.append( subm_item )
-            subm_item.connect( 'activate', self.submit_task_popup, reg )
-
             descr_item = gtk.MenuItem( '_Description' )
             infomenu.append( descr_item )
             descr_item.connect( 'activate', self.describe_suite, reg )
@@ -995,18 +774,6 @@ The Cylc Suite Engine.
             infomenu.append( jobs_item )
             jobs_item.connect( 'activate', self.jobscript_popup, reg )
  
-            out_item = gtk.MenuItem( 'View Suite Std_out')
-            infomenu.append( out_item )
-            out_item.connect( 'activate', self.view_log, reg, 'out'  )
-
-            out_item = gtk.MenuItem( 'View Suite Std_err')
-            infomenu.append( out_item )
-            out_item.connect( 'activate', self.view_log, reg, 'err' )
-
-            out_item = gtk.MenuItem( 'View Suite _Log')
-            infomenu.append( out_item )
-            out_item.connect( 'activate', self.view_log, reg, 'log' )
-
             if state != '-':
                 # suite is running
                 dump_item = gtk.MenuItem( 'D_ump Suite State' )
@@ -1110,7 +877,6 @@ The Cylc Suite Engine.
             del_item.connect( 'activate', self.unregister_popup, reg )
 
             menu.append( prepmenu_item )
-            menu.append( ctrlmenu_item )
             menu.append( infomenu_item )
             menu.append( dbmenu_item )
 
@@ -1122,7 +888,7 @@ The Cylc Suite Engine.
 
         # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
-        return True
+        return False
 
 
     def alias_popup( self, w, reg ):
@@ -1532,48 +1298,6 @@ The Cylc Suite Engine.
         window.add( vbox )
         window.show_all()
 
-    def submit_task_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Submit A Single Task")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-        label = gtk.Label("SUITE: " + reg )
-        vbox.pack_start( label )
- 
-        label = gtk.Label("TASK ID" )
-        task_entry = gtk.Entry()
-        hbox = gtk.HBox()
-        hbox.pack_start( label, True )
-        hbox.pack_start(task_entry, True) 
-        vbox.pack_start( hbox )
- 
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Submit" )
-        ok_button.connect("clicked", self.submit_task, reg, task_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'task', 'submit' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def submit_task( self, w, reg, task_entry ):
-        command = "cylc submit --notify-completion " + self.dbopt + " " + reg + " " + task_entry.get_text()
-        foo = gcapture_tmpfile( command, self.tmpdir, 500, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
     def jobscript( self, w, reg, task_entry ):
         command = "cylc jobscript " + self.dbopt + " " + reg + " " + task_entry.get_text()
         foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
@@ -1599,32 +1323,9 @@ echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion 
         self.gcapture_windows.append(foo)
         foo.run()
 
-    def launch_gcylc( self, w, name, suite_dir, state, views=None ):
-        if not PyroInstalled:
-            warning_dialog( "Cannot run gcylc: Pyro is not installed"  ).warn()
-            return
-
-        if views:
-            command = "gcylc --views=" + views + " " + self.dbopt
-        else:
-            command = "gcylc " + self.dbopt
-        if self.pyro_timeout:
-            command += " --timeout=" + str(self.pyro_timeout)
-        command += " " + name
-
-        foo = gcapture_tmpfile( command, self.tmpdir, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
     def close_log_window( self, w, e, window, clv ):
         window.destroy()
         clv.quit()
-
-    def view_log( self, w, reg, type ):
-        task_name_list = [] # To Do
-        # assumes suite out, err, and log are in the same location:
-        logdir = suite_log( reg ).get_dir()
-        cylc_logviewer( type, logdir, task_name_list )
 
     def check_entries( self, entries ):
         # note this check retrieved entry values

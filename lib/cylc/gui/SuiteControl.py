@@ -48,6 +48,11 @@ from textload import textload
 from datetime import datetime
 from gcapture import gcapture_tmpfile
 from cylc.task_state import task_state
+from cylc.passphrase import passphrase
+
+from cylc.suite_logging import suite_log
+from cylc.registration import localdb
+from cylc.gui.db_viewer import MainApp
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -84,13 +89,12 @@ class InitData(object):
     """
 Class to hold initialisation data.
     """
-    def __init__( self, suite, logdir, pphrase, owner, host,
-            port, cylc_tmpdir, pyro_timeout, template_vars, template_vars_file ):
+    def __init__( self, suite, owner, host, port, db,
+            cylc_tmpdir, pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
-        self.pphrase = pphrase
         self.host = host
         self.port = port
-        self.logdir = logdir
+        self.db = db
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -109,6 +113,32 @@ Class to hold initialisation data.
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
 
+        self.reset( suite )
+
+    def reset( self, suite ):
+        self.suite = suite
+
+        suitedir = None
+        # dealias the suite name (an aliased name may be given for local suites)
+        if not is_remote_host( self.host ) and not is_remote_user( self.owner ):
+            db = localdb(file=self.db)
+            db.load_from_file()
+            try:
+                self.suite = db.unalias( suite )
+                suitedir = db.getdir( suite )
+            except Exception, x:
+                warning_dialog( "ERROR in suite name de-aliasing!\n" + str(x) ).warn()
+                self.suite = suite
+                #self.quit()
+            try:
+                self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
+            except Exception, x:
+                warning_dialog( "ERROR in suite passphrase hunt!\n" + str(x) ).warn()
+                self.pphrase = None
+                #self.quit()
+
+        self.logdir = suite_log( suite ).get_dir()
+
 class InfoBar(gtk.VBox):
     """
 Class to create an information bar.
@@ -122,7 +152,9 @@ Class to create an information bar.
 
         self.set_theme( theme )
 
-        self._suite_states = ["empty"]
+        # TODO: Ben: why the "empty" here:
+        #self._suite_states = ["empty"]
+        self._suite_states = []
         self.state_widget = gtk.HBox()
         self._set_tooltip( self.state_widget, "states" )  
 
@@ -279,13 +311,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
 
-    def __init__( self, suite, logdir, pphrase, owner, host, port, cylc_tmpdir,
+    def __init__( self, suite, db, owner, host, port, cylc_tmpdir,
             startup_views, pyro_timeout, usercfg, template_vars, template_vars_file ):
 
         gobject.threads_init()
-        
-        self.cfg = InitData( suite, logdir, pphrase, owner, host, port,
+
+        self.cfg = InitData( suite, owner, host, port, db, 
                 cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
+        
         self.usercfg = usercfg
         self.theme_name = usercfg['use theme'] 
         self.theme = usercfg['themes'][ self.theme_name ]
@@ -295,18 +328,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.view_layout_horizontal = False
 
-        #self.connection_lost = False # (not used)
         self.quitters = []
         self.gcapture_windows = []
 
         self.log_colors = rotator()
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        title = self.cfg.suite
-        if self.cfg.host != socket.getfqdn():
-            title += " - " + self.cfg.host
-        title += " - gcylc"
-        self.window.set_title( title )
+
         self.window.set_icon(get_icon())
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(800, 500)
@@ -332,6 +360,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.window.add( bigbox )
         self.window.show_all()
+
+        if not suite:
+            self.click_open()
+        else:
+            self.reset(suite)
+
+    def reset( self, suite ):
+        title = suite
+        self.cfg.suite = suite
+        if self.cfg.host != socket.getfqdn():
+            title += " - " + self.cfg.host
+        title += " - gcylc"
+        self.window.set_title( title )
+        self.cfg.reset(suite)
+
+        self.logdir = suite_log( suite ).get_dir()
+
+        self.restart_views()
 
     def setup_icons( self ):
         """Set up some extra stock icons for better PyGTK compatibility."""
@@ -396,6 +442,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if not item.get_active():
             return False
         self.theme = self.usercfg['themes'][item.theme_name]
+        self.restart_views()
+
+    def restart_views( self ):
+        """Replace each view with itself"""
         for view_num in range( 0, len(self.current_views)):
             if self.current_views[view_num]:
                 # (may be None if the second view pane is turned off)
@@ -620,6 +670,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def click_exit( self, foo ):
         self.quit()
+
+    def click_open( self, foo=None ):
+        app = MainApp( self.window, self.cfg.db, self.cfg.owner, self.cfg.cylc_tmpdir, self.cfg.pyro_timeout )
+        chosen = None
+        while True:
+            response = app.window.run()
+            if response == gtk.RESPONSE_OK:
+                if app.regname:
+                    chosen = app.regname
+                    break
+                else:
+                    warning_dialog( "Choose a suite or cancel!", self.window ).warn()
+            if response == gtk.RESPONSE_CANCEL:
+                break
+        app.updater.quit = True
+        app.window.destroy()
+        if chosen:
+            self.reset( chosen )
 
     def pause_suite( self, bt ):
         try:
@@ -2018,6 +2086,12 @@ or remove task definitions without restarting the suite."""
 
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
+
+        open_item = gtk.ImageMenuItem( '_Open (Switch Suites)' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU )
+        open_item.set_image(img)
+        open_item.connect( 'activate', self.click_open )
+        file_menu.append( open_item )
 
         exit_item = gtk.ImageMenuItem( 'E_xit (Disconnect From Suite)' )
         img = gtk.image_new_from_stock(  gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU )
