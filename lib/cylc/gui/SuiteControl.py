@@ -1202,7 +1202,7 @@ The Cylc Suite Engine.
 
     def add_prerequisite( self, w, entry, window, task_id ):
         dep = entry.get_text()
-        m = re.match( '^(\w+)'+TaskID.DELIM+'(\w+)$', dep )
+        m = re.match( '^(\w+)'+TaskID.DELIM_RE+'(\w+)$', dep )
         if m:
             #name, ctime = m.groups()
             msg = dep + ' succeeded'
