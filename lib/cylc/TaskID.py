@@ -144,7 +144,7 @@ class TaskID(object):
     """
 
     DELIM = '.'
-    DELIM_RE = re.compile('\.')
+    DELIM_RE = '\.'
 
     def __init__( self, *args ):
         if len(args) == 1:
