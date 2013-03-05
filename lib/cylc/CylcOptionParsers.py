@@ -134,10 +134,6 @@ Arguments:"""
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
-            self.add_option( "-p", "--passphrase",
-                    help="Suite passphrase file (if not in a default location)",
-                    metavar="FILE", action="store", dest="pfile" )
-
             self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
@@ -171,10 +167,6 @@ Arguments:"""
         foo = db_optparse( options.db )
         options.db = foo.get_db_location()
         options.db_owner = foo.get_db_owner()
-
-        if self.pyro:
-            if options.pfile:
-                options.pfile = os.path.abspath( options.pfile )
 
         if self.gcylc or not self.pyro:
             if options.templatevars_file:

@@ -112,8 +112,6 @@ else:
     suite = None
 
 try:
-    # TODO: GET RID OF PFILE (command line password)
-    #app = ControlApp( suite, options.db, options.pfile, options.owner,
     app = ControlApp( suite, options.db, options.owner,
             options.host, options.port, cylc_tmpdir, views,
             options.pyro_timeout, usercfg.cfg, options.templatevars,
