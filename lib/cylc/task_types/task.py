@@ -193,11 +193,13 @@ class task( object ):
         self.__class__.instance_count -= 1
 
     def record_db_event(self, event="", message=""):
-        if self.owner is None:
-            self.owner = user
-        if self.hostname is None:
-            self.hostname = "localhost"
-        user_at_host = self.owner + "@" + self.hostname
+        user_at_host = ""
+        if event in ["submitted", "submit failed"]:
+            if self.owner is None:
+                self.owner = user
+            if self.hostname is None:
+                self.hostname = "localhost"
+            user_at_host = self.owner + "@" + self.hostname
         call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, user_at_host)
         self.db_queue.append(call)
     
@@ -247,7 +249,6 @@ class task( object ):
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
-        self.record_db_event(event="submitted", message="task submitted")
         self.record_db_update("task_states", self.name, self.c_time, status="submitted")
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
@@ -259,7 +260,7 @@ class task( object ):
         
     def set_running( self ):
         self.state.set_status( 'running' )
-        self.record_db_event(event="started", message="task started")
+        self.record_db_event(event="started")
         self.record_db_update("task_states", self.name, self.c_time, status="running")
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
@@ -273,13 +274,13 @@ class task( object ):
         self.outputs.set_all_completed()
         self.state.set_status( 'succeeded' )
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
-        self.record_db_event(event="succeeded", message="task succeeded")
+        self.record_db_event(event="succeeded")
         self.succeeded_time = task.clock.get_datetime()
         # don't update mean total elapsed time if set_succeeded() was called
 
     def set_succeeded_handler( self ):
         # (set_succeeded() is used by remote switch)
-        self.record_db_event(event="succeeded", message="task succeeded")
+        self.record_db_event(event="succeeded")
         self.state.set_status( 'succeeded' )
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
         handler = self.event_handlers['succeeded']
@@ -287,7 +288,7 @@ class task( object ):
             self.log( 'NORMAL', "Queuing succeeded event handler" )
             self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
         
-    def set_failed( self, reason='task failed' ):
+    def set_failed( self, reason="" ):
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
         self.record_db_event(event="failed", message=reason)
@@ -300,7 +301,7 @@ class task( object ):
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
-        self.record_db_event(event="failed", message=reason)
+        self.record_db_event(event="submit failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
@@ -333,7 +334,7 @@ class task( object ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
-        self.record_db_event(event="succeeded", message="task succeeded")
+        self.record_db_event(event="succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_completed()
@@ -342,7 +343,7 @@ class task( object ):
         # all prerequisites satisified and no outputs complete
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
-        self.record_db_event(event="failed", message="task failed")
+        self.record_db_event(event="failed")
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
@@ -576,6 +577,7 @@ class task( object ):
         
         self.record_db_update("task_states", self.name, self.c_time, 
                               submit_method=self.submit_method, host=user_at_host)
+        self.record_db_event(event="submitted")
 
         share_dir = gcfg.get_suite_share_dir( self.suite_name, cfghost, owner )
         work_dir  = gcfg.get_task_work_dir( self.suite_name, self.id, cfghost, owner )
@@ -751,6 +753,10 @@ class task( object ):
             submit_method_id = message[len(self.id + ' submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time,
                                   submit_method_id=submit_method_id)
+                                  
+        if message.startswith("Task job script received signal"):
+            #capture and record signals sent to task proxy
+            self.record_db_event(event="signaled", message=message)
 
         if message == self.id + ' failed':
             # (note not 'elif' here as started messages must go through
@@ -777,6 +783,7 @@ class task( object ):
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
+                self.record_db_event(event="retrying")
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
