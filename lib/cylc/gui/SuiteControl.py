@@ -34,7 +34,7 @@ from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotMaker
-from cylc.gui.util import get_icon, get_image_dir, get_logo
+from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryDialog
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
@@ -2098,11 +2098,15 @@ or remove task definitions without restarting the suite."""
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        open_item = gtk.ImageMenuItem( '_Open (Switch Suites)' )
+        open_item = gtk.ImageMenuItem( '_Open A Registered Suite' )
         img = gtk.image_new_from_stock(  gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU )
         open_item.set_image(img)
         open_item.connect( 'activate', self.click_open )
         file_menu.append( open_item )
+
+        reg_new_item = gtk.MenuItem( 'Register A _New Suite' )
+        reg_new_item.connect( 'activate', self.newreg_popup )
+        file_menu.append( reg_new_item )
 
         exit_item = gtk.ImageMenuItem( 'E_xit (Disconnect From Suite)' )
         img = gtk.image_new_from_stock(  gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU )
@@ -2481,6 +2485,75 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
 
+    def newreg_popup( self, w ):
+        dialog = gtk.FileChooserDialog(title='Register Or Create A Suite',
+                action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+
+        filter = gtk.FileFilter()
+        filter.set_name("Cylc Suite Definition Files")
+        filter.add_pattern( "suite.rc" )
+        dialog.add_filter( filter )
+
+        response = dialog.run()
+        if response != gtk.RESPONSE_OK:
+            dialog.destroy()
+            return False
+
+        res = dialog.get_filename()
+
+        dialog.destroy()
+
+        dir = os.path.dirname( res )
+        fil = os.path.basename( res )
+
+        if fil != "suite.rc":
+            warning_dialog( "Suite definitions filenames must be \"suite.rc\" : " + fil, self.window ).warn()
+            fil = "suite.rc"
+
+        # handle home directories under gpfs filesets, e.g.: if my home
+        # directory is /home/oliver:
+        home = os.environ['HOME']
+        # but is really located on a gpfs fileset such as this:
+        # /gpfs/filesets/hpcf/home/oliver; the pygtk file chooser will
+        # return the "real" path that really should be hidden:
+        home_real = os.path.realpath(home)
+        # so let's restore it to the familiar form (/home/oliver):
+        dir = re.sub( '^' + home_real, home, dir )
+
+        suiterc = os.path.join( dir, fil )
+
+        if not os.path.isfile( suiterc ):
+            info_dialog( "creating a template suite definition: " + suiterc, self.window ).inform()
+            template = open( suiterc, 'wb' )
+            template.write(
+'''
+title = "my new suite definition"
+description = """
+This is what my suite does:..."""
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+       # settings...
+'''        )
+            template.close()
+
+        window = EntryDialog( parent=self.window,
+                flags=0,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_OK_CANCEL,
+                message_format="Suite name for " + dir )
+
+        suite = window.run()
+        window.destroy()
+        if suite:
+            command = "cylc register " + suite + ' ' + dir
+            res, stdout = run_get_stdout( command )
+            if res:
+                self.reset( suite  )
 
     def reset_connection_polling( self, bt ):
         # Force the polling schedule to go back to short intervals so

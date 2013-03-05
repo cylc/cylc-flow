@@ -299,10 +299,6 @@ class db_updater(threading.Thread):
 class MainApp(object):
     def __init__(self, parent, db, db_owner, tmpdir, pyro_timeout ):
 
-        if not db:
-            dbname = "(default DB)"
-        else:
-            dbname = db
         self.db = db
         self.db_owner = db_owner
         if pyro_timeout:
@@ -323,7 +319,7 @@ class MainApp(object):
         #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window = gtk.Dialog( "Choose a suite", parent, gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
         #self.window.set_modal(True)
-        self.window.set_title("Registered Suites " + dbname )
+        self.window.set_title("Registered Suites " + db )
         self.window.set_size_request(750, 400)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
@@ -341,33 +337,9 @@ class MainApp(object):
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
         self.regd_treeview.set_search_column(0)
 
-        #file_menu = gtk.Menu()
-        #file_menu_root = gtk.MenuItem( '_File' )
-        #file_menu_root.set_submenu( file_menu )
-
-        #self.reg_new_item = gtk.MenuItem( '_Register Existing Suite' )
-        #self.reg_new_item.connect( 'activate', self.newreg_popup )
-        #file_menu.append( self.reg_new_item )
-
-        #self.reg_new_item2 = gtk.MenuItem( '_Create New Suite' )
-        #self.reg_new_item2.connect( 'activate', self.newreg2_popup )
-        #file_menu.append( self.reg_new_item2 )
-
         #exit_item = gtk.MenuItem( 'E_xit' )
         #exit_item.connect( 'activate', self.delete_all_event, None )
         #file_menu.append( exit_item )
-
-
-        ## TO DO: restore ability to switch databases
-        ##db_menu = gtk.Menu()
-        ##db_menu_root = gtk.MenuItem( '_Database' )
-        ##db_menu_root.set_submenu( db_menu )
-
-        ##self.dblocal_item = gtk.MenuItem( '_User' )
-        ##db_menu.append( self.dblocal_item )
-        ##self.dblocal_item.set_sensitive(False) # (already on local at startup)
-
-        #self.dblocal_item.connect( 'activate', self.localdb )
 
         #self.menu_bar = gtk.MenuBar()
         #self.menu_bar.append( file_menu_root )
@@ -468,140 +440,6 @@ class MainApp(object):
             self.updater.quit = True # does this take effect?
         self.updater = db_updater( self.regd_treestore, db, filtr, self.pyro_timeout )
         self.updater.start()
-
-    def newreg_popup( self, w ):
-        dialog = gtk.FileChooserDialog(title='Register Existing Suite (choose a suite.rc file)',
-                action=gtk.FILE_CHOOSER_ACTION_OPEN,
-                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
-                    gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-        filtr = gtk.FileFilter()
-        filtr.set_name("cylc suite.rc files")
-        filtr.add_pattern("suite\.rc")
-        dialog.add_filter( filtr )
-
-        response = dialog.run()
-        if response != gtk.RESPONSE_OK:
-            dialog.destroy()
-            return False
-
-        suiterc = dialog.get_filename()
-        dialog.destroy()
-        dir = os.path.dirname( suiterc )
-
-        # handle home directories under gpfs filesets, e.g.: if my home
-        # directory is /home/oliver:
-        home = os.environ['HOME']
-        # but is really located on a gpfs fileset such as this:
-        # /gpfs/filesets/hpcf/home/oliver; the pygtk file chooser will
-        # return the "real" path that really should be hidden:
-        home_real = os.path.realpath(home)
-        # so let's restore it to the familiar form (/home/oliver):
-        dir = re.sub( '^' + home_real, home, dir )
-
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "New Registration" )
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-
-        label = gtk.Label( 'PATH: ' + dir )
-        vbox.pack_start( label, True )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'SUITE:' )
-        box.pack_start( label, True )
-        as_entry = gtk.Entry()
-        box.pack_start (as_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        apply_button = gtk.Button( "_Register" )
-        apply_button.connect("clicked", self.new_reg, window, dir, as_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'register' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( apply_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def newreg2_popup( self, w ):
-        dialog = gtk.FileChooserDialog(title='Register New Suite (choose or create suite definition directory)',
-                action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
-                    gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-
-        response = dialog.run()
-        if response != gtk.RESPONSE_OK:
-            dialog.destroy()
-            return False
-
-        res = dialog.get_filename()
-        dialog.destroy()
-
-        if os.path.isdir( res ):
-            suiterc = os.path.join( res, 'suite.rc' )
-        else:
-            warning_dialog( res + " is not a directory", self.window ).warn()
-            return False
-            
-        if not os.path.isfile( suiterc ):
-            info_dialog( "creating empty suite.rc file: " + suiterc, self.window ).inform()
-            os.system( 'touch ' + suiterc )
-
-        dir = os.path.dirname( suiterc )
-
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "New Suite" )
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-        vbox = gtk.VBox()
-
-        label = gtk.Label( 'PATH: ' + dir )
-        vbox.pack_start( label, True )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'SUITE:' )
-        box.pack_start( label, True )
-        as_entry = gtk.Entry()
-        box.pack_start (as_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        apply_button = gtk.Button( "_Register" )
-        apply_button.connect("clicked", self.new_reg, window, dir, as_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'register' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( apply_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def new_reg( self, b, w, dir, reg_e ):
-        reg = reg_e.get_text()
-        command = "cylc register --notify-completion " + reg + ' ' + dir
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
 
     # TODO: a button to do this?
     #def reload( self, w ):
