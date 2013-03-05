@@ -53,6 +53,7 @@ from cylc.passphrase import passphrase
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
 from cylc.gui.db_viewer import MainApp
+from cylc.global_config import gcfg
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -90,7 +91,7 @@ class InitData(object):
 Class to hold initialisation data.
     """
     def __init__( self, suite, owner, host, port, db,
-            cylc_tmpdir, pyro_timeout, template_vars, template_vars_file ):
+            pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
         self.host = host
         self.port = port
@@ -101,7 +102,8 @@ Class to hold initialisation data.
             self.pyro_timeout = None
 
         self.owner = owner
-        self.cylc_tmpdir = cylc_tmpdir
+
+        self.cylc_tmpdir = gcfg.get_tmpdir()
 
         self.imagedir = get_image_dir()
 
@@ -311,13 +313,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
 
-    def __init__( self, suite, db, owner, host, port, cylc_tmpdir,
-            startup_views, pyro_timeout, usercfg, template_vars, template_vars_file ):
+    def __init__( self, suite, db, owner, host, port, startup_views,
+            pyro_timeout, usercfg, template_vars, template_vars_file ):
 
         gobject.threads_init()
 
         self.cfg = InitData( suite, owner, host, port, db, 
-                cylc_tmpdir, pyro_timeout, template_vars, template_vars_file )
+                pyro_timeout, template_vars, template_vars_file )
         
         self.usercfg = usercfg
         self.theme_name = usercfg['use theme'] 
