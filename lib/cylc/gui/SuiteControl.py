@@ -54,6 +54,7 @@ from cylc.suite_logging import suite_log
 from cylc.registration import localdb
 from cylc.gui.db_viewer import MainApp
 from cylc.global_config import gcfg
+from cylc.gui.gcylc_config import config
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -93,6 +94,7 @@ Class to hold initialisation data.
     def __init__( self, suite, owner, host, port, db,
             pyro_timeout, template_vars, template_vars_file ):
         self.suite = suite
+        self.owner = owner
         self.host = host
         self.port = port
         self.db = db
@@ -100,12 +102,6 @@ Class to hold initialisation data.
             self.pyro_timeout = float(pyro_timeout)
         else:
             self.pyro_timeout = None
-
-        self.owner = owner
-
-        self.cylc_tmpdir = gcfg.get_tmpdir()
-
-        self.imagedir = get_image_dir()
 
         self.template_vars_opts = ""
         for tv in template_vars:
@@ -115,7 +111,11 @@ Class to hold initialisation data.
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
 
-        self.reset( suite )
+        self.cylc_tmpdir = gcfg.get_tmpdir()
+        self.imagedir = get_image_dir()
+
+        if suite:
+            self.reset( suite )
 
     def reset( self, suite ):
         self.suite = suite
@@ -313,17 +313,21 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                         "dot": "/icons/tab-led.xpm",
                         "text": "/icons/tab-tree.xpm" }
 
-    def __init__( self, suite, db, owner, host, port, startup_views,
-            pyro_timeout, usercfg, template_vars, template_vars_file ):
+    def __init__( self, suite, db, owner, host, port, pyro_timeout,
+            template_vars, template_vars_file ):
 
         gobject.threads_init()
 
         self.cfg = InitData( suite, owner, host, port, db, 
                 pyro_timeout, template_vars, template_vars_file )
         
-        self.usercfg = usercfg
-        self.theme_name = usercfg['use theme'] 
-        self.theme = usercfg['themes'][ self.theme_name ]
+        # load gcylc.rc
+        self.usercfg = config().cfg
+        self.theme_name = self.usercfg['use theme'] 
+        self.theme = self.usercfg['themes'][ self.theme_name ]
+
+        self.current_views = []
+
         self.key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
 
         self.setup_icons()
@@ -348,24 +352,28 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
 
-        self.create_tool_bar()
+        self.initial_views = self.usercfg['initial views'] 
+        self.create_tool_bar( )
         bigbox.pack_start( self.tool_bar_box, False, False )
+
+        self.tool_bar_box.set_sensitive(False)
+
         self.create_info_bar()
 
         self.views_parent = gtk.VBox()
         bigbox.pack_start( self.views_parent, True )
-        self.setup_views(startup_views)
 
         hbox = gtk.HBox()
         hbox.pack_start( self.info_bar, True )
         bigbox.pack_start( hbox, False )
 
         self.window.add( bigbox )
+        self.window.set_title( "gcylc" )
+ 
         self.window.show_all()
 
-        if not suite:
-            self.click_open()
-        else:
+        self.setup_views()
+        if suite:
             self.reset(suite)
 
     def reset( self, suite ):
@@ -377,7 +385,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.window.set_title( title )
         self.cfg.reset(suite)
 
-        self.logdir = suite_log( suite ).get_dir()
+        self.tool_bar_box.set_sensitive(True)
+        for menu in self.suite_menus:
+            menu.set_sensitive(True)
 
         self.restart_views()
 
@@ -394,21 +404,19 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         factory.add( 'ungroup', ungrp_iconset )
         factory.add_default()
 
-    def setup_views( self, startup_views=[] ):
-        """Create our view containers and the startup views."""
+    def setup_views( self ):
+        """Create our view containers."""
         num_views = 2
-        if not startup_views:
-            startup_views = [ self.DEFAULT_VIEW ]
         self.view_containers = []
-        self.current_views = []
         self.current_view_toolitems = []
-        for i in range(num_views):
-            self.view_containers.append(gtk.HBox())
+        for i in range(0, num_views):
             self.current_views.append(None)
+            self.view_containers.append(gtk.HBox())
             self.current_view_toolitems.append([])
         self.views_parent.pack_start( self.view_containers[0],
                                       expand=True, fill=True )
-        for i, view in enumerate(startup_views):
+    def create_views( self ):
+        for i, view in enumerate(self.initial_views):
             self.create_view(view, i)
             if i == 0:
                 self._set_menu_view0( view )
@@ -416,7 +424,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             elif i == 1:
                 self._set_menu_view1( view )
                 self._set_tool_bar_view1( view )
-
+ 
     def change_view_layout( self, horizontal=False ):
         """Switch between horizontal or vertical positioning of views."""
         self.view_layout_horizontal = horizontal
@@ -448,6 +456,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def restart_views( self ):
         """Replace each view with itself"""
+        if not self.current_views[0]:
+            self.create_views()
+
         for view_num in range( 0, len(self.current_views)):
             if self.current_views[view_num]:
                 # (may be None if the second view pane is turned off)
@@ -570,14 +581,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.create_view( new_viewname, view_num, pane_position=old_position )
         return False
 
-    def create_view( self, viewname=None, view_num=0, pane_position=-1 ):
+    def create_view( self, viewname, view_num=0, pane_position=-1 ):
         """Create a view instance.
         
         Toolbars and menus must be updated, as well as pane positioning.
         
         """
-        if viewname is None:
-            viewname = self.DEFAULT_VIEW
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname]( 
                                                    self.cfg,
@@ -2461,11 +2470,17 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
 
+        start_menu_root.set_sensitive(False)
+        view_menu_root.set_sensitive(False)
+        tools_menu_root.set_sensitive(False)
+        self.suite_menus = ( start_menu_root, view_menu_root, tools_menu_root )
+
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
+
 
     def reset_connection_polling( self, bt ):
         # Force the polling schedule to go back to short intervals so
@@ -2512,6 +2527,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
     def create_tool_bar( self ):
         """Create the tool bar for the control GUI."""
+        initial_views = self.initial_views
         self.tool_bars = [ gtk.Toolbar(), gtk.Toolbar() ]
         views = self.VIEWS_ORDERED
         self.tool_bar_view0 = gtk.ComboBox()
@@ -2529,7 +2545,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         cell_pix0 = gtk.CellRendererPixbuf()
         self.tool_bar_view0.pack_start( cell_pix0 )
         self.tool_bar_view0.add_attribute( cell_pix0, "pixbuf", 0 )
-        self.tool_bar_view0.set_active(0)
+        self.tool_bar_view0.set_active(views.index(initial_views[0]))
         self.tool_bar_view0.connect( "changed", self._cb_change_view0_tool )
         self._set_tooltip( self.tool_bar_view0, "Change primary view" )
         self.view_toolitems = [ gtk.ToolItem() ]
@@ -2544,7 +2560,12 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         self.tool_bar_view1.add_attribute( cell_text1, "text", 1 )
         self.tool_bar_view1.add_attribute( cell_pix1, "visible", 2 )
         self.tool_bar_view1.add_attribute( cell_text1, "visible", 3 )
-        self.tool_bar_view1.set_active(0)
+        if len(initial_views) == 1:
+            # only one view specified, set second to the null view
+            self.tool_bar_view1.set_active(0)
+        else:
+            self.tool_bar_view1.set_active( views.index(initial_views[1]) + 1)
+
         self.tool_bar_view1.connect( "changed", self._cb_change_view1_tool )
         self._set_tooltip( self.tool_bar_view1, "Change secondary view" )
         self.view_toolitems.append( gtk.ToolItem() )

@@ -32,33 +32,17 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 parser = cop( """cylc gui [OPTIONS] [REG]
 gcylc [OPTIONS] [REG]
 
-The cylc GUI for suite control etc. This program can also be launched by
-right-clicking on a suite in cylc dbviewer.
+The Graphical User Interface for viewing, editing, and controlling
+(etc.) cylc suites.
 
 If the '-t,--timeout=' option is used the timeout value will be passed
 on to the suite if it is subsequently started from the GUI
 (and it will in turn be passed to tasks submitted by the suite).
 
-Task state color themes can be changed via the View menu. To customize
-themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc
-and follow the instructions in the file.""", pyro=True, gcylc=True,
-    argdoc=[('[REG]', 'Suite name' )])
-
-parser.add_option( "-w", "--views", metavar="VIEWS", 
-        help="Initial view panes for the suite control GUI. "
-        "choose one or two, comma separated, from 'dot', "
-        "'text', and 'graph'; the default is 'dot,text'",
-        action="store", default='dot,text', dest="gviews" )
-
-parser.add_option( "-u", "--use-theme", metavar="NAME",
-        help="The task state color and icon theme to use at start-up "
-        "(this overrides the theme specified in your gcylc.rc file).",
-        action="store", default=None, dest="theme" )
-
-parser.add_option( "-l", "--list-themes", 
-        help="Print available task state color themes "
-        "(built-in themes and any in $HOME/.cylc/gcylc.rc).",
-        action="store_true", default=False, dest="list_themes" )
+Available task state color themes are shown under the View menu. To
+customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+$HOME/.cylc/gcylc.rc and follow the instructions in the file.""",
+pyro=True, gcylc=True, argdoc=[('[REG]', 'Suite name' )])
 
 parser.remove_option("-f" ) # don't need force (To Do: a read-only GUI)
 
@@ -71,7 +55,6 @@ import gtk
 import warnings
 warnings.filterwarnings('ignore', 'use the new', Warning)
 from cylc.gui.SuiteControl import ControlApp
-from cylc.gui.gcylc_config import config
 
 # Make current working directory be $HOME. Otherwise (1) if the user
 # attempts to start gcylc from a CWD that has been removed, Pyro will
@@ -80,24 +63,9 @@ from cylc.gui.gcylc_config import config
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-# load gcylc.rc
-usercfg = config( options.list_themes, options.theme )
-
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
 gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
-
-views = (options.gviews).split(',')
-
-if len(views) > 2:
-    sys.exit( "ERROR: Too many views specified" )
-
-illegal = []
-for view in views:
-    if view not in ['dot', 'text', 'graph' ]:
-        illegal.append(view)
-if len(illegal) != 0:
-    sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
 
 if len(args) == 1:
     suite = args[0]
@@ -106,9 +74,8 @@ else:
 
 try:
     app = ControlApp( suite, options.db, options.owner,
-            options.host, options.port, cylc_tmpdir, views,
-            options.pyro_timeout, usercfg.cfg, options.templatevars,
-            options.templatevars_file )
+            options.host, options.port, options.pyro_timeout,
+            options.templatevars, options.templatevars_file )
 except Exception, x:
     if options.debug:
         raise
