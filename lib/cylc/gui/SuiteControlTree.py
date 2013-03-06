@@ -19,7 +19,6 @@
 import gtk
 import os, re
 import gobject
-import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
 from util import EntryTempText

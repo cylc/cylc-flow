@@ -44,7 +44,6 @@ from cylc.registration import localdb, RegistrationError
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 from util import get_icon, get_image_dir, get_logo
-import helpwindow
 from gcapture import gcapture, gcapture_tmpfile
 from graph import graph_suite_popup
 from cylc.mkdir_p import mkdir_p

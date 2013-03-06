@@ -2417,11 +2417,12 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
 
-        guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
-        guide_item.set_image(img)
-        help_menu.append( guide_item )
-        guide_item.connect( 'activate', helpwindow.userguide )
+        ## TODO: a better (and up to date) gcylc Quick Guide
+        ##guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
+        ##img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
+        ##guide_item.set_image(img)
+        ##help_menu.append( guide_item )
+        ##guide_item.connect( 'activate', helpwindow.userguide )
 
         doc_menu = gtk.Menu()
         doc_item = gtk.ImageMenuItem( "_Documentation" )

@@ -19,7 +19,6 @@
 import gtk
 import os, re
 import gobject
-import helpwindow
 from xstateview import xupdater
 from warning_dialog import warning_dialog, info_dialog
 from cylc.cycle_time import ct
@@ -382,9 +381,6 @@ Dependency graph suite control interface.
         apply_button.connect("clicked", self.filter,
                 exclude_entry, include_entry, filterbox)
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", helpwindow.stop_guide )
-
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
         hbox.pack_start( reset_button, False )
@@ -477,9 +473,6 @@ Dependency graph suite control interface.
         apply_button.connect("clicked", self.focused_timezoom, 
                ctime, start_entry, stop_entry )
 
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", helpwindow.stop_guide )
-
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
         hbox.pack_start( reset_button, False )
@@ -538,9 +531,6 @@ Dependency graph suite control interface.
         apply_button = gtk.Button( "_Apply" )
         apply_button.connect("clicked", self.graph_timezoom, 
                 start_entry, stop_entry )
-
-        #help_button = gtk.Button( "_Help" )
-        #help_button.connect("clicked", helpwindow.stop_guide )
 
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
