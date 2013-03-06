@@ -281,8 +281,7 @@ For detailed documentation see the Cylc User Guide (cylc doc --help).
 
 Version """+cylc_version+""" 
 
-Cylc also has a comprehensive Graphical User Interface:
-  * "gcylc" (a.k.a. "cylc gui") - work on and run a specific suite.
+The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
     
 USAGE:
   % cylc -v,--version                   # print cylc version
