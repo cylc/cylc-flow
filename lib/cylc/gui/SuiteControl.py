@@ -2431,58 +2431,32 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         doc_item.set_submenu( doc_menu )
         help_menu.append(doc_item)
 
-        item = gtk.ImageMenuItem( 'Print document locations' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_COPY, gtk.ICON_SIZE_MENU )
-        item.set_image(img)
-        doc_menu.append( item )
-        item.connect( 'activate', self.browse, '' )
- 
-        doc_menu.append( gtk.SeparatorMenuItem() )
- 
-        cug_html_item = gtk.ImageMenuItem( '(file://) HTML Documentation Index' )
+        cug_html_item = gtk.ImageMenuItem( '(file://) Documentation Index' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
         cug_html_item.set_image(img)
         doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--view=html-index' )
+        cug_html_item.connect( 'activate', self.browse )
 
         cug_pdf_item = gtk.ImageMenuItem( '(file://) PDF User Guide' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
         cug_pdf_item.set_image(img)
         doc_menu.append( cug_pdf_item )
-        cug_pdf_item.connect( 'activate', self.browse, '--view=pdf' )
+        cug_pdf_item.connect( 'activate', self.browse, '-p' )
   
-        cug_html_item = gtk.ImageMenuItem( '(file://) _Multi Page HTML User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND_MULTIPLE, gtk.ICON_SIZE_MENU )
-        cug_html_item.set_image(img)
-        doc_menu.append( cug_html_item )
-        cug_html_item.connect( 'activate', self.browse, '--view=html-multi' )
-
-        cug_shtml_item = gtk.ImageMenuItem( '(file://) _Single Page HTML User Guide' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        cug_shtml_item.set_image(img)
-        doc_menu.append( cug_shtml_item )
-        cug_shtml_item.connect( 'activate', self.browse, '--view=html-single' )
-
         doc_menu.append( gtk.SeparatorMenuItem() )
 
         cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--view=local-index' )
+        cug_www_item.connect( 'activate', self.browse, '-x' )
  
         cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '--view=www-homepage' )
+        cug_www_item.connect( 'activate', self.browse, '-w' )
  
-        #cug_www_item = gtk.ImageMenuItem( '(http://) Internet Document Index' )
-        #img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        #cug_www_item.set_image(img)
-        #doc_menu.append( cug_www_item )
-        #cug_www_item.connect( 'activate', self.browse, '--view=www-index' )
-
         chelp_menu = gtk.ImageMenuItem( '_Command Help' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
         chelp_menu.set_image(img)
@@ -2983,7 +2957,7 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
         return " --host=" + self.cfg.host + " --owner=" + self.cfg.owner
 
     def browse( self, b, option='' ):
-        command = 'cylc documentation ' + option
+        command = 'cylc doc ' + option
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700 )
         self.gcapture_windows.append(foo)
         foo.run()
