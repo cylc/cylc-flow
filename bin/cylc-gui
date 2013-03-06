@@ -32,12 +32,15 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 parser = cop( """cylc gui [OPTIONS] [REG]
 gcylc [OPTIONS] [REG]
 
-The Graphical User Interface for viewing, editing, and controlling
-(etc.) cylc suites.
+This is the cylc Graphical User Interface.
+
+Local suites can be opened and switched between from within gcylc. To
+connect to running remote suites (whose passphrase you have installed)
+you must currently use --host and/or --owner on the gcylc command line.
 
 If the '-t,--timeout=' option is used the timeout value will be passed
-on to the suite if it is subsequently started from the GUI
-(and it will in turn be passed to tasks submitted by the suite).
+on to the suite if it is subsequently started from the GUI (and it will
+in turn be passed to tasks submitted by the suite).
 
 Available task state color themes are shown under the View menu. To
 customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
