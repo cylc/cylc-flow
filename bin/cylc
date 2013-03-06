@@ -229,7 +229,6 @@ license_commands['warranty'  ] = [ 'warranty']
 license_commands['conditions'] = [ 'conditions']
 
 database_commands = OrderedDict()
-database_commands['dbviewer'  ] = [ 'dbviewer' ]
 database_commands['register'  ] = [ 'register' ]
 database_commands['reregister'] = [ 'reregister','rename' ]
 database_commands['alias'     ] = [ 'alias' ]
@@ -284,7 +283,6 @@ Version """+cylc_version+"""
 
 Cylc also has a comprehensive Graphical User Interface:
   * "gcylc" (a.k.a. "cylc gui") - work on and run a specific suite.
-  * "cylc dbviewer" - to view registered suites; right-click to act.
     
 USAGE:
   % cylc -v,--version                   # print cylc version
@@ -363,7 +361,6 @@ comsum[ 'copy'       ] = 'Copy a suite or a group of suites'
 comsum[ 'print'      ] = 'Print registered suites'
 comsum[ 'get-directory' ] = 'Retrieve suite definition directory paths'
 comsum[ 'refresh'    ] = 'Report invalid registrations and update suite titles'
-comsum[ 'dbviewer'   ] = 'GUI to view registered suites and operate on them.'
 # preparation
 comsum[ 'edit'       ] = 'Edit suite definitions, optionally inlined'
 comsum[ 'view'       ] = 'View suite definitions, inlined and Jinja2 processed'
