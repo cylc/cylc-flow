@@ -31,7 +31,7 @@ if os.path.isdir( gitd ) or os.path.isfile( gitd ):
     script = os.path.join( cylc_dir, 'admin', 'get-repo-version' )
     res = run_get_stdout.run_get_stdout( script )
     if res[0]:
-        cylc_version = res[1]
+        cylc_version = res[1][0]
     else:
         raise SystemExit( "Failed to get version number!")
  

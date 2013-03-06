@@ -27,17 +27,17 @@ def run_get_stdout( command ):
         err = popen.stderr.read()
         res = popen.wait()
         if res < 0:
-            print >> sys.stderr, "ERROR: command terminated by signal %d\n%s" % (res, err)
-            return (False, [])
+            msg = "ERROR: command terminated by signal %d\n%s" % (res, err)
+            return (False, [msg,command])
         elif res > 0:
-            print >> sys.stderr, "ERROR: command failed %d\n%s" % (res,err)
-            return (False, [])
+            msg = "ERROR: command failed %d\n%s" % (res,err)
+            return (False, [msg, command])
     except OSError, e:
-        print >> sys.stderr, "ERROR: command invocation failed:", command
-        return (False, [])
+        msg = "ERROR: command invocation failed"
+        return (False, [msg, command])
     else:
         # output is a string with newlines
         res = out.strip()
-        return ( True, res )
+        return ( True, res.split('\n') )
     return (False, None )
 
