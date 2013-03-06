@@ -297,13 +297,9 @@ class db_updater(threading.Thread):
         value = model.get_value( iter, column )
         return value == key
 
-class MainApp(object):
+class dbchooser(object):
     def __init__(self, parent, db, db_owner, tmpdir, pyro_timeout ):
 
-        if db:
-            dbname = db
-        else:
-            dbname = "(default DB)"
         self.db = db
         self.db_owner = db_owner
         if pyro_timeout:
@@ -324,7 +320,7 @@ class MainApp(object):
         #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window = gtk.Dialog( "Choose a suite", parent, gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
         #self.window.set_modal(True)
-        self.window.set_title("Registered Suites " + dbname )
+        self.window.set_title("Suite Chooser" )
         self.window.set_size_request(750, 400)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
@@ -341,13 +337,6 @@ class MainApp(object):
         self.regd_treeview.connect( 'key_press_event', self.on_suite_select )
         self.regd_treeview.connect( 'button_press_event', self.on_suite_select )
         self.regd_treeview.set_search_column(0)
-
-        #exit_item = gtk.MenuItem( 'E_xit' )
-        #exit_item.connect( 'activate', self.delete_all_event, None )
-        #file_menu.append( exit_item )
-
-        #self.menu_bar = gtk.MenuBar()
-        #self.menu_bar.append( file_menu_root )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
@@ -391,16 +380,9 @@ class MainApp(object):
 
         sw.add( self.regd_treeview )
 
-        #vbox.pack_start( self.menu_bar, False )
-
         vbox.pack_start( sw, True )
 
-        #eb = gtk.EventBox()
-        #eb.add( gtk.Label( "left-click to select, right-click to view" ) )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
-        #vbox.pack_start( eb, False )
-
-        self.selected_label = gtk.Label( 'SELECTED: (none)' )
+        self.selected_label = gtk.Label( '(no selection)' )
 
         filter_entry = EntryTempText()
         filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
@@ -423,13 +405,13 @@ class MainApp(object):
         collapse_button.connect( 'clicked', lambda x: self.regd_treeview.collapse_all() )
 
         hbox = gtk.HBox()
-        hbox.pack_start( self.selected_label, False )
 
-        hbox.pack_start( gtk.HBox(), True )
-
+        eb = gtk.EventBox()
+        eb.add( self.selected_label )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbc' ) ) 
+        hbox.pack_start( eb, True )
         hbox.pack_start( expand_button, False )
         hbox.pack_start( collapse_button, False )
-
         hbox.pack_start (filter_toolitem, False)
  
         vbox.pack_start( hbox, False )
@@ -546,10 +528,10 @@ class MainApp(object):
         reg = get_reg( item, iter )
         if not group_clicked:
             self.regname = reg
-            self.selected_label.set_text( 'SELECTED: ' + reg )
+            self.selected_label.set_text( reg )
         else:
             self.regname = None
-            self.selected_label.set_text( 'SELECTED: (none)' )
+            self.selected_label.set_text( '(no selection)' )
 
         # return False so clicks still be handled for tree expand/collapse
         if event.button == 1:

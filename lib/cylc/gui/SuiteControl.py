@@ -27,6 +27,7 @@ import subprocess
 import helpwindow
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
+from dbchooser import dbchooser
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 from cylc.gui.SuiteControlGraph import ControlGraph
@@ -52,7 +53,6 @@ from cylc.passphrase import passphrase
 
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
-from cylc.gui.db_viewer import MainApp
 from cylc.global_config import gcfg
 from cylc.gui.gcylc_config import config
 
@@ -683,7 +683,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.quit()
 
     def click_open( self, foo=None ):
-        app = MainApp( self.window, self.cfg.db, self.cfg.owner, self.cfg.cylc_tmpdir, self.cfg.pyro_timeout )
+        app = dbchooser( self.window, self.cfg.db, self.cfg.owner, self.cfg.cylc_tmpdir, self.cfg.pyro_timeout )
         chosen = None
         while True:
             response = app.window.run()
