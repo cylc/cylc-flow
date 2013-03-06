@@ -132,12 +132,11 @@ Class to hold initialisation data.
                 warning_dialog( "ERROR in suite name de-aliasing!\n" + str(x) ).warn()
                 self.suite = suite
                 #self.quit()
-            try:
-                self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
-            except Exception, x:
-                warning_dialog( "ERROR in suite passphrase hunt!\n" + str(x) ).warn()
-                self.pphrase = None
-                #self.quit()
+        try:
+            self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
+        except Exception, x:
+            warning_dialog( "ERROR in suite passphrase hunt!\n" + str(x) ).warn()
+            self.pphrase = None
 
         self.logdir = suite_log( suite ).get_dir()
 
