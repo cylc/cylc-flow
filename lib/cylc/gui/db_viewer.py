@@ -28,7 +28,8 @@ from cylc.config import config, SuiteConfigError
 from cylc.version import cylc_version
 from cylc.suite_logging import suite_log
 from cylc.suite_logging import suite_log
-from util import EntryTempText
+from util import EntryTempText, EntryDialog
+from cylc.run_get_stdout import run_get_stdout
 
 try:
     from cylc import cylc_pyro_client
@@ -299,6 +300,10 @@ class db_updater(threading.Thread):
 class MainApp(object):
     def __init__(self, parent, db, db_owner, tmpdir, pyro_timeout ):
 
+        if db:
+            dbname = db
+        else:
+            dbname = "(default DB)"
         self.db = db
         self.db_owner = db_owner
         if pyro_timeout:
@@ -319,7 +324,7 @@ class MainApp(object):
         #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window = gtk.Dialog( "Choose a suite", parent, gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
         #self.window.set_modal(True)
-        self.window.set_title("Registered Suites " + db )
+        self.window.set_title("Registered Suites " + dbname )
         self.window.set_size_request(750, 400)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
@@ -475,8 +480,6 @@ class MainApp(object):
                 gwindow.quit( None, None )
 
     def on_suite_select( self, treeview, event ):
-        # popup menu on right click or 'Return' key only
-        do_menu = True
         try:
             event.button
         except AttributeError:
@@ -505,7 +508,7 @@ class MainApp(object):
         else:
             # called by button click
 
-            if event.button != 1:
+            if event.button != 1 and event.button != 3:
                 return False
 
             # the following sets selection to the position at which the
@@ -548,14 +551,11 @@ class MainApp(object):
             self.regname = None
             self.selected_label.set_text( 'SELECTED: (none)' )
 
-        #if not do_menu:
-        #return True
-        return False
+        # return False so clicks still be handled for tree expand/collapse
+        if event.button == 1:
+            return False
 
         menu = gtk.Menu()
-
-        menu_root = gtk.MenuItem( 'foo' )
-        menu_root.set_submenu( menu )
 
         if group_clicked:
             group = reg
@@ -573,150 +573,25 @@ class MainApp(object):
             del_item.connect( 'activate', self.unregister_popup, group, True )
 
         else:
-            # MENU OPTIONS FOR SUITES
-            infomenu_item = gtk.MenuItem( '_Information' )
-            infomenu = gtk.Menu()
-            infomenu_item.set_submenu(infomenu)
- 
-            descr_item = gtk.MenuItem( '_Description' )
-            infomenu.append( descr_item )
-            descr_item.connect( 'activate', self.describe_suite, reg )
-
-            listitem = gtk.MenuItem( '_List' )
-            infomenu.append( listitem )
-            listmenu = gtk.Menu()
-            listitem.set_submenu(listmenu)
- 
-            flat_item = gtk.MenuItem( '_Tasks' )
-            listmenu.append( flat_item )
-            flat_item.connect( 'activate', self.list_suite, reg )
-
-            tree_item = gtk.MenuItem( '_Namespaces' )
-            listmenu.append( tree_item )
-            tree_item.connect( 'activate', self.list_suite, reg, '-t' )
-
-            igraph_item = gtk.MenuItem( '_Graph' )
-            infomenu.append( igraph_item )
-            igraphmenu = gtk.Menu()
-            igraph_item.set_submenu(igraphmenu)
-
-            igtree_item = gtk.MenuItem( '_Dependencies' )
-            igraphmenu.append( igtree_item )
-            igtree_item.connect( 'activate', self.graph_suite_popup_driver, reg )
-
-            igns_item = gtk.MenuItem( '_Namespaces' )
-            igraphmenu.append( igns_item )
-            igns_item.connect( 'activate', self.nsgraph_suite, reg )
-
-            jobs_item = gtk.MenuItem( 'Generate A _Job Script')
-            infomenu.append( jobs_item )
-            jobs_item.connect( 'activate', self.jobscript_popup, reg )
- 
-            if state != '-':
-                # suite is running
-                dump_item = gtk.MenuItem( 'D_ump Suite State' )
-                infomenu.append( dump_item )
-                dump_item.connect( 'activate', self.dump_suite, reg )
-   
-            prepmenu_item = gtk.MenuItem( '_Preparation' )
-            prepmenu = gtk.Menu()
-            prepmenu_item.set_submenu(prepmenu)
-    
-            pdescr_item = gtk.MenuItem( '_Description' )
-            prepmenu.append( pdescr_item )
-            pdescr_item.connect( 'activate', self.describe_suite, reg )
-
-            edit_item = gtk.MenuItem( '_Edit' )
-            prepmenu.append( edit_item )
-            editmenu = gtk.Menu()
-            edit_item.set_submenu(editmenu)
-
-            raw_item = gtk.MenuItem( '_Raw' )
-            editmenu.append( raw_item )
-            raw_item.connect( 'activate', self.edit_suite, reg, False )
-    
-            inl_item = gtk.MenuItem( '_Inlined' )
-            editmenu.append( inl_item )
-            inl_item.connect( 'activate', self.edit_suite, reg, True )
- 
-            view_item = gtk.MenuItem( '_View' )
-            prepmenu.append( view_item )
-            viewmenu = gtk.Menu()
-            view_item.set_submenu(viewmenu)
-
-            rw_item = gtk.MenuItem( '_Raw' )
-            viewmenu.append( rw_item )
-            rw_item.connect( 'activate', self.view_suite, reg, 'raw' )
- 
-            viewi_item = gtk.MenuItem( '_Inlined' )
-            viewmenu.append( viewi_item )
-            viewi_item.connect( 'activate', self.view_suite, reg, 'inlined' )
- 
-            viewp_item = gtk.MenuItem( '_Processed' )
-            viewmenu.append( viewp_item )
-            viewp_item.connect( 'activate', self.view_suite, reg, 'processed' )
-
-            plistitem = gtk.MenuItem( '_List' )
-            prepmenu.append( plistitem )
-            plistmenu = gtk.Menu()
-            plistitem.set_submenu(plistmenu)
- 
-            pflat_item = gtk.MenuItem( '_Tasks' )
-            plistmenu.append( pflat_item )
-            pflat_item.connect( 'activate', self.list_suite, reg )
-
-            ptree_item = gtk.MenuItem( '_Namespaces' )
-            plistmenu.append( ptree_item )
-            ptree_item.connect( 'activate', self.list_suite, reg, '-t' )
- 
-            graph_item = gtk.MenuItem( '_Graph' )
-            prepmenu.append( graph_item )
-            graphmenu = gtk.Menu()
-            graph_item.set_submenu(graphmenu)
-
-            gtree_item = gtk.MenuItem( '_Dependencies' )
-            graphmenu.append( gtree_item )
-            gtree_item.connect( 'activate', self.graph_suite_popup_driver, reg )
-
-            gns_item = gtk.MenuItem( '_Namespaces' )
-            graphmenu.append( gns_item )
-            gns_item.connect( 'activate', self.nsgraph_suite, reg )
-
-            search_item = gtk.MenuItem( '_Search' )
-            prepmenu.append( search_item )
-            search_item.connect( 'activate', self.search_suite_popup, reg )
-
-            val_item = gtk.MenuItem( '_Validate' )
-            prepmenu.append( val_item )
-            val_item.connect( 'activate', self.validate_suite, reg )
-    
-            dbmenu_item = gtk.MenuItem( '_Database' )
-            dbmenu = gtk.Menu()
-            dbmenu_item.set_submenu(dbmenu)
-    
             copy_item = gtk.MenuItem( '_Copy' )
-            dbmenu.append( copy_item )
+            menu.append( copy_item )
             copy_item.connect( 'activate', self.copy_popup, reg )
 
             alias_item = gtk.MenuItem( '_Alias' )
-            dbmenu.append( alias_item )
+            menu.append( alias_item )
             alias_item.connect( 'activate', self.alias_popup, reg )
     
-            compare_item = gtk.MenuItem( 'C_ompare' )
-            dbmenu.append( compare_item )
-            compare_item.connect( 'activate', self.compare_popup, reg )
- 
             reregister_item = gtk.MenuItem( '_Reregister' )
-            dbmenu.append( reregister_item )
+            menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_popup, reg )
     
             del_item = gtk.MenuItem( '_Unregister' )
-            dbmenu.append( del_item )
+            menu.append( del_item )
             del_item.connect( 'activate', self.unregister_popup, reg )
 
-            menu.append( prepmenu_item )
-            menu.append( infomenu_item )
-            menu.append( dbmenu_item )
+            compare_item = gtk.MenuItem( 'C_ompare' )
+            menu.append( compare_item )
+            compare_item.connect( 'activate', self.compare_popup, reg )
 
         menu.show_all()
         # button only:
@@ -728,452 +603,114 @@ class MainApp(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return False
 
-
     def alias_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Alias A Suite")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
-        vbox = gtk.VBox()
-        label = gtk.Label( "SUITE: " + reg )
-        vbox.pack_start( label )
+        window = EntryDialog( parent=self.window,
+                flags=0,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_OK_CANCEL,
+                message_format="Alias Suite Name " + reg )
 
-        box = gtk.HBox()
-        label = gtk.Label( 'ALIAS:' )
-        box.pack_start( label, True )
-        alias_entry = gtk.Entry()
-        alias_entry.set_text( reg )
-        box.pack_start (alias_entry, True)
-        vbox.pack_start(box)
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Alias" )
-        ok_button.connect("clicked", self.alias_suite, window, reg, alias_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'alias' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def alias_suite( self, b, w, reg, alias_entry ):
-        command = "cylc alias --notify-completion " + self.dbopt + " " + reg + " " + alias_entry.get_text()
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
+        alias = window.run()
+        window.destroy()
+        if alias:
+            command = "cylc alias " + reg + ' ' + alias
+            res, out = run_get_stdout( command )
+            if not res:
+                warning_dialog( '\n'.join(out), self.window ).warn()
 
     def unregister_popup( self, w, reg, is_group=False ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Unregister Suite(s)")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
-        vbox = gtk.VBox()
+        window = gtk.MessageDialog( parent=self.window,
+                flags=0,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_NONE,
+                message_format="Unregistering Suite " + reg + """
+\nDelete suite definition directory too? (DANGEROUS!)""")
 
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
+        window.add_button( gtk.STOCK_YES, gtk.RESPONSE_YES )
+        window.add_button( gtk.STOCK_NO, gtk.RESPONSE_NO )
+        window.add_button( gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL )
+        response = window.run()
+        window.destroy()
 
-        oblit_cb = gtk.CheckButton( "_Delete suite definition directories" )
-        oblit_cb.set_active(False)
-
-        ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_suites, window, reg, oblit_cb, is_group )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'unregister' )
-
-        label = gtk.Label( "SUITE: " + reg )
-        vbox.pack_start( label )
-        vbox.pack_start( oblit_cb )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def unregister_suites( self, b, w, reg, oblit_cb, is_group ):
-        options = ''
-        if oblit_cb.get_active():
-            res = question_dialog( "!DANGER! !DANGER! !DANGER! !DANGER! !DANGER! !DANGER!\n"
-                    "?Do you REALLY want to delete the associated suite definitions?",
-                    self.window ).ask()
-            if res == gtk.RESPONSE_YES:
-                options = '--delete '
-            else:
-                return False
- 
         if is_group:
             reg = '^' + reg + '\..*$'
         else:
             reg = '^' + reg + '$'
 
-        command = "cylc unregister " + self.dbopt + " --notify-completion --force " + options + reg
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
-
-    def browse( self, b, option='' ):
-        command = 'cylc documentation ' + option
-        foo = gcapture_tmpfile( command, self.tmpdir, 700 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def toggle_entry_sensitivity( self, w, entry ):
-        if entry.get_property( 'sensitive' ) == 0:
-            entry.set_sensitive( True )
+        if response == gtk.RESPONSE_YES:
+            command = "cylc unregister -f -d " + reg
+        elif response == gtk.RESPONSE_NO:
+            command = "cylc unregister " + reg
         else:
-            entry.set_sensitive( False )
+            command = None
+        if command:
+            res, out = run_get_stdout( command )
+            if not res:
+                warning_dialog( '\n'.join(out), self.window ).warn()
 
     def reregister_popup( self, w, reg, is_group=False ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Reregister Suite(s)" )
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
-        vbox = gtk.VBox()
+        window = EntryDialog( parent=self.window,
+                flags=0,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_OK_CANCEL,
+                message_format="Reregister Suite " + reg + " As")
 
-        label = gtk.Label("SOURCE: " + reg )
-        vbox.pack_start( label )
- 
-        label = gtk.Label("TARGET: " )
-        name_entry = gtk.Entry()
-        name_entry.set_text( reg )
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(name_entry, True) 
-        vbox.pack_start( hbox )
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Reregister" )
-        ok_button.connect("clicked", self.reregister_suites, window, reg, name_entry, is_group )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'reregister' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def reregister_suites( self, b, w, reg, n_e, is_group ):
-        newreg = n_e.get_text()
-        command = "cylc reregister " + self.dbopt + " --notify-completion " + reg + ' ' + newreg
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
+        rereg = window.run()
+        window.destroy()
+        if rereg:
+            command = "cylc reregister " + reg + ' ' + rereg
+            res, out = run_get_stdout( command )
+            if not res:
+                warning_dialog( '\n'.join(out), self.window ).warn()
 
     def compare_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Compare")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
-        vbox = gtk.VBox()
-        label = gtk.Label("SUITE1: " + reg)
-        vbox.pack_start(label)
+        window = EntryDialog( parent=self.window,
+                flags=0,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_OK_CANCEL,
+                message_format="Compare Suite " + reg + " With")
 
-        label = gtk.Label("SUITE2:" )
-        name_entry = gtk.Entry()
-        name_entry.set_text( reg )
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(name_entry, True) 
-        vbox.pack_start( hbox )
-
-        nested_cb = gtk.CheckButton( "Nested section headings" )
-        nested_cb.set_active(False)
-        vbox.pack_start (nested_cb, True)
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "Co_mpare" )
-        ok_button.connect("clicked", self.compare_suites, window, reg, name_entry, nested_cb )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'prep', 'compare'  )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
+        compare = window.run()
+        window.destroy()
+        if compare:
+            command = "cylc diff " + reg + ' ' + compare
+            res, out = run_get_stdout( command )
+            if not res:
+                warning_dialog( '\n'.join(out), self.window ).warn()
+            else:
+                # TODO: need a bigger scrollable window here!
+                info_dialog( '\n'.join(out), self.window ).inform()
 
     def copy_popup( self, w, reg, is_group=False ):
 
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Copy Suite(s)")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+        window = EntryDialog( parent=self.window,
+                flags=0,
+                type=gtk.MESSAGE_QUESTION,
+                buttons=gtk.BUTTONS_OK_CANCEL,
+                message_format="Copy Suite " + reg + """To
+NAME,TOP_DIRECTORY""")
 
-        vbox = gtk.VBox()
-
-        label = gtk.Label("SOURCE: " + reg )
-        vbox.pack_start( label )
-
-        label = gtk.Label("TARGET" )
-        name_entry = gtk.Entry()
-        name_entry.set_text( reg )
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(name_entry, True) 
-        vbox.pack_start( hbox )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'TOPDIR' )
-        box.pack_start( label, True )
-        dir_entry = gtk.Entry()
-        box.pack_start (dir_entry, True)
-        vbox.pack_start(box)
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "Co_py" )
-        ok_button.connect("clicked", self.copy_suites, window, reg, name_entry, dir_entry, is_group )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'db', 'copy')
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def compare_suites( self, b, w, reg, name_entry, nested_cb ):
-        name  = name_entry.get_text()
-        chk = [ name ]
-        opts = ''
-        if nested_cb.get_active():
-            opts = ' -n '
-        if not self.check_entries( chk ):
-            return False
-        command = "cylc diff " + self.dbopt + " --notify-completion " + opts + reg + ' ' + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 800 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
- 
-    def copy_suites( self, b, w, reg, name_entry, dir_entry, is_group ):
-        name  = name_entry.get_text()
-        sdir  = dir_entry.get_text()
-        chk = [ name, sdir ]
-        if not self.check_entries( chk ):
-            return False
-        #if is_group:
-        #    reg = '^' + reg + '\..*$'
-        #else:
-        #    reg = '^' + reg + '$'
-        command = "cylc copy --notify-completion " + self.dbopt + ' ' + reg + ' ' + name + ' ' + sdir
-        foo = gcapture_tmpfile( command, self.tmpdir, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        w.destroy()
- 
-    def search_suite_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Suite Search" )
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-
-        label = gtk.Label("SUITE: " + reg )
-        vbox.pack_start(label)
-
-        label = gtk.Label("PATTERN" )
-        pattern_entry = gtk.Entry()
-        hbox = gtk.HBox()
-        hbox.pack_start( label )
-        hbox.pack_start(pattern_entry, True) 
-        vbox.pack_start( hbox )
-
-        yesbin_cb = gtk.CheckButton( "Also search suite bin directory" )
-        yesbin_cb.set_active(True)
-        vbox.pack_start (yesbin_cb, True)
-
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Search" )
-        ok_button.connect("clicked", self.search_suite, reg, yesbin_cb, pattern_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'prep', 'search' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def search_suite( self, w, reg, yesbin_cb, pattern_entry ):
-        pattern = pattern_entry.get_text()
-        options = ''
-        if not yesbin_cb.get_active():
-            options += ' -x '
-        command = "cylc search " + self.dbopt + " --notify-completion " + options + ' ' + reg + ' ' + pattern 
-        foo = gcapture_tmpfile( command, self.tmpdir, width=600, height=500 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def graph_suite_popup_driver( self, w, reg ):
-        # don't bother extracting [visualization] start and stop cycles
-        # to insert in the popup. The suite has to be parsed again for
-        # the graph and doing that twice is bad for very large suites. 
-        # (We could provide a load button like the suite start popup does).
-        template_opts = ""
-        graph_suite_popup( reg, self.command_help, None, None, " " + self.dbopt,
-                           self.gcapture_windows, self.tmpdir, template_opts, self.window )
-        return False
-
-    def view_suite( self, w, reg, method ):
-        extra = ''
-        if method == 'inlined':
-            extra = ' -i'
-        elif method == 'processed':
-            extra = ' -j'
-
-        command = "cylc view " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
-        foo = gcapture_tmpfile( command, self.tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        return False
-
-    def edit_suite( self, w, reg, inlined ):
-        extra = ''
-        if inlined:
-            extra = '-i '
-        command = "cylc edit " + self.dbopt + " --notify-completion -g " + extra + ' ' + reg
-        foo = gcapture_tmpfile( command, self.tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-        return False
-
-    def validate_suite( self, w, name ):
-        command = "cylc validate -v " + self.dbopt + " --notify-completion " + name 
-        foo = gcapture_tmpfile( command, self.tmpdir, 700 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def dump_suite( self, w, name ):
-        command = "cylc dump --notify-completion " + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 400, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def jobscript_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Generate A Task Job Script")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-
-        vbox = gtk.VBox()
-        label = gtk.Label("SUITE: " + reg )
-        vbox.pack_start( label )
-
-        label = gtk.Label("TASK ID: " )
-        task_entry = gtk.Entry()
-        hbox = gtk.HBox()
-        hbox.pack_start( label, True )
-        hbox.pack_start(task_entry, True) 
-        vbox.pack_start( hbox )
- 
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        ok_button = gtk.Button( "_Generate" )
-        ok_button.connect("clicked", self.jobscript, reg, task_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, 'prep', 'jobscript' )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( ok_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def jobscript( self, w, reg, task_entry ):
-        command = "cylc jobscript " + self.dbopt + " " + reg + " " + task_entry.get_text()
-        foo = gcapture_tmpfile( command, self.tmpdir, 800, 800 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def describe_suite( self, w, name ):
-        command = """echo '> TITLE:'; cylc get-config """ + self.dbopt + " -i title " + name + """; echo
-echo '> DESCRIPTION:'; cylc get-config """ + self.dbopt + " --notify-completion -i description " + name 
-        foo = gcapture_tmpfile( command, self.tmpdir, 800, 400 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def list_suite( self, w, name, opt='' ):
-        command = "cylc list " + self.dbopt + " " + opt + " --notify-completion " + name
-        foo = gcapture_tmpfile( command, self.tmpdir, 600, 600 )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def nsgraph_suite( self, w, name ):
-        command = "cylc graph --namespaces " + self.dbopt + " --notify-completion " + name
-        foo = gcapture_tmpfile( command, self.tmpdir )
-        self.gcapture_windows.append(foo)
-        foo.run()
-
-    def close_log_window( self, w, e, window, clv ):
+        out = window.run()
         window.destroy()
-        clv.quit()
+        if out:
+            try:
+                name, topdir = re.split(' *, *', out )
+            except Exception, e:
+                warning_dialog( str(e), self.window ).warn()
+            else:
+                print name, topdir
+                topdir = os.path.expanduser( os.path.expandvars( topdir ))
+                print name, topdir
+                command = "cylc cp " + reg + ' ' + name + ' ' + topdir
+                print command
+                res, out = run_get_stdout( command )
+                if not res:
+                    warning_dialog( '\n'.join(out), self.window ).warn()
+                elif out:
+                    info_dialog( '\n'.join(out), self.window ).inform()
 
-    def check_entries( self, entries ):
-        # note this check retrieved entry values
-        bad = False
-        for entry in entries:
-            if entry == '':
-                bad = True
-        if bad:
-            warning_dialog( "Please complete all required text entry panels!",
-                            self.window ).warn()
-            return False
-        else:
-            return True
+

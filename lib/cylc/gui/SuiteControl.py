@@ -2104,7 +2104,9 @@ or remove task definitions without restarting the suite."""
         open_item.connect( 'activate', self.click_open )
         file_menu.append( open_item )
 
-        reg_new_item = gtk.MenuItem( 'Register A _New Suite' )
+        reg_new_item = gtk.ImageMenuItem( 'Register A _New Suite' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU )
+        reg_new_item.set_image(img)
         reg_new_item.connect( 'activate', self.newreg_popup )
         file_menu.append( reg_new_item )
 
@@ -2295,22 +2297,32 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         runahead_item.connect( 'activate', self.change_runahead_popup )
 
         tools_menu = gtk.Menu()
-        tools_menu_root = gtk.MenuItem( '_Tools' )
+        tools_menu_root = gtk.MenuItem( '_Suite' )
         tools_menu_root.set_submenu( tools_menu )
 
-        val_item = gtk.ImageMenuItem( 'Suite _Validate' )
+        val_item = gtk.ImageMenuItem( '_Validate' )
         img = gtk.image_new_from_stock(  gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU )
         val_item.set_image(img)
         tools_menu.append( val_item )
         val_item.connect( 'activate', self.run_suite_validate )
 
-        info_item = gtk.ImageMenuItem( 'Suite _Info' )
+        tools_menu.append( gtk.SeparatorMenuItem() )
+
+        des_item = gtk.ImageMenuItem( '_Describe' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        des_item.set_image(img)
+        tools_menu.append( des_item )
+        des_item.connect( 'activate', self.describe_suite )
+
+        info_item = gtk.ImageMenuItem( '_Info (Running)' )
         img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
         info_item.set_image(img)
         tools_menu.append( info_item )
         info_item.connect( 'activate', self.run_suite_info )
 
-        graph_item = gtk.ImageMenuItem( 'Suite _Graph' )
+        tools_menu.append( gtk.SeparatorMenuItem() )
+
+        graph_item = gtk.ImageMenuItem( '_Graph' )
         img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
         graph_item.set_image(img)
         tools_menu.append( graph_item )
@@ -2325,7 +2337,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         graphmenu.append( gns_item )
         gns_item.connect( 'activate', self.run_suite_graph, True )
 
-        list_item = gtk.ImageMenuItem( 'Suite _List' )
+        list_item = gtk.ImageMenuItem( '_List' )
         img = gtk.image_new_from_stock(  gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU )
         list_item.set_image(img)
         tools_menu.append( list_item )
@@ -2340,25 +2352,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         list_menu.append( tree_item )
         tree_item.connect( 'activate', self.run_suite_list, '-t' )
 
-        log_item = gtk.ImageMenuItem( 'Suite Std_out' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        log_item.set_image(img)
-        tools_menu.append( log_item )
-        log_item.connect( 'activate', self.run_suite_log, 'out' )
-
-        out_item = gtk.ImageMenuItem( 'Suite Std_err' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        out_item.set_image(img)
-        tools_menu.append( out_item )
-        out_item.connect( 'activate', self.run_suite_log, 'err' )
-
-        log_item = gtk.ImageMenuItem( 'Suite _Log' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        log_item.set_image(img)
-        tools_menu.append( log_item )
-        log_item.connect( 'activate', self.run_suite_log, 'log' )
-
-        view_item = gtk.ImageMenuItem( 'Suite _View' )
+        view_item = gtk.ImageMenuItem( '_View' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
         view_item.set_image(img)
         tools_menu.append( view_item )
@@ -2377,7 +2371,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         subviewmenu.append( viewp_item )
         viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
 
-        edit_item = gtk.ImageMenuItem( 'Suite _Edit' )
+        edit_item = gtk.ImageMenuItem( '_Edit' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EDIT, gtk.ICON_SIZE_MENU )
         edit_item.set_image(img)
         tools_menu.append( edit_item )
@@ -2391,6 +2385,33 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         inl_item = gtk.MenuItem( '_Inlined' )
         edit_menu.append( inl_item )
         inl_item.connect( 'activate', self.run_suite_edit, True )
+
+        search_item = gtk.ImageMenuItem( '_Search' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_FIND, gtk.ICON_SIZE_MENU )
+        search_item.set_image(img)
+        tools_menu.append( search_item )
+        search_item.connect( 'activate', self.search_suite_popup )
+
+        tools_menu.append( gtk.SeparatorMenuItem() )
+
+        log_item = gtk.ImageMenuItem( 'Std _Output' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        log_item.set_image(img)
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log, 'out' )
+
+        out_item = gtk.ImageMenuItem( 'Std _Error' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        out_item.set_image(img)
+        tools_menu.append( out_item )
+        out_item.connect( 'activate', self.run_suite_log, 'err' )
+
+        log_item = gtk.ImageMenuItem( 'Event _Log' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+        log_item.set_image(img)
+        tools_menu.append( log_item )
+        log_item.connect( 'activate', self.run_suite_log, 'log' )
+
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
@@ -2484,6 +2505,66 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( tools_menu_root )
         self.menu_bar.append( help_menu_root )
+
+    def describe_suite( self, w ):
+        command = "echo '> TITLE:'; cylc get-config -i title " + self.cfg.suite + """; echo
+echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + self.cfg.suite 
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
+    def search_suite_popup( self, w ):
+        reg = self.cfg.suite
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Suite Search" )
+        window.set_transient_for( self.window )
+        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label("SUITE: " + reg )
+        vbox.pack_start(label)
+
+        label = gtk.Label("PATTERN" )
+        pattern_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(pattern_entry, True) 
+        vbox.pack_start( hbox )
+
+        yesbin_cb = gtk.CheckButton( "Also search suite bin directory" )
+        yesbin_cb.set_active(True)
+        vbox.pack_start (yesbin_cb, True)
+
+        cancel_button = gtk.Button( "_Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "_Search" )
+        ok_button.connect("clicked", self.search_suite, reg, yesbin_cb, pattern_entry )
+
+        help_button = gtk.Button( "_Help" )
+        help_button.connect("clicked", self.command_help, 'prep', 'search' )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( ok_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def search_suite( self, w, reg, yesbin_cb, pattern_entry ):
+        pattern = pattern_entry.get_text()
+        options = ''
+        if not yesbin_cb.get_active():
+            options += ' -x '
+        command = "cylc search --notify-completion " + options + ' ' + reg + ' ' + pattern 
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, width=600, height=500 )
+        self.gcapture_windows.append(foo)
+        foo.run()
+
 
     def newreg_popup( self, w ):
         dialog = gtk.FileChooserDialog(title='Register Or Create A Suite',
@@ -2911,3 +2992,4 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
+
