@@ -456,7 +456,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def restart_views( self ):
         """Replace each view with itself"""
         if not self.current_views[0]:
+            # first time
             self.create_views()
+            return False
 
         for view_num in range(len(self.current_views)):
             if self.current_views[view_num]:
