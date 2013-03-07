@@ -19,10 +19,12 @@
 import Pyro.core
 from cycle_time import ct, CycleTimeError
 from copy import deepcopy
+from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
+from rundb import RecordBroadcastObject
 from validate import Validator
 
 class broadcast( Pyro.core.ObjBase ):
@@ -35,6 +37,9 @@ class broadcast( Pyro.core.ObjBase ):
     def __init__( self, linearized_ancestors ):
         self.log = logging.getLogger('main')
         self.settings = {}
+        self.last_settings = self.get_dump()
+        self.new_settings = False
+        self.settings_queue = []
         self.linearized_ancestors = linearized_ancestors
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', 'runtime.spec')
         Pyro.core.ObjBase.__init__(self)
@@ -128,6 +133,11 @@ class broadcast( Pyro.core.ObjBase ):
             if tmp == self.settings:
                 break
 
+        if self.get_dump() != self.last_settings:
+            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.last_settings = self.settings
+            self.new_settings = True
+
         return ( True, 'OK' )
 
     def get( self, task_id=None ):
@@ -171,10 +181,23 @@ class broadcast( Pyro.core.ObjBase ):
 
     def clear( self ):
         self.settings = {}
+        if self.get_dump() != self.last_settings:
+            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.last_settings = self.settings
+            self.new_settings = True
 
     def dump( self, FILE ):
         # write broadcast variables to the suite state dump file
         FILE.write( pickle.dumps( self.settings) + '\n' )
+
+    def get_db_ops(self):
+        ops = []
+        for d in self.settings_queue:
+            if d.to_run:
+                ops.append(d)
+                d.to_run = False
+        self.new_settings = False
+        return ops
     
     def get_dump( self ):
         # return the broadcast variables as written to the suite state dump file
