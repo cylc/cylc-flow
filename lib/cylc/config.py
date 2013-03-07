@@ -756,7 +756,7 @@ class config( CylcConfigObj ):
         for rt in fh:
             items = copy(fh[rt])
             items.reverse()
-            for i in range(0,len(items)):
+            for i in range(len(items)):
                 tmp = 2*i + 1 + len(items[i])
                 if i == 0:
                     tmp -= 1

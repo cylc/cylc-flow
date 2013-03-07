@@ -408,7 +408,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         num_views = 2
         self.view_containers = []
         self.current_view_toolitems = []
-        for i in range(0, num_views):
+        for i in range(num_views):
             self.current_views.append(None)
             self.view_containers.append(gtk.HBox())
             self.current_view_toolitems.append([])
@@ -458,7 +458,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if not self.current_views[0]:
             self.create_views()
 
-        for view_num in range( 0, len(self.current_views)):
+        for view_num in range(len(self.current_views)):
             if self.current_views[view_num]:
                 # (may be None if the second view pane is turned off)
                 self.switch_view( self.current_views[view_num].name, view_num, force=True )

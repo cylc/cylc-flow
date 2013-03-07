@@ -202,7 +202,7 @@ Dependency graph suite control interface.
 
     def rearrange( self, col, n ):
         cols = self.ttreeview.get_columns()
-        for i_n in range(0,len(cols)):
+        for i_n in range(len(cols)):
             if i_n == n: 
                 cols[i_n].set_sort_indicator(True)
             else:
