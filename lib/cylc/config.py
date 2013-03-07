@@ -297,13 +297,6 @@ class config( CylcConfigObj ):
 
         self.compute_runahead_limit()
 
-        self.family_tree = {}
-        self.single_family_tree = {}
-        self.task_runtimes = {}
-        self.define_inheritance_tree( self.family_tree, self.runtime['linearized ancestors'] )
-        self.define_inheritance_tree( self.single_family_tree, self.runtime['first-parent ancestors'] )
-        self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
-
         self.configure_queues()
 
         # Warn or abort (if --strict) if naked dummy tasks (no runtime
@@ -686,84 +679,20 @@ class config( CylcConfigObj ):
                     foo[item] = {}
                 foo = foo[item]
 
-    def prune_inheritance_tree( self, tree, runtimes ):
-        # When self.family_tree is constructed leaves are {}. This
-        # replaces the leaves with first line of task title, and
-        # populates self.task_runtimes with just the leaves (tasks).
-        for item in tree:
-            skeys = tree[item].keys() 
-            if len( skeys ) > 0:
-                self.prune_inheritance_tree(tree[item], runtimes)
-            else:
-                ### TO DO: title may now come from root, inheritance from which is now deferred
-                ###title = self['runtime'][item]['title']
-                ###dlines = re.split( '\n', title )
-                ###dline1 = dlines[0]
-                ###if len(dlines) > 1:
-                ###    dline1 += '...'
-                dline1 = "" # TODO: task title here (see comment just above)
-                tree[item] = dline1
-                runtimes[item] = self['runtime'][item]
-
-    def print_task_list( self, filter=None, labels=None, pretty=False ):
-        # determine padding for alignment of task title
-        tasks = self.task_runtimes.keys()
-        maxlen = 0
-        for task in tasks:
-            if len(task) > maxlen:
-                maxlen = len(task)
-        padding = (maxlen+1) * ' '
-
-        for task in tasks:
-            if filter:
-                if not re.search( filter, task ):
-                    continue
-            # print task title
-            ###title = self['runtime'][task]['title']
-            ###dlines = re.split( '\n', title )
-            ###dline1 = dlines[0]
-            ###if len(dlines) > 1:
-            ###   dline1 += '...'
-            ###print task + padding[ len(task): ] + dline1
-            print task
-
-    def print_inheritance_tree( self, filter=None, labels=None, pretty=False, multi=False ):
-        # determine padding for alignment of task titles
-        if multi:
-            ancestors = self.runtime['linearized ancestors']
-            family_tree = self.family_tree
-        else:
-            ancestors = self.runtime['first-parent ancestors']
-            family_tree = self.single_family_tree
-
-        if filter:
-            trt = {}
-            ft = {}
-            fh = {}
-            for item in ancestors:
-                if item not in self.task_runtimes:
-                    continue
-                if not re.search( filter, item ):
-                    continue
-                fh[item] = ancestors[item]
-            self.define_inheritance_tree( ft, fh )
-            self.prune_inheritance_tree( ft, trt )
-        else:
-            fh = ancestors
-            ft = family_tree
-
-        maxlen = 0
-        for rt in fh:
-            items = copy(fh[rt])
-            items.reverse()
-            for i in range(0,len(items)):
-                tmp = 2*i + 1 + len(items[i])
-                if i == 0:
-                    tmp -= 1
-                if tmp > maxlen:
-                    maxlen = tmp
-        padding = (maxlen+1) * ' '
-        print_tree( ft, padding=padding, unicode=pretty, labels=labels )
+    def get_namespace_list( self, which ):
+        names = []
+        if which == 'graphed tasks':
+            # tasks used only in the graph
+            names = self.taskdefs.keys()
+        elif which == 'all namespaces':
+            # all namespaces
+            names = self['runtime'].keys()
+        elif which == 'all tasks':
+            for ns in self['runtime']:
+                if ns not in self.runtime['descendants']:
+                    # tasks have no descendants
+                    names.append( ns )
+        return names
 
     def process_directories(self):
         # Environment variable interpolation in directory paths.
