@@ -2097,7 +2097,7 @@ or remove task definitions without restarting the suite."""
         file_menu_root = gtk.MenuItem( '_File' )
         file_menu_root.set_submenu( file_menu )
 
-        open_item = gtk.ImageMenuItem( '_Open A Registered Suite' )
+        open_item = gtk.ImageMenuItem( '_Switch To Another Suite' )
         img = gtk.image_new_from_stock(  gtk.STOCK_OPEN, gtk.ICON_SIZE_MENU )
         open_item.set_image(img)
         open_item.connect( 'activate', self.click_open )
@@ -2109,7 +2109,7 @@ or remove task definitions without restarting the suite."""
         reg_new_item.connect( 'activate', self.newreg_popup )
         file_menu.append( reg_new_item )
 
-        exit_item = gtk.ImageMenuItem( 'E_xit (Disconnect From Suite)' )
+        exit_item = gtk.ImageMenuItem( 'E_xit Gcylc' )
         img = gtk.image_new_from_stock(  gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU )
         exit_item.set_image(img)
         exit_item.connect( 'activate', self.click_exit )
