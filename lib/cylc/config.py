@@ -694,6 +694,47 @@ class config( CylcConfigObj ):
                     names.append( ns )
         return names
 
+    def get_mro( self, ns ):
+        try:
+            mro = self.runtime['linearized ancestors'][ns]
+        except KeyError:
+            mro = ["ERROR: no such namespace: " + ns ]
+        return mro
+
+
+    def print_first_parent_tree( self, pretty=False ):
+        # find task namespaces (no descendants)
+        tasks = []
+        for ns in self['runtime']:
+            if ns not in self.runtime['descendants']:
+                tasks.append(ns)
+
+        ancestors = self.runtime['first-parent ancestors']
+        # prune non-task namespaces from ancestors dict
+        tree = {}
+        pruned_ancestors = {}
+        for item in ancestors:
+            if item not in tasks:
+                continue
+            pruned_ancestors[item] = ancestors[item]
+        self.define_inheritance_tree( tree, pruned_ancestors )
+
+        # if using labels to the right of the true, compute padding:
+        padding = ''
+        #maxlen = 0
+        #for rt in pruned_ancestors:
+        #    items = copy(pruned_ancestors[rt])
+        #    items.reverse()
+        #    for i in range(0,len(items)):
+        #        tmp = 2*i + 1 + len(items[i])
+        #        if i == 0:
+        #            tmp -= 1
+        #        if tmp > maxlen:
+        #            maxlen = tmp
+        #padding = (maxlen+1) * ' '
+
+        print_tree( tree, padding=padding, unicode=pretty, labels=None )
+
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite

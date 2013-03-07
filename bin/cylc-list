@@ -27,15 +27,20 @@ from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-List suite namespaces names, either:
- 1) tasks used in the graph
- 2) all tasks (namespaces with no descendants)
- 3) all namespaces (tasks and family groups)
+ 1) List runtime namespaces (tasks and families), optionally with their
+linearized inheritance precedence (known as "Method Resolution Order" in
+programming languages with multiple inheritance).
 
-By default, only graphed tasks are printed.
-To visualize the full runtime tree use 'cylc graph -n'.""" )
+ 2) Print the first-parent inheritance hierarchy as a character graph.
+This is the runtime inheritance tree determined by first parents alone.
+If the suite does not make use of multiple inheritance it will be the
+full inheritance hierarchy. First parents also define the primary family
+groupings that are collapsible in gcylc suite views and the graph viewer.
 
-parser.add_option( "-t","--all-tasks",
+To visualize the full multiple inheritance hierarchy use:
+  'cylc graph -n'.""" )
+
+parser.add_option( "-a","--all-tasks",
         help="Print all tasks, not just those used in the graph.",
         action="store_true", default=False, dest="all_tasks" )
 
@@ -43,12 +48,26 @@ parser.add_option( "-n","--all-namespaces",
         help="Print all runtime namespaces, just tasks.",
         action="store_true", default=False, dest="all_namespaces" )
 
+parser.add_option( "-m","--mro",
+        help="Print the linear \"method resolution order\" for each namespace "
+        "(the multiple-inheritance precedence order as determined by the "
+        "C3 linearization algorithm).",
+        action="store_true", default=False, dest="mro" )
+
+parser.add_option( "-t","--tree",
+        help="Print the first-parent inheritance hierarchy used .",
+        action="store_true", default=False, dest="tree" )
+
+parser.add_option( "-b","--box",
+        help="With -t/--tree, using unicode box characters",
+        action="store_true", default=False, dest="box" )
+
 (options, args) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
 if options.all_tasks and options.all_namespaces:
-    parser.error("Choose either -t or -n")
+    parser.error("Choose either -a or -n")
 if options.all_tasks:
     which = "all tasks"
 elif options.all_namespaces:
@@ -56,17 +75,28 @@ elif options.all_namespaces:
 else:
     which = "graphed tasks"
 
+if options.tree and any( [options.all_tasks, options.all_namespaces, options.mro] ):
+    print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
+
 try:
-    namespaces = config( suite, suiterc,
+    config = config( suite, suiterc,
         template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file
-        ).get_namespace_list( which )
+        template_vars_file=options.templatevars_file)
+    if options.tree:
+        config.print_first_parent_tree( options.box )
+    else:
+        namespaces = config.get_namespace_list( which )
+        namespaces.sort()
+        for ns in namespaces:
+            if options.mro:
+                print ns,
+                for i in config.get_mro( ns )[1:]:
+                    print i,
+                print
+            else:
+                print ns
 except Exception,x:
     if options.debug:
         raise
     raise SystemExit(x)
-
-namespaces.sort()
-for ns in namespaces:
-    print ns
 
