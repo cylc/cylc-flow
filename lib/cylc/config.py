@@ -1005,14 +1005,15 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
         repl = orig[:-4]
 
-        m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
-        m.sort() # put empty offset '' first ...
-        m.reverse() # ... then last
-        for foffset in m:
-            if fam not in self.families_used_in_graph:
-                self.families_used_in_graph.append(fam)
-            mems = paren_open + connector.join( [ i + foffset + repl for i in members ] ) + paren_close
-            line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
+        if fam in line and orig in line:
+            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
+            m.sort() # put empty offset '' first ...
+            m.reverse() # ... then last
+            for foffset in m:
+                if fam not in self.families_used_in_graph:
+                    self.families_used_in_graph.append(fam)
+                mems = paren_open + connector.join( [ i + foffset + repl for i in members ] ) + paren_close
+                line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
     def process_graph_line( self, line, section ):
