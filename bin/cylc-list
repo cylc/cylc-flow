@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
@@ -75,6 +75,11 @@ elif options.all_namespaces:
     which = "all namespaces"
 else:
     which = "graphed tasks"
+
+if options.tree:
+    if os.environ['LANG'] == 'C':
+        print >> sys.stderr, "WARNING, ignoring -t/--tree: $LANG=C"
+        options.tree = False
 
 if options.tree and any( [options.all_tasks, options.all_namespaces, options.mro] ):
     print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
