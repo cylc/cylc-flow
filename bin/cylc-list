@@ -27,17 +27,16 @@ from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
- 1) List runtime namespaces (tasks and families), optionally with their
-linearized inheritance precedence (known as "Method Resolution Order" in
-programming languages with multiple inheritance).
+List runtime namespaces (tasks, families) or print the first-parent
+inheritance graph to the terminal. Additional information can be printed
+for each namespace:
+  * title
+  * linearized inheritance precedence ("Method Resolution Order" in
+    programming languages with multiple inheritance).
 
- 2) Print the first-parent inheritance hierarchy as a character graph.
-This is the runtime inheritance tree determined by first parents alone.
-If the suite does not make use of multiple inheritance it will be the
-full inheritance hierarchy. First parents also define the primary family
-groupings that are collapsible in gcylc suite views and the graph viewer.
-
-To visualize the full multiple inheritance hierarchy use:
+The first-parent inheritance graph determines the primary task family
+groupings that are collapsible in gcylc suite views and the graph
+viewer tool. To visualize the full multiple inheritance hierarchy use:
   'cylc graph -n'.""" )
 
 parser.add_option( "-a","--all-tasks",
@@ -63,6 +62,10 @@ parser.add_option( "-b","--box",
         "must be able to display unicode characters.",
         action="store_true", default=False, dest="box" )
 
+parser.add_option( "-w","--with-titles",
+        help="Print namespaces titles too.",
+        action="store_true", default=False, dest="titles" )
+
 (options, args) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
@@ -81,26 +84,42 @@ if options.tree:
         print >> sys.stderr, "WARNING, ignoring -t/--tree: $LANG=C"
         options.tree = False
 
+if options.titles and options.mro:
+    parser.error( "Please choose --mro or --title, not both")
+
 if options.tree and any( [options.all_tasks, options.all_namespaces, options.mro] ):
     print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
 
 try:
-    config = config( suite, suiterc,
+    config = config( suite, suiterc, 
         template_vars=options.templatevars,
         template_vars_file=options.templatevars_file)
     if options.tree:
-        config.print_first_parent_tree( options.box )
+        config.print_first_parent_tree( pretty=options.box, titles=options.titles )
     else:
-        namespaces = config.get_namespace_list( which )
+        result = config.get_namespace_list( which )
+        namespaces = result.keys()
         namespaces.sort()
+
+        if ( options.mro or options.titles ):
+            # compute padding
+            maxlen = 0
+            for ns in namespaces:
+                if len(ns) > maxlen: maxlen = len(ns)
+            padding = maxlen*' '
+
         for ns in namespaces:
             if options.mro:
-                print ns,
-                for i in config.get_mro( ns )[1:]:
+                print ns, padding[0:len(padding)-len(ns)],
+                for i in config.get_mro( ns ):
                     print i,
                 print
+            elif options.titles:
+                print ns, padding[0:len(padding)-len(ns)],
+                print result[ns]
             else:
                 print ns
+
 except Exception,x:
     if options.debug:
         raise

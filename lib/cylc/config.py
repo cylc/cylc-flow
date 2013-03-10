@@ -668,7 +668,7 @@ class config( CylcConfigObj ):
     def get_first_parent_descendants( self ):
         return self.runtime['first-parent descendants']
 
-    def define_inheritance_tree( self, tree, hierarchy ):
+    def define_inheritance_tree( self, tree, hierarchy, titles=False ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:
             hier = copy(hierarchy[rt])
@@ -678,6 +678,16 @@ class config( CylcConfigObj ):
                 if item not in foo:
                     foo[item] = {}
                 foo = foo[item]
+
+    def add_tree_titles( self, tree ):
+        for key,val in tree.items():
+            if val == {}:
+                if 'title' in self['runtime'][key]:
+                    tree[key] = self['runtime'][key]['title'] 
+                else:
+                    tree[key] = 'No title provided'
+            elif isinstance(val, dict):
+                self.add_tree_titles( val )
 
     def get_namespace_list( self, which ):
         names = []
@@ -692,7 +702,16 @@ class config( CylcConfigObj ):
                 if ns not in self.runtime['descendants']:
                     # tasks have no descendants
                     names.append( ns )
-        return names
+        result = {}
+        for ns in names:
+            if 'title' in self['runtime'][ns]:
+                # the runtime dict is sparse at this stage.
+                result[ns] = self['runtime'][ns]['title']
+            else:
+                # no need to flesh out the full runtime just for title
+                result[ns] = "No title provided"
+
+        return result
 
     def get_mro( self, ns ):
         try:
@@ -701,8 +720,7 @@ class config( CylcConfigObj ):
             mro = ["ERROR: no such namespace: " + ns ]
         return mro
 
-
-    def print_first_parent_tree( self, pretty=False ):
+    def print_first_parent_tree( self, pretty=False, titles=False ):
         # find task namespaces (no descendants)
         tasks = []
         for ns in self['runtime']:
@@ -711,29 +729,31 @@ class config( CylcConfigObj ):
 
         ancestors = self.runtime['first-parent ancestors']
         # prune non-task namespaces from ancestors dict
-        tree = {}
         pruned_ancestors = {}
         for item in ancestors:
             if item not in tasks:
                 continue
             pruned_ancestors[item] = ancestors[item]
-        self.define_inheritance_tree( tree, pruned_ancestors )
-
-        # if using labels to the right of the true, compute padding:
+        tree = {}
+        self.define_inheritance_tree( tree, pruned_ancestors, titles=titles )
         padding = ''
-        #maxlen = 0
-        #for rt in pruned_ancestors:
-        #    items = copy(pruned_ancestors[rt])
-        #    items.reverse()
-        #    for i in range(0,len(items)):
-        #        tmp = 2*i + 1 + len(items[i])
-        #        if i == 0:
-        #            tmp -= 1
-        #        if tmp > maxlen:
-        #            maxlen = tmp
-        #padding = (maxlen+1) * ' '
+        if titles:
+            self.add_tree_titles(tree)
+            # compute pre-title padding
+            maxlen = 0
+            for ns in pruned_ancestors:
+                items = copy(pruned_ancestors[ns])
+                items.reverse()
+                for i in range(0,len(items)):
+                    tmp = 2*i + 1 + len(items[i])
+                    if i == 0:
+                        tmp -= 1
+                    if tmp > maxlen:
+                        maxlen = tmp
+            padding = maxlen * ' '
 
-        print_tree( tree, padding=padding, unicode=pretty, labels=None )
+        print_tree( tree, padding=padding, use_unicode=pretty )
+
 
     def process_directories(self):
         # Environment variable interpolation in directory paths.
