@@ -45,7 +45,7 @@ parser.add_option( "-a","--all-tasks",
         action="store_true", default=False, dest="all_tasks" )
 
 parser.add_option( "-n","--all-namespaces",
-        help="Print all runtime namespaces, just tasks.",
+        help="Print all runtime namespaces, not just tasks.",
         action="store_true", default=False, dest="all_namespaces" )
 
 parser.add_option( "-m","--mro",
@@ -55,11 +55,12 @@ parser.add_option( "-m","--mro",
         action="store_true", default=False, dest="mro" )
 
 parser.add_option( "-t","--tree",
-        help="Print the first-parent inheritance hierarchy used .",
+        help="Print the first-parent inheritance hierarchy in tree form.",
         action="store_true", default=False, dest="tree" )
 
 parser.add_option( "-b","--box",
-        help="With -t/--tree, using unicode box characters",
+        help="With -t/--tree, using unicode box characters. Your terminal "
+        "must be able to display unicode characters.",
         action="store_true", default=False, dest="box" )
 
 (options, args) = parser.parse_args()
