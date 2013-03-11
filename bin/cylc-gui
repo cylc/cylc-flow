@@ -26,8 +26,8 @@ if '--use-ssh' in sys.argv[1:]:
 import os
 from cylc.CylcOptionParsers import cop
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
+sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
+sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../')
 
 parser = cop( """cylc gui [OPTIONS] [REG]
 gcylc [OPTIONS] [REG]
