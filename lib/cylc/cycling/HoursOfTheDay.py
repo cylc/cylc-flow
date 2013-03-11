@@ -38,7 +38,7 @@ class HoursOfTheDay( cycler ):
         """Parse and store incoming list of hours of the day."""
         if len(args) == 0:
             # no args, assume all hours
-            self.valid_hours = range(0,23)
+            self.valid_hours = range(23)
         else:
             self.valid_hours = []
             for arg in args:

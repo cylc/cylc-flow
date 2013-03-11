@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 echo "WARNING: \"gcontrol\" is deprecated - it is now called \"gcylc\""
-echo "WARNING: and the former \"gcylc\" has been demoted to \"cylc dbviewer\""
 echo "WARNING: This command alias will eventually be deleted."
 $(dirname $0)/cylc gui "$@"
 
