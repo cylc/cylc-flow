@@ -500,7 +500,7 @@ class xupdater(threading.Thread):
                     self.set_live_node_attr( node, id, shape='box')
 
                 # add invisible edges to force vertical alignment
-                for i in range( 0, len(extra_node_ids[state])):
+                for i in range( len(extra_node_ids[state])):
                    if i == len(extra_node_ids[state]) -1:
                        break
                    self.graphw.cylc_add_edge( extra_node_ids[state][i],

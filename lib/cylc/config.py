@@ -754,7 +754,6 @@ class config( CylcConfigObj ):
 
         print_tree( tree, padding=padding, use_unicode=pretty )
 
-
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
@@ -1064,7 +1063,8 @@ class config( CylcConfigObj ):
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.runtime['descendants']:
             members = copy(self.runtime['descendants'][fam])
-            for member in members:
+            for member in copy(members):
+                # (another copy here: don't remove items from the iterating list) 
                 # remove family names from the member list, leave just tasks
                 # (allows using higher-level family names in the graph)
                 if member in self.runtime['descendants']:

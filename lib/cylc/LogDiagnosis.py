@@ -17,7 +17,7 @@ class LogSpec( object ):
     def __init__( self, log ):
         self.lines = []
         h = open( log, 'rb' )
-        for line in range(0, self.__class__.stop_tag_line_no + 1):
+        for line in range(self.__class__.stop_tag_line_no + 1):
             self.lines.append( h.readline().strip())
         h.close()
 

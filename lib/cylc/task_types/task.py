@@ -542,14 +542,16 @@ class task( object ):
                 res = run_get_stdout( hs_command ) # (T/F,[lines])
                 if res[0]:
                     # host selection command succeeded
-                    host = res[1]
+                    host = res[1][0]
                     self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
-                    self.hostname = host
                 else:
                     # host selection command failed
                     self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
                     self.incoming( 'CRITICAL', self.id + " failed" )
-                    return
+                    print >> sys.stderr, '\n'.join(res[1])
+                    # must still assign a name now or abort the suite?
+                    host = "NO-HOST-SELECTED"
+                self.hostname = host
 
             if host not in gcfg.cfg['task hosts']:
                 # there's no specific config for this host
