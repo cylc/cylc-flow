@@ -19,7 +19,6 @@
 import gtk
 import os, re
 import gobject
-import helpwindow
 from stateview import lupdater
 from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client

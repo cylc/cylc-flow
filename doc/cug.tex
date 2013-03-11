@@ -343,14 +343,6 @@ run time.
 %\pagebreak
 \section{Cylc Screenshots}
 
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=1.0\textwidth]{graphics/png/orig/dbviewer.png}
-    \end{center}
-\caption[The cylc dbviewer GUI]{\scriptsize
-The cylc dbviewer GUI, showing one suite running on port 7766.}
-\label{fig-db}
-\end{figure} 
 
 \begin{figure}
     \begin{center}
@@ -408,7 +400,7 @@ The cylc dbviewer GUI, showing one suite running on port 7766.}
     \item {\bf Pyro (Python Remote Objects), version 3.10$+$, latest
         tested 3.16}; not Pyro 4.x as yet. Pyro is used by cylc
         for network communication between server processes (cylc suites)
-        and client programs (running tasks, control GUIs and commands).
+        and client programs (running tasks, gcylc, and commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
     \item {\bf sqlite (a server-less, zero-configuration, SQL database
         engine}). This is likely included in your Linux distribution
@@ -431,7 +423,7 @@ Jinja2 you will not be able to run many of the example suites}:
     \item {\bf Graphviz} (latest tested 2.28.0) and {\bf Pygraphviz}
         (latest tested 1.1), a graph layout engine and a Python
         interface to it. These are required for suite dependency
-        graphing and the graph suite control GUI (but you can also run
+        graphing and the gcylc graph view (but you can also run
         cylc without them).
         \newline \url{http://www.graphviz.org}
         \newline \url{http://networkx.lanl.gov/pygraphviz}
@@ -658,9 +650,8 @@ each one for use:
 \end{lstlisting}
 Where \lstinline=TOPDIR= is the top level directory into which the
 example suite definitions will be copied.
-To view the content of the resulting suite database, run 
-\lstinline=cylc db print= command or its GUI counterpart
-\lstinline=cylc db dbviewer=:
+To view the content of the suite database run \lstinline=cylc db print= 
+or open the gcylc suite chooser dialog.
 
 \begin{lstlisting}
 % cylc db print --tree -x 'Auto|Quick'
@@ -1051,15 +1042,13 @@ The optional visualization section configures graph plotting.
 
 \subsection[Plotting examples.QuickStart.a]{Plotting The examples.QuickStart.a Dependency Graph}
 
-Right-click on the {\em examples.QuickStart.a} suite in the db viewer and choose
-Graph; or by command line,
+Open the {\em examples.QuickStart.a} suite gcylc and graph it using the ``Suite'' menu; 
+or by command line,
 \begin{lstlisting}
 % cylc graph examples.QuickStart.a 2011052300 2011052318 &
 \end{lstlisting}
 This will pop up a zoomable, pannable, graph viewer showing
 the graph of Figure~\ref{fig-QuickStartA-graph18}. 
-If you edit the suite.rc file the viewer will update in real time
-whenever you save the file.
 
 \begin{figure}
     \begin{center}
@@ -1084,15 +1073,12 @@ Section~\ref{SuiteDefinition}):
 \end{lstlisting}
 The command arguments above reflect suite definition section nesting. 
 
-Now start a suite control GUI by right-clicking on the suite in the db viewer
-and choosing Control $\rightarrow$ Graph View.  You can also open other control GUIs
-for the same suite if you like. Multiple GUIs running at the same time
-will automatically connect to the same running suite (they won't try to
-run separate instances). Note also that if you shut down a suite control
-GUI, the suite will keep running. You can reconnect to it later by
-opening another control GUI.
+Now open the suite in gcylc and select {\em Graph View} in the top
+toolbar.  You can also open other gcylc instances for the same suite at
+the same time if you like. Note that closing gcylc does not kill the suite 
+that the GUI is currently connected to.
 
-In the control GUI click on Control $\rightarrow$ Run, enter an initial
+In gcylc click on Control $\rightarrow$ Run, enter an initial
 cold-start cycle time (e.g.\ 2011052306), and select ``Hold (pause) on
 start-up'' so that the suite will start in the held state (tasks
 will not be submitted even if they are ready to run). 
@@ -1139,13 +1125,12 @@ or 12. The greyed out tasks are from the base graph, defined in the
 suite.rc file, and aren't actually present in the suite as yet (they
 are shown in the graph in order to put the live tasks in context).
 
-Now, click on Control $\rightarrow$ Release in the suite control GUI
-to {\em release the hold on the suite}, 
-and observe what happens: the GetData tasks will rapidly go off 
-in parallel out to a few cycles ahead (how far ahead depends on 
-the suite runahead limit as explained below and in {\em The Suite
-Runahead Limit}, Section~\ref{RunaheadLimit}) and then the suite will
-stall, as shown in Figures~\ref{fig-QuickStartA-ControlRunning}
+Now, select Control $\rightarrow$ Release in gcylc to {\em release the
+hold on the suite} and observe what happens: the GetData tasks will
+rapidly go off in parallel out to a few cycles ahead (how far ahead
+depends on the suite runahead limit as explained below and in {\em The
+Suite Runahead Limit}, Section~\ref{RunaheadLimit}) and then the suite
+will stall, as shown in Figures~\ref{fig-QuickStartA-ControlRunning}
 and~\ref{fig-QuickStartA-ControlStalled}. 
 
 \begin{figure}
@@ -1400,7 +1385,7 @@ FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
    (6): cylc checkvars -c GETDATA_OUTPUT_DIR
    (11): touch $GETDATA_OUTPUT_DIR/obs-${CYLC_TASK_CYCLE_TIME}.nc
 \end{lstlisting}
-(Suite search is also available from the db viewer right-click menu).
+(Suite search is also available from the gcylc {\em Suite} menu).
 \lstset{language=transcript}
 
 \subsection{Comparing Suites}
@@ -1573,31 +1558,11 @@ client/server communication works and how to use it.
 Each user has a suite database that associates registered suite names
 with their respective suite definition directory locations. Hierarchical
 suite names stored in the database can be displayed in a tree structure.
-By right-clicking on a suite in your database, from within the db
-viewer, or using cylc commands, you can:
-\begin{myenumerate}
-    \item start a suite control GUI to run the suite (or connect to a running suite),
-    \item submit a single task to run, just as it would be submitted by its suite
-    \item view the suite stdout and stderr streams,
-    \item view the suite log (which records all events and messages from tasks),
-    \item retrieve the suite description,
-    \item list tasks in the suite,
-    \item view the suite namespace hierarchy,
-    \item edit the suite definition in your editor,
-    \item plot the suite dependency graph,
-    \item search the suite definition and bin scripts,
-    \item validate the suite definition,
-    \item copy the suite or group,
-    \item alias the suite name to another name,
-    \item compare (difference) the suite with another suite,
-    \item unreregister the suite or group,
-    \item reregister the suite or group.
-\end{myenumerate}
 
-Note that the suite title shown in the db viewer is parsed from the suite.rc
-file at the time of initial registration; if you change the title (by
-editing the suite.rc file) use \lstinline=cylc db refresh= or the db viewer's 
-View $\rightarrow$ Refresh to update the database.
+Note that the suite title held in the registration database is parsed
+from the suite definition at the time of initial registration; if you
+change the title (by editing the suite.rc file) use 
+\lstinline=cylc db refresh= to update the database.
 
 The user suite database file is \lstinline=$HOME/.cylc/DB=.
 
@@ -1618,7 +1583,6 @@ HELP: cylc [db|database] COMMAND help,--help
 COMMANDS:
   alias ............... Register an alternative name for a suite
   copy|cp ............. Copy a suite or a group of suites
-  dbviewer ............ GUI to view registered suites and operate on them.
   get-directory ....... Retrieve suite definition directory paths
   print ............... Print registered suites
   refresh ............. Report invalid registrations and update suite titles
@@ -1650,7 +1614,7 @@ a directory tree, under the target directory, that reflects the
 registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
 The same functionality is also available by right-clicking on suites
-or suite groups in the db viewer GUI, as shown in Figure~\ref{fig-db}.
+or groups in the gcylc ``Open Registered Suite'' dialog.
 
 %\pagebreak
 \section{Suite Definition} 
@@ -1879,8 +1843,7 @@ configuration items grouped under several top level section headings:
             \item a nested family hierarchy with common properties
                 inherited by related tasks
         \end{myitemize}
-    \item {\bf [visualization] } - configures suite graphing and the
-        graph suite control GUI.
+    \item {\bf [visualization] } - configures suite graphing.
 \end{myitemize}
 
 
@@ -3297,8 +3260,7 @@ applying common style attributes. See the suite.rc reference
 
 Nested families from the namespace inheritance hierarchy, even if 
 they are not used as family triggers in the graph, can be expanded or
-collapsed in suite graphs and in the suite control GUI's text and graph
-views.
+collapsed in suite graphs and the gcylc suite views.
 
 In the graph view ungraphed tasks, which includes the members of
 collapsed families, are automatically plotted as rectangular nodes to
@@ -3352,7 +3314,7 @@ families in the {\em namespaces} example suite.
 namespaces} example suite showing various states of expansion of the
 nested namespace family hierarchy, from all families collapsed (top
 left) through to all expanded (bottom right). This can also be done by 
-right-clicking on tasks in the suite control GUI graph view.}
+right-clicking on tasks in the gcylc graph view.}
 \label{fig-namespaces}
 \end{figure} 
 
@@ -4298,9 +4260,6 @@ that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred
 to here will be complete task job logs.
 
-Cylc's suite control GUIs can display the task job logs (updating in 
-real time for local tasks). 
-
 \subsection{Overriding the Job Submission Command}
 \label{CommandTemplate}
 
@@ -4695,7 +4654,7 @@ the real tasks) may move through a number of defined states:
 Finally, there is also a pseudo-state displayed by the gcylc graph view:
 
 \begin{myitemize}
-    \item {\bf base} (Graph Control GUI only) - greyed out base graph
+    \item {\bf base} (gcylc graph view only) - greyed out base graph
         nodes do not represent current live task proxies in the suite,
         they just connect the current live nodes according to the
         full suite graph.
@@ -5650,10 +5609,9 @@ directories first.
 \subsection{Make Suites As Self-Contained As Possible}
 
 The only compulsory content of a cylc suite definition directory is the
-suite.rc file (and you'll almost certainly have a suite
-\lstinline=bin= sub-directory too). However, you can store whatever you
+\lstinline=suite.rc= file. However, you can store whatever you
 like in a suite definition directory;\footnote{If you copy a suite using
-cylc commands or db viewer the entire suite definition directory
+cylc commands or GUI the entire suite definition directory
 will be copied.} other files there will be ignored by cylc but
 suite tasks can access them via the
 \lstinline=$CYLC_SUITE_DEF_PATH= variable that cylc automatically 
@@ -5810,7 +5768,7 @@ To watch suite locks being acquired and released as a suite runs,
 % watch cylc lockclient --print
 \end{lstlisting}
 
-\section{The Suite Control GUI Graph View}
+\section{The gcylc Graph View}
 \label{TheGraphBasedcontrolGUI}
 
 The graph view in the gcylc GUI has the advantage that it shows

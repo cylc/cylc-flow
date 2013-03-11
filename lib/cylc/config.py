@@ -754,7 +754,6 @@ class config( CylcConfigObj ):
 
         print_tree( tree, padding=padding, use_unicode=pretty )
 
-
     def process_directories(self):
         # Environment variable interpolation in directory paths.
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
