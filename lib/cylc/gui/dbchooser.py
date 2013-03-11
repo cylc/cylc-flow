@@ -323,6 +323,7 @@ class dbchooser(object):
         self.window.set_size_request(750, 400)
         self.window.set_icon(get_icon())
         #self.window.set_border_width( 5 )
+
         self.window.connect("delete_event", self.delete_all_event)
 
         sw = gtk.ScrolledWindow()
@@ -381,7 +382,7 @@ class dbchooser(object):
 
         vbox.pack_start( sw, True )
 
-        self.selected_label = gtk.Label( '(no selection)' )
+        self.selected_label = gtk.Label( '(double-click or OK to select)' )
 
         filter_entry = EntryTempText()
         filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
@@ -530,7 +531,12 @@ class dbchooser(object):
             self.selected_label.set_text( reg )
         else:
             self.regname = None
-            self.selected_label.set_text( '(no selection)' )
+            self.selected_label.set_text( '(double-click or OK to select)' )
+
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            # double-click
+            self.window.response(gtk.RESPONSE_OK)
+            return True
 
         # return False so clicks still be handled for tree expand/collapse
         if event.button == 1:
