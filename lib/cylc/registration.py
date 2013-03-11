@@ -366,8 +366,7 @@ class regdb(object):
         return invalid
 
     def get_suite_title( self, suite, path=None ):
-        # Attempt to determine the suite title without parsing the full
-        # suite definition file.
+        "Determine the suite title without a full file parse"
         if path:
             suiterc = os.path.join( path, 'suite.rc' )
         else:
@@ -376,20 +375,31 @@ class regdb(object):
 
         title = ""
         found_start = False
+        done = False
         for xline in open( suiterc, 'rb' ):
+            if re.search( '^ *\[', xline ):
+                # abort the search: title comes before first [section]
+                break
             line = xline.strip()
             if not found_start:
                 m = re.match( '^title\s*=\s*([\'\"]+)(.*)', line )
                 if m:
                     found_start = True
+                    # strip quotes
                     start_quotes, line = m.groups()
             if found_start:
                 if line.endswith( start_quotes ):
+                    # strip quotes
                     line = re.sub( start_quotes, '', line )
-                    title += " " + line
-                    break
+                    done = True
+                if title:
+                    # adding on a second line on
+                    title += " "
                 title += line
-        if title == "":
+                if done:
+                    break
+
+        if not title:
             title = "No title provided"
         return title
 
