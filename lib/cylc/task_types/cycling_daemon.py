@@ -38,7 +38,7 @@ class cycling_daemon( oneoff, cycling ):
 
         self.env_vars[ 'START_CYCLE_TIME' ] = self.last_reported
 
-        cycling.__init__( self, state )
+        cycling.__init__( self, state, validate )
 
 
     def incoming( self, priority, message ):
