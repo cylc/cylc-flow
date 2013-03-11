@@ -7,6 +7,8 @@
 
 use theme = string( default="classic" )
 
+initial views = force_list( default=list("text") )
+
 [themes]
     [[__many__]]
         inherit = string( default=None )

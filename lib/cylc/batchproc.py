@@ -106,7 +106,7 @@ if __name__ == "__main__":
     batchsize = sys.argv[1]
 
     b = batchproc( batchsize, shell=True )
-    for i in range(0,10):
+    for i in range(10):
         b.add_or_process( item(i) )
     # process any leftovers
     b.process()

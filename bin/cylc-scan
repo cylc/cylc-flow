@@ -52,7 +52,6 @@ IFS=$OFIS
 """, pyro=True, 
 argdoc=[])
 
-parser.remove_option("-p" ) # don't need passphrase
 parser.remove_option("-f" ) # don't need force
 
 parser.add_option( "--print-ports",
