@@ -1301,20 +1301,7 @@ to build real cylc suites. Here's the complete suite definition
 \lstset{language=suiterc}
 \lstinputlisting{../examples/QuickStart/c/suite.rc}
 \lstset{language=transcript}
-Here's the namespace hierarchy defined by this suite:
-\begin{lstlisting}
-% cylc list --tree examples.QuickStart.c
-root           
- |-GetData     retrieve data for the current cycle time
- |-Models      
- | |-ColdModel cold start the forecast model
- | `-Model     the forecast model
- |-Post        
- | |-PostA     post processing for model
- | `-PostB     post processing for model
- `-Prep        prepare the suite workspace for a new run
-\end{lstlisting}
-And here, for example, is the complete implementation for the PostA task
+And here is the complete implementation for the PostA task
 (located with the other task scripts in the suite bin directory):
 \lstset{language=bash}
 \lstinputlisting{../examples/QuickStart/c/bin/PostA.sh}
@@ -3285,25 +3272,7 @@ purposes - you can group tasks at root level in the inheritance
 hierarchy prior to defining real properties at higher levels.
 
 Figure~\ref{fig-namespaces} illustrates successive expansion of nested task
-families in the {\em namespaces} example suite, which has the following
-namespace hierarchy:
-\begin{lstlisting}
-% cylc list --tree cylc-x-y-z.namespaces
-root              
- |-GEN            
- | |-OPS          
- | | |-aircraft   OPS aircraft obs processing
- | | |-atovs      OPS ATOVS obs processing
- | | `-atovs_post OPS ATOVS postprocessing
- | `-VAR          
- |   |-AnPF       runs VAR AnalysePF
- |   `-ConLS      runs VAR ConfigureLS
- |-baz            
- | |-bar1         Task bar1 of baz
- | `-bar2         Task bar2 of baz
- |-foo            No description provided
- `-prepobs        obs preprocessing
- \end{lstlisting}
+families in the {\em namespaces} example suite.
 
 \begin{figure}
 \begin{minipage}[t]{0.3\textwidth}
@@ -3576,7 +3545,7 @@ Here's the result:
 % cylc list SUITE
 Jinja2 Template Error
 'FIRST_TASK' is undefined
-cylc-list -t foo  failed:  1
+cylc-list foo  failed:  1
 
 % cylc list --set FIRST_TASK=bob foo
 bob

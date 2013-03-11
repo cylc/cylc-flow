@@ -412,7 +412,7 @@ class task( object ):
                             dlist += int(mult) * [float(val)]
                     except ValueError, x:
                         print >> sys.stderr, x
-                        raise SystemExit( "ERROR, retry delay values must be INT or INT*FLOAT" )
+                        raise SystemExit( "ERROR, retry delay values must be FLOAT or INT*FLOAT" )
 
                 self.retry_delays = deque( dlist )
             else:

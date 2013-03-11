@@ -368,7 +368,7 @@ comsum[ 'search'     ] = 'Search in suite definitions'
 comsum[ 'graph'      ] = 'Plot suite dependency graphs and runtime hierarchies'
 comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
 # information
-comsum[ 'list'       ] = 'Print suite tasks and runtime hierarchies'
+comsum[ 'list'       ] = 'List suite tasks and family namespaces'
 comsum[ 'dump'       ] = 'Print the state of tasks in a running suite'
 comsum[ 'cat-state'  ] = 'Print the state of tasks from the state dump'
 comsum[ 'show'       ] = 'Print task state (prerequisites and outputs etc.)'

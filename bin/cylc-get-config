@@ -60,8 +60,8 @@ $ cylc get-config --item=[runtime][modelX] foo.bar
 ...""" )
 
 parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
-        help="Set a runtime item by broadcast. Can be used multiple "
-        "times to broadcast several settings at once.",
+        help="The config item to print. Can be used multiple "
+        "times on the same command line.",
         action="append", dest="item", default=[] )
 
 parser.add_option( "-t", "--tasks",

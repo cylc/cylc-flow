@@ -30,15 +30,15 @@ from cylc.regpath import RegPath
 def get_padding( reglist ):
     maxlen = 0
     for reg in reglist:
-        regpath = reg[0]
-        items = RegPath(regpath).get_list()
-        for i in range(len(items)):
-            tmp = 2*i + 1 + len(items[i])
+        items = RegPath(reg[0]).get_list()
+        for i in range(0,len(items)):
             if i == 0:
-                tmp -= 1
+                tmp = len(items[i])
+            else:
+                tmp = 2*i + 1 + len(items[i])
             if tmp > maxlen:
                 maxlen = tmp
-    return (maxlen+1) * ' '
+    return maxlen * ' '
 
 parser = cop( usage = """cylc [db] print [OPTIONS] [REGEX]
 
@@ -138,10 +138,8 @@ try:
             if not options.x and not options.y:
                 line = title + ' | ' + dir 
             elif not options.y:
-                #line = ' | ' + title
                 line = ' ' + title
             elif not options.x:
-                #line = ' | ' + dir
                 line = ' ' + dir
             else:
                 line = ''
