@@ -2541,7 +2541,6 @@ echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + 
         self.gcapture_windows.append(foo)
         foo.run()
 
-
     def newreg_popup( self, w ):
         dialog = gtk.FileChooserDialog(title='Register Or Create A Suite',
                 action=gtk.FILE_CHOOSER_ACTION_SAVE,
