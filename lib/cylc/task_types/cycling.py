@@ -56,7 +56,7 @@ class cycling( task ):
 
     # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
 
-    def __init__( self, state, stop_c_time = None ):
+    def __init__( self, state, stop_c_time = None, validate = False ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -69,7 +69,7 @@ class cycling( task ):
 
         # A final stop time can be set by 'cylc insert' to create a temporary task.
         self.stop_c_time = stop_c_time
-        task.__init__( self, state )
+        task.__init__( self, state, validate )
 
     def ready_to_spawn( self ):
         # return True or False
