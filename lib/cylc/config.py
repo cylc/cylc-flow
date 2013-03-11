@@ -979,6 +979,8 @@ class config( CylcConfigObj ):
         # Replace family trigger expressions with member trigger expressions.
         # The replacements below handle optional [T-n] cycle offsets.
 
+        if orig and orig not in line_in:
+            return line_in
         line = line_in
         paren_open = ''
         paren_close = ''
@@ -1077,6 +1079,9 @@ class config( CylcConfigObj ):
             # raw strings (r'\bfoo\b') are needed to protect special
             # backslashed re markers like \b from being interpreted as
             # normal escapeded characters.
+
+            if fam not in line:
+                continue
 
             # Replace family triggers with member triggers
             for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
