@@ -147,8 +147,7 @@ class task( object ):
         self.db_queue = []
 
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
-        self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
-        self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
+
         
         self.validate = validate
         
@@ -156,6 +155,8 @@ class task( object ):
         if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
         else:
+            self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
             submits = self.db.get_task_current_submit_num(self.name, self.c_time)
             if submits > 0:
                 self.submit_num = submits
@@ -168,8 +169,8 @@ class task( object ):
                     self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
                 except:
                     pass
+            self.db.close()
 
-        self.db.close()
         self.hostname = None
         self.owner = None
         self.submit_method = None
