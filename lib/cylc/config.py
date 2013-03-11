@@ -885,7 +885,7 @@ class config( CylcConfigObj ):
                 try:
                     # instantiate a task
                     # startup True here or oneoff async tasks will be ignored:
-                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
+                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
                 except TypeError, x:
                     raise
                     # This should not happen as we now explicitly catch use

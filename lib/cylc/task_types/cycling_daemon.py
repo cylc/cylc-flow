@@ -27,7 +27,7 @@ class cycling_daemon( oneoff, cycling ):
     # registered patterns come in. The corresponding real task may keep
     # running indefinitely, e.g. to watch for incoming external data.
 
-    def __init__( self, state ):
+    def __init__( self, state, validate=False ):
 
         m = re.match( '(\d{10}) \| (.*)', state )
         if m:

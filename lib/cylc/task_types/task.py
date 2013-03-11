@@ -109,7 +109,7 @@ class task( object ):
         mtet_sec = sum( elt_sec ) / len( elt_sec )
         cls.mean_total_elapsed_time = datetime.timedelta( seconds=mtet_sec )
 
-    def __init__( self, state ):
+    def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -150,19 +150,24 @@ class task( object ):
         self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
         self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
         
+        self.validate = validate
+        
         # sets submit num for restarts or when triggering state prior to submission
-        submits = self.db.get_task_current_submit_num(self.name, self.c_time)
-        if submits > 0:
-            self.submit_num = submits
-            self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status()) #is this redundant?
-        else:
+        if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
+        else:
+            submits = self.db.get_task_current_submit_num(self.name, self.c_time)
+            if submits > 0:
+                self.submit_num = submits
+                self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status()) #is this redundant?
+            else:
+                self.submit_num = 0
 
-        if not self.db.get_task_state_exists(self.name, self.c_time):
-            try:
-                self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
-            except:
-                pass
+            if not self.db.get_task_state_exists(self.name, self.c_time):
+                try:
+                    self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
+                except:
+                    pass
 
         self.db.close()
         self.hostname = None
