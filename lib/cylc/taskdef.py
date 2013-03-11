@@ -243,7 +243,7 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False ):
+        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False ):
 
             sself.cycon = container.cycon( self.cyclers )
             if self.cycling: # and startup:
@@ -285,11 +285,11 @@ class taskdef(object):
 
             if stop_c_time:
                 # cycling tasks with a final cycle time set
-                super( sself.__class__, sself ).__init__( initial_state, stop_c_time )
+                super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
             else:
                 # TO DO: TEMPORARY HACK FOR ASYNC
                 sself.stop_c_time = '99991231230000'
-                super( sself.__class__, sself ).__init__( initial_state )
+                super( sself.__class__, sself ).__init__( initial_state, validate=validate )
 
             sself.reconfigure_me = False
             sself.is_coldstart = self.is_coldstart

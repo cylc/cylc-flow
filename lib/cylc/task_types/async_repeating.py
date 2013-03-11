@@ -35,7 +35,7 @@ class async_repeating( nopid, task ):
 
     used_outputs = {}
     
-    def __init__( self, state ):
+    def __init__( self, state, validate = False ):
         # Call this AFTER derived class initialisation.
         # Top level derived classes must define self.id.
         self.env_vars['ASYNCID'] = 'UNSET'
@@ -50,7 +50,7 @@ class async_repeating( nopid, task ):
         else:
             self.asyncid = 'UNSET'
         self.env_vars[ 'ASYNCID' ] = self.asyncid 
-        task.__init__( self, state )
+        task.__init__( self, state, validate )
 
     def check_requisites( self ):
         for reqs in self.prerequisites.container:
