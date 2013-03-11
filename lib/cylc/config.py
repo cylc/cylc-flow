@@ -297,13 +297,6 @@ class config( CylcConfigObj ):
 
         self.compute_runahead_limit()
 
-        self.family_tree = {}
-        self.single_family_tree = {}
-        self.task_runtimes = {}
-        self.define_inheritance_tree( self.family_tree, self.runtime['linearized ancestors'] )
-        self.define_inheritance_tree( self.single_family_tree, self.runtime['first-parent ancestors'] )
-        self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
-
         self.configure_queues()
 
         # Warn or abort (if --strict) if naked dummy tasks (no runtime
@@ -675,7 +668,7 @@ class config( CylcConfigObj ):
     def get_first_parent_descendants( self ):
         return self.runtime['first-parent descendants']
 
-    def define_inheritance_tree( self, tree, hierarchy ):
+    def define_inheritance_tree( self, tree, hierarchy, titles=False ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:
             hier = copy(hierarchy[rt])
@@ -686,84 +679,81 @@ class config( CylcConfigObj ):
                     foo[item] = {}
                 foo = foo[item]
 
-    def prune_inheritance_tree( self, tree, runtimes ):
-        # When self.family_tree is constructed leaves are {}. This
-        # replaces the leaves with first line of task title, and
-        # populates self.task_runtimes with just the leaves (tasks).
-        for item in tree:
-            skeys = tree[item].keys() 
-            if len( skeys ) > 0:
-                self.prune_inheritance_tree(tree[item], runtimes)
+    def add_tree_titles( self, tree ):
+        for key,val in tree.items():
+            if val == {}:
+                if 'title' in self['runtime'][key]:
+                    tree[key] = self['runtime'][key]['title'] 
+                else:
+                    tree[key] = 'No title provided'
+            elif isinstance(val, dict):
+                self.add_tree_titles( val )
+
+    def get_namespace_list( self, which ):
+        names = []
+        if which == 'graphed tasks':
+            # tasks used only in the graph
+            names = self.taskdefs.keys()
+        elif which == 'all namespaces':
+            # all namespaces
+            names = self['runtime'].keys()
+        elif which == 'all tasks':
+            for ns in self['runtime']:
+                if ns not in self.runtime['descendants']:
+                    # tasks have no descendants
+                    names.append( ns )
+        result = {}
+        for ns in names:
+            if 'title' in self['runtime'][ns]:
+                # the runtime dict is sparse at this stage.
+                result[ns] = self['runtime'][ns]['title']
             else:
-                ### TO DO: title may now come from root, inheritance from which is now deferred
-                ###title = self['runtime'][item]['title']
-                ###dlines = re.split( '\n', title )
-                ###dline1 = dlines[0]
-                ###if len(dlines) > 1:
-                ###    dline1 += '...'
-                dline1 = "" # TODO: task title here (see comment just above)
-                tree[item] = dline1
-                runtimes[item] = self['runtime'][item]
+                # no need to flesh out the full runtime just for title
+                result[ns] = "No title provided"
 
-    def print_task_list( self, filter=None, labels=None, pretty=False ):
-        # determine padding for alignment of task title
-        tasks = self.task_runtimes.keys()
-        maxlen = 0
-        for task in tasks:
-            if len(task) > maxlen:
-                maxlen = len(task)
-        padding = (maxlen+1) * ' '
+        return result
 
-        for task in tasks:
-            if filter:
-                if not re.search( filter, task ):
-                    continue
-            # print task title
-            ###title = self['runtime'][task]['title']
-            ###dlines = re.split( '\n', title )
-            ###dline1 = dlines[0]
-            ###if len(dlines) > 1:
-            ###   dline1 += '...'
-            ###print task + padding[ len(task): ] + dline1
-            print task
+    def get_mro( self, ns ):
+        try:
+            mro = self.runtime['linearized ancestors'][ns]
+        except KeyError:
+            mro = ["ERROR: no such namespace: " + ns ]
+        return mro
 
-    def print_inheritance_tree( self, filter=None, labels=None, pretty=False, multi=False ):
-        # determine padding for alignment of task titles
-        if multi:
-            ancestors = self.runtime['linearized ancestors']
-            family_tree = self.family_tree
-        else:
-            ancestors = self.runtime['first-parent ancestors']
-            family_tree = self.single_family_tree
+    def print_first_parent_tree( self, pretty=False, titles=False ):
+        # find task namespaces (no descendants)
+        tasks = []
+        for ns in self['runtime']:
+            if ns not in self.runtime['descendants']:
+                tasks.append(ns)
 
-        if filter:
-            trt = {}
-            ft = {}
-            fh = {}
-            for item in ancestors:
-                if item not in self.task_runtimes:
-                    continue
-                if not re.search( filter, item ):
-                    continue
-                fh[item] = ancestors[item]
-            self.define_inheritance_tree( ft, fh )
-            self.prune_inheritance_tree( ft, trt )
-        else:
-            fh = ancestors
-            ft = family_tree
+        ancestors = self.runtime['first-parent ancestors']
+        # prune non-task namespaces from ancestors dict
+        pruned_ancestors = {}
+        for item in ancestors:
+            if item not in tasks:
+                continue
+            pruned_ancestors[item] = ancestors[item]
+        tree = {}
+        self.define_inheritance_tree( tree, pruned_ancestors, titles=titles )
+        padding = ''
+        if titles:
+            self.add_tree_titles(tree)
+            # compute pre-title padding
+            maxlen = 0
+            for ns in pruned_ancestors:
+                items = copy(pruned_ancestors[ns])
+                items.reverse()
+                for i in range(0,len(items)):
+                    tmp = 2*i + 1 + len(items[i])
+                    if i == 0:
+                        tmp -= 1
+                    if tmp > maxlen:
+                        maxlen = tmp
+            padding = maxlen * ' '
 
-        maxlen = 0
-        for rt in fh:
-            items = copy(fh[rt])
-            items.reverse()
-            for i in range(0,len(items)):
-                tmp = 2*i + 1 + len(items[i])
-                if i == 0:
-                    tmp -= 1
-                if tmp > maxlen:
-                    maxlen = tmp
-        padding = (maxlen+1) * ' '
-        print_tree( ft, padding=padding, unicode=pretty, labels=labels )
+        print_tree( tree, padding=padding, use_unicode=pretty )
+
 
     def process_directories(self):
         # Environment variable interpolation in directory paths.
