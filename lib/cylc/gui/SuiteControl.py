@@ -35,7 +35,7 @@ from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotMaker
-from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryDialog
+from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
@@ -853,7 +853,7 @@ been defined for this suite""").inform()
 
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-            entry_ctime, stoptime_entry, no_reset_cb, statedump_entry,
+            entry_ctime, stoptime_entry, statedump_entry,
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
 
@@ -871,8 +871,6 @@ been defined for this suite""").inform()
         elif restart_rb.get_active():
             method = 'restart'
             command = 'cylc control restart --from-gui ' + self.cfg.template_vars_opts
-            if no_reset_cb.get_active():
-                options += ' --no-reset'
 
         if mode_live_rb.get_active():
             pass
@@ -1695,20 +1693,18 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             box.set_sensitive(True)
 
-    def startup_method( self, b, meth, ic_box, is_box, no_reset_cb ):
+    def startup_method( self, b, meth, ic_box, is_box ):
         if meth in ['cold', 'warm', 'raw']:
             for ch in ic_box.get_children():
                 ch.set_sensitive( True )
             for ch in is_box.get_children():
                 ch.set_sensitive( False )
-            no_reset_cb.set_sensitive(False)
         else:
             # restart
             for ch in ic_box.get_children():
                 ch.set_sensitive( False )
             for ch in is_box.get_children():
                 ch.set_sensitive( True )
-            no_reset_cb.set_sensitive(True)
 
     def startsuite_popup( self, b ):
         window = gtk.Window()
@@ -1722,17 +1718,29 @@ shown here in the state they were in at the time of triggering.''' )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
-        box.pack_start( gtk.Label("Startup:"),True)
-        coldstart_rb = gtk.RadioButton( None, "Cold" )
+        coldstart_rb = gtk.RadioButton( None, "Cold-start" )
         box.pack_start (coldstart_rb, True)
-        warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm" )
-        box.pack_start (warmstart_rb, True)
-        rawstart_rb = gtk.RadioButton( coldstart_rb, "Raw" )
-        box.pack_start (rawstart_rb, True)
         restart_rb = gtk.RadioButton( coldstart_rb, "Restart" )
         box.pack_start (restart_rb, True)
+        warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm-start" )
+        box.pack_start (warmstart_rb, True)
+        rawstart_rb = gtk.RadioButton( coldstart_rb, "Raw-start" )
+        box.pack_start (rawstart_rb, True)
         coldstart_rb.set_active(True)
         vbox.pack_start( box )
+
+        box = gtk.HBox()
+        box.pack_start(gtk.Label( 'Mode' ),True)
+        mode_live_rb = gtk.RadioButton( None, "live" )
+        box.pack_start (mode_live_rb, True)
+        mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
+        box.pack_start (mode_sim_rb, True)
+        mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
+        box.pack_start (mode_dum_rb, True)
+
+        mode_live_rb.set_active(True)
+        vbox.pack_start( box )
+
 
         nvbox = gtk.VBox()
         nhbox = gtk.HBox()
@@ -1774,41 +1782,27 @@ shown here in the state they were in at the time of triggering.''' )
         is_box.pack_start (statedump_entry, True)
         vbox.pack_start(is_box)
 
-        no_reset_cb = gtk.CheckButton( "Don't reset failed tasks to 'ready'" )
-        no_reset_cb.set_active(False)
-        no_reset_cb.set_sensitive(False)
-        vbox.pack_start (no_reset_cb, True)
-
-        coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box, no_reset_cb )
-        warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box, no_reset_cb )
-        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box, no_reset_cb )
-        restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box, no_reset_cb )
+        coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box )
+        warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box )
+        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box )
+        restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box )
         
+        hbox = gtk.HBox()
+
         hold_cb = gtk.CheckButton( "Hold on start-up" )
-  
+
         hold_box = gtk.HBox()
-        label = gtk.Label( 'Hold after (cycle)' )
-        hold_box.pack_start( label, True )
-        holdtime_entry = gtk.Entry()
-        holdtime_entry.set_max_length(14)
+        holdtime_entry = EntryTempText()
+        holdtime_entry.set_temp_text("Hold after cycle")
+        holdtime_entry.set_width_chars(14)
         hold_box.pack_start (holdtime_entry, True)
 
-        vbox.pack_start( hold_cb )
-        vbox.pack_start( hold_box )
+        hbox.pack_start( hold_cb )
+        hbox.pack_start( hold_box )
+
+        vbox.pack_start( hbox )
 
         hold_cb.connect( "toggled", self.hold_cb_toggled, hold_box )
-
-        box = gtk.HBox()
-        box.pack_start(gtk.Label( 'Run mode' ),True)
-        mode_live_rb = gtk.RadioButton( None, "live" )
-        box.pack_start (mode_live_rb, True)
-        mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
-        box.pack_start (mode_sim_rb, True)
-        mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
-        box.pack_start (mode_dum_rb, True)
-
-        mode_live_rb.set_active(True)
-        vbox.pack_start( box )
 
         hbox = gtk.HBox()
         hbox.pack_start( gtk.Label('Options'),True)
@@ -1831,7 +1825,7 @@ shown here in the state they were in at the time of triggering.''' )
         start_button = gtk.Button( "_Start" )
         start_button.connect("clicked", self.startsuite, window,
                 coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-                ctime_entry, stoptime_entry, no_reset_cb,
+                ctime_entry, stoptime_entry, 
                 statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
                 mode_dum_rb, hold_cb, holdtime_entry )
 
