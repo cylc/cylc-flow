@@ -990,6 +990,8 @@ class config( CylcConfigObj ):
         # Replace family trigger expressions with member trigger expressions.
         # The replacements below handle optional [T-n] cycle offsets.
 
+        if orig and orig not in line_in:
+            return line_in
         line = line_in
         paren_open = ''
         paren_close = ''
@@ -1005,15 +1007,14 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
         repl = orig[:-4]
 
-        if fam in line and orig in line:
-            m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
-            m.sort() # put empty offset '' first ...
-            m.reverse() # ... then last
-            for foffset in m:
-                if fam not in self.families_used_in_graph:
-                    self.families_used_in_graph.append(fam)
-                mems = paren_open + connector.join( [ i + foffset + repl for i in members ] ) + paren_close
-                line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
+        m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
+        m.sort() # put empty offset '' first ...
+        m.reverse() # ... then last
+        for foffset in m:
+            if fam not in self.families_used_in_graph:
+                self.families_used_in_graph.append(fam)
+            mems = paren_open + connector.join( [ i + foffset + repl for i in members ] ) + paren_close
+            line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
     def process_graph_line( self, line, section ):
@@ -1088,6 +1089,9 @@ class config( CylcConfigObj ):
             # raw strings (r'\bfoo\b') are needed to protect special
             # backslashed re markers like \b from being interpreted as
             # normal escapeded characters.
+
+            if fam not in line:
+                continue
 
             # Replace family triggers with member triggers
             for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
