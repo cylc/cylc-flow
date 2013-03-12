@@ -42,7 +42,6 @@ from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
-from RuntimeGraph import rGraph
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
 from broadcast import broadcast
@@ -57,6 +56,7 @@ import flags
 import cylc.rundb
 from Queue import Queue
 from batch_submit import event_batcher
+
 
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -299,8 +299,17 @@ class scheduler(object):
         if self.config.suite_timeout:
             self.set_suite_timer()
 
+        self.runtime_graph_on = False
         if self.config['visualization']['runtime graph']['enable']:
-            self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
+            try:
+                from RuntimeGraph import rGraph
+            except ImportError, x:
+                # this imports pygraphviz via cylc.graphing
+                print >> sys.stderr, str(x)
+                print >> sys.stderr, "WARNING: runtime graphing disabled, please install pygraphviz."
+            else:
+                self.runtime_graph_on = True
+                self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
 
         self.orphans = []
         self.reconfiguring = False
@@ -1099,7 +1108,7 @@ class scheduler(object):
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what at run time).
         for itask in tasks:
-            if self.config['visualization']['runtime graph']['enable']:
+            if self.runtime_graph_on:
                 self.runtime_graph.update( itask, self.get_oldest_c_time(), self.get_oldest_async_tag() )
             if self.config['cylc']['log resolved dependencies']:
                 itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
@@ -1240,7 +1249,7 @@ class scheduler(object):
             # port file may have been deleted
             print >> sys.stderr, x
 
-        if self.config['visualization']['runtime graph']['enable']:
+        if self.runtime_graph_on:
             self.runtime_graph.finalize()
 
         #disconnect from suite-db/stop db queue
