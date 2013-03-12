@@ -168,7 +168,7 @@ class MyDotWindow2( xdot.DotWindow ):
                 print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
                 print >> sys.stderr, x
                 return False
-        self.inherit = self.suiterc.get_inheritance()
+        self.inherit = self.suiterc.get_parent_lists()
         return True
 
     def get_graph( self ):
