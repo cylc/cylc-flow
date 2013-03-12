@@ -20,14 +20,8 @@ import gobject
 #import pygtk
 #pygtk.require('2.0')
 import gtk
-import subprocess
 import time, os, re, sys
 import threading
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.config import config, SuiteConfigError
-from cylc.version import cylc_version
-from cylc.suite_logging import suite_log
-from cylc.suite_logging import suite_log
 from util import EntryTempText, EntryDialog
 from cylc.run_get_stdout import run_get_stdout
 
@@ -40,15 +34,11 @@ else:
     PyroInstalled = True
     from cylc.port_scan import scan
 
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import localdb
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
-from util import get_icon, get_image_dir, get_logo
+from util import get_icon
 from gcapture import gcapture, gcapture_tmpfile
-from graph import graph_suite_popup
-from cylc.mkdir_p import mkdir_p
-from cylc_logviewer import cylc_logviewer
-from cylc.passphrase import passphrase
 
 debug = False
 
@@ -314,14 +304,12 @@ class dbchooser(object):
 
         gobject.threads_init()
 
-        self.imagedir = get_image_dir()
-
         #self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window = gtk.Dialog( "Choose a suite", parent, gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
         #self.window.set_modal(True)
         self.window.set_title("Suite Chooser" )
         self.window.set_size_request(750, 400)
-        self.window.set_icon(get_icon())
+        self.window.set_icon(get_icon()) # TODO: not needed for a dialog window?
         #self.window.set_border_width( 5 )
 
         self.window.connect("delete_event", self.delete_all_event)
@@ -382,7 +370,8 @@ class dbchooser(object):
 
         vbox.pack_start( sw, True )
 
-        self.selected_label = gtk.Label( '(double-click or OK to select)' )
+        self.selected_label_text = '(double-click or OK to select; right-click for db options)'
+        self.selected_label = gtk.Label( self.selected_label_text )
 
         filter_entry = EntryTempText()
         filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
@@ -531,7 +520,7 @@ class dbchooser(object):
             self.selected_label.set_text( reg )
         else:
             self.regname = None
-            self.selected_label.set_text( '(double-click or OK to select)' )
+            self.selected_label.set_text( self.selected_label_text )
 
         if event.type == gtk.gdk._2BUTTON_PRESS:
             # double-click
