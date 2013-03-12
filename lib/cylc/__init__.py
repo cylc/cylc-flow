@@ -32,7 +32,7 @@ def environ_init(argv0=None):
     # BAZ=$(python -c 'from cylc.foo import bar; print bar')
     # where argv0 will be '-c'.
 
-    cylc_dir = os.path.dirname(os.path.dirname(os.path.abspath(argv0)))
+    cylc_dir = os.path.dirname(os.path.dirname(os.path.realpath(os.path.abspath(argv0))))
     if cylc_dir != os.getenv('CYLC_DIR', ''):
         os.environ['CYLC_DIR'] = cylc_dir
 
