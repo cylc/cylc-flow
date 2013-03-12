@@ -80,7 +80,7 @@ else:
     which = "graphed tasks"
 
 if options.tree:
-    if os.environ['LANG'] == 'C':
+    if os.environ['LANG'] == 'C' and options.box:
         print >> sys.stderr, "WARNING, ignoring -t/--tree: $LANG=C"
         options.tree = False
 
