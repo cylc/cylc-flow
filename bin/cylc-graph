@@ -155,9 +155,10 @@ import gtk, gobject
 from xdot import DotWindow
 try:
     from cylc.cylc_xdot import MyDotWindow, MyDotWindow2
-except Exception, x:
+except ImportError, x:
+    # this imports pygraphviz via cylc.graphing
     print >> sys.stderr, str(x)
-    raise SystemExit( "Cylc graphing disabled" )
+    raise SystemExit( "ERROR: please install pygraphviz." )
 
 if options.filename:
     if len(args) != 0:

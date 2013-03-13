@@ -16,37 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Cylc suite graphing module. Modules relying on this should test for 
+ImportError due to pygraphviz/graphviz not being installed."""
+
 import re
+import pygraphviz
 from TaskID import TaskID, AsyncTag
 
-class GraphvizError( Exception ):
-    """
-    Attributes:
-        message - what the problem is. 
-        TO DO: element - config element causing the problem
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
-
-# TO DO:
-# 1/ Consolidate graph-disabling tests within cylc.
-# 2/ Do we still need autoURL below?
-
-try:
-    import pygraphviz
-except ImportError:
-    # This allows us to carry on with graphing disabled if
-    # pygraphviz is not installed.
-    raise GraphvizError, 'graphviz and/or pygraphviz are not accessible.'
-
-# Not needed as 'import pygraphviz' fails if graphviz is not installed.
-#try:
-#    testG = pygraphviz.AGraph(directed=True)
-#    testG.layout()  # this invokes the pygraphviz 'dot' program
-#except ValueError:
-#    raise GraphvizError, 'graphviz is not installed or not accessible'
+# TODO: Do we still need autoURL below?
 
 ddmmhh = TaskID.DELIM_RE
 tformat = r'\\n'
