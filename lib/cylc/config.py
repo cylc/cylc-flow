@@ -656,7 +656,7 @@ class config( CylcConfigObj ):
             else:
                 print " + All tasks assigned to the 'default' queue"
 
-    def get_inheritance( self ):
+    def get_parent_lists( self ):
         return self.runtime['parents']
 
     def get_first_parent_ancestors( self ):
@@ -1259,8 +1259,8 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
+                # naked dummy task, implicit inheritance from root
                 self.naked_dummy_tasks.append( name )
-                # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
                 if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in the suite.rc)
@@ -1268,6 +1268,7 @@ class config( CylcConfigObj ):
                 if 'root' not in self.runtime['first-parent descendants']:
                     # (happens when no runtimes are defined in the suite.rc)
                     self.runtime['first-parent descendants']['root'] = []
+                self.runtime['parents'][name] = ['root']
                 self.runtime['linearized ancestors'][name] = [name, 'root']
                 self.runtime['first-parent ancestors'][name] = [name, 'root']
                 self.runtime['descendants']['root'].append(name)
