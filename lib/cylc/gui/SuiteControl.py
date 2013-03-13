@@ -30,10 +30,19 @@ from cylc.owner import is_remote_user
 from dbchooser import dbchooser
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
-from cylc.gui.SuiteControlGraph import ControlGraph
+
+try:
+    from cylc.gui.SuiteControlGraph import ControlGraph
+    from cylc.gui.graph import graph_suite_popup
+except ImportError, x:
+    # pygraphviz not installed
+    warning_dialog( "WARNING: graph view disabled\n" + str(x) ).warn() 
+    graphing_disabled = True
+else:
+    graphing_disabled = False
+
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
-from cylc.gui.graph import graph_suite_popup
 from cylc.gui.stateview import DotMaker
 from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog
 from cylc import cylc_pyro_client
@@ -300,17 +309,24 @@ class ControlApp(object):
 Main Control GUI that displays one or more views or interfaces to the suite.
     """
 
-    DEFAULT_VIEW = "graph"
-    VIEWS_ORDERED = [ "graph", "dot", "text" ]
-    VIEWS = { "graph": ControlGraph,
-              "dot": ControlLED,
-              "text": ControlTree }
-    VIEW_DESC = { "graph": "Dependency graph view",
+    DEFAULT_VIEW = "text"
+
+    VIEWS_ORDERED = [ "text", "dot" ]
+
+    VIEWS = { "text": ControlTree,
+              "dot": ControlLED }
+              
+    VIEW_DESC = { "text": "Detailed list view",
                   "dot": "Dot summary view",
-                  "text": "Detailed list view" }
-    VIEW_ICON_PATHS = { "graph": "/icons/tab-graph.xpm",
-                        "dot": "/icons/tab-led.xpm",
-                        "text": "/icons/tab-tree.xpm" }
+                  "graph" : "Dependency graph view" }
+                 
+    VIEW_ICON_PATHS = { "text": "/icons/tab-tree.xpm",
+                        "dot": "/icons/tab-led.xpm", 
+                        "graph": "/icons/tab-graph.xpm" }
+
+    if not graphing_disabled:
+        VIEWS["graph"] = ControlGraph 
+        VIEWS_ORDERED.append( "graph" )
 
     def __init__( self, suite, db, owner, host, port, pyro_timeout,
             template_vars, template_vars_file ):
@@ -352,6 +368,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start( self.menu_bar, False )
 
         self.initial_views = self.usercfg['initial views'] 
+        if graphing_disabled:
+            try:
+                self.initial_views.remove("graph")
+            except ValueError:
+                pass
+        if len(self.initial_views) == 0:
+            self.initial_views = [self.VIEWS_ORDERED[0]]
+
         self.create_tool_bar( )
         bigbox.pack_start( self.tool_bar_box, False, False )
 
@@ -2180,29 +2204,32 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        graph_view0_item = gtk.RadioMenuItem( label="1 - _Graph View" )
-        self.view_menu.append( graph_view0_item )
-        self._set_tooltip( graph_view0_item, self.VIEW_DESC["graph"] + " - primary panel" )
-        graph_view0_item._viewname = "graph"
-        graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
-
-        dot_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - _Dot View" )
-        self.view_menu.append( dot_view0_item )
-        self._set_tooltip( dot_view0_item, self.VIEW_DESC["dot"] + " - primary panel" )
-        dot_view0_item._viewname = "dot"
-        dot_view0_item.set_active( self.DEFAULT_VIEW == "dot" )
-
-        text_view0_item = gtk.RadioMenuItem( group=graph_view0_item, label="1 - _Text View" )
+        text_view0_item = gtk.RadioMenuItem( label="1 - _Text View" )
         self.view_menu.append( text_view0_item )
         self._set_tooltip( text_view0_item, self.VIEW_DESC["text"] + " - primary panel" )
         text_view0_item._viewname = "text"
         text_view0_item.set_active( self.DEFAULT_VIEW == "text" )
-
-        graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-        dot_view0_item.connect( 'toggled', self._cb_change_view0_menu )
         text_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-        self.view_menu_views0 = [ graph_view0_item, dot_view0_item, text_view0_item ]
-        
+
+        dot_view0_item = gtk.RadioMenuItem( group=text_view0_item, label="1 - _Dot View" )
+        self.view_menu.append( dot_view0_item )
+        self._set_tooltip( dot_view0_item, self.VIEW_DESC["dot"] + " - primary panel" )
+        dot_view0_item._viewname = "dot"
+        dot_view0_item.set_active( self.DEFAULT_VIEW == "dot" )
+        dot_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+
+        graph_view0_item = gtk.RadioMenuItem( group=text_view0_item, label="1 - _Graph View" )
+        self.view_menu.append( graph_view0_item )
+        self._set_tooltip( graph_view0_item, self.VIEW_DESC["graph"] + " - primary panel" )
+        graph_view0_item._viewname = "graph"
+        graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
+        graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
+ 
+        if graphing_disabled:
+            graph_view0_item.set_sensitive(False)
+
+        self.view_menu_views0 = [ text_view0_item, dot_view0_item, graph_view0_item ]
+       
         self.views_option_menuitems = [ gtk.MenuItem(  "1 - _Options" ) ]
         self.views_option_menus = [gtk.Menu()]
         self.views_option_menuitems[0].set_submenu( self.views_option_menus[0] )
@@ -2218,11 +2245,11 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         no_view1_item._viewname = "None"
         no_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Grap_h View" )
-        self.view_menu.append( graph_view1_item )
-        self._set_tooltip( graph_view1_item, self.VIEW_DESC["graph"] + " - secondary panel" )
-        graph_view1_item._viewname = "graph"
-        graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
+        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Te_xt View" )
+        self.view_menu.append( text_view1_item )
+        self._set_tooltip( text_view1_item, self.VIEW_DESC["text"] + " - secondary panel" )
+        text_view1_item._viewname = "text"
+        text_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
         dot_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Dot _View" )
         self.view_menu.append( dot_view1_item )
@@ -2230,16 +2257,16 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         dot_view1_item._viewname = "dot"
         dot_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        text_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Te_xt View" )
-        self.view_menu.append( text_view1_item )
-        self._set_tooltip( text_view1_item, self.VIEW_DESC["text"] + " - secondary panel" )
-        text_view1_item._viewname = "text"
-        text_view1_item.connect( 'toggled', self._cb_change_view1_menu )
+        graph_view1_item = gtk.RadioMenuItem( group=no_view1_item, label="2 - Grap_h View" )
+        self.view_menu.append( graph_view1_item )
+        self._set_tooltip( graph_view1_item, self.VIEW_DESC["graph"] + " - secondary panel" )
+        graph_view1_item._viewname = "graph"
+        graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        self.view_menu_views1 = [ no_view1_item,
-                                  graph_view1_item,
-                                  dot_view1_item,
-                                  text_view1_item ]
+        if graphing_disabled:
+            graph_view1_item.set_sensitive(False)
+
+        self.view_menu_views1 = [ no_view1_item, text_view1_item, dot_view1_item, graph_view1_item ]
 
         self.views_option_menuitems.append( gtk.MenuItem(  "2 - O_ptions" ) )
         self.views_option_menus.append( gtk.Menu() )
@@ -2343,6 +2370,10 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         gns_item = gtk.MenuItem( '_Namespaces' )
         graphmenu.append( gns_item )
         gns_item.connect( 'activate', self.run_suite_graph, True )
+
+        if graphing_disabled:
+            gtree_item.set_sensitive(False)
+            gns_item.set_sensitive(False)
 
         list_item = gtk.ImageMenuItem( '_List' )
         img = gtk.image_new_from_stock(  gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU )
