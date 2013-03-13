@@ -31,7 +31,8 @@ import stat
 from jobfile import jobfile
 import socket
 from subprocess import Popen, PIPE
-from cylc.owner import user
+from cylc.owner import user, is_remote_user
+from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
 
 class job_submit(object):
@@ -66,7 +67,7 @@ class job_submit(object):
         remote_host = xconfig['host']
         task_owner = xconfig['owner']
 
-        if remote_host or task_owner:
+        if is_remote_host(remote_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
             self.local = False
             if task_owner:
