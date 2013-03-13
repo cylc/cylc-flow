@@ -87,7 +87,7 @@ elif method == 'address':
 elif method == 'hardwired':
     if not hardwired:
         sys.exit( 'ERROR, no hardwired hostname is configured' )
-    suite_host = manual
+    suite_host = hardwired
 else:
     sys.exit( 'ERROR, unknown host method: ' + method )
  
