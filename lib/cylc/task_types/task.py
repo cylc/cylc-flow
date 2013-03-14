@@ -280,7 +280,7 @@ class task( object ):
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
         self.record_db_update("task_states", self.name, self.c_time, status="submitted")
-        self.log( 'NORMAL', "job submitted" )
+        #self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         handler = self.event_handlers['submitted']
@@ -325,7 +325,7 @@ class task( object ):
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
         self.record_db_event(event="failed", message=reason)
-        self.log( 'CRITICAL', reason )
+        #self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
         if handler:
             self.log( 'NORMAL', "Queuing failed event handler" )
@@ -335,7 +335,7 @@ class task( object ):
         self.state.set_status( 'submit-failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
         self.record_db_event(event="submit failed", message=reason)
-        self.log( 'CRITICAL', reason )
+        #self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
             self.log( 'NORMAL', "Queuing submission_failed event handler" )
@@ -776,13 +776,26 @@ class task( object ):
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
-
-        # always update the suite state summary for latest message
-        flags.iflag = True
+        # log and prepend with '>' to indicate a message received
+        self.log( priority, '> ' + message )
 
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
+
+        # check if the message matches a registered output
+        if self.outputs.exists( message ):
+            if not self.outputs.is_completed( message ):
+                flags.pflag = True
+                self.outputs.set_completed( message )
+            else:
+                # This output has already been reported complete.
+                # Currently this is treated as an error condition
+                self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
+                self.log( 'WARNING', "-> " + message )
+
+        # always update the suite state summary for latest message
+        flags.iflag = True
 
         self.latest_message = message
         self.latest_message_priority = priority
@@ -807,31 +820,22 @@ class task( object ):
             self.set_submitted()
 
         elif message.startswith(self.id + ' submit_method_id='):
+            # capture and record submit method job IDs
             submit_method_id = message[len(self.id + ' submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time,
                                   submit_method_id=submit_method_id)
                                   
-        if message.startswith("Task job script received signal"):
+        elif message.startswith("Task job script received signal"):
             #capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=message)
 
-        if message == self.id + ' submission failed':
-            # (note not 'elif' here as started messages must go through
-            # the elif block below)
+        elif message == self.id + ' submission failed':
             # Received a 'task submission failed' message
             try:
                 # Is there a retry lined up for this task?
                 self.sub_retry_delay = float(self.sub_retry_delays.popleft())
             except IndexError:
                 # There is no submission retry lined up: definitive failure.
-
-                # TODO: submission failure should really be a distinct
-                # state as failure triggering is for task failure  recovery.
-                # OR as here, just set the task to the failed state but
-                # don't add an output (unlike for 'task failed') so that
-                # other tasks cannot trigger off job submission failure.
-                # (but this may be confusing for users: task is failed,
-                # but why isn't my failure trigger working?)
                 self.set_submit_failed( message )
             else:
                 # There is a retry lined up
@@ -849,9 +853,19 @@ class task( object ):
                     self.log( 'NORMAL', "Queuing submission retry event handler" )
                     self.__class__.event_queue.put( ('submission_retry', handler, self.id, 'task retrying') )
  
+        elif message == self.id + ' succeeded':
+            # Task has succeeded
+            self.succeeded_time = task.clock.get_datetime()
+            self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
+            if not self.outputs.all_completed():
+                # Reported success before all registered outputs were completed.
+                # Currently this is treated as an error condition.
+                self.set_failed( 'succeeded before all outputs were completed' )
+            else:
+                # Set state to 'succeeded' and handle succeeded events
+                self.set_succeeded_handler()
+
         elif message == self.id + ' failed':
-            # (note not 'elif' here as started messages must go through
-            # the elif block below)
             # Received a 'task failed' message
             flags.pflag = True
             try:
@@ -882,36 +896,6 @@ class task( object ):
                     self.log( 'NORMAL', "Queuing retry event handler" )
                     self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
-        if message == self.id + ' submission failed':
-            self.set_submit_failed( message )
-
-        elif self.outputs.exists( message ):
-            # Received a registered internal output message
-            # (this includes 'task succeeded')
-            if not self.outputs.is_completed( message ):
-                flags.pflag = True
-                self.log( priority,  message )
-                self.outputs.set_completed( message )
-                if message == self.id + ' succeeded':
-                    # Task has succeeded
-                    self.succeeded_time = task.clock.get_datetime()
-                    self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
-                    if not self.outputs.all_completed():
-                        # Reported success before all registered outputs were completed.
-                        # Currently this is treated as an error condition.
-                        self.set_failed( 'succeeded before all outputs were completed' )
-                    else:
-                        # Set state to 'succeeded' and handle succeeded events
-                        self.set_succeeded_handler()
-            else:
-                # This output has already been reported complete.
-                # Currently this is treated as an error condition
-                self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
-                self.log( 'WARNING', "-> " + message )
-        else:
-            # A general unregistered progress message: log with a '*' prefix
-            message = '*' + message
-            self.log( priority, message )
 
     def update( self, reqs ):
         for req in reqs.get_list():

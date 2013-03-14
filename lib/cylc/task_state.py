@@ -36,6 +36,8 @@ class TaskStateError( Exception ):
 class task_state(object):
 
     legal = [ 'waiting',
+              'runahead', 
+              'held',
               'queued',
               'submitting',
               'submitted',
@@ -43,9 +45,7 @@ class task_state(object):
               'running',
               'succeeded',
               'failed',
-              'retrying',
-              'held',
-              'runahead' ]
+              'retrying' ]
 
     @classmethod
     def is_legal( cls, state ):

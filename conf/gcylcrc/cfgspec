@@ -1,17 +1,20 @@
+# This is the ConfigObj cfgspec for gcylc user configuration:
+# legal items and default values for $HOME/.cylc/gcylc.rc
 
-# gcylc user configuration defaults
+# Views to load at start up.
+# One or two of "text", "dot", "graph".
+initial views = force_list( default=list("text", "dot") )
 
-# suport multiple palettes rather than just allowing users to override
-# a single default palette, so that we can have pre-configured high
-# contrast and color-blind palettes, for example.
+# Task state color themes are defined in
+#   $CYLC_DIR/conf/gcylcrc/themes.rc
+# (note the "default" theme MUST be defined in themes.rc)
+# Custom user themes in
+#   $HOME/.cylc/gcylc.rc
 
-use theme = string( default="classic" )
-
-initial views = force_list( default=list("text") )
-
+use theme = string( default="default" )
 [themes]
     [[__many__]]
-        inherit = string( default=None )
-        defaults = force_list( default=list() )
-        __many__ = force_list( default=list() )
+        inherit = string( default="default" )
+        defaults = force_list( default=None )
+        __many__ = force_list( default=None )
 

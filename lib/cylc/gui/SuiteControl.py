@@ -2191,15 +2191,15 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         theme_item.set_submenu(thememenu)
 
         theme_items = {}
-        theme = "classic"
+        theme = "default"
         theme_items[theme] = gtk.RadioMenuItem( label=theme )
         thememenu.append( theme_items[theme] )
         self._set_tooltip( theme_items[theme], theme + " task state theme" )
         theme_items[theme].theme_name = theme
         for theme in self.usercfg['themes']:
-            if theme == "classic":
+            if theme == "default":
                 continue
-            theme_items[theme] = gtk.RadioMenuItem( group=theme_items['classic'], label=theme )
+            theme_items[theme] = gtk.RadioMenuItem( group=theme_items['default'], label=theme )
             thememenu.append( theme_items[theme] )
             self._set_tooltip( theme_items[theme], theme + " task state theme" )
             theme_items[theme].theme_name = theme
