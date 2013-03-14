@@ -42,7 +42,6 @@ from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
-from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
 from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
@@ -51,10 +50,17 @@ from C3MRO import C3
 
 try:
     import graphing
-except:
+except ImportError:
     graphing_disabled = True
 else:
     graphing_disabled = False
+
+try:
+    from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
+except ImportError:
+    jinja2_disabled = True
+else:
+    jinja2_disabled = False
 
 class SuiteConfigError( Exception ):
     """
@@ -136,21 +142,30 @@ class config( CylcConfigObj ):
         except IncludeFileError, x:
             raise SuiteConfigError( str(x) )
 
-        # handle Jinja2 expressions
-        try:
-            suiterc = Jinja2Process( flines, self.dir, template_vars,
-                    template_vars_file, self.verbose )
-        except TemplateSyntaxError, x:
-            lineno = x.lineno + 1  # (flines array starts from 0)
-            print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
-            print >> sys.stderr, flines[x.lineno]
-            raise SystemExit(str(x))
-        except TemplateError, x:
-            print >> sys.stderr, 'Jinja2 Template Error'
-            raise SystemExit(x)
-        except TypeError, x:
-            print >> sys.stderr, 'Jinja2 Type Error'
-            raise SystemExit(x)
+        if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
+            # Jinja2 template processing, if first line is "#![jJ]inja2"
+            if jinja2_disabled:
+                print >> sys.stderr, 'ERROR: This is a "#!jinja2" suite, but Jinja2 is not installed'
+                raise SuiteConfigError( 'Aborting (Jinja2 required).')
+            if verbose:
+                print "Processing the suite with Jinja2"
+
+            try:
+                suiterc = Jinja2Process( flines, self.dir, template_vars, template_vars_file, self.verbose )
+            except TemplateSyntaxError, x:
+                lineno = x.lineno + 1  # (flines array starts from 0)
+                print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
+                print >> sys.stderr, flines[x.lineno]
+                raise SystemExit(str(x))
+            except TemplateError, x:
+                print >> sys.stderr, 'Jinja2 Template Error'
+                raise SystemExit(x)
+            except TypeError, x:
+                print >> sys.stderr, 'Jinja2 Type Error'
+                raise SystemExit(x)
+        else:
+            # plain cylc suite definition
+            suiterc = flines
 
         # handle cylc continuation lines
         suiterc = join( suiterc )
