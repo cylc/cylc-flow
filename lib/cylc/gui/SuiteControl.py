@@ -1008,6 +1008,7 @@ The Cylc Suite Engine.
 
         if states[ task_id ][ 'state' ] == 'waiting' or \
                 states[ task_id ][ 'state' ] == 'submitting' or \
+                states[ task_id ][ 'state' ] == 'submit-failed' or \
                 states[ task_id ][ 'state' ] == 'queued':
             view = False
             reasons.append( task_id + ' has not started running yet' )
@@ -1135,6 +1136,12 @@ The Cylc Suite Engine.
         reset_failed_item.set_image(reset_img)
         reset_menu.append( reset_failed_item )
         reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'failed' )
+
+        reset_failed_item = gtk.ImageMenuItem( '"submit-failed"' )
+        reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
+        reset_failed_item.set_image(reset_img)
+        reset_menu.append( reset_failed_item )
+        reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'submit-failed' )
 
         spawn_item = gtk.ImageMenuItem( 'Force spawn' )
         img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )

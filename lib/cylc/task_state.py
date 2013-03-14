@@ -39,6 +39,7 @@ class task_state(object):
               'queued',
               'submitting',
               'submitted',
+              'submit-failed',
               'running',
               'succeeded',
               'failed',
@@ -56,6 +57,7 @@ class task_state(object):
             'queued'     : '_queued',
             'submitting' : 'su_bmitting',
             'submitted'  : 'sub_mitted',
+            'submit-failed'  : 'submit-f_ailed',
             'running'    : '_running',
             'succeeded'  : '_succeeded',
             'failed'     : '_failed',
@@ -69,6 +71,7 @@ class task_state(object):
             'queued'     : "\033[1;38;44m",
             'submitting' : "\033[1;32m",
             'submitted'  : "\033[1;33m",
+            'submit-failed'  : "\033[1;34m",
             'running'    : "\033[1;37;42m",
             'succeeded'  : "\033[0m",
             'failed'     : "\033[1;37;41m",
@@ -146,6 +149,12 @@ class task_state(object):
 
     def is_submitted( self ):
         if self.state[ 'status' ] == 'submitted':
+            return True
+        else:
+            return False
+
+    def is_submit_failed( self ):
+        if self.state[ 'status' ] == 'submit-failed':
             return True
         else:
             return False

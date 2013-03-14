@@ -332,6 +332,7 @@ class scheduler(object):
             try:
                 self.control_commands[ name ]( *args )
             except Exception, x:
+                # don't let a bad command bring the suite down
                 print >> sys.stderr, x
                 self.log.warning( 'Queued command failed: ' + name + '(' + ','.join( [ str(a) for a in args ]) + ')' )
             else:
@@ -926,7 +927,7 @@ class scheduler(object):
             self.event_queue = Queue()
             task.task.event_queue = self.event_queue
             self.evworker = event_batcher( 
-                    'Event Queue', self.event_queue, 
+                    'Event Handler Submission', self.event_queue, 
                     self.config['cylc']['event handler execution']['batch size'],
                     self.config['cylc']['event handler execution']['delay between batches'],
                     self.suite,
@@ -1834,7 +1835,8 @@ class scheduler(object):
             itask.set_trigger_now(True)
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
+        # we only allow resetting to a subset of available task states
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'submit-failed', 'held', 'spawn' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         found = False
         for itask in self.pool.get_tasks():
@@ -1860,6 +1862,8 @@ class scheduler(object):
             itask.reset_state_succeeded()
         elif state == 'failed':
             itask.reset_state_failed()
+        elif state == 'submit-failed':
+            itask.reset_state_submit_failed()
         elif state == 'held':
             itask.reset_state_held()
         elif state == 'spawn':

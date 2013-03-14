@@ -35,7 +35,7 @@ class pool(object):
 
         self.jobqueue = Queue.Queue()
 
-        self.worker = task_batcher( 'Job Queue', self.jobqueue, 
+        self.worker = task_batcher( 'Job Submission', self.jobqueue, 
                 config['cylc']['job submission']['batch size'],
                 config['cylc']['job submission']['delay between batches'],
                 self.wireless, self.run_mode, self.verbose )

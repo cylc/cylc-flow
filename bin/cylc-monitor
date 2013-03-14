@@ -29,6 +29,7 @@ if '--use-ssh' in sys.argv[1:]:
     sys.exit( "No '--use-ssh': this command requires a local terminal." )
 
 import os, re
+from copy import copy
 from time import sleep
 from cylc.cycle_time import ct, CycleTimeError
 from cylc import cylc_pyro_client
@@ -59,14 +60,14 @@ parser.remove_option("-f" ) # don't need force
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
 states = task_state.legal
-key = ' '.join(states)
-header = ' ' * len(key)
 
-
+key = ''
 for state in states:
     ctrl = task_state.ctrl[state] 
     ctrl_end = task_state.ctrl_end
-    key = re.sub( state, ctrl + state + ctrl_end, key )
+    key += ctrl + state + ctrl_end + ' '
+key = key.rstrip()
+header = ' ' * len(' '.join(states)) # must ignore ctrl chars
 
 alerted = False
 alerted2 = False
@@ -223,7 +224,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:                            ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:                                          ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             if run_mode != 'live':
                 foo = 'SIMULATION:'
@@ -234,15 +235,15 @@ try:
                 blit.append( baz )
 
             if stopping:
-                foo = '____________________________________________________________________S_T_O_P_P_I_N_G'
+                foo = '__________________________________________________________________________________S_T_O_P_P_I_N_G'
             elif paused:
-                foo = '________________________________________________________________________P_A_U_S_E_D'
+                foo = '______________________________________________________________________________________P_A_U_S_E_D'
             elif will_pause_at:
-                foo = '_____________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                foo = '___________________________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                foo = '___________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                foo = '_________________________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                foo = '______________________________________________________________________R_U_N_N_I_N_G'
+                foo = '____________________________________________________________________________________R_U_N_N_I_N_G'
          
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )

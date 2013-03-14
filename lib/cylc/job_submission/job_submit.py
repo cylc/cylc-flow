@@ -216,8 +216,10 @@ class job_submit(object):
         if not self.local:
             # direct the local jobfile across the ssh tunnel via stdin
             command = command + ' < ' + self.local_jobfile_path
-        print 'SUBMISSION:', command
-
+        print 'SUBMIT #' + \
+                str(self.jobconfig['absolute submit number']) + '(' + \
+                str(self.jobconfig['submission try number']) + ',' + \
+                str( self.jobconfig['try number']) + '):', command
         try:
             popen = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
             # To test sequential job submission (pre cylc-4.5.1)

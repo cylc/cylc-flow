@@ -188,7 +188,7 @@ class task_batcher( batcher ):
             psinfo.append( (p, itask, itask.id, launcher) ) 
 
     def item_failed_hook( self, itask, info, msg ):
-        itask.incoming( 'CRITICAL', itask.id + ' failed' )
+        itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
         batcher.item_failed_hook( self, itask, info, msg )
  
     def item_succeeded_hook( self, p, itask, info, launcher, out, err ):

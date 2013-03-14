@@ -25,11 +25,9 @@
 # .   pass
 # . foo = classmethod( foo )
 
-# TASK PROXY BASE CLASS:
-
 import os, sys, re
 import datetime
-from copy import deepcopy
+from copy import copy, deepcopy
 from random import randrange
 from collections import deque
 from cylc import task_state
@@ -56,6 +54,21 @@ def displaytd( td ):
 
 
 class task( object ):
+    """The cylc task proxy base class"""
+
+    # RETRY LOGIC:
+    #  1) ABSOLUTE SUBMIT NUMBER increments every time a task is
+    #  submitted, manually or automatically by (submission or execution)
+    # retries; whether or not the task actually begins executing, and is
+    # appended to the task log root filename.
+    #  2) SUBMISSION TRY NUMBER increments when task job submission
+    # fails, if submission retries are configured, but resets to 1 if
+    # the task begins executing; and is used for accounting purposes.
+    #  3) EXECUTION TRY NUMBER increments only when task execution fails,
+    # if execution retries are configured; and is passed to task
+    # environments to allow changed behaviour after previous failures.
+    # 
+    # Currently on manual re-triggering...
 
     clock = None
     intercycle = False
@@ -119,7 +132,7 @@ class task( object ):
 
         class_vars = {}
         self.state = task_state.task_state( state )
-        self.trigger_now = False
+        self.trigger_now = False # used by clock-triggered tasks
 
         # Count instances of each top level object derived from task.
         # Top level derived classes must define:
@@ -140,8 +153,14 @@ class task( object ):
         self.succeeded_time = None
         self.etc = None
         self.to_go = None
+
+        self.retries_configured = False
+
         self.try_number = 1
         self.retry_delay_timer_start = None
+
+        self.sub_try_number = 1
+        self.sub_retry_delay_timer_start = None
 
         self.message_queue = msgqueue()
         self.db_queue = []
@@ -242,8 +261,13 @@ class task( object ):
                      foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
                      if diff >= foo:
                         ready = True
-                else:
+                elif self.sub_retry_delay_timer_start:
+                     diff = task.clock.get_datetime() - self.sub_retry_delay_timer_start
+                     foo = datetime.timedelta( 0,0,0,0,self.sub_retry_delay,0,0 )
+                     if diff >= foo:
                         ready = True
+                else:
+                    ready = True
         return ready
 
     def get_resolved_dependencies( self ):
@@ -271,6 +295,9 @@ class task( object ):
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
+        # if started running, submission must have been successful so reset submission try number
+        self.sub_try_number = 0
+        self.sub_retry_delays = copy( self.sub_retry_delays_orig )
         handler = self.event_handlers['started']
         if handler:
             self.log( 'NORMAL', "Queuing started event handler" )
@@ -304,9 +331,9 @@ class task( object ):
             self.log( 'NORMAL', "Queuing failed event handler" )
             self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
 
-    def set_submit_failed( self, reason='job submission failed' ):
-        self.state.set_status( 'failed' )
-        self.record_db_update("task_states", self.name, self.c_time, status="failed")
+    def set_submit_failed( self, reason="" ):
+        self.state.set_status( 'submit-failed' )
+        self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
         self.record_db_event(event="submit failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
@@ -324,6 +351,13 @@ class task( object ):
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
+        self.prerequisites.set_all_satisfied()
+        self.unfail()
+        self.outputs.set_all_incomplete()
+
+    def reset_state_submit_failed( self ):
+        self.state.set_status( 'submit-failed' )
+        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="submit-failed")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -378,6 +412,33 @@ class task( object ):
             else:
                 target[key] = val
 
+
+    def _get_retry_delays( self, cfg, descr ):
+        """Check retry delay config (execution and submission) and return
+        a deque of individual delay values (multipliers expanded out)."""
+
+        # coerce single values to list (see warning in conf/suiterc/runtime.spec)
+        if not isinstance( cfg, list ):
+            cfg = [ cfg ]
+
+        values = []
+        for item in cfg:
+            try:
+                try:
+                    mult, val = item.split('*')
+                except ValueError:
+                    # too few values to unpack (single item)
+                    values.append(float(item))
+                else:
+                    # mult * val
+                    values += int(mult) * [float(val)]
+            except ValueError, x:
+                # illegal values for mult and/or val
+                print >> sys.stderr, x
+                print >> sys.stderr, "WARNING ignoring " + descr
+                print >> sys.stderr, "(values must be FLOAT or INT*FLOAT)"
+        return deque(values)
+
     def set_from_rtconfig( self, cfg={} ):
         # [runtime] settings that are not involved in job submission may
         # also be overridden by a broadcast:
@@ -390,39 +451,23 @@ class task( object ):
         self.title = rtconfig['title']
         self.description = rtconfig['description']
 
-        if self.try_number == 1:
+        if not self.retries_configured:
             # configure retry delays before the first try
+            self.retries_configured = True
             if self.__class__.run_mode == 'live' or \
                 ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable retries'] ) or \
                 ( self.__class__.run_mode == 'dummy' and not rtconfig['dummy mode']['disable retries'] ):
-
                 # note that a *copy* of the retry delays list is needed
                 # so that all instances of the same task don't pop off
-                # the same deque (copy of rtconfig above solves this).
-
-                # expand out 'n*d' list items
-
-                rd = rtconfig['retry delays']
-                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
-                if not isinstance( rd, list ):
-                    rd = [ rd ]
-
-                dlist = []
-                for item in rd:
-                    try:
-                        try:
-                            mult, val = item.split('*')
-                        except ValueError:
-                            dlist.append(float(item))
-                        else:
-                            dlist += int(mult) * [float(val)]
-                    except ValueError, x:
-                        print >> sys.stderr, x
-                        raise SystemExit( "ERROR, retry delay values must be FLOAT or INT*FLOAT" )
-
-                self.retry_delays = deque( dlist )
+                # the same deque (but copy of rtconfig above solves this).
+                self.retry_delays = self._get_retry_delays( rtconfig['retry delays'], 'retry delays' )
+                self.sub_retry_delays_orig = self._get_retry_delays( rtconfig['job submission']['retry delays'], '[job submission] retry delays' )
             else:
                 self.retry_delays = deque()
+                self.sub_retry_delays_orig = deque()
+            # retain the original submission retry deque for re-use if
+            # execution fails (then submission tries start over).
+            self.sub_retry_delays = copy( self.sub_retry_delays_orig )
 
         rrange = rtconfig['simulation mode']['run time range']
         ok = True
@@ -450,6 +495,7 @@ class task( object ):
                 'failed'    : rtconfig['event hooks']['failed handler'],
                 'warning'   : rtconfig['event hooks']['warning handler'],
                 'retry'     : rtconfig['event hooks']['retry handler'],
+                'submission retry'   : rtconfig['event hooks']['submission retry handler'],
                 'submission failed'  : rtconfig['event hooks']['submission failed handler'],
                 'submission timeout' : rtconfig['event hooks']['submission timeout handler'],
                 'execution timeout'  : rtconfig['event hooks']['execution timeout handler']
@@ -467,6 +513,7 @@ class task( object ):
                 'failed'    : None,
                 'warning'   : None,
                 'retry'     : None,
+                'submission retry'   : None,
                 'submission failed'  : None,
                 'submission timeout' : None,
                 'execution timeout'  : None
@@ -483,7 +530,7 @@ class task( object ):
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
     
-        # TO DO: REPLACE DEEPCOPY():
+        # TODO: REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
         self.set_from_rtconfig( rtconfig )
@@ -607,7 +654,9 @@ class task( object ):
                 'command scripting'      : command,
                 'post-command scripting' : postcommand,
                 'namespace hierarchy'    : self.namespace_hierarchy,
+                'submission try number'  : self.sub_try_number,
                 'try number'             : self.try_number,
+                'absolute submit number' : self.submit_num,
                 'is cold-start'          : self.is_coldstart,
                 'share path'             : share_dir, 
                 'work path'              : work_dir,
@@ -766,12 +815,45 @@ class task( object ):
             #capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=message)
 
-        if message == self.id + ' failed':
+        if message == self.id + ' submission failed':
+            # (note not 'elif' here as started messages must go through
+            # the elif block below)
+            # Received a 'task submission failed' message
+            try:
+                # Is there a retry lined up for this task?
+                self.sub_retry_delay = float(self.sub_retry_delays.popleft())
+            except IndexError:
+                # There is no submission retry lined up: definitive failure.
+
+                # TODO: submission failure should really be a distinct
+                # state as failure triggering is for task failure  recovery.
+                # OR as here, just set the task to the failed state but
+                # don't add an output (unlike for 'task failed') so that
+                # other tasks cannot trigger off job submission failure.
+                # (but this may be confusing for users: task is failed,
+                # but why isn't my failure trigger working?)
+                self.set_submit_failed( message )
+            else:
+                # There is a retry lined up
+                self.log( "NORMAL", "Setting submission retry delay: " + str(self.sub_retry_delay) +  " minutes" )
+                self.sub_retry_delay_timer_start = task.clock.get_datetime()
+                self.sub_try_number += 1
+                self.state.set_status( 'retrying' )
+                self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
+                self.record_db_event(event="retrying")
+                self.prerequisites.set_all_satisfied()
+                self.outputs.set_all_incomplete()
+                # Handle submission retry events
+                handler = self.event_handlers['submission retry']
+                if handler:
+                    self.log( 'NORMAL', "Queuing submission retry event handler" )
+                    self.__class__.event_queue.put( ('submission_retry', handler, self.id, 'task retrying') )
+ 
+        elif message == self.id + ' failed':
             # (note not 'elif' here as started messages must go through
             # the elif block below)
             # Received a 'task failed' message
             flags.pflag = True
-            self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
                 self.retry_delay = float(self.retry_delays.popleft())
@@ -799,6 +881,9 @@ class task( object ):
                 if handler:
                     self.log( 'NORMAL', "Queuing retry event handler" )
                     self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
+
+        if message == self.id + ' submission failed':
+            self.set_submit_failed( message )
 
         elif self.outputs.exists( message ):
             # Received a registered internal output message
@@ -900,7 +985,7 @@ class task( object ):
         # to strip off fraction of seconds:
         # timedelta = re.sub( '\.\d*$', '', timedelta )
 
-        # TO DO: the following section could probably be streamlined a bit
+        # TODO: the following section could probably be streamlined a bit
         if self.__class__.mean_total_elapsed_time:
             met = self.__class__.mean_total_elapsed_time
             summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
