@@ -63,7 +63,7 @@ class xupdater(threading.Thread):
         self.filter_exclude = None
         self.state_filter = None
 
-        self.families = []
+        self.descendants = []
         self.family_nodes = []
         self.graphed_family_nodes = []
         self.live_graph_movie = False
@@ -114,7 +114,8 @@ class xupdater(threading.Thread):
             # on reconnection retrieve static info
             self.family_nodes = self.sinfo.get( 'family nodes' )
             self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
-            self.families = self.sinfo.get( 'first-parent descendants' )
+            self.descendants = self.sinfo.get( 'first-parent descendants' )
+            self.ancestors = self.sinfo.get('first-parent ancestors' )
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except:
             # connection lost
@@ -167,7 +168,7 @@ class xupdater(threading.Thread):
 
     def get_summary( self, task_id ):
         return get_id_summary( task_id, self.state_summary,
-                               self.fam_state_summary, self.families )
+                               self.fam_state_summary, self.descendants )
 
     def update(self):
         #print "Updating"
@@ -336,7 +337,7 @@ class xupdater(threading.Thread):
                 break
             except KeyError:
                 name, tag = id.split(TaskID.DELIM)
-                if any( [name in self.families[fam] for
+                if any( [name in self.descendants[fam] for
                          fam in self.graphed_family_nodes] ):
                     # if task name is a member of a family omit it
                     #print 'Not graphing family-collapsed node', id
@@ -430,7 +431,7 @@ class xupdater(threading.Thread):
             self.graphw.remove_nodes_from( self.rem_nodes )
 
         #print '____'
-        #print self.families
+        #print self.descendants
         #print
         #print self.family_nodes
         #print 
@@ -455,7 +456,7 @@ class xupdater(threading.Thread):
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
                 name, tag = id.split(TaskID.DELIM)
-                if any( [name in self.families[fam] for
+                if any( [name in self.descendants[fam] for
                          fam in self.graphed_family_nodes] ):
                     # if task name is a member of a family omit it
                     #print 'Not graphing family-collapsed node', id
