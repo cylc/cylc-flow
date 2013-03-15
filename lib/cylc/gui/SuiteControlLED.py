@@ -86,7 +86,7 @@ LED suite control interface.
 
         task_id = name + TaskID.DELIM + ctime
 
-        is_fam = (name in self.t.families)
+        is_fam = (name in self.t.descendants)
 
         menu = self.get_right_click_menu( task_id, task_is_family=is_fam )
 
