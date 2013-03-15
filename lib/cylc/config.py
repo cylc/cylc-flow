@@ -1400,19 +1400,20 @@ class config( CylcConfigObj ):
         if group_all:
             # Group all family nodes
             for fam in members:
-                #if fam != 'root':
-                if fam not in self.closed_families:
-                    self.closed_families.append( fam )
+                if fam != 'root':
+                    if fam not in self.closed_families:
+                        self.closed_families.append( fam )
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []
         elif len(group_nodes) > 0:
             # Group chosen family nodes
             for node in group_nodes:
-                if node != 'root':
+                #if node != 'root':
                     parent = hierarchy[node][1]
                     if parent not in self.closed_families:
-                        self.closed_families.append( parent )
+                        if parent != 'root':
+                            self.closed_families.append( parent )
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:

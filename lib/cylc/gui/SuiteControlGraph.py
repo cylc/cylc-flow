@@ -174,7 +174,7 @@ Dependency graph suite control interface.
         menu.append( ungroup_rec_item )
 
         if type == 'live task':
-            is_fam = (name in self.t.families)
+            is_fam = (name in self.t.descendants)
             default_menu = self.get_right_click_menu( task_id, hide_task=True,
                                                       task_is_family=is_fam )
             for item in default_menu.get_children():
@@ -226,30 +226,28 @@ Dependency graph suite control interface.
         crop_item.set_active( self.t.crop )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        self.menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
+        menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        self.menu_filter_item.set_image(img)
-        items.append( self.menu_filter_item )
-        self.menu_filter_item.connect( 'activate', self.filter_popup )
+        menu_filter_item.set_image(img)
+        items.append( menu_filter_item )
+        menu_filter_item.connect( 'activate', self.filter_popup )
 
         self.menu_group_item = gtk.ImageMenuItem( '_Group All Families' )
         img = gtk.image_new_from_stock(  'group', gtk.ICON_SIZE_MENU )
         self.menu_group_item.set_image(img)
-        self.menu_group_item.set_sensitive( not self.t.group_all )
         items.append( self.menu_group_item )
-        self.menu_group_item.connect( 'activate', self.group_all_families, True )
+        self.menu_group_item.connect( 'activate', self.group_all, True )
 
         self.menu_ungroup_item = gtk.ImageMenuItem( '_UnGroup All Families' )
         img = gtk.image_new_from_stock(  'ungroup', gtk.ICON_SIZE_MENU )
         self.menu_ungroup_item.set_image(img)
-        self.menu_ungroup_item.set_sensitive( not self.t.ungroup_all )
         items.append( self.menu_ungroup_item )
-        self.menu_ungroup_item.connect( 'activate', self.group_all_families, False )
+        self.menu_ungroup_item.connect( 'activate', self.group_all, False )
 
-        self.menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
-        items.append( self.menu_landscape_item )
-        self.menu_landscape_item.set_active( self.t.orientation == "LR" )
-        self.menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
+        menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
+        items.append( menu_landscape_item )
+        menu_landscape_item.set_active( self.t.orientation == "LR" )
+        menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -264,6 +262,20 @@ Dependency graph suite control interface.
             if isinstance(child, gtk.HButtonBox):
                 self.xdot.vbox.remove(child)
 
+        self.group_toolbutton = gtk.ToolButton()
+        g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
+        self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.connect( 'clicked', self.group_all, True )
+        self._set_tooltip( self.group_toolbutton, "Graph View - Click to group all task families" )
+        items.append( self.group_toolbutton )
+ 
+        self.ungroup_toolbutton = gtk.ToolButton()
+        g_image = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_SMALL_TOOLBAR )
+        self.ungroup_toolbutton.set_icon_widget( g_image )
+        self.ungroup_toolbutton.connect( 'clicked', self.group_all, False )
+        self._set_tooltip( self.ungroup_toolbutton, "Graph View - Click to ungroup all task families" )
+        items.append( self.ungroup_toolbutton )
+ 
         zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
         zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
         zoomin_button.set_label( None )
@@ -308,13 +320,11 @@ Dependency graph suite control interface.
 
         return items
              
-    def group_all_families( self, w, group ):
+    def group_all( self, w, group ):
         if group:
             self.t.group_all = True
         else:
             self.t.ungroup_all = True
-        self.menu_group_item.set_sensitive( not self.t.group_all )
-        self.menu_ungroup_item.set_sensitive( not self.t.ungroup_all )
         self.t.action_required = True
         self.t.best_fit = True
 
