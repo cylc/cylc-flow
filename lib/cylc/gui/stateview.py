@@ -150,7 +150,7 @@ class tupdater(threading.Thread):
         self.global_summary = {}
         self.fam_state_summary = {}
         self.stop_summary = None
-        self.families = []
+        self.descendants = []
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
@@ -188,9 +188,8 @@ class tupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.families = self.sinfo.get('first-parent descendants' )
+            self.descendants = self.sinfo.get('first-parent descendants' )
             self.ancestors = self.sinfo.get('first-parent ancestors' )
-            self.allowed_families = self.sinfo.get('vis families' )
         except:
             # connection lost
             if debug:
@@ -551,7 +550,7 @@ class lupdater(threading.Thread):
         self.state_summary = {}
         self.global_summary = {}
         self.stop_summary = None
-        self.families = []
+        self.descendants = []
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
@@ -593,8 +592,7 @@ class lupdater(threading.Thread):
 
             # on reconnection retrieve static info
             self.ancestors = self.sinfo.get( 'first-parent ancestors' )
-            self.families = self.sinfo.get( 'first-parent descendants' )
-            self.allowed_families = self.sinfo.get( 'vis families' )
+            self.descendants = self.sinfo.get( 'first-parent descendants' )
         except:
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
@@ -644,15 +642,14 @@ class lupdater(threading.Thread):
             return False
 
         if self.should_group_families:
-            allowed_names = [i for i in self.ancestors if i != "root"]
             self.task_list = []
-            for families in self.ancestors.values():
-                for name in reversed(families):
-                    if name in allowed_names:
-                        if name not in self.task_list and name in self.families:
-                            # (exclude non first-parent family names)
-                                self.task_list.append( name )
-                        break
+            for key, val in self.ancestors.items():
+                if key == 'root':
+                    continue
+                # highest level family name (or plain task) above root
+                name = val[-2]
+                if name not in self.task_list:
+                    self.task_list.append( name )
 
         self.task_list.sort()
         if self.filter:
@@ -821,7 +818,7 @@ class lupdater(threading.Thread):
             tooltip.set_text(task_id)
             return True
         text = get_id_summary( task_id, self.state_summary,
-                               self.fam_state_summary, self.families )
+                               self.fam_state_summary, self.descendants )
         if text == task_id:
             return False
         tooltip.set_text(text)
