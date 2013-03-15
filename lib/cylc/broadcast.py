@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -19,10 +19,12 @@
 import Pyro.core
 from cycle_time import ct, CycleTimeError
 from copy import deepcopy
+from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
+from rundb import RecordBroadcastObject
 from validate import Validator
 
 class broadcast( Pyro.core.ObjBase ):
@@ -32,10 +34,13 @@ class broadcast( Pyro.core.ObjBase ):
     #self.settings[ 'all' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
     #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
 
-    def __init__( self, family_hierarchy ):
+    def __init__( self, linearized_ancestors ):
         self.log = logging.getLogger('main')
         self.settings = {}
-        self.family_hierarchy = family_hierarchy
+        self.last_settings = self.get_dump()
+        self.new_settings = False
+        self.settings_queue = []
+        self.linearized_ancestors = linearized_ancestors
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', 'runtime.spec')
         Pyro.core.ObjBase.__init__(self)
 
@@ -128,6 +133,11 @@ class broadcast( Pyro.core.ObjBase ):
             if tmp == self.settings:
                 break
 
+        if self.get_dump() != self.last_settings:
+            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.last_settings = self.settings
+            self.new_settings = True
+
         return ( True, 'OK' )
 
     def get( self, task_id=None ):
@@ -135,7 +145,7 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, tag = task_id.split('%')
+        name, tag = task_id.split( TaskID.DELIM )
 
         apply = {}
         for cycle in [ 'all', tag ]:
@@ -143,11 +153,11 @@ class broadcast( Pyro.core.ObjBase ):
             if cycle not in self.settings:
                 continue
             nslist = []
-            for ns in self.family_hierarchy[name]:
+            for ns in self.linearized_ancestors[name]:
                 if ns in self.settings[cycle]:
                     nslist.append( ns )
             # nslist contains namespaces from current broadcast settings
-            # that are in the task's family tree, in family hierarchy
+            # that are in the task's family tree, in linearized ancestor
             # order, e.g. ['ops_atovs', 'OPS', 'root' ] means a
             # broadcast setting is in place for root, OPS, and
             # ops_atovs. Use the highest level one (i.e. a task specific
@@ -171,10 +181,27 @@ class broadcast( Pyro.core.ObjBase ):
 
     def clear( self ):
         self.settings = {}
+        if self.get_dump() != self.last_settings:
+            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.last_settings = self.settings
+            self.new_settings = True
 
     def dump( self, FILE ):
         # write broadcast variables to the suite state dump file
         FILE.write( pickle.dumps( self.settings) + '\n' )
+
+    def get_db_ops(self):
+        ops = []
+        for d in self.settings_queue:
+            if d.to_run:
+                ops.append(d)
+                d.to_run = False
+        self.new_settings = False
+        return ops
+    
+    def get_dump( self ):
+        # return the broadcast variables as written to the suite state dump file
+        return pickle.dumps( self.settings ) + '\n'
 
     def load( self, pickled_settings ):
         self.settings = pickle.loads( pickled_settings )

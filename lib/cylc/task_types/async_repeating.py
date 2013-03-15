@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ class async_repeating( nopid, task ):
 
     used_outputs = {}
     
-    def __init__( self, state ):
+    def __init__( self, state, validate = False ):
         # Call this AFTER derived class initialisation.
         # Top level derived classes must define self.id.
         self.env_vars['ASYNCID'] = 'UNSET'
@@ -50,7 +50,7 @@ class async_repeating( nopid, task ):
         else:
             self.asyncid = 'UNSET'
         self.env_vars[ 'ASYNCID' ] = self.asyncid 
-        task.__init__( self, state )
+        task.__init__( self, state, validate )
 
     def check_requisites( self ):
         for reqs in self.prerequisites.container:

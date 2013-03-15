@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from cylc.TaskID import TaskID
 
 import sys, re
 
@@ -85,7 +87,7 @@ where output x of foo may also have an offset:
                 # just the given message (no cycle time offsetting to do).
                 preq = self.msg
             else:
-                preq = self.name + '%1' + ' ' + self.type
+                preq = self.name + TaskID.DELIM + '1' + ' ' + self.type
         elif self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
@@ -108,6 +110,6 @@ where output x of foo may also have an offset:
                 # implicit output
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = self.name + '%' + ctime + ' ' + self.type
+                preq = self.name + TaskID.DELIM + ctime + ' ' + self.type
         return preq
 

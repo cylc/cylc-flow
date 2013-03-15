@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+from time import sleep, time
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+from cylc.CylcOptionParsers import cop
+from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
+from cylc.global_config import globalcfg
+
+
+gcfg = globalcfg()
+default_run_dir = gcfg.cfg['task hosts']['local']['run directory']
+
+parser = cop( usage = """cylc suite-state REG [OPTIONS]
+
+Print task states retrieved from a suite database. Can be used to query if a 
+task in a suite has reached a particular state by using the task, cycle and 
+status options.
+
+Example usage:
+
+cylc suite-state REG --task=TASK --cycle=CYCLE --run-dir=CYLC-RUN --status=STATUS
+
+Returns 0 if task TASK at cycle CYCLE has reached status STATUS, 1 otherwise.
+
+The command can be run in polling mode by specifying a wait time in seconds 
+using the --wait option. 
+""")
+
+parser.remove_option("-s")
+parser.remove_option("--db")
+parser.remove_option("--set-file")
+parser.remove_option("--debug")
+
+parser.add_option( "-t", "--task", 
+        help="Specify a task to check the state of.",
+        action="store", dest="task", default=None )
+
+parser.add_option( "-c", "--cycle", 
+        help="Specify the cycle to check task states for.",
+        action="store", dest="cycle", default=None )
+
+parser.add_option( "-d", "--run-dir", 
+        help="Specify the run directory for the suite being queried.",
+        action="store", dest="run_dir", default=default_run_dir )
+
+parser.add_option( "-S", "--status", 
+        help="Specify a particular status to check for.",
+        action="store", dest="status", default=None )
+        
+parser.add_option( "-w", "--wait",
+        help="Used to specify a time (in seconds) to wait until a task achieves a particular state before exiting.",
+        action="store", dest="wait", default=False )
+
+parser.add_option( "-i", "--interval",
+        help="Specify a polling interval (in seconds) for use when in wait mode (default=5).",
+        action="store", dest="interval", default=5 )
+
+( options, args ) = parser.parse_args()
+
+suite = args[0]
+
+starttime = time()
+
+"""check wait is a number"""
+try:
+    wait = float(options.wait)
+except:
+    sys.stderr.write("wait must be a number\n")
+    sys.exit(1)
+
+"""check interval is a number"""
+try:
+    float(options.interval)
+except:
+    sys.stderr.write("interval must be a number\n")
+    sys.exit(1)
+
+if options.wait:
+    """polling mode"""
+    found = False
+    while not found and ((time() - starttime) < wait):
+        try:
+            checker = CylcSuiteDBChecker(options.run_dir, suite)
+            found = True
+        except DBNotFoundError:
+            if options.verbose:
+                sys.stdout.write("cannot connect to suite database, retrying...\n")
+            sleep(float(options.interval))
+            found = False
+else:
+    """one off mode"""
+    try:    
+        checker = CylcSuiteDBChecker(options.run_dir, suite)
+        found = True
+    except DBNotFoundError:
+        found = False
+
+if not found:
+    sys.stderr.write("suite db not found!\n")
+    sys.exit(1)
+
+if options.status and options.task and options.cycle:
+    """checking a task status"""
+    res = checker.task_state_met(options.task, options.cycle, options.status)
+    if options.wait:
+        while ((time() - starttime) < wait) and not res:
+            res = checker.task_state_met(options.task, options.cycle, options.status)
+            if not res:
+                sleep(float(options.interval))
+    sys.exit(not res)
+else:
+    """displaying query results"""
+    checker.display_maps(checker.suite_state_query(task=options.task, cycle=options.cycle, status=options.status))
+
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -34,9 +34,14 @@ from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
-from cylc.RunEventHandler import RunHandler
+from cylc.global_config import gcfg
+from cylc.owner import user
+from cylc.suite_host import hostname as suite_hostname
 import logging
-import Pyro.core
+import cylc.flags as flags
+from cylc.task_receiver import msgqueue
+import cylc.rundb
+from cylc.run_get_stdout import run_get_stdout
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -49,13 +54,13 @@ def displaytd( td ):
         res = str(td)
     return res
 
-class task( Pyro.core.ObjBase ):
+
+class task( object ):
 
     clock = None
     intercycle = False
-    suite = None
-    state_changed = True
-    progress_msg_rec = True
+
+    event_queue = None
 
     # set by the back door at startup:
     cylc_env = {}
@@ -104,11 +109,11 @@ class task( Pyro.core.ObjBase ):
         mtet_sec = sum( elt_sec ) / len( elt_sec )
         cls.mean_total_elapsed_time = datetime.timedelta( seconds=mtet_sec )
 
-    def __init__( self, state ):
+    def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
-        #  * self.id: unique identity (e.g. NAME%CYCLE for cycling tasks)
+        #  * self.id: unique identity (e.g. NAME.CYCLE for cycling tasks)
         #  * prerequisites and outputs
         #  * self.env_vars
 
@@ -124,8 +129,6 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count += 1
         self.__class__.upward_instance_count += 1
 
-        Pyro.core.ObjBase.__init__(self)
-
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
 
@@ -140,10 +143,37 @@ class task( Pyro.core.ObjBase ):
         self.try_number = 1
         self.retry_delay_timer_start = None
 
-    def plog( self, message ):
-        # print and log a low priority message
-        print self.id + ':', message
-        self.log( 'NORMAL', message )
+        self.message_queue = msgqueue()
+        self.db_queue = []
+
+        self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
+
+        
+        self.validate = validate
+        
+        # sets submit num for restarts or when triggering state prior to submission
+        if self.validate: # if in validate mode bypass db operations
+            self.submit_num = 0
+        else:
+            self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
+            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
+            submits = self.db.get_task_current_submit_num(self.name, self.c_time)
+            if submits > 0:
+                self.submit_num = submits
+                self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status()) #is this redundant?
+            else:
+                self.submit_num = 0
+
+            if not self.db.get_task_state_exists(self.name, self.c_time):
+                try:
+                    self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
+                except:
+                    pass
+            self.db.close()
+
+        self.hostname = None
+        self.owner = None
+        self.submit_method = None
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -168,10 +198,45 @@ class task( Pyro.core.ObjBase ):
         # to be garbage collected (not guaranteed to be right away). 
         self.__class__.instance_count -= 1
 
+    def record_db_event(self, event="", message=""):
+        user_at_host = ""
+        if event in ["submitted", "submit failed"]:
+            if self.owner is None:
+                self.owner = user
+            if self.hostname is None:
+                self.hostname = "localhost"
+            user_at_host = self.owner + "@" + self.hostname
+        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, user_at_host)
+        self.db_queue.append(call)
+    
+    def record_db_update(self, table, name, cycle, **kwargs):
+        call = cylc.rundb.UpdateObject(table, name, cycle, **kwargs)
+        self.db_queue.append(call)        
+
+    def record_db_state(self, name, cycle, time_created=datetime.datetime.now(), time_updated=None,
+                     submit_num=None, is_manual_submit=None, try_num=None,
+                     host=None, submit_method=None, submit_method_id=None,
+                     status=None):
+        call = cylc.rundb.RecordStateObject(name, cycle, 
+                     time_created=time_created, time_updated=time_updated,
+                     submit_num=submit_num, is_manual_submit=is_manual_submit, try_num=try_num,
+                     host=host, submit_method=submit_method, submit_method_id=submit_method_id,
+                     status=status)
+        self.db_queue.append(call)
+
+    def get_db_ops(self):
+        ops = []
+        for item in self.db_queue:
+            if item.to_run:
+                ops.append(item)
+                item.to_run = False
+        return ops
+
     def ready_to_run( self ):
         ready = False
         if self.state.is_currently('queued') or \
-            self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+            self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
+             self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
                 if self.retry_delay_timer_start:
                      diff = task.clock.get_datetime() - self.retry_delay_timer_start
                      foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
@@ -190,49 +255,64 @@ class task( Pyro.core.ObjBase ):
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
+        self.record_db_update("task_states", self.name, self.c_time, status="submitted")
         self.log( 'NORMAL', "job submitted" )
         self.submitted_time = task.clock.get_datetime()
         self.submission_timer_start = self.submitted_time
         handler = self.event_handlers['submitted']
         if handler:
-            RunHandler( 'submitted', handler, self.__class__.suite, self.id, 'task submitted' )
-
+            self.log( 'NORMAL', "Queuing submitted event handler" )
+            self.__class__.event_queue.put( ('submitted', handler, self.id, 'task submitted') )
+        
     def set_running( self ):
         self.state.set_status( 'running' )
+        self.record_db_event(event="started")
+        self.record_db_update("task_states", self.name, self.c_time, status="running")
         self.started_time = task.clock.get_datetime()
         self.started_time_real = datetime.datetime.now()
         self.execution_timer_start = self.started_time
         handler = self.event_handlers['started']
         if handler:
-            RunHandler( 'started', handler, self.__class__.suite, self.id, 'task started' )
+            self.log( 'NORMAL', "Queuing started event handler" )
+            self.__class__.event_queue.put( ('started', handler, self.id, 'task started') )
 
     def set_succeeded( self ):
         self.outputs.set_all_completed()
         self.state.set_status( 'succeeded' )
+        self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
+        self.record_db_event(event="succeeded")
         self.succeeded_time = task.clock.get_datetime()
         # don't update mean total elapsed time if set_succeeded() was called
 
     def set_succeeded_handler( self ):
         # (set_succeeded() is used by remote switch)
-        print '\n' + self.id + " SUCCEEDED"
+        self.record_db_event(event="succeeded")
         self.state.set_status( 'succeeded' )
+        self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
         handler = self.event_handlers['succeeded']
         if handler:
-            RunHandler( 'succeeded', handler, self.__class__.suite, self.id, 'task succeeded' )
-
-    def set_failed( self, reason='task failed' ):
+            self.log( 'NORMAL', "Queuing succeeded event handler" )
+            self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
+        
+    def set_failed( self, reason="" ):
         self.state.set_status( 'failed' )
+        self.record_db_update("task_states", self.name, self.c_time, status="failed")
+        self.record_db_event(event="failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
         if handler:
-            RunHandler( 'failed', handler, self.__class__.suite, self.id, reason )
+            self.log( 'NORMAL', "Queuing failed event handler" )
+            self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
 
     def set_submit_failed( self, reason='job submission failed' ):
         self.state.set_status( 'failed' )
+        self.record_db_update("task_states", self.name, self.c_time, status="failed")
+        self.record_db_event(event="submit failed", message=reason)
         self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
-            RunHandler( 'submission_failed', handler, self.__class__.suite, self.id, reason )
+            self.log( 'NORMAL', "Queuing submission_failed event handler" )
+            self.__class__.event_queue.put( ('submission_failed', handler, self.id, reason) )
 
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
@@ -243,6 +323,7 @@ class task( Pyro.core.ObjBase ):
 
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
+        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -250,6 +331,7 @@ class task( Pyro.core.ObjBase ):
     def reset_state_waiting( self ):
         # waiting and all prerequisites UNsatisified.
         self.state.set_status( 'waiting' )
+        self.record_db_update("task_states", self.name, self.c_time, status="waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -257,6 +339,8 @@ class task( Pyro.core.ObjBase ):
     def reset_state_succeeded( self ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
+        self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
+        self.record_db_event(event="succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_completed()
@@ -264,13 +348,28 @@ class task( Pyro.core.ObjBase ):
     def reset_state_failed( self ):
         # all prerequisites satisified and no outputs complete
         self.state.set_status( 'failed' )
+        self.record_db_update("task_states", self.name, self.c_time, status="failed")
+        self.record_db_event(event="failed")
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
         self.outputs.add( self.id + ' failed', completed=True )
 
     def reset_state_held( self ):
-        itask.state.set_status( 'held' )
+        self.state.set_status( 'held' )
+        self.record_db_update("task_states", self.name, self.c_time, status="held")
+
+    def reset_state_runahead( self ):
+        self.state.set_status( 'runahead' )
+        self.record_db_update("task_states", self.name, self.c_time, status="runahead")
+
+    def reset_state_submitting( self ):
+        self.state.set_status( 'submitting' )
+        self.record_db_update("task_states", self.name, self.c_time, status="submitting")
+
+    def reset_state_queued( self ):
+        self.state.set_status( 'queued' )
+        self.record_db_update("task_states", self.name, self.c_time, status="queued")
 
     def override( self, target, sparse ):
         for key,val in sparse.items():
@@ -319,7 +418,7 @@ class task( Pyro.core.ObjBase ):
                             dlist += int(mult) * [float(val)]
                     except ValueError, x:
                         print >> sys.stderr, x
-                        raise SystemExit( "ERROR, retry delay values must be INT or INT*FLOAT" )
+                        raise SystemExit( "ERROR, retry delay values must be FLOAT or INT*FLOAT" )
 
                 self.retry_delays = deque( dlist )
             else:
@@ -380,10 +479,19 @@ class task( Pyro.core.ObjBase ):
 
 
     def submit( self, dry_run=False, debug=False, overrides={} ):
+
+        self.submit_num += 1
+        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
+    
         # TO DO: REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
         self.set_from_rtconfig( rtconfig )
+
+        if len(self.env_vars) > 0:
+            # Add in any instance-specific environment variables
+            # (currently only used by async_repeating tasks)
+            rtconfig['environment'].update( self.env_vars )
 
         self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
@@ -423,41 +531,75 @@ class task( Pyro.core.ObjBase ):
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
 
-        share_dir = rtconfig['share directory']
-        work_dir  = rtconfig['work directory']
-        remote_log_dir = rtconfig['remote']['log directory']
-        if rtconfig['remote']['host'] or rtconfig['remote']['owner']:
-            # remote task
-            if rtconfig['remote']['work directory']:
-                # Replace local work directory.
-                work_dir  = rtconfig['remote']['work directory']
-            else:
-                # Use local work directory path, but replace suite
-                # owner's home dir (if present) with literal '$HOME' for
-                # interpretation on the remote host.
-                work_dir  = re.sub( os.environ['HOME'], '$HOME', work_dir )
+        # Determine task host settings now, just before job submission,
+        # because dynamic host selection may be used.
 
-            if rtconfig['remote']['share directory']:
-                # Replace local share directory.
-                share_dir  = rtconfig['remote']['share directory']
-            else:
-                # (as for work dir)
-                share_dir  = re.sub( os.environ['HOME'], '$HOME', share_dir )
+        # host may be None (= run task on suite host)
+        host = rtconfig['remote']['host']
+        
+        if host:
+            # dynamic host section:
+            #   host = $( host-select-command )
+            #   host =  ` host-select-command `
+            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
+            if m:
+                # extract the command and execute it
+                hs_command = m.groups()[1]
+                res = run_get_stdout( hs_command ) # (T/F,[lines])
+                if res[0]:
+                    # host selection command succeeded
+                    host = res[1][0]
+                    self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
+                else:
+                    # host selection command failed
+                    self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
+                    self.incoming( 'CRITICAL', self.id + " failed" )
+                    print >> sys.stderr, '\n'.join(res[1])
+                    # must still assign a name now or abort the suite?
+                    host = "NO-HOST-SELECTED"
+                self.hostname = host
 
-            # We need to retain local and remote log directory paths -
-            # the local one is used for the local task job script before
-            # it is copied to the remote host. 
-            if not remote_log_dir:
-                # (as for work dir)
-                remote_log_dir = re.sub( os.environ['HOME'], '$HOME', rtconfig['log directory'] )
+            if host not in gcfg.cfg['task hosts']:
+                # there's no specific config for this host
+                self.log( 'NORMAL', "No explicit site/user config for host " + host )
+                cfghost = 'local'
+            else:
+                # use host-specific settings
+                cfghost = host
+        else:
+            cfghost = 'local'
+            self.hostname = suite_hostname
+
+        owner = rtconfig['remote']['owner']
+        if owner is None:
+            self.owner = user
+        else:
+            self.owner = owner
+
+        if self.hostname is None:
+            self.hostname = "localhost"
+            
+        user_at_host = self.owner + "@" + self.hostname
+        
+        self.submit_method = rtconfig['job submission']['method']
+        
+        self.record_db_update("task_states", self.name, self.c_time, 
+                              submit_method=self.submit_method, host=user_at_host)
+        self.record_db_event(event="submitted")
+
+        share_dir = gcfg.get_suite_share_dir( self.suite_name, cfghost, owner )
+        work_dir  = gcfg.get_task_work_dir( self.suite_name, self.id, cfghost, owner )
+        local_log_dir = gcfg.get_task_log_dir( self.suite_name ) 
+        remote_log_dir = gcfg.get_task_log_dir( self.suite_name, cfghost, owner )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use ssh messaging'      : rtconfig['remote']['ssh messaging'],
-                'remote cylc path'       : rtconfig['remote']['cylc directory'],
+                'use login shell'        : gcfg.cfg['task hosts'][cfghost]['use login shell'],
+                'use ssh messaging'      : gcfg.cfg['task hosts'][cfghost]['use ssh messaging'],
+                'remote cylc path'       : gcfg.cfg['task hosts'][cfghost]['cylc directory'],
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -475,16 +617,16 @@ class task( Pyro.core.ObjBase ):
                 'directive connector'    : " ",
                 }
         xconfig = {
-                'owner'                  : rtconfig['remote']['owner'],
-                'host'                   : rtconfig['remote']['host'],
-                'log path'               : rtconfig['log directory'],
-                'remote shell template'  : rtconfig['remote']['remote shell template'],
+                'owner'                  : owner,
+                'host'                   : host,
+                'log path'               : local_log_dir,
+                'remote shell template'  : gcfg.cfg['task hosts'][cfghost]['remote shell template'],
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,
                 }
 
-        launcher = launcher_class( self.id, jobconfig, xconfig )
+        launcher = launcher_class( self.id, jobconfig, xconfig, str(self.submit_num) )
 
         try:
             p = launcher.submit( dry_run, debug )
@@ -493,9 +635,7 @@ class task( Pyro.core.ObjBase ):
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
-            self.set_submitted()
-            self.submission_timer_start = task.clock.get_datetime()
-            return p
+            return (p, launcher)
 
     def check_submission_timeout( self ):
         handler = self.event_handlers['submission timeout']
@@ -511,7 +651,8 @@ class task( Pyro.core.ObjBase ):
             if current_time > cutoff:
                 msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
                 self.log( 'WARNING', msg )
-                RunHandler( 'submission_timeout', handler, self.__class__.suite, self.id, msg )
+                self.log( 'NORMAL', "Queuing submission_timeout event handler" )
+                self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
                 self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -531,7 +672,8 @@ class task( Pyro.core.ObjBase ):
                 else:
                     msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
                 self.log( 'WARNING', msg )
-                RunHandler( 'execution_timeout', handler, self.__class__.suite, self.id, msg )
+                self.log( 'NORMAL', "Queuing execution_timeout event handler" )
+                self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
                 self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -544,7 +686,7 @@ class task( Pyro.core.ObjBase ):
                 self.incoming( 'CRITICAL', self.id + ' failed' )
             else:
                 self.incoming( 'NORMAL', self.id + ' succeeded' )
-            task.state_changed = True
+            flags.pflag = True
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -575,7 +717,19 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def incoming( self, priority, message ):
-        # Receive incoming messages for this task
+        # queue incoming messages for this task
+        self.message_queue.incoming( priority, message )
+
+    def process_incoming_messages( self ):
+        queue = self.message_queue.get_queue() 
+        while queue.qsize() > 0:
+            self.process_incoming_message( queue.get() )
+            queue.task_done()
+
+    def process_incoming_message( self, (priority, message) ):
+
+        # always update the suite state summary for latest message
+        flags.iflag = True
 
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
@@ -584,15 +738,11 @@ class task( Pyro.core.ObjBase ):
         self.latest_message = message
         self.latest_message_priority = priority
 
-        # Set this to stimulate task processing
-        task.state_changed = True
-        # Set this to stimulate suite state summary update even if not task processing.
-        task.progress_msg_rec = False
-
         # Handle warning events
         handler = self.event_handlers['warning']
         if priority == 'WARNING' and handler:
-            RunHandler( 'warning', handler, self.__class__.suite, self.id, message )
+            self.log( 'NORMAL', "Queuing warning event handler" )
+            self.__class__.event_queue.put( ('warning', handler, self.id, message) )
 
         if self.reset_timer:
             # Reset execution timer on incoming messages
@@ -600,14 +750,27 @@ class task( Pyro.core.ObjBase ):
 
         if message == self.id + ' started':
             # Received a 'task started' message
+            flags.pflag = True
             self.set_running()
 
-        if not self.state.is_currently('running'):
-            # Only running tasks should be sending messages
-            self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running):\n" + message )
+        elif message == self.id + ' submitted':
+            # (a faked task message from the job submission thread)
+            self.set_submitted()
+
+        elif message.startswith(self.id + ' submit_method_id='):
+            submit_method_id = message[len(self.id + ' submit_method_id='):]
+            self.record_db_update("task_states", self.name, self.c_time,
+                                  submit_method_id=submit_method_id)
+                                  
+        if message.startswith("Task job script received signal"):
+            #capture and record signals sent to task proxy
+            self.record_db_event(event="signaled", message=message)
 
         if message == self.id + ' failed':
+            # (note not 'elif' here as started messages must go through
+            # the elif block below)
             # Received a 'task failed' message
+            flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             try:
                 # Is there a retry lined up for this task?
@@ -620,24 +783,28 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
                 # (this also calls the task failure handler):
-                self.set_failed()
+                self.set_failed( message )
             else:
                 # There is a retry lined up
-                self.plog( 'Setting retry delay: ' + str(self.retry_delay) +  ' minutes' )
+                self.log( "NORMAL", "Setting retry delay: " + str(self.retry_delay) +  " minutes" )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
-                self.state.set_status( 'retry_delayed' )
+                self.state.set_status( 'retrying' )
+                self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
+                self.record_db_event(event="retrying")
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
                 handler = self.event_handlers['retry']
                 if handler:
-                    RunHandler( 'retry', handler, self.__class__.suite, self.id, 'task retrying' )
+                    self.log( 'NORMAL', "Queuing retry event handler" )
+                    self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
         elif self.outputs.exists( message ):
             # Received a registered internal output message
             # (this includes 'task succeeded')
             if not self.outputs.is_completed( message ):
+                flags.pflag = True
                 self.log( priority,  message )
                 self.outputs.set_completed( message )
                 if message == self.id + ' succeeded':
@@ -656,14 +823,10 @@ class task( Pyro.core.ObjBase ):
                 # Currently this is treated as an error condition
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
-                task.state_changed = False
-
         else:
             # A general unregistered progress message: log with a '*' prefix
             message = '*' + message
             self.log( priority, message )
-            task.progress_msg_rec = True
-            task.state_changed = False
 
     def update( self, reqs ):
         for req in reqs.get_list():

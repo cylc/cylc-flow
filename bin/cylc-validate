@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.version import cylc_version
 from cylc.config import config
 from cylc.command_prep import prep_file
+from cylc.TaskID import TaskID
 
 parser = cop( """cylc [prep] validate [OPTIONS] ARGS
 
@@ -33,9 +34,7 @@ files held in $CYLC_DIR/conf/suiterc/.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use 
-'cylc view -i,--inline SUITE' for comparison.""",
-    argdoc=[('REG', 'Suite name'),
-            ('[TASK]', 'Task NAME%TAG: validate one task definition' )])
+'cylc view -i,--inline SUITE' for comparison.""" )
 
 parser.add_option( "--strict", 
         help="Fail any use of unsafe or experimental features. "
@@ -51,17 +50,12 @@ suite, suiterc = prep_file( args[0], options ).execute()
 if options.verbose:
     print "Parsing Suite Definition"
 
-if len(args) == 2:
-    only = [args[1]]
-else:
-    only = None
-
 try:
     config( suite, suiterc, 
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             validation=True, strict=options.strict,
-            verbose=options.verbose, only=only )
+            verbose=options.verbose )
 except Exception,x:
     if options.debug:
         raise

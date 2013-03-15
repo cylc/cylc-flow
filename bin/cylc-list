@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
@@ -27,32 +27,101 @@ from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-Print a suite's task list or runtime namespace inheritance hierarchy.
-To graph the namespace hierarchy, see 'cylc graph'.""" )
+List runtime namespaces (tasks, families) or print the first-parent
+inheritance graph to the terminal. Additional information can be printed
+for each namespace:
+  * title
+  * linearized inheritance precedence ("Method Resolution Order" in
+    programming languages with multiple inheritance).
+
+The first-parent inheritance graph determines the primary task family
+groupings that are collapsible in gcylc suite views and the graph
+viewer tool. To visualize the full multiple inheritance hierarchy use:
+  'cylc graph -n'.""" )
+
+parser.add_option( "-a","--all-tasks",
+        help="Print all tasks, not just those used in the graph.",
+        action="store_true", default=False, dest="all_tasks" )
+
+parser.add_option( "-n","--all-namespaces",
+        help="Print all runtime namespaces, not just tasks.",
+        action="store_true", default=False, dest="all_namespaces" )
+
+parser.add_option( "-m","--mro",
+        help="Print the linear \"method resolution order\" for each namespace "
+        "(the multiple-inheritance precedence order as determined by the "
+        "C3 linearization algorithm).",
+        action="store_true", default=False, dest="mro" )
 
 parser.add_option( "-t","--tree",
-        help="Print the full runtime inheritance hierarchy.",
+        help="Print the first-parent inheritance hierarchy in tree form.",
         action="store_true", default=False, dest="tree" )
 
-parser.add_option( "-b", "--box",
-        help="(with -t,--tree) Use unicode box characters.",
-        action="store_true", default=False, dest="pretty" )
+parser.add_option( "-b","--box",
+        help="With -t/--tree, using unicode box characters. Your terminal "
+        "must be able to display unicode characters.",
+        action="store_true", default=False, dest="box" )
+
+parser.add_option( "-w","--with-titles",
+        help="Print namespaces titles too.",
+        action="store_true", default=False, dest="titles" )
 
 (options, args) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
+if options.all_tasks and options.all_namespaces:
+    parser.error("Choose either -a or -n")
+if options.all_tasks:
+    which = "all tasks"
+elif options.all_namespaces:
+    which = "all namespaces"
+else:
+    which = "graphed tasks"
+
+if options.tree:
+    if os.environ['LANG'] == 'C' and options.box:
+        print >> sys.stderr, "WARNING, ignoring -t/--tree: $LANG=C"
+        options.tree = False
+
+if options.titles and options.mro:
+    parser.error( "Please choose --mro or --title, not both")
+
+if options.tree and any( [options.all_tasks, options.all_namespaces, options.mro] ):
+    print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
+
 try:
-    config = config( suite, suiterc,
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file )
+    config = config( suite, suiterc, 
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file)
+    if options.tree:
+        config.print_first_parent_tree( pretty=options.box, titles=options.titles )
+    else:
+        result = config.get_namespace_list( which )
+        namespaces = result.keys()
+        namespaces.sort()
+
+        if ( options.mro or options.titles ):
+            # compute padding
+            maxlen = 0
+            for ns in namespaces:
+                if len(ns) > maxlen: maxlen = len(ns)
+            padding = maxlen*' '
+
+        for ns in namespaces:
+            if options.mro:
+                print ns, padding[0:len(padding)-len(ns)],
+                for i in config.get_mro( ns ):
+                    print i,
+                print
+            elif options.titles:
+                print ns, padding[0:len(padding)-len(ns)],
+                print result[ns]
+            else:
+                print ns
+
 except Exception,x:
     if options.debug:
         raise
     raise SystemExit(x)
-
-if options.tree or options.pretty:
-    config.print_inheritance_tree( pretty=options.pretty )
-else:
-    config.print_task_list()
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -16,8 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.TaskID import TaskID
+
 import re, os
 import StringIO
+
 
 class jobfile(object):
 
@@ -28,7 +31,7 @@ class jobfile(object):
         self.task_id = task_id
         self.jobconfig = jobconfig
 
-        self.task_name, self.tag = task_id.split( '%' )
+        self.task_name, self.tag = task_id.split( TaskID.DELIM )
 
     def write( self, path ):
         ############# !!!!!!!! WARNING !!!!!!!!!!! #####################
@@ -150,8 +153,8 @@ class jobfile(object):
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(self.jobconfig['use login shell']) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
-        BUFFER.write( "\n# Note the suite share path may actually be family- or task-specific:" )
         BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
 
     def write_cylc_access( self, BUFFER=None ):
@@ -169,26 +172,42 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
-        self.FILE.write( '\n\n# SET ERROR TRAPPING:' )
-        self.FILE.write( '\nset -u # Fail when using an undefined variable' )
-        self.FILE.write( '\n# Define the trap handler' )
-        self.FILE.write( '\nHANDLE_TRAP() {' )
-        self.FILE.write( '\n  echo Received signal "$@"' )
-        self.FILE.write( '\n  # SEND TASK FAILED MESSAGE' )
-        self.FILE.write( '\n  cylc task failed "Task job script received signal $@"' )
-        self.FILE.write( '\n  trap "" EXIT' )
-        self.FILE.write( '\n  exit 0' )
-        self.FILE.write( '\n}' )
-        self.FILE.write( '\n# Trap signals that could cause this script to exit:' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP EXIT" EXIT' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP ERR"  ERR' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP TERM" TERM' )
-        self.FILE.write( '\ntrap "HANDLE_TRAP XCPU" XCPU' )
+        self.FILE.write( r"""
+
+# SET ERROR TRAPPING:
+set -u # Fail when using an undefined variable
+# Define the trap handler
+SIGNALS="EXIT ERR TERM XCPU"
+function HANDLE_TRAP() {
+    local SIGNAL=$1
+    echo "Received signal $SIGNAL"
+    local S=
+    for S in $SIGNALS; do
+        trap "" $S
+    done
+    # SEND TASK FAILED MESSAGE
+    if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
+        {
+            echo "CYLC_JOB_EXIT=$SIGNAL"
+            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
+        } >>$CYLC_TASK_LOG_ROOT.status
+    fi
+    cylc task failed "Task job script received signal $@"
+    exit 1
+}
+# Trap signals that could cause this script to exit:
+for S in $SIGNALS; do
+    trap "HANDLE_TRAP $S" $S
+done""")
 
     def write_task_started( self ):
-        self.FILE.write( """
+        self.FILE.write( r"""
 
 # SEND TASK STARTED MESSAGE:
+{
+    echo "CYLC_JOB_PID=$$"
+    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
+} >$CYLC_TASK_LOG_ROOT.status
 cylc task started""" )
 
     def write_work_directory_create( self ):
@@ -324,12 +343,22 @@ rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
         if self.jobconfig['use manual completion']:
-            self.FILE.write( '\n\necho "JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING"')
+            self.FILE.write( r"""
+
+echo 'JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING'
+trap '' EXIT""")
         else:
-            self.FILE.write( '\n\n# SEND TASK SUCCEEDED MESSAGE:')
-            self.FILE.write( '\ncylc task succeeded' )
-            self.FILE.write( '\n\necho "JOB SCRIPT EXITING (TASK SUCCEEDED)"')
-        self.FILE.write( '\ntrap "" EXIT' )
+            self.FILE.write( r"""
+
+# SEND TASK SUCCEEDED MESSAGE:
+{
+    echo 'CYLC_JOB_EXIT=SUCCEEDED'
+    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
+} >>$CYLC_TASK_LOG_ROOT.status
+cylc task succeeded
+
+echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
+trap '' EXIT""" )
 
     def write_eof( self ):
         self.FILE.write( '\n\n#EOF' )

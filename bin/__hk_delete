@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from optparse import OptionParser
+from cylc.housekeeping import HousekeepingError, NonIdenticalTargetError
+from cylc.hkdiff import diff
+import os, sys, shutil
+
+class hk_delete:
+    """
+        Delete a source item (file or directory).
+        If a target directory is specified:
+         + Delete only if a target item exists and is identical to the source.
+         + Do not delete if the target item does not exist.
+         + Do not delete, and Warn, if the target exists but differs from the source.
+    """
+ 
+    def __init__( self, src, tdir=None, cheap=False ):
+        self.cheap = cheap
+        self.src = src
+        self.tdir = tdir
+
+        # source file/dir must exist
+        if not os.path.exists( src ):
+            raise HousekeepingError, "File not found: " + src
+
+    def execute( self ):
+        print "Delete:"
+        print " + source: " + self.src
+        if self.tdir:
+            target = os.path.join( self.tdir, os.path.basename(self.src))
+            print " + target: " + target
+
+        if self.tdir:
+            if not os.path.exists( target ):
+                print "NOT DELETING: target does not exist"
+                return
+            else: 
+                try:
+                    diff( self.src, target, cheap=self.cheap ).execute()
+                except NonIdenticalTargetError, x:
+                    print >> sys.stderr, 'WARNING: NOT DELETING, target exists and differs from source!'
+                    return
+                else:
+                    # target is identical
+                    print "DELETING: target exists"
+
+        if os.path.isdir( self.src ):
+            # delete directory tree
+            shutil.rmtree( self.src )
+        elif os.path.isfile( self.src ):
+            # delete file
+            os.unlink( self.src )
+        print "SUCCEEDED"
+        return
+                
+if __name__ == "__main__":
+    # THE CYLC HOUSEKEEPING UTILITY PROGRAM USES THIS COMMAND
+    parser = OptionParser( """__hk_delete [options] SRC [DIR]
+    
+Arguments:
+  SRC    - source item (directory or file) to delete
+  DIR    - destination directory""")
+
+    parser.add_option( "-c", "--cheap-diff", 
+            help="assume that files with the same size are identical",
+            action="store_true", default=False, dest="cheapdiff" )
+
+    (options, args) = parser.parse_args()
+
+    if len(args) < 1 or len(args) > 2:
+        parser.error( "Wrong number of arguments" )
+
+    dst = None
+    if len(args) == 2:
+        dst = args[1]
+
+    hk_delete( args[0], dst, options.cheapdiff ).execute()

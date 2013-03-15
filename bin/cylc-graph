@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
 
 import sys
 from cylc.remote import remrun
+from cylc.TaskID import TaskID
+
 if remrun().execute():
     sys.exit(0)
 
-import gtk, gobject
-from xdot import DotWindow
 from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.command_prep import prep_file
@@ -32,12 +32,6 @@ from cylc.command_prep import prep_file
 # viewer, via changes to this file and to lib/cylc/cylc_xdot.py - all
 # of which could stand some refactoring to streamline the code a bit.
 
-try:
-    from cylc.cylc_xdot import MyDotWindow, MyDotWindow2
-except Exception, x:
-    print >> sys.stderr, str(x)
-    raise SystemExit( "Cylc graphing disabled" )
-
 def on_url_clicked( widget, url, event, window ):
     if event.button != 3:
         return False
@@ -45,7 +39,7 @@ def on_url_clicked( widget, url, event, window ):
     right_click_menu( event, url, type='live task', window=window )
 
 def right_click_menu( event, task_id, type='live task', window=None ):
-    name, ctime = task_id.split('%')
+    name, ctime = task_id.split(TaskID.DELIM)
 
     menu = gtk.Menu()
     menu_root = gtk.MenuItem( task_id )
@@ -145,7 +139,7 @@ parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
 
-parser.add_option( "--output", 
+parser.add_option( "-o", "--output", 
     help="Write out an image file, format determined by file extension. "
     "The file will be rewritten if the suite definition is changed while "
     "the viewer is running.  Available formats depend on your graphviz "
@@ -153,6 +147,18 @@ parser.add_option( "--output",
     metavar="FILE", action="store", default=None, dest="outputfile" )
 
 ( options, args ) = parser.parse_args()
+
+# import modules that require gtk now, so that a display is not needed
+# just to get command help (e.g. when running make on a post-commit hook
+# on a remote repository).
+import gtk, gobject
+from xdot import DotWindow
+try:
+    from cylc.cylc_xdot import MyDotWindow, MyDotWindow2
+except ImportError, x:
+    # this imports pygraphviz via cylc.graphing
+    print >> sys.stderr, str(x)
+    raise SystemExit( "ERROR: please install pygraphviz." )
 
 if options.filename:
     if len(args) != 0:

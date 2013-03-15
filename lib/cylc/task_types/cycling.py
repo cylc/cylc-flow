@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ class cycling( task ):
 
     # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
 
-    def __init__( self, state, stop_c_time = None ):
+    def __init__( self, state, stop_c_time = None, validate = False ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -69,7 +69,7 @@ class cycling( task ):
 
         # A final stop time can be set by 'cylc insert' to create a temporary task.
         self.stop_c_time = stop_c_time
-        task.__init__( self, state )
+        task.__init__( self, state, validate )
 
     def ready_to_spawn( self ):
         # return True or False

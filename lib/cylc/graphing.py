@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -16,44 +16,16 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Cylc suite graphing module. Modules relying on this should test for 
+ImportError due to pygraphviz/graphviz not being installed."""
+
 import re
+import pygraphviz
 from TaskID import TaskID, AsyncTag
 
-class GraphvizError( Exception ):
-    """
-    Attributes:
-        message - what the problem is. 
-        TO DO: element - config element causing the problem
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
+# TODO: Do we still need autoURL below?
 
-# TO DO:
-# 1/ Consolidate graph-disabling tests within cylc.
-# 2/ Do we still need autoURL below?
-
-try:
-    import pygraphviz
-except ImportError:
-    # This allows us to carry on with graphing disabled if
-    # pygraphviz is not installed.
-    raise GraphvizError, 'graphviz and/or pygraphviz are not accessible.'
-
-# Not needed as 'import pygraphviz' fails if graphviz is not installed.
-#try:
-#    testG = pygraphviz.AGraph(directed=True)
-#    testG.layout()  # this invokes the pygraphviz 'dot' program
-#except ValueError:
-#    raise GraphvizError, 'graphviz is not installed or not accessible'
-
-#ddmmhh = re.compile('%(\d{4})(\d{2})(\d{2})(\d{2})')
-# allow literal 'YYYYMMDDHH'
-#ddmmhh = re.compile('%(\w{4})(\w{2})(\w{2})(\w{2})')
-#tformat = r'\\n\2/\3 \4'  # MM/DD HH
-#tformat = r'\\n\1\2\3\4'  # YYYYMMDDHH
-ddmmhh = re.compile('%')
+ddmmhh = TaskID.DELIM_RE
 tformat = r'\\n'
 
 class CGraphPlain( pygraphviz.AGraph ):
@@ -67,7 +39,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.graph_attr['label'] = title
 
     def node_attr_by_taskname( self, n ):
-        name = re.sub( '%.*', '', n )
+        name = re.sub( TaskID.DELIM_RE+'.*', '', n )
         if name in self.task_attr:
             return self.task_attr[name]
         else:

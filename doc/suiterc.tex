@@ -72,18 +72,6 @@ logged by cylc will also be in UTC.
     \item {\em default:} False 
 \end{myitemize}
 
-\subsubsection[maximum simultaneous job submissions]{[cylc] $\rightarrow$ maximum simultaneous job submissions}
-
-This sets the maximum allowable number of simultaneous (parallel) job
-submissions. If a greater number of tasks happen to become ready to run
-at once (as in ensemble suites for instance) cylc will submit them in
-batches of this size, waiting for all batch members to return before
-proceeding to the next batch. See Section~\ref{MaxSimJobSub}.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 50
-\end{myitemize}
 
 \subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
 
@@ -107,6 +95,77 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
+\subsubsection[job submission]{[cylc] $\rightarrow$ job submission}
+
+Tasks ready to submit are now queued for processing in a background
+worker thread, so submitting a lot of tasks at once does not hold cylc 
+back.  In the job submission thread tasks are are batched, with members
+of each batch being submitted in parallel. Batches are processed serially, 
+with a delay between batches, to avoid swamping the host system with too
+many simultaneous job submissions. 
+
+The time required for a single task's job submission to complete
+typically depends on whether it is a remote task (for which an ssh
+connection must be established and used) and whether dynamic host
+selection is used (see~\ref{DynamicHostSelection} (a dynamic host
+selection command runs as part of the job submission command). The time
+taken for a batch of parallel job submissions to complete will be
+roughly the duration of the slowest member process. 
+
+\paragraph[batch size]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ batch size}
+
+The maximum number of tasks to be submitted in a single batch, in the
+job submission thread. Cylc waits for all batch member job-submissions
+to complete before proceeding to the next batch.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 10
+\end{myitemize}
+
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ delay between batches}
+
+It may cause a problem for some batch queue schedulers to submit too
+many jobs at once, so cylc allows a configurable delay between job 
+submission batches.
+
+\begin{myitemize}
+    \item {\em type:} integer seconds (minimum 0)
+    \item {\em default:} 15
+\end{myitemize}
+
+\subsubsection[event handler execution]{[cylc] $\rightarrow$ [event handler execution]}
+
+Task event handlers are queued to a background worker thread that limits
+the number of event handlers that can run at once, as for task job
+submissions (above), because of the potential for large suites to swamp
+the suite host with event handlers. Event handlers are currently
+executed directly as sub-processes (i.e.\ unlike task job submission you
+can't specify the ``job submission method'' to use).
+
+Note that {\em suite} event handlers are currently executed directly in
+the main scheduler thread, not queued to the task event handler worker
+thread.
+
+\paragraph[batch size]{[cylc] $\rightarrow$ [event handler execution] $\rightarrow$ batch size}
+
+The maximum number of event handlers to be executed in parallel in the
+worker thread. Cylc waits for all batch members to complete before
+proceeding on to the next batch.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 5
+\end{myitemize}
+
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [event handler execution] $\rightarrow$ delay between batches}
+
+A configurable delay between batches of task event handlers.
+
+\begin{myitemize}
+    \item {\em type:} integer seconds (minimum 0)
+    \item {\em default:} 0
+\end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}
@@ -372,9 +431,9 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} list of strings (task IDs: \lstinline=name%tag=)
+    \item {\em type:} list of strings (task IDs: \lstinline=name.tag=)
     \item {\em default:} (none)
-    \item {\em example:} \lstinline=foo%20120808, bar%20120908=
+    \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
 
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
@@ -652,7 +711,7 @@ tasks, may be required.
 The suite dependency graph is defined under this section.  You can plot
 the dependency graph as you work on it, with \lstinline=cylc graph= or
 by right clicking on the suite in the db viewer.  See also 
-Section~\ref{DependencyGraphs}.
+Section~\ref{ConfiguringScheduling}.
 
 \paragraph[graph]{ [scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ graph }
 
@@ -663,7 +722,7 @@ then exits, or an initial suite section that completes prior to the
 cycling tasks starting (if you make the first cycling tasks depend on
 the last one-off ones). But note that synchronous {\em start-up} tasks
 can also be used for the latter purpose.  See Section~\ref{GraphDescrip}
-below for graph string syntax, and Section~\ref{DependencyGraphs}.
+below for graph string syntax, and Section~\ref{ConfiguringScheduling}.
 \begin{myitemize}
     \item {\em type:} string 
     \item {\em example:} (see Section~\ref{GraphDescrip} below)
@@ -706,7 +765,7 @@ single suite, and so on.
 
 The dependency graph for the specified validity section (described just
 above) goes here. Syntax examples follow; see also
-Sections~\ref{DependencyGraphs} ({\em Dependency Graphs})
+Sections~\ref{ConfiguringScheduling} ({\em Configuring Scheduling})
 and~\ref{TriggerTypes} ({\em Trigger Types}). 
 
 \begin{myitemize}
@@ -744,30 +803,27 @@ is associated with a particular asynchronous ID.
 
 \subsection{[runtime]}
 
-This section defines how, where, and what to execute when tasks are
-ready to run. Runtime subsections define an inheritance hierarchy of 
-{\em namespaces}, each of which represents a family of tasks or an
-individual task, as described in Section~\ref{NIORP}).
+This section is used to specify how, where, and what to execute when
+tasks are ready to run. Common
+configuration can be factored out in a multiple-inheritance hierarchy of
+runtime namespaces that culminates in the tasks of the suite. Order of
+precedence is determined by the C3 linearization algorithm as used to
+find the {\em method resolution order} in Python language class
+hiearchies. For details and examples see Section~\ref{NIORP}, {\em
+Runtime Properties}.
 
 \subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]]}
 
 Replace \_\_NAME\_\_ with a namespace name, or a comma separated list of
-names, and repeat as needed to define all tasks in the suite.
+names, and repeat as needed to define all tasks in the suite. Names may
+contain letters, digits, underscores, and hyphens. A namespace
+represents a group or family of tasks if other namespaces inherit from
+it, or a task if no others inherit from it.
 
-Namespace names may contain letters, digits, underscores, and hyphens.
-They may not contain colons (which would preclude use of directory paths
-involving the registration name in \lstinline=$PATH= variables). They 
-may not contain the `.' character (it will be interpreted 
-as the namespace hierarchy delimiter, separating groups and names). 
-{\em Task names should not be hardwired into task implementations.}
-Rather, task and suite identity should be extracted portably from the
-task execution environment supplied by cylc 
-(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
-can just change its name in the suite.rc file.
-
-A namespace represents a family if other namespaces inherit from it; it
-represents a task if it is a leaf on the inheritance tree (i.e.\ no
-other namespaces inherit from it).
+%Names may not contain colons (which would preclude use of directory paths
+%involving the registration name in \lstinline=$PATH= variables). They 
+%may not contain the `.' character (it will be interpreted as the
+%namespace hierarchy delimiter, separating groups and names -huh?). 
 
 \begin{myitemize}
 \item {\em legal values:} 
@@ -777,25 +833,21 @@ other namespaces inherit from it).
     \end{myitemize}
 \end{myitemize}
 
-If multiple names are listed, the subsequent namespace configuration
-items apply to each member. 
+If multiple names are listed the subsequent settings apply to each. 
 
-All namespaces inherit initially from {\em root}, which you can
-explicitly configure to override or provide default runtime settings for
-all tasks in the suite.
+All namespaces inherit initially from {\em root}, which can be
+explicitly configured to provide or override default settings
+for all tasks in the suite.
 
 \paragraph[inherit]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ inherit}
 
-Specify here the namepace from which this namespace should inherit all
-of its runtime configuration; specific items can then be overridden
-as required. Note that many of the available items are left undefined even
-in the root namespace.
+A list of the immediate parent(s) this namespace inherits from. If no
+parents are listed \lstinline=root= is assumed.
 
 \begin{myitemize}
-\item {\em type:} string (another namespace name)
-\item {\em default:} root
+\item {\em type:} comma-separated list of strings (other namespace names)
+\item {\em default:} \lstinline=root=
 \end{myitemize}
-
 
 \paragraph[title]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ title}
 
@@ -945,63 +997,6 @@ Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
 \item {\em default:} False
 \end{myitemize}
 
-
-\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ log directory}
-\label{LocalLog}
-
-This is where task job scripts, and the stdout and stderr logs for local
-tasks, are written. The directory path may contain environment
-variables, including suite identity variables to make the path
-suite-specific (as the default value does) but {\em it may not 
-contain task identity variables such as \lstinline=$CYLC_TASK_NAME= and
-\lstinline=$CYLC_TASK_CYCLE_TIME= or any variables defined in the task
-environment section} - the directory has to be created by cylc before
-the task runs so the directory creation process does not see the task
-execution environment.
-%? Remote tasks must also define a [[[remote]]] log directory. 
-%? For owned tasks, the suite owner's home directory is replaced by the
-%? task owner's.
-The job script filename is constructed, just before job submission,
-from the task ID and {\em seconds since epoch}, and then {\em .out} and
-{\em .err} are appended to construct the stdout and stderr log names,
-respectively. These filenames are thus unique even if a task
-gets retriggered and yet will be correctly time ordered if the log
-directory is listed. The filenames are also recorded by the task proxies 
-for access via cylc commands and the suite control GUIs.
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job=
-\end{myitemize}
-
-\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work directory}
-\label{LocalWork}
-
-Task command scripting is executed from within a work directory created
-on the fly, if necessary, by the task's job script. In non-detaching
-tasks the work directory is automatically removed again {\em if it is
-empty} before the job script exits. The work directory can be accessed
-by tasks via the environment variable \lstinline=$CYLC_TASK_WORK_PATH=.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID=
-\end{myitemize}
-
-\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ share directory}
-\label{LocalShare}
-
-Like task work directories (above) this directory is created on the fly,
-if necessary, by the job script. It is intended as a shared data area
-for multiple tasks on the same host, but as for any task runtime config
-item it can be specialized to particular tasks or groups of tasks. 
-It can be accessed by tasks at run time via the environment variable
-\lstinline=$CYLC_SUITE_SHARE_PATH=.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/share=
-\end{myitemize}
-
 \paragraph[{[[[}dummy mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]]}
 
 Dummy mode configuration.
@@ -1112,33 +1107,37 @@ to be modified slightly to allow use of the C shell.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Configuration for tasks that run on a different host than the one the suite 
-is running on. If a remote host is specified cylc will use passwordless
-ssh to submit the task, using the specified job submission method, on
-that host. Cylc must be installed on remote task hosts, but of the
-external software dependencies only Pyro 
-is required there (actually, not even that if {\em ssh messaging} is
-used; see below). Passwordless ssh must be configured between the local
-suite owner on the suite host, and the task owner on the remote task
-host.
+Configur host and username, for tasks that do not run on the suite host.
+Cylc will use passwordless ssh to submit the task by the configured
+job submission method. Cylc must be installed on remote task hosts, but
+of the external software dependencies only Pyro is required there
+(actually, not even that if {\em ssh messaging} is used; see below).
+Passwordless ssh must be configured between the local suite owner on the
+suite host, and the task owner on the remote task host.
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
+\label{DynamicHostSelection}
 
-The remote host for this task or family. A literal host name can be
-specified, or a shell back-tick expression to execute an external
-command that writes a hostname to stdout.
+The remote host for this namespace. This can be a static hostname or a
+command that prints a suitable hostname to stdout. Host selection
+commands are executed just prior to job submission. The host (static or
+dynamic) may have an entry in the cylc site or user config file to
+specify parameters such as the location of cylc on the remote machine;
+if not, the corresponding local settings (on the suite host) will be
+assumed to apply on the remote host. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
 \item {\em default:} (none)
 \item {\em examples:}
     \begin{myitemize}
-        \item short name: \lstinline@host = foo@
-        \item fully qualified name: \lstinline@host = foo.bar.baz@
-        \item external host selector: \lstinline@host = $(host-selector.sh)@ 
-        \item external host selector: \lstinline@host = `host-selector.sh)`@ (back-tick version)
+        \item static host name: \lstinline@host = foo@
+        \item fully qualified: \lstinline@host = foo.bar.baz@
+        \item dynamic host selection: \lstinline@host = $(host-selector.sh)@ 
+        \item dynamic host selection: \lstinline@host = `host-selector.sh)`@ (back-tick version)
     \end{myitemize}
 \end{myitemize}
+
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
@@ -1149,16 +1148,6 @@ may be defined using local environment variables
 
 \begin{myitemize}
 \item {\em type:} string (a valid username on the remote host)
-\item {\em default:} (none)
-\end{myitemize}
-
-\subparagraph[cylc directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ cylc directory}
-
-The path to the remote cylc installation, required if cylc
-is not in the default search path on the remote host.
-
-\begin{myitemize}
-\item {\em type:} string (a valid directory path on the remote host)
 \item {\em default:} (none)
 \end{myitemize}
 
@@ -1178,83 +1167,6 @@ interpretation on the remote host.
     replaced)
 \end{myitemize}
  
-\subparagraph[remote shell template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ remote shell template }
-
-A template for the remote shell command for a submitting a remote task.
-The template's first \%s will be substituted by the remote user@host.
-
-\begin{myitemize}
-\item {\em type:} string (a string template)
-\item {\em root default:} \lstinline@ssh -oBatchMode=yes %s@
-\end{myitemize}
-
-\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ log directory }
-
-This log directory is used for the stdout and stderr logs of remote
-tasks. The directory will be created on the fly if necessary. If not
-specified, the local job submission log path will be used
-(see~\ref{LocalLog}) with the
-suite owner's home directory path, if present, replaced by
-\lstinline='$HOME'= for interpretation on the remote host. The stdout
-and stderr log file names are the same as for local tasks, and are
-recorded by the task proxies for access via gcylc. Suite identity
-variables can be used in the path, but {\em not task identity variables}
-such as \lstinline=$CYLC_TASK_NAME= and \lstinline=$CYLC_TASK_CYCLE_TIME=, 
-because the log directory is created before the task runs.
-
-\begin{myitemize}
-\item {\em type:} string (a valid directory path on the remote host)
-\item {\em default:} (local log path with \lstinline=$HOME= replaced)
-\end{myitemize}
- 
-\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ work directory}
-
-Use this item if you need to override the local task work directory 
-(see~\ref{LocalWork}). If omitted, the local directory will be used with
-the suite owner's home directory path, if present,
-replaced by \lstinline='$HOME'= for interpretation on 
-the remote host.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} (local task work path with \lstinline=$HOME= replaced)
-\end{myitemize}
-
-\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ share directory}
-
-Use this item if you need to override the local share directory 
-(see~\ref{LocalShare}). If omitted, the local directory will be used
-with the suite owner's home directory path, if present, replaced by
-\lstinline='$HOME'= for interpretation on the remote host.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} (local task share path with \lstinline=$HOME= replaced)
-\end{myitemize}
-
-\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ ssh messaging}
-
-If your network configuration or firewall blocks the TCP/IP sockets
-required for remote tasks to communicate with their parent suite
-you can tell cylc to use passwordless ssh (from remote host to suite
-host) instead, to invoke local messaging commands on the suite host.
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em default:} False
-\end{myitemize}
-
-This item affects the behaviour of the cylc messaging commands by means
-of the task execution environment, so no special cylc configuration is
-required on the remote host itself. Eventually it may be moved to a site
-and host configuration file (yet to be implemented) because it is host-
-rather than task-specific. For the moment though you can still set it
-just once in a namespace inherited by all tasks on the affected host.
-
-Note that you can use a remote section with this item in it even for
-tasks that are local as far as cylc is concerned, but which end up
-running on the affected remote host due to the action of the local batch
-queueing system or resource manager.
 
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
@@ -1292,7 +1204,7 @@ section for each of the following task events that you wish to handle:
     \item `execution timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
-the task (\lstinline=NAME%CYCLE= for cycling tasks).
+the task (\lstinline=NAME.CYCLE= for cycling tasks).
 
 \begin{myitemize}
     \item {\em type:} string (the event handler)
@@ -1457,8 +1369,8 @@ show the full suite.
 
 A list of family (namespace) names to be shown in the collapsed state
 (i.e.\ the family members will be replaced by a single family node) when
-the suite is plotted in the graph viewer or the graph-based suite
-control GUI. This item determines how family groups are shown 
+the suite is plotted in the graph viewer or the gcylc graph view. This
+item determines how family groups are shown 
 {\em initially} in the suite control GUI; subsequently you can use the
 interactive controls to group and ungroup nodes at will. For the same
 reason (presence of interactive grouping controls) this item is ignored
@@ -1610,25 +1522,9 @@ Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
 % HIDDEN \subsubsection[use quick task elimination]{[development] $\rightarrow$ use quick task elimination }
 % HIDDEN     default True
 
-\subsection{Special Placeholder Variables}
+\subsection{Special Placeholder Variables In Suite Definitions}
 
-A few special variables are used as placeholders in cylc suite definitions:
-
-\begin{myitemize}
-    \item \lstinline=<CYLC_TASK_CYCLE_TIME>= and
-        \lstinline=<CYLC_TASK_CYCLE_TIME+/-offset>= \newline
-        These are replaced with the actual cycle time of the task (with
-        optional computed offset) in the message strings registered for
-        explicit internal (pre-completion) task outputs. They correspond to 
-        \lstinline=$CYLC_TASK_CYCLE_TIME= in the task execution environment.
-
-    \item \lstinline=<ASYNCID>=\newline
-        This placeholder variable is replaced with the actual ``asynchronous
-        ID'' (e.g. satellite pass ID) for repeating asynchronous tasks.
-\end{myitemize}
-
-To use real (programming language) variables in suite definitions, use the 
-Jinja2 template processor (Section~\ref{Jinja2}).
+See Section~\ref{SPHV}.
 
 
 \subsection{Default Suite Configuration}

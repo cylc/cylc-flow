@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@ Arguments:"""
                 action="store_true", default=False, dest="verbose" )
 
         self.add_option( "--debug",
-                help="Turn on exception tracebacks.",
+                help="Run suites in non-daemon mode, and show exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",
@@ -122,16 +122,17 @@ Arguments:"""
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
 
+            self.add_option( "--no-login",
+                    help="Do not use a login shell to run remote ssh commands. "
+                    "The default is to use a login shell.",
+                    action="store_false", default=True, dest="ssh_login" )
+
             self.add_option( "--pyro-timeout", metavar='SEC',
                     help="Set a timeout for network connections "
                     "to the running suite. The default is no timeout. "
                     "For task messaging connections see "
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
-
-            self.add_option( "-p", "--passphrase",
-                    help="Suite passphrase file (if not in a default location)",
-                    metavar="FILE", action="store", dest="pfile" )
 
             self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",
@@ -166,10 +167,6 @@ Arguments:"""
         foo = db_optparse( options.db )
         options.db = foo.get_db_location()
         options.db_owner = foo.get_db_owner()
-
-        if self.pyro:
-            if options.pfile:
-                options.pfile = os.path.abspath( options.pfile )
 
         if self.gcylc or not self.pyro:
             if options.templatevars_file:

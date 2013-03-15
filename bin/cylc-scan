@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if '--use-ssh' in sys.argv[1:]:
 from cylc.port_scan import scan
 from cylc.suite_host import hostname
 from cylc.CylcOptionParsers import cop
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 
 parser = cop( """cylc [discover] scan [OPTIONS]
     
@@ -52,18 +52,17 @@ IFS=$OFIS
 """, pyro=True, 
 argdoc=[])
 
-parser.remove_option("-p" ) # don't need passphrase
 parser.remove_option("-f" ) # don't need force
 
 parser.add_option( "--print-ports",
         help="Print the port range from the site config file "
-        "($CYLC_DIR/conf/globals/cylc.rc).",
+        "($CYLC_DIR/conf/siterc/site.rc).",
         action="store_true",default=False, dest="print_ports" )
 
 ( options, args ) = parser.parse_args()
 
 if options.print_ports:
-    globals = globalcfg()
+    globals = gcfg
     base = globals.cfg['pyro']['base port']
     range = globals.cfg['pyro']['maximum number of ports']
     print base, '<= port <=', base + range

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 2/ With [STOP], shut down a suite AFTER on of the following events:
     a/ all tasks have passed the TAG STOP (cycle time or async tag)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
-    c/ the task STOP (TASK%TAG) has finished
+    c/ the task STOP (TASK.TAG) has finished
 
 3/ With [--now], shut down immediately, regardless of tasks still running.
    WARNING: beware of orphaning tasks that are still running at shutdown;
@@ -65,7 +65,7 @@ if len( args ) == 2:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command-interface' )
 except Exception, x:
     if options.debug:
         raise
@@ -98,11 +98,11 @@ if shutdown_at:
                     raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
                 else:
                     # is probably an async TAG
-                    method = 'stop after TAG'
+                    method = 'stop after tag'
                     #print 'async'
             else:
                 # is a cycle time
-                method = 'stop after TAG'
+                method = 'stop after tag'
                 #print 'cycling'
         else:
             # is a date time
@@ -116,18 +116,18 @@ if shutdown_at:
     #print method
 
     prompt( 'Set shutdown ' + shutdown_arg + ' for ' + suite, options.force )
-    result = proxy.set_stop( shutdown_arg, method )
+    result = proxy.put( method, shutdown_arg )
 
 elif options.shutdownnow:
     prompt( 'Shut down ' + suite + ' NOW', options.force )
-    result = proxy.shutdown_now()
+    result = proxy.put( 'stop now' )
 
 else:
     prompt( 'Shut down ' + suite, options.force )
-    result = proxy.shutdown()
+    result = proxy.put( 'stop cleanly' )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    print 'ERROR:', result.reason
-    sys.exit(1)
+    sys.exit( result[1] )
+

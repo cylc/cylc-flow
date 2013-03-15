@@ -1,7 +1,7 @@
 #!/usr/bin/env
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import config
 import os, sys
 from cycle_time import ct
 from graphing import CGraphPlain
+from TaskID import TaskID
 
 class MyDotWindow2( xdot.DotWindow ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
@@ -167,7 +168,7 @@ class MyDotWindow2( xdot.DotWindow ):
                 print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
                 print >> sys.stderr, x
                 return False
-        self.inherit = self.suiterc.get_inheritance()
+        self.inherit = self.suiterc.get_parent_lists()
         return True
 
     def get_graph( self ):
@@ -175,11 +176,11 @@ class MyDotWindow2( xdot.DotWindow ):
         graph = CGraphPlain( title )
         graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
-            if self.inherit[ns]:
+            for p in self.inherit[ns]:
                 attr = {}
                 attr['color'] = 'royalblue'
-                graph.add_edge( self.inherit[ns], ns, **attr )
-                nl = graph.get_node( self.inherit[ns] )
+                graph.add_edge( p, ns, **attr )
+                nl = graph.get_node( p )
                 nr = graph.get_node( ns )
                 for n in nl, nr:
                     n.attr['shape'] = 'box'
@@ -391,7 +392,7 @@ class MyDotWindow( xdot.DotWindow ):
 
     def get_graph( self, group_nodes=[], ungroup_nodes=[], 
             ungroup_recursive=False, ungroup_all=False, group_all=False ):
-        family_nodes = self.suiterc.members.keys()
+        family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.families_used_in_graph
 
         if self.ctime != None and self.stop_after != None:
@@ -411,7 +412,7 @@ class MyDotWindow( xdot.DotWindow ):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, tag = node.get_name().split('%')
+            name, tag = node.get_name().split(TaskID.DELIM)
             if name in family_nodes:
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'

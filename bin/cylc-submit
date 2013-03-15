@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
+from cylc.global_config import gcfg
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -52,12 +53,12 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (i.e. only if 
-the same task, NAME%TAG, is not currently running in the suite)."""
+the same task, NAME.TAG, is not currently running in the suite)."""
 
 def commandline_parser():
     parser = cop( usage, 
             argdoc=[ ("REG", "Suite name"),
-                ("TASK", "Target task (NAME%TAG)")])
+                ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
 
     parser.set_defaults( sched=False, dry_run=False )
 
@@ -109,6 +110,8 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
+# create task log directory
+gcfg.get_task_log_dir( suite, create=True )
 
 use_lockserver = False
 if config['cylc']['lockserver']['enable']:
@@ -139,6 +142,7 @@ task.task.suite = suite
 # create the suite log, with a modified directory path ending in
 # 'submit' so that we don't overwrite logs from a proper suite run.
 slog = suite_log( suite, 'submit' )
+slog.mkdir()
 slog.pimp( clock=dclock )
 log = slog.get_log()
 logging_dir = slog.get_dir()

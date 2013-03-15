@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -17,9 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from global_config import globalcfg
+from global_config import gcfg
 from rolling_archive import rolling_archive
 from mkdir_p import mkdir_p
+
 
 class dumper( object ):
 
@@ -28,9 +29,9 @@ class dumper( object ):
         self.clock = clock
         self.start_tag = start_tag
         self.stop_tag = stop_tag
-        globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['run directory'], suite, 'state' ) 
-        self.path = os.path.join( self.dir, 'state' ) 
+        globals = gcfg
+        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
+        self.path = os.path.join( self.dir, 'state' )
         try:
             mkdir_p( self.dir )
         except Exception, x:

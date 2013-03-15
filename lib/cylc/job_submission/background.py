@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -19,13 +19,17 @@
 from job_submit import job_submit
 
 class background( job_submit ):
+
+    """Run the task job script directly in a background shell.
+
+    stdin redirection (< /dev/null) allows background execution
+    even on a remote host - ssh can exit without waiting for the
+    remote process to finish.
+
     """
-Run the task job script directly in a background shell.
-    """
-    # stdin redirection (< /dev/null) allows background execution
-    # even on a remote host - ssh can exit without waiting for the
-    # remote process to finish.
+
     COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s &"
+
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
@@ -34,3 +38,6 @@ Run the task job script directly in a background shell.
                                             self.stdout_file,
                                             self.stderr_file )
 
+    def get_id( self, pid, out, err ):
+        """Return "str(pid)"."""
+        return str(pid)

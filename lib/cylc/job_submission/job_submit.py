@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -30,9 +30,10 @@ import pwd, sys, os
 import stat
 from jobfile import jobfile
 import socket
-import subprocess
-import time
-from cylc.owner import user
+from subprocess import Popen, PIPE
+from cylc.owner import user, is_remote_user
+from cylc.suite_host import is_remote_host
+from cylc.TaskID import TaskID
 
 class job_submit(object):
     REMOTE_COMMAND_TEMPLATE = ( " '"
@@ -44,7 +45,7 @@ class job_submit(object):
             + " && (%(command)s)"
             + "'" )
 
-    def __init__( self, task_id, jobconfig, xconfig ):
+    def __init__( self, task_id, jobconfig, xconfig, submit_num ):
 
         self.jobconfig = jobconfig
 
@@ -54,10 +55,9 @@ class job_submit(object):
         self.job_submit_command_template = xconfig['job submission command template']
         self.remote_shell_template = xconfig['remote shell template']
 
-        # Local job script path: Tag with microseconds since epoch
+        # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        now = time.time()
-        tag = self.task_id + "-%.6f" % now
+        tag = task_id + TaskID.DELIM + submit_num
         self.local_jobfile_path = os.path.join( xconfig['log path'], tag )
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
@@ -67,7 +67,7 @@ class job_submit(object):
         remote_host = xconfig['host']
         task_owner = xconfig['owner']
 
-        if remote_host or task_owner:
+        if is_remote_host(remote_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
             self.local = False
             if task_owner:
@@ -201,11 +201,10 @@ class job_submit(object):
             return None
 
         if self.local:
-            stdin = None
             command = self.command
         else:
-            stdin = subprocess.PIPE
-            command = self.__class__.REMOTE_COMMAND_TEMPLATE % { "jobfile_path": self.jobfile_path, "command": self.command }
+            command = self.__class__.REMOTE_COMMAND_TEMPLATE % {
+                    "jobfile_path": self.jobfile_path, "command": self.command}
             destination = self.task_owner + "@" + self.remote_host
             command = self.remote_shell_template % destination + command
         # execute the local command to submit the job
@@ -220,7 +219,7 @@ class job_submit(object):
         print 'SUBMISSION:', command
 
         try:
-            popen = subprocess.Popen( command, shell=True )
+            popen = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
             # To test sequential job submission (pre cylc-4.5.1)
             # uncomment the following line (this tie cylc up for a while
             # in the event of submitting many ensemble tasks at once):

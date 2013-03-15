@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -119,17 +119,6 @@ parser.add_option( "-n", "--nested", help="print suite.rc "
 
 prep1 = prep_file( args[0], options )
 prep2 = prep_file( args[1], options )
-
-ver1 = prep1.get_version()
-ver2 = prep2.get_version()
-
-if ver1 != ver2:
-    print >> sys.stderr, 'Suite cylc version spec:'
-    print >> sys.stderr, ' ', args[0] + ':', ver1
-    print >> sys.stderr, ' ', args[1] + ':', ver2
-    # To Do: this may not matter - we should carry on with difference
-    # here, but account for new or missing config items.
-    raise SystemExit('ERROR: these suites require different cylc versions' )
 
 suite1, suite1rc = prep1.execute()
 suite2, suite2rc = prep2.get_suite()

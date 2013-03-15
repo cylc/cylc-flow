@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -19,11 +19,12 @@
 import gtk
 import os, re
 import gobject
-import helpwindow
 from stateview import tupdater
 from gcapture import gcapture_tmpfile
 from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
+from cylc.task_state import task_state
+from cylc.TaskID import TaskID
 
 try:
     any
@@ -208,24 +209,10 @@ Text Treeview suite control interface.
 
         self.tfilterbox = gtk.HBox()
 
-        # allow filtering out of 'succeeded' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'succeeded', 'failed', 'held', 'runahead', 'queued' ]
-        labels = {}
-        labels[ 'waiting'   ] = '_waiting'
-        labels[ 'submitted' ] = 's_ubmitted'
-        labels[ 'running'   ] = '_running'
-        labels[ 'succeeded' ] = 'su_cceeded'
-        labels[ 'failed'    ] = 'f_ailed'
-        labels[ 'held'      ] = '_held'
-        labels[ 'runahead'  ] = '_runahead'
-        labels[ 'queued'   ] = '_queued'
-  
-        # To initially filter out 'succeeded' and 'waiting' tasks:
-        #self.tfilter_states = [ 'waiting', 'succeeded' ]
         self.tfilter_states = []
 
-        for st in all_states:
-            b = gtk.CheckButton( labels[st] )
+        for st in task_state.legal:
+            b = gtk.CheckButton( task_state.labels[st] )
             self.tfilterbox.pack_start(b)
             if st in self.tfilter_states:
                 b.set_active(False)
@@ -270,7 +257,7 @@ Text Treeview suite control interface.
             # must have clicked on the top level ctime 
             return
 
-        task_id = name + '%' + ctime
+        task_id = name + TaskID.DELIM + ctime
 
         is_fam = (name in self.t.families)
 

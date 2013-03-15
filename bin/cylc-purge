@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -35,26 +35,27 @@ from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] purge [OPTIONS] ARGS
 
-Remove an entire tree of dependent tasks, across multiple cycles, from a
-running suite. The root task will be forced to spawn and will then be
-removed, then so will every task that depends on it, and every task that
-depends on those, and so on until the given stop cycle time.
+Remove an entire tree of dependent tasks, over multiple cycles into the
+future, from a running suite. The purge top task will be forced to
+spawn and will then be removed, then so will every task that depends on
+it, and every task that depends on those, and so on until the given stop
+cycle time.
 
 WARNING: THIS COMMAND IS DANGEROUS but in case of disaster you can
 restart the suite from the automatic pre-purge state dump (the filename
 will be logged by cylc before the purge is actioned.)
 
 UNDERSTANDING HOW PURGE WORKS: cylc identifies tasks that depend on 
-the root task, and then on its downstream dependents, and then on
-theirs, etc., by simulating what would happen if the root task were to
-trigger: it artificially sets the root task to the "succeeded" state
+the top task, and then on its downstream dependents, and then on
+theirs, etc., by simulating what would happen if the top task were to
+trigger: it artificially sets the top task to the "succeeded" state
 then negotatiates dependencies and artificially sets any tasks whose
 prerequisites get satisfied to "succeeded"; then it negotiates
 dependencies again, and so on until the stop cycle is reached or nothing
 new triggers. Finally it marks "virtually triggered" tasks for removal.
 Consequently:
  * Dependent tasks will only be identified as such, and purged, if they
-   have already spawned into the root cycle - so let them catch up first.
+   have already spawned into the top cycle - so let them catch up first.
  * You can't purge a tree of tasks that has already triggered, because
    the algorithm relies on detecting new triggering.
 Note also the suite runahead limit must be large enough to bridge the
@@ -64,7 +65,7 @@ purge gap or runahead-held tasks may prevent the purge completing fully.
 graph to determine downstream tasks to remove, without doing this
 internal triggering simulation.]""",
     pyro=True, argdoc=[("REG", "Suite name"), 
-                ("TASK", "Task (NAME%CYCLE) to start purge"),
+                ("TASK", "Task (NAME.CYCLE) to start purge"),
                 ("STOP", "Cycle (inclusive!) to stop purge")])
 
 (options, args) = parser.parse_args()
@@ -81,7 +82,7 @@ except TaskIDError, x:
 else:
     task_id, (name, start) = tid.getstr(), tid.splitstr()
 
-stopid = 'junk%' + stoptag
+stopid = 'junk' + TaskID.DELIM + stoptag
 try:
     tid = TaskID( stopid )
 except TaskIDError, x:
@@ -92,17 +93,17 @@ else:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command-interface' )
 except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
 
 prompt( 'Purge from ' + task_id + ' to ' + stop + ' in ' + suite, options.force )
-result = proxy.purge( target, stop )
+result = proxy.put( 'purge tree', target, stop )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    sys.exit( 'ERROR: ' + result.reason )
+    sys.exit( result[1] )
 

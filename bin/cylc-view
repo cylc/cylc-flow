@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -24,12 +24,18 @@ if remrun().execute():
 import os, re
 import tempfile
 import subprocess
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 from cylc.CylcOptionParsers import cop
 from cylc.continuation_lines import join
-from cylc.Jinja2Support import Jinja2Process
 from cylc.include_files import inline_for_viewing
 from cylc.command_prep import prep_file
+
+try:
+    from cylc.Jinja2Support import Jinja2Process
+except ImportError:
+    jinja2_disabled = True
+else:
+    jinja2_disabled = False
 
 parser = cop( """cylc [prep] view [OPTIONS] ARGS 
 
@@ -39,7 +45,7 @@ editor, after optional include-file inlining and Jinja2 preprocessing.
 The edit process is spawned in the foreground as follows:
   % <editor> suite.rc
 Where <editor> is defined in the cylc site and user config files
-($CYLC_DIR/conf/globals/cylc.rc and $HOME/.cylc/cylc.rc).
+($CYLC_DIR/conf/siterc/site.rc and $HOME/.cylc/user.rc).
 
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
@@ -87,12 +93,11 @@ parser.add_option( "--stdout",
 
 suite, suiterc = prep_file( args[0], options ).execute()
 
-globals = globalcfg()
-cylc_tmpdir = globals.cfg['temporary directory']
+cylc_tmpdir = gcfg.get_tmpdir()
 if options.geditor:
-    editor = globals.cfg['editors']['gui']
+    editor = gcfg.cfg['editors']['gui']
 else:
-    editor = globals.cfg['editors']['in-terminal']
+    editor = gcfg.cfg['editors']['in-terminal']
 
 global suitedir
 suitedir = os.path.dirname(suiterc)
@@ -108,13 +113,18 @@ if os.path.isfile( suiterc ):
         lines = inline_for_viewing( suitedir, lines, options.mark, options.single, options.label )
 
     if options.process:
-        try:
-            lines = Jinja2Process( lines, suitedir,
+        if lines and re.match( '^#![jJ]inja2\s*', lines[0] ):
+            # Jinja2 template processing, if first line is "#![jJ]inja2"
+            if jinja2_disabled:
+                print >> sys.stderr, 'ERROR: This is a "#!jinja2" suite, but Jinja2 is not installed'
+                raise SystemExit( 'Aborting (Jinja2 required).')
+            try:
+                lines = Jinja2Process( lines, suitedir,
                 options.templatevars,
                 options.templatevars_file,
                 verbose=False )
-        except Exception, x:
-            raise SystemExit(x)
+            except Exception, x:
+                raise SystemExit(x)
 
     if not options.nojoin:
         # join any continuation lines

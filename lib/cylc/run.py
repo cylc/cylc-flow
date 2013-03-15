@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -19,23 +19,55 @@
 """Provide the main function for "cylc run" and "cylc restart"."""
 
 import sys
+from daemonize import daemonize
+from version import cylc_version
 
-global debug
-debug = True
+def print_blurb():
+    lines = []
+    lines.append( " The Cylc Suite Engine [" + cylc_version + "] " )
+    lines.append( " Copyright (C) 2008-2013 Hilary Oliver, NIWA " )
+
+    lic = """
+ This program comes with ABSOLUTELY NO WARRANTY.  It is free software; 
+ you are welcome to redistribute it under certain conditions. Details: 
+  `cylc license conditions'; `cylc license warranty' """
+    lines += lic.split('\n')
+
+    mx = 0
+    for line in lines:
+        if len(line) > mx:
+            mx = len(line)
+
+    print '*' * (mx + 2)
+    for line in lines:
+        print '*' + line.center( mx ) + '*'
+    print '*' * (mx + 2)
 
 def main(name, start):
 
-    # local invocation
+    # Parse the command line:
+    server = start()
+
+    # Print copyright and license information
+    print_blurb()
+
+    # Configure Pyro to get the port file, to check the suite is not
+    # already running, before daemonizing.
     try:
-        server = start()
+        server.configure_pyro()
     except Exception, x:
-        if debug:
+        if server.options.debug:
             raise
         else:
             print >> sys.stderr, x
-            print >> sys.stderr, "(use --debug to see exception traceback)"
             sys.exit(1)
+ 
+    # Daemonize the suite
+    if not server.options.debug:
+        daemonize( server.suite, server.port )
+
     try:
+        server.configure()
         server.run()
         #   For profiling:
         #import cProfile
@@ -43,25 +75,20 @@ def main(name, start):
         #   and see Python docs "The Python Profilers"
         #   for how to display the resulting stats.
     except Exception, x:
-        print >> sys.stderr, "ERROR CAUGHT, will clean up before exit"
-        # this assumes no exceptions in shutdown():
-        server.shutdown( 'ERROR: ' + str(x) )
-
-        if debug:
+        print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
+        try:
+            server.shutdown( 'ERROR: ' + str(x) )
+        except Exception, y:
+            # In case of exceptions in the shutdown method itself
+            print str(y)
+            pass
+        if server.options.debug:
             raise
         else:
             print >> sys.stderr, "THE ERROR WAS:"
             print >> sys.stderr, x
-            print >> sys.stderr, "(use --debug to see exception traceback)"
+            print >> sys.stderr, "use --debug to turn on exception tracebacks)"
             sys.exit(1)
-    except:
-        # (note: to catch SystemExit use "except BaseException")
-        print >> sys.stderr, "ERROR CAUGHT; will clean up before exit"
-        server.shutdown('!cylc error - please report!')
-        raise
     else:
-        server.shutdown('suite shutting down')
+        server.shutdown()
 
-def set_main_debug(mode):
-    global debug
-    debug = mode

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -127,11 +127,9 @@ class config( object ):
             sys.exit(0)
 
         # expand theme data
-        cfg = {}
-        cfg['use theme'] = dcfg['use theme']
-        cfg['themes'] = {}
+        cfg_themes = {}
         for theme in dcfg['themes']:
-            cfg['themes'][theme] = {}
+            cfg_themes[theme] = {}
             if 'defaults' in dcfg['themes'][theme]:
                 defs = self.parse_state( theme, 'defaults', dcfg['themes'][theme]['defaults'] )
             else:
@@ -146,9 +144,24 @@ class config( object ):
                 # reverse inherit (override)
                 tcfg = deepcopy(defs)
                 self.inherit( tcfg, self.parse_state(theme, item, val))
-                cfg['themes'][theme][state] = tcfg
+                cfg_themes[theme][state] = tcfg
+
         # result:
-        self.cfg = cfg
+        dcfg['themes'] = cfg_themes
+
+        views = dcfg['initial views']
+        illegal = []
+        for view in views:
+            if view not in ['dot', 'text', 'graph' ]:
+                illegal.append(view)
+        if len(illegal) != 0:
+            sys.exit( "ERROR, gcylc.rc: illegal view(s): " + ', '.join( illegal))
+        if len( views ) == 0:
+            # at least one view required
+            dcfg['initial views'] = ['text']
+
+        # store
+        self.cfg = dcfg
 
     def parse_state( self, theme, name, cfglist=[] ):
         allowed_keys = ['style', 'color', 'fontcolor']
@@ -157,13 +170,13 @@ class config( object ):
         for item in cfglist:
             key, val = item.split('=')
             if key not in allowed_keys:
-                raise SystemExit( 'Error, illegal config: ' + theme + ': '+ name + ' = ' + cfglist )
+                raise SystemExit( 'ERROR, gcylc.rc, illegal: ' + theme + ': '+ name + ' = ' + cfglist )
             if key == 'color' or key == 'fontcolor':
                 try:
                     gtk.gdk.color_parse( val )
                 except ValueError, x:
                     print >> sys.stderr, 'ERROR', x
-                    sys.exit( 'Illegal color: ' + theme + ': ' + name + '="' + item + '"')
+                    sys.exit( 'ERROR, gcylc.rc, illegal color: ' + theme + ': ' + name + '="' + item + '"')
             cfg[key] = val
         return cfg
 

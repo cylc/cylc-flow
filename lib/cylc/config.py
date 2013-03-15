@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -21,6 +21,11 @@
 # comma) ... so to reparse the file  we have to instantiate a new config
 # object.
 
+# For future reference, I attempted flattening each namespace dict prior
+# to inheritance processing, and expanding again after, to allow
+# copy-and-override of shallow rather than nested dicts, but got no
+# appreciable speedup.
+
 import re, os, sys
 import taskdef
 from envvar import check_varnames, expandvars
@@ -37,17 +42,25 @@ from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
-from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
 from continuation_lines import join
-from include_files import inline
+from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
+from TaskID import TaskID
+from C3MRO import C3
 
 try:
     import graphing
-except:
+except ImportError:
     graphing_disabled = True
 else:
     graphing_disabled = False
+
+try:
+    from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
+except ImportError:
+    jinja2_disabled = True
+else:
+    jinja2_disabled = False
 
 class SuiteConfigError( Exception ):
     """
@@ -63,9 +76,8 @@ class SuiteConfigError( Exception ):
 class TaskNotDefinedError( SuiteConfigError ):
     pass
 
-# To Do: separate config for run and non-run purposes?
-
-# To Do: this module could use some clean-up and re-organisation.
+# TODO: separate config for run and non-run purposes?
+# TODO: this module could use some clean-up and re-organisation.
 
 class config( CylcConfigObj ):
     """Parse and validate a suite definition, and compute everything
@@ -74,7 +86,7 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False, collapsed=[], only=None ):
+            verbose=False, validation=False, strict=False, collapsed=[] ):
 
         self.run_mode = run_mode
         self.verbose = verbose
@@ -92,15 +104,25 @@ class config( CylcConfigObj ):
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
-        self.members = {}
-        self.family_hierarchy = {}
+        # runtime hierarchy dicts keyed by namespace name:
+        self.runtime = {
+                # lists of parent namespaces
+                'parents' : {},
+                # lists of C3-linearized ancestor namespaces
+                'linearized ancestors' : {},
+                # lists of first-parent ancestor namepaces
+                'first-parent ancestors' : {},
+                # lists of all descendant namespaces
+                'descendants' : {},
+                # lists of all descendant namespaces from the first-parent hierarchy
+                'first-parent descendants' : {}
+                }
+
         self.families_used_in_graph = []
 
         self.suite = suite
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
-
-        self.only = only # validate a list of tasks
 
         self.owner = owner
 
@@ -115,23 +137,35 @@ class config( CylcConfigObj ):
         f.close()
 
         # handle cylc include-files
-        flines = inline( flines, self.dir )
-
-        # handle Jinja2 expressions
         try:
-            suiterc = Jinja2Process( flines, self.dir, template_vars,
-                    template_vars_file, self.verbose )
-        except TemplateSyntaxError, x:
-            lineno = x.lineno + 1  # (flines array starts from 0)
-            print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
-            print >> sys.stderr, flines[x.lineno]
-            raise SystemExit(str(x))
-        except TemplateError, x:
-            print >> sys.stderr, 'Jinja2 Template Error'
-            raise SystemExit(x)
-        except TypeError, x:
-            print >> sys.stderr, 'Jinja2 Type Error'
-            raise SystemExit(x)
+            flines = inline( flines, self.dir )
+        except IncludeFileError, x:
+            raise SuiteConfigError( str(x) )
+
+        if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
+            # Jinja2 template processing, if first line is "#![jJ]inja2"
+            if jinja2_disabled:
+                print >> sys.stderr, 'ERROR: This is a "#!jinja2" suite, but Jinja2 is not installed'
+                raise SuiteConfigError( 'Aborting (Jinja2 required).')
+            if verbose:
+                print "Processing the suite with Jinja2"
+
+            try:
+                suiterc = Jinja2Process( flines, self.dir, template_vars, template_vars_file, self.verbose )
+            except TemplateSyntaxError, x:
+                lineno = x.lineno + 1  # (flines array starts from 0)
+                print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
+                print >> sys.stderr, flines[x.lineno]
+                raise SystemExit(str(x))
+            except TemplateError, x:
+                print >> sys.stderr, 'Jinja2 Template Error'
+                raise SystemExit(x)
+            except TypeError, x:
+                print >> sys.stderr, 'Jinja2 Type Error'
+                raise SystemExit(x)
+        else:
+            # plain cylc suite definition
+            suiterc = flines
 
         # handle cylc continuation lines
         suiterc = join( suiterc )
@@ -173,8 +207,6 @@ class config( CylcConfigObj ):
         # during validation.  
         if self.validation:
             for name in self['runtime']:
-                if self.only != None and name not in self.only:
-                    continue
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
                 self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
@@ -226,9 +258,10 @@ class config( CylcConfigObj ):
             del self['runtime'][item]
 
         self.check_env()
-        self.famtree()
 
-        self.inheritance()
+        self.compute_family_tree()
+
+        self.compute_inheritance()
 
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -237,7 +270,7 @@ class config( CylcConfigObj ):
         else:
             self.closed_families = collapsed_rc
         for cfam in self.closed_families:
-            if cfam not in self.members:
+            if cfam not in self.runtime['descendants']:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
@@ -273,32 +306,27 @@ class config( CylcConfigObj ):
         self.process_directories()
 
         self.load_graph()
-        if len( self.naked_dummy_tasks ) > 0:
-            if self.strict or self.verbose:
-                print 'Naked dummy tasks detected:'
-                for ndt in self.naked_dummy_tasks:
-                    print '    +', ndt
-                print '  WARNING: this can be caused by misspelled task names!' 
-            if self.strict:
-                raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
 
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
         self.compute_runahead_limit()
 
-        self.family_tree = {}
-        self.task_runtimes = {}
-        self.define_inheritance_tree( self.family_tree, self.family_hierarchy )
-        self.prune_inheritance_tree( self.family_tree, self.task_runtimes )
-
         self.configure_queues()
+
+        # Warn or abort (if --strict) if naked dummy tasks (no runtime
+        # section) are found in graph or queue config. 
+        if len( self.naked_dummy_tasks ) > 0:
+            if self.strict or self.verbose:
+                print 'Naked dummy tasks detected (no entry under [runtime]):'
+                for ndt in self.naked_dummy_tasks:
+                    print '  +', ndt
+                print '  WARNING: this can be caused by misspelled task names!' 
+            if self.strict:
+                raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
+
         if self.validation:
             self.check_tasks()
-
-        if self['visualization']['runtime graph']['enable'] and graphing_disabled:
-            print >> sys.stderr, 'WARNING: disabling runtime graphing (graphing not available).'
-            self['visualization']['runtime graph']['enable'] = False
 
         # Default visualization start and stop cycles (defined here
         # rather than in the spec file so we can set a sensible stop
@@ -324,9 +352,9 @@ class config( CylcConfigObj ):
         # member nodes can be styled together using the family name.
         # Users can override this for individual nodes or sub-groups.
         ng = self['visualization']['node groups']
-        for fam in self.members:
+        for fam in self.runtime['descendants']:
             if fam not in ng:
-                ng[fam] = [fam] + self.members[fam]
+                ng[fam] = [fam] + self.runtime['descendants'][fam]
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
         # because putting default attributes for root in the suite.rc spec
@@ -353,70 +381,113 @@ class config( CylcConfigObj ):
                      print >> sys.stderr, "  ", var
              raise SuiteConfigError("Illegal env variable name(s) detected" )
 
-    def famtree( self ):
-        for label in self['runtime']:
-            hierarchy = []
-            if label == 'root':
-                self.family_hierarchy['root'] = ['root']
+    def compute_family_tree( self ):
+        first_parents = {}
+        for name in self['runtime']:
+            if name == 'root':
+                self.runtime['parents'][name] = []
+                first_parents[name] = []
                 continue
-            name = label
-            while True:
-                hierarchy.append(name) 
-                if name == 'root':
-                    break
-                if 'inherit' in self['runtime'][name]:
-                    inherit = self['runtime'][name]['inherit']
+            if 'inherit' in self['runtime'][name]:
+                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
+                i = self['runtime'][name]['inherit'] 
+                if not isinstance( i, list ):
+                    pts = [i]
                 else:
-                    # implicit inheritance from root
-                    inherit = 'root'
-                if inherit not in self['runtime']:
-                    raise SuiteConfigError, 'Undefined parent runtime: ' + inherit
-                name = inherit
-                if name not in self.members:
-                    self.members[name] = []
-                self.members[name].append(label)
-            self.family_hierarchy[label] = copy(hierarchy)
+                    pts = i
+            else:
+                # implicit inheritance from root
+                pts = [ 'root' ]
+            for p in pts:
+                if p not in self['runtime']:
+                    raise SuiteConfigError, "ERROR, undefined parent for " + name +": " + p
+            self.runtime['parents'][name] = pts
+            first_parents[name] = [ pts[0] ]
 
-    def inheritance( self ):
-        """This works through the inheritance hierarchy from root, for
-        each namespace. For future reference, I did attempt flattening
-        each namespace dict prior to inheritance processing, and
-        expanding again after, to allow copy-and-override of shallow
-        rather than nested dicts, but got no appreciable speedup."""
+        c3 = C3( self.runtime['parents'] )
+        c3_single = C3( first_parents )
+
+        for name in self['runtime']:
+            self.runtime['linearized ancestors'][name] = c3.mro(name)
+            self.runtime['first-parent ancestors'][name] = c3_single.mro(name)
+
+        for name in self['runtime']:
+            ancestors = self.runtime['linearized ancestors'][name]
+            for p in ancestors[1:]:
+                if p not in self.runtime['descendants']: 
+                    self.runtime['descendants'][p] = []
+                if name not in self.runtime['descendants'][p]:
+                    self.runtime['descendants'][p].append(name)
+            first_ancestors = self.runtime['first-parent ancestors'][name]
+            for p in first_ancestors[1:]:
+                if p not in self.runtime['first-parent descendants']: 
+                    self.runtime['first-parent descendants'][p] = []
+                if name not in self.runtime['first-parent descendants'][p]:
+                    self.runtime['first-parent descendants'][p].append(name)
+
+        #for name in self['runtime']:
+        #    print name, self.runtime['linearized ancestors'][name]
+
+    def compute_inheritance( self, use_simple_method=True ):
 
         if self.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        inherited = ['root']
-        for label in self['runtime']:
-            if label == 'root':
-                continue
+        results = {}
+        n_reps = 0
 
-            if self.only != None:
-                # only do inheritance where it affects tasks in self.only
-                skip = True
-                for so in self.only:
-                    if so in hierarchy:
-                        skip = False
-                if skip:
-                    continue
+        already_done = {} # to store already computed namespaces by mro
 
-            hierarchy = self.family_hierarchy[label]
-            prev = 0
-            taskconf = OrderedDict()
-            for i in range(len(hierarchy)-1,-1,-1):
-                if hierarchy[i] in inherited:
-                    # we've already actioned this inheritance
-                    continue
-                #print label, ': replicating', hierarchy[j]
-                j = i + 1
-                replicate( taskconf, self['runtime'][hierarchy[j]].odict())
-                inherited.append( hierarchy[j] )
+        for ns in self['runtime']:
+            # for each namespace ...
 
-            # (we have to do a final replicate and replace here to
-            #  get the ordering of inherited variables right.)
-            replicate( taskconf, self['runtime'][label].odict() )
-            self['runtime'][label] = taskconf
+            hierarchy = copy(self.runtime['linearized ancestors'][ns])
+            hierarchy.reverse()
+
+            result = OrderedDict()
+
+            if use_simple_method:
+                # Go up the linearized MRO from root, replicating or
+                # overriding each namespace element as we go. 
+                for name in hierarchy:
+                    replicate( result, self['runtime'][name].odict() )
+                    n_reps += 1
+
+            else:
+                # As for the simple method, but store the result of each
+                # completed MRO (full or partial) as we go, and re-use
+                # these wherever possible. This ought to be a lot more
+                # efficient for big namespaces (e.g. lots of environment
+                # variables) in deep hiearchies, but results may vary...
+                prev_shortcut = False
+                mro = []
+                for name in hierarchy:
+                    mro.append(name)
+                    i_mro = '*'.join(mro)
+                    if i_mro in already_done:
+                        ad_result = already_done[i_mro]
+                        prev_shortcut = True
+                    else:
+                        if prev_shortcut:
+                            prev_shortcut = False
+                            # copy ad_result (to avoid altering already_done)
+                            result = OrderedDict() # zero the result here...
+                            replicate(result,ad_result) # ...and use stored
+                            n_reps += 1
+                        # override name content into tmp
+                        replicate( result, self['runtime'][name].odict() )
+                        n_reps += 1
+                        # record this mro as already done
+                        already_done[i_mro] = result
+    
+            results[ns] = result
+
+        # replace pre-inheritance namespaces with the post-inheritance result
+        self['runtime'] = results
+
+        # uncomment this to compare the simple and efficient methods
+        # print '  Number of namespace replications:', n_reps
+
 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
@@ -539,15 +610,15 @@ class config( CylcConfigObj ):
         # run their course and disappear.
         queues = self['scheduling']['queues']
         for orphan in orphans:
-            self.family_hierarchy[orphan] = [ orphan, 'root' ]
+            self.runtime['linearized ancestors'][orphan] = [ orphan, 'root' ]
             queues['default']['members'].append( orphan )
 
     def configure_queues( self ):
         """ Replace family names with members, in internal queues,
          and remove assigned members from the default queue. """
 
-        # TO DO: user input consistency checking (e.g. duplicate queue
-        # assignments and non-existent task names)
+        if self.verbose:
+            print "Configuring internal queues"
 
         # NOTE: this method modifies the parsed config dict itself.
 
@@ -558,35 +629,57 @@ class config( CylcConfigObj ):
         for queue in queues:
             if queue == 'default':
                 continue
-            # remove assigned tasks from the default queue
+            # assign tasks to queue and remove them from default
             qmembers = []
             for qmember in queues[queue]['members']:
-                if qmember in self.members:
-                    # qmember is a family: replace with family members
-                    for fmem in self.members[qmember]:
-                        qmembers.append( fmem )
-                        queues['default']['members'].remove( fmem )
+                if qmember in self.runtime['descendants']:
+                    # qmember is a family so replace it with member tasks. Note that 
+                    # self.runtime['descendants'][fam] includes sub-families too.
+                    for fmem in self.runtime['descendants'][qmember]:
+                        if qmember not in qmembers:
+                            try:
+                                queues['default']['members'].remove( fmem )
+                            except ValueError:
+                                # no need to check for naked dummy tasks here as
+                                # families are defined by runtime entries.
+                                if self.verbose and fmem not in self.runtime['descendants']:
+                                    # family members that are themselves families should be ignored as we only need tasks in the queues.
+                                    print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + fmem + ' of family ' + qmember + ' (task not used in the graph)'
+                            else:
+                                qmembers.append( fmem )
                 else:
                     # qmember is a task
-                    qmembers.append(qmember)
-                    queues['default']['members'].remove( qmember )
+                    if qmember not in qmembers:
+                        try:
+                            queues['default']['members'].remove( qmember )
+                        except ValueError:
+                            if self.verbose:
+                                print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + qmember + ' (task not used in the graph)'
+                            if qmember not in self['runtime']:
+                                self.naked_dummy_tasks.append( qmember )
+                        else:
+                            qmembers.append(qmember)
             queues[queue]['members'] = qmembers
-        #for queue in queues:
-        #    print queue, queues[queue]['members']
+        if self.verbose:
+            if len( queues.keys() ) > 1:
+                for queue in queues:
+                    print "  +", queue, queues[queue]['members']
+            else:
+                print " + All tasks assigned to the 'default' queue"
 
-    def get_inheritance( self ):
-        # used by cylc_xdot
-        inherit = {}
-        for ns in self['runtime']:
-            parent = None
-            if 'inherit' in self['runtime'][ns]:
-                parent = self['runtime'][ns]['inherit']
-            elif ns != "root":
-                parent = "root"
-            inherit[ns] = parent
-        return inherit
+    def get_parent_lists( self ):
+        return self.runtime['parents']
 
-    def define_inheritance_tree( self, tree, hierarchy ):
+    def get_first_parent_ancestors( self ):
+        return self.runtime['first-parent ancestors']
+
+    def get_linearized_ancestors( self ):
+        return self.runtime['linearized ancestors']
+
+    def get_first_parent_descendants( self ):
+        return self.runtime['first-parent descendants']
+
+    def define_inheritance_tree( self, tree, hierarchy, titles=False ):
         # combine inheritance hierarchies into a tree structure.
         for rt in hierarchy:
             hier = copy(hierarchy[rt])
@@ -597,77 +690,80 @@ class config( CylcConfigObj ):
                     foo[item] = {}
                 foo = foo[item]
 
-    def prune_inheritance_tree( self, tree, runtimes ):
-        # When self.family_tree is constructed leaves are {}. This
-        # replaces the leaves with first line of task title, and
-        # populates self.task_runtimes with just the leaves (tasks).
-        for item in tree:
-            skeys = tree[item].keys() 
-            if len( skeys ) > 0:
-                self.prune_inheritance_tree(tree[item], runtimes)
+    def add_tree_titles( self, tree ):
+        for key,val in tree.items():
+            if val == {}:
+                if 'title' in self['runtime'][key]:
+                    tree[key] = self['runtime'][key]['title'] 
+                else:
+                    tree[key] = 'No title provided'
+            elif isinstance(val, dict):
+                self.add_tree_titles( val )
+
+    def get_namespace_list( self, which ):
+        names = []
+        if which == 'graphed tasks':
+            # tasks used only in the graph
+            names = self.taskdefs.keys()
+        elif which == 'all namespaces':
+            # all namespaces
+            names = self['runtime'].keys()
+        elif which == 'all tasks':
+            for ns in self['runtime']:
+                if ns not in self.runtime['descendants']:
+                    # tasks have no descendants
+                    names.append( ns )
+        result = {}
+        for ns in names:
+            if 'title' in self['runtime'][ns]:
+                # the runtime dict is sparse at this stage.
+                result[ns] = self['runtime'][ns]['title']
             else:
-                ### TO DO: title may now come from root, inheritance from which is now deferred
-                ###title = self['runtime'][item]['title']
-                ###dlines = re.split( '\n', title )
-                ###dline1 = dlines[0]
-                ###if len(dlines) > 1:
-                ###    dline1 += '...'
-                dline1 = "" # To Do: task title here (see comment just above)
-                tree[item] = dline1
-                runtimes[item] = self['runtime'][item]
+                # no need to flesh out the full runtime just for title
+                result[ns] = "No title provided"
 
-    def print_task_list( self, filter=None, labels=None, pretty=False ):
-        # determine padding for alignment of task title
-        tasks = self.task_runtimes.keys()
-        maxlen = 0
-        for task in tasks:
-            if len(task) > maxlen:
-                maxlen = len(task)
-        padding = (maxlen+1) * ' '
+        return result
 
-        for task in tasks:
-            if filter:
-                if not re.search( filter, task ):
-                    continue
-            # print task title
-            ###title = self['runtime'][task]['title']
-            ###dlines = re.split( '\n', title )
-            ###dline1 = dlines[0]
-            ###if len(dlines) > 1:
-            ###   dline1 += '...'
-            ###print task + padding[ len(task): ] + dline1
-            print task
+    def get_mro( self, ns ):
+        try:
+            mro = self.runtime['linearized ancestors'][ns]
+        except KeyError:
+            mro = ["ERROR: no such namespace: " + ns ]
+        return mro
 
-    def print_inheritance_tree( self, filter=None, labels=None, pretty=False ):
-        # determine padding for alignment of task titles
-        if filter:
-            trt = {}
-            ft = {}
-            fh = {}
-            for item in self.family_hierarchy:
-                if item not in self.task_runtimes:
-                    continue
-                if not re.search( filter, item ):
-                    continue
-                fh[item] = self.family_hierarchy[item]
-            self.define_inheritance_tree( ft, fh )
-            self.prune_inheritance_tree( ft, trt )
-        else:
-            fh = self.family_hierarchy
-            ft = self.family_tree
+    def print_first_parent_tree( self, pretty=False, titles=False ):
+        # find task namespaces (no descendants)
+        tasks = []
+        for ns in self['runtime']:
+            if ns not in self.runtime['descendants']:
+                tasks.append(ns)
 
-        maxlen = 0
-        for rt in fh:
-            items = copy(fh[rt])
-            items.reverse()
-            for i in range(0,len(items)):
-                tmp = 2*i + 1 + len(items[i])
-                if i == 0:
-                    tmp -= 1
-                if tmp > maxlen:
-                    maxlen = tmp
-        padding = (maxlen+1) * ' '
-        print_tree( ft, padding=padding, unicode=pretty, labels=labels )
+        ancestors = self.runtime['first-parent ancestors']
+        # prune non-task namespaces from ancestors dict
+        pruned_ancestors = {}
+        for item in ancestors:
+            if item not in tasks:
+                continue
+            pruned_ancestors[item] = ancestors[item]
+        tree = {}
+        self.define_inheritance_tree( tree, pruned_ancestors, titles=titles )
+        padding = ''
+        if titles:
+            self.add_tree_titles(tree)
+            # compute pre-title padding
+            maxlen = 0
+            for ns in pruned_ancestors:
+                items = copy(pruned_ancestors[ns])
+                items.reverse()
+                for i in range(0,len(items)):
+                    tmp = 2*i + 1 + len(items[i])
+                    if i == 0:
+                        tmp -= 1
+                    if tmp > maxlen:
+                        maxlen = tmp
+            padding = maxlen * ' '
+
+        print_tree( tree, padding=padding, use_unicode=pretty )
 
     def process_directories(self):
         # Environment variable interpolation in directory paths.
@@ -747,11 +843,12 @@ class config( CylcConfigObj ):
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
 
         if self.verbose:
+            print "Checking for defined tasks not used in the graph"
             for name in self['runtime']:
                 if name not in self.taskdefs:
-                    if name not in self.members:
+                    if name not in self.runtime['descendants']:
                         # any family triggers have have been replaced with members by now.
-                        print >> sys.stderr, 'WARNING: task "' + name + '" is not used in the graph.'
+                        print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
         self.check_for_case_errors()
 
@@ -764,6 +861,8 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['runtime']:
                     raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
+                if type == 'sequential' and name in self.runtime['descendants']:
+                    raise SuiteConfigError, 'ERROR: family names cannot be declared ' + type + ': ' + name 
 
         try:
             import Pyro.constants
@@ -778,8 +877,6 @@ class config( CylcConfigObj ):
             # for each graph section
             for name in self.tasks_by_cycler[cyclr]:
                 # instantiate one of each task appearing in this section
-                if self.only != None and name not in self.only:
-                    continue
                 type = self.taskdefs[name].type
                 if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
                     tag = cyclr.initial_adjust_up( '2999010100' )
@@ -788,7 +885,7 @@ class config( CylcConfigObj ):
                 try:
                     # instantiate a task
                     # startup True here or oneoff async tasks will be ignored:
-                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True )
+                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
                 except TypeError, x:
                     raise
                     # This should not happen as we now explicitly catch use
@@ -821,7 +918,7 @@ class config( CylcConfigObj ):
 
     def check_for_case_errors( self ):
         # check for case errors in task names
-        # To Do: this could probably be done more efficiently!
+        # TODO: this could probably be done more efficiently!
         all_names_dict = {}
         for name in self.taskdefs.keys() + self['runtime'].keys():
             # remove legitimate duplicates (names in graph and runtime)
@@ -893,6 +990,8 @@ class config( CylcConfigObj ):
         # Replace family trigger expressions with member trigger expressions.
         # The replacements below handle optional [T-n] cycle offsets.
 
+        if orig and orig not in line_in:
+            return line_in
         line = line_in
         paren_open = ''
         paren_close = ''
@@ -975,12 +1074,13 @@ class config( CylcConfigObj ):
         # line = re.sub(  r'\b(\w+(\[.*?]){0,1}):(complete(d){0,1}|finish(ed){0,1})\b', r'( \1 | \1:fail )', line )
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
-        for fam in self.members:
-            members = copy(self.members[fam])
-            for member in members:
+        for fam in self.runtime['descendants']:
+            members = copy(self.runtime['descendants'][fam])
+            for member in copy(members):
+                # (another copy here: don't remove items from the iterating list) 
                 # remove family names from the member list, leave just tasks
                 # (allows using higher-level family names in the graph)
-                if member in self.members:
+                if member in self.runtime['descendants']:
                     members.remove(member)
             # Note, in the regular expressions below, the word boundary
             # marker before the time offset pattern is required to close
@@ -990,6 +1090,9 @@ class config( CylcConfigObj ):
             # raw strings (r'\bfoo\b') are needed to protect special
             # backslashed re markers like \b from being interpreted as
             # normal escapeded characters.
+
+            if fam not in line:
+                continue
 
             # Replace family triggers with member triggers
             for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
@@ -1097,19 +1200,7 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, ' ', ', '.join(bad)
                     raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
 
-            if self.only != None:
-                rnames = []
-                for r in rights:
-                    rr = r.replace( '!', '' )
-                    rrr = re.sub( ':.*$', '', rr )
-                    rnames.append(rrr)
-                for so in self.only:
-                    if so not in lnames and so not in rnames:
-                        return
-                        
             for rt in rights:
-                if self.only != None and rt not in self.only:
-                    continue
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
                 if rt and rt.startswith('!'):
@@ -1137,7 +1228,8 @@ class config( CylcConfigObj ):
                             m = re.match( '^ASYNCID:(.*)$', section )
                             asyncid_pattern = m.groups()[0]
                
-                if self.only == None and not self.validation:
+                if not self.validation and not graphing_disabled:
+                    # edges not needed for validation
                     self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
                 self.generate_taskdefs( orig_line, lnames, r, ttype, section, cyclr, asyncid_pattern )
                 self.generate_triggers( lexpression, lnames, r, cyclr, asyncid_pattern, suicide )
@@ -1178,14 +1270,20 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, str(x)
 
             if name not in self['runtime']:
+                # naked dummy task, implicit inheritance from root
                 self.naked_dummy_tasks.append( name )
-                # inherit the root runtime
                 self['runtime'][name] = self['runtime']['root'].odict()
-                if 'root' not in self.members:
+                if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in the suite.rc)
-                    self.members['root'] = []
-                self.family_hierarchy[name] = [name, 'root']
-                self.members['root'].append(name)
+                    self.runtime['descendants']['root'] = []
+                if 'root' not in self.runtime['first-parent descendants']:
+                    # (happens when no runtimes are defined in the suite.rc)
+                    self.runtime['first-parent descendants']['root'] = []
+                self.runtime['parents'][name] = ['root']
+                self.runtime['linearized ancestors'][name] = [name, 'root']
+                self.runtime['first-parent ancestors'][name] = [name, 'root']
+                self.runtime['descendants']['root'].append(name)
+                self.runtime['first-parent descendants']['root'].append(name)
 
             if name not in self.taskdefs:
                 try:
@@ -1294,10 +1392,14 @@ class config( CylcConfigObj ):
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
         actual edges for a concrete range of cycle times."""
+        members = self.runtime['first-parent descendants']
+        hierarchy = self.runtime['first-parent ancestors']
+        #members = self.runtime['descendants']
+        #hierarchy = self.runtime['linearized ancestors']
 
         if group_all:
             # Group all family nodes
-            for fam in self.members:
+            for fam in members:
                 #if fam != 'root':
                 if fam not in self.closed_families:
                     self.closed_families.append( fam )
@@ -1308,7 +1410,7 @@ class config( CylcConfigObj ):
             # Group chosen family nodes
             for node in group_nodes:
                 if node != 'root':
-                    parent = self.family_hierarchy[node][1]
+                    parent = hierarchy[node][1]
                     if parent not in self.closed_families:
                         self.closed_families.append( parent )
         elif len(ungroup_nodes) > 0:
@@ -1318,7 +1420,7 @@ class config( CylcConfigObj ):
                     self.closed_families.remove(node)
                 if ungroup_recursive:
                     for fam in copy(self.closed_families):
-                        if fam in self.members[node]:
+                        if fam in members[node]:
                             self.closed_families.remove(fam)
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
@@ -1452,6 +1554,9 @@ class config( CylcConfigObj ):
         # the right of the formatted-name base graph).
         formatted=False
 
+        members = self.runtime['first-parent descendants']
+        #members = self.runtime['descendants']
+
         lname, ltag = None, None
         rname, rtag = None, None
         nr, nl = None, None
@@ -1470,23 +1575,23 @@ class config( CylcConfigObj ):
         clf = copy( self.closed_families )
         for i in self.closed_families:
             for j in self.closed_families:
-                if i in self.members[j]:
+                if i in members[j]:
                     # i is a member of j
                     if i in clf:
                         clf.remove( i )
 
         for fam in clf:
-            if lname in self.members[fam] and rname in self.members[fam]:
+            if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = fam + '%'+ltag, fam + '%'+rtag
+                nl,nr = fam + TaskID.DELIM +ltag, fam + TaskID.DELIM +rtag
                 break
-            elif lname in self.members[fam]:
+            elif lname in members[fam]:
                 # l is a member of fam
-                nl = fam + '%'+ltag
-            elif rname in self.members[fam]:
+                nl = fam + TaskID.DELIM + ltag
+            elif rname in members[fam]:
                 # r is a member of fam
-                nr = fam + '%'+rtag
+                nr = fam + TaskID.DELIM + rtag
 
         return nl, nr
 
@@ -1565,7 +1670,7 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        foo = copy(self.family_hierarchy[ name ])
+        foo = copy(self.runtime['linearized ancestors'][ name ])
         foo.reverse()
         taskd.namespace_hierarchy = foo
 

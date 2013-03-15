@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -23,64 +23,41 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute():
         sys.exit(0)
 
-import os,re,gtk
-import warnings
-warnings.filterwarnings('ignore', 'use the new', Warning)
+import os
 from cylc.CylcOptionParsers import cop
-from copy import copy
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../lib')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
-
-from cylc.gui.SuiteControl import ControlApp
-from cylc.gui.gcylc_config import config
-from cylc.global_config import globalcfg
-from cylc.suite_host import is_remote_host
-from cylc.suite_logging import suite_log
-from cylc.owner import user, is_remote_user
-from cylc.registration import localdb
-from cylc.passphrase import passphrase
+sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
+sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../')
 
 parser = cop( """cylc gui [OPTIONS] [REG]
 gcylc [OPTIONS] [REG]
 
-The cylc GUI for suite control etc. This program can also be launched by
-right-clicking on a suite in cylc dbviewer.
+This is the cylc Graphical User Interface.
+
+Local suites can be opened and switched between from within gcylc. To
+connect to running remote suites (whose passphrase you have installed)
+you must currently use --host and/or --owner on the gcylc command line.
 
 If the '-t,--timeout=' option is used the timeout value will be passed
-on to the suite if it is subsequently started from the GUI
-(and it will in turn be passed to tasks submitted by the suite).
+on to the suite if it is subsequently started from the GUI (and it will
+in turn be passed to tasks submitted by the suite).
 
-Task state color themes can be changed via the View menu. To customize
-themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc
-and follow the instructions in the file.
-
-NOTE: daemonize important suites with the POSIX nohup command:
-    $ nohup gcylc [OPTIONS] [REG] &""", pyro=True, gcylc=True,
-    argdoc=[('[REG]', 'Suite name' )])
-
-parser.add_option( "-w", "--views", metavar="VIEWS", 
-        help="Initial view panes for the suite control GUI. "
-        "choose one or two, comma separated, from 'dot', "
-        "'text', and 'graph'; the default is 'dot,text'",
-        action="store", default='dot,text', dest="gviews" )
-
-parser.add_option( "-u", "--use-theme", metavar="NAME",
-        help="The task state color and icon theme to use at start-up "
-        "(this overrides the theme specified in your gcylc.rc file).",
-        action="store", default=None, dest="theme" )
-
-parser.add_option( "-l", "--list-themes", 
-        help="Print available task state color themes "
-        "(built-in themes and any in $HOME/.cylc/gcylc.rc).",
-        action="store_true", default=False, dest="list_themes" )
+Available task state color themes are shown under the View menu. To
+customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+$HOME/.cylc/gcylc.rc and follow the instructions in the file.""",
+pyro=True, gcylc=True, argdoc=[('[REG]', 'Suite name' )])
 
 parser.remove_option("-f" ) # don't need force (To Do: a read-only GUI)
 
 ( options, args ) = parser.parse_args()
 
-globals = globalcfg()
-cylc_tmpdir = globals.cfg['temporary directory']
+# import modules that require gtk now, so that a display is not needed
+# just to get command help (e.g. when running make on a post-commit hook
+# on a remote repository).
+import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
+from cylc.gui.SuiteControl import ControlApp
 
 # Make current working directory be $HOME. Otherwise (1) if the user
 # attempts to start gcylc from a CWD that has been removed, Pyro will
@@ -89,54 +66,19 @@ cylc_tmpdir = globals.cfg['temporary directory']
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-if not options.list_themes:
-    if len( args ) == 0:
-        sys.exit( "ERROR: please give a suite name" )
-    suite = args[0]
-    suitedir = None
-    # dealias the suite name (an aliased name may be given for local suites)
-    if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
-        db = localdb(file=options.db, verbose=options.verbose)
-        db.load_from_file()
-        try:
-            suite = db.unalias( suite )
-            suitedir = db.getdir( suite )
-        except Exception, x:
-            if options.debug:
-                raise
-            raise SystemExit(x)
-
-    try:
-        pphrase = passphrase( suite, options.owner, options.host,
-                verbose=options.verbose ).get( options.pfile, suitedir )
-    except Exception, x:
-        sys.exit(str(x))
-
-# load gcylc.rc
-usercfg = config( options.list_themes, options.theme )
-
 gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
 gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
 gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
 
-views = (options.gviews).split(',')
+if len(args) == 1:
+    suite = args[0]
+else:
+    suite = None
 
-if len(views) > 2:
-    sys.exit( "ERROR: Too many views specified" )
-
-illegal = []
-for view in views:
-    if view not in ['dot', 'text', 'graph' ]:
-        illegal.append(view)
-if len(illegal) != 0:
-    sys.exit( "ERROR, illegal view specs: " + ', '.join( illegal))
-
-logdir = suite_log( suite ).get_dir()
 try:
-    app = ControlApp( suite, logdir, pphrase, options.owner,
-            options.host, options.port, cylc_tmpdir, views,
-            options.pyro_timeout, usercfg.cfg, options.templatevars,
-            options.templatevars_file )
+    app = ControlApp( suite, options.db, options.owner,
+            options.host, options.port, options.pyro_timeout,
+            options.templatevars, options.templatevars_file )
 except Exception, x:
     if options.debug:
         raise

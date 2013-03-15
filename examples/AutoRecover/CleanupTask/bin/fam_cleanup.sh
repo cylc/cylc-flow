@@ -19,7 +19,7 @@ for T in $FAILED_TASKS; do
     if [[ $T == m_* ]]; then
         found_failed_member=true
         echo "REMOVING family member"
-        cylc control remove --force $CYLC_SUITE_REG_NAME ${T}%$CYLC_TASK_CYCLE_TIME
+        cylc control remove --force $CYLC_SUITE_REG_NAME ${T}.$CYLC_TASK_CYCLE_TIME
     else
         echo "NOT REMOVING (not family member)"
     fi

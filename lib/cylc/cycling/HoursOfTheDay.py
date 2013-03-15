@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ class HoursOfTheDay( cycler ):
         """Parse and store incoming list of hours of the day."""
         if len(args) == 0:
             # no args, assume all hours
-            self.valid_hours = range(0,23)
+            self.valid_hours = range(23)
         else:
             self.valid_hours = []
             for arg in args:

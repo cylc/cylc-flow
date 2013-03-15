@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -89,9 +89,7 @@ class outputs( object ):
         # Add a new output message
         if message in self.completed or message in self.not_completed:
             # duplicate output messages are an error.
-            print >> sys.stderr, 'ERROR: output already registered: ' + message
-            # TO DO: raise an exception here
-            sys.exit(1)
+            print >> sys.stderr, 'WARNING: output already registered: ' + message
         if not completed:
             self.not_completed[message] = self.owner_id
         else:
@@ -108,7 +106,6 @@ class outputs( object ):
 
     def register( self ):
         # automatically define special 'started' and 'succeeded' outputs
-        # TO DO: just use two calls to add()?
-        message = self.owner_id + ' started'
-        self.not_completed[ message ] = self.owner_id
+        self.add( self.owner_id + ' started' )
         self.add( self.owner_id + ' succeeded' )
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ class prep_pyro( prep ):
         # get the suite passphrase
         try:
             self.pphrase = passphrase( self.suite, self.options.owner, self.options.host,
-                    verbose=options.verbose ).get( self.options.pfile, self.suitedir )
+                    verbose=options.verbose ).get( None, self.suitedir )
         except Exception, x:
             if self.options.debug:
                 raise

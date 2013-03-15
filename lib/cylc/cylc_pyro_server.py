@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ class pyro_server( object ):
         self.owner = user
 
         # SINGLE THREADED PYRO
-        Pyro.config.PYRO_MULTITHREADED = 0
+        Pyro.config.PYRO_MULTITHREADED = 1
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
         # (see the Userguide "Networking Issues" section).
         Pyro.config.PYRO_DNS_URI = True
@@ -49,7 +49,6 @@ class pyro_server( object ):
         self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get(suitedir=suitedir)] )
 
     def shutdown( self ):
-        print "Pyro daemon shutdown"
         self.daemon.shutdown(True)
         # If a suite shuts down via 'stop --now' or # Ctrl-C, etc.,
         # any existing client end connections will hang for a long time

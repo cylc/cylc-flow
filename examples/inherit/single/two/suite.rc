@@ -1,0 +1,71 @@
+title = 'inheritance example'
+
+description = """
+This suite illustrates several tiers of task runtime inheritance.
+To see the result, use 'cylc get-config' or examine task job scripts
+generated with 'cylc jobscript'."""
+
+[scheduling]
+    initial cycle time = 2011010100
+    final cycle time = 2011010300
+    [[dependencies]]
+        [[[0]]]
+            graph = """
+                foo => OPS
+                OPS:finish-all & OPS:succeed-any => VAR
+                VAR:succeed-all => baz
+                atovs => atovs_post
+                """
+[runtime]
+    [[root]]
+        [[[environment]]]
+            ROOT = "the quick brown fox"
+    [[GEN]]
+        [[[environment]]]
+            GEN_A = gen_a
+            GEN_B = gen_b
+    [[OPS]]
+        inherit = GEN
+        command scripting = "echo run-OPS.sh; sleep 10"
+        [[[environment]]]
+            GEN_B = ops_b
+    [[VAR]]
+        inherit = GEN
+        command scripting = "echo run-VAR.sh; sleep 10"
+        [[[environment]]]
+            GEN_B = var_b
+    [[atovs]]
+        description = "OPS ATOVS obs processing"
+        inherit = OPS
+        [[[environment]]]
+            OPS_DATA = atovs
+    [[aircraft]]
+        description = "OPS aircraft obs processing"
+        inherit = OPS
+        command scripting = "echo HELLO from $CYLC_TASK_ID; sleep 5; echo ABORT; /bin/false"
+        [[[environment]]]
+            OPS_DATA = aircraft
+    [[ConLS]]
+        description = "runs VAR ConfigureLS"
+        inherit = VAR
+        [[[environment]]]
+            VAR_PROG = ConfigureLS
+    [[AnPF]]
+        description = "runs VAR AnalysePF"
+        inherit = VAR
+        command scripting = "echo run-VAR.sh --apf; sleep 10"
+        [[[environment]]]
+            VAR_PROG = AnalysePF
+    [[baz]]
+    [[bar1,bar2]]
+        inherit = baz
+        description = "member of baz"
+    [[atovs_post]]
+        inherit = OPS
+        description = "OPS ATOVS postprocessing"
+
+    [[prepobs]]
+        description = "obs preprocessing"
+
+[visualization]
+    collapsed families = OPS, VAR, baz

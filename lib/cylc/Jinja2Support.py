@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -18,13 +18,10 @@
 
 import os, sys, re
 import glob
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError, StrictUndefined
 
-try:
-    from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError, StrictUndefined
-except ImportError:
-    jinja2_loaded = False
-else:
-    jinja2_loaded = True
+"""cylc support for the Jinja2 template processor. Importing code should
+catch ImportError in case Jinja2 is not installed."""
 
 def load_template_vars( pairs, pairs_file, verbose=False ):
     res = {}
@@ -59,81 +56,66 @@ def load_template_vars( pairs, pairs_file, verbose=False ):
     return res
 
 def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
-    # check first line of file for template engine directive
-    # (check for new empty suite.rc files - zero lines - first)
-    if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
-        # This suite.rc file requires processing with jinja2.
-        if not jinja2_loaded:
-            print >> sys.stderr, 'ERROR: This suite requires processing with the Jinja2 template engine'
-            print >> sys.stderr, 'ERROR: but the Jinja2 modules are not installed in your PYTHONPATH.'
-            raise TemplateError( 'Aborting (Jinja2 required).')
-        if verbose:
-            print "Processing the suite with Jinja2"
-        env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined )
+    env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined )
 
-        # Load any custom Jinja2 filters in the suite definition directory
-        # Example: a filter to pad integer values some fill character:
-        #|(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
-        #|  #!/usr/bin/env python
-        #|  def foo( value, length, fillchar ):
-        #|     return str(value).rjust( int(length), str(fillchar) )
-        fdirs = [os.path.join( os.environ['CYLC_DIR'], 'lib', 'Jinja2Filters' ),
-                os.path.join( dir, 'Jinja2Filters' ),
-                os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2Filters' ))]
-        usedfdirs = []
-        for fdir in fdirs:
-            if os.path.isdir( fdir ):
-                usedfdirs.append( fdir )
-        for filterdir in usedfdirs:
-            sys.path.append( os.path.abspath( filterdir ))
-            for f in glob.glob( os.path.join( filterdir, '*.py' )):
-                fname = os.path.basename( f ).rstrip( '.py' )
-                # TO DO: EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
-                m = __import__( fname )
-                env.filters[ fname ] = getattr( m, fname )
+    # Load any custom Jinja2 filters in the suite definition directory
+    # Example: a filter to pad integer values some fill character:
+    #|(file SUITE_DEFINIION_DIRECTORY/Jinja2/foo.py)
+    #|  #!/usr/bin/env python
+    #|  def foo( value, length, fillchar ):
+    #|     return str(value).rjust( int(length), str(fillchar) )
+    fdirs = [os.path.join( os.environ['CYLC_DIR'], 'lib', 'Jinja2Filters' ),
+            os.path.join( dir, 'Jinja2Filters' ),
+            os.path.join( os.path.join( os.environ['HOME'], '.cylc', 'Jinja2Filters' ))]
+    usedfdirs = []
+    for fdir in fdirs:
+        if os.path.isdir( fdir ):
+            usedfdirs.append( fdir )
+    for filterdir in usedfdirs:
+        sys.path.append( os.path.abspath( filterdir ))
+        for f in glob.glob( os.path.join( filterdir, '*.py' )):
+            fname = os.path.basename( f ).rstrip( '.py' )
+            # TO DO: EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
+            m = __import__( fname )
+            env.filters[ fname ] = getattr( m, fname )
 
-        # Import SUITE HOST USER ENVIRONMENT into template:
-        # (usage e.g.: {{environ['HOME']}}).
-        env.globals['environ'] = os.environ
+    # Import SUITE HOST USER ENVIRONMENT into template:
+    # (usage e.g.: {{environ['HOME']}}).
+    env.globals['environ'] = os.environ
 
-        # load file lines into a template, excluding '#!jinja2' so
-        # that '#!cylc-x.y.z' rises to the top.
-        # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
-        # try:
-        template = env.from_string( ''.join(flines[1:]) )
-        # except Exception, x:
-        #     # This happens if we use an unknown Jinja2 filter, for example.
-        ##     # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
-        #     raise TemplateError( x )
+    # load file lines into a template, excluding '#!jinja2' so
+    # that '#!cylc-x.y.z' rises to the top.
+    # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
+    # try:
+    template = env.from_string( ''.join(flines[1:]) )
+    # except Exception, x:
+    #     # This happens if we use an unknown Jinja2 filter, for example.
+    ##     # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
+    #     raise TemplateError( x )
+    try:
+        template_vars = load_template_vars( inputs, inputs_file, verbose )
+    except Exception, x:
+        raise TemplateError( x )
+    
+    # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
+    # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
+    # (converting unicode to plain string; configobj doesn't like?)
+    #try:
+    rendered = str( template.render( template_vars ) )
+    #except Exception, x:
+    #    raise TemplateError( x )
 
-        try:
-            template_vars = load_template_vars( inputs, inputs_file, verbose )
-        except Exception, x:
-            raise TemplateError( x )
-        
-        # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
-        # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
-        # (converting unicode to plain string; configobj doesn't like?)
-        #try:
-        rendered = str( template.render( template_vars ) )
-        #except Exception, x:
-        #    raise TemplateError( x )
-
-        xlines = rendered.split('\n') # pass a list of lines to configobj
-        suiterc = []
-        for line in xlines:
-            # Jinja2 leaves blank lines where source lines contain
-            # only Jinja2 code; this matters if line continuation
-            # markers are involved, so we remove blank lines here.
-            if re.match( '^\s*$', line ):
-                continue
-
+    xlines = rendered.split('\n') # pass a list of lines to configobj
+    suiterc = []
+    for line in xlines:
+        # Jinja2 leaves blank lines where source lines contain
+        # only Jinja2 code; this matters if line continuation
+        # markers are involved, so we remove blank lines here.
+        if re.match( '^\s*$', line ):
+            continue
             # restoring newlines here is only necessary for display by
-            # the cylc view command:
-            suiterc.append(line + '\n')
-    else:
-        # This is a plain suite.rc file.
-        suiterc = flines
+        # the cylc view command:
+        suiterc.append(line + '\n')
 
     return suiterc
 

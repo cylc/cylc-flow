@@ -1,5 +1,5 @@
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 
 [runtime]
     [[__many__]]
-        inherit = string( default=None )
+        inherit = force_list( default=list() )
         title = string( default="No title provided" )
         description = string( default="No description provided" )
         initial scripting = string( default=None )
@@ -51,9 +51,6 @@
         manual completion = boolean( default=False )
         extra log files = force_list( default=list())
         enable resurrection = boolean( default=False )
-        log directory = string( default='$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job' )
-        share directory = string( default='$CYLC_SUITE_DEF_PATH/share' )
-        work directory = string( default='$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID' )
         [[[simulation mode]]]
             run time range = list( default=list(1,16))
             simulate failure = boolean( default=False )
@@ -72,13 +69,10 @@
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
-            cylc directory = string( default=None )
+            # This should really be host-specific in the suite
+            # definition; but currently no other items warrant a top
+            # level [host] section:
             suite definition directory = string( default=None )
-            remote shell template = string( default='ssh -oBatchMode=yes %s' )
-            log directory = string( default=None )
-            share directory = string( default=None )
-            work directory = string( default=None )
-            ssh messaging = boolean( default=False )
         [[[event hooks]]]
             submitted handler = string( default=None )
             started handler = string( default=None )
@@ -96,6 +90,7 @@
             execution timeout = float( default=None )
 
             reset timer = boolean( default=False )
+
         [[[environment]]]
             __many__ = string
         [[[directives]]]

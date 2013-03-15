@@ -8,7 +8,7 @@ GetData task to trigger the first Model."""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.2 # minutes
+       live mode suite timeout = 1.0 # minutes
 
 [scheduling]
     initial cycle time = 2011010106
@@ -30,7 +30,7 @@ GetData task to trigger the first Model."""
     [[GetData]]
         command scripting = """
 if [[ $CYLC_TASK_CYCLE_TIME == 2011010112 ]]; then
-    cylc message "TRIGGERING FIRST MODEL NOW!"
-    cylc trigger -f $CYLC_SUITE_REG_NAME Model%2011010106
+    cylc message "TRIGGERING FIRST MODEL NOW"
+    cylc trigger -f $CYLC_SUITE_REG_NAME Model.2011010106
 fi"""
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@
 import gtk
 import os, re
 import gobject
-import helpwindow
 from stateview import lupdater
 from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
+from cylc.TaskID import TaskID
 from util import EntryTempText
 
 class ControlLED(object):
@@ -84,7 +84,7 @@ LED suite control interface.
         ctime_column = treeview.get_model().get_n_columns() - 1
         ctime = treeview.get_model().get_value( r_iter, ctime_column )
 
-        task_id = name + '%' + ctime
+        task_id = name + TaskID.DELIM + ctime
 
         is_fam = (name in self.t.families)
 

@@ -1,0 +1,19 @@
+title = "Uncomment #BAD below to get a bad runtime multiple inheritance hierarchy"
+
+description = """Uncomment #BAD for an inheritance structure for which the C3
+linearization algorithm fails. It follows an example in the Python
+object MRI reference document. For a detailed explanation, see:
+  http://www.python.org/download/releases/2.3/mro/ 
+"""
+
+[scheduling]
+    [[dependencies]]
+        graph = g
+[runtime]
+    [[f]]
+    [[e]]
+        inherit = f
+    [[g]]
+        inherit = e,f # GOOD, or:
+        # inherit = f,e # BAD
+

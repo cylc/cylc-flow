@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -47,10 +47,6 @@ fi
 TOPDIR=$1
 
 CYLC_VERSION=$( cylc -v )
-if [[ $CYLC_VERSION == "VERSION-TEMPLATE" ]]; then
-    # we are in a cylc git repository - get most recent tag
-    CYLC_VERSION=$( git tag | tail -1 )X
-fi
 SSE=$( date +%s )
 TOP=cylc-$( echo $CYLC_VERSION | tr '.' '-' )-$SSE
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -26,12 +26,12 @@ from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
 
-        globals = globalcfg()
+        globals = gcfg
         self.retry_seconds = globals.cfg['task messaging']['retry interval in seconds']
         self.max_tries = globals.cfg['task messaging']['maximum number of tries']
         self.try_timeout = globals.cfg['task messaging']['connection timeout in seconds']
@@ -110,6 +110,13 @@ class message(object):
                 self.ssh_messaging = True
         except:
             pass
+
+        self.ssh_login_shell = True
+        try:
+            if os.environ['CYLC_TASK_SSH_LOGIN_SHELL'] == 'False':
+                self.ssh_login_shell = False
+        except:
+            pass
             
     def now( self ):
         if self.utc:
@@ -162,6 +169,12 @@ class message(object):
             sys.argv.append( '--host=' + self.host )
             if self.verbose:
                 sys.argv.append( '-v' )
+
+            if self.ssh_login_shell:
+                sys.argv.append('--login')
+            else:
+                sys.argv.append('--no-login')
+
             # Some variables from the task execution environment are
             # also required by the re-invoked remote command: Note that
             # $CYLC_TASK_SSH_MESSAGING is not passed through so the

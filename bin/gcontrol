@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 echo "WARNING: \"gcontrol\" is deprecated - it is now called \"gcylc\""
-echo "WARNING: and the former \"gcylc\" has been demoted to \"cylc dbviewer\""
 echo "WARNING: This command alias will eventually be deleted."
 $(dirname $0)/cylc gui "$@"
 

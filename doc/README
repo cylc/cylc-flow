@@ -1,0 +1,15 @@
+
+To generate pdf and html (single and multi-page) Cylc User Guides:
+
+ | cd $CYLC_DIR/doc
+ | make
+
+The following make targets are also avaialable:
+ | make pdf
+ | make html
+ | make html-single
+ | make html-multi
+
+This will generate the documents under pdf/ and html/ sub-directories,
+and an index.html file at the top level that links to them.
+

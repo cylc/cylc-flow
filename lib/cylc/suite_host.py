@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys, socket
-from global_config import globalcfg
+from global_config import gcfg
 
 def get_local_ip_address( target ):
     """
@@ -67,7 +67,7 @@ returning the IP address associated with this socket.
     return ipaddr
 
 
-globals = globalcfg()
+globals = gcfg
 method = globals.cfg['suite host self-identification']['method']
 target = globals.cfg['suite host self-identification']['target']
 hardwired = globals.cfg['suite host self-identification']['host']
@@ -87,7 +87,7 @@ elif method == 'address':
 elif method == 'hardwired':
     if not hardwired:
         sys.exit( 'ERROR, no hardwired hostname is configured' )
-    suite_host = manual
+    suite_host = hardwired
 else:
     sys.exit( 'ERROR, unknown host method: ' + method )
  
@@ -95,7 +95,7 @@ def is_remote_host(name):
     """Return True if name has different IP address than the current host.
     Return False if name is None.  Abort if host is unknown.
     """
-    if not name:
+    if not name or name == "localhost":
         return False
     try:
         ipa = socket.gethostbyname(name) 

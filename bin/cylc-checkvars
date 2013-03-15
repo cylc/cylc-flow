@@ -1,0 +1,166 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os, sys
+from optparse import OptionParser
+from cylc.mkdir_p import mkdir_p
+
+parser = OptionParser( usage = """cylc [util] checkvars [OPTIONS] VARNAMES
+
+Check that each member of a list of environment variables is defined,
+and then optionally check their values according to the chosen
+commandline option. Note that THE VARIABLES MUST BE EXPORTED AS THIS
+SCRIPT NECESSARILY EXECUTES IN A SUBSHELL.
+
+All of the input variables are checked in turn and the results printed. 
+If any problems are found then, depending on use of '-w,--warn-only',
+this script either aborts with exit status 1 (error) or emits a stern
+warning and exits with status 0 (success).
+
+Arguments:
+   VARNAMES     Space-separated list of environment variable names.""")
+
+parser.add_option( "-d", "--dirs-exist", 
+        help="Check that the variables refer to directories that exist.", 
+        action="store_true", default=False, dest="checkdirs" )
+
+parser.add_option( "-c", "--create-dirs", 
+        help="Attempt to create the directories referred to by the "
+        "variables, if they do not already exist.",
+        action="store_true", default=False, dest="createdirs" )
+
+parser.add_option( "-p", "--create-parent-dirs", 
+        help="Attempt to create the parent directories of files "
+        "referred to by the variables, if they do not already exist.",
+        action="store_true", default=False, dest="createparentdirs" )
+
+parser.add_option( "-f", "--files-exist", 
+        help="Check that the variables refer to files that exist.", 
+        action="store_true", default=False, dest="checkfiles" )
+
+parser.add_option( "-i", "--int",
+        help="Check that the variables refer to integer values.", 
+        action="store_true", default=False, dest="checkint" )
+
+parser.add_option( "-s", "--silent", 
+        help="Do not print the result of each check.", 
+        action="store_false", default=True, dest="verbose" )
+
+parser.add_option( "-w", "--warn-only", 
+        help="Print a warning instead of aborting with error status.", 
+        action="store_true", default=False, dest="warnonly" )
+
+(options, args) = parser.parse_args()
+
+if len( args ) == 0:
+    parser.error( "VARNAMES argument is required" )
+
+
+if [ options.checkdirs, options.createdirs, options.createparentdirs, \
+        options.checkfiles, options.checkint ].count( True ) > 1:
+    parser.error( "Please choose at most one option." )
+
+varnames = args
+
+failed = False
+if options.warnonly:
+    ALERT = 'cylc checkvars: WARNING,'
+else:
+    ALERT = 'cylc checkvars: ERROR,'
+
+for varname in varnames:
+    if varname in os.environ:
+        value = os.environ[ varname ]
+
+        if options.verbose:
+            print '$' + varname, "evaluates to", value
+
+        if options.createdirs:
+            if os.path.isdir( value ):
+                if options.verbose:
+                    print '(directory exists)'
+            else:
+                try:
+                    # (see documentation in src/mkdir_p)
+                    mkdir_p( value )
+                except:
+                    # failed for reason other than dir exists already
+                    failed = True
+                    print >> sys.stderr, ALERT, 'cannot create directory:', value
+                else:
+                    print '(directory created)'
+
+        if options.createparentdirs:
+            parent = os.path.dirname( value )
+            if os.path.isdir( parent ):
+                if options.verbose:
+                    print '(parent directory exists)'
+            else:
+                try:
+                    # (see documentation in src/mkdir_p)
+                    mkdir_p( parent )
+                except:
+                    # failed for reason other than dir exists already
+                    failed = True
+                    print >> sys.stderr, ALERT, 'cannot create directory:', parent
+                else:
+                    print '(parent directory created)'
+
+        if options.checkdirs:
+            if os.path.isdir( value ):
+                if options.verbose:
+                    print '(directory exists)'
+            else:
+                failed = True
+                if options.verbose:
+                    print >> sys.stderr, ALERT, 'directory not found:', value
+
+        if options.checkfiles:
+            if os.path.isfile( value ):
+                if options.verbose:
+                    print '(file exists)'
+            else:
+                failed = True
+                if options.verbose:
+                    print >> sys.stderr, ALERT, 'file not found:', value
+
+        if options.checkint:
+            # value is a string; conversion from string to int fails
+            # unless the string contains *only* digits:
+            # int( 100.1 ) = 100, but int( '100.1') fails.
+            try:
+                int( value )
+            except:
+                failed = True
+                if options.verbose:
+                    print >> sys.stderr, ALERT, 'value is not an integer:', value
+            else:
+                if options.verbose:
+                    print '(is an integer)'
+    else:
+        failed = True
+        if options.verbose:
+            print >> sys.stderr, ALERT, 'variable not defined: $' + varname
+
+if failed:
+    if options.warnonly:
+        print >> sys.stderr, 'cylc checkvars: WARNINGS detected, exit 0'
+        sys.exit(0)
+    else:
+        print >> sys.stderr, 'cylc checkvars: ERRORS detected, ABORTING'
+        sys.exit(1)

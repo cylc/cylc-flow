@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 import re, sys
 
 # label1 => "foo ready for <TAG>
-# label2 => "bar%<TAG> succeeded"
+# label2 => "bar.<TAG> succeeded"
 # expr   => "( [label1] or [label2] )"
 
 class TriggerExpressionError( Exception ):

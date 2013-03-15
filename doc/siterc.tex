@@ -3,9 +3,9 @@
 
 \lstset{language=bash}
 
-*** NOT USED YET - TBD ***
+*** NOT USED YET - FROM SUITE DEF ITEMS CUT FROM OLD SUITERC.TEX - To Be Completed ***
 
-\subsection[suite run directory]{suite run directory}
+\subsection[run directory]{suite run directory}
 
 Cylc writes the following files to a special ``run'' directory:
 
@@ -50,4 +50,119 @@ configured maximum size, and whenever the suite is started or restarted.
     \item {\em default:} True
 \end{myitemize}
 
+
+\subparagraph[cylc directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ cylc directory}
+
+The path to the remote cylc installation, required if cylc
+is not in the default search path on the remote host.
+
+\begin{myitemize}
+\item {\em type:} string (a valid directory path on the remote host)
+\item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[remote shell template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ remote shell template }
+
+A template for the remote shell command for a submitting a remote task.
+The template's first \%s will be substituted by the remote user@host.
+
+\begin{myitemize}
+\item {\em type:} string (a string template)
+\item {\em root default:} \lstinline@ssh -oBatchMode=yes %s@
+\end{myitemize}
+
+\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ log directory }
+
+This log directory is used for the stdout and stderr logs of remote
+tasks. The directory will be created on the fly if necessary. If not
+specified, the local job submission log path will be used
+(see~\ref{LocalLog}) with the
+suite owner's home directory path, if present, replaced by
+\lstinline='$HOME'= for interpretation on the remote host. The stdout
+and stderr log file names are the same as for local tasks, and are
+recorded by the task proxies for access via gcylc. Suite identity
+variables can be used in the path, but {\em not task identity variables}
+such as \lstinline=$CYLC_TASK_NAME= and \lstinline=$CYLC_TASK_CYCLE_TIME=, 
+because the log directory is created before the task runs.
+
+\begin{myitemize}
+\item {\em type:} string (a valid directory path on the remote host)
+\item {\em default:} (local log path with \lstinline=$HOME= replaced)
+\end{myitemize}
+ 
+NOTE: work and share directories are now configured by a single ``workspace directory''.
+
+\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ work directory}
+
+Use this item if you need to override the local task work directory 
+(see~\ref{LocalWork}). If omitted, the local directory will be used with
+the suite owner's home directory path, if present,
+replaced by \lstinline='$HOME'= for interpretation on 
+the remote host.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} (local task work path with \lstinline=$HOME= replaced)
+\end{myitemize}
+
+\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ share directory}
+
+Use this item if you need to override the local share directory 
+(see~\ref{LocalShare}). If omitted, the local directory will be used
+with the suite owner's home directory path, if present, replaced by
+\lstinline='$HOME'= for interpretation on the remote host.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} (local task share path with \lstinline=$HOME= replaced)
+\end{myitemize}
+
+\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ ssh messaging}
+
+If your network configuration or firewall blocks the TCP/IP sockets
+required for remote tasks to communicate with their parent suite
+you can tell cylc to use passwordless ssh (from remote host to suite
+host) instead, to invoke local messaging commands on the suite host.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} False
+\end{myitemize}
+
+This item affects the behaviour of the cylc messaging commands by means
+of the task execution environment, so no special cylc configuration is
+required on the remote host itself. Eventually it may be moved to a site
+and host configuration file (yet to be implemented) because it is host-
+rather than task-specific. For the moment though you can still set it
+just once in a namespace inherited by all tasks on the affected host.
+
+Note that you can use a remote section with this item in it even for
+tasks that are local as far as cylc is concerned, but which end up
+running on the affected remote host due to the action of the local batch
+queueing system or resource manager.
+
+
+\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ use login shell}
+
+By default Cylc will submit remote ssh commands using a login shell. For
+security reasons some institutions do not allow unattended commands to start
+login shells, setting this item to false will disable that behaviour.
+
+When this option is set to True Cylc will start a Bash login shell to run
+remote ssh commands, e.g. \lstinline=ssh user@host 'bash --login cylc task'=
+which will source the files \lstinline=/etc/profile= and \lstinline=~/.profile=
+in order to set up the user environment. Without the login option Cylc will be
+run directly by ssh, e.g. \lstinline=ssh user@host 'cylc task'= which will use
+the default shell on the remote machine. In this case the environment will be
+set up by sourcing the files \lstinline=~/.bashrc= or \lstinline=~/.cshrc=,
+depending on the shell type of the remote machine.
+
+In either case the PATH environment variable on the remote machine should
+include \lstinline=$CYLC_DIR/bin= in order for the Cylc executable to be
+found.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} True
+\end{myitemize}
 

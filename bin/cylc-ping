@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
-from cylc.global_config import globalcfg
+from cylc.global_config import gcfg
 
 parser = cop( """cylc [discover] ping [OPTIONS] ARGS
     
@@ -37,7 +37,7 @@ error status. For tasks, success means the task proxy is currently in
 the 'running' state.""",
     pyro=True,
     argdoc=[('REG', 'Suite name'), 
-            ('[TASK]', 'Task NAME%TAG (TAG is cycle time or integer)')])
+            ('[TASK]', 'Task NAME'+TaskID.DELIM+'TAG (TAG is cycle time or integer)')])
 
 parser.add_option( "--print-ports",
         help="Print the port range from the site config file "
@@ -47,7 +47,7 @@ parser.add_option( "--print-ports",
 ( options, args ) = parser.parse_args()
 
 if options.print_ports:
-    globals = globalcfg()
+    globals = gcfg
     base = globals.cfg['pyro']['base port']
     range = globals.cfg['pyro']['maximum number of ports']
     print base, '<= port <=', base + range
@@ -59,8 +59,8 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose).get_proxy( 'remote' )
-    proxy.ping()
+            options.verbose).get_proxy( 'suite-info' )
+    proxy.get( 'ping suite' )
 except Exception, x:
     if options.debug:
         raise
@@ -78,7 +78,7 @@ except TaskIDError,x:
 else:
     task_id = tid.getstr()
 
-result = proxy.ping_task( task_id )
+result = proxy.get( 'ping task', task_id )
 
 if not result.success:
     sys.exit( 'ERROR: ' + result.reason )

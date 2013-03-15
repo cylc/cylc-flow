@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 import datetime, time
 import subprocess
+from cylc.TaskID import TaskID
 
 def get_stop_state(suite, owner=None, host=None):
     """Return the contents of the last 'state' file."""
@@ -73,7 +74,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             continue
         try:
             ( task_id, info ) = line.split(' : ')
-            ( name, tag ) = task_id.split('%')
+            ( name, tag ) = task_id.split( TaskID.DELIM )
         except:
             continue
         task_summary.setdefault(task_id, {"name": name, "tag": tag,

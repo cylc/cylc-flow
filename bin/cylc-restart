@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -25,8 +25,9 @@ import os, re
 from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
-from cylc.run import main, set_main_debug
+from cylc.run import main
 from cylc.command_prep import prep_file
+from cylc.TaskID import TaskID
 
 class restart( scheduler ):
     def __init__( self ):
@@ -34,6 +35,9 @@ class restart( scheduler ):
 
 Restart a cylc suite from a previous recorded state (to start from
 scratch see the 'cylc run' command).
+
+Cylc suites run in daemon mode by default (without --debug) so it safe
+to log out from your terminal after starting a suite.
 
 The most recent previous state is loaded by default, but other states
 can be specified on the command line (e.g. cylc writes special state
@@ -48,9 +52,6 @@ they really are still running. You may need to do some manual state
 resetting or triggering according to your knowledge of what happened to
 the real tasks at or after suite shutdown.
 
-NOTE: daemonize important suites with the POSIX nohup command:
-    nohup cylc [con] restart SUITE > suite.out 2> suite.err &
-    
 NOTE: suites can be (re)started on remote hosts or other user accounts
 if passwordless ssh is set up. The ssh tunnel will remain open to
 receive the suite stdout and stderr streams. To control the running 
@@ -98,8 +99,6 @@ the remote host before starting the suite."""
 
         scheduler.parse_commandline( self )
         self.verbose = self.options.verbose
-
-        set_main_debug( self.options.debug )
 
     def load_tasks( self ):
         # FIND THE INITIAL STATE DUMP FILE
@@ -286,7 +285,7 @@ the remote host before starting the suite."""
             # instance variables
             try:
                 ( id, state ) = line.split(' : ')
-                ( name, tag ) = id.split('%')
+                ( name, tag ) = id.split(TaskID.DELIM)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
@@ -310,7 +309,7 @@ the remote host before starting the suite."""
         # 'running'    - ditto
         # 'queued'     - ditto (only tasks ready to run get queued)
         # 'failed'     - ditto (tasks must be ready to run in order to fail)
-        # 'retry_delayed' - ditto (tasks must fail in order to retry)
+        # 'retrying'   - ditto (tasks must fail in order to retry)
         #
         # 'succeeded'  - prerequisites satisfied, outputs completed
 
@@ -336,7 +335,7 @@ the remote host before starting the suite."""
                 pass
 
             elif itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently('queued') or \
-                    itask.state.is_currently('failed') or itask.state.is_currently('retry_delayed'):  
+                    itask.state.is_currently('failed') or itask.state.is_currently('retrying'):  
                 itask.prerequisites.set_all_satisfied()
 
             elif itask.state.is_currently('succeeded'):  

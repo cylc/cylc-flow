@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ as normal unless they are 'one-off' tasks.
 See also 'cylc [task] submit', for running single tasks without the scheduler.""",
     pyro=True,
     argdoc=[ ('REG', 'Suite name' ), 
-            ('TASK[%STOP]', 'Task to insert (NAME%TAG)[%STOPTAG]' )])
+            ('TASK[.STOP]', 'Task to insert (NAME.TAG)[.STOPTAG]' )])
 
 (options, args) = parser.parse_args()
 
@@ -46,19 +46,19 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 target = args[1]
 
 try:
-    # name%tag%stoptag
-    ( name, tag, stoptag ) = target.split('%')
+    # name.tag.stoptag
+    ( name, tag, stoptag ) = target.split(TaskID.DELIM)
 except ValueError:
     try:
-        ( name, tag ) = target.split('%')
+        ( name, tag ) = target.split(TaskID.DELIM)
     except ValueError:
-        raise SystemExit( "ERROR: final argument must be NAME%TAG[%STOPTAG]" )
+        raise SystemExit( "ERROR: final argument must be NAME.TAG[.STOPTAG]" )
     else:
         stoptag = None
 
 # check TASK is a valid task ID
 try:
-    tid = TaskID( name + '%' + tag )
+    tid = TaskID( name + TaskID.DELIM + tag )
 except TaskIDError, x:
     raise SystemExit(x)
 else:
@@ -67,7 +67,7 @@ else:
 if stoptag:
     # check if stoptag is cycling or asynchronous
     try:
-        tid = TaskID( 'junk%' + stoptag )
+        tid = TaskID( 'junk' + TaskID.DELIM + stoptag )
     except TaskIDError, x:
         raise SystemExit('ERROR, invalid stop tag: ' + stoptag )
     else:
@@ -78,17 +78,17 @@ else:
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'remote' )
+            options.verbose ).get_proxy( 'command-interface' )
 except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
 
 prompt( 'Insert ' + target + ' in ' + suite, options.force )
-result = proxy.insert( name + '%' + tag, stop )
+result = proxy.put( 'insert task', name + TaskID.DELIM + tag, stop )
 
-if result.success:
-    print result.reason
+if result[0]:
+    print result[1]
 else:
-    sys.exit( 'ERROR:' + result.reason )
+    sys.exit( result[1] )
 

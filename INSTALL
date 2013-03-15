@@ -1,0 +1,57 @@
+
+Cylc can run from a raw source tree (at a particular version) or a git
+repository clone (which can be updated to the latest version at will).
+In either case, cylc can be installed into a normal user home directory
+or a system location, so long as the full source tree remains intact.
+
+INSTALLING A SOURCE TARBALL:
+
+  % tar xzf cylc-x.y.z.tar.gz
+  % cd cylc-x.y.z
+  % make
+
+The make process does the following:
+
+  1) a VERSION file is created containing the cylc version string, e.g.
+  5.1.0. This is taken from the name of the parent directory; DO NOT
+  CHANGE THE NAME OF THE UNPACKED SOURCE TREE before running 'make'.
+
+  2) generates the Cylc User Guide from its LaTeX source files in doc/:
+   * if you have pdflatex installed, a PDF version is generated, and
+   * if you have tex4ht and ImageMagick convert installed, two HTML
+     versions are generated, and
+   * a doc/index.html file is created with links to the generated docs.
+
+  3) The "orrdereddict" Python module will be built from its C language
+  source files, in ext/ordereddict-0.4.5. This is not essential - a
+  Python implementation will be used by cylc if necessary. Currently, 
+  if the build is successful you must install the module yourself into 
+  your $PYTHONPATH.
+
+You may want to maintain successive versions of cylc under the same top
+level directory:
+    TOP/cylc-5.1.0/
+    TOP/cylc-5.2.3.
+    # etc.
+
+INSTALLING A GIT REPOSITORY CLONE:
+
+  1) To get a clone that can track the official repository:
+
+     % git clone git://github.com/cylc/cylc.git
+     % cd cylc
+     % make  # build orderreddict and documentation (as above)
+     % #...
+     % git pull origin master # update latest changes
+     % make # remake documentation in case of changes
+
+  2) To participate in cylc development: fork cylc on github, clone your
+  own fork locally, commit changes in a feature branch and then push it  
+  to your fork and issue a pull request to the cylc maintainer.
+
+In a cylc repository you can re-run make at will to regenerate the
+documentation after making changes or updating the repository. Inside
+the doc directory you can rebuild specific formats of the User Guide
+using special make targets "pdf", "html", "html-single", and
+"html-multi".
+

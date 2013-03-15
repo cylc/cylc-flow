@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 import os, sys, re
 import logging, logging.handlers
-from global_config import globalcfg
+from global_config import gcfg
 from mkdir_p import mkdir_p
 
 """Configure suite logging with the Python logging module, 'main'
@@ -38,12 +38,14 @@ class LogFilter(logging.Filter):
 
 class suite_log( object ):
     def __init__( self, suite, ext='suite' ):
-        globals = globalcfg()
-        self.dir = os.path.join( globals.cfg['run directory'], suite, 'log', ext ) 
+        globals = gcfg
+        self.dir = globals.get_suite_log_dir( suite, ext )
         self.path = os.path.join( self.dir, 'log' ) 
         self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']
         self.n_keep = globals.cfg['suite logging']['rolling archive length']
         self.max_bytes = globals.cfg['suite logging']['maximum size in bytes']
+
+    def mkdir( self ):
         try:
             mkdir_p( self.dir )
         except Exception, x:

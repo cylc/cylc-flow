@@ -1,6 +1,6 @@
 [cylc]
     [[reference test]]
-        live mode suite timeout = 1.0
+        live mode suite timeout = 0.5
         suite shutdown event handler = log-check.sh
     
 [scheduling]
@@ -8,7 +8,10 @@
         graph = "foo"
 [runtime]
     [[foo]]
+        # stay in 'submitted' state for 2 secs:
+        initial scripting = sleep 2
         command scripting = """
+sleep 5
 cylc message -p WARNING "WARNING - this is just a test!"
 """
         [[[remote]]]
@@ -21,8 +24,10 @@ cylc message -p WARNING "WARNING - this is just a test!"
             warning handler = handler.sh
 
             submission timeout handler = handler.sh
-            submission timeout = 0.0001
+            # submission timeout after about 1 sec
+            submission timeout = 0.01
 
             execution timeout handler = handler.sh
-            execution timeout = 0.001
+            # execution timeout after about 1 sec
+            execution timeout = 0.01 
 

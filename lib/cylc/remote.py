@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2012 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
 #C: 
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 
 import os, sys
 import subprocess
+from textwrap import TextWrapper
+from pipes import quote
 
 from suite_host import is_remote_host
 from owner import is_remote_user
@@ -32,6 +34,7 @@ class remrun( object ):
     def __init__( self ):
         self.owner = None
         self.host = None
+        self.ssh_login_shell = True
 
         if '-v' in sys.argv or '--verbose' in sys.argv:
             self.verbose = True
@@ -47,6 +50,10 @@ class remrun( object ):
                 self.owner = arg.replace("--owner=", "")
             elif arg.startswith("--host="):
                 self.host = arg.replace("--host=", "")
+            elif arg == "--login":
+                self.ssh_login_shell = True
+            elif arg == "--no-login":
+                self.ssh_login_shell = False
             else:
                 self.args.append(arg)
 
@@ -76,32 +83,38 @@ class remrun( object ):
         else:
             user_at_host += 'localhost'
 
-        # ssh command and options (X forwarding):
-        command = ["ssh", "-oBatchMode=yes", "-Y" ]
-        # target URL and explicit bash shell
-        command += [ user_at_host, "/usr/bin/env", "bash"]
+        # Build the remote command
+        command = []
+        if self.ssh_login_shell:
+            # A login shell will always source /etc/profile and the user's bash profile file.
+            # To avoid having to quote the entire remote command it is passed as arguments to
+            # the bash script.
+            command += ["bash","--login","-c","'$0 \"$@\"'"]
+        if path != []:
+            remote_cylc_command = '/'.join(path+["cylc"])
+        else:
+            remote_cylc_command = "cylc"
+        command += [remote_cylc_command, name]
+        for var,val in env.iteritems():
+            command += ["--env=%s=%s"%(var,val)]
+        for arg in self.args:
+            command += ["'"+arg+"'"]
+            # above: args quoted to avoid interpretation by the shell, 
+            # e.g. for match patterns such as '.*' on the command line.
 
-        if len(path) != 0:
-            # add to remote $PATH before running command
-            path.append('$PATH')
-            env['PATH'] = ':'.join(path)
+        # ssh command and options (X forwarding):
+        # Each entry in the list is a single argument to ssh, using the join
+        # for the final entry has the same effect as quoting it.
+        command = ["ssh", "-oBatchMode=yes", "-Y", user_at_host, ' '.join(command)]
 
         print "Remote command re-invocation for", user_at_host
         if self.verbose:
-            print '|' + ' '.join(command) + '\\'
-            print '|  for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done;' + '\\'
-            if len( env.keys() ) != 0:
-                print '|  %s ' % (' '.join( item + '=' + value for item, value in env.items())) + '\\'
-            print '|  cylc %s %s' % ( name, ' '.join( '"' + arg + '"' for arg in self.args))
+            # Wordwrap the command, quoting arguments so they can be run
+            # properly from the command line
+            print '\n'.join(TextWrapper(subsequent_indent='\t').wrap(' '.join(map(quote,command))))
 
         try:
-            popen = subprocess.Popen( command, stdin=subprocess.PIPE )
-            popen.communicate( """
-for FILE in /etc/profile ~/.profile; do test -f $FILE && . $FILE > /dev/null; done
-%s cylc %s %s""" % (' '.join( item + '=' + value for item, value in env.items()),\
-            name, ' '.join( '"' + arg + '"' for arg in self.args)) )
-            # above: args quoted to avoid interpretation by the shell, 
-            # e.g. for match patterns such as '.*' on the command line.
+            popen = subprocess.Popen( command )
             res = popen.wait()
             if res < 0:
                 sys.exit("ERROR: remote command terminated by signal %d" % res)

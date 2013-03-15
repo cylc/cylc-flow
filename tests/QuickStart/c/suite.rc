@@ -11,7 +11,7 @@ description  = "(Quick Start b plus real tasks)"
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.3 # minutes
+       live mode suite timeout = 1.0 # minutes
 
 [scheduling]
     initial cycle time = 2011010106
