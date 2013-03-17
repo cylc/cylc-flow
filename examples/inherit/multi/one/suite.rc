@@ -38,3 +38,9 @@ description = """To see how multiple inheritance works:
     [[var_p1, var_p2]]
         inherit = VAR, PARALLEL
 
+[visualization]
+    [[node groups]]
+    [[node attributes]]
+        OPS = "style=filled", "fillcolor=orange"
+        SERIAL = "shape=box", "color=red"
+

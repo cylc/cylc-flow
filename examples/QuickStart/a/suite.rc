@@ -19,7 +19,7 @@ description = "(see the Cylc User Guide)"
     [[node groups]]
         post = PostA, PostB
     [[node attributes]]
-        post  = "style=unfilled", "color=blue", "shape=rectangle"
+        post  = "color=blue", "shape=rectangle"
         PostB = "style=filled", "fillcolor=seagreen2"
         Model  = "style=filled", "fillcolor=red"
         GetData = "style=filled", "fillcolor=yellow3", "shape=septagon"

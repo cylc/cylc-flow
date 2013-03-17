@@ -1411,7 +1411,7 @@ Attribute pairs must be quoted to hide the internal \lstinline@=@ character.
 \begin{myitemize}
     \item {\em type:} list of quoted \lstinline@'attribute=value'@ pairs
     \item {\em legal values:} see graphviz or pygraphviz documentation
-    \item {\em default:} \lstinline@'style=unfilled', 'color=black', 'shape=box'@
+    \item {\em default:} \lstinline@'style=filled', 'fillcolor=yellow', 'shape=box'@
 \end{myitemize}
 
 \subsubsection[default edge attributes]{[visualization] $\rightarrow$ default edge attributes}
@@ -1481,9 +1481,9 @@ assignment.
     \item {\em default:} (none)
     \item {\em example:} (with reference to the node groups defined above)
 \begin{lstlisting}
-   PreProc = 'style=filled', 'color=blue'
+   PreProc = 'style=filled', 'fillcolor=orange'
    PostProc = 'color=red'
-   foo = 'style=unfilled'
+   foo = 'style=filled'
 \end{lstlisting}
 \end{myitemize}
 
