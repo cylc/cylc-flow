@@ -1343,8 +1343,7 @@ Replace \_\_OUTPUT\_\_ with any number of labelled output messages.
 
 \subsection{[visualization]}
 
-Configuration of suite graphing and, where explicitly stated, the
-graph-based suite control GUI.
+Configuration of suite graphing and, where explicitly stated, the gcylc graph view.
 
 \subsubsection[initial cycle time]{[visualization] $\rightarrow$ initial cycle time}
 
@@ -1428,8 +1427,8 @@ internal \lstinline@=@ character.
 
 \subsubsection[enable live graph movie]{[visualization] $\rightarrow$ enable live graph movie}
 
-If True, the graph-based suite control GUI will write out a dot-language
-graph file on every change; these can be post-processed into a movie
+If True, the gcylc graph-view write out a dot-language graph file on
+every change; these can be post-processed into a movie
 showing how the suite evolves. The frames will be written to the run
 time graph directory (see below).
 
@@ -1463,8 +1462,13 @@ Replace \_\_GROUP\_\_ with each named group of tasks or families.
 
 Here you can assign graph node attributes to specific nodes, or to all
 members of named groups defined in [visualization] $\rightarrow$ [[node
-groups]] (task families are automatically node groups). Group styling 
-can be overridden for individual nodes or subgroups.
+groups]]. Task families are automatically node groups. Styling of a
+family node applies to all member nodes (tasks and sub-families), but
+precedence is determined by ordering in the suite definition.  For
+example, if you style a family red and then one of its members green,
+cylc will plot a red family with one green member; but if you style one
+member green and then the family red, the red family styling will
+override the earlier green styling of the member.
 
 \paragraph[\_\_NAME\_\_]{[visualization] $\rightarrow$ [[node attributes]] $\rightarrow$ \_\_NAME\_\_}
 
