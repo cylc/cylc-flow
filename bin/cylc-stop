@@ -23,6 +23,7 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute( force_required=True ):
         sys.exit(0)
 
+from time import sleep, time
 from cylc.prompt import prompt
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
@@ -43,8 +44,11 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 3/ With [--now], shut down immediately, regardless of tasks still running.
    WARNING: beware of orphaning tasks that are still running at shutdown;
    these may need to be killed manually, and they will (by default) be
-   resubmitted if the suite is restarted.""", pyro=True,
-    argdoc=[ ("REG", "Suite name"), 
+   resubmitted if the suite is restarted.
+   
+This command exits immediately after queueing the stop request unless
+the -w/--wait option forces it to wait for the suite to stop first.""",
+    pyro=True, argdoc=[ ("REG", "Suite name"), 
     ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
                         c/ TASK (task ID).""")] )
@@ -52,6 +56,16 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 parser.add_option( "--now", 
         help="Shut down immediately; see WARNING above.",
         action="store_true", default=False, dest="shutdownnow" )
+
+parser.add_option( "-w", "--wait",
+        help="Time in seconds to wait for the suite to stop, "
+        "before timing out and exiting with error status.",
+        action="store", dest="wait", default=False )
+
+parser.add_option( "-i", "--interval",
+        help="Polling interval in seconds, for use with "
+        "-w/--wait (default=5).",
+        action="store", dest="interval", default=5 )
 
 (options, args) = parser.parse_args()
 
@@ -61,6 +75,23 @@ shutdown_at = False
 if len( args ) == 2:
     shutdown_at = True
     shutdown_arg = args[1] 
+
+if options.wait:
+    """polling mode"""
+ 
+    """check wait is a number"""
+    try:
+        wait = float(options.wait)
+    except:
+        sys.stderr.write("wait must be a number\n")
+        sys.exit(1)
+
+    """check interval is a number"""
+    try:
+        float(options.interval)
+    except:
+        sys.stderr.write("interval must be a number\n")
+        sys.exit(1)
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
@@ -127,7 +158,36 @@ else:
     result = proxy.put( 'stop cleanly' )
 
 if result[0]:
+    # command queued
     print result[1]
 else:
+    # (should not happen)
     sys.exit( result[1] )
+
+if options.wait:
+    """polling mode"""
+    try:
+        proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+                options.host, options.pyro_timeout, options.port,
+                options.verbose ).get_proxy( 'suite-info' )
+    except Exception, x:
+        if options.debug:
+            raise
+        raise SystemExit(x)
+
+    starttime = time()
+    stopped = False
+    while not stopped and ((time() - starttime) < wait ):
+        try:
+            proxy.get( 'ping suite' )
+        except:
+            stopped = True
+            print
+        else:
+            sys.stderr.write('.')
+            sleep( float(options.interval) )
+
+    if not stopped:
+        print
+        sys.exit("ERROR: wait timed out with the suite still running")
 
