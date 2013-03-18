@@ -68,11 +68,14 @@ parser.add_option( "-S", "--status",
         action="store", dest="status", default=None )
         
 parser.add_option( "-w", "--wait",
-        help="Used to specify a time (in seconds) to wait until a task achieves a particular state before exiting.",
+        help="Time in seconds to wait for a task to achieve the "
+        "desired state, before timing out and exiting with "
+        "error status.",
         action="store", dest="wait", default=False )
 
 parser.add_option( "-i", "--interval",
-        help="Specify a polling interval (in seconds) for use when in wait mode (default=5).",
+        help="Polling interval in seconds, for use with "
+        "-w/--wait (default=5).",
         action="store", dest="interval", default=5 )
 
 ( options, args ) = parser.parse_args()
@@ -131,5 +134,4 @@ if options.status and options.task and options.cycle:
 else:
     """displaying query results"""
     checker.display_maps(checker.suite_state_query(task=options.task, cycle=options.cycle, status=options.status))
-
 
