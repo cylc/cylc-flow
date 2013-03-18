@@ -1821,7 +1821,7 @@ class scheduler(object):
                 break
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
-        if itask.state.is_submitting():
+        if itask.state.is_currently( 'submitting' ):
             # (manual reset of 'submitting' tasks disabled pending
             # some deep thought about concurrency with the job
             # submission thread.
@@ -1846,7 +1846,7 @@ class scheduler(object):
                 break
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
-        if itask.state.is_submitting():
+        if itask.state.is_currently( 'submitting' ):
             # Currently can't reset a 'submitting' task in the job submission thread!
             raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
 

@@ -102,12 +102,6 @@ class task_state(object):
         if self.__class__.is_legal( state ):
             self.state[ 'status' ] = state
 
-    def has_key( self, key ):
-        if key in self.state.keys():
-            return True
-        else:
-            return False
-
     def get_status( self ):
         return self.state[ 'status' ]
 
@@ -116,49 +110,7 @@ class task_state(object):
 
     def has_spawned( self ):
         return self.state[ 'spawned' ] == 'true'
-        if self.state[ 'spawned' ] == 'true':
-            return True
-        else:
-            return False
-
-    def is_succeeded( self ):
-        if self.state[ 'status' ] == 'succeeded':
-            return True
-        else:
-            return False
-
-    def is_failed( self ):
-        if self.state[ 'status' ] == 'failed':
-            return True
-        else:
-            return False
-
-    def is_waiting( self ):
-        # TO DO: check why we're identifying retrying as waiting here:
-        if self.state[ 'status' ] == 'waiting' or \
-        self.state[ 'status' ] == 'retrying':
-            return True
-        else:
-            return False
-
-    def is_submitting( self ):
-        if self.state[ 'status' ] == 'submitting':
-            return True
-        else:
-            return False
-
-    def is_submitted( self ):
-        if self.state[ 'status' ] == 'submitted':
-            return True
-        else:
-            return False
-
-    def is_submit_failed( self ):
-        if self.state[ 'status' ] == 'submit-failed':
-            return True
-        else:
-            return False
-
+    
     def is_currently( self, state ):
         return state == self.state[ 'status' ]
 
