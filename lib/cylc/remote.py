@@ -102,10 +102,8 @@ class remrun( object ):
             # above: args quoted to avoid interpretation by the shell, 
             # e.g. for match patterns such as '.*' on the command line.
 
-        # ssh command and options (X forwarding):
-        # Each entry in the list is a single argument to ssh, using the join
-        # for the final entry has the same effect as quoting it.
-        command = ["ssh", "-oBatchMode=yes", "-Y", user_at_host, ' '.join(command)]
+        # ssh command and options (X forwarding)
+        command = ["ssh", "-oBatchMode=yes", "-Y", user_at_host] + command
 
         print "Remote command re-invocation for", user_at_host
         if self.verbose:
