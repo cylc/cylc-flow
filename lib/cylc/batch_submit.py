@@ -182,7 +182,7 @@ class task_batcher( batcher ):
 
     def submit_item( self, itask, psinfo ):
         self.log.info( 'TASK READY: ' + itask.id )
-        itask.incoming( 'NORMAL', itask.id + ' submitted' )
+        itask.incoming( 'NORMAL', itask.id + ' submitting now' )
         p, launcher = itask.submit( overrides=self.wireless.get(itask.id) )
         if p:
             psinfo.append( (p, itask, itask.id, launcher) ) 
@@ -193,6 +193,7 @@ class task_batcher( batcher ):
  
     def item_succeeded_hook( self, p, itask, info, launcher, out, err ):
         """Hook for succeeded item."""
+        itask.incoming( 'NORMAL', itask.id + ' submission succeeded' )
         if hasattr(launcher, 'get_id'):
             submit_method_id = launcher.get_id(p.pid, out, err)
             if submit_method_id:

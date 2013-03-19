@@ -324,8 +324,6 @@ class task( object ):
     def set_failed( self, reason="" ):
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
-        self.record_db_event(event="failed", message=reason)
-        #self.log( 'CRITICAL', reason )
         handler = self.event_handlers['failed']
         if handler:
             self.log( 'NORMAL', "Queuing failed event handler" )
@@ -334,7 +332,6 @@ class task( object ):
     def set_submit_failed( self, reason="" ):
         self.state.set_status( 'submit-failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
-        self.record_db_event(event="submit failed", message=reason)
         #self.log( 'CRITICAL', reason )
         handler = self.event_handlers['submission failed']
         if handler:
@@ -632,7 +629,6 @@ class task( object ):
         
         self.record_db_update("task_states", self.name, self.c_time, 
                               submit_method=self.submit_method, host=user_at_host)
-        self.record_db_event(event="submitted")
 
         share_dir = gcfg.get_suite_share_dir( self.suite_name, cfghost, owner )
         work_dir  = gcfg.get_task_work_dir( self.suite_name, self.id, cfghost, owner )
@@ -810,27 +806,24 @@ class task( object ):
             # Reset execution timer on incoming messages
             self.execution_timer_start = task.clock.get_datetime()
 
-        if message == self.id + ' started':
-            # Received a 'task started' message
-            flags.pflag = True
-            self.set_running()
+        if message == self.id + ' submitting now':
+            # (a fake task message from the job submission thread)
+            self.record_db_event(event="submitting now")
 
-        elif message == self.id + ' submitted':
-            # (a faked task message from the job submission thread)
+        elif message == self.id + ' submission succeeded':
+            # (a fake task message from the job submission thread)
             self.set_submitted()
 
         elif message.startswith(self.id + ' submit_method_id='):
+            # (a fake task message from the job submission thread)
             # capture and record submit method job IDs
             submit_method_id = message[len(self.id + ' submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time,
                                   submit_method_id=submit_method_id)
                                   
-        elif message.startswith("Task job script received signal"):
-            #capture and record signals sent to task proxy
-            self.record_db_event(event="signaled", message=message)
-
         elif message == self.id + ' submission failed':
-            # Received a 'task submission failed' message
+            # (a fake task message from the job submission thread)
+            self.record_db_event(event="submission failed")
             try:
                 # Is there a retry lined up for this task?
                 self.sub_retry_delay = float(self.sub_retry_delays.popleft())
@@ -844,7 +837,7 @@ class task( object ):
                 self.sub_try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="retrying")
+                self.record_db_event(event="retrying in " + str(self.sub_retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle submission retry events
@@ -853,6 +846,11 @@ class task( object ):
                     self.log( 'NORMAL', "Queuing submission retry event handler" )
                     self.__class__.event_queue.put( ('submission_retry', handler, self.id, 'task retrying') )
  
+        elif message == self.id + ' started':
+            # Received a 'task started' message
+            flags.pflag = True
+            self.set_running()
+
         elif message == self.id + ' succeeded':
             # Task has succeeded
             self.succeeded_time = task.clock.get_datetime()
@@ -866,6 +864,7 @@ class task( object ):
                 self.set_succeeded_handler()
 
         elif message == self.id + ' failed':
+            self.record_db_event(event="execution failed")
             # Received a 'task failed' message
             flags.pflag = True
             try:
@@ -887,7 +886,7 @@ class task( object ):
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="retrying")
+                self.record_db_event(event="retrying in " + str( self.retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
@@ -896,6 +895,9 @@ class task( object ):
                     self.log( 'NORMAL', "Queuing retry event handler" )
                     self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
+        elif message.startswith("Task job script received signal"):
+            #capture and record signals sent to task proxy
+            self.record_db_event(event="signaled", message=message)
 
     def update( self, reqs ):
         for req in reqs.get_list():
