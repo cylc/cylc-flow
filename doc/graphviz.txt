@@ -10,9 +10,8 @@
  * the subgraph into several rows you can manually add invisible
  * invisible edges, for example: "node1 -> node2 [color=invis];"
  *
- * When the default node style is "filled" use "unfilled" to get
- * specific nodes that are unfilled (this seems to be undocumented)
- * or just fill with the graph background color.
+ * When the default node style is "filled" use "style=" to unset filled, 
+ * or fill with background color (there is no "unfilled" style attribute).
  *
  * Processing a dot-file the graphviz 'unflatten' command may result
  * in a more pleasing layout.
