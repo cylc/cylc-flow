@@ -27,7 +27,7 @@
         queued    = "color=#dcd901"
         submitting= "color=#a08f49"
         submitted = "color=#a1cf25", "style=filled"
-        submit-failed = "color=#ff2265", "style=filled"
+        submit-failed = "color=#ff007e", "style=filled"
         running   = "color=#00c140", "style=filled"
         succeeded = "color=#ada5a5", "style=filled"
         failed    = "color=#ff0000", "style=filled", "fontcolor=white"
