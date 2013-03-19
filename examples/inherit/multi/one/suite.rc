@@ -38,3 +38,24 @@ description = """To see how multiple inheritance works:
     [[var_p1, var_p2]]
         inherit = VAR, PARALLEL
 
+[visualization]
+    # NOTE ON VISUALIZATION AND MULTIPLE INHERITANCE: overlapping
+    # family groups can have overlapping attributes, so long as 
+    # non-conflictling attributes are used to style each group. Below,
+    # for example, OPS tasks are filled green and SERIAL tasks are
+    # outlined blue, so that ops_s1 and ops_s2 are green with a blue
+    # outline. But if the SERIAL tasks are explicitly styled as "not
+    # filled" (by setting "style=") this will override the fill setting
+    # in the (previously defined and therefore lower precedence) OPS
+    # group, making ops_s1 and ops_s2 unfilled with a blue outline.
+    # Alternatively you can just create a manual node group for ops_s1
+    # and ops_s2 and style them separately.
+    [[node groups]]
+        #(see comment above:)
+        #serial_ops = ops_s1, ops_s2
+    [[node attributes]]
+        OPS = "style=filled", "fillcolor=green"
+        SERIAL = "color=blue" #(see comment above:), "style="
+        #(see comment above:)
+        #serial_ops = "color=blue", "style=filled", "fillcolor=green"
+

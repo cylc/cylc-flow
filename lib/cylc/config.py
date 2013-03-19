@@ -349,13 +349,26 @@ class config( CylcConfigObj ):
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
 
+        ngs = self['visualization']['node groups']
+
+        # If any existing node group member is a family, include its descendants too.
+        replace = {}
+        for ng, mems in ngs.items():
+            replace[ng] = []
+            for mem in mems:
+                replace[ng] += [mem]
+                if mem in self.runtime['descendants']:
+                    replace[ng] += self.runtime['descendants'][mem]
+        for ng in replace:
+            ngs[ng] = replace[ng]
+
         # Define family node groups automatically so that family and
         # member nodes can be styled together using the family name.
         # Users can override this for individual nodes or sub-groups.
-        ng = self['visualization']['node groups']
         for fam in self.runtime['descendants']:
-            if fam not in ng:
-                ng[fam] = [fam] + self.runtime['descendants'][fam]
+            if fam not in ngs:
+                ngs[fam] = [fam] + self.runtime['descendants'][fam]
+ 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
         # because putting default attributes for root in the suite.rc spec

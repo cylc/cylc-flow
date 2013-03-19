@@ -85,7 +85,7 @@ modified unless you know what you're doing."""
     default node attributes = "style=filled"
     [[node attributes]]
         Model = "shape=septagon"
-        Post   = "style=unfilled", "shape=rectangle"
+        Post   = "style=", "shape=rectangle"
         Cold   = "shape=egg", "fillcolor=slateblue"
         X   = "shape=box", "fillcolor=lawngreen"
         A      = "fillcolor=red"
