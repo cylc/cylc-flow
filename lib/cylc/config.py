@@ -384,6 +384,7 @@ class config( CylcConfigObj ):
 
     def compute_family_tree( self ):
         first_parents = {}
+        demoted = {}
         for name in self['runtime']:
             if name == 'root':
                 self.runtime['parents'][name] = []
@@ -406,11 +407,17 @@ class config( CylcConfigObj ):
                 if p not in self['runtime']:
                     raise SuiteConfigError, "ERROR, undefined parent for " + name +": " + p
             if pts[0] == "None":
+                demoted[name] = pts[1]
                 pts = pts[1:]
                 first_parents[name] = ['root']
             else:
                 first_parents[name] = [ pts[0] ]
             self.runtime['parents'][name] = pts
+
+        if self.verbose and demoted:
+            print "First parent(s) demoted to secondary:"
+            for n,p in demoted.items():
+                print " +", p, "as parent of '" + n + "'"
 
         c3 = C3( self.runtime['parents'] )
         c3_single = C3( first_parents )
