@@ -179,7 +179,6 @@ class config( object ):
 
     def parse_state( self, theme, name, cfglist=[] ):
         allowed_keys = ['style', 'color', 'fontcolor']
-        allowed_styles = ['filled', 'unfilled']
         cfg = {}
         for item in cfglist:
             key, val = item.split('=')
