@@ -65,7 +65,7 @@ description  = "(Quick Start b plus real tasks)"
 [visualization]
     default node attributes = "shape=ellipse"
     [[node attributes]]
-        Post  = "style=unfilled", "color=blue", "shape=rectangle"
+        Post  = "color=blue", "shape=rectangle"
         PostB = "style=filled", "fillcolor=seagreen2"
         Models  = "style=filled", "fillcolor=red"
         ColdModel = "fillcolor=lightblue"
