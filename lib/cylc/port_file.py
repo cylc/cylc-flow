@@ -115,9 +115,10 @@ class port_retriever( object ):
         port = ssh.stdout.readline()
         err = ssh.stderr.readline()
         res = ssh.wait()
+        if err:
+            print >> sys.stderr, "WARNING: from remote port file retrieval:"
+            print >> sys.stderr, err.rstrip('\n')
         if res != 0:
-            if err:
-                print >> sys.stderr, err
             raise PortFileError( "ERROR, unable to retrieve remote port file" )
         return port
 

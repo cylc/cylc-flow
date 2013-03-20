@@ -111,9 +111,10 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
-except PortFileError:
+except PortFileError, x:
     # suite not running: this is OK for the 'stop' command
-    print >> sys.stderr, "WARNING: suite not running"
+    print >> sys.stderr, x
+    print >> sys.stderr, "WARNING: suite not running (OK for \"cylc stop\")"
     sys.exit(0)
 except Exception, x:
     if options.debug:
