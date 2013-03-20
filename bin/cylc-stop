@@ -23,13 +23,35 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute( force_required=True ):
         sys.exit(0)
 
-from time import sleep, time
 from cylc.prompt import prompt
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
+from cylc.poll import poller
+from cylc.port_file import PortFileError
+
+class stop_poller( poller ):
+    """A polling object that checks if a suite has stopped yet."""
+
+    def check( self ):
+        # return True if suite has stopped (success) else False
+        try:
+            proxy = cylc_pyro_client.client(
+                    self.args['suite'],
+                    self.args['pphrase'],
+                    self.args['owner'],
+                    self.args['host'],
+                    self.args['pyro_timeout'],
+                    self.args['port'] ).get_proxy('suite-info')
+            proxy.get( 'ping suite' )
+        except:
+            # failed to connect and ping - suite stopped
+            return True 
+        else:
+            # connected and pinged - suite must be live
+            return False
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
@@ -47,7 +69,7 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
    resubmitted if the suite is restarted.
    
 This command exits immediately after queueing the stop request unless
-the -w/--wait option forces it to wait for the suite to stop first.""",
+polling mode (-w/--wait) forces it to wait for the suite to stop.""",
     pyro=True, argdoc=[ ("REG", "Suite name"), 
     ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
@@ -57,15 +79,7 @@ parser.add_option( "--now",
         help="Shut down immediately; see WARNING above.",
         action="store_true", default=False, dest="shutdownnow" )
 
-parser.add_option( "-w", "--wait",
-        help="Time in seconds to wait for the suite to stop, "
-        "before timing out and exiting with error status.",
-        action="store", dest="wait", default=False )
-
-parser.add_option( "-i", "--interval",
-        help="Polling interval in seconds, for use with "
-        "-w/--wait (default=5).",
-        action="store", dest="interval", default=5 )
+stop_poller.add_to_cmd_options( parser )
 
 (options, args) = parser.parse_args()
 
@@ -77,26 +91,23 @@ if len( args ) == 2:
     shutdown_arg = args[1] 
 
 if options.wait:
-    """polling mode"""
- 
-    """check wait is a number"""
-    try:
-        wait = float(options.wait)
-    except:
-        sys.stderr.write("wait must be a number\n")
-        sys.exit(1)
-
-    """check interval is a number"""
-    try:
-        float(options.interval)
-    except:
-        sys.stderr.write("interval must be a number\n")
-        sys.exit(1)
-
+    spoller = stop_poller( "suite stopped", options.timeout,
+            options.interval, args={
+                'suite'   : suite,
+                'pphrase' : pphrase,
+                'owner'   : options.owner,
+                'host'    : options.host,
+                'pyro_timeout' : options.pyro_timeout,
+                'port'    : options.port
+                })
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+except PortFileError:
+    # suite not running: this is OK for the 'stop' command
+    print >> sys.stderr, "WARNING: suite not running"
+    sys.exit(0)
 except Exception, x:
     if options.debug:
         raise
@@ -165,29 +176,6 @@ else:
     sys.exit( result[1] )
 
 if options.wait:
-    """polling mode"""
-    try:
-        proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-                options.host, options.pyro_timeout, options.port,
-                options.verbose ).get_proxy( 'suite-info' )
-    except Exception, x:
-        if options.debug:
-            raise
-        raise SystemExit(x)
-
-    starttime = time()
-    stopped = False
-    while not stopped and ((time() - starttime) < wait ):
-        try:
-            proxy.get( 'ping suite' )
-        except:
-            stopped = True
-            print
-        else:
-            sys.stderr.write('.')
-            sleep( float(options.interval) )
-
-    if not stopped:
-        print
-        sys.exit("ERROR: wait timed out with the suite still running")
+    if not spoller.poll():
+        sys.exit(1)
 

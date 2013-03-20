@@ -115,7 +115,7 @@ class port_retriever( object ):
 
     def get( self ):
         if self.verbose:
-            print "Retrieving suite port number",
+            print "Retrieving suite port number..."
 
         if is_remote_host( self.host ) or is_remote_user( self.owner ):
             self.port = self.get_remote()

@@ -25,26 +25,58 @@ if remrun().execute():
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
 from cylc.global_config import globalcfg
-
+from cylc.poll import poller
 
 gcfg = globalcfg()
 default_run_dir = gcfg.cfg['task hosts']['local']['run directory']
 
+class suite_poller( poller ):
+    """A polling object that checks suite state."""
+
+    def connect( self, poll=True ):
+        """Connect to the suite db, polling if necessary in case the
+        suite has not been started up yet."""
+
+        # Returns True if connected, otherwise (one-off failed to
+        # connect, or timed out polling) False
+        connected = False
+        while not ( connected or self._timed_out()):
+            try:
+                self.checker = CylcSuiteDBChecker(self.args['run_dir'], self.args['suite'])
+                connected = True
+            except DBNotFoundError:
+                if not poll:
+                    break
+                else:
+                    sleep(self.interval)
+        return connected
+
+    def check( self ):
+        # return True if desired suite state achieved, else False
+        if self.checker.task_state_met(
+                self.args['task'],
+                self.args['cycle'],
+                self.args['status']):
+            return True
+        else:
+            return False
+
 parser = cop( usage = """cylc suite-state REG [OPTIONS]
 
-Print task states retrieved from a suite database. Can be used to query if a 
-task in a suite has reached a particular state by using the task, cycle and 
-status options.
+Print task states retrieved from a suite database, or query if a task
+has reached a particular state (by using the task, cycle, and status
+options). In polling mode the command will wait until the requested 
+state is achieved, with an optional timeout abort. The suite database
+does not need to exist at the time polling commences.
 
 Example usage:
 
-cylc suite-state REG --task=TASK --cycle=CYCLE --run-dir=CYLC-RUN --status=STATUS
+cylc suite-state REG \
+        --task=TASK --cycle=CYCLE --run-dir=CYLC-RUN --status=STATUS
 
-Returns 0 if task TASK at cycle CYCLE has reached status STATUS, 1 otherwise.
+Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.
 
-The command can be run in polling mode by specifying a wait time in seconds 
-using the --wait option. 
-""")
+The command can be run in polling mode with the --wait option.""")
 
 parser.remove_option("-s")
 parser.remove_option("--db")
@@ -67,71 +99,37 @@ parser.add_option( "-S", "--status",
         help="Specify a particular status to check for.",
         action="store", dest="status", default=None )
         
-parser.add_option( "-w", "--wait",
-        help="Time in seconds to wait for a task to achieve the "
-        "desired state, before timing out and exiting with "
-        "error status.",
-        action="store", dest="wait", default=False )
-
-parser.add_option( "-i", "--interval",
-        help="Polling interval in seconds, for use with "
-        "-w/--wait (default=5).",
-        action="store", dest="interval", default=5 )
+suite_poller.add_to_cmd_options( parser )
 
 ( options, args ) = parser.parse_args()
 
 suite = args[0]
 
-starttime = time()
+spoller = suite_poller( "requested state", options.timeout,
+        options.interval, args={
+            'suite'   : suite,
+            'run_dir' : options.run_dir,
+            'task'    : options.task,
+            'cycle'   : options.cycle,
+            'status'  : options.status
+            })
 
-"""check wait is a number"""
-try:
-    wait = float(options.wait)
-except:
-    sys.stderr.write("wait must be a number\n")
-    sys.exit(1)
-
-"""check interval is a number"""
-try:
-    float(options.interval)
-except:
-    sys.stderr.write("interval must be a number\n")
-    sys.exit(1)
-
-if options.wait:
-    """polling mode"""
-    found = False
-    while not found and ((time() - starttime) < wait):
-        try:
-            checker = CylcSuiteDBChecker(options.run_dir, suite)
-            found = True
-        except DBNotFoundError:
-            if options.verbose:
-                sys.stdout.write("cannot connect to suite database, retrying...\n")
-            sleep(float(options.interval))
-            found = False
-else:
-    """one off mode"""
-    try:    
-        checker = CylcSuiteDBChecker(options.run_dir, suite)
-        found = True
-    except DBNotFoundError:
-        found = False
-
-if not found:
-    sys.stderr.write("suite db not found!\n")
-    sys.exit(1)
+if not spoller.connect():
+    sys.exit( "ERROR: cannot connect to the suite DB" )
 
 if options.status and options.task and options.cycle:
-    """checking a task status"""
-    res = checker.task_state_met(options.task, options.cycle, options.status)
+    """check a task status"""
     if options.wait:
-        while ((time() - starttime) < wait) and not res:
-            res = checker.task_state_met(options.task, options.cycle, options.status)
-            if not res:
-                sleep(float(options.interval))
-    sys.exit(not res)
+        if not spoller.poll():
+            sys.exit(1)
+    else:
+        if not spoller.check_once():
+            sys.exit(1)
 else:
-    """displaying query results"""
-    checker.display_maps(checker.suite_state_query(task=options.task, cycle=options.cycle, status=options.status))
+    """just display query results"""
+    spoller.checker.display_maps(
+            spoller.checker.suite_state_query(
+                task=options.task,
+                cycle=options.cycle,
+                status=options.status))
 
