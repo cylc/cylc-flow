@@ -1836,7 +1836,7 @@ class scheduler(object):
 
     def reset_task_state( self, task_id, state ):
         # we only allow resetting to a subset of available task states
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'submit-failed', 'held', 'spawn' ]:
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         found = False
         for itask in self.pool.get_tasks():
@@ -1862,8 +1862,6 @@ class scheduler(object):
             itask.reset_state_succeeded()
         elif state == 'failed':
             itask.reset_state_failed()
-        elif state == 'submit-failed':
-            itask.reset_state_submit_failed()
         elif state == 'held':
             itask.reset_state_held()
         elif state == 'spawn':
