@@ -97,7 +97,7 @@ class poller( object ):
         """Poll for the condition embodied by self.check(). Return True
         if condition met, or False on time out."""
 
-        print "polling for condition '" + self.condition + "'", 
+        print "polling for condition '" + self.condition + "' ", 
         done = False 
         while not ( done or self._timed_out() ):
             if self.check():
@@ -105,12 +105,10 @@ class poller( object ):
             else:
                 sys.stdout.write('.')
                 sleep( self.interval )
-        sys.stderr.write('\n')
-
         if done:
-            print "condition '" + self.condition + "' achieved"
+            print " achieved"
             return True
         else:
-            print >> sys.stderr, "ERROR: timed out before condition '" + self.condition + "' achieved"
+            print >> sys.stderr, " ERROR: timed out"
             return False
 
