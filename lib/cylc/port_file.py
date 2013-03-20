@@ -19,6 +19,7 @@
 import os, sys
 from suite_host import is_remote_host
 from owner import user, is_remote_user
+from global_config import gcfg
 
 """Any process that connects to a running suite (cylc server) must know
 which port to connect to (i.e. the one the suite is listening on). At
@@ -47,25 +48,27 @@ class PortFileExistsError( PortFileError ):
     pass
 
 class port_file( object ):
-    def __init__(self, suite, port, location, verbose=False):
+    def __init__(self, suite, port, verbose=False):
         self.verbose = verbose
         self.suite = suite 
-        fpath=os.path.join( location, suite )
+
+        self.local_path = os.path.join( gcfg.cfg['pyro']['ports directory'], suite )
+
         try:
             self.port = str(int(port))
         except ValueError, x:
             print >> sys.stderr, x
             raise PortFileError( "ERROR, illegal port number: " + str(port) )
-        self.fpath = fpath
+
         self.write()
 
     def write( self ):
-        if os.path.exists( self.fpath ):
-            raise PortFileExistsError( "ERROR, port file exists: " + self.fpath )
+        if os.path.exists( self.local_path ):
+            raise PortFileExistsError( "ERROR, port file exists: " + self.local_path )
         if self.verbose:
-            print "Writing port file:", self.fpath
+            print "Writing port file:", self.local_path
         try:
-            f = open( self.fpath, 'w' )
+            f = open( self.local_path, 'w' )
         except OSError,x:
             raise PortFileError( "ERROR, failed to open port file: " + self.port )
  
@@ -75,27 +78,27 @@ class port_file( object ):
 
     def unlink( self ):
         if self.verbose:
-            print "Removing port file:", self.fpath
+            print "Removing port file:", self.local_path
         try:
-            os.unlink( self.fpath )
+            os.unlink( self.local_path )
         except OSError,x:
             print >> sys.stderr, x
-            raise PortFileError( "ERROR, cannot remove port file: " + self.fpath )
+            raise PortFileError( "ERROR, cannot remove port file: " + self.local_path )
 
 class port_retriever( object ):
-    def __init__(self, suite, host, owner, location, verbose=False):
+    def __init__(self, suite, host, owner, verbose=False):
         self.verbose = verbose
         self.suite = suite
         self.host = host
         self.owner = owner
         self.port = None
-        self.fpath = os.path.join( location, suite )
+
+        self.local_path = os.path.join( gcfg.cfg['pyro']['ports directory'], suite )
 
     def get_local( self ):
-        fpath = os.path.join( os.environ['HOME'], self.fpath )
-        if not os.path.exists( fpath ):
-            raise PortFileError( "ERROR, port file not found: " + fpath )
-        f = open( fpath, 'r' )
+        if not os.path.exists( self.local_path ):
+            raise PortFileError( "ERROR, port file not found: " + self.local_path )
+        f = open( self.local_path, 'r' )
         try:
             port = int( f.readline() )
         except ValueError:
@@ -106,10 +109,15 @@ class port_retriever( object ):
     def get_remote( self ):
         import subprocess
         target = self.owner + '@' + self.host 
-        ssh = subprocess.Popen( ['ssh', '-oBatchMode=yes', target, 'cat', self.fpath], stdout=subprocess.PIPE )
+        remote_path = self.local_path.replace( os.environ['HOME'], '$HOME' )
+        ssh = subprocess.Popen( ['ssh', '-oBatchMode=yes', target, 'cat', remote_path],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE )
         port = ssh.stdout.readline()
+        err = ssh.stderr.readline()
         res = ssh.wait()
         if res != 0:
+            if err:
+                print >> sys.stderr, err
             raise PortFileError( "ERROR, unable to retrieve remote port file" )
         return port
 
