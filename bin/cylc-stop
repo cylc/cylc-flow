@@ -35,22 +35,29 @@ from cylc.port_file import PortFileError
 class stop_poller( poller ):
     """A polling object that checks if a suite has stopped yet."""
 
-    def check( self ):
-        # return True if suite has stopped (success) else False
+    def connect( self ):
         try:
-            proxy = cylc_pyro_client.client(
+            self.proxy = cylc_pyro_client.client(
                     self.args['suite'],
                     self.args['pphrase'],
                     self.args['owner'],
                     self.args['host'],
                     self.args['pyro_timeout'],
                     self.args['port'] ).get_proxy('suite-info')
-            proxy.get( 'ping suite' )
         except:
-            # failed to connect and ping - suite stopped
+            return False
+        else:
+            return True
+ 
+    def check( self ):
+        # return True if suite has stopped (success) else False
+        try:
+           self.proxy.get( 'ping suite' )
+        except:
+            # failed to ping - suite stopped
             return True 
         else:
-            # connected and pinged - suite must be live
+            # pinged - suite must be alive
             return False
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
@@ -176,6 +183,9 @@ else:
     sys.exit( result[1] )
 
 if options.wait:
+    if not spoller.connect():
+        # (should not happen if we got the command proxy above)
+        sys.exit( "ERROR: cannot connect to the suite info proxy" )
     if not spoller.poll():
         sys.exit(1)
 
