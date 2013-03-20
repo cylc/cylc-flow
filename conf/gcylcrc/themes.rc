@@ -27,33 +27,30 @@
         queued    = "color=#dcd901"
         submitting= "color=#a08f49"
         submitted = "color=#a1cf25", "style=filled"
-        submit-failed = "color=#ff007e", "style=filled"
+        submit-failed = "color=#ff007e", "style=filled", "fontcolor=white"
         running   = "color=#00c140", "style=filled"
         succeeded = "color=#ada5a5", "style=filled"
         failed    = "color=#ff0000", "style=filled", "fontcolor=white"
         retrying  = "color=#ff7e00"
-
 
     [[solid]]
         # a solid version of the default theme
         inherit = "default"
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
 
-
     [[high-contrast]]
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=white"
         waiting   = "color=#008eb1"
         runahead  = "color=#0808a2",
         held      = "color=#fc00ff"
-        queued    = "color=#f9f600"
+        queued    = "color=#c6b542", "fontcolor=black"
         submitting= "color=#7c6300"
-        submitted = "color=#76a200"
+        submitted = "color=#76a200", "fontcolor=black"
         submit-failed = "color=#d01d53"
         running   = "color=#009431"
         succeeded = "color=#555454"
         failed    = "color=#ff0000"
         retrying  = "color=#ff6000"
-
 
     [[color-blind]]
          # Ten colors that are apparently distinguishable by people with
