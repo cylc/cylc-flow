@@ -157,11 +157,8 @@ class scheduler(object):
 
         self.parse_commandline()
 
-        # global config
-        self.globals = gcfg
-
         # create task log directory
-        self.globals.get_task_log_dir( self.suite, create=True )
+        gcfg.get_task_log_dir( self.suite, create=True )
 
     def configure( self ):
         # read-only commands to expose directly to the network
@@ -811,14 +808,12 @@ class scheduler(object):
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir, 
-                self.globals.cfg['pyro']['base port'],
-                self.globals.cfg['pyro']['maximum number of ports'] )
+                gcfg.cfg['pyro']['base port'],
+                gcfg.cfg['pyro']['maximum number of ports'] )
         self.port = self.pyro.get_port()
 
         try:
-            self.port_file = port_file( self.suite, self.port,
-                self.globals.cfg['pyro']['ports directory'],
-                self.verbose )
+            self.port_file = port_file( self.suite, self.port, self.verbose )
         except PortFileExistsError,x:
             print >> sys.stderr, x
             raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
@@ -831,7 +826,7 @@ class scheduler(object):
                 verbose=self.verbose )
         self.config.create_directories()
 
-        run_dir = self.globals.cfg['task hosts']['local']['run directory']
+        run_dir = gcfg.cfg['task hosts']['local']['run directory']
 
         if not reconfigure:
             if not self.is_restart:     # create new suite_db file if needed

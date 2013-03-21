@@ -205,7 +205,12 @@ if options.show or options.showtask:
             name, tag = options.showtask.split(TaskID.DELIM)
         except ValueError:
             parser.error( "TASKID must be NAME"+TaskID.DELIM+"TAG" )
-    settings = proxy.get( options.showtask )
+    try:
+        settings = proxy.get( options.showtask )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
     padding = get_padding(settings) * ' '
     if options.raw:
         print str( settings )
@@ -214,8 +219,14 @@ if options.show or options.showtask:
     sys.exit(0)
 
 if options.clear:
-    settings = proxy.clear()
-    sys.exit(0)
+    try:
+        settings = proxy.clear()
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
+    else:
+        sys.exit(0)
 
 if len( options.set ) == 0 and len( options.unset ) == 0:
     parser.error( "No items to set or unset!" )
@@ -250,7 +261,13 @@ for u in options.unset:
         raise SystemExit( "ERROR: --unset does not take a value" )
     settings.append( get_rdict( u ) )
 
-success, msg = proxy.put( namespaces, tags, settings )
-if not success:
-    raise SystemExit( msg )
+try:
+    success, msg = proxy.put( namespaces, tags, settings )
+except Exception, x:
+    if options.debug:
+        raise
+    sys.exit(x)
+else:
+    if not success:
+        sys.exit(msg)
 
