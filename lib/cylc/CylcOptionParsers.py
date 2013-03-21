@@ -135,8 +135,10 @@ Arguments:"""
                     action="store", default=None, dest="pyro_timeout" )
 
             self.add_option( "-f", "--force",
-                help="Do not ask for confirmation before acting.",
-                action="store_true", default=False, dest="force" )
+                    help="Do not ask for confirmation before acting. Note that "
+                    "it is not necessary to use this option if interactive command "
+                    "prompts have already been disabled in site/user config files.",
+                    action="store_true", default=False, dest="force" )
 
         if gcylc or not pyro:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
