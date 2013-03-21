@@ -790,7 +790,7 @@ class scheduler(object):
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
-                        new_task.set_succeeded()
+                        new_task.reset_state_succeeded(manual=False)
                     self.pool.remove( itask, '(suite definition reload)' )
                     self.pool.add( new_task )
         self.reconfiguring = found
@@ -1993,7 +1993,7 @@ class scheduler(object):
             if itask.id == id:
                 # set it succeeded
                 print '  Setting', itask.id, 'succeeded'
-                itask.set_succeeded()
+                itask.reset_state_succeeded(manual=False)
                 # force it to spawn
                 print '  Spawning', itask.id
                 foo = self.force_spawn( itask )
@@ -2016,7 +2016,7 @@ class scheduler(object):
                 if itask.ready_to_run():
                     something_triggered = True
                     print '  Triggering', itask.id
-                    itask.set_succeeded()
+                    itask.reset_state_succeeded(manual=False)
                     print '  Spawning', itask.id
                     foo = self.force_spawn( itask )
                     if foo:

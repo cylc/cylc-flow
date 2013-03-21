@@ -166,7 +166,6 @@ class task( object ):
         self.db_queue = []
 
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
-
         
         self.validate = validate
         
@@ -277,67 +276,7 @@ class task( object ):
             dep.append( satby[ label ] )
         return dep
 
-    def set_submitted( self ):
-        self.state.set_status( 'submitted' )
-        self.record_db_update("task_states", self.name, self.c_time, status="submitted")
-        #self.log( 'NORMAL', "job submitted" )
-        self.submitted_time = task.clock.get_datetime()
-        self.submission_timer_start = self.submitted_time
-        handler = self.event_handlers['submitted']
-        if handler:
-            self.log( 'NORMAL', "Queuing submitted event handler" )
-            self.__class__.event_queue.put( ('submitted', handler, self.id, 'task submitted') )
-        
-    def set_running( self ):
-        self.state.set_status( 'running' )
-        self.record_db_event(event="started")
-        self.record_db_update("task_states", self.name, self.c_time, status="running")
-        self.started_time = task.clock.get_datetime()
-        self.started_time_real = datetime.datetime.now()
-        self.execution_timer_start = self.started_time
-        # if started running, submission must have been successful so reset submission try number
-        self.sub_try_number = 0
-        self.sub_retry_delays = copy( self.sub_retry_delays_orig )
-        handler = self.event_handlers['started']
-        if handler:
-            self.log( 'NORMAL', "Queuing started event handler" )
-            self.__class__.event_queue.put( ('started', handler, self.id, 'task started') )
-
-    def set_succeeded( self ):
-        self.outputs.set_all_completed()
-        self.state.set_status( 'succeeded' )
-        self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
-        self.record_db_event(event="succeeded")
-        self.succeeded_time = task.clock.get_datetime()
-        # don't update mean total elapsed time if set_succeeded() was called
-
-    def set_succeeded_handler( self ):
-        # (set_succeeded() is used by remote switch)
-        self.record_db_event(event="succeeded")
-        self.state.set_status( 'succeeded' )
-        self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
-        handler = self.event_handlers['succeeded']
-        if handler:
-            self.log( 'NORMAL', "Queuing succeeded event handler" )
-            self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
-        
-    def set_failed( self, reason="" ):
-        self.state.set_status( 'failed' )
-        self.record_db_update("task_states", self.name, self.c_time, status="failed")
-        handler = self.event_handlers['failed']
-        if handler:
-            self.log( 'NORMAL', "Queuing failed event handler" )
-            self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
-
-    def set_submit_failed( self, reason="" ):
-        self.state.set_status( 'submit-failed' )
-        self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
-        #self.log( 'CRITICAL', reason )
-        handler = self.event_handlers['submission failed']
-        if handler:
-            self.log( 'NORMAL', "Queuing submission_failed event handler" )
-            self.__class__.event_queue.put( ('submission_failed', handler, self.id, reason) )
-
+      
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
         # or on later success it will be seen as an incomplete output.
@@ -348,13 +287,7 @@ class task( object ):
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
-        self.prerequisites.set_all_satisfied()
-        self.unfail()
-        self.outputs.set_all_incomplete()
-
-    def reset_state_submit_failed( self ):
-        self.state.set_status( 'submit-failed' )
-        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="submit-failed")
+        self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
@@ -363,15 +296,21 @@ class task( object ):
         # waiting and all prerequisites UNsatisified.
         self.state.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, status="waiting")
+        self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.outputs.set_all_incomplete()
 
-    def reset_state_succeeded( self ):
+    def reset_state_succeeded( self, manual=True ):
         # all prerequisites satisified and all outputs complete
         self.state.set_status( 'succeeded' )
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
-        self.record_db_event(event="succeeded")
+        if manual:
+            self.record_db_event(event="reset to succeeded")
+        else:
+            # Artificially set to succeeded but not by the user. E.g. by
+            # the purge algorithm and when reloading task definitions.
+            self.record_db_event(event="set to succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.outputs.set_all_completed()
@@ -380,7 +319,7 @@ class task( object ):
         # all prerequisites satisified and no outputs complete
         self.state.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
-        self.record_db_event(event="failed")
+        self.record_db_event(event="reset to failed")
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
@@ -389,6 +328,7 @@ class task( object ):
     def reset_state_held( self ):
         self.state.set_status( 'held' )
         self.record_db_update("task_states", self.name, self.c_time, status="held")
+        self.record_db_event(event="reset to held")
 
     def reset_state_runahead( self ):
         self.state.set_status( 'runahead' )
@@ -408,7 +348,6 @@ class task( object ):
                 self.override( target[key], val )
             else:
                 target[key] = val
-
 
     def _get_retry_delays( self, cfg, descr ):
         """Check retry delay config (execution and submission) and return
@@ -772,64 +711,88 @@ class task( object ):
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
-        # log and prepend with '>' to indicate a message received
+
+        # Log every incoming task message. Prepend with '>' to
+        # distinguish from other kinds of log entry.
         self.log( priority, '> ' + message )
+
+        # Remove the prepended task ID.
+        content = message.replace( self.id + ' ', '' )
+
+        # Record every incoming message as an event.
+        prefix = "message received "
+        if priority == 'CRITICAL':
+            self.record_db_event(event=prefix+'(CRITICAL)', message=content)
+        elif priority == 'WARNING':
+            self.record_db_event(event=prefix+'(WARNING)', message=content)
+        else:
+            self.record_db_event(event=prefix+'(NORMAL)', message=content)
+
+        # always update the suite state summary for latest message
+        self.latest_message = message
+        self.latest_message_priority = priority
+        flags.iflag = True
 
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
-        # check if the message matches a registered output
+        # If the message matches a registered output, record it as completed.
         if self.outputs.exists( message ):
             if not self.outputs.is_completed( message ):
                 flags.pflag = True
                 self.outputs.set_completed( message )
+                self.record_db_event(event="output completed", message=content)
             else:
-                # This output has already been reported complete.
-                # Currently this is treated as an error condition
+                # Warn if the output has already been reported complete.
+                # This is no longer treated as an error condition though.
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
                 self.log( 'WARNING', "-> " + message )
 
-        # always update the suite state summary for latest message
-        flags.iflag = True
-
-        self.latest_message = message
-        self.latest_message_priority = priority
-
         # Handle warning events
-        handler = self.event_handlers['warning']
-        if priority == 'WARNING' and handler:
-            self.log( 'NORMAL', "Queuing warning event handler" )
-            self.__class__.event_queue.put( ('warning', handler, self.id, message) )
+        if priority == 'WARNING':
+            handler = self.event_handlers['warning']
+            if handler:
+                self.log( 'NORMAL', "Queuing warning event handler" )
+                self.__class__.event_queue.put( ('warning', handler, self.id, content) )
 
         if self.reset_timer:
             # Reset execution timer on incoming messages
             self.execution_timer_start = task.clock.get_datetime()
 
-        if message == self.id + ' submitting now':
+        if content == 'submission succeeded':
             # (a fake task message from the job submission thread)
-            self.record_db_event(event="submitting now")
+            self.state.set_status( 'submitted' )
+            self.record_db_update("task_states", self.name, self.c_time, status="submitted")
+            self.record_db_event(event="submission succeeded" )
+            self.submitted_time = task.clock.get_datetime()
+            self.submission_timer_start = self.submitted_time
+            handler = self.event_handlers['submitted']
+            if handler:
+                self.log( 'NORMAL', "Queuing submitted event handler" )
+                self.__class__.event_queue.put( ('submitted', handler, self.id, 'task submitted') )
 
-        elif message == self.id + ' submission succeeded':
-            # (a fake task message from the job submission thread)
-            self.set_submitted()
-
-        elif message.startswith(self.id + ' submit_method_id='):
+        elif content.startswith( 'submit_method_id='):
             # (a fake task message from the job submission thread)
             # capture and record submit method job IDs
-            submit_method_id = message[len(self.id + ' submit_method_id='):]
+            submit_method_id = content[len('submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time,
                                   submit_method_id=submit_method_id)
                                   
-        elif message == self.id + ' submission failed':
+        elif content == 'submission failed':
             # (a fake task message from the job submission thread)
-            self.record_db_event(event="submission failed")
             try:
                 # Is there a retry lined up for this task?
                 self.sub_retry_delay = float(self.sub_retry_delays.popleft())
             except IndexError:
                 # There is no submission retry lined up: definitive failure.
-                self.set_submit_failed( message )
+                self.state.set_status( 'submit-failed' )
+                self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
+                self.record_db_event(event="submission failed" )
+                handler = self.event_handlers['submission failed']
+                if handler:
+                    self.log( 'NORMAL', "Queuing submission_failed event handler" )
+                    self.__class__.event_queue.put( ('submission_failed', handler, self.id, reason) )
             else:
                 # There is a retry lined up
                 self.log( "NORMAL", "Setting submission retry delay: " + str(self.sub_retry_delay) +  " minutes" )
@@ -846,27 +809,41 @@ class task( object ):
                     self.log( 'NORMAL', "Queuing submission retry event handler" )
                     self.__class__.event_queue.put( ('submission_retry', handler, self.id, 'task retrying') )
  
-        elif message == self.id + ' started':
+        elif content == 'started':
             # Received a 'task started' message
             flags.pflag = True
-            self.set_running()
+            self.state.set_status( 'running' )
+            self.record_db_update("task_states", self.name, self.c_time, status="running")
+            self.record_db_event(event="started" )
+            self.started_time = task.clock.get_datetime()
+            self.started_time_real = datetime.datetime.now()
+            self.execution_timer_start = self.started_time
+            # submission was successful so reset submission try number
+            self.sub_try_number = 0
+            self.sub_retry_delays = copy( self.sub_retry_delays_orig )
+            handler = self.event_handlers['started']
+            if handler:
+                self.log( 'NORMAL', "Queuing started event handler" )
+                self.__class__.event_queue.put( ('started', handler, self.id, 'task started') )
 
-        elif message == self.id + ' succeeded':
-            # Task has succeeded
+        elif content == 'succeeded':
+            # Received a 'task succeeded' message
+            flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
+            self.state.set_status( 'succeeded' )
+            self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
+            self.record_db_event(event="succeeded" )
+            handler = self.event_handlers['succeeded']
+            if handler:
+                self.log( 'NORMAL', "Queuing succeeded event handler" )
+                self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
             if not self.outputs.all_completed():
-                # Reported success before all registered outputs were completed.
-                # Currently this is treated as an error condition.
-                self.set_failed( 'succeeded before all outputs were completed' )
-            else:
-                # Set state to 'succeeded' and handle succeeded events
-                self.set_succeeded_handler()
-
-        elif message == self.id + ' failed':
-            self.record_db_event(event="execution failed")
+                # This is no longer treated as an error condition.
+                self.log( 'WARNING', "Succeeded before all outputs were completed" )
+ 
+        elif content == 'failed':
             # Received a 'task failed' message
-            flags.pflag = True
             try:
                 # Is there a retry lined up for this task?
                 self.retry_delay = float(self.retry_delays.popleft())
@@ -875,10 +852,16 @@ class task( object ):
                 # Add the failed message as a task output so that other tasks can
                 # trigger off the failure event (failure outputs are not added in
                 # advance - they are not completed outputs in case of success):
+                flags.pflag = True
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
-                # (this also calls the task failure handler):
-                self.set_failed( message )
+                self.state.set_status( 'failed' )
+                self.record_db_update("task_states", self.name, self.c_time, status="failed")
+                self.record_db_event(event="failed" )
+                handler = self.event_handlers['failed']
+                if handler:
+                    self.log( 'NORMAL', "Queuing failed event handler" )
+                    self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
             else:
                 # There is a retry lined up
                 self.log( "NORMAL", "Setting retry delay: " + str(self.retry_delay) +  " minutes" )
@@ -895,9 +878,9 @@ class task( object ):
                     self.log( 'NORMAL', "Queuing retry event handler" )
                     self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
-        elif message.startswith("Task job script received signal"):
-            #capture and record signals sent to task proxy
-            self.record_db_event(event="signaled", message=message)
+        elif content.startswith("Task job script received signal"):
+            # capture and record signals sent to task proxy
+            self.record_db_event(event="signaled", message=content)
 
     def update( self, reqs ):
         for req in reqs.get_list():
