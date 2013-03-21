@@ -45,14 +45,12 @@ parser = cop( """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
-'--align' is not used.""", pyro=True )
+'--align' is not used.""", pyro=True, noforce=True )
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
         "is only useful for small suites.",
         action="store_true", default=False, dest="align_columns" )
-
-parser.remove_option("-f" ) # don't need force
 
 ( options, args ) = parser.parse_args()
 
