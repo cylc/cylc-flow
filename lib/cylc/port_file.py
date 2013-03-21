@@ -91,48 +91,56 @@ class port_retriever( object ):
         self.suite = suite
         self.host = host
         self.owner = owner
-        self.port = None
+        self.locn = None
 
         self.local_path = os.path.join( gcfg.cfg['pyro']['ports directory'], suite )
 
     def get_local( self ):
+        self.locn = self.local_path
         if not os.path.exists( self.local_path ):
             raise PortFileError( "ERROR, port file not found: " + self.local_path )
         f = open( self.local_path, 'r' )
-        try:
-            port = int( f.readline() )
-        except ValueError:
-            print >> sys.stderr, x
-            raise PortFileError( "ERROR, illegal port file content: " + port )
-        return port
+        str_port = f.readline().rstrip('\n')
+        f.close()
+        return str_port
 
     def get_remote( self ):
         import subprocess
         target = self.owner + '@' + self.host 
         remote_path = self.local_path.replace( os.environ['HOME'], '$HOME' )
+        self.locn = target + ':' + remote_path
         ssh = subprocess.Popen( ['ssh', '-oBatchMode=yes', target, 'cat', remote_path],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-        port = ssh.stdout.readline()
+        str_port = ssh.stdout.readline().rstrip('\n')
         err = ssh.stderr.readline()
         res = ssh.wait()
         if err:
-            print >> sys.stderr, "WARNING: from remote port file retrieval:"
-            print >> sys.stderr, err.rstrip('\n')
+            print >> sys.stderr, "Remote port get:", err.rstrip('\n')
         if res != 0:
-            raise PortFileError( "ERROR, unable to retrieve remote port file" )
-        return port
+            print >> sys.stderr, "ERROR failed to get", self.locn 
+            raise PortFileError( "ERROR, remote port file not found" )
+        return str_port
 
     def get( self ):
         if self.verbose:
             print "Retrieving suite port number..."
 
         if is_remote_host( self.host ) or is_remote_user( self.owner ):
-            self.port = self.get_remote()
+            str_port = self.get_remote()
         else:
-            self.port = self.get_local()
+            str_port = self.get_local()
+
+        try:
+            # convert to integer
+            port = int( str_port )
+        except ValueError, x:
+            # this also catches an empty port file (touch)
+            print >> sys.stderr, x
+            print >> sys.stderr, "ERROR: bad port file", self.locn
+            raise PortFileError( "ERROR, illegal port file content: " + str_port )
 
         if self.verbose:
-            print '...', self.port
+            print '...', port
 
-        return self.port
+        return port
 
