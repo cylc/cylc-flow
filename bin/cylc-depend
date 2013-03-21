@@ -58,7 +58,7 @@ if m:
     msg = dep + ' succeeded'
 else:
     msg = dep
-    print >> sys.stderr, 'WARNING: DEP is not a task ID, assuming prerequisite message:'
+    print >> sys.stderr, "WARNING: DEP should be a prerequisite but looks like a task ID"
     print >> sys.stderr, msg
 
 try:
@@ -66,7 +66,7 @@ try:
 except TaskIDError, x:
     if options.debug:
         raise
-    raise SystemExit(x)
+    sys.exit(x)
 else:
     task_id = tid.getstr()
 
@@ -74,13 +74,12 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+    prompt( 'Add new prerequisite to ' + task_id + ' in ' + suite, options.force )
+    result = proxy.put( 'add prerequisite', task_id, msg )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-prompt( 'Add new prerequisite to ' + task_id + ' in ' + suite, options.force )
-result = proxy.put( 'add prerequisite', task_id, msg )
+    sys.exit(x)
 
 if result[0]:
     print result[1]

@@ -166,15 +166,30 @@ if shutdown_at:
     #print method
 
     prompt( 'Set shutdown ' + shutdown_arg + ' for ' + suite, options.force )
-    result = proxy.put( method, shutdown_arg )
+    try:
+        result = proxy.put( method, shutdown_arg )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 elif options.shutdownnow:
     prompt( 'Shut down ' + suite + ' NOW', options.force )
-    result = proxy.put( 'stop now' )
+    try:
+        result = proxy.put( 'stop now' )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 else:
     prompt( 'Shut down ' + suite, options.force )
-    result = proxy.put( 'stop cleanly' )
+    try:
+        result = proxy.put( 'stop cleanly' )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 if result[0]:
     # command queued

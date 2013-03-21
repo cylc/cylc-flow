@@ -57,13 +57,12 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+    prompt( 'Trigger task ' + task_id + ' in ' + suite, options.force )
+    result = proxy.put( 'trigger task', task_id )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-prompt( 'Trigger task ' + task_id + ' in ' + suite, options.force )
-result = proxy.put( 'trigger task', task_id )
+    sys.exit(x)
 
 if result[0]:
     print result[1]

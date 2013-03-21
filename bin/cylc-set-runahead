@@ -52,21 +52,17 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+    if runahead:
+        prompt( 'Change runahead limit in ' + suite + ' to ' + runahead, options.force )
+        result = proxy.put( 'set runahead', runahead )
+    else:
+        # no limit!
+        prompt( 'Change runahead limit in ' + suite + ' to NO LIMIT', options.force )
+        result = proxy.put( 'set runahead' )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-if runahead:
-    prompt( 'Change runahead limit in ' + suite + ' to ' + runahead, options.force )
-else:
-    prompt( 'Change runahead limit in ' + suite + ' to NO LIMIT', options.force )
-
-if runahead:
-    result = proxy.put( 'set runahead', runahead )
-else:
-    # no limit!
-    result = proxy.put( 'set runahead' )
+    sys.exit(x)
 
 if result[0]:
     print result[1]
