@@ -557,7 +557,8 @@ class task( object ):
                     print >> sys.stderr, '\n'.join(res[1])
                     # must still assign a name now or abort the suite?
                     host = "NO-HOST-SELECTED"
-                self.hostname = host
+            
+            self.hostname = host
 
             if host not in gcfg.cfg['task hosts']:
                 # there's no specific config for this host
