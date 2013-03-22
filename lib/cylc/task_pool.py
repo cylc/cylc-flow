@@ -140,7 +140,7 @@ class pool(object):
                             readytogo.append(itask)
                         else:
                             # (direct task state reset ok: this executes in the main thread)
-                            itask.reset_state_queued()
+                            itask.set_state_queued()
                     else:
                         readytogo.append(itask)
 
@@ -155,7 +155,7 @@ class pool(object):
 
         for itask in readytogo:
             # (direct task state reset ok: this executes in the main thread)
-            itask.reset_state_submitting()
+            itask.set_state_submitting()
             self.jobqueue.put( itask )
 
         return readytogo

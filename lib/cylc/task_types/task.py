@@ -287,12 +287,17 @@ class task( object ):
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
 
+    def turn_off_timeouts( self ):
+        self.submission_timer_start = None
+        self.execution_timer_start = None
+
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
         self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_satisfied()
         self.unfail()
+        self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
     def reset_state_waiting( self ):
@@ -302,6 +307,7 @@ class task( object ):
         self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
+        self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
     def reset_state_succeeded( self, manual=True ):
@@ -316,6 +322,7 @@ class task( object ):
             self.record_db_event(event="set to succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
+        self.turn_off_timeouts()
         self.outputs.set_all_completed()
 
     def reset_state_failed( self ):
@@ -326,22 +333,27 @@ class task( object ):
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
+        self.turn_off_timeouts()
         self.outputs.add( self.id + ' failed', completed=True )
 
     def reset_state_held( self ):
         self.state.set_status( 'held' )
         self.record_db_update("task_states", self.name, self.c_time, status="held")
+        self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
 
     def reset_state_runahead( self ):
         self.state.set_status( 'runahead' )
+        self.turn_off_timeouts()
         self.record_db_update("task_states", self.name, self.c_time, status="runahead")
 
-    def reset_state_submitting( self ):
+    def set_state_submitting( self ):
+        # called by scheduler main thread
         self.state.set_status( 'submitting' )
         self.record_db_update("task_states", self.name, self.c_time, status="submitting")
 
-    def reset_state_queued( self ):
+    def set_state_queued( self ):
+        # called by scheduler main thread
         self.state.set_status( 'queued' )
         self.record_db_update("task_states", self.name, self.c_time, status="queued")
 
@@ -625,43 +637,58 @@ class task( object ):
             return (p, launcher)
 
     def check_submission_timeout( self ):
+        # if no timer is set, return
+        if not self.submission_timer_start:
+            return
+        # if no handler is specified, return
         handler = self.event_handlers['submission timeout']
         timeout = self.timeouts['submission']
         if not handler or not timeout:
             return
-        if not self.state.is_currently('submitted') and not self.state.is_currently('running'):
-            # nothing to time out yet
-            return
-        current_time = task.clock.get_datetime()
-        if self.submission_timer_start != None and not self.state.is_currently('running'):
-            cutoff = self.submission_timer_start + datetime.timedelta( minutes=float(timeout) )
-            if current_time > cutoff:
-                msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
-                self.log( 'WARNING', msg )
-                self.log( 'NORMAL', "Queueing submission_timeout event handler" )
-                self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
+
+        # if submission completed, turn off the timer
+        for state in [ 'submit-failed', 'running', 'succeeded', 'failed', 'retrying' ]: 
+            if self.state.is_currently(state):
                 self.submission_timer_start = None
+                return
+
+        # if timed out, queue the event handler turn off the timer
+        current_time = task.clock.get_datetime()
+        cutoff = self.submission_timer_start + datetime.timedelta( minutes=float(timeout) )
+        if current_time > cutoff:
+            msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
+            self.log( 'WARNING', msg )
+            self.log( 'NORMAL', "Queueing submission_timeout event handler" )
+            self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
+            self.submission_timer_start = None
 
     def check_execution_timeout( self ):
+        # if no timer is set, return
+        if not self.execution_timer_start:
+            return
+        # if no handler is specified, return
         handler = self.event_handlers['execution timeout']
         timeout = self.timeouts['execution']
         if not handler or not timeout:
             return
-        if not self.state.is_currently('submitted') and not self.state.is_currently('running'):
-            # nothing to time out yet
-            return
-        current_time = task.clock.get_datetime()
-        if self.execution_timer_start != None and self.state.is_currently('running'):
-            cutoff = self.execution_timer_start + datetime.timedelta( minutes=float(timeout) )
-            if current_time > cutoff:
-                if self.reset_timer:
-                    msg = 'last message ' + timeout + ' minutes ago, but has not succeeded'
-                else:
-                    msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
-                self.log( 'WARNING', msg )
-                self.log( 'NORMAL', "Queueing execution_timeout event handler" )
-                self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
+        # if execution completed, turn off the timer
+        for state in [ 'succeeded', 'failed', 'retrying' ]: 
+            if self.state.is_currently(state):
                 self.execution_timer_start = None
+                return
+        # if timed out, queue the event handler turn off the timer
+        current_time = task.clock.get_datetime()
+        cutoff = self.execution_timer_start + datetime.timedelta( minutes=float(timeout) )
+        if current_time > cutoff:
+            if self.reset_timer:
+                # the timer is being re-started by incoming messages
+                msg = 'last message ' + timeout + ' minutes ago, but has not succeeded'
+            else:
+                msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
+            self.log( 'WARNING', msg )
+            self.log( 'NORMAL', "Queueing execution_timeout event handler" )
+            self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
+            self.execution_timer_start = None
 
     def sim_time_check( self ):
         if not self.state.is_currently('running'):
@@ -769,16 +796,23 @@ class task( object ):
 
         if content == 'submission succeeded':
             # A fake task message from the job submission thread.
+
+            # TODO: should we extract the real event time from the
+            # message to use here?
+            self.submitted_time = task.clock.get_datetime()
+
             if self.state.is_currently( 'submitting' ): 
                 # It is possible that task started arrives first, so
                 # only set to 'submitted' if we're still in the
                 # 'submitting' state.
                 self.state.set_status( 'submitted' )
+                self.submission_timer_start = self.submitted_time
+            else:
+                # task started must have arrived first
+                self.submission_timer_start = None
 
             self.record_db_update("task_states", self.name, self.c_time, status="submitted")
             self.record_db_event(event="submission succeeded" )
-            self.submitted_time = task.clock.get_datetime()
-            self.submission_timer_start = self.submitted_time
             handler = self.event_handlers['submitted']
             if handler:
                 self.log( 'NORMAL', "Queueing submitted event handler" )
@@ -829,7 +863,11 @@ class task( object ):
             self.record_db_event(event="started" )
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
+
+            # TODO: should we use the real event time extracted from the
+            # message here:
             self.execution_timer_start = self.started_time
+
             # submission was successful so reset submission try number
             self.sub_try_number = 0
             self.sub_retry_delays = copy( self.sub_retry_delays_orig )
