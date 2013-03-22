@@ -629,7 +629,6 @@ cmd = 'cylc-' + command
 if command in [ 'started', 'message' ]:
     # Run non job-ending task message commands in the background.
     p = subprocess.Popen( [ cmd ] + args )
-    print "(bye)"
     sys.exit(0)
 else:
     # Replace the current process with that of the sub-command.
