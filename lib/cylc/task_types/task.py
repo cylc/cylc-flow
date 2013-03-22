@@ -768,8 +768,13 @@ class task( object ):
             self.execution_timer_start = task.clock.get_datetime()
 
         if content == 'submission succeeded':
-            # (a fake task message from the job submission thread)
-            self.state.set_status( 'submitted' )
+            # A fake task message from the job submission thread.
+            if self.state.is_currently( 'submitting' ): 
+                # It is possible that task started arrives first, so
+                # only set to 'submitted' if we're still in the
+                # 'submitting' state.
+                self.state.set_status( 'submitted' )
+
             self.record_db_update("task_states", self.name, self.c_time, status="submitted")
             self.record_db_event(event="submission succeeded" )
             self.submitted_time = task.clock.get_datetime()
