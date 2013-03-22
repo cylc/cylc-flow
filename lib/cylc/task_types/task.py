@@ -715,21 +715,18 @@ class task( object ):
 
     def process_incoming_message( self, (priority, message) ):
 
-        # Log every incoming task message. Prepend with '>' to
-        # distinguish from other kinds of log entry.
+        # Log every incoming task message. Prepend '>' to distinguish
+        # from other non-task message log entries.
         self.log( priority, '> ' + message )
-
-        # Remove the prepended task ID.
-        content = message.replace( self.id + ' ', '' )
 
         # Record every incoming message as an event.
         prefix = "message received "
         if priority == 'CRITICAL':
-            self.record_db_event(event=prefix+'(CRITICAL)', message=content)
+            self.record_db_event(event=prefix+'(CRITICAL)', message=message)
         elif priority == 'WARNING':
-            self.record_db_event(event=prefix+'(WARNING)', message=content)
+            self.record_db_event(event=prefix+'(WARNING)', message=message)
         else:
-            self.record_db_event(event=prefix+'(NORMAL)', message=content)
+            self.record_db_event(event=prefix+'(NORMAL)', message=message)
 
         # always update the suite state summary for latest message
         self.latest_message = message
@@ -739,6 +736,13 @@ class task( object ):
         if self.reject_if_failed( message ):
             # Failed tasks do not send messages unless declared resurrectable
             return
+
+        # After logging and recording remove the remote event time from
+        # the end of task messages.
+        message = re.sub( ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$', '', message )
+
+        # Remove the prepended task ID.
+        content = message.replace( self.id + ' ', '' )
 
         # If the message matches a registered output, record it as completed.
         if self.outputs.exists( message ):

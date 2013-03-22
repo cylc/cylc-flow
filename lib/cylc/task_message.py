@@ -32,6 +32,11 @@ class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
 
         globals = gcfg
+
+        # Record the time the messaging system was called and append it
+        # to the message, in case the message is delayed in some way.
+        self.true_event_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
         self.retry_seconds = globals.cfg['task messaging']['retry interval in seconds']
         self.max_tries = globals.cfg['task messaging']['maximum number of tries']
         self.try_timeout = globals.cfg['task messaging']['connection timeout in seconds']
@@ -151,8 +156,10 @@ class message(object):
         elif self.msg:
             msg = self.msg
         if not msg:
-            # nothing to send (To Do: this is not needed?)
+            # nothing to send (TODO: not needed?)
             return
+        # append event time to the message
+        msg += ' at ' + self.true_event_time
         if self.mode != 'scheduler':
             # no suite to communicate with, just print to stdout.
             self.print_msg( msg )
