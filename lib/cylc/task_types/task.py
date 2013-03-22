@@ -117,6 +117,9 @@ class task( object ):
     @classmethod
     def update_mean_total_elapsed_time( cls, started, succeeded ):
         # the class variables here are defined in derived task classes
+        if not started:
+            # in case the started messaged did not get through
+            return
         cls.elapsed_times.append( succeeded - started )
         elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
         mtet_sec = sum( elt_sec ) / len( elt_sec )
@@ -840,8 +843,9 @@ class task( object ):
                 self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
             if not self.outputs.all_completed():
                 # This is no longer treated as an error condition.
-                self.log( 'WARNING', "Succeeded before all outputs were completed" )
- 
+                self.log( 'WARNING', "Succeeded before all outputs completed; completing them now" )
+                self.outputs.set_all_completed()
+
         elif content == 'failed':
             # Received a 'task failed' message
             try:
