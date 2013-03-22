@@ -804,7 +804,7 @@ class task( object ):
                 handler = self.event_handlers['submission failed']
                 if handler:
                     self.log( 'NORMAL', "Queueing submission_failed event handler" )
-                    self.__class__.event_queue.put( ('submission_failed', handler, self.id, reason) )
+                    self.__class__.event_queue.put( ('submission_failed', handler, self.id) )
             else:
                 # There is a retry lined up
                 self.log( "NORMAL", "Setting submission retry delay: " + str(self.sub_retry_delay) +  " minutes" )
@@ -874,7 +874,7 @@ class task( object ):
                 handler = self.event_handlers['failed']
                 if handler:
                     self.log( 'NORMAL', "Queueing failed event handler" )
-                    self.__class__.event_queue.put( ('failed', handler, self.id, reason) )
+                    self.__class__.event_queue.put( ('failed', handler, self.id) )
             else:
                 # There is a retry lined up
                 self.log( "NORMAL", "Setting retry delay: " + str(self.retry_delay) +  " minutes" )
