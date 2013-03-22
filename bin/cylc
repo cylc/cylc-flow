@@ -626,8 +626,10 @@ if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' 
 
 cmd = 'cylc-' + command
 
-####This results in an error in Pyro core for the 'message' command,
-####currently undiagnosed:
+####BACKGROUNDED MESSAGING CALLS: this results in a currently
+####undiagnosed error in Pyro core when the 'message' command is
+####invoked - but not for the 'started' command (try it and see the task
+####stderr log). 
 ##if command in [ 'started', 'message' ]:
 ##    # Run non job-ending task message commands in the background.
 ##    p = subprocess.Popen( [ cmd ] + args )
