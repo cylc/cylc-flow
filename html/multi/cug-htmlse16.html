@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-03-02 09:54:00"> 
+<meta name="date" content="2013-03-05 10:38:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5764--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5760--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse17.html" >next</a>] [<a 
 href="cug-htmlse15.html" >prev</a>] [<a 
 href="cug-htmlse15.html#tailcug-htmlse15.html" >prev-tail</a>] [<a 
@@ -21,7 +21,7 @@ href="cug-html.html#cug-htmlse16.html" >up</a>] </p></div>
  id="x17-305000B"></a>Site/User Config File Reference</h3>
    <div class="sectionTOCS">
    </div>
-<!--l. 5766--><p class="indent" >   Cylc now has a site config file for settings that apply to all suites: <span class="lstinline"><span 
+<!--l. 5762--><p class="indent" >   Cylc now has a site config file for settings that apply to all suites: <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
 class="pcrr7t-">/</span><span 
@@ -43,7 +43,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">user</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">rc</span></span>
-<!--l. 5774--><p class="indent" >   See also <span class="lstinline"><span 
+<!--l. 5770--><p class="indent" >   See also <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">get</span><span 
@@ -55,10 +55,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span>, which can be used to write an initial site or user config file
 with internal documentation and all items commented out.
-<!--l. 5778--><p class="indent" >   As a temporary measure the self-documenting <span 
+<!--l. 5774--><p class="indent" >   As a temporary measure the self-documenting <span 
 class="cmti-10">configspec </span>for site/user config files is included verbatim
 here.
-   <!--l. 5781--><div class="lstinputlisting">
+   <!--l. 5777--><div class="lstinputlisting">
 <a 
  id="x17-305001"></a>
    <span 
@@ -859,7 +859,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">The</span><span 
+class="pcrr7t-">This</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">timeout</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -890,11 +890,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">It</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">should</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">be</span><span 
+class="pcrr7t-">If</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -908,18 +904,21 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">timeout</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">or</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">a</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">large</span><span 
+class="pcrr7t-">non</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">responsive</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">number</span><span 
+class="pcrr7t-">suite</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">(</span><span 
-class="pcrr7t-">a</span><span 
+class="pcrr7t-">e</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">g</span><span 
+class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">few</span><span 
+class="pcrr7t-">suspended</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-305044r43"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -928,26 +927,30 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">minutes</span><span 
+class="pcrr7t-">with</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Ctrl</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">Z</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
+class="pcrr7t-">could</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">until</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">has</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">network</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">request</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">handling</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
+class="pcrr7t-">cause</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">a</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">task</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">to</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">hang</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">indefinitely</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">when</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">it</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-305045r44"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -956,24 +959,22 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">separate</span><span 
+class="pcrr7t-">attempts</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">thread</span><span 
+class="pcrr7t-">to</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">(</span><span 
-class="pcrr7t-">see</span><span 
+class="pcrr7t-">send</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">User</span><span 
+class="pcrr7t-">a</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Guide</span><span 
+class="pcrr7t-">message</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">Network</span><span 
+class="pcrr7t-">to</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Connection</span><span 
+class="pcrr7t-">the</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Timeouts</span><span 
-class="pcrr7t-">").</span><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-305046r45"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4594,12 +4595,12 @@ class="pcrr7t-">)</span>
                                                                                          
 
                                                                                          
-   <!--l. 5786--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5782--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse17.html" >next</a>] [<a 
 href="cug-htmlse15.html" >prev</a>] [<a 
 href="cug-htmlse15.html#tailcug-htmlse15.html" >prev-tail</a>] [<a 
 href="cug-htmlse16.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse16.html" >up</a>] </p></div>
-<!--l. 5786--><p class="indent" >   <a 
+<!--l. 5782--><p class="indent" >   <a 
  id="tailcug-htmlse16.html"></a>  
 </body></html> 

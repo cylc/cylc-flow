@@ -17,6 +17,7 @@
 <ul>
 		<li><a href="#">TOP</a></li>
 		<li><a href="#pending">pending</a></li>
+		<li><a href="#5.1.1">5.1.1</a></li>
 		<li><a href="#5.1.0">5.1.0</a></li>
 		<li><a href="#5.0.3">5.0.3</a></li>
 		<li><a href="#5.0.2">5.0.2</a></li>
@@ -35,17 +36,42 @@ guide, command help, or post a question to the cylc mailing list. <p>
 <a name="pending"/>
 		<h2>pending (in master but not tagged yet)</h2>
 
-		<p>(NONE)</p>
+		<ul>
+				<li><code>cylc list</code> command output has been updated/fixed  
+				for multiple inheritance, and the option to print namespace
+				(task and family) title information has been restored.</li>
+
+				<li>Cylc can now be invoked successfully via symlinked
+				directories in <code>$PATH</code>.</li>
+
+				<li>Fixed a recent slow-down in validation time due to
+				unnecessary access to the new run databases.</li>
+
+				<li><b>gcylc can now switch between suites</b> and the <code>cylc
+						dbviewer</code> GUI has been removed (it has become a "File
+				Open" dialog for gcylc).</li>
+		</ul>
+
+<a name="5.1.1"/>
+		<h2>5.1.1</h2>
+
+		<ul>
+				<li>Restored use of visualization settings, broken by
+				the task ID delimiter change in 5.0.0.</li>
+
+				<li>Restored <b>image file output</b> capability to the gcylc
+				suite graph dialog.</li>
+		</ul>
 
 <a name="5.1.0"/>
 		<h2>5.1.0</h2>
 
 <ul>
 
-		<li>Added site/user config file documentation to the User
+		<li>Added <b>site/user config file documentation</b> to the User
 		Guide.</li>
 
-		<li>The task ID delimiter has been changed from '%' to '.'
+		<li>The <b>task ID delimiter has changed</b> from '%' to '.'
 		(foo%2013080800 becomes foo.2013080800) because the '%' character
 		causes trouble for web-based suite output viewers. This affects task
 		IDs on the command line, and task log filenames, but it does not affect
@@ -53,9 +79,9 @@ guide, command help, or post a question to the cylc mailing list. <p>
 
 		<li> Updated several example suites that were not validiting after recent changes.</li>
 
-		<li>Multiple inheritance for the runtime namespace hierarchy.</li>
+		<li><b>Multiple inheritance</b> for the runtime namespace hierarchy.</li>
 
-		<li>A new command <code>cylc [util] suite-state</code> queries the
+		<li><b>A new command</b> <code>cylc [util] suite-state</code> queries the
 		new suite run databases for task state, and in a polling mode can be
 		used by tasks to wait on tasks in other suites.</li>
 
