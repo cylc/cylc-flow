@@ -36,6 +36,9 @@ class batcher( threading.Thread ):
         self.batch_size = int( batch_size )
         self.batch_delay = int( batch_delay )
 
+        # should we exhaust the queue before exiting?
+        self.finish_before_exiting = False
+
         self.log = logging.getLogger( 'main' )
 
         # not a daemon thread: shut down when instructed by the main thread
@@ -73,9 +76,11 @@ class batcher( threading.Thread ):
 
         while True:
             if self.quit:
-                # TODO: should we process any remaining queue jobs first?
-                self.log.info(  "Exiting " + self.name + " thread" )
-                break
+                if self.finish_before_exiting and self.jobqueue.qsize() > 0:
+                    pass
+                else:
+                    self.log.info(  "Exiting " + self.name + " thread" )
+                    break
             batches = []
             batch = []
             # divide current queued jobs into batches
@@ -170,6 +175,9 @@ class task_batcher( batcher ):
         batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
         self.wireless = wireless
+        # if the suite is told to stop, we should stop before submitting
+        # any more queued tasks
+        self.finish_before_exiting = False
 
     def submit( self, batch, i, n ):
         if self.run_mode == 'simulation':
@@ -206,6 +214,9 @@ class event_batcher( batcher ):
     def __init__( self, name, jobqueue, batch_size, batch_delay, suite, verbose ):
         batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
         self.suite = suite
+        # if the suite is about to exit, we should run any remaining
+        # queued event handlers first.
+        self.finish_before_exiting = True
 
     def submit_item( self, item, psinfo ):
         event, handler, taskid, msg = item
