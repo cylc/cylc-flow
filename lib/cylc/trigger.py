@@ -80,19 +80,11 @@ where output x of foo may also have an offset:
     def set_offset( self, offset ):
         self.evaluation_offset = int( offset )
     def get( self, ctime, cycler ):
-        if self.async_oneoff:
-            # oneoff async
-            if self.msg:
-                # if oneoff async tasks declare an explicit output, it is
-                # just the given message (no cycle time offsetting to do).
-                preq = self.msg
-            else:
-                preq = self.name + TaskID.DELIM + '1' + ' ' + self.type
-        elif self.async_repeating:
+        if self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
         else:
-            # cycling
+            # cycling or oneoff async
             if self.msg:
                 # explicit internal output ...
                 preq = self.msg
@@ -100,11 +92,6 @@ where output x of foo may also have an offset:
                     ctime = cycler.offset( ctime, - self.intrinsic_offset )
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
-                # pre-4.5.0 backward compatibility:
-                if re.search( '<CYLC_TASK_CYCLE_TIME.*', preq ):
-                    print >> sys.stderr, 'ERROR, output message time format change in cylc-4.5.0:'
-                    print >> sys.stderr, '   <CYLC_TASK_CYCLE_TIME+n> should now be [T+n]'
-                    raise TriggerXError, 'Aborting (Trigger Error)'
                 preq = re.sub( '\[\s*T\s*.*?\]', ctime, preq )
             else:
                 # implicit output
