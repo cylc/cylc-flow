@@ -549,13 +549,11 @@ class task( object ):
                 if res[0]:
                     # host selection command succeeded
                     host = res[1][0]
-                    self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
                 else:
                     # host selection command failed
-                    self.log( 'CRITICAL', "Dynamic host selection by command failed for " + self.id )
                     print >> sys.stderr, '\n'.join(res[1])
-                    # must still assign a name now or abort the suite?
-                    host = "NO-HOST-SELECTED"
+                    self.set_submit_failed( "Host selection by " + host + " failed" )
+                    return (None, None)
 
             # 2) check for dynamic host selection variable:
             #   host = ${ENV_VAR}
@@ -568,12 +566,10 @@ class task( object ):
                 try:
                     host = os.environ[var]
                 except KeyError:
-                    self.log( 'CRITICAL', "Dynamic host selection by environment variable failed for " + self.id )
-                    # must still assign a name now or abort the suite?
-                    host = "NO-HOST-SELECTED"
-                else:
-                    self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
-            
+                    self.set_submit_failed( "Host selection by " + host + " failed" )
+                    return (None, None)
+
+            self.log( "NORMAL", "Task host: " + host )
             self.hostname = host
 
             if host not in gcfg.cfg['task hosts']:
@@ -647,7 +643,7 @@ class task( object ):
         try:
             p = launcher.submit( dry_run, debug )
         except Exception, x:
-            # a bug was activated in cylc job submission code
+            # a bug was activated in cylc job submission code?
             print >> sys.stderr, 'ERROR: cylc job submission bug?'
             raise
         else:
