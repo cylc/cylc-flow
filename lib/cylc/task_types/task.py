@@ -538,7 +538,7 @@ class task( object ):
         host = rtconfig['remote']['host']
         
         if host:
-            # dynamic host section:
+            # 1) check for dynamic host selection command
             #   host = $( host-select-command )
             #   host =  ` host-select-command `
             m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
@@ -552,16 +552,31 @@ class task( object ):
                     self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
                 else:
                     # host selection command failed
-                    self.log( 'CRITICAL', "Dynamic host selection failed for task " + self.id )
-                    self.incoming( 'CRITICAL', self.id + " failed" )
+                    self.log( 'CRITICAL', "Dynamic host selection by command failed for " + self.id )
                     print >> sys.stderr, '\n'.join(res[1])
                     # must still assign a name now or abort the suite?
                     host = "NO-HOST-SELECTED"
+
+            # 2) check for dynamic host selection variable:
+            #   host = ${ENV_VAR}
+            #   host = $ENV_VAR
+
+            n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', host )
+            # any string quotes are stripped by configobj parsing 
+            if n:
+                var = n.groups()[0]
+                try:
+                    host = os.environ[var]
+                except KeyError:
+                    self.log( 'CRITICAL', "Dynamic host selection by environment variable failed for " + self.id )
+                    # must still assign a name now or abort the suite?
+                    host = "NO-HOST-SELECTED"
+                else:
+                    self.log( "NORMAL", "Host selected for " + self.id + ": " + host )
             
             self.hostname = host
 
             if host not in gcfg.cfg['task hosts']:
-                # there's no specific config for this host
                 self.log( 'NORMAL', "No explicit site/user config for host " + host )
                 cfghost = 'local'
             else:
