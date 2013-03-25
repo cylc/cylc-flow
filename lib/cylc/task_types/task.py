@@ -479,6 +479,7 @@ class task( object ):
 
 
     def submit( self, dry_run=False, debug=False, overrides={} ):
+        # NOTE THIS EXECUTES IN THE JOB SUBMISSION THREAD
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
@@ -552,7 +553,7 @@ class task( object ):
                 else:
                     # host selection command failed
                     print >> sys.stderr, '\n'.join(res[1])
-                    self.set_submit_failed( "Host selection by " + host + " failed" )
+                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed" )
                     return (None, None)
 
             # 2) check for dynamic host selection variable:
@@ -566,7 +567,7 @@ class task( object ):
                 try:
                     host = os.environ[var]
                 except KeyError:
-                    self.set_submit_failed( "Host selection by " + host + " failed" )
+                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed" )
                     return (None, None)
 
             self.log( "NORMAL", "Task host: " + host )
@@ -644,8 +645,8 @@ class task( object ):
             p = launcher.submit( dry_run, debug )
         except Exception, x:
             # a bug was activated in cylc job submission code?
-            print >> sys.stderr, 'ERROR: cylc job submission bug?'
-            raise
+            self.log( 'CRITICAL', 'ERROR: job submission failed' )
+            return (None, launcher )
         else:
             return (p, launcher)
 
