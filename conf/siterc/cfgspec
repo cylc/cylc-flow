@@ -6,13 +6,13 @@
 #>   *** Do not modify this configspec file ***
 #>   (1) Run "cylc get-global-config --write-site" to generate the file
 #>       $CYLC_DIR/conf/site.rc with all default settings commented out.
-#>   (2) Uncomment and modify specific configuration items as required.
+#>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
 #> HOW TO CUSTOMIZE SETTINGS FOR AN INDIVIDUAL USER:
 #>   *** Do not modify this configspec file ***
 #>   (1) Run "cylc get-global-config --write-user" to generate the file 
 #>       $HOME/.cylc/cylc.rc with all default settings commented out.
-#>   (2) Uncomment and modify specific configuration items as required.
+#>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
 #>   NOTE THAT SITE AND/OR USER CONFIG IS REQUIRED ON TASK HOSTS TOO 
 #>----------------------------------------------------------------------
@@ -28,7 +28,7 @@
 # Cylc temporary directories are automatically cleaned up on exit.
 temporary directory = string( default=None )
 
-# A rolling archive of suite state dumps is maintained for restart use.
+# A rolling archive of suite state dumps is maintained for restarts.
 state dump rolling archive length = integer( min=1, default=10 )
 
 # Task messaging settings apply to the "cylc task COMMAND" commands 
@@ -38,10 +38,12 @@ state dump rolling archive length = integer( min=1, default=10 )
 [task messaging]
     retry interval in seconds = float( min=1, default=30 )
     maximum number of tries = integer( min=1, default=10 )
+
     # This timeout is the same as --pyro-timeout for user commands.
     # If set to None (no timeout) a non-responsive suite (e.g. suspended
     # with Ctrl-Z) could cause a task to hang indefinitely when it
     # attempts to send a message to the suite.
+# TODO set a finite by large default connection timeout:
     connection timeout in seconds = float( min=1, default=None )
 
 # suites logs go under the suite run directory (see below)
@@ -52,6 +54,7 @@ state dump rolling archive length = integer( min=1, default=10 )
 
 # The "cylc doc" command and GUI Help menus need the following items.
 [documentation]
+
     # Documentation files that come with the cylc release tarball.
 # SITE ONLY
     [[files]]
@@ -59,11 +62,14 @@ state dump rolling archive length = integer( min=1, default=10 )
         pdf user guide = string( default="$CYLC_DIR/doc/pdf/cug-pdf.pdf" )
         multi-page html user guide = string( default="$CYLC_DIR/doc/html/multi/cug-html.html" )
         single-page html user guide = string( default="$CYLC_DIR/doc/html/single/cug-html.html" )
+
     # Documentation URLs:
     [[urls]]
+
         # The cylc homepage links to documentation for the latest release.
 # SITE ONLY
         internet homepage = string( default="http://cylc.github.com/cylc/" )
+
         # You may want to copy the docs for access via a local web server.
         local index = string( default=None )
 
@@ -85,81 +91,69 @@ state dump rolling archive length = integer( min=1, default=10 )
 
 # Pyro is used by cylc for network communications.
 [pyro]
+
     # Each suite listens on a dedicated network port.
     # Servers bind on the first port available from the base port up:
 # SITE ONLY
     base port = integer( default=7766 )
+
     # This sets the maximum number of suites that can run at once.
 # SITE ONLY
     maximum number of ports = integer( default=100 )
+
     # Port numbers are recorded in this directory, by suite name.
     ports directory = string( default="$HOME/.cylc/ports/" )
 
-# The [task hosts] section configures items needed to run tasks on
-# specific hosts at your site, including 'local' for the suite host.
-# The local sub-section also provides default values for directory paths
-# on remote task hosts - the local home directory path, if present, will
-# be replaced with literal '$HOME' for evaluation on the remote host. 
-# A remote host entry can be empty (i.e. just the sub-section heading)
-# or missing (i.e. no entry for a requested host) in which case the
-# local defaults will be used with $HOME replaced.
-[task hosts]
-    # The default task host is the suite host, called 'local' here:
-    [[local]]
-        # Run directory:
-        #   For suite event log, and suite stdout and stderr logs:
-        #       <VALUE>/<suite-name>/log/suite/
-        #   and suite state dump files: 
-        #       <VALUE>/<suite-name>/state/
-        #   and task job scripts and stdout and stderr logs:
-        #       <VALUE>/<suite-name>/log/job/
-        #   If not set the local path will be used with your home
-        #   directory path swapped for '$HOME' (to be evaluated on host)
-        run directory = string( default="$HOME/cylc-run" )
-        # Workspace directory:
-        #   For the suite share directory, a common workspace made
-        #   available to all tasks via $CYLC_SUITE_SHARE_PATH:
-        #       <VALUE>/<suite-name>/share/
-        #   and task work directories, from within which task job
-        #   scripts are executed:
-        #       <VALUE>/<suite-name>/work/<task-id>
-        #   This can be distinct from the run directory tree because of
-        #   the potential for much a greater storage requirement.
-        #   If not set for remote task hosts: same as for run directory.
-        workspace directory = string( default="$HOME/cylc-run" )
+# The [hosts] section configures host-specific settings for the suite
+# host ('localhost') and remote task hosts. Local settings are used as
+# default values for task hosts (for directory paths the local home
+# directory will be replaced with literal '$HOME' for evaluation on the
+# remote host) so specific task hosts only need to be mentioned here if
+# you need to override the defaults.
+[hosts]
 
-        # THE FOLLOWING THREE ITEMS ARE NOT USED FOR THE LOCAL HOST
-        # unless you run tasks under other local user accounts, but  
-        # they can still provide default settings for remote hosts.
-        # Cylc location on the host, leave unset if cylc is in $PATH:
-        cylc directory = string( default=None )
+    # The default task host is the suite host, i.e. localhost:
+    # Add task host sections if local defaults are not sufficient.
+    [[localhost]]
+
+        # Top level for suite output logs of various kinds:
+        run directory  = string( default="$HOME/cylc-run" )
+
+        # Top level for suite work and share directories:
+        work directory = string( default="$HOME/cylc-run" )
+
+        # Cylc installed location, leave unset if cylc is in $PATH:
+        cylc bin directory = string( default=None )
+
         # Re-invoke task messaging commands on the suite host
         # instead of using Pyro-based RPC across the network:
         use ssh messaging = boolean( default=False )
-        # How to invoke commands on this host; default shown:
+
+        # How to invoke commands on this host; default shown (not used
+        # on localhost unless you run tasks under another user account):
         remote shell template = string( default='ssh -oBatchMode=yes %s' )
-        # Use a login shell or not for remote command invocation.  By
-        # default Cylc will submit remote ssh commands using a login
-        # shell. For security reasons some institutions do not allow
-        # unattended commands to start login shells, setting this item
-        # to false will disable that behaviour.  When this option is set
-        # to True Cylc will start a Bash login shell to run remote ssh
-        # commands, e.g. ssh user@host 'bash --login cylc ...' which
-        # will source the files /etc/profile and ~/.profile in order to
-        # set up the user environment. Without the login option Cylc
-        # will be run directly by ssh, e.g. ssh user@host 'cylc ...'
-        # which will use the default shell on the remote machine. In
-        # this case the environment will be set up by sourcing the files
-        # ~/.bashrc or ~/.cshrc, depending on the shell type of the
-        # remote machine.  In either case the PATH environment variable
-        # on the remote machine should include $CYLC_DIR/bin in order
-        # for the Cylc executable to be found.
+
+        # Use a login shell or not for remote command invocation. By
+        # default cylc submits remote ssh commands using a login shell,
+        #   ssh user@host 'bash --login cylc ...'
+        # which will source /etc/profile and ~/.profile to set up the
+        # user environment.  However, for security reasons some
+        # institutions do not allow unattended commands to start login
+        # shells, so you can turn off this behaviour to get,
+        #   ssh user@host 'cylc ...'
+        # this will use the default shell on the remote machine,
+        # sourcing ~/.bashrc (or ~/.cshrc) to set up the environment.
+        # In either case the PATH environment variable on the remote
+        # machine should include $CYLC_DIR/bin in order for the cylc
+        # executable to be found (or else use "cylc directory" above).
+        # NOTE: this setting does not currently apply to job submission
+        # commands (executing on the suite host to submit remote tasks).
         use login shell = boolean( default=True )
 
     #> Here's the __many__ configspec for available remote task hosts:
     [[__many__]]
-        run directory = string( default=None )
-        workspace directory = string( default=None)
+        run directory  = string( default=None )
+        work directory = string( default=None)
         cylc directory = string( default=None )
         use ssh messaging = boolean( default=None )
         remote shell template = string( default=None )
@@ -178,11 +172,14 @@ state dump rolling archive length = integer( min=1, default=10 )
 # site might see the suite host differently? If so we would need to be
 # able to override the target in suite definitions.)
 [suite host self-identification]
+
     # Method: "name", "address", or "hardwired"
     method = option( "name", "address", "hardwired", default="name" ) 
+
     # Target: if your suite host sees the internet a common address such
     # as 'google.com' will do; otherwise choose a host on your intranet.
     target = string( default="google.com" )
+
     # For the hardwired method, put the host name or IP address here:
     host = string( default=None )
 

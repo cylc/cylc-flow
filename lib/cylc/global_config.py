@@ -4,12 +4,13 @@ import os, sys, re
 from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
 from validate import Validator
 from print_cfg import print_cfg
-from mkdir_p import mkdir_p
 from copy import deepcopy
 import atexit
 import shutil
 from tempfile import mkdtemp
+from envvar import expandvars
 
+# TODO: drop now-broken support for Python 2.4
 try:
     any
 except NameError:
@@ -20,27 +21,42 @@ except NameError:
                 return True
         return False
 
+
+class GlobalConfigError( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
+
 class globalcfg( object ):
     """Handle global (all suites) site and user configuration for cylc.
     Legal items and default values are defined in a single configspec
     file.  Special comments in the configspec file denote items that can
     only be overridden by a site config file; otherwise a user config
-    file can override site values (which override the defaults)."""
+    file can override site values (which override the defaults).
+
+    Local host settings can be used directly; for other hosts use the
+    get_host_item(host) method; it knows how to use modified local
+    settings as defaults.
+    
+    For all derived items - paths hardwired under the configurable top
+    levels - use the get_derived_host_item(suite,host) method."""
 
     def __init__( self ):
         """Load defaults, site, and user config files (in reverse order
         of precedence) to generate the global config structure; validate
-        to catch errors; disallow user config of site-only items; expand
-        environment variables, and create directories.""" 
+        to catch errors; disallow user config of site-only items.""" 
 
         try:
             self.load()
         except Exception, x:
+            raise
             print >> sys.stderr, x
             print >> sys.stderr, "Failed to load load cylc site/user config:"
             print >> sys.stderr, "  + " + self.rcfiles['site']
             print >> sys.stderr, "  + " + self.rcfiles['user']
-            raise SystemExit("ABORTING")
+            raise GlobalConfigError("ABORTING")
 
     def load( self ):
         # location of the configspec file
@@ -77,8 +93,42 @@ class globalcfg( object ):
         # now validate the final result to catch any errors
         self.validate( self.cfg )
 
-        # expand out environment variables, create directories, etc.
-        self.process()
+        self.expand_local_paths()
+
+    def expand_local_paths( self ):
+        """Expand environment variables and ~user in LOCAL file paths."""
+
+        for key,val in self.cfg['documentation']['files'].items():
+            self.cfg['documentation']['files'][key] = expandvars( val )
+
+        self.cfg['pyro']['ports directory'] = expandvars( self.cfg['pyro']['ports directory'] )
+
+        for key,val in self.cfg['hosts']['localhost'].items():
+            if val and key and key.endswith('directory'):
+                self.cfg['hosts']['localhost'][key] = expandvars( val )
+
+
+    def get_tmpdir( self ):
+        """Make a new temporary directory and arrange for it to be
+        deleted automatically when we're finished with it. Call this
+        explicitly just before use to ensure the directory is not
+        deleted by other processes before it is needed. THIS IS
+        CURRENTLY ONLY USED BY A FEW CYLC COMMANDS. If cylc suites
+        ever need it this must be called AFTER FORKING TO DAEMON MODE or
+        atexit() will delete the directory when the initial process
+        exits after forking."""
+
+        tdir = self.cfg['temporary directory']
+        if tdir:
+            tdir = expandvars( tdir )
+            tmpdir = mkdtemp(prefix="cylc-", dir=expandvars(tdir) )
+        else:
+            tmpdir = mkdtemp(prefix="cylc-")
+        # self-cleanup
+        atexit.register(lambda: shutil.rmtree(tmpdir))
+        # now replace the original item to allow direct access
+        self.cfg['temporary directory'] = tmpdir
+        return tmpdir
 
     def write_rc( self, ftype=None ):
         """Generate initial site or user config files containing all
@@ -86,12 +136,12 @@ class globalcfg( object ):
         values are obtained by any site settings into the configspec 
         defaults."""
         if ftype not in [ 'site', 'user' ]:
-            raise SystemExit( "ERROR, illegal file type for write_rc(): " + ftype )
+            raise GlobalConfigError( "ERROR, illegal file type for write_rc(): " + ftype )
 
         target = self.rcfiles[ ftype ] 
 
         if os.path.exists( target ):
-            raise SystemExit( "ERROR, file already exists: " + target )
+            raise GlobalConfigError( "ERROR, file already exists: " + target )
 
         # cfgobj.write() will write a config file directly, but we want
         # add a file header, filter out some lines, and comment out all
@@ -137,11 +187,13 @@ class globalcfg( object ):
         # write out all settings, commented out.
         outlines = preamble.split('\n')
         cfg.filename = None
-        for line in cfg.write():
+        for iline in cfg.write():
+            line = iline.strip()
             if line.startswith( "#>" ):
                 # omit comments specific to the spec file
                 continue
-            line = re.sub( '^(\s*)([^[#]+)$', '\g<1>#==> \g<2>', line )
+            if line != '':
+                line = re.sub( '^(\s*)([^[#]+)$', '\g<1>#==> \g<2>', line )
             outlines.append(line)
 
         f = open( target, 'w' )
@@ -151,51 +203,6 @@ class globalcfg( object ):
 
         print "File written:", target
         print "See in-file comments for customization information."
-
-    def get_tmpdir( self ):
-        # NOTE: if the cylc server program ever needs a temporary
-        # directory, this must be called AFTER forking to daemon mode,
-        # otherwise atexit() will delete the tmpdir when the initial
-        # process exits immediately after forking.
-
-        tdir = self.cfg['temporary directory']
-        if tdir:
-            tdir = self.proc_dir( tdir )
-            cylc_tmpdir = mkdtemp(prefix="cylc-", dir=tdir )
-        else:
-            cylc_tmpdir = mkdtemp(prefix="cylc-")
-
-        # self-cleanup
-        atexit.register(lambda: shutil.rmtree(cylc_tmpdir))
-
-        # now replace the original item to allow direct access
-        self.cfg['temporary directory'] = cylc_tmpdir
-
-    def process( self ):
-        # expand environment variables and ~user in file paths
-        for key,val in self.cfg['documentation']['files'].items():
-            self.cfg['documentation']['files'][key] = os.path.expanduser( os.path.expandvars( val ))
-
-        # expand variables in local directory paths, and create if necessary.
-        self.cfg['task hosts']['local']['run directory'] = self.proc_dir( self.cfg['task hosts']['local']['run directory'] )
-        self.cfg['task hosts']['local']['workspace directory'] = self.proc_dir( self.cfg['task hosts']['local']['workspace directory'] )
-        self.cfg['pyro']['ports directory'] = self.proc_dir( self.cfg['pyro']['ports directory'] )
-
-        # propagate host section defaults from the 'local' section
-        for host in self.cfg['task hosts']:
-            for key,val in self.cfg['task hosts'][host].items():
-                if not val:
-                    self.cfg['task hosts'][host][key] = self.cfg['task hosts']['local'][key]
-
-    def proc_dir( self, path ):
-        # expand environment variables and create dir if necessary.
-        path = os.path.expandvars( os.path.expanduser( path ))
-        try:
-            mkdir_p( path )
-        except Exception, x:
-            print >> sys.stderr, x
-            raise Exception( 'ERROR, illegal path? ' + dir )
-        return path
 
     def validate( self, cfg ):
         # validate against the cfgspec and load defaults
@@ -215,7 +222,7 @@ class globalcfg( object ):
                     print >> sys.stderr, "ERROR, required item missing."
                 else:
                     print >> sys.stderr, result
-            raise Exception( "ERROR global config validation failed")
+            raise GlobalConfigError( "ERROR global config validation failed")
         extras = []
         for sections, name in get_extra_values( cfg ):
             extra = ' '
@@ -225,7 +232,7 @@ class globalcfg( object ):
         if len(extras) != 0:
             for extra in extras:
                 print >> sys.stderr, '  Illegal item:', extra 
-            raise Exception( 'ERROR: illegal site/user config items detected' )
+            raise GlobalConfigError( 'ERROR: illegal site/user config items detected' )
 
     def block_user_cfg( self, usercfg, sitecfg, comments={}, sec_blocked=False ):
         """Check the comments for each item for the user exclusion indicator."""
@@ -250,9 +257,9 @@ class globalcfg( object ):
                 self.block_user_cfg( usercfg[item], sitecfg[item], sitecfg[item].comments, sb )
             else:
                 if any( re.match( '^\s*# SITE ONLY\s*$', mem ) for mem in comments[item]):
-                    raise Exception( 'ERROR, item blocked from user override: ' + item )
+                    raise GlobalConfigError( 'ERROR, item blocked from user override: ' + item )
                 elif sec_blocked:
-                    raise Exception( 'ERROR, section blocked from user override, item: ' + item )
+                    raise GlobalConfigError( 'ERROR, section blocked from user override, item: ' + item )
 
     def dump( self, cfg_in=None ):
         if cfg_in:
@@ -260,49 +267,62 @@ class globalcfg( object ):
         else:
             print_cfg( self.cfg, prefix='   ' )
 
-    def get_task_work_dir( self, suite, task, host=None, owner=None ):
-        # this goes under the top level workspace directory; it is
-        # created on the fly, if necessary, by task job scripts.
-        if host:
-            work_root = self.cfg['task hosts'][host]['workspace directory']
+    def get_host_item( self, item, host=None, owner=None ):
+        """This allows use of hosts with no entry in the config file to
+        default to appropriately modified localhost settings."""
+
+        value = None
+        if host and host is not 'localhost':
+            # see if we have an explicit entry for this host item
+            try:
+                value = self.cfg['hosts'][host][item]
+            except KeyError:
+                # no we don't
+                pass
+
+        if not value:
+            # default to the value for localhost.
+            value = self.cfg['hosts']['localhost'][item]
+            # TODO: consolidate with is_remote tests elsewhere:
+            if (host and host is not 'localhost') or (owner and owner is not user ):
+                # time requested for a remote account
+                if 'directory' in item:
+                    # Replace local home directory, if it appears, with
+                    # literal '$HOME' for evaluation on the remote account.
+                    value = value.replace( os.environ['HOME'], '$HOME' )
+        return value
+
+    def get_derived_host_item( self, suite, item, host=None, owner=None ):
+        """Compute hardwired paths relative to the configurable top dirs."""
+
+        # suite run dir
+        srdir = os.path.join( self.get_host_item( 'run directory',  host, owner ), suite )
+        # suite workspace
+        swdir = os.path.join( self.get_host_item( 'work directory', host, owner ), suite )
+
+        if item == 'suite run directory':
+            value = srdir
+
+        elif item == 'suite log directory':
+            value = os.path.join( srdir, 'log', 'suite' )
+
+        elif item == 'suite job log directory':
+            value = os.path.join( srdir, 'log', 'job' )
+
+        elif item == 'suite state directory':
+            value = os.path.join( srdir, 'state' )
+
+        elif item == 'suite work directory':
+            value = os.path.join( swdir, 'work' )
+ 
+        elif item == 'suite share directory':
+            value = os.path.join( swdir, 'share' )
+
         else:
-            work_root = self.cfg['task hosts']['local']['workspace directory']
-        if host or owner:
-            # remote account: replace local home directory with '$HOME' 
-            work_root  = re.sub( os.environ['HOME'], '$HOME', work_root )
-        return os.path.join( work_root, suite, 'work', task )
+            raise GlobalConfigError( "Illegal derived item: " + item )
 
-    def get_suite_share_dir( self, suite, host=None, owner=None ):
-        # this goes under the top level workspace directory; it is
-        # created on the fly, if necessary, by task job scripts.
-        if host:
-            share_root = self.cfg['task hosts'][host]['workspace directory']
-        else:
-            share_root = self.cfg['task hosts']['local']['workspace directory']
-        if host or owner:
-            # remote account: replace local home directory, if present, with '$HOME' 
-            share_root  = re.sub( os.environ['HOME'], '$HOME', share_root )
-        return os.path.join( share_root, suite, 'share' )
+        return value
 
-    def get_suite_log_dir( self, suite, ext='suite', create=False ):
-        path = os.path.join( self.cfg['task hosts']['local']['run directory'], suite, 'log', ext )
-        if create:
-            self.proc_dir( path )
-        return path
-
-    def get_task_log_dir( self, suite, host=None, owner=None, create=False ):
-        log_root = None
-        if host:
-            log_root = self.cfg['task hosts'][host]['run directory']
-        else:
-            log_root = self.cfg['task hosts']['local']['run directory']
-        if host or owner:
-            # remote account: replace local home directory, if present, with '$HOME' 
-            log_root  = re.sub( os.environ['HOME'], '$HOME', log_root )
-        path = os.path.join( log_root, suite, 'log', 'job' )
-        if create:
-            self.proc_dir( path )
-        return path
-
+# instantiate a global config object for use in other modules
 gcfg = globalcfg()
 

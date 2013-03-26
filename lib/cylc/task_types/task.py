@@ -42,6 +42,7 @@ import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
+from OrderedDict import OrderedDict
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -63,7 +64,7 @@ class task( object ):
     event_queue = None
 
     # set by the back door at startup:
-    cylc_env = {}
+    cylc_env = OrderedDict()
 
     @classmethod
     def describe( cls ):
@@ -154,7 +155,7 @@ class task( object ):
         if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
         else:
-            self.db_path = os.path.join(gcfg.cfg['task hosts']['local']['run directory'], self.suite_name)
+            self.db_path = gcfg.get_derived_host_item( self.suite_name, 'suite run directory' )
             self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
             submits = self.db.get_task_current_submit_num(self.name, self.c_time)
             if submits > 0:
@@ -573,27 +574,17 @@ class task( object ):
                     raise Exception( "Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
 
             self.log( "NORMAL", "Task host: " + host )
-            self.hostname = host
 
-            if host not in gcfg.cfg['task hosts']:
-                self.log( 'NORMAL', "No explicit site/user config for host " + host )
-                cfghost = 'local'
-            else:
-                # use host-specific settings
-                cfghost = host
-        else:
-            cfghost = 'local'
-            self.hostname = suite_hostname
-
+        self.hostname = host
+        if self.hostname is None:
+            self.hostname = "localhost"
+ 
         owner = rtconfig['remote']['owner']
         if owner is None:
             self.owner = user
         else:
             self.owner = owner
 
-        if self.hostname is None:
-            self.hostname = "localhost"
-            
         user_at_host = self.owner + "@" + self.hostname
         
         self.submit_method = rtconfig['job submission']['method']
@@ -604,19 +595,17 @@ class task( object ):
                               submit_method=self.submit_method, host=user_at_host)
         self.record_db_event(event="submitted")
 
-        share_dir = gcfg.get_suite_share_dir( self.suite_name, cfghost, owner )
-        work_dir  = gcfg.get_task_work_dir( self.suite_name, self.id, cfghost, owner )
-        local_log_dir = gcfg.get_task_log_dir( self.suite_name ) 
-        remote_log_dir = gcfg.get_task_log_dir( self.suite_name, cfghost, owner )
+        work_dir  = gcfg.get_derived_host_item( self.suite_name, 'suite work directory', host, owner )
+        local_log_dir = gcfg.get_derived_host_item( self.suite_name, 'suite job log directory' ) 
+        remote_log_dir = gcfg.get_derived_host_item( self.suite_name, 'suite job log directory', host, owner ) 
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use login shell'        : gcfg.cfg['task hosts'][cfghost]['use login shell'],
-                'use ssh messaging'      : gcfg.cfg['task hosts'][cfghost]['use ssh messaging'],
-                'remote cylc path'       : gcfg.cfg['task hosts'][cfghost]['cylc directory'],
+                'use login shell'        : gcfg.get_host_item( 'use login shell', host, owner ),
+                'use ssh messaging'      : gcfg.get_host_item( 'use ssh messaging', host, owner ),
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
                 'use manual completion'  : manual,
@@ -626,18 +615,17 @@ class task( object ):
                 'namespace hierarchy'    : self.namespace_hierarchy,
                 'try number'             : self.try_number,
                 'is cold-start'          : self.is_coldstart,
-                'share path'             : share_dir, 
-                'work path'              : work_dir,
+                'work path'              : os.path.join( work_dir, rtconfig['work sub-directory']),
                 'cylc environment'       : deepcopy( task.cylc_env ),
                 'directive prefix'       : None,
                 'directive final'        : "# FINAL DIRECTIVE",
                 'directive connector'    : " ",
-                }
-        xconfig = {
                 'owner'                  : owner,
                 'host'                   : host,
+                }
+        xconfig = {
                 'log path'               : local_log_dir,
-                'remote shell template'  : gcfg.cfg['task hosts'][cfghost]['remote shell template'],
+                'remote shell template'  : gcfg.get_host_item( 'remote shell template', host, owner ),
                 'job submission command template' : rtconfig['job submission']['command template'],
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,

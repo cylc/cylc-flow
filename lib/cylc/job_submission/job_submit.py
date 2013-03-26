@@ -64,8 +64,8 @@ class job_submit(object):
 
         self.suite_owner = user
 
-        remote_host = xconfig['host']
-        task_owner = xconfig['owner']
+        remote_host = jobconfig['host']
+        task_owner = jobconfig['owner']
 
         if is_remote_host(remote_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh

@@ -20,7 +20,7 @@ from cylc.TaskID import TaskID
 
 import re, os
 import StringIO
-
+from cylc.global_config import gcfg
 
 class jobfile(object):
 
@@ -154,16 +154,17 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(self.jobconfig['use login shell']) )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
-        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + self.jobconfig['work path'] )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR # back compat") 
+        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_SHARE_DIR # back compat")
 
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
             BUFFER = self.FILE
-        rcp = self.jobconfig['remote cylc path']
+        rcp = gcfg.get_host_item( 'cylc bin directory', self.jobconfig['host'], self.jobconfig['owner'] )
         if rcp:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-            BUFFER.write( "\nexport PATH=" + rcp + "/bin:$PATH" )
+            BUFFER.write( "\nexport PATH=" + rcp + ":$PATH" )
 
     def write_suite_bin_access( self, BUFFER=None ):
         if not BUFFER:
@@ -214,12 +215,12 @@ cylc task started""" )
         self.FILE.write( """
 
 # SHARE DIRECTORY CREATE:
-mkdir -p $CYLC_SUITE_SHARE_PATH || true
+mkdir -p $CYLC_SUITE_SHARE_DIR || true
 
 # WORK DIRECTORY CREATE:
-mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
-mkdir -p $CYLC_TASK_WORK_PATH
-cd $CYLC_TASK_WORK_PATH""" )
+mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
+mkdir -p $CYLC_TASK_WORK_DIR
+cd $CYLC_TASK_WORK_DIR""" )
 
     def get_var_assign( self, var, value ):
         # generate an environment variable assignment expression
@@ -339,7 +340,7 @@ echo ""''')
 
 # EMPTY WORK DIRECTORY REMOVE:
 cd
-rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
+rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
         if self.jobconfig['use manual completion']:

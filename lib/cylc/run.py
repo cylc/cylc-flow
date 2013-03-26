@@ -76,6 +76,7 @@ def main(name, start):
         #   for how to display the resulting stats.
     except Exception, x:
         print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
+        raise
         try:
             server.shutdown( 'ERROR: ' + str(x) )
         except Exception, y:

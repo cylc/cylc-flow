@@ -27,13 +27,13 @@ get the configure log locations."""
 
 class suite_output( object ):
     def __init__( self, suite ):
-        globals = gcfg
-        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'log', 'suite' ) 
+        self.dir = gcfg.get_derived_host_item( suite, 'suite log directory' )
         self.opath = os.path.join( self.dir, 'out' ) 
         self.epath = os.path.join( self.dir, 'err' ) 
 
-        self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']
-        self.arclen = globals.cfg['suite logging']['rolling archive length']
+        # use same archive length as logging (TODO: document this)
+        self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']
+        self.arclen = gcfg.cfg['suite logging']['rolling archive length']
 
     def get_dir( self ):
         return self.dir

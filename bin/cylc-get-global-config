@@ -18,7 +18,6 @@
 
 import sys
 from optparse import OptionParser
-from cylc.global_config import gcfg
 
 parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS] 
 
@@ -41,16 +40,26 @@ parser.add_option( "-u", "--write-user", help="Write a user "
         "Uncomment and modify items in the file as required.",
         action="store_true", default=False, dest="writeuser" )
 
+parser.add_option( "--debug",
+        help="Run suites in non-daemon mode, and show exception tracebacks.",
+        action="store_true", default=False, dest="debug" )
+
 (options, args) = parser.parse_args()
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
-globals = gcfg
-
-if options.writesite:
-    globals.write_rc( 'site' )
-elif options.writeuser:
-    globals.write_rc( 'user' )
-else:
-    globals.dump()
+try:
+    # this instantiates an object, so import here to avoid aborting
+    # before the command help can be displayed.
+    from cylc.global_config import gcfg
+    if options.writesite:
+        gcfg.write_rc( 'site' )
+    elif options.writeuser:
+        gcfg.write_rc( 'user' )
+    else:
+        gcfg.dump()
+except Exception, x:
+    if options.debug:
+        raise
+    sys.exit( str(x) )
 

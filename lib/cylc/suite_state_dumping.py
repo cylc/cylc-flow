@@ -29,8 +29,7 @@ class dumper( object ):
         self.clock = clock
         self.start_tag = start_tag
         self.stop_tag = stop_tag
-        globals = gcfg
-        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
+        self.dir = gcfg.get_derived_host_item( suite, 'suite state directory' )
         self.path = os.path.join( self.dir, 'state' )
         try:
             mkdir_p( self.dir )
@@ -38,7 +37,7 @@ class dumper( object ):
             # To Do: handle error 
             raise 
 
-        arclen = globals.cfg[ 'state dump rolling archive length' ]
+        arclen = gcfg.cfg[ 'state dump rolling archive length' ]
         self.archive = rolling_archive( self.path, arclen )
 
     def get_path( self ):

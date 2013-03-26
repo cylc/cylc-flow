@@ -38,12 +38,13 @@ class LogFilter(logging.Filter):
 
 class suite_log( object ):
     def __init__( self, suite, ext='suite' ):
-        globals = gcfg
-        self.dir = globals.get_suite_log_dir( suite, ext )
+        self.dir = gcfg.get_derived_host_item( suite, 'suite log directory' )
+        if ext != 'suite':
+            self.dir.replace( 'suite', ext )
         self.path = os.path.join( self.dir, 'log' ) 
-        self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']
-        self.n_keep = globals.cfg['suite logging']['rolling archive length']
-        self.max_bytes = globals.cfg['suite logging']['maximum size in bytes']
+        self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']
+        self.n_keep = gcfg.cfg['suite logging']['rolling archive length']
+        self.max_bytes = gcfg.cfg['suite logging']['maximum size in bytes']
 
     def mkdir( self ):
         try:
