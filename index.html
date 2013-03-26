@@ -326,7 +326,7 @@
     <ul>
         <li> Operating System: Linux or Unix</li>
 
-        <li> Python Version: 2.4 or later, but not Python
+        <li> Python Version: 2.5 or later, but not Python
         3.x as yet.
         <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup></li>
         
@@ -335,7 +335,7 @@
         interface toolkit, included in most Linux Distributions.</li>
         
         <li> <a href="http://www.xs4all.nl/~irmen/pyro3">Pyro 3</a>
-        (Python Remote Objects) - latest version tested 3.14.
+        (Python Remote Objects) - latest version tested 3.16.
         <sup><a href="#fn3" id="fnr3" title="click to see footnote">3</a></sup></li>
         
         <li> The <a href="http://www.graphviz.org">graphviz</a> graph
@@ -344,21 +344,18 @@
         <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>, 
         a python interface to graphviz (latest version tested: 1.1). </li>
 
-        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.</li>
+        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template
+        processor for Python.</li>
 
         <li> <b>LaTeX</b> (for <code>pdflatex</code>) and <b>tex4ht</b>
         (for <code>htlatex</code>) - needed to generate PDF and HTML
         copies of the Cylc User Guide from the LaTeX source files.</li>
-    </ul>
 
-<p class="p1"><span>
-Python and Pyro are essential. PyGTK is required by the gcylc GUI
-(but you can control and monitor cylc suites from the command line). 
-Graphviz and pygraphviz are required for dependency graphing and the
-graph-based suite control GUI (but you can also run cylc without them).
-Jinja2 can be used for advanced programmatic generation of suite
-definitions.
-</span></p>
+        <li> <b>sqlite</b> (a serverless zero-configuration SQL database
+        engine) - likely to be packaged with any modern Linux
+        distributation.</li>
+
+    </ul>
 
 <p class="p1"><span>
 Cylc has absorbed the following software in slightly modified form (you
