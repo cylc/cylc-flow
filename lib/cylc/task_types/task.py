@@ -605,6 +605,8 @@ class task( object ):
         
         self.submit_method = rtconfig['job submission']['method']
         
+        # Note: this should be done in the main thread, but has been
+        # cleaned up in #364:
         self.record_db_update("task_states", self.name, self.c_time, 
                               submit_method=self.submit_method, host=user_at_host)
         self.record_db_event(event="submitted")
