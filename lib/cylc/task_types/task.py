@@ -479,9 +479,9 @@ class task( object ):
 
     def submit( self, dry_run=False, debug=False, overrides={} ):
         """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
-        returns the job process number if successful, or None if job
-        submission fails at any point - which will result in a task
-        failed message being sent for handling by the main thread.
+        returns the job process number if successful. Exceptions raised
+        will be caught by the job submission code and will result in a
+        task failed message being sent for handling by the main thread.
         Run db updates as a result of such errors will also be done by
         the main thread in response to receiving the message."""
 
@@ -492,11 +492,7 @@ class task( object ):
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
         
-        try:
-            self.set_from_rtconfig( rtconfig )
-        except Exception, x:
-            self.log( "CRITICAL", str(x) )
-            return (None,None)
+        self.set_from_rtconfig( rtconfig )
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
@@ -522,8 +518,8 @@ class task( object ):
                 # else try for user-defined job submission classes, in sys.path
                 mod = __import__( module_name, globals(), locals(), [class_name] )
             except ImportError, x:
-                self.log( 'CRITICAL', 'ERROR: cannot import job submission method ' + class_name + '\n  ' + str(x) )
-                return (None,None)
+                self.log( 'CRITICAL', 'cannot import job submission module ' + class_name )
+                raise
 
         launcher_class = getattr( mod, class_name )
  
@@ -561,9 +557,7 @@ class task( object ):
                     host = res[1][0]
                 else:
                     # host selection command failed
-                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed\n  " + \
-                            '\n'.join(res[1]) )
-                    return (None, None)
+                    raise Exception("Host selection by " + host + " failed\n  " + '\n'.join(res[1]) )
 
             # 2) check for dynamic host selection variable:
             #   host = ${ENV_VAR}
@@ -576,8 +570,7 @@ class task( object ):
                 try:
                     host = os.environ[var]
                 except KeyError, x:
-                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
-                    return (None, None)
+                    raise Exception( "Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
 
             self.log( "NORMAL", "Task host: " + host )
             self.hostname = host
@@ -653,14 +646,12 @@ class task( object ):
             launcher = launcher_class( self.id, jobconfig, xconfig, str(self.submit_num) )
         except Exception, x:
             # currently a bad hostname will fail out here due to an is_remote_host() test
-            self.log( 'CRITICAL', 'ERROR: Failed to create job launcher\n  ' + str(x) )
-            return (None,None)
+            raise Exception( 'Failed to create job launcher\n  ' + str(x) )
 
         try:
             p = launcher.submit( dry_run, debug )
         except Exception, x:
-            self.log( 'CRITICAL', 'ERROR: Job submission failed\n  ' + str(x) )
-            return (None,launcher)
+            raise Exception( 'Job submission failed\n  ' + str(x) )
         else:
             return (p,launcher)
 
