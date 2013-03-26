@@ -148,7 +148,6 @@ class task( object ):
 
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
 
-        
         self.validate = validate
         
         # sets submit num for restarts or when triggering state prior to submission
@@ -379,8 +378,9 @@ class task( object ):
                 target[key] = val
 
     def set_from_rtconfig( self, cfg={} ):
-        # [runtime] settings that are not involved in job submission may
-        # also be overridden by a broadcast:
+        """Some [runtime] config requiring consistency checking on reload, 
+        and self variables requiring updating for the same."""
+
         if cfg:
             rtconfig = cfg
         else:
@@ -418,7 +418,7 @@ class task( object ):
                             dlist += int(mult) * [float(val)]
                     except ValueError, x:
                         print >> sys.stderr, x
-                        raise SystemExit( "ERROR, retry delay values must be FLOAT or INT*FLOAT" )
+                        raise Exception( "Retry delay values must be FLOAT or INT*FLOAT" )
 
                 self.retry_delays = deque( dlist )
             else:
@@ -433,12 +433,12 @@ class task( object ):
         except:
             ok = False
         if not ok:
-            raise SystemExit, "ERROR, " + self.name + ": simulation mode run time range must be 'int, int'" 
+            raise Exception, "ERROR, " + self.name + ": simulation mode run time range must be 'int, int'" 
         try:
             self.sim_mode_run_length = randrange( res[0], res[1] )
         except Exception, x:
             print >> sys.stderr, x
-            raise SystemExit, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
+            raise Exception, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
 
         if self.run_mode == 'live' or \
                 ( self.run_mode == 'simulation' and not rtconfig['simulation mode']['disable task event hooks'] ) or \
@@ -477,17 +477,24 @@ class task( object ):
                 }
             self.reset_timer = False
 
-
     def submit( self, dry_run=False, debug=False, overrides={} ):
-        # NOTE THIS EXECUTES IN THE JOB SUBMISSION THREAD
+        """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
+        returns the job process number if successful, or None if job
+        submission fails at any point - which will result in a task
+        failed message being sent for handling by the main thread."""
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
     
-        # TO DO: REPLACE DEEPCOPY():
+        # TODO: REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
-        self.set_from_rtconfig( rtconfig )
+        
+        try:
+            self.set_from_rtconfig( rtconfig )
+        except Exception, x:
+            self.log( "CRITICAL", str(x) )
+            return (None,None)
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
@@ -513,11 +520,11 @@ class task( object ):
                 # else try for user-defined job submission classes, in sys.path
                 mod = __import__( module_name, globals(), locals(), [class_name] )
             except ImportError, x:
-                print >> sys.stderr, x
-                raise SystemExit( 'ERROR importing job submission method: ' + class_name )
+                self.log( 'CRITICAL', 'ERROR: cannot import job submission method ' + class_name + '\n  ' + str(x) )
+                return (None,None)
 
         launcher_class = getattr( mod, class_name )
-
+ 
         command = rtconfig['command scripting']
         manual = rtconfig['manual completion']
         if self.__class__.run_mode == 'dummy':
@@ -552,8 +559,8 @@ class task( object ):
                     host = res[1][0]
                 else:
                     # host selection command failed
-                    print >> sys.stderr, '\n'.join(res[1])
-                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed" )
+                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed\n  " + \
+                            '\n'.join(res[1]) )
                     return (None, None)
 
             # 2) check for dynamic host selection variable:
@@ -638,17 +645,20 @@ class task( object ):
                 'remote log path'        : remote_log_dir,
                 'extra log files'        : self.logfiles,
                 }
-
-        launcher = launcher_class( self.id, jobconfig, xconfig, str(self.submit_num) )
+        try:
+            launcher = launcher_class( self.id, jobconfig, xconfig, str(self.submit_num) )
+        except Exception, x:
+            # currently a bad hostname will fail out here due to an is_remote_host() test
+            self.log( 'CRITICAL', 'ERROR: Failed to create job launcher\n  ' + str(x) )
+            return (None,None)
 
         try:
             p = launcher.submit( dry_run, debug )
         except Exception, x:
-            # a bug was activated in cylc job submission code?
-            self.log( 'CRITICAL', 'ERROR: job submission failed' )
-            return (None, launcher )
+            self.log( 'CRITICAL', 'ERROR: Job submission failed\n  ' + str(x) )
+            return (None,launcher)
         else:
-            return (p, launcher)
+            return (p,launcher)
 
     def check_submission_timeout( self ):
         handler = self.event_handlers['submission timeout']
@@ -913,7 +923,7 @@ class task( object ):
         # to strip off fraction of seconds:
         # timedelta = re.sub( '\.\d*$', '', timedelta )
 
-        # TO DO: the following section could probably be streamlined a bit
+        # TODO: the following section could probably be streamlined a bit
         if self.__class__.mean_total_elapsed_time:
             met = self.__class__.mean_total_elapsed_time
             summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
