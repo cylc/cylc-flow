@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+from time import sleep
 import os
 import shutil
 import sqlite3
@@ -89,14 +90,21 @@ class ThreadedCursor(Thread):
         cnx = sqlite3.Connection(self.db) 
         cursor = cnx.cursor()
         while True:
-            req, arg, res = self.reqs.get()
-            if req=='--close--': break
-            cursor.execute(req, arg)
-            if res:
-                for rec in cursor:
-                    res.put(rec)
-                res.put('--no more--')
-            cnx.commit()
+            attempt = 0
+            while attempt < 5:
+                try:
+                    req, arg, res = self.reqs.get()
+                    if req=='--close--': break
+                    cursor.execute(req, arg)
+                    if res:
+                        for rec in cursor:
+                            res.put(rec)
+                        res.put('--no more--')
+                    cnx.commit()
+                    break
+                except:
+                    attempt += 1
+                    sleep(1) 
         cnx.close()
     def execute(self, req, arg=None, res=None):
         self.reqs.put((req, arg or tuple(), res))
