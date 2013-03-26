@@ -1118,13 +1118,13 @@ suite host, and the task owner on the remote task host.
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 \label{DynamicHostSelection}
 
-The remote host for this namespace. This can be a static hostname or a
-command that prints a suitable hostname to stdout. Host selection
-commands are executed just prior to job submission. The host (static or
-dynamic) may have an entry in the cylc site or user config file to
-specify parameters such as the location of cylc on the remote machine;
-if not, the corresponding local settings (on the suite host) will be
-assumed to apply on the remote host. 
+The remote host for this namespace. This can be a static hostname, an
+environment variable that holds a hostname, or a command that prints a
+hostname to stdout. Host selection commands are executed just prior to
+job submission. The host (static or dynamic) may have an entry in the
+cylc site or user config file to specify parameters such as the location
+of cylc on the remote machine; if not, the corresponding local settings
+(on the suite host) will be assumed to apply on the remote host. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
@@ -1133,8 +1133,12 @@ assumed to apply on the remote host.
     \begin{myitemize}
         \item static host name: \lstinline@host = foo@
         \item fully qualified: \lstinline@host = foo.bar.baz@
-        \item dynamic host selection: \lstinline@host = $(host-selector.sh)@ 
-        \item dynamic host selection: \lstinline@host = `host-selector.sh)`@ (back-tick version)
+        \item dynamic host selection:
+        \begin{myitemize}
+            \item shell command (1): \lstinline@host = $(host-selector.sh)@ 
+            \item shell command (2): \lstinline@host = `host-selector.sh)`@
+            \item environment variable: \lstinline@host = $MY_HOST@ 
+        \end{myitemize}
     \end{myitemize}
 \end{myitemize}
 
