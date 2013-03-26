@@ -481,7 +481,9 @@ class task( object ):
         """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
         returns the job process number if successful, or None if job
         submission fails at any point - which will result in a task
-        failed message being sent for handling by the main thread."""
+        failed message being sent for handling by the main thread.
+        Run db updates as a result of such errors will also be done by
+        the main thread in response to receiving the message."""
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
