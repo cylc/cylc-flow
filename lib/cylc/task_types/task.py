@@ -573,8 +573,8 @@ class task( object ):
                 var = n.groups()[0]
                 try:
                     host = os.environ[var]
-                except KeyError:
-                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed" )
+                except KeyError, x:
+                    self.log( 'CRITICAL', "ERROR: Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
                     return (None, None)
 
             self.log( "NORMAL", "Task host: " + host )
