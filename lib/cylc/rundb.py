@@ -91,10 +91,10 @@ class ThreadedCursor(Thread):
         cursor = cnx.cursor()
         while True:
             attempt = 0
+            req, arg, res = self.reqs.get()
+            if req=='--close--': break
             while attempt < 5:
                 try:
-                    req, arg, res = self.reqs.get()
-                    if req=='--close--': break
                     cursor.execute(req, arg)
                     if res:
                         for rec in cursor:
