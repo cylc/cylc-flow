@@ -150,8 +150,9 @@ class task_state(object):
         else:
             return False
 
-    def is_currently( self, state ):
-        return state == self.state[ 'status' ]
+    def is_currently( self, *states ):
+        """Return true if current state matches any state in states."""
+        return self.state[ 'status' ] in states
 
     # generic set for special dumpable state required by some tasks.
     def set( self, item, value ):

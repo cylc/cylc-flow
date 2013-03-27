@@ -75,6 +75,8 @@ def main(name, start):
         #   and see Python docs "The Python Profilers"
         #   for how to display the resulting stats.
     except Exception, x:
+        import traceback
+        traceback.print_exc(x)
         print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
         try:
             server.shutdown( 'ERROR: ' + str(x) )

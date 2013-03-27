@@ -157,6 +157,22 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
         BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
 
+        BUFFER.write( r"""
+
+# CYLC SUITE ENVIRONMENT FILE:
+if (($# > 0)) && [[ $1 == '--write-suite-env' ]]; then
+    shift 1
+    {""" )
+        for var in sorted(cenv):
+            BUFFER.write( "\n        echo \"%(var)s=$%(var)s\"" %
+                          {"var": var} )
+        BUFFER.write( r"""
+    } >$(dirname $CYLC_TASK_LOG_ROOT)/cylc-suite-env
+    trap '' EXIT
+    exit
+fi
+""" )
+
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
             BUFFER = self.FILE
