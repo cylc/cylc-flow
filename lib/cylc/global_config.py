@@ -143,18 +143,22 @@ class globalcfg( object ):
 
         for host,settings in cfg['hosts'].items():
             # [hosts][<host>] section changes
+            if host == 'localhost':
+                hostkey = 'local' # print the pre-upgrade version
+            else:
+                hostkey = host
             for key,val in settings.items():
                 if key == 'workspace directory':
                     # 'workspace directory' -> 'work directory'
                     new_key = "work directory"
-                    warnings.append( "[task hosts]["+host+"]"+key+" -> [hosts]["+host+"]" + new_key )
+                    warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
                     del cfg['hosts'][host][key]
                     cfg['hosts'][host][new_key] = val
 
                 elif key == 'cylc directory':
                     # 'cylc directory' -> 'cylc bin directory' (and translate value):
                     new_key = "cylc bin directory"
-                    warnings.append( "[task hosts]["+host+"]"+key+" -> [hosts]["+host+"]" + new_key )
+                    warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
                     del cfg['hosts'][host][key]
                     cfg['hosts'][host][new_key] = os.path.join( val, 'bin' )
 
