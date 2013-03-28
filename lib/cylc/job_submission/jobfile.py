@@ -24,12 +24,15 @@ from cylc.global_config import gcfg
 
 class jobfile(object):
 
-    def __init__( self, log_root, job_submission_method, task_id, jobconfig ):
+    def __init__( self, suite, log_root, job_submission_method, task_id, jobconfig ):
 
         self.log_root = log_root
         self.job_submission_method = job_submission_method
         self.task_id = task_id
         self.jobconfig = jobconfig
+        self.suite = suite
+        self.owner = jobconfig['task owner']
+        self.host = jobconfig['task host']
 
         self.task_name, self.tag = task_id.split( TaskID.DELIM )
 
@@ -140,6 +143,12 @@ class jobfile(object):
             # for local tasks too):
             cenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', cenv['CYLC_SUITE_DEF_PATH'])
 
+        work_dir  = os.path.join( gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner ), self.jobconfig['work sub-directory'] )
+
+        use_login_shell = gcfg.get_host_item( 'use login shell', self.host, self.owner )
+
+        use_ssh_messaging = gcfg.get_host_item( 'use ssh messaging', self.host, self.owner )
+
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
         for var, val in cenv.items():
             BUFFER.write( "\nexport " + var + "=" + str(val) )
@@ -152,16 +161,16 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
-        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
-        BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(self.jobconfig['use login shell']) )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + self.jobconfig['work path'] )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(use_ssh_messaging) )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR # back compat") 
         BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_SHARE_DIR # back compat")
 
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
             BUFFER = self.FILE
-        rcp = gcfg.get_host_item( 'cylc bin directory', self.jobconfig['host'], self.jobconfig['owner'] )
+        rcp = gcfg.get_host_item( 'cylc bin directory', self.host, self.owner )
         if rcp:
             BUFFER.write( "\n\n# ACCESS TO CYLC:" )
             BUFFER.write( "\nexport PATH=" + rcp + ":$PATH" )

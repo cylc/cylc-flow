@@ -5,6 +5,7 @@ from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_error
 from validate import Validator
 from print_cfg import print_cfg
 from copy import deepcopy
+from cylc.owner import user
 import atexit
 import shutil
 from tempfile import mkdtemp

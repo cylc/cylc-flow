@@ -29,7 +29,7 @@
 
 import os, sys, re
 import datetime
-from copy import deepcopy
+from copy import deepcopy, copy
 from random import randrange
 from collections import deque
 from cylc import task_state
@@ -150,7 +150,16 @@ class task( object ):
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
 
         self.validate = validate
-        
+
+        # Task owner and host are needed before the first submit
+        # attempt, by record_db_event() for pre-submission events, 
+        # so set their initial values first now as if local (to use
+        # correct values from the start, pre-submit, we'd need to check
+        # dynamic host selection and default to local in case of None).
+        self.task_host = 'localhost'
+        self.task_owner = user 
+        self.user_at_host = self.task_owner + "@" + self.task_host
+
         # sets submit num for restarts or when triggering state prior to submission
         if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
@@ -170,10 +179,6 @@ class task( object ):
                 except:
                     pass
             self.db.close()
-
-        self.hostname = None
-        self.owner = None
-        self.submit_method = None
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -199,14 +204,7 @@ class task( object ):
         self.__class__.instance_count -= 1
 
     def record_db_event(self, event="", message=""):
-        user_at_host = ""
-        if event in ["submitted", "submit failed"]:
-            if self.owner is None:
-                self.owner = user
-            if self.hostname is None:
-                self.hostname = "localhost"
-            user_at_host = self.owner + "@" + self.hostname
-        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, user_at_host)
+        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, self.user_at_host)
         self.db_queue.append(call)
     
     def record_db_update(self, table, name, cycle, **kwargs):
@@ -525,10 +523,10 @@ class task( object ):
         launcher_class = getattr( mod, class_name )
  
         command = rtconfig['command scripting']
-        manual = rtconfig['manual completion']
+        use_manual = rtconfig['manual completion']
         if self.__class__.run_mode == 'dummy':
             # (dummy tasks don't detach)
-            manual = False
+            use_manual = False
             command = rtconfig['dummy mode']['command scripting']
             if rtconfig['dummy mode']['disable pre-command scripting']:
                 precommand = None
@@ -542,103 +540,87 @@ class task( object ):
         # because dynamic host selection may be used.
 
         # host may be None (= run task on suite host)
-        host = rtconfig['remote']['host']
+        self.task_host = rtconfig['remote']['host']
         
-        if host:
+        if self.task_host:
             # 1) check for dynamic host selection command
             #   host = $( host-select-command )
             #   host =  ` host-select-command `
-            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
+            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', self.task_host )
             if m:
                 # extract the command and execute it
                 hs_command = m.groups()[1]
                 res = run_get_stdout( hs_command ) # (T/F,[lines])
                 if res[0]:
                     # host selection command succeeded
-                    host = res[1][0]
+                    self.task_host = res[1][0]
                 else:
                     # host selection command failed
-                    raise Exception("Host selection by " + host + " failed\n  " + '\n'.join(res[1]) )
+                    raise Exception("Host selection by " + self.task_host + " failed\n  " + '\n'.join(res[1]) )
 
             # 2) check for dynamic host selection variable:
             #   host = ${ENV_VAR}
             #   host = $ENV_VAR
 
-            n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', host )
+            n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', self.task_host )
             # any string quotes are stripped by configobj parsing 
             if n:
                 var = n.groups()[0]
                 try:
-                    host = os.environ[var]
+                    self.task_host = os.environ[var]
                 except KeyError, x:
-                    raise Exception( "Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
+                    raise Exception( "Host selection by " + self.task_host + " failed:\n  Variable not defined: " + str(x) )
 
-            self.log( "NORMAL", "Task host: " + host )
-
-        self.hostname = host
-        if self.hostname is None:
-            self.hostname = "localhost"
- 
-        owner = rtconfig['remote']['owner']
-        if owner is None:
-            self.owner = user
+            self.log( "NORMAL", "Task host: " + self.task_host )
         else:
-            self.owner = owner
+            self.task_host = "localhost"
 
-        user_at_host = self.owner + "@" + self.hostname
-        
-        self.submit_method = rtconfig['job submission']['method']
+        self.task_owner = rtconfig['remote']['owner']
+        if not self.task_owner:
+            self.task_owner = user
+
+        self.user_at_host = self.task_owner + "@" + self.task_host
         
         # Note: this should be done in the main thread, but has been
-        # cleaned up in #364:
-        self.record_db_update("task_states", self.name, self.c_time, 
-                              submit_method=self.submit_method, host=user_at_host)
-        self.record_db_event(event="submitted")
+        # cleaned up in issue #364:
+        self.record_db_update("task_states", self.name, self.c_time,
+                submit_method=rtconfig['job submission']['method'],
+                host=self.user_at_host)
 
-        work_dir  = gcfg.get_derived_host_item( self.suite_name, 'suite work directory', host, owner )
-        local_log_dir = gcfg.get_derived_host_item( self.suite_name, 'suite job log directory' ) 
-        remote_log_dir = gcfg.get_derived_host_item( self.suite_name, 'suite job log directory', host, owner ) 
+        self.record_db_event(event="submitted")
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
                 'environment scripting'  : rtconfig['environment scripting'],
                 'runtime environment'    : rtconfig['environment'],
-                'use login shell'        : gcfg.get_host_item( 'use login shell', host, owner ),
-                'use ssh messaging'      : gcfg.get_host_item( 'use ssh messaging', host, owner ),
                 'remote suite path'      : rtconfig['remote']['suite definition directory'],
                 'job script shell'       : rtconfig['job submission']['shell'],
-                'use manual completion'  : manual,
+                'command template'       : rtconfig['job submission']['command template'],
+                'work sub-directory'     : rtconfig['work sub-directory'],
+                'use manual completion'  : use_manual,
                 'pre-command scripting'  : precommand,
                 'command scripting'      : command,
                 'post-command scripting' : postcommand,
                 'namespace hierarchy'    : self.namespace_hierarchy,
                 'try number'             : self.try_number,
                 'is cold-start'          : self.is_coldstart,
-                'work path'              : os.path.join( work_dir, rtconfig['work sub-directory']),
                 'cylc environment'       : deepcopy( task.cylc_env ),
-                'directive prefix'       : None,
-                'directive final'        : "# FINAL DIRECTIVE",
-                'directive connector'    : " ",
-                'owner'                  : owner,
-                'host'                   : host,
-                }
-        xconfig = {
-                'log path'               : local_log_dir,
-                'remote shell template'  : gcfg.get_host_item( 'remote shell template', host, owner ),
-                'job submission command template' : rtconfig['job submission']['command template'],
-                'remote log path'        : remote_log_dir,
+                'task owner'             : self.task_owner,
+                'task host'              : self.task_host,
                 'extra log files'        : self.logfiles,
                 }
         try:
-            launcher = launcher_class( self.id, jobconfig, xconfig, str(self.submit_num) )
+            launcher = launcher_class( self.id, self.suite_name, jobconfig, str(self.submit_num) )
         except Exception, x:
+            raise
             # currently a bad hostname will fail out here due to an is_remote_host() test
             raise Exception( 'Failed to create job launcher\n  ' + str(x) )
 
         try:
             p = launcher.submit( dry_run, debug )
         except Exception, x:
+            raise
             raise Exception( 'Job submission failed\n  ' + str(x) )
         else:
             return (p,launcher)
