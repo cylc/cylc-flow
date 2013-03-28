@@ -50,8 +50,10 @@ if len(args) != 0:
 
 try:
     # this instantiates an object, so import here to avoid aborting
-    # before the command help can be displayed.
+    # before the command help can be displayed in case the user file is
+    # screwed up.
     from cylc.global_config import gcfg
+    gcfg.print_deprecation_warnings()
     if options.writesite:
         gcfg.write_rc( 'site' )
     elif options.writeuser:

@@ -92,7 +92,7 @@ globals = gcfg
 if options.geditor:
     editor = globals.cfg['editors']['gui']
 else:
-    editor = globals.cfg['editors']['in-terminal']
+    editor = globals.cfg['editors']['terminal']
 
 suitedir = os.path.dirname(suiterc)
 

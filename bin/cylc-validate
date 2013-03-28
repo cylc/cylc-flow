@@ -26,6 +26,7 @@ from cylc.version import cylc_version
 from cylc.config import config
 from cylc.command_prep import prep_file
 from cylc.TaskID import TaskID
+from cylc.global_config import gcfg
 
 parser = cop( """cylc [prep] validate [OPTIONS] ARGS
 
@@ -46,6 +47,8 @@ parser.add_option( "--strict",
 (options, args) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
+
+gcfg.print_deprecation_warnings()
 
 if options.verbose:
     print "Parsing Suite Definition"

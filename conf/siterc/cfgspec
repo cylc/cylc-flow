@@ -15,12 +15,17 @@
 #>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
 #>   NOTE THAT SITE AND/OR USER CONFIG IS REQUIRED ON TASK HOSTS TOO 
+#> TODO: document exactly for what purpose
 #>----------------------------------------------------------------------
 #> Comments starting with "#>" are not passed on to generated .rc files.
 #>----------------------------------------------------------------------
 # Sections or items preceded by "# SITE ONLY" can not be set by users.
 #> (trailing comments would be better markers but they don't get passed
 #> through from the configspec to generated config files)
+#-----------------------------------------------------------------------
+# Items that are unset by default are shown below, commented out, with 
+# a value of 'None' - this is not a valid way off unsetting an item in
+# reality - instead just leave the item commented out.
 #-----------------------------------------------------------------------
 
 # A temporary directory is needed by a few cylc commands. Leave it unset
@@ -86,7 +91,7 @@ state dump rolling archive length = integer( min=1, default=10 )
     #  + xterm -e vim  # in-terminal as a proxy for a GUI editor
     #  + emacs         # emacs GUI
     #  + emacs -nw     # emacs in-terminal 
-    in-terminal = string( default="vim" )
+    terminal = string( default="vim" )
     gui         = string( default="gvim -f" )
 
 # Pyro is used by cylc for network communications.

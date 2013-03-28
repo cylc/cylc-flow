@@ -28,7 +28,6 @@ class GlobalConfigError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-
 class globalcfg( object ):
     """Handle global (all suites) site and user configuration for cylc.
     Legal items and default values are defined in a single configspec
@@ -47,6 +46,11 @@ class globalcfg( object ):
         """Load defaults, site, and user config files (in reverse order
         of precedence) to generate the global config structure; validate
         to catch errors; disallow user config of site-only items.""" 
+
+        self.upgrades = [ ('5.1.1',self.upgrade_5_1_1) ]
+        self.warnings = {}
+        self.warnings['site'] = {}
+        self.warnings['user'] = {}
 
         try:
             self.load()
@@ -71,7 +75,11 @@ class globalcfg( object ):
         rc = self.rcfiles['user']
 
         self.usercfg = ConfigObj( infile=rc, configspec=cfgspec )
-
+        for vn,upgr in self.upgrades:
+            warnings = upgr( self.usercfg )
+            if warnings:
+                self.warnings['user'][vn] = warnings
+        
         # load the (sparse) site file
         rc = self.rcfiles['site']
 
@@ -94,6 +102,82 @@ class globalcfg( object ):
         self.validate( self.cfg )
 
         self.expand_local_paths()
+
+    def upgrade_5_1_1( self, cfg ):
+        """Upgrade methods should upgrade to the latest (not next)
+        version; then if we run them from oldest to newest we will avoid
+        generating multiple warnings for items that changed several times."""
+
+        warnings = []
+
+        # [editors] 'in-terminal' -> 'terminal
+        try:
+            old = cfg['editors']['in-terminal']
+        except:
+            pass
+        else:
+            warnings.append( "[editors]in-terminal -> [editors]terminal" )
+            del cfg['editors']['in-terminal']
+            cfg['editors']['terminal'] = old
+
+        # [task hosts] -> [hosts]
+        try:
+            old = cfg['task hosts']
+        except:
+            pass
+        else:
+            warnings.append( "[task hosts] -> [hosts]" )
+            del cfg['task hosts']
+            cfg['hosts'] = old
+
+        # [task hosts][local] -> [hosts][localhost]
+        try:
+            old = cfg['hosts']['local'] # ([hosts] already upgraded)
+        except:
+            pass
+        else:
+            warnings.append( "[task hosts][local] -> [hosts][localhost]" )
+            del cfg['hosts']['local']
+            cfg['hosts']['localhost'] = old
+
+        for host,settings in cfg['hosts'].items():
+            # [hosts][<host>] section changes
+            for key,val in settings.items():
+                if key == 'workspace directory':
+                    # 'workspace directory' -> 'work directory'
+                    new_key = "work directory"
+                    warnings.append( "[task hosts]["+host+"]"+key+" -> [hosts]["+host+"]" + new_key )
+                    del cfg['hosts'][host][key]
+                    cfg['hosts'][host][new_key] = val
+
+                elif key == 'cylc directory':
+                    # 'cylc directory' -> 'cylc bin directory' (and translate value):
+                    new_key = "cylc bin directory"
+                    warnings.append( "[task hosts]["+host+"]"+key+" -> [hosts]["+host+"]" + new_key )
+                    del cfg['hosts'][host][key]
+                    cfg['hosts'][host][new_key] = os.path.join( val, 'bin' )
+
+        return warnings
+
+    def print_deprecation_warnings( self ):
+        if not self.warnings['user'] and not self.warnings['site']:
+            # no warnings
+            return
+
+        print >> sys.stderr, """
+*** SITE/USER CONFIG DEPRECATION WARNING ***
+Some translations were performed on the fly."""
+        for name in ['site','user']:
+            if self.warnings[name]:
+                print >> sys.stderr, "*** Please upgrade", self.rcfiles[name]
+            else:
+                continue
+            for vn, warnings in self.warnings[name].items():
+                for w in warnings:
+                    print >> sys.stderr, " * (" + vn + ")", w
+        print
+
+
 
     def expand_local_paths( self ):
         """Expand environment variables and ~user in LOCAL file paths."""

@@ -157,6 +157,8 @@ class scheduler(object):
 
         self.parse_commandline()
 
+        gcfg.print_deprecation_warnings()
+
         # Set suite-level directory locations for task environments,
         # created on the fly by tasks if necessary (so we don't need to
         # create them explicitly here for task remote hosts).
