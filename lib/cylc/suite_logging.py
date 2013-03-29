@@ -37,10 +37,8 @@ class LogFilter(logging.Filter):
         return True
 
 class suite_log( object ):
-    def __init__( self, suite, ext='suite' ):
-        self.dir = gcfg.get_derived_host_item( suite, 'suite log directory' )
-        if ext != 'suite':
-            self.dir.replace( 'suite', ext )
+    def __init__( self, ldir ):
+        self.dir = ldir
         self.path = os.path.join( self.dir, 'log' ) 
         self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']
         self.n_keep = gcfg.cfg['suite logging']['rolling archive length']

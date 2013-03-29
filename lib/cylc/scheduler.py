@@ -159,23 +159,6 @@ class scheduler(object):
 
         gcfg.print_deprecation_warnings()
 
-        # Set suite-level directory locations for task environments,
-        # created on the fly by tasks if necessary (so we don't need to
-        # create them explicitly here for task remote hosts).
-        task.task.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
-        task.task.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( self.suite, 'suite work directory' )
-        task.task.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( self.suite, 'suite share directory' )
-        
-        tlogdir = gcfg.get_derived_host_item( self.suite, 'suite job log directory' )
-        self.mkdirp( tlogdir )
-
-    def mkdirp( self, d ):
-        try:
-            mkdir_p( d )
-        except Exception, x:
-            print >> sys.stderr, x
-            raise SchedulerError( 'ERROR, failed to make directory:' + d )
-
     def configure( self ):
         # read-only commands to expose directly to the network
         self.info_commands = {
@@ -923,12 +906,12 @@ class scheduler(object):
         self.state_dump_filename = self.state_dumper.get_path()
 
         if not reconfigure:
-            slog = suite_log( self.suite )
+            d = gcfg.get_derived_host_item( self.suite, 'suite job log directory' )
+            slog = suite_log( d )
             slog.mkdir()
             slog.pimp( self.logging_level, self.clock )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
-            self.logdir = slog.get_dir()
 
             self.command_queue = comqueue( self.control_commands.keys() )
             self.pyro.connect( self.command_queue, 'command-interface' )
@@ -950,22 +933,22 @@ class scheduler(object):
 
     def configure_environments( self ):
         task.task.cylc_env[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
+        task.task.cylc_env[ 'CYLC_UTC' ] = str(self.utc)
         task.task.cylc_env[ 'CYLC_MODE' ] = 'scheduler'
         task.task.cylc_env[ 'CYLC_DEBUG' ] = str( self.options.debug )
         task.task.cylc_env[ 'CYLC_VERBOSE' ] = str(self.verbose)
         task.task.cylc_env[ 'CYLC_SUITE_HOST' ] =  str( self.host )
         task.task.cylc_env[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
-        task.task.cylc_env[ 'CYLC_SUITE_REG_NAME' ] = self.suite
+        task.task.cylc_env[ 'CYLC_SUITE_NAME' ] = self.suite
+        task.task.cylc_env[ 'CYLC_SUITE_REG_NAME' ] = self.suite # back compat
         task.task.cylc_env[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
         task.task.cylc_env[ 'CYLC_SUITE_OWNER' ] = self.owner
         task.task.cylc_env[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
         task.task.cylc_env[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
-        task.task.cylc_env[ 'CYLC_UTC' ] = str(self.utc)
         task.task.cylc_env[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
         task.task.cylc_env[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
-        task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = self.logdir
 
         # Put suite identity variables (for event handlers executed by
         # cylc) into the environment in which cylc runs

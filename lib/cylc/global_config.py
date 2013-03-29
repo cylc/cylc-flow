@@ -389,6 +389,15 @@ Some translations were performed on the fly."""
         # suite workspace
         swdir = os.path.join( self.get_host_item( 'work directory', host, owner ), suite )
 
+        # if invoked by the "cylc submit" command we modify the top
+        # level directory names to avoid contaminating suite output.
+        try:
+            if os.environ['CYLC_MODE'] == 'submit':
+                srdir += '-submit'
+                swdir += '-submit'
+        except:
+            pass
+
         if item == 'suite run directory':
             value = srdir
 

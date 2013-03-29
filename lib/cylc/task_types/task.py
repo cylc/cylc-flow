@@ -589,6 +589,11 @@ class task( object ):
 
         self.record_db_event(event="submitted")
 
+        # Set suite-level directory locations for task environments.
+        self.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( self.suite_name, 'suite run directory', self.task_host, self.task_owner )
+        self.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( self.suite_name, 'suite work directory', self.task_host, self.task_owner )
+        self.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( self.suite_name, 'suite share directory', self.task_host, self.task_owner )
+
         jobconfig = {
                 'directives'             : rtconfig['directives'],
                 'initial scripting'      : rtconfig['initial scripting'],
