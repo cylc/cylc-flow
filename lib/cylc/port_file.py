@@ -52,7 +52,10 @@ class port_file( object ):
         self.verbose = verbose
         self.suite = suite 
 
-        self.local_path = os.path.join( gcfg.cfg['pyro']['ports directory'], suite )
+        # the ports directory is assumed to exist
+        pdir = gcfg.cfg['pyro']['ports directory']
+ 
+        self.local_path = os.path.join( pdir, suite )
 
         try:
             self.port = str(int(port))

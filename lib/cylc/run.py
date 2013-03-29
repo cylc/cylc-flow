@@ -21,6 +21,7 @@
 import sys
 from daemonize import daemonize
 from version import cylc_version
+from global_config import gcfg
 
 def print_blurb():
     lines = []
@@ -51,9 +52,11 @@ def main(name, start):
     # Print copyright and license information
     print_blurb()
 
-    # Configure Pyro to get the port file, to check the suite is not
-    # already running, before daemonizing.
+    # Before daemonizing attempt to create the suite output tree and get
+    # the suite port file.
+
     try:
+        gcfg.create_cylc_run_tree( server.suite, server.options.verbose )
         server.configure_pyro()
     except Exception, x:
         if server.options.debug:
@@ -76,7 +79,6 @@ def main(name, start):
         #   for how to display the resulting stats.
     except Exception, x:
         print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
-        raise
         try:
             server.shutdown( 'ERROR: ' + str(x) )
         except Exception, y:

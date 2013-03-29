@@ -132,6 +132,13 @@ if config['cylc']['lockserver']['enable']:
 utc = config['cylc']['UTC mode']
 dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
+# create log (after CYLC_MODE is exported)
+os.environ['CYLC_MODE'] = 'submit'
+
+gcfg.create_cylc_run_tree( suite, options.verbose )
+slog = suite_log(suite)
+slog.pimp( clock=dclock )
+
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite
@@ -162,9 +169,10 @@ cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
 cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
 cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  suite_dir
+cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = slog.get_dir()
 
 # SCHEDULER ENVIRONMENT
-# Access to the suite bin directory for alert scripts executed
+# Access to the suite bin directory for event handlers executed
 # by the scheduler (probably not required for single submit).
 os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
 # User-defined variables in the scheduler environment
@@ -175,12 +183,6 @@ for var,val in cylcenv.items():
     os.environ[var] = val
 
 task.task.cylc_env = cylcenv
-
-# create log (after CYLC_MODE is exported)
-d = gcfg.get_derived_host_item( suite, 'suite job log directory' )
-slog = suite_log(d)
-slog.mkdir()
-slog.pimp( clock=dclock )
 
 # instantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():

@@ -10,6 +10,7 @@ import atexit
 import shutil
 from tempfile import mkdtemp
 from envvar import expandvars
+from mkdir_p import mkdir_p
 
 # TODO: drop now-broken support for Python 2.4
 try:
@@ -21,7 +22,6 @@ except NameError:
             if entry:
                 return True
         return False
-
 
 class GlobalConfigError( Exception ):
     def __init__( self, msg ):
@@ -421,6 +421,39 @@ Some translations were performed on the fly."""
 
         return value
 
+    def create_directory( self, d, name ):
+        try:
+            mkdir_p( d )
+        except Exception, x:
+            print >> sys.stderr, x
+            raise GlobalConfigError( 'Failed to create site/user config item "' + name + '"' )
+
+    def create_cylc_run_tree( self, suite, verbose=False ):
+        """Create all top-level cylc-run output directories on the suite host."""
+
+        if verbose:
+            print 'Creating the suite output tree:'
+        for item in [
+                'suite run directory',
+                'suite log directory',
+                'suite job log directory',
+                'suite state directory',
+                'suite work directory',
+                'suite share directory']:
+            if verbose:
+                print ' +', item
+            idir = self.get_derived_host_item( suite, item )
+            self.create_directory( idir, item )
+
+        item = 'temporary directory'
+        value = self.cfg[item]
+        if value:
+            self.create_directory( value, item )
+
+        item = '[pyro]ports directory'
+        value = self.cfg['pyro']['ports directory']
+        self.create_directory( value, item )
+        
 # instantiate a global config object for use in other modules
 gcfg = globalcfg()
 

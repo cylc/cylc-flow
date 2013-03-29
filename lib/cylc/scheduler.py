@@ -56,8 +56,6 @@ import flags
 import cylc.rundb
 from Queue import Queue
 from batch_submit import event_batcher
-from mkdir_p import mkdir_p
-
 
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -65,7 +63,6 @@ class result:
         self.success = success
         self.reason = reason
         self.value = value
-
 
 class SchedulerError( Exception ):
     """
@@ -816,6 +813,8 @@ class scheduler(object):
         except PortFileExistsError,x:
             print >> sys.stderr, x
             raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
+        except PortFileError,x:
+            raise SchedulerError( str(x) )
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
@@ -827,7 +826,7 @@ class scheduler(object):
 
         if not reconfigure:
             run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
-            if not self.is_restart:     # create new suite_db file if needed
+            if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
@@ -906,9 +905,8 @@ class scheduler(object):
         self.state_dump_filename = self.state_dumper.get_path()
 
         if not reconfigure:
-            d = gcfg.get_derived_host_item( self.suite, 'suite job log directory' )
-            slog = suite_log( d )
-            slog.mkdir()
+            slog = suite_log( self.suite )
+            self.suite_log_dir = slog.get_dir()
             slog.pimp( self.logging_level, self.clock )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
@@ -949,6 +947,7 @@ class scheduler(object):
         task.task.cylc_env[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
         task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
+        task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = self.suite_log_dir # needed by the test battery
 
         # Put suite identity variables (for event handlers executed by
         # cylc) into the environment in which cylc runs
