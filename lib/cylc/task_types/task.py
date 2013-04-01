@@ -764,14 +764,14 @@ class task( object ):
         # from other non-task message log entries.
         self.log( priority, '> ' + message )
 
-        # Record every incoming message as an event.
-        prefix = "message received "
-        if priority == 'CRITICAL':
-            self.record_db_event(event=prefix+'(CRITICAL)', message=message)
-        elif priority == 'WARNING':
-            self.record_db_event(event=prefix+'(WARNING)', message=message)
-        else:
-            self.record_db_event(event=prefix+'(NORMAL)', message=message)
+        # We have decided not to record every incoming message as an event.
+        #prefix = "message received "
+        #if priority == 'CRITICAL':
+        #    self.record_db_event(event=prefix+'(CRITICAL)', message=message)
+        #elif priority == 'WARNING':
+        #    self.record_db_event(event=prefix+'(WARNING)', message=message)
+        #else:
+        #    self.record_db_event(event=prefix+'(NORMAL)', message=message)
 
         # always update the suite state summary for latest message
         self.latest_message = message
@@ -782,8 +782,7 @@ class task( object ):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
-        # After logging and recording remove the remote event time from
-        # the end of task messages.
+        # After logging remove the remote event time from the end of task messages.
         message = re.sub( ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$', '', message )
 
         # Remove the prepended task ID.
@@ -812,11 +811,17 @@ class task( object ):
             # Reset execution timer on incoming messages
             self.execution_timer_start = task.clock.get_datetime()
 
-        if content == 'submission succeeded':
-            # A fake task message from the job submission thread.
+        if content == 'submitting now':
+            # (A fake task message from the job submission thread).
+            # The job submission command was about to be executed.
+            # Not currently doing anything other than logging this.
+            pass
 
-            # TODO: should we extract the real event time from the
-            # message to use here?
+        elif content == 'submission succeeded':
+            # (A fake task message from the job submission thread).
+            # The job submission command returned success status.
+
+            # TODO: should we use the real event time from the message here?
             self.submitted_time = task.clock.get_datetime()
 
             if self.state.is_currently( 'submitting' ): 
@@ -837,8 +842,8 @@ class task( object ):
                 self.__class__.event_queue.put( ('submitted', handler, self.id, 'task submitted') )
 
         elif content.startswith( 'submit_method_id='):
-            # (a fake task message from the job submission thread)
-            # capture and record submit method job IDs
+            # (A fake task message from the job submission thread).
+            # Capture and record the submit method job ID.
             submit_method_id = content[len('submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time,
                                   submit_method_id=submit_method_id)
@@ -864,7 +869,7 @@ class task( object ):
                 self.sub_try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="retrying in " + str(self.sub_retry_delay) )
+                self.record_db_event(event="submission failed", message="retrying in " + str(self.sub_retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle submission retry events
@@ -930,7 +935,7 @@ class task( object ):
                 handler = self.event_handlers['failed']
                 if handler:
                     self.log( 'NORMAL', "Queueing failed event handler" )
-                    self.__class__.event_queue.put( ('failed', handler, self.id, '') )
+                    self.__class__.event_queue.put( ('execution failed', handler, self.id, '') )
             else:
                 # There is a retry lined up
                 self.log( "NORMAL", "Setting retry delay: " + str(self.retry_delay) +  " minutes" )
@@ -938,7 +943,7 @@ class task( object ):
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="retrying in " + str( self.retry_delay) )
+                self.record_db_event(event="execution failed", message="retrying in " + str( self.retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
