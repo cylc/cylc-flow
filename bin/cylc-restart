@@ -356,6 +356,12 @@ the remote host before starting the suite."""
                 if row and row[0]:
                     self.old_user_at_host_set.add(str(row[0]))
                 c.close()
+                # TODO We also need to interrogate the task status file for
+                # completed outputs! For the moment at least set the
+                # started output completed for running tasks, because
+                # that has to be true:
+                if itask.state.is_currently('running'):
+                    itask.outputs.set_completed( itask.id + ' started' )
 
             elif itask.state.is_currently(
                     'queued', 'retrying', 'submitting', 'failed'):  
