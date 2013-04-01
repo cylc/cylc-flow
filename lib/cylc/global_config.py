@@ -85,6 +85,10 @@ class globalcfg( object ):
         rc = self.rcfiles['site']
 
         self.sitecfg = ConfigObj( infile=rc, configspec=cfgspec, _inspec=False )
+        for vn,upgr in self.upgrades:
+            warnings = upgr( self.sitecfg )
+            if warnings:
+                self.warnings['site'][vn] = warnings
 
         # generate a configobj with all defaults loaded from the configspec
         # (and call it self.cfg as we re-use it below for the final result)
@@ -107,7 +111,12 @@ class globalcfg( object ):
     def upgrade_5_1_1( self, cfg ):
         """Upgrade methods should upgrade to the latest (not next)
         version; then if we run them from oldest to newest we will avoid
-        generating multiple warnings for items that changed several times."""
+        generating multiple warnings for items that changed several times.
+
+        Upgrade methods are handed sparse cfg structures - i.e. just
+        what is set in the file - so don't assume the presence of any
+        items. It is assumed that the cfgspec will always be up to date.
+        """
 
         warnings = []
 
@@ -141,26 +150,29 @@ class globalcfg( object ):
             del cfg['hosts']['local']
             cfg['hosts']['localhost'] = old
 
-        for host,settings in cfg['hosts'].items():
-            # [hosts][<host>] section changes
-            if host == 'localhost':
-                hostkey = 'local' # print the pre-upgrade version
-            else:
-                hostkey = host
-            for key,val in settings.items():
-                if key == 'workspace directory':
-                    # 'workspace directory' -> 'work directory'
-                    new_key = "work directory"
-                    warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
-                    del cfg['hosts'][host][key]
-                    cfg['hosts'][host][new_key] = val
+        try:
+            for host,settings in cfg['hosts'].items():
+                # [hosts][<host>] section changes
+                if host == 'localhost':
+                    hostkey = 'local' # print the pre-upgrade version
+                else:
+                    hostkey = host
+                for key,val in settings.items():
+                    if key == 'workspace directory':
+                        # 'workspace directory' -> 'work directory'
+                        new_key = "work directory"
+                        warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
+                        del cfg['hosts'][host][key]
+                        cfg['hosts'][host][new_key] = val
 
-                elif key == 'cylc directory':
-                    # 'cylc directory' -> 'cylc bin directory' (and translate value):
-                    new_key = "cylc bin directory"
-                    warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
-                    del cfg['hosts'][host][key]
-                    cfg['hosts'][host][new_key] = os.path.join( val, 'bin' )
+                    elif key == 'cylc directory':
+                        # 'cylc directory' -> 'cylc bin directory' (and translate value):
+                        new_key = "cylc bin directory"
+                        warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
+                        del cfg['hosts'][host][key]
+                        cfg['hosts'][host][new_key] = os.path.join( val, 'bin' )
+        except:
+            pass
 
         return warnings
 
