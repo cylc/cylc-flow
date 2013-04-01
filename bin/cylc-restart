@@ -331,8 +331,19 @@ the remote host before starting the suite."""
                 continue
 
             # see comments above on resurrecting tasks
-            if itask.state.is_currently('waiting', 'held', 'runahead'):
+
+            # TODO: we should probably use the task.reset_state()
+            # methods here, to update the rundb too...
+
+            if itask.state.is_currently('waiting', 'runahead'):
                 pass
+
+            elif itask.state.is_currently('held'):
+                # Only waiting tasks get held. These need to be released
+                # on restart to avoid the automatic shutdown criterion:
+                # if all tasks are succeeded or held (e.g. because they
+                # passed the final cycle time) shut down automatically.
+                itask.state.set_status('waiting')
 
             elif itask.state.is_currently('submitted', 'running'):  
                 itask.prerequisites.set_all_satisfied()
