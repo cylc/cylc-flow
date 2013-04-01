@@ -35,7 +35,6 @@ own cycle time.
     def __init__(self, msg, cyclr ):
         self.offset = None
         self.cyclr = cyclr
-        # Replace CYLC_TASK_CYCLE_TIME with TAG 
         self.msg = msg
         m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', self.msg )
         if m:
@@ -45,6 +44,7 @@ own cycle time.
             self.offset = int(offset)
 
     def get( self, ctime ):
+        # Replace [T] with actual cycle time 
         if self.offset:
             ctime = self.cyclr.offset( ctime, - self.offset )
         return re.sub( '\[\s*T.*?\]', ctime, self.msg )

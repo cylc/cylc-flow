@@ -191,9 +191,16 @@ class task_batcher( batcher ):
     def submit_item( self, itask, psinfo ):
         self.log.info( 'TASK READY: ' + itask.id )
         itask.incoming( 'NORMAL', itask.id + ' submitting now' )
-        p, launcher = itask.submit( overrides=self.wireless.get(itask.id) )
+        try:
+            p, launcher = itask.submit( overrides=self.wireless.get(itask.id) )
+        except Exception, x:
+            self.item_failed_hook( itask, str(x), "Job submission failed." )
+            return
         if p:
             psinfo.append( (p, itask, itask.id, launcher) ) 
+        else:
+            # (this may not be needed with the exception handling above)
+            self.item_failed_hook( itask, "", "Job submission failed.")
 
     def item_failed_hook( self, itask, info, msg ):
         itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
