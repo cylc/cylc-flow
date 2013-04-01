@@ -160,17 +160,14 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-
-        # get a proxy for the remote object (this succeeds even if the
-        # suite isn't actually running -it is just addressing.
-        proxy = self.get_proxy()
-        
+       
         print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
         sent = False
         for itry in range( 1, self.max_tries+1 ):
             print '  ', "Try", itry, "of", self.max_tries, "...",  
             try:
-                proxy.incoming( self.priority, msg )
+                # Get a proxy for the remote object and send the message.
+                self.get_proxy().incoming( self.priority, msg )
             except Exception, x:
                 print "failed:", str(x)
                 print "   retry in", self.retry_seconds, "seconds ..."
