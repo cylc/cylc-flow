@@ -103,6 +103,9 @@ class task( object ):
 
     @classmethod
     def update_mean_total_elapsed_time( cls, started, succeeded ):
+        if not started:
+            # TODO on suite restart we don't currently retain task started time
+            return
         # the class variables here are defined in derived task classes
         cls.elapsed_times.append( succeeded - started )
         elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
