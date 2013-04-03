@@ -10,6 +10,7 @@ elif [[ -z $HOST ]]; then
     echo "ERROR: \$CYLC_TEST_TASK_HOST is not defined"
     exit 1
 fi
+# copy the passphrase over in case this host does not use ssh messaging
 echo "Copying suite passphrase to ${OWNER}@$HOST"
 DEST=.cylc/$CYLC_SUITE_REG_NAME
 ssh -oBatchmode=yes ${OWNER}@$HOST mkdir -p $DEST
