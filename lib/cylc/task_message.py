@@ -211,9 +211,6 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-
-        print 'XXX' + msg + 'XXX'
-
         # get a proxy for the remote object (this succeeds even if the
         # suite isn't actually running -it is just addressing.
         proxy = self.get_proxy()
