@@ -16,52 +16,99 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -e; trap "echo 'TEST BATTERY FAILED'" ERR
-
 usage() {
-    echo "USAGE: cylc [admin] test-battery [options] [TOPDIR]"
-    echo ""
-    echo "This command runs a battery of self-diagnosing test-suites. "
-    echo "See documention of \"Reference Tests\" in the User Guide."
-    echo "Test batteries should be kept in a directory tree; use TOPDIR to "
-    echo "target all the contained suites, or a sub-tree, or a single "
-    echo "one of them. TOPDIR defaults to \$CYLC_DIR/tests/, the location"
-    echo "of the official cylc reference tests."
-    echo ""
-    echo "Directory paths containing the word 'hidden' will be ignored."
-    echo "This can be used to hide sub-suites that are not intended run"
-    echo "as standalone tests (this is how to handle tests that are "
-    echo "supposed to cause a suite to fail: put them in a hidden sub-suite"
-    echo "and have the calling task in the main suite check the result)."
-    echo ""
-    echo "Some of the official test suites submit test jobs to a task host"
-    echo "and user account taken from the environment:"
-    echo "  \$CYLC_TEST_TASK_HOST"
-    echo "  \$CYLC_TEST_TASK_OWNER"
-    echo "If these are not defined they default to localhost and \$USER"
-    echo "Passwordless ssh must be configured to the task host account"
-    echo "(even if it is local)."
-    echo ""
-    echo "Options:"
-    echo "  -h, --help   Print this help message and exit."
+    cat <<eof
+USAGE: cylc [admin] test-battery [options] [TOPDIR]
+
+Run a battery of self-diagnosing test-suites. Test batteries should be
+kept in a directory tree. Change TOPDIR to target a sub-tree or a single
+test suite. TOPDIR defaults to \$CYLC_DIR/tests/, the location of the
+official cylc reference tests.
+
+Directory paths containing the word 'hidden' will be ignored. This can
+be used to hide sub-suites that are started by test-suites and not
+intended as standalone tests (this is how to handle tests that are
+supposed to cause a suite to fail: put them in a hidden sub-suite and
+have the calling task in the main suite check for the expected result).
+
+Some of the official test suites submit test jobs to a task host and
+user account taken from the environment:
+  \$CYLC_TEST_TASK_HOST
+  \$CYLC_TEST_TASK_OWNER
+These default to localhost and \$USER. Passwordless ssh must be
+configured to the task host account (even if it is local).
+
+For more information see \"Reference Tests\" in the User Guide.
+
+Options:
+  -h, --help   Print this help message and exit.
+  -p           Run *all* of the test suites under TOPDIR in parallel
+  -n N,        Repeat the whole test battery N times, stopping at the
+               first failure (use to find intermittent problems).
+eof
 }
 
-if [[ $# > 1 ]]; then
+tally() {
+    RET=$1
+    if (( $RET == 0 )); then
+        echo " ok"
+        N_PASSED=$(( N_PASSED + 1 ))
+        PASSED="$PASSED $NAME"
+    else
+        echo "FAILED"
+        N_FAILED=$(( N_FAILED + 1 ))
+        FAILED="$FAILED $NAME"
+    fi
+}
+
+# handle long --help
+if [[ $@ == *\-\-help ]]; then
     usage
-    exit 1
-elif [[ $# == 1 ]]; then
-    if [[ $1 == "--help" ]]; then
+    exit 0
+fi
+
+N=1
+ITERATE=false
+PARALLEL=false
+while getopts "phn:" opt; do
+    case $opt in 
+        h )
         usage
         exit 0
-    else
-        SOURCE_DIR=$1
-        if [[ $SOURCE_DIR != /* ]]; then
-            # abs path:
-            SOURCE_DIR=$PWD/$SOURCE_DIR
-        fi
+        ;;
+        p )
+        PARALLEL=true
+        ;;
+        n )
+        N=$OPTARG
+        ITERATE=true
+        ;;
+        ? )
+        usage
+        exit 0
+        ;;
+    esac
+done
+
+INDENT="  "
+
+shift $(( OPTIND -1 ))
+if [[ $# == 1 ]]; then
+    SOURCE_DIR=$1
+    if [[ $SOURCE_DIR != /* ]]; then
+        # abs path:
+        SOURCE_DIR=$PWD/$SOURCE_DIR
     fi
-else
+elif [[ $# == 0 ]]; then
     SOURCE_DIR=$CYLC_DIR/tests
+else
+    usage
+    exit 1
+fi
+
+if [[ $N != [0-9]* ]]; then
+    echo "ERROR: -n N (N must be an INTEGER)"
+    exit 1
 fi
 
 export CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
@@ -69,90 +116,138 @@ export CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
 
 ACCOUNT=${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}
 
-echo -n "Testing ssh to ${ACCOUNT}..."
+echo -n "Testing ssh to ${ACCOUNT} ... "
 if ! ssh -oBatchmode=yes $ACCOUNT /bin/true > /dev/null 2>&1; then
     echo FAILED
     echo "ERROR: ssh test to $ACCOUNT failed"
     exit 1
 else
-    echo "  OK"
+    echo "ok"
 fi
 
 MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 mkdir -p $MY_TMPDIR
 
 TARGET_DIR=$(mktemp -d)
-REG_GROUP=$( basename $SOURCE_DIR )
 
-echo
-echo ">> COPYING test suites to $TARGET_DIR... "
+UNIQ=battery-$$
+REG_GROUP=${UNIQ}.$( basename $SOURCE_DIR )
+
+# copy to temp dir
 cp -r $SOURCE_DIR $TARGET_DIR
 
-echo
-echo ">> UNREGISTERING previous test suites... "
+# unreg old suites of the same name (not likely)
 cylc unreg -df ${REG_GROUP}'.*' > /dev/null
 
-echo
-echo ">> REGISTERING test suites... "
+# register and validate
 CWD=$PWD
 cd $TARGET_DIR
+COUNT=0
+declare -a NAMES
+declare -a LOGS
+echo -n "Registering and validating test suites "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
     echo $RC | grep 'hidden/' > /dev/null && continue
+    echo -n "."
     DIR=$(dirname $RC)
-    NAME=${DIR#./}
-    NAME=$(echo $NAME | tr '/' '.')
-    cylc db reg $NAME $DIR > /dev/null
+    NAME=${UNIQ}.$(echo ${DIR#./} | tr '/' '.')
+    NAMES[$COUNT]=$NAME
+    LOGS[$COUNT]=$(dirname $PWD)/${NAME}.log
+    cylc db reg $NAME $DIR > /dev/null || exit 1
+    if ! cylc validate $NAME > /dev/null; then
+        echo "ERROR: validation failed for $RC"
+        exit 1
+    fi
+    COUNT=$(( COUNT+1 ))
 done
+echo " ok"
 
-echo
-echo ">> RUNNING test suites now... "
-set +e
+N_TOTAL=$COUNT
+
 cd ..
+
+declare -a PIDS
+
+ITER=1
+TOTAL=$N
+while (( N > 0 )); do
+    if $PARALLEL; then
+        echo -n "Running $N_TOTAL suites in parallel"
+    else
+        echo -n "Running $N_TOTAL suites in sequence"
+    fi
+    if $ITERATE; then
+        echo " ($ITER/$TOTAL)..."
+        ITER=$((ITER+1))
+    else
+        echo " ..."
+    fi
+
 N_FAILED=0
 N_PASSED=0
-N_TOTAL=0
-FAILED=""
 PASSED=""
-for REG in $( cylc db pr -xy $REG_GROUP ); do
-    N_TOTAL=$(( N_TOTAL + 1 ))
-    LOG=$PWD/${REG}.log
-    echo -n "$REG (see $LOG)..."
-    if $( cylc run --reference-test --debug $REG > $LOG 2>&1 ); then
-        echo PASSED
-        N_PASSED=$(( N_PASSED + 1 ))
-        PASSED="$PASSED $REG"
-    else
-        echo FAILED
-        N_FAILED=$(( N_FAILED + 1 ))
-        FAILED="$FAILED $REG"
-    fi
-done
+FAILED=""
 
-set -e; trap "echo 'TEST BATTERY FAILED'" ERR
-
-echo
-echo "SUMMARY:"
-echo "  $N_PASSED of $N_TOTAL tests passed"
-echo "  $N_FAILED of $N_TOTAL tests failed"
-if (( N_FAILED != 0 )); then
-    for REG in $FAILED; do
-        echo "  - $REG"
+if $PARALLEL; then
+    for I in $( seq 0 $(( ${#NAMES[@]}-1 )) ); do
+        # run all tests in the background
+        cylc run --reference-test --debug ${NAMES[$I]} > ${LOGS[$I]} 2>&1 &
+        PIDS[$I]=$!
+    done
+    for I in $( seq 0 $(( ${#PIDS[@]}-1 )) ); do
+        # wait on all tests in turn
+        PID=${PIDS[$I]}
+        NAME=${NAMES[$I]}
+        LOG=${LOGS[$I]}
+        echo -n "${INDENT}$((I+1)). $NAME ($LOG) ..."
+        wait $PID
+        tally $?
+    done
+else
+    for I in $( seq 0 $(( ${#NAMES[@]}-1 )) ); do
+        # run and wait on all tests in the foreground
+        echo -n "${INDENT}$((I+1)). ${NAMES[$I]} (${LOGS[$I]}) ..."
+        cylc run --reference-test --debug ${NAMES[$I]} > ${LOGS[$I]} 2>&1
+        tally $?
     done
 fi
 
-echo
-echo ">> UNREGISTERING successful test suites..."
+
+echo "${INDENT}SUMMARY:"
+if (( N_PASSED == N_TOTAL )); then
+    echo "${INDENT} + all $N_TOTAL tests passed"
+elif (( N_FAILED == N_TOTAL )); then
+    echo "${INDENT} + all $N_TOTAL tests FAILED"
+    # exit loop
+    break
+else
+    echo "${INDENT}+ $N_FAILED of $N_TOTAL tests FAILED"
+    echo "${INDENT}+ $N_PASSED of $N_TOTAL tests passed"
+    # exit loop
+    break
+fi
+
+N=$(( N-1 ))
+done
+
+# unregister successful suites
 for REG in $PASSED; do
     cylc unreg -df $REG > /dev/null
 done
 
 if (( N_FAILED != 0 )); then
     echo
-    echo "ERROR: $N_FAILED test suites FAILED"
-    exit 1
-else
+    echo "${INDENT}Retained failed suite registrations for inspection:"
+    for REG in $FAILED; do
+        echo "${INDENT} + $REG"
+    done
+fi
+
+echo
+if (( N_FAILED != 0 )); then
+    echo "ERROR: test battery failed"
     echo
-    echo ">> DONE: all test suites passed."
+    exit 1
 fi
 
