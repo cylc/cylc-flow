@@ -172,11 +172,10 @@ class task( object ):
         self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
         self.validate = validate
 
-        # Task owner and host are needed before the first submit
-        # attempt, by record_db_event() for pre-submission events, 
-        # so set their initial values first now as if local (to use
-        # correct values from the start, pre-submit, we'd need to check
-        # dynamic host selection and default to local in case of None).
+        # In case task owner and host are needed by record_db_event()
+        # for pre-submission events, set their initial values as if
+        # local (we can't know the correct host prior to this because 
+        # dynamic host selection could be used).
         self.task_host = 'localhost'
         self.task_owner = user 
         self.user_at_host = self.task_owner + "@" + self.task_host
