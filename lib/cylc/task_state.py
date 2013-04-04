@@ -110,43 +110,6 @@ class task_state(object):
 
     def has_spawned( self ):
         return self.state[ 'spawned' ] == 'true'
-<<<<<<< HEAD
-        if self.state[ 'spawned' ] == 'true':
-            return True
-        else:
-            return False
-
-    def is_succeeded( self ):
-        if self.state[ 'status' ] == 'succeeded':
-            return True
-        else:
-            return False
-
-    def is_failed( self ):
-        if self.state[ 'status' ] == 'failed':
-            return True
-        else:
-            return False
-
-    def is_waiting( self ):
-        # TO DO: check why we're identifying retrying as waiting here:
-        if self.state[ 'status' ] == 'waiting' or \
-        self.state[ 'status' ] == 'retrying':
-            return True
-        else:
-            return False
-
-    def is_submitting( self ):
-        if self.state[ 'status' ] == 'submitting':
-            return True
-        else:
-            return False
-
-    def is_submitted( self ):
-        if self.state[ 'status' ] == 'submitted':
-            return True
-        else:
-            return False
 
     def is_currently( self, *states ):
         """Return true if current state matches any state in states."""
