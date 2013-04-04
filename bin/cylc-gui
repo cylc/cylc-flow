@@ -41,7 +41,7 @@ you must currently use --host and/or --owner on the gcylc command line.
 Available task state color themes are shown under the View menu. To
 customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file.""",
-pyro=True, noforce=True, gcylc=True, argdoc=[('[REG]', 'Suite name' )])
+pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
 
 ( options, args ) = parser.parse_args()
 

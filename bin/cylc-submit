@@ -56,7 +56,7 @@ same registration, and only if the task is not locked (i.e. only if
 the same task, NAME.TAG, is not currently running in the suite)."""
 
 def commandline_parser():
-    parser = cop( usage, 
+    parser = cop( usage, jset=True,
             argdoc=[ ("REG", "Suite name"),
                 ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
 
