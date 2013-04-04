@@ -31,6 +31,11 @@ temporary directory = string( default=None )
 # A rolling archive of suite state dumps is maintained for restart use.
 state dump rolling archive length = integer( min=1, default=10 )
 
+# Commands that intervene in running suites can ask for confirmation
+# before acting. Some find this annoying and ineffective as a safety
+# measure, however, so command prompts are disabled by default.
+disable interactive command prompts = boolean( default=True )
+
 # Task messaging settings apply to the "cylc task COMMAND" commands 
 # used by running tasks to communicate with their parent suite. If a
 # message send fails after the configured number of tries the task will 

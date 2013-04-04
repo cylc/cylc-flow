@@ -42,9 +42,7 @@ Examples:
  % cylc [info] dump --tasks --sort SUITE | grep running
 
  Display the state of all tasks in a particular cycle:
- % cylc [info] dump -t SUITE | grep 2010082406""", pyro=True )
-
-parser.remove_option("-f" ) # don't need force
+ % cylc [info] dump -t SUITE | grep 2010082406""", pyro=True, noforce=True )
 
 parser.add_option( "-g", "--global", help="Global information only.",
         action="store_true", default=False, dest="global_only" )

@@ -33,10 +33,8 @@ parser = cop( """cylc [info] show [OPTIONS] ARGS
 Interrogate a running suite for its title and task list, task
 descriptions, current state of task prerequisites and outputs and, for
 clock-triggered tasks, whether or not the trigger time is up yet.""",
-    pyro=True, 
+    pyro=True, noforce=True,
     argdoc=[('REG', 'Suite name'), ('[NAME['+TaskID.DELIM+'TAG]]', 'Task name or ID')])
-
-parser.remove_option("-f" ) # don't need force
 
 (options, args) = parser.parse_args()
 
