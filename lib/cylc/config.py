@@ -1141,6 +1141,12 @@ class config( CylcConfigObj ):
             # finally replace plain family names on the right of a trigger
             line = self.replace_family_triggers( line, fam, members )
 
+        # any remaining use of '-all' or '-any' implies a family trigger
+        # on a non-family task, which is illegal.
+        if '-a' in line: # ('-' is not legal in task names so this gets both cases)
+            print >> sys.stderr, line
+            raise SuiteConfigError, "ERROR: family trigger cannot be used on non-family namespaces"
+
         # Replace "foo:finish" with "( foo:succeed | foo:fail )"
         line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
 
