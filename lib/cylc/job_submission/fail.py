@@ -26,7 +26,7 @@ development purposes.
     # stdin redirection (< /dev/null) allows background execution
     # even on a remote host - ssh can exit without waiting for the
     # remote process to finish.
-    COMMAND_TEMPLATE = "sleep 1; /bin/false"
+    COMMAND_TEMPLATE = "sleep 10; /bin/false"
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:

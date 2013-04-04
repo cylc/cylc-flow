@@ -350,6 +350,7 @@ class scheduler(object):
             try:
                 self.control_commands[ name ]( *args )
             except Exception, x:
+                # don't let a bad command bring the suite down
                 print >> sys.stderr, x
                 self.log.warning( 'Queued command failed: ' + name + '(' + ','.join( [ str(a) for a in args ]) + ')' )
             else:
@@ -807,7 +808,7 @@ class scheduler(object):
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
-                        new_task.set_succeeded()
+                        new_task.reset_state_succeeded(manual=False)
                     self.pool.remove( itask, '(suite definition reload)' )
                     self.pool.add( new_task )
         self.reconfiguring = found
@@ -942,7 +943,7 @@ class scheduler(object):
             self.event_queue = Queue()
             task.task.event_queue = self.event_queue
             self.evworker = event_batcher( 
-                    'Event Queue', self.event_queue, 
+                    'Event Handler Submission', self.event_queue, 
                     self.config['cylc']['event handler execution']['batch size'],
                     self.config['cylc']['event handler execution']['delay between batches'],
                     self.suite,
@@ -1836,7 +1837,7 @@ class scheduler(object):
                 break
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
-        if itask.state.is_submitting():
+        if itask.state.is_currently( 'submitting' ):
             # (manual reset of 'submitting' tasks disabled pending
             # some deep thought about concurrency with the job
             # submission thread.
@@ -1850,6 +1851,7 @@ class scheduler(object):
             itask.set_trigger_now(True)
 
     def reset_task_state( self, task_id, state ):
+        # we only allow resetting to a subset of available task states
         if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         found = False
@@ -1860,7 +1862,7 @@ class scheduler(object):
                 break
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
-        if itask.state.is_submitting():
+        if itask.state.is_currently( 'submitting' ):
             # Currently can't reset a 'submitting' task in the job submission thread!
             raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
 
@@ -2007,7 +2009,7 @@ class scheduler(object):
             if itask.id == id:
                 # set it succeeded
                 print '  Setting', itask.id, 'succeeded'
-                itask.set_succeeded()
+                itask.reset_state_succeeded(manual=False)
                 # force it to spawn
                 print '  Spawning', itask.id
                 foo = self.force_spawn( itask )
@@ -2030,7 +2032,7 @@ class scheduler(object):
                 if itask.ready_to_run():
                     something_triggered = True
                     print '  Triggering', itask.id
-                    itask.set_succeeded()
+                    itask.reset_state_succeeded(manual=False)
                     print '  Spawning', itask.id
                     foo = self.force_spawn( itask )
                     if foo:

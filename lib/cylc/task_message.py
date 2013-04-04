@@ -31,6 +31,10 @@ from cylc.global_config import gcfg
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
 
+        # Record the time the messaging system was called and append it
+        # to the message, in case the message is delayed in some way.
+        self.true_event_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
         g = gcfg.cfg['task messaging']
         self.retry_seconds = g['retry interval in seconds']
         self.max_tries = g['maximum number of tries']
@@ -107,8 +111,10 @@ class message(object):
         elif self.msg:
             msg = self.msg
         if not msg:
-            # nothing to send (To Do: this is not needed?)
+            # nothing to send (TODO: not needed?)
             return
+        # append event time to the message
+        msg += ' at ' + self.true_event_time
         if self.mode != 'scheduler':
             # no suite to communicate with, just print to stdout.
             self.print_msg( msg )
@@ -160,7 +166,6 @@ class message(object):
         self.send_pyro( msg )
 
     def send_pyro( self, msg ):
-       
         print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
         sent = False
         for itry in range( 1, self.max_tries+1 ):
