@@ -56,11 +56,11 @@ class RecordBroadcastObject(object):
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
-    def __init__(self, name, cycle, submit_num, event=None, message=None, user_at_host=None):
+    def __init__(self, name, cycle, submit_num, event=None, message=None, misc=None):
         """Records an event in the table"""
         self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
         self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                     submit_num, event, message, user_at_host]
+                     submit_num, event, message, misc]
         self.to_run = True
 
 
@@ -134,7 +134,7 @@ class CylcRuntimeDAO(object):
                     "submit_num INTEGER",
                     "event TEXT",
                     "message TEXT",
-                    "host TEXT"],               # record the host associated with this event
+                    "misc TEXT"],               # e.g. record the user@host associated with this event
             TASK_STATES: [                      # each task gets a status entry that is updated
                     "name TEXT",
                     "cycle TEXT",

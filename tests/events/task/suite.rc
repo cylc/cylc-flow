@@ -1,4 +1,6 @@
 [cylc]
+    [[environment]]
+        CYLC_BG_SLOW_SLEEP = 5
     [[reference test]]
         live mode suite timeout = 0.5
         suite shutdown event handler = log-check.sh
@@ -8,12 +10,13 @@
         graph = "foo"
 [runtime]
     [[foo]]
-        # stay in 'submitted' state for 2 secs:
-        initial scripting = sleep 2
+        # stay in 'submitted' state for 5 secs:
+        initial scripting = "sleep 5" 
         command scripting = """
 sleep 5
 cylc message -p WARNING "WARNING - this is just a test!"
 """
+        [[[job submission]]]
         [[[remote]]]
             # divorce us from the cylc server environment
             host = localhost
