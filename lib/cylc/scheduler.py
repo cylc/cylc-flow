@@ -151,10 +151,6 @@ class scheduler(object):
                 help="Do a test run against a previously generated reference log.",
                 action="store_true", default=False, dest="reftest" )
 
-        self.parser.add_option( "--from-gui", help=\
-                "(do not use).",
-                action="store_true", default=False, dest="from_gui" )
-
         self.parse_commandline()
 
         # create task log directory
@@ -273,7 +269,7 @@ class scheduler(object):
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime, self.from_gui )
+        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # initial cycle time
@@ -800,11 +796,6 @@ class scheduler(object):
             self.logging_level = logging.DEBUG
         else:
             self.logging_level = logging.INFO
-
-        if self.options.from_gui:
-            self.from_gui = True
-        else:
-            self.from_gui = False
 
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
