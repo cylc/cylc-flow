@@ -624,8 +624,19 @@ args = args_new
 if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' ]:
     command = re.sub( '^task-', '', command )
 
+cmd = 'cylc-' + command
+
+####BACKGROUNDED MESSAGING CALLS: this results in a currently
+####undiagnosed error in Pyro core when the 'message' command is
+####invoked - but not for the 'started' command (try it and see the task
+####stderr log). 
+##if command in [ 'started', 'message' ]:
+##    # Run non job-ending task message commands in the background.
+##    p = subprocess.Popen( [ cmd ] + args )
+##    sys.exit(0)
+##else:
+# Replace the current process with that of the sub-command.
 try:
-    cmd = 'cylc-' + command
     os.execvp( cmd, [ cmd ] + args )
 except OSError, x:
     raise SystemExit(x)
