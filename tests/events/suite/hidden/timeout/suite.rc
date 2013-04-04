@@ -1,10 +1,28 @@
+
+description = """
+This suite is supposed to time out and abort when the timeout handler
+deliberately fails."""
+
 [cylc]
     [[event hooks]]
-        timeout = 0.01 # minutes
+        timeout = 0.083 # 5 seconds
         timeout handler = "/bin/false"
         abort if timeout handler fails = True
 
 [scheduling]
     [[dependencies]]
-        graph = "foo"
+        graph = """foo
+                   foo:fail => bar"""
 
+[runtime]
+    [[foo]]
+        # succeed instantly so that we don't orphan a live task when the
+        # suite aborts on timing out - else if the test suite is executed
+        # multiple times in succession this orphaned task message retry
+        # may occasionally succeed in messaging the next run of this
+        # suite on the same port .
+        command scripting = "/bin/true"
+    [[bar]]
+        # this task is never meant to run (thanks to the fail trigger),
+        # it is just present to keep the suite alive after foo finishes
+        # (preventing auto shutdown until the suite times out as intended).
