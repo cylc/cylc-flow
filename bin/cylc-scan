@@ -49,10 +49,7 @@ IFS=$'\n'; for LINE in $( cylc scan ); do
 done
 IFS=$OFIS
 ----------------------------------------------------------------
-""", pyro=True, 
-argdoc=[])
-
-parser.remove_option("-f" ) # don't need force
+""", pyro=True, noforce=True, argdoc=[])
 
 parser.add_option( "--print-ports",
         help="Print the port range from the site config file "
@@ -62,9 +59,8 @@ parser.add_option( "--print-ports",
 ( options, args ) = parser.parse_args()
 
 if options.print_ports:
-    globals = gcfg
-    base = globals.cfg['pyro']['base port']
-    range = globals.cfg['pyro']['maximum number of ports']
+    base = gcfg.cfg['pyro']['base port']
+    range = gcfg.cfg['pyro']['maximum number of ports']
     print base, '<= port <=', base + range
     sys.exit(0)
 
