@@ -1,7 +1,7 @@
 
-title = "gcontrol task state color theme demo"
+title = "gcylc task state color theme demo"
 description = """This suite contrives to use every possible task state,
-to show what they look like live in the gcontrol GUI."""
+to show what they look like live in gcylc."""
 
 [scheduling]
     initial cycle time = 2012080800
@@ -22,33 +22,48 @@ to show what they look like live in the gcontrol GUI."""
             graph =  """
     cfoo | foo[T-24] => foo => family
     family:finish-all => bar
-    foo => bad
-    bar => !bad
+    foo => bad & bad2 & bad_good
+    bar => !bad & !bad2
                      """
 
 [runtime]
     [[root]]
         # delay all tasks slightly in the 'submitted' state
         initial scripting = "sleep 5"
-    [[family]]
+   [[family]]
     [[m1,m2,m3]]
         inherit = family
     [[m_x]]
         inherit = family
-        title = "this task succeeds on the third try "
-        retry delays = 0.2, 0.2
+        title = "this task succeeds on the second try "
+        retry delays = 0.3
         command scripting = """
 sleep 10
-if [[ $CYLC_TASK_TRY_NUMBER < 3 ]]; then
+if [[ $CYLC_TASK_TRY_NUMBER < 2 ]]; then
     cylc task message -p WARNING ABORTING
     exit 1
 fi"""
     [[bad]]
-        title = "A task that always fails"
+        title = "A task that tries and fails twice"
         description = """Failed instances of this task are removed from the suite
 at the end of each cycle by a suicide trigger."""
+        retry delays = 0.2
         command scripting = "sleep 10; exit 1"
-
+    [[bad2]]
+        title = "A task that fails to submit twice"
+        [[[job submission]]]
+            method = fail
+            retry delays = 0.3
+    [[bad_good]]
+        title = "A task successfully submits on the second try "
+        description = """Uses a retry event handler to broadcast a new job
+submission method for the retry."""
+        [[[job submission]]]
+            method = fail
+            retry delays = 0.3
+        [[[event hooks]]]
+            submission retry handler = change-my-job-sub-method.sh
+ 
 [visualization]
     use node color for labels = True
     [[node attributes]]

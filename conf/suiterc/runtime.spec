@@ -67,6 +67,7 @@
             method = string( default=background )
             command template = string( default=None )
             shell = string( default='/bin/bash' )
+            retry delays = force_list( default=list() )
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
@@ -83,6 +84,7 @@
             submission failed handler = string( default=None )
             warning handler = string( default=None )
             retry handler = string( default=None )
+            submission retry handler = string( default=None )
 
             submission timeout handler = string( default=None )
             submission timeout = float( default=None )

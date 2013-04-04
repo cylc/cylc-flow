@@ -6,7 +6,7 @@ LOG=$CYLC_SUITE_LOG_DIR/log
 EVENTS="submitted submission_timeout started execution_timeout warning succeeded"
 FAIL=false
 for EVENT in $EVENTS; do
-    if ! grep "Queuing $EVENT event handler" $LOG > /dev/null; then
+    if ! grep "Queueing $EVENT event handler" $LOG > /dev/null; then
         echo "ERROR: event $EVENT not logged"
         FAIL=true
     fi

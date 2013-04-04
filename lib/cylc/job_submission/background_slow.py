@@ -21,7 +21,7 @@ from background import background
 class background_slow( background ):
     """
 This is a deliberately slow version of background job submission, used
-for cylc development purposes - sleep 10s before executing the task.
+for cylc development purposes - sleep for a while before executing the task.
 
 Change sleep time by setting $CYLC_BG_SLOW_SLEEP in [cylc][[environment]]
 (or in the terminal environment before running the suite).
@@ -31,3 +31,4 @@ Change sleep time by setting $CYLC_BG_SLOW_SLEEP in [cylc][[environment]]
     # remote process to finish.
 
     COMMAND_TEMPLATE = "sleep ${CYLC_BG_SLOW_SLEEP:-60}; %s </dev/null 1>%s 2>%s &"
+

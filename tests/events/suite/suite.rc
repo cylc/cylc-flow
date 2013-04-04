@@ -1,6 +1,6 @@
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.8
+        live mode suite timeout = 1.0
 [scheduling]
     [[dependencies]]
         graph = "startup => timeout => shutdown"
