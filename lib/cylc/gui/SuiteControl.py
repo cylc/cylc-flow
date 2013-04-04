@@ -903,9 +903,6 @@ been defined for this suite""").inform()
         elif mode_dum_rb.get_active():
             command += ' --mode=dummy'
 
-        if self.cfg.pyro_timeout:
-            command += ' --timeout=' + str(self.cfg.pyro_timeout)
-
         ctime = ''
         if method != 'restart':
             # start time
