@@ -50,12 +50,14 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, gcylc=False ):
+    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, gcylc=False, noforce=False ):
 
         # commands that interact with a running suite ("controlcom=True")
         # normally get remote access via Pyro RPC; but optionally
         # ("--use-ssh") you can use passwordless ssh to re-invoke the
         # command on the suite host, as for non-control commands.
+
+        # noforce=True is for commands that don't use interactive prompts at all
 
         usage += """
 
@@ -134,9 +136,12 @@ Arguments:"""
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
-            self.add_option( "-f", "--force",
-                help="Do not ask for confirmation before acting.",
-                action="store_true", default=False, dest="force" )
+            if not noforce:
+                self.add_option( "-f", "--force",
+                        help="Do not ask for confirmation before acting. Note that "
+                        "it is not necessary to use this option if interactive command "
+                        "prompts have been disabled in the site/user config files.",
+                        action="store_true", default=False, dest="force" )
 
         if gcylc or not pyro:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
