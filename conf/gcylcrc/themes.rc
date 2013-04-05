@@ -22,7 +22,7 @@
         #   more interesting type of waiting, hence darker blue.
         defaults  = "color=#bbbbbb", "style=unfilled", "fontcolor=black"
         waiting   = "color=#88c6ff"
-        runahead  = "color=#397fac", "fontcolor=white"
+        runahead  = "color=#397fac"
         held      = "color=#fe83ff"
         queued    = "color=#dcd901"
         submitting= "color=#a08f49"
