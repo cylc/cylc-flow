@@ -3101,14 +3101,14 @@ $CYLC_TASK_CYCLE_TIME            # 2011051118
 $CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.2011051118.1
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
-$CYLC_TASK_WORK_PATH             # task work directory (see below)
-$CYLC_SUITE_SHARE_PATH           # suite (or task!) shared directory (see below)
+$CYLC_TASK_WORK_DIR              # task work directory (see below)
+$CYLC_SUITE_SHARE_DIR            # suite (or task!) shared directory (see below)
 $CYLC_TASK_IS_COLDSTART          # 'True' for cold-start tasks, else 'False'
 \end{lstlisting}
 And the suite identity variables are:
 \begin{lstlisting}
 $CYLC_SUITE_DEF_PATH   # $HOME/mysuites/baz (e.g.)
-$CYLC_SUITE_REG_NAME   # foo.bar.baz (e.g.)
+$CYLC_SUITE_NAME       # foo.bar.baz (e.g.)
 $CYLC_SUITE_REG_PATH   # foo/bar/baz
 $CYLC_SUITE_HOST       # orca.niwa.co.nz (e.g.) 
 $CYLC_SUITE_PORT       # 7766 (e.g.)
@@ -3128,21 +3128,25 @@ suite.
 
 \paragraph{Suite Share And Task Work Directories}
 
-See the variable listing above, and Sections~\ref{LocalWork} and
-\ref{LocalShare}.
+A {\em suite share directory} is created automatically for use as a file
+exchange area for tasks on same task host. The suite share directory can
+be accessed via \lstinline=$CYLC_SUITE_SHARE_DIR= and its location can
+be set in the cylc site/user config files. 
 
-Task command scripting is executed from within a work directory created
-on the fly, if necessary, by the task's job script. In non-detaching
-tasks the work directory is automatically removed again {\em if it is 
-empty} before the job script exits. 
+A {\em task work directory} is also created automatically for each task, 
+Its location is held in the \lstinline=$CYLC_TASK_WORK_DIR= variable.
+Task command scripting is executed from within the work directory (i.e.
+it is the task's {\em current working directory}. In non-detaching
+tasks the work directory is automatically removed again if it is empty
+when the task finishes. The top level location of the task work and
+share directories can be set in the cylc site/user config files, but in
+the case of work-directories you can set the low-level work
+sub-directory under \lstinline=[runtime]= in your suite definitions. The
+default sub-directory name is the task ID, which gives each task a
+unique working directory. You can override this to give groups of tasks
+the same work directory, however, thus creating private share spaces for
+tasks that read and write files from their current working directory.
 
-The share directory is also created on the fly, if necessary, by the job
-script. It is intended as a shared data area for multiple tasks on the
-same host, but as for any task runtime config item it can be specialized
-to particular tasks or groups of tasks. 
-
-The code for creating these directories, and removing empty work
-directories, can be seen by examining a task job script. 
 
 \paragraph{Other Cylc-Defined Environment Variables}
 

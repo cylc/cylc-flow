@@ -110,9 +110,6 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
-# create task log directory
-gcfg.get_task_log_dir( suite, create=True )
-
 use_lockserver = False
 if config['cylc']['lockserver']['enable']:
     use_lockserver = True
@@ -135,17 +132,16 @@ if config['cylc']['lockserver']['enable']:
 utc = config['cylc']['UTC mode']
 dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
+# create log (after CYLC_MODE is exported)
+os.environ['CYLC_MODE'] = 'submit'
+
+gcfg.create_cylc_run_tree( suite, options.verbose )
+slog = suite_log(suite)
+slog.pimp( clock=dclock )
+
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite
-
-# create the suite log, with a modified directory path ending in
-# 'submit' so that we don't overwrite logs from a proper suite run.
-slog = suite_log( suite, 'submit' )
-slog.mkdir()
-slog.pimp( clock=dclock )
-log = slog.get_log()
-logging_dir = slog.get_dir()
 
 # CYLC EXECUTION ENVIRONMENT
 cylcenv = OrderedDict()
@@ -158,7 +154,8 @@ cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
 cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
 cylcenv[ 'CYLC_SUITE_HOST' ] = suite_host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'None'
-cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite
+cylcenv[ 'CYLC_SUITE_NAME' ] = suite
+cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite # back compat
 cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
 # replace home dir with literal '$HOME' for the benefit of remote tasks:
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
@@ -172,19 +169,18 @@ cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
 cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
 cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
 cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  suite_dir
-cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = logging_dir
+cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = slog.get_dir()
 
 # SCHEDULER ENVIRONMENT
-# Access to the suite bin directory for alert scripts executed
+# Access to the suite bin directory for event handlers executed
 # by the scheduler (probably not required for single submit).
 os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
 # User-defined variables in the scheduler environment
-senv = config['cylc']['environment']
-for var in senv:
-    os.environ[var] = os.path.expandvars(senv[var])
+for var,val in config['cylc']['environment'].items():
+    os.environ[var] = os.path.expandvars(val)
 # Also put cylcenv variables in the scheduler environment
-for var in cylcenv:
-    os.environ[var] = cylcenv[var]
+for var,val in cylcenv.items():
+    os.environ[var] = val
 
 task.task.cylc_env = cylcenv
 
@@ -208,7 +204,7 @@ except TaskNotDefinedError, x:
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if not options.dry_run:
-    print "Logging directory: " + logging_dir
+    print "Logging directory: " + slog.get_dir()
     print
 task_proxy.submit( dry_run=options.dry_run, debug=options.debug )
 

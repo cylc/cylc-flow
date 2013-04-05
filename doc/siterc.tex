@@ -89,21 +89,6 @@ because the log directory is created before the task runs.
 \item {\em type:} string (a valid directory path on the remote host)
 \item {\em default:} (local log path with \lstinline=$HOME= replaced)
 \end{myitemize}
- 
-NOTE: work and share directories are now configured by a single ``workspace directory''.
-
-\subparagraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ work directory}
-
-Use this item if you need to override the local task work directory 
-(see~\ref{LocalWork}). If omitted, the local directory will be used with
-the suite owner's home directory path, if present,
-replaced by \lstinline='$HOME'= for interpretation on 
-the remote host.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} (local task work path with \lstinline=$HOME= replaced)
-\end{myitemize}
 
 \subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ share directory}
 

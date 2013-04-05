@@ -2,7 +2,6 @@
 
 import os, sys
 from suite_output import suite_output
-from mkdir_p import mkdir_p
 
 def daemonize( suite, port ):
     """
@@ -14,10 +13,6 @@ def daemonize( suite, port ):
     # Programming in the UNIX Environment" for details (ISBN 0201563177)
 
     sout = suite_output( suite )
-    try:
-        mkdir_p( sout.get_dir() )
-    except Exception, x:
-        sys.exit( str(x) )
 
     try:
         pid = os.fork()
@@ -42,7 +37,7 @@ def daemonize( suite, port ):
             print " + Name:", suite
             print " + PID: ", pid
             print " + Port:", port
-            print " + Logs: %s/(log|out|err)" % sout.get_dir()
+            print " + Logs: %s/(log|out|err)" % os.path.dirname( sout.get_path() )
             print
             print "To see if this suite is still running:"
             print " * cylc scan"
