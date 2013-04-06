@@ -980,6 +980,23 @@ Section~\ref{DetachingTasks}).
 
 % HIDDEN \paragraph[extra log files]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ extra log files}
 
+\paragraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work sub-directory}
+
+Task command scripting is executed from with automatically created work
+directories, which can be accessed by their tasks through
+\lstinline=$CYLC_TASK_WORK_DIR=.  This items sets the low-level
+sub-directory name. The default value provides a unique workspace for
+each task, but this can overridden to make groups of tasks run in the
+same working directory, thereby providing a share space for tasks that 
+read and write from their current working directories.
+
+\begin{myitemize}
+\item {\em type:} string (directory path, may contain environment variables)
+\item {\em default:} \lstinline=$TASK_ID=
+\end{myitemize}
+
+
+
 \paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
 
 If a message is received from a failed task cylc will normally treat
