@@ -352,25 +352,8 @@ class xupdater(threading.Thread):
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
-            #Get a graph object
             self.graphw = graphing.CGraphPlain( self.cfg.suite )
-
-            # sort and then add edges in the hope that edges added in the
-            # same order each time will result in the graph layout not
-            # jumping around (does this help? -if not discard)
-            gr_edges.sort()
-            for e in gr_edges:
-                l, r, dashed, suicide, conditional = e
-                style=None
-                arrowhead='normal'
-                if dashed:
-                    style='dashed'
-                if suicide:
-                    style='dashed'
-                    arrowhead='dot'
-                if conditional:
-                    arrowhead='onormal'
-                self.graphw.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+            self.graphw.add_edges( gr_edges )
 
         for n in self.graphw.nodes(): # base node defaults
             n.attr['style'] = 'filled'
@@ -429,14 +412,6 @@ class xupdater(threading.Thread):
 
             # remove_nodes_from( nbunch ) - nbunch is any iterable container.
             self.graphw.remove_nodes_from( self.rem_nodes )
-
-        #print '____'
-        #print self.descendants
-        #print
-        #print self.family_nodes
-        #print 
-        #print self.graphed_family_nodes
-        #print '____'
 
         for id in self.state_summary:
 
