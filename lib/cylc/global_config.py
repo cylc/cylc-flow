@@ -384,15 +384,15 @@ Some translations were performed on the fly."""
         if not value:
             # default to the value for localhost.
             value = self.cfg['hosts']['localhost'][item]
-            # TODO: consolidate with is_remote tests elsewhere:
-            if value:
-                # localhost items may default to None too (e.g. cylc bin directory)
-                if (host and host is not 'localhost') or (owner and owner is not user ):
-                    # item requested for a remote account
-                    if 'directory' in item:
-                        # Replace local home directory, if it appears, with
-                        # literal '$HOME' for evaluation on the remote account.
-                        value = value.replace( os.environ['HOME'], '$HOME' )
+
+        if value:
+            # localhost items may default to None too (e.g. cylc bin directory)
+            if (host and host is not 'localhost') or (owner and owner is not user ):
+                # item requested for a remote account
+                if 'directory' in item:
+                    # Replace local home directory, if it appears, with
+                    # literal '$HOME' for evaluation on the remote account.
+                    value = value.replace( os.environ['HOME'], '$HOME' )
         return value
 
     def get_derived_host_item( self, suite, item, host=None, owner=None ):
