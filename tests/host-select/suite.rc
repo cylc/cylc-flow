@@ -1,3 +1,6 @@
+#!Jinja2
+
+{% set OWNER = environ['CYLC_TEST_TASK_OWNER'] %}
 
 title = "Test external task host selection"
 
@@ -7,8 +10,12 @@ test suite it just returns the value of $CYLC_TEST_TASK_HOST as used
 by many of the other test suites (see "cylc test-battery --help")."""
 
 [cylc]
+    [[event hooks]]
+        startup handler = startup.sh
+        abort if startup handler fails = True
     [[reference test]]
         live mode suite timeout = 0.5
+        suite shutdown event handler = cleanup.sh
 [scheduling]
     [[dependencies]]
         graph = "foo"
@@ -16,5 +23,6 @@ by many of the other test suites (see "cylc test-battery --help")."""
     [[foo]]
         [[[remote]]]
             # in suite bin directory:
-            host = $(host-select.sh)
+            host = $(host-select.sh) # returns value of $CYLC_TEST_TASK_HOST
+            owner = {{ OWNER }}
 
