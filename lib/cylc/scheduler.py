@@ -940,6 +940,12 @@ class scheduler(object):
         task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
         task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
         task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = self.suite_log_dir # needed by the test battery
+        # task-host dependent items that will be overidden by tasks:
+        task.task.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
+        task.task.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( self.suite, 'suite work directory' )
+        task.task.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( self.suite, 'suite share directory' )
+        # backward compat:
+        task.task.cylc_env[ 'CYLC_SUITE_SHARE_PATH'] = "$CYLC_SUITE_SHARE_DIR"
 
         # Put suite identity variables (for event handlers executed by
         # cylc) into the environment in which cylc runs
