@@ -402,10 +402,10 @@ class MyDotWindow( xdot.DotWindow ):
             one = str( self.suiterc['visualization']['initial cycle time'])
             two = str(self.suiterc['visualization']['final cycle time'])
 
-        # TO DO: move ct().get() out of this call (for error checking): 
-        graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(), 
-                colored=True, raw=self.raw, 
-                group_nodes=group_nodes, ungroup_nodes=ungroup_nodes, 
+        # TODO: move ct().get() out of this call (for error checking): 
+        graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(),
+                raw=self.raw, group_nodes=group_nodes,
+                ungroup_nodes=ungroup_nodes, 
                 ungroup_recursive=ungroup_recursive, 
                 group_all=group_all, ungroup_all=ungroup_all )
 

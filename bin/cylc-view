@@ -50,7 +50,7 @@ Where <editor> is defined in the cylc site and user config files
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
 
-See also 'cylc [prep] edit'.""")
+See also 'cylc [prep] edit'.""", jset=True )
 
 parser.add_option( "--inline", "-i", 
         help="Inline any include-files.",

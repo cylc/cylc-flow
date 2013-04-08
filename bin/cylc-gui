@@ -38,14 +38,10 @@ Local suites can be opened and switched between from within gcylc. To
 connect to running remote suites (whose passphrase you have installed)
 you must currently use --host and/or --owner on the gcylc command line.
 
-If the '-t,--timeout=' option is used the timeout value will be passed
-on to the suite if it is subsequently started from the GUI (and it will
-in turn be passed to tasks submitted by the suite).
-
 Available task state color themes are shown under the View menu. To
 customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file.""",
-pyro=True, noforce=True, gcylc=True, argdoc=[('[REG]', 'Suite name' )])
+pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
 
 ( options, args ) = parser.parse_args()
 

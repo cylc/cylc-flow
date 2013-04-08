@@ -152,6 +152,8 @@ class jobfile(object):
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
         for var, val in cenv.items():
             BUFFER.write( "\nexport " + var + "=" + str(val) )
+        if str(cenv.get('CYLC_UTC')) == 'True':
+            BUFFER.write( "\nexport TZ=UTC" )
 
         BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
@@ -165,7 +167,6 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR # back compat") 
-        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_SHARE_DIR # back compat")
 
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:

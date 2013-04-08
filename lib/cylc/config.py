@@ -798,16 +798,10 @@ class config( CylcConfigObj ):
         print_tree( tree, padding=padding, use_unicode=pretty )
 
     def process_directories(self):
-        # Environment variable interpolation in directory paths.
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['visualization']['runtime graph']['directory'] = expandvars( self['visualization']['runtime graph']['directory'], self.owner)
-
-        # suite config dir is not user-configurable as some processes
-        # need to know where it is without parsing the suite definition:
-        self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
-
 
     def set_trigger( self, section, left, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         print 'SET_TRIGGER', section, left, right
@@ -999,15 +993,6 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, n,
                 print >> sys.stderr, ''
  
-    def create_directories( self, task=None ):
-        dirs = [ self.suite_config_dir ]
-        for d in dirs:
-            try:
-                mkdir_p( d )
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, illegal dir? ' + d
-        
     def get_filename( self ):
         return self.file
 
@@ -1534,57 +1519,16 @@ class config( CylcConfigObj ):
 
         return gr_edges
  
-    def get_graph( self, start_ctime, stop, colored=True, raw=False,
-            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-            group_all=False, ungroup_all=False ):
+    def get_graph( self, start_ctime, stop, raw=False, group_nodes=[],
+            ungroup_nodes=[], ungroup_recursive=False, group_all=False,
+            ungroup_all=False ):
 
-        # TO DO: this method could be put in the graphing module? It is
-        # currently duplicated in xstateview.py.
-
-        # get_graph_raw is factored out here because the graph control
-        # GUI has to retrieve the raw graph, because the PyGraphviz 
-        # graph object does not seem to be serializable (pickle error)
-        # for Pyro.
         gr_edges = self.get_graph_raw( start_ctime, stop, raw,
                 group_nodes, ungroup_nodes, ungroup_recursive,
                 group_all, ungroup_all )
 
-        # Get a graph object
-        if colored:
-            graph = graphing.CGraph( self.suite, self['visualization'] )
-        else:
-            graph = graphing.CGraphPlain( self.suite )
-
-        # sort and then add edges in the hope that edges added in the
-        # same order each time will result in the graph layout not
-        # jumping around (does this help? -if not discard)
-        gr_edges.sort()
-        for e in gr_edges:
-            l, r, dashed, suicide, conditional = e
-            if conditional:
-                if suicide:
-                    style='dashed'
-                    arrowhead='odot'
-                else:
-                    style='solid'
-                    arrowhead='onormal'
-            else:
-                if suicide:
-                    style='dashed'
-                    arrowhead='dot'
-                else:
-                    style='solid'
-                    arrowhead='normal'
-            if dashed:
-                # override
-                style='dashed'
-
-            graph.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
-
-        for n in graph.nodes():
-            if not colored:
-                n.attr['style'] = 'filled'
-                n.attr['fillcolor'] = 'cornsilk'
+        graph = graphing.CGraph( self.suite, self['visualization'] )
+        graph.add_edges( gr_edges )
 
         return graph
 
