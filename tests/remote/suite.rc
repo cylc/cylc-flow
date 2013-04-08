@@ -12,6 +12,7 @@
         abort if startup handler fails = True
     [[reference test]]
         live mode suite timeout = 0.5
+        suite shutdown event handler = cleanup.sh
 
 [scheduling]
     [[dependencies]]

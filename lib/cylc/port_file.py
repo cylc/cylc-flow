@@ -21,9 +21,9 @@ from suite_host import is_remote_host
 from owner import user, is_remote_user
 from global_config import gcfg
 
-"""Any process that connects to a running suite (cylc server) must know
-which port to connect to (i.e. the one the suite is listening on). At
-start-up cylc writes the suite port number to $HOME/.cylc/SUITE/port.
+"""Processes connecting to a running suite must know which port the
+suite server is listening on: at start-up cylc writes the port to
+$HOME/.cylc/ports/SUITE.
 
 Task messaging commands know the port number of the target suite from
 the task execution environment supplied by the suite: $CYLC_SUITE_PORT,
@@ -74,8 +74,6 @@ class port_file( object ):
             f = open( self.local_path, 'w' )
         except OSError,x:
             raise PortFileError( "ERROR, failed to open port file: " + self.port )
- 
-        # TO DO: write() ERROR HANDLING?
         f.write( self.port ) 
         f.close()
 
