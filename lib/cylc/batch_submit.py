@@ -194,6 +194,7 @@ class task_batcher( batcher ):
         try:
             p, launcher = itask.submit( overrides=self.wireless.get(itask.id) )
         except Exception, x:
+            raise
             self.item_failed_hook( itask, str(x), "Job submission failed." )
             return
         if p:

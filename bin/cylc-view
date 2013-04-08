@@ -97,7 +97,7 @@ cylc_tmpdir = gcfg.get_tmpdir()
 if options.geditor:
     editor = gcfg.cfg['editors']['gui']
 else:
-    editor = gcfg.cfg['editors']['in-terminal']
+    editor = gcfg.cfg['editors']['terminal']
 
 global suitedir
 suitedir = os.path.dirname(suiterc)

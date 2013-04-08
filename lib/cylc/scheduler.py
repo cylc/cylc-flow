@@ -57,14 +57,12 @@ import cylc.rundb
 from Queue import Queue
 from batch_submit import event_batcher
 
-
 class result:
     """TO DO: GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
     def __init__( self, success, reason="Action succeeded", value=None ):
         self.success = success
         self.reason = reason
         self.value = value
-
 
 class SchedulerError( Exception ):
     """
@@ -153,8 +151,7 @@ class scheduler(object):
 
         self.parse_commandline()
 
-        # create task log directory
-        gcfg.get_task_log_dir( self.suite, create=True )
+        gcfg.print_deprecation_warnings()
 
     def configure( self ):
         # read-only commands to expose directly to the network
@@ -809,6 +806,8 @@ class scheduler(object):
         except PortFileExistsError,x:
             print >> sys.stderr, x
             raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
+        except PortFileError,x:
+            raise SchedulerError( str(x) )
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
@@ -818,13 +817,12 @@ class scheduler(object):
                 verbose=self.verbose )
         self.config.create_directories()
 
-        run_dir = gcfg.cfg['task hosts']['local']['run directory']
-
         if not reconfigure:
-            if not self.is_restart:     # create new suite_db file if needed
-                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite, new_mode=True)
+            run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
+            if not self.is_restart:     # create new suite_db file (and dir) if needed
+                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
-                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir + "/" + self.suite)
+                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
 
         self.stop_task = None
 
@@ -901,11 +899,10 @@ class scheduler(object):
 
         if not reconfigure:
             slog = suite_log( self.suite )
-            slog.mkdir()
+            self.suite_log_dir = slog.get_dir()
             slog.pimp( self.logging_level, self.clock )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
-            self.logdir = slog.get_dir()
 
             self.command_queue = comqueue( self.control_commands.keys() )
             self.pyro.connect( self.command_queue, 'command-interface' )
@@ -926,30 +923,29 @@ class scheduler(object):
             self.log.info( "port:" +  str( self.port ))
 
     def configure_environments( self ):
-        cylcenv = OrderedDict()
-        cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
-        cylcenv[ 'CYLC_MODE' ] = 'scheduler'
-        cylcenv[ 'CYLC_DEBUG' ] = str( self.options.debug )
-        cylcenv[ 'CYLC_VERBOSE' ] = str(self.verbose)
-        cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
-        cylcenv[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
-        cylcenv[ 'CYLC_SUITE_REG_NAME' ] = self.suite
-        cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
-        cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
-        cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
-        cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
-        cylcenv[ 'CYLC_UTC' ] = str(self.utc)
-        cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
-        cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
-        cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
-        cylcenv[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
-        cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = self.logdir
-        task.task.cylc_env = cylcenv
+        task.task.cylc_env[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
+        task.task.cylc_env[ 'CYLC_UTC' ] = str(self.utc)
+        task.task.cylc_env[ 'CYLC_MODE' ] = 'scheduler'
+        task.task.cylc_env[ 'CYLC_DEBUG' ] = str( self.options.debug )
+        task.task.cylc_env[ 'CYLC_VERBOSE' ] = str(self.verbose)
+        task.task.cylc_env[ 'CYLC_SUITE_HOST' ] =  str( self.host )
+        task.task.cylc_env[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
+        task.task.cylc_env[ 'CYLC_SUITE_NAME' ] = self.suite
+        task.task.cylc_env[ 'CYLC_SUITE_REG_NAME' ] = self.suite # back compat
+        task.task.cylc_env[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
+        task.task.cylc_env[ 'CYLC_SUITE_OWNER' ] = self.owner
+        task.task.cylc_env[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
+        task.task.cylc_env[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
+        task.task.cylc_env[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
+        task.task.cylc_env[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
+        task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
+        task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
+        task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = self.suite_log_dir # needed by the test battery
 
         # Put suite identity variables (for event handlers executed by
         # cylc) into the environment in which cylc runs
-        for var in cylcenv:
-            os.environ[var] = cylcenv[var]
+        for var,val in task.task.cylc_env.items():
+            os.environ[var] = val
 
         # Suite bin directory for event handlers executed by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 

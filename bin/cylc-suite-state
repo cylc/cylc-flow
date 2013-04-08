@@ -28,7 +28,8 @@ from cylc.global_config import globalcfg
 from cylc.poll import poller
 
 gcfg = globalcfg()
-default_run_dir = gcfg.cfg['task hosts']['local']['run directory']
+# get the raw value here, with literal '$HOME'
+default_run_dir = gcfg.cfg['tasks']['localhost']['cylc run directory']
 
 class suite_poller( poller ):
     """A polling object that checks suite state."""
