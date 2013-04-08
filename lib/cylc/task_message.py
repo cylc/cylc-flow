@@ -21,7 +21,7 @@
 import os, sys
 import socket
 import subprocess
-import datetime
+from datetime import datetime
 from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
@@ -35,7 +35,10 @@ class message(object):
 
         # Record the time the messaging system was called and append it
         # to the message, in case the message is delayed in some way.
-        self.true_event_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        if os.environ.get('CYLC_UTC') == 'True':
+            self.true_event_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+        else:
+            self.true_event_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
         self.retry_seconds = globals.cfg['task messaging']['retry interval in seconds']
         self.max_tries = globals.cfg['task messaging']['maximum number of tries']
@@ -125,9 +128,9 @@ class message(object):
             
     def now( self ):
         if self.utc:
-            return datetime.datetime.utcnow()
+            return datetime.utcnow()
         else:
-            return datetime.datetime.now()
+            return datetime.now()
 
     def get_proxy( self ):
         # get passphrase here, not in __init__, because it is not needed
