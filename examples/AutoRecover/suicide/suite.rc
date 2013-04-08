@@ -16,6 +16,7 @@ pre => model
 model:fail => diagnose => recover
 model => !diagnose & !recover
 model | recover => post
+post => !model # take out failed models if recovery succeeds
                     """
 [runtime]
     [[model]]
