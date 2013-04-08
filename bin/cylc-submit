@@ -174,8 +174,7 @@ task.task.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( suite
 task.task.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( suite, 'suite work directory' )
 task.task.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( suite, 'suite share directory' )
 # backward compat:
-task.task.cylc_env[ 'CYLC_SUITE_SHARE_PATH'] = gcfg.get_derived_host_item( suite, 'suite share directory' )
-
+task.task.cylc_env[ 'CYLC_SUITE_SHARE_PATH'] = '$CYLC_SUITE_SHARE_DIR'
 
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for event handlers executed

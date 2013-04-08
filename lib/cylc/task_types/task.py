@@ -586,6 +586,10 @@ class task( object ):
         my_cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( self.suite_name, 'suite run directory', self.task_host, self.task_owner )
         my_cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( self.suite_name, 'suite work directory', self.task_host, self.task_owner )
         my_cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( self.suite_name, 'suite share directory', self.task_host, self.task_owner )
+        # TODO - separate these few potentially task-specific suite
+        # environment variables from the rest so that we do not need to
+        # copy the lot of them, and additionally move cylc_env directly
+        # to the jobfile module as it is not needed here anymore.
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
