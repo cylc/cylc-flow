@@ -50,7 +50,7 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, gcylc=False, noforce=False ):
+    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, noforce=False, jset=False ):
 
         # commands that interact with a running suite ("controlcom=True")
         # normally get remote access via Pyro RPC; but optionally
@@ -67,7 +67,7 @@ Arguments:"""
         self.n_optional_args = 0
         self.unlimited_args = False
         self.pyro = pyro
-        self.gcylc = gcylc
+        self.jset = jset
         maxlen = 0
         for arg in argdoc:
             if len(arg[0]) > maxlen:
@@ -143,20 +143,19 @@ Arguments:"""
                         "prompts have been disabled in the site/user config files.",
                         action="store_true", default=False, dest="force" )
 
-        if gcylc or not pyro:
+        if self.jset:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
-                help="Set the value of a template variable in the suite "
-                "definition; can be used multiple times to set multiple "
-                "variables.  WARNING: these settings do not persist "
-                "across restarts, you have to set them again on the "
-                "\"cylc restart\" command line.",
+                help="Set the value of a Jinja2 template variable in the suite "
+                "definition. This option can be used multiple times on the command "
+                "line.  WARNING: these settings do not persist across suite restarts; "
+                "they need to be set again on the \"cylc restart\" command line.",
                 action="append", default=[], dest="templatevars" )
 
             self.add_option( "--set-file", metavar="FILE",
-                help="Set the value of template variables in the suite "
+                help="Set the value of Jinja2 template variables in the suite "
                 "definition from a file containing NAME=VALUE pairs (one per line). "
-                "WARNING: these settings do not persist across restarts, you "
-                "have to set them again on the \"cylc restart\" command line.",
+                "WARNING: these settings do not persist across suite restarts; "
+                "they need to be set again on the \"cylc restart\" command line.",
                 action="store", default=None, dest="templatevars_file" )
 
     def parse_args( self ):
@@ -173,7 +172,7 @@ Arguments:"""
         options.db = foo.get_db_location()
         options.db_owner = foo.get_db_owner()
 
-        if self.gcylc or not self.pyro:
+        if self.jset:
             if options.templatevars_file:
                 options.templatevars_file = os.path.abspath( options.templatevars_file )
 

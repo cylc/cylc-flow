@@ -35,7 +35,7 @@ files held in $CYLC_DIR/conf/suiterc/.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use 
-'cylc view -i,--inline SUITE' for comparison.""" )
+'cylc view -i,--inline SUITE' for comparison.""", jset=True )
 
 parser.add_option( "--strict", 
         help="Fail any use of unsafe or experimental features. "
