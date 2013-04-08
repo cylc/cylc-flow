@@ -81,6 +81,31 @@ class CGraphPlain( pygraphviz.AGraph ):
             self.style_node( r, autoURL, base=True )
             self.style_edge( l, r )
 
+    def add_edges( self, edges ):
+        edges.sort() # TODO: does sorting help layout stability?
+        for e in edges:
+            l, r, dashed, suicide, conditional = e
+            if conditional:
+                if suicide:
+                    style='dashed'
+                    arrowhead='odot'
+                else:
+                    style='solid'
+                    arrowhead='onormal'
+            else:
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                else:
+                    style='solid'
+                    arrowhead='normal'
+            if dashed:
+                # override
+                style='dashed'
+
+            self.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+
+
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
     This class automatically adds node and edge attributes 
@@ -202,5 +227,4 @@ class edge( object):
                 tag = tag
 
         return TaskID( left, tag )
-
 

@@ -59,8 +59,7 @@ suite from the local host requires the suite passphrase to be installed.
 Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
 the remote host before starting the suite."""
 
-        self.parser = cop( usage,
-   argdoc=[("REG", "Suite name"),
+        self.parser = cop( usage, jset=True, argdoc=[("REG", "Suite name"),
    ( "[FILE]", """Optional state dump file, assumed to reside in the
                         suite state dump directory unless an absolute path
                         is given. Defaults to the most recent suite state.""")]) 

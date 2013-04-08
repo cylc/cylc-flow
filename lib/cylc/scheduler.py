@@ -151,9 +151,6 @@ class scheduler(object):
                 help="Do a test run against a previously generated reference log.",
                 action="store_true", default=False, dest="reftest" )
 
-        self.parser.add_option( "--from-gui", help= "(do not use).",
-                action="store_true", default=False, dest="from_gui" )
-
         self.parse_commandline()
 
         gcfg.print_deprecation_warnings()
@@ -272,7 +269,7 @@ class scheduler(object):
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime, self.from_gui )
+        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         # initial cycle time
@@ -823,11 +820,6 @@ class scheduler(object):
         else:
             self.logging_level = logging.INFO
 
-        if self.options.from_gui:
-            self.from_gui = True
-        else:
-            self.from_gui = False
-
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir, 
@@ -849,7 +841,6 @@ class scheduler(object):
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
                 verbose=self.verbose )
-        self.config.create_directories()
 
         if not reconfigure:
             run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )

@@ -115,8 +115,9 @@ See also:
             help="Print lockserver PID, log, and state filenames.",
             action="store_true", dest="get_filenames" )
 
-    parser.add_option( "-t", "--timeout", metavar='SECONDS',
-            help="Set a network connection timeout for Pyro.",
+    parser.add_option( "--pyro-timeout", metavar='SEC',
+            help="Set a timeout for Pyro network connections. The "
+            "default is no timeout.",
             action="store",default=None, dest="pyro_timeout" )
 
     #parser.add_option( "--debug",

@@ -881,7 +881,7 @@ been defined for this suite""").inform()
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
 
-        command = 'cylc control run --from-gui ' + self.cfg.template_vars_opts
+        command = 'cylc control run ' + self.cfg.template_vars_opts
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -894,7 +894,7 @@ been defined for this suite""").inform()
             options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
-            command = 'cylc control restart --from-gui ' + self.cfg.template_vars_opts
+            command = 'cylc control restart ' + self.cfg.template_vars_opts
 
         if mode_live_rb.get_active():
             pass
@@ -902,9 +902,6 @@ been defined for this suite""").inform()
             command += ' --mode=simulation'
         elif mode_dum_rb.get_active():
             command += ' --mode=dummy'
-
-        if self.cfg.pyro_timeout:
-            command += ' --timeout=' + str(self.cfg.pyro_timeout)
 
         ctime = ''
         if method != 'restart':

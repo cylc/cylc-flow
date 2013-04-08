@@ -108,7 +108,7 @@ default configuration values (e.g. the default job submission log
 directory.
 
 Files in the suite bin directory and other sub-directories of the 
-suite definition directory are not currently differenced.""", 
+suite definition directory are not currently differenced.""", jset=True,
     argdoc=[('REG1', 'Suite name'), ('REG1', 'Suite name')] )
 
 parser.add_option( "-n", "--nested", help="print suite.rc "

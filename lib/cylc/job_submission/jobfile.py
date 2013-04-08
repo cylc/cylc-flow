@@ -152,6 +152,8 @@ class jobfile(object):
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
         for var, val in cenv.items():
             BUFFER.write( "\nexport " + var + "=" + str(val) )
+        if str(cenv.get('CYLC_UTC')) == 'True':
+            BUFFER.write( "\nexport TZ=UTC" )
 
         BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )

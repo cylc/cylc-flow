@@ -163,11 +163,11 @@ parser.add_option( "-k", "--display-task", metavar="TASKID",
         "(NAME"+TaskID.DELIM+"TAG).", action="store", default=None, dest="showtask" )
 
 parser.add_option( "-b", "--box",
-        help="Use unicode box characters with the show options.",
+        help="Use unicode box characters with -d, -k.",
         action="store_true", default=False, dest="unicode" )
 
 parser.add_option( "-r", "--raw",
-        help="With -s|--show, print in raw Python format",
+        help="Write out the raw Python config structure, with -d and -k ",
         action="store_true", default=False, dest="raw" )
 
 ( options, args ) = parser.parse_args()
