@@ -304,7 +304,7 @@ class scheduler(object):
                 user, host = None, user_at_host
             # this handles defaulting to localhost:
             task_log_dir = gcfg.get_derived_host_item( self.suite, 'suite job log directory', host, user )
-            r_env_file_path = '%s:%s/cylc-suite-env' % (user_at_host, r_log_dir)
+            r_env_file_path = '%s:%s/cylc-suite-env' % (user_at_host, task_log_dir)
             cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
             if subprocess.call(cmd): # return non-zero
                 raise Exception("ERROR: " + str(cmd))
