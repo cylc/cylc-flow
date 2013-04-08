@@ -43,8 +43,8 @@ class message(object):
         self.msg = msg
 
         env_map = dict(os.environ)
-        job_log_d = os.path.dirname(os.environ.get('CYLC_TASK_LOG_ROOT', '.'))
-        env_file_path = os.path.join(job_log_d, 'cylc-suite-env')
+        env_file_path_d = os.environ.get('CYLC_SUITE_RUN_DIR', '.')
+        env_file_path = os.path.join(env_file_path_d, 'cylc-suite-env')
         if os.access(env_file_path, os.F_OK | os.R_OK):
             for line in open(env_file_path):
                 key, value = line.strip().split('=', 1)
