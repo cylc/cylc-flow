@@ -178,7 +178,7 @@ if (($# > 0)) && [[ $1 == '--write-suite-env' ]]; then
             BUFFER.write( "\n        echo \"%(var)s=$%(var)s\"" %
                           {"var": var} )
         BUFFER.write( r"""
-    } >$(dirname $CYLC_TASK_LOG_ROOT)/cylc-suite-env
+    } >$CYLC_SUITE_RUN_DIR/cylc-suite-env
     trap '' EXIT
     exit
 fi

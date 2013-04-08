@@ -348,8 +348,9 @@ the remote host before starting the suite."""
                 itask.prerequisites.set_all_satisfied()
                 c = itask.db.connect()
                 c.execute(r"""
-                        SELECT host FROM task_events
-                        WHERE name==? AND cycle==? AND host!=""
+                        SELECT misc FROM task_events
+                        WHERE name==? AND cycle==? AND
+                              event=="submission succeeded" AND misc!=""
                         ORDER BY submit_num DESC LIMIT 1""", (name, tag))
                 row = c.fetchone()
                 if row and row[0]:
