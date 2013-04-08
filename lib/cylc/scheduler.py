@@ -815,7 +815,6 @@ class scheduler(object):
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
                 verbose=self.verbose )
-        self.config.create_directories()
 
         if not reconfigure:
             run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )

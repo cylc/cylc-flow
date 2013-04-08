@@ -794,16 +794,10 @@ class config( CylcConfigObj ):
         print_tree( tree, padding=padding, use_unicode=pretty )
 
     def process_directories(self):
-        # Environment variable interpolation in directory paths.
         os.environ['CYLC_SUITE_REG_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['visualization']['runtime graph']['directory'] = expandvars( self['visualization']['runtime graph']['directory'], self.owner)
-
-        # suite config dir is not user-configurable as some processes
-        # need to know where it is without parsing the suite definition:
-        self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
-
 
     def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         trig = triggerx(task_name)
@@ -978,15 +972,6 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, n,
                 print >> sys.stderr, ''
  
-    def create_directories( self, task=None ):
-        dirs = [ self.suite_config_dir ]
-        for d in dirs:
-            try:
-                mkdir_p( d )
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, illegal dir? ' + d
-        
     def get_filename( self ):
         return self.file
 
