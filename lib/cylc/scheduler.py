@@ -291,7 +291,7 @@ class scheduler(object):
 
         self.configure_environments()
 
-        task_log_dir = gcfg.get_task_log_dir( self.suite )
+        task_log_dir = gcfg.get_derived_host_item( self.suite, 'suite job log directory' )
         env_file_path = os.path.join(task_log_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
         for key, value in task.task.cylc_env.items():
@@ -302,10 +302,8 @@ class scheduler(object):
                 user, host = user_at_host.split('@', 1)
             else:
                 user, host = None, user_at_host
-            try:
-                r_log_dir = gcfg.get_task_log_dir(self.suite, host, user)
-            except KeyError:
-                r_log_dir = gcfg.get_task_log_dir(self.suite, 'local')
+            # this handles defaulting to localhost:
+            task_log_dir = gcfg.get_derived_host_item( self.suite, 'suite job log directory', host, user )
             r_env_file_path = '%s:%s/cylc-suite-env' % (user_at_host, r_log_dir)
             cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
             if subprocess.call(cmd): # return non-zero
