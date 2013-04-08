@@ -167,7 +167,6 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR # back compat") 
-        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_SHARE_DIR # back compat")
 
         BUFFER.write( r"""
 
