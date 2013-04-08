@@ -41,8 +41,9 @@ where output x of foo may also have an offset:
 (b) is an "intrinsic offset"
     """
 
-    def __init__(self, name ):
-        self.name = name
+    def __init__(self, left, right ):
+        self.left = left
+        self.right = right
         self.msg = None
         self.intrinsic_offset = None
         self.evaluation_offset = None
@@ -52,11 +53,16 @@ where output x of foo may also have an offset:
         self.async_repeating = False
         self.asyncid_pattern = None
         self.startup = False
+        self.spec_ct = None
         self.suicide = False
     def set_suicide( self, suicide ):
         self.suicide = suicide
     def set_startup( self ):
         self.startup = True
+    def set_spec( self, spec_ct ):
+        self.spec_ct = str(spec_ct)
+        print   '   >', spec_ct
+
     def set_async_oneoff( self ):
         self.async_oneoff = True
     def set_async_repeating( self, pattern ):
@@ -75,11 +81,19 @@ where output x of foo may also have an offset:
             self.intrinsic_offset = int(offset)
     def set_type( self, type ):
         if type not in [ 'started', 'succeeded', 'failed' ]:
-            raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
+            raise TriggerXError, 'ERROR, ' + self.left + ', illegal trigger type: ' + type
         self.type = type
+
     def set_offset( self, offset ):
         self.evaluation_offset = int( offset )
+
     def get( self, ctime, cycler ):
+        print 'TRIGGER GET', self.left, self.right
+
+        if self.spec_ct:
+            if ctime != self.spec_ct:
+                return None
+
         if self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
@@ -97,6 +111,8 @@ where output x of foo may also have an offset:
                 # implicit output
                 if self.evaluation_offset:
                     ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = self.name + TaskID.DELIM + ctime + ' ' + self.type
+                elif self.spec_ct:
+                    ctime = self.spec_ct
+                preq = self.left + TaskID.DELIM + ctime + ' ' + self.type
         return preq
 

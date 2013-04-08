@@ -16,27 +16,29 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.cycle_time import at
 from cylc.cycling.base import cycler
 
-class async( cycler ):
-    is_async = True
+class ct_oneoff( cycler ):
     @classmethod
     def offset( cls, tag, n ):
-        return str(int(tag)-int(n))
- 
-    def __init__( self, *args ):
-        pass
+        return None
+
+    def __init__( self, ctime ):
+        # TODO: HANDLE ALLOWED CTIME FORMATS PROPERLY
+        self.ctime = ctime
 
     def get_min_cycling_interval( self ):
         return None
 
     def next( self, tag ):
-        return str( int(tag) + 1 )
+        return None
 
     def initial_adjust_up( self, tag ):
-        return self.intial_tag
+        return self.ctime
 
     def valid( self, tag ):
+        #return tag == self.ctime
+        # TODO - IN TASKDEF.PY THE CYC.VALID TEST PREVENTS USE OF PREQS
+        # FOR THESE TASKS IF WE USE TAG == SELF.CTIME HERE.
         return True
 

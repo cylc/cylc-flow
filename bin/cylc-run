@@ -119,14 +119,19 @@ the remote host before starting the suite."""
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
         for name in task_list:
-            if name in self.asynchronous_task_list:
-                tag = '1' # asynchronous tasks start with tag = 1
-            else:
-                if self.start_tag:
-                    tag = self.start_tag
-                else:
-                    # no initial cycle time: we can't load cycling tasks
-                    continue
+            #if name in self.config.initial_tasks:
+            #    tag = str(self.config['scheduling']['initial cycle time'])
+            #elif name in self.config.final_tasks:
+            #    tag = str(self.config['scheduling']['final cycle time'])
+            #elif name in self.asynchronous_task_list:
+            #if name in self.asynchronous_task_list:
+            #    tag = '1' # asynchronous tasks start with tag = 1
+            #else:
+            #    if self.start_tag:
+            tag = self.start_tag
+            #    else:
+            #        # no initial cycle time: we can't load cycling tasks
+            #        continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True )
             # check stop cycle in case the user has set a very quick stop
             if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):

@@ -101,6 +101,10 @@ class config( CylcConfigObj ):
         self.async_oneoff_tasks = []
         self.async_repeating_edges = []
         self.async_repeating_tasks = []
+        self.initial_tasks = {}
+        self.final_tasks = {}
+        self.once_tasks = {}
+
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
@@ -805,13 +809,14 @@ class config( CylcConfigObj ):
         self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
 
 
-    def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
-        trig = triggerx(task_name)
+    def set_trigger( self, section, left, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
+        print 'SET_TRIGGER', section, left, right
+        trig = triggerx(left,right)
         trig.set_suicide(suicide)
         if output_name:
             try:
                 # check for internal outputs
-                trig.set_special( self['runtime'][task_name]['outputs'][output_name] )
+                trig.set_special( self['runtime'][left]['outputs'][output_name] )
             except KeyError:
                 # There is no matching output defined under the task runtime section 
                 if output_name == 'fail':
@@ -825,7 +830,7 @@ class config( CylcConfigObj ):
                     trig.set_type('succeeded')
                 else:
                     # ERROR
-                    raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
+                    raise SuiteConfigError, "ERROR: '" + left + "' does not define output '" + output_name  + "'"
             else:
                 # There is a matching output defined under the task runtime section
                 if self.run_mode != 'live':
@@ -838,22 +843,34 @@ class config( CylcConfigObj ):
         if offset:
             trig.set_offset(offset)
              
-        if task_name in self.async_oneoff_tasks:
+        # TODO - COMPLETE ALL REQUIRED PAIR COMBOS (INITIAL, CYCLING) ETC.
+
+        if left in self.async_oneoff_tasks:
             trig.set_async_oneoff()
-        elif task_name in self.async_repeating_tasks:
+
+        elif left in self.async_repeating_tasks:
             trig.set_async_repeating( asyncid_pattern)
             if trig.suicide:
-                raise SuiteConfigError, "ERROR, '" + task_name + "': suicide triggers not implemented for repeating async tasks"
+                raise SuiteConfigError, "ERROR, '" + left + "': suicide triggers not implemented for repeating async tasks"
             if trig.type:
-                raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
-        elif task_name in self.cycling_tasks:
+                raise SuiteConfigError, "ERROR, '" + left + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
+
+        elif left in self.cycling_tasks:
             trig.set_cycling()
- 
+
+        # TODO - DO INTIIAL, FINAL, ONCE TASKS, NEED TO BE 'cycling' TASKS?
+        # TODO - (WHAT ABOUT CYCLE RANGE TASKS?!)
+
+        # NOTE - SINGLE AND FINAL ON RHS DOES NOT REQUIRE SPECIAL TRIGGER TREATMENT
+
+        if left in self.initial_tasks:
+            trig.set_spec( self.initial_tasks[left] )
+        
         if right in self.cycling_tasks and \
-            (task_name in self['scheduling']['special tasks']['start-up'] or \
-                 task_name in self.async_oneoff_tasks ):
+            (left in self['scheduling']['special tasks']['start-up'] or \
+                 left in self.async_oneoff_tasks ):
                 # cycling tasks only depend on these tasks at startup
-                trig.set_startup()
+                trig.set_startup() # TODO - JUST USE SET_SPEC() IN TRIGGER INTERNALS!
 
         return trig
 
@@ -869,6 +886,9 @@ class config( CylcConfigObj ):
         #       contains tasks that will be used, defined by the graph.
         # Tasks (a) may be defined but not used (e.g. commented out of the graph)
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
+
+        print 'DISABLED CHECK_TASKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        return
 
         if self.verbose:
             print "Checking for defined tasks not used in the graph"
@@ -906,6 +926,7 @@ class config( CylcConfigObj ):
             for name in self.tasks_by_cycler[cyclr]:
                 # instantiate one of each task appearing in this section
                 type = self.taskdefs[name].type
+                cyclr.dump() 
                 if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
                     tag = cyclr.initial_adjust_up( '2999010100' )
                 else:
@@ -1046,9 +1067,9 @@ class config( CylcConfigObj ):
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section ):
-        # Extract dependent pairs from the suite.rc textual dependency
-        # graph to use in constructing graphviz graphs.
+    def process_graph_line( self, line, section, cyclr ):
+        # Extract dependent pairs from the suite.rc dependency graph.
+        # Used to define graphs for visualization, and triggers for taskdefs.
 
         # 'A => B => C'    : [A => B], [B => C]
         # 'A & B => C'     : [A => C], [B => C]
@@ -1064,35 +1085,17 @@ class config( CylcConfigObj ):
         #  An 'or' on the right side is an ERROR:
         #  'A = > B | C' # ?!
 
+        # SECTIONS:
+        #
+        # (no section): int_oneoff
+        #
+        # [[initial]]: ct_oneoff # ct = "cycle time"
+        # [[CYCLER(args)]]: ct_cycling # (and eventually integer cycling)
+        # [[final]]: ct_oneoff
+        #
+        # [[ASYNCID...]]: asynchronous repeating (satellite...)
+
         orig_line = line
-
-        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        if section == "once":
-            ttype = 'async_oneoff'
-            modname = 'async'
-            args = []
-        elif re.match( '^ASYNCID:', section ):
-            ttype = 'async_repeating'
-            modname = 'async'
-            args = []
-        else:
-            ttype = 'cycling'
-            # match cycler, e.g. "Yearly( 2010, 2 )"
-            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
-            if m:
-                modname, cycargs = m.groups()
-                # remove leading and trailing space
-                cycargs = cycargs.strip()
-                arglist = re.sub( '\s+$', '', cycargs )
-                # split on comma with optional space each side
-                args = re.split( '\s*,\s*', arglist )
-            else:
-                modname = self['scheduling']['cycling']
-                args = re.split( ',\s*', section )
-
-        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
-        cyclr = getattr( mod, modname )(*args)
-        self.cyclers.append(cyclr)
 
         ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed' (NOT USED)
         ## we can replace synonyms here with the standard type designator:
@@ -1164,7 +1167,7 @@ class config( CylcConfigObj ):
         #     arrow = tokens[1::2]                       # [=>, =x]
 
         # Check for missing task names, e.g. '=> a => => b =>; this
-        # results in empty or blank strings in the list of task names.
+        # would result in empty or blank strings in the list of task names.
         arrowerr = False
         for task in tasks:
             if re.match( '^\s*$', task ):
@@ -1174,6 +1177,11 @@ class config( CylcConfigObj ):
             print >> sys.stderr, orig_line
             raise SuiteConfigError, "ERROR: missing task name in graph line?"
 
+        asyncid_pattern = None
+        if section.startswith('ASYNCID'): 
+            m = re.match( '^ASYNCID:(.*)$', section )
+            asyncid_pattern = m.groups()[0]
+ 
         # get list of pairs
         for i in [0] + range( 1, len(tasks)-1 ):
             lexpression = tasks[i]
@@ -1220,7 +1228,7 @@ class config( CylcConfigObj ):
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
-            if section == 'once':
+            if section is 'initial':
                 # Consistency check: synchronous special tasks are
                 # not allowed in asynchronous graph sections.
                 spec = self['scheduling']['special tasks']
@@ -1235,41 +1243,18 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, ' ', ', '.join(bad)
                     raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
 
-            for rt in rights:
-                # foo => '!bar' means task bar should suicide if foo succeeds.
+            for r in rights:
                 suicide = False
-                if rt and rt.startswith('!'):
-                    r = rt[1:]
+                if r and r.startswith('!'):
+                    r = r[1:]
                     suicide = True
-                else:
-                    r = rt
-
-                asyncid_pattern = None
-                if ttype != 'cycling':
-                    for n in lnames + [r]:
-                        if not n:
-                            continue
-                        try:
-                            name = graphnode( n ).name
-                        except GraphNodeError, x:
-                            print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)
-                        if ttype == 'async_oneoff':
-                            if name not in self.async_oneoff_tasks:
-                                self.async_oneoff_tasks.append(name)
-                        elif ttype == 'async_repeating': 
-                            if name not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(name)
-                            m = re.match( '^ASYNCID:(.*)$', section )
-                            asyncid_pattern = m.groups()[0]
-               
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
-                self.generate_taskdefs( orig_line, lnames, r, ttype, section, cyclr, asyncid_pattern )
-                self.generate_triggers( lexpression, lnames, r, cyclr, asyncid_pattern, suicide )
+                    self.generate_edges( lexpression, lnames, r, section, cyclr, suicide )
+                self.generate_taskdefs( orig_line, lnames, r, section, cyclr, asyncid_pattern )
+                self.generate_triggers( lexpression, lnames, r, section, cyclr, asyncid_pattern, suicide )
 
-    def generate_edges( self, lexpression, lnames, right, ttype, cyclr, suicide=False ):
+    def generate_edges( self, lexpression, lnames, right, section, cyclr, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
         if re.search( '\|', lexpression ):
@@ -1281,17 +1266,18 @@ class config( CylcConfigObj ):
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
             e = graphing.edge( left, right, cyclr, sasl, suicide, conditional )
-            if ttype == 'async_oneoff':
+            if section == 'int_oneoff':
                 if e not in self.async_oneoff_edges:
                     self.async_oneoff_edges.append( e )
-            elif ttype == 'async_repeating':
+            elif section.startswith( 'ASYNCID'):
                 if e not in self.async_repeating_edges:
                     self.async_repeating_edges.append( e )
             else:
                 # cycling
                 self.edges.append(e)
 
-    def generate_taskdefs( self, line, lnames, right, ttype, section, cyclr, asyncid_pattern ):
+    def generate_taskdefs( self, line, lnames, right, section, cyclr, asyncid_pattern ):
+        print 'generate taskdefs SECTION', section, lnames, right
         for node in lnames + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
@@ -1327,21 +1313,42 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, line
                     raise SuiteConfigError, str(x)
 
-            # TO DO: setting type should be consolidated to get_taskdef()
-            if name in self.async_oneoff_tasks:
-                # this catches oneoff async tasks that begin a repeating
-                # async section as well.
-                self.taskdefs[name].type = 'async_oneoff'
-            elif ttype == 'async_repeating':
-                self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self['scheduling']['dependencies'][section]['daemon']:
-                    self.taskdefs[name].type = 'async_daemon'
-                else:
-                    self.taskdefs[name].type = 'async_repeating'
-            elif ttype == 'cycling':
-                self.taskdefs[name].cycling = True
-                if name not in self.cycling_tasks:
-                    self.cycling_tasks.append(name)
+            # TODO: CHECK other task types (oneoff,cycling) beginning a
+            # repeating async section
+
+            if not self.taskdefs[name].type:
+                # If already set this task has been met in a previous
+                # graph section - this is why we process sections in the
+                # right order.
+                if section == 'int_oneoff': 
+                    # all tasks here are int_oneoff
+                    self.taskdefs[name].type = 'async_oneoff'
+                    if name not in self.async_oneoff_tasks:
+                        self.async_oneoff_tasks.append(name)
+                elif asyncid_pattern:
+                    # other task types in this section, if any, are processed first
+                    if not self.taskdefs[name].type:
+                        self.taskdefs[name].asyncid_pattern = asyncid_pattern
+                        if name == self['scheduling']['dependencies'][section]['daemon']:
+                            self.taskdefs[name].type = 'async_daemon'
+                        else:
+                            self.taskdefs[name].type = 'async_repeating'
+                        if name not in self.async_repeating_tasks:
+                            self.async_repeating_tasks.append(name)
+                else: # initial, cycling, single, final
+                    self.taskdefs[name].cycling = True
+                    self.taskdefs[name].type = 'free'
+                    if name not in self.cycling_tasks:
+                        self.cycling_tasks.append(name)
+                    if section is 'initial':
+                        self.taskdefs[name].modifiers.append( 'oneoff' )
+                        self.initial_tasks[name] = str(self['scheduling']['initial cycle time'])
+                    elif section is 'final':
+                        self.taskdefs[name].modifiers.append( 'oneoff' )
+                        self.final_tasks[name] = str(self['scheduling']['final cycle time'])
+                    elif section.startswith( "once:" ):
+                        self.taskdefs[name].modifiers.append( 'oneoff' )
+                        self.once_tasks[name] = str(section[5:])
 
             if offset:
                 cyc = deepcopy( cyclr )
@@ -1359,6 +1366,7 @@ class config( CylcConfigObj ):
                         outp = outputx(msg,cyclr)
                         self.taskdefs[ name ].outputs.append( outp )
 
+            # TODO: ONLY NEEDED FOR VALIDATION?:
             # collate which tasks appear in each section
             # (used in checking conditional trigger expressions)
             if cyclr not in self.tasks_by_cycler:
@@ -1367,7 +1375,7 @@ class config( CylcConfigObj ):
                 self.tasks_by_cycler[cyclr].append(name)
 
 
-    def generate_triggers( self, lexpression, lnames, right, cycler, asyncid_pattern, suicide ):
+    def generate_triggers( self, lexpression, lnames, right, section, cycler, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -1386,7 +1394,7 @@ class config( CylcConfigObj ):
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
 
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, asyncid_pattern, suicide )
+            trigger = self.set_trigger( section, lnode.name, right, lnode.output, lnode.offset, asyncid_pattern, suicide )
             if not trigger:
                 continue
             if not conditional:
@@ -1635,14 +1643,14 @@ class config( CylcConfigObj ):
         if self.verbose:
             print "Parsing the dependency graph"
 
+        sections = {}
+
         self.graph_found = False
         for item in self['scheduling']['dependencies']:
             if item == 'graph':
-                # asynchronous graph
                 graph = self['scheduling']['dependencies']['graph']
                 if graph:
-                    section = "once"
-                    self.parse_graph( section, graph )
+                    sections[ "int_oneoff" ] = graph
             else:
                 try:
                     graph = self['scheduling']['dependencies'][item]['graph']
@@ -1650,12 +1658,71 @@ class config( CylcConfigObj ):
                     pass
                 else:
                     if graph:
-                        section = item
-                        self.parse_graph( section, graph )
- 
+                        sections[item] = graph
+
+        # ensure we process graph sections in the right order
+        if 'int_oneoff' in sections:
+            self.parse_graph( 'int_oneoff', sections['int_oneoff'] )
+        if 'initial' in sections:
+            self.parse_graph( 'initial', sections['initial'] )
+        for section, graph in sections.items():
+            if section in [ 'int_oneoff', 'initial', 'final'] or \
+                    section.startswith('once:'):
+                continue
+            self.parse_graph( section, graph )
+        for section, graph in sections.items():
+            if section.startswith( 'once:' ):
+                # any task here is single, unless cycling (or initial?)
+                self.parse_graph( section, graph )
+        if 'final' in sections:
+            # any task here is final, unless cycling (or initial?)
+            self.parse_graph( 'final', sections['final'] )
+
+        print 'NUMBER OF CYCLERS:'
+        for name, df in self.taskdefs.items():
+            print name, len( df.cyclers ), df.modifiers
+
+
     def parse_graph( self, section, graph ):
+        # define a cycler for this section and then process the section
+        # graph line by line.
+        args = []
+        if section == "int_oneoff":
+            modname = 'async'
+            args = [1]
+        elif section.startswith( 'ASYNCID:'):
+            modname = 'async'
+        elif section is 'initial':
+            modname = 'ct_oneoff'
+            args = [ str(self['scheduling']['initial cycle time']) ]
+        elif section is 'final':
+            modname = 'ct_oneoff'
+            args = [ str(self['scheduling']['final cycle time']) ]
+        elif section.startswith('once:'):
+            modname = 'ct_oneoff'
+            args = [ section[5:] ]
+        else:
+            # cycler
+            # match cycler, e.g. "Yearly( 2010, 2 )"
+            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
+            if m:
+                modname, cycargs = m.groups()
+                # remove leading and trailing space
+                cycargs = cycargs.strip()
+                arglist = re.sub( '\s+$', '', cycargs )
+                # split on comma with optional space each side
+                args = re.split( '\s*,\s*', arglist )
+            else:
+                modname = self['scheduling']['cycling']
+                args = re.split( ',\s*', section )
+
+        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
+        cyclr = getattr( mod, modname )(*args)
+        self.cyclers.append(cyclr)
+
         self.graph_found = True
-        # split the graph string into successive lines
+
+        # process the graph string line by line
         lines = re.split( '\s*\n\s*', graph )
         for xline in lines:
             # strip comments
@@ -1663,11 +1730,10 @@ class config( CylcConfigObj ):
             # ignore blank lines
             if re.match( '^\s*$', line ):
                 continue
-            # strip leading or trailing spaces
-            line = re.sub( '^\s*', '', line )
-            line = re.sub( '\s*$', '', line )
+            # strip leading and trailing whitespace
+            line = line.strip()
             # generate pygraphviz graph nodes and edges, and task definitions
-            self.process_graph_line( line, section )
+            self.process_graph_line( line, section, cyclr )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
@@ -1698,8 +1764,6 @@ class config( CylcConfigObj ):
         # (TO DO - can we identify these tasks from the graph?)
         elif name in self['scheduling']['special tasks']['explicit restart outputs']:
             taskd.type = 'tied'
-        else:
-            taskd.type = 'free'
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:

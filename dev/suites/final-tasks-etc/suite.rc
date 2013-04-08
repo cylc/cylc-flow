@@ -1,0 +1,20 @@
+
+# Suite for implementation testing of initial, once, and final tasks.
+# We might also need:
+#    [[[0,6,12,18:<START>]]] - start cycling at START
+#    [[[0,6,12,18:<START>:<STOP>]]] - cycle between START and STOP
+# (and similar for other cycling modules)
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time = 2010080818
+    [[dependencies]]
+        [[[initial]]]
+            graph = "start"
+        [[[0,6,12,18]]]
+            graph = "start => a => b"
+        [[[once:2010080812]]]
+            graph = "b => one"
+        [[[final]]]
+            graph = "b => x => y"
+
