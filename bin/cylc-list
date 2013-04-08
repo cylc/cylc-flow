@@ -37,7 +37,7 @@ for each namespace:
 The first-parent inheritance graph determines the primary task family
 groupings that are collapsible in gcylc suite views and the graph
 viewer tool. To visualize the full multiple inheritance hierarchy use:
-  'cylc graph -n'.""" )
+  'cylc graph -n'.""", jset=True )
 
 parser.add_option( "-a","--all-tasks",
         help="Print all tasks, not just those used in the graph.",

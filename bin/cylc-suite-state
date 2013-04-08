@@ -79,9 +79,7 @@ Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.
 
 The command can be run in polling mode with the --wait option.""")
 
-parser.remove_option("-s")
 parser.remove_option("--db")
-parser.remove_option("--set-file")
 parser.remove_option("--debug")
 
 parser.add_option( "-t", "--task", 

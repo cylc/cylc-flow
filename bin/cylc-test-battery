@@ -20,16 +20,13 @@ usage() {
     cat <<eof
 USAGE: cylc [admin] test-battery [options] [TOPDIR]
 
-Run a battery of self-diagnosing test-suites. Test batteries should be
-kept in a directory tree. Change TOPDIR to target a sub-tree or a single
-test suite. TOPDIR defaults to \$CYLC_DIR/tests/, the location of the
-official cylc reference tests.
+Run a battery of self-diagnosing test-suites held under TOPDIR, which
+defaults to \$CYLC_DIR/tests/.
 
-Directory paths containing the word 'hidden' will be ignored. This can
-be used to hide sub-suites that are started by test-suites and not
-intended as standalone tests (this is how to handle tests that are
-supposed to cause a suite to fail: put them in a hidden sub-suite and
-have the calling task in the main suite check for the expected result).
+Paths under TOPDIR containing 'hidden' are ignored; this can be used to
+hide sub-suites not intended as standalone tests (e.g. tests that
+deliberately cause a suite to fail can be run as sub-suites for which 
+the main suite calling tasks check for the expected results).
 
 Some of the official test suites submit test jobs to a task host and
 user account taken from the environment:
@@ -38,27 +35,37 @@ user account taken from the environment:
 These default to localhost and \$USER. Passwordless ssh must be
 configured to the task host account (even if it is local).
 
-For more information see \"Reference Tests\" in the User Guide.
+Log files and suite run directories are automatically cleaned up on the
+suite host, but not on remote task hosts.
+
+For more information see "Reference Tests" in the User Guide.
 
 Options:
   -h, --help   Print this help message and exit.
   -p           Run *all* of the test suites under TOPDIR in parallel
   -n N,        Repeat the whole test battery N times, stopping at the
                first failure (use to find intermittent problems).
+  -x           Do not clean up after successful tests (reg, logs).
 eof
 }
 
 tally() {
     RET=$1
     if (( $RET == 0 )); then
-        echo " ok"
+        echo "ok"
         N_PASSED=$(( N_PASSED + 1 ))
-        PASSED="$PASSED $NAME"
+        PASS[$NAME]=true
     else
         echo "FAILED"
         N_FAILED=$(( N_FAILED + 1 ))
-        FAILED="$FAILED $NAME"
+        PASS[$NAME]=false
     fi
+}
+
+inform() {
+    echo "${INDENT}${I}. $NAME"
+    echo "${INDENT}${INDENT} ${LOGS[$NAME]}"
+    echo -n "${INDENT}${INDENT} ${SLOG[$NAME]} ... "
 }
 
 # handle long --help
@@ -70,23 +77,27 @@ fi
 N=1
 ITERATE=false
 PARALLEL=false
-while getopts "phn:" opt; do
+CLEANUP=true
+while getopts "pxhn:" opt; do
     case $opt in 
         h )
-        usage
-        exit 0
-        ;;
+            usage
+            exit 0
+            ;;
         p )
-        PARALLEL=true
-        ;;
+            PARALLEL=true
+            ;;
+        x )
+            CLEANUP=false
+            ;;
         n )
-        N=$OPTARG
-        ITERATE=true
-        ;;
+            N=$OPTARG
+            ITERATE=true
+            ;;
         ? )
-        usage
-        exit 0
-        ;;
+            usage
+            exit 0
+            ;;
     esac
 done
 
@@ -143,8 +154,11 @@ cylc unreg -df ${REG_GROUP}'.*' > /dev/null
 CWD=$PWD
 cd $TARGET_DIR
 COUNT=0
-declare -a NAMES
-declare -a LOGS
+declare -A PIDS
+declare -A LOGS # test logs
+declare -A SLOG # suite logs
+declare -A PRTS # port files
+declare -A PASS
 echo -n "Registering and validating test suites "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
@@ -152,8 +166,10 @@ for RC in $( find . -name 'suite.rc' ); do
     echo -n "."
     DIR=$(dirname $RC)
     NAME=${UNIQ}.$(echo ${DIR#./} | tr '/' '.')
-    NAMES[$COUNT]=$NAME
-    LOGS[$COUNT]=$(dirname $PWD)/${NAME}.log
+    LOGS[$NAME]=$(dirname $PWD)/${NAME}.log
+    # determine suite log and port directories
+    SLOG[$NAME]=$( cylc get-global-config | grep 'run directory' | sed -e 's/.*= //' )/$NAME
+    PRTS[$NAME]=$( cylc get-global-config | grep 'ports directory' | sed -e 's/.*= //' )/$NAME
     cylc db reg $NAME $DIR > /dev/null || exit 1
     if ! cylc validate $NAME > /dev/null; then
         echo "ERROR: validation failed for $RC"
@@ -166,8 +182,6 @@ echo " ok"
 N_TOTAL=$COUNT
 
 cd ..
-
-declare -a PIDS
 
 ITER=1
 TOTAL=$N
@@ -184,70 +198,77 @@ while (( N > 0 )); do
         echo " ..."
     fi
 
-N_FAILED=0
-N_PASSED=0
-PASSED=""
-FAILED=""
+    N_FAILED=0
+    N_PASSED=0
 
-if $PARALLEL; then
-    for I in $( seq 0 $(( ${#NAMES[@]}-1 )) ); do
-        # run all tests in the background
-        cylc run --reference-test --debug ${NAMES[$I]} > ${LOGS[$I]} 2>&1 &
-        PIDS[$I]=$!
-    done
-    for I in $( seq 0 $(( ${#PIDS[@]}-1 )) ); do
-        # wait on all tests in turn
-        PID=${PIDS[$I]}
-        NAME=${NAMES[$I]}
-        LOG=${LOGS[$I]}
-        echo -n "${INDENT}$((I+1)). $NAME ($LOG) ..."
-        wait $PID
-        tally $?
-    done
-else
-    for I in $( seq 0 $(( ${#NAMES[@]}-1 )) ); do
-        # run and wait on all tests in the foreground
-        echo -n "${INDENT}$((I+1)). ${NAMES[$I]} (${LOGS[$I]}) ..."
-        cylc run --reference-test --debug ${NAMES[$I]} > ${LOGS[$I]} 2>&1
-        tally $?
-    done
-fi
+    if $PARALLEL; then
+        for NAME in ${!LOGS[@]}; do
+            # run all tests in the background
+            cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
+            PIDS[$NAME]=$!
+        done
+        I=0
+        for NAME in ${!LOGS[@]}; do
+            # wait on all tests in turn
+            I=$(( I + 1 ))
+            inform
+            wait ${PIDS[$NAME]}
+            tally $?
+        done
+    else
+        I=0
+        for NAME in ${!LOGS[@]}; do
+            # run and wait on all tests in the foreground
+            I=$(( I + 1 ))
+            inform
+            cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
+            tally $?
+        done
+    fi
 
+    echo "${INDENT}SUMMARY:"
+    if (( N_PASSED == N_TOTAL )); then
+        echo "${INDENT} + all $N_TOTAL tests passed"
+    elif (( N_FAILED == N_TOTAL )); then
+        echo "${INDENT} + all $N_TOTAL tests FAILED"
+        # exit loop
+        break
+    else
+        echo "${INDENT}+ $N_FAILED of $N_TOTAL tests FAILED"
+        echo "${INDENT}+ $N_PASSED of $N_TOTAL tests passed"
+        # exit loop
+        break
+    fi
 
-echo "${INDENT}SUMMARY:"
-if (( N_PASSED == N_TOTAL )); then
-    echo "${INDENT} + all $N_TOTAL tests passed"
-elif (( N_FAILED == N_TOTAL )); then
-    echo "${INDENT} + all $N_TOTAL tests FAILED"
-    # exit loop
-    break
-else
-    echo "${INDENT}+ $N_FAILED of $N_TOTAL tests FAILED"
-    echo "${INDENT}+ $N_PASSED of $N_TOTAL tests passed"
-    # exit loop
-    break
-fi
-
-N=$(( N-1 ))
+    N=$(( N-1 ))
 done
 
-# unregister successful suites
-for REG in $PASSED; do
-    cylc unreg -df $REG > /dev/null
-done
-
-if (( N_FAILED != 0 )); then
-    echo
-    echo "${INDENT}Retained failed suite registrations for inspection:"
-    for REG in $FAILED; do
-        echo "${INDENT} + $REG"
+if $CLEANUP; then
+    echo -n "${INDENT}Cleaning up successful tests ... "
+    for NAME in ${!LOGS[@]}; do
+        if ${PASS[$NAME]}; then
+            # unregister
+            cylc unreg -df $NAME > /dev/null
+            # test log
+            rm ${LOGS[$NAME]} > /dev/null 2>&1
+            # suite log (use '*' to get hidden sub-suites too)
+            rm -r ${SLOG[$NAME]}* > /dev/null 2&>1
+        else
+            # clean up port files left by aborted or killed tests
+            rm ${PRTS[$NAME]}* > /dev/null 2&>1
+        fi
     done
-fi
+    echo "ok"
+    if (( N_FAILED != 0 )); then
+        echo "${INDENT}NOTE: retained registrations and logs for $N_FAILED failed tests"
+    fi
+else
+    echo "${INDENT}NOTE: retained registrations and logs for ALL tests (-x)"
+fi 
 
 echo
 if (( N_FAILED != 0 )); then
     echo "ERROR: test battery failed"
-    echo
     exit 1
 fi
 

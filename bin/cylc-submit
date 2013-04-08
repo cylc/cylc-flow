@@ -56,7 +56,7 @@ same registration, and only if the task is not locked (i.e. only if
 the same task, NAME.TAG, is not currently running in the suite)."""
 
 def commandline_parser():
-    parser = cop( usage, 
+    parser = cop( usage, jset=True,
             argdoc=[ ("REG", "Suite name"),
                 ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
 
@@ -104,7 +104,6 @@ try:
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             verbose=options.verbose )
-    config.create_directories( task_name )
 except Exception,x:
     if options.debug:
         raise
@@ -144,32 +143,38 @@ clocktriggered.clocktriggered.clock = dclock
 task.task.suite = suite
 
 # CYLC EXECUTION ENVIRONMENT
-cylcenv = OrderedDict()
-cylcenv[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
+task.task.cylc_env[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
 if options.sched:
-    cylcenv[ 'CYLC_MODE' ] = 'scheduler'
+    task.task.cylc_env[ 'CYLC_MODE' ] = 'scheduler'
 else:
-    cylcenv[ 'CYLC_MODE' ] = 'submit'
-cylcenv[ 'CYLC_DEBUG' ] = str( options.debug )
-cylcenv[ 'CYLC_VERBOSE' ] = str(options.verbose)
-cylcenv[ 'CYLC_SUITE_HOST' ] = suite_host
-cylcenv[ 'CYLC_SUITE_PORT' ] = 'None'
-cylcenv[ 'CYLC_SUITE_NAME' ] = suite
-cylcenv[ 'CYLC_SUITE_REG_NAME' ] = suite # back compat
-cylcenv[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
+    task.task.cylc_env[ 'CYLC_MODE' ] = 'submit'
+task.task.cylc_env[ 'CYLC_DEBUG' ] = str( options.debug )
+task.task.cylc_env[ 'CYLC_VERBOSE' ] = str(options.verbose)
+task.task.cylc_env[ 'CYLC_SUITE_HOST' ] = suite_host
+task.task.cylc_env[ 'CYLC_SUITE_PORT' ] = 'None'
+task.task.cylc_env[ 'CYLC_SUITE_NAME' ] = suite
+task.task.cylc_env[ 'CYLC_SUITE_REG_NAME' ] = suite # back compat
+task.task.cylc_env[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
 # replace home dir with literal '$HOME' for the benefit of remote tasks:
-cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
-cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
+task.task.cylc_env[ 'CYLC_SUITE_OWNER' ] = owner
+task.task.cylc_env[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 if use_lockserver:
-    cylcenv[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
-cylcenv[ 'CYLC_UTC' ] = str(utc)
+    task.task.cylc_env[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
+task.task.cylc_env[ 'CYLC_UTC' ] = str(utc)
 ict = config['scheduling']['initial cycle time']
 fct = config['scheduling']['final cycle time'  ]
-cylcenv[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
-cylcenv[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
-cylcenv[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
-cylcenv[ 'CYLC_SUITE_DEF_PATH' ] =  suite_dir
-cylcenv[ 'CYLC_SUITE_LOG_DIR' ] = slog.get_dir()
+task.task.cylc_env[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
+task.task.cylc_env[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
+task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
+task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] =  suite_dir
+task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = slog.get_dir()
+
+# task-host dependent items that will be overidden by tasks:
+task.task.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( suite, 'suite run directory' )
+task.task.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( suite, 'suite work directory' )
+task.task.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( suite, 'suite share directory' )
+# backward compat:
+task.task.cylc_env[ 'CYLC_SUITE_SHARE_PATH'] = '$CYLC_SUITE_SHARE_DIR'
 
 # SCHEDULER ENVIRONMENT
 # Access to the suite bin directory for event handlers executed
@@ -178,11 +183,9 @@ os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH']
 # User-defined variables in the scheduler environment
 for var,val in config['cylc']['environment'].items():
     os.environ[var] = os.path.expandvars(val)
-# Also put cylcenv variables in the scheduler environment
-for var,val in cylcenv.items():
+# Also put task.task.cylc_env variables in the scheduler environment
+for var,val in task.task.cylc_env.items():
     os.environ[var] = val
-
-task.task.cylc_env = cylcenv
 
 # instantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():
