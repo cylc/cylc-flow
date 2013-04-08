@@ -57,7 +57,7 @@ $ cylc get-config --item=[runtime][modelX] foo.bar
 [[[environment]]]
     FOO = foo
     BAR = bar
-...""" )
+...""", jset=True )
 
 parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
         help="The config item to print. Can be used multiple "

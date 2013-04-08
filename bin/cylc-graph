@@ -109,7 +109,7 @@ GRAPH VIEWER CONTROLS:
     * "group" - close this node's parent family.
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
-    argdoc = [('[REG]', 'Suite name'), 
+    jset=True, argdoc = [('[REG]', 'Suite name'), 
         ('[START]', 'Initial cycle time to plot (default=2999010100)'),
         ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
 
