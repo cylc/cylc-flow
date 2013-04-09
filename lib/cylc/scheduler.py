@@ -938,7 +938,7 @@ class scheduler(object):
                 'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
                 'CYLC_SUITE_NAME'        : self.suite,
                 'CYLC_SUITE_REG_NAME'    : self.suite, # DEPRECATED
-                'CYLC_SUITE_HOST'        :  str( self.host ),
+                'CYLC_SUITE_HOST'        : str( self.host ),
                 'CYLC_SUITE_OWNER'       : self.owner,
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED

@@ -26,6 +26,7 @@ import subprocess
 from time import sleep
 from OrderedDict import OrderedDict
 from cylc.execute import execute
+from cylc.job_submission import jobfile
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, TaskIDError
@@ -67,12 +68,6 @@ def commandline_parser():
             "task and report how it would be submitted to run.",
             action="store_true", dest="dry_run" )
 
-    parser.add_option( "--scheduler",
-            help="(EXPERIMENTAL) tell the task to run as a scheduler task, "
-            "i.e. to attempt to communicate with a task proxy in a running "
-            "cylc suite (you probably do not want to do this).",
-            action="store_true", dest="sched" )
-
     return parser
 
 # parse command line options and arguments-----------------------------
@@ -83,6 +78,9 @@ suite, suiterc = prep_file( args[0], options ).execute()
 
 owner = options.owner
 host = options.host
+
+suite_env = {}
+suite_task_env = {}
 
 task_id = args[1]
 
@@ -110,6 +108,7 @@ except Exception,x:
     raise SystemExit(x)
 
 use_lockserver = False
+lockserver_port = None
 if config['cylc']['lockserver']['enable']:
     use_lockserver = True
     try:
@@ -136,56 +135,67 @@ os.environ['CYLC_MODE'] = 'submit'
 
 gcfg.create_cylc_run_tree( suite, options.verbose )
 slog = suite_log(suite)
+suite_log_dir = slog.get_dir()
 slog.pimp( clock=dclock )
 
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
-task.task.suite = suite
 
-# CYLC EXECUTION ENVIRONMENT
-task.task.cylc_env[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
-if options.sched:
-    task.task.cylc_env[ 'CYLC_MODE' ] = 'scheduler'
-else:
-    task.task.cylc_env[ 'CYLC_MODE' ] = 'submit'
-task.task.cylc_env[ 'CYLC_DEBUG' ] = str( options.debug )
-task.task.cylc_env[ 'CYLC_VERBOSE' ] = str(options.verbose)
-task.task.cylc_env[ 'CYLC_SUITE_HOST' ] = suite_host
-task.task.cylc_env[ 'CYLC_SUITE_PORT' ] = 'None'
-task.task.cylc_env[ 'CYLC_SUITE_NAME' ] = suite
-task.task.cylc_env[ 'CYLC_SUITE_REG_NAME' ] = suite # back compat
-task.task.cylc_env[ 'CYLC_SUITE_REG_PATH' ] = RegPath( suite ).get_fpath()
-# replace home dir with literal '$HOME' for the benefit of remote tasks:
-task.task.cylc_env[ 'CYLC_SUITE_OWNER' ] = owner
-task.task.cylc_env[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
-if use_lockserver:
-    task.task.cylc_env[ 'CYLC_LOCKSERVER_PORT' ] = str( lockserver_port )
-task.task.cylc_env[ 'CYLC_UTC' ] = str(utc)
 ict = config['scheduling']['initial cycle time']
 fct = config['scheduling']['final cycle time'  ]
-task.task.cylc_env[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( ict ) # may be "None"
-task.task.cylc_env[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( fct ) # may be "None"
-task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] =  suite_dir
-task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] =  suite_dir
-task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = slog.get_dir()
 
-# task-host dependent items that will be overidden by tasks:
-task.task.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( suite, 'suite run directory' )
-task.task.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( suite, 'suite work directory' )
-task.task.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( suite, 'suite share directory' )
-# backward compat:
-task.task.cylc_env[ 'CYLC_SUITE_SHARE_PATH'] = '$CYLC_SUITE_SHARE_DIR'
+# static cylc and suite-specific variables:
+suite_env = {
+        'CYLC_UTC'               : str(utc),
+        'CYLC_MODE'              : 'submit',
+        'CYLC_DEBUG'             : str( options.debug ),
+        'CYLC_VERBOSE'           : str( options.verbose),
+        'CYLC_USE_LOCKSERVER'    : str( use_lockserver ),
+        'CYLC_LOCKSERVER_PORT'   : str( lockserver_port ), # "None" if not using lockserver
+        'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
+        'CYLC_SUITE_NAME'        : suite,
+        'CYLC_SUITE_REG_NAME'    : suite, # DEPRECATED
+        'CYLC_SUITE_HOST'        : str( suite_host ),
+        'CYLC_SUITE_OWNER'       : owner,
+        'CYLC_SUITE_PORT'        : 'None',
+        'CYLC_SUITE_REG_PATH'    : RegPath( suite ).get_fpath(), # DEPRECATED
+        'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : suite_dir,
+        'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( ict ), # may be "None"
+        'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( fct ), # may be "None"
+        'CYLC_SUITE_LOG_DIR'     : suite_log_dir # needed by the test battery
+        }
 
-# SCHEDULER ENVIRONMENT
-# Access to the suite bin directory for event handlers executed
-# by the scheduler (probably not required for single submit).
-os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
-# User-defined variables in the scheduler environment
-for var,val in config['cylc']['environment'].items():
-    os.environ[var] = os.path.expandvars(val)
-# Also put task.task.cylc_env variables in the scheduler environment
-for var,val in task.task.cylc_env.items():
+# Set local values of variables that are potenitally task-specific
+# due to different directory paths on different task hosts. These 
+# are overridden by tasks prior to job submission, but in
+# principle they could be needed locally by event handlers:
+suite_task_env = {
+        'CYLC_SUITE_RUN_DIR'    : gcfg.get_derived_host_item( suite, 'suite run directory' ),
+        'CYLC_SUITE_WORK_DIR'   : gcfg.get_derived_host_item( suite, 'suite work directory' ),
+        'CYLC_SUITE_SHARE_DIR'  : gcfg.get_derived_host_item( suite, 'suite share directory' ),
+        'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
+        'CYLC_SUITE_DEF_PATH'   : suite_dir
+        }
+# (note gcfg automatically expands environment variables in local paths)
+
+# Add to the scheduler environment for possible use by event handlers
+for var,val in suite_env.items():
     os.environ[var] = val
+for var,val in suite_task_env.items():
+    os.environ[var] = val
+
+# Pass these to the jobfile generation module.
+# TODO - find a better, less back-door, way of doing this!
+jobfile.jobfile.suite_env = suite_env
+jobfile.jobfile.suite_task_env = suite_task_env
+
+# Suite bin directory for event handlers executed by the scheduler. 
+os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
+
+# User defined local variables that may be required by event handlers
+cenv = config['cylc']['environment']
+for var in cenv:
+    os.environ[var] = os.path.expandvars(cenv[var])
 
 # instantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():
@@ -207,7 +217,7 @@ except TaskNotDefinedError, x:
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 if not options.dry_run:
-    print "Logging directory: " + slog.get_dir()
+    print "Logging directory: " + suite_log_dir
     print
 task_proxy.submit( dry_run=options.dry_run, debug=options.debug )
 
