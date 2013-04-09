@@ -112,6 +112,7 @@ class scheduler(object):
         self.graph_warned = {}
 
         self.do_process_tasks = False
+        self.do_update_state_summary = False
 
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
@@ -197,6 +198,22 @@ class scheduler(object):
                 'add prerequisite'      : self.command_add_prerequisite,
                 }
 
+        # run dependency negotation etc. after these commands
+        self.proc_cmds = [ 
+            'release suite',
+            'release task',
+            'kill cycle',
+            'kill task',
+            'set runahead',
+            'purge tree',
+            'reset task state',
+            'trigger task',
+            'nudge suite',
+            'insert task',
+            'reload suite',
+            'prerequisite'
+            ]
+
         self.configure_suite()
 
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
@@ -208,6 +225,7 @@ class scheduler(object):
             if reqmode != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite requires the ' + reqmode + ' run mode'
         
+        # TODO - self.config.dir can be used instead of self.suite_dir
         self.reflogfile = os.path.join(self.config.dir,'reference.log')
 
         if self.options.genref:
@@ -340,21 +358,25 @@ class scheduler(object):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
         if n > 0:
-            print 'Actioning', n, 'queued commands'
+            print 'Processing', n, 'queued commands'
         else:
             return
         while queue.qsize() > 0:
             name, args = queue.get()
+            cmdstr = name + '(' + ','.join( [ str(a) for a in args ]) + ')'
             try:
                 self.control_commands[ name ]( *args )
             except Exception, x:
                 # don't let a bad command bring the suite down
-                print >> sys.stderr, x
-                self.log.warning( 'Queued command failed: ' + name + '(' + ','.join( [ str(a) for a in args ]) + ')' )
+                self.log.warning( str(x) )
+                self.log.warning( 'Command failed: ' +  cmdstr )
             else:
-                self.log.info( 'Actioned queued command: ' + name + '(' + ','.join( [str(a) for a in args ]) + ')' )
+                self.log.info( 'Command succeeded: ' + cmdstr )
+                self.do_update_state_summary = True
+                if name in self.proc_cmds:
+                    print '!!!!!!!!!!!!!!!!!!!!!!PROC'
+                    self.do_process_tasks = True
             queue.task_done()
-            # each command stimulates a state summary update if necessary
 
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
@@ -365,13 +387,6 @@ class scheduler(object):
             return True
         else:
             return False
-
-    def _name_from_id( self, task_id ):
-        if TaskID.DELIM in task_id:
-            name, tag = task_id.split(TaskID.DELIM)
-        else:
-            name = task_id
-        return name
 
     #_________INFO_COMMANDS_____________________________________________
 
@@ -482,9 +497,6 @@ class scheduler(object):
             return dump
     
     # CONTROL_COMMANDS__________________________________________________
-    # TODO - LOG OR PRINT ERRORS AND CARRY ON FROM CONTROL COMMANDS
-    # WHICH ARE NOW EXECUTED ASYNCHRONOUSLY.
-    # AND DO A SUITE SUMMARY UPDATE AFTER EACH COMMAND?
 
     def command_stop_cleanly( self ):
         self.hold_suite()
@@ -498,86 +510,53 @@ class scheduler(object):
         self.set_stop_ctime( tag )
 
     def command_stop_after_clock_time( self, arg ):
-        #try:
+        # format: YYYY/MM/DD-HH:mm
         date, time = arg.split('-')
         yyyy, mm, dd = date.split('/')
         HH,MM = time.split(':')
         dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
-        #except:
-        return result( False, "Bad datetime (YYYY/MM/DD-HH:mm): " + arg )
         self.set_stop_clock( dtime )
 
     def command_stop_after_task( self, tid ):
-        #try:
         tid = TaskID( tid )
-        #except TaskIDError,x:
-        #    return result( False, "Invalid stop task ID: " + arg )
-        #else:
         arg = tid.getstr()
         self.set_stop_task( arg )
 
-    def command_release_task( self, task_id ):
-        if not self._task_type_exists( task_id ):
-            print >> sys.stderr, "task not found: " + self._name_from_id( task_id )
+    def command_release_task( self, name, tag, is_family ):
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
 
-        found = False
         for itask in self.pool.get_tasks():
-            if itask.id == task_id:
-                itask.reset_state_waiting()
-                found = True
-                break
-        if found:
-            self.do_process_tasks = True
-        else:
-            print >> sys.stderr, "Task not found" 
+            if itask.id in task_ids:
+                if itask.state.is_currently('held'):
+                    itask.reset_state_waiting()
 
     def command_release_suite( self ):
         self.release_suite()
-        # TODO - process, to update state summary
         self.suite_halt = False
-        print "Tasks will be submitted when they are ready to run" 
 
-    def command_hold_task( self, task_id ):
-        if not self._task_type_exists( task_id ):
-            print >> sys.stderr, "COMMAND ERROR, task not found:", self._name_from_id( task_id )
-
-        found = False
-        was_waiting = False
+    def command_hold_task( self, name, tag, is_family ):
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+ 
         for itask in self.pool.get_tasks():
-            if itask.id == task_id:
-                found = True
-                if itask.state.is_currently('waiting') or itask.state.is_currently('queued') or \
+            if itask.id in task_ids:
+                if itask.state.is_currently('waiting') or \
+                        itask.state.is_currently('queued') or \
                         itask.state.is_currently('retrying'):
-                    was_waiting = True
                     itask.reset_state_held()
-                break
-        if found:
-            if was_waiting:
-                self.do_process_tasks = True # to update monitor
-                ##return result( True, "OK" )
-            else:
-                pass
-                ##TODO - return result( False, "Task was not waiting or queued" )
-        else:
-            pass
-            ## TODO - return result( False, "Task not found" )
 
     def command_hold_suite( self ):
-        if self.paused():
-            print >> sys.stderr, "COMMAND WARNING: the suite is already paused"
-
         self.hold_suite()
-        # TODO - process, to update state summary
-        self.do_process_tasks = True
-
-        ##return result( True, "Tasks that are ready to run will not be submitted" )
 
     def command_hold_after_tag( self, tag ):
-        """TODO - not currently used - add to the cylc hold command"""
+        """TODO - not currently used, add to the cylc hold command"""
         self.hold_suite( tag )
-        # TODO - process, to update state summary
-        self.do_process_tasks = True
-        print "COMMAND result: The suite will pause when all tasks have passed " + tag 
+        self.log.info( "The suite will pause when all tasks have passed " + tag )
 
     def command_set_runahead( self, hours=None ):
         if hours:
@@ -587,9 +566,6 @@ class scheduler(object):
             # No limit
             self.log.warning( "setting NO runahead limit" )
             self.runahead_limit = None
-
-        self.do_process_tasks = True
-        ##return result( True, "Action succeeded" )
 
     def command_set_verbosity( self, level ):
         # change the verbosity of all the logs:
@@ -611,120 +587,80 @@ class scheduler(object):
         self.log.setLevel( new_level )
         return result(True, 'OK')
 
-    def command_kill_cycle( self, force_spawn, tag ):
-        if not force_spawn:
-            self.kill_cycle( tag )
-        else:
-            self.spawn_and_die_cycle( tag )
+    def command_kill_cycle( self, tag, spawn ):
+        self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        for itask in self.pool.get_tasks():
+            if itask.tag == tag:
+                if spawn:
+                    self.force_spawn( itask )
+                self.pool.remove( itask, 'by request' )
 
-    def command_kill_task( self, force_spawn, task_id ):
-        if not self._task_type_exists( task_id ):
-            pass
-            ## TODO -
-            ## return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
-        if not force_spawn:
-            self.kill( [ task_id ] )
-        else:
-            self.spawn_and_die( [ task_id ] )
+    def command_kill_task( self, name, tag, is_family, spawn ):
+        self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        for itask in self.pool.get_tasks():
+            if itask.id in task_ids:
+                if spawn:
+                    self.force_spawn( itask )
+                self.pool.remove( itask, 'by request' )
 
-    def command_purge_tree( self, task_id, stop ):
-        # TODO - REMOVE MIDDLE-MAN COMMANDS (E.G. THIS ONE) WHERE POSSIBLE
-        if not self._task_type_exists( task_id ):
-            pass
-            ## TODO -
-            ## return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
-        self.purge( task_id, stop )
+    def command_insert_task( self, name, tag, is_family, stop_tag ):
+        self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
 
-    def command_reset_task_state( self, task_id, state ):
-        # TODO - HANDLE EXCEPTIONS FOR THE NEW WAY
-        try:
-            self.reset_task_state( task_id, state )
-        except TaskStateError, x:
-            self.log.warning( 'Refused remote reset: task state error' )
-        except TaskNotFoundError, x:
-            self.log.warning( 'Refused remote reset: task not found' )
-        except Exception, x:
-            # do not let a remote request bring the suite down for any reason
-            self.log.warning( 'Remote reset failed: ' + x.__str__() )
-        else:
-            # TODO - report success
-            self.do_process_tasks = True
+        for task_id in task_ids:
+            name, tag = task_id.split( TaskID.DELIM )
+            gotit = False
+            try:
+                itask = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
+            except KeyError, x:
+                try:
+                    # TO DO - do we still need this?
+                    itask = self.config.get_task_proxy_raw( name, tag, 'waiting', stop_tag, startup=False )
+                except SuiteConfigError,x:
+                    self.log.warning( str(x) )
+                else:
+                    gotit = True
+            else: 
+                gotit = True
 
-    def command_trigger_task( self, task_id ):
-        # TODO - HANDLE EXCEPTIONS FOR THE NEW WAY
-        try:
-            self.trigger_task( task_id )
-        except TaskNotFoundError, x:
-            self.log.warning( 'Refused remote trigger, task not found: ' + task_id )
-        except Exception, x:
-            # do not let a remote request bring the suite down for any reason
-            self.log.warning( 'Remote reset failed: ' + x.__str__() )
-        else:
-            # TODO - report success
-            self.do_process_tasks = True
+            if not gotit:
+                continue
 
-    def command_add_prerequisite( self, task_id, message ):
-        try:
-            self.add_prerequisite( task_id, message )
-        except TaskNotFoundError, x:
-            self.log.warning( 'Refused remote reset: task not found' )
-        except Exception, x:
-            # do not let a remote request bring the suite down for any reason
-            self.log.warning( 'Remote reset failed: ' + x.__str__() )
-        else:
-            # report success
-            # TO DO
-            pass
-
-    def command_insert_task( self, ins_id, stop_c_time=None ):
-        ins_name = self._name_from_id( ins_id )
-        if not self._task_type_exists( ins_name ):
-            # TASK INSERTION GROUPS TEMPORARILY DISABLED
-            #and ins_name not in self.config[ 'task insertion groups' ]:
-            #return result( False, "No such task or group: " + ins_name )
-            print >> sys.stderr, "Task not found: " + ins_name
-        ins = ins_id
-        # insert a new task or task group into the suite
-        try:
-            inserted, rejected = self.insertion( ins, stop_c_time )
-        except Exception, x:
-            self.log.warning( 'Remote insert failed: ' + x.__str__() )
-        n_inserted = len(inserted)
-        n_rejected = len(rejected)
-        if n_inserted == 0:
-            msg = "No tasks inserted"
-            if n_rejected != 0:
-                msg += '\nRejected tasks:'
-                for t in rejected:
-                    msg += '\n  ' + t
-        elif n_rejected != 0:
-            msg = 'Inserted tasks:' 
-            for t in inserted:
-                msg += '\n  ' + t
-            msg += '\nRejected tasks:'
-            for t in rejected:
-                msg += '\n  ' + t
-        elif n_rejected == 0:
-            msg = 'Inserted tasks:' 
-            for t in inserted:
-                msg += '\n  ' + t
-
+            # The cycle time can be altered during task init so create the task before
+            # checking if it already exists or if its stop time has been reached.
+            rject = False
+            for jtask in self.pool.get_tasks():
+                if itask.id == jtask.id:
+                    # reject
+                    self.log.warning( 'Rejecting insertion task ' + itask.id + '(already exists)' )
+                    itask.prepare_for_death()
+                    del itask
+                    rject = True
+                    break
+            if not rject:
+                # insert
+                if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+                    itask.log( "NORMAL", "HOLDING at configured suite stop time " + self.stop_tag )
+                    itask.reset_state_held()
+                if itask.stop_tag and int( itask.tag ) > int( itask.stop_tag ):
+                    # this task has a stop time configured, and we've reached it
+                    itask.log( "NORMAL", "HOLDING at configured task stop time " + itask.stop_tag )
+                    itask.reset_state_held()
+                self.pool.add( itask )
 
     def command_nudge( self ):
-        # cause the task processing loop to be invoked
-        # just set the "process tasks" indicator
-        self.do_process_tasks = True
+        # just to cause the task processing loop to be invoked
+        pass
 
     def command_reload_suite( self ):
-        try:
-            self.reconfigure()
-        except Exception, x:
-            pass
-            # TODO - return result( False, str(x) )
-        else:
-            pass
-            # TODO - return result( True, 'OK' )
-
+        self.reconfigure()
 
     #___________________________________________________________________
 
@@ -1031,9 +967,10 @@ class scheduler(object):
                     itask.sim_time_check()
 
             if self.process_tasks():
-                self.log.debug( "BEGIN TASK PROCESSING" )
-                # loop timing: use real clock even in sim mode
-                main_loop_start_time = datetime.datetime.now()
+                if self.options.debug:
+                    self.log.debug( "BEGIN TASK PROCESSING" )
+                    # loop timing: use real clock even in sim mode
+                    main_loop_start_time = datetime.datetime.now()
 
                 self.negotiate()
 
@@ -1045,14 +982,15 @@ class scheduler(object):
                 self.spawn()
                 self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
-                self.update_state_summary()
+                self.do_update_state_summary = True
 
                 # expire old broadcast variables
                 self.wireless.expire( self.get_oldest_c_time() )
 
-                delta = datetime.datetime.now() - main_loop_start_time
-                seconds = delta.seconds + float(delta.microseconds)/10**6
-                self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
+                if self.options.debug:
+                    delta = datetime.datetime.now() - main_loop_start_time
+                    seconds = delta.seconds + float(delta.microseconds)/10**6
+                    self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
             time.sleep(1)
 
@@ -1077,8 +1015,9 @@ class scheduler(object):
             self.process_command_queue()
 
             #print '<Pyro'
-            if flags.iflag:
+            if flags.iflag or self.do_update_state_summary:
                 flags.iflag = False
+                self.do_update_state_summary = False
                 self.update_state_summary()
 
             if self.config.suite_timeout:
@@ -1310,7 +1249,8 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued') or itask.state.is_currently('waiting') or \
+                if itask.state.is_currently('queued') or \
+                        itask.state.is_currently('waiting') or \
                         itask.state.is_currently('retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
@@ -1508,32 +1448,24 @@ class scheduler(object):
                 new_task.log( "NORMAL", "HOLDING (runahead limit)" )
                 new_task.reset_state_runahead()
 
+    def force_spawn( self, itask ):
+        if itask.state.has_spawned():
+            return None
+        itask.state.set_spawned()
+        itask.log( 'DEBUG', 'forced spawning')
+        new_task = itask.spawn( 'waiting' )
+        self.check_hold_spawned_task( itask, new_task )
+        # perpetuate the task stop time, if there is one
+        new_task.stop_c_time = itask.stop_c_time
+        self.pool.add( new_task )
+        return new_task
+
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
         # the slowest task, and if foo(T) spawns
         for itask in self.pool.get_tasks():
             if itask.ready_to_spawn():
-                itask.log( 'DEBUG', 'spawning')
-                new_task = itask.spawn( 'waiting' )
-                if itask.is_cycling():
-                    self.check_hold_spawned_task( itask, new_task )
-                    # perpetuate the task stop time, if there is one
-                    new_task.stop_c_time = itask.stop_c_time
-                self.pool.add( new_task )
-
-    def force_spawn( self, itask ):
-        if itask.state.has_spawned():
-            return None
-        else:
-            itask.state.set_spawned()
-            itask.log( 'DEBUG', 'forced spawning')
-            # dynamic task object creation by task and module name
-            new_task = itask.spawn( 'waiting' )
-            self.check_hold_spawned_task( itask, new_task )
-            # perpetuate the task stop time, if there is one
-            new_task.stop_c_time = itask.stop_c_time
-            self.pool.add( new_task )
-            return new_task
+                self.force_spawn( itask )
 
     def earliest_unspawned( self ):
         all_spawned = True
@@ -1607,7 +1539,8 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
-                    self.spawn_and_die( [itask.id], dump_state=False, reason='suicide' )
+                    self.force_spawn( itask )
+                    self.pool.remove( itask, 'suicide' )
 
         if self.use_quick:
             self.cleanup_non_intercycle( failed_rt )
@@ -1822,65 +1755,83 @@ class scheduler(object):
         for itask in spent:
             self.pool.remove( itask, 'general' )
 
-    def trigger_task( self, task_id ):
-        # Set a task to the 'waiting' with all prerequisites satisfied,
-        # and tell clock-triggered tasks to trigger regardless of their
-        # designated trigger time.
-        found = False
+    def command_trigger_task( self, name, tag, is_family ):
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+ 
         for itask in self.pool.get_tasks():
-            # Find the task to trigger.
-            if itask.id == task_id:
-                found = True
-                break
-        if not found:
-            raise TaskNotFoundError, "Task not present in suite: " + task_id
-        if itask.state.is_currently( 'submitting' ):
-            # (manual reset of 'submitting' tasks disabled pending
-            # some deep thought about concurrency with the job
-            # submission thread.
-            raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
+            if itask.id in task_ids:
+                self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+                itask.log( "NORMAL", "triggering now" )
+                itask.reset_state_ready()
+                if itask.is_clock_triggered():
+                    itask.set_trigger_now(True)
 
-        # dump state
-        self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-        itask.log( "NORMAL", "triggering now" )
-        itask.reset_state_ready()
-        if itask.is_clock_triggered():
-            itask.set_trigger_now(True)
+    def get_matching_tasks( self, name, is_family=False ):
+        """name can be a task or family name, or a regex to match
+        multiple tasks or families."""
 
-    def reset_task_state( self, task_id, state ):
+        matches = []
+
+        if is_family: 
+            families = self.config.runtime['first-parent descendants']
+            try:
+                # exact
+                matches = families[name]
+            except KeyError:
+                # regex match
+                for fam, mems in families.items():
+                    if re.match( name, fam ):
+                        matches += mems
+        else:
+            tasks = self.config.get_task_name_list()
+            if name in tasks:
+                # exact
+                matches.append(name)
+            else:
+                # regex match
+                for task in tasks:
+                    if re.match( name, task ):
+                        matches.append(task)
+        return matches
+
+    def command_reset_task_state( self, name, tag, state, is_family ):
         # we only allow resetting to a subset of available task states
         if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
-        found = False
+
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+
+        tasks = []
         for itask in self.pool.get_tasks():
-            # Find the task to reset.
-            if itask.id == task_id:
-                found = True
-                break
-        if not found:
-            raise TaskNotFoundError, "Task not present in suite: " + task_id
-        if itask.state.is_currently( 'submitting' ):
-            # Currently can't reset a 'submitting' task in the job submission thread!
-            raise TaskStateError, "ERROR: cannot reset a submitting task: " + task_id
+            if itask.id in task_ids:
+                tasks.append( itask )
 
-        itask.log( "NORMAL", "resetting to " + state + " state" )
+        for itask in tasks:
+            if itask.state.is_currently( 'submitting' ):
+                # Currently can't reset a 'submitting' task in the job submission thread!
+                self.log.warning( "A 'submitting' task cannot be reset: " + itask.id )
+            itask.log( "NORMAL", "resetting to " + state + " state" )
+            self.log.info( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+            if state == 'ready':
+                itask.reset_state_ready()
+            elif state == 'waiting':
+                itask.reset_state_waiting()
+            elif state == 'succeeded':
+                itask.reset_state_succeeded()
+            elif state == 'failed':
+                itask.reset_state_failed()
+            elif state == 'held':
+                itask.reset_state_held()
+            elif state == 'spawn':
+                self.force_spawn(itask)
 
-        self.log.warning( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-
-        if state == 'ready':
-            itask.reset_state_ready()
-        elif state == 'waiting':
-            itask.reset_state_waiting()
-        elif state == 'succeeded':
-            itask.reset_state_succeeded()
-        elif state == 'failed':
-            itask.reset_state_failed()
-        elif state == 'held':
-            itask.reset_state_held()
-        elif state == 'spawn':
-            self.force_spawn(itask)
-
-    def add_prerequisite( self, task_id, message ):
+    def command_add_prerequisite( self, task_id, message ):
         # find the task to reset
         found = False
         for itask in self.pool.get_tasks():
@@ -1895,74 +1846,7 @@ class scheduler(object):
 
         itask.prerequisites.add_requisites(pp)
 
-    def insertion( self, ins_id, stop_c_time=None ):
-        # TODO - UPDATE FOR ASYCHRONOUS TASKS
-
-        # for remote insertion of a new task, or task group
-        ( ins_name, ins_ctime ) = ins_id.split( TaskID.DELIM )
-
-        #### TASK INSERTION GROUPS TEMPORARILY DISABLED
-        ###if ins_name in ( self.config[ 'task insertion groups' ] ):
-        ###    ids = []
-        ###    for name in self.config[ 'task insertion groups' ][ins_name]:
-        ###        ids.append( name + TaskID.DELIM + ins_ctime )
-        ###else:
-        ids = [ ins_id ]
-
-        rejected = []
-        inserted = []
-        to_insert = []
-        for task_id in ids:
-            [ name, c_time ] = task_id.split( TaskID.DELIM )
-            # Instantiate the task proxy object
-            gotit = False
-            try:
-                itask = self.config.get_task_proxy( name, c_time, 'waiting', stop_c_time, startup=False )
-            except KeyError, x:
-                try:
-                    itask = self.config.get_task_proxy_raw( name, c_time, 'waiting', stop_c_time, startup=False )
-                except SuiteConfigError,x:
-                    self.log.warning( str(x) )
-                    rejected.append( name + TaskID.DELIM + c_time )
-                else:
-                    gotit = True
-            else: 
-                gotit = True
-
-            if gotit:
-                # The task cycle time can be altered during task initialization
-                # so we have to create the task before checking if the task
-                # already exists in the system or the stop time has been reached.
-                rject = False
-                for jtask in self.pool.get_tasks():
-                    if not jtask.is_cycling():
-                        continue
-                    if itask.id == jtask.id:
-                        # task already in the suite
-                        rject = True
-                        break
-                if rject:
-                    rejected.append( itask.id )
-                    itask.prepare_for_death()
-                    del itask
-                else: 
-                    if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                        itask.log( "NORMAL", "HOLDING at configured suite stop time " + self.stop_tag )
-                        itask.reset_state_held()
-                    if itask.stop_c_time and int( itask.tag ) > int( itask.stop_c_time ):
-                        # this task has a stop time configured, and we've reached it
-                        itask.log( "NORMAL", "HOLDING at configured task stop time " + itask.stop_c_time )
-                        itask.reset_state_held()
-                    inserted.append( itask.id )
-                    to_insert.append(itask)
-
-        if len( to_insert ) > 0:
-            self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-            for jtask in to_insert:
-                self.pool.add( jtask )
-        return ( inserted, rejected )
-
-    def purge( self, id, stop ):
+    def command_purge_tree( self, id, stop ):
         # Remove an entire dependancy tree rooted on the target task,
         # through to the given stop time (inclusive). In general this
         # involves tasks that do not even exist yet within the pool.
@@ -2014,7 +1898,7 @@ class scheduler(object):
                     spawn.append( foo )
                 # mark it for later removal
                 print '  Marking', itask.id, 'for deletion'
-                die.append( id )
+                die.append( itask )
                 break
 
         print 'VIRTUAL TRIGGERING'
@@ -2036,14 +1920,14 @@ class scheduler(object):
                         spawn.append( foo )
                     print '  Marking', itask.id, 'for deletion'
                     # kill these later (their outputs may still be needed)
-                    die.append( itask.id )
+                    die.append( itask )
                 elif itask.suicide_prerequisites.count() > 0:
                     if itask.suicide_prerequisites.all_satisfied():
                         print '  Spawning virtually activated suicide task', itask.id
                         self.force_spawn( itask )
                         # kill these now (not setting succeeded; outputs not needed)
                         print '  Suiciding', itask.id, 'now'
-                        self.kill( [itask.id], dump_state=False )
+                        self.pool.remove( itask, 'purge' )
 
         # reset any prerequisites "virtually" satisfied during the purge
         print 'RESETTING spawned tasks to unsatisified:'
@@ -2053,9 +1937,9 @@ class scheduler(object):
 
         # finally, purge all tasks marked as depending on the target
         print 'REMOVING PURGED TASKS:'
-        for id in die:
-            print '  ', id
-        self.kill( die, dump_state=False )
+        for itask in die:
+            print '  ', itask.id
+            self.pool.remove( itask, 'purge' )
 
         print 'PURGE DONE'
 
@@ -2074,84 +1958,6 @@ class scheduler(object):
                 result = True
                 break
         return result
-
-    def kill_cycle( self, tag ):
-        # kill all tasks currently with given tag
-        task_ids = []
-        for itask in self.pool.get_tasks():
-            if itask.tag == tag:
-                task_ids.append( itask.id )
-        self.kill( task_ids )
-
-    def spawn_and_die_cycle( self, tag ):
-        # spawn and kill all tasks currently with given tag
-        task_ids = {}
-        for itask in self.pool.get_tasks():
-            if itask.tag == tag:
-                task_ids[ itask.id ] = True
-        self.spawn_and_die( task_ids )
-
-    def spawn_and_die( self, task_ids, dump_state=True, reason='remote request' ):
-        # Spawn and kill all tasks in task_ids. Works for dict or list input.
-        # TODO - clean up use of spawn_and_die (the keyword args are clumsy)
-
-        if dump_state:
-            self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-
-        for id in task_ids:
-            # find the task
-            found = False
-            itask = None
-            for t in self.pool.get_tasks():
-                if t.id == id:
-                    found = True
-                    itask = t
-                    break
-
-            if not found:
-                self.log.warning( "task to kill not found: " + id )
-                return
-
-            itask.log( 'DEBUG', reason )
-
-            if not itask.state.has_spawned():
-                # forcibly spawn the task and create its successor
-                itask.state.set_spawned()
-                itask.log( 'DEBUG', 'forced spawning' )
-
-                new_task = itask.spawn( 'waiting' )
- 
-                if self.stop_tag and int( new_task.tag ) > int( self.stop_tag ):
-                    # we've reached the stop time
-                    new_task.log( "NORMAL", 'HOLDING at configured suite stop time' )
-                    new_task.reset_state_held()
-                # perpetuate the task stop time, if there is one
-                new_task.stop_c_time = itask.stop_c_time
-                self.pool.add( new_task )
-            else:
-                # already spawned: the successor already exists
-                pass
-
-            # now kill the task
-            self.pool.remove( itask, reason )
-
-    def kill( self, task_ids, dump_state=True ):
-        # kill without spawning all tasks in task_ids
-        if dump_state:
-            self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-        for id in task_ids:
-            # find the task
-            found = False
-            itask = None
-            for t in self.pool.get_tasks():
-                if t.id == id:
-                    found = True
-                    itask = t
-                    break
-            if not found:
-                self.log.warning( "task to kill not found: " + id )
-                return
-            self.pool.remove( itask, 'by request' )
 
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config['scheduling']['special tasks']['include at start-up']
