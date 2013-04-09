@@ -86,7 +86,7 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name
-        self.type = 'free'
+        self.type = None # TODO: was free! (delete this comment if no probs)
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -99,10 +99,13 @@ class taskdef(object):
         self.cond_triggers[ cycler ].append( [triggers,exp] )
 
     def add_to_valid_cycles( self, cyclr ):
-            if len( self.cyclers ) == 0:
-                self.cyclers = [cyclr]
-            else:
-                self.cyclers.append( cyclr )
+        # TODO: base on sections?
+        #if cyclr in self.cyclers:
+        #    return
+        if len( self.cyclers ) == 0:
+            self.cyclers = [cyclr]
+        #else:
+        #    self.cyclers.append( cyclr )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -177,6 +180,7 @@ class taskdef(object):
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_add_prerequisites( sself, startup, cycler, tag  ):
+            # TODO - GET RID OF STARTUP FLAG
 
             # NOTE: Task objects hold all triggers defined for the task
             # in all cycling graph sections in this data structure:
@@ -203,13 +207,15 @@ class taskdef(object):
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
-                    if trig.async_repeating:
-                        lp.add( trig.get( tag, cycler ))
-                    else:
-                        if trig.suicide:
-                            sp.add( trig.get( tag, cycler ))
+                    preq = trig.get( tag, cycler )
+                    if preq:
+                        if trig.async_repeating:
+                            lp.add( preq )
                         else:
-                            pp.add( trig.get( tag, cycler ))
+                            if trig.suicide:
+                                sp.add( preq )
+                            else:
+                                pp.add( preq )
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
@@ -233,7 +239,9 @@ class taskdef(object):
                     cp = conditional_prerequisites( sself.id )
                     for label in ctrig:
                         trig = ctrig[label]
-                        cp.add( trig.get( tag, cycler ), label )
+                        preq = trig.get( tag, cycler )
+                        if preq:
+                            cp.add( preq, label )
                     cp.set_condition( exp )
                     if ctrig[foo].suicide:
                         sself.suicide_prerequisites.add_requisites( cp )
