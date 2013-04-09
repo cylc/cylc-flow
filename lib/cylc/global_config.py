@@ -195,7 +195,6 @@ Some translations were performed on the fly."""
         print
 
 
-
     def expand_local_paths( self ):
         """Expand environment variables and ~user in LOCAL file paths."""
 
