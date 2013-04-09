@@ -67,7 +67,7 @@ class dumper( object ):
         FILE.write( 'Begin task states\n' )
 
         for itask in tasks:
-            # TO DO: CHECK THIS STILL WORKS 
+            # TODO - CHECK THIS STILL WORKS 
             itask.dump_class_vars( FILE )
             # task instance variables
             itask.dump_state( FILE )

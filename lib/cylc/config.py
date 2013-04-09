@@ -66,7 +66,7 @@ class SuiteConfigError( Exception ):
     """
     Attributes:
         message - what the problem is. 
-        TO DO: element - config element causing the problem
+        TODO - element - config element causing the problem
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -570,7 +570,7 @@ class config( CylcConfigObj ):
         
         extras = []
         for sections, name in get_extra_values(dense):
-            # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
+            # !!! TODO - THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves
             ##the_section = dense
             ##for section in sections:
@@ -933,7 +933,7 @@ class config( CylcConfigObj ):
                 tag = itask.next_tag()
             #print "OK:", itask.id
 
-        # TO DO: check that any multiple appearance of same task  in
+        # TODO - check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
         # 'sequential' and 'clock-triggered' at the time, but not both
         # 'model' and 'sequential' at the same time.
@@ -979,7 +979,7 @@ class config( CylcConfigObj ):
         return self.dir
 
     def get_coldstart_task_list( self ):
-        # TO DO: automatically determine this by parsing the dependency graph?
+        # TODO - automatically determine this by parsing the dependency graph?
         # For now user must define this:
         return self['scheduling']['special tasks']['cold-start']
 
@@ -1312,7 +1312,7 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, line
                     raise SuiteConfigError, str(x)
 
-            # TO DO: setting type should be consolidated to get_taskdef()
+            # TODO - setting type should be consolidated to get_taskdef()
             if name in self.async_oneoff_tasks:
                 # this catches oneoff async tasks that begin a repeating
                 # async section as well.
@@ -1494,7 +1494,7 @@ class config( CylcConfigObj ):
 
                 if l_id != None and not e.sasl:
                     # check that l_id is not earlier than start time
-                    # TO DO: does this invalidate r_id too?
+                    # TODO - does this invalidate r_id too?
                     tmp, lctime = l_id.split()
                     #sct = ct(start_ctime)
                     sct = ct(actual_first_ctime)
@@ -1528,7 +1528,7 @@ class config( CylcConfigObj ):
         # Generate final node names, replacing family members with
         # family nodes if requested.
 
-        # TO DO: FORMATTED NODE NAMES
+        # TODO - FORMATTED NODE NAMES
         # can't be used until comparison with internal IDs cope
         # for gcylc (get non-formatted tasks as disconnected nodes on
         # the right of the formatted-name base graph).
@@ -1624,7 +1624,7 @@ class config( CylcConfigObj ):
 
         taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode )
 
-        # TO DO: put all taskd.foo items in a single config dict
+        # TODO - put all taskd.foo items in a single config dict
         # SET ONE-OFF AND COLD-START TASK INDICATORS
         if name in self['scheduling']['special tasks']['cold-start']:
             taskd.modifiers.append( 'oneoff' )

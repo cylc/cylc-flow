@@ -29,7 +29,7 @@ class loose_prerequisites( plain_prerequisites ):
         plain_prerequisites.__init__( self, owner_id )
 
     def add( self, message ):
-        # TO DO: CHECK FOR LOOSE PATTERN HERE
+        # TODO - CHECK FOR LOOSE PATTERN HERE
         # see fuzzy_prerequisites for example
         plain_prerequisites.add( self, message )
 

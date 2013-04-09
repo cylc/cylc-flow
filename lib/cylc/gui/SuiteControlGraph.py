@@ -184,7 +184,7 @@ Dependency graph suite control interface.
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
 
-        # TO DO: popup menus are not automatically destroyed and can be
+        # TODO - popup menus are not automatically destroyed and can be
         # reused if saved; however, we need to reconstruct or at least
         # alter ours dynamically => should destroy after each use to
         # prevent a memory leak? But I'm not sure how to do this as yet.)
@@ -352,7 +352,7 @@ Dependency graph suite control interface.
             window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
-        # TO DO: error checking on date range given
+        # TODO - error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Exclude (regex)' )
         box.pack_start( label, True )
@@ -449,14 +449,14 @@ Dependency graph suite control interface.
         vbox = gtk.VBox()
 
         name, ctime = id.split(TaskID.DELIM)
-        # TO DO: do we need to check that oldeset_ctime is defined yet?
+        # TODO - do we need to check that oldeset_ctime is defined yet?
         cti = ct(ctime)
         octi = ct( self.t.oldest_ctime )
         ncti = ct( self.t.newest_ctime )
         diff_pre = cti.subtract_hrs( octi )
         diff_post = ncti.subtract_hrs( cti )
 
-        # TO DO: error checking on date range given
+        # TODO - error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Pre (hours)' )
         box.pack_start( label, True )
@@ -511,7 +511,7 @@ Dependency graph suite control interface.
             window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
-        # TO DO: error checking on date range given
+        # TODO - error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Start (YYYY[MM[DD[HH[mm[ss]]]]])' )
         box.pack_start( label, True )

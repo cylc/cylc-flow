@@ -2065,7 +2065,7 @@ or remove task definitions without restarting the suite."""
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
     def popup_logview( self, task_id, logfiles, choice='stdout' ):
-        # TO DO: choice is dirty hack to separate the task job script,
+        # TODO - choice is dirty hack to separate the task job script,
         # stdout, and stderr file; we should do this properly by storing them
         # separately in the task proxy, or at least separating them in
         # the suite state summary.

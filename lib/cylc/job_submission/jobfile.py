@@ -288,7 +288,7 @@ cd $CYLC_TASK_WORK_DIR""" )
             self.FILE.write( " " + var )
 
     def write_manual_environment( self ):
-        # TO DO: THIS METHOD NEEDS UPDATING FOR CURRENT SECTIONS
+        # TODO - THIS METHOD NEEDS UPDATING FOR CURRENT SECTIONS
         if not self.jobconfig['use manual completion']:
             return
         strio = StringIO.StringIO()

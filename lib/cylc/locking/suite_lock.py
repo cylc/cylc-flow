@@ -37,7 +37,7 @@ class suite_lock(object):
         # once? 
         
         # GET A NEW CONNECTION WITH EACH REQUEST
-        # TO DO: OR GET A SINGLE CONNECTION IN INIT
+        # TODO - OR GET A SINGLE CONNECTION IN INIT
 
         server = lockserver( self.host, port=self.port ).get()
         (result, reason) = server.get_suite_access( self.suite_dir, self.suite, self.cylc_mode, exclusive )

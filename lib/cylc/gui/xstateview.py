@@ -85,7 +85,7 @@ class xupdater(threading.Thread):
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
  
         self.reconnect()
-        # TO DO: handle failure to get a remote proxy in reconnect()
+        # TODO - handle failure to get a remote proxy in reconnect()
 
         self.graph_warned = {}
 
@@ -153,7 +153,7 @@ class xupdater(threading.Thread):
         # Get an *empty* graph object
         # (comment out to show the last suite state before shutdown)
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
-        # TO DO: if connection is lost we should just set the state
+        # TODO - if connection is lost we should just set the state
         # summary arrays to empty and update to clear only once.
         self.update_xdot()
 
@@ -295,7 +295,7 @@ class xupdater(threading.Thread):
             node.attr['shape'] = shape
 
     def update_graph(self):
-        # To do: check edges against resolved ones
+        # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
         self.oldest_ctime = self.global_summary['oldest cycle time']
         self.newest_ctime = self.global_summary['newest cycle time']
@@ -313,13 +313,13 @@ class xupdater(threading.Thread):
         if start_time == None or oldest > start_time:
             rawx = True
         else:
-            # (show cold start tasks) - TO DO: actual raw start
+            # (show cold start tasks) - TODO - actual raw start
             rawx = False
 
         extra_node_ids = {}
 
-        # TO DO: mv ct().get() out of this call (for error checking):
-        # TO DO: remote connection exception handling?
+        # TODO - mv ct().get() out of this call (for error checking):
+        # TODO - remote connection exception handling?
         try:
             gr_edges = self.sinfo.get( 'graph raw', ct(oldest).get(), ct(newest).get(),
                     rawx, self.group, self.ungroup, self.ungroup_recursive, 
@@ -460,7 +460,7 @@ class xupdater(threading.Thread):
                 continue
             self.set_live_node_attr( node, id )
 
-        # TO DO: ?optional transitive reduction:
+        # TODO - ?optional transitive reduction:
         # self.graphw.tred()
 
         self.graphw.graph_attr['rankdir'] = self.orientation

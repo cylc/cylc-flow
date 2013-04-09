@@ -54,7 +54,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         node.attr[ 'label' ] = label
         if autoURL:
             if base:
-                # To Do: This is only called from cylc_add_edge in this
+                # TODO - This is only called from cylc_add_edge in this
                 # base class ... should it also be called from add_node?
                 node.attr[ 'URL' ] = 'base:' + n
             else:
@@ -129,7 +129,7 @@ class CGraph( CGraphPlain ):
             self.edge_attr[ attr ] = value
 
         # non-default node attributes by task name
-        # TO DO: ERROR CHECKING FOR INVALID TASK NAME
+        # TODO - ERROR CHECKING FOR INVALID TASK NAME
         self.task_attr = {}
 
         for item in self.vizconfig['node attributes']:

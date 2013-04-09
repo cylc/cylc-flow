@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO: consider sending cylc WARNING messages on target check
+# TODO - consider sending cylc WARNING messages on target check
 # failures,  which presumably indicate an archiving failure.
 
 import os, sys

@@ -103,7 +103,7 @@ class cylc_logviewer( logviewer ):
         self.task_filter = filter
         self.update_view()
 
-        # TO DO: CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
+        # TODO - CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
         return False
 
     def custom_filter_log( self, e ):

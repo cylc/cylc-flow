@@ -20,7 +20,7 @@ import sys
 import datetime
 from cylc.cycle_time import ct
 
-# TO DO: the task base class now has clock-triggering functionality too, to
+# TODO - the task base class now has clock-triggering functionality too, to
 # handle retry delays, so this class could probably disappear now to leave
 # clock-triggering as just a special case of normal task initialization.
 

@@ -20,7 +20,7 @@ from cylc import which
 import os, re
 from job_submit import job_submit
 
-# TO DO: THIS CLASS MAY NEED UPDATING
+# TODO - THIS CLASS MAY NEED UPDATING
 
 class ll_raw( job_submit ):
 

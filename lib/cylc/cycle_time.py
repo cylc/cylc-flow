@@ -88,7 +88,7 @@ class ct( object ):
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
     def get( self ):
-        #### TO DO: INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
+        #### TODO - INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
         #### OF DIGITS EVERYWHERE
         #return self.strvalue
         return self.strvalue[0:10] # just YYYYMMDDHH for now

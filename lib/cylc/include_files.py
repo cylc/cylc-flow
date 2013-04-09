@@ -20,7 +20,7 @@ import re, os, sys
 import datetime
 from shutil import copy
 
-# To Do: the four file inclusion functions below are very similar and
+# TODO - the four file inclusion functions below are very similar and
 # should be combined into one.
 
 class IncludeFileError( Exception ):
