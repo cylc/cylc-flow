@@ -366,6 +366,11 @@ the remote host before starting the suite."""
             elif itask.state.is_currently(
                     'queued', 'retrying', 'submitting', 'failed'):  
                 itask.prerequisites.set_all_satisfied()
+                if not itask.state.is_currently( 'failed' ):
+                    # tasks that were queued, retrying, or submitting,
+                    # should be reset to waiting as they had not
+                    # actually been submitted yet.
+                    itask.state.set_status('waiting')
 
             elif itask.state.is_currently('succeeded'):  
                 itask.prerequisites.set_all_satisfied()
