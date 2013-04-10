@@ -367,7 +367,7 @@ Some translations were performed on the fly."""
         else:
             print_cfg( self.cfg, prefix='   ' )
 
-    def get_host_item( self, item, host=None, owner=None ):
+    def get_host_item( self, item, host=None, owner=None, replace=False ):
         """This allows use of hosts with no entry in the config file to
         default to appropriately modified localhost settings."""
 
@@ -386,7 +386,7 @@ Some translations were performed on the fly."""
 
         if value:
             # localhost items may default to None too (e.g. cylc bin directory)
-            if (host and host is not 'localhost') or (owner and owner is not user ):
+            if (host and host is not 'localhost') or (owner and owner is not user ) or replace:
                 # item requested for a remote account
                 if 'directory' in item:
                     # Replace local home directory, if it appears, with
@@ -394,13 +394,13 @@ Some translations were performed on the fly."""
                     value = value.replace( os.environ['HOME'], '$HOME' )
         return value
 
-    def get_derived_host_item( self, suite, item, host=None, owner=None ):
+    def get_derived_host_item( self, suite, item, host=None, owner=None, replace=False ):
         """Compute hardwired paths relative to the configurable top dirs."""
 
         # suite run dir
-        srdir = os.path.join( self.get_host_item( 'run directory',  host, owner ), suite )
+        srdir = os.path.join( self.get_host_item( 'run directory',  host, owner, replace ), suite )
         # suite workspace
-        swdir = os.path.join( self.get_host_item( 'work directory', host, owner ), suite )
+        swdir = os.path.join( self.get_host_item( 'work directory', host, owner, replace ), suite )
 
         # if invoked by the "cylc submit" command we modify the top
         # level directory names to avoid contaminating suite output.

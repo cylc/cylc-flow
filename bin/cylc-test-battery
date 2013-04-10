@@ -122,6 +122,12 @@ if [[ $N != [0-9]* ]]; then
     exit 1
 fi
 
+declare -A junk
+if [[ $? != 0 ]]; then
+    echo "ERROR: your bash version does not support associative arrays."
+    exit 1
+fi
+
 export CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
 export CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
 

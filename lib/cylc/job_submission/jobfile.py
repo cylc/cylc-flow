@@ -180,6 +180,22 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED 
 
+        BUFFER.write( r"""
+
+# CYLC SUITE ENVIRONMENT FILE:
+if (($# > 0)) && [[ $1 == '--write-suite-env' ]]; then
+    shift 1
+    {""" )
+        for var in sorted(cenv):
+            BUFFER.write( "\n        echo \"%(var)s=$%(var)s\"" %
+                          {"var": var} )
+        BUFFER.write( r"""
+    } >$CYLC_SUITE_RUN_DIR/cylc-suite-env
+    trap '' EXIT
+    exit
+fi
+""" )
+
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
             BUFFER = self.FILE

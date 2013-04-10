@@ -330,19 +330,54 @@ the remote host before starting the suite."""
                 continue
 
             # see comments above on resurrecting tasks
-            if itask.state.is_currently('waiting') or itask.state.is_currently('held') or itask.state.is_currently('runahead'):
+
+            # TODO: we should probably use the task.reset_state()
+            # methods here, to update the rundb too...
+
+            if itask.state.is_currently('waiting', 'runahead'):
                 pass
 
-            elif itask.state.is_currently('submitted') or itask.state.is_currently('running') or itask.state.is_currently('queued') or \
-                    itask.state.is_currently('failed') or itask.state.is_currently('retrying'):  
+            elif itask.state.is_currently('held'):
+                # Only waiting tasks get held. These need to be released
+                # on restart to avoid the automatic shutdown criterion:
+                # if all tasks are succeeded or held (e.g. because they
+                # passed the final cycle time) shut down automatically.
+                itask.state.set_status('waiting')
+
+            elif itask.state.is_currently('submitted', 'running'):  
                 itask.prerequisites.set_all_satisfied()
+                c = itask.db.connect()
+                c.execute(r"""
+                        SELECT misc FROM task_events
+                        WHERE name==? AND cycle==? AND
+                              event=="submission succeeded" AND misc!=""
+                        ORDER BY submit_num DESC LIMIT 1""", (name, tag))
+                row = c.fetchone()
+                if row and row[0]:
+                    self.old_user_at_host_set.add(str(row[0]))
+                c.close()
+                # TODO We also need to interrogate the task status file for
+                # completed outputs! For the moment at least set the
+                # started output completed for running tasks, because
+                # that has to be true:
+                if itask.state.is_currently('running'):
+                    itask.outputs.set_completed( itask.id + ' started' )
+
+            elif itask.state.is_currently(
+                    'queued', 'retrying', 'submitting', 'failed'):  
+                itask.prerequisites.set_all_satisfied()
+                if not itask.state.is_currently( 'failed' ):
+                    # tasks that were queued, retrying, or submitting,
+                    # should be reset to waiting as they had not
+                    # actually been submitted yet.
+                    itask.state.set_status('waiting')
 
             elif itask.state.is_currently('succeeded'):  
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
 
             else:
-                raise SystemExit( 'ERROR: unknown task state for ' + itask.id ) 
+                raise Exception( 'ERROR: unknown task state for ' + itask.id ) 
 
             # check stop cycle in case the user has set a very quick stop
             if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
@@ -350,6 +385,7 @@ the remote host before starting the suite."""
                 itask.log( 'WARNING', "HOLDING at configured stop cycle " + self.stop_tag )
                 itask.state.set_status('held')
             self.pool.add( itask )
+
 
 if __name__ == '__main__':
     main("restart", restart)
