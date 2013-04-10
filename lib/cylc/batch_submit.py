@@ -228,7 +228,8 @@ class event_batcher( batcher ):
 
     def submit_item( self, item, psinfo ):
         event, handler, taskid, msg = item
-        command = " ".join( [handler, event, self.suite, taskid, "'" + msg + "'"] )
+        command = " ".join( [handler, "'" + event + "'", self.suite, taskid,
+                             "'" + msg + "'"] )
         try:
             p = subprocess.Popen( command, shell=True )
         except OSError, e:
