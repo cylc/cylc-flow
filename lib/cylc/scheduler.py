@@ -56,6 +56,8 @@ import flags
 import cylc.rundb
 from Queue import Queue
 from batch_submit import event_batcher
+import subprocess
+
 
 class result:
     """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -262,6 +264,7 @@ class scheduler(object):
         self.request_handler.start()
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
+        self.old_user_at_host_set = set()
         self.load_tasks()
         self.initial_oldest_ctime = self.get_oldest_c_time()
 
@@ -284,6 +287,29 @@ class scheduler(object):
                 self.ict = self.start_tag
 
         self.configure_environments()
+
+        suite_run_dir = os.path.expandvars(
+                gcfg.get_derived_host_item(self.suite, 'suite run directory'))
+        env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
+        f = open(env_file_path, 'wb')
+        for key, value in task.task.cylc_env.items():
+            f.write("%s=%s\n" % (key, value))
+        f.close()
+        r_suite_run_dir = os.path.expandvars(
+                gcfg.get_derived_host_item(self.suite, 'suite run directory'))
+        for user_at_host in self.old_user_at_host_set:
+            if '@' in user_at_host:
+                user, host = user_at_host.split('@', 1)
+            else:
+                user, host = None, user_at_host
+            # this handles defaulting to localhost:
+            r_suite_run_dir = gcfg.get_derived_host_item(
+                    self.suite, 'suite run directory', host, user)
+            r_env_file_path = '%s:%s/cylc-suite-env' % (
+                    user_at_host, r_suite_run_dir)
+            cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+            if subprocess.call(cmd): # return non-zero
+                raise Exception("ERROR: " + str(cmd))
 
         self.already_timed_out = False
         if self.config.suite_timeout:

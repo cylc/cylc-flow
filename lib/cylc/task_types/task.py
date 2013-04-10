@@ -117,6 +117,9 @@ class task( object ):
 
     @classmethod
     def update_mean_total_elapsed_time( cls, started, succeeded ):
+        if not started:
+            # TODO on suite restart we don't currently retain task started time
+            return
         # the class variables here are defined in derived task classes
         if not started:
             # in case the started messaged did not get through
