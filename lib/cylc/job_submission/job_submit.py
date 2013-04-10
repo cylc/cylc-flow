@@ -37,12 +37,14 @@ from cylc.TaskID import TaskID
 from cylc.global_config import gcfg
 
 class job_submit(object):
+    LOCAL_COMMAND_TEMPLATE = "%(jobfile_path)s --write-suite-env && %(command)s"
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
             + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
+            + " && %(jobfile_path)s --write-suite-env"
             + " && (%(command)s)"
             + "'" )
 
@@ -212,10 +214,11 @@ class job_submit(object):
             return None
 
         if self.local:
-            command = self.command
+            command = self.LOCAL_COMMAND_TEMPLATE % {
+                      "jobfile_path": self.jobfile_path, "command": self.command}
         else:
-            command = self.__class__.REMOTE_COMMAND_TEMPLATE % {
-                    "jobfile_path": self.jobfile_path, "command": self.command}
+            command = self.REMOTE_COMMAND_TEMPLATE % {
+                      "jobfile_path": self.jobfile_path, "command": self.command}
             destination = self.task_owner + "@" + self.task_host
             command = self.remote_shell_template % destination + command
         # execute the local command to submit the job
