@@ -322,7 +322,7 @@ class config( CylcConfigObj ):
                 print 'Naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
                     print '  +', ndt
-                print '  WARNING: this can be caused by misspelled task names!' 
+                print >> sys.stderr, '  WARNING: naked dummy tasks can result from misspelled task names!' 
             if self.strict:
                 raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
 
