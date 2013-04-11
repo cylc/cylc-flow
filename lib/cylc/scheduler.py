@@ -1773,19 +1773,24 @@ class scheduler(object):
         multiple tasks or families."""
 
         matches = []
+        tasks = self.config.get_task_name_list()
 
         if is_family: 
             families = self.config.runtime['first-parent descendants']
             try:
                 # exact
-                matches = families[name]
+                f_matches = families[name]
             except KeyError:
                 # regex match
                 for fam, mems in families.items():
                     if re.match( name, fam ):
-                        matches += mems
+                        f_matches += mems
+            matches = []
+            for m in f_matches:
+                if m in tasks:
+                    matches.append(m)
+
         else:
-            tasks = self.config.get_task_name_list()
             if name in tasks:
                 # exact
                 matches.append(name)
@@ -1794,6 +1799,7 @@ class scheduler(object):
                 for task in tasks:
                     if re.match( name, task ):
                         matches.append(task)
+
         return matches
 
     def command_reset_task_state( self, name, tag, state, is_family ):
