@@ -37,7 +37,7 @@ from cylc.TaskID import TaskID
 from cylc.global_config import gcfg
 
 class job_submit(object):
-    LOCAL_COMMAND_TEMPLATE = "%(jobfile_path)s --write-suite-env && %(command)s"
+    LOCAL_COMMAND_TEMPLATE = "%(jobfile_path)s --write-suite-env && (%(command)s)"
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
             + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
