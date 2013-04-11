@@ -905,6 +905,8 @@ class scheduler(object):
 
         # Running in UTC time? (else just use the system clock)
         self.utc = self.config['cylc']['UTC mode']
+        if self.utc:
+            os.environ['TZ'] = 'UTC'
 
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']
