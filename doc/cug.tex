@@ -388,19 +388,14 @@ run time.
 \begin{myitemize}
     \item {\bf Cylc}, the version associated with this document is: \input{cylc-version.txt}. % generated each time by doc/process
         \newline \url{http://cylc.github.com/cylc}
-    \item {\bf OS: Linux or Unix (including Mac OS X).} Cylc may assume
-        Unix-style file paths in places, a tiny minority of cylc
-        commands are Bash shell scripts (most are Python), and
-        cylc-generated task job scripts are written for Bash.
-    \item {\bf The Python Language, v 2.4$+$, preferably 2.5$+$,
-        latest tested 2.7.2}. 
-        Not Python 3.x yet; as of mid 2011 version 2.7 is the
-        standard for new Linux distributions.
+    \item {\bf OS: Linux, Unix, including OS X.}
+    \item {\bf The Python Language, version 2.5 or later, but 
+        not 3.x yet.
         \newline \url{http://python.org}
     \item {\bf Pyro (Python Remote Objects), version 3.10$+$, latest
         tested 3.16}; not Pyro 4.x as yet. Pyro is used by cylc
         for network communication between server processes (cylc suites)
-        and client programs (running tasks, gcylc, and commands).
+        and client programs (running tasks, gcylc, commands).
         \newline \url{http://irmen.home.xs4all.nl/pyro3}
     \item {\bf sqlite (a server-less, zero-configuration, SQL database
         engine}). This is likely included in your Linux distribution
