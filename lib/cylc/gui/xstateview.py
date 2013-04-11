@@ -30,18 +30,6 @@ import sys
 import threading
 from time import sleep
 
-
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
-
 class xupdater(threading.Thread):
     def __init__(self, cfg, theme, info_bar, xdot ):
         super(xupdater, self).__init__()
