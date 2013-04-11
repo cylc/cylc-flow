@@ -107,7 +107,7 @@ fi"""
         command scripting = """
 # insert ColdA:
 AT=$( cylc cycletime --offset-hours=18 )
-cylc insert -f $CYLC_SUITE_REG_NAME ColdA.${AT}
+cylc insert -f $CYLC_SUITE_REG_NAME ColdA ${AT}
 # purge tasks that cannot run:
 TO=$( cylc cycletime --offset-hours=12 )
 cylc purge -f $CYLC_SUITE_REG_NAME X.$CYLC_TASK_CYCLE_TIME ${TO}

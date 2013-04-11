@@ -33,6 +33,12 @@ class ControlGraph(object):
 Dependency graph suite control interface.
     """
     def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
+        # NOTE: this view has separate family Group and Ungroup buttons
+        # instead of a single Group/Ungroup toggle button, unlike the
+        # other views the graph view can display intermediate states
+        # between fully grouped and fully ungrouped (well, so can the
+        # tree view, but in that case the toggle button determines
+        # whether it displays a flat list or a proper tree view).
 
         self.cfg = cfg
         self.usercfg = usercfg

@@ -374,7 +374,6 @@ class scheduler(object):
                 self.log.info( 'Command succeeded: ' + cmdstr )
                 self.do_update_state_summary = True
                 if name in self.proc_cmds:
-                    print '!!!!!!!!!!!!!!!!!!!!!!PROC'
                     self.do_process_tasks = True
             queue.task_done()
 

@@ -128,11 +128,11 @@ Text Treeview suite control interface.
 
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
+        group_on = toggle_item.get_active()
+        if group_on == self.t.should_group_families:
+            return False
+        self.t.should_group_families = group_on
         if isinstance( toggle_item, gtk.ToggleToolButton ):
-            group_on = toggle_item.get_active()
-            if group_on == self.t.should_group_families:
-                return False
-            self.t.should_group_families = group_on
             if group_on:
                 tip_text = "Tree View - Click to ungroup families"
             else:
@@ -140,10 +140,6 @@ Text Treeview suite control interface.
             self._set_tooltip( toggle_item, tip_text )
             self.group_menu_item.set_active( group_on )
         else:
-            group_on = toggle_item.get_active()
-            if group_on == self.t.should_group_families:
-                return False
-            self.t.should_group_families = group_on
             if toggle_item != self.group_menu_item:
                 self.group_menu_item.set_active( group_on )
             self.group_toolbutton.set_active( group_on )            
