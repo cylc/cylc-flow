@@ -76,18 +76,11 @@ Dependency graph suite control interface.
 
         m = re.match( 'base:(.*)', url )
         if m:
-            #print 'BASE GRAPH'
+            # base graph node
             task_id = m.groups()[0]
-            #warning_dialog( 
-            #        task_id + "\n"
-            #        "This task is part of the base graph, taken from the\n"
-            #        "suite config file (suite.rc) dependencies section, \n" 
-            #        "but it does not currently exist in the running suite." ).warn()
             self.right_click_menu( event, task_id, type='base graph task' )
             return
 
-        # URL is task ID
-        #print 'LIVE TASK'
         self.right_click_menu( event, url, type='live task' )
 
     def on_motion_notify( self, widget, event ):
