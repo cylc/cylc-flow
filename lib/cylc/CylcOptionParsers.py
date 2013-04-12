@@ -73,7 +73,7 @@ Arguments:"""
         self.jset = jset
 
         self.prep = prep
-        self.suites = []
+        self.suite_info = []
         self.twosuites = twosuites
  
         maxlen = 0
@@ -167,7 +167,7 @@ Arguments:"""
                 action="store", default=None, dest="templatevars_file" )
 
     def get_suite( self, index=0 ):
-        return self.suites[index]
+        return self.suite_info[index]
 
     def _getdef( self, arg, options ):
         suiterc = arg
@@ -209,9 +209,9 @@ Arguments:"""
 
         if self.prep:
             # allow file path or suite name 
-            self.suites.append( self._getdef( args[0], options ))
+            self.suite_info.append( self._getdef( args[0], options ))
             if self.twosuites:
-                self.suites.append( self._getdef( args[1], options ))
+                self.suite_info.append( self._getdef( args[1], options ))
 
         return ( options, args )
 
