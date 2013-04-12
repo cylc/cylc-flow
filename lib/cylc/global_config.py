@@ -12,17 +12,6 @@ from tempfile import mkdtemp
 from envvar import expandvars
 from mkdir_p import mkdir_p
 
-# TODO: drop now-broken support for Python 2.4
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
 class GlobalConfigError( Exception ):
     def __init__( self, msg ):
         self.msg = msg

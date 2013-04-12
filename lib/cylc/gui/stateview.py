@@ -30,18 +30,6 @@ import sys
 import threading
 from time import sleep, time
 
-
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
-
 class PollSchd(object):
     """Keep information on whether an updater should poll or not."""
 
