@@ -296,7 +296,7 @@ class scheduler(object):
                 gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
-        for key, value in task.task.cylc_env.items():
+        for key, value in self.suite_env.items() + self.suite_task_env.items():
             f.write("%s=%s\n" % (key, value))
         f.close()
         r_suite_run_dir = os.path.expandvars(

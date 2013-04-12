@@ -186,7 +186,7 @@ class jobfile(object):
 if (($# > 0)) && [[ $1 == '--write-suite-env' ]]; then
     shift 1
     {""" )
-        for var in sorted(cenv):
+        for var in sorted(self.__class__.suite_env) + sorted(st_env):
             BUFFER.write( "\n        echo \"%(var)s=$%(var)s\"" %
                           {"var": var} )
         BUFFER.write( r"""
