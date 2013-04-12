@@ -51,10 +51,10 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[], pyro=False, noforce=False,
+    def __init__( self, usage, argdoc=None, pyro=False, noforce=False,
             jset=False, prep=False, twosuites=False ):
 
-        if not argdoc:
+        if argdoc == None:
             if not prep:
                 argdoc = [('REG', 'Suite name')]
             else:
