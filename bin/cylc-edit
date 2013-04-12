@@ -29,7 +29,6 @@ from cylc.global_config import gcfg
 from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_editing, \
     split_file, backup, backups, newfiles, cleanup, modtimes
-from cylc.command_prep import prep_file
 
 parser = cop( """cylc [prep] edit [OPTIONS] ARGS
 
@@ -38,10 +37,10 @@ locations, and with optional reversible inlining of include-files. Note
 that Jinja2 suites can only be edited in raw form but the processed
 version can be viewed with 'cylc [prep] view -p'.
 
-1/cylc [prep] edit REG 
+1/cylc [prep] edit SUITE 
 Change to the suite definition directory and edit the suite.rc file.
 
-2/ cylc [prep] edit -i,--inline REG
+2/ cylc [prep] edit -i,--inline SUITE
 Edit the suite with include-files inlined between special markers. The
 original suite.rc file is temporarily replaced so that the inlined
 version is "live" during editing (i.e. you can run suites during
@@ -51,7 +50,7 @@ again when you exit the editor. Include-files can be nested or
 multiply-included; in the latter case only the first inclusion is
 inlined (this prevents conflicting changes made to the same file).
 
-3/ cylc [prep] edit --cleanup REG
+3/ cylc [prep] edit --cleanup SUITE
 Remove backup files left by previous INLINED edit sessions.
 
 INLINED EDITING SAFETY: The suite.rc file and its include-files are
@@ -70,7 +69,7 @@ The edit process is spawned in the foreground as follows:
 Where <editor> is defined in the cylc site and user config files
 ($CYLC_DIR/conf/globals/cylc.rc and $HOME/.cylc/cylc.rc).
 
-See also 'cylc [prep] view'.""")
+See also 'cylc [prep] view'.""", prep=True )
 
 parser.add_option( "--inline", "-i", 
         help="Edit with include-files inlined as described above.",
@@ -86,7 +85,7 @@ parser.add_option( "--gui", "-g",
 
 ( options, args ) = parser.parse_args()
 
-suite, suiterc = prep_file( args[0], options ).execute()
+suite, suiterc, junk = parser.get_suite()
 
 globals = gcfg
 if options.geditor:

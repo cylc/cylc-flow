@@ -94,7 +94,7 @@ def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
             else:
                 print ' ' + arrow + '  ', key, '=', dct[key]
 
-parser = cop( """cylc [prep] diff|compare [OPTIONS] REG REG2
+parser = cop( """cylc [prep] diff|compare [OPTIONS] SUITE1 SUITE2
 
 Compare two suite definitions and display any differences.
 
@@ -108,8 +108,9 @@ default configuration values (e.g. the default job submission log
 directory.
 
 Files in the suite bin directory and other sub-directories of the 
-suite definition directory are not currently differenced.""", jset=True,
-    argdoc=[('REG1', 'Suite name'), ('REG1', 'Suite name')] )
+suite definition directory are not currently differenced.""",
+    jset=True, prep=True, twosuites=True,
+    argdoc=[('SUITE1', 'Suite name or path'), ('SUITE2', 'Suite name or path')] )
 
 parser.add_option( "-n", "--nested", help="print suite.rc "
         "section headings in nested form.",
@@ -117,11 +118,8 @@ parser.add_option( "-n", "--nested", help="print suite.rc "
 
 (options, args) = parser.parse_args()
 
-prep1 = prep_file( args[0], options )
-prep2 = prep_file( args[1], options )
-
-suite1, suite1rc = prep1.execute()
-suite2, suite2rc = prep2.get_suite()
+suite1, suite1rc, junk = parser.get_suite()
+suite2, suite2rc, junk = parser.get_suite(index=1)
 
 try:
     print "Parsing", suite1
