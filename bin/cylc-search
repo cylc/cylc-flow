@@ -68,7 +68,7 @@ parser.add_option( "-x", help="Do not search in the suite bin directory",
 
 ( options, args ) = parser.parse_args()
 
-suite, suiterc = parser.get_suite()
+suite, suiterc, junk = parser.get_suite()
 
 # cylc search SUITE PATTERN
 pattern = '|'.join(args[1:])
