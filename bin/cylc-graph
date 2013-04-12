@@ -25,7 +25,6 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct, CycleTimeError
-from cylc.command_prep import prep_file
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and
 # right-click menu have been rather hastily stuck on to the original
@@ -81,8 +80,8 @@ def grouping( w, name, window, un, recursive ):
         else:
             window.get_graph( ungroup_nodes=[name], ungroup_recursive=False )
 
-parser = cop( """1/ cylc [prep] graph [OPTIONS] REG [START [STOP]]
-     Plot the suite.rc dependency graph for REG.
+parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START [STOP]]
+     Plot the suite.rc dependency graph for SUITE.
        2/ cylc [prep] graph [OPTIONS] -f,--file FILE
      Plot the specified dot-language graph file.
 
@@ -109,7 +108,7 @@ GRAPH VIEWER CONTROLS:
     * "group" - close this node's parent family.
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
-    jset=True, argdoc = [('[REG]', 'Suite name'), 
+    jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'), 
         ('[START]', 'Initial cycle time to plot (default=2999010100)'),
         ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
 
@@ -182,9 +181,7 @@ if options.filename:
     gtk.main()
     sys.exit(0)
 
-prep = prep_file( args[0], options )
-suite, suiterc = prep.execute()
-watchers = prep.get_rcfiles()
+suite, suiterc, watchers = parser.get_suite()
 
 if options.landscape:
     orientation = "LR"
