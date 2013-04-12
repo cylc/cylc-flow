@@ -70,7 +70,7 @@ class SchedulerError( Exception ):
     """
     Attributes:
         message - what the problem is. 
-        TO DO: element - config element causing the problem
+        TODO - element - config element causing the problem
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -437,7 +437,7 @@ class scheduler(object):
 
     def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):
-        # TO DO: CAN WE OMIT THE MIDDLE MAN HERE?
+        # TODO - CAN WE OMIT THE MIDDLE MAN HERE?
         return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
                 ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
 
@@ -486,7 +486,7 @@ class scheduler(object):
             return dump
     
     # CONTROL_COMMANDS__________________________________________________
-    # TO DO: LOG OR PRINT ERRORS AND CARRY ON FROM CONTROL COMMANDS
+    # TODO - LOG OR PRINT ERRORS AND CARRY ON FROM CONTROL COMMANDS
     # WHICH ARE NOW EXECUTED ASYNCHRONOUSLY.
     # AND DO A SUITE SUMMARY UPDATE AFTER EACH COMMAND?
 
@@ -537,7 +537,7 @@ class scheduler(object):
 
     def command_release_suite( self ):
         self.release_suite()
-        # TO DO: process, to update state summary
+        # TODO - process, to update state summary
         self.suite_halt = False
         print "Tasks will be submitted when they are ready to run" 
 
@@ -561,25 +561,25 @@ class scheduler(object):
                 ##return result( True, "OK" )
             else:
                 pass
-                ##TO DO: return result( False, "Task was not waiting or queued" )
+                ##TODO - return result( False, "Task was not waiting or queued" )
         else:
             pass
-            ## TO DO: return result( False, "Task not found" )
+            ## TODO - return result( False, "Task not found" )
 
     def command_hold_suite( self ):
         if self.paused():
             print >> sys.stderr, "COMMAND WARNING: the suite is already paused"
 
         self.hold_suite()
-        # TO DO: process, to update state summary
+        # TODO - process, to update state summary
         self.do_process_tasks = True
 
         ##return result( True, "Tasks that are ready to run will not be submitted" )
 
     def command_hold_after_tag( self, tag ):
-        """To Do: not currently used - add to the cylc hold command"""
+        """TODO - not currently used - add to the cylc hold command"""
         self.hold_suite( tag )
-        # TO DO: process, to update state summary
+        # TODO - process, to update state summary
         self.do_process_tasks = True
         print "COMMAND result: The suite will pause when all tasks have passed " + tag 
 
@@ -624,7 +624,7 @@ class scheduler(object):
     def command_kill_task( self, force_spawn, task_id ):
         if not self._task_type_exists( task_id ):
             pass
-            ## To Do:
+            ## TODO -
             ## return result(False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
         if not force_spawn:
             self.kill( [ task_id ] )
@@ -632,15 +632,15 @@ class scheduler(object):
             self.spawn_and_die( [ task_id ] )
 
     def command_purge_tree( self, task_id, stop ):
-        # TO DO: REMOVE MIDDLE-MAN COMMANDS (E.G. THIS ONE) WHERE POSSIBLE
+        # TODO - REMOVE MIDDLE-MAN COMMANDS (E.G. THIS ONE) WHERE POSSIBLE
         if not self._task_type_exists( task_id ):
             pass
-            ## To Do:
+            ## TODO -
             ## return result( False, "there is no task " + self._name_from_id( task_id ) + " in the suite graph." )
         self.purge( task_id, stop )
 
     def command_reset_task_state( self, task_id, state ):
-        # TO DO: HANDLE EXCEPTIONS FOR THE NEW WAY
+        # TODO - HANDLE EXCEPTIONS FOR THE NEW WAY
         try:
             self.reset_task_state( task_id, state )
         except TaskStateError, x:
@@ -651,11 +651,11 @@ class scheduler(object):
             # do not let a remote request bring the suite down for any reason
             self.log.warning( 'Remote reset failed: ' + x.__str__() )
         else:
-            # To Do: report success
+            # TODO - report success
             self.do_process_tasks = True
 
     def command_trigger_task( self, task_id ):
-        # TO DO: HANDLE EXCEPTIONS FOR THE NEW WAY
+        # TODO - HANDLE EXCEPTIONS FOR THE NEW WAY
         try:
             self.trigger_task( task_id )
         except TaskNotFoundError, x:
@@ -664,7 +664,7 @@ class scheduler(object):
             # do not let a remote request bring the suite down for any reason
             self.log.warning( 'Remote reset failed: ' + x.__str__() )
         else:
-            # To Do: report success
+            # TODO - report success
             self.do_process_tasks = True
 
     def command_add_prerequisite( self, task_id, message ):
@@ -724,10 +724,10 @@ class scheduler(object):
             self.reconfigure()
         except Exception, x:
             pass
-            # TO DO: return result( False, str(x) )
+            # TODO - return result( False, str(x) )
         else:
             pass
-            # TO DO: return result( True, 'OK' )
+            # TODO - return result( True, 'OK' )
 
 
     #___________________________________________________________________
@@ -909,6 +909,8 @@ class scheduler(object):
 
         # Running in UTC time? (else just use the system clock)
         self.utc = self.config['cylc']['UTC mode']
+        if self.utc:
+            os.environ['TZ'] = 'UTC'
 
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']
@@ -1016,7 +1018,7 @@ class scheduler(object):
                raise SchedulerError( "Failed to acquire a suite lock" )
 
         if self.hold_time:
-            # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
+            # TODO - HANDLE STOP AND PAUSE TIMES THE SAME WAY?
             self.hold_suite( self.hold_time )
 
         if self.options.start_held:
@@ -1109,7 +1111,7 @@ class scheduler(object):
             if self.check_suite_shutdown():
                 break
 
-            # hard abort? (To Do: will a normal shutdown suffice here?)
+            # hard abort? (TODO - will a normal shutdown suffice here?)
             # 1) "abort if any task fails" is set, and one or more tasks failed
             if self.config['cylc']['abort if any task fails']:
                 if self.any_task_failed():
@@ -1354,7 +1356,7 @@ class scheduler(object):
                     # release this task
                     itask.reset_state_waiting()
  
-        # TO DO: write a separate method for cancelling a stop time:
+        # TODO - write a separate method for cancelling a stop time:
         #if self.stop_tag:
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
         #    self.stop_tag = None
@@ -1482,7 +1484,7 @@ class scheduler(object):
                 self.broker.negotiate( itask )
 
         for itask in self.pool.get_tasks():
-            # (To Do: only used by repeating async tasks now)
+            # (TODO - only used by repeating async tasks now)
             if not itask.not_fully_satisfied():
                 itask.check_requisites()
 
@@ -1491,7 +1493,7 @@ class scheduler(object):
             ouct = self.get_runahead_base() 
             for itask in self.pool.get_tasks():
                 if not itask.is_cycling():
-                    # TO DO: this test is not needed?
+                    # TODO - this test is not needed?
                     continue
                 if itask.state.is_currently('runahead'):
                     foo = ct( itask.c_time )
@@ -1917,7 +1919,7 @@ class scheduler(object):
         itask.prerequisites.add_requisites(pp)
 
     def insertion( self, ins_id, stop_c_time=None ):
-        # TO DO: UPDATE FOR ASYCHRONOUS TASKS
+        # TODO - UPDATE FOR ASYCHRONOUS TASKS
 
         # for remote insertion of a new task, or task group
         ( ins_name, ins_ctime ) = ins_id.split( TaskID.DELIM )
@@ -2006,7 +2008,7 @@ class scheduler(object):
         # Finally, reset the prerequisites of all tasks spawned during
         # the purge to unsatisfied, since they may have been satisfied
         # by the purged tasks in the "virtual" dependency negotiations.
-        # TO DO: THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
+        # TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
         # ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
@@ -2114,7 +2116,7 @@ class scheduler(object):
 
     def spawn_and_die( self, task_ids, dump_state=True, reason='remote request' ):
         # Spawn and kill all tasks in task_ids. Works for dict or list input.
-        # TO DO: clean up use of spawn_and_die (the keyword args are clumsy)
+        # TODO - clean up use of spawn_and_die (the keyword args are clumsy)
 
         if dump_state:
             self.log.warning( 'pre-spawn-and-die state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
@@ -2210,7 +2212,7 @@ class scheduler(object):
                     return True
                 else:
                     # reset self.stop_clock_time and delegate to 2) above
-                    # To Do: rationalize use of hold_suite and suite_halt?
+                    # TODO - rationalize use of hold_suite and suite_halt?
                     self.log.info( "The suite will shutdown when all running tasks have finished" )
                     self.hold_suite()
                     self.suite_halt = True
@@ -2223,7 +2225,7 @@ class scheduler(object):
             stop = True
             for itask in self.pool.get_tasks():
                 if itask.name == name:
-                    # To Do: the task must still be present in the pool
+                    # TODO - the task must still be present in the pool
                     # (this should be OK; but the potential loophole
                     # will be closed by the upcoming task event databse).
                     if not itask.state.is_currently('succeeded'):

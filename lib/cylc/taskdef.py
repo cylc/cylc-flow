@@ -161,7 +161,7 @@ class taskdef(object):
         # [runtime][TASK][enviroment] is now held in a class variable).
         tclass.env_vars = OrderedDict()
 
-        tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
+        tclass.name = self.name        # TODO - NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
        
@@ -287,7 +287,7 @@ class taskdef(object):
                 # cycling tasks with a final cycle time set
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
             else:
-                # TO DO: TEMPORARY HACK FOR ASYNC
+                # TODO - TEMPORARY HACK FOR ASYNC
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state, validate=validate )
 

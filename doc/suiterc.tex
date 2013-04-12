@@ -655,7 +655,7 @@ Dependence on one-off tasks is not restricted to the first cycle.
 
 \paragraph[explicit restart outputs]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ explicit restart outputs}
 
-% TO DO: THESE TASKS COULD BE IDENTIFIED FROM THE GRAPH?
+% TODO - THESE TASKS COULD BE IDENTIFIED FROM THE GRAPH?
 
 This is only required in the event that you need a warm cycled forecast
 model to start at the instant its restart files are ready (if other
@@ -1124,13 +1124,12 @@ to be modified slightly to allow use of the C shell.
 
 \paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
 
-Configur host and username, for tasks that do not run on the suite host.
-Cylc will use passwordless ssh to submit the task by the configured
-job submission method. Cylc must be installed on remote task hosts, but
-of the external software dependencies only Pyro is required there
-(actually, not even that if {\em ssh messaging} is used; see below).
-Passwordless ssh must be configured between the local suite owner on the
-suite host, and the task owner on the remote task host.
+Configure host and username, for tasks that do not run on the suite host
+account. Passwordless ssh is used to submit the task by the configured
+job submission method, so you must distribute your ssh key to allow
+this. Cylc must be installed on remote task hosts, but of the external
+software dependencies only Pyro is required there (not even that if {\em
+ssh messaging} is used; see below).
 
 \subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
 \label{DynamicHostSelection}
@@ -1162,10 +1161,14 @@ of cylc on the remote machine; if not, the corresponding local settings
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
-The task owner username. This is (only) used in the passwordless ssh
-command line  invoked by cylc to submit the remote task (consequently it
-may be defined using local environment variables 
+The username of the task host account. This is (only) used in the
+passwordless ssh command invoked by cylc to submit the remote task
+(consequently it may be defined using local environment variables 
 (i.e.\ the shell in which cylc runs, and [cylc] $\rightarrow$ [[environment]]). 
+
+If you use dynamic host selection and have different usernames on
+the different selectable hosts, you can configure your
+\lstinline=$HOME/.ssh/config= to handle username translation.
 
 \begin{myitemize}
 \item {\em type:} string (a valid username on the remote host)

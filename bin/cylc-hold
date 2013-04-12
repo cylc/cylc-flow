@@ -39,7 +39,7 @@ See also 'cylc [control] release'.""", pyro=True,
     argdoc=[("REG", "Suite name"), 
             ("[TASK]", "Task to hold (NAME"+TaskID.DELIM+"CYCLE)")]) 
 
-# TO DO: hold after TAG etc. as per the stop command?
+# TODO - hold after TAG etc. as per the stop command?
 
 (options, args) = parser.parse_args()
 

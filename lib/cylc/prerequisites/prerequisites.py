@@ -49,7 +49,7 @@ class prerequisites(object):
             
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prerequisites?
-        # DELEGATE TO CONTAINED CLASSES (TO DO: CHECK EFFICIENCY)
+        # DELEGATE TO CONTAINED CLASSES (TODO - CHECK EFFICIENCY)
         # (asynchronous tasks have different satisfy_me() requirements)
         for reqs in self.container:
         ##    for label in reqs.satisfied:

@@ -26,16 +26,6 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.task_state import task_state
 from cylc.TaskID import TaskID
 
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
 class ControlTree(object):
     """
 Text Treeview suite control interface.
@@ -275,7 +265,7 @@ Text Treeview suite control interface.
 
         menu.popup( None, None, None, event.button, event.time )
 
-        # TO DO: popup menus are not automatically destroyed and can be
+        # TODO - popup menus are not automatically destroyed and can be
         # reused if saved; however, we need to reconstruct or at least
         # alter ours dynamically => should destroy after each use to
         # prevent a memory leak? But I'm not sure how to do this as yet.)

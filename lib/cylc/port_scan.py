@@ -101,7 +101,7 @@ class port_interrogator(object):
             raise
         else:
             # got access with no passphrase => not a secure suite
-            # TO DO: THIS IS NO LONGER LEGAL from cylc-4.5.0
+            # TODO - THIS IS NO LONGER LEGAL from cylc-4.5.0
             return name, owner, 'insecure'
 
 def warn_timeout( host, port, timeout ):

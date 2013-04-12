@@ -41,7 +41,7 @@ class conditional_prerequisites(object):
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
         if label:
-            # TO DO: autolabelling NOT USED? (and is broken because the
+            # TODO - autolabelling NOT USED? (and is broken because the
             # supplied condition is necessarily expressed in terms of
             # user labels?).
             pass
@@ -51,7 +51,7 @@ class conditional_prerequisites(object):
 
         if message in self.labels:
             # DUPLICATE PREREQUISITE - IMPOSSIBLE IN CURRENT USE OF THIS CLASS?
-            # (TO DO: if impossible, remove related code from this file)
+            # (TODO - if impossible, remove related code from this file)
             #raise SystemExit( "Duplicate prerequisite: " + message )
             print >> sys.stderr, "WARNING, " + self.owner_id + ": duplicate prerequisite: " + message
             self.excess_labels.append(label)

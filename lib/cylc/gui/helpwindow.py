@@ -337,7 +337,7 @@ node grouping, using the viewer controls, take precedence).
 
 
 #-----------------------------------------------------------------------
-# TO DO: THE FOLLOWING HELP WINDOWS SHOULD BE REDONE IN FORMATTED STRING 
+# TODO - THE FOLLOWING HELP WINDOWS SHOULD BE REDONE IN FORMATTED STRING 
 # FORM, AS ABOVE.
 
 def update_tb( tb, line, tags = None ):

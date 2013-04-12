@@ -81,7 +81,7 @@ if options.taskfilter:
 elif options.regexfilter:
     filter = re.compile( options.regexfilter )
 
-# TO DO: exception handling for large files that exceed memory capacity?
+# TODO - exception handling for large files that exceed memory capacity?
 # apparently readline() one line at a time is much slower than readlines()
 try:
     LOG = open( filename )

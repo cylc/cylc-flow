@@ -30,18 +30,6 @@ import sys
 import threading
 from time import sleep, time
 
-
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
-
 class PollSchd(object):
     """Keep information on whether an updater should poll or not."""
 
@@ -524,7 +512,7 @@ class tupdater(threading.Thread):
         while not self.quit:
             if self.poll_schd.ready() and self.update():
                 gobject.idle_add( self.update_gui )
-                # TO DO: only update globals if they change, as for tasks
+                # TODO - only update globals if they change, as for tasks
                 gobject.idle_add( self.update_globals )
             sleep(1)
         else:
@@ -659,7 +647,7 @@ class lupdater(threading.Thread):
                             self.filter in t or \
                             re.search( self.filter, t )]
             except:
-                # bad regex (To Do: dialog warn from main thread - idle_add?)
+                # bad regex (TODO - dialog warn from main thread - idle_add?)
                 self.task_list = []
 
         # always update global info
@@ -702,7 +690,7 @@ class lupdater(threading.Thread):
         # Digitize cycle time for the LED panel display.
         # For asynchronous tasks blank-pad the task tag.
 
-        # TO DO: if we ever have cycling modules for which minutes and
+        # TODO - if we ever have cycling modules for which minutes and
         # seconds are important, take the whole of ctin here:
         ncol = 10 # columns in the digital cycletime row
         ct = ctin[:ncol]
@@ -886,7 +874,7 @@ class lupdater(threading.Thread):
         while not self.quit:
             if self.poll_schd.ready() and self.update():
                 gobject.idle_add( self.update_gui )
-                # TO DO: only update globals if they change, as for tasks
+                # TODO - only update globals if they change, as for tasks
                 gobject.idle_add( self.update_globals )
             sleep(1)
         else:

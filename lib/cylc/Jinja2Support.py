@@ -75,7 +75,7 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
         sys.path.append( os.path.abspath( filterdir ))
         for f in glob.glob( os.path.join( filterdir, '*.py' )):
             fname = os.path.basename( f ).rstrip( '.py' )
-            # TO DO: EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
+            # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
             m = __import__( fname )
             env.filters[ fname ] = getattr( m, fname )
 
@@ -90,7 +90,7 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
     template = env.from_string( ''.join(flines[1:]) )
     # except Exception, x:
     #     # This happens if we use an unknown Jinja2 filter, for example.
-    ##     # TO DO: THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
+    ##     # TODO - THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
     #     raise TemplateError( x )
     try:
         template_vars = load_template_vars( inputs, inputs_file, verbose )

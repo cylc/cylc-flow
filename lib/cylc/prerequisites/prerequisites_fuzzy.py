@@ -31,7 +31,7 @@ from prerequisites import prerequisites
 # or equal to this cycle time". A delimited time cutoff is expected
 # in the message string. Requires a more complex satisfy_me() method.
 
-# TO DO: THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
+# TODO - THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
 # HANDLING.  SEE LOOSE_PREREQUISITES AS AN EXAMPLE.
 
 class fuzzy_prerequisites( prerequisites ):
@@ -44,7 +44,7 @@ class fuzzy_prerequisites( prerequisites ):
         m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( message )
         if not m:
             # ADD ARTIFICIAL BOUNDS
-            # TO DO: this is a hack, find a better way.
+            # TODO - this is a hack, find a better way.
             m = re.compile( "^(.*)(\d{10})(.*)$").match( message )
             if m:
                 [ one, two, three ] = m.groups()

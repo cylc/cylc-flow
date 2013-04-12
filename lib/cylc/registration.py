@@ -105,7 +105,7 @@ class regdb(object):
         # items[one][two]...[name] = (dir,title)
         self.items = {}
         # create initial database directory if necessary
-        # TO DO: CREATE ONLY WHEN REGISTERING?
+        # TODO - CREATE ONLY WHEN REGISTERING?
         if not os.path.exists( self.dir ):
             try:
                 os.makedirs( self.dir )
@@ -419,7 +419,7 @@ class regdb(object):
     def get_rcfiles ( self, suite ):
         suite = self.unalias(suite)
         # return a list of all include-files used by this suite
-        # TO DO: THIS NEEDS TO BE MADE RECURSIVE
+        # TODO - THIS NEEDS TO BE MADE RECURSIVE
         # (only used by cylc_xdot to check if graph has changed).
         rcfiles = []
         try:
@@ -435,7 +435,7 @@ class regdb(object):
         return rcfiles
 
 class localdb( regdb ):
-    # TO DO: REABSORB THIS BACK INTO THE MAIN regdb CLASS
+    # TODO - REABSORB THIS BACK INTO THE MAIN regdb CLASS
     # (it dates back to when we had a central db as well).
 
     """

@@ -46,7 +46,7 @@ class AsyncTag( object ):
     def getstr( self, formatted=False ):
         return self.tag
     def get( self, formatted=False ):
-        # TO DO: get rid of this as we replace old ct() with new
+        # TODO - get rid of this as we replace old ct() with new
         # CycleTime()
         return self.tag
 
@@ -92,7 +92,7 @@ class CycleTime( object ):
             return self.year + '/' + self.month + '/' + self.day + '|' + \
                     self.hour + ':' + self.minute + ':' + self.seconds
         else:
-            #### TO DO: INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
+            #### TODO - INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
             #### OF DIGITS EVERYWHERE
             #return self.strvalue
             return self.strvalue[0:10] # just YYYYMMDDHH for now
