@@ -23,7 +23,6 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
-from cylc.command_prep import prep_file
 
 n_oone = 0
 n_otwo = 0
