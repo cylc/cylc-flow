@@ -794,7 +794,7 @@ class config( CylcConfigObj ):
         print_tree( tree, padding=padding, use_unicode=pretty )
 
     def process_directories(self):
-        os.environ['CYLC_SUITE_REG_NAME'] = self.suite
+        os.environ['CYLC_SUITE_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['visualization']['runtime graph']['directory'] = expandvars( self['visualization']['runtime graph']['directory'], self.owner)

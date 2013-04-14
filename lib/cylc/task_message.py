@@ -65,7 +65,7 @@ class message(object):
 
         for attr, key, default in (
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
-                ('suite', 'CYLC_SUITE_REG_NAME', None),
+                ('suite', 'CYLC_SUITE_NAME', None),
                 ('owner', 'CYLC_SUITE_OWNER', None),
                 ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
                 ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
@@ -148,7 +148,7 @@ class message(object):
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
-                    'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
+                    'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
                 # (no exception handling here as these variables should
