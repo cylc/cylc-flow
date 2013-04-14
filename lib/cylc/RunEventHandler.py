@@ -20,12 +20,7 @@ import subprocess
 import logging
 
 def RunHandler( event, script, suite, taskID=None, msg=None, fg=False ):
-    """EXECUTION OF EVENT HANDLERS by cylc via task.py: These have to be
-executed in the background because (a) they could take time to execute,
-or (b) they could try to operate on the suite in some way (e.g. to
-remove a failed task automatically) - this would create a deadlock if
-cylc waited on them to complete before carrying on.  Cylc does not
-currently detect failure of handlers."""
+    """This is now only used for suite (not task) event handlers."""
 
     tolog = 'Calling ' + event + ' handler'
     if fg:
