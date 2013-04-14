@@ -592,11 +592,13 @@ class task( object ):
             env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
             r_suite_run_dir = gcfg.get_derived_host_item(
                     self.suite_name, 'suite run directory', self.task_host, self.task_owner)
-            r_env_file_path = '%s:%s/cylc-suite-env' % (
-                    self.user_at_host, r_suite_run_dir)
-            cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-            if subprocess.call(cmd): # return non-zero
-                raise Exception("ERROR: " + str(cmd))
+            r_env_file_path = '%s:%s/cylc-suite-env' % ( self.user_at_host, r_suite_run_dir)
+            cmd1 = ['ssh', '-oBatchMode=yes', self.user_at_host, 'mkdir', '-p', r_suite_run_dir]
+            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+            for cmd in [cmd1,cmd2]:
+                print cmd
+                if subprocess.call(cmd): # return non-zero
+                    raise Exception("ERROR: " + str(cmd))
             self.__class__.suite_contact_env_hosts.append( self.user_at_host )
         
         self.record_db_update("task_states", self.name, self.c_time, submit_method=rtconfig['job submission']['method'], host=self.user_at_host)

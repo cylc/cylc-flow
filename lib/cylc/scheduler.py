@@ -315,9 +315,12 @@ class scheduler(object):
                     self.suite, 'suite run directory', host, user)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                     user_at_host, r_suite_run_dir)
-            cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-            if subprocess.call(cmd): # return non-zero
-                raise Exception("ERROR: " + str(cmd))
+            # just in case the remote dir was deleted:
+            cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
+            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+            for cmd in [cmd1,cmd2]:
+                if subprocess.call(cmd): # return non-zero
+                    raise Exception("ERROR: " + str(cmd))
             task.task.suite_contact_env_hosts.append( user_at_host )
 
         self.already_timed_out = False
