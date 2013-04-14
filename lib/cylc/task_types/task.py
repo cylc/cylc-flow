@@ -172,7 +172,7 @@ class task( object ):
         self.message_queue = msgqueue()
         self.db_queue = []
 
-        self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
+        self.suite_name = os.environ['CYLC_SUITE_NAME']
         self.validate = validate
 
         # In case task owner and host are needed by record_db_event()

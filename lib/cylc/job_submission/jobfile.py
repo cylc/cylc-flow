@@ -319,7 +319,7 @@ cd $CYLC_TASK_WORK_DIR""" )
         self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
         self.FILE.write( '''
 echo "cylc Suite and Task Identity:"
-echo "  Suite Name  : $CYLC_SUITE_REG_NAME"
+echo "  Suite Name  : $CYLC_SUITE_NAME"
 echo "  Suite Host  : $CYLC_SUITE_HOST"
 echo "  Suite Port  : $CYLC_SUITE_PORT"
 echo "  Suite Owner : $CYLC_SUITE_OWNER"
