@@ -85,6 +85,11 @@ where output x of foo may also have an offset:
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
         else:
             # cycling or oneoff async
+            if self.async_oneoff:
+                # ctime applies to the cycling section, but
+                # self.async_oneff means the trigger is on an async
+                # oneoff task!
+                ctime = '1'
             if self.msg:
                 # explicit internal output ...
                 preq = self.msg
