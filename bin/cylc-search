@@ -25,7 +25,6 @@ import os, re
 from collections import deque
 from cylc.CylcOptionParsers import cop
 from cylc.include_files import inline_for_search
-from cylc.command_prep import prep_file
 
 def section_level( heading ):
     # e.g. foo => 0
@@ -59,8 +58,8 @@ Note that this command performs a text search on the suite definition,
 it does not search the data structure that results from parsing the
 suite definition - so it will not report implicit default settings.
 
-For case insenstive matching use '(?i)PATTERN'.""",
-    argdoc = [('REG', 'Suite name'), 
+For case insenstive matching use '(?i)PATTERN'.""", prep=True,
+    argdoc = [('SUITE', 'Suite name or path'), 
         ('PATTERN', 'Python-style regular expression'),
         ('[PATTERN2...]', 'Additional search patterns')])
 
@@ -69,7 +68,7 @@ parser.add_option( "-x", help="Do not search in the suite bin directory",
 
 ( options, args ) = parser.parse_args()
 
-suite, suiterc = prep_file( args[0], options ).execute()
+suite, suiterc, junk = parser.get_suite()
 
 # cylc search SUITE PATTERN
 pattern = '|'.join(args[1:])

@@ -23,7 +23,6 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
-from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
@@ -37,7 +36,7 @@ for each namespace:
 The first-parent inheritance graph determines the primary task family
 groupings that are collapsible in gcylc suite views and the graph
 viewer tool. To visualize the full multiple inheritance hierarchy use:
-  'cylc graph -n'.""", jset=True )
+  'cylc graph -n'.""", jset=True, prep=True )
 
 parser.add_option( "-a","--all-tasks",
         help="Print all tasks, not just those used in the graph.",
@@ -68,7 +67,7 @@ parser.add_option( "-w","--with-titles",
 
 (options, args) = parser.parse_args()
 
-suite, suiterc = prep_file( args[0], options ).execute()
+suite, suiterc, junk = parser.get_suite()
 
 if options.all_tasks and options.all_namespaces:
     parser.error("Choose either -a or -n")
