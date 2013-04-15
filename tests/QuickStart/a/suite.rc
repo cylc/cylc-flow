@@ -31,6 +31,6 @@ GetData task to trigger the first Model."""
         command scripting = """
 if [[ $CYLC_TASK_CYCLE_TIME == 2011010112 ]]; then
     cylc message "TRIGGERING FIRST MODEL NOW"
-    cylc trigger -f $CYLC_SUITE_REG_NAME Model.2011010106
+    cylc trigger -f $CYLC_SUITE_REG_NAME Model 2011010106
 fi"""
 

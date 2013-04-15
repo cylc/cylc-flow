@@ -24,20 +24,20 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import cop
+from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 
-parser = cop( """cylc [control] hold [OPTIONS] ARGS
+parser = cop( """cylc [control] hold [OPTIONS] [MATCH TAG]
 
-Holding a suite stops it from submitting tasks that are ready to run,
-until it is released. Holding a waiting TASK prevents it from running
-until it is released.  
+Hold one or more waiting tasks, or a whole suite. Held tasks do not
+submit even if they are ready to run. 
+""" + multitask_usage + """
 
-See also 'cylc [control] release'.""", pyro=True,
+See also 'cylc [control] release'.""", pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"), 
-            ("[TASK]", "Task to hold (NAME"+TaskID.DELIM+"CYCLE)")]) 
+    ('[MATCH]', 'Task or family name matching regular expression'),
+    ('[TAG]', 'Task cycle time or integer tag') ])
 
 # TODO - hold after TAG etc. as per the stop command?
 
@@ -45,29 +45,25 @@ See also 'cylc [control] release'.""", pyro=True,
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-task_only = False
-if len(args) == 2:
-    task_only = True
-    task = args[1]
-    try:
-        tid = TaskID( task )
-    except TaskIDError, x:
-        raise SystemExit(x)
-    else:
-        task = tid.getstr()
-
-    prompt( 'Hold task ' + task + ' in ' + suite, options.force )
-else:
+whole_suite = True
+if len(args) == 3:
+    whole_suite = False
+    name = args[1]
+    tag = args[2]
+    prompt( 'Hold task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
+elif len(args) == 1:
     prompt( 'Hold suite ' + suite, options.force )
+else:
+    parser.error( "Wrong number of arguments" )
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
-    if task_only:
-        result = proxy.put( 'hold task now', task )
-    else:
+    if whole_suite:
         result = proxy.put( 'hold suite now' )
+    else:
+        result = proxy.put( 'hold task now', name, tag, options.is_family )
 except Exception, x:
     if options.debug:
         raise

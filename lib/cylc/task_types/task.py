@@ -140,6 +140,8 @@ class task( object ):
         class_vars = {}
         self.state = task_state.task_state( state )
         self.trigger_now = False # used by clock-triggered tasks
+        
+        self.stop_tag = None
 
         # Count instances of each top level object derived from task.
         # Top level derived classes must define:

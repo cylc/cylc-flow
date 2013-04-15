@@ -24,63 +24,43 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import cop
+from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] insert [OPTIONS] ARGS
 
-Insert a task into a running suite. Inserted tasks will spawn successors
-as normal unless they are 'one-off' tasks.
-See also 'cylc [task] submit', for running single tasks without the scheduler.""",
-    pyro=True,
-    argdoc=[ ('REG', 'Suite name' ), 
-            ('TASK[.STOP]', 'Task to insert (NAME.TAG)[.STOPTAG]' )])
+Insert tasks into a running suite.
+
+See also 'cylc submit', for running single tasks outside of the scheduler.
+""" + multitask_usage, pyro=True, multitask=True,
+    argdoc=[("REG", "Suite name"), 
+        ('MATCH', 'Task or family name matching regular expression'),
+        ('TAG', 'Cycle time or integer tag'),
+        ('[STOP]', 'Optional stop tag for inserted task.' )])
 
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-target = args[1]
-
-try:
-    # name.tag.stoptag
-    ( name, tag, stoptag ) = target.split(TaskID.DELIM)
-except ValueError:
-    try:
-        ( name, tag ) = target.split(TaskID.DELIM)
-    except ValueError:
-        raise SystemExit( "ERROR: final argument must be NAME.TAG[.STOPTAG]" )
-    else:
-        stoptag = None
-
-# check TASK is a valid task ID
-try:
-    tid = TaskID( name + TaskID.DELIM + tag )
-except TaskIDError, x:
-    raise SystemExit(x)
-else:
-    name, tag = tid.splitstr()
-
-if stoptag:
-    # check if stoptag is cycling or asynchronous
+name = args[1]
+tag = args[2]
+if len(args) == 4:
+    stoptag = args[3]
     try:
         tid = TaskID( 'junk' + TaskID.DELIM + stoptag )
     except TaskIDError, x:
         raise SystemExit('ERROR, invalid stop tag: ' + stoptag )
-    else:
-        junk, stop = tid.splitstr()
 else:
-    stop = None
+    stoptag = None
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
-    prompt( 'Insert ' + target + ' in ' + suite, options.force )
-    result = proxy.put( 'insert task', name + TaskID.DELIM + tag, stop )
+    prompt( 'Insert ' + name + ' at ' + tag + ' in ' + suite, options.force )
+    result = proxy.put( 'insert task', name, tag, options.is_family, stoptag )
 except Exception, x:
     if options.debug:
         raise
