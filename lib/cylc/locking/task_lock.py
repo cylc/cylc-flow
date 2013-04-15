@@ -60,12 +60,12 @@ class task_lock(object):
         if suite:
             self.suite = suite
         else:
-            if 'CYLC_SUITE_REG_NAME' in os.environ.keys():
-                self.suite = os.environ[ 'CYLC_SUITE_REG_NAME' ]
+            if 'CYLC_SUITE_NAME' in os.environ.keys():
+                self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
             elif self.mode == 'raw':
                 pass
             else:
-                print >> sys.stderr, '$CYLC_SUITE_REG_NAME not defined'
+                print >> sys.stderr, '$CYLC_SUITE_NAME not defined'
                 sys.exit(1)
 
         if owner:

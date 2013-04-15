@@ -18,6 +18,7 @@
 
 from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
+from job_submission import jobfile
 from prerequisites.plain_prerequisites import plain_prerequisites
 from suite_host import suite_host
 from owner import user
@@ -31,7 +32,6 @@ import logging
 import re, os, sys, shutil
 from state_summary import state_summary
 from passphrase import passphrase
-from OrderedDict import OrderedDict
 from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
@@ -94,6 +94,7 @@ class request_handler( threading.Thread ):
         self.log.info(  "Exiting request handler thread" )
 
 class scheduler(object):
+
     def __init__( self, is_restart=False ):
 
         # SUITE OWNER
@@ -110,6 +111,10 @@ class scheduler(object):
         self.is_restart = is_restart
 
         self.graph_warned = {}
+
+        self.suite_env = {}
+        self.suite_task_env = {}
+        self.suite_contact_env = {}
 
         self.do_process_tasks = False
         self.do_update_state_summary = False
@@ -304,18 +309,21 @@ class scheduler(object):
             else:
                 self.ict = self.start_tag
 
-        self.configure_environments()
+        self.configure_suite_environment()
 
-        suite_run_dir = os.path.expandvars(
-                gcfg.get_derived_host_item(self.suite, 'suite run directory'))
+        # Write suite contact environment variables.
+        # 1) local file (os.path.expandvars is called automatically for local)
+        suite_run_dir = gcfg.get_derived_host_item(self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
-        for key, value in task.task.cylc_env.items():
+        for key, value in self.suite_contact_env.items():
             f.write("%s=%s\n" % (key, value))
         f.close()
+        # 2) restart only: copy to other accounts with still-running tasks 
         r_suite_run_dir = os.path.expandvars(
                 gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
+            self.log.warning( 'RESTART: COPYING CONTACT ENV TO ' + user_at_host )
             if '@' in user_at_host:
                 user, host = user_at_host.split('@', 1)
             else:
@@ -325,9 +333,13 @@ class scheduler(object):
                     self.suite, 'suite run directory', host, user)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                     user_at_host, r_suite_run_dir)
-            cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-            if subprocess.call(cmd): # return non-zero
-                raise Exception("ERROR: " + str(cmd))
+            # just in case the remote dir was deleted:
+            cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
+            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+            for cmd in [cmd1,cmd2]:
+                if subprocess.call(cmd): # return non-zero
+                    raise Exception("ERROR: " + str(cmd))
+            task.task.suite_contact_env_hosts.append( user_at_host )
 
         self.already_timed_out = False
         if self.config.suite_timeout:
@@ -706,7 +718,7 @@ class scheduler(object):
         self.pool.verbose = self.verbose
         self.pool.assign( reload=True )
         self.suite_state.config = self.config
-        self.configure_environments()
+        self.configure_suite_environment()
         self.reconfiguring = True
         for itask in self.pool.get_tasks():
             itask.reconfigure_me = True
@@ -840,6 +852,8 @@ class scheduler(object):
 
         # Running in UTC time? (else just use the system clock)
         self.utc = self.config['cylc']['UTC mode']
+        if self.utc:
+            os.environ['TZ'] = 'UTC'
 
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']
@@ -882,43 +896,71 @@ class scheduler(object):
 
             self.log.info( "port:" +  str( self.port ))
 
-    def configure_environments( self ):
-        task.task.cylc_env[ 'CYLC_DIR_ON_SUITE_HOST' ] = os.environ[ 'CYLC_DIR' ]
-        task.task.cylc_env[ 'CYLC_UTC' ] = str(self.utc)
-        task.task.cylc_env[ 'CYLC_MODE' ] = 'scheduler'
-        task.task.cylc_env[ 'CYLC_DEBUG' ] = str( self.options.debug )
-        task.task.cylc_env[ 'CYLC_VERBOSE' ] = str(self.verbose)
-        task.task.cylc_env[ 'CYLC_SUITE_HOST' ] =  str( self.host )
-        task.task.cylc_env[ 'CYLC_SUITE_PORT' ] =  str( self.pyro.get_port())
-        task.task.cylc_env[ 'CYLC_SUITE_NAME' ] = self.suite
-        task.task.cylc_env[ 'CYLC_SUITE_REG_NAME' ] = self.suite # back compat
-        task.task.cylc_env[ 'CYLC_SUITE_REG_PATH' ] = RegPath( self.suite ).get_fpath()
-        task.task.cylc_env[ 'CYLC_SUITE_OWNER' ] = self.owner
-        task.task.cylc_env[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
-        task.task.cylc_env[ 'CYLC_LOCKSERVER_PORT' ] = str( self.lockserver_port ) # "None" if not using lockserver
-        task.task.cylc_env[ 'CYLC_SUITE_INITIAL_CYCLE_TIME' ] = str( self.ict ) # may be "None"
-        task.task.cylc_env[ 'CYLC_SUITE_FINAL_CYCLE_TIME'   ] = str( self.stop_tag  ) # may be "None"
-        task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' ] = self.suite_dir
-        task.task.cylc_env[ 'CYLC_SUITE_DEF_PATH' ] = self.suite_dir
-        task.task.cylc_env[ 'CYLC_SUITE_LOG_DIR' ] = self.suite_log_dir # needed by the test battery
-        # task-host dependent items that will be overidden by tasks:
-        task.task.cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
-        task.task.cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( self.suite, 'suite work directory' )
-        task.task.cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( self.suite, 'suite share directory' )
-        # backward compat:
-        task.task.cylc_env[ 'CYLC_SUITE_SHARE_PATH'] = "$CYLC_SUITE_SHARE_DIR"
+    def configure_suite_environment( self ):
 
-        # Put suite identity variables (for event handlers executed by
-        # cylc) into the environment in which cylc runs
-        for var,val in task.task.cylc_env.items():
+        # static cylc and suite-specific variables:
+        self.suite_env = {
+                'CYLC_UTC'               : str(self.utc),
+                'CYLC_MODE'              : 'scheduler',
+                'CYLC_DEBUG'             : str( self.options.debug ),
+                'CYLC_VERBOSE'           : str(self.verbose),
+                'CYLC_USE_LOCKSERVER'    : str( self.use_lockserver ),
+                'CYLC_LOCKSERVER_PORT'   : str( self.lockserver_port ), # "None" if not using lockserver
+                'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
+                'CYLC_SUITE_NAME'        : self.suite,
+                'CYLC_SUITE_REG_NAME'    : self.suite, # DEPRECATED
+                'CYLC_SUITE_HOST'        : str( self.host ),
+                'CYLC_SUITE_OWNER'       : self.owner,
+                'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
+                'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
+                'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
+                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.ict ), # may be "None"
+                'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_tag ), # may be "None"
+                'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
+                }
+
+        # Contact details for remote tasks, written to file on task
+        # hosts because the details can change on restarting a suite.
+        self.suite_contact_env = {
+                'CYLC_SUITE_NAME'        : self.suite_env['CYLC_SUITE_NAME' ],
+                'CYLC_SUITE_HOST'        : self.suite_env['CYLC_SUITE_HOST' ],
+                'CYLC_SUITE_OWNER'       : self.suite_env['CYLC_SUITE_OWNER'],
+                'CYLC_SUITE_PORT'        : self.suite_env['CYLC_SUITE_PORT' ],
+                }
+
+        # Set local values of variables that are potenitally task-specific
+        # due to different directory paths on different task hosts. These 
+        # are overridden by tasks prior to job submission, but in
+        # principle they could be needed locally by event handlers:
+        self.suite_task_env = {
+                'CYLC_SUITE_RUN_DIR'    : gcfg.get_derived_host_item( self.suite, 'suite run directory' ),
+                'CYLC_SUITE_WORK_DIR'   : gcfg.get_derived_host_item( self.suite, 'suite work directory' ),
+                'CYLC_SUITE_SHARE_DIR'  : gcfg.get_derived_host_item( self.suite, 'suite share directory' ),
+                'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
+                'CYLC_SUITE_DEF_PATH'   : self.suite_dir
+                }
+        # (note gcfg automatically expands environment variables in local paths)
+
+        # Add to the scheduler environment for possible use by event handlers
+        for var,val in self.suite_env.items():
             os.environ[var] = val
+        for var,val in self.suite_task_env.items():
+            os.environ[var] = val
+
+        # Pass these to the jobfile generation module.
+        # TODO - find a better, less back-door, way of doing this!
+        jobfile.jobfile.suite_env = self.suite_env
+        jobfile.jobfile.suite_task_env = self.suite_task_env
+        # And pass contact env to the task module
+        task.task.suite_contact_env = self.suite_contact_env
 
         # Suite bin directory for event handlers executed by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
+
         # User defined local variables that may be required by event handlers
-        senv = self.config['cylc']['environment']
-        for var in senv:
-            os.environ[var] = os.path.expandvars(senv[var])
+        cenv = self.config['cylc']['environment']
+        for var in cenv:
+            os.environ[var] = os.path.expandvars(cenv[var])
 
     def run( self ):
 

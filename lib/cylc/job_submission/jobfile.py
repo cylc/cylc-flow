@@ -20,9 +20,14 @@ from cylc.TaskID import TaskID
 
 import re, os
 import StringIO
+from copy import deepcopy
 from cylc.global_config import gcfg
 
 class jobfile(object):
+
+    # These are set by the scheduler object at start-up:
+    suite_env = None       # static variables not be be changed below
+    suite_task_env = None  # copy and change below
 
     def __init__( self, suite, log_root, job_submission_method, task_id, jobconfig ):
 
@@ -132,28 +137,35 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
 
-        # Override CYLC_SUITE_DEF_PATH for remotely hosted tasks
-        rsp = self.jobconfig['remote suite path']
-        cenv = self.jobconfig['cylc environment']
-        if rsp:
-            cenv['CYLC_SUITE_DEF_PATH'] = rsp
-        else:
-            # for remote tasks that don't specify a remote suite dir
-            # default to replace home dir with literal '$HOME' (works
-            # for local tasks too):
-            cenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', cenv['CYLC_SUITE_DEF_PATH'])
+        BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
 
-        work_dir  = os.path.join( gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner ), self.jobconfig['work sub-directory'] )
+        # write the static suite variables
+        for var, val in self.__class__.suite_env.items():
+            BUFFER.write( "\nexport " + var + "=" + str(val) )
+
+        if str(self.__class__.suite_env.get('CYLC_UTC')) == 'True':
+            BUFFER.write( "\nexport TZ=UTC" )
+
+        # override and write task-host-specific suite variables
+        suite_work_dir = gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
+        st_env = deepcopy( self.__class__.suite_task_env ) 
+        st_env[ 'CYLC_SUITE_RUN_DIR'    ] = gcfg.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )
+        st_env[ 'CYLC_SUITE_WORK_DIR'   ] = suite_work_dir
+        st_env[ 'CYLC_SUITE_SHARE_DIR'  ] = gcfg.get_derived_host_item( self.suite, 'suite share directory', self.host, self.owner )
+        st_env[ 'CYLC_SUITE_SHARE_PATH' ] = '$CYLC_SUITE_SHARE_DIR' # DEPRECATED
+        rsp = self.jobconfig['remote suite path']
+        if rsp:
+            st_env[ 'CYLC_SUITE_DEF_PATH' ] = rsp
+        else:
+            # replace home dir with '$HOME' for evaluation on the task host
+            st_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', st_env['CYLC_SUITE_DEF_PATH'] )
+        for var, val in st_env.items():
+            BUFFER.write( "\nexport " + var + "=" + str(val) )
+
+        task_work_dir  = os.path.join( suite_work_dir, self.jobconfig['work sub-directory'] )
 
         use_login_shell = gcfg.get_host_item( 'use login shell', self.host, self.owner )
-
         use_ssh_messaging = gcfg.get_host_item( 'use ssh messaging', self.host, self.owner )
-
-        BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
-        for var, val in cenv.items():
-            BUFFER.write( "\nexport " + var + "=" + str(val) )
-        if str(cenv.get('CYLC_UTC')) == 'True':
-            BUFFER.write( "\nexport TZ=UTC" )
 
         BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
@@ -165,24 +177,8 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(use_ssh_messaging) )
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + work_dir )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR # back compat") 
-
-        BUFFER.write( r"""
-
-# CYLC SUITE ENVIRONMENT FILE:
-if (($# > 0)) && [[ $1 == '--write-suite-env' ]]; then
-    shift 1
-    {""" )
-        for var in sorted(cenv):
-            BUFFER.write( "\n        echo \"%(var)s=$%(var)s\"" %
-                          {"var": var} )
-        BUFFER.write( r"""
-    } >$CYLC_SUITE_RUN_DIR/cylc-suite-env
-    trap '' EXIT
-    exit
-fi
-""" )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED 
 
     def write_cylc_access( self, BUFFER=None ):
         if not BUFFER:
@@ -323,7 +319,7 @@ cd $CYLC_TASK_WORK_DIR""" )
         self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
         self.FILE.write( '''
 echo "cylc Suite and Task Identity:"
-echo "  Suite Name  : $CYLC_SUITE_REG_NAME"
+echo "  Suite Name  : $CYLC_SUITE_NAME"
 echo "  Suite Host  : $CYLC_SUITE_HOST"
 echo "  Suite Port  : $CYLC_SUITE_PORT"
 echo "  Suite Owner : $CYLC_SUITE_OWNER"

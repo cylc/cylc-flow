@@ -20,6 +20,7 @@ import os, re
 from optparse import OptionParser
 from suite_host import hostname
 from owner import user
+from cylc.command_prep import prep_file
 
 """Common options for all cylc commands."""
 
@@ -54,13 +55,14 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[('REG', 'Suite name')],
-            pyro=False, noforce=False, jset=False, multitask=False ):
+    def __init__( self, usage, argdoc=None, pyro=False, noforce=False,
+            jset=False, multitask=False, prep=False, twosuites=False ):
 
-        # commands that interact with a running suite ("controlcom=True")
-        # normally get remote access via Pyro RPC; but optionally
-        # ("--use-ssh") you can use passwordless ssh to re-invoke the
-        # command on the suite host, as for non-control commands.
+        if argdoc == None:
+            if not prep:
+                argdoc = [('REG', 'Suite name')]
+            else:
+                argdoc = [('SUITE', 'Suite name or path')]
 
         # noforce=True is for commands that don't use interactive prompts at all
 
@@ -73,7 +75,13 @@ Arguments:"""
         self.unlimited_args = False
         self.pyro = pyro
         self.jset = jset
+
         self.multitask = multitask
+
+        self.prep = prep
+        self.suite_info = []
+        self.twosuites = twosuites
+ 
         maxlen = 0
         for arg in argdoc:
             if len(arg[0]) > maxlen:
@@ -169,6 +177,29 @@ Arguments:"""
                     help="Match members of named families rather than tasks.",
                     action="store_true", default=False, dest="is_family" )
 
+    def get_suite( self, index=0 ):
+        return self.suite_info[index]
+
+    def _getdef( self, arg, options ):
+        suiterc = arg
+        if os.path.isdir( suiterc ):
+            # directory
+            suite = suiterc
+            suiterc = os.path.join( suiterc, 'suite.rc' )
+        if os.path.isfile( suiterc ):
+            # suite.rc file
+            suite = os.path.basename( os.path.dirname( suiterc ))
+            suiterc = os.path.abspath( suiterc)
+            # TODO - return suite def include files to, as below
+            watchers = [suiterc]
+        else:
+            # must be a registered suite name
+            prepper = prep_file( arg, options )
+            suite, suiterc = prepper.execute()
+            # This lists top level suite def include files too:
+            watchers = prepper.get_rcfiles()
+        return suite, suiterc, watchers
+
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
 
@@ -186,6 +217,12 @@ Arguments:"""
         if self.jset:
             if options.templatevars_file:
                 options.templatevars_file = os.path.abspath( options.templatevars_file )
+
+        if self.prep:
+            # allow file path or suite name 
+            self.suite_info.append( self._getdef( args[0], options ))
+            if self.twosuites:
+                self.suite_info.append( self._getdef( args[1], options ))
 
         return ( options, args )
 

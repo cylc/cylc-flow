@@ -27,6 +27,7 @@
 
 import os, sys, re
 import datetime
+import subprocess
 from copy import copy, deepcopy
 from random import randrange
 from collections import deque
@@ -40,7 +41,6 @@ import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
-from OrderedDict import OrderedDict
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -76,8 +76,8 @@ class task( object ):
 
     event_queue = None
 
-    # set by the back door at startup:
-    cylc_env = OrderedDict()
+    suite_contact_env_hosts = []
+    suite_contact_env = {}
 
     @classmethod
     def describe( cls ):
@@ -174,7 +174,7 @@ class task( object ):
         self.message_queue = msgqueue()
         self.db_queue = []
 
-        self.suite_name = os.environ['CYLC_SUITE_REG_NAME']
+        self.suite_name = os.environ['CYLC_SUITE_NAME']
         self.validate = validate
 
         # In case task owner and host are needed by record_db_event()
@@ -582,19 +582,28 @@ class task( object ):
             self.task_owner = user
 
         self.user_at_host = self.task_owner + "@" + self.task_host
+
+        if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
+                self.user_at_host != user + '@localhost':
+            # If the suite contact file has not been copied to user@host
+            # host yet, do so. This will happen for the first task on
+            # this remote account inside the job-submission thread just
+            # prior to job submission.
+            self.log( 'WARNING', 'COPYING CONTACT ENV TO ' + self.user_at_host )
+            suite_run_dir = gcfg.get_derived_host_item(self.suite_name, 'suite run directory')
+            env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
+            r_suite_run_dir = gcfg.get_derived_host_item(
+                    self.suite_name, 'suite run directory', self.task_host, self.task_owner)
+            r_env_file_path = '%s:%s/cylc-suite-env' % ( self.user_at_host, r_suite_run_dir)
+            cmd1 = ['ssh', '-oBatchMode=yes', self.user_at_host, 'mkdir', '-p', r_suite_run_dir]
+            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+            for cmd in [cmd1,cmd2]:
+                print cmd
+                if subprocess.call(cmd): # return non-zero
+                    raise Exception("ERROR: " + str(cmd))
+            self.__class__.suite_contact_env_hosts.append( self.user_at_host )
         
         self.record_db_update("task_states", self.name, self.c_time, submit_method=rtconfig['job submission']['method'], host=self.user_at_host)
-
-        # copy suite env variables...
-        my_cylc_env = deepcopy( self.__class__.cylc_env )
-        # ...now it's safe to override task-host-dependent items in task.cylc_env:
-        my_cylc_env[ 'CYLC_SUITE_RUN_DIR'   ] = gcfg.get_derived_host_item( self.suite_name, 'suite run directory', self.task_host, self.task_owner )
-        my_cylc_env[ 'CYLC_SUITE_WORK_DIR'  ] = gcfg.get_derived_host_item( self.suite_name, 'suite work directory', self.task_host, self.task_owner )
-        my_cylc_env[ 'CYLC_SUITE_SHARE_DIR' ] = gcfg.get_derived_host_item( self.suite_name, 'suite share directory', self.task_host, self.task_owner )
-        # TODO - separate these few potentially task-specific suite
-        # environment variables from the rest so that we do not need to
-        # copy the lot of them, and additionally move cylc_env directly
-        # to the jobfile module as it is not needed here anymore.
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
@@ -614,7 +623,6 @@ class task( object ):
                 'try number'             : self.try_number,
                 'absolute submit number' : self.submit_num,
                 'is cold-start'          : self.is_coldstart,
-                'cylc environment'       : my_cylc_env,
                 'task owner'             : self.task_owner,
                 'task host'              : self.task_host,
                 'extra log files'        : self.logfiles,

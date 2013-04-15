@@ -26,16 +26,6 @@ from warning_dialog import warning_dialog, info_dialog
 from cylc.task_state import task_state
 from cylc.TaskID import TaskID
 
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
 class ControlTree(object):
     """
 Text Treeview suite control interface.
