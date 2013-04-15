@@ -114,6 +114,7 @@ class scheduler(object):
 
         self.suite_env = {}
         self.suite_task_env = {}
+        self.suite_contact_env = {}
 
         self.do_process_tasks = False
 
@@ -292,16 +293,19 @@ class scheduler(object):
 
         self.configure_suite_environment()
 
-        suite_run_dir = os.path.expandvars(
-                gcfg.get_derived_host_item(self.suite, 'suite run directory'))
+        # Write suite contact environment variables.
+        # 1) local file (os.path.expandvars is called automatically for local)
+        suite_run_dir = gcfg.get_derived_host_item(self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
-        for key, value in self.suite_env.items() + self.suite_task_env.items():
+        for key, value in self.suite_contact_env.items():
             f.write("%s=%s\n" % (key, value))
         f.close()
+        # 2) restart only: copy to other accounts with still-running tasks 
         r_suite_run_dir = os.path.expandvars(
                 gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
+            self.log.warning( 'RESTART: COPYING CONTACT ENV TO ' + user_at_host )
             if '@' in user_at_host:
                 user, host = user_at_host.split('@', 1)
             else:
@@ -311,9 +315,13 @@ class scheduler(object):
                     self.suite, 'suite run directory', host, user)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                     user_at_host, r_suite_run_dir)
-            cmd = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-            if subprocess.call(cmd): # return non-zero
-                raise Exception("ERROR: " + str(cmd))
+            # just in case the remote dir was deleted:
+            cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
+            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+            for cmd in [cmd1,cmd2]:
+                if subprocess.call(cmd): # return non-zero
+                    raise Exception("ERROR: " + str(cmd))
+            task.task.suite_contact_env_hosts.append( user_at_host )
 
         self.already_timed_out = False
         if self.config.suite_timeout:
@@ -976,6 +984,15 @@ class scheduler(object):
                 'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
                 }
 
+        # Contact details for remote tasks, written to file on task
+        # hosts because the details can change on restarting a suite.
+        self.suite_contact_env = {
+                'CYLC_SUITE_NAME'        : self.suite_env['CYLC_SUITE_NAME' ],
+                'CYLC_SUITE_HOST'        : self.suite_env['CYLC_SUITE_HOST' ],
+                'CYLC_SUITE_OWNER'       : self.suite_env['CYLC_SUITE_OWNER'],
+                'CYLC_SUITE_PORT'        : self.suite_env['CYLC_SUITE_PORT' ],
+                }
+
         # Set local values of variables that are potenitally task-specific
         # due to different directory paths on different task hosts. These 
         # are overridden by tasks prior to job submission, but in
@@ -999,6 +1016,8 @@ class scheduler(object):
         # TODO - find a better, less back-door, way of doing this!
         jobfile.jobfile.suite_env = self.suite_env
         jobfile.jobfile.suite_task_env = self.suite_task_env
+        # And pass contact env to the task module
+        task.task.suite_contact_env = self.suite_contact_env
 
         # Suite bin directory for event handlers executed by the scheduler. 
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 

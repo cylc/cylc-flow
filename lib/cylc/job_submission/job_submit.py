@@ -37,14 +37,13 @@ from cylc.TaskID import TaskID
 from cylc.global_config import gcfg
 
 class job_submit(object):
-    LOCAL_COMMAND_TEMPLATE = "%(jobfile_path)s --write-suite-env && (%(command)s)"
+    LOCAL_COMMAND_TEMPLATE = "(%(command)s)"
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
             + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
-            + " && %(jobfile_path)s --write-suite-env"
             + " && (%(command)s)"
             + "'" )
 
@@ -221,6 +220,7 @@ class job_submit(object):
                       "jobfile_path": self.jobfile_path, "command": self.command}
             destination = self.task_owner + "@" + self.task_host
             command = self.remote_shell_template % destination + command
+
         # execute the local command to submit the job
         if dry_run:
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
@@ -230,23 +230,19 @@ class job_submit(object):
         if not self.local:
             # direct the local jobfile across the ssh tunnel via stdin
             command = command + ' < ' + self.local_jobfile_path
+
         print 'SUBMIT #' + \
                 str(self.jobconfig['absolute submit number']) + '(' + \
                 str(self.jobconfig['submission try number']) + ',' + \
                 str( self.jobconfig['try number']) + '):', command
         try:
-            popen = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
-            # To test sequential job submission (pre cylc-4.5.1)
-            # uncomment the following line (this tie cylc up for a while
-            # in the event of submitting many ensemble tasks at once):
-            ###popen.wait()
+            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
         except OSError, e:
             if debug:
                 raise
             print >> sys.stderr, "ERROR:", e
             print >> sys.stderr, "ERROR: Job submission failed"
             print >> sys.stderr, "Use --debug to abort cylc with an exception traceback."
-            popen = None
-
-        return popen
+            p = None
+        return p
 

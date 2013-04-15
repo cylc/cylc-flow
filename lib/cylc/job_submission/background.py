@@ -22,13 +22,31 @@ class background( job_submit ):
 
     """Run the task job script directly in a background shell.
 
-    stdin redirection (< /dev/null) allows background execution
-    even on a remote host - ssh can exit without waiting for the
-    remote process to finish.
-
+    Background submission is special - the job submits immediately (and
+    always successfully: try "/bin/false & echo $?") and the job ID
+    retained for polling or killing the task needs to be the process ID
+    of the submitted job on the task host. We override the general
+    command templates to achieve this by printing the pid of the running
+    job script to stdout (by "job-script & echo $!"). This avoids
+    another process to read the PID from the task status file, which is
+    not required for other job submission methods where it is the batch
+    scheduler job ID, not the running process ID, that is important.
+    Note that the pid returned by the job submission sub-process in
+    cylc, for remote background jobs, is that of the local ssh process 
+    used to invoke the remote command.
     """
 
-    COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s &"
+    LOCAL_COMMAND_TEMPLATE = "(%(command)s & echo $! )"
+    REMOTE_COMMAND_TEMPLATE = ( " '"
+            + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
+            + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
+            + " mkdir -p $(dirname %(jobfile_path)s)"
+            + " && cat >%(jobfile_path)s"
+            + " && chmod +x %(jobfile_path)s" 
+            + " && ( (%(command)s) & echo $! )"
+            + "'" )
+ 
+    COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template
@@ -39,5 +57,6 @@ class background( job_submit ):
                                             self.stderr_file )
 
     def get_id( self, pid, out, err ):
-        """Return "str(pid)"."""
-        return str(pid)
+        # (see commments above)
+        return out.strip()
+
