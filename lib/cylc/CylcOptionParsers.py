@@ -24,6 +24,10 @@ from cylc.command_prep import prep_file
 
 """Common options for all cylc commands."""
 
+multitask_usage = """
+For matching multiple tasks or families at once note that MATCH is 
+interpreted as a full regular expression, not a simple shell glob."""
+
 class db_optparse( object ):
     def __init__( self, dbopt ):
         # input is DB option spec from the cylc command line
@@ -52,7 +56,7 @@ class db_optparse( object ):
 class cop( OptionParser ):
 
     def __init__( self, usage, argdoc=None, pyro=False, noforce=False,
-            jset=False, prep=False, twosuites=False ):
+            jset=False, multitask=False, prep=False, twosuites=False ):
 
         if argdoc == None:
             if not prep:
@@ -71,6 +75,8 @@ Arguments:"""
         self.unlimited_args = False
         self.pyro = pyro
         self.jset = jset
+
+        self.multitask = multitask
 
         self.prep = prep
         self.suite_info = []
@@ -153,18 +159,23 @@ Arguments:"""
 
         if self.jset:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
-                help="Set the value of a Jinja2 template variable in the suite "
-                "definition. This option can be used multiple times on the command "
-                "line.  WARNING: these settings do not persist across suite restarts; "
-                "they need to be set again on the \"cylc restart\" command line.",
-                action="append", default=[], dest="templatevars" )
+                    help="Set the value of a Jinja2 template variable in the suite "
+                    "definition. This option can be used multiple times on the command "
+                    "line.  WARNING: these settings do not persist across suite restarts; "
+                    "they need to be set again on the \"cylc restart\" command line.",
+                    action="append", default=[], dest="templatevars" )
 
             self.add_option( "--set-file", metavar="FILE",
-                help="Set the value of Jinja2 template variables in the suite "
-                "definition from a file containing NAME=VALUE pairs (one per line). "
-                "WARNING: these settings do not persist across suite restarts; "
-                "they need to be set again on the \"cylc restart\" command line.",
-                action="store", default=None, dest="templatevars_file" )
+                    help="Set the value of Jinja2 template variables in the suite "
+                    "definition from a file containing NAME=VALUE pairs (one per line). "
+                    "WARNING: these settings do not persist across suite restarts; "
+                    "they need to be set again on the \"cylc restart\" command line.",
+                    action="store", default=None, dest="templatevars_file" )
+
+        if self.multitask:
+            self.add_option( "-m", "--family", 
+                    help="Match members of named families rather than tasks.",
+                    action="store_true", default=False, dest="is_family" )
 
     def get_suite( self, index=0 ):
         return self.suite_info[index]

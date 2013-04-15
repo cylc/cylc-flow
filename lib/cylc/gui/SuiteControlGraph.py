@@ -33,6 +33,12 @@ class ControlGraph(object):
 Dependency graph suite control interface.
     """
     def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
+        # NOTE: this view has separate family Group and Ungroup buttons
+        # instead of a single Group/Ungroup toggle button, unlike the
+        # other views the graph view can display intermediate states
+        # between fully grouped and fully ungrouped (well, so can the
+        # tree view, but in that case the toggle button determines
+        # whether it displays a flat list or a proper tree view).
 
         self.cfg = cfg
         self.usercfg = usercfg
@@ -76,18 +82,11 @@ Dependency graph suite control interface.
 
         m = re.match( 'base:(.*)', url )
         if m:
-            #print 'BASE GRAPH'
+            # base graph node
             task_id = m.groups()[0]
-            #warning_dialog( 
-            #        task_id + "\n"
-            #        "This task is part of the base graph, taken from the\n"
-            #        "suite config file (suite.rc) dependencies section, \n" 
-            #        "but it does not currently exist in the running suite." ).warn()
             self.right_click_menu( event, task_id, type='base graph task' )
             return
 
-        # URL is task ID
-        #print 'LIVE TASK'
         self.right_click_menu( event, url, type='live task' )
 
     def on_motion_notify( self, widget, event ):
