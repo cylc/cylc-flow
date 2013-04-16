@@ -1246,10 +1246,11 @@ class config( CylcConfigObj ):
             # plot conditional triggers differently
             conditional = True
  
-        sasl = False
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
+            else:
+                sasl = False
             e = graphing.edge( left, right, cyclr, sasl, suicide, conditional )
             if section == 'int_oneoff':
                 if e not in self.async_oneoff_edges:
