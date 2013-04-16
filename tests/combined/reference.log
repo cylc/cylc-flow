@@ -1,0 +1,91 @@
+2013/04/16 10:58:55 INFO - Starting Event Handler Submission thread
+2013/04/16 10:58:55 INFO - port:7766
+2013/04/16 10:58:55 CRITICAL - Suite starting at 2013-04-16 10:58:55.307037
+2013/04/16 10:58:55 INFO - Log event clock: real time
+2013/04/16 10:58:55 INFO - Run mode: live
+2013/04/16 10:58:55 INFO - Start tag: 2010080800
+2013/04/16 10:58:55 INFO - Stop tag: 2010080900
+2013/04/16 10:58:55 INFO - Starting Job Submission thread
+2013/04/16 10:58:55 INFO - Starting request handler thread
+2013/04/16 10:58:55 INFO - Cold Start 2010080800
+2013/04/16 10:58:55 INFO - [x1.1] -triggered off []
+2013/04/16 10:58:55 INFO - [sup.2010080800] -triggered off []
+2013/04/16 10:58:56 INFO - TASK READY: x1.1
+2013/04/16 10:58:56 INFO - TASK READY: sup.2010080800
+2013/04/16 10:58:56 INFO - Job Submission: batch 1/1 (2 members):
+ + x1.1
+ + sup.2010080800
+2013/04/16 10:58:56 INFO - [x1.1] -> x1.1 submitting now
+2013/04/16 10:58:56 INFO - [x1.1] -> x1.1 submission succeeded
+2013/04/16 10:58:56 INFO - [x1.1] -> x1.1 submit_method_id=3987
+2013/04/16 10:58:56 INFO - [sup.2010080800] -> sup.2010080800 submitting now
+2013/04/16 10:58:57 INFO - [x1.1] -> x1.1 started at 2013-04-16T10:58:56
+2013/04/16 10:58:57 INFO - [x1.1] -> x1.1 succeeded at 2013-04-16T10:58:56
+2013/04/16 10:58:57 INFO - [sup.2010080800] -> sup.2010080800 started at 2013-04-16T10:58:56
+2013/04/16 10:58:57 INFO - [sup.2010080800] -> sup.2010080800 succeeded at 2013-04-16T10:58:56
+2013/04/16 10:58:57 INFO - [sup.2010080800] -> sup.2010080800 submission succeeded
+2013/04/16 10:58:57 INFO - [sup.2010080800] -> sup.2010080800 submit_method_id=3992
+2013/04/16 10:58:57 INFO - [x2.1] -triggered off ['x1.1']
+2013/04/16 10:58:58 INFO - Job Submission: batch completed
+  Time taken: 0:00:02.029238
+  All 2 items succeeded
+2013/04/16 10:58:59 INFO - TASK READY: x2.1
+2013/04/16 10:58:59 INFO - Job Submission: batch 1/1 (1 members):
+ + x2.1
+2013/04/16 10:58:59 INFO - [x2.1] -> x2.1 submitting now
+2013/04/16 10:59:00 INFO - [x2.1] -> x2.1 started at 2013-04-16T10:58:59
+2013/04/16 10:59:00 INFO - [x2.1] -> x2.1 succeeded at 2013-04-16T10:58:59
+2013/04/16 10:59:00 INFO - [x2.1] -> x2.1 submission succeeded
+2013/04/16 10:59:00 INFO - [x2.1] -> x2.1 submit_method_id=4047
+2013/04/16 10:59:00 INFO - [foo.2010080800] -triggered off ['x2.1', 'sup.2010080800']
+2013/04/16 10:59:01 INFO - Job Submission: batch completed
+  Time taken: 0:00:02.011991
+  All 1 items succeeded
+2013/04/16 10:59:02 INFO - TASK READY: foo.2010080800
+2013/04/16 10:59:02 INFO - Job Submission: batch 1/1 (1 members):
+ + foo.2010080800
+2013/04/16 10:59:02 INFO - [foo.2010080800] -> foo.2010080800 submitting now
+2013/04/16 10:59:03 INFO - [foo.2010080800] -> foo.2010080800 started at 2013-04-16T10:59:02
+2013/04/16 10:59:03 INFO - [foo.2010080800] -> foo.2010080800 succeeded at 2013-04-16T10:59:02
+2013/04/16 10:59:03 INFO - [foo.2010080800] -> foo.2010080800 submission succeeded
+2013/04/16 10:59:03 INFO - [foo.2010080800] -> foo.2010080800 submit_method_id=4077
+2013/04/16 10:59:03 INFO - [bar.2010080800] -triggered off ['foo.2010080800']
+2013/04/16 10:59:04 INFO - Job Submission: batch completed
+  Time taken: 0:00:02.014560
+  All 1 items succeeded
+2013/04/16 10:59:04 INFO - [foo.2010080900] -triggered off []
+2013/04/16 10:59:05 INFO - TASK READY: bar.2010080800
+2013/04/16 10:59:05 INFO - TASK READY: foo.2010080900
+2013/04/16 10:59:05 INFO - Job Submission: batch 1/1 (2 members):
+ + bar.2010080800
+ + foo.2010080900
+2013/04/16 10:59:05 INFO - [bar.2010080800] -> bar.2010080800 submitting now
+2013/04/16 10:59:05 INFO - [bar.2010080800] -> bar.2010080800 submission succeeded
+2013/04/16 10:59:05 INFO - [bar.2010080800] -> bar.2010080800 submit_method_id=4133
+2013/04/16 10:59:05 INFO - [foo.2010080900] -> foo.2010080900 submitting now
+2013/04/16 10:59:06 INFO - [bar.2010080800] -> bar.2010080800 started at 2013-04-16T10:59:05
+2013/04/16 10:59:06 INFO - [bar.2010080800] -> bar.2010080800 succeeded at 2013-04-16T10:59:05
+2013/04/16 10:59:06 INFO - [foo.2010080900] -> foo.2010080900 started at 2013-04-16T10:59:05
+2013/04/16 10:59:06 INFO - [foo.2010080900] -> foo.2010080900 succeeded at 2013-04-16T10:59:05
+2013/04/16 10:59:06 INFO - [foo.2010080900] -> foo.2010080900 submission succeeded
+2013/04/16 10:59:06 INFO - [foo.2010080900] -> foo.2010080900 submit_method_id=4138
+2013/04/16 10:59:06 INFO - [foo.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/04/16 10:59:07 INFO - Job Submission: batch completed
+  Time taken: 0:00:02.026688
+  All 2 items succeeded
+2013/04/16 10:59:07 INFO - [bar.2010080900] -triggered off ['foo.2010080900']
+2013/04/16 10:59:08 INFO - TASK READY: bar.2010080900
+2013/04/16 10:59:08 INFO - Job Submission: batch 1/1 (1 members):
+ + bar.2010080900
+2013/04/16 10:59:08 INFO - [bar.2010080900] -> bar.2010080900 submitting now
+2013/04/16 10:59:09 INFO - [bar.2010080900] -> bar.2010080900 started at 2013-04-16T10:59:08
+2013/04/16 10:59:09 INFO - [bar.2010080900] -> bar.2010080900 succeeded at 2013-04-16T10:59:08
+2013/04/16 10:59:09 INFO - [bar.2010080900] -> bar.2010080900 submission succeeded
+2013/04/16 10:59:09 INFO - [bar.2010080900] -> bar.2010080900 submit_method_id=4197
+2013/04/16 10:59:09 INFO - [bar.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/04/16 10:59:10 INFO - Job Submission: batch completed
+  Time taken: 0:00:02.017200
+  All 1 items succeeded
+2013/04/16 10:59:10 INFO - All cycling tasks have spawned past the final cycle 2010080900
+2013/04/16 10:59:10 INFO - All non-cycling tasks have succeeded
+2013/04/16 10:59:10 CRITICAL - Suite shutting down at 2013-04-16 10:59:10.526807
