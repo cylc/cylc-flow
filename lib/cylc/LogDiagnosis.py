@@ -10,62 +10,49 @@ class LogAnalyserError( Exception ):
         return repr(self.msg)
 
 class LogSpec( object ):
-    # indexing from zero:
-    start_tag_line_no = 3
-    stop_tag_line_no = 4
+    """Get important information from an existing reference run log
+    file, in order to do the same run for a reference test. Currently
+    just gets the start and stop cycle times."""
 
     def __init__( self, log ):
-        self.lines = []
         h = open( log, 'rb' )
-        for line in range(self.__class__.stop_tag_line_no + 1):
-            self.lines.append( h.readline().strip())
+        self.lines = h.readlines()
         h.close()
 
     def get_start_tag( self ):
-        m = re.search( 'Start tag: (.*)$', self.lines[self.__class__.start_tag_line_no])
-        if m:
-            tag = m.groups()[0]
-            if tag == "None":
-                return None
-            else:
-                return tag
+        found = False
+        for line in self.lines:
+            m = re.search( 'Start tag: (.*)$',line)
+            if m:
+                found = True
+                tag = m.groups()[0]
+                if tag == "None":
+                    tag = None
+                break
+        if found:
+            return tag
         else:
             raise LogAnalyserError( "ERROR: logged start tag not found" )
 
     def get_stop_tag( self ):
-        m = re.search( 'Stop tag: (.*)$', self.lines[self.__class__.stop_tag_line_no])
-        if m:
-            tag = m.groups()[0]
-            if tag == "None":
-                return None
-            else:
-                return tag
+        found = False
+        for line in self.lines:
+            m = re.search( 'Stop tag: (.*)$',line)
+            if m:
+                found = True
+                tag = m.groups()[0]
+                if tag == "None":
+                    return None
+                break
+        if found:
+            return tag
         else:
             raise LogAnalyserError( "ERROR: logged stop tag not found" )
 
-    def get_run_length( self ):
-        # This was to compute the run length for reference tests, to set
-        # the suite timeout automatically to twice (say) the reference
-        # run length. BUT it's not much use the appropriate test run
-        # length depends on the suite run mode.
-
-        # TO RESTORE, READ IN *THE WHOLE LOG FILE* IN INIT ABOVE AND
-        # COMPLETE THE DIFFERENCE CALCULATION BELOW.
-        raise LogAnalyserError( "ERROR: method not fully implemented!" )
-
-        m = re.search( 'Suite starting at (.*)$', self.lines[0] )
-        if m:
-            t1 = m.groups()[0]
-        else:
-            raise LogAnalyserError( "ERROR: logged real start time not found" )
-        m = re.search( 'Suite shutting down at (.*)$', self.lines[-1] )
-        if m:
-            t2 = m.groups()[0]
-        else:
-            raise LogAnalyserError( "ERROR: logged real stop time not found" )
-        # compute and return difference ...
-        
 class LogAnalyser( object ):
+    """Compare an existing reference log with the log from a new
+    reference test run. Currently just compares triggering info."""
+
     def __init__( self, new_log, ref_log ):
         h = open( new_log, 'rb' )
         self.new_loglines = h.readlines()
