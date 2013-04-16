@@ -1,3 +1,8 @@
+
+description = """
+Tests triggering of asynchronous one-off, synchronous one-off
+(start-up), and cycling tasks in one suite."""
+
 [cylc]
    [[reference test]]
        required run mode = live
