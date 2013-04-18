@@ -67,10 +67,9 @@ returning the IP address associated with this socket.
     return ipaddr
 
 
-globals = gcfg
-method = globals.cfg['suite host self-identification']['method']
-target = globals.cfg['suite host self-identification']['target']
-hardwired = globals.cfg['suite host self-identification']['host']
+method = gcfg.cfg['suite host self-identification']['method']
+target = gcfg.cfg['suite host self-identification']['target']
+hardwired = gcfg.cfg['suite host self-identification']['host']
 
 hostname = socket.getfqdn()
 

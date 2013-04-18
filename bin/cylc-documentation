@@ -32,10 +32,8 @@ documentation URL. The browser and PDF reader to use, and the intranet
 URL, is determined by cylc site/user configuration - for details see
   $ cylc get-global-config --help""" )
 
-globals = gcfg
-
-intranet = globals.cfg['documentation']['urls']['local index']
-internet = globals.cfg['documentation']['urls']['internet homepage']
+intranet = gcfg.cfg['documentation']['urls']['local index']
+internet = gcfg.cfg['documentation']['urls']['internet homepage']
 
 parser.add_option( "-p", "--pdf",
         help="Open the PDF User Guide directly",
@@ -54,20 +52,20 @@ if intranet:
 
 http = False
 if options.pdf:
-    viewer = globals.cfg['document viewers']['pdf']
-    target = globals.cfg['documentation']['files']['pdf user guide'] 
+    viewer = gcfg.cfg['document viewers']['pdf']
+    target = gcfg.cfg['documentation']['files']['pdf user guide'] 
 elif options.www:
     http = True
-    viewer = globals.cfg['document viewers']['html']
-    target = globals.cfg['documentation']['urls']['internet homepage'] 
+    viewer = gcfg.cfg['document viewers']['html']
+    target = gcfg.cfg['documentation']['urls']['internet homepage'] 
 elif intranet and options.xxx:
     http = True
-    viewer = globals.cfg['document viewers']['html']
-    target = globals.cfg['documentation']['urls']['local index'] 
+    viewer = gcfg.cfg['document viewers']['html']
+    target = gcfg.cfg['documentation']['urls']['local index'] 
 else:
     # default
-    viewer = globals.cfg['document viewers']['html']
-    target = globals.cfg['documentation']['files']['html index'] 
+    viewer = gcfg.cfg['document viewers']['html']
+    target = gcfg.cfg['documentation']['files']['html index'] 
 
 if not http and not os.path.isfile( target ):
     print >> sys.stderr, "ERROR, file not found: " + target
