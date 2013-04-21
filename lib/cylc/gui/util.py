@@ -99,7 +99,7 @@ def get_image_dir():
 
 def get_icon():
     """Return the gcylc icon as a gtk.gdk.Pixbuf."""
-    icon_path = os.path.join(get_image_dir(), "icon.png")
+    icon_path = os.path.join(get_image_dir(), "icon.svg")
     return gtk.gdk.pixbuf_new_from_file(icon_path)
 
 
