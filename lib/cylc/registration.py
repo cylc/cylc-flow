@@ -121,15 +121,22 @@ class regdb(object):
         return hash( str(sorted(self.items.items())))
 
     def lock( self ):
-        if os.path.exists( self.lockfile ):
-            print >> sys.stderr, "lock file:", self.lockfile
-            raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
+        attempts = 0
+        while True:
+            attempts += 1
+            if os.path.exists( self.lockfile ):
+                if self.verbose:
+                    print "  (database locked, waiting 1 second, " + str( attempts ) + "/5 attempts)"
+                time.sleep(1)
+                if attempts > 5:
+                    print >> sys.stderr, "lock file:", self.lockfile
+                    raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
+            else:
+                break
         if self.verbose:
             print "   (locking database " + self.file + ")"
-        lockfile = open( self.lockfile, 'wb' )
-        lockfile.write( 'locked by ' + user + '\n' )
-        lockfile.write( str(datetime.datetime.now()))
-        lockfile.close()
+        # touch file:
+        open( self.lockfile, 'w' ).close()
 
     def unlock( self ):
         if os.path.exists( self.lockfile ):
