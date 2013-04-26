@@ -99,8 +99,14 @@ def get_image_dir():
 
 def get_icon():
     """Return the gcylc icon as a gtk.gdk.Pixbuf."""
-    icon_path = os.path.join(get_image_dir(), "icon.svg")
-    return gtk.gdk.pixbuf_new_from_file(icon_path)
+    try:
+        icon_path = os.path.join(get_image_dir(), "icon.svg")
+        icon      = gtk.gdk.pixbuf_new_from_file(icon_path)
+    except:
+        # SVG error? Try loading it the old way.
+        icon_path = os.path.join(get_image_dir(), "icon.png")
+        icon      = gtk.gdk.pixbuf_new_from_file(icon_path)
+    return icon
 
 
 def get_logo():
