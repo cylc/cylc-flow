@@ -24,14 +24,13 @@ except ImportError, x:
     print >> sys.stderr, x
     sys.exit( "ERROR: Pyro is not installed" )
 from passphrase import passphrase
-from suite_host import hostname
-from owner import user
+from suite_owner import username
 
 class pyro_server( object ):
-    def __init__( self, suite, suitedir, base_port, max_n_ports, user=user ):
+    def __init__( self, suite, suitedir, base_port, max_n_ports, user=username ):
 
         self.suite = suite
-        self.owner = user
+        self.owner = username
 
         # SINGLE THREADED PYRO
         Pyro.config.PYRO_MULTITHREADED = 1
@@ -46,7 +45,7 @@ class pyro_server( object ):
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
-        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get(suitedir=suitedir)] )
+        self.daemon.setAllowedIdentifications( [passphrase(suite,username,'localhost').get(suitedir=suitedir)] )
 
     def shutdown( self ):
         self.daemon.shutdown(True)

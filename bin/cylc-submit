@@ -35,12 +35,12 @@ from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
 from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
-from cylc.suite_host import suite_host, hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
 from cylc.global_config import gcfg
+from cylc.suite_owner import username
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -61,7 +61,7 @@ def commandline_parser():
             argdoc=[ ("REG", "Suite name"),
                 ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
 
-    parser.set_defaults( sched=False, dry_run=False )
+    parser.set_defaults( dry_run=False )
 
     parser.add_option( "-d", "--dry-run",
             help="Generate the cylc task execution file for the "
@@ -75,9 +75,6 @@ parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
-
-owner = options.owner
-host = options.host
 
 suite_env = {}
 suite_task_env = {}
@@ -112,7 +109,7 @@ lockserver_port = None
 if config['cylc']['lockserver']['enable']:
     use_lockserver = True
     try:
-        lockserver_port = lockserver( hostname ).get_port()
+        lockserver_port = lockserver( 'localhost' ).get_port()
     except SuiteIdentificationError, x:
         raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
 
@@ -120,7 +117,7 @@ if config['cylc']['lockserver']['enable']:
     # suite has an exclusive lock, we can use submit only via the
     # same suite registration. submit does not need to call
     # release_suite_access()
-    if not suite_lock( suite, suite_dir, hostname, lockserver_port, 'submit' ).request_suite_access():
+    if not suite_lock( suite, suite_dir, 'localhost', lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
 # No TASK EVENT HOOKS are set for the submit command because there is
@@ -155,8 +152,8 @@ suite_env = {
         'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
         'CYLC_SUITE_NAME'        : suite,
         'CYLC_SUITE_REG_NAME'    : suite, # DEPRECATED
-        'CYLC_SUITE_HOST'        : str( suite_host ),
-        'CYLC_SUITE_OWNER'       : owner,
+        'CYLC_SUITE_HOST'        : 'localhost',
+        'CYLC_SUITE_OWNER'       : username,
         'CYLC_SUITE_PORT'        : 'None',
         'CYLC_SUITE_REG_PATH'    : RegPath( suite ).get_fpath(), # DEPRECATED
         'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : suite_dir,

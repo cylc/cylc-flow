@@ -59,7 +59,6 @@ parser.add_option( "-e", "--stderr",
 ( options, args ) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
-owner = options.db_owner
 
 if options.print_stdout:
     filename = suite_output( suite ).get_path()

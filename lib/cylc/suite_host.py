@@ -16,8 +16,29 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, sys, socket
+import sys, socket
+import logging
 from global_config import gcfg
+import datetime
+
+"""SUITE HOST IDENTIFICATION IN CYLC: to avoid potential delays
+due to host lookup, the suite host self-identifies to local tasks as
+'localhost', requiring no host lookup. If there are any remote tasks,
+suite host lookup is done once in the job submission thread when the
+first remote task is about to be submitted (and then remembered here for
+other remote tasks).
+TASK HOST IDENTIFICATION IN CYLC: if a task specifies 'localhost' or no
+host at all under [remote] it will be treated as a local task; otherwise
+it will be submitted by ssh as a remote task even if it is actually a
+local task.  This allows us to avoid doing any host lookup for suites
+containing only local tasks, and also to test remote hosting
+functionality without an actual remote host, by specifying the
+suite host's external host name or IP address as a task host, rather
+than 'localhost'.""" 
+
+log = logging.getLogger( "main" )
+ 
+host = None
 
 def get_local_ip_address( target ):
     """
@@ -54,7 +75,11 @@ returning the IP address associated with this socket.
 
     # Note that although no connection is made to the target, the target
     # must be reachable on the network (or just recorded in the DNS?) or
-    # the function will hang and time out after a few seconds.
+    # the function will hang and time out after a few (e.g. 20!) seconds.
+
+    # TODO - is it conceivable that different remote task hosts at the
+    # same site might see the suite host differently? If so we would
+    # need to be able to override the target in suite definitions.)
 
     ipaddr = ''
     try:
@@ -66,43 +91,44 @@ returning the IP address associated with this socket.
         pass
     return ipaddr
 
+def get_host():
+    """Return the current host by hostname, external IP address, or
+    hardwired (determined by site/user config files."""
 
-method = gcfg.cfg['suite host self-identification']['method']
-target = gcfg.cfg['suite host self-identification']['target']
-hardwired = gcfg.cfg['suite host self-identification']['host']
+    global host
+    # lazy evaluation, to avoid dns additional lookup delays
+    if host:
+        # already computed
+        return host
 
-hostname = socket.getfqdn()
+    method = gcfg.cfg['suite host self-identification']['method']
+    target = gcfg.cfg['suite host self-identification']['target']
+    hardwired = gcfg.cfg['suite host self-identification']['host']
 
-# external IP address of the suite host:
-host_ip_address = get_local_ip_address( target )
-# local IP address of the suite host (may be 127.0.0.1, for e.g.)
-local_ip_address = socket.gethostbyname(hostname) 
+    tstart = datetime.datetime.now()
 
-# the following is for suite host self-identfication in task job scripts:
-if method == 'name':
-    suite_host = hostname
-elif method == 'address':
-    suite_host = host_ip_address
-elif method == 'hardwired':
-    if not hardwired:
-        sys.exit( 'ERROR, no hardwired hostname is configured' )
-    suite_host = hardwired
-else:
-    sys.exit( 'ERROR, unknown host method: ' + method )
+    # for suite host self-identfication in task job scripts:
+    if method == 'name':
+        host = socket.getfqdn()
+        # internal_ip_address = socket.gethostbyname(host)  # (not needed)
+    elif method == 'address':
+        # external IP address of the suite host (as seen by others)
+        host = get_local_ip_address( target )
+    elif method == 'hardwired':
+        host = hardwired
+    else:
+        # can't happen due to config parse checking
+        sys.exit( 'ERROR, unknown host method: ' + method )
+
+    tdelta = datetime.datetime.now() - tstart
+    seconds = tdelta.seconds + float(tdelta.microseconds)/10**6
+    if method == 'hardwired':
+        log.debug( "suite host hardwired to " + host )
+    else:
+        log.debug( "suite host " + host + " (lookup took " + str( seconds ) + " seconds)" )
+
+    return host
  
-def is_remote_host(name):
-    """Return True if name has different IP address than the current host.
-    Return False if name is None.  Abort if host is unknown.
-    """
-    if not name or name == "localhost":
-        return False
-    try:
-        ipa = socket.gethostbyname(name) 
-    except Exception, e:
-        print >> sys.stderr, str(e)
-        raise Exception( 'ERROR, host not found: ' + name )
-    return name and ipa != host_ip_address and ipa != local_ip_address
-
 if __name__ == "__main__":
 
     target = sys.argv[1]

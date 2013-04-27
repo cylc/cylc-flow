@@ -25,11 +25,10 @@ import os, re, sys
 import socket
 import subprocess
 import helpwindow
-from cylc.suite_host import is_remote_host
-from cylc.owner import is_remote_user
 from dbchooser import dbchooser
 from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
+from cylc.suite_owner import username
 
 try:
     from cylc.gui.SuiteControlGraph import ControlGraph
@@ -130,10 +129,9 @@ Class to hold initialisation data.
 
     def reset( self, suite ):
         self.suite = suite
-
         suitedir = None
         # dealias the suite name (an aliased name may be given for local suites)
-        if not is_remote_host( self.host ) and not is_remote_user( self.owner ):
+        if self.owner == username and self.host == 'localhost':
             db = localdb(file=self.db)
             db.load_from_file()
             try:
@@ -404,8 +402,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def reset( self, suite ):
         title = suite
         self.cfg.suite = suite
-        if self.cfg.host != socket.getfqdn():
-            title += " - " + self.cfg.host
         title += " - gcylc"
         self.window.set_title( title )
         self.cfg.reset(suite)
@@ -2914,14 +2910,13 @@ For more Stop options use the Control menu.""" )
         foo.run()
 
     def run_suite_log( self, w, type='log' ):
-        if is_remote_host( self.cfg.host ) or is_remote_user( self.cfg.owner ):
+        if self.cfg.owner != username or self.cfg.host != 'localhost':
             if type == 'out':
                 xopts = ' --stdout '
             elif type == 'err':
                 xopts == ' --stderr '
             else:
                 xopts = ' '
-
             warning_dialog( \
 """The full-function GUI log viewer is only available
 for local suites; I will call "cylc cat-log" instead.""" ).warn()

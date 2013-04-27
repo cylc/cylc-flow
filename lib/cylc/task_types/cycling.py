@@ -64,9 +64,6 @@ class cycling( task ):
         #  * prerequisites and outputs
         #  * self.env_vars 
 
-        # Top level derived classes must define:
-        #   <class>.instance_count = 0
-
         # A final stop time can be set by 'cylc insert' to create a temporary task.
         self.stop_c_time = stop_c_time
         task.__init__( self, state, validate )

@@ -20,9 +20,7 @@ import os, sys
 import subprocess
 from textwrap import TextWrapper
 from pipes import quote
-
-from suite_host import is_remote_host
-from owner import is_remote_user
+from suite_owner import username
 
 class remrun( object ):
     """If owner or host differ from username and localhost, strip the
@@ -32,8 +30,8 @@ class remrun( object ):
     # always printed, but to stderr so as not to interfere with results.
 
     def __init__( self ):
-        self.owner = None
-        self.host = None
+        self.owner = username
+        self.host = 'localhost'
         self.ssh_login_shell = True
 
         if '-v' in sys.argv or '--verbose' in sys.argv:
@@ -57,16 +55,11 @@ class remrun( object ):
             else:
                 self.args.append(arg)
 
-        if is_remote_user( self.owner ) or is_remote_host(self.host):
-            self.is_remote = True
-        else:
-            self.is_remote = False
-
     def execute( self, force_required=False, env={}, path=[] ):
         # returns False if remote re-invocation is not needed,
         # True it is is needed and executes successfully
         # otherwise aborts.
-        if not self.is_remote:
+        if self.owner == username and self.host == 'localhost':
             return False
 
         if force_required and \

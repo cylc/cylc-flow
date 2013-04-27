@@ -17,13 +17,12 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from suite_host import hostname
-from owner import user
 from passphrase import passphrase
 from registration import localdb
 import datetime
 import Pyro.errors, Pyro.core
 from global_config import gcfg
+from suite_owner import username
 
 class SuiteIdentificationError( Exception ):
     """
@@ -124,7 +123,7 @@ def portid( host, port ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None, verbose=False ):
+def get_port( suite, owner=username, host='localhost', pphrase=None, pyro_timeout=None, verbose=False ):
     # Scan ports until a particular suite is found.
 
     pyro_base_port = gcfg.cfg['pyro']['base port']
@@ -174,7 +173,7 @@ def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None,
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suite + ' ' + owner + ' ' + host
 
-def check_port( suite, pphrase, port, owner=user, host=hostname, pyro_timeout=None, verbose=False ):
+def check_port( suite, pphrase, port, owner=username, host='localhost', pyro_timeout=None, verbose=False ):
     # is a particular suite running at host:port?
 
     uri = cylcid_uri( host, port )
@@ -212,7 +211,7 @@ def check_port( suite, pphrase, port, owner=user, host=hostname, pyro_timeout=No
             print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
             raise OtherSuiteFoundError, "ERROR: Found another suite"
 
-def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False ):
+def scan( host='localhost', db=None, pyro_timeout=None, verbose=False, silent=False ):
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 

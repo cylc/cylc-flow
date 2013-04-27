@@ -22,6 +22,8 @@ import re, os
 import StringIO
 from copy import deepcopy
 from cylc.global_config import gcfg
+from cylc.suite_owner import username
+from cylc.suite_host import get_host
 
 class jobfile(object):
 
@@ -138,6 +140,10 @@ class jobfile(object):
             BUFFER = self.FILE
 
         BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
+
+        # if this task is remotely hosted do suite host lookup now
+        if self.host != 'localhost':
+            self.__class__.suite_env['CYLC_SUITE_HOST'] = get_host()
 
         # write the static suite variables
         for var, val in self.__class__.suite_env.items():

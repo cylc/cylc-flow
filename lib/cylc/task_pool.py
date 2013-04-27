@@ -100,7 +100,6 @@ class pool(object):
             print >> sys.stderr, x
             self.log.critical( task.id + ' CANNOT BE REMOVED (unknown error)' )
             return
-        task.prepare_for_death()
         # remove task from its queue
         queue = self.myq[task.name]
         self.queues[queue].remove( task )

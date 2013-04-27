@@ -31,10 +31,9 @@ import stat
 from jobfile import jobfile
 import socket
 from subprocess import Popen, PIPE
-from cylc.owner import user, is_remote_user
-from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
 from cylc.global_config import gcfg
+from cylc.suite_owner import username, homedir
 
 class job_submit(object):
     LOCAL_COMMAND_TEMPLATE = "(%(command)s)"
@@ -67,26 +66,16 @@ class job_submit(object):
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
 
-        task_host = jobconfig['task host']
-        task_owner  = jobconfig['task owner']
+        self.host = jobconfig['task host']
+        self.owner  = jobconfig['task owner']
 
-        self.remote_shell_template = gcfg.get_host_item( 'remote shell template', task_host, task_owner )
+        self.remote_shell_template = gcfg.get_host_item( 'remote shell template', self.host, self.owner )
 
-        if is_remote_host(task_host) or is_remote_user(task_owner):
-            # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
+        if self.owner != username or self.host != 'localhost':
             self.local = False
-            if task_owner:
-                self.task_owner = task_owner
-            else:
-                self.task_owner = user
-
-            if task_host:
-                self.task_host = task_host
-            else:
-                self.task_host = socket.gethostname()
 
             self.remote_jobfile_path = os.path.join( \
-                    gcfg.get_derived_host_item( self.suite, 'suite job log directory', self.task_host, self.task_owner ), tag )
+                    gcfg.get_derived_host_item( self.suite, 'suite job log directory', self.host, self.owner ), tag )
 
             # Remote log files
             self.stdout_file = self.remote_jobfile_path + ".out"
@@ -98,7 +87,7 @@ class job_submit(object):
             # Record paths of remote log files for access by gui
             if True:
                 # by ssh URL
-                url_prefix = self.task_owner + '@' + self.task_host
+                url_prefix = self.owner + '@' + self.host
                 self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
                 self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
             else:
@@ -117,7 +106,7 @@ class job_submit(object):
         else:
             # LOCAL TASKS
             self.local = True
-            self.task_owner = user
+            self.owner = username
             # Used in command construction:
             self.jobfile_path = self.local_jobfile_path
 
@@ -173,7 +162,7 @@ class job_submit(object):
         submission sub-process, or None if a failure occurs."""
 
         try:
-            os.chdir( pwd.getpwnam(user).pw_dir )
+            os.chdir( homedir )
         except OSError, e:
             if debug:
                 raise
@@ -218,7 +207,7 @@ class job_submit(object):
         else:
             command = self.REMOTE_COMMAND_TEMPLATE % {
                       "jobfile_path": self.jobfile_path, "command": self.command}
-            destination = self.task_owner + "@" + self.task_host
+            destination = self.owner + "@" + self.host
             command = self.remote_shell_template % destination + command
 
         # execute the local command to submit the job
