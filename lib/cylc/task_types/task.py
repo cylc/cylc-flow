@@ -69,12 +69,11 @@ class task( object ):
     suite_contact_env_hosts = []
     suite_contact_env = {}
     @classmethod
-    def postcard( cls, suite, user, host ):
+    def post_contact_file( cls, suite, user, host ):
         user_at_host = user + '@' + host
         if user_at_host in cls.suite_contact_env_hosts:
             # already posted to user_at_host
             return
-        print 'COPYING CONTACT ENV for', suite, 'TO ' + user_at_host
         suite_run_dir = gcfg.get_derived_host_item( suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         r_suite_run_dir = gcfg.get_derived_host_item( suite, 'suite run directory', host, user)
@@ -84,7 +83,6 @@ class task( object ):
             cmd += "%s=%s\n" % (key, value)
         cmd = cmd.strip() # remove last newline
         cmd += "' | ssh -oBatchMode=yes " + user_at_host + " 'mkdir -p " + r_suite_run_dir + " && cat > " + r_env_file_path + "'"
-        print cmd
         try:
             subprocess.Popen(cmd, shell=True) # return non-zero
         except Exception, x:
@@ -574,7 +572,7 @@ class task( object ):
         self.user_at_host = owner + "@" + host
         self.log( "NORMAL", "Task account: " + self.user_at_host )
 
-        self.__class__.postcard( self.suite_name, owner, host )
+        self.__class__.post_contact_file( self.suite_name, owner, host )
 
         self.record_db_update("task_states", self.name, self.c_time, submit_method=rtconfig['job submission']['method'], host=self.user_at_host)
 

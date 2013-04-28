@@ -311,7 +311,7 @@ class scheduler(object):
             else:
                 # TODO - is this used?
                 user, host = None, user_at_host
-            task.task.postcard( self.suite, user, host )
+            task.task.post_contact_file( self.suite, user, host )
 
         self.already_timed_out = False
         if self.config.suite_timeout:
