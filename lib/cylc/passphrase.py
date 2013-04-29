@@ -21,8 +21,7 @@ from stat import *
 import random
 import string
 from mkdir_p import mkdir_p
-from suite_host import hostname, is_remote_host
-from owner import user, is_remote_user
+from suite_owner import username
 
 class SecurityError( Exception ):
     """
@@ -47,22 +46,12 @@ class InvalidPassphraseError( SecurityError ):
     pass
 
 class passphrase(object):
-    def __init__( self, suite, owner=user, host=hostname, verbose=False ):
+    def __init__( self, suite, owner=username, host='localhost', verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.verbose = verbose
         self.location = None
-
-        ### ?? this doesn't matter, we now set permissions explicitly:
-        ### ?? TODO - handle existing file that owner can't read? etc.?
-        ##mode = os.stat( ppfile )[ST_MODE]
-        ##if not S_IRUSR & mode:
-        ##    raise PassphraseNotReadableError, 'Owner cannot read passphrase file: ' + ppfile
-        ##if S_IROTH & mode or S_IWOTH & mode or S_IXOTH & mode:
-        ##    raise InsecurePassphraseError, 'OTHERS have access to passphrase file: ' + ppfile
-        ##if S_IRGRP & mode or S_IWGRP & mode or S_IXGRP & mode:
-        ##    raise InsecurePassphraseError, 'GROUP has access to passphrase file: ' + ppfile
 
     def get_passphrase_file( self, pfile=None, suitedir=None ):
         """
@@ -104,7 +93,7 @@ that do not actually need the suite definition directory to be installed.
 
             else:
                 # if an explicit location is given, the file must exist
-                raise SecurityError, 'ERROR, file not found on ' + user + '@' + hostname + ': ' + pfile
+                raise SecurityError, 'ERROR, file not found: ' + pfile
 
         # 2/ cylc commands with suite definition directory from local registration
         if not self.location and suitedir:
@@ -126,8 +115,7 @@ that do not actually need the suite definition directory to be installed.
                 # not called by a task
                 pass
             else:
-                # called by a task
-                if is_remote_host( suite_host ) or is_remote_user( suite_owner ):
+                if suite_owner != username or suite_host != 'localhost':
                     # 2(i)/ cylc messaging calls on a remote account.
 
                     # First look in the remote suite definition
@@ -142,13 +130,10 @@ that do not actually need the suite definition directory to be installed.
                             self.set_location( pfile )
 
                 else:
-                    # 2(ii)/ cylc messaging calls on the suite host and account.
-
-                    # Could be a local task or a remote task with 'ssh
-                    # messaging = True'. In either case use
-                    # $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST which never
-                    # changes, not $CYLC_SUITE_DEF_PATH which gets
-                    # modified for remote tasks as described above.
+                    # 2(ii)/ cylc messaging calls on the suite host account.
+                    # Could be a local task, or a remote task with 'ssh messaging = True'.
+                    # In either case use $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST which never changes,
+                    # not $CYLC_SUITE_DEF_PATH which gets modified for remote tasks as explained above.
                     try:
                         pfile = os.path.join( os.environ['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'], 'passphrase' )
                     except KeyError:
@@ -177,13 +162,13 @@ that do not actually need the suite definition directory to be installed.
                     break
 
         if not self.location:
-            raise SecurityError, 'ERROR: passphrase not found on ' + user + '@' + hostname
+            raise SecurityError, 'ERROR: passphrase not found'
 
         return self.location
 
     def set_location( self, pfile ):
         if self.verbose:
-            print 'Passphrase detected at', pfile, 'on', user + '@' + hostname
+            print 'Passphrase detected at', pfile
         self.location = pfile
 
     def generate( self, dir ):
@@ -204,7 +189,7 @@ that do not actually need the suite definition directory to be installed.
         # set passphrase file permissions to owner-only
         os.chmod( pfile, 0600 )
         if self.verbose:
-            print 'Generated suite passphrase file on', user + '@' + hostname + ':', pfile
+            print 'Generated suite passphrase file:', pfile
 
     def get( self, pfile=None, suitedir=None ):
         ppfile = self.get_passphrase_file( pfile, suitedir )
@@ -212,9 +197,9 @@ that do not actually need the suite definition directory to be installed.
         lines = psf.readlines()
         psf.close()
         if len(lines) == 0:
-            raise InvalidPassphraseError, 'ERROR, passphrase file is empty, on ' + user + '@' + hostname + ': ' + ppfile
+            raise InvalidPassphraseError, 'ERROR, passphrase file is empty: ' + ppfile
         if len(lines) > 1:
-            raise InvalidPassphraseError, 'ERROR, passphrase file contains multiple lines, on ' + user + '@' + hostname + ': ' + ppfile
+            raise InvalidPassphraseError, 'ERROR, passphrase file contains multiple lines: ' + ppfile
         # chomp trailing whitespace and newline
         self.passphrase = lines[0].strip()
         return self.passphrase

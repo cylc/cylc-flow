@@ -16,16 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""In analogy with cylc.hostname.is_remote_host(), determine if a
-username is "remote"."""
-
 import os, pwd
 
-user = os.environ.get( 'USER', pwd.getpwuid(os.getuid()).pw_name )
-
-def is_remote_user(name):
-    """Return True if name is different than the current username.
-    Return False if name is None.
-    """
-    return name and name != user
+username = os.environ.get( 'USER', pwd.getpwuid(os.getuid()).pw_name )
+homedir = pwd.getpwnam(username).pw_dir 
 

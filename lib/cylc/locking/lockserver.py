@@ -20,11 +20,11 @@
 
 import Pyro.core, Pyro.naming, Pyro.errors
 import socket
-from cylc.owner import user
+from cylc.suite_owner import username
 from cylc.port_scan import get_port, check_port
 
 class lockserver(object):
-    def __init__( self, host, owner=user, port=None, timeout=None ):
+    def __init__( self, host, owner=username, port=None, timeout=None ):
         self.owner = owner
         self.host = host
         self.port = port

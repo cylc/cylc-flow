@@ -24,7 +24,6 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.port_scan import scan
-from cylc.suite_host import hostname
 from cylc.CylcOptionParsers import cop
 from cylc.global_config import gcfg
 
@@ -52,8 +51,7 @@ IFS=$OFIS
 """, pyro=True, noforce=True, argdoc=[])
 
 parser.add_option( "--print-ports",
-        help="Print the port range from the site config file "
-        "($CYLC_DIR/conf/siterc/site.rc).",
+        help="Print the port range from the site config file.",
         action="store_true",default=False, dest="print_ports" )
 
 ( options, args ) = parser.parse_args()

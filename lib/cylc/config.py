@@ -185,6 +185,8 @@ class config( CylcConfigObj ):
         self.file = suiterc
         self.dir = os.path.dirname(suiterc)
 
+        # TODO: owner is now only used for tilde expansion of vis
+        # directory; is it still needed?
         self.owner = owner
 
         if self.verbose:

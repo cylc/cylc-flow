@@ -23,14 +23,13 @@ except ImportError, x:
 
 import sys
 from optparse import OptionParser
-from suite_host import hostname
 from time import sleep
 from passphrase import passphrase
-from owner import user
 from port_file import port_retriever
+from suite_owner import username
 
 class client( object ):
-    def __init__( self, suite, pphrase=None, owner=user, host=hostname,
+    def __init__( self, suite, pphrase=None, owner=username, host='localhost',
             pyro_timeout=None, port=None, verbose=False ):
         self.suite = suite
         self.owner = owner

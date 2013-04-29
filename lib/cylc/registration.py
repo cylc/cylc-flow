@@ -20,7 +20,6 @@ import os, sys, re
 import pickle
 import datetime, time
 from regpath import RegPath
-from owner import user
 
 # NOTE:ABSPATH (see below)
 #   dir = os.path.abspath( dir )
@@ -73,12 +72,6 @@ class SuiteNotRegisteredError( RegistrationError ):
     def __init__( self, suite ):
         self.msg = "ERROR: Suite not found " + suite
 
-class GroupNotFoundError( RegistrationError ):
-    def __init__( self, group, owner=None ):
-        self.msg = "ERROR: group not found " + group
-        if owner:
-            self.msg += ' (' + owner + ')'
-
 class GroupAlreadyExistsError( RegistrationError ):
     def __init__( self, group, owner=None ):
         self.msg = "ERROR: group already exists " + group
@@ -127,7 +120,6 @@ class regdb(object):
         if self.verbose:
             print "   (locking database " + self.file + ")"
         lockfile = open( self.lockfile, 'wb' )
-        lockfile.write( 'locked by ' + user + '\n' )
         lockfile.write( str(datetime.datetime.now()))
         lockfile.close()
 

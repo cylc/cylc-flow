@@ -5,7 +5,7 @@ from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_error
 from validate import Validator
 from print_cfg import print_cfg
 from copy import deepcopy
-from cylc.owner import user
+from suite_owner import username
 import atexit
 import shutil
 from tempfile import mkdtemp
@@ -96,6 +96,14 @@ class globalcfg( object ):
         self.validate( self.cfg )
 
         self.expand_local_paths()
+
+        # consistency checks
+        self.check()
+
+    def check( self ):
+        if self.cfg['suite host self-identification']['method'] == 'hardwired':
+            if not self.cfg['suite host self-identification']['host']:
+                raise GlobalConfigError("ERROR: 'host' required with 'hardwired' self-identification.")
 
     def upgrade_5_1_1( self, cfg ):
         """Upgrade methods should upgrade to the latest (not next)
@@ -375,7 +383,7 @@ Some translations were performed on the fly."""
 
         if value:
             # localhost items may default to None too (e.g. cylc bin directory)
-            if (host and host is not 'localhost') or (owner and owner is not user ) or replace:
+            if (host and host is not 'localhost') or (owner and owner is not username ) or replace:
                 # item requested for a remote account
                 if 'directory' in item:
                     # Replace local home directory, if it appears, with

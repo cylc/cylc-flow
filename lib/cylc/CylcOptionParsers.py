@@ -18,8 +18,7 @@
 
 import os, re
 from optparse import OptionParser
-from suite_host import hostname
-from owner import user
+from suite_owner import username
 from cylc.command_prep import prep_file
 
 """Common options for all cylc commands."""
@@ -31,7 +30,7 @@ interpreted as a full regular expression, not a simple shell glob."""
 class db_optparse( object ):
     def __init__( self, dbopt ):
         # input is DB option spec from the cylc command line
-        self.owner = user
+        self.owner = username
         self.location = None
         if dbopt:
             self.parse( dbopt )
@@ -105,13 +104,13 @@ Arguments:"""
         OptionParser.__init__( self, usage )
 
         self.add_option( "--owner",
-                help="User account name (defaults to $USER).",
-                metavar="USER", default=user,
+                help="User name, if you are not the suite owner.",
+                metavar="USER", default=username,
                 action="store", dest="owner" )
 
         self.add_option( "--host",
-                help="Host name (defaults to localhost).",
-                metavar="HOST", action="store", default=hostname,
+                help="Host name, if you are not on the suite host.",
+                metavar="HOST", action="store", default='localhost',
                 dest="host" )
 
         self.add_option( "-v", "--verbose",
@@ -123,9 +122,9 @@ Arguments:"""
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",
-                help="Suite database: 'u:USERNAME' for another user's "
-                "default database, or PATH to an explicit location. "
-                "Defaults to $HOME/.cylc/DB.",
+                help="Use this to access a suite database other than the default "
+                "$HOME/.cylc/DB. May be 'u:USER' for USER's default db, or an "
+                "explicit db file path.",
                 metavar="DB", action="store", default=None, dest="db" )
 
         if pyro:

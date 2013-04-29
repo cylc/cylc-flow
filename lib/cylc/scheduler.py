@@ -20,9 +20,8 @@ from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
 from job_submission import jobfile
 from prerequisites.plain_prerequisites import plain_prerequisites
-from suite_host import suite_host
-from owner import user
 from shutil import copy as shcopy
+from suite_owner import username
 from copy import deepcopy
 from cycle_time import ct, CycleTimeError
 import datetime, time
@@ -96,12 +95,6 @@ class request_handler( threading.Thread ):
 class scheduler(object):
 
     def __init__( self, is_restart=False ):
-
-        # SUITE OWNER
-        self.owner = user
-
-        # SUITE HOST
-        self.host= suite_host
 
         # DEPENDENCY BROKER
         self.broker = broker()
@@ -222,7 +215,7 @@ class scheduler(object):
         self.configure_suite()
 
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
-        self.suite_id = identifier( self.suite, self.owner )
+        self.suite_id = identifier( self.suite, username )
         self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
 
         reqmode = self.config['cylc']['required run mode']
@@ -312,34 +305,13 @@ class scheduler(object):
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
-        # 1) local file (os.path.expandvars is called automatically for local)
-        suite_run_dir = gcfg.get_derived_host_item(self.suite, 'suite run directory')
-        env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
-        f = open(env_file_path, 'wb')
-        for key, value in self.suite_contact_env.items():
-            f.write("%s=%s\n" % (key, value))
-        f.close()
-        # 2) restart only: copy to other accounts with still-running tasks 
-        r_suite_run_dir = os.path.expandvars(
-                gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
-            self.log.warning( 'RESTART: COPYING CONTACT ENV TO ' + user_at_host )
             if '@' in user_at_host:
                 user, host = user_at_host.split('@', 1)
             else:
+                # TODO - is this used?
                 user, host = None, user_at_host
-            # this handles defaulting to localhost:
-            r_suite_run_dir = gcfg.get_derived_host_item(
-                    self.suite, 'suite run directory', host, user)
-            r_env_file_path = '%s:%s/cylc-suite-env' % (
-                    user_at_host, r_suite_run_dir)
-            # just in case the remote dir was deleted:
-            cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
-            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-            for cmd in [cmd1,cmd2]:
-                if subprocess.call(cmd): # return non-zero
-                    raise Exception("ERROR: " + str(cmd))
-            task.task.suite_contact_env_hosts.append( user_at_host )
+            task.task.post_contact_file( self.suite, user, host )
 
         self.already_timed_out = False
         if self.config.suite_timeout:
@@ -422,7 +394,7 @@ class scheduler(object):
             return result( True, task_id + " is currently running" )
 
     def info_get_suite_info( self ):
-        return [ self.config['title'], user ]
+        return [ self.config['title'] ]
 
     def info_get_task_list( self, logit=True ):
         return self.config.get_task_name_list()
@@ -651,7 +623,6 @@ class scheduler(object):
                 if itask.id == jtask.id:
                     # reject
                     self.log.warning( 'Rejecting insertion task ' + itask.id + '(already exists)' )
-                    itask.prepare_for_death()
                     del itask
                     rject = True
                     break
@@ -841,7 +812,7 @@ class scheduler(object):
             # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
             # (else scan etc. will hang on the partially started suite).
             # raises port_scan.SuiteNotFound error:
-            self.lockserver_port = lockserver( self.host ).get_port()
+            self.lockserver_port = lockserver().get_port()
 
 
         # USE QUICK TASK ELIMINATION?
@@ -909,8 +880,8 @@ class scheduler(object):
                 'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
                 'CYLC_SUITE_NAME'        : self.suite,
                 'CYLC_SUITE_REG_NAME'    : self.suite, # DEPRECATED
-                'CYLC_SUITE_HOST'        : str( self.host ),
-                'CYLC_SUITE_OWNER'       : self.owner,
+                'CYLC_SUITE_HOST'        : 'localhost',
+                'CYLC_SUITE_OWNER'       : username,
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
@@ -966,7 +937,7 @@ class scheduler(object):
 
         if self.use_lockserver:
             # request suite access from the lock server
-            if suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
+            if suite_lock( self.suite, self.suite_dir, 'localhost', self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
                self.lock_acquired = True
             else:
                raise SchedulerError( "Failed to acquire a suite lock" )
@@ -1229,7 +1200,7 @@ class scheduler(object):
             # do this last
             if self.lock_acquired:
                 print " * releasing suite lock"
-                lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
+                lock = suite_lock( self.suite, self.suite_dir, 'localhost', self.lockserver_port, 'scheduler' )
                 try:
                     if not lock.release_suite_access():
                         print >> sys.stderr, 'WARNING failed to release suite lock!'

@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cylc.suite_host import hostname
 from optparse import OptionParser
 from time import sleep
 from cylc.cycle_time import ct, CycleTimeError
@@ -27,6 +26,7 @@ from cylc.locking.lockserver import lockserver
 from cylc.locking.task_lock import task_lock
 from cylc.locking.suite_lock import suite_lock
 from cylc.TaskID import TaskID
+from cylc.suite_owner import username
 
 import Pyro.core, Pyro.errors
 
@@ -137,40 +137,39 @@ See also:
     if count != 1:
         parser.error( "choose one option only!" )
     
-    owner = os.environ[ 'USER' ]
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
         if options.acquire:
             (suite, task_id) = check_task_spec( options.acquire )
-            if not task_lock( task_id, suite, owner, hostname ).acquire():
+            if not task_lock( task_id, suite, username, 'localhost' ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
 
         elif options.release:
             (suite, task_id) = check_task_spec( options.release )
-            if not task_lock( task_id, suite, owner, hostname ).release():
+            if not task_lock( task_id, suite, username, 'localhost' ).release():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
 
         elif options.suite_acquire:
             suite = options.suite_acquire
             suitedir = check_suite_spec( suite )
-            if not suite_lock( suite, suitedir, hostname, None, 'scheduler' ).request_suite_access( True ):
+            if not suite_lock( suite, suitedir, 'localhost', None, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
             suite = options.suite_acquire_nonex
             suitedir = check_suite_spec( suite )
-            if not suite_lock( suite, suitedir, hostname, None, 'scheduler' ).request_suite_access( False ):
+            if not suite_lock( suite, suitedir, 'localhost', None, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
             suite = options.suite_release
             suitedir = check_suite_spec( suite )
-            if not suite_lock( suite, suitedir, hostname, None, 'scheduler' ).release_suite_access():
+            if not suite_lock( suite, suitedir, 'localhost', None, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
-            (task_locks, suite_ex, suite_nonex ) = lockserver( hostname, timeout=options.pyro_timeout ).dump()
+            (task_locks, suite_ex, suite_nonex ) = lockserver( 'localhost', timeout=options.pyro_timeout ).dump()
 
             print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
             for suitedir in suite_ex:
@@ -188,10 +187,10 @@ See also:
                 print " - ", lock
 
         elif options.clear_all:
-            lockserver( hostname, timeout=options.pyro_timeout ).clear()
+            lockserver( 'localhost', timeout=options.pyro_timeout ).clear()
 
         elif options.get_filenames:
-            pid, log, state = lockserver( hostname, timeout=options.pyro_timeout ).get_filenames()
+            pid, log, state = lockserver( 'localhost', timeout=options.pyro_timeout ).get_filenames()
 
             print "lockserver files:"
             print "  PID ......", pid

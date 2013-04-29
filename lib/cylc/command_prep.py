@@ -19,12 +19,11 @@
 import os
 from cylc.passphrase import passphrase
 from cylc.registration import localdb
-from cylc.suite_host import is_remote_host
-from cylc.owner import is_remote_user
+from cylc.suite_owner import username
 
-"""This module used to handle pseudo-backward-compatibility command
-re-invocation. That's been dropped, so the module doesn't do much now;
-the remaining functionality could be used more sensibly."""
+"""TODO - this module once handled command re-invocation for
+pseudo-backward-compatibility. That's been dropped, so it doesn't
+doesn't do much now; remaining useful code should be distilled..."""
 
 class prep( object ):
     def __init__( self, suite, options ):
@@ -33,7 +32,7 @@ class prep( object ):
         self.suiterc = None
         self.suitedir = None
         # dealias the suite name (an aliased name may be given for local suites)
-        if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
+        if options.owner == username and options.host == 'localhost':
             self.db = localdb(file=options.db, verbose=options.verbose)
             self.db.load_from_file()
             try:

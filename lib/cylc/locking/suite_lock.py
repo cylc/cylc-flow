@@ -18,7 +18,6 @@
 
 import Pyro.core
 import os,sys,socket
-import os
 
 from lockserver import lockserver
 

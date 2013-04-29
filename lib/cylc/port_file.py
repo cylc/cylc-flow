@@ -17,8 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from suite_host import is_remote_host
-from owner import user, is_remote_user
+from suite_owner import username
 from global_config import gcfg
 
 """Processes connecting to a running suite must know which port the
@@ -126,7 +125,7 @@ class port_retriever( object ):
         if self.verbose:
             print "Retrieving suite port number..."
 
-        if is_remote_host( self.host ) or is_remote_user( self.owner ):
+        if self.owner != username or self.host != 'localhost':
             str_port = self.get_remote()
         else:
             str_port = self.get_local()

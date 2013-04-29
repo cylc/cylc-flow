@@ -1140,11 +1140,11 @@ hostname to stdout. Host selection commands are executed just prior to
 job submission. The host (static or dynamic) may have an entry in the
 cylc site or user config file to specify parameters such as the location
 of cylc on the remote machine; if not, the corresponding local settings
-(on the suite host) will be assumed to apply on the remote host. 
+(on the suite host) will be adapted for the remote host. 
 
 \begin{myitemize}
 \item {\em type:} string (a valid hostname on the network)
-\item {\em default:} (none)
+\item {\em default:} (none) - i.e.\ run on the suite host
 \item {\em examples:}
     \begin{myitemize}
         \item static host name: \lstinline@host = foo@
@@ -1161,18 +1161,14 @@ of cylc on the remote machine; if not, the corresponding local settings
 
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
-The username of the task host account. This is (only) used in the
-passwordless ssh command invoked by cylc to submit the remote task
-(consequently it may be defined using local environment variables 
-(i.e.\ the shell in which cylc runs, and [cylc] $\rightarrow$ [[environment]]). 
-
-If you use dynamic host selection and have different usernames on
-the different selectable hosts, you can configure your
-\lstinline=$HOME/.ssh/config= to handle username translation.
+The username of the task host account.  If you use dynamic host
+selection and have different usernames on the different selectable
+hosts \lstinline=$HOME/.ssh/config= can be used to handle username
+translation.
 
 \begin{myitemize}
 \item {\em type:} string (a valid username on the remote host)
-\item {\em default:} (none)
+\item {\em default:} (none) - i.e.\ use the suite account username
 \end{myitemize}
 
 \subparagraph[suite definition directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$  suite definition directory}

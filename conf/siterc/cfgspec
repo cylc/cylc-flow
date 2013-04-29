@@ -15,7 +15,7 @@
 #>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
 #>   NOTE THAT SITE AND/OR USER CONFIG IS REQUIRED ON TASK HOSTS TOO 
-#> TODO: document exactly for what purpose
+#> TODO - document exactly for what purpose
 #>----------------------------------------------------------------------
 #> Comments starting with "#>" are not passed on to generated .rc files.
 #>----------------------------------------------------------------------
@@ -178,9 +178,6 @@ disable interactive command prompts = boolean( default=True )
 # seen by the task host, must be determined on the suite host, which is
 # not always easy to do.  Cylc requires a special "target address" to do
 # this; see documentation in $CYLC_DIR/lib/cylc/suite_host.py for why.
-# (TO DO: is it conceivable that different remote task hosts at the same
-# site might see the suite host differently? If so we would need to be
-# able to override the target in suite definitions.)
 [suite host self-identification]
 
     # Method: "name", "address", or "hardwired"

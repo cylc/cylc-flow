@@ -22,18 +22,10 @@ import Pyro.core
 from CylcError import TaskNotFoundError, TaskStateError
 from job_submission.job_submit import job_submit
 from version import cylc_version
-from owner import user
 
 """Pyro interface for DIRECT READ-ONLY INTERACTION with a cylc suite.
 Any interaction that alters suite state in any way must go via the
 indirect thread-safe suite command interface queue."""
-
-#class result:
-#    """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
-#    def __init__( self, success, reason="Action succeeded", value=None ):
-#        self.success = success
-#        self.reason = reason
-#        self.value = value
 
 class info_interface( Pyro.core.ObjBase ):
     def __init__( self, info_commands ):
@@ -41,7 +33,7 @@ class info_interface( Pyro.core.ObjBase ):
         self.commands = info_commands
 
     def get( self, descrip, *args ):
-#        # TODO - HOW WHAT TO RETURN IN CASE OF UNKNOWN COMMAND
+        # TODO - HOW + WHAT TO RETURN IN CASE OF UNKNOWN COMMAND
 #        if descrip not in self.commands:
 #            return result( False, reason="Unknown command" )
         return self.commands[ descrip ]( *args )
