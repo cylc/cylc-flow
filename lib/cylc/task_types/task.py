@@ -656,9 +656,9 @@ class task( object ):
 
         # if timed out, queue the event handler turn off the timer
         current_time = task.clock.get_datetime()
-        cutoff = self.submission_timer_start + datetime.timedelta( minutes=float(timeout) )
+        cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
-            msg = 'task submitted ' + timeout + ' minutes ago, but has not started'
+            msg = 'task submitted ' + str(timeout) + ' minutes ago, but has not started'
             self.log( 'WARNING', msg )
             self.log( 'NORMAL', "Queueing submission_timeout event handler" )
             self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
@@ -680,13 +680,13 @@ class task( object ):
                 return
         # if timed out, queue the event handler turn off the timer
         current_time = task.clock.get_datetime()
-        cutoff = self.execution_timer_start + datetime.timedelta( minutes=float(timeout) )
+        cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
             if self.reset_timer:
                 # the timer is being re-started by incoming messages
-                msg = 'last message ' + timeout + ' minutes ago, but has not succeeded'
+                msg = 'last message ' + str(timeout) + ' minutes ago, but has not succeeded'
             else:
-                msg = 'task started ' + timeout + ' minutes ago, but has not succeeded'
+                msg = 'task started ' + str(timeout) + ' minutes ago, but has not succeeded'
             self.log( 'WARNING', msg )
             self.log( 'NORMAL', "Queueing execution_timeout event handler" )
             self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
