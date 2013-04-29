@@ -110,40 +110,63 @@ class batcher( threading.Thread ):
         before = datetime.datetime.now()
         psinfo = []
 
+        # submit each item in the batch, recording pid etc. in psinfo
         for itask in batch:
             self.submit_item( itask, psinfo )
 
         logmsg = 'batch ' + str(i) + '/' + str(n) + ' (' + str( len(psinfo) ) + ' members):'
-        for p, item, info, more in psinfo:
+        for p, item, info, launcher in psinfo:
             logmsg += "\n + " + info
         self.idprint( logmsg )
 
+        # determine the success of each job submission in the batch
         n_succ = 0
         n_fail = 0
         while len( psinfo ) > 0:
             for data in psinfo:
-                p, item, info, more = data
-                res = p.poll()
-                if res is None:
-                    #self.log.info( info + ' still waiting...' )
-                    continue
-                out, err = p.communicate()
-                if out:
-                    sys.stdout.write(out)
-                if err:
-                    sys.stderr.write(err)
+                p, item, info, launcher = data
+
+                bkg = False
+                try:
+                    if item.job_sub_method == 'background':
+                        bkg = True
+                except:
+                    pass
+
+                if bkg:
+                    # Background tasks echo PID to stdout but do not
+                    # detach until the job finishes (see comments in
+                    # job_submission/background.py) - so read one line
+                    # (PID) but do not wait on the process to finish.
+                    out = p.stdout.readline().rstrip()
+                    #  p.stderr.readline() blocks until the process
+                    #  finishes because nothing is written to stderr.
+                    err = ''
+                    res = 0
+                else: 
+                    # If process is finished, handle its output. Use
+                    # poll() to avoid blocking on unfinished processes.
+                    res = p.poll()
+                    if res is None:
+                        # process not finished, go on to check next process
+                        continue
+                    else:
+                        # process is finished, retreive output
+                        out, err = p.communicate()
+
                 if res < 0:
-                    self.item_failed_hook( item, info,
-                                           "terminated by signal " + str(res) )
+                    self.item_failed_hook( item, info, "terminated by signal " + str(res) )
                     n_fail += 1
                 elif res > 0:
                     self.item_failed_hook( item, info, "failed " + str(res) )
                     n_fail += 1
                 else:
-                    self.item_succeeded_hook( p, item, info, more, out, err )
+                    self.item_succeeded_hook( p, item, info, launcher, out, err )
                     n_succ += 1
+
                 psinfo.remove( data )
                 self.jobqueue.task_done()
+
             time.sleep(1)
 
         after = datetime.datetime.now()
@@ -175,8 +198,6 @@ class task_batcher( batcher ):
         batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
         self.wireless = wireless
-        # if the suite is told to stop, we should stop before submitting
-        # any more queued tasks
         self.finish_before_exiting = False
 
     def submit( self, batch, i, n ):
@@ -206,7 +227,7 @@ class task_batcher( batcher ):
         itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
         batcher.item_failed_hook( self, itask, info, msg )
  
-    def item_succeeded_hook( self, p, itask, info, launcher, out, err ):
+    def item_succeeded_hook( self, p, itask, info, launcher, out="", err="" ):
         """Hook for succeeded item."""
         itask.incoming( 'NORMAL', itask.id + ' submission succeeded' )
         if hasattr(launcher, 'get_id'):
@@ -221,8 +242,6 @@ class event_batcher( batcher ):
     def __init__( self, name, jobqueue, batch_size, batch_delay, suite, verbose ):
         batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
         self.suite = suite
-        # if the suite is about to exit, we should run any remaining
-        # queued event handlers first.
         self.finish_before_exiting = True
 
     def submit_item( self, item, psinfo ):
