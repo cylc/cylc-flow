@@ -31,6 +31,7 @@ from cylc.command_prep import prep_pyro
 from cylc.cycle_time import ct, CycleTimeError
 from cylc.print_tree import print_tree
 from cylc.TaskID import TaskID
+from cylc.config import coerce_runtime_values
 
 def get_padding( settings, level=0, padding=0 ):
     level += 1
@@ -58,48 +59,6 @@ def get_rdict( left, right=None ):
         rdict = { left : right }
     return rdict
  
-def str2list( st ):
-    return re.split( '[, ]+', st )
-
-def str2bool( st ):
-    return st.lower() in ( 'true' )
-
-def translate( rdict ):
-    try:
-        # translate list values from string
-        for item in [
-            'retry delays',
-            'extra log files',
-            ( 'simulation mode', 'run time range' ) ]:
-        
-            if isinstance( item, list ):
-                rdict[item[0]][item[1]] = str2list( rdict[item[0]][item[1]] )
-            else:
-                rdict[item] = str2list( rdict[item] )
-
-        # translate bool values from string
-        for item in [
-            'manual completion',
-            'enable resurrection',
-            ( 'simulation mode', 'simulate failure' ),
-            ( 'simulation mode', 'disable task event hooks' ),
-            ( 'dummy mode', 'disable pre-command scripting' ),
-            ( 'dummy mode', 'disable post-command scripting' ),
-            ( 'dummy mode', 'disable task event hooks' ),
-            ( 'dummy mode', 'disable retries' ),
-            ( 'event hooks', 'reset timer' ) ]:
-
-            if isinstance( item, list ):
-                rdict[item[0]][item[1]] = strbool( rdict[item[0]][item[1]] )
-            else:
-                rdict[item] = str2bool( rdict[item] )
-
-        # floats?
-                 
-    except KeyError:
-        # item not in rdict
-        pass
-
 usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 
 This command overrides [runtime] namespace settings in a running suite.
@@ -251,7 +210,7 @@ for s in options.set:
     except ValueError:
         raise SystemExit( "ERROR: --set requires a value" )
     rdict = get_rdict( left, val )
-    translate( rdict )
+    coerce_runtime_values( rdict )
     settings.append( rdict )
 
 for u in options.unset:

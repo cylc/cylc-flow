@@ -62,6 +62,66 @@ except ImportError:
 else:
     jinja2_disabled = False
 
+def str2list( st ):
+    return re.split( '[, ]+', st )
+
+def str2bool( st ):
+    return st.lower() in ( 'true' )
+
+def str2float( st ):
+    return float( st )
+
+def coerce_runtime_values( rdict ):
+    """Coerce non-string values as would be done by [runtime]
+    validation. This must be kept up to date with any new non-string
+    items added the runtime configspec."""
+
+    # coerce list values from string
+    for item in [
+        'inherit',
+        'retry delays',
+        'extra log files',
+        ( 'simulation mode', 'run time range' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2list( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2list( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce bool values from string
+    for item in [
+        'manual completion',
+        'enable resurrection',
+        ( 'simulation mode', 'simulate failure' ),
+        ( 'simulation mode', 'disable task event hooks' ),
+        ( 'simulation mode', 'disable retries' ),
+        ( 'dummy mode', 'disable pre-command scripting' ),
+        ( 'dummy mode', 'disable post-command scripting' ),
+        ( 'dummy mode', 'disable task event hooks' ),
+        ( 'dummy mode', 'disable retries' ),
+        ( 'event hooks', 'reset timer' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2bool( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2bool( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce float values from string
+    for item in [
+            ('event hooks', 'submission timeout' ),
+            ('event hooks', 'execution timeout' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2float( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2float( rdict[item] )
+        except KeyError:
+            pass
+
 class SuiteConfigError( Exception ):
     """
     Attributes:
@@ -203,14 +263,17 @@ class config( CylcConfigObj ):
         if 'runtime' not in self.keys():
             self['runtime'] = OrderedDict()
 
-        # [runtime] validation: this loads the complete defaults dict
-        # into every namespace, so we just do it as a validity check
-        # during validation.  
+        # [runtime] validation loads the complete defaults dict into
+        # every namespace, so just do it for explicit validation.  
         if self.validation:
             for name in self['runtime']:
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
                 self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
+
+        # coerce non-string [runtime] values manually, as validation would have done
+        for ns in self['runtime']:
+            coerce_runtime_values( self['runtime'][ns] )
 
         if 'root' not in self['runtime']:
             self['runtime']['root'] = OrderedDict()
@@ -404,16 +467,8 @@ class config( CylcConfigObj ):
                 self.runtime['parents'][name] = []
                 first_parents[name] = []
                 continue
-            if 'inherit' in self['runtime'][name]:
-                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
-                i = self['runtime'][name]['inherit'] 
-                if not isinstance( i, list ):
-                    pts = [i]
-                else:
-                    pts = i
-            else:
-                # implicit inheritance from root
-                pts = [ 'root' ]
+            # get declared parents, with implicit inheritance from root.
+            pts = self['runtime'][name].get( 'inherit', ['root'] )
             for p in pts:
                 if p == "None":
                     # see just below

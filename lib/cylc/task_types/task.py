@@ -370,10 +370,6 @@ class task( object ):
         """Check retry delay config (execution and submission) and return
         a deque of individual delay values (multipliers expanded out)."""
 
-        # coerce single values to list (see warning in conf/suiterc/runtime.spec)
-        if not isinstance( cfg, list ):
-            cfg = [ cfg ]
-
         values = []
         for item in cfg:
             try:
