@@ -104,7 +104,7 @@ Arguments:"""
         OptionParser.__init__( self, usage )
 
         self.add_option( "--owner",
-                help="User name, i fyour are not the suite owner.",
+                help="User name, if you are not the suite owner.",
                 metavar="USER", default=username,
                 action="store", dest="owner" )
 
