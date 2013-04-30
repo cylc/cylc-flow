@@ -22,28 +22,25 @@ class background( job_submit ):
 
     """Run the task job script directly in a background shell.
 
-    Background submission is special - the job submits immediately (and
-    always successfully: try "/bin/false & echo $?") and the job ID
-    retained for polling or killing the task needs to be the process ID
-    of the submitted job on the task host. We override the general
-    command templates to achieve this by printing the pid of the running
-    job script to stdout (by "job-script & echo $!"). This avoids
-    another process to read the PID from the task status file, which is
-    not required for other job submission methods where it is the batch
-    scheduler job ID, not the running process ID, that is important.
-    Note that the pid returned by the job submission sub-process in
-    cylc, for remote background jobs, is that of the local ssh process 
-    used to invoke the remote command.
-    """
+    In contrast to job submission methods that return a "job submission
+    ID" to a batch queue system (pbs, loadleveler, ...) and then detach
+    immediately, background 'submission' actually runs the task directly.
+    We could make it detach immediately by backgrounding with '&', but 
+    this is a problem for remote background jobs at sites that do not
+    allow unattended jobs on login nodes. Consequently we background
+    with '&' to allow returning the PID in stdout with 'echo $!' but
+    then use 'wait' to prevent exit before the job is finished:
+      % ssh user@host 'job-script & echo $!; wait'
+    (We have to override the general command templates to achieve this)."""
 
-    LOCAL_COMMAND_TEMPLATE = "(%(command)s & echo $! )"
+    LOCAL_COMMAND_TEMPLATE = "(%(command)s & echo $!; wait )"
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
             + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s" 
-            + " && ( (%(command)s) & echo $! )"
+            + " && ( (%(command)s) & echo $!; wait )"
             + "'" )
  
     COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
