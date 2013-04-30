@@ -63,10 +63,12 @@ else:
     jinja2_disabled = False
 
 def str2list( st ):
+    if isinstance(st, list):
+        return st
     return re.split( '[, ]+', st )
 
 def str2bool( st ):
-    return st.lower() in ( 'true' )
+    return str(st).lower() in ( 'true' )
 
 def str2float( st ):
     return float( st )
