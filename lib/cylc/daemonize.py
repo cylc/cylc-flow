@@ -42,7 +42,7 @@ def daemonize( suite, port ):
             print "To see if this suite is still running:"
             print " * cylc scan"
             print " * cylc ping -v", suite
-            print " * ps -fu $USER | grep 'cylc-run", suite + "'"
+            print " * ps -fu $USER | grep 'cylc-run .*", suite + "'"
             print
             print "To run in non-daemon mode use --debug."
             print "For more information type 'cylc --help'."

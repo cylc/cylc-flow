@@ -62,6 +62,68 @@ except ImportError:
 else:
     jinja2_disabled = False
 
+def str2list( st ):
+    if isinstance(st, list):
+        return st
+    return re.split( '[, ]+', st )
+
+def str2bool( st ):
+    return str(st).lower() in ( 'true' )
+
+def str2float( st ):
+    return float( st )
+
+def coerce_runtime_values( rdict ):
+    """Coerce non-string values as would be done by [runtime]
+    validation. This must be kept up to date with any new non-string
+    items added the runtime configspec."""
+
+    # coerce list values from string
+    for item in [
+        'inherit',
+        'retry delays',
+        'extra log files',
+        ( 'simulation mode', 'run time range' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2list( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2list( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce bool values from string
+    for item in [
+        'manual completion',
+        'enable resurrection',
+        ( 'simulation mode', 'simulate failure' ),
+        ( 'simulation mode', 'disable task event hooks' ),
+        ( 'simulation mode', 'disable retries' ),
+        ( 'dummy mode', 'disable pre-command scripting' ),
+        ( 'dummy mode', 'disable post-command scripting' ),
+        ( 'dummy mode', 'disable task event hooks' ),
+        ( 'dummy mode', 'disable retries' ),
+        ( 'event hooks', 'reset timer' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2bool( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2bool( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce float values from string
+    for item in [
+            ('event hooks', 'submission timeout' ),
+            ('event hooks', 'execution timeout' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2float( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2float( rdict[item] )
+        except KeyError:
+            pass
+
 class SuiteConfigError( Exception ):
     """
     Attributes:
@@ -77,7 +139,6 @@ class TaskNotDefinedError( SuiteConfigError ):
     pass
 
 # TODO: separate config for run and non-run purposes?
-# TODO: this module could use some clean-up and re-organisation.
 
 class config( CylcConfigObj ):
     """Parse and validate a suite definition, and compute everything
@@ -118,6 +179,7 @@ class config( CylcConfigObj ):
                 'first-parent descendants' : {}
                 }
         # (first-parents are used for visualization purposes)
+        # (tasks - leaves on the tree - do not appear in 'descendants')
 
         self.families_used_in_graph = []
 
@@ -203,14 +265,17 @@ class config( CylcConfigObj ):
         if 'runtime' not in self.keys():
             self['runtime'] = OrderedDict()
 
-        # [runtime] validation: this loads the complete defaults dict
-        # into every namespace, so we just do it as a validity check
-        # during validation.  
+        # [runtime] validation loads the complete defaults dict into
+        # every namespace, so just do it for explicit validation.  
         if self.validation:
             for name in self['runtime']:
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
                 self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
+
+        # coerce non-string [runtime] values manually, as validation would have done
+        for ns in self['runtime']:
+            coerce_runtime_values( self['runtime'][ns] )
 
         if 'root' not in self['runtime']:
             self['runtime']['root'] = OrderedDict()
@@ -263,6 +328,8 @@ class config( CylcConfigObj ):
         self.compute_family_tree()
 
         self.compute_inheritance()
+        #debugging:
+        #self.print_inheritance()
 
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -319,10 +386,9 @@ class config( CylcConfigObj ):
         # section) are found in graph or queue config. 
         if len( self.naked_dummy_tasks ) > 0:
             if self.strict or self.verbose:
-                print 'Naked dummy tasks detected (no entry under [runtime]):'
+                print >> sys.stderr, 'WARNING: naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
-                    print '  +', ndt
-                print >> sys.stderr, '  WARNING: naked dummy tasks can result from misspelled task names!' 
+                    print >> sys.stderr, '  +', ndt
             if self.strict:
                 raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
 
@@ -390,7 +456,7 @@ class config( CylcConfigObj ):
          if bad:
              print >> sys.stderr, "ERROR, bad env variable names:"
              for label, vars in bad.items():
-                 print 'Namespace:', label
+                 print >> sys.stderr, 'Namespace:', label
                  for var in vars:
                      print >> sys.stderr, "  ", var
              raise SuiteConfigError("Illegal env variable name(s) detected" )
@@ -403,16 +469,8 @@ class config( CylcConfigObj ):
                 self.runtime['parents'][name] = []
                 first_parents[name] = []
                 continue
-            if 'inherit' in self['runtime'][name]:
-                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
-                i = self['runtime'][name]['inherit'] 
-                if not isinstance( i, list ):
-                    pts = [i]
-                else:
-                    pts = i
-            else:
-                # implicit inheritance from root
-                pts = [ 'root' ]
+            # get declared parents, with implicit inheritance from root.
+            pts = self['runtime'][name].get( 'inherit', ['root'] )
             for p in pts:
                 if p == "None":
                     # see just below
@@ -516,6 +574,11 @@ class config( CylcConfigObj ):
         # uncomment this to compare the simple and efficient methods
         # print '  Number of namespace replications:', n_reps
 
+    def print_inheritance(self):
+        for foo in self.runtime:
+            print '  ', foo
+            for item, val in self.runtime[foo].items():
+                print '  ', '  ', item, val
 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
@@ -872,8 +935,6 @@ class config( CylcConfigObj ):
                         # any family triggers have have been replaced with members by now.
                         print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
-        self.check_for_case_errors()
-
         # warn if listed special tasks are not defined
         for type in self['scheduling']['special tasks']:
             for name in self['scheduling']['special tasks'][type]:
@@ -938,40 +999,6 @@ class config( CylcConfigObj ):
         # 'sequential' and 'clock-triggered' at the time, but not both
         # 'model' and 'sequential' at the same time.
 
-    def check_for_case_errors( self ):
-        # check for case errors in task names
-        # TODO: this could probably be done more efficiently!
-        all_names_dict = {}
-        for name in self.taskdefs.keys() + self['runtime'].keys():
-            # remove legitimate duplicates (names in graph and runtime)
-            if name not in all_names_dict:
-                all_names_dict[name] = True
-        all_names = all_names_dict.keys()
-        knob = {}
-        duplicates = []
-        for name in [ foo.lower() for foo in all_names ]:
-            if name not in knob:
-                knob[name] = True
-            else:
-                duplicates.append(name)
-        duplist = {}
-        for dup in duplicates:
-            for name in all_names:
-                if name.lower() == dup:
-                    if dup not in duplist:
-                        duplist[dup] = [name]
-                    else:
-                        duplist[dup].append(name)
-        if self.verbose:
-            if len( duplist.keys() ) > 0:
-                print >> sys.stderr, 'WARNING: THE FOLLOWING TASK NAMES DIFFER ONLY BY CASE:'
-            for name in duplist:
-                # this is probably, but not necessarily, an error.
-                print >> sys.stderr, ' ', 
-                for n in duplist[name]:
-                    print >> sys.stderr, n,
-                print >> sys.stderr, ''
- 
     def get_filename( self ):
         return self.file
 

@@ -66,8 +66,7 @@ include-file boundary markers in the inlined file.
 
 The edit process is spawned in the foreground as follows:
   % <editor> suite.rc
-Where <editor> is defined in the cylc site and user config files
-($CYLC_DIR/conf/globals/cylc.rc and $HOME/.cylc/cylc.rc).
+Where <editor> is defined in the cylc site/user config files.
 
 See also 'cylc [prep] view'.""", prep=True )
 
@@ -87,11 +86,10 @@ parser.add_option( "--gui", "-g",
 
 suite, suiterc, junk = parser.get_suite()
 
-globals = gcfg
 if options.geditor:
-    editor = globals.cfg['editors']['gui']
+    editor = gcfg.cfg['editors']['gui']
 else:
-    editor = globals.cfg['editors']['terminal']
+    editor = gcfg.cfg['editors']['terminal']
 
 suitedir = os.path.dirname(suiterc)
 

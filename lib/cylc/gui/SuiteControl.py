@@ -2443,11 +2443,12 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
   
         doc_menu.append( gtk.SeparatorMenuItem() )
 
-        cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '-x' )
+        if gcfg.cfg['documentation']['urls']['local index']:
+            cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+            cug_www_item.set_image(img)
+            doc_menu.append( cug_www_item )
+            cug_www_item.connect( 'activate', self.browse, '-x' )
  
         cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
