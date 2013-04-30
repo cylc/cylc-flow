@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language name="Cylc suite.rc" section="Configuration" extensions="suite.rc" mimetype="" version="1.0" kateversion="2.0" author="" license="GPL">
+
+<!-- For use with Kate. To use it, place or symlink this file in ~/.kde/share/apps/katepart/syntax/,
+ or if possible, /usr/share/kde4/apps/katepart/syntax/ -->
+
+  <highlighting>
+
+    <contexts>
+      <context name="File" attribute="Normal Text" lineEndContext="#stay">
+        <!-- To regenerate this keyword list, run something like:
+        sed "/^#/d; /^[^=]*$/d; /__many__/d; s/^ *\([^=]*\) =.*$/        <RegExpr attribute='Keyword' String=' \1 '\/>/g" ~fcm/cylc-head/conf/suiterc/* | sort -r | uniq
+        The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
+        <RegExpr attribute='Keyword' String=' work sub-directory '/>
+        <RegExpr attribute='Keyword' String=' warning handler '/>
+        <RegExpr attribute='Keyword' String=' use quick task elimination '/>
+        <RegExpr attribute='Keyword' String=' use node color for labels '/>
+        <RegExpr attribute='Keyword' String=' use node color for edges '/>
+        <RegExpr attribute='Keyword' String=' title '/>
+        <RegExpr attribute='Keyword' String=' timeout handler '/>
+        <RegExpr attribute='Keyword' String=' timeout '/>
+        <RegExpr attribute='Keyword' String=' suite shutdown event handler '/>
+        <RegExpr attribute='Keyword' String=' suite definition directory '/>
+        <RegExpr attribute='Keyword' String=' succeeded handler '/>
+        <RegExpr attribute='Keyword' String=' submitted handler '/>
+        <RegExpr attribute='Keyword' String=' submission timeout handler '/>
+        <RegExpr attribute='Keyword' String=' submission timeout '/>
+        <RegExpr attribute='Keyword' String=' submission retry handler '/>
+        <RegExpr attribute='Keyword' String=' submission failed handler '/>
+        <RegExpr attribute='Keyword' String=' startup handler '/>
+        <RegExpr attribute='Keyword' String=' started handler '/>
+        <RegExpr attribute='Keyword' String=' start-up '/>
+        <RegExpr attribute='Keyword' String=' simultaneous instances '/>
+        <RegExpr attribute='Keyword' String=' simulation mode suite timeout '/>
+        <RegExpr attribute='Keyword' String=' simulate failure '/>
+        <RegExpr attribute='Keyword' String=' shutdown handler '/>
+        <RegExpr attribute='Keyword' String=' shell '/>
+        <RegExpr attribute='Keyword' String=' sequential '/>
+        <RegExpr attribute='Keyword' String=' runahead limit '/>
+        <RegExpr attribute='Keyword' String=' run time range '/>
+        <RegExpr attribute='Keyword' String=' retry handler '/>
+        <RegExpr attribute='Keyword' String=' retry delays '/>
+        <RegExpr attribute='Keyword' String=' reset timer '/>
+        <RegExpr attribute='Keyword' String=' required run mode '/>
+        <RegExpr attribute='Keyword' String=' rate '/>
+        <RegExpr attribute='Keyword' String=' pre-command scripting '/>
+        <RegExpr attribute='Keyword' String=' post-command scripting '/>
+        <RegExpr attribute='Keyword' String=' owner '/>
+        <RegExpr attribute='Keyword' String=' one-off '/>
+        <RegExpr attribute='Keyword' String=' offset '/>
+        <RegExpr attribute='Keyword' String=' method '/>
+        <RegExpr attribute='Keyword' String=' members '/>
+        <RegExpr attribute='Keyword' String=' manual completion '/>
+        <RegExpr attribute='Keyword' String=' log resolved dependencies '/>
+        <RegExpr attribute='Keyword' String=' live mode suite timeout '/>
+        <RegExpr attribute='Keyword' String=' limit '/>
+        <RegExpr attribute='Keyword' String=' initial scripting '/>
+        <RegExpr attribute='Keyword' String=' initial cycle time '/>
+        <RegExpr attribute='Keyword' String=' inherit '/>
+        <RegExpr attribute='Keyword' String=' include at start-up '/>
+        <RegExpr attribute='Keyword' String=' host '/>
+        <RegExpr attribute='Keyword' String=' graph '/>
+        <RegExpr attribute='Keyword' String=' final cycle time '/>
+        <RegExpr attribute='Keyword' String=' failed handler '/>
+        <RegExpr attribute='Keyword' String=' extra log files '/>
+        <RegExpr attribute='Keyword' String=' explicit restart outputs '/>
+        <RegExpr attribute='Keyword' String=' expected task failures '/>
+        <RegExpr attribute='Keyword' String=' execution timeout handler '/>
+        <RegExpr attribute='Keyword' String=' execution timeout '/>
+        <RegExpr attribute='Keyword' String=' exclude at start-up '/>
+        <RegExpr attribute='Keyword' String=' environment scripting '/>
+        <RegExpr attribute='Keyword' String=' enable resurrection '/>
+        <RegExpr attribute='Keyword' String=' enable live graph movie '/>
+        <RegExpr attribute='Keyword' String=' enable '/>
+        <RegExpr attribute='Keyword' String=' dummy mode suite timeout '/>
+        <RegExpr attribute='Keyword' String=' disable task event hooks '/>
+        <RegExpr attribute='Keyword' String=' disable task elimination '/>
+        <RegExpr attribute='Keyword' String=' disable suite event hooks '/>
+        <RegExpr attribute='Keyword' String=' disable retries '/>
+        <RegExpr attribute='Keyword' String=' disable pre-command scripting '/>
+        <RegExpr attribute='Keyword' String=' disable post-command scripting '/>
+        <RegExpr attribute='Keyword' String=' disable '/>
+        <RegExpr attribute='Keyword' String=' directory '/>
+        <RegExpr attribute='Keyword' String=' description '/>
+        <RegExpr attribute='Keyword' String=' delay between batches '/>
+        <RegExpr attribute='Keyword' String=' default node attributes '/>
+        <RegExpr attribute='Keyword' String=' default edge attributes '/>
+        <RegExpr attribute='Keyword' String=' daemon '/>
+        <RegExpr attribute='Keyword' String=' cycling '/>
+        <RegExpr attribute='Keyword' String=' cutoff '/>
+        <RegExpr attribute='Keyword' String=' command template '/>
+        <RegExpr attribute='Keyword' String=' command scripting '/>
+        <RegExpr attribute='Keyword' String=' collapsed families '/>
+        <RegExpr attribute='Keyword' String=' cold-start '/>
+        <RegExpr attribute='Keyword' String=' clock-triggered '/>
+        <RegExpr attribute='Keyword' String=' batch size '/>
+        <RegExpr attribute='Keyword' String=' allow task failures '/>
+        <RegExpr attribute='Keyword' String=' abort on timeout '/>
+        <RegExpr attribute='Keyword' String=' abort if timeout handler fails '/>
+        <RegExpr attribute='Keyword' String=' abort if startup handler fails '/>
+        <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
+        <RegExpr attribute='Keyword' String=' abort if any task fails '/>
+        <RegExpr attribute='Keyword' String=' UTC mode '/>
+        <!-- Non-keyword syntax -->
+        <RegExpr attribute="Section" String="^ *\[.*\] *$" />
+        <RegExpr attribute='Assignment' String='=&gt;'/>
+        <RegExpr attribute='Assignment' String='|'/>
+        <RegExpr attribute='Assignment' String='&amp;'/>
+        <DetectChar attribute="Assignment" char="=" />
+        <DetectChar attribute='String' char='"'/>
+        <DetectChar attribute='String' char="'"/>
+        <DetectChar attribute="Assignment" char="\" />
+        <RegExpr attribute='Comment' String="\{#.*#\}"/>
+        <RegExpr attribute='Jinja2' String="\{%.*%\}"/>
+        <RegExpr attribute='Jinja2' String="\{\{.*\}\}"/>
+        <RegExpr attribute="Comment" String="#.*$" />
+        <RegExpr attribute="Environment" String="\$\w+" />
+        <RegExpr attribute="Environment" String="\$\{\w+\}" />
+      </context>
+    </contexts>
+
+    <itemDatas>
+      <itemData name="Normal Text" defStyleNum="dsNormal" />
+      <itemData name="Keyword" defStyleNum="dsKeyword" />
+      <itemData name="Section" defStyleNum="dsFunction" />
+      <itemData name="Comment" defStyleNum="dsComment" />
+      <itemData name="Jinja2" defStyleNum="dsDataType" />
+      <itemData name="Environment" defStyleNum="dsFloat" />
+      <itemData name="Assignment" defStyleNum="dsOthers" />
+      <itemData name="String" defStyleNum="dsString" />
+    </itemDatas>
+  </highlighting>
+  
+  <general>
+    <comments>
+      <comment name="singleLine" start="#"/>
+    </comments>
+  </general>
+
+</language>
