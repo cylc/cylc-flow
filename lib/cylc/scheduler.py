@@ -130,6 +130,7 @@ class scheduler(object):
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
+        self.runtime_graph_on = None
 
         # COMMANDLINE OPTIONS
 
@@ -690,7 +691,7 @@ class scheduler(object):
                 # async integer tag
                 int( tag )
             except ValueError:
-                raise SystemExit( "ERROR:, invalid task tag : " + tag )
+                raise Exception( "ERROR:, invalid task tag : " + tag )
             else:
                 pass
         else:
