@@ -27,6 +27,7 @@ from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
 from cylc.global_config import gcfg
+from cylc import cylc_mode
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
@@ -60,12 +61,11 @@ class message(object):
         else:
             raise Exception( 'Illegal message priority ' + priority )
 
-        # 'scheduler' or 'submit'
+        # 'scheduler', 'submit', (or 'raw' if job script run manually)
         self.mode = env_map.get( 'CYLC_MODE', 'raw' )
 
         for attr, key, default in (
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
-                ('suite', 'CYLC_SUITE_NAME', None),
                 ('owner', 'CYLC_SUITE_OWNER', None),
                 ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
                 ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
@@ -74,6 +74,13 @@ class message(object):
             else:
                 value = env_map[key]
             setattr(self, attr, value)
+
+        # back compat for ssh messaging from task host with cylc <= 5.1.1:
+        self.suite = env_map.get('CYLC_SUITE_NAME')
+        if not self.suite:
+            self.suite = env_map.get('CYLC_SUITE_REG_NAME')
+            if self.suite:
+                os.environ['CYLC_SUITE_NAME'] = self.suite
 
         self.utc = env_map.get('CYLC_UTC') == 'True'
         self.ssh_messaging = (
@@ -168,6 +175,7 @@ class message(object):
         self.print_msg( msg )
         self.send_pyro( msg )
 
+
     def send_pyro( self, msg ):
         print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
         sent = False
@@ -188,11 +196,13 @@ class message(object):
             # issue a warning and let the task carry on
             print >> sys.stderr, 'WARNING: MESSAGE SEND FAILED'
 
-    def send_succeeded( self ):
-        self.send( self.task_id + ' succeeded' )
-
     def send_started( self ):
         self.send( self.task_id + ' started' )
+        self.task_lock()
+
+    def send_succeeded( self ):
+        self.task_lock( False )
+        self.send( self.task_id + ' succeeded' )
 
     def send_failed( self ):
         self.priority = 'CRITICAL'
@@ -200,7 +210,27 @@ class message(object):
             # send reason for failure first so it does not contaminate
             # the special task failed message.
             self.send()
+        self.task_lock( False )
         self.send( self.task_id + ' failed' )
+ 
+    def task_lock( self, acquire=True ):
+        # acquire or release a task lock if using the lockserver
+        if cylc_mode.mode().is_raw() or self.ssh_messaging:
+            return
+        from cylc.locking.task_lock import task_lock
+        try:
+            if acquire:
+                if not task_lock().acquire():
+                    # (don't send task failed message - handled by trapping)
+                    raise SystemExit( "Failed to acquire a task lock" )
+            else:
+                if not task_lock().release():
+                    raise SystemExit( "Failed to release task lock" )
+        except Exception, z:
+            print >> sys.stderr, z
+            if debug:
+                raise
+            raise SystemExit( "Failed to connect to the lockserver?" )
 
     def shortcut_next_restart( self ):
         self.print_msg( 'next restart file completed' )
