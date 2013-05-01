@@ -3179,47 +3179,32 @@ a host other than the suit host, e.g.:
         [[[remote]]]
             host = orca.niwa.co.nz
             owner = bob
-            cylc directory = /path/to/remote/cylc/installation/on/foo
-            suite definition directory = /path/to/remote/suite/definition/on/foo
+        [[[job submission]]]
+            method = pbs
 \end{lstlisting}
 \lstset{language=transcript}
-cylc will execute the task on the declared host, by the configured job
-submission method, as the declared owner, using passwordless ssh. 
-
+cylc will use passwordless ssh to execute the task on the declared host
+account (\lstinline=owner@host=) by the configured job submission method.
+For this to work,
 \begin{myitemize}
-    \item passwordless ssh must be configured between the suite owner on
-        the suite host and the task owner on the task host.
-    \item cylc and Pyro must be installed on the task host so that the
-        remote task can communicate with the suite (but graphviz,
-        Pygraphviz, and Jinja2 are not needed by the task messaging
-        commands).
-    \item the suite definition directory can optionally be installed on
-        the task host if the task needs access to the suite bin
-        directory or to other suite files.
+    \item passwordless ssh must be configured between suite and task
+    host accounts.
+    \item cylc must be installed on task hosts so that remote tasks can
+    use cylc messaging commands to communicate back to the suite.
+    \begin{myitemize}
+        \item Pyro is needed by cylc on tasks hosts - unless ssh messaging
+        is used - but other cylc software dependencies such as graphviz and
+        Jinja2 are not.
+    \end{myitemize}
+    \item the suite definition directory, or some fraction of its
+    content, can be installed on the task host if the remote task needs it.
 \end{myitemize}
 
-A local task to run under another user account is treated as a remote task.
+Tasks running on the suite host under another user account are treated as
+remote tasks.
 
-{\em You may not need this functionality if you have a cross-platform
-resource manager, such as loadleveler, that allows you to submit a job
-locally to run on the remote host}.
-
-Remote host functionality, like all namespace settings, can 
-be declared globally (in the root namespace) or per family, or for 
-individual tasks. Use the global settings if all or most of your tasks
-need to run on the same remote host.
-
-If cylc is not in your \lstinline=$PATH= on the remote host you can use
-the ``cylc directory'' item to give remote tasks access to cylc. However,
-the remote job submission mechanism automatically sources
-\lstinline=.profile= if it exists, so you can also set your
-\lstinline=PATH= for cylc there. Similarly tasks can use 
-\lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on the task host,
-and the suite bin directory is automatically added \lstinline=$PATH=. 
-If a remote suite definition directory is not specified the local (suite
-host) path will be assumed with the local home directory, if present,
-substituted with literal \lstinline=$HOME= for evaluation on the task
-host.
+Remote hosting, like all namespace settings, can be declared globally in
+the root namespace, or per family, or for individual tasks.
 
 \paragraph{Dynamic Host Selection}
 
@@ -3227,6 +3212,35 @@ Instead of hardwiring host names into the suite definition you can
 specify a shell command that prints a hostname, or an environment
 variable that holds a hostname, as the value of the host config item.
 See Section~\ref{DynamicHostSelection}.
+
+\paragraph{Access To Cylc On Task Hosts}
+
+Remote tasks must have access to cylc on the task host. There are
+several ways of configuring your remote \lstinline=$PATH= for cylc:
+
+\begin{myenumerate}
+
+\item system or user login scripts: \lstinline=/etc/profile= or
+\lstinline=$HOME/.profile= - the remote job submission mechanism
+automatically sources these.
+
+\item Use {\em cylc bin directory} items in site/user config file host
+sections to set the cylc location for all suites running on the host.
+
+\end{myenumerate}
+
+It is also possible to configure your \lstinline=$PATH= manually
+in runtime namespace {\em intial scripting} sections, which end up
+at the top of task job scripts before the first cylc messaging call. The
+other methods are preferred, however, because this is really a
+host-specific setting.
+
+Tasks can use \lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on
+the task host, and the suite bin directory is automatically added
+\lstinline=$PATH=.  If a remote suite definition directory is not
+specified the local (suite host) path will be assumed with the local
+home directory, if present, swapped for literal \lstinline=$HOME= for
+evaluation on the task host.
 
 \paragraph{Remote Task Log Directories}
 
