@@ -221,7 +221,6 @@ class message(object):
         try:
             if acquire:
                 if not task_lock().acquire():
-                    # (don't send task failed message - handled by trapping)
                     raise SystemExit( "Failed to acquire a task lock" )
             else:
                 if not task_lock().release():
