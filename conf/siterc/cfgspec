@@ -155,7 +155,7 @@ disable interactive command prompts = boolean( default=True )
         # sourcing ~/.bashrc (or ~/.cshrc) to set up the environment.
         # In either case the PATH environment variable on the remote
         # machine should include $CYLC_DIR/bin in order for the cylc
-        # executable to be found (or else use "cylc directory" above).
+        # executable to be found (or else use "cylc bin directory" above).
         # NOTE: this setting does not currently apply to job submission
         # commands (executing on the suite host to submit remote tasks).
         use login shell = boolean( default=True )
@@ -164,7 +164,7 @@ disable interactive command prompts = boolean( default=True )
     [[__many__]]
         run directory  = string( default=None )
         work directory = string( default=None)
-        cylc directory = string( default=None )
+        cylc bin directory = string( default=None )
         use ssh messaging = boolean( default=None )
         remote shell template = string( default=None )
         use login shell = boolean( default=True )
