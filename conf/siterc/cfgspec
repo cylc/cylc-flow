@@ -41,6 +41,11 @@ state dump rolling archive length = integer( min=1, default=10 )
 # measure, however, so command prompts are disabled by default.
 disable interactive command prompts = boolean( default=True )
 
+# The suite run directory tree is created anew with every suite start
+# (not restarts) but output from the most recent previous runs is
+# retained in a rolling archive. Set length to 0 to keep no backups.
+run directory rolling archive length = integer( min=0, default=2 )
+
 # Task messaging settings apply to the "cylc task COMMAND" commands 
 # used by running tasks to communicate with their parent suite. If a
 # message send fails after the configured number of tries the task will 

@@ -423,6 +423,25 @@ Some translations were performed on the fly."""
 
         return value
 
+    def roll_directory( self, d, name, archlen=0 ):
+        """
+        Create a directory after rolling back any previous instances of it.
+        e.g. if archlen = 2 we keep: d, d.1, d.2. If 0 keep no old ones.
+        """
+        for n in range( archlen, -1, -1 ): # archlen...0
+            if n > 0:
+                dpath = d+'.'+str(n)
+            else:
+                dpath = d
+            if os.path.exists( dpath ):
+                if n >= archlen:
+                    # remove oldest backup
+                    shutil.rmtree( dpath )
+                else:
+                    # roll others over
+                    os.rename( dpath, d+'.'+str(n+1) )
+        self.create_directory( d, name )
+
     def create_directory( self, d, name ):
         try:
             mkdir_p( d )
@@ -435,8 +454,14 @@ Some translations were performed on the fly."""
 
         if verbose:
             print 'Creating the suite output tree:'
+
+        item = 'suite run directory'
+        if verbose:
+            print ' +', item
+        idir = self.get_derived_host_item( suite, item )
+        self.roll_directory( idir, item, self.cfg['run directory rolling archive length'] )
+
         for item in [
-                'suite run directory',
                 'suite log directory',
                 'suite job log directory',
                 'suite state directory',
