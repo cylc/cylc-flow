@@ -5356,7 +5356,7 @@ The following topics have yet to be documented in detail.
     \item Automatic state dump backups, named pre-intervention state dumps:
         these are used to resetart a suite from a previous state of operation.
         They are mentioned in the {\em Quick Start Guide}. Watch the
-        suite log after intervening in a suite, to get the filenames.
+        suite log after intervening in a suite, to get the filename.
 
     \item Recursive purge: this is a powerful intervention but you need
         to understand how it works before using it. See 
@@ -5368,13 +5368,16 @@ The following topics have yet to be documented in detail.
         the initial cycle time can be in the past; and (b) you can give
         a final cycle time after which the task will be eliminated from
         the suite. 
+
     % \item How to recover from certain kinds of task failure.
     %\item instant simulation mode clones of a running suite
     %\item fuzzy prerequisites - triggering of the {\em most recent available},
     %    within limits, instance of an upstream task
+
     \item Sub-suites: to run another suite inside a task, just invoke the 
         subsuite, with appropriate start and end cycles (probably a
         single cycle), in the host task's command scripting:
+
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -5382,6 +5385,13 @@ The following topics have yet to be documented in detail.
         command scripting = \
         "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
 \end{lstlisting}
+
+    \item Dependence between suites: cylc will eventually support this
+        directly, via special graph syntax. For the moment dependence on
+        other suites can be implemented easily, within task scripting,
+        using the command \lstinline=cylc suite-state=, which has a
+        polling mode and reads the other suite's run database.
+
 \end{myitemize}
 \lstset{language=transcript}
 
