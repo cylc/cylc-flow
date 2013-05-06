@@ -1541,10 +1541,13 @@ directory at registration time, if one does not already exist there. For
 the default Pyro-based connection method the passphrase file must be
 distributed to any other accounts that host running tasks or from which
 you need monitoring or control access to the running suite.
+
 Alternatively, an ssh-based communication method can be used to
 automatically re-invoke cylc commands, including task messaging, on the
 suite host, in which case the suite passphrase is only needed on the
-suite host. See Section~\ref{passphrases} for more on how cylc's
+suite host.
+
+See Section~\ref{passphrases} for more on how cylc's
 client/server communication works and how to use it.
 
 \subsection{Suite Databases}
@@ -4513,7 +4516,6 @@ method. Legal passphrase locations, in order of preference, are:
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
-    \item (or, optionally, given on the commandline with \lstinline=-p FILE=)
 \end{myenumerate}
 The locations under \lstinline=$HOME/.cylc= are suitable for remote
 suite control accounts - in which case the suite definition directory
@@ -4576,9 +4578,9 @@ would then presumably be impossible, but:
         if not to the wider world.
     \item It has been suggested that network {\em port forwarding} may 
         provide a solution.
-    \item We plan to develop a one-way polling mechansim to track the
-        progress of remote tasks that are unable to communicate back to
-        their suite, but this has not been implemented yet.
+    \item A one-way polling mechanism to track the progress of remote
+        tasks that are unable to communicate back to their suite has
+        been implemented and is currently in testing and code review.
 \end{myitemize}
 
 \subsection{Restarting Suites}
