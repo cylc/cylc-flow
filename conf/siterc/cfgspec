@@ -44,6 +44,9 @@ disable interactive command prompts = boolean( default=True )
 # The suite run directory tree is created anew with every suite start
 # (not restarts) but output from the most recent previous runs is
 # retained in a rolling archive. Set length to 0 to keep no backups.
+# *** THIS IS CURRENTLY INCOMPATIBLE WITH ROSE SUITE HOUSEKEEPING ***
+# If not enabled (and without Rose) new logs overwrite existing ones.
+enable run directory housekeeping = boolean( default=False )
 run directory rolling archive length = integer( min=0, default=2 )
 
 # Task messaging settings apply to the "cylc task COMMAND" commands 

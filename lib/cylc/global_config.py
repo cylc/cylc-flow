@@ -459,7 +459,8 @@ Some translations were performed on the fly."""
         if verbose:
             print ' +', item
         idir = self.get_derived_host_item( suite, item )
-        self.roll_directory( idir, item, self.cfg['run directory rolling archive length'] )
+        if self.cfg['enable run directory housekeeping']:
+            self.roll_directory( idir, item, self.cfg['run directory rolling archive length'] )
 
         for item in [
                 'suite log directory',
