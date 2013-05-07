@@ -9,11 +9,11 @@
 #   3) To see what themes are available (built-in and your own) type
 #   'gcylc -l|--list-themes', or use the View  menu at run time.
 
-initial views = text, dot
-use theme = PinkRun # set the default theme to use at start-up
+initial views = text, dot  # set your default views
+use theme = PinkRun        # set your default theme
 
 [themes]
-    [[PinkRun]] # override the 'running' color in the 'classic' theme
-        inherit = classic
+    [[PinkRun]] # override the 'running' color in the 'default' theme
+        inherit = default
         running = "color=#ff00ff" # magenta
 
