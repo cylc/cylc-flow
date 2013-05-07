@@ -167,7 +167,7 @@ class CylcRuntimeDAO(object):
         try:
             mkdir_p( suite_dir )
         except Exception, x:
-            sys.exit( str(x) )
+            raise Exception( str(x) )
 
         if new_mode:
             if os.path.isdir(self.db_file_name):
