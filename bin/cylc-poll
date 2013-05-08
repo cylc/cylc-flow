@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+if '--use-ssh' in sys.argv[1:]: 
+    sys.argv.remove( '--use-ssh' )
+    from cylc.remote import remrun
+    if remrun().execute( force_required=True ):
+        sys.exit(0)
+
+from cylc.prompt import prompt
+from cylc import cylc_pyro_client
+from cylc.CylcOptionParsers import cop, multitask_usage
+from cylc.command_prep import prep_pyro
+
+parser = cop( """cylc [control] poll [OPTIONS] ARGS
+
+Poll a 'submitted' or 'running' task to verify its status. If a job was
+killed by external means this will update the suite accordingly.
+""" + multitask_usage, pyro=True, multitask=True,
+        argdoc=[ ('REG', 'Suite name'),
+            ('MATCH', 'Task or family name matching regular expression'),
+            ('TAG', 'Task cycle time or integer tag') ])
+
+(options, args) = parser.parse_args()
+
+suite, pphrase = prep_pyro( args[0], options ).execute()
+
+name = args[1]
+tag = args[2]
+
+try:
+    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+            options.host, options.pyro_timeout, options.port,
+            options.verbose ).get_proxy( 'command-interface' )
+    prompt( 'Poll task ' + name + ' at ' + tag + ' in ' + suite, options.force )
+    result = proxy.put( 'poll tasks', name, tag, options.is_family )
+
+except Exception, x:
+    if options.debug:
+        raise
+    sys.exit(x)
+
+if result[0]:
+    print result[1]
+else:
+    sys.exit( result[1] )
+
