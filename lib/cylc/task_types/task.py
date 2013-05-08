@@ -1242,6 +1242,6 @@ class task( object ):
                     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + uah + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
-        self.log( 'CRITICAL', "Killing task job now" )
+        self.log( 'CRITICAL', "Killing job" )
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'kill') )
 

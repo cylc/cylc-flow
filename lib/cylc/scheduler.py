@@ -84,14 +84,14 @@ class request_handler( threading.Thread ):
         self.pyro = pyro
         self.quit = False
         self.log = logging.getLogger( 'main' )
-        self.log.info(  "Starting request handler thread" )
+        self.log.info( "Thread Start: Network Request Handling" )
 
     def run( self ):
         while True:
             self.pyro.handleRequests(timeout=1)
             if self.quit:
                 break
-        self.log.info(  "Exiting request handler thread" )
+        self.log.info(  "Thread Exit: Network Request Handling" )
 
 class scheduler(object):
 
@@ -1220,10 +1220,9 @@ class scheduler(object):
             print '(' + reason + ')'
         else:
             print
-
-
+        
+        # tell other threads to shut down
         if self.pool:
-            print " * telling job submission thread to terminate"
             self.pool.worker.quit = True
             self.pool.worker.join()
             # disconnect task message queues
@@ -1234,38 +1233,38 @@ class scheduler(object):
                 self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
         if self.evworker:
-            print " * telling event handler thread to terminate"
             self.evworker.quit = True
             self.evworker.join()
 
         if self.poll_and_kill_worker:
-            print " * telling polling thread to terminate"
             self.poll_and_kill_worker.quit = True
             self.poll_and_kill_worker.join()
 
         if self.request_handler:
-            print " * telling request handling thread to terminate"
             self.request_handler.quit = True
             self.request_handler.join()
+
         if self.command_queue:
             self.pyro.disconnect( self.command_queue )
+
         if self.clock:
             self.pyro.disconnect( self.clock )
+
         if self.wireless:
             self.pyro.disconnect( self.wireless )
+
         if self.suite_id:
             self.pyro.disconnect( self.suite_id )
+
         if self.suite_state:
             self.pyro.disconnect( self.suite_state )
 
         if self.pyro:
-            print " * terminating the suite Pyro daemon"
             self.pyro.shutdown()
 
         if self.use_lockserver:
             # do this last
             if self.lock_acquired:
-                print " * releasing suite lock"
                 lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 try:
                     if not lock.release_suite_access():
@@ -1283,9 +1282,8 @@ class scheduler(object):
         if self.runtime_graph_on:
             self.runtime_graph.finalize()
 
-        #disconnect from suite-db/stop db queue
+        # disconnect from suite-db, stop db queue
         self.db.close()
-        print " * disconnecting from suite database"
 
         # shutdown handler
         handler = self.config.event_handlers['shutdown']
@@ -1305,7 +1303,7 @@ class scheduler(object):
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 
-        print "Main thread DONE"
+        # EXIT
 
     def set_stop_ctime( self, stop_tag ):
         self.log.warning( "Setting stop cycle time: " + stop_tag )

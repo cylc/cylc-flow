@@ -46,14 +46,13 @@ class job_batcher( threading.Thread ):
         # NOTE: Queue.get() blocks if the queue is empty
         # AND: Queue.task_done() doesn't block the producer; it is for
         # queue.join() to block until all queued data is processed.
-        self.log.info(  "Starting " + self.queue_name + " thread" )
+        self.log.info(  "Thread Start: " + self.queue_name )
 
         while True:
             if self.quit:
                 if self.finish_before_exiting and self.jobqueue.qsize() > 0:
                     pass
                 else:
-                    self.log.info(  "Exiting " + self.queue_name + " thread" )
                     break
             batches = []
             batch = []
@@ -78,6 +77,8 @@ class job_batcher( threading.Thread ):
                     #self.log.info(  "  batch delay " )
                     time.sleep( self.batch_delay )
             time.sleep( 1 )
+
+        self.log.info(  "Thread Exit: " + self.queue_name )
 
 
     def process_batch( self, batch, i, n ):
