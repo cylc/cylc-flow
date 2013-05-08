@@ -37,6 +37,8 @@ class globalcfg( object ):
         of precedence) to generate the global config structure; validate
         to catch errors; disallow user config of site-only items.""" 
 
+        self.header_printed = False
+
         self.upgrades = [ ('5.1.1',self.upgrade_5_1_1) ]
         self.warnings = {}
         self.warnings['site'] = {}
@@ -45,11 +47,7 @@ class globalcfg( object ):
         try:
             self.load()
         except Exception, x:
-            raise
             print >> sys.stderr, x
-            print >> sys.stderr, "Failed to load load cylc site/user config:"
-            print >> sys.stderr, "  + " + self.rcfiles['site']
-            print >> sys.stderr, "  + " + self.rcfiles['user']
             raise GlobalConfigError("ABORTING")
 
     def load( self ):
@@ -82,18 +80,34 @@ class globalcfg( object ):
         # generate a configobj with all defaults loaded from the configspec
         # (and call it self.cfg as we re-use it below for the final result)
         self.cfg = ConfigObj( configspec=cfgspec )
-        self.validate( self.cfg ) # (validation loads the default settings)
+        try:
+            self.validate( self.cfg ) # (validation loads the default settings)
+        except Exception, x:
+            self.myprint( str(x) )
+            self.myprint( '*** ERROR: FAILED TO LOAD SITE/USER CONFIG SPEC (FATAL)' )
 
         # check the user file for any attempt to override site-onlyitems
         self.block_user_cfg( self.usercfg, self.cfg, self.cfg.comments )
 
         # merge site config into defaults (site takes precedence)
         self.cfg.merge( self.sitecfg )
+
+        # validate again to catch site errors
+        try:
+            self.validate( self.cfg )
+        except Exception, x:
+            self.myprint( str(x) )
+            self.myprint( '*** WARNING: FAILED TO LOAD SITE CONFIG FILE' )
+
         # now merge user config for final result (user takes precedence) 
         self.cfg.merge( self.usercfg )
 
-        # now validate the final result to catch any errors
-        self.validate( self.cfg )
+        # validate again to catch user errors
+        try:
+            self.validate( self.cfg )
+        except Exception, x:
+            self.myprint( str(x) )
+            self.myprint( '*** WARNING: FAILED TO LOAD USER CONFIG FILE' )
 
         self.expand_local_paths()
 
@@ -170,19 +184,18 @@ class globalcfg( object ):
             # no warnings
             return
 
-        print >> sys.stderr, """
+        self.myprint( """
 *** SITE/USER CONFIG DEPRECATION WARNING ***
-Some translations were performed on the fly."""
+Some translations were performed on the fly.""" )
         for name in ['site','user']:
             if self.warnings[name]:
-                print >> sys.stderr, "*** Please upgrade", self.rcfiles[name]
+                self.myprint( "*** Please upgrade " + self.rcfiles[name] )
             else:
                 continue
             for vn, warnings in self.warnings[name].items():
                 for w in warnings:
-                    print >> sys.stderr, " * (" + vn + ")", w
-        print
-
+                    self.myprint( " * (" + vn + ") " + w )
+        self.myprint( "" )
 
     def expand_local_paths( self ):
         """Expand environment variables and ~user in LOCAL file paths."""
@@ -293,6 +306,12 @@ Some translations were performed on the fly."""
         print "File written:", target
         print "See in-file comments for customization information."
 
+    def myprint( self, msg, stream=sys.stderr ):
+        if not self.header_printed:
+            print >> stream, "SITE/USER Config File Parsing:"
+            self.header_printed = True
+        print >> stream, msg
+
     def validate( self, cfg ):
         # validate against the cfgspec and load defaults
         val = Validator()
@@ -303,25 +322,26 @@ Some translations were performed on the fly."""
             # Always print reason for validation failure
             for item in failed_items:
                 sections, key, result = item
-                print >> sys.stderr, ' ',
+                secs = ' '
                 for sec in sections:
-                    print >> sys.stderr, sec, ' / ',
-                print >> sys.stderr, key
+                    secs += '[' + sec + ']'
+                self.myprint( secs + ' ' + key )
                 if result == False:
-                    print >> sys.stderr, "ERROR, required item missing."
+                    pass
+                    #self.myprint( "ERROR, required item missing." )
                 else:
-                    print >> sys.stderr, result
-            raise GlobalConfigError( "ERROR global config validation failed")
+                    self.myprint( result )
+            raise GlobalConfigError( "ERROR: validation failed")
         extras = []
         for sections, name in get_extra_values( cfg ):
             extra = ' '
             for sec in sections:
-                extra += sec + ' / '
+                extra += '[' + sec + ']'
             extras.append( extra + name )
         if len(extras) != 0:
             for extra in extras:
-                print >> sys.stderr, '  Illegal item:', extra 
-            raise GlobalConfigError( 'ERROR: illegal site/user config items detected' )
+                self.myprint( '  Illegal item: ' + str(extra) )
+            raise GlobalConfigError( "ERROR: illegal items detected" )
 
     def block_user_cfg( self, usercfg, sitecfg, comments={}, sec_blocked=False ):
         """Check the comments for each item for the user exclusion indicator."""
@@ -427,7 +447,7 @@ Some translations were performed on the fly."""
         try:
             mkdir_p( d )
         except Exception, x:
-            print >> sys.stderr, x
+            self.myprint(  str(x) )
             raise GlobalConfigError( 'Failed to create site/user config item "' + name + '"' )
 
     def create_cylc_run_tree( self, suite, verbose=False ):
