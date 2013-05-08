@@ -49,6 +49,10 @@ disable interactive command prompts = boolean( default=True )
 enable run directory housekeeping = boolean( default=False )
 run directory rolling archive length = integer( min=0, default=2 )
 
+# Polling interval in seconds for the 'poll' task communication method
+# (wherein 'submitted' and 'running' tasks are polled periodically). 
+task polling interval = float( min=5, default=10 )
+
 # Task messaging settings apply to the "cylc task COMMAND" commands 
 # used by running tasks to communicate with their parent suite. If a
 # message send fails after the configured number of tries the task will 
@@ -61,7 +65,7 @@ run directory rolling archive length = integer( min=0, default=2 )
     # If set to None (no timeout) a non-responsive suite (e.g. suspended
     # with Ctrl-Z) could cause a task to hang indefinitely when it
     # attempts to send a message to the suite.
-# TODO set a finite by large default connection timeout:
+# TODO - set a finite by large default connection timeout:
     connection timeout in seconds = float( min=1, default=None )
 
 # suites logs go under the suite run directory (see below)
@@ -93,7 +97,7 @@ run directory rolling archive length = integer( min=0, default=2 )
 
 # PDF and HTML viewers can be launched by cylc to view documentation.
 [document viewers]
-    pdf = string( default="evince" )
+    pdf  = string( default="evince" )
     html = string( default="firefox" )
 
 # Configure your favourite text editor for editing suite definitions.
@@ -105,7 +109,7 @@ run directory rolling archive length = integer( min=0, default=2 )
     #  + emacs         # emacs GUI
     #  + emacs -nw     # emacs in-terminal 
     terminal = string( default="vim" )
-    gui         = string( default="gvim -f" )
+    gui      = string( default="gvim -f" )
 
 # Pyro is used by cylc for network communications.
 [pyro]
@@ -140,12 +144,14 @@ run directory rolling archive length = integer( min=0, default=2 )
         # Top level for suite work and share directories:
         work directory = string( default="$HOME/cylc-run" )
 
-        # Cylc installed location, leave unset if cylc is in $PATH:
-        cylc bin directory = string( default=None )
-
-        # Re-invoke task messaging commands on the suite host
-        # instead of using Pyro-based RPC across the network:
-        use ssh messaging = boolean( default=False )
+        # Method of communication of task progress back to the suite:
+        #   1) pyro - direct client-server RPC via network ports
+        #   2) ssh  - re-invoke messaging commands on the suite server
+        #   3) poll - no communication from tasks, suite polls instead
+        # Pyro RPC is still required in all cases *on the suite host*
+        # for cylc clients (commands etc.) to communicate with suites. 
+        task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
+        # (the polling iterval is not task-host dependent, see above)
 
         # How to invoke commands on this host; default shown (not used
         # on localhost unless you run tasks under another user account):
@@ -163,7 +169,7 @@ run directory rolling archive length = integer( min=0, default=2 )
         # sourcing ~/.bashrc (or ~/.cshrc) to set up the environment.
         # In either case the PATH environment variable on the remote
         # machine should include $CYLC_DIR/bin in order for the cylc
-        # executable to be found (or else use "cylc bin directory" above).
+        # executable to be found.
         # NOTE: this setting does not currently apply to job submission
         # commands (executing on the suite host to submit remote tasks).
         use login shell = boolean( default=True )
@@ -172,8 +178,7 @@ run directory rolling archive length = integer( min=0, default=2 )
     [[__many__]]
         run directory  = string( default=None )
         work directory = string( default=None)
-        cylc bin directory = string( default=None )
-        use ssh messaging = boolean( default=None )
+        task communication method = option( "pyro", "ssh", "poll", default=None ) 
         remote shell template = string( default=None )
         use login shell = boolean( default=True )
 
