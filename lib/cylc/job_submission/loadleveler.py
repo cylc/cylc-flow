@@ -18,6 +18,7 @@
 
 import re
 from job_submit import job_submit
+from TaskID import TaskID
 
 class loadleveler( job_submit ):
 
@@ -32,7 +33,7 @@ class loadleveler( job_submit ):
         self.jobconfig['directive final'] = "# @ queue"
 
         defaults = {}
-        defaults[ 'job_name' ] = self.task_id
+        defaults[ 'job_name' ] = self.suite + TaskID.DELIM + self.task_id
         # Replace literal '$HOME' in stdout and stderr file paths with '' 
         # because environment variables are not interpreted in directives.
         # (For remote tasks the local home directory path is replaced
