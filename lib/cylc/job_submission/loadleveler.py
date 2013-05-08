@@ -18,7 +18,7 @@
 
 import re
 from job_submit import job_submit
-from TaskID import TaskID
+from cylc.TaskID import TaskID
 
 class loadleveler( job_submit ):
 
