@@ -56,7 +56,8 @@ def main(name, start):
     # the suite port file.
 
     try:
-        gcfg.create_cylc_run_tree( server.suite, server.options.verbose )
+        if server.__class__.__name__ != 'restart':
+            gcfg.create_cylc_run_tree( server.suite, server.options.verbose )
         server.configure_pyro()
     except Exception, x:
         if server.options.debug:
