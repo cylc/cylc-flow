@@ -33,8 +33,7 @@ parser = cop( """cylc [control] trigger [OPTIONS] ARGS
 Trigger tasks immediately. This is equivalent to using the command  
 "cylc reset --state=ready" but additionally gets clock-triggered tasks
 to ignore their trigger time.
-""" + multitask_usage,
-    pyro=True, multitask=True,
+""" + multitask_usage, pyro=True, multitask=True,
     argdoc=[ ('REG', 'Suite name'),
         ('MATCH', 'Task or family name matching regular expression'),
         ('TAG', 'Task cycle time or integer tag') ])

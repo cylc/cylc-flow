@@ -31,11 +31,10 @@ class start( scheduler ):
     def __init__( self ):
         usage = """cylc [control] run|start [OPTIONS] ARGS
 
-Start a suite running at a specified initial cycle time.
-(To restart a suite from a previous state, see 'cylc restart REG').
+Start a suite running at a specified initial cycle time. To restart from
+a previous state see the 'cylc restart' command.
 
-Cylc suites run in daemon mode by default (without --debug) so it safe
-to log out from your terminal after starting a suite.
+Cylc suites run in daemon mode by default unless --debug is used.
 
 The following are all equivalent if no intercycle dependence exists:
   1/ Cold start (default)    : use special cold-start tasks 
@@ -61,12 +60,12 @@ In task environments, $CYLC_SUITE_FINAL_CYCLE_TIME is always set to the
 final cycle time if one is set (by suite.rc file or command line). The 
 initial and final cycle time variables persists across suite restarts.
 
-NOTE: suites can be (re)started on remote hosts or other user accounts
-if passwordless ssh is set up. The ssh tunnel will remain open to
-receive the suite stdout and stderr streams. To control the running 
-suite from the local host requires the suite passphrase to be installed.
-Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
-the remote host before starting the suite.""" 
+NOTE: suites can be started on remote hosts or other user accounts if
+passwordless ssh is set up. The ssh tunnel will remain open to receive
+the suite stdout and stderr streams. To control the running suite from
+the local host requires the suite passphrase to be installed.  Both
+/etc/profile and $HOME/.profile, if they exist, will be sourced on the
+remote host before starting the suite.""" 
 
         self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"), 
                 ("[START]", """Initial cycle time or 'now'. Not required if

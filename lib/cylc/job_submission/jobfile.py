@@ -63,7 +63,6 @@ class jobfile(object):
         self.write_task_job_script_starting()
         self.write_err_trap()
 
-        self.write_cylc_access()
         self.write_initial_scripting()
 
         self.write_environment_1()
@@ -165,7 +164,7 @@ class jobfile(object):
         task_work_dir  = os.path.join( suite_work_dir, self.jobconfig['work sub-directory'] )
 
         use_login_shell = gcfg.get_host_item( 'use login shell', self.host, self.owner )
-        use_ssh_messaging = gcfg.get_host_item( 'use ssh messaging', self.host, self.owner )
+        comms = gcfg.get_host_item( 'task communication method', self.host, self.owner )
 
         BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
@@ -175,18 +174,10 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
-        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(use_ssh_messaging) )
+        BUFFER.write( "\nexport CYLC_TASK_COMMUNICATION=" + comms )
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED 
-
-    def write_cylc_access( self, BUFFER=None ):
-        if not BUFFER:
-            BUFFER = self.FILE
-        rcp = gcfg.get_host_item( 'cylc bin directory', self.host, self.owner )
-        if rcp:
-            BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-            BUFFER.write( "\nexport PATH=" + rcp + ":$PATH" )
 
     def write_suite_bin_access( self, BUFFER=None ):
         if not BUFFER:
@@ -306,7 +297,6 @@ cd $CYLC_TASK_WORK_DIR""" )
         strio = StringIO.StringIO()
         self.write_initial_scripting( strio )
         self.write_environment_1( strio )
-        self.write_cylc_access( strio )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()

@@ -66,6 +66,7 @@ class task( object ):
     intercycle = False
 
     event_queue = None
+    poll_and_kill_queue = None
 
     suite_contact_env_hosts = []
     suite_contact_env = {}
@@ -178,6 +179,11 @@ class task( object ):
 
         self.submit_method_id = None
         self.job_sub_method = None
+        self.launcher = None
+
+        self.polling_interval = gcfg.cfg['task polling interval']
+        # Set just prior to job submission (task host dependent)
+        self.poll_timer_start = None
 
         # sets submit num for restarts or when triggering state prior to submission
         if self.validate: # if in validate mode bypass db operations
@@ -429,9 +435,9 @@ class task( object ):
             print >> sys.stderr, x
             raise Exception, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
 
-        if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not rtconfig['simulation mode']['disable task event hooks'] ) or \
-                ( self.run_mode == 'dummy' and not rtconfig['dummy mode']['disable task event hooks'] ):
+        if self.__class__.run_mode == 'live' or \
+                ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable task event hooks'] ) or \
+                ( self.__class__.run_mode == 'dummy' and not rtconfig['dummy mode']['disable task event hooks'] ):
             self.event_handlers = {
                 'submitted' : rtconfig['event hooks']['submitted handler'],
                 'started'   : rtconfig['event hooks']['started handler'],
@@ -468,6 +474,7 @@ class task( object ):
                 }
             self.reset_timer = False
 
+ 
     def submit( self, dry_run=False, debug=False, overrides={} ):
         """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
         returns the job process number if successful. Exceptions raised
@@ -476,10 +483,17 @@ class task( object ):
         Run db updates as a result of such errors will also be done by
         the main thread in response to receiving the message."""
 
+        self.incoming( 'NORMAL', self.id + " submitting now" )
+
+        if self.__class__.run_mode == "simulation":
+            # TOOD - check this works!
+            self.incoming( self.id + " started" )
+            return (None, None) 
+
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
     
-        # TODO: REPLACE DEEPCOPY():
+        # TODO - REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
         self.override( rtconfig, overrides )
         
@@ -503,6 +517,7 @@ class task( object ):
         # NOTE: not using__import__() keyword arguments:
         #mod = __import__( module_name, fromlist=[class_name] )
         # as these were only introduced in Python 2.5.
+        # TODO - UPGRADE TO THE 2.5 FORM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         try:
             # try to import built-in job submission classes first
             mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
@@ -515,7 +530,7 @@ class task( object ):
                 raise
 
         launcher_class = getattr( mod, class_name )
- 
+
         command = rtconfig['command scripting']
         use_manual = rtconfig['manual completion']
         if self.__class__.run_mode == 'dummy':
@@ -575,13 +590,16 @@ class task( object ):
 
         self.user_at_host = self.task_owner + "@" + self.task_host
 
+        if gcfg.get_host_item( 'task communication method', self.task_host, self.task_owner) == "poll":
+            self.poll_timer_start = datetime.datetime.now()
+
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
                 self.user_at_host != user + '@localhost':
             # If the suite contact file has not been copied to user@host
             # host yet, do so. This will happen for the first task on
             # this remote account inside the job-submission thread just
             # prior to job submission.
-            self.log( 'WARNING', 'COPYING CONTACT ENV TO ' + self.user_at_host )
+            self.log( 'NORMAL', 'Copying suite contact file to ' + self.user_at_host )
             suite_run_dir = gcfg.get_derived_host_item(self.suite_name, 'suite run directory')
             env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
             r_suite_run_dir = gcfg.get_derived_host_item(
@@ -595,7 +613,7 @@ class task( object ):
                     raise Exception("ERROR: " + str(cmd))
             self.__class__.suite_contact_env_hosts.append( self.user_at_host )
         
-        self.record_db_update("task_states", self.name, self.c_time, submit_method=rtconfig['job submission']['method'], host=self.user_at_host)
+        self.record_db_update("task_states", self.name, self.c_time, submit_method=module_name, host=self.user_at_host)
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
@@ -617,31 +635,105 @@ class task( object ):
                 'is cold-start'          : self.is_coldstart,
                 'task owner'             : self.task_owner,
                 'task host'              : self.task_host,
-                'extra log files'        : self.logfiles,
+                'log files'              : self.logfiles,
                 }
         try:
-            launcher = launcher_class( self.id, self.suite_name, jobconfig, str(self.submit_num) )
+            self.launcher = launcher_class( self.id, self.suite_name, jobconfig, str(self.submit_num) )
         except Exception, x:
-            raise
+            raise  # TODO -
             # currently a bad hostname will fail out here due to an is_remote_host() test
             raise Exception( 'Failed to create job launcher\n  ' + str(x) )
 
         try:
-            p = launcher.submit( dry_run, debug )
+            p = self.launcher.submit( dry_run, debug )
         except Exception, x:
-            raise
+            raise  # TODO -
             raise Exception( 'Job submission failed\n  ' + str(x) )
         else:
-            return (p,launcher)
+            return (p,self.launcher)
+
+    def presubmit( self, user_at_host, subnum ):
+        """A cut down version of submit, without the job submission,
+        just to provide access to the launcher-specific job poll
+        commands before the task is submitted (polling in submitted
+        state or on suite restart)."""
+        # TODO - refactor to get easier access to polling commands!
+
+        # TODO - REPLACE DEEPCOPY():
+        rtconfig = deepcopy( self.__class__.rtconfig )
+
+        owner, host = user_at_host.split('@')
+
+        # dynamic instantiation - don't know job sub method till run time.
+        module_name = rtconfig['job submission']['method']
+
+        class_name  = module_name
+        # NOTE: not using__import__() keyword arguments:
+        #mod = __import__( module_name, fromlist=[class_name] )
+        # as these were only introduced in Python 2.5.
+        # TODO - UPGRADE TO THE 2.5 FORM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        try:
+            # try to import built-in job submission classes first
+            mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
+        except ImportError:
+            try:
+                # else try for user-defined job submission classes, in sys.path
+                mod = __import__( module_name, globals(), locals(), [class_name] )
+            except ImportError, x:
+                self.log( 'CRITICAL', 'cannot import job submission module ' + class_name )
+                raise
+
+        launcher_class = getattr( mod, class_name )
+
+        jobconfig = {
+                'directives'             : rtconfig['directives'],
+                'initial scripting'      : rtconfig['initial scripting'],
+                'environment scripting'  : rtconfig['environment scripting'],
+                'runtime environment'    : rtconfig['environment'],
+                'remote suite path'      : rtconfig['remote']['suite definition directory'],
+                'job script shell'       : rtconfig['job submission']['shell'],
+                'command template'       : rtconfig['job submission']['command template'],
+                'work sub-directory'     : rtconfig['work sub-directory'],
+                'use manual completion'  : False,
+                'pre-command scripting'  : '',
+                'command scripting'      : '',
+                'post-command scripting' : '',
+                'namespace hierarchy'    : '',
+                'submission try number'  : 1,
+                'try number'             : 1,
+                'absolute submit number' : subnum,
+                'is cold-start'          : False,
+                'task owner'             : owner,
+                'task host'              : host,
+                'log files'              : self.logfiles,
+                }
+        try:
+            launcher = launcher_class( self.id, self.suite_name, jobconfig, str(subnum) )
+        except Exception, x:
+            raise
+            # currently a bad hostname will fail out here due to an is_remote_host() test
+            raise Exception( 'Failed to create job launcher\n  ' + str(x) )
+        return launcher
+
+    def check_timers( self ):
+        self.check_submission_timeout()
+        self.check_execution_timeout()
+        if self.poll_timer_start:
+            if self.state.is_currently( 'submitted', 'running' ):
+                self.check_poll_timer()
+
+    def check_poll_timer( self ):
+        timeout = self.poll_timer_start + \
+                datetime.timedelta( seconds=self.polling_interval )
+        if datetime.datetime.now() > timeout:
+            print 'POLLING', self.id
+            self.poll()
+            self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):
         # if no timer is set, return
-        if not self.submission_timer_start:
-            return
-        # if no handler is specified, return
-        handler = self.event_handlers['submission timeout']
         timeout = self.timeouts['submission']
-        if not handler or not timeout:
+        if not self.submission_timer_start or not timeout:
             return
 
         # if submission completed, turn off the timer
@@ -656,24 +748,29 @@ class task( object ):
         if current_time > cutoff:
             msg = 'task submitted ' + str(timeout) + ' minutes ago, but has not started'
             self.log( 'WARNING', msg )
-            self.log( 'NORMAL', "Queueing submission_timeout event handler" )
-            self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
+
+            self.poll()
+        
+            handler = self.event_handlers['submission timeout']
+            if handler:
+                self.log( 'NORMAL', "Queueing submission_timeout event handler" )
+                self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
+
+            # TODO - reset timer now? if handled?
             self.submission_timer_start = None
 
     def check_execution_timeout( self ):
         # if no timer is set, return
-        if not self.execution_timer_start:
-            return
-        # if no handler is specified, return
-        handler = self.event_handlers['execution timeout']
         timeout = self.timeouts['execution']
-        if not handler or not timeout:
+        if not self.execution_timer_start or not timeout:
             return
+
         # if execution completed, turn off the timer
         for state in [ 'succeeded', 'failed', 'retrying' ]: 
             if self.state.is_currently(state):
                 self.execution_timer_start = None
                 return
+
         # if timed out, queue the event handler turn off the timer
         current_time = task.clock.get_datetime()
         cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
@@ -684,8 +781,16 @@ class task( object ):
             else:
                 msg = 'task started ' + str(timeout) + ' minutes ago, but has not succeeded'
             self.log( 'WARNING', msg )
-            self.log( 'NORMAL', "Queueing execution_timeout event handler" )
-            self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
+
+            self.poll()
+ 
+            # if no handler is specified, return
+            handler = self.event_handlers['execution timeout']
+            if handler:
+                self.log( 'NORMAL', "Queueing execution_timeout event handler" )
+                self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
+
+            # TODO - reset timer now? if handled?
             self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -774,11 +879,11 @@ class task( object ):
                 flags.pflag = True
                 self.outputs.set_completed( message )
                 self.record_db_event(event="output completed", message=content)
-            else:
+            elif not self.poll_timer_start:
                 # Warn if the output has already been reported complete.
-                # This is no longer treated as an error condition though.
-                self.log( 'WARNING', "UNEXPECTED OUTPUT (already completed):" )
-                self.log( 'WARNING', "-> " + message )
+                # This is not treated as an error condition.
+                # Not for polling tasks: multiple polls should produce the same result.
+                self.log( "WARNING", "Unexpected output (already completed):\n  " + message )
 
         # Handle warning events
         if priority == 'WARNING':
@@ -802,7 +907,7 @@ class task( object ):
             # (A fake task message from the job submission thread).
             # The job submission command returned success status.
 
-            # TODO: should we use the real event time from the message here?
+            # TODO - should we use the real event time from the message here?
             self.submitted_time = task.clock.get_datetime()
 
             if self.state.is_currently( 'submitting' ): 
@@ -825,11 +930,13 @@ class task( object ):
         elif content.startswith( 'submit_method_id='):
             # (A fake task message from the job submission thread).
             # Capture and record the submit method job ID.
-            submit_method_id = content[len('submit_method_id='):]
-            self.record_db_update("task_states", self.name, self.c_time, submit_method_id=submit_method_id)
+            self.submit_method_id = content[len('submit_method_id='):]
+            self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
                                   
-        elif content == 'submission failed':
+        elif content == 'submission failed' or \
+                content == 'kill command succeeded'  and self.state.is_currently('submitted'):
             # (a fake task message from the job submission thread)
+            self.submit_method_id = None
             try:
                 # Is there a retry lined up for this task?
                 self.sub_retry_delay = float(self.sub_retry_delays.popleft())
@@ -867,7 +974,7 @@ class task( object ):
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
 
-            # TODO: should we use the real event time extracted from the
+            # TODO - should we use the real event time extracted from the
             # message here:
             self.execution_timer_start = self.started_time
 
@@ -881,6 +988,7 @@ class task( object ):
 
         elif content == 'succeeded':
             # Received a 'task succeeded' message
+            self.submit_method_id = None
             flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
@@ -893,11 +1001,16 @@ class task( object ):
                 self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
             if not self.outputs.all_completed():
                 # This is no longer treated as an error condition.
-                self.log( 'WARNING', "Succeeded before all outputs completed; completing them now" )
+                err = "Assuming uncompleted outputs were completed:"
+                for key,val in self.outputs.not_completed.items():
+                    err += "\n" + key + ' = ' + val
+                self.log( 'WARNING', err )
                 self.outputs.set_all_completed()
 
-        elif content == 'failed':
-            # Received a 'task failed' message
+        elif content == 'failed' or \
+                content == 'kill command succeeded' and self.state.is_currently('running'):
+            # Received a 'task failed' message, or killed, or polling failed
+            self.submit_method_id = None
             try:
                 # Is there a retry lined up for this task?
                 self.retry_delay = float(self.retry_delays.popleft())
@@ -933,6 +1046,7 @@ class task( object ):
                     self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
 
         elif content.startswith("Task job script received signal"):
+            self.submit_method_id = None
             # capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=content)
 
@@ -1008,7 +1122,7 @@ class task( object ):
         # to strip off fraction of seconds:
         # timedelta = re.sub( '\.\d*$', '', timedelta )
 
-        # TODO: the following section could probably be streamlined a bit
+        # TODO - the following section could probably be streamlined a bit
         if self.__class__.mean_total_elapsed_time:
             met = self.__class__.mean_total_elapsed_time
             summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
@@ -1067,4 +1181,67 @@ class task( object ):
 
     def is_clock_triggered( self ):
         return False
+
+    def poll( self, submit_method_id=None, user_at_host=None, sub_num=None ):
+        """Poll my live task job and update status accordingly."""
+        smid = submit_method_id or self.submit_method_id
+        uah = user_at_host or self.user_at_host
+        snum = sub_num or self.submit_num
+
+        if not self.state.is_currently('running', 'submitted' ):
+            self.log( 'WARNING', 'Only submitted or running tasks can be polled.' )
+            return
+        if not smid:
+            # should not happen
+            self.log( 'CRITICAL', 'No submit method ID' )
+            return
+
+        launcher = self.launcher
+        if not launcher:
+            launcher = self.presubmit( uah, snum )
+
+        if not hasattr( launcher, 'get_job_poll_command' ):
+            # (for job submission methods that do not handle polling yet)
+            self.log( 'WARNING', self.job_sub_method + ' job submission does not support polling' )
+            return
+
+        cmd = launcher.get_job_poll_command( smid )
+        if uah != user + '@localhost':
+            cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
+                    "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
+            cmd = 'ssh -oBatchMode=yes ' + uah + " '" + cmd + "'"
+        # TODO - just pass self.incoming rather than whole self?
+        self.log( 'NORMAL', "Polling for live status" )
+        self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
+
+    def kill( self, submit_method_id=None, user_at_host=None, sub_num=None ):
+        smid = submit_method_id or self.submit_method_id
+        uah = user_at_host or self.user_at_host
+        snum = sub_num or self.submit_num
+
+        if not self.state.is_currently('running', 'submitted' ):
+            self.log( 'WARNING', 'Only submitted or running tasks can be killed.' )
+            return
+        if not smid:
+            # should not happen
+            self.log( 'CRITICAL', 'No submit method ID' )
+            return
+
+        launcher = self.launcher
+        if not launcher:
+            self.presubmit( uah, snum )
+
+        if not hasattr( launcher, 'get_job_kill_command' ):
+            # (for job submission methods that do not handle polling yet)
+            self.log( 'WARNING', self.job_sub_method + ' job submission does not support killing' )
+            return
+
+        cmd = self.launcher.get_job_kill_command( smid )
+        if uah != user + '@localhost':
+            cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
+                    "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
+            cmd = 'ssh -oBatchMode=yes ' + uah + " '" + cmd + "'"
+        # TODO - just pass self.incoming rather than whole self?
+        self.log( 'CRITICAL', "Killing task job now" )
+        self.__class__.poll_and_kill_queue.put( (cmd, self, 'kill') )
 

@@ -22,10 +22,21 @@ from cylc.TaskID import TaskID
 
 class loadleveler( job_submit ):
 
-    """Loadleveler job submission."""
+    # TODO - DOCUMENT THAT SINGLE QUOTES CAN'T BE USED IN POLLING
+    # TEMPLATES OR COMMAND STRINGS (EXTERNAL SINGLE QUOTES ARE USED TO
+    # PROTECT THE SSH COMMAND FROM LOCAL SHELL - IS THIS NECESSARY?)
+
+    "Loadleveler job submission"
 
     COMMAND_TEMPLATE = "llsubmit %s"
     REC_ID = re.compile(r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
+
+    # TODO - llcancel does not report successful job kill, just this:
+    # "llcancel: Cancel command has been sent to the central manager"
+    JOB_KILL_TEMPLATE = "llcancel %s"
+
+    # Use job ID and grep for it, to avoid the llq output header line:
+    JOB_STATUS_TEMPLATE = "llq -f %%id %%st %s | grep %s | awk \"{print \$2}\""
 
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "# @"
@@ -65,9 +76,23 @@ class loadleveler( job_submit ):
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
 
+    def get_job_poll_command( self, jid ):
+        # Loadleveler reports many job states, which we simplify to:
+        #  * Running if status is 'R' (running) or 'ST' (starting)
+        #  * Queued if status is 'I' (idle?)
+        #  * Anything else, feed queued or running info to cylc-get-task-status
+        return ( "RUNNING=$( " + self.__class__.JOB_STATUS_TEMPLATE % ( jid, jid ) + " | egrep \"^(R|ST)$\" > /dev/null && echo true || echo false );"
+            + " QUEUED=$(   " + self.__class__.JOB_STATUS_TEMPLATE % ( jid, jid ) + " | egrep \"^I$\" > /dev/null && echo true || echo false );"
+            + " cylc-get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING"  )
+
+    def get_job_kill_command( self, jid ):
+        """construct a command to kill the real job"""
+        return self.JOB_KILL_TEMPLATE % ( jid )
+
     def get_id( self, pid, out, err ):
         """Parse "out" for the submit ID."""
         for line in str(out).splitlines():
             match = self.REC_ID.match(line)
             if match:
                 return match.group("id")
+

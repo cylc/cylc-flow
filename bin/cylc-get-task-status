@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Determine live job status by interrogating the task status file in
+# light of current polled status.
+
+# DEBUGGING: with 'set -x' output will be printed to cylc stderr in
+# debug mode (the poll succeeded hook prints command stderr output to
+# suite stderr).
+
+if [[ $# != 3 ]]; then
+    echo "ERROR: wrong number of args!" 1>&2
+    exit 1
+fi
+
+STATUS_FILE=$1
+TASKID=$( basename ${STATUS_FILE%.*.status} )
+QUEUED=$2   # boolean
+RUNNING=$3  # boolean
+
+if $QUEUED && ! $RUNNING; then
+    RESULT="submitted"
+
+elif $RUNNING; then
+    # TODO - checkout internal outputs in status file
+    RESULT="started"
+
+else
+    if [[ ! -f $STATUS_FILE ]]; then
+        # job did not start running
+        RESULT="submission failed"
+    else
+        # load status file
+        for LINE in $( cat $STATUS_FILE ); do
+            eval $LINE
+        done
+        if [[ -z $CYLC_JOB_EXIT ]]; then
+            RESULT="failed"
+        else
+            if [[ $CYLC_JOB_EXIT == "SUCCEEDED" ]]; then
+                RESULT="succeeded"
+            else
+                RESULT="failed"
+            fi
+        fi
+    fi
+fi
+
+# echo standard task message form:
+echo "$TASKID $RESULT"
+
