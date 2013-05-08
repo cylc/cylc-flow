@@ -174,8 +174,8 @@ for RC in $( find . -name 'suite.rc' ); do
     NAME=${UNIQ}.$(echo ${DIR#./} | tr '/' '.')
     LOGS[$NAME]=$(dirname $PWD)/${NAME}.log
     # determine suite log and port directories
-    SLOG[$NAME]=$( cylc get-global-config | grep 'run directory' | sed -e 's/.*= //' )/$NAME
-    PRTS[$NAME]=$( cylc get-global-config | grep 'ports directory' | sed -e 's/.*= //' )/$NAME
+    SLOG[$NAME]=$( cylc get-global-config | grep 'run directory =' | sed -e 's/.*= //' )/$NAME
+    PRTS[$NAME]=$( cylc get-global-config | grep 'ports directory =' | sed -e 's/.*= //' )/$NAME
     cylc db reg $NAME $DIR > /dev/null || exit 1
     if ! cylc validate $NAME > /dev/null; then
         echo "ERROR: validation failed for $RC"
