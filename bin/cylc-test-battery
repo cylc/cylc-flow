@@ -155,7 +155,7 @@ cp -r $SOURCE_DIR $TARGET_DIR
 # unreg old suites of the same name (not likely)
 cylc unreg -df ${REG_GROUP}'.*' > /dev/null
 
-# register and validate
+# find and register test suites
 CWD=$PWD
 cd $TARGET_DIR
 COUNT=0
@@ -164,22 +164,18 @@ declare -A LOGS # test logs
 declare -A SLOG # suite logs
 declare -A PRTS # port files
 declare -A PASS
-echo -n "Registering and validating test suites "
+echo -n "Finding and registering test suites "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
     echo $RC | grep 'hidden/' > /dev/null && continue
-    echo -n "."
     DIR=$(dirname $RC)
     NAME=${UNIQ}.$(echo ${DIR#./} | tr '/' '.')
     LOGS[$NAME]=$(dirname $PWD)/${NAME}.log
     # determine suite log and port directories
     SLOG[$NAME]=$( cylc get-global-config | grep 'run directory =' | sed -e 's/.*= //' )/$NAME
     PRTS[$NAME]=$( cylc get-global-config | grep 'ports directory =' | sed -e 's/.*= //' )/$NAME
+    echo -n "."
     cylc db reg $NAME $DIR > /dev/null || exit 1
-    if ! cylc validate $NAME > /dev/null; then
-        echo "ERROR: validation failed for $RC"
-        exit 1
-    fi
     COUNT=$(( COUNT+1 ))
 done
 echo " ok"
@@ -192,9 +188,9 @@ ITER=1
 TOTAL=$N
 while (( N > 0 )); do
     if $PARALLEL; then
-        echo -n "Running $N_TOTAL suites in parallel"
+        echo -n "Validating and running $N_TOTAL suites in parallel"
     else
-        echo -n "Running $N_TOTAL suites in sequence"
+        echo -n "Validating and running $N_TOTAL suites in sequence"
     fi
     if $ITERATE; then
         echo " ($ITER/$TOTAL)..."
@@ -208,8 +204,9 @@ while (( N > 0 )); do
 
     if $PARALLEL; then
         for NAME in ${!LOGS[@]}; do
-            # run all tests in the background
-            cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
+            # validate and run all tests in the background
+            cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
+                cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1 &
             PIDS[$NAME]=$!
         done
         I=0
@@ -232,7 +229,8 @@ while (( N > 0 )); do
             # run and wait on all tests in the foreground
             I=$(( I+1 ))
             inform
-            cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
+            cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
+            cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1
             tally $?
         done
     fi
