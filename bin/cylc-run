@@ -69,11 +69,9 @@ Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
 the remote host before starting the suite.""" 
 
         self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"), 
-                ("[START]", """Initial cycle time, optional if defined in the 
-                        suite.rc file (in which case the command line
-                        takes priority and a suite.rc final cycle time
-                        will be ignored); not required if the
-                        suite contains no cycling tasks.""")])
+                ("[START]", """Initial cycle time or 'now'. Not required if
+                         the suite has no cycling tasks. Overrides an 
+                         initial cycle time in the suite definition.""")])
 
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
                 action="store_true", default=False, dest="warm" )
