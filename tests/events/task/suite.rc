@@ -14,8 +14,6 @@
 sleep 5
 cylc message -p WARNING "WARNING - this is just a test!"
 """
-        [[[job submission]]]
-            method = at
         [[[remote]]]
             # divorce us from the cylc server environment
             host = localhost

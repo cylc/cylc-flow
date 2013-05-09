@@ -19,6 +19,7 @@
         graph = "foo"
 [runtime]
     [[foo]]
+        command scripting = "/bin/true" # fast
         [[[remote]]]
             host = {{ HOST }}
             owner = {{ OWNER }}

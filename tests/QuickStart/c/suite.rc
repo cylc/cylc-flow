@@ -31,7 +31,7 @@ description  = "(Quick Start b plus real tasks)"
 [runtime]
     [[root]]
         [[[environment]]]
-            TASK_EXE_SECONDS = 0
+            TASK_EXE_SECONDS = 0 # fast
             WORKSPACE = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
 
     [[Prep]]

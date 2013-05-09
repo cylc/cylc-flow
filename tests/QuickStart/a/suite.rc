@@ -26,7 +26,7 @@ GetData task to trigger the first Model."""
 
 [runtime]
     [[root]]
-        command scripting = "echo Hello" # override the default sleep 10
+        command scripting = "/bin/true" # fast
     [[GetData]]
         command scripting = """
 if [[ $CYLC_TASK_CYCLE_TIME == 2011010112 ]]; then
