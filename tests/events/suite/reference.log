@@ -8,11 +8,11 @@
 2012/08/26 18:28:18 INFO - [startup.1] -startup.1 started
 2012/08/26 18:28:18 INFO - [startup.1] -startup.1 succeeded
 2012/08/26 18:28:18 INFO - [timeout.1] -job submitted
-2012/08/26 18:28:18 INFO - [timeout.1] -triggered off []
+2012/08/26 18:28:18 INFO - [timeout.1] -triggered off ['startup.1']
 2012/08/26 18:28:18 INFO - [timeout.1] -timeout.1 started
 2012/08/26 18:28:20 INFO - [timeout.1] -timeout.1 succeeded
 2012/08/26 18:28:20 INFO - [shutdown.1] -job submitted
-2012/08/26 18:28:20 INFO - [shutdown.1] -triggered off []
+2012/08/26 18:28:20 INFO - [shutdown.1] -triggered off ['timeout.1']
 2012/08/26 18:28:20 INFO - [shutdown.1] -shutdown.1 started
 2012/08/26 18:28:24 INFO - [shutdown.1] -shutdown.1 succeeded
 2012/08/26 18:28:24 WARNING - ALL TASKS FINISHED OR HELD

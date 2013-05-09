@@ -91,6 +91,9 @@ class RegistrationNotValidError( RegistrationError ):
 class DatabaseLockedError( RegistrationError ):
     pass
 
+class DatabaseUnpickleError( RegistrationError ):
+    pass
+
 class OwnerError( RegistrationError ):
     pass
 
@@ -121,31 +124,40 @@ class regdb(object):
         return hash( str(sorted(self.items.items())))
 
     def lock( self ):
+        if self.verbose:
+            print "locking suite reg db"
         attempts = 0
         while True:
             attempts += 1
             if os.path.exists( self.lockfile ):
-                if self.verbose:
-                    print "  (database locked, waiting 1 second, " + str( attempts ) + "/5 attempts)"
-                time.sleep(1)
                 if attempts > 5:
                     print >> sys.stderr, "lock file:", self.lockfile
                     raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
+                if self.verbose:
+                    print "  (database locked, waiting 1 second, " + str( attempts ) + "/5 attempts)"
+                time.sleep(1)
             else:
                 break
-        if self.verbose:
-            print "   (locking database " + self.file + ")"
         # touch file:
         open( self.lockfile, 'w' ).close()
+        if self.verbose:
+            print "  db locked"
 
     def unlock( self ):
+        if self.verbose:
+            print "unlocking suite reg db"
         if os.path.exists( self.lockfile ):
-            if self.verbose:
-                print "   (unlocking database " + self.file + ")"
             try:
                 os.unlink( self.lockfile )
             except OSError, x:
+                if self.verbose:
+                    print "  failed to remove lock file: " + self.file
                 raise
+
+            else:
+                if self.verbose:
+                    print "  db unlocked"
+
 
     def changed_on_disk( self ):
         # use to detect ONE change in database since we read it,
@@ -177,15 +189,13 @@ class regdb(object):
         # open the database file
         input = open( self.file, 'rb' )
 
-        while True:
-            try:
-                self.items = pickle.load( input )
-            except Exception, x:
-                print >> sys.stderr, 'WARNING, failed to unpickle suite database  ' + self.file
-                print >> sys.stderr, 'Trying again in 1 second ...'
-                time.sleep(1)
-            else:
-                break
+        try:
+            self.items = pickle.load( input )
+        except Exception, x:
+            input.close()
+            print >> sys.stderr, 'failed to unpickle suite database  ' + self.file
+            raise DatabaseUnpickleError( 'failed to unpickle suite database  ' + self.file )
+
         input.close()
         # record state at load
         self.statehash = self.get_hash()

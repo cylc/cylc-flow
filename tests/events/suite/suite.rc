@@ -3,7 +3,7 @@
         live mode suite timeout = 1.0
 [scheduling]
     [[dependencies]]
-        graph = "startup & timeout & shutdown"
+        graph = "startup => timeout => shutdown"
 [runtime]
     [[common]]
         command scripting = """
