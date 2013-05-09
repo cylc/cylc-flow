@@ -64,8 +64,7 @@ tally() {
 
 inform() {
     echo "${INDENT}${I}. $NAME"
-    echo "${INDENT}${INDENT} ${LOGS[$NAME]}"
-    echo -n "${INDENT}${INDENT} ${SLOG[$NAME]} ... "
+    echo -n "${INDENT}${INDENT} ${LOGS[$NAME]} ... "
 }
 
 # handle long --help
@@ -165,7 +164,6 @@ declare -A LOGS # test logs
 declare -A SLOG # suite logs
 declare -A PRTS # port files
 declare -A PASS
-declare -A INDX
 echo -n "Registering and validating test suites "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
@@ -183,7 +181,6 @@ for RC in $( find . -name 'suite.rc' ); do
         exit 1
     fi
     COUNT=$(( COUNT+1 ))
-    INDX[$NAME]=$COUNT
 done
 echo " ok"
 
@@ -215,11 +212,12 @@ while (( N > 0 )); do
             cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
             PIDS[$NAME]=$!
         done
+        I=0
         while [[ ${#PIDS[@]} > 0 ]]; do
             for NAME in ${!LOGS[@]}; do
                 if ! ps ${PIDS[$NAME]} > /dev/null; then
                     # finished, get result
-                    I=${INDX[$NAME]}
+                    I=$(( I+1 ))
                     inform
                     wait ${PIDS[$NAME]}
                     tally $?
@@ -229,9 +227,10 @@ while (( N > 0 )); do
             sleep 1
         done
     else
+        I=0
         for NAME in ${!LOGS[@]}; do
             # run and wait on all tests in the foreground
-            I=${INDX[$NAME]}
+            I=$(( I+1 ))
             inform
             cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
             tally $?
@@ -256,7 +255,7 @@ while (( N > 0 )); do
 done
 
 if $CLEANUP; then
-    echo -n "${INDENT}Cleaning up successful tests ... "
+    echo -n "${INDENT}Cleaning up successful tests (suite host only)... "
     for NAME in ${!LOGS[@]}; do
         if ${PASS[$NAME]}; then
             # unregister
