@@ -255,7 +255,7 @@ while (( N > 0 )); do
 done
 
 if $CLEANUP; then
-    echo -n "${INDENT}Cleaning up successful tests (suite host only)... "
+    echo -n "${INDENT}Deleting log files etc. of successful tests (suite host only)... "
     for NAME in ${!LOGS[@]}; do
         if ${PASS[$NAME]}; then
             # unregister
@@ -271,7 +271,7 @@ if $CLEANUP; then
     done
     echo "ok"
     if (( N_FAILED != 0 )); then
-        echo "${INDENT}NOTE: retained registrations and logs for $N_FAILED failed tests"
+        echo "${INDENT}Retained logs and registrations for the $N_FAILED failed tests"
     fi
 else
     echo "${INDENT}NOTE: retained registrations and logs for ALL tests (-x)"

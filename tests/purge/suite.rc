@@ -47,8 +47,6 @@ title = "Cylc Admin Test Suite"
 [runtime]
     [[root]]
         command scripting = ${CYLC_TASK_NAME}.sh
-        [[[job submission]]]
-            method = at
         [[[environment]]]
             #TASK_EXE_SECONDS = $( cylc rnd 1 15 )
             TASK_EXE_SECONDS = 0
