@@ -165,6 +165,7 @@ declare -A LOGS # test logs
 declare -A SLOG # suite logs
 declare -A PRTS # port files
 declare -A PASS
+declare -A INDX
 echo -n "Registering and validating test suites "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
@@ -182,6 +183,7 @@ for RC in $( find . -name 'suite.rc' ); do
         exit 1
     fi
     COUNT=$(( COUNT+1 ))
+    INDX[$NAME]=$COUNT
 done
 echo " ok"
 
@@ -213,19 +215,23 @@ while (( N > 0 )); do
             cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
             PIDS[$NAME]=$!
         done
-        I=0
-        for NAME in ${!LOGS[@]}; do
-            # wait on all tests in turn
-            I=$(( I + 1 ))
-            inform
-            wait ${PIDS[$NAME]}
-            tally $?
+        while [[ ${#PIDS[@]} > 0 ]]; do
+            for NAME in ${!LOGS[@]}; do
+                if ! ps ${PIDS[$NAME]} > /dev/null; then
+                    # finished, get result
+                    I=${INDX[$NAME]}
+                    inform
+                    wait ${PIDS[$NAME]}
+                    tally $?
+                    unset PIDS[$NAME]
+                fi
+            done
+            sleep 1
         done
     else
-        I=0
         for NAME in ${!LOGS[@]}; do
             # run and wait on all tests in the foreground
-            I=$(( I + 1 ))
+            I=${INDX[$NAME]}
             inform
             cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
             tally $?
