@@ -52,7 +52,7 @@ eof
 tally() {
     RET=$1
     if (( $RET == 0 )); then
-        echo "ok"
+        echo "passed"
         N_PASSED=$(( N_PASSED + 1 ))
         PASS[$NAME]=true
     else
@@ -76,6 +76,7 @@ fi
 N=1
 ITERATE=false
 PARALLEL=false
+TYPE_STR="sequence"
 CLEANUP=true
 while getopts "pxhn:" opt; do
     case $opt in 
@@ -85,6 +86,7 @@ while getopts "pxhn:" opt; do
             ;;
         p )
             PARALLEL=true
+            TYPE_STR="parallel"
             ;;
         x )
             CLEANUP=false
@@ -187,11 +189,12 @@ cd ..
 ITER=1
 TOTAL=$N
 while (( N > 0 )); do
-    if $PARALLEL; then
-        echo -n "Validating and running $N_TOTAL suites in parallel"
+    if (( ITER == 1 )); then 
+        echo -n "Validating and running $N_TOTAL suites in $TYPE_STR"
     else
-        echo -n "Validating and running $N_TOTAL suites in sequence"
+        echo -n "Running $N_TOTAL suites in $TYPE_STR"
     fi
+
     if $ITERATE; then
         echo " ($ITER/$TOTAL)..."
         ITER=$((ITER+1))
@@ -203,10 +206,14 @@ while (( N > 0 )); do
     N_PASSED=0
 
     if $PARALLEL; then
+        # run tests in the background in parallel
         for NAME in ${!LOGS[@]}; do
-            # validate and run all tests in the background
-            cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
-                cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1 &
+            if (( ITER == 1 )); then
+                cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
+                    cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1 &
+            else
+                cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
+            fi
             PIDS[$NAME]=$!
         done
         I=0
@@ -224,13 +231,17 @@ while (( N > 0 )); do
             sleep 1
         done
     else
+        # run tests sequentially in the foreground
         I=0
         for NAME in ${!LOGS[@]}; do
-            # run and wait on all tests in the foreground
             I=$(( I+1 ))
             inform
-            cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
-            cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1
+            if (( ITER == 1 )); then 
+                cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
+                    cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1
+            else
+                cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
+            fi
             tally $?
         done
     fi
@@ -253,7 +264,7 @@ while (( N > 0 )); do
 done
 
 if $CLEANUP; then
-    echo -n "${INDENT}Deleting log files etc. of successful tests (suite host only)... "
+    echo -n "${INDENT}Deleting successful test logs (suite host only)... "
     for NAME in ${!LOGS[@]}; do
         if ${PASS[$NAME]}; then
             # unregister
