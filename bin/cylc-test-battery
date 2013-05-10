@@ -52,7 +52,7 @@ eof
 tally() {
     RET=$1
     if (( $RET == 0 )); then
-        echo "ok"
+        echo "passed"
         N_PASSED=$(( N_PASSED + 1 ))
         PASS[$NAME]=true
     else
@@ -64,8 +64,7 @@ tally() {
 
 inform() {
     echo "${INDENT}${I}. $NAME"
-    echo "${INDENT}${INDENT} ${LOGS[$NAME]}"
-    echo -n "${INDENT}${INDENT} ${SLOG[$NAME]} ... "
+    echo -n "${INDENT}${INDENT} ${LOGS[$NAME]} ... "
 }
 
 # handle long --help
@@ -77,6 +76,7 @@ fi
 N=1
 ITERATE=false
 PARALLEL=false
+TYPE_STR="sequence"
 CLEANUP=true
 while getopts "pxhn:" opt; do
     case $opt in 
@@ -86,6 +86,7 @@ while getopts "pxhn:" opt; do
             ;;
         p )
             PARALLEL=true
+            TYPE_STR="parallel"
             ;;
         x )
             CLEANUP=false
@@ -156,7 +157,7 @@ cp -r $SOURCE_DIR $TARGET_DIR
 # unreg old suites of the same name (not likely)
 cylc unreg -df ${REG_GROUP}'.*' > /dev/null
 
-# register and validate
+# find and register test suites
 CWD=$PWD
 cd $TARGET_DIR
 COUNT=0
@@ -165,22 +166,18 @@ declare -A LOGS # test logs
 declare -A SLOG # suite logs
 declare -A PRTS # port files
 declare -A PASS
-echo -n "Registering and validating test suites "
+echo -n "Finding and registering test suites "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
     echo $RC | grep 'hidden/' > /dev/null && continue
-    echo -n "."
     DIR=$(dirname $RC)
     NAME=${UNIQ}.$(echo ${DIR#./} | tr '/' '.')
     LOGS[$NAME]=$(dirname $PWD)/${NAME}.log
     # determine suite log and port directories
     SLOG[$NAME]=$( cylc get-global-config | grep 'run directory =' | sed -e 's/.*= //' )/$NAME
     PRTS[$NAME]=$( cylc get-global-config | grep 'ports directory =' | sed -e 's/.*= //' )/$NAME
+    echo -n "."
     cylc db reg $NAME $DIR > /dev/null || exit 1
-    if ! cylc validate $NAME > /dev/null; then
-        echo "ERROR: validation failed for $RC"
-        exit 1
-    fi
     COUNT=$(( COUNT+1 ))
 done
 echo " ok"
@@ -192,11 +189,12 @@ cd ..
 ITER=1
 TOTAL=$N
 while (( N > 0 )); do
-    if $PARALLEL; then
-        echo -n "Running $N_TOTAL suites in parallel"
+    if (( ITER == 1 )); then 
+        echo -n "Validating and running $N_TOTAL suites in $TYPE_STR"
     else
-        echo -n "Running $N_TOTAL suites in sequence"
+        echo -n "Running $N_TOTAL suites in $TYPE_STR"
     fi
+
     if $ITERATE; then
         echo " ($ITER/$TOTAL)..."
         ITER=$((ITER+1))
@@ -208,26 +206,42 @@ while (( N > 0 )); do
     N_PASSED=0
 
     if $PARALLEL; then
+        # run tests in the background in parallel
         for NAME in ${!LOGS[@]}; do
-            # run all tests in the background
-            cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
+            if (( ITER == 1 )); then
+                cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
+                    cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1 &
+            else
+                cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1 &
+            fi
             PIDS[$NAME]=$!
         done
         I=0
-        for NAME in ${!LOGS[@]}; do
-            # wait on all tests in turn
-            I=$(( I + 1 ))
-            inform
-            wait ${PIDS[$NAME]}
-            tally $?
+        while [[ ${#PIDS[@]} > 0 ]]; do
+            for NAME in ${!LOGS[@]}; do
+                if ! ps ${PIDS[$NAME]} > /dev/null; then
+                    # finished, get result
+                    I=$(( I+1 ))
+                    inform
+                    wait ${PIDS[$NAME]}
+                    tally $?
+                    unset PIDS[$NAME]
+                fi
+            done
+            sleep 1
         done
     else
+        # run tests sequentially in the foreground
         I=0
         for NAME in ${!LOGS[@]}; do
-            # run and wait on all tests in the foreground
-            I=$(( I + 1 ))
+            I=$(( I+1 ))
             inform
-            cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
+            if (( ITER == 1 )); then 
+                cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
+                    cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1
+            else
+                cylc run --reference-test --debug $NAME > ${LOGS[$NAME]} 2>&1
+            fi
             tally $?
         done
     fi
@@ -250,7 +264,7 @@ while (( N > 0 )); do
 done
 
 if $CLEANUP; then
-    echo -n "${INDENT}Cleaning up successful tests ... "
+    echo -n "${INDENT}Deleting successful test logs (suite host only)... "
     for NAME in ${!LOGS[@]}; do
         if ${PASS[$NAME]}; then
             # unregister
@@ -266,7 +280,7 @@ if $CLEANUP; then
     done
     echo "ok"
     if (( N_FAILED != 0 )); then
-        echo "${INDENT}NOTE: retained registrations and logs for $N_FAILED failed tests"
+        echo "${INDENT}Retained logs and registrations for the $N_FAILED failed tests"
     fi
 else
     echo "${INDENT}NOTE: retained registrations and logs for ALL tests (-x)"

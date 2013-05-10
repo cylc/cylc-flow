@@ -21,6 +21,7 @@ by many of the other test suites (see "cylc test-battery --help")."""
         graph = "foo"
 [runtime]
     [[foo]]
+        command scripting = "/bin/true" # fast
         [[[remote]]]
             # in suite bin directory:
             host = $(host-select.sh) # returns value of $CYLC_TEST_TASK_HOST
