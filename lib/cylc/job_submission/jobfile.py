@@ -203,7 +203,7 @@ function HANDLE_TRAP() {
     if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
         {
             echo "CYLC_JOB_EXIT=$SIGNAL"
-            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
+            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%S'
         } >>$CYLC_TASK_LOG_ROOT.status
     fi
     cylc task failed "Task job script received signal $@"
@@ -220,7 +220,7 @@ done""")
 # SEND TASK STARTED MESSAGE:
 {
     echo "CYLC_JOB_PID=$$"
-    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
+    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%S'
 } >$CYLC_TASK_LOG_ROOT.status
 cylc task started""" )
 
@@ -366,7 +366,7 @@ trap '' EXIT""")
 # SEND TASK SUCCEEDED MESSAGE:
 {
     echo 'CYLC_JOB_EXIT=SUCCEEDED'
-    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
+    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%S'
 } >>$CYLC_TASK_LOG_ROOT.status
 cylc task succeeded
 

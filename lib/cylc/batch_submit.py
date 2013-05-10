@@ -224,10 +224,11 @@ class task_batcher( job_batcher ):
 
     def item_succeeded_hook( self, jobinfo ):
         job_batcher.item_succeeded_hook( self, jobinfo )
+        itask,launcher = jobinfo['data']
+        itask.incoming('NORMAL', itask.id + ' submission succeeded' )
         p = jobinfo['p']
         out = jobinfo['out']
         err = jobinfo['err']
-        itask,launcher = jobinfo['data']
         if hasattr(launcher, 'get_id'):
             # Extract the job submit ID
             submit_method_id = launcher.get_id(p.pid, out, err)
