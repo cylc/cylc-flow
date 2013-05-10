@@ -7,50 +7,50 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-03-05 10:38:00"> 
+<meta name="date" content="2013-05-11 00:25:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5477--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5429--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse15.html" >next</a>] [<a 
 href="cug-htmlse13.html" >prev</a>] [<a 
 href="cug-htmlse13.html#tailcug-htmlse13.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse14.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse14.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">14   </span> <a 
- id="x15-16900014"></a>Suite Design Principles</h3>
+ id="x15-17000014"></a>Suite Design Principles</h3>
    <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >14.1 <a 
-href="#x15-17000014.1">Make Fine-Grained Suites</a></span>
+href="#x15-17100014.1">Make Fine-Grained Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.2 <a 
-href="#x15-17100014.2">Make Tasks Rerunnable</a></span>
+href="#x15-17200014.2">Make Tasks Rerunnable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.3 <a 
-href="#x15-17200014.3">Make Models Rerunnable</a></span>
+href="#x15-17300014.3">Make Models Rerunnable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.4 <a 
-href="#x15-17300014.4">Limit Previous-Instance Dependence</a></span>
+href="#x15-17400014.4">Limit Previous-Instance Dependence</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.5 <a 
-href="#x15-17400014.5">Put Task Cycle Time In All Output File Paths</a></span>
+href="#x15-17500014.5">Put Task Cycle Time In All Output File Paths</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.6 <a 
-href="#x15-17600014.6">How To Manage Input/Output File Dependencies</a></span>
+href="#x15-17700014.6">How To Manage Input/Output File Dependencies</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.7 <a 
-href="#x15-17700014.7">Use Generic Task Scripts</a></span>
+href="#x15-17800014.7">Use Generic Task Scripts</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.8 <a 
-href="#x15-17800014.8">Make Suites Portable</a></span>
+href="#x15-17900014.8">Make Suites Portable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.9 <a 
-href="#x15-17900014.9">Make Tasks As Self-Contained As Possible</a></span>
+href="#x15-18000014.9">Make Tasks As Self-Contained As Possible</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.10 <a 
-href="#x15-18000014.10">Make Suites As Self-Contained As Possible</a></span>
+href="#x15-18100014.10">Make Suites As Self-Contained As Possible</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.11 <a 
-href="#x15-18100014.11">Orderly Product Generation?</a></span>
+href="#x15-18200014.11">Orderly Product Generation?</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.12 <a 
-href="#x15-18200014.12">Clock-triggered Tasks Wait On External Data</a></span>
+href="#x15-18300014.12">Clock-triggered Tasks Wait On External Data</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.13 <a 
-href="#x15-18300014.13">Do Not Treat Real Time Operation As Special</a></span>
+href="#x15-18400014.13">Do Not Treat Real Time Operation As Special</a></span>
    </div>
-<!--l. 5482--><p class="noindent" >
+<!--l. 5434--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.1   </span> <a 
- id="x15-17000014.1"></a>Make Fine-Grained Suites</h4>
-<!--l. 5485--><p class="noindent" >A suite can contain a small number of large, internally complex tasks; a large number of small, simple tasks; or
+ id="x15-17100014.1"></a>Make Fine-Grained Suites</h4>
+<!--l. 5437--><p class="noindent" >A suite can contain a small number of large, internally complex tasks; a large number of small, simple tasks; or
 anything in between. Cylc can easily handle a large number of tasks, however, so there are definite advantages to
 fine-graining:
      <ul class="itemize1">
@@ -63,10 +63,10 @@ fine-graining:
      <li class="itemize">code reuse: similar tasks can often call the same script or command with differing task-specific input
      parameters (consider tasks that move files around, for example).
      </li></ul>
-<!--l. 5505--><p class="noindent" >
+<!--l. 5457--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.2   </span> <a 
- id="x15-17100014.2"></a>Make Tasks Rerunnable</h4>
-<!--l. 5507--><p class="noindent" >It should be possible to rerun a task by simply resubmitting it for the same cycle time. In other words, failure at any
+ id="x15-17200014.2"></a>Make Tasks Rerunnable</h4>
+<!--l. 5459--><p class="noindent" >It should be possible to rerun a task by simply resubmitting it for the same cycle time. In other words, failure at any
 point during execution of a task should not render a rerun impossible by corrupting the state of some internal-use
 file, or whatever. It is difficult to overstate the usefulness of being able to rerun the same task multiple times, either
 outside of the suite with <span class="lstinline"><span 
@@ -77,20 +77,20 @@ class="pcrr7t-">submit</span></span>, or by retriggering it within the running s
 
                                                                                          
 problem.
-<!--l. 5515--><p class="noindent" >
+<!--l. 5467--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.3   </span> <a 
- id="x15-17200014.3"></a>Make Models Rerunnable</h4>
-<!--l. 5517--><p class="noindent" >If a warm-cycled model simply overwrites its restart files in each run, the only cycle that can subsequently run is the
+ id="x15-17300014.3"></a>Make Models Rerunnable</h4>
+<!--l. 5469--><p class="noindent" >If a warm-cycled model simply overwrites its restart files in each run, the only cycle that can subsequently run is the
 next one. This is dangerous because if, accidentally or otherwise, the task runs for the wrong cycle time, its restart
 files will be corrupted such that the correct cycle can no longer run (probably necessitating a cold-start). Instead,
 consider organising restart files by cycle time, through a file or directory naming convention, and keep them in a
 simple rolling archive (cylc&#8217;s filename templating and housekeeping utilities can easily do this for you). Then,
 given availability of external inputs, you can easily rerun the task for any cycle still in the restart
 archive.
-<!--l. 5529--><p class="noindent" >
+<!--l. 5481--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.4   </span> <a 
- id="x15-17300014.4"></a>Limit Previous-Instance Dependence</h4>
-<!--l. 5532--><p class="noindent" >Cylc does not require that successive instances of the same task run sequentially. In order to task advantage of this
+ id="x15-17400014.4"></a>Limit Previous-Instance Dependence</h4>
+<!--l. 5484--><p class="noindent" >Cylc does not require that successive instances of the same task run sequentially. In order to task advantage of this
 and achieve maximum functional parallelism whenever the opportunity arises (usually when catching up from a
 delay) you should ensure that tasks that in principle do not depend on their own previous instances (the vast
 majority of tasks in most suites, in fact) do not do so in practice. In other words, they should be
@@ -100,18 +100,18 @@ cycle time in the file or directory name so that there is no interference betwee
 If this is difficult to achieve in particular cases, however, you can declare the offending tasks to be
 <span 
 class="cmti-10">sequential</span>.
-<!--l. 5555--><p class="noindent" >
+<!--l. 5507--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.5   </span> <a 
- id="x15-17400014.5"></a>Put Task Cycle Time In All Output File Paths</h4>
-<!--l. 5558--><p class="noindent" >Having all filenames, or perhaps the names of their containing directories, stamped with the cycle time of the
+ id="x15-17500014.5"></a>Put Task Cycle Time In All Output File Paths</h4>
+<!--l. 5510--><p class="noindent" >Having all filenames, or perhaps the names of their containing directories, stamped with the cycle time of the
 generating task greatly aids in managing suite disk usage, both for archiving and cleanup. It also
 enables the aforementioned task rerunnability recommendation by avoiding overwrite of important files
 from one cycle to the next. Cylc has powerful utilities for cycle time offset filename templating and
 housekeeping.
-<!--l. 5566--><p class="noindent" >
+<!--l. 5518--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">14.5.1   </span> <a 
- id="x15-17500014.5.1"></a>Use Cylc Cycle Time Filename Templating</h5>
-<!--l. 5568--><p class="noindent" >The command line utility program <span class="lstinline"><span 
+ id="x15-17600014.5.1"></a>Use Cylc Cycle Time Filename Templating</h5>
+<!--l. 5520--><p class="noindent" >The command line utility program <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[</span><span 
@@ -124,7 +124,7 @@ time, or components of it, into a given template string containing &#8220;YYYY&#
 &#8220;MM&#8221; for month, and so on. This can be used in the suite.rc environment or command scripting sections, or in task
 implementation scripting, to generate filenames containing the current cycle time (or some offset from it) for use by
 tasks.
-<!--l. 5578--><p class="indent" >   See <span class="lstinline"><span 
+<!--l. 5530--><p class="indent" >   See <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[</span><span 
@@ -135,54 +135,54 @@ class="pcrr7t-">cycletime</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> for examples.
-<!--l. 5580--><p class="noindent" >
+<!--l. 5532--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.6   </span> <a 
- id="x15-17600014.6"></a>How To Manage Input/Output File Dependencies</h4>
+ id="x15-17700014.6"></a>How To Manage Input/Output File Dependencies</h4>
                                                                                          
 
                                                                                          
-<!--l. 5583--><p class="noindent" >Dependencies between tasks usually, though not always, take the form of files generated by one task that are used
+<!--l. 5535--><p class="noindent" >Dependencies between tasks usually, though not always, take the form of files generated by one task that are used
 by other tasks. It is possible to manage these files across a suite without hard wiring I/O locations and therefore
 compromising suite flexibility and portability.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmbx-10">Use A Common I/O Workspace</span>
-     <!--l. 5592--><p class="noindent" >For small suites you may be able to have all tasks read and write from a common workspace, thereby
+     <!--l. 5544--><p class="noindent" >For small suites you may be able to have all tasks read and write from a common workspace, thereby
      avoiding the need to move common files around. You should be able to define the workspace location
      once in the suite.rc file rather than hard wiring it into the task implementations.
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Add Connector Tasks To The Suite</span>
-     <!--l. 5599--><p class="noindent" >Tasks can be added to a suite to move files from A&#8217;s output directory to B&#8217;s input directory, and
+     <!--l. 5551--><p class="noindent" >Tasks can be added to a suite to move files from A&#8217;s output directory to B&#8217;s input directory, and
      so on. Many connector tasks may be able to call the same file transfer script or command, with
      task-dependendent input parameters defined in the suite.rc file.
      </li>
      <li class="itemize"><span 
 class="cmbx-10">Dynamic Configuration Of I/O Paths</span>
-     <!--l. 5606--><p class="noindent" >Whether or not your suite uses a single common workspace, passing common I/O paths to tasks via
+     <!--l. 5558--><p class="noindent" >Whether or not your suite uses a single common workspace, passing common I/O paths to tasks via
      variables defined once in the suite.rc file should allow you to avoid using connector tasks at all, except
      where it is necessary to transfer files between machines, or similar.
      </li></ul>
-<!--l. 5613--><p class="noindent" >
+<!--l. 5565--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.7   </span> <a 
- id="x15-17700014.7"></a>Use Generic Task Scripts</h4>
-<!--l. 5615--><p class="noindent" >If your suite contains multiple logically distinct tasks that actually have similar functionality (e.g.&#x00A0;for moving files
+ id="x15-17800014.7"></a>Use Generic Task Scripts</h4>
+<!--l. 5567--><p class="noindent" >If your suite contains multiple logically distinct tasks that actually have similar functionality (e.g.&#x00A0;for moving files
 around, or for generating similar products from the output of several similar models) have the corresponding cylc
 tasks all call the same command, script, or executable - just provide different input parameters via the task
 command scripting and/or execution environment, in the suite.rc file.
-<!--l. 5624--><p class="noindent" >
+<!--l. 5576--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.8   </span> <a 
- id="x15-17800014.8"></a>Make Suites Portable</h4>
-<!--l. 5626--><p class="noindent" >If every task in a suite is configured to put its output under <span class="lstinline"><span 
+ id="x15-17900014.8"></a>Make Suites Portable</h4>
+<!--l. 5578--><p class="noindent" >If every task in a suite is configured to put its output under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span></span> (i.e.&#x00A0;the environment variable, literally, not the
 explicit path to your home directory; and similarly for temporary directories, etc.) then other users will be able to
 copy the suite and run it immediately, after merely ensuring that any external input files are in the right
 place.
-<!--l. 5633--><p class="indent" >   For the ultimate in portability, construct suites in which all task I/O paths are dynamically configured to be user
-and suite (registration) specific, e.g. <!--l. 5636-->
-   <div class="lstlisting" id="listing-162"><span class="label"><a 
- id="x15-178001r1"></a></span><span 
+<!--l. 5585--><p class="indent" >   For the ultimate in portability, construct suites in which all task I/O paths are dynamically configured to be user
+and suite (registration) specific, e.g. <!--l. 5588-->
+   <div class="lstlisting" id="listing-160"><span class="label"><a 
+ id="x15-179001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
@@ -192,13 +192,13 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_REG_PATH</span>
    
    </div>
-<!--l. 5639--><p class="indent" >   (these variables are automatically exported to the task execution environment by cylc - see <span 
+<!--l. 5591--><p class="indent" >   (these variables are automatically exported to the task execution environment by cylc - see <span 
 class="cmti-10">Task Execution</span>
 <span 
 class="cmti-10">Environment</span>, Section&#x00A0;<a 
 href="cug-htmlse8.html#x9-950008.4.7">8.4.7<!--tex4ht:ref: TaskExecutionEnvironment --></a>). Then you can run multiple instances of the suite at once (even under the same user
 account) without changing anything, and they will not interfere with each other.
-<!--l. 5646--><p class="indent" >   <span 
+<!--l. 5598--><p class="indent" >   <span 
 class="cmti-10">You can test changes to a portable suite safely by making a quick copy of it in a temporary directory, then</span>
 <span 
 class="cmti-10">modifying and running the test copy without fear of corrupting the output directories, suite logs, and suite state, of</span>
@@ -207,21 +207,21 @@ class="cmti-10">the original.</span>
                                                                                          
 
                                                                                          
-<!--l. 5652--><p class="noindent" >
+<!--l. 5604--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.9   </span> <a 
- id="x15-17900014.9"></a>Make Tasks As Self-Contained As Possible</h4>
-<!--l. 5654--><p class="noindent" >Where possible, no task should rely on the action of another task, except for the prerequisites embodied in the suite
+ id="x15-18000014.9"></a>Make Tasks As Self-Contained As Possible</h4>
+<!--l. 5606--><p class="noindent" >Where possible, no task should rely on the action of another task, except for the prerequisites embodied in the suite
 dependency graph that it has no choice but to depend on. If this rule is followed, your suite will be as flexible as
 possible in terms of being able to run single tasks, or subsets of the suite, whilst debugging or developing new
 features.<span class="footnote-mark"><a 
 href="#fn9x0" id="fn9x0-bk"><sup class="textsuperscript">9</sup></a></span><a 
- id="x15-179001f9"></a>
+ id="x15-180001f9"></a>
 For example, every task should create its own output directories if they do not already exist, instead of assuming
 their existence due to the action of some other task; then you will be able to run single tasks without having to
 manually create output directories first.
-   <!--l. 5667-->
-   <div class="lstlisting" id="listing-163"><span class="label"><a 
- id="x15-179002r1"></a></span><span 
+   <!--l. 5619-->
+   <div class="lstlisting" id="listing-161"><span class="label"><a 
+ id="x15-180002r1"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">manual</span><span 
@@ -231,7 +231,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">scripting</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179003r2"></a></span><span 
+ id="x15-180003r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
@@ -256,7 +256,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">exist</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179004r3"></a></span><span 
+ id="x15-180004r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">mkdir</span><span 
@@ -267,7 +267,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">OUTDIR</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179005r4"></a></span><span 
+ id="x15-180005r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
@@ -298,7 +298,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">exist</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179006r5"></a></span><span 
+ id="x15-180006r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">mkdir</span><span 
@@ -316,9 +316,9 @@ class="pcrr7t-">OUTFILE</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179007r6"></a></span><span 
+ id="x15-180007r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179008r7"></a></span><span 
+ id="x15-180008r7"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">OR</span><span 
@@ -334,7 +334,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">utility</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179009r8"></a></span><span 
+ id="x15-180009r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
@@ -361,7 +361,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">necessary</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179010r9"></a></span><span 
+ id="x15-180010r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -380,7 +380,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">...</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179011r10"></a></span><span 
+ id="x15-180011r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
@@ -409,7 +409,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">necessary</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x15-179012r11"></a></span><span 
+ id="x15-180012r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -429,15 +429,16 @@ class="pcrr7t-">#</span><span
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 5681--><p class="noindent" >
+<!--l. 5633--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.10   </span> <a 
- id="x15-18000014.10"></a>Make Suites As Self-Contained As Possible</h4>
-<!--l. 5683--><p class="noindent" >The only compulsory content of a cylc suite definition directory is the suite.rc file (and you&#8217;ll almost certainly
-have a suite <span class="lstinline"><span 
-class="pcrr7t-">bin</span></span> sub-directory too). However, you can store whatever you like in a suite definition
-directory;<span class="footnote-mark"><a 
+ id="x15-18100014.10"></a>Make Suites As Self-Contained As Possible</h4>
+<!--l. 5635--><p class="noindent" >The only compulsory content of a cylc suite definition directory is the <span class="lstinline"><span 
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">rc</span></span> file. However, you can store whatever you like in a
+suite definition directory;<span class="footnote-mark"><a 
 href="#fn10x0" id="fn10x0-bk"><sup class="textsuperscript">10</sup></a></span><a 
- id="x15-180001f10"></a>
+ id="x15-181001f10"></a>
 other files there will be ignored by cylc but suite tasks can access them via the <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_DEF_PATH</span></span> variable
@@ -446,42 +447,42 @@ files, control files (etc.) required by the suite are stored in the suite defini
 the suite reference external build directories (etc.), you can turn the directory into a revision control
 repository and be virtually assured of the ability to exactly reproduce earlier versions, regardless of suite
 complexity.
-<!--l. 5699--><p class="noindent" >
+<!--l. 5650--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.11   </span> <a 
- id="x15-18100014.11"></a>Orderly Product Generation?</h4>
-<!--l. 5702--><p class="noindent" >Correct scheduling is not equivalent to &#8220;orderly generation of products by cycle time&#8221;. Under cylc, a product
+ id="x15-18200014.11"></a>Orderly Product Generation?</h4>
+<!--l. 5653--><p class="noindent" >Correct scheduling is not equivalent to &#8220;orderly generation of products by cycle time&#8221;. Under cylc, a product
 generation task will trigger as soon as its prerequisites are satisfied (i.e.&#x00A0;when its input files are ready,
 generally) regardless of whether other tasks with the same cycle time have finished or have yet to
 run. If your product delivery or presentation system demands that all products for one cycle time
 are uploaded (or whatever) before any from the next cycle, then be aware that this may be quite
 inefficient if your suite is ever faced with catching up from a significant delay or running over historical
 data.
-<!--l. 5712--><p class="indent" >   If you must, however, you can introduce artificial dependencies into your suite to ensure that the final products
+<!--l. 5663--><p class="indent" >   If you must, however, you can introduce artificial dependencies into your suite to ensure that the final products
 never arrive out of sequence. One way of doing this would be to have a final &#8220;product upload&#8221; task that depends on
 completion of all the real product generation tasks at the same cycle time, and then declare it to be
 sequential.
-<!--l. 5719--><p class="noindent" >
+<!--l. 5670--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.12   </span> <a 
- id="x15-18200014.12"></a>Clock-triggered Tasks Wait On External Data</h4>
-<!--l. 5721--><p class="noindent" >All tasks in a cylc suite know their own private cycle time, but most don&#8217;t care about the wall clock time - they just
+ id="x15-18300014.12"></a>Clock-triggered Tasks Wait On External Data</h4>
+<!--l. 5672--><p class="noindent" >All tasks in a cylc suite know their own private cycle time, but most don&#8217;t care about the wall clock time - they just
 run when their prerequisites are satisfied. The exception to this is <span 
 class="cmti-10">clock-triggered </span>tasks, which wait on a wall clock
 time expressed as an offset from their own cycle time, in addition to any other prerequisites. The usual purpose of
 these tasks is to retrieve real time data from the external world, triggering at roughly the expected time of
 availability of the data. Triggering the task at the right time is up to cylc, but the task itself should go into a
+check-and-wait loop in case the data is delayed; only on successful detection or retrieval should the task report
                                                                                          
 
                                                                                          
-check-and-wait loop in case the data is delayed; only on successful detection or retrieval should the task report
 success and then exit (or perhaps report failure and then exit if the data has not arrived by some cutoff
 time).
-<!--l. 5734--><p class="noindent" >
+<!--l. 5685--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">14.13   </span> <a 
- id="x15-18300014.13"></a>Do Not Treat Real Time Operation As Special</h4>
-<!--l. 5736--><p class="noindent" >Cylc suites, without modification, can handle real time and delayed operation equally well.
-<!--l. 5739--><p class="indent" >   In real time operation clock-triggered tasks constrain the behaviour of the whole suite, or at least of all tasks
+ id="x15-18400014.13"></a>Do Not Treat Real Time Operation As Special</h4>
+<!--l. 5687--><p class="noindent" >Cylc suites, without modification, can handle real time and delayed operation equally well.
+<!--l. 5690--><p class="indent" >   In real time operation clock-triggered tasks constrain the behaviour of the whole suite, or at least of all tasks
 downstream of them in the dependency graph.
-<!--l. 5743--><p class="indent" >   In delayed operation (whether due to an actual delay in an operational suite or because you&#8217;re running an
+<!--l. 5694--><p class="indent" >   In delayed operation (whether due to an actual delay in an operational suite or because you&#8217;re running an
 historical trial) clock-triggered tasks will not constrain the suite at all, and cylc&#8217;s cycle interleaving abilities come to
 the fore, because their trigger times have already passed. But if a clock-triggered task happens to catch up to the
 wall clock, it will automatically wait again. In this way a cylc suite naturally and seamlessly transitions between
@@ -492,7 +493,7 @@ delayed and real time operation as required.
                                                                                          
 
                                                                                          
-   <div class="footnotes"><!--l. 5661--><p class="indent" >    <span class="footnote-mark"><a 
+   <div class="footnotes"><!--l. 5613--><p class="indent" >    <span class="footnote-mark"><a 
 href="#fn9x0-bk" id="fn9x0"><sup class="textsuperscript">9</sup></a></span><span 
 class="cmr-8">The </span><span class="lstinline"><span 
 class="pcrr7t-x-x-80">cylc</span><span 
@@ -500,9 +501,9 @@ class="pcrr7t-x-x-80">&#x00A0;</span><span
 class="pcrr7t-x-x-80">submit</span></span> <span 
 class="cmr-8">command runs a single task exactly as its suite would, in terms of both job submission method and execution</span>
 <span 
-class="cmr-8">environment.</span><!--l. 5688--><p class="indent" > <span class="footnote-mark"><a 
+class="cmr-8">environment.</span><!--l. 5639--><p class="indent" > <span class="footnote-mark"><a 
 href="#fn10x0-bk" id="fn10x0"><sup class="textsuperscript">10</sup></a></span><span 
-class="cmr-8">If you copy a suite using cylc commands or db viewer the entire suite definition directory will be copied.</span>                  </div>
+class="cmr-8">If you copy a suite using cylc commands or GUI the entire suite definition directory will be copied.</span>                         </div>
 <!--l. 1--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse15.html" >next</a>] [<a 
 href="cug-htmlse13.html" >prev</a>] [<a 

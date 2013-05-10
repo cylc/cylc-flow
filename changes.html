@@ -16,7 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
-		<li><a href="#pending">pending</a></li>
+		<li><a href="#5.2.0">5.2.0</a></li>
 		<li><a href="#5.1.1">5.1.1</a></li>
 		<li><a href="#5.1.0">5.1.0</a></li>
 		<li><a href="#5.0.3">5.0.3</a></li>
@@ -28,28 +28,75 @@
 </div>
 
 <p><b>This document summarizes changes between cylc versions.</b>
-Minor changes and routine updates to the user guide may be omitted. 
-<b>The definitive guide to changes is the repository commit log</b>.
-For usage details relating to a particular change refer to the cylc user
-guide, command help, or post a question to the cylc mailing list. <p>
+Minor changes and bug fixes, and routine updates to the user guide may
+be omitted. The definitive guide to changes is the repository commit log.<p>
 
-<a name="pending"/>
-		<h2>pending (in master but not tagged yet)</h2>
+<a name="5.2.0"/>
+		<h2>5.2.0</h2>
 
 		<ul>
-				<li><code>cylc list</code> command output has been updated/fixed  
+				<li><b>gcylc can now switch between suites</b> - the 
+				former <code>cylc dbviewer</code> GUI has been converted to a
+				"File Open" dialog for gcylc.</li>
+
+				<li><b>Preparation commands</b> (validate, graph, etc.) can now take
+						a suite definition path instead of a registered suite name.</li>
+
+    		<li><b>Control commands</b> can now operate on multiple tasks at once,
+				selecting by family name or regular expression.</li>
+
+				<li><b>A new task state</b> to distinguish submission failure from 
+						execution failure.</li>
+
+				<li> Configurable <b>job submission retry</b>.</li>
+
+				<li>A poll-and-wait option for the <b>stop command</b>.</li>
+
+				<li><b>Orphaned running tasks</b> can now reconnect to a
+				restarted suite, even if it starts on a different port.</li>
+
+				<li>Automatic suite <b>run-directory housekeeping</b>.</li>
+
+				<li>The final path component of a <b>task work directory</b> can
+				now be set in the suite definition. This restores the pre cylc-5
+				ability to allow groups of interdependent tasks that all read
+				and write from their current working directories to be given a
+				common file share space.</li>
+
+				<li>The ssh connection now remains open while <b>remote background
+						tasks</b> run, for sites that automatically kill detached
+				processes on login nodes.</li>
+
+				<li>Restored <b>dynamic host selection by environment variable</b>.</li>
+
+				<li><b>Suicide triggers</b> can now be applied to task families.</li>
+
+				<li>Interactive <b>command prompts</b> have been disabled by default.</li>
+
+				<li>Dropped support for <b>Python 2.4.</b></li>
+
+				<li><b>UTC mode</b> now sets <code>$TZ</code> in task environments.</li>
+
+				<li>The <b>test battery</b> now cleans up temporary files after
+				itself, and it has been parallelized.</li>
+
+				<li> <b>syntax hilighting</b> for the <b>kate</b> editor.</li>
+
+				<li>Access to the new <b>suite run-db</b> is now retried several
+				times in case of an unlikely access conflict.</li>
+
+				<li>A first-parent namespace can now be demoted to prevent its
+				use as the visualization family (e.g. 
+				<code>inherit = None, myparent</code> will keep the namespace 
+				under root for visualization purposes).</li>
+
+				<li><code>cylc list</code> command output has been updated
 				for multiple inheritance, and the option to print namespace
 				(task and family) title information has been restored.</li>
 
-				<li>Cylc can now be invoked successfully via symlinked
-				directories in <code>$PATH</code>.</li>
+				<li>Cylc can now be invoked via symlinked directories in
+				<code>$PATH</code>.</li>
 
-				<li>Fixed a recent slow-down in validation time due to
-				unnecessary access to the new run databases.</li>
-
-				<li><b>gcylc can now switch between suites</b> and the <code>cylc
-						dbviewer</code> GUI has been removed (it has become a "File
-				Open" dialog for gcylc).</li>
 		</ul>
 
 <a name="5.1.1"/>

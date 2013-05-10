@@ -9,7 +9,7 @@
     <meta name="robots" content="all"/>
     <meta name="google-site-verification" content="80O-lgcVlVkKfF1yVyn0Q05W6QuN-WjcP30UftFhmiM" /> 
 
-	<title>The Cylc Suite Engine</title>
+	<title>The Cylc MetaScheduler</title>
 
 	<!-- correct the unsightly Flash of Unstyled Content. http://www.bluerobot.com/web/css/fouc.asp -->
     <!--<script type="text/javascript"></script>-->
@@ -58,7 +58,7 @@
 		<div id="preamble">
 
             <div class="warning">
-                Current Version: <a href="#download">5.2.0</a> (11 May 2013) <a href="changes.html">changes</a>
+                Current Version: <a href="#download">5.2.0</a> (2013-05-11) <a href="changes.html">changes</a>
             </div>
 
     <p class="p1">Cylc was selected as a finalist in two categories for
@@ -113,8 +113,8 @@
     <p class="p3"><span>
         Cylc's suite design paradigm is simple and intuitive: "draw" a
         dependency graph in concise textual form, then configure the
-        runtime properties of each task in an efficient multiple
-        inheritance hierarchy. This simple 
+        runtime properties of each task in an efficient inheritance
+        hierarchy. This simple 
         <a href="screenshots/simple-suiterc.png">suite definition</a>,
         for example, defines a suite with this
 <a href="screenshots/QuickStartB-graph18.png">dependency graph</a>.
@@ -141,8 +141,9 @@
             <div id="screenshots">
 				<h4 class="foo"><span>Screen Shots</span></h4>
 				<ul>
+				  <li> <a href="screenshots/gcylc-db.png">The cylc suite database viewer, one suite running on port 7766</a></li>
 				  <li> <a href="screenshots/suiterc-jinja2.png">A cylc suite definition in the vim editor</a></li>
-				  <li> <a href="screenshots/graph-viewer.png">Suite graph viewer</a></li>
+				  <li> <a href="screenshots/graph-viewer.png">Interactive suite graph viewer</a></li>
 				  <li> <a href="screenshots/control1.png">The gcylc GUI, dot and text views</a></li>
 				  <li> <a href="screenshots/control2.png">The gcylc GUI, graph and text views</a></li>
 				  <li> <a href="screenshots/ecox-1.png">A large suite graphed by cylc</a></li>
@@ -223,7 +224,7 @@
                         and <b>runtime</b> configuration.</li>
 
                         <li> Configuration of task runtime properties
-                        (environment etc.) via a multiple inheritance
+                        (environment etc.) via an inheritance
                         hierarchy of nested <b>task families</b>.</li>
 
                         <li> <b>Remote control</b>: from your desktop
@@ -238,35 +239,46 @@
                         (beyond this the suite control GUI may struggle,
                         but you can run very large suites via the command line tools).</li>
 
-                        <li> Tasks can be <b>distributed</b> across multiple
+                        <li> <b>Suites can be distributed</b> across multiple
                         hosts on a heterogeneous network.</li>
 
-                        <li> Supports many <b>job submission methods</b> within a suite 
-                        (loadleveler, pbs, sge, background, at)</li>
+                        <li> Supports use of many <b>job submission methods</b> within a suite 
+                        (e.g. loadleveler, pbs, sge, background, at)</li>
 
-                        <li> <b>Suites are validated</b> against a specification,
+
+                        <li> <b>Suites are validated</b> against a spec
                         to catch many errors prior to run time.</li>
 	
-                        <li> <b>Security</b> - all access to running suites
-                        is passphrase authenticated.</li>
+                        <li> <b>Suite security:</b> access to running
+                        suites is automatically passphrase
+                        authenticated.</li>
 
                         <li> <b>Submit single tasks</b> exactly as the suite would
                         (including job submission method and execution environment).</li>
+
+                        <li> Suites are accessed via <b>hierarchical
+                            names</b> (which to group and organize
+                        suites) registered in a private <b>suite database</b> .</li>
 
                         <li> A <b>lockserver</b> can be used to prevent
                         accidental invocation of multiple instances of a
                         suite or task at the same time (even for distributed suites).</li>
 
-                        <li> Suites can be <b>cold-start</b>ed, <b>warm-start</b>ed, and
+                        <li> Suites <b>cold-start</b>ed, <b>warm-start</b>ed, and
                         stopped and <b>restart</b>ed in any state of operation.</li>
 
                         <li> Explicit <b>cold start bootstrapping</b> 
                         to get warm-cycling suites up and running.</li>
 
+                        <!-- might just confuse readers: <li> Spin-up
+                        processing by insertion of
+                        temporary tasks and addition of new
+                        prerequisites on the fly.</li>-->
+
                         <li> <b>Recursive purge</b>: remove sub-trees of tasks
                         from a running suite through to some future cycle.</li>
 
-                        <li> <b>Conditional triggers</b>.</li>
+                        <li> <b>General conditional triggers</b>.</li>
 
                         <li> <b>Task family triggers</b>.</li>
 
@@ -281,7 +293,11 @@
                         <li> <b>Simulation mode</b>: get the scheduling right,
                         on an accelerated clock, without running real tasks.</li>
 
-                        <li> Parallel processing of real time satellite data.</li>
+                        <li> <b>One-off asynchronous tasks</b> for constructing 
+                        one-off suites of non-cycling tasks.</li>
+
+                        <li> <b>Repeating asynchronous tasks</b> for parallel processing 
+                        of real time satellite datasets.</li>
 
                         <li> <b>Jinja2 Template Processor</b> supported,
                         for programmatic generation of suite definitions.</li>
@@ -290,13 +306,14 @@
                         of active (submitted or running) tasks.</li>
 				</ul>
 
-			<h4><span>Coming Next Release</span></h4>
+			<!--<h4><span>Coming Soon</span></h4>
 				<ul>
-                    <li>Polling and killing of real task jobs by cylc, and 
-                    a one-way polling communication mechanism, for
-                    facilities that do not allow any communication back
-                    from task hosts.</li>
+                        <li> Loose prerequisites: trigger off the "most
+                        recent available" (variable offset) instance of
+                        a slower-cycling upstream task (back-port from
+                        cylc-2).</li>
 				</ul>
+                -->
 
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
 
@@ -309,7 +326,7 @@
     <ul>
         <li> Operating System: Linux or Unix</li>
 
-        <li> Python Version: 2.5 or later, but not Python
+        <li> Python Version: 2.4 or later, but not Python
         3.x as yet.
         <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup></li>
         
@@ -318,7 +335,7 @@
         interface toolkit, included in most Linux Distributions.</li>
         
         <li> <a href="http://www.xs4all.nl/~irmen/pyro3">Pyro 3</a>
-        (Python Remote Objects) - latest version tested 3.16.
+        (Python Remote Objects) - latest version tested 3.14.
         <sup><a href="#fn3" id="fnr3" title="click to see footnote">3</a></sup></li>
         
         <li> The <a href="http://www.graphviz.org">graphviz</a> graph
@@ -327,18 +344,21 @@
         <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>, 
         a python interface to graphviz (latest version tested: 1.1). </li>
 
-        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template
-        processor for Python.</li>
+        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.</li>
 
         <li> <b>LaTeX</b> (for <code>pdflatex</code>) and <b>tex4ht</b>
         (for <code>htlatex</code>) - needed to generate PDF and HTML
         copies of the Cylc User Guide from the LaTeX source files.</li>
-
-        <li> <b>sqlite</b> (a serverless zero-configuration SQL database
-        engine) - likely to be packaged with any modern Linux
-        distributation.</li>
-
     </ul>
+
+<p class="p1"><span>
+Python and Pyro are essential. PyGTK is required by the gcylc GUI
+(but you can control and monitor cylc suites from the command line). 
+Graphviz and pygraphviz are required for dependency graphing and the
+graph-based suite control GUI (but you can also run cylc without them).
+Jinja2 can be used for advanced programmatic generation of suite
+definitions.
+</span></p>
 
 <p class="p1"><span>
 Cylc has absorbed the following software in slightly modified form (you
@@ -440,7 +460,7 @@ do not need to install them separately):
             <h3><span>Development</span></h3>
 
             <p class="p1"><span>
-                Cylc uses the powerful <a href="http://git-scm.com">Git</a>
+                Cylc uses the powerful <a href="git-scm.com">Git</a>
                 distributed source code management system.  Git makes
                 branching and merging, forking/cloning, and pushing and
                 pulling changes between repositories very easy. The 

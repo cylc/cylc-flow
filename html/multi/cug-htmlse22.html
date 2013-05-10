@@ -7,32 +7,32 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-03-05 10:38:00"> 
+<meta name="date" content="2013-05-11 00:25:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5887--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5838--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse23.html" >next</a>] [<a 
 href="cug-htmlse21.html" >prev</a>] [<a 
 href="cug-htmlse21.html#tailcug-htmlse21.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse22.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse22.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">H   </span> <a 
- id="x23-390000H"></a>Cylc Development History</h3>
+ id="x23-388000H"></a>Cylc Development History</h3>
    <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >H.1 <a 
-href="#x23-391000H.1">Pre-3.0</a></span>
+href="#x23-389000H.1">Pre-3.0</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >H.2 <a 
-href="#x23-392000H.2">Version 3.0</a></span>
+href="#x23-390000H.2">Version 3.0</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >H.3 <a 
-href="#x23-393000H.3">Version 4.0</a></span>
+href="#x23-391000H.3">Version 4.0</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >H.4 <a 
-href="#x23-394000H.4">Version 5.0</a></span>
+href="#x23-392000H.4">Version 5.0</a></span>
    </div>
-<!--l. 5888--><p class="noindent" >
+<!--l. 5839--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">H.1   </span> <a 
- id="x23-391000H.1"></a>Pre-3.0</h4>
-<!--l. 5890--><p class="noindent" >Early versions of cylc were focused on developing and testing the new scheduling algorithm, and the suite design
+ id="x23-389000H.1"></a>Pre-3.0</h4>
+<!--l. 5841--><p class="noindent" >Early versions of cylc were focused on developing and testing the new scheduling algorithm, and the suite design
 interface at the time was essentially the quickest route to that end. A suite was a collection of &#8220;task definition files&#8221;
 that encoded the prerequisites and outputs of each task in a direct reflection of cylc&#8217;s internal task proxies. This way
 of defining suites exposed cylc&#8217;s self-organising nature to the user, and it did have some nice properties. For instance
@@ -43,17 +43,17 @@ associated with suite start-up and forecast model restart dependencies were, arg
 understand; and the global structure of a suite was not readily apparent until run time (although to
 counter this cylc 2.x could generate run-time resolved dependency graphs very quickly in simulation
 mode).
-<!--l. 5907--><p class="noindent" >
+<!--l. 5858--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">H.2   </span> <a 
- id="x23-392000H.2"></a>Version 3.0</h4>
-<!--l. 5909--><p class="noindent" >Version 3.0 implemented an entirely new suite design interface in which one defines the suite dependency graph,
+ id="x23-390000H.2"></a>Version 3.0</h4>
+<!--l. 5860--><p class="noindent" >Version 3.0 implemented an entirely new suite design interface in which one defines the suite dependency graph,
 execution environment, and command scripting for each task, in a single structured, validated, configuration file -
 the suite.rc file. This makes suite structure apparent at a glance, and much important detail is now implicitly
 implied by the graph.
-<!--l. 5916--><p class="noindent" >
+<!--l. 5867--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">H.3   </span> <a 
- id="x23-393000H.3"></a>Version 4.0</h4>
-<!--l. 5918--><p class="noindent" >Version 4.0 has the following major improvements over cylc-3.x, along with many refinements:
+ id="x23-391000H.3"></a>Version 4.0</h4>
+<!--l. 5869--><p class="noindent" >Version 4.0 has the following major improvements over cylc-3.x, along with many refinements:
      <ul class="itemize1">
      <li class="itemize">Suite  registration  was  generalized  from  GROUP:NAME  to  a  hierarchy  of  arbitrary  depth,  e.g
      foo.bar.baz, allowing suites to be organized in a tree-like structure.
@@ -67,21 +67,21 @@ class="cmti-10">namespace hierarchy </span>of families and tasks to allow
                                                                                          
      </li>
      <li class="itemize">The Jinja2 template engine is now supported, adding general programmability to cylc suite definitions.</li></ul>
-<!--l. 5933--><p class="noindent" >
+<!--l. 5884--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">H.4   </span> <a 
- id="x23-394000H.4"></a>Version 5.0</h4>
-<!--l. 5935--><p class="noindent" >Version 5.0 contains some major internal changes to enhance performance for large suites, such as multi-threading
+ id="x23-392000H.4"></a>Version 5.0</h4>
+<!--l. 5886--><p class="noindent" >Version 5.0 contains some major internal changes to enhance performance for large suites, such as multi-threading
 for continuous request handling and task job submission. We also aim to provide backward compatibility for suite
 definitions from version 5.0 onward, wherever possible.
                                                                                          
 
                                                                                          
-   <!--l. 5941--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5892--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse23.html" >next</a>] [<a 
 href="cug-htmlse21.html" >prev</a>] [<a 
 href="cug-htmlse21.html#tailcug-htmlse21.html" >prev-tail</a>] [<a 
 href="cug-htmlse22.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse22.html" >up</a>] </p></div>
-<!--l. 5941--><p class="indent" >   <a 
+<!--l. 5892--><p class="indent" >   <a 
  id="tailcug-htmlse22.html"></a>   
 </body></html> 
