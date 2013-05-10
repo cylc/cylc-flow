@@ -726,7 +726,6 @@ class task( object ):
         timeout = self.poll_timer_start + \
                 datetime.timedelta( seconds=self.polling_interval )
         if datetime.datetime.now() > timeout:
-            print 'POLLING', self.id
             self.poll()
             self.poll_timer_start = datetime.datetime.now()
 
