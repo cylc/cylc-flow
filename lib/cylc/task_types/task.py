@@ -867,6 +867,11 @@ class task( object ):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
+        msg_was_polled = False
+        if message.startswith( 'polled ' ):
+            msg_was_polled = True
+            message = message[7:]
+
         # After logging remove the remote event time from the end of task messages.
         message = re.sub( ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$', '', message )
 
@@ -879,11 +884,13 @@ class task( object ):
                 flags.pflag = True
                 self.outputs.set_completed( message )
                 self.record_db_event(event="output completed", message=content)
-            elif not self.poll_timer_start:
-                # Warn if the output has already been reported complete.
-                # This is not treated as an error condition.
-                # Not for polling tasks: multiple polls should produce the same result.
+            elif not msg_was_polled:
+                # This output has already been reported complete.
+                # Not an error condition - maybe the network was down for a bit.
+                # Ok for polling as multiple polls *should* produce the same result.
                 self.log( "WARNING", "Unexpected output (already completed):\n  " + message )
+            else:
+                self.log( 'CRITICAL', 'IGNORING.......' )
 
         # Handle warning events
         if priority == 'WARNING':

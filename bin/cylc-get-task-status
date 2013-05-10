@@ -17,34 +17,44 @@ TASKID=$( basename ${STATUS_FILE%.*.status} )
 QUEUED=$2   # boolean
 RUNNING=$3  # boolean
 
+# QUEUED=true => polled in batch queue (may be running or not)
+# RUNNING=true => polled as running
+
 if $QUEUED && ! $RUNNING; then
+    # not running yet (so no status file)
     RESULT="submitted"
 
-elif $RUNNING; then
-    # TODO - checkout internal outputs in status file
-    RESULT="started"
-
 else
+    # running, or no longer running, or never ran
     if [[ ! -f $STATUS_FILE ]]; then
         # job did not start running
         RESULT="submission failed"
     else
-        # load status file
+        # LOAD STATUS FILE
         for LINE in $( cat $STATUS_FILE ); do
             eval $LINE
         done
-        if [[ -z $CYLC_JOB_EXIT ]]; then
-            RESULT="failed"
+
+        if $RUNNING; then
+            RESULT="started at $CYLC_JOB_INIT_TIME"
+            # TODO - checkout status file for internal outputs
+
         else
-            if [[ $CYLC_JOB_EXIT == "SUCCEEDED" ]]; then
-                RESULT="succeeded"
+            # not queued and not running
+            if [[ -z $CYLC_JOB_EXIT ]]; then
+                # did not exit cleanly
+                RESULT="failed at $CYLC_JOB_EXIT_TIME"
             else
-                RESULT="failed"
+                if [[ $CYLC_JOB_EXIT == "SUCCEEDED" ]]; then
+                    RESULT="succeeded at $CYLC_JOB_EXIT_TIME"
+                else
+                    RESULT="failed at $CYLC_JOB_EXIT_TIME"
+                fi
             fi
         fi
     fi
 fi
 
-# echo standard task message form:
-echo "$TASKID $RESULT"
+# echo standard task message form with "polled" added:
+echo "polled $TASKID $RESULT"
 
