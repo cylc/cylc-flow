@@ -889,8 +889,6 @@ class task( object ):
                 # Not an error condition - maybe the network was down for a bit.
                 # Ok for polling as multiple polls *should* produce the same result.
                 self.log( "WARNING", "Unexpected output (already completed):\n  " + message )
-            else:
-                self.log( 'CRITICAL', 'IGNORING.......' )
 
         # Handle warning events
         if priority == 'WARNING':

@@ -1103,6 +1103,21 @@ The Cylc Suite Engine.
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id, task_is_family )
 
+        # TODO - grey out poll and kill if the task is not 'submitted' or 'running'
+        poll_item = gtk.ImageMenuItem( 'poll' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        poll_item.set_image(img)
+        items.append( poll_item )
+        poll_item.connect( 'activate', self.poll_task, task_id, task_is_family )
+
+        kill_item = gtk.ImageMenuItem( 'kill' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CANCEL, gtk.ICON_SIZE_MENU )
+        kill_item.set_image(img)
+        items.append( kill_item )
+        kill_item.connect( 'activate', self.kill_task, task_id, task_is_family )
+
+        items.append( gtk.SeparatorMenuItem() )
+
         reset_menu = gtk.Menu()
         reset_item = gtk.ImageMenuItem( "Reset State" )
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
@@ -1494,6 +1509,36 @@ shown here in the state they were in at the time of triggering.''' )
         name, tag = task_id.split(TaskID.DELIM)
         try:
             result = self.get_pyro( 'command-interface' ).put( 'trigger task', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
+    def poll_task( self, b, task_id, is_family=False ):
+        cmd = "poll"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'poll tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
+    def kill_task( self, b, task_id, is_family=False ):
+        cmd = "kill"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'kill tasks', name, tag, is_family )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
