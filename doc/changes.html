@@ -16,7 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
-		<li><a href="#pending">pending</a></li>
+		<li><a href="#5.2.0">5.2.0</a></li>
 		<li><a href="#5.1.1">5.1.1</a></li>
 		<li><a href="#5.1.0">5.1.0</a></li>
 		<li><a href="#5.0.3">5.0.3</a></li>
@@ -31,19 +31,18 @@
 Minor changes and bug fixes, and routine updates to the user guide may
 be omitted. The definitive guide to changes is the repository commit log.<p>
 
-<a name="pending"/>
-		<h2>pending (in master but not tagged yet)</h2>
+<a name="5.2.0"/>
+		<h2>5.2.0</h2>
 
 		<ul>
-				<li><b>gcylc can now switch between suites</b></li>
-				
-				<li>The <code>cylc dbviewer</code> GUI has been converted to a
+				<li><b>gcylc can now switch between suites</b> - the 
+				former <code>cylc dbviewer</code> GUI has been converted to a
 				"File Open" dialog for gcylc.</li>
 
 				<li><b>Preparation commands</b> (validate, graph, etc.) can now take
 						a suite definition path instead of a registered suite name.</li>
 
-						<li><b>Control commands</b> can now operate on multiple tasks at once,
+    		<li><b>Control commands</b> can now operate on multiple tasks at once,
 				selecting by family name or regular expression.</li>
 
 				<li><b>A new task state</b> to distinguish submission failure from 
@@ -56,11 +55,17 @@ be omitted. The definitive guide to changes is the repository commit log.<p>
 				<li><b>Orphaned running tasks</b> can now reconnect to a
 				restarted suite, even if it starts on a different port.</li>
 
+				<li>Automatic suite <b>run-directory housekeeping</b>.</li>
+
 				<li>The final path component of a <b>task work directory</b> can
 				now be set in the suite definition. This restores the pre cylc-5
 				ability to allow groups of interdependent tasks that all read
 				and write from their current working directories to be given a
 				common file share space.</li>
+
+				<li>The ssh connection now remains open while <b>remote background
+						tasks</b> run, for sites that automatically kill detached
+				processes on login nodes.</li>
 
 				<li>Restored <b>dynamic host selection by environment variable</b>.</li>
 
@@ -75,16 +80,15 @@ be omitted. The definitive guide to changes is the repository commit log.<p>
 				<li>The <b>test battery</b> now cleans up temporary files after
 				itself, and it has been parallelized.</li>
 
+				<li> <b>syntax hilighting</b> for the <b>kate</b> editor.</li>
+
 				<li>Access to the new <b>suite run-db</b> is now retried several
 				times in case of an unlikely access conflict.</li>
 
-				<li>A namespace's first parent can now be demoted to
-				prevent its use as the visualization family (e.g. 
+				<li>A first-parent namespace can now be demoted to prevent its
+				use as the visualization family (e.g. 
 				<code>inherit = None, myparent</code> will keep the namespace 
 				under root for visualization purposes).</li>
-
-				<li>Disabled grouping to root level and added group/ungroup
-				buttons, for suite visualization.</li>
 
 				<li><code>cylc list</code> command output has been updated
 				for multiple inheritance, and the option to print namespace
