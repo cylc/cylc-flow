@@ -58,7 +58,7 @@
 		<div id="preamble">
 
             <div class="warning">
-                Current Version: <a href="#download">5.1.1</a> (2013-03-05) <a href="changes.html">changes</a>
+                Current Version: <a href="#download">5.2.0</a> (11 May 2013) <a href="changes.html">changes</a>
             </div>
 
     <p class="p1">Cylc was selected as a finalist in two categories for
@@ -113,8 +113,8 @@
     <p class="p3"><span>
         Cylc's suite design paradigm is simple and intuitive: "draw" a
         dependency graph in concise textual form, then configure the
-        runtime properties of each task in an efficient inheritance
-        hierarchy. This simple 
+        runtime properties of each task in an efficient multiple
+        inheritance hierarchy. This simple 
         <a href="screenshots/simple-suiterc.png">suite definition</a>,
         for example, defines a suite with this
 <a href="screenshots/QuickStartB-graph18.png">dependency graph</a>.
@@ -141,9 +141,8 @@
             <div id="screenshots">
 				<h4 class="foo"><span>Screen Shots</span></h4>
 				<ul>
-				  <li> <a href="screenshots/gcylc-db.png">The cylc suite database viewer, one suite running on port 7766</a></li>
 				  <li> <a href="screenshots/suiterc-jinja2.png">A cylc suite definition in the vim editor</a></li>
-				  <li> <a href="screenshots/graph-viewer.png">Interactive suite graph viewer</a></li>
+				  <li> <a href="screenshots/graph-viewer.png">Suite graph viewer</a></li>
 				  <li> <a href="screenshots/control1.png">The gcylc GUI, dot and text views</a></li>
 				  <li> <a href="screenshots/control2.png">The gcylc GUI, graph and text views</a></li>
 				  <li> <a href="screenshots/ecox-1.png">A large suite graphed by cylc</a></li>
@@ -224,7 +223,7 @@
                         and <b>runtime</b> configuration.</li>
 
                         <li> Configuration of task runtime properties
-                        (environment etc.) via an inheritance
+                        (environment etc.) via a multiple inheritance
                         hierarchy of nested <b>task families</b>.</li>
 
                         <li> <b>Remote control</b>: from your desktop
@@ -239,46 +238,35 @@
                         (beyond this the suite control GUI may struggle,
                         but you can run very large suites via the command line tools).</li>
 
-                        <li> <b>Suites can be distributed</b> across multiple
+                        <li> Tasks can be <b>distributed</b> across multiple
                         hosts on a heterogeneous network.</li>
 
-                        <li> Supports use of many <b>job submission methods</b> within a suite 
-                        (e.g. loadleveler, pbs, sge, background, at)</li>
+                        <li> Supports many <b>job submission methods</b> within a suite 
+                        (loadleveler, pbs, sge, background, at)</li>
 
-
-                        <li> <b>Suites are validated</b> against a spec
+                        <li> <b>Suites are validated</b> against a specification,
                         to catch many errors prior to run time.</li>
 	
-                        <li> <b>Suite security:</b> access to running
-                        suites is automatically passphrase
-                        authenticated.</li>
+                        <li> <b>Security</b> - all access to running suites
+                        is passphrase authenticated.</li>
 
                         <li> <b>Submit single tasks</b> exactly as the suite would
                         (including job submission method and execution environment).</li>
-
-                        <li> Suites are accessed via <b>hierarchical
-                            names</b> (which to group and organize
-                        suites) registered in a private <b>suite database</b> .</li>
 
                         <li> A <b>lockserver</b> can be used to prevent
                         accidental invocation of multiple instances of a
                         suite or task at the same time (even for distributed suites).</li>
 
-                        <li> Suites <b>cold-start</b>ed, <b>warm-start</b>ed, and
+                        <li> Suites can be <b>cold-start</b>ed, <b>warm-start</b>ed, and
                         stopped and <b>restart</b>ed in any state of operation.</li>
 
                         <li> Explicit <b>cold start bootstrapping</b> 
                         to get warm-cycling suites up and running.</li>
 
-                        <!-- might just confuse readers: <li> Spin-up
-                        processing by insertion of
-                        temporary tasks and addition of new
-                        prerequisites on the fly.</li>-->
-
                         <li> <b>Recursive purge</b>: remove sub-trees of tasks
                         from a running suite through to some future cycle.</li>
 
-                        <li> <b>General conditional triggers</b>.</li>
+                        <li> <b>Conditional triggers</b>.</li>
 
                         <li> <b>Task family triggers</b>.</li>
 
@@ -293,11 +281,7 @@
                         <li> <b>Simulation mode</b>: get the scheduling right,
                         on an accelerated clock, without running real tasks.</li>
 
-                        <li> <b>One-off asynchronous tasks</b> for constructing 
-                        one-off suites of non-cycling tasks.</li>
-
-                        <li> <b>Repeating asynchronous tasks</b> for parallel processing 
-                        of real time satellite datasets.</li>
+                        <li> Parallel processing of real time satellite data.</li>
 
                         <li> <b>Jinja2 Template Processor</b> supported,
                         for programmatic generation of suite definitions.</li>
@@ -306,14 +290,13 @@
                         of active (submitted or running) tasks.</li>
 				</ul>
 
-			<!--<h4><span>Coming Soon</span></h4>
+			<h4><span>Coming Next Release</span></h4>
 				<ul>
-                        <li> Loose prerequisites: trigger off the "most
-                        recent available" (variable offset) instance of
-                        a slower-cycling upstream task (back-port from
-                        cylc-2).</li>
+                    <li>Polling and killing of real task jobs by cylc, and 
+                    a one-way polling communication mechanism, for
+                    facilities that do not allow any communication back
+                    from task hosts.</li>
 				</ul>
-                -->
 
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
 
