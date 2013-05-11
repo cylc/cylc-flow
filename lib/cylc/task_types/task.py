@@ -1006,9 +1006,9 @@ class task( object ):
                 self.__class__.event_queue.put( ('succeeded', handler, self.id, 'task succeeded') )
             if not self.outputs.all_completed():
                 # This is no longer treated as an error condition.
-                err = "Assuming uncompleted outputs were completed:"
-                for key,val in self.outputs.not_completed.items():
-                    err += "\n" + key + ' = ' + val
+                err = "Assuming non-reported outputs were completed:"
+                for key in self.outputs.not_completed:
+                    err += "\n" + key
                 self.log( 'WARNING', err )
                 self.outputs.set_all_completed()
 

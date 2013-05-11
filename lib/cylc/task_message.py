@@ -69,9 +69,9 @@ class message(object):
         self.mode = self.env_map.get( 'CYLC_MODE', 'raw' )
 
         self.ssh_messaging = (
-                self.env_map.get('CYLC_TASK_COMMUNICATION') == 'ssh' )
+                self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' )
         self.polling = (
-                self.env_map.get('CYLC_TASK_COMMUNICATION') == 'poll' )
+                self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'poll' )
 
         self.ssh_login_shell = (
                 self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')

@@ -174,7 +174,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
-        BUFFER.write( "\nexport CYLC_TASK_COMMUNICATION=" + comms )
+        BUFFER.write( "\nexport CYLC_TASK_COMMS_METHOD=" + comms )
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED 
