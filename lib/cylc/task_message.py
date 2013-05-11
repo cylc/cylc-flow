@@ -41,6 +41,15 @@ class message(object):
 
         # load the environment
         self.env_map = dict(os.environ)
+
+        # set some instance variables 
+        for attr, key, default in (
+                ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
+                ('owner', 'CYLC_SUITE_OWNER', None),
+                ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
+                ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
+            value = self.env_map.get(key, default)
+            setattr(self, attr, value)
         
         rd = self.env_map.get( 'CYLC_SUITE_RUN_DIR', '.' )
         self.env_file_path = os.path.join (rd, 'cylc-suite-env' )
@@ -94,6 +103,8 @@ class message(object):
             self.suite = env_map.get('CYLC_SUITE_REG_NAME')
             if self.suite:
                 os.environ['CYLC_SUITE_NAME'] = self.suite
+
+        self.utc = self.env_map.get('CYLC_UTC') == 'True'
 
         self.ssh_messaging = (
                 env_map.get('CYLC_TASK_SSH_MESSAGING') == 'True')

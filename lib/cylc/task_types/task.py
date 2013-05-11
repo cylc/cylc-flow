@@ -666,6 +666,7 @@ class task( object ):
 
         # dynamic instantiation - don't know job sub method till run time.
         module_name = rtconfig['job submission']['method']
+        self.job_sub_method = module_name
 
         class_name  = module_name
         # NOTE: not using__import__() keyword arguments:
@@ -1188,63 +1189,60 @@ class task( object ):
 
     def poll( self, submit_method_id=None, user_at_host=None, sub_num=None ):
         """Poll my live task job and update status accordingly."""
-        smid = submit_method_id or self.submit_method_id
-        uah = user_at_host or self.user_at_host
-        snum = sub_num or self.submit_num
+        # (the arguments are by the restart command)
+        self.submit_method_id = submit_method_id or self.submit_method_id 
+        self.user_at_host = user_at_host or self.user_at_host
+        self.submit_num = sub_num or self.submit_num
 
         if not self.state.is_currently('running', 'submitted' ):
             self.log( 'WARNING', 'Only submitted or running tasks can be polled.' )
             return
-        if not smid:
+        if not self.submit_method_id:
             # should not happen
             self.log( 'CRITICAL', 'No submit method ID' )
             return
 
         launcher = self.launcher
         if not launcher:
-            launcher = self.presubmit( uah, snum )
+            launcher = self.presubmit( self.user_at_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_poll_command' ):
             # (for job submission methods that do not handle polling yet)
-            self.log( 'WARNING', self.job_sub_method + ' job submission does not support polling' )
+            self.log( 'WARNING', "'" + self.job_sub_method + "' job submission does not support polling" )
             return
 
-        cmd = launcher.get_job_poll_command( smid )
-        if uah != user + '@localhost':
+        cmd = launcher.get_job_poll_command( self.submit_method_id )
+        if self.user_at_host != user + '@localhost':
             cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
                     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
-            cmd = 'ssh -oBatchMode=yes ' + uah + " '" + cmd + "'"
+            cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
         self.log( 'NORMAL', "Polling for live status" )
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
 
-    def kill( self, submit_method_id=None, user_at_host=None, sub_num=None ):
-        smid = submit_method_id or self.submit_method_id
-        uah = user_at_host or self.user_at_host
-        snum = sub_num or self.submit_num
-
+    def kill( self ):
         if not self.state.is_currently('running', 'submitted' ):
             self.log( 'WARNING', 'Only submitted or running tasks can be killed.' )
             return
-        if not smid:
+        if not self.submit_method_id:
             # should not happen
             self.log( 'CRITICAL', 'No submit method ID' )
             return
 
         launcher = self.launcher
         if not launcher:
-            self.presubmit( uah, snum )
+            self.presubmit( self.user_at_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_kill_command' ):
             # (for job submission methods that do not handle polling yet)
-            self.log( 'WARNING', self.job_sub_method + ' job submission does not support killing' )
+            self.log( 'WARNING', "'" + self.job_sub_method + "' job submission does not support killing" )
             return
 
-        cmd = self.launcher.get_job_kill_command( smid )
-        if uah != user + '@localhost':
+        cmd = self.launcher.get_job_kill_command( self.submit_method_id )
+        if self.user_at_host != user + '@localhost':
             cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
                     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
-            cmd = 'ssh -oBatchMode=yes ' + uah + " '" + cmd + "'"
+            cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
         self.log( 'CRITICAL', "Killing job" )
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'kill') )

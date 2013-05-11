@@ -41,19 +41,20 @@ class background( job_submit ):
  
     COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
 
-    JOB_KILL_TEMPLATE = "kill -9 %s >/dev/null 2>&1"
-
-    JOB_RUNNING_TEMPLATE = "ps %s >/dev/null 2>&1"
+    # NOTE: don't use single quotes in job poll and kill template
+    # strings - it interferes with the automatic single quoting used.
+    JOB_KILL = "kill -9 %s >/dev/null 2>&1"
+    JOB_RUNNING = "ps %s >/dev/null 2>&1"
 
     def get_job_poll_command( self, jid ):
         # (there is no external queued status for background jobs)
-        cmd = ( "RUNNING=$( " + self.__class__.JOB_RUNNING_TEMPLATE % ( jid ) + " && echo true || echo false );"
+        cmd = ( "RUNNING=$( " + self.__class__.JOB_RUNNING % ( jid ) + " && echo true || echo false );"
             + " cylc-get-task-status " + self.jobfile_path + ".status $RUNNING $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, pid ):
         """construct a command to kill the real job"""
-        return self.JOB_KILL_TEMPLATE % ( pid )
+        return self.JOB_KILL % ( pid )
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template

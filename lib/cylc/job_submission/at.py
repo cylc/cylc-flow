@@ -36,19 +36,21 @@ class at( job_submit ):
     COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now" # % ( jobfile-path, out, err )
     REC_ID = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
 
-    JOB_RUNNING_TEMPLATE = "ps -f -u $USER | grep %s | grep -v grep > /dev/null" # % ( jobfile-path )
-    JOB_QUEUED_TEMPLATE  = "atq | grep \"^%s\" > /dev/null" # % ( job-id )
-    JOB_KILL_TEMPLATE = "atrm %s 2>&1 | grep 'Warning: deleting running job' && pkill -f -9 %s" # % ( job-id, jobfile-path )
+    # NOTE: don't use single quotes in job poll and kill template
+    # strings - it interferes with the automatic single quoting used.
+    JOB_RUNNING = "ps -f -u $USER | grep %s | grep -v grep > /dev/null" # % ( jobfile-path )
+    JOB_QUEUED  = "atq | grep \"^%s\" > /dev/null" # % ( job-id )
+    JOB_KILL = "atrm %s 2>&1 | grep 'Warning: deleting running job' && pkill -f -9 %s" # % ( job-id, jobfile-path )
 
     def get_job_poll_command( self, jid ):
-        cmd = ( "RUNNING=$( " + self.__class__.JOB_RUNNING_TEMPLATE % ( self.jobfile_path ) + " && echo true || echo false );"
-            + " QUEUED=$( " + self.__class__.JOB_QUEUED_TEMPLATE % ( jid ) + " && echo true || echo false );"
+        cmd = ( "RUNNING=$( " + self.__class__.JOB_RUNNING % ( self.jobfile_path ) + " && echo true || echo false );"
+            + " QUEUED=$( " + self.__class__.JOB_QUEUED % ( jid ) + " && echo true || echo false );"
             + " cylc-get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, jid ):
         """construct a command to kill the real job"""
-        return self.JOB_KILL_TEMPLATE % ( jid, self.jobfile_path )
+        return self.JOB_KILL % ( jid, self.jobfile_path )
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template

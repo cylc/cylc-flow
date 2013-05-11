@@ -146,8 +146,8 @@ task polling interval = float( min=5, default=10 )
 
         # Method of communication of task progress back to the suite:
         #   1) pyro - direct client-server RPC via network ports
-        #   2) ssh  - re-invoke messaging commands on the suite server
-        #   3) poll - no communication from tasks, suite polls instead
+        #   2) ssh  - re-invoke pyro messaging commands on suite server
+        #   3) poll - the suite polls for status of passive tasks
         # Pyro RPC is still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites. 
         task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 

@@ -90,7 +90,7 @@ class job_batcher( threading.Thread ):
         # submit each item
         jobs = []
         msg = "batch " + str(i) + '/' + str(n) + " (" + str(len(batch)) + " members):"
-        self.log.info( self.queue_name + ": " + msg )
+        self.log.info( self.queue_name + " " + msg )
 
         for item in batch:
             jobinfo = \
@@ -165,12 +165,12 @@ class job_batcher( threading.Thread ):
 
 
     def item_succeeded_hook( self, jobinfo ):
-        self.log.info( jobinfo['descr'] + ' succeeded' )
+        #self.log.info( jobinfo['descr'] + ' succeeded' )
+        pass
 
 
     def item_failed_hook( self, descr, *args ):
         self.log.warning( jobinfo['descr'] + ' failed' )
-
 
 
 class task_batcher( job_batcher ):
@@ -323,9 +323,9 @@ class poll_and_kill_batcher( job_batcher ):
             # get-task-status prints a standard task message to stdout
             itask.incoming( 'NORMAL', jobinfo['out'].strip() )
         else:
-            # TOOD - just log?!
+            # TODO - just log?
             itask.incoming( 'NORMAL', jobinfo['jtype'] + ' command succeeded' )
         if jobinfo['err']:
-            # TODO - just log?!
+            # TODO - just log?
             print >> sys.stderr, jobinfo['err']
 

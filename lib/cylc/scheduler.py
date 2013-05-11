@@ -327,7 +327,7 @@ class scheduler(object):
         r_suite_run_dir = os.path.expandvars(
                 gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
-            self.log.warning( 'RESTART: COPYING CONTACT ENV TO ' + user_at_host )
+            self.log.info( 'Restart: copying suite contact file to ' + user_at_host )
             if '@' in user_at_host:
                 user, host = user_at_host.split('@', 1)
             else:
