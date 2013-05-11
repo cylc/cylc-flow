@@ -98,19 +98,19 @@ class message(object):
             setattr(self, attr, value)
 
         # back compat for ssh messaging from task host with cylc <= 5.1.1:
-        self.suite = env_map.get('CYLC_SUITE_NAME')
+        self.suite = self.env_map.get('CYLC_SUITE_NAME')
         if not self.suite:
-            self.suite = env_map.get('CYLC_SUITE_REG_NAME')
+            self.suite = self.env_map.get('CYLC_SUITE_REG_NAME')
             if self.suite:
                 os.environ['CYLC_SUITE_NAME'] = self.suite
 
         self.utc = self.env_map.get('CYLC_UTC') == 'True'
 
         self.ssh_messaging = (
-                env_map.get('CYLC_TASK_SSH_MESSAGING') == 'True')
+                self.env_map.get('CYLC_TASK_SSH_MESSAGING') == 'True')
 
         self.ssh_login_shell = (
-                env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
+                self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
             
     def now( self ):
         if self.utc:
