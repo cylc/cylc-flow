@@ -53,20 +53,17 @@ run directory rolling archive length = integer( min=0, default=2 )
 # (wherein 'submitted' and 'running' tasks are polled periodically). 
 task polling interval = float( min=5, default=10 )
 
-# Task messaging settings apply to the "cylc task COMMAND" commands 
-# used by running tasks to communicate with their parent suite. If a
-# message send fails after the configured number of tries the task will 
-# carry on regardless.
+# Task messaging settings affect task-to-suite communications.
 [task messaging]
-    retry interval in seconds = float( min=1, default=30 )
-    maximum number of tries = integer( min=1, default=10 )
+    # If a message send fails, retry after this delay:
+    retry interval in seconds = float( min=1, default=5 )
+    # If send fails after this many tries, give up trying:
+    maximum number of tries = integer( min=1, default=7 )
 
-    # This timeout is the same as --pyro-timeout for user commands.
-    # If set to None (no timeout) a non-responsive suite (e.g. suspended
-    # with Ctrl-Z) could cause a task to hang indefinitely when it
-    # attempts to send a message to the suite.
-# TODO - set a finite by large default connection timeout:
-    connection timeout in seconds = float( min=1, default=None )
+    # This timeout is the same as --pyro-timeout for user commands. If
+    # set to None (no timeout) message send to non-responsive suite
+    # (e.g. suspended with Ctrl-Z) could hang indefinitely.
+    connection timeout in seconds = float( min=1, default=30 )
 
 # suites logs go under the suite run directory (see below)
 [suite logging]
