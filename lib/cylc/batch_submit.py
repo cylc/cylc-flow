@@ -169,7 +169,7 @@ class job_batcher( threading.Thread ):
         pass
 
 
-    def item_failed_hook( self, descr, *args ):
+    def item_failed_hook( self, jobinfo ):
         self.log.warning( jobinfo['descr'] + ' failed' )
 
 
