@@ -67,7 +67,7 @@ def main(name, start):
             sys.exit(1)
  
     # Daemonize the suite
-    if not server.options.no_detach:
+    if not server.options.no_detach and not server.options.debug:
         daemonize( server.suite, server.port )
 
     try:
