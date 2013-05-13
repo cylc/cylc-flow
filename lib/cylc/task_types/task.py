@@ -872,8 +872,10 @@ class task( object ):
             msg_was_polled = True
             message = message[7:]
 
-        # After logging remove the remote event time from the end of task messages.
-        message = re.sub( ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$', '', message )
+        # remove the remote event time (or "unknown-time") from the end:
+        message = re.sub( ' at .*$', '', message )
+        # NOTE: if we need to extract the time the proper regex is:
+        # ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
 
         # Remove the prepended task ID.
         content = message.replace( self.id + ' ', '' )

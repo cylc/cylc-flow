@@ -43,7 +43,7 @@ else
             # not queued and not running
             if [[ -z $CYLC_JOB_EXIT ]]; then
                 # did not exit cleanly
-                RESULT="failed at $CYLC_JOB_EXIT_TIME"
+                RESULT="failed at unknown-time"
             else
                 if [[ $CYLC_JOB_EXIT == "SUCCEEDED" ]]; then
                     RESULT="succeeded at $CYLC_JOB_EXIT_TIME"
