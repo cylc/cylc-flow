@@ -322,9 +322,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                   "dot": "Dot summary view",
                   "graph" : "Dependency graph view" }
                  
-    VIEW_ICON_PATHS = { "text": "/icons/tab-tree.xpm",
-                        "dot": "/icons/tab-led.xpm", 
-                        "graph": "/icons/tab-graph.xpm" }
+    VIEW_ICON_PATHS = { "text": "/icons/tab-tree.png",
+                        "dot": "/icons/tab-dot.png", 
+                        "graph": "/icons/tab-graph.png" }
 
     if not graphing_disabled:
         VIEWS["graph"] = ControlGraph 
