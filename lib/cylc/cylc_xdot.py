@@ -391,7 +391,8 @@ class MyDotWindow( xdot.DotWindow ):
         self.get_graph( ungroup_all=True )
 
     def get_graph( self, group_nodes=[], ungroup_nodes=[], 
-            ungroup_recursive=False, ungroup_all=False, group_all=False ):
+            ungroup_recursive=False, ungroup_all=False, group_all=False, 
+            ignore_suicide=False ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.families_used_in_graph
 
@@ -407,7 +408,8 @@ class MyDotWindow( xdot.DotWindow ):
                 raw=self.raw, group_nodes=group_nodes,
                 ungroup_nodes=ungroup_nodes, 
                 ungroup_recursive=ungroup_recursive, 
-                group_all=group_all, ungroup_all=ungroup_all )
+                group_all=group_all, ungroup_all=ungroup_all,
+                ignore_suicide=ignore_suicide )
 
         graph.graph_attr['rankdir'] = self.orientation
 

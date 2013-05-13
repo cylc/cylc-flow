@@ -134,6 +134,11 @@ parser.add_option( "-l", "--landscape",
     "Cannot be used in conjunction with -f, --file",
     action="store_true", default=False, dest="landscape" )
 
+parser.add_option( "-i", "--ignore-suicide",
+    help="Suicide triggers can over-complicate a graph, use "
+    "this option to omit them.",
+    action="store_true", default=False, dest="ignore_suicide" )
+
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
@@ -232,7 +237,7 @@ else:
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
-window.get_graph()
+window.get_graph( ignore_suicide=options.ignore_suicide )
 window.connect( 'destroy', gtk.main_quit)
 
 #if options.updatelive:
