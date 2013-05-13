@@ -35,6 +35,7 @@ class xupdater(threading.Thread):
         super(xupdater, self).__init__()
 
         self.quit = False
+        self.ignore_suicide = False
         self.focus_start_ctime = None
         self.focus_stop_ctime = None
         self.xdot = xdot
@@ -341,7 +342,7 @@ class xupdater(threading.Thread):
 
         if needs_redraw:
             self.graphw = graphing.CGraphPlain( self.cfg.suite )
-            self.graphw.add_edges( gr_edges )
+            self.graphw.add_edges( gr_edges, ignore_suicide=self.ignore_suicide )
 
         for n in self.graphw.nodes(): # base node defaults
             n.attr['style'] = 'filled'
@@ -488,4 +489,4 @@ class xupdater(threading.Thread):
             states = set(self.state_filter)
         return ( set( edges ), set( extra_ids ), self.crop,
                  self.filter_exclude, self.filter_include, states,
-                 self.orientation )
+                 self.orientation, self.ignore_suicide )
