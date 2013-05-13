@@ -243,10 +243,16 @@ Dependency graph suite control interface.
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all, False )
 
-        menu_landscape_item = gtk.CheckMenuItem( 'Toggle _Landscape Mode' )
+        menu_landscape_item = gtk.CheckMenuItem( '_Landscape Mode' )
         items.append( menu_landscape_item )
         menu_landscape_item.set_active( self.t.orientation == "LR" )
         menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
+
+        igsui_item = gtk.CheckMenuItem( '_Ignore Suicide Triggers' )
+        items.append( igsui_item )
+        igsui_item.set_active( self.t.ignore_suicide )
+        igsui_item.connect( 'activate', self.toggle_ignore_suicide_triggers )
+ 
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -337,6 +343,10 @@ Dependency graph suite control interface.
             self.t.orientation = "LR"  # Left -> right ordering
         elif self.t.orientation == "LR":
             self.t.orientation = "TB"
+        self.t.action_required = True
+
+    def toggle_ignore_suicide_triggers( self, w ):
+        self.t.ignore_suicide = not self.t.ignore_suicide
         self.t.action_required = True
 
     def filter_popup( self, w ):
