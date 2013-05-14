@@ -14,9 +14,6 @@
 #>       $HOME/.cylc/cylc.rc with all default settings commented out.
 #>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
-#>   NOTE THAT SITE AND/OR USER CONFIG IS REQUIRED ON TASK HOSTS TOO 
-#> TODO: document exactly for what purpose
-#>----------------------------------------------------------------------
 #> Comments starting with "#>" are not passed on to generated .rc files.
 #>----------------------------------------------------------------------
 # Sections or items preceded by "# SITE ONLY" can not be set by users.
@@ -50,7 +47,6 @@ enable run directory housekeeping = boolean( default=False )
 run directory rolling archive length = integer( min=0, default=2 )
 
 # Polling interval in seconds for the 'poll' task communication method
-# (wherein 'submitted' and 'running' tasks are polled periodically). 
 task polling interval = float( min=5, default=10 )
 
 # Task messaging settings affect task-to-suite communications.
@@ -124,8 +120,9 @@ task polling interval = float( min=5, default=10 )
     ports directory = string( default="$HOME/.cylc/ports/" )
 
 # The [hosts] section configures host-specific settings for the suite
-# host ('localhost') and remote task hosts. Local settings are used as
-# default values for task hosts (for directory paths the local home
+# host ('localhost') and remote task hosts (site/user settings on the
+# suite host determine remote task behaviour). Local settings are used
+# as defaults for task hosts (for directory paths the local home
 # directory will be replaced with literal '$HOME' for evaluation on the
 # remote host) so specific task hosts only need to be mentioned here if
 # you need to override the defaults.

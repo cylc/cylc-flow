@@ -81,10 +81,12 @@ class CGraphPlain( pygraphviz.AGraph ):
             self.style_node( r, autoURL, base=True )
             self.style_edge( l, r )
 
-    def add_edges( self, edges ):
+    def add_edges( self, edges, ignore_suicide=False ):
         edges.sort() # TODO: does sorting help layout stability?
         for e in edges:
             l, r, dashed, suicide, conditional = e
+            if suicide and ignore_suicide:
+                continue
             if conditional:
                 if suicide:
                     style='dashed'

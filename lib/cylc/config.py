@@ -1592,14 +1592,14 @@ Some translations were performed on the fly."""
  
     def get_graph( self, start_ctime, stop, raw=False, group_nodes=[],
             ungroup_nodes=[], ungroup_recursive=False, group_all=False,
-            ungroup_all=False ):
+            ungroup_all=False, ignore_suicide=False ):
 
         gr_edges = self.get_graph_raw( start_ctime, stop, raw,
                 group_nodes, ungroup_nodes, ungroup_recursive,
                 group_all, ungroup_all )
 
         graph = graphing.CGraph( self.suite, self['visualization'] )
-        graph.add_edges( gr_edges )
+        graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
 

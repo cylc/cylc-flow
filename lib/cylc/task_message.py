@@ -45,17 +45,33 @@ class message(object):
         # set some instance variables 
         for attr, key, default in (
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
+                ('retry_seconds', 'CYLC_TASK_MSG_RETRY_INTVL', '(CYLC_TASK_MSG_RETRY_INTVL)'),
+                ('max_tries',     'CYLC_TASK_MSG_MAX_TRIES',   '(CYLC_TASK_MSG_MAX_TRIES)'),
+                ('try_timeout',   'CYLC_TASK_MSG_TIMEOUT',     '(CYLC_TASK_MSG_TIMEOUT)'),
                 ('owner', 'CYLC_SUITE_OWNER', None),
                 ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
                 ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
             value = self.env_map.get(key, default)
             setattr(self, attr, value)
-        
+
+        # conversions from string:
+        if self.try_timeout == 'None':
+            self.try_timeout = None
+        try:
+            self.retry_seconds = float( self.retry_seconds )
+            self.max_tries = int( self.max_tries )
+        except:
+            pass
+ 
+        self.verbose = verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
+
+        # 'scheduler' or 'submit', (or 'raw' if job script run manually)
+        self.mode = self.env_map.get( 'CYLC_MODE', 'raw' )
+
         rd = self.env_map.get( 'CYLC_SUITE_RUN_DIR', '.' )
         self.env_file_path = os.path.join (rd, 'cylc-suite-env' )
 
         self.utc = self.env_map.get('CYLC_UTC') == 'True'
-
         # Record the time the messaging system was called and append it
         # to the message, in case the message is delayed in some way.
         if self.utc:
@@ -63,23 +79,23 @@ class message(object):
         else:
             self.true_event_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-        self.verbose = verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
-
-        # 'scheduler' or 'submit', (or 'raw' if job script run manually)
-        self.mode = self.env_map.get( 'CYLC_MODE', 'raw' )
-
         self.ssh_messaging = (
                 self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' )
+
         self.polling = (
                 self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'poll' )
 
         self.ssh_login_shell = (
                 self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
 
-        g = gcfg.cfg['task messaging']
-        self.retry_seconds = g['retry interval in seconds']
-        self.max_tries = g['maximum number of tries']
-        self.try_timeout = g['connection timeout in seconds']
+        # back compat for ssh messaging from task host with cylc <= 5.1.1:
+        self.suite = self.env_map.get('CYLC_SUITE_NAME')
+        if not self.suite:
+            self.suite = self.env_map.get('CYLC_SUITE_REG_NAME')
+            if self.suite:
+                os.environ['CYLC_SUITE_NAME'] = self.suite
+        self.ssh_messaging = (
+                self.env_map.get('CYLC_TASK_SSH_MESSAGING') == 'True')
 
     def load_suite_contact_file( self ):
         # override CYLC_SUITE variables using the contact environment file,
@@ -96,22 +112,7 @@ class message(object):
                 ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
             value = self.env_map.get(key, default)
             setattr(self, attr, value)
-
-        # back compat for ssh messaging from task host with cylc <= 5.1.1:
-        self.suite = self.env_map.get('CYLC_SUITE_NAME')
-        if not self.suite:
-            self.suite = self.env_map.get('CYLC_SUITE_REG_NAME')
-            if self.suite:
-                os.environ['CYLC_SUITE_NAME'] = self.suite
-
-        self.utc = self.env_map.get('CYLC_UTC') == 'True'
-
-        self.ssh_messaging = (
-                self.env_map.get('CYLC_TASK_SSH_MESSAGING') == 'True')
-
-        self.ssh_login_shell = (
-                self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
-            
+           
     def now( self ):
         if self.utc:
             return datetime.utcnow()
@@ -123,13 +124,11 @@ class message(object):
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
         # it is needed, we will end up in this method). 
 
-        suite = self.env_map.get( 'CYLC_SUITE_NAME', None )
-
-        self.pphrase = passphrase( suite, self.owner, self.host,
+        self.pphrase = passphrase( self.suite, self.owner, self.host,
                 verbose=self.verbose ).get( None, None )
 
         import cylc_pyro_client
-        return cylc_pyro_client.client( suite, self.pphrase,
+        return cylc_pyro_client.client( self.suite, self.pphrase,
                 self.owner, self.host, self.try_timeout, self.port,
                 self.verbose ).get_proxy( self.task_id )
 
@@ -193,6 +192,8 @@ class message(object):
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
                     'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
+                    'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
+                    'CYLC_TASK_MSG_RETRY_INTVL',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
                 # (no exception handling here as these variables should
                 # always be present in the task execution environment)
@@ -218,16 +219,16 @@ class message(object):
         itry = 0
         while True:
             itry += 1
-            print '  ', "Try", itry, "of", self.max_tries, "...",  
+            print '  ', "Try", itry, "of", str(self.max_tries), "...",  
             try:
                 # Get a proxy for the remote object and send the message.
                 self.load_suite_contact_file() # might have change between tries
                 self.get_proxy().incoming( self.priority, msg )
             except Exception, x:
                 print "failed:", str(x)
-                if itry == self.max_tries:
+                if itry >= self.max_tries:
                     break
-                print "   retry in", self.retry_seconds, "seconds ..."
+                print "   retry in", str(self.retry_seconds), "seconds ..."
                 sleep( self.retry_seconds )
             else:
                 print "succeeded"
