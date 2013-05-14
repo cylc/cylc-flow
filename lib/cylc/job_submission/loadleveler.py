@@ -27,15 +27,6 @@ class loadleveler( job_submit ):
     COMMAND_TEMPLATE = "llsubmit %s"
     REC_ID = re.compile(r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
 
-    # NOTE: don't use single quotes in job poll and kill template
-    # strings - it interferes with the automatic single quoting used.
-
-    # NOTE: llcancel does not report successful job kill, just this:
-    # "llcancel: Cancel command has been sent to the central manager"
-    JOB_KILL = "llcancel %s"
-    # Use job ID and grep for it, to avoid the llq output header line:
-    JOB_STATUS = "llq -f %%id %%st %s | grep %s | awk \"{print \$2}\""
-
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "# @"
         self.jobconfig['directive connector'] = " = "
@@ -76,16 +67,22 @@ class loadleveler( job_submit ):
 
     def get_job_poll_command( self, jid ):
         # Loadleveler reports many job states, which we simplify to:
-        #  * Running if status is 'R' (running) or 'ST' (starting)
-        #  * Queued if status is 'I' (idle?)
-        #  * Anything else, feed queued or running info to cylc-get-task-status
-        return ( "RUNNING=$( " + self.__class__.JOB_STATUS % ( jid, jid ) + " | egrep \"^(R|ST)$\" > /dev/null && echo true || echo false );"
-            + " QUEUED=$(   " + self.__class__.JOB_STATUS % ( jid, jid ) + " | egrep \"^I$\" > /dev/null && echo true || echo false );"
-            + " cylc-get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING"  )
+        #  * Queued and Running if status is 'R' (running) or 'ST' (starting)
+        #  * Queued (and waiting) if status is 'I' (idle?)
+        cmd = ( "set -e; RUNNING=false; QUEUED=false; "
+                + "llq -f %id %st " + jid + " | grep " + jid + " | awk \"{ print \$2 }\" | egrep \"^(R|ST)$\" > /dev/null 2>&1; "
+                + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
+                + "if ! $QUEUED; then "
+                + "llq -f %id %st " + jid + " | awk \"{ print \$2 }\" | egrep \"^I$\" > /dev/null 2>&1; "
+                + "[[ $? == 0 ]] && QUEUED=true; fi; "
+            + " cylc-get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
+        return cmd
 
     def get_job_kill_command( self, jid ):
-        """construct a command to kill the real job"""
-        return self.JOB_KILL % ( jid )
+        # NOTE: llcancel does not report successful job kill, just this:
+        # "llcancel: Cancel command has been sent to the central manager"
+        cmd = "llcancel " + jid
+        return cmd
 
     def get_id( self, pid, out, err ):
         """Parse "out" for the submit ID."""

@@ -67,11 +67,6 @@ class at( job_submit ):
                 + "if ! $QUEUED; then echo WARNING job gone; exit 0; fi; "
                 + "if ! $RUNNING; then atrm " + jid + "; exit 0; fi; "
                 + "ps aux | grep " + self.jobfile_path + " | grep -v grep | awk \"{print \$2}\" | xargs kill -9" )
-        junk = open( 'foo.sh', 'wb' )
-        junk.write( '#!/usr/bin/bash\n; set -x\n' )
-        junk.write( cmd  )
-        junk.close()
-
         return cmd
 
     def construct_jobfile_submission_command( self ):
