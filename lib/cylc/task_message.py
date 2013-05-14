@@ -26,7 +26,6 @@ from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
-from cylc.global_config import gcfg
 from cylc import cylc_mode
 
 class message(object):
@@ -38,11 +37,6 @@ class message(object):
             self.true_event_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
         else:
             self.true_event_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-        g = gcfg.cfg['task messaging']
-        self.retry_seconds = g['retry interval in seconds']
-        self.max_tries = g['maximum number of tries']
-        self.try_timeout = g['connection timeout in seconds']
 
         self.msg = msg
 
@@ -66,14 +60,26 @@ class message(object):
 
         for attr, key, default in (
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
+                ('retry_seconds', 'CYLC_TASK_MSG_RETRY_INTVL', '(CYLC_TASK_MSG_RETRY_INTVL)'),
+                ('max_tries',     'CYLC_TASK_MSG_MAX_TRIES',   '(CYLC_TASK_MSG_MAX_TRIES)'),
+                ('try_timeout',   'CYLC_TASK_MSG_TIMEOUT',     '(CYLC_TASK_MSG_TIMEOUT)'),
                 ('owner', 'CYLC_SUITE_OWNER', None),
-                ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
-                ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
+                ('host',  'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
+                ('port',  'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
             if self.mode == 'raw':
                 value = env_map.get(key, default)
             else:
                 value = env_map[key]
             setattr(self, attr, value)
+
+        # conversions from string:
+        if self.try_timeout == 'None':
+            self.try_timeout = None
+        try:
+            self.retry_seconds = float( self.retry_seconds )
+            self.max_tries = int( self.max_tries )
+        except:
+            pass
 
         # back compat for ssh messaging from task host with cylc <= 5.1.1:
         self.suite = env_map.get('CYLC_SUITE_NAME')
@@ -157,6 +163,8 @@ class message(object):
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
                     'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
+                    'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
+                    'CYLC_TASK_MSG_RETRY_INTVL',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
                 # (no exception handling here as these variables should
                 # always be present in the task execution environment)
@@ -179,14 +187,18 @@ class message(object):
     def send_pyro( self, msg ):
         print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
         sent = False
-        for itry in range( 1, self.max_tries+1 ):
-            print '  ', "Try", itry, "of", self.max_tries, "...",  
+        itry = 0
+        while True:
+            itry += 1
+            print '  ', "Try", itry, "of", str(self.max_tries), "...",  
             try:
                 # Get a proxy for the remote object and send the message.
                 self.get_proxy().incoming( self.priority, msg )
             except Exception, x:
                 print "failed:", str(x)
-                print "   retry in", self.retry_seconds, "seconds ..."
+                if itry >= self.max_tries:
+                    break
+                print "   retry in", str(self.retry_seconds), "seconds ..."
                 sleep( self.retry_seconds )
             else:
                 print "succeeded"
