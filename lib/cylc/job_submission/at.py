@@ -49,9 +49,9 @@ class at( job_submit ):
         # command must not print to stdout (used by cylc-get-task-status)
         status_file = self.jobfile_path + ".status"
         cmd = ( "set -e; RUNNING=false; QUEUED=false; "
-                + "atq | grep " + jid + " >/dev/null; "
+                + "atq | grep " + jid + " >/dev/null 2>&1; "
                 + "[[ $? == 0 ]] && QUEUED=true;"
-                + "atq | grep " + jid + " | grep = >/dev/null; "
+                + "atq | grep " + jid + " | grep = >/dev/null 2>&1; "
                 + "[[ $? == 0 ]] && RUNNING=true; "
                 + "cylc-get-task-status " + status_file + " $QUEUED $RUNNING"  )
         return cmd
