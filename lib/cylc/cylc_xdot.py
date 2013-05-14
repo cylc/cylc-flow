@@ -249,6 +249,7 @@ class MyDotWindow( xdot.DotWindow ):
             <toolitem action="UnGroup"/>
             <separator name="LandscapeSep"/>
             <toolitem action="Landscape"/>
+            <toolitem action="IgnoreSuicide"/>
             <separator expand="true"/> 
             <toolitem action="Help"/>
         </toolbar>
@@ -268,6 +269,7 @@ class MyDotWindow( xdot.DotWindow ):
         self.orientation = orientation
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
+        self.ignore_suicide = False
 
         gtk.Window.__init__(self)
 
@@ -315,6 +317,9 @@ class MyDotWindow( xdot.DotWindow ):
         ))
         actiongroup.add_toggle_actions((
             ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+        ))
+        actiongroup.add_toggle_actions((
+            ('IgnoreSuicide', gtk.STOCK_CANCEL, None, None, 'Ignore Suicide Triggers', self.on_igsui),
         ))
 
         # Add the actiongroup to the uimanager
@@ -391,8 +396,7 @@ class MyDotWindow( xdot.DotWindow ):
         self.get_graph( ungroup_all=True )
 
     def get_graph( self, group_nodes=[], ungroup_nodes=[], 
-            ungroup_recursive=False, ungroup_all=False, group_all=False, 
-            ignore_suicide=False ):
+            ungroup_recursive=False, ungroup_all=False, group_all=False ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.families_used_in_graph
 
@@ -409,7 +413,7 @@ class MyDotWindow( xdot.DotWindow ):
                 ungroup_nodes=ungroup_nodes, 
                 ungroup_recursive=ungroup_recursive, 
                 group_all=group_all, ungroup_all=ungroup_all,
-                ignore_suicide=ignore_suicide )
+                ignore_suicide=self.ignore_suicide )
 
         graph.graph_attr['rankdir'] = self.orientation
 
@@ -434,6 +438,10 @@ class MyDotWindow( xdot.DotWindow ):
             self.set_orientation( "LR" )  # Left to right ordering of nodes
         else:
             self.set_orientation( "TB" )  # Top to bottom (default) ordering
+
+    def on_igsui( self, toolitem ):
+        self.ignore_suicide = toolitem.get_active()
+        self.get_graph()
 
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
