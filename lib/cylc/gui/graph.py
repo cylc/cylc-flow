@@ -80,12 +80,16 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     fc_hbox.pack_start(stop_entry, True) 
     vbox.pack_start (fc_hbox, True)
 
+    igsui_cb = gtk.CheckButton( "Ignore suicide triggers" )
+    vbox.pack_start( igsui_cb, True )
+
     cancel_button = gtk.Button( "_Close" )
     cancel_button.connect("clicked", lambda x: window.destroy() )
     ok_button = gtk.Button( "_Graph" )
     ok_button.connect(
               "clicked",
               lambda w: graph_suite( reg, warm_rb.get_active(),
+                                     igsui_cb,
                                      outputfile_entry.get_text(),
                                      start_entry.get_text(),
                                      stop_entry.get_text(),
@@ -105,7 +109,7 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     window.show_all()
 
 
-def graph_suite( reg, is_warm, ofile, start, stop, graph_opts,
+def graph_suite( reg, is_warm, igsui_cb, ofile, start, stop, graph_opts,
                  gcapture_windows, tmpdir, template_opts, window=None ):
     """Launch the cylc graph command with some options."""
     options = graph_opts
@@ -134,6 +138,10 @@ def graph_suite( reg, is_warm, ofile, start, stop, graph_opts,
 
     if is_warm:
         options += ' -w '
+
+    if igsui_cb.get_active():
+        options += ' -i '
+
     options += ' ' + reg + ' ' + start + ' ' + stop
     command = "cylc graph --notify-completion " + template_opts + " " + options
     foo = gcapture_tmpfile( command, tmpdir )
