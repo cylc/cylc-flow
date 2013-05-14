@@ -38,19 +38,41 @@ class at( job_submit ):
 
     # NOTE: don't use single quotes in job poll and kill template
     # strings - it interferes with the automatic single quoting used.
-    JOB_RUNNING = "ps -f -u $USER | grep %s | grep -v grep > /dev/null" # % ( jobfile-path )
-    JOB_QUEUED  = "atq | grep \"^%s\" > /dev/null" # % ( job-id )
-    JOB_KILL = "atrm %s 2>&1 | grep 'Warning: deleting running job' && pkill -f -9 %s" # % ( job-id, jobfile-path )
+
+    # atq properties:
+    #   * stdout is "job-num date hour queue username", e.g.:
+    #      1762 Wed May 15 00:20:00 2013 = hilary
+    #   * queue is '=' if running
+    #   
 
     def get_job_poll_command( self, jid ):
-        cmd = ( "RUNNING=$( " + self.__class__.JOB_RUNNING % ( self.jobfile_path ) + " && echo true || echo false );"
-            + " QUEUED=$( " + self.__class__.JOB_QUEUED % ( jid ) + " && echo true || echo false );"
-            + " cylc-get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING"  )
+        # command must not print to stdout (used by cylc-get-task-status)
+        status_file = self.jobfile_path + ".status"
+        cmd = ( "set -e; RUNNING=false; QUEUED=false; "
+                + "atq | grep " + jid + " >/dev/null; "
+                + "[[ $? == 0 ]] && QUEUED=true;"
+                + "atq | grep " + jid + " | grep = >/dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true; "
+                + "cylc-get-task-status " + status_file + " $QUEUED $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, jid ):
-        """construct a command to kill the real job"""
-        return self.JOB_KILL % ( jid, self.jobfile_path )
+        # use atrm if not running, else kill the process
+        # (atrm does not kill running jobs)
+        cmd = ( "set -e; RUNNING=false; QUEUED=false; "
+                + "atq | grep " + jid + " >/dev/null; "
+                + "[[ $? == 0 ]] && QUEUED=true;"
+                + "atq | grep " + jid + " | grep = >/dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true; "
+                + "if ! $QUEUED; then echo WARNING job gone; exit 0; fi; "
+                + "if ! $RUNNING; then atrm " + jid + "; exit 0; fi; "
+                + "ps aux | grep " + self.jobfile_path + " | grep -v grep | awk \"{print \$2}\" | xargs kill -9" )
+        junk = open( 'foo.sh', 'wb' )
+        junk.write( '#!/usr/bin/bash\n; set -x\n' )
+        junk.write( cmd  )
+        junk.close()
+
+        return cmd
 
     def construct_jobfile_submission_command( self ):
         command_template = self.job_submit_command_template

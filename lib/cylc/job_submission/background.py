@@ -48,8 +48,11 @@ class background( job_submit ):
 
     def get_job_poll_command( self, jid ):
         # (there is no external queued status for background jobs)
-        cmd = ( "RUNNING=$( " + self.__class__.JOB_RUNNING % ( jid ) + " && echo true || echo false );"
-            + " cylc-get-task-status " + self.jobfile_path + ".status $RUNNING $RUNNING"  )
+        status_file = self.jobfile_path + ".status"
+        cmd = ( "set -e;"
+                + self.__class__.JOB_RUNNING % ( jid ) + ";"
+                + "if [[ $? == 0 ]]; then RUNNING=true; else RUNNING=false; fi;"
+                + "cylc-get-task-status " + status_file + " $RUNNING $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, pid ):
