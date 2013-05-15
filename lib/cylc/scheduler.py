@@ -458,9 +458,9 @@ class scheduler(object):
         return ( self.config['visualization']['enable live graph movie'],
                  self.config['visualization']['runtime graph']['directory'] ) 
 
-    def info_get_first_parent_ancestors( self ):
+    def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
-        return deepcopy(self.config.get_first_parent_ancestors() )
+        return deepcopy(self.config.get_first_parent_ancestors(pruned) )
 
     def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):
