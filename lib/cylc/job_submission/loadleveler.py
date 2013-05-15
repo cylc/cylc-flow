@@ -102,7 +102,7 @@ class loadleveler( job_submit ):
                 + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
                 + "if ! $QUEUED; then "
                 + "  llq -f %id %st " + jid
-                + "   | awk \"{ print \$2 }\" | egrep \"^I$\" > /dev/null 2>&1; "
+                + "   | awk \"{ print \$2 }\" | egrep \"^I$\" > /dev/null; "
                 + "  [[ $? == 0 ]] && QUEUED=true; "
                 + "fi; "
             + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )

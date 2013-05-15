@@ -95,7 +95,7 @@ class pbs( job_submit ):
                 + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
                 + "if ! $QUEUED; then "
                 + "  qstat -J " + jid + " | grep " + jid
-                + "   | awk \"{ print \$5 }\" | egrep \"^Q$\" > /dev/null 2>&1; "
+                + "   | awk \"{ print \$5 }\" | egrep \"^Q$\" > /dev/null; "
                 + "  [[ $? == 0 ]] && QUEUED=true; "
                 + "fi; "
             + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
