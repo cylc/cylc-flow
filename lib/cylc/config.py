@@ -838,13 +838,7 @@ class config( CylcConfigObj ):
             if ns not in self.runtime['descendants']:
                 tasks.append(ns)
 
-        ancestors = self.runtime['first-parent ancestors']
-        # prune non-task namespaces from ancestors dict
-        pruned_ancestors = {}
-        for item in ancestors:
-            if item not in tasks:
-                continue
-            pruned_ancestors[item] = ancestors[item]
+        pruned_ancestors = self.get_first_parent_ancestors( pruned=True )
         tree = {}
         self.define_inheritance_tree( tree, pruned_ancestors, titles=titles )
         padding = ''
