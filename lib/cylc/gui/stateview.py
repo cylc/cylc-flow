@@ -148,7 +148,7 @@ class tupdater(threading.Thread):
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
         self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
-        self.should_group_families = False
+        self.should_group_families = True
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
@@ -528,7 +528,7 @@ class lupdater(threading.Thread):
         self.quit = False
         self.autoexpand = True
         self.should_hide_headings = False
-        self.should_group_families = False
+        self.should_group_families = True
 
         self.cfg = cfg
         self.theme = theme
@@ -579,9 +579,10 @@ class lupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.ancestors = self.sinfo.get( 'first-parent ancestors' )
+            self.ancestors = self.sinfo.get( 'first-parent ancestors', True )
             self.descendants = self.sinfo.get( 'first-parent descendants' )
-        except:
+        except Exception, x:
+            print str(x)
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
                                                        self.cfg.suite,
@@ -623,14 +624,16 @@ class lupdater(threading.Thread):
         #print "Attempting Update"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.god.get_task_name_list()
+            if not self.should_group_families:
+                self.task_list = self.god.get_task_name_list()
+            else:
+                self.task_list = []
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
 
         if self.should_group_families:
-            self.task_list = []
             for key, val in self.ancestors.items():
                 if key == 'root':
                     continue
