@@ -198,13 +198,23 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
+
         self.FILE.write( r"""
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
 # Define the trap handler
 SIGNALS="EXIT ERR TERM XCPU"
-function HANDLE_TRAP() {
+""")
+
+        if 'ksh' in self.jobconfig['job script shell']:
+            # Korn shell scripts don't have anything after the function name
+            self.FILE.write(r"function HANDLE_TRAP {")
+        else:
+            # but Bourne shell scripts do.
+            self.FILE.write(r"function HANDLE_TRAP() {")
+
+        self.FILE.write( r"""
     local SIGNAL=$1
     echo "Received signal $SIGNAL"
     local S=
