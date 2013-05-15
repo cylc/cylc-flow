@@ -43,14 +43,14 @@ class background( job_submit ):
 
     def get_job_poll_command( self, jid ):
         status_file = self.jobfile_path + ".status"
-        cmd = ( "set -e; RUNNING=false; "
+        cmd = ( "RUNNING=false; "
                 + "ps " + jid + " >/dev/null 2>&1; "
                 + "[[ $? == 0 ]] && RUNNING=true; "
                 + "cylc-get-task-status " + status_file + " $RUNNING $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, pid ):
-        cmd = "set -e; kill -9 " + pid + " >/dev/null 2>&1"
+        cmd = "kill -9 " + pid + " >/dev/null 2>&1"
         return cmd
 
     def construct_jobfile_submission_command( self ):

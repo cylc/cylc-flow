@@ -48,7 +48,7 @@ class at( job_submit ):
     def get_job_poll_command( self, jid ):
         # command must not print to stdout (used by cylc-get-task-status)
         status_file = self.jobfile_path + ".status"
-        cmd = ( "set -e; RUNNING=false; QUEUED=false; "
+        cmd = ( "RUNNING=false; QUEUED=false; "
                 + "atq | grep " + jid + " >/dev/null 2>&1; "
                 + "[[ $? == 0 ]] && QUEUED=true;"
                 + "atq | grep " + jid + " | grep = >/dev/null 2>&1; "
@@ -59,13 +59,13 @@ class at( job_submit ):
     def get_job_kill_command( self, jid ):
         # use atrm if not running, else kill the process
         # (atrm does not kill running jobs)
-        cmd = ( "set -e; RUNNING=false; QUEUED=false; "
+        cmd = ( "RUNNING=false; QUEUED=false; "
                 + "atq | grep " + jid + " >/dev/null; "
                 + "[[ $? == 0 ]] && QUEUED=true;"
                 + "atq | grep " + jid + " | grep = >/dev/null; "
                 + "[[ $? == 0 ]] && RUNNING=true; "
-                + "if ! $QUEUED; then echo WARNING job gone; exit 0; fi; "
-                + "if ! $RUNNING; then atrm " + jid + "; exit 0; fi; "
+                + "! $QUEUED && echo WARNING job not found && exit 0; "
+                + "! $RUNNING && atrm " + jid + " && exit 0; "
                 + "ps aux | grep " + self.jobfile_path + " | grep -v grep | awk \"{print \$2}\" | xargs kill -9" )
         return cmd
 

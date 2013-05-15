@@ -69,7 +69,7 @@ class loadleveler( job_submit ):
         # Loadleveler reports many job states, which we simplify to:
         #  * Queued and Running if status is 'R' (running) or 'ST' (starting)
         #  * Queued (and waiting) if status is 'I' (idle?)
-        cmd = ( "set -e; RUNNING=false; QUEUED=false; "
+        cmd = ( "RUNNING=false; QUEUED=false; "
                 + "llq -f %id %st " + jid + " | grep " + jid + " | awk \"{ print \$2 }\" | egrep \"^(R|ST)$\" > /dev/null 2>&1; "
                 + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
                 + "if ! $QUEUED; then "
