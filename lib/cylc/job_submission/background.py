@@ -77,7 +77,7 @@ class background( job_submit ):
         cmd = ( "RUNNING=false; "
                 + "ps " + pid + " >/dev/null; "
                 + "[[ $? == 0 ]] && RUNNING=true; "
-                + "cylc-get-task-status " + status_file + " $RUNNING $RUNNING"  )
+                + "cylc get-task-status " + status_file + " $RUNNING $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, pid ):

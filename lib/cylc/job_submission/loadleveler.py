@@ -105,7 +105,7 @@ class loadleveler( job_submit ):
                 + "   | awk \"{ print \$2 }\" | egrep \"^I$\" > /dev/null 2>&1; "
                 + "  [[ $? == 0 ]] && QUEUED=true; "
                 + "fi; "
-            + " cylc-get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
+            + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
         return cmd
 
     def get_job_kill_command( self, jid ):

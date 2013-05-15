@@ -81,7 +81,7 @@ class at( job_submit ):
                 + "[[ $? == 0 ]] && QUEUED=true;"
                 + "atq | grep " + jid + " | grep = >/dev/null; "
                 + "[[ $? == 0 ]] && RUNNING=true; "
-                + "cylc-get-task-status " + status_file + " $QUEUED $RUNNING"  )
+                + "cylc get-task-status " + status_file + " $QUEUED $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, jid ):

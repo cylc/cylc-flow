@@ -312,7 +312,7 @@ class poll_and_kill_batcher( job_batcher ):
 
     def item_failed_hook( self, jobinfo ):
         job_batcher.item_failed_hook( self, jobinfo )
-        print jobinfo['err']
+        print >> sys.stderr, jobinfo['err']
         print jobinfo['out']
         itask = jobinfo['data']
         itask.incoming( 'CRITICAL', jobinfo['jtype'] + ' command failed' )

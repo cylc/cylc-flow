@@ -204,6 +204,7 @@ control_commands['depend' ] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity' ] = ['set-verbosity' ]
 control_commands['broadcast'] = [ 'broadcast', 'bcast' ]
+control_commands['get-task-status'] = [ 'get-task-status' ]
 
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
