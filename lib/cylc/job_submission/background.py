@@ -41,19 +41,10 @@ class background( job_submit ):
  
     COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
 
-    def get_job_poll_command( self, jid ):
-        status_file = self.jobfile_path + ".status"
-        cmd = ( "RUNNING=false; "
-                + "ps " + jid + " >/dev/null 2>&1; "
-                + "[[ $? == 0 ]] && RUNNING=true; "
-                + "cylc-get-task-status " + status_file + " $RUNNING $RUNNING"  )
-        return cmd
-
-    def get_job_kill_command( self, pid ):
-        cmd = "kill -9 " + pid + " >/dev/null 2>&1"
-        return cmd
-
     def construct_jobfile_submission_command( self ):
+        """
+        Construct a command to submit this job to run.
+        """
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
@@ -61,7 +52,38 @@ class background( job_submit ):
                                             self.stdout_file,
                                             self.stderr_file )
 
-    def get_id( self, pid, out, err ):
-        # (see commments above on return of PID)
+    def get_id( self, out, err ):
+        """
+        Extract the job process ID from job submission command
+        output. For background jobs the submission command simply
+        echoes the process ID to stdout as described above.
+        """
         return out.strip()
+
+    def get_job_poll_command( self, pid ):
+        """
+        Given the job process ID, return a command string that uses
+        cylc-get-task-status to determine current job status:
+           cylc-get-job-status <QUEUED> <RUNNING>
+        where:
+            QUEUED  = true if job is waiting or running, else false
+            RUNNING = true if job is running, else false
+
+        WARNING: cylc-get-task-status prints a task status message - the
+        final result - to stdout, so any stdout from scripting prior to
+        the call must be dumped to /dev/null.
+        """
+        status_file = self.jobfile_path + ".status"
+        cmd = ( "RUNNING=false; "
+                + "ps " + pid + " >/dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true; "
+                + "cylc-get-task-status " + status_file + " $RUNNING $RUNNING"  )
+        return cmd
+
+    def get_job_kill_command( self, pid ):
+        """
+        Given the job process ID, return a command to kill the job.
+        """
+        cmd = "kill -9 " + pid
+        return cmd
 

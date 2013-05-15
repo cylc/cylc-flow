@@ -232,8 +232,8 @@ class task_batcher( job_batcher ):
         out = jobinfo['out']
         err = jobinfo['err']
         if hasattr(launcher, 'get_id'):
-            # Extract the job submit ID
-            submit_method_id = launcher.get_id(p.pid, out, err)
+            # Extract the job submit ID from submission command output
+            submit_method_id = launcher.get_id( out, err )
             if submit_method_id:
                 itask.incoming('NORMAL', itask.id + ' submit_method_id=' + submit_method_id )
 

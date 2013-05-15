@@ -36,29 +36,61 @@ class at( job_submit ):
     COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now" # % ( jobfile-path, out, err )
     REC_ID = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
 
-    # NOTE: don't use single quotes in job poll and kill template
-    # strings - it interferes with the automatic single quoting used.
-
     # atq properties:
     #   * stdout is "job-num date hour queue username", e.g.:
     #      1762 Wed May 15 00:20:00 2013 = hilary
     #   * queue is '=' if running
     #   
 
+    def construct_jobfile_submission_command( self ):
+        """
+        Construct a command to submit this job to run.
+        """
+        command_template = self.job_submit_command_template
+        if not command_template:
+            command_template = self.__class__.COMMAND_TEMPLATE
+        self.command = command_template % ( self.jobfile_path,
+                                            self.stdout_file,
+                                            self.stderr_file )
+    def get_id( self, out, err ):
+        """
+        Extract the job submit ID from job submission command
+        output. The at scheduler prints the job ID to stderr.
+        """
+        for line in str(err).splitlines():
+            match = self.REC_ID.match(line)
+            if match:
+                return match.group("id")
+
     def get_job_poll_command( self, jid ):
-        # command must not print to stdout (used by cylc-get-task-status)
+        """
+        Given the job submit ID, return a command string that uses
+        cylc-get-task-status to determine current job status:
+           cylc-get-job-status <QUEUED> <RUNNING>
+        where:
+            QUEUED  = true if job is waiting or running, else false
+            RUNNING = true if job is running, else false
+
+        WARNING: cylc-get-task-status prints a task status message - the
+        final result - to stdout, so any stdout from scripting prior to
+        the call must be dumped to /dev/null.
+        """
         status_file = self.jobfile_path + ".status"
         cmd = ( "RUNNING=false; QUEUED=false; "
-                + "atq | grep " + jid + " >/dev/null 2>&1; "
+                + "atq | grep " + jid + " >/dev/null; "
                 + "[[ $? == 0 ]] && QUEUED=true;"
-                + "atq | grep " + jid + " | grep = >/dev/null 2>&1; "
+                + "atq | grep " + jid + " | grep = >/dev/null; "
                 + "[[ $? == 0 ]] && RUNNING=true; "
                 + "cylc-get-task-status " + status_file + " $QUEUED $RUNNING"  )
         return cmd
 
     def get_job_kill_command( self, jid ):
-        # use atrm if not running, else kill the process
-        # (atrm does not kill running jobs)
+        """
+        Given the job submit ID, return a command to kill the job.
+        The atrm command removes waiting jobs from the queue but it
+        does not kill jobs that are already running, so we have to
+        determine the job process ID by searching in 'ps' output.
+        """
         cmd = ( "RUNNING=false; QUEUED=false; "
                 + "atq | grep " + jid + " >/dev/null; "
                 + "[[ $? == 0 ]] && QUEUED=true;"
@@ -68,18 +100,4 @@ class at( job_submit ):
                 + "! $RUNNING && atrm " + jid + " && exit 0; "
                 + "ps aux | grep " + self.jobfile_path + " | grep -v grep | awk \"{print \$2}\" | xargs kill -9" )
         return cmd
-
-    def construct_jobfile_submission_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path,
-                                            self.stdout_file,
-                                            self.stderr_file )
-    def get_id( self, pid, out, err ):
-        """Parse "err" for the at submit ID."""
-        for line in str(err).splitlines():
-            match = self.REC_ID.match(line)
-            if match:
-                return match.group("id")
 

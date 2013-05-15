@@ -608,7 +608,6 @@ class task( object ):
             cmd1 = ['ssh', '-oBatchMode=yes', self.user_at_host, 'mkdir', '-p', r_suite_run_dir]
             cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
             for cmd in [cmd1,cmd2]:
-                print cmd
                 if subprocess.call(cmd): # return non-zero
                     raise Exception("ERROR: " + str(cmd))
             self.__class__.suite_contact_env_hosts.append( self.user_at_host )
@@ -1219,7 +1218,6 @@ class task( object ):
                     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
-        self.log( 'NORMAL', "Polling for live status" )
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
 
     def kill( self ):
