@@ -727,6 +727,8 @@ class task( object ):
                 datetime.timedelta( seconds=self.polling_interval )
         if datetime.datetime.now() > timeout:
             self.poll()
+            # reset the poll timer to poll again after the same interval 
+            # TODO - document this.
             self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):

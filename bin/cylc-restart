@@ -35,24 +35,17 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [OPTIONS] ARGS
 
-Restart a cylc suite from a previous recorded state. To start from
-scratch see the 'cylc run' command.
+Restart a cylc suite from a previous state. To start from scratch see
+the 'cylc run' command.
 
-Suites run in daemon mode unless -n/--non-daemon is used.
+Suites run in daemon mode unless -n/--non-daemon or --debug is used.
 
 The most recent previous state is loaded by default, but other states
 can be specified on the command line (cylc writes special state dumps
 and logs their filenames before actioning intervention commands).
 
-On restart the status of tasks recorded as 'submitted' or 'running' will
-be updated to reflect their actual progress while the suite was down.
-
-NOTE: suites can be started on remote hosts or other user accounts if
-passwordless ssh is set up. The ssh tunnel will remain open to receive
-the suite stdout and stderr streams. To control the running suite from
-the local host requires the suite passphrase to be installed.  Both
-/etc/profile and $HOME/.profile, if they exist, will be sourced on the
-remote host before starting the suite."""
+Tasks recorded as 'submitted' or 'running' will be polled to determine
+where they got to while the suite was down."""
 
         self.parser = cop( usage, jset=True, argdoc=[("REG", "Suite name"),
    ( "[FILE]", """Optional state dump file, assumed to reside in the
