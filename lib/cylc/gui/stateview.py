@@ -582,7 +582,7 @@ class lupdater(threading.Thread):
             self.ancestors = self.sinfo.get( 'first-parent ancestors', True )
             self.descendants = self.sinfo.get( 'first-parent descendants' )
         except Exception, x:
-            print str(x)
+            #print str(x) # (port file not found, if suite not running)
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
                                                        self.cfg.suite,
