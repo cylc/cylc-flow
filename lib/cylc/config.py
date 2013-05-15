@@ -761,8 +761,17 @@ class config( CylcConfigObj ):
     def get_parent_lists( self ):
         return self.runtime['parents']
 
-    def get_first_parent_ancestors( self ):
-        return self.runtime['first-parent ancestors']
+    def get_first_parent_ancestors( self, pruned=False ):
+        if pruned:
+            # prune non-task namespaces from ancestors dict
+            pruned_ancestors = {}
+            for key,val in self.runtime['first-parent ancestors'].items():
+                if key not in self.taskdefs:
+                    continue
+                pruned_ancestors[key] = val
+            return pruned_ancestors
+        else:
+            return self.runtime['first-parent ancestors']
 
     def get_linearized_ancestors( self ):
         return self.runtime['linearized ancestors']
