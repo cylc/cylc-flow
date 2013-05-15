@@ -18,7 +18,7 @@
 
 usage() {
     cat <<eof
-USAGE: cylc [admin] test-battery [options] [TOPDIR]
+USAGE: cylc [admin] test-battery [OPTIONS] [TOPDIR]
 
 Run a battery of self-diagnosing test-suites held under TOPDIR, which
 defaults to \$CYLC_DIR/tests/.
