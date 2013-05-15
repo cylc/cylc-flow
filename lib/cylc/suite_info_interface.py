@@ -28,21 +28,12 @@ from owner import user
 Any interaction that alters suite state in any way must go via the
 indirect thread-safe suite command interface queue."""
 
-#class result:
-#    """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
-#    def __init__( self, success, reason="Action succeeded", value=None ):
-#        self.success = success
-#        self.reason = reason
-#        self.value = value
-
 class info_interface( Pyro.core.ObjBase ):
     def __init__( self, info_commands ):
         Pyro.core.ObjBase.__init__(self)
         self.commands = info_commands
 
     def get( self, descrip, *args ):
-#        # TODO - HOW WHAT TO RETURN IN CASE OF UNKNOWN COMMAND
-#        if descrip not in self.commands:
-#            return result( False, reason="Unknown command" )
+        # TODO - WHAT TO RETURN IN CASE OF UNKNOWN COMMAND?
         return self.commands[ descrip ]( *args )
 
