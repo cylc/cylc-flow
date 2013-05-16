@@ -204,10 +204,10 @@ class jobfile(object):
 set -u # Fail when using an undefined variable
 # Define the trap handler
 SIGNALS="EXIT ERR TERM XCPU"
-function HANDLE_TRAP() {
-    local SIGNAL=$1
+function HANDLE_TRAP {
+    typeset SIGNAL=$1
     echo "Received signal $SIGNAL"
-    local S=
+    typeset S=
     for S in $SIGNALS; do
         trap "" $S
     done
