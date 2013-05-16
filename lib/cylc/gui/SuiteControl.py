@@ -1104,13 +1104,14 @@ The Cylc Suite Engine.
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id, task_is_family )
 
         # TODO - grey out poll and kill if the task is not 'submitted' or 'running'
-        poll_item = gtk.ImageMenuItem( 'poll' )
+        # (this requires getting the task state from the underlying data model...)
+        poll_item = gtk.ImageMenuItem( 'Poll' )
         img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
         poll_item.set_image(img)
         items.append( poll_item )
         poll_item.connect( 'activate', self.poll_task, task_id, task_is_family )
 
-        kill_item = gtk.ImageMenuItem( 'kill' )
+        kill_item = gtk.ImageMenuItem( 'Kill' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CANCEL, gtk.ICON_SIZE_MENU )
         kill_item.set_image(img)
         items.append( kill_item )
@@ -1775,7 +1776,6 @@ shown here in the state they were in at the time of triggering.''' )
 
         mode_live_rb.set_active(True)
         vbox.pack_start( box )
-
 
         nvbox = gtk.VBox()
         nhbox = gtk.HBox()
