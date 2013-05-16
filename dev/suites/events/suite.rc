@@ -1,0 +1,58 @@
+#!jinja2
+
+title = "test all event hooks"
+
+# simple generic handler in the suite bin dir:
+{% set HANDLER = "handler.sh" %}
+{% set EVNTLOG = "$CYLC_SUITE_LOG_DIR/events.log" %}
+
+[cylc]
+    [[environment]]
+        EVNTLOG = {{ EVNTLOG }}
+[scheduling]
+    [[dependencies]]
+        graph = "prep => ALL"
+
+[runtime]
+    [[root]]
+        extra log files = {{ EVNTLOG }}
+    [[prep]]
+        command scripting = """
+printf '%15s' EVENT > {{ EVNTLOG }}
+echo -e "\tSUITE\tTASK\t\"MSG\"" >> {{ EVNTLOG}}"""
+    [[ALL]]
+    [[foo]]
+        # submit timeout, submitted, started, timeout, warning, succeeded 
+        inherit = ALL
+        command scripting = "sleep 10; cylc task message -p WARNING 'This is a warning'; sleep 10"
+        [[[job submission]]]
+            method = at
+            command template = 'echo "%s 1>%s 2>%s" | at now + 1 minutes'         
+        [[[event hooks]]]
+            submit-timeout handler = {{ HANDLER }}
+            submitted handler = {{ HANDLER }}
+            started handler = {{ HANDLER }}
+            succeeded handler = {{ HANDLER }}
+            warning handler = {{ HANDLER }}
+            timeout handler = {{ HANDLER }}
+            submit-timeout = 0.1
+            timeout = 0.1
+
+    [[bar]]
+        # submit-retry and submit-failed
+        inherit = ALL
+        [[[event hooks]]]
+            submit-failed handler = {{ HANDLER }}
+            submit-retry handler  = {{ HANDLER }}
+        [[[job submission]]]
+            retry delays = 0.1
+        [[[remote]]]
+            host = NOHOST
+
+     [[baz]]
+        # failed
+        inherit = ALL
+        command scripting = "false"
+        [[[event hooks]]]
+            failed handler = {{ HANDLER }}
+            
