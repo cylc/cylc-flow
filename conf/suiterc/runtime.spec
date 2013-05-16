@@ -81,16 +81,16 @@
             succeeded handler = string( default=None )
             failed handler = string( default=None )
 
-            submission failed handler = string( default=None )
+            submit-failed handler = string( default=None )
             warning handler = string( default=None )
             retry handler = string( default=None )
-            submission retry handler = string( default=None )
+            submit-retry handler = string( default=None )
 
-            submission timeout handler = string( default=None )
-            submission timeout = float( default=None )
+            submit-timeout handler = string( default=None )
+            submit-timeout = float( default=None )
 
-            execution timeout handler = string( default=None )
-            execution timeout = float( default=None )
+            timeout handler = string( default=None )
+            timeout = float( default=None )
 
             reset timer = boolean( default=False )
 
@@ -100,5 +100,4 @@
             __many__ = string
         [[[outputs]]]
             __many__ = string
-
 

@@ -13,6 +13,7 @@
         command scripting = """
 sleep 5
 cylc message -p WARNING "WARNING - this is just a test!"
+sleep 5
 """
         [[[remote]]]
             # divorce us from the cylc server environment
@@ -23,11 +24,11 @@ cylc message -p WARNING "WARNING - this is just a test!"
             succeeded handler = handler.sh
             warning handler = handler.sh
 
-            submission timeout handler = handler.sh
+            submit-timeout handler = handler.sh
             # submission timeout after about 1 sec
-            submission timeout = 0.01
+            submit-timeout = 0.01
 
-            execution timeout handler = handler.sh
+            timeout handler = handler.sh
             # execution timeout after about 1 sec
-            execution timeout = 0.01 
+            timeout = 0.01 
 

@@ -59,8 +59,6 @@ class task( object ):
     #  3) EXECUTION TRY NUMBER increments only when task execution fails,
     # if execution retries are configured; and is passed to task
     # environments to allow changed behaviour after previous failures.
-    # 
-    # Currently on manual re-triggering...
 
     clock = None
     intercycle = False
@@ -439,14 +437,14 @@ class task( object ):
                 'failed'    : rtconfig['event hooks']['failed handler'],
                 'warning'   : rtconfig['event hooks']['warning handler'],
                 'retry'     : rtconfig['event hooks']['retry handler'],
-                'submission retry'   : rtconfig['event hooks']['submission retry handler'],
-                'submission failed'  : rtconfig['event hooks']['submission failed handler'],
-                'submission timeout' : rtconfig['event hooks']['submission timeout handler'],
-                'execution timeout'  : rtconfig['event hooks']['execution timeout handler']
+                'submission retry'   : rtconfig['event hooks']['submit-retry handler'],
+                'submission failed'  : rtconfig['event hooks']['submit-failed handler'],
+                'submission timeout' : rtconfig['event hooks']['submit-timeout handler'],
+                'execution timeout'  : rtconfig['event hooks']['timeout handler']
                 }
             self.timeouts = {
-                'submission' : rtconfig['event hooks']['submission timeout'],
-                'execution'  : rtconfig['event hooks']['execution timeout']
+                'submission' : rtconfig['event hooks']['submit-timeout'],
+                'execution'  : rtconfig['event hooks']['timeout']
                 }
             self.reset_timer = rtconfig['event hooks']['reset timer']
         else:
@@ -656,8 +654,8 @@ class task( object ):
         if current_time > cutoff:
             msg = 'task submitted ' + str(timeout) + ' minutes ago, but has not started'
             self.log( 'WARNING', msg )
-            self.log( 'NORMAL', "Queueing submission_timeout event handler" )
-            self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
+            self.log( 'NORMAL', "Queueing submit-timeout event handler" )
+            self.__class__.event_queue.put( ('submit-timeout', handler, self.id, msg) )
             self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -680,12 +678,12 @@ class task( object ):
         if current_time > cutoff:
             if self.reset_timer:
                 # the timer is being re-started by incoming messages
-                msg = 'last message ' + str(timeout) + ' minutes ago, but has not succeeded'
+                msg = 'last message ' + str(timeout) + ' minutes ago, but has not finished'
             else:
-                msg = 'task started ' + str(timeout) + ' minutes ago, but has not succeeded'
+                msg = 'task started ' + str(timeout) + ' minutes ago, but has not finished'
             self.log( 'WARNING', msg )
-            self.log( 'NORMAL', "Queueing execution_timeout event handler" )
-            self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
+            self.log( 'NORMAL', "Queueing timeout event handler" )
+            self.__class__.event_queue.put( ('timeout', handler, self.id, msg) )
             self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -840,11 +838,12 @@ class task( object ):
                 self.record_db_event(event="submission failed" )
                 handler = self.event_handlers['submission failed']
                 if handler:
-                    self.log( 'NORMAL', "Queueing submission_failed event handler" )
-                    self.__class__.event_queue.put( ('submission_failed', handler, self.id,'') )
+                    self.log( 'NORMAL', "Queueing submit-failed event handler" )
+                    self.__class__.event_queue.put( ('submit-failed', handler, self.id,'task submit failed') )
             else:
                 # There is a retry lined up
-                self.log( "NORMAL", "Setting submission retry delay: " + str(self.sub_retry_delay) +  " minutes" )
+                msg = "task submit failed, retrying in " + str(self.sub_retry_delay) +  " minutes"
+                self.log( "NORMAL", msg )
                 self.sub_retry_delay_timer_start = task.clock.get_datetime()
                 self.sub_try_number += 1
                 self.state.set_status( 'retrying' )
@@ -855,8 +854,8 @@ class task( object ):
                 # Handle submission retry events
                 handler = self.event_handlers['submission retry']
                 if handler:
-                    self.log( 'NORMAL', "Queueing submission retry event handler" )
-                    self.__class__.event_queue.put( ('submission_retry', handler, self.id, 'task retrying') )
+                    self.log( 'NORMAL', "Queueing submit-retry event handler" )
+                    self.__class__.event_queue.put( ('submit-retry', handler, self.id, msg ))
  
         elif content == 'started':
             # Received a 'task started' message
@@ -915,10 +914,11 @@ class task( object ):
                 handler = self.event_handlers['failed']
                 if handler:
                     self.log( 'NORMAL', "Queueing failed event handler" )
-                    self.__class__.event_queue.put( ('execution failed', handler, self.id, '') )
+                    self.__class__.event_queue.put( ('failed', handler, self.id, 'task failed') )
             else:
                 # There is a retry lined up
-                self.log( "NORMAL", "Setting retry delay: " + str(self.retry_delay) +  " minutes" )
+                msg = "task failed, retrying in " + str(self.retry_delay) + " minutes" 
+                self.log( "NORMAL", msg )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
@@ -930,7 +930,7 @@ class task( object ):
                 handler = self.event_handlers['retry']
                 if handler:
                     self.log( 'NORMAL', "Queueing retry event handler" )
-                    self.__class__.event_queue.put( ('retry', handler, self.id, 'task retrying') )
+                    self.__class__.event_queue.put( ('retry', handler, self.id, msg ))
 
         elif content.startswith("Task job script received signal"):
             # capture and record signals sent to task proxy

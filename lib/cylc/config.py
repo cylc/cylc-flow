@@ -83,6 +83,7 @@ def coerce_runtime_values( rdict ):
         'inherit',
         'retry delays',
         'extra log files',
+        ( 'job submission', 'retry delays' ),
         ( 'simulation mode', 'run time range' ) ]:
         try:
             if isinstance( item, tuple ):
@@ -114,8 +115,8 @@ def coerce_runtime_values( rdict ):
 
     # coerce float values from string
     for item in [
-            ('event hooks', 'submission timeout' ),
-            ('event hooks', 'execution timeout' ) ]:
+            ('event hooks', 'submit-timeout' ),
+            ('event hooks', 'timeout' ) ]:
         try:
             if isinstance( item, tuple ):
                 rdict[item[0]][item[1]] = str2float( rdict[item[0]][item[1]] )

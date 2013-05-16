@@ -36,8 +36,8 @@ if [[ $# < 4 ]]; then
 fi
 
 EVENT=$1      # e.g. "failed"
-SUITE=$2      # registered name of the suite
-TASKID=$3     # name of the task 
+SUITE=$2      # suite name
+TASKID=$3     # task ID
 MESSAGE="$4"  # quotes required (message contains spaces)
 
 MAIL_SUBJECT="!!cylc alert!! suite $SUITE task $TASKID $EVENT" 
@@ -48,3 +48,4 @@ MESSAGE: $MESSAGE"
 
 echo "cylc hook email-task: Sending email to $MAIL_ADDRESS"
 echo "$MAIL_BODY" | mail -s "$MAIL_SUBJECT" $MAIL_ADDRESS
+
