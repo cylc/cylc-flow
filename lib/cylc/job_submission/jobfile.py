@@ -198,6 +198,10 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
+        """Note that all job-file scripting must be bash- and
+        ksh-compatible, hence use of 'typeset' below instead of the more
+        sensible but bash-specific 'local'."""
+
         self.FILE.write( r"""
 
 # SET ERROR TRAPPING:
