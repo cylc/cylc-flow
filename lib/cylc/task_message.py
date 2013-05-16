@@ -44,6 +44,7 @@ class message(object):
 
         # set some instance variables 
         for attr, key, default in (
+                ('suite', 'CYLC_SUITE_NAME', '(CYLC_SUITE_NAME)'),
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
                 ('retry_seconds', 'CYLC_TASK_MSG_RETRY_INTVL', '(CYLC_TASK_MSG_RETRY_INTVL)'),
                 ('max_tries',     'CYLC_TASK_MSG_MAX_TRIES',   '(CYLC_TASK_MSG_MAX_TRIES)'),
@@ -87,15 +88,6 @@ class message(object):
 
         self.ssh_login_shell = (
                 self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
-
-        # back compat for ssh messaging from task host with cylc <= 5.1.1:
-        self.suite = self.env_map.get('CYLC_SUITE_NAME')
-        if not self.suite:
-            self.suite = self.env_map.get('CYLC_SUITE_REG_NAME')
-            if self.suite:
-                os.environ['CYLC_SUITE_NAME'] = self.suite
-        self.ssh_messaging = (
-                self.env_map.get('CYLC_TASK_SSH_MESSAGING') == 'True')
 
     def load_suite_contact_file( self ):
         # override CYLC_SUITE variables using the contact environment file,
