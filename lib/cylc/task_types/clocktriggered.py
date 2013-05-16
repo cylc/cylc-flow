@@ -33,12 +33,7 @@ class clocktriggered(object):
     def get_real_time_delay( self ):
         return self.real_time_delay
 
-    def set_trigger_now( self, now=False ):
-        self.trigger_now = now
-
     def start_time_reached( self ):
-        if self.trigger_now:
-            return True
         reached = False
         # check current time against expected start time
         rt = ct( self.c_time ).get_datetime()
@@ -49,6 +44,8 @@ class clocktriggered(object):
         return reached
 
     def ready_to_run( self ):
+        if self.trigger_now():
+            return True
         # not ready unless delayed start time is up too.
         ready = False
         if self.state.is_currently('queued') or \

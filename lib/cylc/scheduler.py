@@ -1153,11 +1153,6 @@ class scheduler(object):
                 self.set_suite_timer()
 
         elif self.waiting_clocktriggered_task_ready():
-            # This actually returns True if ANY task is ready to run,
-            # not just clock-triggered tasks (but this should not matter).
-            # For a clock-triggered task, this means its time offset is
-            # up AND its prerequisites are satisfied; it won't result
-            # in multiple passes through the main loop.
             process = True
 
         ##if not process:
@@ -1806,10 +1801,9 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
                 self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-                itask.log( "NORMAL", "triggering now" )
+                itask.log( "NORMAL", "manual trigger now" )
                 itask.reset_state_ready()
-                if itask.is_clock_triggered():
-                    itask.set_trigger_now(True)
+                itask.manual_trigger = True
 
     def get_matching_tasks( self, name, is_family=False ):
         """name can be a task or family name, or a regex to match
@@ -1997,11 +1991,10 @@ class scheduler(object):
             itask.check_execution_timeout()
 
     def waiting_clocktriggered_task_ready( self ):
-        # This method actually returns True if ANY task is ready to run,
-        # not just clocktriggered tasks. However, this should not be a problem.
         result = False
         for itask in self.pool.get_tasks():
-            #print itask.id
+            if not itask.is_clock_triggered():
+                continue
             if itask.ready_to_run():
                 result = True
                 break

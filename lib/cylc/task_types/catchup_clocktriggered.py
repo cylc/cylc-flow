@@ -61,6 +61,8 @@ class catchup_clocktriggered( clocktriggered ):
         clocktriggered.__init__( self )
 
     def ready_to_run( self ):
+        if self.trigger_now():
+            return True
         # ready IF waiting AND all prerequisites satisfied AND if my
         # delayed start time is up.
         ready = False
