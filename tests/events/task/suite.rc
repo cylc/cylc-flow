@@ -1,34 +1,70 @@
+#!jinja2
+
+title = "test all event hooks"
+
+# simple generic handler in the suite bin dir:
+{% set HANDLER = "handler.sh" %}
+{% set EVNTLOG = "$CYLC_SUITE_LOG_DIR/events.log" %}
+
 [cylc]
+    [[environment]]
+        EVNTLOG = {{ EVNTLOG }}
     [[reference test]]
         live mode suite timeout = 0.5
         suite shutdown event handler = log-check.sh
-    
+        expected task failures = bar.1, baz.1
+ 
 [scheduling]
     [[dependencies]]
-        graph = "foo"
+        graph = """
+   prep => foo & bar & baz
+      bar:submit-fail => !bar
+        baz:fail => !bar & !baz
+                """
 [runtime]
-    [[foo]]
-        # stay in 'submitted' state for 5 secs:
-        initial scripting = "sleep 5" 
+    [[root]]
+        # make the event handler log available to gcylc:
+        extra log files = {{ EVNTLOG }}
+
+    [[prep]]
         command scripting = """
-sleep 5
-cylc message -p WARNING "WARNING - this is just a test!"
-sleep 5
-"""
-        [[[remote]]]
-            # divorce us from the cylc server environment
-            host = localhost
+printf '%15s' EVENT > {{ EVNTLOG }}
+echo -e "\tTASK\t\"MSG\"" >> {{ EVNTLOG}}"""
+
+    [[foo]]
+        # timeout, retry, warning, succeeded 
+        retry delays = 0.05
+        command scripting = """
+if [[ $CYLC_TASK_TRY_NUMBER == 1 ]]; then
+    false
+else
+    sleep 5; cylc task message -p WARNING 'This is a warning'
+fi"""
         [[[event hooks]]]
-            submitted handler = handler.sh
-            started handler = handler.sh
-            succeeded handler = handler.sh
-            warning handler = handler.sh
+            succeeded handler = {{ HANDLER }}
+            warning handler = {{ HANDLER }}
+            timeout handler = {{ HANDLER }}
+            retry handler = {{ HANDLER }}
+            timeout = 0.05
 
-            submit-timeout handler = handler.sh
-            # submission timeout after about 1 sec
-            submit-timeout = 0.01
+    [[bar]]
+        # submit-retry and submit-failed
+        [[[event hooks]]]
+            submit-failed handler = {{ HANDLER }}
+            submit-retry handler = {{ HANDLER }}
+        [[[job submission]]]
+            retry delays = 0.05
+        [[[remote]]]
+            host = NOHOST
 
-            timeout handler = handler.sh
-            # execution timeout after about 1 sec
-            timeout = 0.01 
+     [[baz]]
+        # submitted, submit-timeout, started, failed
+        initial scripting = "sleep 5"
+        command scripting = "false"
+        [[[event hooks]]]
+            submit-timeout handler = {{ HANDLER }}
+            submitted handler = {{ HANDLER }}
+            started handler = {{ HANDLER }}
+            failed handler = {{ HANDLER }}
+            submit-timeout = 0.05
 
