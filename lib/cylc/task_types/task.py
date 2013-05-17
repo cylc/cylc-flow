@@ -291,7 +291,7 @@ class task( object ):
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
-        self.record_db_event(event="reset to waiting")
+        self.record_db_event(event="reset to ready")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
@@ -868,7 +868,7 @@ class task( object ):
             flags.pflag = True
             self.state.set_status( 'running' )
             self.record_db_update("task_states", self.name, self.c_time, status="running")
-            self.record_db_event(event="execution started" )
+            self.record_db_event(event="started" )
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
 
@@ -891,7 +891,7 @@ class task( object ):
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
             self.state.set_status( 'succeeded' )
             self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
-            self.record_db_event(event="execution succeeded" )
+            self.record_db_event(event="succeeded" )
             handler = self.event_handlers['succeeded']
             if handler:
                 self.log( 'NORMAL', "Queueing succeeded event handler" )
@@ -916,7 +916,7 @@ class task( object ):
                 self.outputs.set_completed( message )
                 self.state.set_status( 'failed' )
                 self.record_db_update("task_states", self.name, self.c_time, status="failed")
-                self.record_db_event(event="execution failed" )
+                self.record_db_event(event="failed" )
                 handler = self.event_handlers['failed']
                 if handler:
                     self.log( 'NORMAL', "Queueing failed event handler" )
@@ -929,7 +929,7 @@ class task( object ):
                 self.try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="execution failed", message="retrying in " + str( self.retry_delay) )
+                self.record_db_event(event="failed", message="retrying in " + str( self.retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle retry events
