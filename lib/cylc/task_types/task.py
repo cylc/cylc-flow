@@ -280,6 +280,9 @@ class task( object ):
         failed_msg = self.id + " failed"
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
+        failed_msg = self.id + "submit-failed"
+        if self.outputs.exists(failed_msg):
+            self.outputs.remove(failed_msg)
 
     def turn_off_timeouts( self ):
         self.submission_timer_start = None
@@ -796,7 +799,7 @@ class task( object ):
             # Not currently doing anything other than logging this.
             pass
 
-        elif content == 'submission succeeded':
+        elif content == 'submitted':
             # (A fake task message from the job submission thread).
             # The job submission command returned success status.
 
@@ -814,7 +817,7 @@ class task( object ):
                 self.submission_timer_start = None
 
             self.record_db_update("task_states", self.name, self.c_time, status="submitted")
-            self.record_db_event(event="submission succeeded" )
+            self.record_db_event(event="submitted" )
             handler = self.event_handlers['submitted']
             if handler:
                 self.log( 'NORMAL', "Queueing submitted event handler" )
@@ -826,16 +829,19 @@ class task( object ):
             submit_method_id = content[len('submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time, submit_method_id=submit_method_id)
                                   
-        elif content == 'submission failed':
+        elif content == 'submit-failed':
             # (a fake task message from the job submission thread)
             try:
                 # Is there a retry lined up for this task?
                 self.sub_retry_delay = float(self.sub_retry_delays.popleft())
             except IndexError:
                 # There is no submission retry lined up: definitive failure.
+                flags.pflag = True
+                self.outputs.add( message )
+                self.outputs.set_completed( message )
                 self.state.set_status( 'submit-failed' )
                 self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
-                self.record_db_event(event="submission failed" )
+                self.record_db_event(event="submit-failed" )
                 handler = self.event_handlers['submission failed']
                 if handler:
                     self.log( 'NORMAL', "Queueing submit-failed event handler" )
@@ -848,7 +854,7 @@ class task( object ):
                 self.sub_try_number += 1
                 self.state.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="submission failed", message="retrying in " + str(self.sub_retry_delay) )
+                self.record_db_event(event="submit-failed", message="retrying in " + str(self.sub_retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle submission retry events
