@@ -83,6 +83,7 @@ def coerce_runtime_values( rdict ):
         'inherit',
         'retry delays',
         'extra log files',
+        ( 'job submission', 'retry delays' ),
         ( 'simulation mode', 'run time range' ) ]:
         try:
             if isinstance( item, tuple ):
@@ -114,8 +115,8 @@ def coerce_runtime_values( rdict ):
 
     # coerce float values from string
     for item in [
-            ('event hooks', 'submission timeout' ),
-            ('event hooks', 'execution timeout' ) ]:
+            ('event hooks', 'submit-timeout' ),
+            ('event hooks', 'timeout' ) ]:
         try:
             if isinstance( item, tuple ):
                 rdict[item[0]][item[1]] = str2float( rdict[item[0]][item[1]] )
@@ -164,6 +165,10 @@ class config( CylcConfigObj ):
         self.async_repeating_tasks = []
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
+
+        self.upgrades = [
+                ( '5.3.0', self.upgrade_5_3_0 ) ]
+        self.deprecation_warnings = {}
 
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
@@ -238,6 +243,14 @@ class config( CylcConfigObj ):
             CylcConfigObj.__init__( self, suiterc, interpolation=False )
         except ConfigObjError, x:
             raise SuiteConfigError, x
+
+        # on-the-fly backward compatibility translations
+        for vn,upgr in self.upgrades:
+            warnings = upgr( self )
+            if warnings:
+                self.deprecation_warnings[vn] = warnings
+        if self.validation:
+            self.print_deprecation_warnings()
 
         # now validate and load defaults for each section in turn
         # (except [runtime] - see below).
@@ -442,6 +455,56 @@ class config( CylcConfigObj ):
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
+
+    def upgrade_5_3_0( self, cfg ):
+        """Upgrade methods should upgrade to the latest (not next)
+        version; then if we run them from oldest to newest we will avoid
+        generating multiple warnings for items that changed several times.
+
+        Upgrade methods are handed sparse cfg structures - i.e. just
+        what is set in the file - so don't assume the presence of any
+        items. It is assumed that the cfgspec will always be up to date.
+        """
+
+        warnings = []
+
+        # task event hook name changes
+        try:
+            for ns in cfg['runtime']:
+                for o_item,n_item in [
+                    ( 'submission failed handler', 'submit-failed handler' ),
+                    ( 'submission failed handler', 'submit-failed handler' ),
+                    ( 'submission timeout handler', 'submit-timeout handler' ),
+                    ( 'submission timeout', 'submit-timeout' ),
+                    ( 'execution timeout handler', 'timeout handler' ),
+                    ( 'execution timeout', 'timeout' ) ]:
+                    try:
+                        old = cfg['runtime'][ns]['event hooks'][o_item]
+                    except:
+                        pass
+                    else:
+                        warnings.append( "[runtime][" + ns + "][event hooks]" + o_item + " -> [runtime][" + ns + "][event hooks]" + n_item  )
+                        del cfg['runtime'][ns]['event hooks'][o_item]
+                        cfg['runtime'][ns]['event hooks'][n_item] = old
+        except:
+            # no 'runtime' section defined
+            pass
+
+        return warnings
+
+    def print_deprecation_warnings( self ):
+        if not self.deprecation_warnings:
+            return
+
+        print >> sys.stderr, """
+*** SUITE DEFINITION DEPRECATION WARNING ***
+Some translations were performed on the fly."""
+        if self.deprecation_warnings:
+            print >> sys.stderr, "*** Please upgrade your suite definition"
+        for vn, warnings in self.deprecation_warnings.items():
+            for w in warnings:
+                print >> sys.stderr, " * (" + vn + ")", w
+        print
 
     def check_env( self ):
         # check environment variables now to avoid checking inherited
@@ -874,7 +937,13 @@ class config( CylcConfigObj ):
                 trig.set_special( self['runtime'][task_name]['outputs'][output_name] )
             except KeyError:
                 # There is no matching output defined under the task runtime section 
-                if output_name == 'fail':
+                if output_name == 'submit':
+                    # OK, task:submit
+                    trig.set_type('submitted' )
+                elif output_name == 'submit-fail':
+                    # OK, task:submit-fail
+                    trig.set_type('submit-failed' )
+                elif output_name == 'fail':
                     # OK, task:fail
                     trig.set_type('failed' )
                 elif output_name == 'start':
@@ -1139,7 +1208,7 @@ class config( CylcConfigObj ):
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
+            for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
 

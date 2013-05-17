@@ -36,7 +36,7 @@ class combo_logviewer( logviewer ):
         logviewer.create_gui_panel( self )
         
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'stdout / stderr' ) 
+        combobox.append_text( 'Files' ) 
         for file in self.file_list:
             combobox.append_text( os.path.basename( file ) )
 

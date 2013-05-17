@@ -1416,13 +1416,13 @@ class scheduler(object):
     def get_failed_tasks( self ):
         failed = []
         for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed'):
+            if itask.state.is_currently('failed', 'submit-failed' ):
                 failed.append( itask )
         return failed
 
     def any_task_failed( self ):
         for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed'):
+            if itask.state.is_currently('failed', 'submit-failed' ):
                 return True
         return False
 

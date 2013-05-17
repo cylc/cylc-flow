@@ -224,12 +224,12 @@ class task_batcher( batcher ):
             self.item_failed_hook( itask, "", "Job submission failed.")
 
     def item_failed_hook( self, itask, info, msg ):
-        itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
+        itask.incoming( 'CRITICAL', itask.id + ' submit-failed' )
         batcher.item_failed_hook( self, itask, info, msg )
  
     def item_succeeded_hook( self, p, itask, info, launcher, out="", err="" ):
         """Hook for succeeded item."""
-        itask.incoming( 'NORMAL', itask.id + ' submission succeeded' )
+        itask.incoming( 'NORMAL', itask.id + ' submitted' )
         if hasattr(launcher, 'get_id'):
             submit_method_id = launcher.get_id(p.pid, out, err)
             if submit_method_id:

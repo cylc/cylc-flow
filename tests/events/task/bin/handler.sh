@@ -1,17 +1,9 @@
-#!/bin/bash
-
-echo
-echo "HELLO FROM TASK EVENT HANDLER"
 
 EVENT=$1
 SUITE=$2
 TASK=$3
-MSG=$4
+MSG="$4"
 
-ARGS="EVENT SUITE TASK MSG"
-for ITEM in $ARGS; do
-    echo "  $ITEM $( eval echo \$$ITEM )"
-done
+printf '%15s' $EVENT >> $EVNTLOG
+echo -e "\t$TASK\t\"$MSG\"" >> $EVNTLOG
 
-echo "BYE FROM TASK EVENT HANDLER"
-echo

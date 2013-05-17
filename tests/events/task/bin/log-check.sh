@@ -1,22 +1,19 @@
 #!/bin/bash
 
 echo "HELLO FROM log-check.sh shutdown handler for $CYLC_SUITE_REG_NAME"
-LOG=$CYLC_SUITE_LOG_DIR/log
 
-EVENTS="submitted submission_timeout started execution_timeout warning succeeded"
-FAIL=false
-for EVENT in $EVENTS; do
-    if ! grep "Queueing $EVENT event handler" $LOG > /dev/null; then
-        echo "ERROR: event $EVENT not logged"
-        FAIL=true
-    fi
-done
+# compare events.log with the reference version
+# sorted so that event order doesn't matter
 
-if $FAIL; then
-    echo "ERROR: one or more event handlers not called"
+NEW_LOG=$EVNTLOG
+REF_LOG=$CYLC_SUITE_DEF_PATH/events.log
+
+if ! diff <(sort $NEW_LOG) <(sort $REF_LOG); then 
+    echo "ERROR: event handler output logs differ" >&2
     exit 1
+else
+    echo "OK: event handler output logs agree"
 fi
-echo "OK: all expected event handlers called"
 
 echo "BYE FROM log-check.sh shutdown handler for $CYLC_SUITE_REG_NAME"
 

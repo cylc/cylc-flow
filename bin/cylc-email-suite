@@ -34,7 +34,7 @@ if [[ $# < 3 ]]; then
 fi
 
 EVENT=$1      # e.g. "shutdown"
-SUITE=$2      # registered name of the suite
+SUITE=$2      # suite name
 MESSAGE="$3"  # quotes required (message contains spaces)
 
 MAIL_SUBJECT="!!cylc alert!! suite $SUITE $EVENT" 
@@ -44,3 +44,4 @@ MESSAGE: $MESSAGE"
 
 echo "cylc hook email-suite: Sending email to $MAIL_ADDRESS"
 echo "$MAIL_BODY" | mail -s "$MAIL_SUBJECT" $MAIL_ADDRESS
+
