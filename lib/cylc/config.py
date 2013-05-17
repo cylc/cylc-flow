@@ -469,22 +469,26 @@ class config( CylcConfigObj ):
         warnings = []
 
         # task event hook name changes
-        for ns in cfg['runtime']:
-            for o_item,n_item in [
+        try:
+            for ns in cfg['runtime']:
+                for o_item,n_item in [
                     ( 'submission failed handler', 'submit-failed handler' ),
                     ( 'submission failed handler', 'submit-failed handler' ),
                     ( 'submission timeout handler', 'submit-timeout handler' ),
                     ( 'submission timeout', 'submit-timeout' ),
                     ( 'execution timeout handler', 'timeout handler' ),
                     ( 'execution timeout', 'timeout' ) ]:
-                try:
-                    old = cfg['runtime'][ns]['event hooks'][o_item]
-                except:
-                    pass
-                else:
-                    warnings.append( "[runtime][" + ns + "][event hooks]" + o_item + " -> [runtime][" + ns + "][event hooks]" + n_item  )
-                    del cfg['runtime'][ns]['event hooks'][o_item]
-                    cfg['runtime'][ns]['event hooks'][n_item] = old
+                    try:
+                        old = cfg['runtime'][ns]['event hooks'][o_item]
+                    except:
+                        pass
+                    else:
+                        warnings.append( "[runtime][" + ns + "][event hooks]" + o_item + " -> [runtime][" + ns + "][event hooks]" + n_item  )
+                        del cfg['runtime'][ns]['event hooks'][o_item]
+                        cfg['runtime'][ns]['event hooks'][n_item] = old
+        except:
+            # no 'runtime' section defined
+            pass
 
         return warnings
 
