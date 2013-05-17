@@ -25,8 +25,6 @@ class pbs( job_submit ):
     "PBS qsub job submission."
 
     COMMAND_TEMPLATE = "qsub %s"
-    # Match numeric sequence ending in .sdb  *** Check this ***
-    REC_ID = re.compile(r"\A(?P<id>\d+.sdb)")
 
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "#PBS"
@@ -64,13 +62,10 @@ class pbs( job_submit ):
     def get_id( self, out, err ):
         """
         Extract the job submit ID from job submission command
-        output. For background jobs the submission command simply
-        echoes the process ID to stdout as described above.
+        output. For PBS jobs the submission command returns
+        the process ID to stdout.
         """
-        for line in str(out).splitlines():
-            match = self.REC_ID.match(line)
-            if match:
-                return match.group("id")
+        return out.strip()
 
     def get_job_poll_command( self, jid ):
         """
