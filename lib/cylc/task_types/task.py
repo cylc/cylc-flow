@@ -59,8 +59,6 @@ class task( object ):
     #  3) EXECUTION TRY NUMBER increments only when task execution fails,
     # if execution retries are configured; and is passed to task
     # environments to allow changed behaviour after previous failures.
-    # 
-    # Currently on manual re-triggering...
 
     clock = None
     intercycle = False
@@ -282,6 +280,9 @@ class task( object ):
         failed_msg = self.id + " failed"
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
+        failed_msg = self.id + "submit-failed"
+        if self.outputs.exists(failed_msg):
+            self.outputs.remove(failed_msg)
 
     def turn_off_timeouts( self ):
         self.submission_timer_start = None
@@ -290,7 +291,7 @@ class task( object ):
     def reset_state_ready( self ):
         self.state.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
-        self.record_db_event(event="reset to waiting")
+        self.record_db_event(event="reset to ready")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
@@ -433,16 +434,16 @@ class task( object ):
                 ( self.run_mode == 'simulation' and not rtconfig['simulation mode']['disable task event hooks'] ) or \
                 ( self.run_mode == 'dummy' and not rtconfig['dummy mode']['disable task event hooks'] ):
             self.event_handlers = {
-                'submitted' : rtconfig['event hooks']['submitted handler'],
                 'started'   : rtconfig['event hooks']['started handler'],
                 'succeeded' : rtconfig['event hooks']['succeeded handler'],
                 'failed'    : rtconfig['event hooks']['failed handler'],
                 'warning'   : rtconfig['event hooks']['warning handler'],
                 'retry'     : rtconfig['event hooks']['retry handler'],
+                'execution timeout'  : rtconfig['event hooks']['execution timeout handler'],
+                'submitted' : rtconfig['event hooks']['submitted handler'],
                 'submission retry'   : rtconfig['event hooks']['submission retry handler'],
                 'submission failed'  : rtconfig['event hooks']['submission failed handler'],
                 'submission timeout' : rtconfig['event hooks']['submission timeout handler'],
-                'execution timeout'  : rtconfig['event hooks']['execution timeout handler']
                 }
             self.timeouts = {
                 'submission' : rtconfig['event hooks']['submission timeout'],
@@ -815,6 +816,8 @@ class task( object ):
                 # task started must have arrived first
                 self.submission_timer_start = None
 
+            outp = self.id + " submitted" # hack: see github #476
+            self.outputs.set_completed( outp )
             self.record_db_update("task_states", self.name, self.c_time, status="submitted")
             self.record_db_event(event="submission succeeded" )
             handler = self.event_handlers['submitted']
@@ -835,6 +838,10 @@ class task( object ):
                 self.sub_retry_delay = float(self.sub_retry_delays.popleft())
             except IndexError:
                 # There is no submission retry lined up: definitive failure.
+                flags.pflag = True
+                outp = self.id + " submit-failed" # hack: see github #476
+                self.outputs.add( outp )
+                self.outputs.set_completed( outp )
                 self.state.set_status( 'submit-failed' )
                 self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
                 self.record_db_event(event="submission failed" )

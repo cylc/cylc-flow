@@ -2463,10 +2463,12 @@ one way or the other:
     graph = "A:finish => B"
 \end{lstlisting}
 
-\paragraph{Internal Triggers}
+\paragraph{Internal (Message) Triggers}
 \label{InternalTriggers}
 
-{\em These are only required to trigger off events that occur before a task finishes.}
+These allow triggering off off events that occur while a task runs. A
+special event message must be registered in the suite definition, and 
+deliberately sent by the task at the appropriate time.
 \begin{lstlisting}
 # SUITE.RC
 [scheduling]
@@ -2481,6 +2483,23 @@ one way or the other:
 \end{lstlisting}
 Task A must emit this message when the actual output has been completed - 
 see {\em Reporting Internal Outputs Completed} (Section~\ref{RIOC}).
+
+\paragraph{Job Submission Triggers}
+
+It is also possible to trigger off a task submitting, or failing to submit:
+\begin{lstlisting}
+# SUITE.RC
+# B triggers if A submits successfully:
+    graph = "A:submit => B"
+# D triggers if C fails to submit successfully:
+    graph = "C:submit-fail => D"
+\end{lstlisting}
+
+A possible use case for submit-fail triggers: if a task goes into the
+submit-failed state, possibly after several job submission retries,
+another task that inherits the same runtime but sets a different job
+submission method and/or host could be triggered to, in effect, run the
+same job on a different platform.
 
 \paragraph{Intercycle Triggers}
 \label{IntercycleTriggers}

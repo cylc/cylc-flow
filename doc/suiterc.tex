@@ -783,6 +783,8 @@ graph = """
    X | X:fail => Z           # Z triggers if X succeeds or fails
    X:finish => Z             # Z triggers if X succeeds or fails
    (A | B & C ) | D => foo   # general conditional triggers
+   foo:submit => bar         # bar triggers if foo is successfully submitted
+   foo:submit-fail => bar    # bar triggers if submission of foo fails
    # comment
    """
   \end{lstlisting}
