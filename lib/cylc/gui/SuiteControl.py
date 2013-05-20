@@ -2916,7 +2916,7 @@ For more Stop options use the Control menu.""" )
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
                         xopts + self.cfg.suite )
-            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
             return
@@ -2935,7 +2935,7 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
 
         command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + \
                     " " + extra + " " + self.cfg.template_vars_opts + " " + self.cfg.suite )
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
