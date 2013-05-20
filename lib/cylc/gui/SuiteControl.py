@@ -1065,23 +1065,17 @@ The Cylc Suite Engine.
             # NOTE: we have to respond to 'button-press-event' rather than
             # 'activate' in order for sub-menus to work in the graph-view.
 
-            info_item = gtk.ImageMenuItem( 'stdout log' )
-            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-            info_item.set_image(img)
-            view_menu.append( info_item )
-            info_item.connect( 'button-press-event', self.view_task_info, task_id, 'stdout' )
-
-            inf_item = gtk.ImageMenuItem( 'stderr log' )
-            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-            inf_item.set_image(img)
-            view_menu.append( inf_item )
-            inf_item.connect( 'button-press-event', self.view_task_info, task_id, 'stderr' )
-
             js_item = gtk.ImageMenuItem( 'job script' )
             img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
             js_item.set_image(img)
             view_menu.append( js_item )
             js_item.connect( 'button-press-event', self.view_task_info, task_id, 'job script' )
+
+            info_item = gtk.ImageMenuItem( 'log files' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+            info_item.set_image(img)
+            view_menu.append( info_item )
+            info_item.connect( 'button-press-event', self.view_task_info, task_id, None )
 
             info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
             img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
@@ -1360,7 +1354,6 @@ The Cylc Suite Engine.
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 400)
-        window.set_transient_for( self.window )
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         sw = gtk.ScrolledWindow()
@@ -2020,44 +2013,40 @@ or remove task definitions without restarting the suite."""
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
-    def popup_logview( self, task_id, logfiles, choice='stdout' ):
-        # TODO - choice is dirty hack to separate the task job script,
-        # stdout, and stderr file; we should do this properly by storing them
-        # separately in the task proxy, or at least separating them in
-        # the suite state summary.
-        window = gtk.Window()
+    def popup_logview( self, task_id, logfiles, choice=None ):
+        # TODO - choice is dirty hack to separate the task job script
+        # from other logs (stdout, stderr, and any extra logs); we
+        # should do this properly by storing them separately in the task
+        # proxy, or at least separating them in the suite state summary.
+        window = gtk.Window( gtk.WINDOW_TOPLEVEL )
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
-        jsfound = False
         err = []
         out = []
+        extra = []
         for f in logfiles:
             if f.endswith('.err'):
                 err.append(f)
             elif f.endswith('.out'):
                 out.append(f)
-            else:
+            elif re.search( '.*' + task_id + '\.\d+$', f ): # /a/b/c/foo.1.2
                 js = f
+            else:
+                extra.append( f )
 
         # for re-tries this sorts in time order due to filename:
+        # (TODO - does this still work, post secs-since-epoch file extensions?)
         err.sort( reverse=True )
         out.sort( reverse=True )
-        window.set_size_request(800, 300)
+        window.set_size_request(800, 400)
         if choice == 'job script':
-            window.set_title( task_id + ": Task Job Script" )
+            window.set_title( task_id + ": Job Script" )
             lv = textload( task_id, js )
-
         else:
-            if choice == 'stdout':
-                logs = out + err
-            elif choice == 'stderr':
-                logs = err + out
-
-            window.set_title( task_id + ": Task Logs" )
+            logs = out + err + extra
+            window.set_title( task_id + ": Log Files" )
             lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv
         self.quitters.append( lv )
@@ -2946,7 +2935,7 @@ for local suites; I will call "cylc cat-log" instead.""" ).warn()
 
         command = ( "cylc view --notify-completion -g " + self.get_remote_run_opts() + \
                     " " + extra + " " + self.cfg.template_vars_opts + " " + self.cfg.suite )
-        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 400 )
+        foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
         return False
