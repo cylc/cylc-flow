@@ -4889,23 +4889,28 @@ suite using cylc commands.  \lstinline=cylc [hook] email-suite= and
 \lstinline=cylc [hook] email-task= are example event handlers packaged
 with cylc.
 
-Custom task event handlers can be located in the suite bin directory.
-They are passed the following arguments by cylc:
+Event handlers can be located in the suite bin directory, otherwise 
+it is up to you to ensure their location is in \lstinline=$PATH=
+(in the shell in which cylc runs, on the suite host).
+
+Task event handlers are passed the following arguments by cylc:
 
 \begin{lstlisting}
-<handler> EVENT SUITE TASKID MESSAGE
+<task-event-handler> EVENT SUITE TASKID MESSAGE
 \end{lstlisting}
-where EVENT is one of the following strings:
+where EVENT is one of the following:
+
 \begin{myitemize}
-    \item `submitted' - the task was submitted
-    \item `started' - the task started running 
-    \item `succeeded' - the task succeeded
-    \item `submission\_failed' - the task failed in job submission
+    \item `submitted' - the job submit command was successful
+    \item `submission failed' - the job submit command failed
+    \item `submission timeout' - task job submission timed out
+    \item `submission retry' - task job submission failed, but will retry after a configured delay
+    \item `started' - the task reported commencement of execution
+    \item `succeeded' - the task reported successful completion
     \item `warning' - the task reported a warning message
     \item `failed' - the task failed
     \item `retry' - the task failed but will retry
-    \item `submission\_timeout' - task job submission timed out
-    \item `execution\_timeout' - task execution timed out
+    \item `execution timeout' - task execution timed out
 \end{myitemize}
 MESSAGE, if provided, describes what has happened, and TASKID identifies
 the task (\lstinline=NAME.CYCLE= for cycling tasks).
