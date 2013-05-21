@@ -22,47 +22,39 @@ if remrun().execute():
     sys.exit(0)
 
 import os, re
+import datetime
 from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
 from cylc.run import main
 from cylc.command_prep import prep_file
 from cylc.TaskID import TaskID
+from cylc.global_config import gcfg
 
 class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [OPTIONS] ARGS
 
-Restart a cylc suite from a previous recorded state (to start from
-scratch see the 'cylc run' command).
+Restart a cylc suite from a previous state. To start from scratch see
+the 'cylc run' command.
 
-Cylc suites run in daemon mode by default (without --debug) so it safe
-to log out from your terminal after starting a suite.
+Suites run in daemon mode unless -n/--non-daemon or --debug is used.
 
 The most recent previous state is loaded by default, but other states
-can be specified on the command line (e.g. cylc writes special state
-dumps and logs their filenames before actioning intervention commands).
+can be specified on the command line (cylc writes special state dumps
+and logs their filenames before actioning intervention commands).
 
-WARNING: for maximum flexibility, and to avoid automatic re-submission
-of tasks that may not need re-running, task proxies are now loaded with
-states *exactly* as recorded in the suite state dump file. This means
-that task proxies loaded in the 'submitted' and 'running' states will
-not reflect the actual states of their associated real tasks - unless
-they really are still running. You may need to do some manual state
-resetting or triggering according to your knowledge of what happened to
-the real tasks at or after suite shutdown.
-
-NOTE: suites can be (re)started on remote hosts or other user accounts
-if passwordless ssh is set up. The ssh tunnel will remain open to
-receive the suite stdout and stderr streams. To control the running 
-suite from the local host requires the suite passphrase to be installed.
-Both /etc/profile and $HOME/.profile, if they exist, will be sourced on
-the remote host before starting the suite."""
+Tasks recorded as 'submitted' or 'running' will be polled to determine
+where they got to while the suite was down."""
 
         self.parser = cop( usage, jset=True, argdoc=[("REG", "Suite name"),
    ( "[FILE]", """Optional state dump file, assumed to reside in the
                         suite state dump directory unless an absolute path
                         is given. Defaults to the most recent suite state.""")]) 
+
+        self.parser.add_option( "-n", "--non-daemon",
+                help="Do not daemonize the suite",
+                action="store_true", default=False, dest="no_detach" )
 
         self.parser.add_option( "--ignore-final-cycle", 
             help="Ignore the final cycle time in the state dump. If one is"
@@ -303,36 +295,45 @@ the remote host before starting the suite."""
         # 'waiting'    - nothing to do
         # 'held'       - ditto (only waiting tasks can be held)
         # 'runahead'   - ditto (runahead tasks are waiting tasks on hold)
-        #
-        # 'submitted'  - prerequisites satisfied, outputs not completed
-        # 'running'    - ditto
+        # 
         # 'queued'     - ditto (only tasks ready to run get queued)
         # 'failed'     - ditto (tasks must be ready to run in order to fail)
         # 'retrying'   - ditto (tasks must fail in order to retry)
         #
         # 'succeeded'  - prerequisites satisfied, outputs completed
+        #
+        # The equivalent for 'submitted' or 'running' tasks is:
+        #   'submitted'  - prerequisites satisfied, outputs not completed
+        #   'running'    - ditto
+        # but these are now updated properly by polling and status files.
 
         initial_task_list = tasknames.keys()
         task_list = self.filter_initial_task_list( initial_task_list )
+
+        print "RELOADING task proxies"
 
         for id in taskstates:
             name, tag, state = taskstates[id]
             if name not in task_list:
                 continue
 
+            print " +", id
+
             try:
                 # startup is True only for a cold start
                 itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
             except Exception, x:
-                print >> sys.stderr, x
+                print >> sys.stderr, str(x)
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
                 print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
                 continue
 
             # see comments above on resurrecting tasks
 
-            # TODO: we should probably use the task.reset_state()
+            # TODO - we should probably use the task.reset_state()
             # methods here, to update the rundb too...
+
+            print "  ", itask.state.get_status()
 
             if itask.state.is_currently('waiting', 'runahead'):
                 pass
@@ -347,6 +348,8 @@ the remote host before starting the suite."""
             elif itask.state.is_currently('submitted', 'running'):  
                 itask.prerequisites.set_all_satisfied()
                 c = itask.db.connect()
+                # get user_at_host from run-db
+                user_at_host = None
                 c.execute(r"""
                         SELECT misc FROM task_events
                         WHERE name==? AND cycle==? AND
@@ -354,17 +357,36 @@ the remote host before starting the suite."""
                         ORDER BY submit_num DESC LIMIT 1""", (name, tag))
                 row = c.fetchone()
                 if row and row[0]:
-                    self.old_user_at_host_set.add(str(row[0]))
-                c.close()
-                # TODO We also need to interrogate the task status file for
-                # completed outputs! For the moment at least set the
-                # started output completed for running tasks, because
-                # that has to be true:
-                if itask.state.is_currently('running'):
-                    itask.outputs.set_completed( itask.id + ' started' )
+                    user_at_host = row[0]
+                    self.old_user_at_host_set.add(str(user_at_host))
+                else:
+                    print >> sys.stderr, "WARNING:", id, "failed to read user@host from run-db!"
 
-            elif itask.state.is_currently(
-                    'queued', 'retrying', 'submitting', 'failed'):  
+                # get submit_method_id and try_num from run-db
+                submit_method_id = try_num = None
+                c.execute(r"""
+                        SELECT submit_method_id, try_num FROM task_states
+                        WHERE name==? AND cycle==? 
+                        ORDER BY submit_num DESC LIMIT 1""", (name, tag))
+                row = c.fetchone()
+                if row and row[0]:
+                    submit_method_id, try_num = row
+                else:
+                    print >> sys.stderr, "WARNING:", id, "failed to read submit_method_id and try_num from run-db!"
+                c.close()
+
+                if None in [ user_at_host, submit_method_id, try_num ]:
+                    print >> sys.stderr, "WARNING: cannot determine what happened to " + id
+                else:
+                    itask.poll( submit_method_id, user_at_host, try_num )
+                    itask.submit_method_id = submit_method_id
+                    # now set task polling method according to host settings
+                    if user_at_host:
+                        owner, host = user_at_host.split('@')
+                        if gcfg.get_host_item( 'task communication method', host, owner) == "poll":
+                            itask.poll_timer_start = datetime.datetime.now()
+                    
+            elif itask.state.is_currently( 'queued', 'retrying', 'submitting', 'failed'):  
                 itask.prerequisites.set_all_satisfied()
                 if not itask.state.is_currently( 'failed' ):
                     # tasks that were queued, retrying, or submitting,
