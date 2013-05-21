@@ -189,16 +189,20 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
+        """Note that all job-file scripting must be bash- and
+        ksh-compatible, hence use of 'typeset' below instead of the more
+        sensible but bash-specific 'local'."""
+
         self.FILE.write( r"""
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
 # Define the trap handler
 SIGNALS="EXIT ERR TERM XCPU"
-function HANDLE_TRAP() {
-    local SIGNAL=$1
+function HANDLE_TRAP {
+    typeset SIGNAL=$1
     echo "Received signal $SIGNAL"
-    local S=
+    typeset S=
     for S in $SIGNALS; do
         trap "" $S
     done
