@@ -55,7 +55,7 @@ from task_pool import pool
 import flags
 import cylc.rundb
 from Queue import Queue
-from batch_submit import event_batcher
+from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 
 
@@ -84,14 +84,14 @@ class request_handler( threading.Thread ):
         self.pyro = pyro
         self.quit = False
         self.log = logging.getLogger( 'main' )
-        self.log.info(  "Starting request handler thread" )
+        self.log.info( "Thread Start: Network Request Handling" )
 
     def run( self ):
         while True:
             self.pyro.handleRequests(timeout=1)
             if self.quit:
                 break
-        self.log.info(  "Exiting request handler thread" )
+        self.log.info(  "Thread Exit: Network Request Handling" )
 
 class scheduler(object):
 
@@ -127,6 +127,7 @@ class scheduler(object):
         self.command_queue = None
         self.pool = None
         self.evworker = None
+        self.poll_and_kill_worker = None
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
@@ -189,8 +190,8 @@ class scheduler(object):
                 'stop after task'       : self.command_stop_after_task,
                 'release suite'         : self.command_release_suite,
                 'release task'          : self.command_release_task,
-                'kill cycle'            : self.command_kill_cycle,
-                'kill task'             : self.command_kill_task,
+                'remove cycle'          : self.command_remove_cycle,
+                'remove task'           : self.command_remove_task,
                 'hold suite now'        : self.command_hold_suite,
                 'hold task now'         : self.command_hold_task,
                 'set runahead'          : self.command_set_runahead,
@@ -202,6 +203,8 @@ class scheduler(object):
                 'insert task'           : self.command_insert_task,
                 'reload suite'          : self.command_reload_suite,
                 'add prerequisite'      : self.command_add_prerequisite,
+                'poll tasks'            : self.command_poll_tasks,
+                'kill tasks'            : self.command_kill_tasks,
                 }
 
         # run dependency negotation etc. after these commands
@@ -324,7 +327,7 @@ class scheduler(object):
         r_suite_run_dir = os.path.expandvars(
                 gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
-            self.log.warning( 'RESTART: COPYING CONTACT ENV TO ' + user_at_host )
+            self.log.info( 'Restart: copying suite contact file to ' + user_at_host )
             if '@' in user_at_host:
                 user, host = user_at_host.split('@', 1)
             else:
@@ -360,6 +363,7 @@ class scheduler(object):
 
         self.orphans = []
         self.reconfiguring = False
+
         self.nudge_timer_start = None
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
@@ -545,6 +549,28 @@ class scheduler(object):
                 if itask.state.is_currently('held'):
                     itask.reset_state_waiting()
 
+    def command_poll_tasks( self, name, tag, is_family ):
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+
+        for itask in self.pool.get_tasks():
+            if itask.id in task_ids:
+                # (state check done in task module)
+                itask.poll()
+
+    def command_kill_tasks( self, name, tag, is_family ):
+        matches = self.get_matching_tasks( name, is_family )
+        if not matches:
+            raise TaskNotFoundError, "No matching tasks found: " + name
+        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+
+        for itask in self.pool.get_tasks():
+            if itask.id in task_ids:
+                # (state check done in task module)
+                itask.kill()
+
     def command_release_suite( self ):
         self.release_suite()
         self.suite_halt = False
@@ -557,9 +583,7 @@ class scheduler(object):
  
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                if itask.state.is_currently('waiting') or \
-                        itask.state.is_currently('queued') or \
-                        itask.state.is_currently('retrying'):
+                if itask.state.is_currently('waiting', 'queued', 'retrying' ):
                     itask.reset_state_held()
 
     def command_hold_suite( self ):
@@ -599,7 +623,7 @@ class scheduler(object):
         self.log.setLevel( new_level )
         return result(True, 'OK')
 
-    def command_kill_cycle( self, tag, spawn ):
+    def command_remove_cycle( self, tag, spawn ):
         self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.tag == tag:
@@ -607,7 +631,7 @@ class scheduler(object):
                     self.force_spawn( itask )
                 self.pool.remove( itask, 'by request' )
 
-    def command_kill_task( self, name, tag, is_family, spawn ):
+    def command_remove_task( self, name, tag, is_family, spawn ):
         self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
@@ -633,7 +657,7 @@ class scheduler(object):
                 itask = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
             except KeyError, x:
                 try:
-                    # TO DO - do we still need this?
+                    # TODO - do we still need this?
                     itask = self.config.get_task_proxy_raw( name, tag, 'waiting', stop_tag, startup=False )
                 except SuiteConfigError,x:
                     self.log.warning( str(x) )
@@ -739,8 +763,7 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_currently('waiting') or itask.state.is_currently('queued') or \
-                            itask.state.is_currently('retrying'):
+                    if itask.state.is_currently('waiting', 'queued', 'retrying'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -886,11 +909,19 @@ class scheduler(object):
             task.task.event_queue = self.event_queue
             self.evworker = event_batcher( 
                     'Event Handler Submission', self.event_queue, 
-                    self.config['cylc']['event handler execution']['batch size'],
-                    self.config['cylc']['event handler execution']['delay between batches'],
-                    self.suite,
-                    self.verbose )
+                    self.config['cylc']['event handler submission']['batch size'],
+                    self.config['cylc']['event handler submission']['delay between batches'],
+                    self.suite, self.verbose )
             self.evworker.start()
+
+            self.poll_and_kill_queue = Queue()
+            task.task.poll_and_kill_queue = self.poll_and_kill_queue
+            self.poll_and_kill_worker = poll_and_kill_batcher( 
+                    'Poll and Kill Command Submission', self.poll_and_kill_queue, 
+                    self.config['cylc']['poll and kill command submission']['batch size'],
+                    self.config['cylc']['poll and kill command submission']['delay between batches'],
+                    self.suite, self.verbose )
+            self.poll_and_kill_worker.start()
 
             self.info_interface = info_interface( self.info_commands )
             self.pyro.connect( self.info_interface, 'suite-info' )
@@ -1189,10 +1220,9 @@ class scheduler(object):
             print '(' + reason + ')'
         else:
             print
-
-
+        
+        # tell other threads to shut down
         if self.pool:
-            print " * telling job submission thread to terminate"
             self.pool.worker.quit = True
             self.pool.worker.join()
             # disconnect task message queues
@@ -1203,33 +1233,38 @@ class scheduler(object):
                 self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
         if self.evworker:
-            print " * telling event handler thread to terminate"
             self.evworker.quit = True
             self.evworker.join()
 
+        if self.poll_and_kill_worker:
+            self.poll_and_kill_worker.quit = True
+            self.poll_and_kill_worker.join()
+
         if self.request_handler:
-            print " * telling request handling thread to terminate"
             self.request_handler.quit = True
             self.request_handler.join()
+
         if self.command_queue:
             self.pyro.disconnect( self.command_queue )
+
         if self.clock:
             self.pyro.disconnect( self.clock )
+
         if self.wireless:
             self.pyro.disconnect( self.wireless )
+
         if self.suite_id:
             self.pyro.disconnect( self.suite_id )
+
         if self.suite_state:
             self.pyro.disconnect( self.suite_state )
 
         if self.pyro:
-            print " * terminating the suite Pyro daemon"
             self.pyro.shutdown()
 
         if self.use_lockserver:
             # do this last
             if self.lock_acquired:
-                print " * releasing suite lock"
                 lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 try:
                     if not lock.release_suite_access():
@@ -1247,9 +1282,8 @@ class scheduler(object):
         if self.runtime_graph_on:
             self.runtime_graph.finalize()
 
-        #disconnect from suite-db/stop db queue
+        # disconnect from suite-db, stop db queue
         self.db.close()
-        print " * disconnecting from suite database"
 
         # shutdown handler
         handler = self.config.event_handlers['shutdown']
@@ -1269,7 +1303,7 @@ class scheduler(object):
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 
-        print "Main thread DONE"
+        # EXIT
 
     def set_stop_ctime( self, stop_tag ):
         self.log.warning( "Setting stop cycle time: " + stop_tag )
@@ -1291,9 +1325,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued') or \
-                        itask.state.is_currently('waiting') or \
-                        itask.state.is_currently('retrying'):
+                if itask.state.is_currently('queued','waiting','retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.reset_state_held()
@@ -1356,7 +1388,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if itask.state.is_currently('failed') or itask.state.is_currently('succeeded'):
+            if itask.state.is_currently('failed', 'succeeded'):
                 continue
             #if itask.is_daemon():
             #    # avoid daemon tasks
@@ -1409,7 +1441,7 @@ class scheduler(object):
 
     def no_tasks_submitted_or_running( self ):
         for itask in self.pool.get_tasks():
-            if itask.state.is_currently('running') or itask.state.is_currently('submitted'):
+            if itask.state.is_currently('running', 'submitted'):
                 return False
         return True
 
@@ -1967,13 +1999,13 @@ class scheduler(object):
                     if foo:
                         spawn.append( foo )
                     print '  Marking', itask.id, 'for deletion'
-                    # kill these later (their outputs may still be needed)
+                    # remove these later (their outputs may still be needed)
                     die.append( itask )
                 elif itask.suicide_prerequisites.count() > 0:
                     if itask.suicide_prerequisites.all_satisfied():
                         print '  Spawning virtually activated suicide task', itask.id
                         self.force_spawn( itask )
-                        # kill these now (not setting succeeded; outputs not needed)
+                        # remove these now (not setting succeeded; outputs not needed)
                         print '  Suiciding', itask.id, 'now'
                         self.pool.remove( itask, 'purge' )
 
@@ -1993,8 +2025,7 @@ class scheduler(object):
 
     def check_timeouts( self ):
         for itask in self.pool.get_tasks():
-            itask.check_submission_timeout()
-            itask.check_execution_timeout()
+            itask.check_timers()
 
     def waiting_clocktriggered_task_ready( self ):
         # This method actually returns True if ANY task is ready to run,

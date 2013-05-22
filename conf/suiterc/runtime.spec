@@ -49,7 +49,6 @@
         post-command scripting = string( default=None )
         retry delays = force_list( default=list() )
         manual completion = boolean( default=False )
-        extra log files = force_list( default=list())
         enable resurrection = boolean( default=False )
         work sub-directory = string( default=$CYLC_TASK_ID )
         [[[simulation mode]]]

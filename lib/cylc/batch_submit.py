@@ -23,63 +23,36 @@ import logging
 import sys
 import time
 
-class batcher( threading.Thread ):
-    """Submit queued sub-processes in batches: within a batch members
-    are submitted in parallel and we wait on all members before
-    proceeding to the next batch. This helps to avoid swamping the
-    system with too many parallel sub-processes."""
+class job_batcher( threading.Thread ):
+    """Batch-submit queued subprocesses in parallel, with a delay between batches."""
 
-    def __init__( self, name, jobqueue, batch_size, batch_delay, verbose ):
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ):
         threading.Thread.__init__(self)
-        self.name = name 
+        self.thread_id = str(self.getName()) 
+
+        self.queue_name = queue_name 
         self.jobqueue = jobqueue
         self.batch_size = int( batch_size )
         self.batch_delay = int( batch_delay )
-
-        # should we exhaust the queue before exiting?
-        self.finish_before_exiting = False
-
-        self.log = logging.getLogger( 'main' )
-
-        # not a daemon thread: shut down when instructed by the main thread
-        self.quit = False
- 
         self.verbose = verbose
-        self.thread_id = str(self.getName()) 
 
-    def idprint( self, msg, err=False ):
-        if err:
-            self.log.warning(  "ERROR: " + self.name + ": " + msg )
-        else:
-            self.log.info( self.name + ": " + msg )
-
-    def submit_item( self, item, psinfo ):
-        """submit a job by appropriate means, then append the resulting
-        process id plus item and an info string to the psinfo list."""
-
-        raise SystemExit( "ERROR: batcher.submit_item() must be overridden" )
- 
-    def item_failed_hook( self, item, info, msg ):
-        """warn of a failed item"""
-        # (submitted item supplied in case needed by derived classes)
-        self.idprint( info + " " + msg, err=True )
- 
-    def item_succeeded_hook( self, *args, **kwargs ):
-        """Hook for succeeded item."""
-        pass
+        self.finish_before_exiting = False
+        self.log = logging.getLogger( 'main' )
+        self.quit = False
 
     def run( self ):
+        """The thread run method."""
+
         # NOTE: Queue.get() blocks if the queue is empty
         # AND: Queue.task_done() doesn't block the producer; it is for
         # queue.join() to block until all queued data is processed.
-        self.log.info(  "Starting " + self.name + " thread" )
+        self.log.info(  "Thread Start: " + self.queue_name )
 
         while True:
             if self.quit:
                 if self.finish_before_exiting and self.jobqueue.qsize() > 0:
                     pass
                 else:
-                    self.log.info(  "Exiting " + self.name + " thread" )
                     break
             batches = []
             batch = []
@@ -98,161 +71,263 @@ class batcher( threading.Thread ):
             i = 0
             while len(batches) > 0:
                 i += 1
-                self.submit( batches.pop(0), i, n )  # index 0 => pop from left
+                self.process_batch( batches.pop(0), i, n )  # index 0 => pop from left
                 # only delay if there's another batch left
                 if len(batches) > 0:
                     #self.log.info(  "  batch delay " )
                     time.sleep( self.batch_delay )
             time.sleep( 1 )
 
-    def submit( self, batch, i, n ):
+        self.log.info(  "Thread Exit: " + self.queue_name )
 
+
+    def process_batch( self, batch, i, n ):
+        """Submit a batch of jobs in parallel, then wait and collect results."""
+
+        batch_size = len(batch)
         before = datetime.datetime.now()
-        psinfo = []
 
-        # submit each item in the batch, recording pid etc. in psinfo
-        for itask in batch:
-            self.submit_item( itask, psinfo )
+        # submit each item
+        jobs = []
+        msg = "batch " + str(i) + '/' + str(n) + " (" + str(len(batch)) + " members):"
+        self.log.info( self.queue_name + " " + msg )
 
-        logmsg = 'batch ' + str(i) + '/' + str(n) + ' (' + str( len(psinfo) ) + ' members):'
-        for p, item, info, launcher in psinfo:
-            logmsg += "\n + " + info
-        self.idprint( logmsg )
+        for item in batch:
+            jobinfo = \
+                    {
+                    'p' : None,
+                    'out' : None,
+                    'err' : None,
+                    'data' : None,
+                    'descr' : None
+                    }
+            res = self.submit_item( item, jobinfo )
+            if res:
+                jobs.append( jobinfo )
+            else:
+                self.item_failed_hook( jobinfo )
 
         # determine the success of each job submission in the batch
         n_succ = 0
         n_fail = 0
-        while len( psinfo ) > 0:
-            for data in psinfo:
-                p, item, info, launcher = data
-
-                bkg = False
-                try:
-                    if item.job_sub_method == 'background':
-                        bkg = True
-                except:
-                    pass
-
-                if bkg:
-                    # Background tasks echo PID to stdout but do not
-                    # detach until the job finishes (see comments in
-                    # job_submission/background.py) - so read one line
-                    # (PID) but do not wait on the process to finish.
-                    out = p.stdout.readline().rstrip()
-                    #  p.stderr.readline() blocks until the process
-                    #  finishes because nothing is written to stderr.
-                    err = ''
-                    res = 0
-                else: 
-                    # If process is finished, handle its output. Use
-                    # poll() to avoid blocking on unfinished processes.
-                    res = p.poll()
-                    if res is None:
-                        # process not finished, go on to check next process
-                        continue
-                    else:
-                        # process is finished, retreive output
-                        out, err = p.communicate()
-
-                if res < 0:
-                    self.item_failed_hook( item, info, "terminated by signal " + str(res) )
+        while len( jobs ) > 0:
+            for jobinfo in jobs:
+                res = self.follow_up_item( jobinfo )
+                if res is None:
+                    # process not done yet
+                    continue
+                elif res != 0:
+                    if res < 0:
+                        print >> sys.stderr, "ERROR: process terminated by signal " + str(res)
+                    elif res > 0:
+                        print >> sys.stderr, "ERROR: process failed: " + str(res)
                     n_fail += 1
-                elif res > 0:
-                    self.item_failed_hook( item, info, "failed " + str(res) )
-                    n_fail += 1
+                    self.item_failed_hook( jobinfo )
                 else:
-                    self.item_succeeded_hook( p, item, info, launcher, out, err )
                     n_succ += 1
-
-                psinfo.remove( data )
+                    self.item_succeeded_hook( jobinfo )
+                jobs.remove( jobinfo )
                 self.jobqueue.task_done()
-
             time.sleep(1)
-
         after = datetime.datetime.now()
-        n_tasks = len(batch)
 
         msg = """batch completed
   """ + "Time taken: " + str( after - before )
         if n_succ == 0:
             msg += """
-  All """ + str(n_tasks) + " items FAILED"
+  All """ + str(batch_size) + " items FAILED"
         elif n_fail > 0:
             msg += """
-  """ + str(n_succ) + " of " + str(n_tasks) + """ items succeeded
-  """ + str(n_fail) + " of " + str(n_tasks) + " items FAILED"
+  """ + str(n_succ) + " of " + str(batch_size) + """ items succeeded
+  """ + str(n_fail) + " of " + str(batch_size) + " items FAILED"
         else:
             msg += """
-  All """ + str(n_tasks) + " items succeeded"
-        self.idprint( msg )
+  All """ + str(batch_size) + " items succeeded"
+        self.log.info( self.queue_name + ": " + msg )
 
-class task_batcher( batcher ):
-    """Batched submission of queued tasks"""
 
-    # Note that task state changes as a result of job submission are
-    # queued by means of faking incoming task messages - this does not
-    # execute in the main thread so we need to avoid making direct task
-    # state changes here.
+    def submit_item( self, item, jobinfo ):
+        """
+        Submit a single item and update the jobinfo structure above. Any
+        data needed by the process follow-up method or item hooks should
+        also be added to jobinfo['data'] here.
+        """
+        raise SystemExit( "ERROR: job_batcher.submit_item() must be overridden" )
+ 
 
-    def __init__( self, name, jobqueue, batch_size, batch_delay, wireless, run_mode, verbose ):
-        batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
+    def follow_up_item( self, jobinfo ):
+        """Determine the result of a single process without blocking."""
+        p = jobinfo['p']
+        res = p.poll()
+        if res is not None:
+            jobinfo['out'], jobinfo['err'] = p.communicate()
+        return res
+
+
+    def item_succeeded_hook( self, jobinfo ):
+        #self.log.info( jobinfo['descr'] + ' succeeded' )
+        pass
+
+
+    def item_failed_hook( self, jobinfo ):
+        self.log.warning( jobinfo['descr'] + ' failed' )
+
+
+class task_batcher( job_batcher ):
+    """Batched task job submission; item is a task proxy object."""
+
+    # Task state changes as a result of job submission are effected by
+    # sending fake task messages to be processed in the main thread - we
+    # need to avoid making direct task state changes here.
+
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, wireless, run_mode, verbose ):
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
         self.wireless = wireless
         self.finish_before_exiting = False
 
-    def submit( self, batch, i, n ):
-        if self.run_mode == 'simulation':
-            for itask in batch:
-                self.idprint( 'TASK READY: ' + itask.id )
-                itask.incoming( 'NORMAL', itask.id + ' started' )
-            return
-        else:
-            batcher.submit( self, batch, i, n )
 
-    def submit_item( self, itask, psinfo ):
-        self.log.info( 'TASK READY: ' + itask.id )
-        itask.incoming( 'NORMAL', itask.id + ' submitting now' )
+    def submit_item( self, itask, jobinfo ):
+        jobinfo['descr'] = itask.id + ' job submission'
         try:
             p, launcher = itask.submit( overrides=self.wireless.get(itask.id) )
+            jobinfo[ 'p' ] = p
+            jobinfo[ 'data' ] = (itask,launcher)
         except Exception, x:
-            self.item_failed_hook( itask, str(x), "Job submission failed." )
-            return
-        if p:
-            psinfo.append( (p, itask, itask.id, launcher) ) 
+            self.log.critical( str(x) )
+            return False
         else:
-            # (this may not be needed with the exception handling above)
-            self.item_failed_hook( itask, "", "Job submission failed.")
+            return True
 
-    def item_failed_hook( self, itask, info, msg ):
-        itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
-        batcher.item_failed_hook( self, itask, info, msg )
- 
-    def item_succeeded_hook( self, p, itask, info, launcher, out="", err="" ):
-        """Hook for succeeded item."""
-        itask.incoming( 'NORMAL', itask.id + ' submission succeeded' )
+
+    def follow_up_item( self, jobinfo ):
+        itask, launcher = jobinfo['data']
+        bkg = False
+        try:
+            if itask.job_sub_method == 'background':
+                bkg = True
+        except:
+            pass
+
+        if bkg:
+            p = jobinfo['p']
+            # Background tasks echo PID to stdout but do not
+            # detach until the job finishes (see comments in
+            # job_submission/background.py) - so read one line
+            # (PID) but do not wait on the process to finish.
+            jobinfo['out'] = p.stdout.readline().rstrip()
+            #  p.stderr.readline() blocks until the process
+            #  finishes because nothing is written to stderr.
+            res = 0
+        else: 
+            res = job_batcher.follow_up_item( self, jobinfo )
+        return res
+
+
+    def item_succeeded_hook( self, jobinfo ):
+        job_batcher.item_succeeded_hook( self, jobinfo )
+        itask,launcher = jobinfo['data']
+        itask.incoming('NORMAL', itask.id + ' submission succeeded' )
+        p = jobinfo['p']
+        out = jobinfo['out']
+        err = jobinfo['err']
         if hasattr(launcher, 'get_id'):
-            submit_method_id = launcher.get_id(p.pid, out, err)
+            # Extract the job submit ID from submission command output
+            submit_method_id = launcher.get_id( out, err )
             if submit_method_id:
-                message = itask.id + ' submit_method_id=' + submit_method_id
-                itask.incoming('NORMAL', message)
+                itask.incoming('NORMAL', itask.id + ' submit_method_id=' + submit_method_id )
 
-class event_batcher( batcher ):
-    """Batched execution of queued task event handlers"""
 
-    def __init__( self, name, jobqueue, batch_size, batch_delay, suite, verbose ):
-        batcher.__init__( self, name, jobqueue, batch_size, batch_delay, verbose ) 
+    def item_failed_hook( self, jobinfo ):
+        job_batcher.item_failed_hook( self, jobinfo )
+        out = jobinfo['out']
+        err = jobinfo['err']
+        itask,launcher = jobinfo['data']
+        if out:
+            itask.incoming( 'NORMAL', out )
+        if err:
+            itask.incoming( 'WARNING', err )
+        itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
+ 
+
+
+class event_batcher( job_batcher ):
+    """Batched execution of task event handlers; item is (event-label,
+    handler, task-id, message). We do not capture the output of event
+    handlers as doing so could block the thread."""
+
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, suite, verbose ):
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.suite = suite
         self.finish_before_exiting = True
 
-    def submit_item( self, item, psinfo ):
+
+    def submit_item( self, item, jobinfo ):
         event, handler, taskid, msg = item
-        command = " ".join( [handler, "'" + event + "'", self.suite, taskid,
-                             "'" + msg + "'"] )
+        jobinfo['descr'] = taskid + ' ' + event + ' handler'
+        command = " ".join( [handler, "'" + event + "'", self.suite, taskid, "'" + msg + "'"] )
         try:
-            p = subprocess.Popen( command, shell=True )
+            jobinfo['p'] = subprocess.Popen( command, shell=True )
         except OSError, e:
             print >> sys.stderr, "ERROR:", e
-            self.idprint( "event handler submission failed", err=True )
+            self.log.warning(  "ERROR: " + self.queue_name + ": failed to invoke event handler" )
+            return False
         else:
-            psinfo.append( (p, item, taskid + " " + event, None) ) 
+            return True
+
+
+
+class poll_and_kill_batcher( job_batcher ):
+    """Batched submission of task poll and kill commands."""
+
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, run_mode, verbose ):
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
+        self.run_mode = run_mode
+        self.finish_before_exiting = False
+
+
+    def process_batch( self, batch, i, n ):
+        # TODO - get rid of simulation checks in here
+        if self.run_mode == 'simulation':
+            # no real jobs to poll in simulation mode
+            return
+        else:
+            job_batcher.process_batch( self, batch, i, n )
+
+
+    def submit_item( self, item, jobinfo ):
+        command, itask, jtype = item
+        jobinfo['data'] = itask
+        jobinfo['jtype'] = jtype
+        jobinfo['descr'] = 'job ' + jtype
+        try:
+            jobinfo['p'] = subprocess.Popen( command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        except OSError, e:
+            print >> sys.stderr, "ERROR:", e
+            self.log.warning(  "ERROR: " + self.queue_name + ": task poll command invocation failed" )
+            return False
+        else:
+            return True
+
+
+    def item_failed_hook( self, jobinfo ):
+        job_batcher.item_failed_hook( self, jobinfo )
+        print >> sys.stderr, jobinfo['err']
+        print jobinfo['out']
+        itask = jobinfo['data']
+        itask.incoming( 'CRITICAL', jobinfo['jtype'] + ' command failed' )
+ 
+
+    def item_succeeded_hook( self, jobinfo ):
+        job_batcher.item_succeeded_hook( self, jobinfo )
+        itask = jobinfo['data']
+        if jobinfo['jtype'] == 'poll':
+            # get-task-status prints a standard task message to stdout
+            itask.incoming( 'NORMAL', jobinfo['out'].strip() )
+        else:
+            # TODO - just log?
+            itask.incoming( 'NORMAL', jobinfo['jtype'] + ' command succeeded' )
+        if jobinfo['err']:
+            # TODO - just log?
+            print >> sys.stderr, jobinfo['err']
 

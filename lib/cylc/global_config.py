@@ -39,7 +39,9 @@ class globalcfg( object ):
 
         self.header_printed = False
 
-        self.upgrades = [ ('5.1.1',self.upgrade_5_1_1) ]
+        self.upgrades = [
+                ('5.1.1',self.upgrade_5_1_1),
+                ('5.2.0', self.upgrade_5_2_0) ]
         self.warnings = {}
         self.warnings['site'] = {}
         self.warnings['user'] = {}
@@ -174,6 +176,33 @@ class globalcfg( object ):
                         warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key )
                         del cfg['hosts'][host][key]
                         cfg['hosts'][host][new_key] = os.path.join( val, 'bin' )
+        except:
+            pass
+
+        return warnings
+
+    def upgrade_5_2_0( self, cfg ):
+        warnings = []
+
+        try:
+            for host,settings in cfg['hosts'].items():
+                if host == 'localhost':
+                    hostkey = 'local' # print the pre-upgrade version
+                else:
+                    hostkey = host
+
+                for key,val in settings.items():
+
+                    if key == 'cylc bin directory':
+                        warnings.append( "[task hosts]["+hostkey+"]"+key+" : no longer supported, use $PATH on task host" )
+                        del cfg['hosts'][host][key]
+
+                    if key == 'use ssh messaging':
+                        new_key = 'task communication method'
+                        warnings.append( "[task hosts]["+hostkey+"]"+key+" -> [hosts]["+host+"]" + new_key + " = ssh" )
+                        del cfg['hosts'][host][key]
+                        cfg['hosts'][host][new_key] = 'ssh'
+ 
         except:
             pass
 
@@ -381,7 +410,7 @@ Some translations were performed on the fly.""" )
         default to appropriately modified localhost settings."""
 
         value = None
-        if host and host is not 'localhost':
+        if host and host != 'localhost':
             # see if we have an explicit entry for this host item
             try:
                 value = self.cfg['hosts'][host][item]
@@ -395,7 +424,7 @@ Some translations were performed on the fly.""" )
 
         if value:
             # localhost items may default to None too (e.g. cylc bin directory)
-            if (host and host is not 'localhost') or (owner and owner is not user ) or replace:
+            if (host and host != 'localhost') or (owner and owner != user ) or replace:
                 # item requested for a remote account
                 if 'directory' in item:
                     # Replace local home directory, if it appears, with

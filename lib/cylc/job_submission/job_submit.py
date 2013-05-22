@@ -54,9 +54,9 @@ class job_submit(object):
 
         self.task_id = task_id
         self.suite = suite
-        self.logfiles = jobconfig['extra log files']
+        self.logfiles = jobconfig.get( 'log files' )
 
-        self.job_submit_command_template = jobconfig['command template']
+        self.job_submit_command_template = jobconfig.get('command template')
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
@@ -68,8 +68,8 @@ class job_submit(object):
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
 
-        task_host = jobconfig['task host']
-        task_owner  = jobconfig['task owner']
+        task_host = jobconfig.get('task host')
+        task_owner  = jobconfig.get('task owner')
 
         self.remote_shell_template = gcfg.get_host_item( 'remote shell template', task_host, task_owner )
 
@@ -237,9 +237,9 @@ class job_submit(object):
             command = command + ' < ' + self.local_jobfile_path
 
         print 'SUBMIT #' + \
-                str(self.jobconfig['absolute submit number']) + '(' + \
-                str(self.jobconfig['submission try number']) + ',' + \
-                str( self.jobconfig['try number']) + '):', command
+                str(self.jobconfig.get('absolute submit number')) + '(' + \
+                str(self.jobconfig.get('submission try number')) + ',' + \
+                str( self.jobconfig.get('try number')) + '):', command
         try:
             p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
         except OSError, e:

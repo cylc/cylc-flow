@@ -19,21 +19,17 @@
 from job_submit import job_submit
 
 class background( job_submit ):
-
-    """Run the task job script directly in a background shell.
-
-    In contrast to job submission methods that return a "job submission
-    ID" to a batch queue system (pbs, loadleveler, ...) and then detach
-    immediately, background 'submission' actually runs the task directly.
-    We could make it detach immediately by backgrounding with '&', but 
-    this is a problem for remote background jobs at sites that do not
-    allow unattended jobs on login nodes. Consequently we background
-    with '&' to allow returning the PID in stdout with 'echo $!' but
-    then use 'wait' to prevent exit before the job is finished:
+    """
+    Background 'job submission' runs the task directly in the background
+    (with '&') so that we can get the job PID (with $!) but then uses
+    'wait' to prevent exit before the job is finished (which would be a
+    problem for remote background jobs at sites that do not allow
+    unattended jobs on login nodes):
       % ssh user@host 'job-script & echo $!; wait'
     (We have to override the general command templates to achieve this)."""
 
     LOCAL_COMMAND_TEMPLATE = "(%(command)s & echo $!; wait )"
+
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
             + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
@@ -46,6 +42,9 @@ class background( job_submit ):
     COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
 
     def construct_jobfile_submission_command( self ):
+        """
+        Construct a command to submit this job to run.
+        """
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
@@ -53,7 +52,39 @@ class background( job_submit ):
                                             self.stdout_file,
                                             self.stderr_file )
 
-    def get_id( self, pid, out, err ):
-        # (see commments above)
+    def get_id( self, out, err ):
+        """
+        Extract the job process ID from job submission command
+        output. For background jobs the submission command simply
+        echoes the process ID to stdout as described above.
+        """
         return out.strip()
+
+    def get_job_poll_command( self, pid ):
+        """
+        Given the job process ID, return a command string that uses
+        'cylc get-task-status' (on the task host) to determine current
+        job status:
+           cylc get-job-status <QUEUED> <RUNNING>
+        where:
+            QUEUED  = true if job is waiting or running, else false
+            RUNNING = true if job is running, else false
+
+        WARNING: 'cylc get-task-status' prints a task status message -
+        the final result - to stdout, so any stdout from scripting prior
+        to the call must be dumped to /dev/null.
+        """
+        status_file = self.jobfile_path + ".status"
+        cmd = ( "RUNNING=false; "
+                + "ps " + pid + " >/dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true; "
+                + "cylc get-task-status " + status_file + " $RUNNING $RUNNING"  )
+        return cmd
+
+    def get_job_kill_command( self, pid ):
+        """
+        Given the job process ID, return a command to kill the job.
+        """
+        cmd = "kill -9 " + pid
+        return cmd
 
