@@ -311,6 +311,7 @@ class scheduler(object):
             else:
                 self.ict = self.start_tag
 
+        self.state_dumper.set_cts( self.ict, self.stop_tag )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.

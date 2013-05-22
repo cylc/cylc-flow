@@ -206,6 +206,7 @@ the remote host before starting the suite."""
                         print >> sys.stderr, "WARNING: ignoring old initial cycle", oldstartcycle, "; using suite.rc", self.start_tag
                     else:
                         print >> sys.stderr, "WARNING: old initial cycle", oldstartcycle, "overriding suite.rc", self.start_tag
+                        self.start_tag = oldstartcycle
             else:
                 # reinstate the former start cycle
                 self.start_tag = oldstartcycle
