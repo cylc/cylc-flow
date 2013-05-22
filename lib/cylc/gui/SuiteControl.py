@@ -1103,6 +1103,22 @@ The Cylc Suite Engine.
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id, task_is_family )
 
+        # TODO - grey out poll and kill if the task is not 'submitted' or 'running'
+        # (this requires getting the task state from the underlying data model...)
+        poll_item = gtk.ImageMenuItem( 'Poll' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        poll_item.set_image(img)
+        items.append( poll_item )
+        poll_item.connect( 'activate', self.poll_task, task_id, task_is_family )
+
+        kill_item = gtk.ImageMenuItem( 'Kill' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CANCEL, gtk.ICON_SIZE_MENU )
+        kill_item.set_image(img)
+        items.append( kill_item )
+        kill_item.connect( 'activate', self.kill_task, task_id, task_is_family )
+
+        items.append( gtk.SeparatorMenuItem() )
+
         reset_menu = gtk.Menu()
         reset_item = gtk.ImageMenuItem( "Reset State" )
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
@@ -1156,17 +1172,19 @@ The Cylc Suite Engine.
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.ImageMenuItem( 'Remove after spawning' )
+        remove_item = gtk.ImageMenuItem( 'Remove after spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        kill_item.set_image(img)
-        items.append( kill_item )
-        kill_item.connect( 'activate', self.kill_task, task_id, task_is_family )
 
-        kill_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
+        remove_item.set_image(img)
+        items.append( remove_item )
+        remove_item.connect( 'activate', self.remove_task, task_id, task_is_family )
+
+        remove_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        kill_nospawn_item.set_image(img)
-        items.append( kill_nospawn_item )
-        kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id, task_is_family )
+
+        remove_nospawn_item.set_image(img)
+        items.append( remove_nospawn_item )
+        remove_nospawn_item.connect( 'activate', self.remove_task_nospawn, task_id, task_is_family )
 
         if not task_is_family:
             purge_item = gtk.ImageMenuItem( 'Remove Tree (Recursive Purge)' )
@@ -1499,6 +1517,36 @@ shown here in the state they were in at the time of triggering.''' )
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
 
+    def poll_task( self, b, task_id, is_family=False ):
+        cmd = "poll"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'poll tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
+    def kill_task( self, b, task_id, is_family=False ):
+        cmd = "kill"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'kill tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
     def reset_task_state( self, b, e, task_id, state, is_family=False ):
         if hasattr(e, "button") and e.button != 1:
             return False
@@ -1518,7 +1566,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
 
-    def kill_task( self, b, task_id, is_family ):
+    def remove_task( self, b, task_id, is_family ):
         cmd = "remove"
         msg = "remove " + task_id + " (after spawning)?"
         if not self.get_confirmation( cmd, task_id, msg ):
@@ -1526,14 +1574,14 @@ shown here in the state they were in at the time of triggering.''' )
 
         name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface'  ). put( 'kill task', name, tag, is_family, True )
+            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, True )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
  
-    def kill_task_nospawn( self, b, task_id, is_family=False ):
+    def remove_task_nospawn( self, b, task_id, is_family=False ):
         cmd = "remove"
         msg = "remove " + task_id + " (without spawning)?"
         if not self.get_confirmation( cmd, task_id, msg ):
@@ -1541,7 +1589,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'kill task', name, tag, is_family, False )
+            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, False )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1728,7 +1776,6 @@ shown here in the state they were in at the time of triggering.''' )
 
         mode_live_rb.set_active(True)
         vbox.pack_start( box )
-
 
         nvbox = gtk.VBox()
         nhbox = gtk.HBox()

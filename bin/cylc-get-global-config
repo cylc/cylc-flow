@@ -53,13 +53,14 @@ try:
     # before the command help can be displayed in case the user file is
     # screwed up.
     from cylc.global_config import gcfg
-    gcfg.print_deprecation_warnings()
     if options.writesite:
         gcfg.write_rc( 'site' )
     elif options.writeuser:
         gcfg.write_rc( 'user' )
     else:
         gcfg.dump()
+
+    gcfg.print_deprecation_warnings()
 except Exception, x:
     if options.debug:
         raise

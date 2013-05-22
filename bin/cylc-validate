@@ -47,8 +47,6 @@ parser.add_option( "--strict",
 
 suite, suiterc, junk = parser.get_suite()
 
-gcfg.print_deprecation_warnings()
-
 if options.verbose:
     print "Parsing Suite Definition"
 
@@ -64,4 +62,6 @@ except Exception,x:
     raise SystemExit(x)
 
 print "Suite " + suite + " is valid for cylc-" + cylc_version
+
+gcfg.print_deprecation_warnings()
 

@@ -18,11 +18,11 @@
 
 import re
 from job_submit import job_submit
+from cylc.TaskID import TaskID
 
 class pbs( job_submit ):
-    """
-PBS qsub job submission.
-    """
+
+    "PBS qsub job submission."
 
     COMMAND_TEMPLATE = "qsub %s"
 
@@ -51,8 +51,55 @@ PBS qsub job submission.
         self.jobconfig['directives'] = defaults
 
     def construct_jobfile_submission_command( self ):
+        """
+        Construct a command to submit this job to run.
+        """
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
+
+    def get_id( self, out, err ):
+        """
+        Extract the job submit ID from job submission command
+        output. For PBS jobs the submission command returns
+        the process ID to stdout.
+        """
+        return out.strip()
+
+    def get_job_poll_command( self, jid ):
+        """
+        Given the job submit ID, return a command string that uses
+        cylc-get-task-status to determine current job status:
+           cylc-get-job-status <QUEUED> <RUNNING>
+        where:
+            QUEUED  = true if job is waiting or running, else false
+            RUNNING = true if job is running, else false
+
+        WARNING: cylc-get-task-status prints a task status message - the
+        final result - to stdout, so any stdout from scripting prior to
+        the call must be dumped to /dev/null.
+
+        PBS has MANY possible job states; I think we only need:
+          * 'Q' (queueing) = waiting in the pbs queue
+          * 'R' (running) = running
+        """
+        cmd = ( "RUNNING=false; QUEUED=false; "
+                + "qstat -J " + jid + " | grep " + jid
+                + " | awk \"{ print \$5}\" | egrep \"^R$\" > /dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
+                + "if ! $QUEUED; then "
+                + "  qstat -J " + jid + " | grep " + jid
+                + "   | awk \"{ print \$5 }\" | egrep \"^Q$\" > /dev/null; "
+                + "  [[ $? == 0 ]] && QUEUED=true; "
+                + "fi; "
+            + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
+        return cmd
+
+    def get_job_kill_command( self, jid ):
+        """
+        Given the job submit ID, return a command to kill the job.
+        """
+        cmd = "qdel " + jid
+        return cmd
 
