@@ -70,15 +70,16 @@ class pbs( job_submit ):
     def get_job_poll_command( self, jid ):
         """
         Given the job submit ID, return a command string that uses
-        cylc-get-task-status to determine current job status:
-           cylc-get-job-status <QUEUED> <RUNNING>
+        'cylc get-task-status' (on the task host) to determine current
+        job status:
+           cylc get-job-status <QUEUED> <RUNNING>
         where:
             QUEUED  = true if job is waiting or running, else false
             RUNNING = true if job is running, else false
 
-        WARNING: cylc-get-task-status prints a task status message - the
-        final result - to stdout, so any stdout from scripting prior to
-        the call must be dumped to /dev/null.
+        WARNING: 'cylc get-task-status' prints a task status message -
+        the final result - to stdout, so any stdout from scripting prior
+        to the call must be dumped to /dev/null.
 
         PBS has MANY possible job states; I think we only need:
           * 'Q' (queueing) = waiting in the pbs queue
