@@ -1,5 +1,4 @@
 
-title = "test multiple local and remote job submission methods at once"
 [scheduling]
     initial cycle time = 2010080800
     [[dependencies]]
