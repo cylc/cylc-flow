@@ -199,7 +199,7 @@ if len(args) < 1 or len(args) > 3:
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
             options.templatevars_file, watchers, options.outputfile,
-            orientation, options.ungroup )
+            orientation )
 else:
     # SUITE DEPENDENCY GRAPH
 
