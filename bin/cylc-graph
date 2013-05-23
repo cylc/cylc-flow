@@ -145,6 +145,10 @@ parser.add_option( "-o", "--output",
     "build and may include png, jpg, gif, svg, pdf, ps, etc.",
     metavar="FILE", action="store", default=None, dest="outputfile" )
 
+parser.add_option( "-u", "--ungroup", 
+    help="Start up the graph viewer with families ungrouped.",
+    action="store_true", default=None, dest="ungroup" )
+
 ( options, args ) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
@@ -195,7 +199,7 @@ if len(args) < 1 or len(args) > 3:
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
             options.templatevars_file, watchers, options.outputfile,
-            orientation )
+            orientation, options.ungroup )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -232,7 +236,7 @@ else:
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
-window.get_graph()
+window.get_graph(ungroup_all=options.ungroup)
 window.connect( 'destroy', gtk.main_quit)
 
 #if options.updatelive:
