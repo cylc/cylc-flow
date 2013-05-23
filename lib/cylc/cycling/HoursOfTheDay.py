@@ -71,6 +71,8 @@ class HoursOfTheDay( cycler ):
             adj = hour - int(offset)
             if adj < 0:
                 adj = 24 + adj
+            if adj == 24:
+                adj = 0
             adj_hours.append( adj )
         self.valid_hours = adj_hours
 

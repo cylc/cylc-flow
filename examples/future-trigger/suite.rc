@@ -1,0 +1,8 @@
+
+title = "test multiple local and remote job submission methods at once"
+[scheduling]
+    initial cycle time = 2010080800
+    [[dependencies]]
+        [[[0]]]
+            graph = "foo[T+24] => bar"
+

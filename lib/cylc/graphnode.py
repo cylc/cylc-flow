@@ -59,6 +59,8 @@ class graphnode( object ):
             self.intercycle = True
             node, sign, self.offset = m.groups()
             if sign == '+':
-                raise GraphNodeError, "Prerequisite offsets must be negative: " + node_in
+                #raise GraphNodeError, "Prerequisite offsets must be negative: " + node_in
+                # TODO - temporary hack - handle this more sensibly
+                self.offset = '-' + self.offset
         # only name left now
         self.name = node
