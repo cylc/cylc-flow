@@ -133,7 +133,7 @@ submission batches.
     \item {\em default:} 15
 \end{myitemize}
 
-\subsubsection[{[[}event handler execution{]]}]{[cylc] $\rightarrow$ [[event handler execution]]}
+\subsubsection[{[[}event handler submission{]]}]{[cylc] $\rightarrow$ [[event handler submission]]}
 
 Task event handlers are queued to a worker thread that processes them in
 parallel, in batches to limit the number that can execute at once ({\em
@@ -141,7 +141,7 @@ suite event handlers}, on the other hand, are executed as background
 sub-processes in the main thread, not queued to the task
 event handler thread).
 
-\paragraph[batch size]{[cylc] $\rightarrow$ [[event handler execution]] $\rightarrow$ batch size}
+\paragraph[batch size]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ batch size}
 
 The maximum number of event handlers to execute at once, before moving
 on to the next batch.
@@ -151,7 +151,7 @@ on to the next batch.
     \item {\em default:} 5
 \end{myitemize}
 
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler execution]] $\rightarrow$ delay between batches}
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ delay between batches}
 
 How long to wait, in seconds, before processing the next batch of event handlers. 
 

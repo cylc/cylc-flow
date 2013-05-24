@@ -3626,14 +3626,12 @@ Several special variables are used as placeholders in cylc suite definitions:
 
 \begin{myitemize}
     \item \lstinline=[T]= and \lstinline=[T+n]= \newline
-        Where \lstinline=n= is an integer cycle time offset, the units
+        Where \lstinline=n= is an integer cycle time offset, the unit 
         of which (e.g. hours, days, months, or years) is determined by
         the cycling module in use. This is replaced, in internal task
         message strings under the runtime outputs config section, by the
         actual offset cycle time of the task. The syntax is the same as 
-        for cycle time offsets in the suite graph; and they also allow
-        cylc to avoid erroneously matching literal capital T's in the
-        output message. 
+        for cycle time offsets in the suite graph.
 
     \item \lstinline=<ASYNCID>=\newline
         This is replaced with the actual ``asynchronous ID'' (e.g.
