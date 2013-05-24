@@ -83,6 +83,7 @@ def coerce_runtime_values( rdict ):
         'inherit',
         'retry delays',
         'extra log files',
+        ( 'job submission', 'retry delays' ),
         ( 'simulation mode', 'run time range' ) ]:
         try:
             if isinstance( item, tuple ):
@@ -925,7 +926,13 @@ Some translations were performed on the fly."""
                 trig.set_special( self['runtime'][task_name]['outputs'][output_name] )
             except KeyError:
                 # There is no matching output defined under the task runtime section 
-                if output_name == 'fail':
+                if output_name == 'submit':
+                    # OK, task:submit
+                    trig.set_type('submitted' )
+                elif output_name == 'submit-fail':
+                    # OK, task:submit-fail
+                    trig.set_type('submit-failed' )
+                elif output_name == 'fail':
                     # OK, task:fail
                     trig.set_type('failed' )
                 elif output_name == 'start':
@@ -1190,7 +1197,7 @@ Some translations were performed on the fly."""
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
+            for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
 

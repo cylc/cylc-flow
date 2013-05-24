@@ -105,7 +105,8 @@ class outputs( object ):
             print >> sys.stderr, ' => ', message
 
     def register( self ):
-        # automatically define special 'started' and 'succeeded' outputs
+        # automatically define special outputs common to all tasks
+        self.add( self.owner_id + ' submitted' )
         self.add( self.owner_id + ' started' )
         self.add( self.owner_id + ' succeeded' )
 
