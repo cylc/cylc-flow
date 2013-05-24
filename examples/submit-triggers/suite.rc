@@ -1,0 +1,17 @@
+
+title = "test submit and submit-fail triggers."
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+foo:submit-fail => bar
+bar:submit => baz
+                """
+
+[runtime]
+    [[root]]
+        command scripting = "sleep 60"
+    [[foo]]
+        [[[job submission]]]
+            method = "FAIL"
+

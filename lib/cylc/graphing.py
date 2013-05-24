@@ -207,7 +207,7 @@ class edge( object):
         first_cycle = not not_first_cycle
 
         # strip off special outputs
-        left = re.sub( ':\w+', '', self.left )
+        left = re.sub( ':[\w-]+', '', self.left )
 
         if re.search( '\[\s*T\s*-\d+\s*\]', left ) and first_cycle:
             # ignore intercycle deps in first cycle

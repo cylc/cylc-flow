@@ -194,6 +194,7 @@ class task_batcher( job_batcher ):
             jobinfo[ 'p' ] = p
             jobinfo[ 'data' ] = (itask,launcher)
         except Exception, x:
+            jobinfo[ 'data' ] = (itask,None) # (defaults to non-list None)
             self.log.critical( str(x) )
             return False
         else:

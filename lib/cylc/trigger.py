@@ -74,7 +74,7 @@ where output x of foo may also have an offset:
                 raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
             self.intrinsic_offset = int(offset)
     def set_type( self, type ):
-        if type not in [ 'started', 'succeeded', 'failed' ]:
+        if type not in [ 'submitted', 'submit-failed', 'started', 'succeeded', 'failed' ]:
             raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
         self.type = type
     def set_offset( self, offset ):

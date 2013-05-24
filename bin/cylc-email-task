@@ -1,5 +1,20 @@
 #!/bin/bash
 
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 usage() {
     echo "USAGE: cylc [hook] email-task EVENT SUITE TASKID MESSAGE"
@@ -16,8 +31,7 @@ usage() {
     echo "[runtime]"
     echo "   [[root]]"
     echo "      [[[event hooks]]]"
-    echo "         events = failed"
-    echo "         script = cylc email-task"
+    echo "         failed handler = cylc email-task"
     echo ""
     echo "See the Suite.rc Reference (Cylc User Guide) for more information"
     echo "on suite and task event hooks and event handler scripts."
@@ -36,9 +50,9 @@ if [[ $# < 4 ]]; then
 fi
 
 EVENT=$1      # e.g. "failed"
-SUITE=$2      # registered name of the suite
-TASKID=$3     # name of the task 
-MESSAGE="$4"  # quotes required (message contains spaces)
+SUITE=$2      # suite name
+TASKID=$3     # task ID
+MESSAGE=$4
 
 MAIL_SUBJECT="!!cylc alert!! suite $SUITE task $TASKID $EVENT" 
 MAIL_ADDRESS=${MAIL_ADDRESS:-$USER@$HOSTNAME}
@@ -48,3 +62,4 @@ MESSAGE: $MESSAGE"
 
 echo "cylc hook email-task: Sending email to $MAIL_ADDRESS"
 echo "$MAIL_BODY" | mail -s "$MAIL_SUBJECT" $MAIL_ADDRESS
+
