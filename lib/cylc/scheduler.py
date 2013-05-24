@@ -84,14 +84,15 @@ class request_handler( threading.Thread ):
         self.pyro = pyro
         self.quit = False
         self.log = logging.getLogger( 'main' )
-        self.log.info( "Thread Start: Network Request Handling" )
+        self.log.info(  str(self.getName()) + " start (Request Handling)")
 
     def run( self ):
         while True:
             self.pyro.handleRequests(timeout=1)
             if self.quit:
                 break
-        self.log.info(  "Thread Exit: Network Request Handling" )
+        self.log.info(  str(self.getName()) + " exit (Request Handling)")
+
 
 class scheduler(object):
 
@@ -1032,13 +1033,6 @@ class scheduler(object):
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
 
-            if self.run_mode == 'simulation':
-                for itask in self.pool.get_tasks():
-                    # set sim-mode tasks to "succeeded" after their
-                    # alotted run time (and then set flags.pflag to
-                    # stimulate task processing).
-                    itask.sim_time_check()
-
             if self.process_tasks():
                 if self.options.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
@@ -1184,13 +1178,16 @@ class scheduler(object):
                 self.set_suite_timer()
 
         elif self.waiting_clocktriggered_task_ready():
-            # This actually returns True if ANY task is ready to run,
-            # not just clock-triggered tasks (but this should not matter).
-            # For a clock-triggered task, this means its time offset is
-            # up AND its prerequisites are satisfied; it won't result
-            # in multiple passes through the main loop.
             process = True
 
+        if self.run_mode == 'simulation':
+            for itask in self.pool.get_tasks():
+                if itask.state.is_currently('running'):
+                    # set sim-mode tasks to "succeeded" after their
+                    # alotted run time
+                    if itask.sim_time_check():
+                        process = True
+ 
         ##if not process:
         ##    # If we neglect to set flags.pflag on some event that 
         ##    # makes re-negotiation of dependencies necessary then if
@@ -2028,8 +2025,8 @@ class scheduler(object):
             itask.check_timers()
 
     def waiting_clocktriggered_task_ready( self ):
-        # This method actually returns True if ANY task is ready to run,
-        # not just clocktriggered tasks. However, this should not be a problem.
+        # returns True if any clocktriggered task is ready to run
+        # (TODO - the following reports if ANY task is ready)
         result = False
         for itask in self.pool.get_tasks():
             #print itask.id

@@ -484,12 +484,14 @@ class task( object ):
         Run db updates as a result of such errors will also be done by
         the main thread in response to receiving the message."""
 
-        self.incoming( 'NORMAL', self.id + " submitting now" )
+        if self.__class__.run_mode == 'simulation':
+            self.started_time = task.clock.get_datetime()
+            self.started_time_real = datetime.datetime.now()
+            self.outputs.set_completed( self.id + " started" )
+            self.state.set_status( 'running' )
+            return (None,None)
 
-        if self.__class__.run_mode == "simulation":
-            # TOOD - check this works!
-            self.incoming( self.id + " started" )
-            return (None, None) 
+        self.incoming( 'NORMAL', self.id + " submitting now" )
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
@@ -796,16 +798,18 @@ class task( object ):
             self.execution_timer_start = None
 
     def sim_time_check( self ):
-        if not self.state.is_currently('running'):
-            return
         timeout = self.started_time_real + \
                 datetime.timedelta( seconds=self.sim_mode_run_length )
         if datetime.datetime.now() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
+                self.incoming( 'NORMAL', self.id + ' submitted' )
                 self.incoming( 'CRITICAL', self.id + ' failed' )
             else:
+                self.incoming( 'NORMAL', self.id + ' submitted' )
                 self.incoming( 'NORMAL', self.id + ' succeeded' )
-            flags.pflag = True
+            return True
+        else:
+            return False
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -1201,6 +1205,9 @@ class task( object ):
 
     def poll( self, submit_method_id=None, user_at_host=None, sub_num=None ):
         """Poll my live task job and update status accordingly."""
+        if self.__class__.run_mode == 'simulation':
+            # No real task to poll
+            return
         # (the arguments are by the restart command)
         self.submit_method_id = submit_method_id or self.submit_method_id 
         self.user_at_host = user_at_host or self.user_at_host
@@ -1232,6 +1239,9 @@ class task( object ):
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
 
     def kill( self ):
+        if self.__class__.run_mode == 'simulation':
+            # No real task to kill
+            return
         if not self.state.is_currently('running', 'submitted' ):
             self.log( 'WARNING', 'Only submitted or running tasks can be killed.' )
             return
