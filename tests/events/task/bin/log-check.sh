@@ -8,7 +8,9 @@ echo "HELLO FROM log-check.sh shutdown handler for $CYLC_SUITE_REG_NAME"
 NEW_LOG=$EVNTLOG
 REF_LOG=$CYLC_SUITE_DEF_PATH/events.log
 
-if ! diff <(sort $NEW_LOG) <(sort $REF_LOG); then 
+# difference with 'sort -u' (unique) because polling on timeouts may now
+# result in multiple 'started' messages etc.
+if ! diff <(sort -u $NEW_LOG) <(sort -u $REF_LOG); then 
     echo "ERROR: event handler output logs differ" >&2
     exit 1
 else

@@ -755,8 +755,8 @@ class task( object ):
         
             handler = self.event_handlers['submission timeout']
             if handler:
-                self.log( 'NORMAL', "Queueing submission_timeout event handler" )
-                self.__class__.event_queue.put( ('submission_timeout', handler, self.id, msg) )
+                self.log( 'NORMAL', "Queueing submission timeout event handler" )
+                self.__class__.event_queue.put( ('submission timeout', handler, self.id, msg) )
 
             # TODO - reset timer now? if handled?
             self.submission_timer_start = None
@@ -789,8 +789,8 @@ class task( object ):
             # if no handler is specified, return
             handler = self.event_handlers['execution timeout']
             if handler:
-                self.log( 'NORMAL', "Queueing execution_timeout event handler" )
-                self.__class__.event_queue.put( ('execution_timeout', handler, self.id, msg) )
+                self.log( 'NORMAL', "Queueing execution timeout event handler" )
+                self.__class__.event_queue.put( ('execution timeout', handler, self.id, msg) )
 
             # TODO - reset timer now? if handled?
             self.execution_timer_start = None

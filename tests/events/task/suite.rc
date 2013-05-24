@@ -18,7 +18,7 @@ title = "test all event hooks"
     [[dependencies]]
         graph = """
           prep => foo & bar & baz
-      bar:submit-fail & baz:fail => done
+      bar:submit-fail & baz:fail & foo => done
            done => !bar & !baz
                 """
 [runtime]
