@@ -4247,6 +4247,32 @@ These are written to the top of the task job script like this:
 #$ -l h_data=1024M,h_rt=24:00:00
 \end{lstlisting}
 
+\subsubsection{slurm}
+
+This job submission method submits tasks to Simple Linux Utility for
+Resource Management using the \lstinline=sbatch= command.  SLURM
+directives can be provided in the suite.rc file (note that since
+not all SLURM commands have a short form, cylc requires the long
+form directives):
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[__NAME__]]
+        [[[directives]]]
+            --nodes = 5
+            --time = 1:00:00
+            --account = QXZ5W2
+\end{lstlisting}
+These are written to the top of the task job script like this:
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+#SBATCH --nodes=5
+#SBATCH --time=1:00:00
+#SBATCH --account=QXZ5W2
+\end{lstlisting}
+
 \subsubsection{Default Directives Provided}
 
 For loadleveler, pbs, and sge job submission, default directives
