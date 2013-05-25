@@ -56,13 +56,13 @@ $(catx): categories/%.txt: ../bin/cylc
 commands.tex: $(cmdx) $(catx) cylc.txt
 	./scripts/make-commands.sh
 
-html/multi/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
+html/multi/cug-html.html: commands.tex cug-html.tex cug.tex suiterc.tex cug-html.cfg
 	./scripts/make-html.sh multi
 
-html/single/cug-html.html: commands.tex cug-html.tex cug.tex cug-html.cfg
+html/single/cug-html.html: commands.tex cug-html.tex cug.tex suiterc.tex cug-html.cfg
 	./scripts/make-html.sh single
 
-pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex
+pdf/cug-pdf.pdf: commands.tex cug-pdf.tex cug.tex suiterc.tex 
 	./scripts/make-pdf.sh
 
 # delete all generated files:

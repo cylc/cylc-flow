@@ -43,8 +43,7 @@ right-click menu, or at run time with the \lstinline=cylc show= command.
 
 \subsection{[cylc]}
 
-This section is for suite configuration that is not specifically
-task-related.
+This section is for configuration that is not specifically task-related.
 
 \subsubsection[required run mode]{ [cylc] $\rightarrow$ required run mode}
 
@@ -95,7 +94,7 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[job submission]{[cylc] $\rightarrow$ job submission}
+\subsubsection[{[[}job submission{]]}]{[cylc] $\rightarrow$ [[job submission]]}
 
 Tasks ready to submit are now queued for processing in a background
 worker thread, so submitting a lot of tasks at once does not hold cylc 
@@ -112,7 +111,7 @@ selection command runs as part of the job submission command). The time
 taken for a batch of parallel job submissions to complete will be
 roughly the duration of the slowest member process. 
 
-\paragraph[batch size]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ batch size}
+\paragraph[batch size]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ batch size}
 
 The maximum number of tasks to be submitted in a single batch, in the
 job submission thread. Cylc waits for all batch member job-submissions
@@ -123,7 +122,7 @@ to complete before proceeding to the next batch.
     \item {\em default:} 10
 \end{myitemize}
 
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [job submission] $\rightarrow$ delay between batches}
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ delay between batches}
 
 It may cause a problem for some batch queue schedulers to submit too
 many jobs at once, so cylc allows a configurable delay between job 
@@ -134,33 +133,27 @@ submission batches.
     \item {\em default:} 15
 \end{myitemize}
 
-\subsubsection[event handler execution]{[cylc] $\rightarrow$ [event handler execution]}
+\subsubsection[{[[}event handler submission{]]}]{[cylc] $\rightarrow$ [[event handler submission]]}
 
-Task event handlers are queued to a background worker thread that limits
-the number of event handlers that can run at once, as for task job
-submissions (above), because of the potential for large suites to swamp
-the suite host with event handlers. Event handlers are currently
-executed directly as sub-processes (i.e.\ unlike task job submission you
-can't specify the ``job submission method'' to use).
+Task event handlers are queued to a worker thread that processes them in
+parallel, in batches to limit the number that can execute at once ({\em
+suite event handlers}, on the other hand, are executed as background
+sub-processes in the main thread, not queued to the task
+event handler thread).
 
-Note that {\em suite} event handlers are currently executed directly in
-the main scheduler thread, not queued to the task event handler worker
-thread.
+\paragraph[batch size]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ batch size}
 
-\paragraph[batch size]{[cylc] $\rightarrow$ [event handler execution] $\rightarrow$ batch size}
-
-The maximum number of event handlers to be executed in parallel in the
-worker thread. Cylc waits for all batch members to complete before
-proceeding on to the next batch.
+The maximum number of event handlers to execute at once, before moving
+on to the next batch.
 
 \begin{myitemize}
     \item {\em type:} integer (minimum 1)
     \item {\em default:} 5
 \end{myitemize}
 
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [event handler execution] $\rightarrow$ delay between batches}
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ delay between batches}
 
-A configurable delay between batches of task event handlers.
+How long to wait, in seconds, before processing the next batch of event handlers. 
 
 \begin{myitemize}
     \item {\em type:} integer seconds (minimum 0)
@@ -171,48 +164,50 @@ A configurable delay between batches of task event handlers.
 \label{SuiteEventHandling}
 
 Cylc has internal ``hooks'' to which you can attach handlers that are 
-called whenever certain events occur. This section is for configuring suite
-event hooks. See Section~\ref{TaskEventHandling} for task event hooks.
+called {\em by cylc} whenever certain events occur. This section
+configures suite event hooks; see Section~\ref{TaskEventHandling} for
+task event hooks.
 
-Event handlers can send an email or an SMS, call a pager, and so on; or
-intervene in the operation of their own suite using cylc commands. 
-The command \lstinline=cylc [hook] email-suite= is a ready-made suite
-event handler.
+Event handlers can send an email or an SMS, call a pager, intervene in
+the operation of their own suite, or whatever.
+They can be held in the suite bin directory, otherwise it is up to you
+to ensure their location is in \lstinline=$PATH= (in the shell in which
+cylc runs, on the suite host).
+\lstinline=cylc [hook] email-suite= is a simple suite event handler.
 
-Custom suite event handlers can be located in the suite bin directory,  
-in which case you will not need to modify your \lstinline=$PATH= to ensure
-they are found.  They are called by cylc with the following arguments:
+Suite event handlers are called by cylc with the following arguments:
 \begin{lstlisting}
-<handler> EVENT SUITE MESSAGE
+<suite-event-handler> EVENT SUITE MESSAGE
 \end{lstlisting}
-EVENT is the event name (see below), SUITE is the suite name, and 
-MESSAGE, if provided, describes what has happened.
+where,
+\begin{myitemize}
+    \item EVENT - event name (see below)
+    \item SUITE - suite name
+    \item MESSAGE - describes what has happened.
+\end{myitemize}
 
-{\em Note that event handlers are called by cylc itself} so if you wish
-to pass additional information to them via the environment you must use
-[cylc] $\rightarrow$ [[environment]], not task runtime environments
-(suite-level variables - \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=
-etc.\ - are exported into the cylc environment, however).
+Additional information can be passed to event handlers via 
+[cylc] $\rightarrow$ [[environment]].
 
 \paragraph[EVENT handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
 
-The handler to call when the suite event EVENT occurs. Repeat this
-section for each of the following suite events that you wish to handle:
+Specify a handler script to call when one of the following EVENTs occurs:
 \begin{myitemize}
-    \item `startup' - the suite started running 
-    \item `shutdown' - the suite stopped, normally or not
-    \item `timeout' - the suite timed out
+    \item {\bf startup}  - the suite has started running 
+    \item {\bf shutdown} - the suite is shutting down
+    \item {\bf timeout}  - the suite has timed out
 \end{myitemize}
 
+Item details:
 \begin{myitemize}
-    \item {\em type:} string (the event handler)
+    \item {\em type:} string (event handler script name)
     \item {\em default:} None
     \item {\em example:} \lstinline@startup handler = my-handler.sh@
 \end{myitemize}
 
 \paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
-If a timeout is set and the timeout event is handled, the event
+If a timeout is set and the timeout event is handled, the timeout event
 handler will be called if the suite times out before it finishes.
 The timer is set initially at suite start up. 
 
@@ -783,6 +778,8 @@ graph = """
    X | X:fail => Z           # Z triggers if X succeeds or fails
    X:finish => Z             # Z triggers if X succeeds or fails
    (A | B & C ) | D => foo   # general conditional triggers
+   foo:submit => bar         # bar triggers if foo is successfully submitted
+   foo:submit-fail => bar    # bar triggers if submission of foo fails
    # comment
    """
   \end{lstlisting}
@@ -978,8 +975,6 @@ Section~\ref{DetachingTasks}).
 
 % HIDDEN \paragraph[hours]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ hours}
 
-% HIDDEN \paragraph[extra log files]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ extra log files}
-
 \paragraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work sub-directory}
 
 Task command scripting is executed from with automatically created work
@@ -1087,6 +1082,7 @@ Cylc has a number of built in job submission methods:
        \item {\em loadleveler} - \lstinline=llsubmit=, with directives defined in the suite.rc file 
        \item {\em pbs} - PBS \lstinline=qsub=, with directives defined in the suite.rc file 
        \item {\em sge} - Sun Grid Engine \lstinline=qsub=, with directives defined in the suite.rc file 
+       \item {\em slurm} - Simple Linux Utility for Resource Management \lstinline=sbatch=, with directives defined in the suite.rc file.
    \end{myitemize}
 \item {\em default:} \lstinline=background=
 \end{myitemize}
@@ -1195,54 +1191,65 @@ interpretation on the remote host.
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
 
-See Section~\ref{SuiteEventHandling} (Suite Event Hooks) for a general
-description of cylc event handling. This section is specific to task events. 
-The command \lstinline=cylc [hook] email-task= is a ready-made task event 
-handler. 
+Cylc has internal ``hooks'' to which you can attach handlers that are 
+called {\em by cylc} whenever certain events occur. This section
+configures task event hooks; see Section~\ref{SuiteEventHandling} for
+suite event hooks.
 
-Custom task event handlers can be located in the suite bin directory,  
-in which case you will not need to modify your \lstinline=$PATH= to ensure
-they are found.  They are called by cylc with the following arguments:
+Event handlers can send an email or an SMS, call a pager, intervene
+in the operation of their own suite, or whatever.
+They can be held in the suite bin directory, otherwise it is up to you
+to ensure their location is in \lstinline=$PATH= (in the shell in which
+cylc runs, on the suite host).
+\lstinline=cylc [hook] email-task= is a simple task event handler. 
+
+Task event handlers are called by cylc with the following arguments:
 \begin{lstlisting}
-<handler> EVENT SUITE TASK MESSAGE
+<task-event-handler> EVENT SUITE TASK MESSAGE
 \end{lstlisting}
-EVENT is the event name (see below), SUITE is the suite name, TASK 
-is the task ID, and MESSAGE, if provided, describes what has happened.
-Note that {\em spaces in event names will be replaced by underscores 
-in the handler argument list} to make parsing easier in the script,
-e.g.\ ``submission failed'' becomes ``submission\_failed''.
+where,
+\begin{myitemize}
+    \item EVENT - event name (see below)
+    \item SUITE - suite name
+    \item TASK  - task ID
+    \item MESSAGE - describes what has happened.
+\end{myitemize}
+
+Additional information can be passed to event handlers via the
+[cylc] $\rightarrow$ [[environment]] (but not via task
+runtime environments - event handlers are not called by tasks).
 
 \subparagraph[EVENT handler]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ EVENT handler}
 
-The handler to call when the task event EVENT occurs. Repeat this
-section for each of the following task events that you wish to handle:
+Specify a handler script to call when one of the following EVENTs occurs:
 \begin{myitemize}
-    \item `submitted' - the task was submitted
-    \item `started' - the task started running 
-    \item `succeeded' - the task succeeded
-    \item `failed' - the task failed
-    \item `submission failed' - the task failed in job submission
-    \item `warning' - the task reported a warning message
-    \item `retry' - the task failed but will retry
-    \item `submission timeout' - task job submission timed out
-    \item `execution timeout' - task execution timed out
-\end{myitemize}
-MESSAGE, if provided, describes what has happened, and TASKID identifies
-the task (\lstinline=NAME.CYCLE= for cycling tasks).
+    \item {\bf submitted}      - the job submit command was successful
+    \item {\bf submission failed}  - the job submit command failed, or the
+                                   submitted job was killed before it started executing
+    \item {\bf submission retry}   - job submit failed, but cylc will resubmit it
+                                   after a configured delay
+    \item {\bf submission timeout} - the submitted job timed out without commencing execution 
 
+    \item {\bf started}        - the task reported commencement of execution
+    \item {\bf succeeded}      - the task reported that it completed successfully
+    \item {\bf failed}         - the task reported that if tailed to complete successfully
+    \item {\bf retry}          - the task failed, but cylc will resubmit it
+                                  after a configured delay
+    \item {\bf execution timeout}        - the task timed out after execution commenced
+    \item {\bf warning}        - the task reported a warning priority message
+\end{myitemize}
+
+Item details:
 \begin{myitemize}
-    \item {\em type:} string (the event handler)
+    \item {\em type:} string (event handler script name)
     \item {\em default:} None
-    \item {\em example:} \lstinline@failed handler = my-handler.sh@
+    \item {\em example:} \lstinline@failed handler = my-failed-handler.sh@
 \end{myitemize}
-
-To handle timeouts you must also specify a timeout value, below.
 
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
 
 If a task has not started the specified number of minutes after it was
-submitted, the event handler will be called by cylc with 
-{\em submission\_timeout} as the EVENT argument:
+submitted, the {\em submission timeout} event handler will be called.
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
@@ -1251,8 +1258,8 @@ submitted, the event handler will be called by cylc with
 \subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
 
 If a task has not finished the specified number of minutes after it
-started running, the event handler will be called by cylc with {\em
-execution\_timeout} as the EVENT argument:
+started running, the {\em execution timeout} event handler will be
+called.
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)

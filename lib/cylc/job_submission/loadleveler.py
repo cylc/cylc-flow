@@ -22,7 +22,7 @@ from cylc.TaskID import TaskID
 
 class loadleveler( job_submit ):
 
-    """Loadleveler job submission."""
+    "Loadleveler job submission"
 
     COMMAND_TEMPLATE = "llsubmit %s"
     REC_ID = re.compile(r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
@@ -60,14 +60,60 @@ class loadleveler( job_submit ):
         self.jobconfig['directives'] = defaults
 
     def construct_jobfile_submission_command( self ):
+        """
+        Construct a command to submit this job to run.
+        """
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
 
-    def get_id( self, pid, out, err ):
-        """Parse "out" for the submit ID."""
+    def get_id( self, out, err ):
+        """
+        Extract the job submit ID from job submission command
+        output. For background jobs the submission command simply
+        echoes the process ID to stdout as described above.
+        """
         for line in str(out).splitlines():
             match = self.REC_ID.match(line)
             if match:
                 return match.group("id")
+
+    def get_job_poll_command( self, jid ):
+        """
+        Given the job submit ID, return a command string that uses
+        'cylc get-task-status' to determine current job status:
+           cylc get-job-status <QUEUED> <RUNNING>
+        where:
+            QUEUED  = true if job is waiting or running, else false
+            RUNNING = true if job is running, else false
+
+        WARNING: 'cylc get-task-status' prints a task status message -
+        the final result - to stdout, so any stdout from scripting prior
+        to the call must be dumped to /dev/null.
+
+        Loadleveler has MANY possible job states; I think we only need:
+          * 'I' (idle?) = waiting in the loadleveler queue
+          * 'R' (running) or 'ST' (starting) = running
+        """
+        cmd = ( "RUNNING=false; QUEUED=false; "
+                + "llq -f %id %st " + jid + " | grep " + jid
+                + " | awk \"{ print \$2 }\" | egrep \"^(R|ST)$\" > /dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
+                + "if ! $QUEUED; then "
+                + "  llq -f %id %st " + jid
+                + "   | awk \"{ print \$2 }\" | egrep \"^I$\" > /dev/null; "
+                + "  [[ $? == 0 ]] && QUEUED=true; "
+                + "fi; "
+            + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
+        return cmd
+
+    def get_job_kill_command( self, jid ):
+        """
+        Given the job submit ID, return a command to kill the job.
+        Note that llcancel does not report successful job kill, just:
+        "Cancel command has been sent to the central manager"
+        """
+        cmd = "llcancel " + jid
+        return cmd
+

@@ -48,7 +48,7 @@ class graphnode( object ):
         self.output = None
 
         # parse and strip special output: foo[T-6]:m1 -> foo[T-6]
-        m = re.match( '(.*):(\w+)', node )
+        m = re.match( '(.*):([\w-]+)', node )
         if m:
             self.special_output = True
             node, self.output = m.groups()

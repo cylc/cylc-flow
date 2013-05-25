@@ -83,6 +83,7 @@ def coerce_runtime_values( rdict ):
         'inherit',
         'retry delays',
         'extra log files',
+        ( 'job submission', 'retry delays' ),
         ( 'simulation mode', 'run time range' ) ]:
         try:
             if isinstance( item, tuple ):
@@ -165,6 +166,10 @@ class config( CylcConfigObj ):
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
+        self.upgrades = [
+                ( '5.2.0', self.upgrade_5_2_0 ) ]
+        self.deprecation_warnings = {}
+
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
                 # lists of parent namespaces
@@ -238,6 +243,14 @@ class config( CylcConfigObj ):
             CylcConfigObj.__init__( self, suiterc, interpolation=False )
         except ConfigObjError, x:
             raise SuiteConfigError, x
+
+        # on-the-fly backward compatibility translations
+        for vn,upgr in self.upgrades:
+            warnings = upgr( self )
+            if warnings:
+                self.deprecation_warnings[vn] = warnings
+        if self.validation:
+            self.print_deprecation_warnings()
 
         # now validate and load defaults for each section in turn
         # (except [runtime] - see below).
@@ -443,6 +456,44 @@ class config( CylcConfigObj ):
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
 
+    def upgrade_5_2_0( self, cfg ):
+        """Upgrade methods should upgrade to the latest (not next)
+        version; then if we run them from oldest to newest we will avoid
+        generating multiple warnings for items that changed several times.
+
+        Upgrade methods are handed sparse cfg structures - i.e. just
+        what is set in the file - so don't assume the presence of any
+        items. It is assumed that the cfgspec will always be up to date.
+        """
+
+        warnings = []
+
+        # [cylc][event handler execution] -> [cylc][event handler submission]
+        try:
+            old = cfg['cylc']['event handler execution']
+        except:
+            pass
+        else:
+            warnings.append( "[cylc][event handler execution] -> [cylc][event handler submission]" )
+            del cfg['cylc']['event handler execution']
+            cfg['cylc']['event handler submission'] = old
+
+        return warnings
+
+    def print_deprecation_warnings( self ):
+        if not self.deprecation_warnings:
+            return
+
+        print >> sys.stderr, """
+*** SUITE DEFINITION DEPRECATION WARNING ***
+Some translations were performed on the fly."""
+        if self.deprecation_warnings:
+            print >> sys.stderr, "*** Please upgrade your suite definition"
+        for vn, warnings in self.deprecation_warnings.items():
+            for w in warnings:
+                print >> sys.stderr, " * (" + vn + ")", w
+        print
+
     def check_env( self ):
         # check environment variables now to avoid checking inherited
         # variables multiple times.
@@ -611,6 +662,7 @@ class config( CylcConfigObj ):
 
         spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', spec )
 
+        # (note it is *validation* that fills out the dense structure)
         dense = ConfigObj( cfg, interpolation=False, configspec=spec )
         # validate and convert to correct types
         val = Validator()
@@ -874,7 +926,13 @@ class config( CylcConfigObj ):
                 trig.set_special( self['runtime'][task_name]['outputs'][output_name] )
             except KeyError:
                 # There is no matching output defined under the task runtime section 
-                if output_name == 'fail':
+                if output_name == 'submit':
+                    # OK, task:submit
+                    trig.set_type('submitted' )
+                elif output_name == 'submit-fail':
+                    # OK, task:submit-fail
+                    trig.set_type('submit-failed' )
+                elif output_name == 'fail':
                     # OK, task:fail
                     trig.set_type('failed' )
                 elif output_name == 'start':
@@ -1139,7 +1197,7 @@ class config( CylcConfigObj ):
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
+            for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
 

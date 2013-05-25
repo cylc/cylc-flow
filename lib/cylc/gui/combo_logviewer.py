@@ -35,8 +35,10 @@ class combo_logviewer( logviewer ):
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
         
+        label = gtk.Label("Choose Log File: " )
+ 
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'stdout / stderr' ) 
+        
         for file in self.file_list:
             combobox.append_text( os.path.basename( file ) )
 
@@ -44,16 +46,15 @@ class combo_logviewer( logviewer ):
         combobox.set_active(0)
 
         self.hbox.pack_end( combobox, False )
+        self.hbox.pack_end( label, False )
 
     def switch_log( self, cb ):
         model = cb.get_model()
         index = cb.get_active()
-        if index == 0:
-            return False
 
         file = model[index][0]
         for F in self.file_list:
-            if os.path.basename( F ) == file:
+            if os.path.basename( F ) == file and file != self.file:
                 self.replace_log( F )
                 break
 
@@ -67,7 +68,7 @@ class combo_logviewer( logviewer ):
         s,e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete( s, e )
-        #self.log_label.set_text( self.path() ) 
+        self.log_label.set_text( self.path() ) 
         self.t = tailer( self.logview, self.path() )
         ###print "Starting log viewer thread"
         self.t.start()

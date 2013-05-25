@@ -1065,23 +1065,17 @@ The Cylc Suite Engine.
             # NOTE: we have to respond to 'button-press-event' rather than
             # 'activate' in order for sub-menus to work in the graph-view.
 
-            info_item = gtk.ImageMenuItem( 'stdout log' )
-            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-            info_item.set_image(img)
-            view_menu.append( info_item )
-            info_item.connect( 'button-press-event', self.view_task_info, task_id, 'stdout' )
-
-            inf_item = gtk.ImageMenuItem( 'stderr log' )
-            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-            inf_item.set_image(img)
-            view_menu.append( inf_item )
-            inf_item.connect( 'button-press-event', self.view_task_info, task_id, 'stderr' )
-
             js_item = gtk.ImageMenuItem( 'job script' )
             img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
             js_item.set_image(img)
             view_menu.append( js_item )
             js_item.connect( 'button-press-event', self.view_task_info, task_id, 'job script' )
+
+            info_item = gtk.ImageMenuItem( 'log files' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+            info_item.set_image(img)
+            view_menu.append( info_item )
+            info_item.connect( 'button-press-event', self.view_task_info, task_id, None )
 
             info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
             img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
@@ -1102,6 +1096,22 @@ The Cylc Suite Engine.
         trigger_now_item.set_image(img)
         items.append( trigger_now_item )
         trigger_now_item.connect( 'activate', self.trigger_task_now, task_id, task_is_family )
+
+        # TODO - grey out poll and kill if the task is not 'submitted' or 'running'
+        # (this requires getting the task state from the underlying data model...)
+        poll_item = gtk.ImageMenuItem( 'Poll' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        poll_item.set_image(img)
+        items.append( poll_item )
+        poll_item.connect( 'activate', self.poll_task, task_id, task_is_family )
+
+        kill_item = gtk.ImageMenuItem( 'Kill' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CANCEL, gtk.ICON_SIZE_MENU )
+        kill_item.set_image(img)
+        items.append( kill_item )
+        kill_item.connect( 'activate', self.kill_task, task_id, task_is_family )
+
+        items.append( gtk.SeparatorMenuItem() )
 
         reset_menu = gtk.Menu()
         reset_item = gtk.ImageMenuItem( "Reset State" )
@@ -1156,17 +1166,19 @@ The Cylc Suite Engine.
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.ImageMenuItem( 'Remove after spawning' )
+        remove_item = gtk.ImageMenuItem( 'Remove after spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        kill_item.set_image(img)
-        items.append( kill_item )
-        kill_item.connect( 'activate', self.kill_task, task_id, task_is_family )
 
-        kill_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
+        remove_item.set_image(img)
+        items.append( remove_item )
+        remove_item.connect( 'activate', self.remove_task, task_id, task_is_family )
+
+        remove_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        kill_nospawn_item.set_image(img)
-        items.append( kill_nospawn_item )
-        kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id, task_is_family )
+
+        remove_nospawn_item.set_image(img)
+        items.append( remove_nospawn_item )
+        remove_nospawn_item.connect( 'activate', self.remove_task_nospawn, task_id, task_is_family )
 
         if not task_is_family:
             purge_item = gtk.ImageMenuItem( 'Remove Tree (Recursive Purge)' )
@@ -1360,7 +1372,6 @@ The Cylc Suite Engine.
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 400)
-        window.set_transient_for( self.window )
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         sw = gtk.ScrolledWindow()
@@ -1499,6 +1510,36 @@ shown here in the state they were in at the time of triggering.''' )
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
 
+    def poll_task( self, b, task_id, is_family=False ):
+        cmd = "poll"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'poll tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
+    def kill_task( self, b, task_id, is_family=False ):
+        cmd = "kill"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'kill tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
     def reset_task_state( self, b, e, task_id, state, is_family=False ):
         if hasattr(e, "button") and e.button != 1:
             return False
@@ -1518,7 +1559,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
 
-    def kill_task( self, b, task_id, is_family ):
+    def remove_task( self, b, task_id, is_family ):
         cmd = "remove"
         msg = "remove " + task_id + " (after spawning)?"
         if not self.get_confirmation( cmd, task_id, msg ):
@@ -1526,14 +1567,14 @@ shown here in the state they were in at the time of triggering.''' )
 
         name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface'  ). put( 'kill task', name, tag, is_family, True )
+            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, True )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
  
-    def kill_task_nospawn( self, b, task_id, is_family=False ):
+    def remove_task_nospawn( self, b, task_id, is_family=False ):
         cmd = "remove"
         msg = "remove " + task_id + " (without spawning)?"
         if not self.get_confirmation( cmd, task_id, msg ):
@@ -1541,7 +1582,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'kill task', name, tag, is_family, False )
+            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, False )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1728,7 +1769,6 @@ shown here in the state they were in at the time of triggering.''' )
 
         mode_live_rb.set_active(True)
         vbox.pack_start( box )
-
 
         nvbox = gtk.VBox()
         nhbox = gtk.HBox()
@@ -2020,44 +2060,40 @@ or remove task definitions without restarting the suite."""
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
-    def popup_logview( self, task_id, logfiles, choice='stdout' ):
-        # TODO - choice is dirty hack to separate the task job script,
-        # stdout, and stderr file; we should do this properly by storing them
-        # separately in the task proxy, or at least separating them in
-        # the suite state summary.
-        window = gtk.Window()
+    def popup_logview( self, task_id, logfiles, choice=None ):
+        # TODO - choice is dirty hack to separate the task job script
+        # from other logs (stdout, stderr, and any extra logs); we
+        # should do this properly by storing them separately in the task
+        # proxy, or at least separating them in the suite state summary.
+        window = gtk.Window( gtk.WINDOW_TOPLEVEL )
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
-        jsfound = False
         err = []
         out = []
+        extra = []
         for f in logfiles:
             if f.endswith('.err'):
                 err.append(f)
             elif f.endswith('.out'):
                 out.append(f)
-            else:
+            elif re.search( '.*' + task_id + '\.\d+$', f ): # /a/b/c/foo.1.2
                 js = f
+            else:
+                extra.append( f )
 
         # for re-tries this sorts in time order due to filename:
+        # (TODO - does this still work, post secs-since-epoch file extensions?)
         err.sort( reverse=True )
         out.sort( reverse=True )
-        window.set_size_request(800, 300)
+        window.set_size_request(800, 400)
         if choice == 'job script':
-            window.set_title( task_id + ": Task Job Script" )
+            window.set_title( task_id + ": Job Script" )
             lv = textload( task_id, js )
-
         else:
-            if choice == 'stdout':
-                logs = out + err
-            elif choice == 'stderr':
-                logs = err + out
-
-            window.set_title( task_id + ": Task Logs" )
+            logs = out + err + extra
+            window.set_title( task_id + ": Log Files" )
             lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv
         self.quitters.append( lv )
@@ -2927,7 +2963,7 @@ For more Stop options use the Control menu.""" )
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
                         xopts + self.cfg.suite )
-            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
             return

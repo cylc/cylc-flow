@@ -8,7 +8,7 @@
 #>       $CYLC_DIR/conf/site.rc with all default settings commented out.
 #>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
-#> HOW TO CUSTOMIZE SETTINGS FOR AN INDIVIDUAL USER:
+#> HOW TO CUSTOMIZE SETTINGS FOR A USER (this overrides the site file):
 #>   *** Do not modify this configspec file ***
 #>   (1) Run "cylc get-global-config --write-user" to generate the file 
 #>       $HOME/.cylc/cylc.rc with all default settings commented out.
@@ -17,17 +17,14 @@
 #> Comments starting with "#>" are not passed on to generated .rc files.
 #>----------------------------------------------------------------------
 # Sections or items preceded by "# SITE ONLY" can not be set by users.
-#> (trailing comments would be better markers but they don't get passed
-#> through from the configspec to generated config files)
+#> (trailing comments don't get passed on to generated config files)
 #-----------------------------------------------------------------------
-# Items that are unset by default are shown below, commented out, with 
-# a value of 'None' - this is not a valid way off unsetting an item in
-# reality - instead just leave the item commented out.
+# For display items unset by default are commented out with value 'None'.
+# To unset an item in reality, don't use 'None' - just comment it out.
 #-----------------------------------------------------------------------
 
-# A temporary directory is needed by a few cylc commands. Leave it unset
-# to get the default system temporary directory (usually $TMPDIR).
-# Cylc temporary directories are automatically cleaned up on exit.
+# A temporary directory is needed by a few cylc commands, and is cleaned
+# automatically on exit. Leave unset for the default (usually $TMPDIR).
 temporary directory = string( default=None )
 
 # A rolling archive of suite state dumps is maintained for restarts.
@@ -46,21 +43,21 @@ disable interactive command prompts = boolean( default=True )
 enable run directory housekeeping = boolean( default=False )
 run directory rolling archive length = integer( min=0, default=2 )
 
-# Task messaging settings apply to the "cylc task COMMAND" commands 
-# used by running tasks to communicate with their parent suite. If a
-# message send fails after the configured number of tries the task will 
-# carry on regardless.
-# Site/user settings on the suite host determine remote task behaviour.
-[task messaging]
-    retry interval in seconds = float( min=1, default=30 )
-    maximum number of tries = integer( min=1, default=10 )
+# Polling interval in seconds for the 'poll' task communication method
+# (wherein 'submitted' and 'running' tasks are polled periodically). 
+task polling interval = float( min=5, default=10 )
 
-    # This timeout is the same as --pyro-timeout for user commands.
-    # If set to None (no timeout) a non-responsive suite (e.g. suspended
-    # with Ctrl-Z) could cause a task to hang indefinitely when it
-    # attempts to send a message to the suite.
-# TODO set a finite by large default connection timeout:
-    connection timeout in seconds = float( min=1, default=None )
+# Task messaging settings affect task-to-suite communications.
+[task messaging]
+    # If a message send fails, retry after this delay:
+    retry interval in seconds = float( min=1, default=5 )
+    # If send fails after this many tries, give up trying:
+    maximum number of tries = integer( min=1, default=7 )
+
+    # This timeout is the same as --pyro-timeout for user commands. If
+    # set to None (no timeout) message send to non-responsive suite
+    # (e.g. suspended with Ctrl-Z) could hang indefinitely.
+    connection timeout in seconds = float( min=1, default=30 )
 
 # suites logs go under the suite run directory (see below)
 [suite logging]
@@ -91,7 +88,7 @@ run directory rolling archive length = integer( min=0, default=2 )
 
 # PDF and HTML viewers can be launched by cylc to view documentation.
 [document viewers]
-    pdf = string( default="evince" )
+    pdf  = string( default="evince" )
     html = string( default="firefox" )
 
 # Configure your favourite text editor for editing suite definitions.
@@ -103,7 +100,7 @@ run directory rolling archive length = integer( min=0, default=2 )
     #  + emacs         # emacs GUI
     #  + emacs -nw     # emacs in-terminal 
     terminal = string( default="vim" )
-    gui         = string( default="gvim -f" )
+    gui      = string( default="gvim -f" )
 
 # Pyro is used by cylc for network communications.
 [pyro]
@@ -139,12 +136,14 @@ run directory rolling archive length = integer( min=0, default=2 )
         # Top level for suite work and share directories:
         work directory = string( default="$HOME/cylc-run" )
 
-        # Cylc installed location, leave unset if cylc is in $PATH:
-        cylc bin directory = string( default=None )
-
-        # Re-invoke task messaging commands on the suite host
-        # instead of using Pyro-based RPC across the network:
-        use ssh messaging = boolean( default=False )
+        # Method of communication of task progress back to the suite:
+        #   1) pyro - direct client-server RPC via network ports
+        #   2) ssh  - re-invoke pyro messaging commands on suite server
+        #   3) poll - the suite polls for status of passive tasks
+        # Pyro RPC is still required in all cases *on the suite host*
+        # for cylc clients (commands etc.) to communicate with suites. 
+        task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
+        # (the polling iterval is not task-host dependent, see above)
 
         # How to invoke commands on this host; default shown (not used
         # on localhost unless you run tasks under another user account):
@@ -162,7 +161,7 @@ run directory rolling archive length = integer( min=0, default=2 )
         # sourcing ~/.bashrc (or ~/.cshrc) to set up the environment.
         # In either case the PATH environment variable on the remote
         # machine should include $CYLC_DIR/bin in order for the cylc
-        # executable to be found (or else use "cylc bin directory" above).
+        # executable to be found.
         # NOTE: this setting does not currently apply to job submission
         # commands (executing on the suite host to submit remote tasks).
         use login shell = boolean( default=True )
@@ -171,8 +170,7 @@ run directory rolling archive length = integer( min=0, default=2 )
     [[__many__]]
         run directory  = string( default=None )
         work directory = string( default=None)
-        cylc bin directory = string( default=None )
-        use ssh messaging = boolean( default=None )
+        task communication method = option( "pyro", "ssh", "poll", default=None ) 
         remote shell template = string( default=None )
         use login shell = boolean( default=True )
 
