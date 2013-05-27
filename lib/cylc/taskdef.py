@@ -69,6 +69,7 @@ class taskdef(object):
 
         # some defaults
         self.intercycle = False
+        self.intercycle_offset = 0
         self.cycling = False
         self.asyncid_pattern = None
         self.modifiers = []
@@ -247,11 +248,13 @@ class taskdef(object):
         def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False ):
 
             sself.cycon = container.cycon( self.cyclers )
+            sself.intercycle_offset = self.intercycle_offset
             if self.cycling: # and startup:
                 # adjust only needed at start-up but it does not hurt to
                 # do it every time as after the first adjust we're already
                 # on-cycle.
                 sself.tag = sself.cycon.initial_adjust_up( start_tag )
+                sself.intercycle_cutoff = sself.cycon.offset( sself.tag, str(-int(sself.intercycle_offset)) )
             else:
                 sself.tag = start_tag
 
