@@ -47,7 +47,7 @@ class HoursOfTheDay( cycler ):
                 self.valid_hours.append( int(arg) )
             self.valid_hours.sort()
 
-        # smallest interval between successive cycle times.
+        # smallest interval between successive cycle times
         prev = self.valid_hours[0]
         sml = 24
         for h in self.valid_hours[1:]:
