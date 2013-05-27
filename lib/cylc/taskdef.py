@@ -254,7 +254,7 @@ class taskdef(object):
                 # do it every time as after the first adjust we're already
                 # on-cycle.
                 sself.tag = sself.cycon.initial_adjust_up( start_tag )
-                sself.intercycle_cutoff = sself.cycon.offset( sself.tag, str(-int(sself.intercycle_offset)) )
+                sself.cleanup_cutoff = sself.cycon.offset( sself.tag, str(-int(sself.intercycle_offset)) )
             else:
                 sself.tag = start_tag
 
