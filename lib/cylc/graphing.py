@@ -224,8 +224,8 @@ class edge( object):
             m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
             if m: 
                 left, sign, offset = m.groups()
-                if sign == '+': # TODO - temporary hack - handle this more sensibly
-                    offset = '-' + offset
+                # the cycler expects foo[T-offset] so change sign:
+                offset = str( -int( sign + offset ))
                 tag = self.cyclr.__class__.offset( tag, offset )
             else:
                 tag = tag
