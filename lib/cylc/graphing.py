@@ -221,11 +221,11 @@ class edge( object):
             # left node is asynchronous, so override the cycler
             tag = '1'
         else:
-            m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
+            m = re.match( '(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]', left )
             if m: 
-                left, sign, offset = m.groups()
+                left, offset = m.groups()
                 # the cycler expects foo[T-offset] so change sign:
-                offset = str( -int( sign + offset ))
+                offset = str( -int( offset ))
                 tag = self.cyclr.__class__.offset( tag, offset )
             else:
                 tag = tag
