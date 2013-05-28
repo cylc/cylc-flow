@@ -270,6 +270,8 @@ class taskdef(object):
             sself.add_prerequisites( startup, sself.cycon, sself.tag )
 
             sself.logfiles = logfiles()
+            for lfile in self.rtconfig[ 'extra log files' ]:
+                sself.logfiles.add_path( lfile )
  
             # outputs
             sself.outputs = outputs( sself.id )

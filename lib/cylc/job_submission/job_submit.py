@@ -35,6 +35,7 @@ from cylc.owner import user, is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
 from cylc.global_config import gcfg
+from cylc.envvar import expandvars
 
 class job_submit(object):
     LOCAL_COMMAND_TEMPLATE = "(%(command)s)"
@@ -124,6 +125,10 @@ class job_submit(object):
             # Local stdout and stderr log file paths:
             self.stdout_file = self.local_jobfile_path + ".out"
             self.stderr_file = self.local_jobfile_path + ".err"
+
+            # interpolate environment variables in extra logs
+            for idx in range( 0, len( self.logfiles.paths )):
+                self.logfiles.paths[idx] = expandvars( self.logfiles.paths[idx] )
 
             # Record paths of local log files for access by gui
             self.logfiles.add_path( self.stdout_file)

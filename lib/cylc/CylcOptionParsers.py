@@ -220,9 +220,17 @@ Arguments:"""
 
         if self.prep:
             # allow file path or suite name 
-            self.suite_info.append( self._getdef( args[0], options ))
-            if self.twosuites:
-                self.suite_info.append( self._getdef( args[1], options ))
+            try:
+                self.suite_info.append( self._getdef( args[0], options ))
+                if self.twosuites:
+                    self.suite_info.append( self._getdef( args[1], options ))
+            except IndexError:
+                if options.filename:
+                    # Empty args list is OK if we supplied a filename
+                    pass
+                else:
+                    # No filename, so we're expecting an argument
+                    self.error( "Need either a filename or suite name(s)" )
 
         return ( options, args )
 
