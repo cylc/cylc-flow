@@ -68,8 +68,7 @@ class passphrase(object):
         """
 Passphrase location, order of preference:
 
-1/ The pfile argument (used for initial passphrase creation by the
-register command, and optionally on the command line).
+1/ The pfile argument - used for passphrase creation by "cylc register".
 
 2/ The suite definition directory, because suites may be automatically
 installed (e.g. by Rose) to remote task hosts, and remote tasks know
