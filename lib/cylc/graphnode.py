@@ -44,7 +44,7 @@ class graphnode( object ):
         self.intercycle = False
         self.special_output = False
 
-        self.offset = None
+        self.offset = None # negative offset (e.g. foo[T-N] -> N)
         self.output = None
 
         # parse and strip special output: foo[T-6]:m1 -> foo[T-6]
@@ -57,10 +57,9 @@ class graphnode( object ):
         m = re.match( '([\w]+)\s*\[\s*T\s*([+-])\s*(\d+)\s*\]', node )
         if m:
             self.intercycle = True
-            node, sign, self.offset = m.groups()
-            if sign == '+':
-                #raise GraphNodeError, "Prerequisite offsets must be negative: " + node_in
-                # TODO - temporary hack - handle this more sensibly
-                self.offset = '-' + self.offset
+            node, sign, offset = m.groups()
+            # change sign to get self.offset:
+            self.offset = str( -int( sign + offset ))
         # only name left now
         self.name = node
+
