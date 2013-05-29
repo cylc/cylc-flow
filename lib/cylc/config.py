@@ -1474,6 +1474,7 @@ Some translations were performed on the fly."""
             # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
+            label = re.sub( '\+', 'x', label ) # future triggers
             ctrig[label] = trigger
             cname[label] = lnode.name
 
@@ -1494,6 +1495,7 @@ Some translations were performed on the fly."""
  
         # Replace some chars for later use in regular expressions.
         expr = re.sub( '[-\[\]:]', '_', lexpression )
+        expr = re.sub( '\+', 'x', expr ) # future triggers
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
 
     def get_graph_raw( self, start_ctime, stop, raw=False,

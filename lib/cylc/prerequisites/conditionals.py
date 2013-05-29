@@ -123,3 +123,4 @@ class conditional_prerequisites(object):
     def set_all_unsatisfied( self ):
         for label in self.messages:
             self.satisfied[ label ] = False
+
