@@ -1459,6 +1459,8 @@ Some translations were performed on the fly."""
             lnode = graphnode(left)  # (GraphNodeError checked above)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
+                if int(lnode.offset) > int(self.taskdefs[lnode.name].intercycle_offset):
+                    self.taskdefs[lnode.name].intercycle_offset = lnode.offset
 
             trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, asyncid_pattern, suicide )
             if not trigger:
