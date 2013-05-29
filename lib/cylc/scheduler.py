@@ -1626,10 +1626,9 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
                 self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-                itask.log( "NORMAL", "triggering now" )
+                itask.log( "NORMAL", "manual trigger now" )
                 itask.reset_state_ready()
-                if itask.is_clock_triggered():
-                    itask.set_trigger_now(True)
+                itask.manual_trigger = True
 
     def get_matching_tasks( self, name, is_family=False ):
         """name can be a task or family name, or a regex to match
@@ -1816,11 +1815,10 @@ class scheduler(object):
             itask.check_timers()
 
     def waiting_clocktriggered_task_ready( self ):
-        # returns True if any clocktriggered task is ready to run
-        # (TODO - the following reports if ANY task is ready)
         result = False
         for itask in self.pool.get_tasks():
-            #print itask.id
+            if not itask.is_clock_triggered():
+                continue
             if itask.ready_to_run():
                 result = True
                 break

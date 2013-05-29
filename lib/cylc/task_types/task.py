@@ -129,7 +129,7 @@ class task( object ):
 
         class_vars = {}
         self.state = task_state.task_state( state )
-        self.trigger_now = False # used by clock-triggered tasks
+        self.manual_trigger = False
         
         self.stop_tag = None
 
@@ -253,7 +253,21 @@ class task( object ):
                 item.to_run = False
         return ops
 
+    def trigger_now( self ):
+        if self.manual_trigger:
+            self.retry_delay_timer_start = None
+            self.sub_retry_delay_timer_start = None
+            # unset manual trigger flag in submit() because
+            # ready_to_run() is currently called more than once
+            # before submission (to test if clock-triggers are ready).
+            return True
+        else:
+            return False
+
     def ready_to_run( self ):
+        if self.trigger_now():
+            # (derived task types overriding ready_to_run() must do this too)
+            return True
         ready = False
         if self.state.is_currently('queued') or \
             self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
@@ -495,9 +509,11 @@ class task( object ):
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
-    
-        # TODO - REPLACE DEEPCOPY():
-        rtconfig = deepcopy( self.__class__.rtconfig )
+
+        # (see ready_to_run() above)
+        self.manual_trigger = False
+
+        rtconfig = deepcopy( self.__class__.rtconfig )  # (TODO - replace deepcopy)
         self.override( rtconfig, overrides )
         
         self.set_from_rtconfig( rtconfig )
