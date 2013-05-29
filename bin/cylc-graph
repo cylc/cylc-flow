@@ -145,6 +145,10 @@ parser.add_option( "-o", "--output",
     "build and may include png, jpg, gif, svg, pdf, ps, etc.",
     metavar="FILE", action="store", default=None, dest="outputfile" )
 
+parser.add_option( "-u", "--ungroup", 
+    help="Start up the graph viewer with families ungrouped.",
+    action="store_true", default=None, dest="ungroup" )
+
 ( options, args ) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
@@ -232,7 +236,11 @@ else:
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
-window.get_graph()
+if not options.ungroup:
+    window.get_graph( group_all=True )
+else:
+    window.get_graph( ungroup_all=options.ungroup )
+    
 window.connect( 'destroy', gtk.main_quit)
 
 #if options.updatelive:
