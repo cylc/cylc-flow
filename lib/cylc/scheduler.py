@@ -301,7 +301,8 @@ class scheduler(object):
 
         # initial cycle time
         if self.is_restart:
-            self.ict = None
+            # self.ict is set by "cylc restart" after loading state dump
+            pass
         else:
             if self.options.warm:
                 if self.options.set_ict:
@@ -313,6 +314,7 @@ class scheduler(object):
             else:
                 self.ict = self.start_tag
 
+        self.state_dumper.set_cts( self.ict, self.stop_tag )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
