@@ -51,20 +51,22 @@ eof
 
 tally() {
     RET=$1
+    NOW=$(date +"%s")
+    TDFF=$(( NOW - STME[$NAME] ))
     if (( $RET == 0 )); then
-        echo "passed"
+        echo "ok (${TDFF}s)"
         N_PASSED=$(( N_PASSED + 1 ))
         PASS[$NAME]=true
     else
-        echo "FAILED"
+        echo "FAILED (${TDFF}s)"
+        echo "${INDENT}${INDENT}${INDENT}${INDENT} see ${LOGS[$NAME]}"
         N_FAILED=$(( N_FAILED + 1 ))
         PASS[$NAME]=false
     fi
 }
 
 inform() {
-    echo "${INDENT}${I}. $NAME"
-    echo -n "${INDENT}${INDENT} ${LOGS[$NAME]} ... "
+    printf "${INDENT}%3s. %s ... " ${I} ${NAME#*.}
 }
 
 # handle long --help
@@ -143,9 +145,6 @@ else
     echo "ok"
 fi
 
-MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
-mkdir -p $MY_TMPDIR
-
 TARGET_DIR=$(mktemp -d)
 
 UNIQ=battery-$$
@@ -161,18 +160,20 @@ cylc unreg -df ${REG_GROUP}'.*' > /dev/null
 CWD=$PWD
 cd $TARGET_DIR
 COUNT=0
-declare -A PIDS
+declare -A PIDS # process IDs
+declare -A STME # start times
 declare -A LOGS # test logs
 declare -A SLOG # suite logs
 declare -A PRTS # port files
-declare -A PASS
-echo -n "Finding and registering test suites "
+declare -A PASS # passed tests
+echo -n "Registering test suites under $UNIQ "
 for RC in $( find . -name 'suite.rc' ); do
     # ignore paths containing 'hidden/'
     echo $RC | grep 'hidden/' > /dev/null && continue
     DIR=$(dirname $RC)
-    NAME=${UNIQ}.$(echo ${DIR#./} | tr '/' '.')
-    LOGS[$NAME]=$(dirname $PWD)/${NAME}.log
+    BARE=$(echo ${DIR#./} | tr '/' '.')
+    NAME=${UNIQ}.$BARE
+    LOGS[$NAME]=$PWD/${BARE}.log
     # determine suite log and port directories
     SLOG[$NAME]=$( cylc get-global-config | grep 'run directory =' | sed -e 's/.*= //' )/$NAME
     PRTS[$NAME]=$( cylc get-global-config | grep 'ports directory =' | sed -e 's/.*= //' )/$NAME
@@ -186,20 +187,20 @@ N_TOTAL=$COUNT
 
 cd ..
 
-ITER=1
+ITER=0
 TOTAL=$N
 while (( N > 0 )); do
-    if (( ITER == 1 )); then 
-        echo -n "Validating and running $N_TOTAL suites in $TYPE_STR"
-    else
-        echo -n "Running $N_TOTAL suites in $TYPE_STR"
+    PREFIX="R"
+    if (( ITER == 0 )); then 
+        PREFIX="Validating and r"
     fi
+    echo -n "${PREFIX}unning $N_TOTAL suites in $TYPE_STR (logs ${TARGET_DIR}/)"
 
     if $ITERATE; then
-        echo " ($ITER/$TOTAL)..."
         ITER=$((ITER+1))
+        echo " ($ITER/$TOTAL)"
     else
-        echo " ..."
+        echo ""
     fi
 
     N_FAILED=0
@@ -208,6 +209,7 @@ while (( N > 0 )); do
     if $PARALLEL; then
         # run tests in the background in parallel
         for NAME in ${!LOGS[@]}; do
+            STME[$NAME]=$(date +"%s")
             if (( ITER == 1 )); then
                 cylc validate -v $NAME > ${LOGS[$NAME]} 2>&1 && \
                     cylc run --reference-test --debug $NAME >> ${LOGS[$NAME]} 2>&1 &
@@ -234,6 +236,7 @@ while (( N > 0 )); do
         # run tests sequentially in the foreground
         I=0
         for NAME in ${!LOGS[@]}; do
+            STME[$NAME]=$(date +"%s")
             I=$(( I+1 ))
             inform
             if (( ITER == 1 )); then 
@@ -254,8 +257,8 @@ while (( N > 0 )); do
         # exit loop
         break
     else
-        echo "${INDENT}+ $N_FAILED of $N_TOTAL tests FAILED"
-        echo "${INDENT}+ $N_PASSED of $N_TOTAL tests passed"
+        echo "${INDENT} + $N_FAILED of $N_TOTAL tests FAILED"
+        echo "${INDENT} + $N_PASSED of $N_TOTAL tests passed"
         # exit loop
         break
     fi
@@ -264,7 +267,7 @@ while (( N > 0 )); do
 done
 
 if $CLEANUP; then
-    echo -n "${INDENT}Deleting successful test logs (suite host only)... "
+    echo -n "Unregistering successful tests and deleting logs (suite host only) ... "
     for NAME in ${!LOGS[@]}; do
         if ${PASS[$NAME]}; then
             # unregister
@@ -280,10 +283,13 @@ if $CLEANUP; then
     done
     echo "ok"
     if (( N_FAILED != 0 )); then
-        echo "${INDENT}Retained logs and registrations for the $N_FAILED failed tests"
+        echo "Retained names and logs for $N_FAILED failed tests:"
+        for NAME in $(cylc db print $UNIQ -xy); do
+            echo " + $NAME ... ${LOGS[$NAME]}"
+        done
     fi
 else
-    echo "${INDENT}NOTE: retained registrations and logs for ALL tests (-x)"
+    echo "Retained registrations and logs for ALL tests (-x)"
 fi 
 
 echo
