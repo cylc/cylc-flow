@@ -47,7 +47,7 @@ class HoursOfTheDay( cycler ):
                 self.valid_hours.append( int(arg) )
             self.valid_hours.sort()
 
-        # smallest interval between successive cycle times.
+        # smallest interval between successive cycle times
         prev = self.valid_hours[0]
         sml = 24
         for h in self.valid_hours[1:]:
@@ -69,10 +69,10 @@ class HoursOfTheDay( cycler ):
         adj_hours = []
         for hour in self.valid_hours:
             adj = hour - int(offset)
-            if adj < 0:
-                adj = 24 + adj
-            adj_hours.append( adj )
+            # convert back to 0-23 range, e.g. 30 => 6, -30 => 18, ...
+            adj_hours.append( adj % 24 )
         self.valid_hours = adj_hours
+        self.valid_hours.sort()
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
