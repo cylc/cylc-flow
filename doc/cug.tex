@@ -1547,7 +1547,7 @@ suite host.
 And finally, cylc now has a one-way polling mechanism for tracking task 
 progress on task hosts that do not allow routing back to the suite host.
 
-See Section~\ref{SecRunningSuites} for more on how cylc's
+See Section~\ref{RunningSuites} for more on how cylc's
 client/server communication works and how to use it.
 
 \subsection{Suite Databases}
@@ -3976,7 +3976,7 @@ expressions above) to do the job.
 
 
 
-\section{Task Job Submission}
+\section{Task Job Submission, Poll and Kill}
 \label{TaskJobSubmission}
 
 {\em Task Implementation} (Section~\ref{TaskImplementation}) describes
@@ -3984,6 +3984,18 @@ what requirements a command, script, or program, must fulfill in order
 to function as a cylc task. This section explains how tasks are submitted 
 by cylc when they are ready to run, and how to define new task job
 submission methods.
+
+\subsection{Job Poll And Kill}
+
+For each supported job submission method, cylc now also supports polling
+for real task status, and job kill, from the gcylc GUI and command line
+(\lstinline=cylc poll= and \lstinline=cylc kill=).
+In addition to on-demand polling, formerly submitted and running tasks
+are polled automatically on suite restarts (Section~\ref{RestartingSuites})
+and on job submission and execution timeouts, and one-way polling can be
+used to track tasks on hosts that do not allow return routing for 
+task-initiated messaging (Section~\ref{RunningSuites}).
+
 
 \subsection{Task Job Scripts}
 \label{JobScripts}
@@ -4023,7 +4035,7 @@ Job scripts can also be generated and printed directly to stdout with the
 \lstinline=cylc jobscript= command.  Take a look at one to see exactly
 how cylc wraps and runs your tasks.
 
-\subsection{Built-in Job Submission Methods}
+\subsection{Supported Job Submission Methods}
 \label{AvailableMethods}
 
 Cylc supports a number of commonly used job submission methods, and 
@@ -4300,7 +4312,7 @@ at the top of the example file above).
 
 
 \section{Running Suites}
-\label{SecRunningSuites}
+\label{RunningSuites}
 
 To learn how to control running suites please also see the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
@@ -4462,6 +4474,7 @@ command host accounts must have the suite passphrase installed in one of
 the secondary locations under \lstinline=$HOME/.cylc/=.
 
 \subsection{Restarting Suites}
+\label{RestartingSuites}
 
 A restarted suite (see \lstinline=cylc restart --help=) is initialized
 from a previous recorded suite state dump so that it can carry on from
