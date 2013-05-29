@@ -1497,6 +1497,19 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
+
+    def future_trigger_stopped( self, itask ):
+        """If a future-triggered task reaches beyond the suite final
+        cycle time, we hold it so the suite can shut down normally when
+        other non future-triggered tasks are held beyond the final cycle."""
+        res = False
+        for pct in itask.prerequisites.get_target_tags():
+            if int( ct(pct).get() ) > int(self.stop_tag):
+                res = True
+                break
+        return res
+
+
     def check_hold_spawned_task( self, old_task, new_task ):
         if self.hold_suite_now:
             new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
@@ -1513,14 +1526,23 @@ class scheduler(object):
             # this task has a stop time configured, and we've reached it
             new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
             new_task.reset_state_held()
-        elif self.runahead_limit:
-            ouct = self.get_runahead_base()
-            foo = ct( new_task.c_time )
-            foo.decrement( hours=self.runahead_limit )
-            if int( foo.get() ) >= int( ouct ):
-                # beyond the runahead limit
-                new_task.log( "NORMAL", "HOLDING (runahead limit)" )
-                new_task.reset_state_runahead()
+        else:
+            held = False
+            if self.runahead_limit:
+                ouct = self.get_runahead_base()
+                foo = ct( new_task.c_time )
+                foo.decrement( hours=self.runahead_limit )
+                if int( foo.get() ) >= int( ouct ):
+                    # beyond the runahead limit
+                    new_task.log( "NORMAL", "HOLDING (runahead limit)" )
+                    new_task.reset_state_runahead()
+                    held = True
+
+            if not held and self.stop_tag:
+                # check for future triggers beyond the final cycle time
+                if self.future_trigger_stopped( new_task ):
+                    new_task.log( "NORMAL", "HOLDING (future trigger beyond stop time)" )
+                    new_task.reset_state_held()
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -2059,7 +2081,7 @@ class scheduler(object):
                 self.log.warning( "STOPPING NOW: some running tasks will be orphaned" )
             return True
 
-        # 2) normal shutdown requested and no tasks  submitted or running
+        # 2) normal shutdown requested and no tasks submitted or running
         if self.suite_halt and self.no_tasks_submitted_or_running():
             self.log.info( "Stopping now: all current tasks completed" )
             return True
@@ -2114,6 +2136,7 @@ class scheduler(object):
         
         i_cyc = False
         i_asy = False
+        i_fut = False
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
                 i_cyc = True
@@ -2124,6 +2147,10 @@ class scheduler(object):
                             # a succeeded task that is earlier than the
                             # stop cycle can be ignored if it has
                             # spawned, in which case the successor matters.
+                            pass
+                        elif itask.state.is_currently('held') and self.future_trigger_stopped(itask):
+                            # held because it's triggers reache beyond the stop time
+                            i_fut = True
                             pass
                         else:
                             stop = False
@@ -2139,8 +2166,10 @@ class scheduler(object):
                     stop = False
                     break
         if stop:
+            if i_fut:
+                self.log.info( "All future-triggered tasks have run as far as possible toward " + self.stop_tag )
             if i_cyc:
-                self.log.info( "All cycling tasks have spawned past the final cycle " + self.stop_tag )
+                self.log.info( "All normal cycling tasks have spawned past the final cycle " + self.stop_tag )
             if i_asy:
                 self.log.info( "All non-cycling tasks have succeeded" )
             return True
