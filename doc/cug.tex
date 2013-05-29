@@ -4522,109 +4522,164 @@ at the top of the example file above).
 
 \section{Running Suites}
 
-This section may be incomplete - please see also the Quick Start
+To learn how to control running suites please also see the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
-(Section~\ref{CommandReference}), and play with the example suites.
+(Section~\ref{CommandReference}), and experiment with cylc's example
+suites and your own dummy task test suites.
 
-\subsection{How Tasks And Control Commands Interact With Suites}
+\subsection{How Tasks Interact With Running Suites}
 
-All interaction with a running suite by control commands, gcylc GUI
-instances, and messaging commands from running tasks, uses the Pyro
-network RPC (Remote Procedure Call) protocol. Each suite listens on its
-own network port; cylc starts grabbing ports at 7766 by default - 
-this is configured in the site config file
-\lstinline=$CYLC_DIR/conf/site/site.rc=, see 
-\lstinline=cylc get-global-config --help=.
+Suites need to track the progress of their tasks. Cylc now has three
+ways of achieving this, configured per task host in the site/user config
+files. One suite can use different task communication mechanisms for 
+different task hosts if necessary. \begin{myenumerate}
+\item {\bf task-to-suite messaging:} task job scripts encapsulate
+task scripting in a wrapper that automatically invokes messaging
+commands to report progress back to the suite. The messaging commands
+can be configured to work in two different ways:
+    \begin{myenumerate}
+        \item {\bf Pyro:} direct messaging via network sockets, using
+        Pyro (Python Remote Objects). 
+        \item {\bf ssh messaging:} for tasks hosts that block 
+        access to the network ports required by Pyro, this communication
+        method uses passwordless ssh to re-invoke task messaging
+        commands on the suite host (where ultimately Pyro is still used).
+    \end{myenumerate}
+\item {\bf one-way polling:} for task hosts that do not allow return
+routing back to the suite host for Pyro or ssh, cylc can now poll tasks
+at configurable intervals using passwordless ssh, for all supported job
+submission methods. 
+\end{myenumerate}
 
-However, if the Pyro network ports are blocked at your site you can get
-remote control commands and remote task messaging calls to re-invoke
-themselves on the suite host using passwordless ssh, so that the
-ultimate Pyro connection to the suite only occurs on the suite host.
+The Pyro connection method is the default because it is direct and
+efficient, whereas ssh messaging just inserts an extra step in the process.
+Polling is less efficient, particularly for very quick-running suites,
+and you should be careful to avoid spamming task hosts - each poll opens
+(and then closes) a new ssh connection. Polling subprocesses are batched by
+cylc, and the number invoked at once can be configured in suite definitions:
 
-\subsubsection{Pyro Connections And Secure Passphrases}
+\begin{lstlisting}
+# SUITE.RC
+[cylc]
+    [[poll and kill command submission]]
+        batch size = integer( min=1, default=5 )
+        delay between batches = integer( min=0, default=0 ) # seconds
+\end{lstlisting}
+
+Finally,
+\begin{myitemize}
+\item it has been suggested that network {\em port forwarding} may
+provide a solution if Pyro ports are blocked and you don't want to 
+use polling.
+\item you may be able to persuade system administrators to provide
+networking routing to one or more dedicated cylc servers, if not to the
+wider world. 
+\item it is possible to run cylc itself on HPC login nodes, to avoid the 
+need for {\em remote} task tracking, but depending on what software is
+installed on the HPC this may preclude use of the gcylc GUI and
+suite visualization tools.
+\end{myitemize}
+
+
+Here are the site/user config items relevant to task tracking:
+
+\begin{lstlisting}
+#SITE/USER CONFIG
+
+# Polling interval in seconds for the 'poll' task communication method
+# (wherein 'submitted' and 'running' tasks are polled periodically). 
+task polling interval = float( min=5, default=10 )
+
+# Task messaging settings affect task-to-suite communications.
+[task messaging]
+    # If a message send fails, retry after this delay:
+    retry interval in seconds = float( min=1, default=5 )
+    # If send fails after this many tries, give up trying:
+    maximum number of tries = integer( min=1, default=7 )
+
+    # This timeout is the same as --pyro-timeout for user commands. If
+    # set to None (no timeout) message send to non-responsive suite
+    # (e.g. suspended with Ctrl-Z) could hang indefinitely.
+    connection timeout in seconds = float( min=1, default=30 )
+
+# Pyro is used by cylc for network communications.
+[pyro]
+
+    # Each suite listens on a dedicated network port.
+    # Servers bind on the first port available from the base port up:
+# SITE ONLY
+    base port = integer( default=7766 )
+
+    # This sets the maximum number of suites that can run at once.
+# SITE ONLY
+    maximum number of ports = integer( default=100 )
+
+    # Port numbers are recorded in this directory, by suite name.
+    ports directory = string( default="$HOME/.cylc/ports/" )
+
+[hosts]
+    # The default task host is the suite host, i.e. localhost:
+    # Add task host sections if local defaults are not sufficient.
+    [[HOST]]
+       # Method of communication of task progress back to the suite:
+        #   1) pyro - direct client-server RPC via network ports
+        #   2) ssh  - re-invoke pyro messaging commands on suite server
+        #   3) poll - the suite polls for status of passive tasks
+        # Pyro RPC is still required in all cases *on the suite host*
+        # for cylc clients (commands etc.) to communicate with suites. 
+        task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
+        # (the polling iterval is not task-host dependent, see above)
+\end{lstlisting}
+
+\subsection{How Commands Interact With Running Suites}
+
+User-invoked commands that connect to running suites can also choose
+between direct communication across network sockets (Pyro) and
+re-invocation of commands on the suite host using passwordless ssh
+(there is a \lstinline=--use-ssh= command option for this purpose).
+
+The gcylc GUI requires direct Pyro connections to its target suite. If
+that is not possible, run gcylc on the suite host.
+
+
+\subsection{Connection Authentication}
+
+All Pyro connections to a running suite (task messaging and
+user-invoked commands) must authenticate with an arbitary single line of
+text in a file called \lstinline=passphrase=, which will be found and
+used automatically if installed properly - see below.  A secure MD5
+checksum, not the raw passphrase, is passed across the network. A random
+passphrase is generated in the suite definition directory when a suite
+is registered, but you can create your own if you wish.
+
+For ssh task messaging and user command re-invocation, on the other
+hand, the suite passphrase is only required on the suite host account
+but ssh keys must be installed for passwordless connections instead. 
+
+\subsubsection{Suite Pyro Passphrase Locations}
 \label{passphrases}
 
-All Pyro connections to a suite require passphrase authentication. The
-passphrase is just an arbitary single line of text. A secure MD5
-checksum is passed across the network, not the raw passphrase itself. 
-A random suite passhprase is generated in the suite definition directory
-when a suite is registered, but you can create your own as you wish.
+Suite passphrases currently have to be installed manually to all task
+host accounts that use the Pyro communication method (see above); and
+also to accounts used to run commands that interact directly with the
+suite via Pyro.
 
-Passphrases currently have to be installed manually in any user account,
-local or remote, that hosts tasks from the suite, or from which you want
-to interact with the suite without using the ssh remote communication 
-method. Legal passphrase locations, in order of preference, are:
+Legal passphrase locations, in order of preference, are:
 \begin{myenumerate}
     \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
 \end{myenumerate}
-The locations under \lstinline=$HOME/.cylc= are suitable for remote
-suite control accounts - in which case the suite definition directory
-may not be known or accessible. On remote task hosts the suite
-definition directory defaults to the same location relative to
-\lstinline=$HOME= as on the suite host; or the remote location can be
-specified explicitly in the suite definition. 
-
-\subsubsection{Ssh-Pyro Connections}
-
-For ssh-based remote task messaging and suite control, ssh keys must be
-installed in the relevant accounts to allow passwordless ssh connections
-back to the suite host account. The suite passphrase is then only
-required on the suite host.  
-
-\subsubsection{Choosing The Communication Method}
-
-The Pyro connection method is the default because it is simpler and more
-efficient, but if your remote task host does not have the right network
-ports open, and the IT staff are reluctant to change that, then the ssh
-alternative is available {\em so long as your local system and network
-configurations do not also prevent ssh connections back to the suite
-host - in that case see Section~\ref{difficultnetworkenv} below}.
-
-To use the ssh-based method:
-\lstset{language=suiterc}
-\begin{myitemize}
-    \item For remote tasks:
-\begin{lstlisting}
-# SUITE.RC
-[runtime]
-    [[NAME]]
-        [[[remote]]]
-            host = foo.bar.com
-            ssh messaging = True
-\end{lstlisting}
-    \item For user-invoked suite control commands, use
-        the \lstinline=--use-ssh= command line option along with the 
-        \lstinline=--host= and/or \lstinline=--owner= options. Commands
-        that normally prompt before taking action will also require use
-        of \lstinline=-f,--force=.
-\end{myitemize}
-
-\subsubsection{If You Cannot Use Pyro or Ssh Connections}
-\label{difficultnetworkenv}
-
-It has come to our attention that some HPC facilities do not have any
-networking routing back out of the compute nodes, for security reasons
-and/or to avoid network chatter that could affect performance.  Any
-kind of communication back to a cylc suite running on an external host
-would then presumably be impossible, but: 
-
-\begin{myitemize}
-    \item You may be able to run cylc itself on one of the HPC login
-        nodes. Depending on what software is installed on the HPC,
-        however, this may preclude use of the cylc GUI and suite
-        visualization tools.
-    \item You may be able to persuade your system administrators to
-        provide networking routing to a dedicated cylc server,
-        if not to the wider world.
-    \item It has been suggested that network {\em port forwarding} may 
-        provide a solution.
-    \item A one-way polling mechanism to track the progress of remote
-        tasks that are unable to communicate back to their suite has
-        been implemented and is currently in testing and code review.
-\end{myitemize}
+Remote tasks know the location of the remote suite definition directory
+(if one exists) through their execution environment. Local (suite host)
+user command invocations can find the suite definition directory in the
+suite registration database. Remote user command invocations, however,
+cannot interrogate the database on the command host because the suite
+will not be registered there (cylc cannot assume that the command host
+shares a common filesystem with the suite host). Consequently remote
+command host accounts must have the suite passphrase installed in one of
+the secondary locations under \lstinline=$HOME/.cylc/=.
 
 \subsection{Restarting Suites}
 
