@@ -411,6 +411,7 @@ comsum[ 'message'    ] = 'Report progress and completion of outputs'
 comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
 comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
+comsum[ 'get-task-status' ] = 'Retrieve current job status for a task'
 
 # utility
 comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'

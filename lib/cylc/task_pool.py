@@ -87,7 +87,7 @@ class pool(object):
         flags.pflag = True
         itask.log('DEBUG', "task proxy inserted" )
 
-    def remove( self, task, reason ):
+    def remove( self, task, reason=None ):
         # remove a task from the pool
         try:
             self.pyro.disconnect( task.message_queue )
@@ -104,7 +104,10 @@ class pool(object):
         # remove task from its queue
         queue = self.myq[task.name]
         self.queues[queue].remove( task )
-        task.log( 'DEBUG', "task proxy removed (" + reason + ")" )
+        msg = "task proxy removed" 
+        if reason:
+            msg += " (" + reason + ")"
+            task.log( 'DEBUG', msg )
         del task
 
     def get_tasks( self ):

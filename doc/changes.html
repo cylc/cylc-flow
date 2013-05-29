@@ -36,6 +36,13 @@ be omitted. The definitive guide to changes is the repository commit log.<p>
 		<h2>5.3.0 PENDING</h2>
 
 		<ul>
+				<li>New <code>submit</code> and <code>submit-fail</code> task
+				triggers.</li>
+
+				<li>The EVENT argument passed to event handler scripts now
+				matches the suite.rc item names exactly (no replacement of
+				spaces with underscores, e.g. in "submission timeout".</li>
+
 				<li>Automatic task polling by for task hosts that do not allow
 				return messaging by network socket (Pyro) or ssh.</li>
 

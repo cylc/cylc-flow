@@ -8,7 +8,7 @@
 #>       $CYLC_DIR/conf/site.rc with all default settings commented out.
 #>   (2) UNCOMMENT and modify specific configuration items as required.
 #>----------------------------------------------------------------------
-#> HOW TO CUSTOMIZE SETTINGS FOR AN INDIVIDUAL USER:
+#> HOW TO CUSTOMIZE SETTINGS FOR A USER (this overrides the site file):
 #>   *** Do not modify this configspec file ***
 #>   (1) Run "cylc get-global-config --write-user" to generate the file 
 #>       $HOME/.cylc/cylc.rc with all default settings commented out.
@@ -17,17 +17,14 @@
 #> Comments starting with "#>" are not passed on to generated .rc files.
 #>----------------------------------------------------------------------
 # Sections or items preceded by "# SITE ONLY" can not be set by users.
-#> (trailing comments would be better markers but they don't get passed
-#> through from the configspec to generated config files)
+#> (trailing comments don't get passed on to generated config files)
 #-----------------------------------------------------------------------
-# Items that are unset by default are shown below, commented out, with 
-# a value of 'None' - this is not a valid way off unsetting an item in
-# reality - instead just leave the item commented out.
+# For display items unset by default are commented out with value 'None'.
+# To unset an item in reality, don't use 'None' - just comment it out.
 #-----------------------------------------------------------------------
 
-# A temporary directory is needed by a few cylc commands. Leave it unset
-# to get the default system temporary directory (usually $TMPDIR).
-# Cylc temporary directories are automatically cleaned up on exit.
+# A temporary directory is needed by a few cylc commands, and is cleaned
+# automatically on exit. Leave unset for the default (usually $TMPDIR).
 temporary directory = string( default=None )
 
 # A rolling archive of suite state dumps is maintained for restarts.
@@ -47,6 +44,7 @@ enable run directory housekeeping = boolean( default=False )
 run directory rolling archive length = integer( min=0, default=2 )
 
 # Polling interval in seconds for the 'poll' task communication method
+# (wherein 'submitted' and 'running' tasks are polled periodically). 
 task polling interval = float( min=5, default=10 )
 
 # Task messaging settings affect task-to-suite communications.
@@ -57,7 +55,7 @@ task polling interval = float( min=5, default=10 )
     maximum number of tries = integer( min=1, default=7 )
 
     # This timeout is the same as --pyro-timeout for user commands. If
-    # set to None (no timeout) message send to non-responsive suite
+    # set to None (no timeout) message send to non-responsive suites
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
     connection timeout in seconds = float( min=1, default=30 )
 

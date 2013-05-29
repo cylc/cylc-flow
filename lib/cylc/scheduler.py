@@ -84,14 +84,15 @@ class request_handler( threading.Thread ):
         self.pyro = pyro
         self.quit = False
         self.log = logging.getLogger( 'main' )
-        self.log.info( "Thread Start: Network Request Handling" )
+        self.log.info(  str(self.getName()) + " start (Request Handling)")
 
     def run( self ):
         while True:
             self.pyro.handleRequests(timeout=1)
             if self.quit:
                 break
-        self.log.info(  "Thread Exit: Network Request Handling" )
+        self.log.info(  str(self.getName()) + " exit (Request Handling)")
+
 
 class scheduler(object):
 
@@ -301,7 +302,8 @@ class scheduler(object):
 
         # initial cycle time
         if self.is_restart:
-            self.ict = None
+            # self.ict is set by "cylc restart" after loading state dump
+            pass
         else:
             if self.options.warm:
                 if self.options.set_ict:
@@ -313,6 +315,7 @@ class scheduler(object):
             else:
                 self.ict = self.start_tag
 
+        self.state_dumper.set_cts( self.ict, self.stop_tag )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
@@ -1032,13 +1035,6 @@ class scheduler(object):
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
 
-            if self.run_mode == 'simulation':
-                for itask in self.pool.get_tasks():
-                    # set sim-mode tasks to "succeeded" after their
-                    # alotted run time (and then set flags.pflag to
-                    # stimulate task processing).
-                    itask.sim_time_check()
-
             if self.process_tasks():
                 if self.options.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
@@ -1050,9 +1046,11 @@ class scheduler(object):
                 submitted = self.pool.process()
                 self.process_resolved( submitted )
 
-                if not self.config['development']['disable task elimination']:
-                    self.cleanup()
                 self.spawn()
+
+                if not self.config['development']['disable task elimination']:
+                    self.remove_spent_tasks()
+
                 self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
                 self.do_update_state_summary = True
@@ -1184,13 +1182,16 @@ class scheduler(object):
                 self.set_suite_timer()
 
         elif self.waiting_clocktriggered_task_ready():
-            # This actually returns True if ANY task is ready to run,
-            # not just clock-triggered tasks (but this should not matter).
-            # For a clock-triggered task, this means its time offset is
-            # up AND its prerequisites are satisfied; it won't result
-            # in multiple passes through the main loop.
             process = True
 
+        if self.run_mode == 'simulation':
+            for itask in self.pool.get_tasks():
+                if itask.state.is_currently('running'):
+                    # set sim-mode tasks to "succeeded" after their
+                    # alotted run time
+                    if itask.sim_time_check():
+                        process = True
+ 
         ##if not process:
         ##    # If we neglect to set flags.pflag on some event that 
         ##    # makes re-negotiation of dependencies necessary then if
@@ -1448,13 +1449,13 @@ class scheduler(object):
     def get_failed_tasks( self ):
         failed = []
         for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed'):
+            if itask.state.is_currently('failed', 'submit-failed' ):
                 failed.append( itask )
         return failed
 
     def any_task_failed( self ):
         for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed'):
+            if itask.state.is_currently('failed', 'submit-failed' ):
                 return True
         return False
 
@@ -1541,89 +1542,61 @@ class scheduler(object):
             if itask.ready_to_spawn():
                 self.force_spawn( itask )
 
-    def earliest_unspawned( self ):
-        all_spawned = True
-        earliest_unspawned = '99998877665544'
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
-                continue
-            if not itask.state.has_spawned():
-                all_spawned = False
-                if not earliest_unspawned:
-                    earliest_unspawned = itask.c_time
-                elif int( itask.c_time ) < int( earliest_unspawned ):
-                    earliest_unspawned = itask.c_time
+    def remove_spent_tasks( self ):
+        """Remove tasks no longer needed to satisfy others' prerequisites."""
+        self.remove_suiciding_tasks()
+        self.remove_spent_cycling_tasks()
+        self.remove_spent_async_tasks()
 
-        return [ all_spawned, earliest_unspawned ]
 
-    def earliest_unsatisfied( self ):
-        # find the earliest unsatisfied task
-        all_satisfied = True
-        earliest_unsatisfied = '99998877665544'
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
-                continue
-            if not itask.prerequisites.all_satisfied():
-                all_satisfied = False
-                if not earliest_unsatisfied:
-                    earliest_unsatisfied = itask.c_time
-                elif int( itask.c_time ) < int( earliest_unsatisfied ):
-                    earliest_unsatisfied = itask.c_time
-
-        return [ all_satisfied, earliest_unsatisfied ]
-
-    def earliest_unsucceeded( self ):
-        # find the earliest unsucceeded task
-        # EXCLUDING FAILED TASKS
-        all_succeeded = True
-        earliest_unsucceeded = '99998877665544'
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
-                continue
-            if itask.state.is_currently('failed'):
-                # EXCLUDING FAILED TASKS
-                continue
-            #if itask.is_daemon():
-            #   avoid daemon tasks
-            #   continue
-
-            if not itask.state.is_currently('succeeded'):
-                all_succeeded = False
-                if not earliest_unsucceeded:
-                    earliest_unsucceeded = itask.c_time
-                elif int( itask.c_time ) < int( earliest_unsucceeded ):
-                    earliest_unsucceeded = itask.c_time
-
-        return [ all_succeeded, earliest_unsucceeded ]
-
-    def cleanup( self ):
-        # Delete tasks that are no longer needed, i.e. those that
-        # spawned, succeeded, AND are no longer needed to satisfy
-        # the prerequisites of other tasks.
-
-        # times of any failed tasks. 
-        failed_rt = {}
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
-                continue
-            if itask.state.is_currently('failed'):
-                failed_rt[ itask.c_time ] = True
-
-        # suicide
+    def remove_suiciding_tasks( self ):
+        """Remove any tasks that have suicide-triggered."""
         for itask in self.pool.get_tasks():
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
                     self.force_spawn( itask )
                     self.pool.remove( itask, 'suicide' )
 
-        if self.use_quick:
-            self.cleanup_non_intercycle( failed_rt )
 
-        self.cleanup_generic( failed_rt )
+    def remove_spent_cycling_tasks( self ):
+        """
+        Remove cycling tasks no longer needed to satisfy others' prerequisites.
+        Each task proxy knows its "cleanup cutoff" from the graph. For example:
+          graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
+        implies foo's cutoff is T+12: if foo has succeeded and spawned,
+        it can be removed if no unsatisfied task proxy exists with
+        T<=T+12. Note this only uses information about the cycle time of
+        downstream dependents - if we used specific IDs instead spent
+        tasks could be identified and removed even earlier).
+        """
 
-        self.cleanup_async()
+        # first find the cycle time of the earliest unsatisfied task
+        cutoff = None
+        for itask in self.pool.get_tasks():
+            if not itask.is_cycling():
+                continue
+            if itask.state.is_currently('waiting', 'runahead', 'held' ):
+                if not cutoff or int(itask.c_time) < int(cutoff):
+                    cutoff = itask.c_time
+            elif not itask.has_spawned():
+                nxt = itask.next_tag()
+                if not cutoff or int(nxt) < int(cutoff):
+                    cutoff = nxt
 
-    def async_cutoff(self):
+        # now check each succeeded task against the cutoff
+        spent = []
+        for itask in self.pool.get_tasks():
+            if not itask.state.is_currently('succeeded') or \
+                    not itask.is_cycling() or \
+                    not itask.state.has_spawned():
+                continue
+            if cutoff and cutoff > itask.cleanup_cutoff:
+                spent.append(itask)
+        for itask in spent:
+            self.pool.remove( itask )
+
+
+    def remove_spent_async_tasks( self ):
         cutoff = 0
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
@@ -1634,10 +1607,6 @@ class scheduler(object):
             if not itask.done():
                 if itask.tag > cutoff:
                     cutoff = itask.tag
-        return cutoff
- 
-    def cleanup_async( self ):
-        cutoff = self.async_cutoff()
         spent = []
         for itask in self.pool.get_tasks():
             if itask.is_cycling():
@@ -1645,189 +1614,8 @@ class scheduler(object):
             if itask.done() and itask.tag < cutoff:
                 spent.append( itask )
         for itask in spent:
-            self.pool.remove( itask, 'async spent' )
+            self.pool.remove( itask )
 
-    def cleanup_non_intercycle( self, failed_rt ):
-        # A/ Non INTERCYCLE tasks by definition have ONLY COTEMPORAL
-        # DOWNSTREAM DEPENDANTS). i.e. they are no longer needed once
-        # their cotemporal peers have succeeded AND there are no
-        # unspawned tasks with earlier cycle times. So:
-        #
-        # (i) FREE TASKS are spent if they are:
-        #    spawned, succeeded, no earlier unspawned tasks.
-        #
-        # (ii) TIED TASKS are spent if they are:
-        #    spawned, succeeded, no earlier unspawned tasks, AND there is
-        #    at least one subsequent instance that is SUCCEEDED
-        #    ('satisfied' would do but that allows elimination of a tied
-        #    task whose successor could subsequently fail, thus
-        #    requiring manual task reset after a restart).
-        #  ALTERNATIVE TO (ii): DO NOT ALLOW non-INTERCYCLE tied tasks
-
-        # time of the earliest unspawned task
-        [all_spawned, earliest_unspawned] = self.earliest_unspawned()
-        if all_spawned:
-            self.log.debug( "all tasks spawned")
-        else:
-            self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
-
-        # find the spent quick death tasks
-        spent = []
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
-                continue
-            if itask.intercycle: 
-                # task not up for consideration here
-                continue
-            if not itask.has_spawned():
-                # task has not spawned yet, or will never spawn (one off tasks)
-                continue
-            if not itask.done():
-                # task has not succeeded yet
-                continue
-
-            #if itask.c_time in failed_rt.keys():
-            #    # task is cotemporal with a failed task
-            #    # THIS IS NOT NECESSARY AS WE RESTART FAILED
-            #    # TASKS IN THE READY STATE?
-            #    continue
-
-            if all_spawned:
-                # (happens prior to shutting down at stop top time)
-                # (=> earliest_unspawned is undefined)
-                continue
-
-            if int( itask.c_time ) >= int( earliest_unspawned ):
-                # An EARLIER unspawned task may still spawn a successor
-                # that may need me to satisfy its prerequisites.
-                # The '=' here catches cotemporal unsatisfied tasks
-                # (because an unsatisfied task cannot have spawned).
-                continue
-
-            if hasattr( itask, 'is_pid' ):
-                # Is there a later succeeded instance of the same task?
-                # It must be SUCCEEDED in case the current task fails and
-                # cannot be fixed => the task's manually inserted
-                # post-gap successor will need to be satisfied by said
-                # succeeded task. 
-                there_is = False
-                for t in self.pool.get_tasks():
-                    if not t.is_cycling():
-                        continue
-                    if t.name == itask.name and \
-                            int( t.c_time ) > int( itask.c_time ) and \
-                            t.state.is_currently('succeeded'):
-                                there_is = True
-                                break
-                if not there_is:
-                    continue
-
-            # and, by a process of elimination
-            spent.append( itask )
- 
-        # delete the spent quick death tasks
-        for itask in spent:
-            self.pool.remove( itask, 'quick' )
-
-    def cleanup_generic( self, failed_rt ):
-        # B/ THE GENERAL CASE
-        # No succeeded-and-spawned task that is later than the *EARLIEST
-        # UNSATISFIED* task can be deleted yet because it may still be
-        # needed to satisfy new tasks that may appear when earlier (but
-        # currently unsatisfied) tasks spawn. Therefore only
-        # succeeded-and-spawned tasks that are earlier than the
-        # earliest unsatisfied task are candidates for deletion. Of
-        # these, we can delete a task only IF another spent instance of
-        # it exists at a later time (but still earlier than the earliest
-        # unsatisfied task) 
-
-        # BUT while the above paragraph is correct, the method can fail
-        # at restart: just before shutdown, when all running tasks have
-        # finished, we briefly have 'all tasks satisfied', which allows 
-        # deletion without the 'earliest unsatisfied' limit, and can
-        # result in deletion of succeeded tasks that are still required
-        # to satisfy others after a restart.
-
-        # THEREFORE the correct deletion cutoff is the earlier of:
-        # *EARLIEST UNSUCCEEDED*  OR *EARLIEST UNSPAWNED*, the latter
-        # being required to account for sequential (and potentially
-        # tied) tasks that can spawn only after finishing - thus there
-        # may be tasks in the system that have succeeded but have not yet
-        # spawned a successor that could still depend on the deletion
-        # candidate.  The only way to use 'earliest unsatisfied'
-        # over a suite restart would be to record the state of all
-        # prerequisites for each task in the state dump (which may be a
-        # good thing to do, eventually!)
-
-        [ all_succeeded, earliest_unsucceeded ] = self.earliest_unsucceeded()
-        if all_succeeded:
-            self.log.debug( "all tasks succeeded" )
-        else:
-            self.log.debug( "earliest unsucceeded: " + earliest_unsucceeded )
-
-        # time of the earliest unspawned task
-        [all_spawned, earliest_unspawned] = self.earliest_unspawned()
-        if all_spawned:
-            self.log.debug( "all tasks spawned")
-        else:
-            self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
-
-        cutoff = int( earliest_unsucceeded )
-        if int( earliest_unspawned ) < cutoff:
-            cutoff = int( earliest_unspawned )
-        self.log.debug( "cleanup cutoff: " + str(cutoff) )
-
-        # find candidates for deletion
-        candidates = {}
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
-                continue
-            if not itask.done():
-                continue
-            #if itask.c_time in failed_rt.keys():
-            #    continue
-            if int( itask.c_time ) >= cutoff:
-                continue
-            
-            if itask.c_time in candidates.keys():
-                candidates[ itask.c_time ].append( itask )
-            else:
-                candidates[ itask.c_time ] = [ itask ]
-
-        # searching from newest tasks to oldest, after the earliest
-        # unsatisfied task, find any done task types that appear more
-        # than once - the second or later occurrences can be deleted.
-        ctimes = candidates.keys()
-        ctimes.sort( key = int, reverse = True )
-        seen = {}
-        spent = []
-        for rt in ctimes:
-            if int( rt ) >= cutoff:
-                continue
-            
-            for itask in candidates[ rt ]:
-                if hasattr( itask, 'is_oneoff' ):
-                    # one off candidates that do not nominate a follow-on can
-                    # be assumed to have no non-cotemporal dependants
-                    # and can thus be eliminated.
-                    try:
-                        name = itask.oneoff_follow_on
-                    except AttributeError:
-                        spent.append( itask )
-                        continue
-                else:
-                    name = itask.name
-
-                if name in seen.keys():
-                    # already seen this guy, so he's spent
-                    spent.append( itask )
-                else:
-                    # first occurence
-                    seen[ name ] = True
-            
-        # now delete the spent tasks
-        for itask in spent:
-            self.pool.remove( itask, 'general' )
 
     def command_trigger_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -2028,8 +1816,8 @@ class scheduler(object):
             itask.check_timers()
 
     def waiting_clocktriggered_task_ready( self ):
-        # This method actually returns True if ANY task is ready to run,
-        # not just clocktriggered tasks. However, this should not be a problem.
+        # returns True if any clocktriggered task is ready to run
+        # (TODO - the following reports if ANY task is ready)
         result = False
         for itask in self.pool.get_tasks():
             #print itask.id
