@@ -46,7 +46,7 @@ class job_batcher( threading.Thread ):
         # NOTE: Queue.get() blocks if the queue is empty
         # AND: Queue.task_done() doesn't block the producer; it is for
         # queue.join() to block until all queued data is processed.
-        self.log.info(  "Thread Start: " + self.queue_name )
+        self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
             if self.quit:
@@ -78,7 +78,7 @@ class job_batcher( threading.Thread ):
                     time.sleep( self.batch_delay )
             time.sleep( 1 )
 
-        self.log.info(  "Thread Exit: " + self.queue_name )
+        self.log.info(  self.thread_id + " exit (" + self.queue_name + ")" )
 
 
     def process_batch( self, batch, i, n ):
@@ -194,7 +194,7 @@ class task_batcher( job_batcher ):
             jobinfo[ 'p' ] = p
             jobinfo[ 'data' ] = (itask,launcher)
         except Exception, x:
-            jobinfo[ 'data' ] = (itask,None) # (defaults to non-list None)
+            jobinfo[ 'data' ] = (itask,None) # (defaults to scalar None)
             self.log.critical( str(x) )
             return False
         else:
@@ -202,6 +202,8 @@ class task_batcher( job_batcher ):
 
 
     def follow_up_item( self, jobinfo ):
+        if self.run_mode == 'simulation':
+            return 0
         itask, launcher = jobinfo['data']
         bkg = False
         try:
@@ -226,6 +228,8 @@ class task_batcher( job_batcher ):
 
 
     def item_succeeded_hook( self, jobinfo ):
+        if self.run_mode == 'simulation':
+            return
         job_batcher.item_succeeded_hook( self, jobinfo )
         itask,launcher = jobinfo['data']
         itask.incoming('NORMAL', itask.id + ' submission succeeded' )

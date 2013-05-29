@@ -55,7 +55,7 @@ task polling interval = float( min=5, default=10 )
     maximum number of tries = integer( min=1, default=7 )
 
     # This timeout is the same as --pyro-timeout for user commands. If
-    # set to None (no timeout) message send to non-responsive suite
+    # set to None (no timeout) message send to non-responsive suites
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
     connection timeout in seconds = float( min=1, default=30 )
 

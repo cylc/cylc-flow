@@ -739,12 +739,9 @@ If you don't have access to a remote task host just use
 \end{myitemize}
 
 If these requirements are satisfied no tests should fail on an official
-cylc release, because of pre-release testing. If you find that some do
-fail, consider reporting this to cylc's maintainer or the cylc mailing
-list.  A possible exception to this is that some suite timeouts may be
-set too low if your suite host is slow or overloaded. Suite timeouts are
-intended to catch error conditions, such as unexpected task failures,
-that prevent a suite from completing and shutting down automatically.
+cylc release, unless perhaps some timeouts occur because your suite host
+is slow or overloaded - otherwise please consider reporting test
+failures to the cylc-dev mailing list.
 
 \subsection{Complete Non System-Level Installation}
 \label{LocalInstall}
@@ -1537,7 +1534,7 @@ Any client process that connects to a running suite (this includes task
 messaging and user-invoked interrogation and control commands) must
 authenticate with a secure passphrase that has been loaded by the suite. 
 A random passphrase is generated automatically in the suite definition
-directory at registration time, if one does not already exist there. For 
+directory at registration time if one does not already exist there. For 
 the default Pyro-based connection method the passphrase file must be
 distributed to any other accounts that host running tasks or from which
 you need monitoring or control access to the running suite.
@@ -1547,7 +1544,10 @@ automatically re-invoke cylc commands, including task messaging, on the
 suite host, in which case the suite passphrase is only needed on the
 suite host.
 
-See Section~\ref{passphrases} for more on how cylc's
+And finally, cylc now has a one-way polling mechanism for tracking task 
+progress on task hosts that do not allow routing back to the suite host.
+
+See Section~\ref{RunningSuites} for more on how cylc's
 client/server communication works and how to use it.
 
 \subsection{Suite Databases}
@@ -1804,17 +1804,19 @@ although this is more akin to Python module import than simple text
 inclusion, and the implications of this for suite design have not yet
 been explored.
 
-\subsubsection{Syntax Highlighting In Vim and Emacs}
+\subsubsection{Syntax Highlighting For Suite Definitions}
 \label{SyntaxHighlighting}
 
 \lstset{language=transcript}
 Cylc comes with a syntax file to configure suite.rc syntax
 highlighting and section folding in the {\em vim} editor, as shown in
-Figure~\ref{fig-cylc-vim}, and an emacs font-lock mode. Both are stored
-under the cylc conf directory:
+Figure~\ref{fig-cylc-vim}. We also have an {\em emacs} font-lock mode,
+and syntax files for the {\em gedit} and {\em kate} editors: 
 \begin{lstlisting}
-$CYLC_DIR/conf/cylc.vim
-$CYLC_DIR/conf/cylc-mode.el
+$CYLC_DIR/conf/cylc.vim     # vim
+$CYLC_DIR/conf/cylc-mode.el # emacs
+$CYLC_DIR/conf/cylc.lang    # gedit (and other gtksourceview programs)
+$CYLC_DIR/conf/cylc.xml     # kate
 \end{lstlisting}
 Refer to comments at the top of each file to see how to use them.
 
@@ -1950,15 +1952,8 @@ Multiline graph strings may contain:
 \begin{myitemize}
     \item {\bf blank lines}
     \item {\bf arbitrary white space}
-    \item {\bf task names}
-    \item {\bf internal comments:} following the \# character
-    \item {\bf cycle time offsets:} \lstinline=A[T-6]=
-    \item {\bf start triggers:} \lstinline@foo:start => bar@
-    \item {\bf success triggers:} \lstinline@foo:succeed => bar@ OR \lstinline@foo => bar@
-    \item {\bf fail triggers:} \lstinline@foo:fail => bar@
-    \item {\bf suicide triggers:} \lstinline@foo => !bar@
-    \item {\bf internal output triggers:} \lstinline@foo:upload1 => bar@
-    \item {\bf conditional triggers:} \lstinline@ (A | B) & C => D@ 
+    \item {\bf internal comments:} following the \lstinline=#= character
+    \item {\bf conditional task trigger expressions} - see below.
 \end{myitemize}
 
 \subsubsection{Interpreting Graph Strings}
@@ -3011,6 +3006,22 @@ inherit = ['OPS', 'SERIAL']
    job_type = serial
 \end{lstlisting}
 
+\paragraph{Suite Visualization And Multiple Inheritance}
+
+The first parent inherited by a namespace is also used as the
+collapsible family group when visualizing the suite. If this is not what
+you want, you can demote the first parent for visualization purposes,
+without affecting the order of inheritance of runtime properties:
+\begin{lstlisting}
+[runtime]
+    [[bar]]
+        # ...
+    [[foo]]
+        # inherit properties from bar, but stay under root for visualization:
+        inherit = None, bar
+\end{lstlisting}
+
+
 \subsubsection{How Runtime Inheritance Works}
 
 The linear precedence order of ancestors is computed for each namespace
@@ -3125,44 +3136,33 @@ And the suite identity variables are:
 \begin{lstlisting}
 $CYLC_SUITE_DEF_PATH   # $HOME/mysuites/baz (e.g.)
 $CYLC_SUITE_NAME       # foo.bar.baz (e.g.)
-$CYLC_SUITE_REG_PATH   # foo/bar/baz
+$CYLC_SUITE_REG_PATH   # name translate to path: foo/bar/baz
 $CYLC_SUITE_HOST       # orca.niwa.co.nz (e.g.) 
 $CYLC_SUITE_PORT       # 7766 (e.g.)
 $CYLC_SUITE_OWNER      # oliverh (e.g.)
 \end{lstlisting}
-The variable \lstinline=$CYLC_SUITE_REG_PATH= is just 
-\lstinline=$CYLC_SUITE_REG_NAME= (the hierarchical name under which the
-suite definition is registered in your suite database) translated into a
-directory path. This can be used when configuring suite logging
-directories and the like to put suite output in a directory tree that
-reflects the suite registration hierarchy (as opposed to the namespace
-hierarchy).
-
 Some of these variables are also used by cylc task messaging commands in
-order to automatically target the right task proxy object in the right
-suite.
+order to target the right task proxy object in the right suite.
 
 \paragraph{Suite Share And Task Work Directories}
 
 A {\em suite share directory} is created automatically for use as a file
-exchange area for tasks on same task host. The suite share directory can
-be accessed via \lstinline=$CYLC_SUITE_SHARE_DIR= and its location can
-be set in the cylc site/user config files. 
+exchange area for tasks on same task host. It can be accessed via
+\lstinline=$CYLC_SUITE_SHARE_DIR= and its location can be set in the
+cylc site/user config files. 
 
 A {\em task work directory} is also created automatically for each task, 
-Its location is held in the \lstinline=$CYLC_TASK_WORK_DIR= variable.
-Task command scripting is executed from within the work directory (i.e.
-it is the task's {\em current working directory}. In non-detaching
+and can be accessed via the \lstinline=$CYLC_TASK_WORK_DIR= variable.
+Task command scripting is executed from within the work directory (i.e.\
+it is the task's {\em current working directory}). For non-detaching
 tasks the work directory is automatically removed again if it is empty
-when the task finishes. The top level location of the task work and
-share directories can be set in the cylc site/user config files, but in
-the case of work-directories you can set the low-level work
-sub-directory under \lstinline=[runtime]= in your suite definitions. The
-default sub-directory name is the task ID, which gives each task a
-unique working directory. You can override this to give groups of tasks
-the same work directory, however, thus creating private share spaces for
-tasks that read and write files from their current working directory.
-
+when the task finishes. The main work directory location is set in the
+cylc site/user config files, but the lowest-level sub-directory, which
+name defaults to the task ID to give each task a unique workspace, can
+be overridden under \lstinline=[runtime]= in suite definitions. This
+enables groups of tasks that read and write files from their current
+working directories to be given common work directories as file share
+spaces.
 
 \paragraph{Other Cylc-Defined Environment Variables}
 
@@ -3172,7 +3172,7 @@ command line, are passed to task execution environments as:
 $CYLC_SUITE_INITIAL_CYCLE_TIME 
 $CYLC_SUITE_FINAL_CYCLE_TIME 
 \end{lstlisting}
-Running tasks can use these to determine whether or not they are running
+Tasks can use these to determine whether or not they are running
 in the first or final cycles.
 
 \lstset{language=transcript}
@@ -3237,25 +3237,14 @@ See Section~\ref{DynamicHostSelection}.
 
 \paragraph{Access To Cylc On Task Hosts}
 
-Remote tasks must have access to cylc on the task host. There are
-several ways of configuring your remote \lstinline=$PATH= for cylc:
-
-\begin{myenumerate}
-
-\item system or user login scripts: \lstinline=/etc/profile= or
-\lstinline=$HOME/.profile= - the remote job submission mechanism
-automatically sources these.
-
-\item Use {\em cylc bin directory} items in site/user config file host
-sections to set the cylc location for all suites running on the host.
-
-\end{myenumerate}
+Remote tasks must have access to cylc via \lstinline=$PATH= on the task
+host.  This can be achived by the system or user login scripts,
+\lstinline=/etc/profile= or \lstinline=$HOME/.profile= - the remote job
+submission mechanism automatically sources these.
 
 It is also possible to configure your \lstinline=$PATH= manually
 in runtime namespace {\em intial scripting} sections, which end up
-at the top of task job scripts before the first cylc messaging call. The
-other methods are preferred, however, because this is really a
-host-specific setting.
+at the top of task job scripts before the first cylc messaging call.
 
 Tasks can use \lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on
 the task host, and the suite bin directory is automatically added
@@ -3987,7 +3976,7 @@ expressions above) to do the job.
 
 
 
-\section{Task Job Submission}
+\section{Task Job Submission, Poll and Kill}
 \label{TaskJobSubmission}
 
 {\em Task Implementation} (Section~\ref{TaskImplementation}) describes
@@ -3995,6 +3984,18 @@ what requirements a command, script, or program, must fulfill in order
 to function as a cylc task. This section explains how tasks are submitted 
 by cylc when they are ready to run, and how to define new task job
 submission methods.
+
+\subsection{Job Poll And Kill}
+
+For each supported job submission method, cylc now also supports polling
+for real task status, and job kill, from the gcylc GUI and command line
+(\lstinline=cylc poll= and \lstinline=cylc kill=).
+In addition to on-demand polling, formerly submitted and running tasks
+are polled automatically on suite restarts (Section~\ref{RestartingSuites})
+and on job submission and execution timeouts, and one-way polling can be
+used to track tasks on hosts that do not allow return routing for 
+task-initiated messaging (Section~\ref{RunningSuites}).
+
 
 \subsection{Task Job Scripts}
 \label{JobScripts}
@@ -4020,9 +4021,7 @@ specific tasks or families:
 \end{lstlisting}
 
 The actual command line used to submit the job script is written to
-stdout by cylc. In the following shell transcript we generate a job
-script for a task in the examples.QuickStart.c example suite and then
-examine it:
+stdout by cylc:
 \lstset{language=transcript}
 \begin{lstlisting}
 % cylc submit --dry-run examples.QuickStart.c Model.2011080506
@@ -4032,151 +4031,30 @@ examine it:
     1> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1.out 
     2> ~/cylc-run/examples.QuickStart.c/log/job/Model.2011080506.1.err &
 \end{lstlisting}
-Here is the generated job script (note that some config items not used in
-this suite, such as task \lstinline=initial scripting= , result in extra 
-job script sections not shown here):
-\lstset{language=bash}
-\begin{lstlisting}
-#!/bin/bash
+Job scripts can also be generated and printed directly to stdout with the 
+\lstinline=cylc jobscript= command.  Take a look at one to see exactly
+how cylc wraps and runs your tasks.
 
-# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task: foo.2010080800
-# To be submitted by method: 'background'
-
-echo "JOB SCRIPT STARTING"
-
-# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:
-export CYLC_DIR_ON_SUITE_HOST=/home/oliverh/cylc
-export CYLC_MODE=submit
-export CYLC_DEBUG=False
-export CYLC_VERBOSE=False
-export CYLC_SUITE_HOST=oliverh-33586DL.greta.niwa.co.nz
-export CYLC_SUITE_PORT=None
-export CYLC_SUITE_REG_NAME=baz
-export CYLC_SUITE_REG_PATH=baz
-export CYLC_SUITE_OWNER=oliverh
-export CYLC_USE_LOCKSERVER=False
-export CYLC_UTC=False
-export CYLC_SUITE_INITIAL_CYCLE_TIME=2010080800
-export CYLC_SUITE_FINAL_CYCLE_TIME=None
-export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST=/home/oliverh/cylc/baz
-export CYLC_SUITE_DEF_PATH=$HOME/cylc/baz
-export CYLC_SUITE_PYRO_TIMEOUT=None
-
-# CYLC TASK IDENTITY AND ENVIRONMENT:
-export CYLC_TASK_ID=foo.2010080800
-export CYLC_TASK_NAME=foo
-export CYLC_TASK_CYCLE_TIME=2010080800
-export CYLC_TASK_LOG_ROOT=$HOME/cylc-run/baz/log/job/foo.2010080800.1
-export CYLC_TASK_NAMESPACE_HIERARCHY="root foo"
-export CYLC_TASK_TRY_NUMBER=1
-export CYLC_TASK_SSH_MESSAGING=False
-export CYLC_TASK_WORK_PATH=$CYLC_SUITE_DEF_PATH/work/$CYLC_TASK_ID
-# Note the suite share path may actually be family- or task-specific:
-export CYLC_SUITE_SHARE_PATH=$CYLC_SUITE_DEF_PATH/share
-
-# ACCESS TO CYLC:
-PATH=/home/oliverh/cylc/bin:$PATH
-
-# ACCESS TO THE SUITE BIN DIRECTORY:
-PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH
-export PATH
-
-# TASK RUNTIME ENVIRONMENT:
-FOO=BAR
-
-# SET ERROR TRAPPING:
-set -u # Fail when using an undefined variable
-# Define the trap handler
-HANDLE_TRAP() {
-  echo Received signal "$@"
-  cylc task failed "Task job script received signal $@"
-  trap "" EXIT
-  exit 0
-}
-# Trap signals that could cause this script to exit:
-trap "HANDLE_TRAP EXIT" EXIT
-trap "HANDLE_TRAP ERR"  ERR
-trap "HANDLE_TRAP TERM" TERM
-trap "HANDLE_TRAP XCPU" XCPU
-
-# INITIAL SCRIPTING:
-echo Hello World
-
-# SEND TASK STARTED MESSAGE:
-cylc task started
-
-# SHARE DIRECTORY CREATE:
-mkdir -p $CYLC_SUITE_SHARE_PATH || true
-
-# WORK DIRECTORY CREATE:
-mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
-mkdir -p $CYLC_TASK_WORK_PATH
-cd $CYLC_TASK_WORK_PATH
-
-# TASK IDENTITY SCRIPTING:
-echo "cylc Suite and Task Identity:"
-echo "  Suite Name  : $CYLC_SUITE_REG_NAME"
-echo "  Suite Host  : $CYLC_SUITE_HOST"
-echo "  Suite Port  : $CYLC_SUITE_PORT"
-echo "  Suite Owner : $CYLC_SUITE_OWNER"
-echo "  Task ID     : $CYLC_TASK_ID"
-if [[ $(uname) == AIX ]]; then
-   # on AIX the hostname command has no '-f' option
-   echo "  Task Host   : $(hostname).$(namerslv -sn | awk '{print $2}')"
-else
-    echo "  Task Host   : $(hostname -f)"
-fi
-echo "  Task Owner  : $USER"
-echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
-echo ""
-
-# TASK COMMAND SCRIPTING:
-echo Dummy command scripting; sleep 10
-
-# EMPTY WORK DIRECTORY REMOVE:
-cd
-rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true
-
-# SEND TASK SUCCEEDED MESSAGE:
-cylc task succeeded
-
-echo "JOB SCRIPT EXITING (TASK SUCCEEDED)"
-trap "" EXIT
-
-#EOF
-\end{lstlisting}
-
-You can also generate a job script and print it directly to stdout with
-\lstinline=cylc jobscript SUITE TASKID=.
-
-\subsection{Built-in Job Submission Methods}
+\subsection{Supported Job Submission Methods}
 \label{AvailableMethods}
 
-Cylc has a number of built-in job submission methods. If these do 
-not suite your needs Section~\ref{DefiningNewJobSubmissionMethods} 
-shows how to extend cylc with new user-defined job submission methods.
-
-There are also two job submission methods intended for use in cylc
-development and testing: \lstinline=background_slow=, in which the job
-submission subprocess itself takes ten seconds to complete before the
-task starts executing; and \lstinline=fail=, in which the job submission
-subprocess itself always fails.  
+Cylc supports a number of commonly used job submission methods, and 
+Section~\ref{DefiningNewJobSubmissionMethods} shows how to add 
+support for other user-defined job submission methods.
 
 \subsubsection{background}
 
-This job submission method runs tasks directly in a background shell.
+Runs tasks directly in a background shell.
 
 \subsubsection{at}
 
-This job submission method submits tasks to the rudimentary Unix
-\lstinline=at= scheduler. The \lstinline=atd= daemon must be running.
+Submits tasks to the rudimentary Unix \lstinline=at= scheduler. The
+\lstinline=atd= daemon must be running.
 
 \subsubsection{loadleveler}
 
-This job submission method submits tasks to loadleveler using the
-\lstinline=llsubmit= command.  Loadleveler directives can be provided in
-the suite.rc file: 
+Submits tasks to loadleveler by the \lstinline=llsubmit= command.
+Loadleveler directives can be provided in the suite.rc file: 
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -4199,9 +4077,8 @@ These are written to the top of the task job script like this:
 
 \subsubsection{pbs}
 
-This job submission method submits tasks to PBS (or Torque) using the
-\lstinline=qsub= command.  PBS directives can be provided in the
-suite.rc file: 
+Submits tasks to PBS (or Torque) by the \lstinline=qsub= command.  PBS
+directives can be provided in the suite.rc file: 
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -4222,9 +4099,8 @@ These are written to the top of the task job script like this:
 
 \subsubsection{sge}
 
-This job submission method submits tasks to Sun Grid Engine using the
-\lstinline=qsub= command.  SGE directives can be provided in the
-suite.rc file: 
+Submits tasks to Sun/Oracle Grid Engine by the \lstinline=qsub= command.
+SGE directives can be provided in the suite.rc file: 
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -4247,11 +4123,10 @@ These are written to the top of the task job script like this:
 
 \subsubsection{slurm}
 
-This job submission method submits tasks to Simple Linux Utility for
-Resource Management using the \lstinline=sbatch= command.  SLURM
-directives can be provided in the suite.rc file (note that since
-not all SLURM commands have a short form, cylc requires the long
-form directives):
+Submits tasks to Simple Linux Utility for Resource Management by the
+\lstinline=sbatch= command.  SLURM directives can be provided in the
+suite.rc file (note that since not all SLURM commands have a short form,
+cylc requires the long form directives):
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -4273,10 +4148,11 @@ These are written to the top of the task job script like this:
 
 \subsubsection{Default Directives Provided}
 
-For loadleveler, pbs, and sge job submission, default directives
-are provided to set the job name and stdout and stderr file paths.
+For job submission methods that use job file directives (PBS,
+Loadlevler, etc.) default directives are provided to set the job name
+and stdout and stderr file paths.
 
-\subsubsection{PBS and SGE Cylc Quirks}
+\subsubsection{Cylc Quirks (PBS,SGE,...) }
 
 As shown in the example above, multiple entries for the same PBS or SGE
 directive option must be comma-separated on the same line, in the
@@ -4289,7 +4165,7 @@ As also shown in the example above, to get a naked option flag such as
 \lstinline=-cwd= in SGE you must give a quoted blank space as the
 directive value in the suite.rc file.
 
-\subsection{Task stdout and stderr Logs}
+\subsection{Task stdout And stderr Logs}
 \label{WhitherStdoutAndStderr}
 
 When a task is ready to run cylc generates a filename root to be used
@@ -4318,7 +4194,7 @@ that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred
 to here will be complete task job logs.
 
-\subsection{Overriding the Job Submission Command}
+\subsection{Overriding The Job Submission Command}
 \label{CommandTemplate}
 
 \lstset{language=suiterc}
@@ -4343,7 +4219,7 @@ to the job stdout and stderr files.
 \subsection{Defining New Job Submission Methods}
 \label{DefiningNewJobSubmissionMethods}
 
-Defining a new job submission method requires some minimal Python
+Defining a new job submission method requires a little Python
 programming. You can derive (in the sense of object oriented programming
 inheritance) new methods from one of the existing ones, or directly from
 cylc's job submission base class,
@@ -4351,93 +4227,8 @@ cylc's job submission base class,
 \begin{lstlisting}
 $CYLC_DIR/lib/cylc/job_submission/job_submit.py
 \end{lstlisting}
-using the existing methods as examples. Most often this should 
-merely be a matter of defining the command line used to execute the
-aforementioned job scripts and using the provided stdout and stderr file
-paths appropriately. For example, here is the entire class code for 
-the \lstinline=background= method:
-
+using the existing job submission methods as examples.
 \lstset{language=Python}
-
-\begin{lstlisting}
-#!/usr/bin/env python
-
-from job_submit import job_submit
-
-class background( job_submit ):
-    """
-Run the task job script directly in a background shell.
-    """
-    # stdin redirection (< /dev/null) allows background execution on
-    # remote hosts - ssh needn't wait for the process to finish.
-    COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s &"
-    def construct_jobfile_submission_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path,
-                                            self.stdout_file,
-                                            self.stderr_file )
-\end{lstlisting}
-
-Here is the \lstinline=at= method:
-
-\begin{lstlisting}
-#!/usr/bin/env python
-
-from job_submit import job_submit
-
-class at( job_submit ):
-    """
-Submit the task job script to the simple 'at' scheduler. The 'atd' daemon
-service must be running.
-    """
-    COMMAND_TEMPLATE = "echo \"%s 1>%s 2>%s\" | at now"
-
-    def construct_jobfile_submission_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path,
-                                            self.stdout_file,
-                                            self.stderr_file )
-\end{lstlisting}
-
-And here is the \lstinline=pbs= method:
-
-\begin{lstlisting}
-
-#!/usr/bin/env python
-from job_submit import job_submit
-
-class pbs( job_submit ):
-    """
-PBS qsub job submission.
-    """
-
-    COMMAND_TEMPLATE = "qsub %s"
-
-    def set_directives( self ):
-        self.directive_prefix = "#PBS"
-        self.final_directive  = None
-        self.directive_connector = " "
-
-        defaults = {}
-        defaults[ '-N' ] = self.task_id
-        defaults[ '-o' ] = self.stdout_file
-        defaults[ '-e' ] = self.stderr_file
-
-        # In case the user wants to override the above defaults:
-        for d in self.directives:
-            defaults[ d ] = self.directives[ d ]
-        self.directives = defaults
-
-    def construct_jobfile_submission_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path )
-\end{lstlisting}
 
 \subsubsection{An Example}
 
@@ -4521,207 +4312,245 @@ at the top of the example file above).
 
 
 \section{Running Suites}
+\label{RunningSuites}
 
-This section may be incomplete - please see also the Quick Start
+To learn how to control running suites please also see the Quick Start
 Guide (Section~\ref{QuickStartGuide}), command documentation 
-(Section~\ref{CommandReference}), and play with the example suites.
+(Section~\ref{CommandReference}), and experiment with cylc's example
+suites and your own dummy task test suites.
 
-\subsection{How Tasks And Control Commands Interact With Suites}
+\subsection{How Tasks Interact With Running Suites}
 
-All interaction with a running suite by control commands, gcylc GUI
-instances, and messaging commands from running tasks, uses the Pyro
-network RPC (Remote Procedure Call) protocol. Each suite listens on its
-own network port; cylc starts grabbing ports at 7766 by default - 
-this is configured in the site config file
-\lstinline=$CYLC_DIR/conf/site/site.rc=, see 
-\lstinline=cylc get-global-config --help=.
+Suites need to track the progress of their tasks. Cylc now has three
+ways of achieving this, configured per task host in the site/user config
+files. One suite can use different task communication mechanisms for 
+different task hosts if necessary. \begin{myenumerate}
+\item {\bf task-to-suite messaging:} task job scripts encapsulate
+task scripting in a wrapper that automatically invokes messaging
+commands to report progress back to the suite. The messaging commands
+can be configured to work in two different ways:
+    \begin{myenumerate}
+        \item {\bf Pyro:} direct messaging via network sockets, using
+        Pyro (Python Remote Objects). 
+        \item {\bf ssh messaging:} for tasks hosts that block 
+        access to the network ports required by Pyro, this communication
+        method uses passwordless ssh to re-invoke task messaging
+        commands on the suite host (where ultimately Pyro is still used).
+    \end{myenumerate}
+\item {\bf one-way polling:} for task hosts that do not allow return
+routing back to the suite host for Pyro or ssh, cylc can now poll tasks
+at configurable intervals using passwordless ssh, for all supported job
+submission methods. 
+\end{myenumerate}
 
-However, if the Pyro network ports are blocked at your site you can get
-remote control commands and remote task messaging calls to re-invoke
-themselves on the suite host using passwordless ssh, so that the
-ultimate Pyro connection to the suite only occurs on the suite host.
+The Pyro connection method is the default because it is direct and
+efficient, whereas ssh messaging just inserts an extra step in the process.
+Polling is less efficient, particularly for very quick-running suites,
+and you should be careful to avoid spamming task hosts - each poll opens
+(and then closes) a new ssh connection. Polling subprocesses are batched by
+cylc, and the number invoked at once can be configured in suite definitions:
 
-\subsubsection{Pyro Connections And Secure Passphrases}
+\begin{lstlisting}
+# SUITE.RC
+[cylc]
+    [[poll and kill command submission]]
+        batch size = integer( min=1, default=5 )
+        delay between batches = integer( min=0, default=0 ) # seconds
+\end{lstlisting}
+
+Finally,
+\begin{myitemize}
+\item it has been suggested that network {\em port forwarding} may
+provide a solution if Pyro ports are blocked and you don't want to 
+use polling.
+\item you may be able to persuade system administrators to provide
+networking routing to one or more dedicated cylc servers, if not to the
+wider world. 
+\item it is possible to run cylc itself on HPC login nodes, to avoid the 
+need for {\em remote} task tracking, but depending on what software is
+installed on the HPC this may preclude use of the gcylc GUI and
+suite visualization tools.
+\end{myitemize}
+
+
+Here are the site/user config items relevant to task tracking:
+
+\begin{lstlisting}
+#SITE/USER CONFIG
+
+# Polling interval in seconds for the 'poll' task communication method
+# (wherein 'submitted' and 'running' tasks are polled periodically). 
+task polling interval = float( min=5, default=10 )
+
+# Task messaging settings affect task-to-suite communications.
+[task messaging]
+    # If a message send fails, retry after this delay:
+    retry interval in seconds = float( min=1, default=5 )
+    # If send fails after this many tries, give up trying:
+    maximum number of tries = integer( min=1, default=7 )
+
+    # This timeout is the same as --pyro-timeout for user commands. If
+    # set to None (no timeout) message send to non-responsive suite
+    # (e.g. suspended with Ctrl-Z) could hang indefinitely.
+    connection timeout in seconds = float( min=1, default=30 )
+
+# Pyro is used by cylc for network communications.
+[pyro]
+
+    # Each suite listens on a dedicated network port.
+    # Servers bind on the first port available from the base port up:
+# SITE ONLY
+    base port = integer( default=7766 )
+
+    # This sets the maximum number of suites that can run at once.
+# SITE ONLY
+    maximum number of ports = integer( default=100 )
+
+    # Port numbers are recorded in this directory, by suite name.
+    ports directory = string( default="$HOME/.cylc/ports/" )
+
+[hosts]
+    # The default task host is the suite host, i.e. localhost:
+    # Add task host sections if local defaults are not sufficient.
+    [[HOST]]
+       # Method of communication of task progress back to the suite:
+        #   1) pyro - direct client-server RPC via network ports
+        #   2) ssh  - re-invoke pyro messaging commands on suite server
+        #   3) poll - the suite polls for status of passive tasks
+        # Pyro RPC is still required in all cases *on the suite host*
+        # for cylc clients (commands etc.) to communicate with suites. 
+        task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
+        # (the polling iterval is not task-host dependent, see above)
+\end{lstlisting}
+
+\subsection{How Commands Interact With Running Suites}
+
+User-invoked commands that connect to running suites can also choose
+between direct communication across network sockets (Pyro) and
+re-invocation of commands on the suite host using passwordless ssh
+(there is a \lstinline=--use-ssh= command option for this purpose).
+
+The gcylc GUI requires direct Pyro connections to its target suite. If
+that is not possible, run gcylc on the suite host.
+
+
+\subsection{Connection Authentication}
+
+All Pyro connections to a running suite (task messaging and
+user-invoked commands) must authenticate with an arbitary single line of
+text in a file called \lstinline=passphrase=, which will be found and
+used automatically if installed properly - see below.  A secure MD5
+checksum, not the raw passphrase, is passed across the network. A random
+passphrase is generated in the suite definition directory when a suite
+is registered, but you can create your own if you wish.
+
+For ssh task messaging and user command re-invocation, on the other
+hand, the suite passphrase is only required on the suite host account
+but ssh keys must be installed for passwordless connections instead. 
+
+\subsubsection{Suite Pyro Passphrase Locations}
 \label{passphrases}
 
-All Pyro connections to a suite require passphrase authentication. The
-passphrase is just an arbitary single line of text. A secure MD5
-checksum is passed across the network, not the raw passphrase itself. 
-A random suite passhprase is generated in the suite definition directory
-when a suite is registered, but you can create your own as you wish.
+Suite passphrases currently have to be installed manually to all task
+host accounts that use the Pyro communication method (see above); and
+also to accounts used to run commands that interact directly with the
+suite via Pyro.
 
-Passphrases currently have to be installed manually in any user account,
-local or remote, that hosts tasks from the suite, or from which you want
-to interact with the suite without using the ssh remote communication 
-method. Legal passphrase locations, in order of preference, are:
+Legal passphrase locations, in order of preference, are:
 \begin{myenumerate}
     \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
 \end{myenumerate}
-The locations under \lstinline=$HOME/.cylc= are suitable for remote
-suite control accounts - in which case the suite definition directory
-may not be known or accessible. On remote task hosts the suite
-definition directory defaults to the same location relative to
-\lstinline=$HOME= as on the suite host; or the remote location can be
-specified explicitly in the suite definition. 
-
-\subsubsection{Ssh-Pyro Connections}
-
-For ssh-based remote task messaging and suite control, ssh keys must be
-installed in the relevant accounts to allow passwordless ssh connections
-back to the suite host account. The suite passphrase is then only
-required on the suite host.  
-
-\subsubsection{Choosing The Communication Method}
-
-The Pyro connection method is the default because it is simpler and more
-efficient, but if your remote task host does not have the right network
-ports open, and the IT staff are reluctant to change that, then the ssh
-alternative is available {\em so long as your local system and network
-configurations do not also prevent ssh connections back to the suite
-host - in that case see Section~\ref{difficultnetworkenv} below}.
-
-To use the ssh-based method:
-\lstset{language=suiterc}
-\begin{myitemize}
-    \item For remote tasks:
-\begin{lstlisting}
-# SUITE.RC
-[runtime]
-    [[NAME]]
-        [[[remote]]]
-            host = foo.bar.com
-            ssh messaging = True
-\end{lstlisting}
-    \item For user-invoked suite control commands, use
-        the \lstinline=--use-ssh= command line option along with the 
-        \lstinline=--host= and/or \lstinline=--owner= options. Commands
-        that normally prompt before taking action will also require use
-        of \lstinline=-f,--force=.
-\end{myitemize}
-
-\subsubsection{If You Cannot Use Pyro or Ssh Connections}
-\label{difficultnetworkenv}
-
-It has come to our attention that some HPC facilities do not have any
-networking routing back out of the compute nodes, for security reasons
-and/or to avoid network chatter that could affect performance.  Any
-kind of communication back to a cylc suite running on an external host
-would then presumably be impossible, but: 
-
-\begin{myitemize}
-    \item You may be able to run cylc itself on one of the HPC login
-        nodes. Depending on what software is installed on the HPC,
-        however, this may preclude use of the cylc GUI and suite
-        visualization tools.
-    \item You may be able to persuade your system administrators to
-        provide networking routing to a dedicated cylc server,
-        if not to the wider world.
-    \item It has been suggested that network {\em port forwarding} may 
-        provide a solution.
-    \item A one-way polling mechanism to track the progress of remote
-        tasks that are unable to communicate back to their suite has
-        been implemented and is currently in testing and code review.
-\end{myitemize}
+Remote tasks know the location of the remote suite definition directory
+(if one exists) through their execution environment. Local (suite host)
+user command invocations can find the suite definition directory in the
+suite registration database. Remote user command invocations, however,
+cannot interrogate the database on the command host because the suite
+will not be registered there (cylc cannot assume that the command host
+shares a common filesystem with the suite host). Consequently remote
+command host accounts must have the suite passphrase installed in one of
+the secondary locations under \lstinline=$HOME/.cylc/=.
 
 \subsection{Restarting Suites}
+\label{RestartingSuites}
 
 A restarted suite (see \lstinline=cylc restart --help=) is initialized
-from a previous recorded suite state dump, so that it can carry on from
+from a previous recorded suite state dump so that it can carry on from
 wherever it got to before being shut down or killed.
 
-Prior to cylc-5.0 any tasks recorded in the submitted or running states
-were automatically resubmitted on restarting, on the basis that they
-might not have completed while the suite was down and so should re-run
-just to be safe. Similarly, any tasks recorded as failed were
-automatically resubmitted on the basis that whatever caused them to fail
-might have been fixed while the suite was down. 
+Tasks that were recorded in the submitted or running states are now
+automatically polled on restart, to see if they are still submitted 
+(e.g. waiting in a PBS batch queue or similar), still running, or if they 
+finished (succeeded or failed) while the suite was down.
 
-Since cylc-5.0 we no longer assume anything on restarting - task
-proxies are now loaded in exactly their recorded states and it is up to
-users to intervene in restarted suites according to their knowledge of
-what happened to the real tasks at or after suite shutdown (e.g.\ by
-re-triggering task proxies shown in the running state if the
-corresponding real tasks are actually not still running).
+Tasks recorded in the failed state at shutdown are not automatically
+resubmitted on restarting the suite, in case the underlying problem has
+not been addressed yet. 
 
 \subsection{Task States}
 
-As a suite runs its tasks (or rather the task proxies that represent 
-the real tasks) may move through a number of defined states:
+As a suite runs its task proxies transition through the following states:
 
 \begin{myitemize}
-    \item {\bf waiting} - prerequisites not satisfied yet
-        (clock-triggered tasks also wait on their trigger time).
+    \item {\bf waiting} - task prerequisites not satisfied yet
+    (clock-triggered tasks also wait on their trigger time).
 
-    \item {\bf queued} - ready to be submitted (i.e.\ prerequisites
-        satisfied) but temporarily held in an internal
-        cylc queue (see Section~\ref{InternalQueues}). 
+    \item {\bf held} - task waiting, but will not be submitted even if ready
+    to run because it (and possibly the suite as a whole) has been put
+    on hold. Cylc automatically holds tasks that spawn past the final
+    cycle time, if one is set. 
 
-    \item {\bf submitting} - ready to submitted (i.e.\ prerequisites
-        satisfied) and passed to the background thread that handles task
-        job submission.
+    \item {\bf runahead} - task waiting, but will not be submitted 
+    even if ready to run because it has exceeded the {\em suite
+    runahead limit}, i.e.\ it has got too far ahead of the slowest tasks
+    and will be held back until they have caught up sufficiently. The
+    size of the runahead limit is configurable - see
+    Section~\ref{RunaheadLimit}.
 
-    \item {\bf submitted} - submitted by the configured job submission
-        method, but not yet running (may be waiting in an external batch
-        scheduler queue, for example).
+    \item {\bf queued} - task ready to run (prerequisites satisfied) but
+    is temporarily held in an {\em internal cylc queue} (see
+    Section~\ref{InternalQueues}). Note this is not the same as the
+    `submitted' state below.
 
-    \item {\bf running} - a ``task started'' message was received, indicating 
-        that the task is now executing.
+    \item {\bf submitting} - task ready to run (prerequisites satisfied)
+    and handed off the cylc background thread that handles job submission.
 
-    \item {\bf retrying} - a ``task failed'' message was received, but the 
-        task has a configured retry lined up after some delay, during which 
-        the task proxy waits in the {\em retrying} state. See
-        Section~\ref{TaskRetries}.
+    \item {\bf submitted} - task successfully submitted but has not
+    started running yet (e.g.\ waiting in a PBS batch queue).
 
-    \item two finished states:
-        \begin{myitemize}
-            \item {\bf succeeded} - a ``task succeeded'' message was received. 
-               The task proxy will remain in the suite in this state
-               until cylc determines its outputs are no longer needed
-               to satisfy the prerequisites of other waiting tasks.
+    \item {\bf submit-failed} - task job submission failed {\em or} the 
+    submitted job was killed before it could start executing.
 
-            \item {\bf failed} - a ``task failed'' message was received, or 
-                some other error condition such as job submission
-                failure occured. Task proxies in the {\em failed} state
-                are not automatically removed from the suite.
-        \end{myitemize}
+    \item {\bf running} - task currently executing (a {\em task started}
+    message was received, or the task polled as running).
 
-    \item two held (paused) states:
-        \begin{myitemize}
-            \item {\bf held} - a {\em held} task will not be submitted,
-                even if it is ready to run, until released.
-                Only waiting tasks can be held. The suite operator can
-                deliberately hold tasks, and cylc itself puts tasks on
-                hold under certain circumstances. For example, if the 
-                suite has been told to shut down after currently running 
-                tasks have finished, waiting tasks will be put on hold 
-                while any currently running tasks are finishing.
+    \item {\bf succeeded} - task finished successsfully (a {\em task
+    succeeded} message was received, or the task polled as succeeeded).
+    Succeeded task proxies are removed from the suite once they are no
+    longer needed to satisfy the prerequisites of others.
 
-            \item {\bf runahead} - a task in the {\em runahead} state has
-                exceeded the suite runahead limit, i.e.\ it has got too far
-                ahead of the slowest tasks and will be held back until 
-                they have caught up sufficiently. This state is automatically
-                managed by cylc, but the size of the limit is
-                configurable. See Section~\ref{RunaheadLimit}.
-        \end{myitemize}
+    \item {\bf failed} - task aborted due to some error condition (a
+    {\em task failed} message was received, or the task polled as failed). 
+    Failed task proxies are not automatically removed from the suite 
+    unless by deliberate use of suicide triggers.
+
+    \item {\bf retrying} - task job submission or execution failed, but 
+    a retry was configured (submission or execution retries, respectively) 
+    so the task is currently waiting for the configured retry delay 
+    before resubmitting. See Section~\ref{TaskRetries}. Tasks only enter
+    the `submit-failed' or `failed' states if all configured retries 
+    are exhausted. 
+
 \end{myitemize}
 
-Finally, there is also a pseudo-state displayed by the gcylc graph view:
+Note that greyed-out ``base graph nodes'' in the gcylc graph view do not 
+represent a task state, they are displayed to flesh out the graph
+structure where it is not covered by the current live task pool.
 
-\begin{myitemize}
-    \item {\bf base} (gcylc graph view only) - greyed out base graph
-        nodes do not represent current live task proxies in the suite,
-        they just connect the current live nodes according to the
-        full suite graph.
-\end{myitemize}
-
-And a pseudo-state for task reset purposes:
-\begin{myitemize}
-    \item {\bf ready} - to reset a task to {\em ready} is to to set it to
-        the {\em waiting} state and set all of its prerequisites satisfied.
-\end{myitemize}
+For manual task state reset purposes {\bf ready} is a pseudo-state that means
+{\em waiting} with all prerequisites satisfied.
 
 
 \subsection{Determining The Suite Network Port}

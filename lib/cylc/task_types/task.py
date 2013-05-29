@@ -498,12 +498,14 @@ class task( object ):
         Run db updates as a result of such errors will also be done by
         the main thread in response to receiving the message."""
 
-        self.incoming( 'NORMAL', self.id + " submitting now" )
+        if self.__class__.run_mode == 'simulation':
+            self.started_time = task.clock.get_datetime()
+            self.started_time_real = datetime.datetime.now()
+            self.outputs.set_completed( self.id + " started" )
+            self.state.set_status( 'running' )
+            return (None,None)
 
-        if self.__class__.run_mode == "simulation":
-            # TOOD - check this works!
-            self.incoming( self.id + " started" )
-            return (None, None) 
+        self.incoming( 'NORMAL', self.id + " submitting now" )
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
@@ -733,13 +735,18 @@ class task( object ):
         return launcher
 
     def check_timers( self ):
-        self.check_submission_timeout()
-        self.check_execution_timeout()
-        if self.poll_timer_start:
-            if self.state.is_currently( 'submitted', 'running' ):
-                self.check_poll_timer()
+        if self.state.is_currently( 'submitted' ):
+            self.check_submission_timeout()
+            self.check_poll_timer()
+        elif self.state.is_currently( 'running' ):
+            self.check_execution_timeout()
+            self.check_poll_timer()
 
     def check_poll_timer( self ):
+        # only called if in the 'submitted' or 'running' states
+        if not self.poll_timer_start:
+            # no timer set
+            return
         timeout = self.poll_timer_start + \
                 datetime.timedelta( seconds=self.polling_interval )
         if datetime.datetime.now() > timeout:
@@ -749,16 +756,12 @@ class task( object ):
             self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):
-        # if no timer is set, return
+        # only called if in the 'submitted' state
         timeout = self.timeouts['submission']
-        if not self.submission_timer_start or not timeout:
+        if not self.submission_timer_start or timeout is None:
+            # (explicit None in case of a zero timeout!)
+            # no timer set
             return
-
-        # if submission completed, turn off the timer
-        for state in [ 'submit-failed', 'running', 'succeeded', 'failed', 'retrying' ]: 
-            if self.state.is_currently(state):
-                self.submission_timer_start = None
-                return
 
         # if timed out, queue the event handler turn off the timer
         current_time = task.clock.get_datetime()
@@ -778,16 +781,12 @@ class task( object ):
             self.submission_timer_start = None
 
     def check_execution_timeout( self ):
-        # if no timer is set, return
+        # only called if in the 'running' state
         timeout = self.timeouts['execution']
-        if not self.execution_timer_start or not timeout:
+        if not self.execution_timer_start or timeout is None:
+            # (explicit None in case of a zero timeout!)
+            # no timer set
             return
-
-        # if execution completed, turn off the timer
-        for state in [ 'succeeded', 'failed', 'retrying' ]: 
-            if self.state.is_currently(state):
-                self.execution_timer_start = None
-                return
 
         # if timed out, queue the event handler turn off the timer
         current_time = task.clock.get_datetime()
@@ -812,16 +811,18 @@ class task( object ):
             self.execution_timer_start = None
 
     def sim_time_check( self ):
-        if not self.state.is_currently('running'):
-            return
         timeout = self.started_time_real + \
                 datetime.timedelta( seconds=self.sim_mode_run_length )
         if datetime.datetime.now() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
+                self.incoming( 'NORMAL', self.id + ' submitted' )
                 self.incoming( 'CRITICAL', self.id + ' failed' )
             else:
+                self.incoming( 'NORMAL', self.id + ' submitted' )
                 self.incoming( 'NORMAL', self.id + ' succeeded' )
-            flags.pflag = True
+            return True
+        else:
+            return False
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -1006,8 +1007,7 @@ class task( object ):
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
 
-            # TODO - should we use the real event time extracted from the
-            # message here:
+            # TODO - should we use the real event time extracted from the message here:
             self.execution_timer_start = self.started_time
 
             # submission was successful so reset submission try number
@@ -1020,7 +1020,7 @@ class task( object ):
 
         elif content == 'succeeded':
             # Received a 'task succeeded' message
-            self.submit_method_id = None
+            self.execution_timer_start = None
             flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
@@ -1042,7 +1042,7 @@ class task( object ):
         elif content == 'failed' or \
                 content == 'kill command succeeded' and self.state.is_currently('running'):
             # Received a 'task failed' message, or killed, or polling failed
-            self.submit_method_id = None
+            self.execution_timer_start = None
             try:
                 # Is there a retry lined up for this task?
                 self.retry_delay = float(self.retry_delays.popleft())
@@ -1079,7 +1079,6 @@ class task( object ):
                     self.__class__.event_queue.put( ('retry', handler, self.id, msg  ))
 
         elif content.startswith("Task job script received signal"):
-            self.submit_method_id = None
             # capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=content)
 
@@ -1217,6 +1216,9 @@ class task( object ):
 
     def poll( self, submit_method_id=None, user_at_host=None, sub_num=None ):
         """Poll my live task job and update status accordingly."""
+        if self.__class__.run_mode == 'simulation':
+            # No real task to poll
+            return
         # (the arguments are by the restart command)
         self.submit_method_id = submit_method_id or self.submit_method_id 
         self.user_at_host = user_at_host or self.user_at_host
@@ -1248,6 +1250,9 @@ class task( object ):
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
 
     def kill( self ):
+        if self.__class__.run_mode == 'simulation':
+            # No real task to kill
+            return
         if not self.state.is_currently('running', 'submitted' ):
             self.log( 'WARNING', 'Only submitted or running tasks can be killed.' )
             return
