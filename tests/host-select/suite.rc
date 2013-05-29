@@ -18,12 +18,17 @@ by many of the other test suites (see "cylc test-battery --help")."""
         suite shutdown event handler = cleanup.sh
 [scheduling]
     [[dependencies]]
-        graph = "foo"
+        graph = "foo & bar"
 [runtime]
-    [[foo]]
+    [[root]]
         command scripting = "/bin/true" # fast
+    [[foo]]
         [[[remote]]]
             # in suite bin directory:
             host = $(host-select.sh) # returns value of $CYLC_TEST_TASK_HOST
+            owner = {{ OWNER }}
+    [[bar]]
+        [[[remote]]]
+            host = $CYLC_TEST_TASK_HOST
             owner = {{ OWNER }}
 
