@@ -243,8 +243,7 @@ class scheduler(object):
 
         elif self.options.reftest:
             req = self.config['cylc']['reference test']['required run mode']
-            run_as = self.config['cylc']['force run mode']
-            if req and req != run_as:
+            if req and req != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
             handler = self.config.event_handlers['shutdown']
             if handler: 
@@ -817,6 +816,9 @@ class scheduler(object):
                 self.options.templatevars_file, run_mode=self.run_mode,
                 verbose=self.verbose )
 
+        if self.run_mode != self.config.run_mode:
+            self.run_mode = self.config.run_mode
+
         if not reconfigure:
             run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
@@ -871,7 +873,6 @@ class scheduler(object):
             # raises port_scan.SuiteNotFound error:
             self.lockserver_port = lockserver( self.host ).get_port()
 
-
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination']
 
@@ -882,11 +883,6 @@ class scheduler(object):
         self.utc = self.config['cylc']['UTC mode']
         if self.utc:
             os.environ['TZ'] = 'UTC'
-
-        # Update run mode if one is specified in the suite.rc file
-        if self.config['cylc']['force run mode']:
-            self.run_mode = self.config['cylc']['force run mode']
-            self.config.run_mode = self.config['cylc']['force run mode']
 
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']
