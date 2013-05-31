@@ -886,6 +886,7 @@ class scheduler(object):
         # Update run mode if one is specified in the suite.rc file
         if self.config['cylc']['force run mode']:
             self.run_mode = self.config['cylc']['force run mode']
+            self.config.run_mode = self.config['cylc']['force run mode']
 
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']

@@ -356,6 +356,10 @@ class config( CylcConfigObj ):
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
 
+        # check for run mode override at suite level
+        if self['cylc']['force run mode']:
+            self.run_mode = self['cylc']['force run mode']
+
         # suite event hooks
         if self.run_mode == 'live' or \
                 ( self.run_mode == 'simulation' and not self['cylc']['simulation mode']['disable suite event hooks'] ) or \
