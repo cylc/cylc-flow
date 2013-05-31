@@ -243,7 +243,8 @@ class scheduler(object):
 
         elif self.options.reftest:
             req = self.config['cylc']['reference test']['required run mode']
-            if req and req != self.run_mode:
+            run_as = self.config['cylc']['force run mode']
+            if req and req != run_as:
                 raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
             handler = self.config.event_handlers['shutdown']
             if handler: 
@@ -881,6 +882,10 @@ class scheduler(object):
         self.utc = self.config['cylc']['UTC mode']
         if self.utc:
             os.environ['TZ'] = 'UTC'
+
+        # Update run mode if one is specified in the suite.rc file
+        if self.config['cylc']['force run mode']:
+            self.run_mode = self.config['cylc']['force run mode']
 
         # ACCELERATED CLOCK for simulation and dummy run modes
         rate = self.config['cylc']['accelerated clock']['rate']
