@@ -83,6 +83,7 @@ def coerce_runtime_values( rdict ):
         'inherit',
         'retry delays',
         'extra log files',
+        'polling intervals',
         ( 'job submission', 'retry delays' ),
         ( 'simulation mode', 'run time range' ) ]:
         try:

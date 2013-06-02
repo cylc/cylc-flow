@@ -179,7 +179,6 @@ class task( object ):
         self.job_sub_method = None
         self.launcher = None
 
-        self.polling_interval = gcfg.cfg['task polling interval']
         # Set just prior to job submission (task host dependent)
         self.poll_timer_start = None
 
@@ -381,9 +380,10 @@ class task( object ):
             else:
                 target[key] = val
 
-    def _get_retry_delays( self, cfg, descr ):
-        """Check retry delay config (execution and submission) and return
-        a deque of individual delay values (multipliers expanded out)."""
+    def _get_float_deque( self, cfg, descr ):
+        """Check retry delay (execution and submission) and polling
+        interval config, and return a deque of float values (with
+        multipliers expanded out)."""
 
         values = []
         for item in cfg:
@@ -425,15 +425,19 @@ class task( object ):
                 # note that a *copy* of the retry delays list is needed
                 # so that all instances of the same task don't pop off
                 # the same deque (but copy of rtconfig above solves this).
-                self.retry_delays = self._get_retry_delays( rtconfig['retry delays'], 'retry delays' )
-                self.sub_retry_delays_orig = self._get_retry_delays( rtconfig['job submission']['retry delays'], '[job submission] retry delays' )
+                self.retry_delays = self._get_float_deque( rtconfig['retry delays'], 'retry delays' )
+                self.sub_retry_delays_orig = self._get_float_deque( rtconfig['job submission']['retry delays'], '[job submission] retry delays' )
             else:
                 self.retry_delays = deque()
                 self.sub_retry_delays_orig = deque()
             # retain the original submission retry deque for re-use if
             # execution fails (then submission tries start over).
             self.sub_retry_delays = copy( self.sub_retry_delays_orig )
-
+            if self.__class__.run_mode != 'simulation':
+                self.polling_intervals = self._get_float_deque( rtconfig['polling intervals'], 'polling intervals' )
+            else:
+                self.polling_intervals = deque()
+ 
         rrange = rtconfig['simulation mode']['run time range']
         ok = True
         if len(rrange) != 2:
@@ -610,7 +614,18 @@ class task( object ):
         self.user_at_host = self.task_owner + "@" + self.task_host
 
         if gcfg.get_host_item( 'task communication method', self.task_host, self.task_owner) == "poll":
-            self.poll_timer_start = datetime.datetime.now()
+            if not self.polling_intervals:
+                defint = gcfg.get_host_item( 'default interval for polling comms', self.task_host, self.task_owner)
+                self.log( 'WARNING', 'No polling intervals set, defaulting to ' + str(defint) + ' sec' )
+                self.polling_intervals = deque( [defint] )
+        if self.polling_intervals:
+            try:
+                self.polling_interval = self.polling_intervals.popleft()
+            except:
+                # stay with previous interval
+                pass
+            if self.polling_interval:
+                self.poll_timer_start = datetime.datetime.now()
 
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
                 self.user_at_host != user + '@localhost':
@@ -743,7 +758,6 @@ class task( object ):
             self.check_poll_timer()
 
     def check_poll_timer( self ):
-        # only called if in the 'submitted' or 'running' states
         if not self.poll_timer_start:
             # no timer set
             return
@@ -751,8 +765,11 @@ class task( object ):
                 datetime.timedelta( seconds=self.polling_interval )
         if datetime.datetime.now() > timeout:
             self.poll()
-            # reset the poll timer to poll again after the same interval 
-            # TODO - document this.
+            try:
+                self.polling_interval = self.polling_intervals.popleft()
+            except:
+                # stay with previous interval
+                pass
             self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):
@@ -770,6 +787,7 @@ class task( object ):
             msg = 'job submitted ' + str(timeout) + ' minutes ago, but has not started'
             self.log( 'WARNING', msg )
 
+            self.log( 'NORMAL', 'polling now' )
             self.poll()
         
             handler = self.event_handlers['submission timeout']
@@ -777,7 +795,7 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing submission timeout event handler" )
                 self.__class__.event_queue.put( ('submission timeout', handler, self.id, msg) )
 
-            # TODO - reset timer now? if handled?
+            # unset the submission timer
             self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -799,6 +817,7 @@ class task( object ):
                 msg = 'job started ' + str(timeout) + ' minutes ago, but has not finished'
             self.log( 'WARNING', msg )
 
+            self.log( 'NORMAL', 'polling now' )
             self.poll()
  
             # if no handler is specified, return
@@ -807,7 +826,7 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing execution timeout event handler" )
                 self.__class__.event_queue.put( ('execution timeout', handler, self.id, msg) )
 
-            # TODO - reset timer now? if handled?
+            # unset execution timer
             self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -1224,12 +1243,8 @@ class task( object ):
         self.user_at_host = user_at_host or self.user_at_host
         self.submit_num = sub_num or self.submit_num
 
-        if not self.state.is_currently('running', 'submitted' ):
-            self.log( 'WARNING', 'Only submitted or running tasks can be polled.' )
-            return
         if not self.submit_method_id:
-            # should not happen
-            self.log( 'CRITICAL', 'No submit method ID' )
+            self.log( 'WARNING', 'No job submit ID to poll!' )
             return
 
         launcher = self.launcher
