@@ -761,7 +761,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #else:
             #    info_dialog( result[1], self.window ).inform()
 
-    def stopsuite( self, bt, window,
+    def stopsuite( self, bt, window, kill_cb, 
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
             stoptag_entry, stopclock_entry, stoptask_entry ):
         stop = False
@@ -769,6 +769,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         stopnow = False
         stopclock = False
         stoptask = False
+        killfirst = False
+
+        if kill_cb.get_active():
+            killfirst = True
 
         if stop_rb.get_active():
             stop = True
@@ -832,7 +836,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         try:
             god = self.get_pyro( 'command-interface' )
             if stop:
-                result = god.put( 'stop cleanly' )
+                result = god.put( 'stop cleanly', killfirst )
             elif stopat:
                 result = god.put( 'stop after tag', stoptag )
             elif stopnow:
@@ -1635,7 +1639,13 @@ shown here in the state they were in at the time of triggering.''' )
 
         stop_rb = gtk.RadioButton( None, "After running tasks have finished" )
         vbox.pack_start (stop_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware of orphaned tasks!)" )
+
+        kill_cb = gtk.CheckButton( "    Kill active tasks first" )
+        vbox.pack_start (kill_cb, True)
+        kill_cb.set_active(False)
+        kill_cb.set_sensitive(True)
+ 
+        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware orphaned tasks)" )
         vbox.pack_start (stopnow_rb, True)
         stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
         vbox.pack_start (stopat_rb, True)
@@ -1677,17 +1687,17 @@ shown here in the state they were in at the time of triggering.''' )
         tt_box.pack_start (stoptask_entry, True)
         vbox.pack_start( tt_box )
 
-        stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box )
-        stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box )
-        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box )
-        stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box )
-        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box )
+        stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box, kill_cb )
+        stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box, kill_cb )
+        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box, kill_cb )
+        stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box, kill_cb )
+        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box, kill_cb )
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         stop_button = gtk.Button( "_Stop" )
-        stop_button.connect("clicked", self.stopsuite, window,
+        stop_button.connect("clicked", self.stopsuite, window, kill_cb,
                 stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
                 stoptime_entry, stopclock_entry, stoptask_entry )
 
@@ -1703,16 +1713,23 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def stop_method( self, b, meth, st_box, sc_box, tt_box  ):
+    def stop_method( self, b, meth, st_box, sc_box, tt_box, kill_cb  ):
         for ch in st_box.get_children() + sc_box.get_children() + tt_box.get_children():
             ch.set_sensitive( False )
-        if meth == 'stopat':
+        if meth == 'stop':
+            kill_cb.set_sensitive(True)
+        elif meth == 'stopnow':
+            kill_cb.set_sensitive(False)
+        elif meth == 'stopat':
+            kill_cb.set_sensitive(False)
             for ch in st_box.get_children():
                 ch.set_sensitive( True )
         elif meth == 'stopclock':
+            kill_cb.set_sensitive(False)
             for ch in sc_box.get_children():
                 ch.set_sensitive( True )
         elif meth == 'stoptask':
+            kill_cb.set_sensitive(False)
             for ch in tt_box.get_children():
                 ch.set_sensitive( True )
 
