@@ -517,7 +517,11 @@ class scheduler(object):
     
     # CONTROL_COMMANDS__________________________________________________
 
-    def command_stop_cleanly( self ):
+    def command_stop_cleanly( self, kill_first=False ):
+        if kill_first:
+            for itask in self.pool.get_tasks():
+                # (state check done in task module)
+                itask.kill()
         self.hold_suite()
         self.suite_halt = True
 
