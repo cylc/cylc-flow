@@ -937,6 +937,38 @@ can be a single command or multiple lines of scripting.
 \end{myitemize}
 
 
+\paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
+
+Scripting to be executed immediately {\em before} the command scripting.
+This would typically be used to add scripting to every task in a family
+(for individual tasks you could just incorporate the extra commands into
+the main command scripting). See also {\em post-command scripting},
+below.
+
+\begin{myitemize}
+\item {\em type:} string, or a list of strings
+\item {\em default:} (none)
+\item {\em example:} 
+ \begin{lstlisting}
+    pre-command scripting = """
+      . $HOME/.profile
+      echo Hello from suite ${CYLC_SUITE_REG_NAME}!"""
+ \end{lstlisting}
+\end{myitemize}
+
+\paragraph[post-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ post-command scripting}
+
+Scripting to be executed immediately {\em after} the command scripting.
+This would typically be used to add scripting to every task in a family
+(for individual tasks you could just incorporate the extra commands into
+the main command scripting). See also {\em pre-command scripting},
+above.
+
+\begin{myitemize}
+\item {\em type:} string, or a list of strings
+\item {\em default:} (none)
+\end{myitemize}
+
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}
 
@@ -974,37 +1006,6 @@ value is used repeatedly until the task has finished}.
 \end{myitemize}
 
 
-\paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
-
-Scripting to be executed immediately {\em before} the command scripting.
-This would typically be used to add scripting to every task in a family
-(for individual tasks you could just incorporate the extra commands into
-the main command scripting). See also {\em post-command scripting},
-below.
-
-\begin{myitemize}
-\item {\em type:} string, or a list of strings
-\item {\em default:} (none)
-\item {\em example:} 
- \begin{lstlisting}
-    pre-command scripting = """
-      . $HOME/.profile
-      echo Hello from suite ${CYLC_SUITE_REG_NAME}!"""
- \end{lstlisting}
-\end{myitemize}
-
-\paragraph[post-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ post-command scripting}
-
-Scripting to be executed immediately {\em after} the command scripting.
-This would typically be used to add scripting to every task in a family
-(for individual tasks you could just incorporate the extra commands into
-the main command scripting). See also {\em pre-command scripting},
-above.
-
-\begin{myitemize}
-\item {\em type:} string, or a list of strings
-\item {\em default:} (none)
-\end{myitemize}
 
 \paragraph[manual completion]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ manual completion}
 
