@@ -7,4 +7,5 @@
         graph = "a => b => c"
 [runtime]
     [[a, b, c]]
-
+        [[[simulation mode]]]
+            run time range = 2,3
