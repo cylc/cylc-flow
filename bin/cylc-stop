@@ -65,17 +65,18 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 1/ Shut down a suite when all currently running tasks have finished. 
    No other tasks will be submitted to run in the meantime.
 
-2/ With [STOP], shut down a suite AFTER on of the following events:
+2/ With [--now], shut down immediately. Any orphaned tasks will be
+   polled on restarting the suite to determine their final status.
+
+3/ With [STOP], shut down a suite AFTER on of the following events:
     a/ all tasks have passed the TAG STOP (cycle time or async tag)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
     c/ the task STOP (TASK.TAG) has finished
 
-3/ With [--now], shut down immediately, regardless of tasks still running.
-   WARNING: beware of orphaning tasks that are still running at shutdown;
-   these may need to be killed manually, and they will (by default) be
-   resubmitted if the suite is restarted.
-   
-This command exits immediately after queueing the stop request unless
+With -k/--kill tasks currently submitted or running will be killed
+before the suite shuts down.
+
+The command exits immediately after queueing the stop request unless
 polling mode (-w/--wait) forces it to wait for the suite to stop.""",
     pyro=True, argdoc=[ ("REG", "Suite name"), 
     ("[STOP]", """a/ task TAG (cycle time or integer), or
@@ -83,8 +84,12 @@ polling mode (-w/--wait) forces it to wait for the suite to stop.""",
                         c/ TASK (task ID).""")] )
 
 parser.add_option( "--now", 
-        help="Shut down immediately; see WARNING above.",
+        help="Shut down immediately.",
         action="store_true", default=False, dest="shutdownnow" )
+
+parser.add_option( "-k", "--kill", 
+        help="Kill submitted and running tasks before shutdown.",
+        action="store_true", default=False, dest="kill" )
 
 stop_poller.add_to_cmd_options( parser )
 
@@ -96,6 +101,13 @@ shutdown_at = False
 if len( args ) == 2:
     shutdown_at = True
     shutdown_arg = args[1] 
+    if options.kill:
+        print >> sys.stderr, "WARNING: ignoring --kill ( not compatible with [STOP])"
+        options.kill = False
+ 
+if options.shutdownnow and options.kill:
+    print >> sys.stderr, "WARNING: ignoring --now ( not compatible with --kill)"
+    options.shutdownnow = False
 
 if options.wait:
     spoller = stop_poller( "suite stopped", options.timeout,
@@ -185,7 +197,7 @@ elif options.shutdownnow:
 else:
     prompt( 'Shut down ' + suite, options.force )
     try:
-        result = proxy.put( 'stop cleanly' )
+        result = proxy.put( 'stop cleanly', options.kill )
     except Exception,x:
         if options.debug:
             raise
