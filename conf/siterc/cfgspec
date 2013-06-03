@@ -98,7 +98,9 @@ run directory rolling archive length = integer( min=0, default=2 )
     terminal = string( default="vim" )
     gui      = string( default="gvim -f" )
 
-# Pyro is used by cylc for network communications.
+# Pyro is required for communications between cylc clients and servers
+# (i.e. between suite-connecting commands and guis, and running suite
+# server processes).
 [pyro]
 
     # Each suite listens on a dedicated network port.
@@ -139,12 +141,12 @@ run directory rolling archive length = integer( min=0, default=2 )
         # Pyro RPC is still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites. 
         task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
-        # A default interval is set here for the polling comms method,
-        # to ensure no tasks are left unpolled. Override it under task
-        # [runtime] (quick-running tasks need more frequent polling...).
-        # The default is not used pyro and ssh comms, but polling is
-        # still done for these if an interval is set under [runtime].
-        default interval for polling comms = float( min=10, default=60 ) 
+        # The "poll" method sets a default interval here to ensure no
+        # tasks are accidentally left unpolled. You should override this
+        # with run-length appropriate intervals under task [runtime] -
+        # which will also result in routine polling to check task health
+        # under the pyro or ssh communications methods.
+        default polling interval = float( min=10, default=60 ) 
 
         # How to invoke commands on this host; default shown (not used
         # on localhost unless you run tasks under another user account):

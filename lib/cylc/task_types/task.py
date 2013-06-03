@@ -613,6 +613,7 @@ class task( object ):
 
         self.user_at_host = self.task_owner + "@" + self.task_host
 
+        # get first polling interval
         if gcfg.get_host_item( 'task communication method', self.task_host, self.task_owner) == "poll":
             if not self.polling_intervals:
                 defint = gcfg.get_host_item( 'default interval for polling comms', self.task_host, self.task_owner)
@@ -622,9 +623,9 @@ class task( object ):
             try:
                 self.polling_interval = self.polling_intervals.popleft()
             except:
-                # stay with previous interval
                 pass
-            if self.polling_interval:
+            else:
+                print 'FIRST POLLING INTERVAL:', self.polling_interval
                 self.poll_timer_start = datetime.datetime.now()
 
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
@@ -765,12 +766,15 @@ class task( object ):
                 datetime.timedelta( seconds=self.polling_interval )
         if datetime.datetime.now() > timeout:
             self.poll()
-            try:
-                self.polling_interval = self.polling_intervals.popleft()
-            except:
-                # stay with previous interval
-                pass
-            self.poll_timer_start = datetime.datetime.now()
+            if self.state.is_currently('running'):
+                # get next polling interval
+                try:
+                    self.polling_interval = self.polling_intervals.popleft()
+                except:
+                    # no more; stay with previous interval
+                    pass
+                print 'NEXT POLLING INTERVAL', self.polling_interval
+                self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):
         # only called if in the 'submitted' state

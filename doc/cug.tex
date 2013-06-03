@@ -1536,19 +1536,24 @@ authenticate with a secure passphrase that has been loaded by the suite.
 A random passphrase is generated automatically in the suite definition
 directory at registration time if one does not already exist there. For 
 the default Pyro-based connection method the passphrase file must be
-distributed to any other accounts that host running tasks or from which
+distributed to other accounts that host running tasks or from which
 you need monitoring or control access to the running suite.
 
-Alternatively, an ssh-based communication method can be used to
-automatically re-invoke cylc commands, including task messaging, on the
-suite host, in which case the suite passphrase is only needed on the
-suite host.
+Alternatively, cylc can be configured to,
+\begin{myenumerate}
+\item use ssh to re-invoke task messaging commands on the suite host; or
+\item use a one-way polling mechanism for tracking task progress. 
+\end{myenumerate}
+Neither of these methods require the suite passphrase to be installed 
+on the task host. For ssh re-invocation ssh keys must be installed for
+the task-to-suite direction in addition to the suite-to-task setup
+already required for job submission. The automatic polling mechanism can
+be used as a last resort for hosts that do not allow routing back to the
+suite host for pyro or ssh. It can also be used as regular health check 
+on submitted tasks under the other communications methods.
 
-And finally, cylc now has a one-way polling mechanism for tracking task 
-progress on task hosts that do not allow routing back to the suite host.
-
-See Section~\ref{RunningSuites} for more on how cylc's
-client/server communication works and how to use it.
+See Section~\ref{RunningSuites} for more detail on cylc client/server
+communications, and how to use it.
 
 \subsection{Suite Databases}
 
@@ -3987,14 +3992,15 @@ submission methods.
 
 \subsection{Job Poll And Kill}
 
-For each supported job submission method, cylc now also supports polling
-for real task status, and job kill, from the gcylc GUI and command line
+For each job submission method cylc now supports polling for real task
+status, and job kill, from the gcylc GUI and command line
 (\lstinline=cylc poll= and \lstinline=cylc kill=).
-In addition to on-demand polling, formerly submitted and running tasks
-are polled automatically on suite restarts (Section~\ref{RestartingSuites})
+In addition to on-demand polling, submitted and running tasks are polled
+automatically on suite restart (Section~\ref{RestartingSuites})
 and on job submission and execution timeouts, and one-way polling can be
-used to track tasks on hosts that do not allow return routing for 
-task-initiated messaging (Section~\ref{RunningSuites}).
+used as regular health check for submitted tasks, and to track tasks on
+hosts that do not allow return routing for task messaging
+(Section~\ref{RunningSuites}).
 
 
 \subsection{Task Job Scripts}
@@ -4321,60 +4327,96 @@ suites and your own dummy task test suites.
 
 \subsection{How Tasks Interact With Running Suites}
 
-Suites need to track the progress of their tasks. Cylc now has three
-ways of achieving this, configured per task host in the site/user config
-files. One suite can use different task communication mechanisms for 
-different task hosts if necessary. \begin{myenumerate}
-\item {\bf task-to-suite messaging:} task job scripts encapsulate
-task scripting in a wrapper that automatically invokes messaging
-commands to report progress back to the suite. The messaging commands
-can be configured to work in two different ways:
+Cylc has three ways of tracking the progress of tasks, configured per
+task host in the site/user config files (Section~\ref{SiteUserConfig}).
+All three methods can be used on different task hosts within the same
+suite if necessary.
+\begin{myenumerate}
+\item {\bf task-to-suite messaging:} cylc job scripts encapsulate task
+scripting in a wrapper that automatically invokes messaging commands to
+report progress back to the suite. The messaging commands can be
+configured to work in two different ways:
     \begin{myenumerate}
-        \item {\bf Pyro:} direct messaging via network sockets, using
+        \item {\bf Pyro:} direct messaging via network sockets using  
         Pyro (Python Remote Objects). 
-        \item {\bf ssh messaging:} for tasks hosts that block 
-        access to the network ports required by Pyro, this communication
-        method uses passwordless ssh to re-invoke task messaging
-        commands on the suite host (where ultimately Pyro is still used).
+        \item {\bf ssh:} for tasks hosts that block access to the
+        network ports required by Pyro, cylc can use passwordless ssh to
+        re-invoke task messaging commands on the suite host (where
+        ultimately Pyro is still used to connect to the server process).
     \end{myenumerate}
-\item {\bf one-way polling:} for task hosts that do not allow return
-routing back to the suite host for Pyro or ssh, cylc can now poll tasks
-at configurable intervals using passwordless ssh, for all supported job
-submission methods. 
+\item {\bf polling:} for task hosts that do not allow return routing to
+the suite host for Pyro or ssh, cylc can poll tasks at configurable
+intervals, using passwordless ssh. 
 \end{myenumerate}
 
-The Pyro connection method is the default because it is direct and
-efficient, whereas ssh messaging just inserts an extra step in the process.
-Polling is less efficient, particularly for very quick-running suites,
-and you should be careful to avoid spamming task hosts - each poll opens
-(and then closes) a new ssh connection. Polling subprocesses are batched by
-cylc, and the number invoked at once can be configured in suite definitions:
+The Pyro communication method is the default because it is the most
+direct and efficient; the ssh method inserts an extra step in the
+process (command re-invocation on the suite host); and task polling is
+the least efficient because results are checked at predetermined
+intervals, not when task events actually occur.  
 
+\subsubsection{Task Polling}
+
+Be careful to avoid spamming task hosts with polling commands. Each poll
+opens (and then closes) a new ssh connection. Polling subprocesses are
+batched by cylc, and the number invoked at once can be configured in the
+suite definition:
+\lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [cylc]
     [[poll and kill command submission]]
-        batch size = integer( min=1, default=5 )
-        delay between batches = integer( min=0, default=0 ) # seconds
+        batch size = 5  # default 10
+        delay between batches = 20 # seconds, default 10
 \end{lstlisting}
 
-Finally,
+Polling intervals are configurable task runtime settings because they
+should be appropriate to the expected task run length. For instance, a 
+task that typically takes an hour to run might be polled every 10
+minutes initially, and then every minute toward the end of its run. The
+first value in the configured list of polling intervals is used
+repeatedly while the task remains in the `submitted' state; then each
+subsequent value is used in turn while the task is in the `running'
+state; and the final value is used repeatedly until the task is
+finished:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# SUITE.RC
+[runtime]
+    [[foo]]
+        # poll every 60 second in the 'submitted' state; then every 
+        # 10 minutes for 50 minutes; then every minute until finished:
+        polling intervals = 60, 5*600, 60
+\end{lstlisting}
+
+Under the pyro and ssh task communication methods regular polling is
+not done by default, but it can still be configured as a regular
+health check for submitted tasks.
+
+Finally, polling is automatically done once on job submission and
+execution timeouts, to see if the timed-out task has failed or not;
+and on a suite restart, to see what happened to tasks that were 
+orphaned when the suite went down.
+
+\subsection{Alternatives To Polling When Routing Is Blocked}
+
+If Pyro and ssh ports are blocked but you don't want to use polling from
+the suite host,
 \begin{myitemize}
 \item it has been suggested that network {\em port forwarding} may
-provide a solution if Pyro ports are blocked and you don't want to 
-use polling.
+provide a solution;
 \item you may be able to persuade system administrators to provide
-networking routing to one or more dedicated cylc servers, if not to the
-wider world. 
-\item it is possible to run cylc itself on HPC login nodes, to avoid the 
-need for {\em remote} task tracking, but depending on what software is
-installed on the HPC this may preclude use of the gcylc GUI and
-suite visualization tools.
+network routing to one or more dedicated cylc servers;
+\item it is possible to run cylc itself on HPC login nodes, but
+depending on what software is installed there this may preclude use
+of the gcylc GUI and suite visualization tools.
 \end{myitemize}
 
+\subsection{Task Host Communications Configuration}
 
 Here are the site/user config items relevant to task tracking:
 
+\lstset{language=suiterc}
 \begin{lstlisting}
 #SITE/USER CONFIG
 
@@ -4394,7 +4436,9 @@ task polling interval = float( min=5, default=10 )
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
     connection timeout in seconds = float( min=1, default=30 )
 
-# Pyro is used by cylc for network communications.
+# Pyro is required for communications between cylc clients and servers
+# (i.e. between suite-connecting commands and guis, and running suite
+# server processes).
 [pyro]
 
     # Each suite listens on a dedicated network port.
@@ -4420,7 +4464,12 @@ task polling interval = float( min=5, default=10 )
         # Pyro RPC is still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites. 
         task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
-        # (the polling iterval is not task-host dependent, see above)
+        # The "poll" method sets a default interval here to ensure no
+        # tasks are accidentally left unpolled. You should override this
+        # with run-length appropriate intervals under task [runtime] -
+        # which will also result in routine polling to check task health
+        # under the pyro or ssh communications methods.
+        default polling interval = float( min=10, default=60 ) 
 \end{lstlisting}
 
 \subsection{How Commands Interact With Running Suites}
@@ -4546,8 +4595,9 @@ As a suite runs its task proxies transition through the following states:
 \end{myitemize}
 
 Note that greyed-out ``base graph nodes'' in the gcylc graph view do not 
-represent a task state, they are displayed to flesh out the graph
-structure where it is not covered by the current live task pool.
+represent task states; they are displayed to fill out the graph
+structure where corresponding task proxies do not currently exist
+in the live task pool.
 
 For manual task state reset purposes {\bf ready} is a pseudo-state that means
 {\em waiting} with all prerequisites satisfied.
@@ -4659,7 +4709,7 @@ section headings). For a suite that has 1- and 24-hourly cylcing tasks
 the default limit will be 2 hours, so that two of the hourly cycles will
 run at once in between the 24-hourly cycles. 
 
-Succeeded and failed tasks are ignored when computing the runahead limit
+Succeeded and failed tasks are ignored when applying the runahead limit
 (but tasks that can't run because they depend on a failed task are not
 ignored, of course). 
 
@@ -5586,6 +5636,7 @@ operation as required.
 \pagebreak
 
 \section{Site/User Config File Reference}
+\label{SiteUserConfig}
 
 Cylc now has a site config file for settings that apply to all suites:
     \lstinline=$CYLC_DIR/conf/site/site.rc=.
