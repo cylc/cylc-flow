@@ -773,8 +773,8 @@ class task( object ):
                 except:
                     # no more; stay with previous interval
                     pass
-                print 'NEXT POLLING INTERVAL', self.polling_interval
-                self.poll_timer_start = datetime.datetime.now()
+            print 'NEXT POLLING INTERVAL', self.polling_interval
+            self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):
         # only called if in the 'submitted' state
