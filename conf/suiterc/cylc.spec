@@ -1,6 +1,7 @@
 [cylc]
     UTC mode = boolean( default=False )
     required run mode = option( 'live','dummy','simulation', default=None )
+    force run mode = option('live','dummy','simulation', default=None )
     abort if any task fails = boolean( default=False )
     log resolved dependencies = boolean( default=False )
     [[job submission]]
