@@ -5272,36 +5272,28 @@ The following topics have yet to be documented in detail.
 \end{myitemize}
 \lstset{language=transcript}
 
-\section{Suite Discovery, Sharing, And Revision Control}
+\section{Suite Storage, Discovery, Revision Control, and Deployment}
 
-Until release 4.2.2 cylc had a ``central suite database'' that users
-could export to and import from, for sharing suites. It was essentially
-just a special instance of a user suite database, held under
-the cylc admin account and with associated export and import commands
-to copy suite definition directories to and from a central store,
-with the suite owner's username as the first hierarchical name component.
-However, it was not on the network, and the suite store had to be
-writeable by all users and hence very insecure. Rather than develop a
-network server for better security and wider access, as was the original
-intention, it was decided to remove this functionality entirely for the
-following reasons:
+Small groups of cylc users can of course share suites by manual copying,
+and generic revision control tools can be used on cylc suites as for any
+collection of files. Beyond this cylc does not have a built-in solution
+for suite storage and discovery, revision control, and deployment, on a
+network. That is not cylc's core purpose, and large sites may have
+preferred revision control systems and suite meta-data requirements that
+are difficult to anticipate. We can, however, recommend the use of {\em
+Rose} to do all of this very easily and elegantly with cylc suites.
+
+\subsection{Rose}
+
+{\bf Rose} is {\em a framework for managing and running suites of
+scientific applications}, developed at the UK Met Office for use with
+cylc. It is available under the open source GPL license.
 
 \begin{myitemize}
-    \item Large sites are likely to have suite meta-data and revision
-        control requirements and preferences beyond what can be provided 
-        by a light-weight native cylc database.
-    \item Small groups of light cylc users, on the other hand,
-        can easily share suites by means of manually copying suite
-        definitions, or with the \lstinline=cylc copy= command which 
-        now supports copying registered suites between databases; they
-        are then free to use preferred revision control tools and so on
-        as they see fit.
+    \item Rose documentation: http://metomi.github.io/rose/doc/rose.html
+    \item Rose source repository: https://github.com/metomi/rose
 \end{myitemize}
 
-We may in the future recommend particular tools that can be used for 
-suite discovery, revision control, and so on, with cylc suites.
-
-%\pagebreak
 
 \section{Suite Design Principles}
 \label{SuiteDesignPrinciples}
