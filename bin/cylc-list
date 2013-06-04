@@ -26,12 +26,8 @@ from cylc.config import config
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-List runtime namespaces (tasks, families) or print the first-parent
-inheritance graph to the terminal. Additional information can be printed
-for each namespace:
-  * title
-  * linearized inheritance precedence ("Method Resolution Order" in
-    programming languages with multiple inheritance).
+Print runtime namespace names (tasks and families), the first-parent
+inheritance graph, or actual tasks for a given cycle range.
 
 The first-parent inheritance graph determines the primary task family
 groupings that are collapsible in gcylc suite views and the graph
@@ -65,6 +61,18 @@ parser.add_option( "-w","--with-titles",
         help="Print namespaces titles too.",
         action="store_true", default=False, dest="titles" )
 
+parser.add_option( "-r", "--range", 
+        help="Print all tasks between START and STOP tags "
+        "(cycle times, or '1's for non-cycling tasks). This "
+        "is equivalent to printing graph node labels.",
+        metavar="START,STOP", action="store", default=None,
+        dest="trange" )
+
+parser.add_option( "-c", "--cold-start", 
+        help="With -r/--range, print tasks as if for a cold-start "
+        "from the START cycle (default False).",
+        action="store_false", default=True, dest="trange_raw" )
+
 (options, args) = parser.parse_args()
 
 suite, suiterc, junk = parser.get_suite()
@@ -75,6 +83,9 @@ if options.all_tasks:
     which = "all tasks"
 elif options.all_namespaces:
     which = "all namespaces"
+elif options.trange:
+    which = "trange"
+    tr_start, tr_stop = options.trange.split(',')
 else:
     which = "graphed tasks"
 
@@ -95,6 +106,11 @@ try:
         template_vars_file=options.templatevars_file)
     if options.tree:
         config.print_first_parent_tree( pretty=options.box, titles=options.titles )
+    elif options.trange:
+        node_labels = config.get_node_labels( tr_start, tr_stop, raw=options.trange_raw )
+        node_labels.sort()
+        for nl in node_labels:
+            print nl
     else:
         result = config.get_namespace_list( which )
         namespaces = result.keys()
