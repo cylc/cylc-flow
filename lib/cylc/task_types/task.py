@@ -181,6 +181,8 @@ class task( object ):
 
         # Set just prior to job submission (task host dependent)
         self.poll_timer_start = None
+        self.polling_interval = None
+        self.polling_intervals = deque()
 
         # sets submit num for restarts or when triggering state prior to submission
         if self.validate: # if in validate mode bypass db operations
@@ -434,9 +436,7 @@ class task( object ):
             # execution fails (then submission tries start over).
             self.sub_retry_delays = copy( self.sub_retry_delays_orig )
             if self.__class__.run_mode != 'simulation':
-                self.polling_intervals = self._get_float_deque( rtconfig['polling intervals'], 'polling intervals' )
-            else:
-                self.polling_intervals = deque()
+                self.polling_intervals = self._get_float_deque( rtconfig['polling intervals in minutes'], 'polling intervals in minutes' )
  
         rrange = rtconfig['simulation mode']['run time range']
         ok = True
@@ -613,19 +613,25 @@ class task( object ):
 
         self.user_at_host = self.task_owner + "@" + self.task_host
 
-        # get first polling interval
+        # get first polling interval (for use in the submitted state only)
         if gcfg.get_host_item( 'task communication method', self.task_host, self.task_owner) == "poll":
             if not self.polling_intervals:
-                defint = gcfg.get_host_item( 'default interval for polling comms', self.task_host, self.task_owner)
-                self.log( 'WARNING', 'No polling intervals set, defaulting to ' + str(defint) + ' sec' )
-                self.polling_intervals = deque( [defint] )
-        if self.polling_intervals:
-            try:
-                self.polling_interval = self.polling_intervals.popleft()
-            except:
-                pass
+                # use default intervals if necessary for polling task
+                # comms  (otherwise tasks will not be tracked at all!)
+                dint = gcfg.get_host_item( 'default polling interval in minutes', self.task_host, self.task_owner)
+                self.log( 'WARNING', 'No polling intervals set, defaulting to ' + str(dint) + ' min' )
+                self.polling_intervals = deque( [dint,dint] )
+        try:
+            self.polling_interval = self.polling_intervals.popleft() * 60.0 # seconds
+        except IndexError:
+            # no polling intervals set
+            pass
+        else:
+            if self.polling_interval == 0:
+                # this means do not poll in the submitted state
+                self.log( 'NORMAL', 'no submission polling configured' )
             else:
-                print 'FIRST POLLING INTERVAL:', self.polling_interval
+                self.log( 'NORMAL', 'setting submission poll timer for ' + str(self.polling_interval) + ' seconds' )
                 self.poll_timer_start = datetime.datetime.now()
 
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
@@ -759,9 +765,10 @@ class task( object ):
             self.check_poll_timer()
 
     def check_poll_timer( self ):
-        if not self.poll_timer_start:
+        if not self.poll_timer_start or not self.polling_interval:
             # no timer set
             return
+
         timeout = self.poll_timer_start + \
                 datetime.timedelta( seconds=self.polling_interval )
         if datetime.datetime.now() > timeout:
@@ -769,11 +776,13 @@ class task( object ):
             if self.state.is_currently('running'):
                 # get next polling interval
                 try:
-                    self.polling_interval = self.polling_intervals.popleft()
-                except:
+                    self.polling_interval = self.polling_intervals.popleft() * 60.0 # seconds
+                except IndexError:
                     # no more; stay with previous interval
                     pass
-            print 'NEXT POLLING INTERVAL', self.polling_interval
+                self.log( 'NORMAL', 'setting execution poll timer for ' + str(self.polling_interval) + ' seconds' )
+            else:
+                self.log( 'NORMAL', 'setting submission poll timer for ' + str(self.polling_interval) + ' seconds' )
             self.poll_timer_start = datetime.datetime.now()
 
     def check_submission_timeout( self ):
@@ -784,14 +793,13 @@ class task( object ):
             # no timer set
             return
 
-        # if timed out, queue the event handler turn off the timer
+        # if timed out, log warning, poll, queue event handler, and turn off the timer
         current_time = task.clock.get_datetime()
         cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
             msg = 'job submitted ' + str(timeout) + ' minutes ago, but has not started'
             self.log( 'WARNING', msg )
 
-            self.log( 'NORMAL', 'polling now' )
             self.poll()
         
             handler = self.event_handlers['submission timeout']
@@ -799,7 +807,6 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing submission timeout event handler" )
                 self.__class__.event_queue.put( ('submission timeout', handler, self.id, msg) )
 
-            # unset the submission timer
             self.submission_timer_start = None
 
     def check_execution_timeout( self ):
@@ -810,7 +817,7 @@ class task( object ):
             # no timer set
             return
 
-        # if timed out, queue the event handler turn off the timer
+        # if timed out: log warning, poll, queue event handler, and turn off the timer
         current_time = task.clock.get_datetime()
         cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
@@ -821,7 +828,6 @@ class task( object ):
                 msg = 'job started ' + str(timeout) + ' minutes ago, but has not finished'
             self.log( 'WARNING', msg )
 
-            self.log( 'NORMAL', 'polling now' )
             self.poll()
  
             # if no handler is specified, return
@@ -830,7 +836,6 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing execution timeout event handler" )
                 self.__class__.event_queue.put( ('execution timeout', handler, self.id, msg) )
 
-            # unset execution timer
             self.execution_timer_start = None
 
     def sim_time_check( self ):
@@ -986,6 +991,11 @@ class task( object ):
                                   
         elif content == 'submission failed' or \
                 content == 'kill command succeeded'  and self.state.is_currently('submitted'):
+
+            if self.state.is_currently('submit-failed'):
+                # (this may occur multiple times if polling)
+                return
+
             # (a fake task message from the job submission thread)
             self.submit_method_id = None
             try:
@@ -1023,6 +1033,11 @@ class task( object ):
  
         elif content == 'started':
             # Received a 'task started' message
+
+            if self.state.is_currently('running'):
+                # (this may occur multiple times if polling)
+                return
+
             flags.pflag = True
             self.state.set_status( 'running' )
             self.record_db_update("task_states", self.name, self.c_time, status="running")
@@ -1041,8 +1056,24 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing started event handler" )
                 self.__class__.event_queue.put( ('started', handler, self.id, 'job started') )
 
+            # pop the second interval and set an execution poll timer
+            # (the first interval is for repeated submission polling)
+            try:
+                self.polling_interval = self.polling_intervals.popleft() * 60.0 # seconds
+            except IndexError:
+                self.log( 'NORMAL', 'no execution polling configured' )
+                self.poll_timer_start = None
+            else:
+                self.poll_timer_start = datetime.datetime.now()
+                self.log( 'NORMAL', 'setting execution poll timer for ' + str(self.polling_interval) + ' seconds' )
+
         elif content == 'succeeded':
             # Received a 'task succeeded' message
+
+            if self.state.is_currently('succeeded'):
+                # (this may occur multiple times if polling)
+                return
+
             self.execution_timer_start = None
             flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
@@ -1064,6 +1095,11 @@ class task( object ):
 
         elif content == 'failed' or \
                 content == 'kill command succeeded' and self.state.is_currently('running'):
+
+            if self.state.is_currently('failed'):
+                # (this may occur multiple times if polling)
+                return
+
             # Received a 'task failed' message, or killed, or polling failed
             self.execution_timer_start = None
             try:
@@ -1266,6 +1302,7 @@ class task( object ):
                     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
+        self.log( 'NORMAL', 'polling now' )
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
 
     def kill( self ):
