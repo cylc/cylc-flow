@@ -22,6 +22,7 @@ import re, os
 import StringIO
 from copy import deepcopy
 from cylc.global_config import gcfg
+from cylc.command_env import cv_scripting_ml
 
 class jobfile(object):
 
@@ -60,7 +61,7 @@ class jobfile(object):
 
         self.write_directives()
 
-        self.write_task_job_script_starting()
+        self.write_prelude()
         self.write_err_trap()
 
         self.write_initial_scripting()
@@ -111,8 +112,10 @@ class jobfile(object):
         if final:
             self.FILE.write( '\n' + final )
 
-    def write_task_job_script_starting( self ):
-        self.FILE.write( '\n\necho "JOB SCRIPT STARTING"')
+    def write_prelude( self ):
+        self.FILE.write( '\n\necho "JOB SCRIPT STARTING"\n')
+        # set cylc version and source profile scripts:
+        self.FILE.write( cv_scripting_ml )
 
     def write_initial_scripting( self, BUFFER=None ):
         iscr = self.jobconfig['initial scripting']

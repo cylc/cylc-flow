@@ -32,6 +32,7 @@ import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
+from cylc.command_env import cv_scripting_sl
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -1243,8 +1244,7 @@ class task( object ):
 
         cmd = launcher.get_job_poll_command( self.submit_method_id )
         if self.user_at_host != user + '@localhost':
-            cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
-                    "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
+            cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
@@ -1272,8 +1272,7 @@ class task( object ):
 
         cmd = self.launcher.get_job_kill_command( self.submit_method_id )
         if self.user_at_host != user + '@localhost':
-            cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
-                    "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
+            cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.incoming rather than whole self?
         self.log( 'CRITICAL', "Killing job" )
