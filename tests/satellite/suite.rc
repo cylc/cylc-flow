@@ -1,0 +1,42 @@
+
+title = "asynchronous tasks for satellite processing"
+
+description = """A tree of asynchronous tasks triggered by a random
+satellite pass or similar. Downstream processing runs in parallel if
+the data comes in quickly."""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 30
+
+[scheduling]
+    [[dependencies]]
+        graph = "prep"
+        [[[ASYNCID:SatID-\d+]]]
+            graph = """prep => watcher:a => upload:a & archive:a"""
+            daemon = watcher
+[runtime]
+    [[prep]]
+        command scripting = true # fast
+    [[watcher]]
+        description = "watch for incoming satellite data"
+        command scripting = watcher.sh
+        [[[environment]]]
+            N_PASSES  = 2 # number of passes to simulate before exiting
+            SLEEP_MIN = 2
+            SLEEP_MAX = 1
+        [[[outputs]]]
+            a = "<ASYNCID> ready for processing"
+
+    [[upload]]
+        description = "upload new satellite data"
+        command scripting = upload.sh
+       [[[outputs]]]
+            a = "<ASYNCID> uploaded"
+
+    [[archive]]
+        description = "archive new satellite data"
+        command scripting = archive.sh
+        [[[outputs]]]
+            a = "<ASYNCID> archived"
+
