@@ -232,7 +232,7 @@ class task_batcher( job_batcher ):
             return
         job_batcher.item_succeeded_hook( self, jobinfo )
         itask,launcher = jobinfo['data']
-        itask.incoming('NORMAL', itask.id + ' submission succeeded' )
+        itask.message_queue.put('NORMAL', itask.id + ' submission succeeded' )
         p = jobinfo['p']
         out = jobinfo['out']
         err = jobinfo['err']
@@ -240,7 +240,7 @@ class task_batcher( job_batcher ):
             # Extract the job submit ID from submission command output
             submit_method_id = launcher.get_id( out, err )
             if submit_method_id:
-                itask.incoming('NORMAL', itask.id + ' submit_method_id=' + submit_method_id )
+                itask.message_queue.put('NORMAL', itask.id + ' submit_method_id=' + submit_method_id )
 
 
     def item_failed_hook( self, jobinfo ):
@@ -249,10 +249,10 @@ class task_batcher( job_batcher ):
         err = jobinfo['err']
         itask,launcher = jobinfo['data']
         if out:
-            itask.incoming( 'NORMAL', out )
+            itask.message_queue.put( 'NORMAL', out )
         if err:
-            itask.incoming( 'WARNING', err )
-        itask.incoming( 'CRITICAL', itask.id + ' submission failed' )
+            itask.message_queue.put( 'WARNING', err )
+        itask.message_queue.put( 'CRITICAL', itask.id + ' submission failed' )
  
 
 
@@ -320,7 +320,7 @@ class poll_and_kill_batcher( job_batcher ):
         print >> sys.stderr, jobinfo['err']
         print jobinfo['out']
         itask = jobinfo['data']
-        itask.incoming( 'CRITICAL', jobinfo['jtype'] + ' command failed' )
+        itask.message_queue.put( 'CRITICAL', jobinfo['jtype'] + ' command failed' )
  
 
     def item_succeeded_hook( self, jobinfo ):
@@ -328,10 +328,10 @@ class poll_and_kill_batcher( job_batcher ):
         itask = jobinfo['data']
         if jobinfo['jtype'] == 'poll':
             # get-task-status prints a standard task message to stdout
-            itask.incoming( 'NORMAL', jobinfo['out'].strip() )
+            itask.message_queue.put( 'NORMAL', jobinfo['out'].strip() )
         else:
             # TODO - just log?
-            itask.incoming( 'NORMAL', jobinfo['jtype'] + ' command succeeded' )
+            itask.message_queue.put( 'NORMAL', jobinfo['jtype'] + ' command succeeded' )
         if jobinfo['err']:
             # TODO - just log?
             print >> sys.stderr, jobinfo['err']
