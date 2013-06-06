@@ -29,7 +29,6 @@ class async_daemon( oneoff, task ):
 
     def process_incoming_message( self, (priority,message) ):
         # intercept incoming messages and check for a pattern match 
-        print self.asyncid_pattern, message,
         if re.match( self.asyncid_pattern, message ):
             self.outputs.add( message )
         task.process_incoming_message( self, (priority,message) )
