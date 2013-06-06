@@ -61,17 +61,17 @@ parser.add_option( "-w","--with-titles",
         help="Print namespaces titles too.",
         action="store_true", default=False, dest="titles" )
 
-parser.add_option( "-r", "--range", 
-        help="Print all tasks between START and STOP tags "
-        "(cycle times, or '1's for non-cycling tasks). This "
-        "is equivalent to printing graph node labels.",
-        metavar="START,STOP", action="store", default=None,
-        dest="trange" )
+parser.add_option( "-c", "--cycles", 
+        help="Print the task IDs of the tasks that would actually "
+        "be created in the START [through STOP] cycles (or '1's "
+        "for non-cycling tasks).",
+        metavar="START[,STOP]", action="store", default=None,
+        dest="crange" )
 
-parser.add_option( "-c", "--cold-start", 
-        help="With -r/--range, print tasks as if for a cold-start "
+parser.add_option( "--cold", 
+        help="With -c/--range, print tasks as if for a cold-start "
         "from the START cycle (default False).",
-        action="store_false", default=True, dest="trange_raw" )
+        action="store_false", default=True, dest="crange_raw" )
 
 (options, args) = parser.parse_args()
 
@@ -83,9 +83,13 @@ if options.all_tasks:
     which = "all tasks"
 elif options.all_namespaces:
     which = "all namespaces"
-elif options.trange:
-    which = "trange"
-    tr_start, tr_stop = options.trange.split(',')
+elif options.crange:
+    which = "crange"
+    try:
+        tr_start, tr_stop = options.crange.split(',')
+    except ValueError:
+        tr_start = tr_stop = options.crange
+
 else:
     which = "graphed tasks"
 
@@ -106,8 +110,8 @@ try:
         template_vars_file=options.templatevars_file)
     if options.tree:
         config.print_first_parent_tree( pretty=options.box, titles=options.titles )
-    elif options.trange:
-        node_labels = config.get_node_labels( tr_start, tr_stop, raw=options.trange_raw )
+    elif options.crange:
+        node_labels = config.get_node_labels( tr_start, tr_stop, raw=options.crange_raw )
         node_labels.sort()
         for nl in node_labels:
             print nl
