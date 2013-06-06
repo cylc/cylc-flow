@@ -1619,6 +1619,10 @@ Some translations were performed on the fly."""
 
         return graph
 
+    def get_node_labels( self, start_ctime, stop, raw ):
+        graph = self.get_graph( start_ctime, stop, raw=raw, ungroup_all=True )
+        return [ i.attr['label'].replace('\\n','.') for i in graph.nodes() ]
+
     def close_families( self, nlid, nrid ):
         # Generate final node names, replacing family members with
         # family nodes if requested.
