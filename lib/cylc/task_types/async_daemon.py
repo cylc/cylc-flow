@@ -29,8 +29,11 @@ class async_daemon( oneoff, task ):
 
     def process_incoming_message( self, (priority,message) ):
         # intercept incoming messages and check for a pattern match 
-        if re.match( self.asyncid_pattern, message ):
-            self.outputs.add( message )
+
+        # remove the remote event time (or "unknown-time") from the end:
+        msg = re.sub( ' at .*$', '', message )
+        if re.match( self.asyncid_pattern, msg ):
+            self.outputs.add( msg )
         task.process_incoming_message( self, (priority,message) )
 
     def is_daemon( self ):
