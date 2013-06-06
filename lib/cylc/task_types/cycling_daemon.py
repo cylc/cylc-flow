@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# DEV NOTE: THIS CLASS HAS NOT BEEN USED SINCE CYLC-2; IT MAY NEED UPDATING.
+""" NOTE: THIS CLASS HAS NOT BEEN USED SINCE CYLC-2; IT MAY NEED UPDATING."""
 
 from cycling import cycling
 from oneoff import oneoff
@@ -41,7 +41,7 @@ class cycling_daemon( oneoff, cycling ):
         cycling.__init__( self, state, validate )
 
 
-    def incoming( self, priority, message ):
+    def process_incoming_message( self, (priority,message) ):
         # intercept incoming messages and check for a pattern match 
         for pattern in self.output_patterns:
             m = re.match( pattern, message )
@@ -50,7 +50,7 @@ class cycling_daemon( oneoff, cycling ):
                 ctime = m.groups()[0]
                 self.last_reported = ctime
 
-        cycling.incoming( self, priority, message )
+        cycling.process_incoming_message( self, (priority,message) )
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file
