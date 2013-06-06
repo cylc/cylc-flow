@@ -38,5 +38,5 @@ scripting = [
 cv_scripting_sl = '; '.join(scripting)
 
 # multi line cylc version scripting:
-cv_scripting_ml = '\n '.join( scripting)
+cv_scripting_ml = '\n'.join( scripting)
 
