@@ -23,6 +23,8 @@ import logging
 import sys
 import time
 
+from cylc.command_env import cv_scripting_sl
+
 class job_batcher( threading.Thread ):
     """Batch-submit queued subprocesses in parallel, with a delay between batches."""
 
@@ -270,7 +272,7 @@ class event_batcher( job_batcher ):
     def submit_item( self, item, jobinfo ):
         event, handler, taskid, msg = item
         jobinfo['descr'] = taskid + ' ' + event + ' handler'
-        command = " ".join( [handler, "'" + event + "'", self.suite, taskid, "'" + msg + "'"] )
+        command = cv_scripting_sl + "; " + " ".join( [handler, "'" + event + "'", self.suite, taskid, "'" + msg + "'"] )
         try:
             jobinfo['p'] = subprocess.Popen( command, shell=True )
         except OSError, e:

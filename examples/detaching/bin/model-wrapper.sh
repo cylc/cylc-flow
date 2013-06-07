@@ -39,7 +39,7 @@ SRCH='SCRIPT=model.sh'
 perl -pi -e "s@^${SRCH}@SCRIPT=$TDIR/model.sh@" $TDIR/run-model.sh
 
 # Execute the (now modified) native process:
-$TDIR/run-model.sh ${PREFIX}-${CYLC_TASK_CYCLE_TIME}-$$.out ${PREFIX}-${CYLC_TASK_CYCLE_TIME}-$$.err
+$TDIR/run-model.sh ${PREFIX}-detached.out ${PREFIX}-detached.err
 
 echo "model-wrapper.sh: see modified job scripts under ${TDIR}!"
 # EOF
