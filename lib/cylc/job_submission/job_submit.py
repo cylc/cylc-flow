@@ -38,10 +38,10 @@ from cylc.global_config import gcfg
 from cylc.envvar import expandvars
 
 class job_submit(object):
-    LOCAL_COMMAND_TEMPLATE = "(%(command)s)"
+
+    LOCAL_COMMAND_TEMPLATE = ( "(%(command)s)" )
+
     REMOTE_COMMAND_TEMPLATE = ( " '"
-            + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
-            + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"

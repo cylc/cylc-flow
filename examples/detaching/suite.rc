@@ -21,6 +21,6 @@ to handle task completion messaging manually - see the Cylc User Guide."""
             # location of native job scripts to modify for this suite:
             NATIVESCRIPTS = $CYLC_SUITE_DEF_PATH/native
             # output path prefix for detached model stdout and stderr:
-            PREFIX = $HOME/detach
+            PREFIX = $CYLC_TASK_LOG_ROOT
             FOO = "$HOME bar $PREFIX"
 
