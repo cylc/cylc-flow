@@ -1297,6 +1297,14 @@ Some translations were performed on the fly."""
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
+            # detect and fail and self-dependence loops (foo => foo)
+            for r_name in rights:
+                if r_name in lnames:
+                    print >> sys.stderr, "Self-dependence detected in '" + r_name + "':"
+                    print >> sys.stderr, "  line:", line
+                    print >> sys.stderr, "  from:", orig_line
+                    raise SuiteConfigError, "ERROR: self-dependence loop detected"
+
             if section == 'once':
                 # Consistency check: synchronous special tasks are
                 # not allowed in asynchronous graph sections.
