@@ -22,7 +22,7 @@ import re, os
 import StringIO
 from copy import deepcopy
 from cylc.global_config import gcfg
-from cylc.command_env import cv_scripting_ml
+from cylc.command_env import cv_scripting_ml, cv_export
 
 class jobfile(object):
 
@@ -92,10 +92,10 @@ class jobfile(object):
         self.FILE.close()
 
     def write_header( self ):
-        self.FILE.write( '#!' + self.jobconfig['job script shell'] )
-        self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
-        self.FILE.write( '\n# Task: ' + self.task_id )
-        self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'' )
+        self.FILE.write( "#!" + self.jobconfig['job script shell'] )
+        self.FILE.write( "\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++" )
+        self.FILE.write( "\n# Task '" + self.task_id  + "' in suite '" + self.suite + "'" )
+        self.FILE.write( "\n# Job submission method: '" + self.job_submission_method + "'" )
 
     def write_directives( self ):
         directives = self.jobconfig['directives']
@@ -139,7 +139,7 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
 
-        BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
+        BUFFER.write( "\n\n# CYLC SUITE ENVIRONMENT:" )
 
         # write the static suite variables
         for var, val in self.__class__.suite_env.items():
@@ -169,7 +169,7 @@ class jobfile(object):
         use_login_shell = gcfg.get_host_item( 'use login shell', self.host, self.owner )
         comms = gcfg.get_host_item( 'task communication method', self.host, self.owner )
 
-        BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
+        BUFFER.write( "\n\n# CYLC TASK ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
         BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( gcfg.cfg['task messaging']['retry interval in seconds']))
@@ -301,22 +301,22 @@ cd $CYLC_TASK_WORK_DIR""" )
             self.FILE.write( " " + var )
 
     def write_manual_environment( self ):
-        # TODO - THIS METHOD NEEDS UPDATING FOR CURRENT SECTIONS
+        # write a transferable environment for detaching tasks
         if not self.jobconfig['use manual completion']:
             return
         strio = StringIO.StringIO()
-        self.write_initial_scripting( strio )
+        self.FILE.write( '\n' + cv_export + '\n')
         self.write_environment_1( strio )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()
         str = re.sub('"', '\\"', str )
-        self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
-        self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
+        self.FILE.write( '\n\n# TRANSPLANTABLE SUITE ENVIRONMENT FOR CUSTOM TASK WRAPPERS:')
+        self.FILE.write( '\n# (contains embedded newlines, use may require "QUOTES")' )
         self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
 
     def write_identity_scripting( self ):
-        self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
+        self.FILE.write( "\n\n# TASK SELF-IDENTIFY:" )
         self.FILE.write( '''
 echo "cylc Suite and Task Identity:"
 echo "  Suite Name  : $CYLC_SUITE_NAME"

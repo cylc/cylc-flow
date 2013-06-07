@@ -28,15 +28,21 @@ This allows users to run suites under multiple cylc versions at once, by
 setting their $PATH according to the cylc version number if necessary.
 """
 
-scripting = [
-    "export CYLC_VERSION=" + cylc_version,
+cv_export = "export CYLC_VERSION=" + cylc_version
+
+s_profile = [
     "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1",
     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1"
             ]
 
 # single line cylc version scripting:
-cv_scripting_sl = '; '.join(scripting)
+cv_scripting_sl = cv_export + '; ' + '; '.join(s_profile)
 
 # multi line cylc version scripting:
-cv_scripting_ml = '\n'.join( scripting)
+cv_scripting_ml = """
+""" + cv_export + """
+
+# Source .profile before turning on error trapping
+# so that errors here do not abort the job script.
+""" + '\n'.join( s_profile )
 
