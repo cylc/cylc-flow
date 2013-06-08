@@ -4383,6 +4383,7 @@ finished:
         # 10 minutes for 50 minutes; then every minute until finished:
         polling intervals in minutes = 1, 5*10, 1 
 \end{lstlisting}
+Use an initial value of zero to turn off submission polling.
 
 Under the pyro and ssh task communication methods regular polling is
 not done by default, but it can still be configured as a regular
@@ -4414,10 +4415,6 @@ Here are the site/user config items relevant to task tracking:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #SITE/USER CONFIG
-
-# Polling interval in seconds for the 'poll' task communication method
-# (wherein 'submitted' and 'running' tasks are polled periodically). 
-task polling interval = float( min=5, default=10 )
 
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
@@ -4464,7 +4461,7 @@ task polling interval = float( min=5, default=10 )
         # with run-length appropriate intervals under task [runtime] -
         # which will also result in routine polling to check task health
         # under the pyro or ssh communications methods.
-        default polling interval in minutes = float( min=10, default=60 ) 
+        default polling interval in minutes = float( min=0.1, default=1.0 ) 
 \end{lstlisting}
 
 \subsection{How Commands Interact With Running Suites}

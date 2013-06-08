@@ -43,6 +43,19 @@ disable interactive command prompts = boolean( default=True )
 enable run directory housekeeping = boolean( default=False )
 run directory rolling archive length = integer( min=0, default=2 )
 
+# Default polling intervals (in MINUTES) are used only for the polling
+# task communications method (below), and only if more task-appropriate
+# intervals have not been configured in the suite definition. For the
+# other comms methods polling is not done by default (but is still done
+# if configured under task [runtime]). A list of interval values is used
+# in turn to poll running jobs with the last value used repeatedly until
+# the task is finished, this allows more frequent polling near the
+# beginning and end of the anticipated task run time. A single value 
+# is probably sufficient for job submission polling. Multipliers can be
+# used as shorthand: 1.0, 3*2.0, 1.0 == 1.0, 2.0, 2.0, 2.0, 1.0
+submission polling intervals = force_list( default=list(1.0)) 
+execution polling intervals = force_list( default=list(1.0))
+
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
     # If a message send fails, retry after this delay:
@@ -140,13 +153,8 @@ run directory rolling archive length = integer( min=0, default=2 )
         #   3) poll - the suite polls for status of passive tasks
         # Pyro RPC is still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites. 
+        # See above for default polling intervals for the poll method.
         task communication method = option( "pyro", "ssh", "poll", default="pyro" ) 
-        # The "poll" method sets a default interval here to ensure no
-        # tasks are accidentally left unpolled. You should override this
-        # with run-length appropriate intervals under task [runtime] -
-        # which will also result in routine polling to check task health
-        # under the pyro or ssh communications methods.
-        default polling interval in minutes = float( min=0.1, default=1.0 ) 
 
         # How to invoke commands on this host; default shown (not used
         # on localhost unless you run tasks under another user account):

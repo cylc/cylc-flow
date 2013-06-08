@@ -52,7 +52,8 @@
         extra log files = force_list( default=list())
         enable resurrection = boolean( default=False )
         work sub-directory = string( default=$CYLC_TASK_ID )
-        polling intervals in minutes = force_list( default=list() )
+        submission polling intervals = force_list( default=list() )
+        execution polling intervals = force_list( default=list() )
         [[[simulation mode]]]
             run time range = list( default=list(1,16))
             simulate failure = boolean( default=False )

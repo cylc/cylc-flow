@@ -40,6 +40,12 @@ parser.add_option( "-u", "--write-user", help="Write a user "
         "Uncomment and modify items in the file as required.",
         action="store_true", default=False, dest="writeuser" )
 
+# See the comment on lazy evaluation in the globalconfig module.
+##parser.add_option( "--strict", help="Abort if either the site "
+##        "or user config file fails validation (otherwise carry "
+##        "on using default values).",
+##        action="store_true", default=False, dest="strict" )
+
 parser.add_option( "--debug",
         help="Run suites in non-daemon mode, and show exception tracebacks.",
         action="store_true", default=False, dest="debug" )
@@ -49,9 +55,8 @@ if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
 try:
-    # this instantiates an object, so import here to avoid aborting
-    # before the command help can be displayed in case the user file is
-    # screwed up.
+    # This instantiates gcfg, so import here to avoid aborting before
+    # command help can be displayed in case of file parsing errors.
     from cylc.global_config import gcfg
     if options.writesite:
         gcfg.write_rc( 'site' )

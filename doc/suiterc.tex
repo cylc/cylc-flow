@@ -983,10 +983,10 @@ first try - this can be used to vary task behavior by try number.
 \item {\em root default:} (none)
 \end{myitemize}
 
-\paragraph[polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ polling intervals}
+\paragraph[polling intervals in minutes]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ polling intervals in minutes}
 \label{PollingIntervals}
 
-A list of intervals, in seconds, after which cylc will poll for task
+A list of intervals, in minutes, after which cylc will poll for task
 status. For the polling task communications method this overrides the
 default generic polling interval (see site/user config,
 Section~\ref{SiteUserConfig}). For pyro and ssh task communications
@@ -996,15 +996,16 @@ regular check on the health of submitted tasks.
 Note that {\em the first list value is used repeatedly while the task is
 in the `submitted' state}, then {\em subsequent list values are used in
 turn while the task is in the `running' state}, and {\em the last list
-value is used repeatedly until the task has finished}.
+value is used repeatedly until the task has finished}. Additionally, 
+{\em setting the first list value to 0 (zero) turns off job submission
+polling}.
 
 \begin{myitemize}
 \item {\em type:} list of floats, optionally {\em preceded} by multipliers
-\item {\em example:} \lstinline=60,3*600,60= is equivalent 
-        to \lstinline=60,600,600,600,60=
+\item {\em example:} \lstinline=1,3*10,1= is equivalent 
+        to \lstinline=1,10,10,10,1=
 \item {\em root default:} (none)
 \end{myitemize}
-
 
 
 \paragraph[manual completion]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ manual completion}
