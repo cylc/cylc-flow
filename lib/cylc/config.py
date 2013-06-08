@@ -357,6 +357,10 @@ class config( CylcConfigObj ):
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
 
+        # check for run mode override at suite level
+        if self['cylc']['force run mode']:
+            self.run_mode = self['cylc']['force run mode']
+
         # suite event hooks
         if self.run_mode == 'live' or \
                 ( self.run_mode == 'simulation' and not self['cylc']['simulation mode']['disable suite event hooks'] ) or \
@@ -1294,6 +1298,14 @@ Some translations were performed on the fly."""
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
+            # detect and fail and self-dependence loops (foo => foo)
+            for r_name in rights:
+                if r_name in lnames:
+                    print >> sys.stderr, "Self-dependence detected in '" + r_name + "':"
+                    print >> sys.stderr, "  line:", line
+                    print >> sys.stderr, "  from:", orig_line
+                    raise SuiteConfigError, "ERROR: self-dependence loop detected"
+
             if section == 'once':
                 # Consistency check: synchronous special tasks are
                 # not allowed in asynchronous graph sections.
@@ -1615,6 +1627,10 @@ Some translations were performed on the fly."""
         graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
+
+    def get_node_labels( self, start_ctime, stop, raw ):
+        graph = self.get_graph( start_ctime, stop, raw=raw, ungroup_all=True )
+        return [ i.attr['label'].replace('\\n','.') for i in graph.nodes() ]
 
     def close_families( self, nlid, nrid ):
         # Generate final node names, replacing family members with

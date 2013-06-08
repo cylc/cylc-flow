@@ -28,11 +28,9 @@ class background( job_submit ):
       % ssh user@host 'job-script & echo $!; wait'
     (We have to override the general command templates to achieve this)."""
 
-    LOCAL_COMMAND_TEMPLATE = "(%(command)s & echo $!; wait )"
+    LOCAL_COMMAND_TEMPLATE = ( "(%(command)s & echo $!; wait )" )
 
     REMOTE_COMMAND_TEMPLATE = ( " '"
-            + "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1;"
-            + "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;"
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s" 

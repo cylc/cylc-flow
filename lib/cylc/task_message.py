@@ -215,7 +215,7 @@ class message(object):
             try:
                 # Get a proxy for the remote object and send the message.
                 self.load_suite_contact_file() # might have change between tries
-                self.get_proxy().incoming( self.priority, msg )
+                self.get_proxy().put( self.priority, msg )
             except Exception, x:
                 print "failed:", str(x)
                 if itry >= self.max_tries:
