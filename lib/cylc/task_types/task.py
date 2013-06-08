@@ -48,10 +48,7 @@ def displaytd( td ):
 
 class PollTimer( object ):
 
-    # TODO - check simulation method
-    # TODO - check re-trigger or retry starts polling over
-
-    def __init__( self, intervals, defaults, name, run_mode, log ):
+    def __init__( self, host, owner, intervals, defaults, name, run_mode, log ):
         self.intervals = copy( deque(intervals) )
         self.default_intervals = deque( defaults )
         self.name = name
@@ -60,7 +57,6 @@ class PollTimer( object ):
         self.log = log
         self.run_mode = run_mode
 
-    def configure( self, host, owner ):
         # the polling comms method is host-specific
         if gcfg.get_host_item( 'task communication method', host, owner) == "poll":
             if not self.intervals:
@@ -439,6 +435,8 @@ class task( object ):
         if not self.retries_configured:
             # configure retry delays before the first try
             self.retries_configured = True
+            # TODO - saving the retry delay lists here is not necessary
+            # (it can be handled like the polling interval lists).
             if self.__class__.run_mode == 'live' or \
                 ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable retries'] ) or \
                 ( self.__class__.run_mode == 'dummy' and not rtconfig['dummy mode']['disable retries'] ):
@@ -455,16 +453,6 @@ class task( object ):
             # case execution fails and submission tries start over.
             self.sub_retry_delays = copy( self.sub_retry_delays_orig )
 
-            # ... in which case polling should start over too:
-            self.submission_poll_timer = PollTimer( \
-                    rtconfig['submission polling intervals'], 
-                    gcfg.cfg['submission polling intervals'],
-                    'submission', self.__class__.run_mode, self.log )
-            self.execution_poll_timer = PollTimer( \
-                    rtconfig['execution polling intervals'], 
-                    gcfg.cfg['execution polling intervals'],
-                    'execution', self.__class__.run_mode, self.log )
-  
         rrange = rtconfig['simulation mode']['run time range']
         ok = True
         if len(rrange) != 2:
@@ -640,8 +628,17 @@ class task( object ):
 
         self.user_at_host = self.task_owner + "@" + self.task_host
 
-        self.submission_poll_timer.configure( self.task_host, self.task_owner )
-        self.execution_poll_timer.configure(  self.task_host, self.task_owner )
+        self.submission_poll_timer = PollTimer( \
+                    self.task_host, self.task_owner, 
+                    copy( rtconfig['submission polling intervals']), 
+                    copy( gcfg.cfg['submission polling intervals']),
+                    'submission', self.__class__.run_mode, self.log )
+
+        self.execution_poll_timer = PollTimer( \
+                    self.task_host, self.task_owner, 
+                    copy( rtconfig['execution polling intervals']), 
+                    copy( gcfg.cfg['execution polling intervals']),
+                    'execution', self.__class__.run_mode, self.log )
 
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
                 self.user_at_host != user + '@localhost':
