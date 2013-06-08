@@ -1187,7 +1187,7 @@ class scheduler(object):
             if self.config.suite_timeout and self.config.reset_timer:
                 self.set_suite_timer()
 
-        elif self.waiting_clocktriggered_task_ready():
+        elif self.waiting_tasks_ready():
             process = True
 
         if self.run_mode == 'simulation':
@@ -1820,11 +1820,11 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             itask.check_timers()
 
-    def waiting_clocktriggered_task_ready( self ):
+    def waiting_tasks_ready( self ):
+        # waiting tasks can become ready for internal reasons:
+        # namely clock-triggers or retry-delay timers
         result = False
         for itask in self.pool.get_tasks():
-            if not itask.is_clock_triggered():
-                continue
             if itask.ready_to_run():
                 result = True
                 break
