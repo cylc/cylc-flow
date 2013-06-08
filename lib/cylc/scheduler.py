@@ -1118,7 +1118,11 @@ class scheduler(object):
                             print >> sys.stderr, itask.id
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
 
-            self.check_timeouts()
+            # check submission and execution timeout and polling timers
+            if self.run_mode != 'simulation':
+                for itask in self.pool.get_tasks():
+                    itask.check_timers()
+
             self.release_runahead()
 
         # END MAIN LOOP
@@ -1815,10 +1819,6 @@ class scheduler(object):
             self.pool.remove( itask, 'purge' )
 
         print 'PURGE DONE'
-
-    def check_timeouts( self ):
-        for itask in self.pool.get_tasks():
-            itask.check_timers()
 
     def waiting_tasks_ready( self ):
         # waiting tasks can become ready for internal reasons:

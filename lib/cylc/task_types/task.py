@@ -48,14 +48,13 @@ def displaytd( td ):
 
 class PollTimer( object ):
 
-    def __init__( self, host, owner, intervals, defaults, name, run_mode, log ):
+    def __init__( self, host, owner, intervals, defaults, name, log ):
         self.intervals = copy( deque(intervals) )
         self.default_intervals = deque( defaults )
         self.name = name
         self.current_interval = None
         self.timer_start = None
         self.log = log
-        self.run_mode = run_mode
 
         # the polling comms method is host-specific
         if gcfg.get_host_item( 'task communication method', host, owner) == "poll":
@@ -77,7 +76,7 @@ class PollTimer( object ):
             self.timer_start = None
 
     def get( self ):
-        if not self.timer_start or self.run_mode == 'simulation':
+        if not self.timer_start:
             return False
         timeout = self.timer_start + datetime.timedelta( seconds=self.current_interval )
         if datetime.datetime.now() > timeout:
@@ -632,13 +631,13 @@ class task( object ):
                     self.task_host, self.task_owner, 
                     copy( rtconfig['submission polling intervals']), 
                     copy( gcfg.cfg['submission polling intervals']),
-                    'submission', self.__class__.run_mode, self.log )
+                    'submission', self.log )
 
         self.execution_poll_timer = PollTimer( \
                     self.task_host, self.task_owner, 
                     copy( rtconfig['execution polling intervals']), 
                     copy( gcfg.cfg['execution polling intervals']),
-                    'execution', self.__class__.run_mode, self.log )
+                    'execution', self.log )
 
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
                 self.user_at_host != user + '@localhost':
@@ -763,6 +762,7 @@ class task( object ):
         return launcher
 
     def check_timers( self ):
+        # not called in simulation mode
         if self.state.is_currently( 'submitted' ):
             self.check_submission_timeout()
             if self.submission_poll_timer.get():
