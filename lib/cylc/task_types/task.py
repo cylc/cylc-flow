@@ -346,7 +346,7 @@ class task( object ):
         self.execution_timer_start = None
 
     def reset_state_ready( self ):
-        self.state.set_status( 'waiting' )
+        self.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
         self.record_db_event(event="reset to ready")
         self.prerequisites.set_all_satisfied()
@@ -356,7 +356,7 @@ class task( object ):
 
     def reset_state_waiting( self ):
         # waiting and all prerequisites UNsatisified.
-        self.state.set_status( 'waiting' )
+        self.set_status( 'waiting' )
         self.record_db_update("task_states", self.name, self.c_time, status="waiting")
         self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
@@ -366,7 +366,7 @@ class task( object ):
 
     def reset_state_succeeded( self, manual=True ):
         # all prerequisites satisified and all outputs complete
-        self.state.set_status( 'succeeded' )
+        self.set_status( 'succeeded' )
         self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
         if manual:
             self.record_db_event(event="reset to succeeded")
@@ -381,7 +381,7 @@ class task( object ):
 
     def reset_state_failed( self ):
         # all prerequisites satisified and no outputs complete
-        self.state.set_status( 'failed' )
+        self.set_status( 'failed' )
         self.record_db_update("task_states", self.name, self.c_time, status="failed")
         self.record_db_event(event="reset to failed")
         self.prerequisites.set_all_satisfied()
@@ -391,24 +391,24 @@ class task( object ):
         self.outputs.add( self.id + ' failed', completed=True )
 
     def reset_state_held( self ):
-        self.state.set_status( 'held' )
+        self.set_status( 'held' )
         self.record_db_update("task_states", self.name, self.c_time, status="held")
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
 
     def reset_state_runahead( self ):
-        self.state.set_status( 'runahead' )
+        self.set_status( 'runahead' )
         self.turn_off_timeouts()
         self.record_db_update("task_states", self.name, self.c_time, status="runahead")
 
     def set_state_submitting( self ):
         # called by scheduler main thread
-        self.state.set_status( 'submitting' )
+        self.set_status( 'submitting' )
         self.record_db_update("task_states", self.name, self.c_time, status="submitting")
 
     def set_state_queued( self ):
         # called by scheduler main thread
-        self.state.set_status( 'queued' )
+        self.set_status( 'queued' )
         self.record_db_update("task_states", self.name, self.c_time, status="queued")
 
     def override( self, target, sparse ):
@@ -520,7 +520,7 @@ class task( object ):
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
             self.outputs.set_completed( self.id + " started" )
-            self.state.set_status( 'running' )
+            self.set_status( 'running' )
             return (None,None)
 
         self.message_queue.put( 'NORMAL', self.id + " submitting now" )
@@ -541,7 +541,6 @@ class task( object ):
             # (currently only used by async_repeating tasks)
             rtconfig['environment'].update( self.env_vars )
 
-        self.log( 'DEBUG', 'submitting task job script' )
         # construct the job launcher here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
@@ -879,7 +878,7 @@ class task( object ):
 
         # Log every incoming task message. Prepend '>' to distinguish
         # from other non-task message log entries.
-        self.log( priority, '> ' + message )
+        self.log( priority, '(current:' + self.state.get_status() + ')> ' + message )
 
         # We have decided not to record every incoming message as an event.
         #prefix = "message received "
@@ -939,26 +938,18 @@ class task( object ):
             # (A fake task message from the job submission thread).
             # The job submission command was about to be executed.
             self.record_db_event(event="submitting now")
-            # Not currently doing anything other than logging this.
-            pass
 
-        elif content == 'submission succeeded':
+        elif content == 'submission succeeded' and self.state.is_currently( 'submitting' ):
             # (A fake task message from the job submission thread).
+            # (note it is possible for 'task started' to arrive first).
             # The job submission command returned success status.
 
             # TODO - should we use the real event time from the message here?
             self.submitted_time = task.clock.get_datetime()
 
-            if self.state.is_currently( 'submitting' ): 
-                # It is possible that task started arrives first, so
-                # only set to 'submitted' if we're still in the
-                # 'submitting' state.
-                self.state.set_status( 'submitted' )
-                self.submission_timer_start = self.submitted_time
-                self.submission_poll_timer.set()
-            else:
-                # task started must have arrived first
-                self.submission_timer_start = None
+            self.set_status( 'submitted' )
+            self.submission_timer_start = self.submitted_time
+            self.submission_poll_timer.set()
 
             outp = self.id + " submitted" # hack: see github #476
             self.outputs.set_completed( outp )
@@ -975,12 +966,8 @@ class task( object ):
             self.submit_method_id = content[len('submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
                                   
-        elif content == 'submission failed' or \
-                content == 'kill command succeeded'  and self.state.is_currently('submitted'):
-
-            if self.state.is_currently('submit-failed'):
-                # (this may occur multiple times if polling)
-                return
+        elif ( content == 'submission failed' or content == 'kill command succeeded' ) and \
+                self.state.is_currently('submitting','submitted'):
 
             # (a fake task message from the job submission thread)
             self.submit_method_id = None
@@ -993,7 +980,7 @@ class task( object ):
                 outp = self.id + " submit-failed" # hack: see github #476
                 self.outputs.add( outp )
                 self.outputs.set_completed( outp )
-                self.state.set_status( 'submit-failed' )
+                self.set_status( 'submit-failed' )
                 self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
                 self.record_db_event(event="submission failed" )
                 handler = self.event_handlers['submission failed']
@@ -1006,7 +993,7 @@ class task( object ):
                 self.log( "NORMAL", msg )
                 self.sub_retry_delay_timer_start = task.clock.get_datetime()
                 self.sub_try_number += 1
-                self.state.set_status( 'retrying' )
+                self.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
                 self.record_db_event(event="submission failed", message="retrying in " + str(self.sub_retry_delay) )
                 self.prerequisites.set_all_satisfied()
@@ -1017,15 +1004,11 @@ class task( object ):
                     self.log( 'NORMAL', "Queueing submission retry event handler" )
                     self.__class__.event_queue.put( ('submission retry', handler, self.id, msg))
  
-        elif content == 'started':
+        elif content == 'started' and self.state.is_currently( 'submitting','submitted','submit-failed' ):
             # Received a 'task started' message
 
-            if self.state.is_currently('running'):
-                # (this may occur multiple times if polling)
-                return
-
             flags.pflag = True
-            self.state.set_status( 'running' )
+            self.set_status( 'running' )
             self.record_db_update("task_states", self.name, self.c_time, status="running")
             self.record_db_event(event="started" )
             self.started_time = task.clock.get_datetime()
@@ -1044,18 +1027,14 @@ class task( object ):
 
             self.execution_poll_timer.set()
 
-        elif content == 'succeeded':
+        elif content == 'succeeded' and self.state.is_currently('submitting','submitted','submit-failed','running','failed'):
             # Received a 'task succeeded' message
-
-            if self.state.is_currently('succeeded'):
-                # (this may occur multiple times if polling)
-                return
-
+            # (submit* states in case of very fast submission and execution)
             self.execution_timer_start = None
             flags.pflag = True
             self.succeeded_time = task.clock.get_datetime()
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
-            self.state.set_status( 'succeeded' )
+            self.set_status( 'succeeded' )
             self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
             self.record_db_event(event="succeeded" )
             handler = self.event_handlers['succeeded']
@@ -1070,12 +1049,10 @@ class task( object ):
                 self.log( 'WARNING', err )
                 self.outputs.set_all_completed()
 
-        elif content == 'failed' or \
-                content == 'kill command succeeded' and self.state.is_currently('running'):
-
-            if self.state.is_currently('failed'):
-                # (this may occur multiple times if polling)
-                return
+        elif ( content == 'failed' or content == 'kill command succeeded' ) and \
+                self.state.is_currently('submitting','submitted','submit-failed','running','succeeded'):
+            # (submit* states in case of very fast submission and
+            # execution; and the fact that polling tasks 1-2 secs)
 
             # Received a 'task failed' message, or killed, or polling failed
             self.execution_timer_start = None
@@ -1090,7 +1067,7 @@ class task( object ):
                 flags.pflag = True
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
-                self.state.set_status( 'failed' )
+                self.set_status( 'failed' )
                 self.record_db_update("task_states", self.name, self.c_time, status="failed")
                 self.record_db_event(event="failed" )
                 handler = self.event_handlers['failed']
@@ -1103,7 +1080,7 @@ class task( object ):
                 self.log( "NORMAL", msg )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
-                self.state.set_status( 'retrying' )
+                self.set_status( 'retrying' )
                 self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
                 self.record_db_event(event="failed", message="retrying in " + str( self.retry_delay) )
                 self.prerequisites.set_all_satisfied()
@@ -1117,6 +1094,17 @@ class task( object ):
         elif content.startswith("Task job script received signal"):
             # capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=content)
+
+        else:
+            # Unhandled messages. These include:
+            #  * general non-output/progress messages
+            #  * poll messages that repeat previous results
+            # Note that all messages are logged already at the top.
+            self.log('DEBUG', '(current:' + self.state.get_status() + ') unhandled: ' + content )
+
+    def set_status( self, status ):
+        self.log( 'NORMAL', '(setting:' + status + ')' )
+        self.state.set_status( status )
 
     def update( self, reqs ):
         for req in reqs.get_list():
