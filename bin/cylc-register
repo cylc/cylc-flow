@@ -23,7 +23,7 @@ if remrun().execute():
 
 import os
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb, RegistrationError, DatabaseLockedError
+from cylc.registration import localdb
 from cylc.passphrase import passphrase
 from cylc.suite_host import hostname
 from cylc.owner import user
@@ -78,27 +78,14 @@ suite = args[0]
 
 db = localdb( file=options.db, verbose=options.verbose )
 try:
-    db.lock()
-    db.load_from_file()
-    db.register( suite, rdir )
-    db.dump_to_file()
-    db.unlock()
-except DatabaseLockedError, x:
+    with db.lock():
+        db.load_from_file()
+        db.register( suite, rdir )
+        db.dump_to_file()
+except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
-except RegistrationError, x:
-    print >> sys.stderr, x
-    db.unlock()
-    if options.debug:
-        raise
-    sys.exit(1)
-except Exception, x:
-    print >> sys.stderr, 'ERROR:', x
-    db.unlock()
-    if options.debug:
-        raise
-    sys.exit(1)
 
 # create a new passphrase for the suite if necessary
 passphrase( suite, user, hostname, verbose=options.verbose ).generate(rdir)
