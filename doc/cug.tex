@@ -4365,34 +4365,35 @@ suite definition:
         delay between batches = 10 # seconds, default 0
 \end{lstlisting}
 
-Polling intervals are configurable task runtime settings because they
-should be appropriate to the expected task run length. For instance, a 
-task that typically takes an hour to run might be polled every 10
-minutes initially, and then every minute toward the end of its run. The
-first value in the configured list of polling intervals is used
-repeatedly while the task remains in the `submitted' state; then each
-subsequent value is used in turn while the task is in the `running'
-state; and the final value is used repeatedly until the task is
-finished:
+Polling intervals are configurable here because they should be
+appropriate to the expected task run length. For instance, a task that
+typically takes an hour to run might be polled every 10 minutes
+initially, and then every minute toward the end of its run. Interval
+values are used in turn until the last value, which is used repeatedly
+until finished:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [runtime]
     [[foo]]
-        # poll every minute in the 'submitted' state; then every 
-        # 10 minutes for 50 minutes; then every minute until finished:
-        polling intervals in minutes = 1, 5*10, 1 
+        # poll every minute in the 'submitted' state:
+        submission polling intervals = 1.0
+        # poll one minute after foo starts running, then every 10
+        # minutes for 50 minutes, then every minute until finished:
+        execution polling intervals = 1.0, 5*10.0, 1.0 
 \end{lstlisting}
-Use an initial value of zero to turn off submission polling.
+A list of intervals with optional multipliers can be used for both
+submission and execution polling, although a single value is probably
+sufficient for submission polling. If these items are not configured
+default values from site/user config will be used for the polling
+task communication method; polling is not done by default under the
+other task communications methods (but it can still be used if you
+like).
 
-Under the pyro and ssh task communication methods regular polling is
-not done by default, but it can still be configured as a regular
-health check for submitted tasks.
-
-Finally, polling is automatically done once on job submission and
-execution timeouts, to see if the timed-out task has failed or not;
-and on a suite restart, to see what happened to tasks that were 
-orphaned when the suite went down.
+Polling is also done automatically once on job submission and execution
+timeouts, to see if the timed-out task has failed or not; and on suite
+restarts, to see what happened to any tasks that were orphaned when the
+suite went down.
 
 \subsection{Alternatives To Polling When Routing Is Blocked}
 
