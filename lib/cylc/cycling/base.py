@@ -78,3 +78,4 @@ class cycler( object ):
         of intercycle triggers, e.g. in "A[T-6] => B" implies that task A 
         runs at cycles 6 hours prior to the cycler sequence."""
         raise CyclerOverrideError( "adjust_state" )
+
