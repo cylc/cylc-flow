@@ -517,7 +517,11 @@ class scheduler(object):
     
     # CONTROL_COMMANDS__________________________________________________
 
-    def command_stop_cleanly( self ):
+    def command_stop_cleanly( self, kill_first=False ):
+        if kill_first:
+            for itask in self.pool.get_tasks():
+                # (state check done in task module)
+                itask.kill()
         self.hold_suite()
         self.suite_halt = True
 
@@ -816,6 +820,9 @@ class scheduler(object):
                 self.options.templatevars_file, run_mode=self.run_mode,
                 verbose=self.verbose )
 
+        if self.run_mode != self.config.run_mode:
+            self.run_mode = self.config.run_mode
+
         if not reconfigure:
             run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
@@ -869,7 +876,6 @@ class scheduler(object):
             # (else scan etc. will hang on the partially started suite).
             # raises port_scan.SuiteNotFound error:
             self.lockserver_port = lockserver( self.host ).get_port()
-
 
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['development']['use quick task elimination']

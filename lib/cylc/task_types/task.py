@@ -32,6 +32,7 @@ import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
+from cylc.command_env import cv_scripting_sl
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -505,7 +506,7 @@ class task( object ):
             self.state.set_status( 'running' )
             return (None,None)
 
-        self.incoming( 'NORMAL', self.id + " submitting now" )
+        self.message_queue.put( 'NORMAL', self.id + " submitting now" )
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
@@ -793,7 +794,7 @@ class task( object ):
         cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
             if self.reset_timer:
-                # the timer is being re-started by incoming messages
+                # the timer is being re-started by put messages
                 msg = 'last message ' + str(timeout) + ' minutes ago, but job not finished'
             else:
                 msg = 'job started ' + str(timeout) + ' minutes ago, but has not finished'
@@ -815,11 +816,11 @@ class task( object ):
                 datetime.timedelta( seconds=self.sim_mode_run_length )
         if datetime.datetime.now() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
-                self.incoming( 'NORMAL', self.id + ' submitted' )
-                self.incoming( 'CRITICAL', self.id + ' failed' )
+                self.message_queue.put( 'NORMAL', self.id + ' submitted' )
+                self.message_queue.put( 'CRITICAL', self.id + ' failed' )
             else:
-                self.incoming( 'NORMAL', self.id + ' submitted' )
-                self.incoming( 'NORMAL', self.id + ' succeeded' )
+                self.message_queue.put( 'NORMAL', self.id + ' submitted' )
+                self.message_queue.put( 'NORMAL', self.id + ' succeeded' )
             return True
         else:
             return False
@@ -832,7 +833,7 @@ class task( object ):
             if message != self.id + ' started' and \
                     message != self.id + ' succeeded' and \
                     message != self.id + ' completed':
-                self.incoming( 'NORMAL', message )
+                self.message_queue.put( 'NORMAL', message )
 
     def is_complete( self ):  # not needed?
         if self.outputs.all_completed():
@@ -851,10 +852,6 @@ class task( object ):
             return True
         else:
             return False
-
-    def incoming( self, priority, message ):
-        # queue incoming messages for this task
-        self.message_queue.incoming( priority, message )
 
     def process_incoming_messages( self ):
         queue = self.message_queue.get_queue() 
@@ -1243,10 +1240,9 @@ class task( object ):
 
         cmd = launcher.get_job_poll_command( self.submit_method_id )
         if self.user_at_host != user + '@localhost':
-            cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
-                    "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
+            cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
-        # TODO - just pass self.incoming rather than whole self?
+        # TODO - just pass self.message_queue.put rather than whole self?
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'poll') )
 
     def kill( self ):
@@ -1272,10 +1268,9 @@ class task( object ):
 
         cmd = self.launcher.get_job_kill_command( self.submit_method_id )
         if self.user_at_host != user + '@localhost':
-            cmd = "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; " + \
-                    "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; " + cmd
+            cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
-        # TODO - just pass self.incoming rather than whole self?
+        # TODO - just pass self.message_queue.put rather than whole self?
         self.log( 'CRITICAL', "Killing job" )
         self.__class__.poll_and_kill_queue.put( (cmd, self, 'kill') )
 

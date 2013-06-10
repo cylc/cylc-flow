@@ -3188,11 +3188,22 @@ evaluated when the task begins executing under the task owner account
 on the task host. Thus \lstinline=$HOME=, for instance, evaluates at
 run time to the home directory of task owner on the task host. 
 
+\subsubsection{How Tasks Get Access To The Suite Directory}
+
+Tasks can use \lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on
+the task host, and the suite bin directory is automatically added
+\lstinline=$PATH=.  If a remote suite definition directory is not
+specified the local (suite host) path will be assumed with the local
+home directory, if present, swapped for literal \lstinline=$HOME= for
+evaluation on the task host.
+
 \subsubsection{Remote Task Hosting}
 \label{RunningTasksOnARemoteHost}
 
 If a task declares an owner other than the suite owner and/or 
-a host other than the suit host, e.g.:
+a host other than the suite host, cylc will use passwordless ssh to
+execute the task on the \lstinline=owner@host= account by the configured
+job submission method,
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
@@ -3205,22 +3216,24 @@ a host other than the suit host, e.g.:
             method = pbs
 \end{lstlisting}
 \lstset{language=transcript}
-cylc will use passwordless ssh to execute the task on the declared host
-account (\lstinline=owner@host=) by the configured job submission method.
 For this to work,
 \begin{myitemize}
-    \item passwordless ssh must be configured between suite and task
+    \item passwordless ssh must be configured between the suite and task
     host accounts.
     \item cylc must be installed on task hosts so that remote tasks can
-    use cylc messaging commands to communicate back to the suite.
+    use cylc messaging and poll or kill commands.
     \begin{myitemize}
-        \item Pyro is needed by cylc on tasks hosts - unless ssh messaging
-        is used - but other cylc software dependencies such as graphviz and
-        Jinja2 are not.
+        \item Pyro and the suite passphrase are needed on tasks hosts,
+            unless the ssh or polling task communication methods are
+            used. Other cylc software dependencies such as graphviz and
+        Jinja2 are not needed on task hosts.
     \end{myitemize}
     \item the suite definition directory, or some fraction of its
-    content, can be installed on the task host if the remote task needs it.
+        content, can be installed on the task host, if needed.
 \end{myitemize}
+
+To learn how to give remote tasks access to cylc, see
+Section~\ref{HowTasksGetAccessToCylc}.
 
 Tasks running on the suite host under another user account are treated as
 remote tasks.
@@ -3234,24 +3247,6 @@ Instead of hardwiring host names into the suite definition you can
 specify a shell command that prints a hostname, or an environment
 variable that holds a hostname, as the value of the host config item.
 See Section~\ref{DynamicHostSelection}.
-
-\paragraph{Access To Cylc On Task Hosts}
-
-Remote tasks must have access to cylc via \lstinline=$PATH= on the task
-host.  This can be achived by the system or user login scripts,
-\lstinline=/etc/profile= or \lstinline=$HOME/.profile= - the remote job
-submission mechanism automatically sources these.
-
-It is also possible to configure your \lstinline=$PATH= manually
-in runtime namespace {\em intial scripting} sections, which end up
-at the top of task job scripts before the first cylc messaging call.
-
-Tasks can use \lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on
-the task host, and the suite bin directory is automatically added
-\lstinline=$PATH=.  If a remote suite definition directory is not
-specified the local (suite host) path will be assumed with the local
-home directory, if present, swapped for literal \lstinline=$HOME= for
-evaluation on the task host.
 
 \paragraph{Remote Task Log Directories}
 
@@ -4473,6 +4468,48 @@ shares a common filesystem with the suite host). Consequently remote
 command host accounts must have the suite passphrase installed in one of
 the secondary locations under \lstinline=$HOME/.cylc/=.
 
+
+\subsection{How Tasks Get Access To Cylc}
+\label{HowTasksGetAccessToCylc}
+
+Running tasks need access to cylc via \lstinline=$PATH=, principally for
+the task messaging commands.  To allow this, the first thing a task job
+script does is set \lstinline=CYLC_VERSION= to the cylc version number,
+then it sources \lstinline=/etc/profile= and \lstinline=$HOME/.profile=
+to configure \lstinline=$PATH=. If you need to run several suites at
+once under different incompatible versions of cylc, use
+\lstinline=$HOME/.profile= to set \lstinline=$PATH= according to the
+value of \lstinline=$CYLC_VERSION=. For example,
+\lstset{language=bash}
+\begin{lstlisting}
+# $HOME/.profile
+
+if [[ $- == *i* ]]; then
+    # interactive shell: use the latest cylc
+    export PATH=/path/to/cylc-latest/bin:$PATH
+elif [[ "$CYLC_VERSION" = 5.3.3-dev ]]; then
+    # non-interactive shell, called by a suite running a new
+    # development version of cylc that I'm testing:
+    export PATH=/path/to/cylc-5.3.3-test/bin:$PATH
+else
+    # non-interactive shell, called by a suite running our 
+    # current production release of cylc.
+    export PATH=/path/to/cylc/bin:$PATH
+fi
+\end{lstlisting}
+{\em Note that \lstinline=$CYLC_VERSION= has only been used in this way
+since cylc-5.3.}
+
+It is also possible to configure \lstinline=$PATH= manually in the 
+{\em initial scripting} section at the top of task job scripts,
+but the use of \lstinline=.profile= is recommended because it works 
+for all suites and it also allows selection of different cylc versions
+forfor other commands invoked by cylc, namely task poll and kill
+commands and event handlers (for these, cylc explicitly sets the version
+variable and sources profile scripts at the start of the subprocess
+command string).
+
+
 \subsection{Restarting Suites}
 \label{RestartingSuites}
 
@@ -5272,36 +5309,28 @@ The following topics have yet to be documented in detail.
 \end{myitemize}
 \lstset{language=transcript}
 
-\section{Suite Discovery, Sharing, And Revision Control}
+\section{Suite Storage, Discovery, Revision Control, and Deployment}
 
-Until release 4.2.2 cylc had a ``central suite database'' that users
-could export to and import from, for sharing suites. It was essentially
-just a special instance of a user suite database, held under
-the cylc admin account and with associated export and import commands
-to copy suite definition directories to and from a central store,
-with the suite owner's username as the first hierarchical name component.
-However, it was not on the network, and the suite store had to be
-writeable by all users and hence very insecure. Rather than develop a
-network server for better security and wider access, as was the original
-intention, it was decided to remove this functionality entirely for the
-following reasons:
+Small groups of cylc users can of course share suites by manual copying,
+and generic revision control tools can be used on cylc suites as for any
+collection of files. Beyond this cylc does not have a built-in solution
+for suite storage and discovery, revision control, and deployment, on a
+network. That is not cylc's core purpose, and large sites may have
+preferred revision control systems and suite meta-data requirements that
+are difficult to anticipate. We can, however, recommend the use of {\em
+Rose} to do all of this very easily and elegantly with cylc suites.
+
+\subsection{Rose}
+
+{\bf Rose} is {\em a framework for managing and running suites of
+scientific applications}, developed at the UK Met Office for use with
+cylc. It is available under the open source GPL license.
 
 \begin{myitemize}
-    \item Large sites are likely to have suite meta-data and revision
-        control requirements and preferences beyond what can be provided 
-        by a light-weight native cylc database.
-    \item Small groups of light cylc users, on the other hand,
-        can easily share suites by means of manually copying suite
-        definitions, or with the \lstinline=cylc copy= command which 
-        now supports copying registered suites between databases; they
-        are then free to use preferred revision control tools and so on
-        as they see fit.
+    \item Rose documentation: http://metomi.github.io/rose/doc/rose.html
+    \item Rose source repository: https://github.com/metomi/rose
 \end{myitemize}
 
-We may in the future recommend particular tools that can be used for 
-suite discovery, revision control, and so on, with cylc suites.
-
-%\pagebreak
 
 \section{Suite Design Principles}
 \label{SuiteDesignPrinciples}
