@@ -69,8 +69,12 @@ class cycler( object ):
         raise CyclerOverrideError( "next" )
 
     def get_min_cycling_interval( self ):
-        """Return the smallest cycling interval for this cycler.""" 
+        """Return the smallest interval in HOURS for this cycler.""" 
         raise CyclerOverrideError( "get_min_cycling_interval" )
+
+    def get_offset( self ):
+        """Return the offset (input to adjust_state) in HOURS for this cycler.""" 
+        raise CyclerOverrideError( "get_offset" )
 
     def adjust_state( self, offset ):
         """Adjust the state variables that define the cycle time sequence

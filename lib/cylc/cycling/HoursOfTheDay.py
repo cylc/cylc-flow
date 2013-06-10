@@ -36,6 +36,7 @@ class HoursOfTheDay( cycler ):
 
     def __init__( self, *args ):
         """Parse and store incoming list of hours of the day."""
+        self.c_offset = 0
         if len(args) == 0:
             # no args, assume all hours
             self.valid_hours = range(23)
@@ -65,10 +66,14 @@ class HoursOfTheDay( cycler ):
     def get_min_cycling_interval( self ):
         return self.smallest_interval
 
+    def get_offset( self ):
+        return self.c_offset
+
     def adjust_state( self, offset ):
+        self.c_offset = int(offset)
         adj_hours = []
         for hour in self.valid_hours:
-            adj = hour - int(offset)
+            adj = hour - self.c_offset
             # convert back to 0-23 range, e.g. 30 => 6, -30 => 18, ...
             adj_hours.append( adj % 24 )
         self.valid_hours = adj_hours

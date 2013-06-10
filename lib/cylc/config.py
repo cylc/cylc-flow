@@ -671,14 +671,27 @@ Some translations were performed on the fly."""
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
             else:
-                rls = []
+                mcis = []
+                offs = []
                 for cyc in self.cyclers:
-                    rahd = cyc.get_min_cycling_interval()
-                    if rahd:
-                        rls.append(rahd)
-                if len(rls) > 0:
-                    # twice the minimum cycling internal in the suite
-                    rl = 2 * min(rls)
+                    m = cyc.get_min_cycling_interval()
+                    if m:
+                        mcis.append(m)
+                    o = cyc.get_offset()
+                    if o:
+                        offs.append(o)
+                if len(mcis) > 0:
+                    # set runahead limit twice the minimum cycling interval
+                    rl = 2 * min(mcis)
+                    if len(offs) > 0:
+                        mo = min(offs)
+                        if mo < 0:
+                            # we have future triggers...
+                            if abs(mo) >= rl:
+                                #... that extend past the default rl
+                                # set to offset plus one minimum interval
+                                rl = abs(mo) + min(mcis)
+                if rl:
                     if self.verbose:
                         print "Computed runahead limit:", rl, "hours"
         self.runahead_limit = rl

@@ -101,10 +101,10 @@ class taskdef(object):
         self.cond_triggers[ cycler ].append( [triggers,exp] )
 
     def add_to_valid_cycles( self, cyclr ):
-            if len( self.cyclers ) == 0:
-                self.cyclers = [cyclr]
-            else:
-                self.cyclers.append( cyclr )
+        if len( self.cyclers ) == 0:
+            self.cyclers = [cyclr]
+        else:
+            self.cyclers.append( cyclr )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
