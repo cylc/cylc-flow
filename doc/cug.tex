@@ -2504,9 +2504,8 @@ same job on a different platform.
 \paragraph{Intercycle Triggers}
 \label{IntercycleTriggers}
 
-Typically most tasks in a suite will trigger off other cotemporal (i.e.\
-the same cycle time) tasks, but some may depend on tasks
-with earlier cycle times. This
+Typically most tasks in a suite will trigger off others in the same
+cycle time, but some may depend on others with other cycle times. This
 notably applies to warm-cycled forecast models, which depend
 on their own previous instances (see below); but other kinds of
 intercycle dependence are possible too.\footnote{In NWP forecast
@@ -2526,6 +2525,16 @@ Intercycle and trigger type (and internal output) notation can be combined:
 # SUITE.RC
     # B triggers if A in the previous cycle fails:
     graph = "A[T-6]:fail => B"
+\end{lstlisting}
+
+Tasks can also trigger off others in {\em the future} (with respect to
+cycle time!):
+\begin{lstlisting}
+# SUITE.RC
+[dependencies]
+    [[0,6,12,18]]
+        # B triggers off A in the next cycle
+        graph = "A[T+6] => B"
 \end{lstlisting}
 
 \subparagraph{Bootstrapping Intercycle Triggers}
@@ -4728,19 +4737,20 @@ A cycling task spawns its successor when it enters the submitted state
 or, for sequential tasks, when it finishes. If a newly spawned task's
 cycle time is ahead of the oldest non-finished (succeeded or failed)
 task by more than the runahead limit it is put into the special
-{\em runahead} held state until other tasks catch up sufficiently.
+{\em runahead} held state until other tasks catch up sufficiently; i.e.\
+the runahead limit constrains the number of cycles that can run at once.
 
-In cylc-4.5.1 and earlier it was possible to stall a suite by setting
-the runahead limit too low; now however it is applied in such a way
-that it simply constrains the number of different cycles that can run at
-once. If the limit is set to the smallest interval between cycles, or
-less than that, just a single cycle will run at a time.
+The default runahead limit is normally set to twice the minimum cycling
+interval in the suite. For a suite with 1- and 24-hourly cylcing tasks
+the default limit will be 2 hours, so that two of the hourly cycles can 
+run at once in between the 24-hourly cycles.  If there are any future
+triggers present (\lstinline@graph = "foo[T+24] => bar"@) that extend
+beyond the default limit, it is adjusted up to equal the future
+offset plus one minimum cycling interval.
 
-The default runahead limit is now set to {\em twice the smallest of the
-cycling intervals of the suite's cycling modules} (i.e.\ the graph
-section headings). For a suite that has 1- and 24-hourly cylcing tasks
-the default limit will be 2 hours, so that two of the hourly cycles will
-run at once in between the 24-hourly cycles. 
+A manually set runahead limit should not stall the suite even if set to
+less than the minimum cycling interval, unless it does not extend out
+past any future triggers.
 
 Succeeded and failed tasks are ignored when applying the runahead limit
 (but tasks that can't run because they depend on a failed task are not
