@@ -875,6 +875,18 @@ class task( object ):
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
+        """
+        Parse incoming messages and update task state accordingly.
+        The latest message is assumed to reflect the true state of the
+        task *unless* it would set the state backward in the natural
+        order of events (a poll can take a couple of seconds to execute,
+        during which time it is possible for a pyro message to come in
+        reflecting a state change that occurred just *after* the poll
+        executed, in which case the poll result, if actioned, would
+        erroneously set the task state backwards.
+
+        TODO - formalize state ordering, for: 'if new_state < old_state'
+        """
 
         # Log every incoming task message. Prepend '>' to distinguish
         # from other non-task message log entries.
