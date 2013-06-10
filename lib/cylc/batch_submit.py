@@ -92,7 +92,7 @@ class job_batcher( threading.Thread ):
         # submit each item
         jobs = []
         msg = "batch " + str(i) + '/' + str(n) + " (" + str(len(batch)) + " members):"
-        self.log.info( self.queue_name + " " + msg )
+        self.log.debug( self.queue_name + " " + msg )
 
         for item in batch:
             jobinfo = \
@@ -145,7 +145,7 @@ class job_batcher( threading.Thread ):
         else:
             msg += """
   All """ + str(batch_size) + " items succeeded"
-        self.log.info( self.queue_name + ": " + msg )
+        self.log.debug( self.queue_name + ": " + msg )
 
 
     def submit_item( self, item, jobinfo ):

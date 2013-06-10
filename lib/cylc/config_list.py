@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -16,36 +16,29 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
+def get_expanded_float_list( cfg, allow_zeroes=True ):
+    """
+    Expand list-with-multiplier config items, and coerce to float:
+         cfg = [1.0, 2*3.0, 4.0]
+       becomes:
+         cfg = [1.0, 3.0, 3.0, 4.0]
+    Used for retry delays and polling interval configuration.
+    Bad values (including multipliers) raise ValueError.
+    """
+    values = []
+    for item in cfg:
+        try:
+            mult, val = item.split('*')
+        except ValueError:
+            # too few values to unpack (single item)
+            values.append(float(item))
+        else:
+            # mult * val
+            values += int(mult) * [float(val)]
 
-from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+    if not allow_zeroes:
+        if 0.0 in values:
+            raise ValueError, '0 (zero) illegal'
 
-parser = cop( usage = """cylc [db] reregister|rename [OPTIONS] ARGS
-
-Change the name of a suite (or group of suites) from REG1 to REG2.
-Example:
-  cylc db rereg foo.bar.baz test.baz""",
-       argdoc=[("REG1", "original name"), 
-         ("REG2", "new name")])
-
-( options, args ) = parser.parse_args()
-
-arg_from = args[0]
-arg_to = args[1]
-
-db = localdb( file=options.db, verbose=options.verbose )
-
-try:
-    with db.lock():
-        db.load_from_file()
-        db.reregister( arg_from, arg_to )
-        db.dump_to_file()
-except Exception, x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
+    return values
 

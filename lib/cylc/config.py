@@ -47,6 +47,7 @@ from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
 from TaskID import TaskID
 from C3MRO import C3
+from config_list import get_expanded_float_list
 
 try:
     import graphing
@@ -79,10 +80,13 @@ def coerce_runtime_values( rdict ):
     items added the runtime configspec."""
 
     # coerce list values from string
+    # (required for single values with no trailing comma)
     for item in [
         'inherit',
         'retry delays',
         'extra log files',
+        'submission polling intervals',
+        'execution polling intervals',
         ( 'job submission', 'retry delays' ),
         ( 'simulation mode', 'run time range' ) ]:
         try:
@@ -124,6 +128,27 @@ def coerce_runtime_values( rdict ):
                 rdict[item] = str2float( rdict[item] )
         except KeyError:
             pass
+
+    # finally, expand float lists with multipliers here
+    for item in [
+            'retry delays',
+            'submission polling intervals',
+            'execution polling intervals',
+            ('job submission', 'retry delays' )]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = get_expanded_float_list( rdict[item[0]][item[1]] )
+            else:
+                if item.endswith( 'polling intervals' ):
+                    allow_zeroes=False
+                else:
+                    allow_zeroes=True
+                rdict[item] = get_expanded_float_list( rdict[item], allow_zeroes )
+        except KeyError:
+            pass
+        except ValueError, x:
+            print >> sys.stderr, x
+            raise SuiteConfigError( "ERROR: illegal value in '" + str(item) + "'" )
 
 class SuiteConfigError( Exception ):
     """

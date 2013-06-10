@@ -107,7 +107,7 @@ class pool(object):
         msg = "task proxy removed" 
         if reason:
             msg += " (" + reason + ")"
-            task.log( 'DEBUG', msg )
+        task.log( 'DEBUG', msg )
         del task
 
     def get_tasks( self ):

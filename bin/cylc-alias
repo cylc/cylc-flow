@@ -22,7 +22,7 @@ if remrun().execute():
     sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb, RegistrationError, DatabaseLockedError
+from cylc.registration import localdb
 
 parser = cop( usage = """cylc [db] alias [OPTIONS] ARGS
 
@@ -48,20 +48,12 @@ alias = args[1]
 
 db = localdb( file=options.db, verbose=options.verbose )
 try:
-    db.lock()
-    db.load_from_file()
-    db.alias( suite, alias )
-    db.dump_to_file()
-    db.unlock()
-
-except DatabaseLockedError, x:
-    raise SystemExit(x)
-except RegistrationError, x:
-    print >> sys.stderr, x
-    db.unlock()
-    sys.exit(1)
+    with db.lock():
+        db.load_from_file()
+        db.alias( suite, alias )
+        db.dump_to_file()
 except Exception, x:
-    print >> sys.stderr, 'ERROR:', x
-    db.unlock()
-    sys.exit(1)
+    if options.debug:
+        raise
+    raise SystemExit(x)
 
