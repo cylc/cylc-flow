@@ -6,6 +6,7 @@ from validate import Validator
 from print_cfg import print_cfg
 from copy import deepcopy
 from cylc.owner import user
+from cylc.config_list import get_expanded_float_list
 import atexit
 import shutil
 from tempfile import mkdtemp
@@ -19,6 +20,7 @@ class GlobalConfigError( Exception ):
         return repr(self.msg)
 
 class globalcfg( object ):
+    
     """Handle global (all suites) site and user configuration for cylc.
     Legal items and default values are defined in a single configspec
     file.  Special comments in the configspec file denote items that can
@@ -32,10 +34,16 @@ class globalcfg( object ):
     For all derived items - paths hardwired under the configurable top
     levels - use the get_derived_host_item(suite,host) method."""
 
-    def __init__( self ):
+    # TODO - use lazy evaluation instead of execute on import
+    # (and update get-global-config command after doing this).
+
+    def __init__( self, strict=False ):
         """Load defaults, site, and user config files (in reverse order
         of precedence) to generate the global config structure; validate
         to catch errors; disallow user config of site-only items.""" 
+        
+        # This can't be used at the moment (see the lazy eval TODO above)
+        self.strict = strict
 
         self.header_printed = False
 
@@ -87,6 +95,7 @@ class globalcfg( object ):
         except Exception, x:
             self.myprint( str(x) )
             self.myprint( '*** ERROR: FAILED TO LOAD SITE/USER CONFIG SPEC (FATAL)' )
+            sys.exit(1)
 
         # check the user file for any attempt to override site-onlyitems
         self.block_user_cfg( self.usercfg, self.cfg, self.cfg.comments )
@@ -100,6 +109,8 @@ class globalcfg( object ):
         except Exception, x:
             self.myprint( str(x) )
             self.myprint( '*** WARNING: FAILED TO LOAD SITE CONFIG FILE' )
+            if self.strict:
+                sys.exit(1)
 
         # now merge user config for final result (user takes precedence) 
         self.cfg.merge( self.usercfg )
@@ -110,8 +121,18 @@ class globalcfg( object ):
         except Exception, x:
             self.myprint( str(x) )
             self.myprint( '*** WARNING: FAILED TO LOAD USER CONFIG FILE' )
+            if self.strict:
+                sys.exit(1)
 
         self.expand_local_paths()
+
+        for item in ( 'submission', 'execution' ):
+            key = item + ' polling intervals'
+            try:
+                self.cfg[key] = get_expanded_float_list( self.cfg[key], allow_zeroes=False )
+            except ValueError, x:
+                print >> sys.stderr, x
+                raise GlobalConfigError( "ERROR, illegal value in '" + key + "'" )
 
     def upgrade_5_1_1( self, cfg ):
         """Upgrade methods should upgrade to the latest (not next)

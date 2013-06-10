@@ -19,6 +19,7 @@
 import os, sys, re
 import pickle
 import datetime, time
+import random
 from regpath import RegPath
 from owner import user
 
@@ -30,8 +31,31 @@ from owner import user
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
+"""
+Suite registration database code. WARNING: the file lock here is not
+atomic (I think) so problems are possible in the unlikely event that
+multiple processes try to access a user reg db at once. However, retry
+on db unpickle errors seems to be good enough to prevent such problems
+in the test battery and in the following stress test:
+
+#!/bin/bash
+SUITE_DIR=$1
+COUNT=0
+MAX=30
+# make sure the db is loaded:
+cylc admin import-examples ${TMPDIR:-/tmp/$USER/$$} >/dev/null
+cylc db reg frzoz-0 $SUITE_DIR
+while (( COUNT < MAX )); do
+    (( COUNT += 1 ))
+    cylc db reg fzroz-${COUNT} > /dev/null & 
+    cylc db get fzroz-0 > /dev/null & 
+done
+"""
+
 # location of the suite registration database:
 regdb_path = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
+
+from contextlib import contextmanager
 
 class RegistrationError( Exception ):
     """
@@ -120,44 +144,31 @@ class regdb(object):
         self.lockfile = self.file + '.lock'
         self.statehash = None
 
-    def get_hash(self):
-        return hash( str(sorted(self.items.items())))
-
+    @contextmanager
     def lock( self ):
         if self.verbose:
-            print "locking suite reg db"
+            print "locking reg db"
         attempts = 0
-        while True:
+        max_attempts = 5 
+        while os.path.exists(self.lockfile):
             attempts += 1
-            if os.path.exists( self.lockfile ):
-                if attempts > 5:
-                    print >> sys.stderr, "lock file:", self.lockfile
-                    raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
-                if self.verbose:
-                    print "  (database locked, waiting 1 second, " + str( attempts ) + "/5 attempts)"
-                time.sleep(1)
-            else:
-                break
-        # touch file:
-        open( self.lockfile, 'w' ).close()
-        if self.verbose:
-            print "  db locked"
-
-    def unlock( self ):
-        if self.verbose:
-            print "unlocking suite reg db"
-        if os.path.exists( self.lockfile ):
+            if attempts > max_attempts:
+                raise DatabaseLockedError, 'ERROR, reg db locked: ' + self.lockfile
+            print >> sys.stderr, "WARNING: reg db locked (attempt " + str( attempts ) + "/" + str(max_attempts) + ")"
+            time.sleep(random.randint(1,5))
+        open(self.lockfile, 'w').write("1")
+        try:
+            yield
+        finally:
+            if self.verbose:
+                print "unlocking reg db"
             try:
-                os.unlink( self.lockfile )
+                os.remove(self.lockfile)
             except OSError, x:
-                if self.verbose:
-                    print "  failed to remove lock file: " + self.file
-                raise
+                pass
 
-            else:
-                if self.verbose:
-                    print "  db unlocked"
-
+    def get_hash(self):
+        return hash( str(sorted(self.items.items())))
 
     def changed_on_disk( self ):
         # use to detect ONE change in database since we read it,
@@ -186,17 +197,25 @@ class regdb(object):
         # get file timestamp
         self.mtime_at_load = os.stat(self.file).st_mtime
 
-        # open the database file
-        input = open( self.file, 'rb' )
+        # retries should not be necessary here, but our locking
+        # mechanism is not atomic (in case of many near-simultaneous
+        # access attempts)
+        attempts = 0
+        max_attempts = 5 
+        while True:
+            attempts += 1
+            if attempts > max_attempts:
+                raise DatabaseUnpickleError, "ERROR: failed to unpickle the reg db" 
+            try:
+                inp = open( self.file, 'rb' )
+                self.items = pickle.load( inp )
+                inp.close()
+            except:
+                print >> sys.stderr, "WARNING: reg db unpickle error (attempt " + str( attempts ) + "/" + str(max_attempts) + ")"
+                time.sleep(random.randint(1,5))
+            else:
+                break
 
-        try:
-            self.items = pickle.load( input )
-        except Exception, x:
-            input.close()
-            print >> sys.stderr, 'failed to unpickle suite database  ' + self.file
-            raise DatabaseUnpickleError( 'failed to unpickle suite database  ' + self.file )
-
-        input.close()
         # record state at load
         self.statehash = self.get_hash()
 
