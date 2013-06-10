@@ -130,8 +130,34 @@ submission batches.
 
 \begin{myitemize}
     \item {\em type:} integer seconds (minimum 0)
-    \item {\em default:} 15
+    \item {\em default:} 0
 \end{myitemize}
+
+\subsubsection[{[[}poll and kill command submission{]]}]{[cylc] $\rightarrow$ [[poll and kill command submission]]}
+
+Task poll and kill commands are queued to a worker thread that processes
+them in parallel, in batches to limit the number that can execute at
+once.
+
+\paragraph[batch size]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ batch size}
+
+The maximum number of poll and kill commands to execute at once, before
+moving on to the next batch.
+
+\begin{myitemize}
+    \item {\em type:} integer (minimum 1)
+    \item {\em default:} 10
+\end{myitemize}
+
+\paragraph[delay between batches]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ delay between batches}
+
+How long to wait, in seconds, before processing the next batch of poll and kill commands. 
+
+\begin{myitemize}
+    \item {\em type:} integer seconds (minimum 0)
+    \item {\em default:} 0
+\end{myitemize}
+
 
 \subsubsection[{[[}event handler submission{]]}]{[cylc] $\rightarrow$ [[event handler submission]]}
 
@@ -148,7 +174,7 @@ on to the next batch.
 
 \begin{myitemize}
     \item {\em type:} integer (minimum 1)
-    \item {\em default:} 5
+    \item {\em default:} 10
 \end{myitemize}
 
 \paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ delay between batches}
@@ -911,20 +937,6 @@ can be a single command or multiple lines of scripting.
 \end{myitemize}
 
 
-\paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
-\label{RefRetries}
-
-A list of time intervals in minutes, after which to resubmit the task if
-it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
-execution environment is incremented each time, starting from 1 for the
-first try - this can be used to vary task behavior by try number. 
-
-\begin{myitemize}
-\item {\em type:} list of floats, optionally preceded by multipliers
-\item {\em example:} \lstinline=1.5,3*10= is equivalent to \lstinline=1.5,10,10,10=
-\item {\em root default:} (none)
-\end{myitemize}
-
 \paragraph[pre-command scripting]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-command scripting}
 
 Scripting to be executed immediately {\em before} the command scripting.
@@ -956,6 +968,45 @@ above.
 \item {\em type:} string, or a list of strings
 \item {\em default:} (none)
 \end{myitemize}
+
+\paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
+\label{RefRetries}
+
+A list of time intervals in minutes, after which to resubmit the task if
+it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
+execution environment is incremented each time, starting from 1 for the
+first try - this can be used to vary task behavior by try number. 
+
+\begin{myitemize}
+\item {\em type:} list of floats, optionally {\em preceded} by multipliers
+\item {\em example:} \lstinline=1.5,3*10= is equivalent to \lstinline=1.5,10,10,10=
+\item {\em root default:} (none)
+\end{myitemize}
+
+\paragraph[polling intervals in minutes]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ polling intervals in minutes}
+\label{PollingIntervals}
+
+A list of intervals, in minutes, after which cylc will poll for task
+status. For the polling task communications method this overrides the
+default generic polling interval (see site/user config,
+Section~\ref{SiteUserConfig}). For pyro and ssh task communications
+polling is not done by default but it can be configured here as a
+regular check on the health of submitted tasks.
+
+Note that {\em the first list value is used repeatedly while the task is
+in the `submitted' state}, then {\em subsequent list values are used in
+turn while the task is in the `running' state}, and {\em the last list
+value is used repeatedly until the task has finished}. Additionally, 
+{\em setting the first list value to 0 (zero) turns off job submission
+polling}.
+
+\begin{myitemize}
+\item {\em type:} list of floats, optionally {\em preceded} by multipliers
+\item {\em example:} \lstinline=1,3*10,1= is equivalent 
+        to \lstinline=1,10,10,10,1=
+\item {\em root default:} (none)
+\end{myitemize}
+
 
 \paragraph[manual completion]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ manual completion}
 
@@ -1117,7 +1168,7 @@ to be modified slightly to allow use of the C shell.
 A list of time intervals in minutes, after which to resubmit if job
 submission fails.
 \begin{myitemize}
-\item {\em type:} list of floats, optionally preceded by multipliers
+\item {\em type:} list of floats, optionally {\em preceded} by multipliers
 \item {\em example:} \lstinline=1.5,3*10= is equivalent to \lstinline=1.5,10,10,10=
 \item {\em root default:} (none)
 \end{myitemize}

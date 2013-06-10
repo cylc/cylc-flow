@@ -1,0 +1,25 @@
+title = "Task polling example suite."
+
+description = """
+Demos job submission and execution polling, for the poll task
+communication method, and more generally. View the suite event log 
+as the suite runs, filtering for the word 'poll'.
+              """ 
+
+[scheduling]
+    [[dependencies]]
+            graph = "foo & bar"
+[runtime]
+    [[foo]]
+        # no polling for this task except with
+        #  "task communication method = poll"
+    [[bar]]
+        command scripting = "sleep 60"
+        # configure submission and execution polling:
+        submission polling intervals = 0.1
+        execution polling intervals = 0.2, 2*0.3, 0.1
+        [[[job submission]]]
+            method = at
+            # stay 'submitted' for up to a minute:
+            command template = 'echo "%s 1>%s 2>%s" | at now + 1 minutes'
+

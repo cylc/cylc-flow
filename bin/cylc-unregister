@@ -24,7 +24,7 @@ if remrun().execute():
 import os
 from shutil import rmtree
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb, RegistrationError, DatabaseLockedError
+from cylc.registration import localdb
 
 parser = cop( usage = """cylc [db] unregister [OPTIONS] ARGS
 
@@ -44,10 +44,6 @@ parser.add_option( "-f", "--force",
         help="Don't ask for confirmation before deleting suite definitions.",
         action="store_true", default=False, dest="force" )
 
-parser.add_option( "--dry-run",
-        help="Just show what I would do.",
-        action="store_true", default=False, dest="dryrun" )
-
 ( options, args ) = parser.parse_args()
 
 arg = args[0]
@@ -55,34 +51,14 @@ arg = args[0]
 db = localdb( file=options.db, verbose=options.verbose )
 
 try:
-    if not options.dryrun:
-        db.lock()
-    else:
-        print "This is DRY RUN - reported actions will not take effect:\n"
-    db.load_from_file()
-    dirs = db.unregister( arg )
-    if not options.dryrun:
+    with db.lock():
+        db.load_from_file()
+        dirs = db.unregister( arg )
         db.dump_to_file()
-        db.unlock()
-
-except DatabaseLockedError, x:
+except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
-except RegistrationError, x:
-    print >> sys.stderr, x
-    if not options.dryrun:
-        db.unlock()
-    if options.debug:
-        raise
-    sys.exit(1)
-except Exception, x:
-    print >> sys.stderr, 'ERROR:', x
-    if not options.dryrun:
-        db.unlock()
-    if options.debug:
-        raise
-    sys.exit(1)
 
 n = len(dirs)
 if n == 0:
@@ -99,9 +75,6 @@ for dir in dirs:
 if options.obliterate and len(dirs) > 0:
     for dir in dirs:
         print 'DELETE ', dir
-
-    if options.dryrun:
-        sys.exit(0)
 
     really_obliterate = False
     if options.force:
