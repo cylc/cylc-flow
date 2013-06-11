@@ -29,6 +29,9 @@ class TriggerExpressionError( Exception ):
         return repr(self.msg)
 
 class conditional_prerequisites(object):
+
+    TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
+
     def __init__( self, owner_id ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
@@ -123,3 +126,14 @@ class conditional_prerequisites(object):
     def set_all_unsatisfied( self ):
         for label in self.messages:
             self.satisfied[ label ] = False
+
+    def get_target_tags( self ):
+        """Return a list of cycle times target by each prerequisite,
+        including each component of conditionals."""
+        tags = []
+        for label, msg in self.messages.items():
+            m = re.match( self.__class__.TAG_RE, msg )
+            if m:
+                tags.append( m.groups()[0] )
+        return tags 
+

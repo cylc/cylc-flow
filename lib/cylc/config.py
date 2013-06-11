@@ -671,14 +671,27 @@ Some translations were performed on the fly."""
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
             else:
-                rls = []
+                mcis = []
+                offs = []
                 for cyc in self.cyclers:
-                    rahd = cyc.get_min_cycling_interval()
-                    if rahd:
-                        rls.append(rahd)
-                if len(rls) > 0:
-                    # twice the minimum cycling internal in the suite
-                    rl = 2 * min(rls)
+                    m = cyc.get_min_cycling_interval()
+                    if m:
+                        mcis.append(m)
+                    o = cyc.get_offset()
+                    if o:
+                        offs.append(o)
+                if len(mcis) > 0:
+                    # set runahead limit twice the minimum cycling interval
+                    rl = 2 * min(mcis)
+                    if len(offs) > 0:
+                        mo = min(offs)
+                        if mo < 0:
+                            # we have future triggers...
+                            if abs(mo) >= rl:
+                                #... that extend past the default rl
+                                # set to offset plus one minimum interval
+                                rl = abs(mo) + min(mcis)
+                if rl:
                     if self.verbose:
                         print "Computed runahead limit:", rl, "hours"
         self.runahead_limit = rl
@@ -1045,7 +1058,7 @@ Some translations were performed on the fly."""
 
         # Instantiate tasks and force evaluation of conditional trigger expressions.
         if self.verbose:
-            print "Checking conditional trigger expressions"
+            print "Instantiating tasks to check trigger expressions"
         for cyclr in self.tasks_by_cycler:
             # for each graph section
             for name in self.tasks_by_cycler[cyclr]:
@@ -1082,7 +1095,8 @@ Some translations were performed on the fly."""
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
                 tag = itask.next_tag()
-            #print "OK:", itask.id
+                if self.verbose:
+                    print "  + " + itask.id + " ok"
 
         # TODO - check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
@@ -1148,7 +1162,7 @@ Some translations were performed on the fly."""
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section ):
+    def process_graph_line( self, line, section, ttype, cyclr ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -1167,34 +1181,6 @@ Some translations were performed on the fly."""
         #  'A = > B | C' # ?!
 
         orig_line = line
-
-        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        if section == "once":
-            ttype = 'async_oneoff'
-            modname = 'async'
-            args = []
-        elif re.match( '^ASYNCID:', section ):
-            ttype = 'async_repeating'
-            modname = 'async'
-            args = []
-        else:
-            ttype = 'cycling'
-            # match cycler, e.g. "Yearly( 2010, 2 )"
-            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
-            if m:
-                modname, cycargs = m.groups()
-                # remove leading and trailing space
-                cycargs = cycargs.strip()
-                arglist = re.sub( '\s+$', '', cycargs )
-                # split on comma with optional space each side
-                args = re.split( '\s*,\s*', arglist )
-            else:
-                modname = self['scheduling']['cycling']
-                args = re.split( ',\s*', section )
-
-        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
-        cyclr = getattr( mod, modname )(*args)
-        self.cyclers.append(cyclr)
 
         ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed' (NOT USED)
         ## we can replace synonyms here with the standard type designator:
@@ -1455,13 +1441,16 @@ Some translations were performed on the fly."""
                     self.cycling_tasks.append(name)
 
             if offset:
+                # adjust cycler state and add
                 cyc = deepcopy( cyclr )
-                # this changes the cyclers internal state so we need a
-                # private copy of it:
                 cyc.adjust_state(offset)
+                # record the adjusted one too
+                self.cyclers.append( cyc )
+                self.taskdefs[ name ].add_to_valid_cycles( cyc )
             else:
-                cyc = cyclr
-            self.taskdefs[ name ].add_to_valid_cycles( cyc )
+                # add cycler if we don't already have it
+                if cyclr not in self.taskdefs[name].cyclers:
+                    self.taskdefs[ name ].add_to_valid_cycles( cyclr )
 
             if self.run_mode == 'live':
                 # register any explicit internal outputs
@@ -1513,6 +1502,7 @@ Some translations were performed on the fly."""
             # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
+            label = re.sub( '\+', 'x', label ) # future triggers
             ctrig[label] = trigger
             cname[label] = lnode.name
 
@@ -1533,6 +1523,7 @@ Some translations were performed on the fly."""
  
         # Replace some chars for later use in regular expressions.
         expr = re.sub( '[-\[\]:]', '_', lexpression )
+        expr = re.sub( '\+', 'x', expr ) # future triggers
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
 
     def get_graph_raw( self, start_ctime, stop, raw=False,
@@ -1731,6 +1722,35 @@ Some translations were performed on the fly."""
  
     def parse_graph( self, section, graph ):
         self.graph_found = True
+
+        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
+        if section == "once":
+            ttype = 'async_oneoff'
+            modname = 'async'
+            args = []
+        elif re.match( '^ASYNCID:', section ):
+            ttype = 'async_repeating'
+            modname = 'async'
+            args = []
+        else:
+            ttype = 'cycling'
+            # match cycler, e.g. "Yearly( 2010, 2 )"
+            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
+            if m:
+                modname, cycargs = m.groups()
+                # remove leading and trailing space
+                cycargs = cycargs.strip()
+                arglist = re.sub( '\s+$', '', cycargs )
+                # split on comma with optional space each side
+                args = re.split( '\s*,\s*', arglist )
+            else:
+                modname = self['scheduling']['cycling']
+                args = re.split( ',\s*', section )
+
+        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
+        cyclr = getattr( mod, modname )(*args)
+        self.cyclers.append(cyclr)
+
         # split the graph string into successive lines
         lines = re.split( '\s*\n\s*', graph )
         for xline in lines:
@@ -1743,7 +1763,7 @@ Some translations were performed on the fly."""
             line = re.sub( '^\s*', '', line )
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
-            self.process_graph_line( line, section )
+            self.process_graph_line( line, section, ttype, cyclr )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)

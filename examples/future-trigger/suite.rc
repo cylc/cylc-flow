@@ -1,0 +1,13 @@
+
+[scheduling]
+    initial cycle time = 2010080800
+    runahead limit = 24
+    [[special tasks]]
+        cold-start = cold
+    [[dependencies]]
+        [[[0,6,12,18]]]
+        graph = """
+( LongForecast[T-6] & LongForecast ) | cold => ObSensitivity
+Analysis[T+12] => ObSensitivity
+                """
+
