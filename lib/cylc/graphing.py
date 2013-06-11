@@ -28,6 +28,8 @@ from TaskID import TaskID, AsyncTag
 ddmmhh = TaskID.DELIM_RE
 tformat = r'\\n'
 
+OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
+
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
 
@@ -221,9 +223,11 @@ class edge( object):
             # left node is asynchronous, so override the cycler
             tag = '1'
         else:
-            m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
+            m = re.match( OFFSET_RE, left )
             if m: 
-                left, sign, offset = m.groups()
+                left, offset = m.groups()
+                # the cycler expects foo[T-offset] so change sign:
+                offset = str( -int( offset ))
                 tag = self.cyclr.__class__.offset( tag, offset )
             else:
                 tag = tag

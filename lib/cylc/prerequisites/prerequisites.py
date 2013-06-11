@@ -89,3 +89,12 @@ class prerequisites(object):
         for reqs in self.container:
             for label in reqs.messages:
                 reqs.satisfied[ label ] = False
+
+    def get_target_tags( self ):
+        """Return a list of cycle times target by each prerequisite,
+        including each component of conditionals."""
+        tags = []
+        for reqs in self.container:
+            tags += reqs.get_target_tags()
+        return tags
+ 
