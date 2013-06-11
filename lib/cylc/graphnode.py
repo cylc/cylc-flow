@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from graphing import OFFSET_RE
 
 class GraphNodeError( Exception ):
     """
@@ -54,7 +55,7 @@ class graphnode( object ):
             node, self.output = m.groups()
 
         # parse and strip intercyle: foo[T-6] or foo[T-nd] --> foo
-        m = re.match( '(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]', node )
+        m = re.match( OFFSET_RE, node )
         if m:
             self.intercycle = True
             node, offset = m.groups()
