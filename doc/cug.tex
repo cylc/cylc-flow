@@ -436,10 +436,10 @@ If installing via a Linux package manager, you may also need a couple of
     \item graphviz-devel
 \end{myitemize}
 
-Since cylc-5.0 any tagged version of cylc can be downloaded and
-installed for use, but you have to generate the user guide yourself from
-the LaTeX source (by running \lstinline=make=). For this purpose, the
-following packages are also required:
+Tagged versions of cylc-5.0 or later can be downloaded and installed
+from GitHub. The user guide must be generated after download from the
+\LaTeX source documents (by running \lstinline=make=). The following
+\TeX packages are required:
 
 \begin{myitemize}
     \item texlive
@@ -561,7 +561,7 @@ Cylc has absorbed the following in modified form (no need to install these separ
 
 \subsection{Install The External Dependencies}
 
-First install Pyro, graphviz, Pygraphviz, Jinja2, TeX, and ImageMagick
+First install Pyro, graphviz, Pygraphviz, Jinja2, \TeX, and ImageMagick
 using the package manager on your system if possible; otherwise download
 the packages manually and follow their native installation documentation.
 On a modern Linux system, this is very easy. For example, to install
@@ -592,6 +592,25 @@ If you do not have root access on your intended cylc host machine and
 cannot get a sysadmin to do this at system level, see
 Section~\ref{LocalInstall} for some tips on installing everything to 
 a local user account. 
+
+Now check that everything other than the \LaTeX packages is
+installed properly:
+\begin{lstlisting}
+$ cylc check-sof
+Checking for Python >= 2.5 ... found 2.7.3 ... ok
+Checking for non-Python packages:
+ + Graphviz ... ok
+ + sqlite ... ok
+Checking for Python packages:
+ + Pyro-3 ... ok
+ + Jinja2 ... ok
+ + pygraphviz ... ok
+ + pygtk ... ok
+\end{lstlisting}
+If this command reports any errors for the Python packages then either
+the packages concerned are not installed or they are not in the system
+python search path or your \lstinline=$PYTHONPATH= environment variable,
+
 
 \subsection{Install The Cylc Release}
 
@@ -738,27 +757,23 @@ If you don't have access to a remote task host just use
 \lstinline=localhost= as the remote hostname.
 \end{myitemize}
 
-If these requirements are satisfied no tests should fail on an official
-cylc release, unless perhaps some timeouts occur because your suite host
-is slow or overloaded - otherwise please consider reporting test
-failures to the cylc-dev mailing list.
+None of the tests should fail on an official cylc release, unless
+because of timeouts if the suite host is slow or overloaded. 
 
 \subsection{Complete Non System-Level Installation}
 \label{LocalInstall}
 
 If you do not have root access to your host machine and cannot easily
-get Pyro, graphviz, Pygraphviz, and Jinja2 installed at system level,
-here's how to install everything under your home directory.
+get Pyro, Graphviz, Pygraphviz, and Jinja2 installed at system level,
+here's how to install everything under a normal user account.
 
-First, cylc is already designed to be installed into a normal user account -
-just unpack the release tarball into \lstinline=$CYLC_DIR=.  If you
-invoke cylc commands at this stage you will get a warning that Pyro is
-not installed.
+First, cylc is already designed to be installed into a user account -
+just unpack the release tarball into \lstinline=$CYLC_DIR=.
 
-Next, create a new sub-directory in the cylc source tree,
-\lstinline=$CYLC_DIR/external=, and download the Pyro,
-Graphviz, and Pygraphviz source distributions to it (the URLs are given
-at the beginning of Section~\ref{Requirements}).
+Next, learn how to use \lstinline=easy_install= for local python package 
+installs {\em or} download the source distributions from the URLs given
+at the beginning of Section~\ref{Requirements} and follow the
+package-specific advice below.
 
 \subsubsection{Pyro}
 
@@ -782,24 +797,6 @@ PYTHONPATH=$HOME/external/installed/lib64/python2.6/site-packages:$PYTHONPATH
 PATH=$HOME/external/installed/bin:$PATH
 \end{lstlisting}
 
-Now you should be able to get cylc to print its release version: 
-\begin{lstlisting}
-% . $HOME/.profile   # (or log in again)
-% cylc -v
-x.y.z
-\end{lstlisting}
-If this command aborts and says that Pyro is not installed or is not available,
-then you have either not installed Pyro (check the output of the installation 
-command carefully) {\em or} you have not pointed to the installed Pyro modules
-in your PYTHONPATH, {\em or} you have not sourced the cylc environment 
-since updating PYTHONPATH.
-
-{\em Note that Pyro can also be installed with \lstinline=easy_install=,
-which downloads and installs python packages in one shot.}
-
-At this point you should have access to all cylc functionality except
-for suite graphing and the gcylc graph view.  For example
-
 \subsubsection{Graphviz}
 
 Install Graphviz under \lstinline=$CYLC_DIR/external/installed= as
@@ -816,9 +813,8 @@ This installs graphviz files into the bin, include, and lib
 sub-directories of your local installation directory. The graphviz lib
 and include locations are required when installing Pygraphviz (next).
 
-Note that the graphviz build, reportedly, may fail on systems that do
-not have QT installed, hence the \lstinline@./configure --with-qt=no@
-option above.
+The graphviz build reportedly may fail on systems that do not have QT
+installed, hence the \lstinline@./configure --with-qt=no@ option above.
 
 \subsubsection{Pygraphviz}
 Install Pygraphviz under \lstinline=$CYLC_DIR/external/installed= as
@@ -834,11 +830,10 @@ include directories:
 library_path=os.environ['CYLC_DIR'] + '/external/installed/lib'
 include_path=os.environ['CYLC_DIR'] + '/external/installed/include/graphviz'
 \end{lstlisting}
-Or you can just specify the absolute paths if you like, instead of using
-the \lstinline=$CYLC_DIR= environment variable. Check that these are the
-correct library and include paths by inspecting the contents of the
-specified directories, and adjust them if necessary.  Finally, install
-pygraphviz:
+Or use absolute paths instead of the \lstinline=$CYLC_DIR= environment
+variable. Check that these are the correct library and include paths by
+inspecting the contents of the specified directories, and adjust them if
+necessary.  Finally, install pygraphviz:
 \begin{lstlisting}
 % export CYLC_DIR=/path/to/cylc
 % python setup.py install --prefix=$CYLC_DIR/external/installed
@@ -851,25 +846,9 @@ Pygraphviz modules into the same place as the Pyro modules, e.g.:
 \end{lstlisting}
 If not, add the correct Pyraphviz installation path to your PYTHONPATH.
 
-The easiest way to check that pygraphviz has been installed properly is
-to start an interactive Python session (type \lstinline=python= after
-sourcing the cylc environment to configure your PYTHONPATH) then type
-\lstinline=import pygraphviz= at the interpreter prompt. If this
-results in an error message {\em ImportError: No module named
-pygraphviz} then either you have not installed pygraphviz properly, {\em
-or} you have not configured your PYTHONPATH to point to the installed
-pygraphviz modules, {\em or} you have not sourced the cylc environment
-since updating PYTHONPATH.  Finally, if you have installed pygraphviz
-and configured your PYTHONPATH but graphviz itself has not been
-installed properly (or if the graphviz libraries have been deleted since
-you installed pygraphviz) then the initial pygraphiz import will be
-successful but a lower level import will fail when the pygraphviz
-modules cannot load the underlying graphviz libraries - in that case,
-reinstall graphviz.
-
 \subsubsection{Jinja2}
 
-You can download Jinja2 from the project web site and install it with: 
+Download Jinja2 from the project web site and install it with: 
 \begin{lstlisting}
 python setup.py install --prefix=/path/to/install/location
 \end{lstlisting}
@@ -877,10 +856,10 @@ or use the \lstinline=easy_install= command to do it all in one step.
 Either way the final installed package location must be present in the
 \lstinline=PYTHONPATH= variable, and you may have to arrange for this
 first. You may also need to create the installed package directory 
-if it doesn't exist already (if so the install will abort and print the
+if it doesn't exist already (the install will abort and print the
 name of the missing directory in the error message).
-Here's how to easy\_install Jinja2 into your new private python site
-packages directory:
+Here's how to easy\_install Jinja2 into your private site packages
+directory:
 
 \begin{lstlisting}
 % LOCALPREFIX=$CYLC_DIR/external/installed
@@ -889,6 +868,23 @@ packages directory:
 % easy_install --prefix=$LOCALPREFIX Jinja2
 \end{lstlisting}
 Adapt the site-packages path according to your actual path, as above.
+
+Finally, check that everything other than \LaTeX is installed properly:
+\begin{lstlisting}
+$ cylc check-sof
+Checking for Python >= 2.5 ... found 2.7.3 ... ok
+Checking for non-Python packages:
+ + Graphviz ... ok
+ + sqlite ... ok
+Checking for Python packages:
+ + Pyro-3 ... ok
+ + Jinja2 ... ok
+ + pygraphviz ... ok
+ + pygtk ... ok
+\end{lstlisting}
+If this command reports an error for any Python packages then those
+packages are not installed, or they are not in the system python
+search path and not in your \lstinline=$PYTHONPATH= environment variable.
 
 \subsection{What Next?}
 
@@ -4830,8 +4826,8 @@ fi"""
 
 \subsection{Reloading The Suite Definition At Runtime}
 
-The \lstinline=cylc reload= command, an experimental feature new in
-cylc-4.5.2, reloads the suite definition at run time. This allows:
+The \lstinline=cylc reload= command reloads the suite definition at run
+time. This allows:
  (a) changing task config such as command scripting or environment;
  (b) adding tasks to, or removing them from, the suite definition,
 at run time - without shutting the suite down and restarting it. (It is
@@ -5725,59 +5721,36 @@ jumping layout problem:
 
 \lstinputlisting{../INSTALL}
 
-\section{Cylc Development History}
-\subsection{Pre-3.0}
+\section{Cylc Development History - Major Changes}
 
-Early versions of cylc were focused on developing and testing the new 
-scheduling algorithm, and the suite design interface at the time was
-essentially the quickest route to that end. A suite was a collection
-of ``task definition files'' that encoded the prerequisites and outputs
-of each task in a direct reflection of cylc's internal task proxies. 
-This way of defining suites exposed cylc's self-organising nature to the
-user, and it did have some nice properties. For instance a group of
-tasks could be transferred directly from one suite to another by simply
-copying the taskdef files over (and checking that prerequisite and
-output messages were consistent with the new suite). However, ensuring
-consistency of prerequisites and outputs across a large suite could be
-tedious; a few edge cases associated with suite start-up and forecast
-model restart dependencies were, arguably, difficult to understand; and
-the global structure of a suite was not readily apparent until run time
-(although to counter this cylc 2.x could generate run-time resolved
-dependency graphs very quickly in simulation mode).
-
-\subsection{Version 3.0}
-
-Version 3.0 implemented an entirely new suite design interface in which
-one defines the suite dependency graph, execution environment, and
-command scripting for each task, in a single structured, validated,
-configuration file - the suite.rc file.  This makes suite structure
-apparent at a glance, and much important detail is now implicitly
-implied by the graph.
-
-\subsection{Version 4.0}
-
-Version 4.0 has the following major improvements over cylc-3.x, along with
-many refinements: 
 \begin{myitemize}
-    \item Suite registration was generalized from GROUP:NAME to a 
-        hierarchy of arbitrary depth, e.g foo.bar.baz, allowing suites
-        to be organized in a tree-like structure.
-    \item The suite.rc file, which was initially somewhat haphazardly
-        structured, was reviewed in great detail and clearly organized.
-        In particular it now defines a {\em namespace hierarchy} of
-        families and tasks to allow common runtime properties to be
-        grouped naturally among related tasks.
-    \item The Jinja2 template engine is now supported, adding general
-        programmability to cylc suite definitions.
+
+    \item {\bf pre-cylc-3} - early versions focused on the new
+    scheduling algorithm. A suite was a collection of ``task definition
+    files'' that encoded the prerequisites and outputs of each task, 
+    exposing cylc's self-organising nature. Tasks could be transferred
+    from one suite to another by simply copying their taskdef files over
+    and checking prerequisite and output consistency. Global suite
+    structure was not easy to discern until run time (although cylc-2
+    could generate resolved run time dependency graphs).
+
+    \item {\bf cylc-3} - a new suite design interface: dependency graph
+    and task runtime properties defined in a single structured,
+    validated, configuration file - the suite.rc file; graphical user
+    interface; suite graphing.
+
+    \item {\bf cylc-4} - refined and organized the suite.rc file
+    structure; task runtime properties defined by an efficient
+    inheritance hierarchy; support for the Jinja2 template processor in
+    suite definitions.
+
+    \item {\bf cylc-5} - multi-threading for continuous network request
+    handling and job submission; more task states to distinguish job
+    submission from execution; dependence between suites via new suite
+    run databases; polling and killing of real task jobs; polling as
+    task communications option.
+
 \end{myitemize}
-
-\subsection{Version 5.0}
-
-Version 5.0 contains some major internal changes to enhance performance
-for large suites, such as multi-threading for continuous request
-handling and task job submission. We also aim to provide backward
-compatibility for suite definitions from version 5.0 onward, wherever
-possible.
 
 \section{Pyro} 
 \label{Pyro}
