@@ -3994,9 +3994,9 @@ to function as a cylc task. This section explains how tasks are submitted
 by cylc when they are ready to run, and how to define new task job
 submission methods.
 
-\subsection{Job Poll And Kill}
+\subsection{Job Poll And Kill Support}
 
-For each job submission method cylc now supports polling for real task
+For most job submission methods cylc now supports polling for real task
 status, and job kill, from the gcylc GUI and command line
 (\lstinline=cylc poll= and \lstinline=cylc kill=).
 In addition to on-demand polling, submitted and running tasks are polled
@@ -4006,6 +4006,11 @@ used as regular health check for submitted tasks, and to track tasks on
 hosts that do not allow return routing for task messaging
 (Section~\ref{RunningSuites}).
 
+\subsubsection{Exceptions}
+
+Task poll and kill support has not yet been added to the {\em SGE} and
+{\em slurm} job submission methods. It will be added in an upcoming
+release.
 
 \subsection{Task Job Scripts}
 \label{JobScripts}
