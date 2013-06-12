@@ -663,7 +663,7 @@ cylc-4-5-1-1344571037
     `-z          Quick Start Example Z
 \end{lstlisting}
 Note that the dots in the cylc release version number are replaced with
-hyphens because `.' is the registration name delimiter. Type
+hyphens because `.' is the suite name delimiter. Type
 \lstinline=cylc db print --help= to see what the command options mean.
 Note also that the Unix ``seconds since epoch'' string is appended to
 the top level of the suite name hierarchy in order ensure uniqueness if 
@@ -702,11 +702,11 @@ examples.AutoRecover.suicide | /tmp/oliverh/examples/AutoRecover/suicide
 \subsection{Automated Database Test} 
 \label{RTADT}
 
-The command \lstinline=cylc admin test-db= gives suite registration
+The command \lstinline=cylc admin test-db= gives suite name 
 database functionality a work out - it copies one of the cylc example
 suites, registers it under a new name and then manipulates it by
 recopying the suite in various ways, and so on, before finally deleting
-the test registrations. This should complete without error in a few seconds.
+the test suites. This should complete without error in a few seconds.
 
 \subsection{Automated Scheduler Tests} 
 \label{RTAST}
@@ -1448,7 +1448,7 @@ environment variables) within the suite definition; and some have real
 task implementations that generate and consume real files and which will
 fail if they are not executed in the right order.  All of the example
 suites are portable in the sense that all suite and task I/O directory
-paths incorporate the suite registration name (this is the default
+paths incorporate the suite name (this is the default
 situation for any cylc suite in fact) so you can run multiple copies of 
 the same suite at once without any interference between them. 
 
@@ -1468,13 +1468,13 @@ mode} or {\em dummy mode} in which case a future start time is fine (see
 Appendix~\ref{SimulationMode}). 
 %\pagebreak
 
-\section{Suite Registration, Name DB, and Passphrases}
+\section{Suite Name Registration, DB, and Passphrases}
 \label{SuiteRegistration}
 
 Cylc commands target particular suites via names registered in a {\em
 suite database}, so that you don't need to remember and continually
 refer to the actual location of the suite definition on disk. A suite
-registration name is a hierarchical name akin to a directory path but
+name is a hierarchical name akin to a directory path but
 delimited by the `.' character; this allows suites to be organised in
 nested tree-like structures:
 \begin{lstlisting}
@@ -1487,10 +1487,10 @@ nwp
    `-region1  Local Model TEST Region1  /home/oliverh/nwp_suites/Regional/TESTING/Region1
 \end{lstlisting}
 
-Note that registration groups are entirely virtual, they do not
-need to be explicitly created before use, and they automatically
-disappear if all tasks are removed from them.  From the listing above,
-for example, to move the suite \lstinline=nwp.oper.region2= into the
+Note that name groups are entirely virtual, they do not need to be
+explicitly created before use, and they automatically disappear if all
+tasks are removed from them.  From the listing above, for example, to
+move the suite \lstinline=nwp.oper.region2= into the
 \lstinline=nwp.test= group:
 \begin{lstlisting}
 % cylc db rereg nwp.oper.region2 nwp.test.region2
@@ -1524,7 +1524,7 @@ as copy, reregister, or unregister, the identity of the source item
 the source item is a group, so must the target be a group (or it will
 be, in the case of an item that will be created by the operation). This
 means that you cannot copy a single suite into a group that does not 
-exist yet unless you specify the entire target registration name. 
+exist yet unless you specify the entire target suite name. 
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
@@ -1534,7 +1534,7 @@ Each user has a database that associates registered suite names
 with their respective suite definition directory locations. Hierarchical
 suite names stored in the database can be displayed in a tree structure.
 
-Note that the suite title held in the registration database is parsed
+Note that the suite title held in the name database is parsed
 from the suite definition at the time of initial registration; if you
 change the title (by editing the suite.rc file) use 
 \lstinline=cylc db refresh= to update the database.
@@ -1549,7 +1549,7 @@ commands to implement the aforementioned operations.
 \lstset{language=usage}
 \begin{lstlisting}
 % cylc db help
-CATEGORY: db|database - Suite registration, copying, deletion, etc.
+CATEGORY: db|database - Suite name registration, copying, deletion, etc.
 
 HELP: cylc [db|database] COMMAND help,--help
   You can abbreviate db|database and COMMAND.
@@ -1566,7 +1566,7 @@ COMMANDS:
   unregister .......... Unregister and optionally delete suites
 \end{lstlisting}
 
-Groups of suites (at any level in the registration hierarchy) can be deleted, 
+Groups of suites (at any level in the name hierarchy) can be deleted, 
 copied, imported, and exported; as well as individual suites.  To do this, 
 just use suite group names as source and/or target for operations, as
 appropriate.  For instance, if a group \lstinline=foo.bar= contains the 
@@ -1586,7 +1586,7 @@ a single suite like this:
 (resulting in new suites \lstinline=boo.bar.baz= and \lstinline=boo.bar.qux=).
 When suites are copied, the suite definition directories are copied into
 a directory tree, under the target directory, that reflects the
-registration name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
+suite name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
 The same functionality is also available by right-clicking on suites
 or groups in the gcylc ``Open Registered Suite'' dialog.
@@ -2928,9 +2928,9 @@ purposes.
 
 Namespace names may contain letters, digits, underscores, and hyphens.
 %They may not contain colons, which would preclude use of suite 
-%registration names in shell \lstinline=$PATH= variables. The 
+%suite names in shell \lstinline=$PATH= variables. The 
 %`.' character is the suite registration hierarchy delimiter (which
-%separates suite registration groups and names, e.g.\
+%separates suite groups and names, e.g.\
 %my\_suites.test.foo). 
 
 Note that {\em task names need not be hardwired into task
@@ -4438,7 +4438,7 @@ Legal passphrase locations, in order of preference, are:
 Remote tasks know the location of the remote suite definition directory
 (if one exists) through their execution environment. Local (suite host)
 user command invocations can find the suite definition directory in the
-suite registration database. Remote user command invocations, however,
+suite name database. Remote user command invocations, however,
 cannot interrogate the database on the command host because the suite
 will not be registered there (cylc cannot assume that the command host
 shares a common filesystem with the suite host). Consequently remote
