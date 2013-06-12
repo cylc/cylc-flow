@@ -16,7 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
-		<li><a href="#5.3.0">5.3.0 pending</a></li>
+		<li><a href="#5.3.0">5.3.0</a></li>
 		<li><a href="#5.2.0">5.2.0</a></li>
 		<li><a href="#5.1.1">5.1.1</a></li>
 		<li><a href="#5.1.0">5.1.0</a></li>
@@ -33,7 +33,7 @@ Minor changes and bug fixes, and routine updates to the user guide may
 be omitted. The definitive guide to changes is the repository commit log.<p>
 
 <a name="5.3.0"/>
-		<h2>5.3.0 PENDING</h2>
+		<h2>5.3.0</h2>
 
 		<ul>
 				<li>New <code>submit</code> and <code>submit-fail</code> task
@@ -43,17 +43,36 @@ be omitted. The definitive guide to changes is the repository commit log.<p>
 				matches the suite.rc item names exactly (no replacement of
 				spaces with underscores, e.g. in "submission timeout".</li>
 
-				<li>Automatic task polling by for task hosts that do not allow
-				return messaging by network socket (Pyro) or ssh.</li>
+				<li>Automatic polling as a task communication mechanism for task
+				hosts that do not allow return messaging by network socket
+				(Pyro) or ssh.</li>
 
-				<li>Job poll and kill by CLI and GUI.</li>
+				<li>On-demand job poll and kill by CLI and GUI.</li>
+
+				<li>Automatic job poll on task job submission and execution
+				timeouts.</li>
+
+				<li>Automatic job polling on restarting a suite, to find out
+				what happened to any orphaned tasks while the suite was
+				down.</li> 
 
 				<li>Task job scripts are now ksh and bash compatible.</li>
 
 				<li>All gcylc views start in family-grouped mode.</li>
 
-				<li>Optionlly ignore suicide triggers in suite graphs and 
+				<li>Optionally ignore suicide triggers in suite graphs and 
 				the gcylc graph view.</li>
+
+				<li>Delay between job submission batches set to zero by default.</li>
+
+				<li>Option to kill active tasks before shutdown.</li>
+
+				<li>Support for "future triggers": <code>foo[T+24] => bar</code></li>
+
+				<li>Better spent task proxy clean-up algorithm.</li>
+
+				<li>Allow manual trigger of tasks in the retrying state.</li>
+
 		</ul>
 
 <a name="5.2.0"/>
