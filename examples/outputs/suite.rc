@@ -1,7 +1,7 @@
 title = "triggering off internal task outputs"
 
 description = """
-This is a self contained example (task implementation, including output
+This is a self-contained example (task implementation, including output
 messaging, is entirely contained within the suite definition)."""
 
 [scheduling]
@@ -18,14 +18,13 @@ messaging, is entirely contained within the suite definition)."""
         command scripting = """
 echo HELLO
 sleep 10 
-# use task runtime environment variables here
 cylc message "foo uploaded file set 1 for $CYLC_TASK_CYCLE_TIME"
 sleep 10
 cylc message "foo $CYLC_TASK_NAME uploaded file set 2 for $CYLC_TASK_CYCLE_TIME"
 sleep 10
 echo BYE"""
         [[[outputs]]]
-            # use cylc placeholder variables here
+            # [T] is replaced by actual cycle time at run time:
             out1 = "foo uploaded file set 1 for [T]"
             out2 = "foo uploaded file set 2 for [T]"
 

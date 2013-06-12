@@ -1528,7 +1528,7 @@ exist yet unless you specify the entire target registration name.
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
-\subsubsection{Suite Passphrases}
+\subsection{Suite Passphrases}
 
 Any client process that connects to a running suite (this includes task
 messaging and user-invoked interrogation and control commands) must
@@ -3694,65 +3694,70 @@ tasks are detected.
 \section{Task Implementation}
 \label{TaskImplementation}
 
-This section lays out the minimal requirements on external commands,
-scripts, or executables invoked by cylc to carry out task processing.
-
-\subsection{Most Tasks Require No Modification For Cylc}
-
-Any existing command, script, or executable can function as a cylc task
-(or rather, perform the external processing that the task represents),
-with the following conditions excepions:
+Existing tasks (models, scripts, etc.) can be used by cylc without any
+modification, with the following few exceptions:
 \begin{myitemize}
-    \item Tasks with internal (pre-completion) outputs that other tasks
-        need to trigger off must be modified to report to the suite when
-        those outputs have been completed.
-    \item Tasks that spawn secondary internal processes which they then
-        detach from and exit early must be modified so that the secondary
-        processes report final success or failure to the suite.
-    \item Tasks that do not return non-zero exit status on error must be 
-        made to do so, to allow cylc's automatic error trapping to work.
-        This is normal best-practice scripting anyway. 
+    \item tasks that do not return error status on error
+    \item tasks with internal outputs that others need to trigger off
+    \item tasks that spawn internal processes and then detach and exit early
 \end{myitemize}
 
-If these requirements are not met, see {\em Tasks Requiring
-Modification For Cylc}, Section~\ref{TaskModsForCylc}. 
+\subsection{Inlined Tasks}
 
-The following suite runs a couple of external scripts that are not
-cylc-aware, but which meet the requirements above so that no special
-treatment is required at all:
-\lstset{language=suiterc}
+Simple tasks can be entirely implemented within the suite.rc file - 
+task {\em command scripting} can be a multi-line string.
+
+\subsection{Returning Proper Error Status}
+
+Tasks should abort with non-zero exit status if a fatal error occurs 
+(this is just standard coding practice anyway). This allows cylc's task
+job scripts to automatically trap errors and send a 
+\lstinline=cylc task failed= message back to the suite. The shell
+\lstinline=set -e= option can be used in lieu of explicit error
+checks for every command:
+\lstset{language=bash}
 \begin{lstlisting}
-# SUITE.RC
-[runtime]
-    [[foo]]
-        description = a task that runs foo.sh
-        command scripting = foo.sh OPTIONS ARGUMENTS
-    [[bar]]
-        description = a task that runs bar.sh
-        command scripting = """echo HELLO
-                               bar.sh
-                               echo BYE""" 
-    [[baz]]
-        description = a task that runs baz.sh and retries on failure
-        retry delays = 3*1 # or 1,1,1
-        command scripting = """echo attempt No. $CYLC_TASK_TRY_NUMBER
-                               baz.sh"""
+#!/bin/bash
+set -e  # abort on error
+mkdir /illegal/dir  # this will abort the script with error status
 \end{lstlisting}
-\lstset{language=transcript}
 
-\subsection{Suite.rc Inlined Tasks}
+\subsection{Reporting Internal Outputs}
+\label{RIOC}
 
-Simple tasks can be entirely implemented within the suite.rc file
-because the task {\em command scripting} string can contain as many
-lines of code as you like.
+If a task has {\em internal outputs} that others need to trigger off
+then it must report completion of those outputs at the appropriate time.
+Output messages must be unique within the suite or else downstream tasks
+will trigger off whichever task happens to send the message first; they
+must exactly match the corresponding outputs registered for the task
+in the suite definition; and for cycling tasks they must contain the
+cycle time in order to distinguish between the same outputs of the same
+task at other cycle times.
 
+The ``outputs'' example is a self-contained suite that illustrates this:
+\lstset{language=suiterc}
+\lstinputlisting{../examples/outputs/suite.rc}
+Note the use of \lstinline=[T]= as a placeholder for cycle time in
+messages registered under \lstinline=[[[outputs]]]= these strings are
+held inside cylc for comparison with incoming task messages; they are
+never interpreted by the shell and may not contain shell environment
+variables. The actual messaging calls made by running tasks, on the
+other hand, can make use of variables in the task runtime environment.
 
-\subsection{Voluntary Messaging Modifications}
-\label{VoluntaryMessagingModifications}
+\subsection{Other Task Messages}
 
-You can, if you like, modify task scripts to send explanatory or
-progress messages to the suite as the task runs.  For example, a task
-can send a priority critical message before aborting on error:
+General (non-output) messages can also be sent to report progress,
+warnings, and so on, e.g.:
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+# a warning message (this will be logged by the suite):
+cylc task message -p WARNING "oops, something's fishy here"
+# information (this will also be logged by the suite):
+cylc task message "Hello from task foo"
+\end{lstlisting}
+
+Explanatory messages can be sent before aborting on error:
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3763,8 +3768,7 @@ if ! mkdir /illegal/dir; then
     exit 1 # now abort non-zero exit status to trigger the task failed message
 fi
 \end{lstlisting}
-
-You can also use this syntax:
+Or equivalently, with different syntax:
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3774,7 +3778,6 @@ mkdir /illegal/dir || {  # inline error checking using OR operator
     exit 1
 }
 \end{lstlisting}
-
 But not this:
 \lstset{language=bash}
 \begin{lstlisting}
@@ -3786,119 +3789,37 @@ if [[ $? != 0 ]]; then  # so this will never be reached.
     exit 1
 fi
 \end{lstlisting}
+If critical errors are not reported in this way task failures will still
+be detected and logged by cylc, but you may have to examine task logs to
+determine what the problem was.
 
-You can also send warning messages, or general information:
-\lstset{language=bash}
-\begin{lstlisting}
-#!/bin/bash
-# a warning message (this will be logged by the suite):
-cylc task message -p WARNING "oops, something's fishy here"
-# information (this will also be logged by the suite):
-cylc task message "Hello from task foo"
-\end{lstlisting}
-
-This may be useful - any message received from a task is logged by cylc
-- but it is not a requirement.  If error messages are not reported, for
-instance, detected task failures will still be registered, and task
-stdout and stderr logs can still be examined for evidence of what went
-wrong.
-
-
-\subsection{Tasks Requiring Modification For Cylc}
-\label{TaskModsForCylc}
-
-There are two main categories of tasks that require some modification to
-work with cylc: those with internal (pre-completion) outputs that other
-tasks need to trigger off, and those that spawn detaching internal
-processes prior to exiting before the spawned processing is finished.
-Additionally, any task that fails to indicate a fatal error by return
-non-zero exit status must be corrected.
-
-\subsubsection{Returning Non-zero Exit Status On Error}
-
-The requirement to abort with non-zero exit status on error
-(which should be normal scripting practice in any case) 
-allows the task job script to trap errors and send a 
-\lstinline=cylc task failed= message to alert the suite. You can 
-use \lstinline=set -e= to avoid writing explicit error checks for every
-operation:
-
-\lstset{language=bash}
-\begin{lstlisting}
-#!/bin/bash
-set -e  # abort on error
-mkdir /illegal/dir  # this error will abort the script with non-zero exit status
-\end{lstlisting}
-
-See Section~\ref{VoluntaryMessagingModifications}, {\em Voluntary
-Messaging Modifications}, for more examples of error detection and
-cylc messaging.
-
-\subsubsection{Reporting Internal Outputs Completed}
-\label{RIOC}
-
-If a task has {\em internal outputs} that others can trigger off before
-it finishes, then it must report completion of those outputs with
-messages sent back to the suite at appropriate times.  Output messages
-must be unique within the suite or else downstream tasks will trigger
-off whichever task happens to send the message first; they must exactly
-match the corresponding outputs registered for the task because cylc
-distinguishes between registered outputs that others can trigger off and
-general messages that are just logged; and for cycling tasks they must
-contain the cycle time in order to distinguish between the outputs of
-successive instances of the same task. 
-
-The ``outputs'' example is a self-contained suite that illustrates use
-of internal outputs:
-\lstset{language=suiterc}
-\lstinputlisting{../examples/outputs/suite.rc}
-Note that cycle time in the output message registration is 
-expressed by a special placeholder variable (see
-Section~\ref{SPHV}) not by the corresponding environment variable. This
-is because registered output messages
-are held by task proxies, inside cylc, for comparison with incoming task
-messages; they are never interpreted by the shell and consequently may
-not contain environment variables. The actual messaging calls made by 
-running tasks, on the other hand, can make use of variables in the task
-runtime environment.
-
-\subsubsection{Reconnecting Detaching Processes}
-\label{ReconnectingDetachingTasks} 
-You may be able to convert a detaching task to a non-detaching
-task very easily. If the detaching process is just a background shell
-process, for instance, run it in the foreground instead; for 
-loadleveler the \lstinline=-s= option prevents \lstinline=llsubmit= from
-returning until the job has completed; for Sun Grid Engine, 
-\lstinline=qsub -sync yes= has the same effect. Section~\ref{CommandTemplate} 
-shows how to override the command template used by cylc in order to
-customize job submission command options like this.
-
-\subsubsection{Tasks That Detach And Exit Early}
+\subsection{Detaching Tasks}
 \label{DetachingTasks}
 
-Tasks with processes that spawn jobs internally (e.g.\ to a batch queue
-scheduler or to another host) and then detach and exit without seeing
-the resulting processing through must arrange for the spawned processing
-to send its own ``cylc task succeeded'' or ``cylc task failed'' messages
-on completion, because the cylc-generated job script
-(Section~\ref{JobScripts}) that otherwise arranges for automatic
-completion messaging cannot know when the task is really finished. 
+If a task spawns another job internally and then detaches and exits
+without seeing the spawned process through, you must arrange for the
+detached process to send its own completion messages, because the
+cylc-generated job script cannot know when it is finished. 
 
-First check that you can't easily ``reconnect'' the detaching internal
-processes, as described above in Section~\ref{ReconnectingDetachingTasks}.
-If not, then start by disabling cylc's automatic completion messaging:
+First check that you can't ``reconnect'' the detaching process. If
+it is a background shell process, for instance, just run it in the
+foreground instead. For loadleveler jobs the \lstinline=-s= option
+prevents \lstinline=llsubmit= from returning until the job has
+completed. For Sun Grid Engine, \lstinline=qsub -sync yes= has the same
+effect.  Section~\ref{CommandTemplate} shows how to override job
+submission command template to achieve this.
+
+If the detaching process cannot be reconnected, disable cylc's automatic
+completion messaging:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # SUITE.RC
 [runtime]
-    [[root]]
-        manual completion = True   # global setting
     [[foo]]
-        manual completion = False  # task-specific setting
+        manual completion = False # this is a detching task
 \end{lstlisting}
 
-Now, reporting success or failure is just a matter of calling the cylc
-messaging commands:
+The cylc messaging commands are called like this:
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
@@ -3913,38 +3834,40 @@ else
     exit 1
 fi
 \end{lstlisting}
-
-Bear in mind, however, that cylc messaging commands read environment
-variables that identify the calling task and the target suite, so if
-your job submission method does not automatically copy its parent
-environment you must arrange for these variables, at the least, to be
-propagated through to your spawned sub-jobs.
+They read environment variables that identify the calling task and the
+target suite, so the task execution environment must be propagated to
+the deatched process.  
 
 One way to handle this is to write a {\em task wrapper} that modifies a
 copy of the detaching native job scripts, on the fly, to insert
-completion messaging in the appropriate places, and other variables if
-necessary, before invoking the (now modified) native process. A
-significant advantage of this method is that you don't need to
-permanently modify the model or its associated native scripting 
-for cylc. Another is that you can configure the native job setup 
-for a single test case (running it without cylc) and then have 
-your custom wrapper modify the test case on the fly with suite, task,
-and cycle-specific parameters as required.
+completion messaging in the appropriate places. An advantage of this
+method is that you don't need to permanently modify the model or its
+associated native scripting for cylc. Another is that you can configure
+the native job setup for a single test case (running it without cylc)
+and then have your custom wrapper modify the standalone test case on the
+fly with suite, task, and cycle-specific parameters as required.
 
 To make this easier, for tasks that declare manual completion 
-messaging, cylc makes non user-defined environment scripting
-available in a single variable called
-\lstinline=$CYLC_SUITE_ENVIRONMENT= that can be inserted into the
-aforementioned native task scripts prior to calling the cylc messaging
-commands.\footnote{Note that \lstinline=$CYLC_SUITE_ENVIRONMENT= is 
+messaging cylc makes non user-defined environment scripting
+available in a variable \lstinline=$CYLC_SUITE_ENVIRONMENT=,
+the value of which can be inserted at the appropriate point in the
+task scripts (just prior to calling the cylc messaging
+commands as above).\footnote{Note that \lstinline=$CYLC_SUITE_ENVIRONMENT= is 
 a string containing embedded newline characters and it has
 to be handled accordingly. In the bash shell, for instance, it should
 be echoed in quotes to avoid concatenation to a single line.}
 
-\subsubsection{A Custom Task Wrapper Example}
+\subsubsection{Detaching Tasks And Polling}
+
+Another reason to avoid detaching tasks if possible is that they cannot
+be polled or killed because there is no way for cylc to determine the
+job ID of the detached process. Attempted polling of a detaching task
+will just result in cylc logging a warning message.
+
+\subsubsection{A Custom Detaching Task Wrapper Example}
 
 The {\em detaching} example suite contains a script 
-\lstinline=model.sh= that runs a pseudo-model executable as follows:
+\lstinline=model.sh= that runs a pseudo model as follows:
 \lstset{language=bash}
 \lstinputlisting{../examples/detaching/native/model.sh}
 this is in turn executed by a script \lstinline=run-model.sh= that
@@ -3980,10 +3903,7 @@ be used: identify which job script needs to be modified and use text
 processing tools (such as the single line {\em perl} search-and-replace 
 expressions above) to do the job.
 
-       
 %\pagebreak
-
-
 
 \section{Task Job Submission, Poll and Kill}
 \label{TaskJobSubmission}

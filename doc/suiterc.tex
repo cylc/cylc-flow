@@ -984,7 +984,7 @@ first try - this can be used to vary task behavior by try number.
 \end{myitemize}
 
 \paragraph[submission polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ submission polling intervals}
-\label{PollingIntervals}
+\label{SubmissionPollingIntervals}
 
 A list of intervals, in minutes, with optional multipliers, after which
 cylc will poll for status while the task is in the submitted state.
@@ -998,6 +998,9 @@ regular check on the health of submitted tasks.
 Each list value is used in turn until the last, which is used repeatedly 
 until finished.
 
+{\em Detaching tasks cannot be polled or killed by cylc - 
+see Section~\ref{DetachingTasks}.}
+
 \begin{myitemize}
 \item {\em type:} list of floats, optionally {\em preceded} by multipliers
 \item {\em example:} \lstinline=1,3*10,1= is equivalent 
@@ -1007,7 +1010,7 @@ until finished.
 A single interval value is probably appropriate for submission polling.
 
 \paragraph[execution polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ execution polling intervals}
-\label{PollingIntervals}
+\label{ExecutionPollingIntervals}
 
 A list of intervals, in minutes, with optional multipliers, after which
 cylc will poll for status while the task is in the running state.
@@ -1020,6 +1023,9 @@ regular check on the health of submitted tasks.
 
 Each list value is used in turn until the last, which is used repeatedly 
 until finished.
+
+{\em Detaching tasks cannot be polled or killed by cylc - 
+see Section~\ref{DetachingTasks}.}
 
 \begin{myitemize}
 \item {\em type:} list of floats, optionally {\em preceded} by multipliers
