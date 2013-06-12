@@ -226,6 +226,7 @@ admin_commands['test-db'         ] = [ 'test-db']
 admin_commands['test-battery'    ] = [ 'test-battery']
 admin_commands['import-examples' ] = [ 'import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
+admin_commands['check-software'  ] = [ 'check-software']
 
 license_commands = OrderedDict()
 license_commands['warranty'  ] = [ 'warranty']
@@ -351,6 +352,7 @@ comsum[ 'test-db'    ] = 'Run an automated suite database test'
 comsum[ 'test-battery' ] = 'Run a battery of self-diagnosing test suites'
 comsum[ 'check-examples' ] = 'Check all example suites validate'
 comsum[ 'import-examples' ] = 'Import example suites your user database'
+comsum[ 'check-software' ] = 'Check required software is installed.'
 # license
 comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
 comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
