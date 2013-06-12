@@ -1,0 +1,107 @@
+#!/bin/bash
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check for cylc software dependencies
+
+usage() {
+    cat <<eof
+USAGE: cylc [admin] check-software
+
+Check that external software required by cylc is installed.
+
+Options:
+  -h, --help   Print this help message and exit.
+eof
+}
+
+# handle long --help
+if [[ $@ == *\-\-help ]]; then
+    usage
+    exit 0
+fi
+
+while getopts "h" opt; do
+    case $opt in 
+        h )
+            usage
+            exit 0
+            ;;
+        ? )
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+RES=0
+
+# Minimum Python version 2.5
+echo -n "Checking for Python >= 2.5 ... "
+PVER=$( python -V 2>&1 | awk '{print $2}' )
+echo -n "found ${PVER} ... "
+if ! python - <<EOF
+import sys
+if sys.version_info < (2,5):
+    sys.exit(1)
+EOF
+then
+    RES=$(( RES + 1 ))
+    echo "ERROR: Python version too old"
+else
+    echo "ok"
+fi
+
+# non-Python packages
+echo "Checking for non-Python packages:"
+echo -n " + Graphviz ... "
+if ! which dot > /dev/null 2>&1; then
+    RES=$(( RES + 1 ))
+    echo "NOT FOUND"
+else
+    echo "ok"
+fi
+echo -n " + sqlite ... "
+if ! which sqlite3 > /dev/null 2>&1; then
+    RES=$(( RES + 1 ))
+    echo "NOT FOUND"
+else
+    echo "ok"
+fi
+
+# Python packages
+# sqlite3 is part of the standard library since Python 2.5
+PKGS="Pyro-3:Pyro.core \
+Jinja2:jinja2 \
+pygraphviz:pygraphviz \
+pygtk:pygtk"
+
+echo "Checking for Python packages:"
+
+for ITEM in $PKGS; do
+    NAME=${ITEM%:*}
+    MODL=${ITEM#*:}
+
+    echo -n " + $NAME ... "
+    if ! python -c "import $MODL" > /dev/null 2>&1; then
+        RES=$(( RES + 1 ))
+        echo "NOT FOUND"
+    else
+        echo "ok"
+    fi
+done
+
