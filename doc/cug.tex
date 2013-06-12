@@ -1468,7 +1468,7 @@ mode} or {\em dummy mode} in which case a future start time is fine (see
 Appendix~\ref{SimulationMode}). 
 %\pagebreak
 
-\section{Suite Registration}
+\section{Suite Registration, Name DB, and Passphrases}
 \label{SuiteRegistration}
 
 Cylc commands target particular suites via names registered in a {\em
@@ -1528,36 +1528,9 @@ exist yet unless you specify the entire target registration name.
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
-\subsection{Suite Passphrases}
+\subsection{Suite Name Databases}
 
-Any client process that connects to a running suite (this includes task
-messaging and user-invoked interrogation and control commands) must
-authenticate with a secure passphrase that has been loaded by the suite. 
-A random passphrase is generated automatically in the suite definition
-directory at registration time if one does not already exist there. For 
-the default Pyro-based connection method the passphrase file must be
-distributed to other accounts that host running tasks or from which
-you need monitoring or control access to the running suite.
-
-Alternatively, cylc can be configured to,
-\begin{myenumerate}
-\item use ssh to re-invoke task messaging commands on the suite host; or
-\item use a one-way polling mechanism for tracking task progress. 
-\end{myenumerate}
-Neither of these methods require the suite passphrase to be installed 
-on the task host. For ssh re-invocation ssh keys must be installed for
-the task-to-suite direction in addition to the suite-to-task setup
-already required for job submission. The automatic polling mechanism can
-be used as a last resort for hosts that do not allow routing back to the
-suite host for pyro or ssh. It can also be used as regular health check 
-on submitted tasks under the other communications methods.
-
-See Section~\ref{RunningSuites} for more detail on cylc client/server
-communications, and how to use it.
-
-\subsection{Suite Databases}
-
-Each user has a suite database that associates registered suite names
+Each user has a database that associates registered suite names
 with their respective suite definition directory locations. Hierarchical
 suite names stored in the database can be displayed in a tree structure.
 
@@ -1568,7 +1541,7 @@ change the title (by editing the suite.rc file) use
 
 The user suite database file is \lstinline=$HOME/.cylc/DB=.
 
-\subsection{Database Operations}
+\subsubsection{Database Operations}
 
 On the command line, the  `database' (or `db') command category contains
 commands to implement the aforementioned operations.
@@ -1617,6 +1590,34 @@ registration name hierarchy. \lstinline=cylc copy --help= has some explicit exam
 
 The same functionality is also available by right-clicking on suites
 or groups in the gcylc ``Open Registered Suite'' dialog.
+
+\subsection{Suite Passphrases}
+
+Any client process that connects to a running suite (this includes task
+messaging and user-invoked interrogation and control commands) must
+authenticate with a secure passphrase that has been loaded by the suite. 
+A random passphrase is generated automatically in the suite definition
+directory at registration time if one does not already exist there. For 
+the default Pyro-based connection method the passphrase file must be
+distributed to other accounts that host running tasks or from which
+you need monitoring or control access to the running suite.
+
+Alternatively, cylc can be configured to,
+\begin{myenumerate}
+\item use ssh to re-invoke task messaging commands on the suite host; or
+\item use a one-way polling mechanism for tracking task progress. 
+\end{myenumerate}
+Neither of these methods require the suite passphrase to be installed 
+on the task host. For ssh re-invocation ssh keys must be installed for
+the task-to-suite direction in addition to the suite-to-task setup
+already required for job submission. The automatic polling mechanism can
+be used as a last resort for hosts that do not allow routing back to the
+suite host for pyro or ssh. It can also be used as regular health check 
+on submitted tasks under the other communications methods.
+
+See Section~\ref{RunningSuites} for more detail on cylc client/server
+communications, and how to use it.
+
 
 %\pagebreak
 \section{Suite Definition} 
