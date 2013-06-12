@@ -22,13 +22,11 @@ ImportError due to pygraphviz/graphviz not being installed."""
 import re
 import pygraphviz
 from TaskID import TaskID, AsyncTag
-
+from graphnode import OFFSET_RE
 # TODO: Do we still need autoURL below?
 
 ddmmhh = TaskID.DELIM_RE
 tformat = r'\\n'
-
-OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
