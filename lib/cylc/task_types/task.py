@@ -1263,6 +1263,9 @@ class task( object ):
         if not self.submit_method_id:
             self.log( 'WARNING', 'No job submit ID to poll!' )
             return
+        if self.__class__.rtconfig['manual completion']:
+            self.log( 'WARNING', 'Detaching tasks cannot be polled (the real job ID is unknown)' )
+            return
 
         launcher = self.launcher
         if not launcher:
@@ -1292,6 +1295,9 @@ class task( object ):
         if not self.submit_method_id:
             # should not happen
             self.log( 'CRITICAL', 'No submit method ID' )
+            return
+        if self.__class__.rtconfig['manual completion']:
+            self.log( 'WARNING', 'Detaching tasks cannot be killed (the real job ID is unknown)' )
             return
 
         launcher = self.launcher

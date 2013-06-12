@@ -305,11 +305,11 @@ cd $CYLC_TASK_WORK_DIR""" )
         if not self.jobconfig['use manual completion']:
             return
         strio = StringIO.StringIO()
-        self.FILE.write( '\n' + cv_export + '\n')
         self.write_environment_1( strio )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()
+        str += '\n' + cv_export
         str = re.sub('"', '\\"', str )
         self.FILE.write( '\n\n# TRANSPLANTABLE SUITE ENVIRONMENT FOR CUSTOM TASK WRAPPERS:')
         self.FILE.write( '\n# (contains embedded newlines, use may require "QUOTES")' )
