@@ -689,15 +689,15 @@ class task( object ):
         try:
             self.launcher = launcher_class( self.id, self.suite_name, jobconfig, str(self.submit_num) )
         except Exception, x:
-            #raise  # TODO -
             # currently a bad hostname will fail out here due to an is_remote_host() test
-            raise Exception( 'Failed to create job launcher\n  ' + str(x) )
+            raise  # TODO - check best way of alerting the user here
+            #raise Exception( 'Failed to create job launcher\n  ' + str(x) )
 
         try:
             p = self.launcher.submit( dry_run, debug )
         except Exception, x:
-            #raise  # TODO -
-            raise Exception( 'Job submission failed\n  ' + str(x) )
+            raise  # TODO - check best way of alerting the user here
+            #raise Exception( 'Job submission failed\n  ' + str(x) )
         else:
             return (p,self.launcher)
 
