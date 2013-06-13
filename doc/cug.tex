@@ -1332,6 +1332,22 @@ site/user config files, defaulting to
 \lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job/= (where 
 \lstinline=$CYLC_SUITE_REG_NAME= is the registered suite name).
 
+\subsubsection{Other Users's Suites}
+
+If you are on a shared machine with other users running cylc and have read
+access to their account, it is possible to use \lstinline=cylc monitor= to
+look at their suite's progress without full shell access to their account.
+To do this, you will need to copy their suite passphrase into
+\lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/=
+(see Section \ref{passphrases}) {\em and} also retrieve the port number of the
+running suite (which can typically be found in
+\lstinline=~SUITE_OWNER/.cylc/ports/SUITE_NAME=).  Once you have this
+information, you can run
+\begin{lstlisting}
+% cylc monitor --owner=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
+\end{lstlisting}
+to view the progress of their suite.
+
 \subsection{Searching A Suite}
 
 The cylc suite search tool reports matches in the suite.rc file
