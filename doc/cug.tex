@@ -4569,24 +4569,41 @@ For manual task state reset purposes {\bf ready} is a pseudo-state that means
 {\em waiting} with all prerequisites satisfied.
 
 
-\subsection{Determining The Suite Network Port}
+\subsection{Remote Control - Passphrases and Network Ports}
 
-All Pyro communication with a running suite requires knowing the network
-port on which the suite is listening. Running tasks know their own
-suite's port number because the suite puts it in the task execution
-environment, but user commands must determine the port number somehow.
-Through to the 4.5.1 release, inclusive, cylc used port scanning to find
-the target port, but this could potentially cause delays on hosts
-with a large number of suites running at once. Consequently suites now
-write their own port number to \lstinline=$HOME/.cylc/ports/<SUITE>= at
-start-up, and commands issued on the suite host read this file to get
-the port number. Commands issued on a remote host use passwordless ssh 
-to the suite owner account to retrieve the port number. Alternatively,
-if passwordless ssh is not configured to the suite host the port number
-can be given on the command line with the \lstinline=--port= option. 
-If you accidentally delete a suite's port file while the suite is still
-running, use \lstinline=cylc scan= to determine the port number to 
-use on the command line.
+Connecting to a running suite requires knowing the {\em network port} it
+is listening on, and the {\em suite passphrase} to authenticate with once
+a connection is made to the port.
+
+Suites write their port number to \lstinline=$HOME/.cylc/ports/<SUITE>=
+at start-up, and suite-connecting commands read this file to get the
+number.\footnote{If you accidentally delete a port file while a suite
+is running, use \lstinline=cylc scan= to determine the port number
+then use it on the command line (\lstinline=--port=) or rewrite the port
+file manually.} An exception to this is the messaging commands called by
+tasks. Running tasks know the port number from the execution environment
+provided by the suite (via the task job script).
+
+So, to connect to a suite running on another account you must install
+the suite passphrase (Section~\ref{passphrases}), and configure
+passwordless ssh so that the port number can be retrieved from the
+remote port file. Then use the \lstinline=--owner= and
+\lstinline=--host= command options to connect:
+\begin{lstlisting}
+$ cylc monitor --owner=USER --host=HOST SUITE
+\end{lstlisting}
+If you know the port number of the target suite, give it on the command
+line to prevent the port-retrieving ssh connection being attempted:
+\begin{lstlisting}
+$ cylc monitor --owner=USER --host=HOST --port=PORT SUITE
+\end{lstlisting}
+
+Possession of a suite passphrase gives full control over the suite, and
+ssh access to the port file also implies full access to the suite host
+account, so it is recommended that this only be used to interact with
+your own suites running on other hosts. We plan to implement
+finer-grained authentication in the future to allow suite owners to
+grant read-only access to others.
 
 
 \subsection{Ensemble Suites, Job Submission, and Network Timeouts}
