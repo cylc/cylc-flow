@@ -48,21 +48,24 @@ def displaytd( td ):
 
 class PollTimer( object ):
 
-    def __init__( self, host, owner, intervals, defaults, name, log ):
+    def __init__( self, intervals, defaults, name, log ):
         self.intervals = copy( deque(intervals) )
         self.default_intervals = deque( defaults )
         self.name = name
+        self.log = log
         self.current_interval = None
         self.timer_start = None
-        self.log = log
 
+    def set_host( self, host, set_timer=False ):
         # the polling comms method is host-specific
-        if gcfg.get_host_item( 'task communication method', host, owner) == "poll":
+        if gcfg.get_host_item( 'task communication method', host ) == "poll":
             if not self.intervals:
                 self.intervals = copy(self.default_intervals)
                 self.log( 'WARNING', '(polling comms) using default ' + self.name + ' polling intervals' )
+            if set_timer:
+                self.set_timer()
 
-    def set( self ):
+    def set_timer( self ):
         try:
             self.current_interval = self.intervals.popleft() * 60.0 # seconds
         except IndexError:
@@ -421,6 +424,7 @@ class task( object ):
     def set_from_rtconfig( self, cfg={} ):
         """Some [runtime] config requiring consistency checking on reload, 
         and self variables requiring updating for the same."""
+        # this is first called from class init (see taskdef.py)
 
         if cfg:
             rtconfig = cfg
@@ -507,6 +511,15 @@ class task( object ):
                 }
             self.reset_timer = False
 
+        self.submission_poll_timer = PollTimer( \
+                    copy( rtconfig['submission polling intervals']), 
+                    copy( gcfg.cfg['submission polling intervals']),
+                    'submission', self.log )
+
+        self.execution_poll_timer = PollTimer( \
+                    copy( rtconfig['execution polling intervals']), 
+                    copy( gcfg.cfg['execution polling intervals']),
+                    'execution', self.log )
  
     def submit( self, dry_run=False, debug=False, overrides={} ):
         """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
@@ -626,17 +639,9 @@ class task( object ):
 
         self.user_at_host = self.task_owner + "@" + self.task_host
 
-        self.submission_poll_timer = PollTimer( \
-                    self.task_host, self.task_owner, 
-                    copy( rtconfig['submission polling intervals']), 
-                    copy( gcfg.cfg['submission polling intervals']),
-                    'submission', self.log )
 
-        self.execution_poll_timer = PollTimer( \
-                    self.task_host, self.task_owner, 
-                    copy( rtconfig['execution polling intervals']), 
-                    copy( gcfg.cfg['execution polling intervals']),
-                    'execution', self.log )
+        self.submission_poll_timer.set_host( self.task_host )
+        self.execution_poll_timer.set_host( self.task_host )
 
         if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
                 self.user_at_host != user + '@localhost':
@@ -684,14 +689,14 @@ class task( object ):
         try:
             self.launcher = launcher_class( self.id, self.suite_name, jobconfig, str(self.submit_num) )
         except Exception, x:
-            raise  # TODO -
+            #raise  # TODO -
             # currently a bad hostname will fail out here due to an is_remote_host() test
             raise Exception( 'Failed to create job launcher\n  ' + str(x) )
 
         try:
             p = self.launcher.submit( dry_run, debug )
         except Exception, x:
-            raise  # TODO -
+            #raise  # TODO -
             raise Exception( 'Job submission failed\n  ' + str(x) )
         else:
             return (p,self.launcher)
@@ -764,14 +769,16 @@ class task( object ):
         # not called in simulation mode
         if self.state.is_currently( 'submitted' ):
             self.check_submission_timeout()
-            if self.submission_poll_timer.get():
-                self.poll()
-                self.submission_poll_timer.set()
+            if self.submission_poll_timer:
+                if self.submission_poll_timer.get():
+                    self.poll()
+                    self.submission_poll_timer.set_timer()
         elif self.state.is_currently( 'running' ):
             self.check_execution_timeout()
-            if self.execution_poll_timer.get():
-                self.poll()
-                self.execution_poll_timer.set()
+            if self.execution_poll_timer:
+                if self.execution_poll_timer.get():
+                    self.poll()
+                    self.execution_poll_timer.set_timer()
 
     def check_submission_timeout( self ):
         # only called if in the 'submitted' state
@@ -961,7 +968,7 @@ class task( object ):
 
             self.set_status( 'submitted' )
             self.submission_timer_start = self.submitted_time
-            self.submission_poll_timer.set()
+            self.submission_poll_timer.set_timer()
 
             outp = self.id + " submitted" # hack: see github #476
             self.outputs.set_completed( outp )
@@ -1037,7 +1044,7 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing started event handler" )
                 self.__class__.event_queue.put( ('started', handler, self.id, 'job started') )
 
-            self.execution_poll_timer.set()
+            self.execution_poll_timer.set_timer()
 
         elif content == 'succeeded' and self.state.is_currently('submitting','submitted','submit-failed','running','failed'):
             # Received a 'task succeeded' message
@@ -1250,16 +1257,11 @@ class task( object ):
     def is_clock_triggered( self ):
         return False
 
-    def poll( self, submit_method_id=None, user_at_host=None, sub_num=None ):
+    def poll( self ):
         """Poll my live task job and update status accordingly."""
         if self.__class__.run_mode == 'simulation':
             # No real task to poll
             return
-        # (the arguments are by the restart command)
-        self.submit_method_id = submit_method_id or self.submit_method_id 
-        self.user_at_host = user_at_host or self.user_at_host
-        self.submit_num = sub_num or self.submit_num
-
         if not self.submit_method_id:
             self.log( 'WARNING', 'No job submit ID to poll!' )
             return
