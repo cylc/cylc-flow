@@ -1,55 +1,55 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Suite Discovery, Sharing, And Revision Control</title> 
+<head><title>Suite Storage, Discovery, Revision Control, and Deployment</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-05-11 00:25:00"> 
+<meta name="date" content="2013-06-14 10:49:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5398--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5324--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse14.html" >next</a>] [<a 
 href="cug-htmlse12.html" >prev</a>] [<a 
 href="cug-htmlse12.html#tailcug-htmlse12.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse13.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse13.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">13   </span> <a 
- id="x14-16900013"></a>Suite Discovery, Sharing, And Revision Control</h3>
+ id="x14-17400013"></a>Suite Storage, Discovery, Revision Control, and Deployment</h3>
    <div class="sectionTOCS">
+   &#x00A0;<span class="subsectionToc" >13.1 <a 
+href="#x14-17500013.1">Rose</a></span>
    </div>
-<!--l. 5400--><p class="indent" >   Until release 4.2.2 cylc had a &#8220;central suite database&#8221; that users could export to and import from, for sharing
-suites. It was essentially just a special instance of a user suite database, held under the cylc admin account and with
-associated export and import commands to copy suite definition directories to and from a central store, with the
-suite owner&#8217;s username as the first hierarchical name component. However, it was not on the network, and the suite
-store had to be writeable by all users and hence very insecure. Rather than develop a network server for better
-security and wider access, as was the original intention, it was decided to remove this functionality entirely for the
-following reasons:
+<!--l. 5326--><p class="indent" >   Small groups of cylc users can of course share suites by manual copying, and generic revision control tools can be
+used on cylc suites as for any collection of files. Beyond this cylc does not have a built-in solution for suite storage
+and discovery, revision control, and deployment, on a network. That is not cylc&#8217;s core purpose, and large sites may
+have preferred revision control systems and suite meta-data requirements that are difficult to anticipate.
+We can, however, recommend the use of <span 
+class="cmti-10">Rose </span>to do all of this very easily and elegantly with cylc
+suites.
+<!--l. 5335--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">13.1   </span> <a 
+ id="x14-17500013.1"></a>Rose</h4>
+<!--l. 5337--><p class="noindent" ><span 
+class="cmbx-10">Rose </span>is <span 
+class="cmti-10">a framework for managing and running suites of scientific applications</span>, developed at the UK Met Office for
+use with cylc. It is available under the open source GPL license.
      <ul class="itemize1">
-     <li class="itemize">Large sites are likely to have suite meta-data and revision control requirements and preferences beyond
-     what can be provided by a light-weight native cylc database.
+     <li class="itemize">Rose documentation: http://metomi.github.io/rose/doc/rose.html
      </li>
-     <li class="itemize">Small groups of light cylc users, on the other hand, can easily share suites by means of manually
-     copying suite definitions, or with the <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">copy</span></span> command which now supports copying registered
-     suites between databases; they are then free to use preferred revision control tools and so on as they
-     see fit.</li></ul>
-<!--l. 5424--><p class="indent" >   We may in the future recommend particular tools that can be used for suite discovery, revision control, and so
-on, with cylc suites.
+     <li class="itemize">Rose source repository: https://github.com/metomi/rose</li></ul>
                                                                                          
 
                                                                                          
-   <!--l. 5429--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5347--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse14.html" >next</a>] [<a 
 href="cug-htmlse12.html" >prev</a>] [<a 
 href="cug-htmlse12.html#tailcug-htmlse12.html" >prev-tail</a>] [<a 
 href="cug-htmlse13.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse13.html" >up</a>] </p></div>
-<!--l. 5429--><p class="indent" >   <a 
- id="tailcug-htmlse13.html"></a>  
+<!--l. 5347--><p class="indent" >   <a 
+ id="tailcug-htmlse13.html"></a>   
 </body></html> 
