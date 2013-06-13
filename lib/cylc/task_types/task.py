@@ -958,17 +958,13 @@ class task( object ):
             # The job submission command was about to be executed.
             self.record_db_event(event="submitting now")
 
-        elif content == 'submission succeeded' and self.state.is_currently( 'submitting' ):
+        elif content == 'submission succeeded':
+            # The job submission command returned success status.
             # (A fake task message from the job submission thread).
             # (note it is possible for 'task started' to arrive first).
-            # The job submission command returned success status.
-
+            
             # TODO - should we use the real event time from the message here?
             self.submitted_time = task.clock.get_datetime()
-
-            self.set_status( 'submitted' )
-            self.submission_timer_start = self.submitted_time
-            self.submission_poll_timer.set_timer()
 
             outp = self.id + " submitted" # hack: see github #476
             self.outputs.set_completed( outp )
@@ -978,6 +974,15 @@ class task( object ):
             if handler:
                 self.log( 'NORMAL', "Queueing submitted event handler" )
                 self.__class__.event_queue.put( ('submitted', handler, self.id, 'job submitted') )
+
+            if self.state.is_currently( 'submitting' ):
+                # The 'started' message can arrive before 'submitted' if
+                # the task starts executing very quickly. So only set
+                # to 'submitted' and set the job submission timer if
+                # currently still in the 'submitting'state.
+                self.set_status( 'submitted' )
+                self.submission_timer_start = self.submitted_time
+                self.submission_poll_timer.set_timer()
 
         elif content.startswith( 'submit_method_id='):
             # (A fake task message from the job submission thread).
