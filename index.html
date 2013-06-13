@@ -212,98 +212,39 @@
 
             <p class="p1"><span>First, see the <a href="#overview">Overview</a> above.</span></p>
 				<ul>
-                        <li> Self-documenting <b>command line</b> and
-                        <b>graphical interfaces</b> covering all functionality.</li>
+                    <li> Unified <b>command line interface</b>.<li>
+                    <li> Multi-view <b>graphical user interface</b> with collapsing task families.</li>
+                    <li> <b>Most tasks require no modification for use with cylc.</b> </li>
+                    <li> Clean separation of task <b>dependencies</b> and <b>runtime</b> configuration.</li>
+                    <li> Configuration of task runtime properties by <b>multiple inheritance</b>.</li>
+                    <li> <b>Distributed suites</b> - submit different tasks by different methods to different hosts.</li>
+                    <li> <b>Remote control</b> - interact with suites running on other hosts.</li>
+                    <li> <b>task cycling</b> - hours-of-the-day; and stepped daily, monthly, and yearly.</li>
 
-                        <li> A multi-view suite control GUI, with
-                        collapsible task families.</li>
+                    <li> Handles <b>more than a thousand tasks</b> in a suite.</li>
 
-                        <li> <b>Most tasks require no modification for use with cylc.</b> </li>
-
-                        <li> Clean separation of task <b>scheduling</b>
-                        and <b>runtime</b> configuration.</li>
-
-                        <li> Configuration of task runtime properties
-                        (environment etc.) via an inheritance
-                        hierarchy of nested <b>task families</b>.</li>
-
-                        <li> <b>Remote control</b>: from your desktop
-                        box, control a suite running on a remote server
-                        that submits tasks to other remote hosts.</li>
-
-                        <li> Extensible cycling: currently
-                        hours-of-the-day, and stepped daily, monthly,
-                        and yearly cycling.</li>
-
-                        <li> Cylc can handle <b>hundreds of tasks</b> in a single suite
-                        (beyond this the suite control GUI may struggle,
-                        but you can run very large suites via the command line tools).</li>
-
-                        <li> <b>Suites can be distributed</b> across multiple
-                        hosts on a heterogeneous network.</li>
-
-                        <li> Supports use of many <b>job submission methods</b> within a suite 
-                        (e.g. loadleveler, pbs, sge, background, at)</li>
-
-
-                        <li> <b>Suites are validated</b> against a spec
-                        to catch many errors prior to run time.</li>
+                    <li> <b>Suite validation</b> - catch many errors prior to run time.</li>
 	
-                        <li> <b>Suite security:</b> access to running
-                        suites is automatically passphrase
-                        authenticated.</li>
+                    <li> Suite <b>cold-start</b>, <b>warm-start</b>, and <b>restart</b>.</li>
 
-                        <li> <b>Submit single tasks</b> exactly as the suite would
-                        (including job submission method and execution environment).</li>
+                    <li> <b>Conditional triggers</b>.</li>
 
-                        <li> Suites are accessed via <b>hierarchical
-                            names</b> (which to group and organize
-                        suites) registered in a private <b>suite database</b> .</li>
+                    <li> <b>Task family triggers</b>.</li>
 
-                        <li> A <b>lockserver</b> can be used to prevent
-                        accidental invocation of multiple instances of a
-                        suite or task at the same time (even for distributed suites).</li>
+                    <li> <b>Automated task failure recovery</b>.</li>
 
-                        <li> Suites <b>cold-start</b>ed, <b>warm-start</b>ed, and
-                        stopped and <b>restart</b>ed in any state of operation.</li>
+                    <li> <b>Task and suite event hooks and timeouts</b> - for central alerting.</li>
 
-                        <li> Explicit <b>cold start bootstrapping</b> 
-                        to get warm-cycling suites up and running.</li>
+                    <li> <b>Simulation and dumy modes</b> - get the scheduling right without running real tasks.</li>
 
-                        <!-- might just confuse readers: <li> Spin-up
-                        processing by insertion of
-                        temporary tasks and addition of new
-                        prerequisites on the fly.</li>-->
+                    <li> <b>Process asynchronous asynchronous satellite passes</b>.</li>
 
-                        <li> <b>Recursive purge</b>: remove sub-trees of tasks
-                        from a running suite through to some future cycle.</li>
+                    <li> Supports the <b>Jinja2 Template Processor</b> for generating suite definitions.</li>
 
-                        <li> <b>General conditional triggers</b>.</li>
+                    <li> <b>Internal Queues</b> - limit the number of simultaneously active tasks.</li>
 
-                        <li> <b>Task family triggers</b>.</li>
+                    <li> <b>Task Poll and Kill</b>.</li>
 
-                        <li> <b>Automated task failure recovery</b> (several methods supported).</li>
-
-                        <li> <b>Task and suite event hooks</b> for central alerting and timeouts.</li>
-
-                        <li> <b>Portable suites</b> are easy to
-                        construct - just copy another user's suite and
-                        run it.</li>
-
-                        <li> <b>Simulation mode</b>: get the scheduling right,
-                        on an accelerated clock, without running real tasks.</li>
-
-                        <li> <b>One-off asynchronous tasks</b> for constructing 
-                        one-off suites of non-cycling tasks.</li>
-
-                        <li> <b>Repeating asynchronous tasks</b> for parallel processing 
-                        of real time satellite datasets.</li>
-
-                        <li> <b>Jinja2 Template Processor</b> supported,
-                        for programmatic generation of suite definitions.</li>
-
-                        <li> <b>Internal Queues</b> - limit the number
-                        of active (submitted or running) tasks.</li>
 				</ul>
 
 			<!--<h4><span>Coming Soon</span></h4>
