@@ -1296,17 +1296,14 @@ And here is the complete implementation for the PostA task
 
 \subsection{Monitoring Running Suites}
 
-\subsubsection{Suite stdout and stderr}
+\subsubsection{Suite Log Files}
 
 Cylc writes some information, including warnings and errors, to the
-suite stdout stream. In debug mode (\lstinline=cylc run --debug=) this
-output is directed to the terminal; otherwise it is directed to a log 
-file under the suite run directory. 
+stdout and stderr streams. In debug mode or non-daemon mode this
+is directed to the terminal; otherwise it goes to log files under the
+suite run directory.  The event log, which records
+timestamped events as the suite runs, is written to same location.
 
-\subsubsection{Suite Logs}
-
-The suite event log records timestamped events as the suite runs; it is
-stored under the suite run directory.
 \begin{figure}
     \begin{center}
         \includegraphics[width=0.7\textwidth]{graphics/png/orig/suite-log.png}
@@ -1320,33 +1317,36 @@ Figure~\ref{fig-suite-log} shows a suite log viewed from gcylc. The
 stderr logs, with optionally filtering of the event log for specific
 tasks. 
 
-\subsubsection{Task stdout and stderr Logs}
+The stdout and stderr streams from task job scripts also end up under
+the suite run directory. 
 
+The location of the suite run directory is determined by site/user
+config files and defaults to \lstinline=$HOME/cylc-run/SUITE=.
+
+\subsubsection{Other Users' Suites}
+
+If you have read access to another user's account (even on another host)
+it is possible to use \lstinline=cylc monitor= to look at their suite's
+progress without full shell access to their account. To do this, you
+will need to copy their suite passphrase to
 \lstset{language=transcript}
-
-The stdout and stderr streams from running tasks (if they do not detach 
-from the process that does the initial job submission, or manage their
-own output) are written to a suite-specific sub-directory of the {\em
-suite run directory}.  The location of this directory is determined by
-site/user config files, defaulting to 
-\lstinline=$HOME/cylc-run/$CYLC_SUITE_REG_NAME/log/job/= (where 
-\lstinline=$CYLC_SUITE_REG_NAME= is the registered suite name).
-
-\subsubsection{Other Users's Suites}
-
-If you are on a shared machine with other users running cylc and have read
-access to their account, it is possible to use \lstinline=cylc monitor= to
-look at their suite's progress without full shell access to their account.
-To do this, you will need to copy their suite passphrase into
-\lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/=
-(see Section \ref{passphrases}) {\em and} also retrieve the port number of the
-running suite (which can typically be found in
-\lstinline=~SUITE_OWNER/.cylc/ports/SUITE_NAME=).  Once you have this
-information, you can run
+\begin{lstlisting}
+    $HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase
+\end{lstlisting}
+(use of the host and owner names is optional here -
+Section~\ref{passphrases}) {\em and} also retrieve the port number
+of the running suite, which can be found in their account:
+\begin{lstlisting}
+    ~SUITE_OWNER/.cylc/ports/SUITE_NAME
+\end{lstlisting}
+Once you have this information, you can run
 \begin{lstlisting}
 % cylc monitor --owner=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
 \end{lstlisting}
 to view the progress of their suite.
+
+Other suite-connecting commands work in the same way too; see
+Section~\ref{RemoteControl}.
 
 \subsection{Searching A Suite}
 
@@ -1358,7 +1358,7 @@ a search of the {\em examples.QuickStart.c} suite.
 \begin{lstlisting}
 % cylc grep OUTPUT_DIR examples.QuickStart.c
 \end{lstlisting}
-\lstset{language=suiterc}
+
 \begin{lstlisting}
 SUITE: examples.QuickStart.c /tmp/oliverh/QuickStart/c/suite.rc
 PATTERN: OUTPUT_DIR
@@ -1389,7 +1389,6 @@ FILE: /tmp/oliverh/QuickStart/c/bin/GetData.sh
    (11): touch $GETDATA_OUTPUT_DIR/obs-${CYLC_TASK_CYCLE_TIME}.nc
 \end{lstlisting}
 (Suite search is also available from the gcylc {\em Suite} menu).
-\lstset{language=transcript}
 
 \subsection{Comparing Suites}
 
@@ -4586,6 +4585,7 @@ For manual task state reset purposes {\bf ready} is a pseudo-state that means
 
 
 \subsection{Remote Control - Passphrases and Network Ports}
+\label{RemoteControl}
 
 Connecting to a running suite requires knowing the {\em network port} it
 is listening on, and the {\em suite passphrase} to authenticate with once
