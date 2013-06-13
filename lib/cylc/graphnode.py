@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from graphing import OFFSET_RE
+OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
 
 class GraphNodeError( Exception ):
     """
