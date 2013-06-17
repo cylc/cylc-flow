@@ -92,6 +92,7 @@ editing. By default the full cold start graph is plotted; you can omit
 cold start tasks with the '-w,--warmstart' option.  Specify the optional
 initial and final cycle time arguments to override the suite.rc defaults.
 If you just override the intitial cycle, only that cycle will be plotted.
+You can save an image of your graph using the "Save" button on the toolbar.
 
 GRAPH VIEWER CONTROLS:
     * Left-click to center the graph on a node.
@@ -119,35 +120,14 @@ GRAPH VIEWER CONTROLS:
 #    "unhelpful if you are studying a panned, zoomed image.",
 #    action="store_true", default=False, dest="updatelive" )
 
-parser.add_option( "-w", "--warmstart", 
-    help="Plot the mid-stream warm start (raw start) "
-    "dependency graph (the default is cold start).",
-    action="store_true", default=False, dest="rawstart" )
-
 parser.add_option( "-n", "--namespaces", 
     help="Plot the suite namespace inheritance hierarchy "
     "(task run time properties).",
     action="store_true", default=False, dest="namespaces" )
 
-parser.add_option( "-l", "--landscape",
-    help="Plot in landscape mode instead of portrait (the default)."
-    "Cannot be used in conjunction with -f, --file",
-    action="store_true", default=False, dest="landscape" )
-
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
-
-parser.add_option( "-o", "--output", 
-    help="Write out an image file, format determined by file extension. "
-    "The file will be rewritten if the suite definition is changed while "
-    "the viewer is running.  Available formats depend on your graphviz "
-    "build and may include png, jpg, gif, svg, pdf, ps, etc.",
-    metavar="FILE", action="store", default=None, dest="outputfile" )
-
-parser.add_option( "-u", "--ungroup", 
-    help="Start up the graph viewer with families ungrouped.",
-    action="store_true", default=None, dest="ungroup" )
 
 ( options, args ) = parser.parse_args()
 
@@ -187,19 +167,13 @@ if options.filename:
 
 suite, suiterc, watchers = parser.get_suite()
 
-if options.landscape:
-    orientation = "LR"
-else:
-    orientation = "TB"
-
 # parse and plot the suite.rc dependency graph
 if len(args) < 1 or len(args) > 3:
     parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
-            options.templatevars_file, watchers, options.outputfile,
-            orientation )
+                           options.templatevars_file, watchers )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -225,24 +199,16 @@ else:
         else:
             stop_ctime = start_ctime 
 
-    raw = False
-    if options.rawstart:
-        raw = True
-
     window = MyDotWindow( suite, suiterc, options.templatevars,
-            options.templatevars_file, watchers, start_ctime,
-            stop_ctime, raw, options.outputfile,
-            orientation )
+                          options.templatevars_file, watchers, 
+                          start_ctime, stop_ctime )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
 if options.namespaces:
     window.get_graph()
 else:
-    if not options.ungroup:
-        window.get_graph( group_all=True )
-    else:
-        window.get_graph( ungroup_all=options.ungroup )
+    window.get_graph( group_all=True )
     
 window.connect( 'destroy', gtk.main_quit)
 
