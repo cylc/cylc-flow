@@ -92,6 +92,7 @@ editing. By default the full cold start graph is plotted; you can omit
 cold start tasks with the '-w,--warmstart' option.  Specify the optional
 initial and final cycle time arguments to override the suite.rc defaults.
 If you just override the intitial cycle, only that cycle will be plotted.
+You can save an image of your graph using the "Save" button on the toolbar.
 
 GRAPH VIEWER CONTROLS:
     * Left-click to center the graph on a node.
@@ -137,13 +138,6 @@ parser.add_option( "-l", "--landscape",
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
-
-parser.add_option( "-o", "--output", 
-    help="Write out an image file, format determined by file extension. "
-    "The file will be rewritten if the suite definition is changed while "
-    "the viewer is running.  Available formats depend on your graphviz "
-    "build and may include png, jpg, gif, svg, pdf, ps, etc.",
-    metavar="FILE", action="store", default=None, dest="outputfile" )
 
 parser.add_option( "-u", "--ungroup", 
     help="Start up the graph viewer with families ungrouped.",
@@ -198,8 +192,7 @@ if len(args) < 1 or len(args) > 3:
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
-            options.templatevars_file, watchers, options.outputfile,
-            orientation )
+            options.templatevars_file, watchers, orientation )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -231,8 +224,7 @@ else:
 
     window = MyDotWindow( suite, suiterc, options.templatevars,
             options.templatevars_file, watchers, start_ctime,
-            stop_ctime, raw, options.outputfile,
-            orientation )
+            stop_ctime, raw, orientation )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 

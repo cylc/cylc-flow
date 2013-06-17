@@ -47,8 +47,8 @@ class MyDotWindow2( xdot.DotWindow ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, watch, outfile=None, orientation="TB" ):
-        self.outfile = outfile
+            template_vars_file, watch, orientation="TB" ):
+        self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
@@ -191,12 +191,7 @@ class MyDotWindow2( xdot.DotWindow ):
                     n.attr['color'] = 'royalblue'
  
         self.set_dotcode( graph.string() )
-        if self.outfile and not self.disable_output_image:
-            try:
-                graph.draw( self.outfile, prog='dot' )
-            except IOError, x:
-                print >> sys.stderr, x
-                self.disable_output_image = True
+        self.graph = graph
 
     def on_landscape( self, toolitem ):
         if toolitem.get_active():
@@ -204,8 +199,31 @@ class MyDotWindow2( xdot.DotWindow ):
         else:
             self.set_orientation( "TB" )  # Top to bottom (default) ordering
 
-    def save_action( self ):
-        print >> sys.stdout, "saving"
+    def save_action( self, toolitem ):
+        chooser = gtk.FileChooserDialog(title="Save Graph",
+                                        action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_SAVE,
+                                                 gtk.RESPONSE_OK))
+        
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        if self.outfile:
+            chooser.set_filename(self.outfile)
+        if chooser.run() == gtk.RESPONSE_OK:
+            self.outfile = chooser.get_filename()
+            if self.outfile:
+                try:
+                    self.graph.draw( self.outfile, prog='dot' )
+                except IOError, x:
+                    msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                            buttons=gtk.BUTTONS_OK,
+                                            message_format=str(x))
+                    msg.run()
+                    msg.destroy()
+            chooser.destroy()
+        else:
+            chooser.destroy()
 
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
@@ -263,8 +281,8 @@ class MyDotWindow( xdot.DotWindow ):
     '''
     def __init__(self, suite, suiterc, template_vars,
             template_vars_file,  watch, ctime, stop_after, raw,
-            outfile=None, orientation="TB" ):
-        self.outfile = outfile
+            orientation="TB" ):
+        self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
@@ -433,12 +451,7 @@ class MyDotWindow( xdot.DotWindow ):
                     node.attr['shape'] = 'doublecircle'
 
         self.set_dotcode( graph.string() )
-        if self.outfile and not self.disable_output_image:
-            try:
-                graph.draw( self.outfile, prog='dot' )
-            except IOError, x:
-                print >> sys.stderr, x
-                self.disable_output_image = True
+        self.graph = graph
 
     def on_landscape( self, toolitem ):
         if toolitem.get_active():
@@ -451,7 +464,30 @@ class MyDotWindow( xdot.DotWindow ):
         self.get_graph()
 
     def save_action( self, toolitem ):
-        print >> sys.stdout, "saving"
+        chooser = gtk.FileChooserDialog(title="Save Graph",
+                                        action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_SAVE,
+                                                 gtk.RESPONSE_OK))
+        
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        if self.outfile:
+            chooser.set_filename(self.outfile)
+        if chooser.run() == gtk.RESPONSE_OK:
+            self.outfile = chooser.get_filename()
+            if self.outfile:
+                try:
+                    self.graph.draw( self.outfile, prog='dot' )
+                except IOError, x:
+                    msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                            buttons=gtk.BUTTONS_OK,
+                                            message_format=str(x))
+                    msg.run()
+                    msg.destroy()
+            chooser.destroy()
+        else:
+            chooser.destroy()
 
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
@@ -612,5 +648,6 @@ class xdot_widgets(object):
 
     def on_reload(self, action):
         self.widget.reload()
+        
 
 
