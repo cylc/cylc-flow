@@ -40,7 +40,8 @@ class MyDotWindow2( xdot.DotWindow ):
             <toolitem action="Zoom100"/>
             <separator name="LandscapeSep"/>
             <toolitem action="Landscape"/>
-            <separator expand="true"/> 
+            <separator expand="true"/>
+            <toolitem action="Save"/>
             <toolitem action="Help"/>
         </toolbar>
     </ui>
@@ -97,6 +98,7 @@ class MyDotWindow2( xdot.DotWindow ):
             ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
             ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
+            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
         actiongroup.add_toggle_actions((
@@ -202,6 +204,9 @@ class MyDotWindow2( xdot.DotWindow ):
         else:
             self.set_orientation( "TB" )  # Top to bottom (default) ordering
 
+    def save_action( self ):
+        print >> sys.stdout, "saving"
+
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
         if orientation == self.orientation:
@@ -250,7 +255,8 @@ class MyDotWindow( xdot.DotWindow ):
             <separator name="LandscapeSep"/>
             <toolitem action="Landscape"/>
             <toolitem action="IgnoreSuicide"/>
-            <separator expand="true"/> 
+            <separator expand="true"/>
+            <toolitem action="Save"/> 
             <toolitem action="Help"/>
         </toolbar>
     </ui>
@@ -313,6 +319,7 @@ class MyDotWindow( xdot.DotWindow ):
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
             ('Group', 'group', None, None, 'Group All Families', self.group_all),
             ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
+            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
         actiongroup.add_toggle_actions((
@@ -442,6 +449,9 @@ class MyDotWindow( xdot.DotWindow ):
     def on_igsui( self, toolitem ):
         self.ignore_suicide = toolitem.get_active()
         self.get_graph()
+
+    def save_action( self, toolitem ):
+        print >> sys.stdout, "saving"
 
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
