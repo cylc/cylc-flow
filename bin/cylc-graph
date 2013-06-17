@@ -125,18 +125,9 @@ parser.add_option( "-n", "--namespaces",
     "(task run time properties).",
     action="store_true", default=False, dest="namespaces" )
 
-parser.add_option( "-l", "--landscape",
-    help="Plot in landscape mode instead of portrait (the default)."
-    "Cannot be used in conjunction with -f, --file",
-    action="store_true", default=False, dest="landscape" )
-
 parser.add_option( "-f", "--file", 
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
-
-parser.add_option( "-u", "--ungroup", 
-    help="Start up the graph viewer with families ungrouped.",
-    action="store_true", default=None, dest="ungroup" )
 
 ( options, args ) = parser.parse_args()
 
@@ -176,18 +167,13 @@ if options.filename:
 
 suite, suiterc, watchers = parser.get_suite()
 
-if options.landscape:
-    orientation = "LR"
-else:
-    orientation = "TB"
-
 # parse and plot the suite.rc dependency graph
 if len(args) < 1 or len(args) > 3:
     parser.error( "Argument list should be: SUITE [START [STOP]]" )
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
-                           options.templatevars_file, watchers, orientation )
+                           options.templatevars_file, watchers )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -214,18 +200,15 @@ else:
             stop_ctime = start_ctime 
 
     window = MyDotWindow( suite, suiterc, options.templatevars,
-                          options.templatevars_file, watchers, start_ctime,
-                          stop_ctime, orientation )
+                          options.templatevars_file, watchers, 
+                          start_ctime, stop_ctime )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
 if options.namespaces:
     window.get_graph()
 else:
-    if not options.ungroup:
-        window.get_graph( group_all=True )
-    else:
-        window.get_graph( ungroup_all=options.ungroup )
+    window.get_graph( group_all=True )
     
 window.connect( 'destroy', gtk.main_quit)
 
