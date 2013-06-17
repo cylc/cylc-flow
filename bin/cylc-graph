@@ -120,11 +120,6 @@ GRAPH VIEWER CONTROLS:
 #    "unhelpful if you are studying a panned, zoomed image.",
 #    action="store_true", default=False, dest="updatelive" )
 
-parser.add_option( "-w", "--warmstart", 
-    help="Plot the mid-stream warm start (raw start) "
-    "dependency graph (the default is cold start).",
-    action="store_true", default=False, dest="rawstart" )
-
 parser.add_option( "-n", "--namespaces", 
     help="Plot the suite namespace inheritance hierarchy "
     "(task run time properties).",
@@ -192,7 +187,7 @@ if len(args) < 1 or len(args) > 3:
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
-            options.templatevars_file, watchers, orientation )
+                           options.templatevars_file, watchers, orientation )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -218,13 +213,9 @@ else:
         else:
             stop_ctime = start_ctime 
 
-    raw = False
-    if options.rawstart:
-        raw = True
-
     window = MyDotWindow( suite, suiterc, options.templatevars,
-            options.templatevars_file, watchers, start_ctime,
-            stop_ctime, raw, orientation )
+                          options.templatevars_file, watchers, start_ctime,
+                          stop_ctime, orientation )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 

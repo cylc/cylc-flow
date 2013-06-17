@@ -273,6 +273,7 @@ class MyDotWindow( xdot.DotWindow ):
             <separator name="LandscapeSep"/>
             <toolitem action="Landscape"/>
             <toolitem action="IgnoreSuicide"/>
+            <toolitem action="IgnoreColdStart"/>
             <separator expand="true"/>
             <toolitem action="Save"/> 
             <toolitem action="Help"/>
@@ -280,14 +281,14 @@ class MyDotWindow( xdot.DotWindow ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file,  watch, ctime, stop_after, raw,
-            orientation="TB" ):
+                 template_vars_file,  watch, ctime, stop_after,
+                 orientation="TB" ):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.ctime = ctime
-        self.raw = raw
+        self.raw = False
         self.stop_after = stop_after
         self.watch = []
         self.orientation = orientation
@@ -345,6 +346,9 @@ class MyDotWindow( xdot.DotWindow ):
         ))
         actiongroup.add_toggle_actions((
             ('IgnoreSuicide', gtk.STOCK_CANCEL, None, None, 'Ignore Suicide Triggers', self.on_igsui),
+        ))
+        actiongroup.add_toggle_actions((
+            ('IgnoreColdStart', gtk.STOCK_YES, None, None, 'Ignore Cold Start Tasks', self.on_igcol),
         ))
 
         # Add the actiongroup to the uimanager
@@ -461,6 +465,10 @@ class MyDotWindow( xdot.DotWindow ):
 
     def on_igsui( self, toolitem ):
         self.ignore_suicide = toolitem.get_active()
+        self.get_graph()
+        
+    def on_igcol( self, toolitem ):
+        self.raw = toolitem.get_active()
         self.get_graph()
 
     def save_action( self, toolitem ):
