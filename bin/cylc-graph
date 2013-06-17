@@ -219,10 +219,13 @@ else:
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
-if not options.ungroup:
-    window.get_graph( group_all=True )
+if options.namespaces:
+    window.get_graph()
 else:
-    window.get_graph( ungroup_all=options.ungroup )
+    if not options.ungroup:
+        window.get_graph( group_all=True )
+    else:
+        window.get_graph( ungroup_all=options.ungroup )
     
 window.connect( 'destroy', gtk.main_quit)
 
