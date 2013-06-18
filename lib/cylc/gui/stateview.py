@@ -22,6 +22,7 @@ from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
+from copy import deepcopy
 import gobject
 import gtk
 import re
@@ -29,57 +30,6 @@ import string
 import sys
 import threading
 from time import sleep, time
-
-class PollSchd(object):
-    """Keep information on whether an updater should poll or not."""
-
-    DELAYS = {(None, 5): 1, (5, 60): 5, (60, 300): 60, (300, None): 300}
-
-    def __init__(self, start=False):
-        """Return a new instance.
-
-        If start is False, the updater can always poll.
-
-        If start is True, the updater should only poll if the ready method
-        returns True.
-
-        """
-
-        self.t_init = None
-        self.t_prev = None
-        if start:
-            self.start()
-
-    def ready(self):
-        """Return True if a poll is ready."""
-        if self.t_init is None:
-            return True
-        if self.t_prev is None:
-            self.t_prev = time()
-            return True
-        dt_init = time() - self.t_init
-        dt_prev = time() - self.t_prev
-        for k, v in self.DELAYS.items():
-            lower, upper = k
-            if ((lower is None or dt_init >= lower) and
-                (upper is None or dt_init < upper)):
-                if dt_prev > v:
-                    self.t_prev = time()
-                    return True
-                else:
-                    return False
-        return True
-
-    def start(self):
-        """Start keeping track of latest poll, if not already started."""
-        if self.t_init is None:
-            self.t_init = time()
-            self.t_prev = None
-
-    def stop(self):
-        """Stop keeping track of latest poll."""
-        self.t_init = None
-        self.t_prev = None
 
 def compare_dict_of_dict( one, two ):
     """Return True if one == two, else return False."""
@@ -121,29 +71,21 @@ def get_col_priority( priority ):
         return '#f0f'
 
 
-class tupdater(threading.Thread):
+class TreeUpdater(threading.Thread):
 
-    def __init__(self, cfg, ttreeview, ttree_paths, info_bar, theme ):
+    def __init__(self, cfg, updater, ttreeview, ttree_paths, info_bar, theme ):
 
-        super(tupdater, self).__init__()
+        super(TreeUpdater, self).__init__()
 
         self.quit = False
         self.autoexpand = True
 
         self.cfg = cfg
+        self.updater = updater
         self.theme = theme
         self.info_bar = info_bar
-
-        self.state_summary = {}
-        self.global_summary = {}
-        self.fam_state_summary = {}
-        self.stop_summary = None
-        self.descendants = []
-        self.god = None
-        self.mode = "waiting..."
-        self.dt = "waiting..."
-        self.status = None
-        self.poll_schd = PollSchd()
+        self.last_update_time = None
+        self.ancestors = {}
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
@@ -159,43 +101,7 @@ class tupdater(threading.Thread):
             self.dots[ state ] = dotm.get_icon( state )
         self.dots['empty'] = dotm.get_icon()
 
-        self.reconnect()
-
-    def reconnect( self ):
-        # set debug here to see how reconnection works
-        debug = False
-        try:
-            client = cylc_pyro_client.client(
-                    self.cfg.suite,
-                    self.cfg.pphrase,
-                    self.cfg.owner,
-                    self.cfg.host,
-                    self.cfg.pyro_timeout,
-                    self.cfg.port )
-            self.god = client.get_proxy( 'state_summary' )
-            self.sinfo = client.get_proxy( 'suite-info' )
-
-            # on reconnection retrieve static info
-            self.descendants = self.sinfo.get('first-parent descendants' )
-            self.ancestors = self.sinfo.get('first-parent ancestors' )
-        except:
-            # connection lost
-            if debug:
-                print ".",
-            if self.stop_summary is None:
-                self.stop_summary = dump.get_stop_state_summary(
-                                                       self.cfg.suite,
-                                                       self.cfg.owner,
-                                                       self.cfg.host)
-                if self.stop_summary is not None and any(self.stop_summary):
-                    self.info_bar.set_stop_summary(self.stop_summary)
-            return False
-        else:
-            self.stop_summary = None
-            self.status = "connected"
-            self.poll_schd.stop()
-            self.info_bar.set_status( self.status )
-            return True
+        self.update()
 
     def connection_lost( self ):
         # clear the ttreestore ...
@@ -205,64 +111,23 @@ class tupdater(threading.Thread):
         # the same gui when nothing is changing (e.g. all tasks waiting
         # on a clock trigger - because we only update the tree after
         # changes in the state summary)
-        self.state_summary = {}
-        self.fam_state_summary = {}
-
-        self.status = "stopped"
-        self.poll_schd.start()
-        self.info_bar.set_state( [] )
-        self.info_bar.set_status( self.status )
-
-        if self.stop_summary is not None and any(self.stop_summary):
-            self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
-
-        self.reconnect()
-
         return False
 
     def update(self):
-        try:
-            [glbl, states, fam_states] = self.god.get_state_summary()
-        except:
-            gobject.idle_add( self.connection_lost )
+        if ( self.last_update_time is not None and
+             self.last_update_time >= self.updater.last_update_time ):
             return False
-
-        # always update global info
-        self.global_summary = glbl
-
-        if glbl['stopping']:
-            self.status = 'stopping'
-
-        elif glbl['paused']:
-            self.status = 'held'
-
-        elif glbl['will_pause_at']:
-            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
-
-        elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl[ 'will_stop_at' ]
-
-        else:
-            self.status = 'running'
-
-        self.info_bar.set_status( self.status )
-
-        self.mode = glbl[ 'run_mode' ] 
-
-        dt = glbl[ 'last_updated' ]
-        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
-
-        # only update states if a change occurred
-        if compare_dict_of_dict( states, self.state_summary ):
-            #print "STATE UNCHANGED"
-            # only update if state changed
+        self.last_update_time = self.updater.last_update_time
+        self.updater.set_update(False)
+        self.state_summary = deepcopy(self.updater.state_summary)
+        self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
+        self.ancestors = deepcopy(self.updater.ancestors)
+        self.updater.set_update(True)
+        if self.updater.status == "stopped":
+            self.connection_lost()
             return False
-        else:
-            #print "STATE CHANGED"
-            self.state_summary = states
-            self.fam_state_summary = fam_states
-            return True
+        return True
 
     def search_level( self, model, iter, func, data ):
         while iter:
@@ -304,8 +169,8 @@ class tupdater(threading.Thread):
         new_data = {}
         new_fam_data = {}
         self.ttree_paths.clear()
-        for summary, dest in [(self.state_summary, new_data),
-                              (self.fam_state_summary, new_fam_data)]:
+        for summary, dest in [(self.updater.state_summary, new_data),
+                              (self.updater.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
             for id in summary:
                 name, ctime = id.split( TaskID.DELIM )
@@ -498,32 +363,23 @@ class tupdater(threading.Thread):
             return False
         return False
 
-    def update_globals( self ):
-        self.info_bar.set_runahead( 
-                          self.global_summary.get( 'runahead limit' ) )
-        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
-        self.info_bar.set_mode( self.mode )
-        self.info_bar.set_time( self.dt )
-        return False
-
     def run(self):
         glbl = None
         states = {}
         while not self.quit:
-            if self.poll_schd.ready() and self.update():
+            if self.update():
                 gobject.idle_add( self.update_gui )
-                # TODO - only update globals if they change, as for tasks
-                gobject.idle_add( self.update_globals )
-            sleep(1)
+            sleep(0.2)
         else:
             pass
             ####print "Disconnecting task state info thread"
 
-class lupdater(threading.Thread):
 
-    def __init__(self, cfg, treeview, info_bar, theme ):
+class DotUpdater(threading.Thread):
 
-        super(lupdater, self).__init__()
+    def __init__(self, cfg, updater, treeview, info_bar, theme ):
+
+        super(DotUpdater, self).__init__()
 
         self.quit = False
         self.autoexpand = True
@@ -531,26 +387,19 @@ class lupdater(threading.Thread):
         self.should_group_families = True
 
         self.cfg = cfg
+        self.updater = updater
         self.theme = theme
         self.info_bar = info_bar
         imagedir = self.cfg.imagedir
-
+        self.last_update_time = None
         self.state_summary = {}
-        self.global_summary = {}
-        self.stop_summary = None
+        self.fam_state_summary = {}
         self.descendants = []
-        self.god = None
-        self.mode = "waiting..."
-        self.dt = "waiting..."
-        self.status = None
-        self.poll_schd = PollSchd()
         self.filter = ""
 
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
         self._prev_tooltip_task_id = None
-
-        self.reconnect()
 
         # generate task state icons
         dotm = DotMaker( theme )
@@ -566,72 +415,39 @@ class lupdater(threading.Thread):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
-    def reconnect( self ):
-        try:
-            client = cylc_pyro_client.client(
-                    self.cfg.suite,
-                    self.cfg.pphrase,
-                    self.cfg.owner,
-                    self.cfg.host,
-                    self.cfg.pyro_timeout,
-                    self.cfg.port )
-            self.god = client.get_proxy( 'state_summary' )
-            self.sinfo = client.get_proxy( 'suite-info' )
-
-            # on reconnection retrieve static info
-            self.ancestors = self.sinfo.get( 'first-parent ancestors', True )
-            self.descendants = self.sinfo.get( 'first-parent descendants' )
-        except Exception, x:
-            #print str(x) # (port file not found, if suite not running)
-            if self.stop_summary is None:
-                self.stop_summary = dump.get_stop_state_summary(
-                                                       self.cfg.suite,
-                                                       self.cfg.owner,
-                                                       self.cfg.host)
-                if self.stop_summary is not None and any(self.stop_summary):
-                    self.info_bar.set_stop_summary(self.stop_summary)
-            return False
-        else:
-            self.stop_summary = None
-            self.status = "connected"
-            self.poll_schd.stop()
-            return True
-
     def _set_tooltip(self, widget, tip_text):
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip( widget, tip_text )
 
     def connection_lost( self ):
-        self.state_summary = {}
-        self.fam_state_summary = {}
 
         # comment out to show the last suite state before shutdown:
         self.led_liststore.clear()
-
-        self.status = "stopped"
-        self.poll_schd.start()
-        if not self.quit:
-            self.info_bar.set_state( [] )
-            self.info_bar.set_status( self.status )
-            if self.stop_summary is not None and any(self.stop_summary):
-                self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
-        self.reconnect()
         return False
 
     def update(self):
         #print "Attempting Update"
-        try:
-            [glbl, states, fam_states] = self.god.get_state_summary()
-            if not self.should_group_families:
-                self.task_list = self.god.get_task_name_list()
-            else:
-                self.task_list = []
-        except Exception, x:
-            #print >> sys.stderr, x
-            gobject.idle_add( self.connection_lost )
+        if ( self.last_update_time is not None and
+             self.last_update_time >= self.updater.last_update_time ):
             return False
+        self.last_update_time = self.updater.last_update_time
+        if self.updater.status == "stopped":
+            gobject.idle_add(self.connection_lost)
+            return False
+
+        self.updater.set_update(False)
+        if not self.should_group_families:
+            self.task_list = deepcopy(self.updater.task_list)
+        else:
+            self.task_list = []
+
+        self.state_summary = deepcopy(self.updater.state_summary)
+        self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
+        self.ancestors = deepcopy(self.updater.ancestors)
+        self.descendants = deepcopy(self.updater.descendants)
+        self.updater.set_update(True)
 
         if self.should_group_families:
             for key, val in self.ancestors.items():
@@ -652,42 +468,7 @@ class lupdater(threading.Thread):
             except:
                 # bad regex (TODO - dialog warn from main thread - idle_add?)
                 self.task_list = []
-
-        # always update global info
-        self.global_summary = glbl
-
-        if glbl['stopping']:
-            self.status = 'stopping'
-
-        elif glbl['paused']:
-            self.status = 'held'
-
-        elif glbl['will_pause_at']:
-            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
-
-        elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl[ 'will_stop_at' ]
-
-        else:
-            self.status = 'running'
-
-        self.info_bar.set_status( self.status )
-
-        self.mode = glbl['run_mode']
-
-        dt = glbl[ 'last_updated' ]
-        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
-
-        # only update states if a change occurred
-        if compare_dict_of_dict( states, self.state_summary ):
-            #print "STATE UNCHANGED"
-            # only update if state changed
-            return False
-        else:
-            #print "STATE CHANGED"
-            self.state_summary = states
-            self.fam_state_summary = fam_states
-            return True
+        return True
 
     def digitize( self, ctin ):
         # Digitize cycle time for the LED panel display.
@@ -865,21 +646,13 @@ class lupdater(threading.Thread):
 
         return False
 
-    def update_globals( self ):
-        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
-        self.info_bar.set_mode( self.mode )
-        self.info_bar.set_time( self.dt )
-        return False
-
     def run(self):
         glbl = None
         states = {}
         while not self.quit:
-            if self.poll_schd.ready() and self.update():
+            if self.update():
                 gobject.idle_add( self.update_gui )
-                # TODO - only update globals if they change, as for tasks
-                gobject.idle_add( self.update_globals )
-            sleep(1)
+            sleep(0.2)
         else:
             pass
             ####print "Disconnecting task state info thread"

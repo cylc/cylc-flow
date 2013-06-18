@@ -18,11 +18,12 @@
 
 from cylc import cylc_pyro_client, dump, graphing
 from cylc.cycle_time import ct
-from cylc.gui.stateview import compare_dict_of_dict, PollSchd
+from cylc.gui.stateview import compare_dict_of_dict
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
 from cylc.TaskID import TaskID
+from copy import deepcopy
 import gobject
 import os
 import re
@@ -30,9 +31,9 @@ import sys
 import threading
 from time import sleep
 
-class xupdater(threading.Thread):
-    def __init__(self, cfg, theme, info_bar, xdot ):
-        super(xupdater, self).__init__()
+class GraphUpdater(threading.Thread):
+    def __init__(self, cfg, updater, theme, info_bar, xdot ):
+        super(GraphUpdater, self).__init__()
 
         self.quit = False
         self.ignore_suicide = False
@@ -52,6 +53,7 @@ class xupdater(threading.Thread):
         self.filter_exclude = None
         self.state_filter = None
 
+        self.should_group_families = False
         self.descendants = []
         self.family_nodes = []
         self.graphed_family_nodes = []
@@ -60,20 +62,24 @@ class xupdater(threading.Thread):
         self.prev_graph_id = ()
 
         self.cfg = cfg
+        self.updater = updater
         self.theme = theme
         self.info_bar = info_bar
-        self.stop_summary = None
+        self.state_summary = {}
+        self.fam_state_summary = {}
+        self.global_summary = {}
+        self.last_update_time = None
 
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
         self.status = None
-        self.poll_schd = PollSchd()
 
+        self.prev_graph_id = ()
+        
         # empty graphw object:
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
  
-        self.reconnect()
         # TODO - handle failure to get a remote proxy in reconnect()
 
         self.graph_warned = {}
@@ -86,57 +92,8 @@ class xupdater(threading.Thread):
 
         self.graph_frame_count = 0
 
-    def reconnect( self ):
-
-        self.prev_graph_id = ()
-        try:
-            client = cylc_pyro_client.client( 
-                    self.cfg.suite,
-                    self.cfg.pphrase,
-                    self.cfg.owner,
-                    self.cfg.host,
-                    self.cfg.pyro_timeout,
-                    self.cfg.port )
-            self.god = client.get_proxy( 'state_summary' )
-            self.sinfo = client.get_proxy( 'suite-info' )
-
-            # on reconnection retrieve static info
-            self.family_nodes = self.sinfo.get( 'family nodes' )
-            self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
-            self.descendants = self.sinfo.get( 'first-parent descendants' )
-            self.ancestors = self.sinfo.get('first-parent ancestors' )
-            self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
-        except:
-            # connection lost
-            if self.stop_summary is None:
-                self.stop_summary = dump.get_stop_state_summary(
-                                                            self.cfg.suite,
-                                                            self.cfg.owner,
-                                                            self.cfg.host)
-                if self.stop_summary is not None and any(self.stop_summary):
-                    self.info_bar.set_stop_summary(self.stop_summary)
-            return False
-        else: 
-            self.stop_summary = None
-            self.status = "connected"
-            self.first_update = True
-            self.info_bar.set_status( self.status )
-            if self.live_graph_movie:
-                try:
-                    mkdir_p( self.live_graph_dir )
-                except Exception, x:
-                    print >> sys.stderr, x
-                    print >> sys.stderr, "Disabling live graph movie"
-                    self.live_graph_movie = False
-            self.first_update = True
-            self.status = "connected"
-            self.poll_schd.stop()
-            self.info_bar.set_status( self.status )
-            return True
-
     def connection_lost( self ):
         self.status = "stopped"
-        self.poll_schd.start()
         self.prev_graph_id = ()
         self.normal_fit = True
         # Get an *empty* graph object
@@ -145,14 +102,7 @@ class xupdater(threading.Thread):
         # TODO - if connection is lost we should just set the state
         # summary arrays to empty and update to clear only once.
         self.update_xdot()
-
-        if not self.quit:
-            self.info_bar.set_state( [] )
-            self.info_bar.set_status( self.status )
-            if self.stop_summary is not None and any(self.stop_summary):
-                self.info_bar.set_stop_summary(self.stop_summary)
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
-        self.reconnect()
         return False
 
     def get_summary( self, task_id ):
@@ -160,12 +110,42 @@ class xupdater(threading.Thread):
                                self.fam_state_summary, self.descendants )
 
     def update(self):
-        #print "Updating"
-        try:
-            [glbl, states_full, fam_states_full] = self.god.get_state_summary()
-        except:
-            gobject.idle_add( self.connection_lost )
+        #print "Attempting Update"
+        if ( self.last_update_time is not None and
+             self.last_update_time >= self.updater.last_update_time ):
             return False
+        
+        if self.updater.status == "stopped":
+            gobject.idle_add(self.connection_lost)
+            return False
+
+        self.updater.set_update(False)
+        if not self.should_group_families:
+            self.task_list = deepcopy(self.updater.task_list)
+        else:
+            self.task_list = []
+        self.live_graph_movie = self.updater.live_graph_movie
+        self.live_graph_dir = self.updater.live_graph_dir
+        states_full = deepcopy(self.updater.state_summary)
+        fam_states_full = deepcopy(self.updater.fam_state_summary)
+        self.ancestors = deepcopy(self.updater.ancestors)
+        self.descendants = deepcopy(self.updater.descendants)
+        self.family_nodes = deepcopy(self.updater.family_nodes)
+        self.graphed_family_nodes = deepcopy(self.updater.graphed_family_nodes)
+        self.global_summary = deepcopy(self.updater.global_summary)
+        self.updater.set_update(True)
+
+        if self.last_update_time is None:
+            self.first_update = True
+            if self.live_graph_movie:
+                try:
+                    mkdir_p( self.live_graph_dir )
+                except Exception, x:
+                    print >> sys.stderr, x
+                    print >> sys.stderr, "Disabling live graph movie"
+                    self.live_graph_movie = False
+
+        self.last_update_time = self.updater.last_update_time
 
         # The graph layout is not stable even when (py)graphviz is  
         # presented with the same graph (may be a node ordering issue
@@ -190,30 +170,6 @@ class xupdater(threading.Thread):
             f_states[id]['name' ] = fam_states_full[id]['name' ]
             f_states[id]['label'] = fam_states_full[id]['label']
             f_states[id]['state'] = fam_states_full[id]['state'] 
-        # always update global info
-        self.global_summary = glbl
-
-        if glbl['stopping']:
-            self.status = 'stopping'
-
-        elif glbl['paused']:
-            self.status = 'held'
-       
-        elif glbl['will_pause_at']:
-            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
-
-        elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl[ 'will_stop_at' ]
-
-        else:
-            self.status = 'running'
-
-        self.info_bar.set_status( self.status )
-
-        self.mode = glbl['run_mode']
-
-        dt = glbl[ 'last_updated' ]
-        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" ) 
 
         # only update states if a change occurred, or action required
         if self.action_required:
@@ -230,25 +186,19 @@ class xupdater(threading.Thread):
             return True
         else:
             return False
-
-    def update_globals( self ):
-        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
-        self.info_bar.set_mode( self.mode )
-        self.info_bar.set_time( self.dt )
-        return False
  
     def run(self):
         glbl = None
         while not self.quit:
-            if self.poll_schd.ready() and self.update():
-                needed_no_redraw = self.update_graph()
+            if self.update():
+                if self.global_summary:
+                    needed_no_redraw = self.update_graph()
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
                 # be unnecessary anyway (due to xdot internals?)
                 ################ gobject.idle_add( self.update_xdot )
-                self.update_xdot( no_zoom=needed_no_redraw )
-                gobject.idle_add( self.update_globals )
-            sleep(1)
+                    self.update_xdot( no_zoom=needed_no_redraw )
+            sleep(0.2)
         else:
             pass
             ####print "Disconnecting task state info thread"
@@ -310,7 +260,8 @@ class xupdater(threading.Thread):
         # TODO - mv ct().get() out of this call (for error checking):
         # TODO - remote connection exception handling?
         try:
-            gr_edges = self.sinfo.get( 'graph raw', ct(oldest).get(), ct(newest).get(),
+            gr_edges = self.updater.sinfo.get(
+                    'graph raw', ct(oldest).get(), ct(newest).get(),
                     rawx, self.group, self.ungroup, self.ungroup_recursive, 
                     self.group_all, self.ungroup_all) 
         except Exception:  # PyroError

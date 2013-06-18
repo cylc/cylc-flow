@@ -19,7 +19,7 @@
 import gtk
 import os, re
 import gobject
-from stateview import lupdater
+from stateview import DotUpdater
 from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
 from cylc.TaskID import TaskID
@@ -29,9 +29,11 @@ class ControlLED(object):
     """
 LED suite control interface.
     """
-    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors):
+    def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
+                 log_colors):
 
         self.cfg = cfg
+        self.updater = updater
         self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
@@ -54,7 +56,8 @@ LED suite control interface.
 
         main_box.pack_start( sw, expand=True, fill=True )
         
-        self.t = lupdater( self.cfg, treeview, self.info_bar, self.usercfg )
+        self.t = DotUpdater( self.cfg, self.updater, treeview,
+                             self.info_bar, self.usercfg )
         self.t.start()
 
         return main_box
