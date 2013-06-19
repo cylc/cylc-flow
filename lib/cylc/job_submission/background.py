@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from job_submit import job_submit
+from cylc.command_env import pr_scripting_sl
 
 class background( job_submit ):
     """
@@ -31,6 +32,7 @@ class background( job_submit ):
     LOCAL_COMMAND_TEMPLATE = ( "(%(command)s & echo $!; wait )" )
 
     REMOTE_COMMAND_TEMPLATE = ( " '"
+            + pr_scripting_sl + "; "
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s" 
