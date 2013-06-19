@@ -550,6 +550,8 @@ class lupdater(threading.Thread):
         self.led_liststore = treeview.get_model()
         self._prev_tooltip_task_id = None
 
+        self.task_list = []
+
         self.reconnect()
 
         # generate task state icons
