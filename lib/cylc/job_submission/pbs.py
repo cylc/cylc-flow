@@ -86,11 +86,11 @@ class pbs( job_submit ):
           * 'R' (running) = running
         """
         cmd = ( "RUNNING=false; QUEUED=false; "
-                + "qstat -J " + jid + " | grep " + jid
+                + "qstat " + jid + " | grep " + jid
                 + " | awk \"{ print \$5}\" | egrep \"^R$\" > /dev/null; "
                 + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
                 + "if ! $QUEUED; then "
-                + "  qstat -J " + jid + " | grep " + jid
+                + "  qstat " + jid + " | grep " + jid
                 + "   | awk \"{ print \$5 }\" | egrep \"^Q$\" > /dev/null; "
                 + "  [[ $? == 0 ]] && QUEUED=true; "
                 + "fi; "
