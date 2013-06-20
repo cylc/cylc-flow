@@ -19,27 +19,22 @@
 import os
 from global_config import gcfg
 from rolling_archive import rolling_archive
-from mkdir_p import mkdir_p
-
 
 class dumper( object ):
 
-    def __init__( self, suite, run_mode='live', clock=None, start_tag=None, stop_tag=None ):
+    def __init__( self, suite, run_mode='live', clock=None, ict=None, stop_tag=None ):
         self.run_mode = run_mode
         self.clock = clock
-        self.start_tag = start_tag
+        self.ict = ict
         self.stop_tag = stop_tag
-        globals = gcfg
-        self.dir = os.path.join( globals.cfg['task hosts']['local']['run directory'], suite, 'state' ) 
+        self.dir = gcfg.get_derived_host_item( suite, 'suite state directory' )
         self.path = os.path.join( self.dir, 'state' )
-        try:
-            mkdir_p( self.dir )
-        except Exception, x:
-            # To Do: handle error 
-            raise 
-
-        arclen = globals.cfg[ 'state dump rolling archive length' ]
+        arclen = gcfg.cfg[ 'state dump rolling archive length' ]
         self.archive = rolling_archive( self.path, arclen )
+
+    def set_cts( self, ict, fct ):
+        self.ict = ict
+        self.stop_tag = fct
 
     def get_path( self ):
         return self.path
@@ -61,8 +56,8 @@ class dumper( object ):
         else:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
-        if self.start_tag:
-            FILE.write( 'initial cycle : ' + self.start_tag + '\n' )
+        if self.ict:
+            FILE.write( 'initial cycle : ' + self.ict + '\n' )
         else:
             FILE.write( 'initial cycle : (none)\n' )
 
@@ -76,7 +71,7 @@ class dumper( object ):
         FILE.write( 'Begin task states\n' )
 
         for itask in tasks:
-            # TO DO: CHECK THIS STILL WORKS 
+            # TODO - CHECK THIS STILL WORKS 
             itask.dump_class_vars( FILE )
             # task instance variables
             itask.dump_state( FILE )

@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
 
@@ -67,18 +66,4 @@ except Exception, x:
         raise
     print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)
-
-# acquire a task lock if using the lockserver
-if not cylc_mode.mode().is_raw():
-    from cylc.locking.task_lock import task_lock
-    try:
-        if not task_lock().acquire():
-            # (don't send task failed message - handled by trapping)
-            raise SystemExit( "Failed to acquire a task lock" )
-    except Exception, z:
-        # (don"t send task failed message - handled by trapping)
-        print >> sys.stderr, z
-        if debug:
-            raise
-        raise SystemExit( "Failed to connect to the lockserver" )
 

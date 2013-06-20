@@ -25,9 +25,8 @@ import re
 from cylc.print_cfg import print_cfg
 from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
-from cylc.command_prep import prep_file
 
-parser = cop( usage = """cylc [info] get-config [OPTIONS] REG
+parser = cop( usage = """cylc [info] get-config [OPTIONS] ARGS
 
 Print configuration settings parsed from a suite definition, after
 runtime inheritance processing and including default values for items
@@ -57,7 +56,7 @@ $ cylc get-config --item=[runtime][modelX] foo.bar
 [[[environment]]]
     FOO = foo
     BAR = bar
-...""" )
+...""", jset=True, prep=True )
 
 parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
         help="The config item to print. Can be used multiple "
@@ -96,11 +95,11 @@ parser.add_option( "-a", "--all-tasks",
         action="store_true", default=False, dest="alltasks" )
 
 ( options, args ) = parser.parse_args()
+
+# TODO - check db owner still is (or should be?) passed through to taskdefs:
 owner = options.db_owner
 
-### To Do: check if owner should be/ is passed through to taskdefs 
-### since the config-optimization changes.
-suite, suiterc = prep_file( args[0], options ).execute()
+suite, suiterc, junk = parser.get_suite()
 
 try:
     config = config( suite, suiterc, 

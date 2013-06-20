@@ -188,7 +188,7 @@ class db_updater(threading.Thread):
                 iter = ts.get_iter(opath)
             except ValueError:
                 # removed the item pointed to
-                # TO DO: NEED TO WORRY ABOUT OTHERS AT THIS LEVEL?
+                # TODO - NEED TO WORRY ABOUT OTHERS AT THIS LEVEL?
                 iter = None
         else:
             iter = None
@@ -575,7 +575,7 @@ class dbchooser(object):
         # this seems to work with keypress and button:
         menu.popup( None, None, None, 0, event.time )
 
-        # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
+        # TODO - POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return False
 

@@ -24,94 +24,58 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import cop
+from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] reset [OPTIONS] ARGS
 
-Force a task's state to:
- 1/ 'ready' .... (default)   ...... all prerequisites satisfied (default) 
- 2/ 'waiting' .. (--waiting) ...... prerequisites not satisfied yet
- 3/ 'succeeded'  (--succeeded) .... all outputs completed
- 4/ 'failed' ... (--failed) 
- Or:
- 5/ force it to spawn if it hasn't done so already (--spawn)
+Reset one or more tasks in a running suite to one of the following states:
+  * 'waiting' .... prerequisites not satisfied 
+  * 'ready' ...... prerequisites satisfied
+  * 'succeeded' .. outputs completed
+  * 'failed' ..... failed 
+
+Additionally you can choose:
+  * 'spawn' ...... force tasks to spawn if they haven't done so already
  
-Resetting a task to 'ready' will cause it to trigger immediately unless
-the suite is held, in which case the task will trigger when normal
-operation is resumed.
+Tasks set to 'ready' will trigger immediately (see also "cylc trigger").
 
-Forcing a task to spawn a successor may be necessary in the case of a 
-failed "sequential task" that cannot be re-run successfully after fixing
-the problem, because sequential tasks do not spawn until they succeed. 
-Alternatively, you could force the failed task to the succeeded state, 
-or insert a new instance into the suite at the next cycle time.""",
-    pyro=True,
-    argdoc=[ ('REG', 'Suite name'), ('TASK', 'Target task ID')])
+If a failed "sequential" task cannot re-run, forcing it to spawn may
+be required as sequential tasks only spawn on succeeding (or consider
+resetting it to "succeeded" or "cylc insert"ing the next instance).
+""" + multitask_usage, pyro=True, multitask=True,
+        argdoc=[ ('REG', 'Suite name'),
+            ('MATCH', 'Task or family name matching regular expression'),
+            ('TAG', 'Task cycle time or integer tag') ])
 
-parser.add_option( "--ready", 
-        help="Force task to the 'ready' state.",
-        action="store_true", default=False, dest="ready" )
+allowed_states = ['waiting', 'ready', 'succeeded', 'failed', 'spawn']
 
-parser.add_option( "--waiting", 
-        help="Force task to the 'waiting' state.",
-        action="store_true", default=False, dest="waiting" )
-
-parser.add_option( "--succeeded", 
-        help="Force task to 'succeeded' state.", 
-        action="store_true", default=False, dest="succeeded" )
-
-parser.add_option( "--failed", 
-        help="Force task to 'failed' state.", 
-        action="store_true", default=False, dest="failed" )
-
-parser.add_option( "--spawn", 
-        help="Force a task to spawn its successor if it hasn't already.", 
-        action="store_true", default=False, dest="spawn" )
+parser.add_option( "-s", "--state", metavar="STATE", 
+        help="Reset task state to STATE, "
+        "must be one of " + ' '.join( allowed_states ),
+        action="store", default=None, dest="state" )
 
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-count = [ options.waiting, options.succeeded, options.failed, options.ready, options.spawn ].count( True )
-if count != 0 and count != 1:
-    parser.error( "Specify none or one of --ready, --waiting, --succeeded, --failed, or --spawn" )
+if options.state not in allowed_states:
+    parser.error( "Illegal STATE value: " + options.state )
 
-if options.waiting:
-    state = 'waiting'
-elif options.succeeded:
-    state = 'succeeded'
-elif options.failed:
-    state = 'failed'
-elif options.spawn:
-    state = 'spawn'
-else:
-    state = 'ready'
-
-task_id = args[1]
-
-try:
-    tid = TaskID( task_id )
-except TaskIDError,x:
-    if options.debug:
-        raise
-    raise SystemExit(x)
-else:
-    task_id = tid.getstr()
+name = args[1]
+tag = args[2]
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+    prompt( 'Reset task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
+    result = proxy.put( 'reset task state', name, tag, options.state, options.is_family )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-prompt( 'Reset task ' + task_id + ' in ' + suite, options.force )
-result = proxy.put( 'reset task state', task_id, state )
+    sys.exit(x)
 
 if result[0]:
     print result[1]

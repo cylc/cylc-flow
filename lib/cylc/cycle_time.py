@@ -60,6 +60,8 @@ class ct( object ):
         return strftime( dtvalue, "%Y%m%d%H%M%S" )
 
     def parse( self, strx ):
+        if strx == "now":
+            strx = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         n = len(strx)
         if n == 4 or n == 6 or n == 8 or n == 10 or n == 12 or n == 14:
             self.strvalue = strx + ct.YYYYMMDDHHmmss[n:]
@@ -88,7 +90,7 @@ class ct( object ):
             raise InvalidCycleTimeError( x.__str__() + ': ' + self.get_formatted() )
 
     def get( self ):
-        #### TO DO: INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
+        #### TODO - INTEGER CTIME COMPARISONS REQUIRE USE OF SAME NUMBER
         #### OF DIGITS EVERYWHERE
         #return self.strvalue
         return self.strvalue[0:10] # just YYYYMMDDHH for now

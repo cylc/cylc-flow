@@ -36,15 +36,16 @@ class TaskStateError( Exception ):
 class task_state(object):
 
     legal = [ 'waiting',
+              'runahead', 
+              'held',
               'queued',
               'submitting',
               'submitted',
+              'submit-failed',
               'running',
               'succeeded',
               'failed',
-              'retrying',
-              'held',
-              'runahead' ]
+              'retrying' ]
 
     @classmethod
     def is_legal( cls, state ):
@@ -56,6 +57,7 @@ class task_state(object):
             'queued'     : '_queued',
             'submitting' : 'su_bmitting',
             'submitted'  : 'sub_mitted',
+            'submit-failed'  : 'submit-f_ailed',
             'running'    : '_running',
             'succeeded'  : '_succeeded',
             'failed'     : '_failed',
@@ -69,6 +71,7 @@ class task_state(object):
             'queued'     : "\033[1;38;44m",
             'submitting' : "\033[1;32m",
             'submitted'  : "\033[1;33m",
+            'submit-failed'  : "\033[1;34m",
             'running'    : "\033[1;37;42m",
             'succeeded'  : "\033[0m",
             'failed'     : "\033[1;37;41m",
@@ -99,12 +102,6 @@ class task_state(object):
         if self.__class__.is_legal( state ):
             self.state[ 'status' ] = state
 
-    def has_key( self, key ):
-        if key in self.state.keys():
-            return True
-        else:
-            return False
-
     def get_status( self ):
         return self.state[ 'status' ]
 
@@ -113,45 +110,10 @@ class task_state(object):
 
     def has_spawned( self ):
         return self.state[ 'spawned' ] == 'true'
-        if self.state[ 'spawned' ] == 'true':
-            return True
-        else:
-            return False
 
-    def is_succeeded( self ):
-        if self.state[ 'status' ] == 'succeeded':
-            return True
-        else:
-            return False
-
-    def is_failed( self ):
-        if self.state[ 'status' ] == 'failed':
-            return True
-        else:
-            return False
-
-    def is_waiting( self ):
-        # TO DO: check why we're identifying retrying as waiting here:
-        if self.state[ 'status' ] == 'waiting' or \
-        self.state[ 'status' ] == 'retrying':
-            return True
-        else:
-            return False
-
-    def is_submitting( self ):
-        if self.state[ 'status' ] == 'submitting':
-            return True
-        else:
-            return False
-
-    def is_submitted( self ):
-        if self.state[ 'status' ] == 'submitted':
-            return True
-        else:
-            return False
-
-    def is_currently( self, state ):
-        return state == self.state[ 'status' ]
+    def is_currently( self, *states ):
+        """Return true if current state matches any state in states."""
+        return self.state[ 'status' ] in states
 
     # generic set for special dumpable state required by some tasks.
     def set( self, item, value ):

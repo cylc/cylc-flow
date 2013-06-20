@@ -24,23 +24,20 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
-from cylc.CylcOptionParsers import cop
+from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 
-parser = cop( """cylc [control] remove|kill [OPTIONS] ARGS
+parser = cop( """cylc [control] remove [OPTIONS] ARGS
 
-Remove a single task, or all tasks with a common TAG (cycle time or
-integer) from a running suite. 
+Remove one or more tasks, or all tasks with a common TAG (cycle time or
+integer tag) from a running suite. 
 
-Target tasks will be forced to spawn successors before being removed if
-they have not done so already, unless you use '--no-spawn'.""",
-    pyro=True,
+Tasks will spawn successors first if they have not done so already.
+""" + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"), 
-            ("TARGET", "NAME"+TaskID.DELIM+"TAG to remove a single task;" +
-               "CYCLE or INT to remove all tasks with the same tag.")])
+        ('[MATCH]', 'Task or family name matching regular expression'),
+        ('TAG', 'Task cycle time or integer tag') ])
 
 parser.add_option( "--no-spawn", 
         help="Do not spawn successors before removal.",
@@ -50,60 +47,31 @@ parser.add_option( "--no-spawn",
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-target = args[1]
-
-kill_tag = False
-kill_task = False
-
-try:
-    # is target a task ID
-    tid = TaskID(target)
-except TaskIDError:
-    # no
-    kill_tag = True
-    try:
-        # is it a cycle time?
-        ct(target)
-    except CycleTimeError,x:
-        # nope: is it an async integer tag?
-        try:
-            int( target )
-        except ValueError:
-            # nope: not task ID, date time, or TAG
-            raise SystemExit( "ERROR, invalid kill target: " + target )
-        else:
-            # is probably an async TAG
-            pass
-    else:
-        # is a cycle time
-        pass
+if len(args) == 3:
+    name = args[1]
+    tag = args[2]
+    remove_tag = False
 else:
-    # is a task id
-    kill_task = True
-    target = tid.getstr()
+    tag = args[1]
+    remove_tag = True
+
+spawn = not options.no_spawn
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+    if remove_tag:
+        prompt( 'remove ALL tasks at ' + tag + ' in ' + suite, options.force )
+        result = proxy.put( 'remove cycle', tag, spawn )
+    else:
+        prompt( 'remove task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
+        result = proxy.put( 'remove task', name, tag, options.is_family, spawn )
+
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-if kill_tag:
-    prompt( 'Kill ALL tasks with tag ' + target + ' in ' + suite, options.force )
-    if options.no_spawn:
-        result = proxy.put( 'kill cycle', False, target ) # die_cycle( target )
-    else:
-        result = proxy.put( 'kill cycle', True, target ) # spawn_and_die_cycle( target )
-
-if kill_task:
-    prompt( 'Kill task ' + target + ' in ' + suite, options.force )
-    if options.no_spawn:
-       result = proxy.put( 'kill task', False, target ) # die( target )
-    else:
-       result = proxy.put( 'kill task', True, target ) # spawn_and_die( target )
+    sys.exit(x)
 
 if result[0]:
     print result[1]

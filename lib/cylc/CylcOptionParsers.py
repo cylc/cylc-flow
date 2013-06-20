@@ -20,8 +20,13 @@ import os, re
 from optparse import OptionParser
 from suite_host import hostname
 from owner import user
+from cylc.command_prep import prep_file
 
 """Common options for all cylc commands."""
+
+multitask_usage = """
+For matching multiple tasks or families at once note that MATCH is 
+interpreted as a full regular expression, not a simple shell glob."""
 
 class db_optparse( object ):
     def __init__( self, dbopt ):
@@ -50,12 +55,16 @@ class db_optparse( object ):
 
 class cop( OptionParser ):
 
-    def __init__( self, usage, argdoc=[('REG', 'Suite name')], pyro=False, gcylc=False ):
+    def __init__( self, usage, argdoc=None, pyro=False, noforce=False,
+            jset=False, multitask=False, prep=False, twosuites=False ):
 
-        # commands that interact with a running suite ("controlcom=True")
-        # normally get remote access via Pyro RPC; but optionally
-        # ("--use-ssh") you can use passwordless ssh to re-invoke the
-        # command on the suite host, as for non-control commands.
+        if argdoc == None:
+            if not prep:
+                argdoc = [('REG', 'Suite name')]
+            else:
+                argdoc = [('SUITE', 'Suite name or path')]
+
+        # noforce=True is for commands that don't use interactive prompts at all
 
         usage += """
 
@@ -65,7 +74,14 @@ Arguments:"""
         self.n_optional_args = 0
         self.unlimited_args = False
         self.pyro = pyro
-        self.gcylc = gcylc
+        self.jset = jset
+
+        self.multitask = multitask
+
+        self.prep = prep
+        self.suite_info = []
+        self.twosuites = twosuites
+ 
         maxlen = 0
         for arg in argdoc:
             if len(arg[0]) > maxlen:
@@ -134,25 +150,55 @@ Arguments:"""
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
-            self.add_option( "-f", "--force",
-                help="Do not ask for confirmation before acting.",
-                action="store_true", default=False, dest="force" )
+            if not noforce:
+                self.add_option( "-f", "--force",
+                        help="Do not ask for confirmation before acting. Note that "
+                        "it is not necessary to use this option if interactive command "
+                        "prompts have been disabled in the site/user config files.",
+                        action="store_true", default=False, dest="force" )
 
-        if gcylc or not pyro:
+        if self.jset:
             self.add_option( "-s", "--set", metavar="NAME=VALUE",
-                help="Set the value of a template variable in the suite "
-                "definition; can be used multiple times to set multiple "
-                "variables.  WARNING: these settings do not persist "
-                "across restarts, you have to set them again on the "
-                "\"cylc restart\" command line.",
-                action="append", default=[], dest="templatevars" )
+                    help="Set the value of a Jinja2 template variable in the suite "
+                    "definition. This option can be used multiple times on the command "
+                    "line.  WARNING: these settings do not persist across suite restarts; "
+                    "they need to be set again on the \"cylc restart\" command line.",
+                    action="append", default=[], dest="templatevars" )
 
             self.add_option( "--set-file", metavar="FILE",
-                help="Set the value of template variables in the suite "
-                "definition from a file containing NAME=VALUE pairs (one per line). "
-                "WARNING: these settings do not persist across restarts, you "
-                "have to set them again on the \"cylc restart\" command line.",
-                action="store", default=None, dest="templatevars_file" )
+                    help="Set the value of Jinja2 template variables in the suite "
+                    "definition from a file containing NAME=VALUE pairs (one per line). "
+                    "WARNING: these settings do not persist across suite restarts; "
+                    "they need to be set again on the \"cylc restart\" command line.",
+                    action="store", default=None, dest="templatevars_file" )
+
+        if self.multitask:
+            self.add_option( "-m", "--family", 
+                    help="Match members of named families rather than tasks.",
+                    action="store_true", default=False, dest="is_family" )
+
+    def get_suite( self, index=0 ):
+        return self.suite_info[index]
+
+    def _getdef( self, arg, options ):
+        suiterc = arg
+        if os.path.isdir( suiterc ):
+            # directory
+            suite = suiterc
+            suiterc = os.path.join( suiterc, 'suite.rc' )
+        if os.path.isfile( suiterc ):
+            # suite.rc file
+            suite = os.path.basename( os.path.dirname( suiterc ))
+            suiterc = os.path.abspath( suiterc)
+            # TODO - return suite def include files to, as below
+            watchers = [suiterc]
+        else:
+            # must be a registered suite name
+            prepper = prep_file( arg, options )
+            suite, suiterc = prepper.execute()
+            # This lists top level suite def include files too:
+            watchers = prepper.get_rcfiles()
+        return suite, suiterc, watchers
 
     def parse_args( self ):
         (options, args) = OptionParser.parse_args( self )
@@ -168,9 +214,23 @@ Arguments:"""
         options.db = foo.get_db_location()
         options.db_owner = foo.get_db_owner()
 
-        if self.gcylc or not self.pyro:
+        if self.jset:
             if options.templatevars_file:
                 options.templatevars_file = os.path.abspath( options.templatevars_file )
+
+        if self.prep:
+            # allow file path or suite name 
+            try:
+                self.suite_info.append( self._getdef( args[0], options ))
+                if self.twosuites:
+                    self.suite_info.append( self._getdef( args[1], options ))
+            except IndexError:
+                if options.filename:
+                    # Empty args list is OK if we supplied a filename
+                    pass
+                else:
+                    # No filename, so we're expecting an argument
+                    self.error( "Need either a filename or suite name(s)" )
 
         return ( options, args )
 

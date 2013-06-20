@@ -18,14 +18,12 @@
 
 import Pyro.core
 import os,sys
-import os
+from cylc.owner import user
 
 from lockserver import lockserver
 
 class task_lock(object):
-    # NOTE: THE FOLLOWING COMMENT MAY NO LONGER APPLY NOW THAT
-    # TASK-SPECIFIC LOGS ARE GONE?
-
+    # TODO - (old!) this may not apply now that task-specific logs are gone:
     # ATTEMPT TO ACQUIRE YOUR LOCK AFTER SENDING THE CYLC START MESSAGE
     # so that failure to lock will be reported to the cylc task logs, as
     # well as to stdout, without causing cylc to complain that it has
@@ -35,70 +33,38 @@ class task_lock(object):
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has succeeded). 
 
-    def __init__( self, task_id=None, suite=None, owner=None, host=None, port=None ):
+    def __init__( self, task_id=None, suite=None, owner=user, host='localhost', port=None ):
         self.use_lock_server = False
         if 'CYLC_USE_LOCKSERVER' in os.environ:
             if os.environ[ 'CYLC_USE_LOCKSERVER' ] == 'True':
                 self.use_lock_server = True
+        if not self.use_lock_server:
+            return
 
-        self.mode = 'raw'
-        if 'CYLC_MODE' in os.environ:
-            self.mode = os.environ[ 'CYLC_MODE' ]
-            # 'scheduler' or 'submit'
+        # 'scheduler', 'submit', (or 'raw' if job script run manually)
+        mode = os.environ.get( 'CYLC_MODE', 'raw' )
 
-        if task_id:
-            self.task_id = task_id
-        else:
-            if 'CYLC_TASK_ID' in os.environ.keys():
-                self.task_id = os.environ[ 'CYLC_TASK_ID' ]
-            elif self.mode == 'raw':
-                self.task_id = 'CYLC_TASK_ID'
-            else:
-                print >> sys.stderr, '$CYLC_TASK_ID not defined'
-                sys.exit(1)
+        # (lockserver and suite must be on the same host)
+        # (port=None forces a port scan)
+        for attr, key, default in (
+                ('task_id', 'CYLC_TASK_ID',         task_id ),
+                ('owner',   'CYLC_SUITE_OWNER',     owner   ),
+                ('host',    'CYLC_SUITE_HOST',      host    ),
+                ('port',    'CYLC_LOCKSERVER_PORT', port    )):
+            val = os.environ.get( key, default )
 
-        if suite:
-            self.suite = suite
-        else:
-            if 'CYLC_SUITE_REG_NAME' in os.environ.keys():
-                self.suite = os.environ[ 'CYLC_SUITE_REG_NAME' ]
-            elif self.mode == 'raw':
-                pass
-            else:
-                print >> sys.stderr, '$CYLC_SUITE_REG_NAME not defined'
-                sys.exit(1)
+            if mode is not 'raw' and key is not 'port':
+                if not val:
+                    sys.exit( 'ERROR: $' + key + ' not defined' )
 
-        if owner:
-            self.owner = owner
-        else:
-            if 'CYLC_SUITE_OWNER' in os.environ.keys():
-                self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
-            elif self.mode == 'raw':
-                pass
-            else:
-                print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
-                sys.exit(1)
+            setattr(self, attr, val)
 
-        # IT IS CURRENTLY ASSUMED THAT LOCKSERVER AND SUITE HOST ARE THE SAME
-        if host:
-            self.host = host
-        else:
-            if 'CYLC_SUITE_HOST' in os.environ.keys():
-                self.host = os.environ[ 'CYLC_SUITE_HOST' ]
-            elif self.mode == 'raw':
-                pass
-            else:
-                # we always define the host explicitly, but could
-                # default to localhost's fully qualified domain name.
-                print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
-                sys.exit(1)
-
-        # port here is the lockserver port, not the suite port
-        # (port = None forces scan).
-        self.port = port
-        if not self.port:
-            if 'CYLC_LOCKSERVER_PORT' in os.environ.keys():
-                self.port = os.environ[ 'CYLC_LOCKSERVER_PORT' ]
+        # back compat for ssh messaging from task host with cylc <= 5.1.1:
+        self.suite = os.environ.get('CYLC_SUITE_NAME')
+        if not self.suite:
+            self.suite = os.environ.get('CYLC_SUITE_REG_NAME')
+            if self.suite:
+                os.environ['CYLC_SUITE_NAME'] = self.suite
 
     def acquire( self ):
         # print statements here will go to task stdout and stderr
@@ -109,7 +75,9 @@ class task_lock(object):
  
         # Owner required here because cylc suites can run tasks as other
         # users - but the lockserver is owned by the suite owner:
+
         server = lockserver( self.host, owner=self.owner, port=self.port ).get()
+
         if server.acquire( self.task_id, self.suite ):
             print "Acquired task lock"
             return True
@@ -137,3 +105,4 @@ class task_lock(object):
         else:
             print >> sys.stderr, "WARNING", self.suite + ':' + self.task_id, "was not locked!"
             return True
+

@@ -40,14 +40,15 @@ class MyDotWindow2( xdot.DotWindow ):
             <toolitem action="Zoom100"/>
             <separator name="LandscapeSep"/>
             <toolitem action="Landscape"/>
-            <separator expand="true"/> 
+            <separator expand="true"/>
+            <toolitem action="Save"/>
             <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, watch, outfile=None, orientation="TB" ):
-        self.outfile = outfile
+            template_vars_file, watch, orientation="TB" ):
+        self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
@@ -97,6 +98,7 @@ class MyDotWindow2( xdot.DotWindow ):
             ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
             ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
+            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
         actiongroup.add_toggle_actions((
@@ -189,18 +191,39 @@ class MyDotWindow2( xdot.DotWindow ):
                     n.attr['color'] = 'royalblue'
  
         self.set_dotcode( graph.string() )
-        if self.outfile and not self.disable_output_image:
-            try:
-                graph.draw( self.outfile, prog='dot' )
-            except IOError, x:
-                print >> sys.stderr, x
-                self.disable_output_image = True
+        self.graph = graph
 
     def on_landscape( self, toolitem ):
         if toolitem.get_active():
             self.set_orientation( "LR" )  # Left to right ordering of nodes
         else:
             self.set_orientation( "TB" )  # Top to bottom (default) ordering
+
+    def save_action( self, toolitem ):
+        chooser = gtk.FileChooserDialog(title="Save Graph",
+                                        action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_SAVE,
+                                                 gtk.RESPONSE_OK))
+        
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        if self.outfile:
+            chooser.set_filename(self.outfile)
+        if chooser.run() == gtk.RESPONSE_OK:
+            self.outfile = chooser.get_filename()
+            if self.outfile:
+                try:
+                    self.graph.draw( self.outfile, prog='dot' )
+                except IOError, x:
+                    msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                            buttons=gtk.BUTTONS_OK,
+                                            message_format=str(x))
+                    msg.run()
+                    msg.destroy()
+            chooser.destroy()
+        else:
+            chooser.destroy()
 
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
@@ -249,25 +272,29 @@ class MyDotWindow( xdot.DotWindow ):
             <toolitem action="UnGroup"/>
             <separator name="LandscapeSep"/>
             <toolitem action="Landscape"/>
-            <separator expand="true"/> 
+            <toolitem action="IgnoreSuicide"/>
+            <toolitem action="IgnoreColdStart"/>
+            <separator expand="true"/>
+            <toolitem action="Save"/> 
             <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file,  watch, ctime, stop_after, raw,
-            outfile=None, orientation="TB" ):
-        self.outfile = outfile
+                 template_vars_file,  watch, ctime, stop_after,
+                 orientation="TB" ):
+        self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.ctime = ctime
-        self.raw = raw
+        self.raw = False
         self.stop_after = stop_after
         self.watch = []
         self.orientation = orientation
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
+        self.ignore_suicide = False
 
         gtk.Window.__init__(self)
 
@@ -311,10 +338,17 @@ class MyDotWindow( xdot.DotWindow ):
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
             ('Group', 'group', None, None, 'Group All Families', self.group_all),
             ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
+            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
             ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
         actiongroup.add_toggle_actions((
             ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+        ))
+        actiongroup.add_toggle_actions((
+            ('IgnoreSuicide', gtk.STOCK_CANCEL, None, None, 'Ignore Suicide Triggers', self.on_igsui),
+        ))
+        actiongroup.add_toggle_actions((
+            ('IgnoreColdStart', gtk.STOCK_YES, None, None, 'Ignore Cold Start Tasks', self.on_igcol),
         ))
 
         # Add the actiongroup to the uimanager
@@ -402,12 +436,13 @@ class MyDotWindow( xdot.DotWindow ):
             one = str( self.suiterc['visualization']['initial cycle time'])
             two = str(self.suiterc['visualization']['final cycle time'])
 
-        # TO DO: move ct().get() out of this call (for error checking): 
-        graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(), 
-                colored=True, raw=self.raw, 
-                group_nodes=group_nodes, ungroup_nodes=ungroup_nodes, 
+        # TODO: move ct().get() out of this call (for error checking): 
+        graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(),
+                raw=self.raw, group_nodes=group_nodes,
+                ungroup_nodes=ungroup_nodes, 
                 ungroup_recursive=ungroup_recursive, 
-                group_all=group_all, ungroup_all=ungroup_all )
+                group_all=group_all, ungroup_all=ungroup_all,
+                ignore_suicide=self.ignore_suicide )
 
         graph.graph_attr['rankdir'] = self.orientation
 
@@ -420,18 +455,47 @@ class MyDotWindow( xdot.DotWindow ):
                     node.attr['shape'] = 'doublecircle'
 
         self.set_dotcode( graph.string() )
-        if self.outfile and not self.disable_output_image:
-            try:
-                graph.draw( self.outfile, prog='dot' )
-            except IOError, x:
-                print >> sys.stderr, x
-                self.disable_output_image = True
+        self.graph = graph
 
     def on_landscape( self, toolitem ):
         if toolitem.get_active():
             self.set_orientation( "LR" )  # Left to right ordering of nodes
         else:
             self.set_orientation( "TB" )  # Top to bottom (default) ordering
+
+    def on_igsui( self, toolitem ):
+        self.ignore_suicide = toolitem.get_active()
+        self.get_graph()
+        
+    def on_igcol( self, toolitem ):
+        self.raw = toolitem.get_active()
+        self.get_graph()
+
+    def save_action( self, toolitem ):
+        chooser = gtk.FileChooserDialog(title="Save Graph",
+                                        action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_SAVE,
+                                                 gtk.RESPONSE_OK))
+        
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        if self.outfile:
+            chooser.set_filename(self.outfile)
+        if chooser.run() == gtk.RESPONSE_OK:
+            self.outfile = chooser.get_filename()
+            if self.outfile:
+                try:
+                    self.graph.draw( self.outfile, prog='dot' )
+                except IOError, x:
+                    msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                                            buttons=gtk.BUTTONS_OK,
+                                            message_format=str(x))
+                    msg.run()
+                    msg.destroy()
+            chooser.destroy()
+        else:
+            chooser.destroy()
 
     def set_orientation( self, orientation="TB" ):
         """Set the orientation of the graph node ordering."""
@@ -592,5 +656,6 @@ class xdot_widgets(object):
 
     def on_reload(self, action):
         self.widget.reload()
+        
 
 

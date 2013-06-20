@@ -22,7 +22,7 @@ ImportError due to pygraphviz/graphviz not being installed."""
 import re
 import pygraphviz
 from TaskID import TaskID, AsyncTag
-
+from graphnode import OFFSET_RE
 # TODO: Do we still need autoURL below?
 
 ddmmhh = TaskID.DELIM_RE
@@ -54,7 +54,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         node.attr[ 'label' ] = label
         if autoURL:
             if base:
-                # To Do: This is only called from cylc_add_edge in this
+                # TODO - This is only called from cylc_add_edge in this
                 # base class ... should it also be called from add_node?
                 node.attr[ 'URL' ] = 'base:' + n
             else:
@@ -81,6 +81,33 @@ class CGraphPlain( pygraphviz.AGraph ):
             self.style_node( r, autoURL, base=True )
             self.style_edge( l, r )
 
+    def add_edges( self, edges, ignore_suicide=False ):
+        edges.sort() # TODO: does sorting help layout stability?
+        for e in edges:
+            l, r, dashed, suicide, conditional = e
+            if suicide and ignore_suicide:
+                continue
+            if conditional:
+                if suicide:
+                    style='dashed'
+                    arrowhead='odot'
+                else:
+                    style='solid'
+                    arrowhead='onormal'
+            else:
+                if suicide:
+                    style='dashed'
+                    arrowhead='dot'
+                else:
+                    style='solid'
+                    arrowhead='normal'
+            if dashed:
+                # override
+                style='dashed'
+
+            self.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+
+
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
     This class automatically adds node and edge attributes 
@@ -104,7 +131,7 @@ class CGraph( CGraphPlain ):
             self.edge_attr[ attr ] = value
 
         # non-default node attributes by task name
-        # TO DO: ERROR CHECKING FOR INVALID TASK NAME
+        # TODO - ERROR CHECKING FOR INVALID TASK NAME
         self.task_attr = {}
 
         for item in self.vizconfig['node attributes']:
@@ -180,7 +207,7 @@ class edge( object):
         first_cycle = not not_first_cycle
 
         # strip off special outputs
-        left = re.sub( ':\w+', '', self.left )
+        left = re.sub( ':[\w-]+', '', self.left )
 
         if re.search( '\[\s*T\s*-\d+\s*\]', left ) and first_cycle:
             # ignore intercycle deps in first cycle
@@ -194,13 +221,14 @@ class edge( object):
             # left node is asynchronous, so override the cycler
             tag = '1'
         else:
-            m = re.search( '(\w+)\s*\[\s*T\s*([+-])(\d+)\s*\]', left )
+            m = re.match( OFFSET_RE, left )
             if m: 
-                left, sign, offset = m.groups()
+                left, offset = m.groups()
+                # the cycler expects foo[T-offset] so change sign:
+                offset = str( -int( offset ))
                 tag = self.cyclr.__class__.offset( tag, offset )
             else:
                 tag = tag
 
         return TaskID( left, tag )
-
 

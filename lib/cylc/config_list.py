@@ -16,18 +16,29 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from background import background
-
-class background_slow( background ):
+def get_expanded_float_list( cfg, allow_zeroes=True ):
     """
-This is a deliberately slow version of background job submission, used
-for cylc development purposes - sleep 10s before executing the task.
-
-Change sleep time by setting $CYLC_BG_SLOW_SLEEP in [cylc][[environment]]
-(or in the terminal environment before running the suite).
+    Expand list-with-multiplier config items, and coerce to float:
+         cfg = [1.0, 2*3.0, 4.0]
+       becomes:
+         cfg = [1.0, 3.0, 3.0, 4.0]
+    Used for retry delays and polling interval configuration.
+    Bad values (including multipliers) raise ValueError.
     """
-    # stdin redirection (< /dev/null) allows background execution
-    # even on a remote host - ssh can exit without waiting for the
-    # remote process to finish.
+    values = []
+    for item in cfg:
+        try:
+            mult, val = item.split('*')
+        except ValueError:
+            # too few values to unpack (single item)
+            values.append(float(item))
+        else:
+            # mult * val
+            values += int(mult) * [float(val)]
 
-    COMMAND_TEMPLATE = "sleep ${CYLC_BG_SLOW_SLEEP:-60}; %s </dev/null 1>%s 2>%s &"
+    if not allow_zeroes:
+        if 0.0 in values:
+            raise ValueError, '0 (zero) illegal'
+
+    return values
+

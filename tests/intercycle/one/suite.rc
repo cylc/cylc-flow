@@ -17,3 +17,7 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
         [[[6,18]]]
             graph = "A[T-6] => B"
 
+[runtime]
+    [[root]]
+        command scripting = "/bin/true" # fast
+

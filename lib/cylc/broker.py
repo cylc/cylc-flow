@@ -49,7 +49,7 @@ class broker(object):
 
         self.all_outputs.update( outputs )
 
-        # TO DO: SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
+        # TODO - SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
         # (note that successive tasks of the same type can register
         # identical outputs if they write staggered restart files).
 

@@ -86,7 +86,7 @@ LED suite control interface.
 
         task_id = name + TaskID.DELIM + ctime
 
-        is_fam = (name in self.t.families)
+        is_fam = (name in self.t.descendants)
 
         menu = self.get_right_click_menu( task_id, task_is_family=is_fam )
 
@@ -108,7 +108,7 @@ LED suite control interface.
         
         menu.popup( None, None, None, event.button, event.time )
 
-        # TO DO: popup menus are not automatically destroyed and can be
+        # TODO - popup menus are not automatically destroyed and can be
         # reused if saved; however, we need to reconstruct or at least
         # alter ours dynamically => should destroy after each use to
         # prevent a memory leak? But I'm not sure how to do this as yet.)
@@ -123,11 +123,11 @@ LED suite control interface.
 
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
+        group_on = toggle_item.get_active()
+        if group_on == self.t.should_group_families:
+            return False
+        self.t.should_group_families = group_on
         if isinstance( toggle_item, gtk.ToggleToolButton ):
-            group_on = toggle_item.get_active()
-            if group_on == self.t.should_group_families:
-                return False
-            self.t.should_group_families = group_on
             if group_on:
                 tip_text = "Dot View - Click to ungroup families"
             else:
@@ -135,10 +135,6 @@ LED suite control interface.
             self._set_tooltip( toggle_item, tip_text )
             self.group_menu_item.set_active( group_on )
         else:
-            group_on = toggle_item.get_active()
-            if group_on == self.t.should_group_families:
-                return False
-            self.t.should_group_families = group_on
             if toggle_item != self.group_menu_item:
                 self.group_menu_item.set_active( group_on )
             self.group_toolbutton.set_active( group_on )

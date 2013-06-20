@@ -117,7 +117,7 @@ class logviewer(object):
             tv.scroll_to_iter( f, 0 )
 
     def freeze_log( self, b ):
-        # TO DO: HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
+        # TODO - HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
         # PASSING IN ARGUMENTS?
         if b.get_active():
             self.t.freeze = True

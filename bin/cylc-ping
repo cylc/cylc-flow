@@ -40,16 +40,14 @@ the 'running' state.""",
             ('[TASK]', 'Task NAME'+TaskID.DELIM+'TAG (TAG is cycle time or integer)')])
 
 parser.add_option( "--print-ports",
-        help="Print the port range from the site config file "
-        "($CYLC_DIR/conf/globals/cylc.rc).",
+        help="Print the port range from the cylc site config file.",
         action="store_true",default=False, dest="print_ports" )
 
 ( options, args ) = parser.parse_args()
 
 if options.print_ports:
-    globals = gcfg
-    base = globals.cfg['pyro']['base port']
-    range = globals.cfg['pyro']['maximum number of ports']
+    base = gcfg.cfg['pyro']['base port']
+    range = gcfg.cfg['pyro']['maximum number of ports']
     print base, '<= port <=', base + range
     sys.exit(0)
 
@@ -64,7 +62,7 @@ try:
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
+    sys.exit(x)
 
 if len(args) == 1:
     sys.exit(0)
@@ -78,7 +76,12 @@ except TaskIDError,x:
 else:
     task_id = tid.getstr()
 
-result = proxy.get( 'ping task', task_id )
+try:
+    result = proxy.get( 'ping task', task_id )
+except Exception,x:
+    if options.debug:
+        raise
+    sys.exit(x)
 
 if not result.success:
     sys.exit( 'ERROR: ' + result.reason )

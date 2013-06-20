@@ -21,7 +21,6 @@ Documentation
 """
 
 import os, sys
-from cylc import cylc_mode
 from optparse import OptionParser
 from cylc.task_message import message
 
@@ -68,17 +67,6 @@ try:
 except KeyError:
     pass
 
-# release task lock if using the lockserver
-if not cylc_mode.mode().is_raw():
-    from cylc.locking.task_lock import task_lock
-    try:
-        if not task_lock().release():
-            raise SystemExit( "Failed to release task lock" )
-    except Exception, z:
-        print >> sys.stderr, z
-        if debug:
-            raise
-        raise SystemExit( "Failed to connect to a lockserver" )
 try:
     message( msg=reason, verbose=options.verbose ).send_failed()
 except Exception, x:

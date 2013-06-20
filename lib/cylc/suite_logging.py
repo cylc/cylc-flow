@@ -19,7 +19,6 @@
 import os, sys, re
 import logging, logging.handlers
 from global_config import gcfg
-from mkdir_p import mkdir_p
 
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
@@ -37,28 +36,21 @@ class LogFilter(logging.Filter):
         return True
 
 class suite_log( object ):
-    def __init__( self, suite, ext='suite' ):
-        globals = gcfg
-        self.dir = globals.get_suite_log_dir( suite, ext )
-        self.path = os.path.join( self.dir, 'log' ) 
-        self.roll_at_startup = globals.cfg['suite logging']['roll over at start-up']
-        self.n_keep = globals.cfg['suite logging']['rolling archive length']
-        self.max_bytes = globals.cfg['suite logging']['maximum size in bytes']
+    def __init__( self, suite ):
+        self.ldir = gcfg.get_derived_host_item( suite, 'suite log directory' )
+        self.path = os.path.join( self.ldir, 'log' ) 
+        self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']
+        self.n_keep = gcfg.cfg['suite logging']['rolling archive length']
+        self.max_bytes = gcfg.cfg['suite logging']['maximum size in bytes']
 
-    def mkdir( self ):
-        try:
-            mkdir_p( self.dir )
-        except Exception, x:
-            # To Do: handle error 
-            raise 
+    def get_dir( self ):
+        return self.ldir
 
     def get_path( self ):
         return self.path
 
-    def get_dir( self ):
-        return self.dir
-
     def get_log( self ):
+        # not really necessary: just get the main logger
         return logging.getLogger( 'main' )
    
     def pimp( self, level=logging.INFO, clock=None ):

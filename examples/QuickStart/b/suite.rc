@@ -21,7 +21,7 @@ description = "(Quick Start a plus a cold-start task)"
         post = PostA, PostB
         models = ColdModel, Model
  [[node attributes]]
-        post  = "style=unfilled", "color=blue", "shape=rectangle"
+        post  = "color=blue", "shape=rectangle"
         PostB = "style=filled", "fillcolor=seagreen2"
         models  = "style=filled", "fillcolor=red"
         ColdModel = "fillcolor=lightblue"

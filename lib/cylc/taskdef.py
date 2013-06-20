@@ -37,6 +37,7 @@ from cycle_time import ct
 from cycling import container
 from dictcopy import replicate, override
 from TaskID import TaskID
+from task_output_logs import logfiles
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -68,6 +69,7 @@ class taskdef(object):
 
         # some defaults
         self.intercycle = False
+        self.intercycle_offset = 0
         self.cycling = False
         self.asyncid_pattern = None
         self.modifiers = []
@@ -99,10 +101,10 @@ class taskdef(object):
         self.cond_triggers[ cycler ].append( [triggers,exp] )
 
     def add_to_valid_cycles( self, cyclr ):
-            if len( self.cyclers ) == 0:
-                self.cyclers = [cyclr]
-            else:
-                self.cyclers.append( cyclr )
+        if len( self.cyclers ) == 0:
+            self.cyclers = [cyclr]
+        else:
+            self.cyclers.append( cyclr )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -161,7 +163,7 @@ class taskdef(object):
         # [runtime][TASK][enviroment] is now held in a class variable).
         tclass.env_vars = OrderedDict()
 
-        tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
+        tclass.name = self.name        # TODO - NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
        
@@ -246,11 +248,13 @@ class taskdef(object):
         def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False ):
 
             sself.cycon = container.cycon( self.cyclers )
+            sself.intercycle_offset = self.intercycle_offset
             if self.cycling: # and startup:
                 # adjust only needed at start-up but it does not hurt to
                 # do it every time as after the first adjust we're already
                 # on-cycle.
                 sself.tag = sself.cycon.initial_adjust_up( start_tag )
+                sself.cleanup_cutoff = sself.cycon.offset( sself.tag, str(-int(sself.intercycle_offset)) )
             else:
                 sself.tag = start_tag
 
@@ -271,7 +275,7 @@ class taskdef(object):
             sself.logfiles = logfiles()
             for lfile in self.rtconfig[ 'extra log files' ]:
                 sself.logfiles.add_path( lfile )
-
+ 
             # outputs
             sself.outputs = outputs( sself.id )
             for outp in self.outputs:
@@ -287,7 +291,7 @@ class taskdef(object):
                 # cycling tasks with a final cycle time set
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
             else:
-                # TO DO: TEMPORARY HACK FOR ASYNC
+                # TODO - TEMPORARY HACK FOR ASYNC
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state, validate=validate )
 

@@ -45,21 +45,6 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
 
     label = gtk.Label("SUITE: " + reg )
 
-    label = gtk.Label("[output FILE]" )
-    outputfile_entry = gtk.Entry()
-    hbox = gtk.HBox()
-    hbox.pack_start( label )
-    hbox.pack_start(outputfile_entry, True) 
-    vbox.pack_start( hbox )
-
-    cold_rb = gtk.RadioButton( None, "Cold Start" )
-    cold_rb.set_active( True )
-    warm_rb = gtk.RadioButton( cold_rb, "Warm Start" )
-    hbox = gtk.HBox()
-    hbox.pack_start (cold_rb, True)
-    hbox.pack_start (warm_rb, True)
-    vbox.pack_start( hbox, True )
-
     label = gtk.Label("[START]: " )
     start_entry = gtk.Entry()
     start_entry.set_max_length(14)
@@ -85,8 +70,7 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     ok_button = gtk.Button( "_Graph" )
     ok_button.connect(
               "clicked",
-              lambda w: graph_suite( reg, warm_rb.get_active(),
-                                     outputfile_entry.get_text(),
+              lambda w: graph_suite( reg, 
                                      start_entry.get_text(),
                                      stop_entry.get_text(),
                                      graph_opts,  gcapture_windows,
@@ -105,12 +89,10 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     window.show_all()
 
 
-def graph_suite( reg, is_warm, ofile, start, stop, graph_opts,
+def graph_suite( reg, start, stop, graph_opts,
                  gcapture_windows, tmpdir, template_opts, window=None ):
     """Launch the cylc graph command with some options."""
     options = graph_opts
-    if ofile != '':
-        options += ' -o ' + ofile
 
     if True:
         if start != '':
@@ -132,8 +114,6 @@ def graph_suite( reg, is_warm, ofile, start, stop, graph_opts,
                 warning_dialog( str(x), window ).warn()
                 return False
 
-    if is_warm:
-        options += ' -w '
     options += ' ' + reg + ' ' + start + ' ' + stop
     command = "cylc graph --notify-completion " + template_opts + " " + options
     foo = gcapture_tmpfile( command, tmpdir )

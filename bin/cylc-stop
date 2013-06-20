@@ -29,29 +29,69 @@ from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
+from cylc.poll import poller
+from cylc.port_file import PortFileError
+
+class stop_poller( poller ):
+    """A polling object that checks if a suite has stopped yet."""
+
+    def connect( self ):
+        try:
+            self.proxy = cylc_pyro_client.client(
+                    self.args['suite'],
+                    self.args['pphrase'],
+                    self.args['owner'],
+                    self.args['host'],
+                    self.args['pyro_timeout'],
+                    self.args['port'] ).get_proxy('suite-info')
+        except:
+            return False
+        else:
+            return True
+ 
+    def check( self ):
+        # return True if suite has stopped (success) else False
+        try:
+           self.proxy.get( 'ping suite' )
+        except:
+            # failed to ping - suite stopped
+            return True 
+        else:
+            # pinged - suite must be alive
+            return False
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
 1/ Shut down a suite when all currently running tasks have finished. 
    No other tasks will be submitted to run in the meantime.
 
-2/ With [STOP], shut down a suite AFTER on of the following events:
+2/ With [--now], shut down immediately. Any orphaned tasks will be
+   polled on restarting the suite to determine their final status.
+
+3/ With [STOP], shut down a suite AFTER on of the following events:
     a/ all tasks have passed the TAG STOP (cycle time or async tag)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
     c/ the task STOP (TASK.TAG) has finished
 
-3/ With [--now], shut down immediately, regardless of tasks still running.
-   WARNING: beware of orphaning tasks that are still running at shutdown;
-   these may need to be killed manually, and they will (by default) be
-   resubmitted if the suite is restarted.""", pyro=True,
-    argdoc=[ ("REG", "Suite name"), 
+With -k/--kill tasks currently submitted or running will be killed
+before the suite shuts down.
+
+The command exits immediately after queueing the stop request unless
+polling mode (-w/--wait) forces it to wait for the suite to stop.""",
+    pyro=True, argdoc=[ ("REG", "Suite name"), 
     ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
                         c/ TASK (task ID).""")] )
 
 parser.add_option( "--now", 
-        help="Shut down immediately; see WARNING above.",
+        help="Shut down immediately.",
         action="store_true", default=False, dest="shutdownnow" )
+
+parser.add_option( "-k", "--kill", 
+        help="Kill submitted and running tasks before shutdown.",
+        action="store_true", default=False, dest="kill" )
+
+stop_poller.add_to_cmd_options( parser )
 
 (options, args) = parser.parse_args()
 
@@ -61,11 +101,33 @@ shutdown_at = False
 if len( args ) == 2:
     shutdown_at = True
     shutdown_arg = args[1] 
+    if options.kill:
+        print >> sys.stderr, "WARNING: ignoring --kill ( not compatible with [STOP])"
+        options.kill = False
+ 
+if options.shutdownnow and options.kill:
+    print >> sys.stderr, "WARNING: ignoring --now ( not compatible with --kill)"
+    options.shutdownnow = False
 
+if options.wait:
+    spoller = stop_poller( "suite stopped", options.timeout,
+            options.interval, args={
+                'suite'   : suite,
+                'pphrase' : pphrase,
+                'owner'   : options.owner,
+                'host'    : options.host,
+                'pyro_timeout' : options.pyro_timeout,
+                'port'    : options.port
+                })
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+except PortFileError, x:
+    # suite not running: this is OK for the 'stop' command
+    print >> sys.stderr, x
+    print >> sys.stderr, "WARNING: suite not running (OK for \"cylc stop\")"
+    sys.exit(0)
 except Exception, x:
     if options.debug:
         raise
@@ -116,18 +178,42 @@ if shutdown_at:
     #print method
 
     prompt( 'Set shutdown ' + shutdown_arg + ' for ' + suite, options.force )
-    result = proxy.put( method, shutdown_arg )
+    try:
+        result = proxy.put( method, shutdown_arg )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 elif options.shutdownnow:
     prompt( 'Shut down ' + suite + ' NOW', options.force )
-    result = proxy.put( 'stop now' )
+    try:
+        result = proxy.put( 'stop now' )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 else:
     prompt( 'Shut down ' + suite, options.force )
-    result = proxy.put( 'stop cleanly' )
+    try:
+        result = proxy.put( 'stop cleanly', options.kill )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 if result[0]:
+    # command queued
     print result[1]
 else:
+    # (should not happen)
     sys.exit( result[1] )
+
+if options.wait:
+    if not spoller.connect():
+        # (should not happen if we got the command proxy above)
+        sys.exit( "ERROR: cannot connect to the suite info proxy" )
+    if not spoller.poll():
+        sys.exit(1)
 

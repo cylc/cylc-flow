@@ -1,0 +1,11 @@
+EVENT                TASK     MESSAGE
+retry                foo.1    job failed, retrying in 0.01 minutes
+submission retry     bar.1    job submission failed, retrying in 0.01 minutes
+submitted            baz.1    job submitted
+submission timeout   baz.1    job submitted 0.01 minutes ago, but has not started
+submission failed    bar.1    job submission failed
+execution timeout    foo.1    job started 0.01 minutes ago, but has not finished
+started              baz.1    job started
+failed               baz.1    job failed
+warning              foo.1    this is a user-defined warning message
+succeeded            foo.1    job succeeded

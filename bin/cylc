@@ -191,7 +191,9 @@ control_commands['stop'] = ['stop', 'shutdown' ]
 control_commands['restart'] = ['restart' ]
 control_commands['trigger'] = ['trigger' ]
 control_commands['insert' ] = ['insert' ]
-control_commands['remove' ] = ['remove', 'kill' ]
+control_commands['remove' ] = ['remove' ]
+control_commands['poll' ] = ['poll' ]
+control_commands['kill' ] = ['kill' ]
 control_commands['purge'  ] = ['purge' ]
 control_commands['hold'   ] = ['hold' ]
 control_commands['release' ] = ['release', 'unhold' ]
@@ -202,6 +204,7 @@ control_commands['depend' ] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity' ] = ['set-verbosity' ]
 control_commands['broadcast'] = [ 'broadcast', 'bcast' ]
+control_commands['get-task-status'] = [ 'get-task-status' ]
 
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
@@ -223,6 +226,7 @@ admin_commands['test-db'         ] = [ 'test-db']
 admin_commands['test-battery'    ] = [ 'test-battery']
 admin_commands['import-examples' ] = [ 'import-examples']
 admin_commands['check-examples'  ] = [ 'check-examples']
+admin_commands['check-software'  ] = [ 'check-software']
 
 license_commands = OrderedDict()
 license_commands['warranty'  ] = [ 'warranty']
@@ -348,6 +352,7 @@ comsum[ 'test-db'    ] = 'Run an automated suite database test'
 comsum[ 'test-battery' ] = 'Run a battery of self-diagnosing test suites'
 comsum[ 'check-examples' ] = 'Check all example suites validate'
 comsum[ 'import-examples' ] = 'Import example suites your user database'
+comsum[ 'check-software' ] = 'Check required software is installed.'
 # license
 comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
 comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
@@ -385,10 +390,12 @@ comsum[ 'restart'    ] = 'Restart a suite from a previous state'
 comsum[ 'trigger'    ] = 'Manually trigger or re-trigger a task'
 comsum[ 'insert'     ] = 'Insert tasks into a running suite'
 comsum[ 'remove'     ] = 'Remove tasks from a running suite'
+comsum[ 'poll'     ] = 'Poll submitted or running tasks'
+comsum[ 'kill'     ] = 'Kill submitted or running tasks'
 comsum[ 'purge'      ] = 'Remove task trees from a running suite'
 comsum[ 'hold'       ] = 'Hold (pause) suites or individual tasks'
 comsum[ 'release'    ] = 'Release (unpause) suites or individual tasks'
-comsum[ 'reset'      ] = 'Manually set tasks to the waiting, ready, or succeeded states'
+comsum[ 'reset'      ] = 'Force one or more tasks to change state.'
 comsum[ 'nudge'      ] = 'Cause the cylc task processing loop to be invoked'
 comsum[ 'reload'     ] = 'Reload the suite definition at run time'
 comsum[ 'depend'     ] = 'Add prerequisites to tasks in a running suite'
@@ -406,6 +413,7 @@ comsum[ 'message'    ] = 'Report progress and completion of outputs'
 comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
 comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
+comsum[ 'get-task-status' ] = 'Retrieve current job status for a task'
 
 # utility
 comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'
@@ -624,8 +632,19 @@ args = args_new
 if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' ]:
     command = re.sub( '^task-', '', command )
 
+cmd = 'cylc-' + command
+
+####BACKGROUNDED MESSAGING CALLS: this results in a currently
+####undiagnosed error in Pyro core when the 'message' command is
+####invoked - but not for the 'started' command (try it and see the task
+####stderr log). 
+##if command in [ 'started', 'message' ]:
+##    # Run non job-ending task message commands in the background.
+##    p = subprocess.Popen( [ cmd ] + args )
+##    sys.exit(0)
+##else:
+# Replace the current process with that of the sub-command.
 try:
-    cmd = 'cylc-' + command
     os.execvp( cmd, [ cmd ] + args )
 except OSError, x:
     raise SystemExit(x)

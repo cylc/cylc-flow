@@ -30,18 +30,6 @@ import sys
 import threading
 from time import sleep, time
 
-
-try:
-    any
-except NameError:
-    # any() appeared in Python 2.5
-    def any(iterable):
-        for entry in iterable:
-            if entry:
-                return True
-        return False
-
-
 class PollSchd(object):
     """Keep information on whether an updater should poll or not."""
 
@@ -150,7 +138,7 @@ class tupdater(threading.Thread):
         self.global_summary = {}
         self.fam_state_summary = {}
         self.stop_summary = None
-        self.families = []
+        self.descendants = []
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
@@ -160,7 +148,7 @@ class tupdater(threading.Thread):
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
         self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
-        self.should_group_families = False
+        self.should_group_families = True
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
@@ -188,9 +176,8 @@ class tupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.families = self.sinfo.get('first-parent descendants' )
+            self.descendants = self.sinfo.get('first-parent descendants' )
             self.ancestors = self.sinfo.get('first-parent ancestors' )
-            self.allowed_families = self.sinfo.get('vis families' )
         except:
             # connection lost
             if debug:
@@ -525,7 +512,7 @@ class tupdater(threading.Thread):
         while not self.quit:
             if self.poll_schd.ready() and self.update():
                 gobject.idle_add( self.update_gui )
-                # TO DO: only update globals if they change, as for tasks
+                # TODO - only update globals if they change, as for tasks
                 gobject.idle_add( self.update_globals )
             sleep(1)
         else:
@@ -541,7 +528,7 @@ class lupdater(threading.Thread):
         self.quit = False
         self.autoexpand = True
         self.should_hide_headings = False
-        self.should_group_families = False
+        self.should_group_families = True
 
         self.cfg = cfg
         self.theme = theme
@@ -551,7 +538,7 @@ class lupdater(threading.Thread):
         self.state_summary = {}
         self.global_summary = {}
         self.stop_summary = None
-        self.families = []
+        self.descendants = []
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
@@ -562,6 +549,8 @@ class lupdater(threading.Thread):
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
         self._prev_tooltip_task_id = None
+
+        self.task_list = []
 
         self.reconnect()
 
@@ -592,10 +581,10 @@ class lupdater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
 
             # on reconnection retrieve static info
-            self.ancestors = self.sinfo.get( 'first-parent ancestors' )
-            self.families = self.sinfo.get( 'first-parent descendants' )
-            self.allowed_families = self.sinfo.get( 'vis families' )
-        except:
+            self.ancestors = self.sinfo.get( 'first-parent ancestors', True )
+            self.descendants = self.sinfo.get( 'first-parent descendants' )
+        except Exception, x:
+            #print str(x) # (port file not found, if suite not running)
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
                                                        self.cfg.suite,
@@ -637,22 +626,23 @@ class lupdater(threading.Thread):
         #print "Attempting Update"
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.god.get_task_name_list()
+            if not self.should_group_families:
+                self.task_list = self.god.get_task_name_list()
+            else:
+                self.task_list = []
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
 
         if self.should_group_families:
-            allowed_names = [i for i in self.ancestors if i != "root"]
-            self.task_list = []
-            for families in self.ancestors.values():
-                for name in reversed(families):
-                    if name in allowed_names:
-                        if name not in self.task_list and name in self.families:
-                            # (exclude non first-parent family names)
-                                self.task_list.append( name )
-                        break
+            for key, val in self.ancestors.items():
+                if key == 'root':
+                    continue
+                # highest level family name (or plain task) above root
+                name = val[-2]
+                if name not in self.task_list:
+                    self.task_list.append( name )
 
         self.task_list.sort()
         if self.filter:
@@ -662,7 +652,7 @@ class lupdater(threading.Thread):
                             self.filter in t or \
                             re.search( self.filter, t )]
             except:
-                # bad regex (To Do: dialog warn from main thread - idle_add?)
+                # bad regex (TODO - dialog warn from main thread - idle_add?)
                 self.task_list = []
 
         # always update global info
@@ -705,7 +695,7 @@ class lupdater(threading.Thread):
         # Digitize cycle time for the LED panel display.
         # For asynchronous tasks blank-pad the task tag.
 
-        # TO DO: if we ever have cycling modules for which minutes and
+        # TODO - if we ever have cycling modules for which minutes and
         # seconds are important, take the whole of ctin here:
         ncol = 10 # columns in the digital cycletime row
         ct = ctin[:ncol]
@@ -821,7 +811,7 @@ class lupdater(threading.Thread):
             tooltip.set_text(task_id)
             return True
         text = get_id_summary( task_id, self.state_summary,
-                               self.fam_state_summary, self.families )
+                               self.fam_state_summary, self.descendants )
         if text == task_id:
             return False
         tooltip.set_text(text)
@@ -889,7 +879,7 @@ class lupdater(threading.Thread):
         while not self.quit:
             if self.poll_schd.ready() and self.update():
                 gobject.idle_add( self.update_gui )
-                # TO DO: only update globals if they change, as for tasks
+                # TODO - only update globals if they change, as for tasks
                 gobject.idle_add( self.update_globals )
             sleep(1)
         else:

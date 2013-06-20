@@ -47,6 +47,7 @@ from include_files import inline, IncludeFileError
 from dictcopy import replicate, override
 from TaskID import TaskID
 from C3MRO import C3
+from config_list import get_expanded_float_list
 
 try:
     import graphing
@@ -62,11 +63,98 @@ except ImportError:
 else:
     jinja2_disabled = False
 
+def str2list( st ):
+    if isinstance(st, list):
+        return st
+    return re.split( '[, ]+', st )
+
+def str2bool( st ):
+    return str(st).lower() in ( 'true' )
+
+def str2float( st ):
+    return float( st )
+
+def coerce_runtime_values( rdict ):
+    """Coerce non-string values as would be done by [runtime]
+    validation. This must be kept up to date with any new non-string
+    items added the runtime configspec."""
+
+    # coerce list values from string
+    # (required for single values with no trailing comma)
+    for item in [
+        'inherit',
+        'retry delays',
+        'extra log files',
+        'submission polling intervals',
+        'execution polling intervals',
+        ( 'job submission', 'retry delays' ),
+        ( 'simulation mode', 'run time range' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2list( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2list( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce bool values from string
+    for item in [
+        'manual completion',
+        'enable resurrection',
+        ( 'simulation mode', 'simulate failure' ),
+        ( 'simulation mode', 'disable task event hooks' ),
+        ( 'simulation mode', 'disable retries' ),
+        ( 'dummy mode', 'disable pre-command scripting' ),
+        ( 'dummy mode', 'disable post-command scripting' ),
+        ( 'dummy mode', 'disable task event hooks' ),
+        ( 'dummy mode', 'disable retries' ),
+        ( 'event hooks', 'reset timer' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2bool( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2bool( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce float values from string
+    for item in [
+            ('event hooks', 'submission timeout' ),
+            ('event hooks', 'execution timeout' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = str2float( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = str2float( rdict[item] )
+        except KeyError:
+            pass
+
+    # finally, expand float lists with multipliers here
+    for item in [
+            'retry delays',
+            'submission polling intervals',
+            'execution polling intervals',
+            ('job submission', 'retry delays' )]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = get_expanded_float_list( rdict[item[0]][item[1]] )
+            else:
+                if item.endswith( 'polling intervals' ):
+                    allow_zeroes=False
+                else:
+                    allow_zeroes=True
+                rdict[item] = get_expanded_float_list( rdict[item], allow_zeroes )
+        except KeyError:
+            pass
+        except ValueError, x:
+            print >> sys.stderr, x
+            raise SuiteConfigError( "ERROR: illegal value in '" + str(item) + "'" )
+
 class SuiteConfigError( Exception ):
     """
     Attributes:
         message - what the problem is. 
-        TO DO: element - config element causing the problem
+        TODO - element - config element causing the problem
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -77,7 +165,6 @@ class TaskNotDefinedError( SuiteConfigError ):
     pass
 
 # TODO: separate config for run and non-run purposes?
-# TODO: this module could use some clean-up and re-organisation.
 
 class config( CylcConfigObj ):
     """Parse and validate a suite definition, and compute everything
@@ -104,6 +191,10 @@ class config( CylcConfigObj ):
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
+        self.upgrades = [
+                ( '5.2.0', self.upgrade_5_2_0 ) ]
+        self.deprecation_warnings = {}
+
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
                 # lists of parent namespaces
@@ -117,6 +208,8 @@ class config( CylcConfigObj ):
                 # lists of all descendant namespaces from the first-parent hierarchy
                 'first-parent descendants' : {}
                 }
+        # (first-parents are used for visualization purposes)
+        # (tasks - leaves on the tree - do not appear in 'descendants')
 
         self.families_used_in_graph = []
 
@@ -176,6 +269,14 @@ class config( CylcConfigObj ):
         except ConfigObjError, x:
             raise SuiteConfigError, x
 
+        # on-the-fly backward compatibility translations
+        for vn,upgr in self.upgrades:
+            warnings = upgr( self )
+            if warnings:
+                self.deprecation_warnings[vn] = warnings
+        if self.validation:
+            self.print_deprecation_warnings()
+
         # now validate and load defaults for each section in turn
         # (except [runtime] - see below).
         head = {}
@@ -202,14 +303,17 @@ class config( CylcConfigObj ):
         if 'runtime' not in self.keys():
             self['runtime'] = OrderedDict()
 
-        # [runtime] validation: this loads the complete defaults dict
-        # into every namespace, so we just do it as a validity check
-        # during validation.  
+        # [runtime] validation loads the complete defaults dict into
+        # every namespace, so just do it for explicit validation.  
         if self.validation:
             for name in self['runtime']:
                 cfg = OrderedDict()
                 replicate( cfg, self['runtime'][name].odict())
                 self.validate_section( { 'runtime': { name: cfg }}, 'runtime.spec' )
+
+        # coerce non-string [runtime] values manually, as validation would have done
+        for ns in self['runtime']:
+            coerce_runtime_values( self['runtime'][ns] )
 
         if 'root' not in self['runtime']:
             self['runtime']['root'] = OrderedDict()
@@ -262,6 +366,8 @@ class config( CylcConfigObj ):
         self.compute_family_tree()
 
         self.compute_inheritance()
+        #debugging:
+        #self.print_inheritance()
 
         collapsed_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -274,6 +380,10 @@ class config( CylcConfigObj ):
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
+
+        # check for run mode override at suite level
+        if self['cylc']['force run mode']:
+            self.run_mode = self['cylc']['force run mode']
 
         # suite event hooks
         if self.run_mode == 'live' or \
@@ -318,10 +428,9 @@ class config( CylcConfigObj ):
         # section) are found in graph or queue config. 
         if len( self.naked_dummy_tasks ) > 0:
             if self.strict or self.verbose:
-                print 'Naked dummy tasks detected (no entry under [runtime]):'
+                print >> sys.stderr, 'WARNING: naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
-                    print '  +', ndt
-                print '  WARNING: this can be caused by misspelled task names!' 
+                    print >> sys.stderr, '  +', ndt
             if self.strict:
                 raise SuiteConfigError, 'ERROR: strict validation fails naked dummy tasks'
 
@@ -348,13 +457,26 @@ class config( CylcConfigObj ):
             self['visualization']['initial cycle time'] = 2999010100
             self['visualization']['final cycle time'] = 2999010123
 
+        ngs = self['visualization']['node groups']
+
+        # If any existing node group member is a family, include its descendants too.
+        replace = {}
+        for ng, mems in ngs.items():
+            replace[ng] = []
+            for mem in mems:
+                replace[ng] += [mem]
+                if mem in self.runtime['descendants']:
+                    replace[ng] += self.runtime['descendants'][mem]
+        for ng in replace:
+            ngs[ng] = replace[ng]
+
         # Define family node groups automatically so that family and
         # member nodes can be styled together using the family name.
         # Users can override this for individual nodes or sub-groups.
-        ng = self['visualization']['node groups']
         for fam in self.runtime['descendants']:
-            if fam not in ng:
-                ng[fam] = [fam] + self.runtime['descendants'][fam]
+            if fam not in ngs:
+                ngs[fam] = [fam] + self.runtime['descendants'][fam]
+ 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
         # because putting default attributes for root in the suite.rc spec
@@ -362,6 +484,44 @@ class config( CylcConfigObj ):
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
+
+    def upgrade_5_2_0( self, cfg ):
+        """Upgrade methods should upgrade to the latest (not next)
+        version; then if we run them from oldest to newest we will avoid
+        generating multiple warnings for items that changed several times.
+
+        Upgrade methods are handed sparse cfg structures - i.e. just
+        what is set in the file - so don't assume the presence of any
+        items. It is assumed that the cfgspec will always be up to date.
+        """
+
+        warnings = []
+
+        # [cylc][event handler execution] -> [cylc][event handler submission]
+        try:
+            old = cfg['cylc']['event handler execution']
+        except:
+            pass
+        else:
+            warnings.append( "[cylc][event handler execution] -> [cylc][event handler submission]" )
+            del cfg['cylc']['event handler execution']
+            cfg['cylc']['event handler submission'] = old
+
+        return warnings
+
+    def print_deprecation_warnings( self ):
+        if not self.deprecation_warnings:
+            return
+
+        print >> sys.stderr, """
+*** SUITE DEFINITION DEPRECATION WARNING ***
+Some translations were performed on the fly."""
+        if self.deprecation_warnings:
+            print >> sys.stderr, "*** Please upgrade your suite definition"
+        for vn, warnings in self.deprecation_warnings.items():
+            for w in warnings:
+                print >> sys.stderr, " * (" + vn + ")", w
+        print
 
     def check_env( self ):
         # check environment variables now to avoid checking inherited
@@ -376,33 +536,39 @@ class config( CylcConfigObj ):
          if bad:
              print >> sys.stderr, "ERROR, bad env variable names:"
              for label, vars in bad.items():
-                 print 'Namespace:', label
+                 print >> sys.stderr, 'Namespace:', label
                  for var in vars:
                      print >> sys.stderr, "  ", var
              raise SuiteConfigError("Illegal env variable name(s) detected" )
 
     def compute_family_tree( self ):
         first_parents = {}
+        demoted = {}
         for name in self['runtime']:
             if name == 'root':
                 self.runtime['parents'][name] = []
                 first_parents[name] = []
                 continue
-            if 'inherit' in self['runtime'][name]:
-                # coerce single values to list (see warning in conf/suiterc/runtime.spec)
-                i = self['runtime'][name]['inherit'] 
-                if not isinstance( i, list ):
-                    pts = [i]
-                else:
-                    pts = i
-            else:
-                # implicit inheritance from root
-                pts = [ 'root' ]
+            # get declared parents, with implicit inheritance from root.
+            pts = self['runtime'][name].get( 'inherit', ['root'] )
             for p in pts:
+                if p == "None":
+                    # see just below
+                    continue
                 if p not in self['runtime']:
                     raise SuiteConfigError, "ERROR, undefined parent for " + name +": " + p
+            if pts[0] == "None":
+                demoted[name] = pts[1]
+                pts = pts[1:]
+                first_parents[name] = ['root']
+            else:
+                first_parents[name] = [ pts[0] ]
             self.runtime['parents'][name] = pts
-            first_parents[name] = [ pts[0] ]
+
+        if self.verbose and demoted:
+            print "First parent(s) demoted to secondary:"
+            for n,p in demoted.items():
+                print " +", p, "as parent of '" + n + "'"
 
         c3 = C3( self.runtime['parents'] )
         c3_single = C3( first_parents )
@@ -488,6 +654,11 @@ class config( CylcConfigObj ):
         # uncomment this to compare the simple and efficient methods
         # print '  Number of namespace replications:', n_reps
 
+    def print_inheritance(self):
+        for foo in self.runtime:
+            print '  ', foo
+            for item, val in self.runtime[foo].items():
+                print '  ', '  ', item, val
 
     def compute_runahead_limit( self ):
         # take the smallest of the default limits from each graph section
@@ -500,14 +671,27 @@ class config( CylcConfigObj ):
                 if self.verbose:
                     print "Configured runahead limit: ", rl, "hours"
             else:
-                rls = []
+                mcis = []
+                offs = []
                 for cyc in self.cyclers:
-                    rahd = cyc.get_min_cycling_interval()
-                    if rahd:
-                        rls.append(rahd)
-                if len(rls) > 0:
-                    # twice the minimum cycling internal in the suite
-                    rl = 2 * min(rls)
+                    m = cyc.get_min_cycling_interval()
+                    if m:
+                        mcis.append(m)
+                    o = cyc.get_offset()
+                    if o:
+                        offs.append(o)
+                if len(mcis) > 0:
+                    # set runahead limit twice the minimum cycling interval
+                    rl = 2 * min(mcis)
+                    if len(offs) > 0:
+                        mo = min(offs)
+                        if mo < 0:
+                            # we have future triggers...
+                            if abs(mo) >= rl:
+                                #... that extend past the default rl
+                                # set to offset plus one minimum interval
+                                rl = abs(mo) + min(mcis)
+                if rl:
                     if self.verbose:
                         print "Computed runahead limit:", rl, "hours"
         self.runahead_limit = rl
@@ -520,6 +704,7 @@ class config( CylcConfigObj ):
 
         spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', spec )
 
+        # (note it is *validation* that fills out the dense structure)
         dense = ConfigObj( cfg, interpolation=False, configspec=spec )
         # validate and convert to correct types
         val = Validator()
@@ -542,7 +727,7 @@ class config( CylcConfigObj ):
         
         extras = []
         for sections, name in get_extra_values(dense):
-            # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
+            # !!! TODO - THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves
             ##the_section = dense
             ##for section in sections:
@@ -670,8 +855,17 @@ class config( CylcConfigObj ):
     def get_parent_lists( self ):
         return self.runtime['parents']
 
-    def get_first_parent_ancestors( self ):
-        return self.runtime['first-parent ancestors']
+    def get_first_parent_ancestors( self, pruned=False ):
+        if pruned:
+            # prune non-task namespaces from ancestors dict
+            pruned_ancestors = {}
+            for key,val in self.runtime['first-parent ancestors'].items():
+                if key not in self.taskdefs:
+                    continue
+                pruned_ancestors[key] = val
+            return pruned_ancestors
+        else:
+            return self.runtime['first-parent ancestors']
 
     def get_linearized_ancestors( self ):
         return self.runtime['linearized ancestors']
@@ -738,13 +932,7 @@ class config( CylcConfigObj ):
             if ns not in self.runtime['descendants']:
                 tasks.append(ns)
 
-        ancestors = self.runtime['first-parent ancestors']
-        # prune non-task namespaces from ancestors dict
-        pruned_ancestors = {}
-        for item in ancestors:
-            if item not in tasks:
-                continue
-            pruned_ancestors[item] = ancestors[item]
+        pruned_ancestors = self.get_first_parent_ancestors( pruned=True )
         tree = {}
         self.define_inheritance_tree( tree, pruned_ancestors, titles=titles )
         padding = ''
@@ -766,16 +954,10 @@ class config( CylcConfigObj ):
         print_tree( tree, padding=padding, use_unicode=pretty )
 
     def process_directories(self):
-        # Environment variable interpolation in directory paths.
-        os.environ['CYLC_SUITE_REG_NAME'] = self.suite
+        os.environ['CYLC_SUITE_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.dir
         self['visualization']['runtime graph']['directory'] = expandvars( self['visualization']['runtime graph']['directory'], self.owner)
-
-        # suite config dir is not user-configurable as some processes
-        # need to know where it is without parsing the suite definition:
-        self.suite_config_dir = os.path.join( os.environ['HOME'], '.cylc', self.suite )
-
 
     def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
         trig = triggerx(task_name)
@@ -786,7 +968,13 @@ class config( CylcConfigObj ):
                 trig.set_special( self['runtime'][task_name]['outputs'][output_name] )
             except KeyError:
                 # There is no matching output defined under the task runtime section 
-                if output_name == 'fail':
+                if output_name == 'submit':
+                    # OK, task:submit
+                    trig.set_type('submitted' )
+                elif output_name == 'submit-fail':
+                    # OK, task:submit-fail
+                    trig.set_type('submit-failed' )
+                elif output_name == 'fail':
                     # OK, task:fail
                     trig.set_type('failed' )
                 elif output_name == 'start':
@@ -850,8 +1038,6 @@ class config( CylcConfigObj ):
                         # any family triggers have have been replaced with members by now.
                         print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
-        self.check_for_case_errors()
-
         # warn if listed special tasks are not defined
         for type in self['scheduling']['special tasks']:
             for name in self['scheduling']['special tasks'][type]:
@@ -872,7 +1058,7 @@ class config( CylcConfigObj ):
 
         # Instantiate tasks and force evaluation of conditional trigger expressions.
         if self.verbose:
-            print "Checking conditional trigger expressions"
+            print "Instantiating tasks to check trigger expressions"
         for cyclr in self.tasks_by_cycler:
             # for each graph section
             for name in self.tasks_by_cycler[cyclr]:
@@ -909,56 +1095,14 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
                 tag = itask.next_tag()
-            #print "OK:", itask.id
+                if self.verbose:
+                    print "  + " + itask.id + " ok"
 
-        # TO DO: check that any multiple appearance of same task  in
+        # TODO - check that any multiple appearance of same task  in
         # 'special tasks' is valid. E.g. a task can be both
         # 'sequential' and 'clock-triggered' at the time, but not both
         # 'model' and 'sequential' at the same time.
 
-    def check_for_case_errors( self ):
-        # check for case errors in task names
-        # TODO: this could probably be done more efficiently!
-        all_names_dict = {}
-        for name in self.taskdefs.keys() + self['runtime'].keys():
-            # remove legitimate duplicates (names in graph and runtime)
-            if name not in all_names_dict:
-                all_names_dict[name] = True
-        all_names = all_names_dict.keys()
-        knob = {}
-        duplicates = []
-        for name in [ foo.lower() for foo in all_names ]:
-            if name not in knob:
-                knob[name] = True
-            else:
-                duplicates.append(name)
-        duplist = {}
-        for dup in duplicates:
-            for name in all_names:
-                if name.lower() == dup:
-                    if dup not in duplist:
-                        duplist[dup] = [name]
-                    else:
-                        duplist[dup].append(name)
-        if self.verbose:
-            if len( duplist.keys() ) > 0:
-                print >> sys.stderr, 'WARNING: THE FOLLOWING TASK NAMES DIFFER ONLY BY CASE:'
-            for name in duplist:
-                # this is probably, but not necessarily, an error.
-                print >> sys.stderr, ' ', 
-                for n in duplist[name]:
-                    print >> sys.stderr, n,
-                print >> sys.stderr, ''
- 
-    def create_directories( self, task=None ):
-        dirs = [ self.suite_config_dir ]
-        for d in dirs:
-            try:
-                mkdir_p( d )
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, illegal dir? ' + d
-        
     def get_filename( self ):
         return self.file
 
@@ -966,7 +1110,7 @@ class config( CylcConfigObj ):
         return self.dir
 
     def get_coldstart_task_list( self ):
-        # TO DO: automatically determine this by parsing the dependency graph?
+        # TODO - automatically determine this by parsing the dependency graph?
         # For now user must define this:
         return self['scheduling']['special tasks']['cold-start']
 
@@ -1007,17 +1151,18 @@ class config( CylcConfigObj ):
             raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
         repl = orig[:-4]
 
-        m = re.findall( r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
+        m = re.findall( "(!){0,1}" + r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
         m.sort() # put empty offset '' first ...
         m.reverse() # ... then last
-        for foffset in m:
+        for grp in m:
+            exclam, foffset = grp 
             if fam not in self.families_used_in_graph:
                 self.families_used_in_graph.append(fam)
-            mems = paren_open + connector.join( [ i + foffset + repl for i in members ] ) + paren_close
-            line = re.sub( r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
+            mems = paren_open + connector.join( [ exclam + i + foffset + repl for i in members ] ) + paren_close
+            line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section ):
+    def process_graph_line( self, line, section, ttype, cyclr ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -1036,34 +1181,6 @@ class config( CylcConfigObj ):
         #  'A = > B | C' # ?!
 
         orig_line = line
-
-        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        if section == "once":
-            ttype = 'async_oneoff'
-            modname = 'async'
-            args = []
-        elif re.match( '^ASYNCID:', section ):
-            ttype = 'async_repeating'
-            modname = 'async'
-            args = []
-        else:
-            ttype = 'cycling'
-            # match cycler, e.g. "Yearly( 2010, 2 )"
-            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
-            if m:
-                modname, cycargs = m.groups()
-                # remove leading and trailing space
-                cycargs = cycargs.strip()
-                arglist = re.sub( '\s+$', '', cycargs )
-                # split on comma with optional space each side
-                args = re.split( '\s*,\s*', arglist )
-            else:
-                modname = self['scheduling']['cycling']
-                args = re.split( ',\s*', section )
-
-        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
-        cyclr = getattr( mod, modname )(*args)
-        self.cyclers.append(cyclr)
 
         ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed' (NOT USED)
         ## we can replace synonyms here with the standard type designator:
@@ -1095,7 +1212,7 @@ class config( CylcConfigObj ):
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in [ ':start', ':succeed', ':fail', ':finish' ]:
+            for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
                 line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
 
@@ -1111,6 +1228,12 @@ class config( CylcConfigObj ):
 
             # finally replace plain family names on the right of a trigger
             line = self.replace_family_triggers( line, fam, members )
+
+        # any remaining use of '-all' or '-any' implies a family trigger
+        # on a non-family task, which is illegal.
+        if '-a' in line: # ('-' is not legal in task names so this gets both cases)
+            print >> sys.stderr, line
+            raise SuiteConfigError, "ERROR: family triggers cannot be used on non-family namespaces"
 
         # Replace "foo:finish" with "( foo:succeed | foo:fail )"
         line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
@@ -1185,6 +1308,14 @@ class config( CylcConfigObj ):
             nstr = nstr.strip()
             lnames = re.split( ' +', nstr )
 
+            # detect and fail and self-dependence loops (foo => foo)
+            for r_name in rights:
+                if r_name in lnames:
+                    print >> sys.stderr, "Self-dependence detected in '" + r_name + "':"
+                    print >> sys.stderr, "  line:", line
+                    print >> sys.stderr, "  from:", orig_line
+                    raise SuiteConfigError, "ERROR: self-dependence loop detected"
+
             if section == 'once':
                 # Consistency check: synchronous special tasks are
                 # not allowed in asynchronous graph sections.
@@ -1241,10 +1372,11 @@ class config( CylcConfigObj ):
             # plot conditional triggers differently
             conditional = True
  
-        sasl = False
         for left in lnames:
             if left in self.async_oneoff_tasks + self.async_repeating_tasks:
                 sasl = True
+            else:
+                sasl = False
             e = graphing.edge( left, right, cyclr, sasl, suicide, conditional )
             if ttype == 'async_oneoff':
                 if e not in self.async_oneoff_edges:
@@ -1292,7 +1424,7 @@ class config( CylcConfigObj ):
                     print >> sys.stderr, line
                     raise SuiteConfigError, str(x)
 
-            # TO DO: setting type should be consolidated to get_taskdef()
+            # TODO - setting type should be consolidated to get_taskdef()
             if name in self.async_oneoff_tasks:
                 # this catches oneoff async tasks that begin a repeating
                 # async section as well.
@@ -1309,13 +1441,16 @@ class config( CylcConfigObj ):
                     self.cycling_tasks.append(name)
 
             if offset:
+                # adjust cycler state and add
                 cyc = deepcopy( cyclr )
-                # this changes the cyclers internal state so we need a
-                # private copy of it:
                 cyc.adjust_state(offset)
+                # record the adjusted one too
+                self.cyclers.append( cyc )
+                self.taskdefs[ name ].add_to_valid_cycles( cyc )
             else:
-                cyc = cyclr
-            self.taskdefs[ name ].add_to_valid_cycles( cyc )
+                # add cycler if we don't already have it
+                if cyclr not in self.taskdefs[name].cyclers:
+                    self.taskdefs[ name ].add_to_valid_cycles( cyclr )
 
             if self.run_mode == 'live':
                 # register any explicit internal outputs
@@ -1350,6 +1485,8 @@ class config( CylcConfigObj ):
             lnode = graphnode(left)  # (GraphNodeError checked above)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
+                if int(lnode.offset) > int(self.taskdefs[lnode.name].intercycle_offset):
+                    self.taskdefs[lnode.name].intercycle_offset = lnode.offset
 
             trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, asyncid_pattern, suicide )
             if not trigger:
@@ -1365,6 +1502,7 @@ class config( CylcConfigObj ):
             # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
+            label = re.sub( '\+', 'x', label ) # future triggers
             ctrig[label] = trigger
             cname[label] = lnode.name
 
@@ -1385,6 +1523,7 @@ class config( CylcConfigObj ):
  
         # Replace some chars for later use in regular expressions.
         expr = re.sub( '[-\[\]:]', '_', lexpression )
+        expr = re.sub( '\+', 'x', expr ) # future triggers
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
 
     def get_graph_raw( self, start_ctime, stop, raw=False,
@@ -1400,19 +1539,20 @@ class config( CylcConfigObj ):
         if group_all:
             # Group all family nodes
             for fam in members:
-                #if fam != 'root':
-                if fam not in self.closed_families:
-                    self.closed_families.append( fam )
+                if fam != 'root':
+                    if fam not in self.closed_families:
+                        self.closed_families.append( fam )
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []
         elif len(group_nodes) > 0:
             # Group chosen family nodes
             for node in group_nodes:
-                if node != 'root':
+                #if node != 'root':
                     parent = hierarchy[node][1]
                     if parent not in self.closed_families:
-                        self.closed_families.append( parent )
+                        if parent != 'root':
+                            self.closed_families.append( parent )
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
@@ -1473,7 +1613,7 @@ class config( CylcConfigObj ):
 
                 if l_id != None and not e.sasl:
                     # check that l_id is not earlier than start time
-                    # TO DO: does this invalidate r_id too?
+                    # TODO - does this invalidate r_id too?
                     tmp, lctime = l_id.split()
                     #sct = ct(start_ctime)
                     sct = ct(actual_first_ctime)
@@ -1490,65 +1630,28 @@ class config( CylcConfigObj ):
 
         return gr_edges
  
-    def get_graph( self, start_ctime, stop, colored=True, raw=False,
-            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-            group_all=False, ungroup_all=False ):
+    def get_graph( self, start_ctime, stop, raw=False, group_nodes=[],
+            ungroup_nodes=[], ungroup_recursive=False, group_all=False,
+            ungroup_all=False, ignore_suicide=False ):
 
-        # TO DO: this method could be put in the graphing module? It is
-        # currently duplicated in xstateview.py.
-
-        # get_graph_raw is factored out here because the graph control
-        # GUI has to retrieve the raw graph, because the PyGraphviz 
-        # graph object does not seem to be serializable (pickle error)
-        # for Pyro.
         gr_edges = self.get_graph_raw( start_ctime, stop, raw,
                 group_nodes, ungroup_nodes, ungroup_recursive,
                 group_all, ungroup_all )
 
-        # Get a graph object
-        if colored:
-            graph = graphing.CGraph( self.suite, self['visualization'] )
-        else:
-            graph = graphing.CGraphPlain( self.suite )
-
-        # sort and then add edges in the hope that edges added in the
-        # same order each time will result in the graph layout not
-        # jumping around (does this help? -if not discard)
-        gr_edges.sort()
-        for e in gr_edges:
-            l, r, dashed, suicide, conditional = e
-            if conditional:
-                if suicide:
-                    style='dashed'
-                    arrowhead='odot'
-                else:
-                    style='solid'
-                    arrowhead='onormal'
-            else:
-                if suicide:
-                    style='dashed'
-                    arrowhead='dot'
-                else:
-                    style='solid'
-                    arrowhead='normal'
-            if dashed:
-                # override
-                style='dashed'
-
-            graph.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
-
-        for n in graph.nodes():
-            if not colored:
-                n.attr['style'] = 'filled'
-                n.attr['fillcolor'] = 'cornsilk'
+        graph = graphing.CGraph( self.suite, self['visualization'] )
+        graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
+
+    def get_node_labels( self, start_ctime, stop, raw ):
+        graph = self.get_graph( start_ctime, stop, raw=raw, ungroup_all=True )
+        return [ i.attr['label'].replace('\\n','.') for i in graph.nodes() ]
 
     def close_families( self, nlid, nrid ):
         # Generate final node names, replacing family members with
         # family nodes if requested.
 
-        # TO DO: FORMATTED NODE NAMES
+        # TODO - FORMATTED NODE NAMES
         # can't be used until comparison with internal IDs cope
         # for gcylc (get non-formatted tasks as disconnected nodes on
         # the right of the formatted-name base graph).
@@ -1619,6 +1722,35 @@ class config( CylcConfigObj ):
  
     def parse_graph( self, section, graph ):
         self.graph_found = True
+
+        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
+        if section == "once":
+            ttype = 'async_oneoff'
+            modname = 'async'
+            args = []
+        elif re.match( '^ASYNCID:', section ):
+            ttype = 'async_repeating'
+            modname = 'async'
+            args = []
+        else:
+            ttype = 'cycling'
+            # match cycler, e.g. "Yearly( 2010, 2 )"
+            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
+            if m:
+                modname, cycargs = m.groups()
+                # remove leading and trailing space
+                cycargs = cycargs.strip()
+                arglist = re.sub( '\s+$', '', cycargs )
+                # split on comma with optional space each side
+                args = re.split( '\s*,\s*', arglist )
+            else:
+                modname = self['scheduling']['cycling']
+                args = re.split( ',\s*', section )
+
+        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
+        cyclr = getattr( mod, modname )(*args)
+        self.cyclers.append(cyclr)
+
         # split the graph string into successive lines
         lines = re.split( '\s*\n\s*', graph )
         for xline in lines:
@@ -1631,7 +1763,7 @@ class config( CylcConfigObj ):
             line = re.sub( '^\s*', '', line )
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
-            self.process_graph_line( line, section )
+            self.process_graph_line( line, section, ttype, cyclr )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
@@ -1644,7 +1776,7 @@ class config( CylcConfigObj ):
 
         taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode )
 
-        # TO DO: put all taskd.foo items in a single config dict
+        # TODO - put all taskd.foo items in a single config dict
         # SET ONE-OFF AND COLD-START TASK INDICATORS
         if name in self['scheduling']['special tasks']['cold-start']:
             taskd.modifiers.append( 'oneoff' )

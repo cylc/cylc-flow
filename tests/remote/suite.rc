@@ -3,17 +3,24 @@
 {% set HOST = environ['CYLC_TEST_TASK_HOST'] %}
 {% set OWNER = environ['CYLC_TEST_TASK_OWNER'] %}
 
+# whether or not ssh messaging is used back from the remote host is
+# determined by the [hosts] section in site/user config files.
+
 [cylc]
+    [[event hooks]]
+        startup handler = startup.sh
+        abort if startup handler fails = True
     [[reference test]]
         live mode suite timeout = 0.5
+        suite shutdown event handler = cleanup.sh
 
 [scheduling]
     [[dependencies]]
         graph = "foo"
 [runtime]
     [[foo]]
+        command scripting = "/bin/true" # fast
         [[[remote]]]
-            ssh messaging = True
             host = {{ HOST }}
             owner = {{ OWNER }}
 

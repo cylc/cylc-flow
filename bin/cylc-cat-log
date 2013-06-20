@@ -18,6 +18,7 @@
 
 import sys
 from cylc.remote import remrun
+from cylc.TaskID import TaskID
 if remrun().execute():
     sys.exit(0)
 
@@ -76,16 +77,20 @@ if options.print_location:
 
 filter = None
 if options.taskfilter:
-    filter = re.compile( '\\[' + options.taskfilter + '%\d+\\]' )
+    filter = re.compile( '\\[' + options.taskfilter + TaskID.DELIM_RE + '\d+\\]' )
 elif options.regexfilter:
     filter = re.compile( options.regexfilter )
 
-# TO DO: exception handling for large files that exceed memory capacity?
+# TODO - exception handling for large files that exceed memory capacity?
 # apparently readline() one line at a time is much slower than readlines()
 try:
     LOG = open( filename )
-except IOError:
-    raise SystemExit( "ERROR: file not found: " + filename )
+except IOError, x:
+    if options.debug:
+        raise
+    print >> sys.stderr, str(x)
+    sys.exit( 'ERROR: suite log file not found' )
+
 
 lines = LOG.readlines()
 LOG.close()

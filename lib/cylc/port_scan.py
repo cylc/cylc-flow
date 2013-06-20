@@ -101,7 +101,7 @@ class port_interrogator(object):
             raise
         else:
             # got access with no passphrase => not a secure suite
-            # TO DO: THIS IS NO LONGER LEGAL from cylc-4.5.0
+            # TODO - THIS IS NO LONGER LEGAL from cylc-4.5.0
             return name, owner, 'insecure'
 
 def warn_timeout( host, port, timeout ):
@@ -127,9 +127,8 @@ def cylcid_uri( host, port ):
 def get_port( suite, owner=user, host=hostname, pphrase=None, pyro_timeout=None, verbose=False ):
     # Scan ports until a particular suite is found.
 
-    globals = gcfg
-    pyro_base_port = globals.cfg['pyro']['base port']
-    pyro_port_range = globals.cfg['pyro']['maximum number of ports']
+    pyro_base_port = gcfg.cfg['pyro']['base port']
+    pyro_port_range = gcfg.cfg['pyro']['maximum number of ports']
 
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         uri = cylcid_uri( host, port )
@@ -217,9 +216,8 @@ def scan( host=hostname, db=None, pyro_timeout=None, verbose=False, silent=False
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 
-    globals = gcfg
-    pyro_base_port = globals.cfg['pyro']['base port']
-    pyro_port_range = globals.cfg['pyro']['maximum number of ports']
+    pyro_base_port = gcfg.cfg['pyro']['base port']
+    pyro_port_range = gcfg.cfg['pyro']['maximum number of ports']
 
     # In non-verbose mode print nothing (scan is used by cylc db viewer).
 

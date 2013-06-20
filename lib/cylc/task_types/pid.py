@@ -39,7 +39,7 @@ class pid(object):
         restart_messages.sort()
         for message in restart_messages:
             if not self.outputs.is_completed( message ):
-                self.incoming( 'NORMAL', message )
+                self.outputs.set_completed( message )
                 # that's the next one, quit now.
                 break
 
@@ -50,7 +50,7 @@ class pid(object):
         for message in self.outputs.completed:
             if re.search( 'restart files ready for', message ):
                 if not self.outputs.is_completed( message ):
-                    self.incoming( 'NORMAL', message )
+                    self.outputs.set_completed( message )
  
     def ready_to_spawn( self ):
         if self.has_spawned():

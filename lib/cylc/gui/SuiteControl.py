@@ -121,6 +121,8 @@ Class to hold initialisation data.
         self.template_vars_file = template_vars_file
 
         self.cylc_tmpdir = gcfg.get_tmpdir()
+        self.no_prompt = gcfg.cfg['disable interactive command prompts']
+
         self.imagedir = get_image_dir()
 
         if suite:
@@ -320,9 +322,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                   "dot": "Dot summary view",
                   "graph" : "Dependency graph view" }
                  
-    VIEW_ICON_PATHS = { "text": "/icons/tab-tree.xpm",
-                        "dot": "/icons/tab-led.xpm", 
-                        "graph": "/icons/tab-graph.xpm" }
+    VIEW_ICON_PATHS = { "text": "/icons/tab-tree.png",
+                        "dot": "/icons/tab-dot.png", 
+                        "graph": "/icons/tab-graph.png" }
 
     if not graphing_disabled:
         VIEWS["graph"] = ControlGraph 
@@ -759,7 +761,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #else:
             #    info_dialog( result[1], self.window ).inform()
 
-    def stopsuite( self, bt, window,
+    def stopsuite( self, bt, window, kill_cb, 
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
             stoptag_entry, stopclock_entry, stoptask_entry ):
         stop = False
@@ -767,6 +769,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         stopnow = False
         stopclock = False
         stoptask = False
+        killfirst = False
+
+        if kill_cb.get_active():
+            killfirst = True
 
         if stop_rb.get_active():
             stop = True
@@ -830,7 +836,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         try:
             god = self.get_pyro( 'command-interface' )
             if stop:
-                result = god.put( 'stop cleanly' )
+                result = god.put( 'stop cleanly', killfirst )
             elif stopat:
                 result = god.put( 'stop after tag', stoptag )
             elif stopnow:
@@ -881,7 +887,7 @@ been defined for this suite""").inform()
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
 
-        command = 'cylc control run --from-gui ' + self.cfg.template_vars_opts
+        command = 'cylc run ' + self.cfg.template_vars_opts
         options = ''
         method = ''
         if coldstart_rb.get_active():
@@ -894,7 +900,7 @@ been defined for this suite""").inform()
             options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
-            command = 'cylc control restart --from-gui ' + self.cfg.template_vars_opts
+            command = 'cylc restart ' + self.cfg.template_vars_opts
 
         if mode_live_rb.get_active():
             pass
@@ -902,9 +908,6 @@ been defined for this suite""").inform()
             command += ' --mode=simulation'
         elif mode_dum_rb.get_active():
             command += ' --mode=dummy'
-
-        if self.cfg.pyro_timeout:
-            command += ' --timeout=' + str(self.cfg.pyro_timeout)
 
         ctime = ''
         if method != 'restart':
@@ -1008,6 +1011,7 @@ The Cylc Suite Engine.
 
         if states[ task_id ][ 'state' ] == 'waiting' or \
                 states[ task_id ][ 'state' ] == 'submitting' or \
+                states[ task_id ][ 'state' ] == 'submit-failed' or \
                 states[ task_id ][ 'state' ] == 'queued':
             view = False
             reasons.append( task_id + ' has not started running yet' )
@@ -1051,59 +1055,67 @@ The Cylc Suite Engine.
         ## help_menu.append( cug_pdf_item )
         ## cug_pdf_item.connect( 'activate', self.browse, '--pdf' )
 
-        if task_is_family:
-            # At the moment, there are no relevant menu items.
-            return []
-
         items.append( gtk.SeparatorMenuItem() )
 
-        view_menu = gtk.Menu()
-        view_item = gtk.ImageMenuItem( "View" )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
-        view_item.set_image(img)
-        view_item.set_submenu( view_menu )
-        items.append( view_item )
+        if not task_is_family:
+
+            view_menu = gtk.Menu()
+            view_item = gtk.ImageMenuItem( "View" )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+            view_item.set_image(img)
+            view_item.set_submenu( view_menu )
+            items.append( view_item )
  
-        # NOTE: we have to respond to 'button-press-event' rather than
-        # 'activate' in order for sub-menus to work in the graph-view.
+            # NOTE: we have to respond to 'button-press-event' rather than
+            # 'activate' in order for sub-menus to work in the graph-view.
 
-        info_item = gtk.ImageMenuItem( 'stdout log' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        info_item.set_image(img)
-        view_menu.append( info_item )
-        info_item.connect( 'button-press-event', self.view_task_info, task_id, 'stdout' )
+            js_item = gtk.ImageMenuItem( 'job script' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+            js_item.set_image(img)
+            view_menu.append( js_item )
+            js_item.connect( 'button-press-event', self.view_task_info, task_id, 'job script' )
 
-        inf_item = gtk.ImageMenuItem( 'stderr log' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        inf_item.set_image(img)
-        view_menu.append( inf_item )
-        inf_item.connect( 'button-press-event', self.view_task_info, task_id, 'stderr' )
+            info_item = gtk.ImageMenuItem( 'log files' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
+            info_item.set_image(img)
+            view_menu.append( info_item )
+            info_item.connect( 'button-press-event', self.view_task_info, task_id, None )
 
-        js_item = gtk.ImageMenuItem( 'job script' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DND, gtk.ICON_SIZE_MENU )
-        js_item.set_image(img)
-        view_menu.append( js_item )
-        js_item.connect( 'button-press-event', self.view_task_info, task_id, 'job script' )
+            info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+            info_item.set_image(img)
+            view_menu.append( info_item )
+            info_item.connect( 'button-press-event', self.popup_requisites, task_id )
 
-        info_item = gtk.ImageMenuItem( 'prereq\'s & outputs' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
-        info_item.set_image(img)
-        view_menu.append( info_item )
-        info_item.connect( 'button-press-event', self.popup_requisites, task_id )
+            js0_item = gtk.ImageMenuItem( 'run "cylc show"' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+            js0_item.set_image(img)
+            view_menu.append( js0_item )
+            js0_item.connect( 'button-press-event', self.view_task_descr, task_id )
 
-        js0_item = gtk.ImageMenuItem( 'run "cylc show"' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
-        js0_item.set_image(img)
-        view_menu.append( js0_item )
-        js0_item.connect( 'button-press-event', self.view_task_descr, task_id )
-
-        items.append( gtk.SeparatorMenuItem() )
+            items.append( gtk.SeparatorMenuItem() )
 
         trigger_now_item = gtk.ImageMenuItem( 'Trigger Now' )
         img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
         trigger_now_item.set_image(img)
         items.append( trigger_now_item )
-        trigger_now_item.connect( 'activate', self.trigger_task_now, task_id )
+        trigger_now_item.connect( 'activate', self.trigger_task_now, task_id, task_is_family )
+
+        # TODO - grey out poll and kill if the task is not 'submitted' or 'running'
+        # (this requires getting the task state from the underlying data model...)
+        poll_item = gtk.ImageMenuItem( 'Poll' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
+        poll_item.set_image(img)
+        items.append( poll_item )
+        poll_item.connect( 'activate', self.poll_task, task_id, task_is_family )
+
+        kill_item = gtk.ImageMenuItem( 'Kill' )
+        img = gtk.image_new_from_stock(  gtk.STOCK_CANCEL, gtk.ICON_SIZE_MENU )
+        kill_item.set_image(img)
+        items.append( kill_item )
+        kill_item.connect( 'activate', self.kill_task, task_id, task_is_family )
+
+        items.append( gtk.SeparatorMenuItem() )
 
         reset_menu = gtk.Menu()
         reset_item = gtk.ImageMenuItem( "Reset State" )
@@ -1116,31 +1128,31 @@ The Cylc Suite Engine.
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
         reset_ready_item.set_image(reset_img)
         reset_menu.append( reset_ready_item )
-        reset_ready_item.connect( 'button-press-event', self.reset_task_state, task_id, 'ready' )
+        reset_ready_item.connect( 'button-press-event', self.reset_task_state, task_id, 'ready', task_is_family )
 
         reset_waiting_item = gtk.ImageMenuItem( '"waiting"' )
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
         reset_waiting_item.set_image(reset_img)
         reset_menu.append( reset_waiting_item )
-        reset_waiting_item.connect( 'button-press-event', self.reset_task_state, task_id, 'waiting' )
+        reset_waiting_item.connect( 'button-press-event', self.reset_task_state, task_id, 'waiting', task_is_family )
 
         reset_succeeded_item = gtk.ImageMenuItem( '"succeeded"' )
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
         reset_succeeded_item.set_image(reset_img)
         reset_menu.append( reset_succeeded_item )
-        reset_succeeded_item.connect( 'button-press-event', self.reset_task_state, task_id, 'succeeded' )
+        reset_succeeded_item.connect( 'button-press-event', self.reset_task_state, task_id, 'succeeded', task_is_family )
 
         reset_failed_item = gtk.ImageMenuItem( '"failed"' )
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
         reset_failed_item.set_image(reset_img)
         reset_menu.append( reset_failed_item )
-        reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'failed' )
+        reset_failed_item.connect( 'button-press-event', self.reset_task_state, task_id, 'failed', task_is_family )
 
         spawn_item = gtk.ImageMenuItem( 'Force spawn' )
         img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
         spawn_item.set_image(img)
         items.append( spawn_item )
-        spawn_item.connect( 'button-press-event', self.reset_task_state, task_id, 'spawn' )
+        spawn_item.connect( 'button-press-event', self.reset_task_state, task_id, 'spawn', task_is_family )
 
         items.append( gtk.SeparatorMenuItem() )
 
@@ -1148,41 +1160,44 @@ The Cylc Suite Engine.
         img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU )
         stoptask_item.set_image(img)
         items.append( stoptask_item )
-        stoptask_item.connect( 'activate', self.hold_task, task_id, True )
+        stoptask_item.connect( 'activate', self.hold_task, task_id, True, task_is_family )
 
         unstoptask_item = gtk.ImageMenuItem( 'Release' )
         img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
         unstoptask_item.set_image(img)
         items.append( unstoptask_item )
-        unstoptask_item.connect( 'activate', self.hold_task, task_id, False )
+        unstoptask_item.connect( 'activate', self.hold_task, task_id, False, task_is_family )
 
         items.append( gtk.SeparatorMenuItem() )
     
-        kill_item = gtk.ImageMenuItem( 'Remove after spawning' )
+        remove_item = gtk.ImageMenuItem( 'Remove after spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        kill_item.set_image(img)
-        items.append( kill_item )
-        kill_item.connect( 'activate', self.kill_task, task_id )
 
-        kill_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
+        remove_item.set_image(img)
+        items.append( remove_item )
+        remove_item.connect( 'activate', self.remove_task, task_id, task_is_family )
+
+        remove_nospawn_item = gtk.ImageMenuItem( 'Remove without spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        kill_nospawn_item.set_image(img)
-        items.append( kill_nospawn_item )
-        kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
 
-        purge_item = gtk.ImageMenuItem( 'Remove Tree (Recursive Purge)' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_DELETE, gtk.ICON_SIZE_MENU )
-        purge_item.set_image(img)
-        items.append( purge_item )
-        purge_item.connect( 'activate', self.popup_purge, task_id )
+        remove_nospawn_item.set_image(img)
+        items.append( remove_nospawn_item )
+        remove_nospawn_item.connect( 'activate', self.remove_task_nospawn, task_id, task_is_family )
 
-        items.append( gtk.SeparatorMenuItem() )
+        if not task_is_family:
+            purge_item = gtk.ImageMenuItem( 'Remove Tree (Recursive Purge)' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DELETE, gtk.ICON_SIZE_MENU )
+            purge_item.set_image(img)
+            items.append( purge_item )
+            purge_item.connect( 'activate', self.popup_purge, task_id )
+
+            items.append( gtk.SeparatorMenuItem() )
     
-        addprereq_item = gtk.ImageMenuItem( 'Add A Prerequisite' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
-        addprereq_item.set_image(img)
-        items.append( addprereq_item )
-        addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
+            addprereq_item = gtk.ImageMenuItem( 'Add A Prerequisite' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
+            addprereq_item.set_image(img)
+            items.append( addprereq_item )
+            addprereq_item.connect( 'activate', self.add_prerequisite_popup, task_id )
 
         return items
 
@@ -1361,7 +1376,6 @@ The Cylc Suite Engine.
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 400)
-        window.set_transient_for( self.window )
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         sw = gtk.ScrolledWindow()
@@ -1440,11 +1454,13 @@ shown here in the state they were in at the time of triggering.''' )
         self.quitters.remove( lv )
         w.destroy()
 
-    def hold_task( self, b, task_id, stop=True ):
-        if stop:
-            msg = "hold " + task_id + "?"
-        else:
-            msg = "release " + task_id + "?"
+    def get_confirmation( self, cmd, name, msg=None ):
+
+        if self.cfg.no_prompt:
+            return True
+
+        if not msg:
+            msg = cmd + " " + name + "?"
 
         prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
                                     gtk.MESSAGE_QUESTION,
@@ -1454,20 +1470,27 @@ shown here in the state they were in at the time of triggering.''' )
         response = prompt.run()
 
         while response == gtk.RESPONSE_HELP:
-            if stop:
-                self.command_help( "control", "hold" )
-            else:
-                self.command_help( "control", "release" )
+            self.command_help( cmd )
             response = prompt.run()
 
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
+            return False
+
+    def hold_task( self, b, task_id, stop=True, is_family=False ):
+        if stop:
+            cmd = "hold"
+        else:
+            cmd = "release"
+        if not self.get_confirmation( cmd, task_id ):
             return
+
+        name, tag = task_id.split(TaskID.DELIM)
         try:
             if stop:
-                result = self.get_pyro( 'command-interface' ).put( 'hold task now', task_id )
+                result = self.get_pyro( 'command-interface' ).put( 'hold task now', name, tag, is_family )
             else:
-                result = self.get_pyro( 'command-interface' ).put( 'release task', task_id )
+                result = self.get_pyro( 'command-interface' ).put( 'release task', name, tag, is_family )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1475,114 +1498,100 @@ shown here in the state they were in at the time of triggering.''' )
 
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
-        #else:
-        #    info_dialog( result[1], self.window ).inform()
 
-    def trigger_task_now( self, b, task_id ):
-        msg = "trigger " + task_id + " now?"
-        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
-                                    gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
-
-        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help( "control", "trigger" )
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+    def trigger_task_now( self, b, task_id, is_family=False ):
+        cmd = "trigger"
+        if not self.get_confirmation( cmd, task_id ):
             return
+
+        name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'trigger task', task_id )
+            result = self.get_pyro( 'command-interface' ).put( 'trigger task', name, tag, is_family )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
-        #else:
-        #    info_dialog( result[1], self.window ).inform()
 
-    def reset_task_state( self, b, e, task_id, state ):
+    def poll_task( self, b, task_id, is_family=False ):
+        cmd = "poll"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'poll tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
+    def kill_task( self, b, task_id, is_family=False ):
+        cmd = "kill"
+        if not self.get_confirmation( cmd, task_id ):
+            return
+
+        name, tag = task_id.split(TaskID.DELIM)
+        try:
+            result = self.get_pyro( 'command-interface' ).put( 'kill tasks', name, tag, is_family )
+        except Exception, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__(), self.window ).warn()
+            return
+        if not result[0]:
+            warning_dialog( result[1], self.window ).warn()
+
+    def reset_task_state( self, b, e, task_id, state, is_family=False ):
         if hasattr(e, "button") and e.button != 1:
             return False
+        cmd = "reset"
+
+        name, tag = task_id.split(TaskID.DELIM)
         msg = "reset " + task_id + " to " + state +"?"
-        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
-                                    gtk.MESSAGE_QUESTION,
-                                    gtk.BUTTONS_OK_CANCEL, msg )
-
-        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help( "control", "reset" )
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+        if not self.get_confirmation( cmd, task_id, msg ):
             return
+
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'reset task state', task_id, state )
+            result = self.get_pyro( 'command-interface' ).put( 'reset task state', name, tag, state, is_family )
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
-        #else:
-        #    info_dialog( result[1], self.window ).inform()
 
-    def kill_task( self, b, task_id ):
+    def remove_task( self, b, task_id, is_family ):
+        cmd = "remove"
         msg = "remove " + task_id + " (after spawning)?"
-
-        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION,
-                                    gtk.BUTTONS_OK_CANCEL, msg )
-
-        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help( "control", "remove" )
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+        if not self.get_confirmation( cmd, task_id, msg ):
             return
+
+        name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface'  ). put( 'kill task', True, task_id )
+            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, True )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
-        #else:
-        #    info_dialog( result[1], self.window ).inform()
  
-    def kill_task_nospawn( self, b, task_id ):
+    def remove_task_nospawn( self, b, task_id, is_family=False ):
+        cmd = "remove"
         msg = "remove " + task_id + " (without spawning)?"
-        prompt = gtk.MessageDialog( self.window, gtk.DIALOG_MODAL,
-                                    gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
-
-        prompt.add_button( gtk.STOCK_HELP, gtk.RESPONSE_HELP )
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help( "control", "remove" )
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+        if not self.get_confirmation( cmd, task_id, msg ):
             return
+
+        name, tag = task_id.split(TaskID.DELIM)
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'kill task', False, task_id )
+            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, False )
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
-        #else:
-        #    info_dialog( result[1], self.window ).inform()
 
     def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
@@ -1630,7 +1639,13 @@ shown here in the state they were in at the time of triggering.''' )
 
         stop_rb = gtk.RadioButton( None, "After running tasks have finished" )
         vbox.pack_start (stop_rb, True)
-        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware of orphaned tasks!)" )
+
+        kill_cb = gtk.CheckButton( "    Kill active tasks first" )
+        vbox.pack_start (kill_cb, True)
+        kill_cb.set_active(False)
+        kill_cb.set_sensitive(True)
+ 
+        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware orphaned tasks)" )
         vbox.pack_start (stopnow_rb, True)
         stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
         vbox.pack_start (stopat_rb, True)
@@ -1672,17 +1687,17 @@ shown here in the state they were in at the time of triggering.''' )
         tt_box.pack_start (stoptask_entry, True)
         vbox.pack_start( tt_box )
 
-        stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box )
-        stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box )
-        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box )
-        stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box )
-        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box )
+        stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box, kill_cb )
+        stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box, kill_cb )
+        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box, kill_cb )
+        stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box, kill_cb )
+        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box, kill_cb )
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         stop_button = gtk.Button( "_Stop" )
-        stop_button.connect("clicked", self.stopsuite, window,
+        stop_button.connect("clicked", self.stopsuite, window, kill_cb,
                 stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
                 stoptime_entry, stopclock_entry, stoptask_entry )
 
@@ -1698,16 +1713,23 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def stop_method( self, b, meth, st_box, sc_box, tt_box  ):
+    def stop_method( self, b, meth, st_box, sc_box, tt_box, kill_cb  ):
         for ch in st_box.get_children() + sc_box.get_children() + tt_box.get_children():
             ch.set_sensitive( False )
-        if meth == 'stopat':
+        if meth == 'stop':
+            kill_cb.set_sensitive(True)
+        elif meth == 'stopnow':
+            kill_cb.set_sensitive(False)
+        elif meth == 'stopat':
+            kill_cb.set_sensitive(False)
             for ch in st_box.get_children():
                 ch.set_sensitive( True )
         elif meth == 'stopclock':
+            kill_cb.set_sensitive(False)
             for ch in sc_box.get_children():
                 ch.set_sensitive( True )
         elif meth == 'stoptask':
+            kill_cb.set_sensitive(False)
             for ch in tt_box.get_children():
                 ch.set_sensitive( True )
 
@@ -1764,7 +1786,6 @@ shown here in the state they were in at the time of triggering.''' )
 
         mode_live_rb.set_active(True)
         vbox.pack_start( box )
-
 
         nvbox = gtk.VBox()
         nhbox = gtk.HBox()
@@ -1960,15 +1981,26 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'SUITE: ' + self.cfg.suite )
         vbox.pack_start( label, True )
  
+        fam_cb = gtk.CheckButton( "Insert a family?" )
+        vbox.pack_start( fam_cb, True )
+
         hbox = gtk.HBox()
-        label = gtk.Label( 'TASK (NAME'+TaskID.DELIM+'TAG)' )
+        label = gtk.Label( 'MATCH' )
         hbox.pack_start( label, True )
-        entry_taskorgroup = gtk.Entry()
-        hbox.pack_start (entry_taskorgroup, True)
+        entry_match = gtk.Entry()
+        hbox.pack_start (entry_match, True)
         vbox.pack_start(hbox)
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'STOP (optional final tag, temporary tasks)' )
+        label = gtk.Label( 'TAG' )
+        hbox.pack_start( label, True )
+        entry_tag = gtk.Entry()
+        hbox.pack_start (entry_tag, True)
+        vbox.pack_start(hbox)
+
+
+        hbox = gtk.HBox()
+        label = gtk.Label( '[STOP]' )
         hbox.pack_start( label, True )
         entry_stoptag = gtk.Entry()
         entry_stoptag.set_max_length(14)
@@ -1980,7 +2012,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         hbox = gtk.HBox()
         insert_button = gtk.Button( "_Insert" )
-        insert_button.connect("clicked", self.insert_task, window, entry_taskorgroup, entry_stoptag )
+        insert_button.connect("clicked", self.insert_task, window, entry_match, entry_tag, entry_stoptag, fam_cb )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         hbox.pack_start(insert_button, False)
@@ -1991,41 +2023,26 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def insert_task( self, w, window, entry_taskorgroup, entry_stoptag ):
-        torg = entry_taskorgroup.get_text()
-        if torg == '':
-            warning_dialog( "Enter task or group ID", self.window ).warn()
+    def insert_task( self, w, window, entry_match, entry_tag, entry_stoptag, fam_cb ):
+        match = entry_match.get_text()
+        tag = entry_tag.get_text()
+        if match == '' or tag == '':
+            warning_dialog( "Enter task or family name MATCH expression", self.window ).warn()
             return
-        else:
-            try:
-                tid = TaskID( torg )
-            except TaskIDError,x:
-                warning_dialog( str(x), self.window ).warn()
-                return
-            else:
-                torg= tid.getstr()
-
-        stoptag = entry_stoptag.get_text()
-        if stoptag != '':
-            try:
-                ct(stoptag)
-            except CycleTimeError,x:
-                warning_dialog( str(x), self.window ).warn()
-                return
         window.destroy()
-        if stoptag == '':
-            stop = None
-        else:
+
+        is_family = fam_cb.get_active()
+        stoptag = entry_stoptag.get_text()
+        stop = None
+        if stoptag != '':
             stop = stoptag
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'insert task', torg, stop )
+            result = self.get_pyro( 'command-interface' ).put( 'insert task', match, tag, is_family, stop )
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
-        #else:
-        #    info_dialog( result[1], self.window ).inform()
 
     def reload_suite( self, w ):
         msg = """Reload the suite definition.
@@ -2060,44 +2077,40 @@ or remove task definitions without restarting the suite."""
         if not result:
             warning_dialog( 'Failed to nudge the suite', self.window ).warn()
 
-    def popup_logview( self, task_id, logfiles, choice='stdout' ):
-        # TO DO: choice is dirty hack to separate the task job script,
-        # stdout, and stderr file; we should do this properly by storing them
-        # separately in the task proxy, or at least separating them in
-        # the suite state summary.
-        window = gtk.Window()
+    def popup_logview( self, task_id, logfiles, choice=None ):
+        # TODO - choice is dirty hack to separate the task job script
+        # from other logs (stdout, stderr, and any extra logs); we
+        # should do this properly by storing them separately in the task
+        # proxy, or at least separating them in the suite state summary.
+        window = gtk.Window( gtk.WINDOW_TOPLEVEL )
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         logs = []
-        jsfound = False
         err = []
         out = []
+        extra = []
         for f in logfiles:
             if f.endswith('.err'):
                 err.append(f)
             elif f.endswith('.out'):
                 out.append(f)
-            else:
+            elif re.search( '.*' + task_id + '\.\d+$', f ): # /a/b/c/foo.1.2
                 js = f
+            else:
+                extra.append( f )
 
         # for re-tries this sorts in time order due to filename:
+        # (TODO - does this still work, post secs-since-epoch file extensions?)
         err.sort( reverse=True )
         out.sort( reverse=True )
-        window.set_size_request(800, 300)
+        window.set_size_request(800, 400)
         if choice == 'job script':
-            window.set_title( task_id + ": Task Job Script" )
+            window.set_title( task_id + ": Job Script" )
             lv = textload( task_id, js )
-
         else:
-            if choice == 'stdout':
-                logs = out + err
-            elif choice == 'stderr':
-                logs = err + out
-
-            window.set_title( task_id + ": Task Logs" )
+            logs = out + err + extra
+            window.set_title( task_id + ": Log Files" )
             lv = combo_logviewer( task_id, logs )
         #print "ADDING to quitters: ", lv
         self.quitters.append( lv )
@@ -2184,15 +2197,15 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         theme_item.set_submenu(thememenu)
 
         theme_items = {}
-        theme = "classic"
+        theme = "default"
         theme_items[theme] = gtk.RadioMenuItem( label=theme )
         thememenu.append( theme_items[theme] )
         self._set_tooltip( theme_items[theme], theme + " task state theme" )
         theme_items[theme].theme_name = theme
         for theme in self.usercfg['themes']:
-            if theme == "classic":
+            if theme == "default":
                 continue
-            theme_items[theme] = gtk.RadioMenuItem( group=theme_items['classic'], label=theme )
+            theme_items[theme] = gtk.RadioMenuItem( group=theme_items['default'], label=theme )
             thememenu.append( theme_items[theme] )
             self._set_tooltip( theme_items[theme], theme + " task state theme" )
             theme_items[theme].theme_name = theme
@@ -2483,11 +2496,12 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
   
         doc_menu.append( gtk.SeparatorMenuItem() )
 
-        cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
-        cug_www_item.set_image(img)
-        doc_menu.append( cug_www_item )
-        cug_www_item.connect( 'activate', self.browse, '-x' )
+        if gcfg.cfg['documentation']['urls']['local index']:
+            cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
+            cug_www_item.set_image(img)
+            doc_menu.append( cug_www_item )
+            cug_www_item.connect( 'activate', self.browse, '-x' )
  
         cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
@@ -2966,7 +2980,7 @@ For more Stop options use the Control menu.""" )
 for local suites; I will call "cylc cat-log" instead.""" ).warn()
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
                         xopts + self.cfg.suite )
-            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
             self.gcapture_windows.append(foo)
             foo.run()
             return

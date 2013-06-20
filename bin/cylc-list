@@ -23,21 +23,16 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
-from cylc.command_prep import prep_file
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
-List runtime namespaces (tasks, families) or print the first-parent
-inheritance graph to the terminal. Additional information can be printed
-for each namespace:
-  * title
-  * linearized inheritance precedence ("Method Resolution Order" in
-    programming languages with multiple inheritance).
+Print runtime namespace names (tasks and families), the first-parent
+inheritance graph, or actual tasks for a given cycle range.
 
 The first-parent inheritance graph determines the primary task family
 groupings that are collapsible in gcylc suite views and the graph
 viewer tool. To visualize the full multiple inheritance hierarchy use:
-  'cylc graph -n'.""" )
+  'cylc graph -n'.""", jset=True, prep=True )
 
 parser.add_option( "-a","--all-tasks",
         help="Print all tasks, not just those used in the graph.",
@@ -66,9 +61,21 @@ parser.add_option( "-w","--with-titles",
         help="Print namespaces titles too.",
         action="store_true", default=False, dest="titles" )
 
+parser.add_option( "-c", "--cycles", 
+        help="Print the task IDs of the tasks that would actually "
+        "be created in the START [through STOP] cycles (or '1's "
+        "for non-cycling tasks).",
+        metavar="START[,STOP]", action="store", default=None,
+        dest="crange" )
+
+parser.add_option( "--cold", 
+        help="With -c/--range, print tasks as if for a cold-start "
+        "from the START cycle (default False).",
+        action="store_false", default=True, dest="crange_raw" )
+
 (options, args) = parser.parse_args()
 
-suite, suiterc = prep_file( args[0], options ).execute()
+suite, suiterc, junk = parser.get_suite()
 
 if options.all_tasks and options.all_namespaces:
     parser.error("Choose either -a or -n")
@@ -76,6 +83,13 @@ if options.all_tasks:
     which = "all tasks"
 elif options.all_namespaces:
     which = "all namespaces"
+elif options.crange:
+    which = "crange"
+    try:
+        tr_start, tr_stop = options.crange.split(',')
+    except ValueError:
+        tr_start = tr_stop = options.crange
+
 else:
     which = "graphed tasks"
 
@@ -96,6 +110,11 @@ try:
         template_vars_file=options.templatevars_file)
     if options.tree:
         config.print_first_parent_tree( pretty=options.box, titles=options.titles )
+    elif options.crange:
+        node_labels = config.get_node_labels( tr_start, tr_stop, raw=options.crange_raw )
+        node_labels.sort()
+        for nl in node_labels:
+            print nl
     else:
         result = config.get_namespace_list( which )
         namespaces = result.keys()

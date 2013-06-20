@@ -40,7 +40,7 @@ class lockserver(object):
             self.port = get_port( "lockserver", self.owner, self.host, None, self.timeout )
 
         # lockservers are connected to Pyro with owner name
-        # see comment in bin/_lockserver. TO DO: reuse code.
+        # see comment in bin/_lockserver. TODO - reuse code.
         qualified_name = self.owner + ".lockserver"
         uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/' + qualified_name
         return Pyro.core.getProxyForURI(uri)

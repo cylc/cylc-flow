@@ -29,6 +29,9 @@ class TriggerExpressionError( Exception ):
         return repr(self.msg)
 
 class conditional_prerequisites(object):
+
+    TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
+
     def __init__( self, owner_id ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
@@ -41,7 +44,7 @@ class conditional_prerequisites(object):
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
         if label:
-            # TO DO: autolabelling NOT USED? (and is broken because the
+            # TODO - autolabelling NOT USED? (and is broken because the
             # supplied condition is necessarily expressed in terms of
             # user labels?).
             pass
@@ -51,7 +54,7 @@ class conditional_prerequisites(object):
 
         if message in self.labels:
             # DUPLICATE PREREQUISITE - IMPOSSIBLE IN CURRENT USE OF THIS CLASS?
-            # (TO DO: if impossible, remove related code from this file)
+            # (TODO - if impossible, remove related code from this file)
             #raise SystemExit( "Duplicate prerequisite: " + message )
             print >> sys.stderr, "WARNING, " + self.owner_id + ": duplicate prerequisite: " + message
             self.excess_labels.append(label)
@@ -123,3 +126,14 @@ class conditional_prerequisites(object):
     def set_all_unsatisfied( self ):
         for label in self.messages:
             self.satisfied[ label ] = False
+
+    def get_target_tags( self ):
+        """Return a list of cycle times target by each prerequisite,
+        including each component of conditionals."""
+        tags = []
+        for label, msg in self.messages.items():
+            m = re.match( self.__class__.TAG_RE, msg )
+            if m:
+                tags.append( m.groups()[0] )
+        return tags 
+

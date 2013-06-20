@@ -55,7 +55,7 @@ class passphrase(object):
         self.location = None
 
         ### ?? this doesn't matter, we now set permissions explicitly:
-        ### ?? To Do: handle existing file that owner can't read? etc.?
+        ### ?? TODO - handle existing file that owner can't read? etc.?
         ##mode = os.stat( ppfile )[ST_MODE]
         ##if not S_IRUSR & mode:
         ##    raise PassphraseNotReadableError, 'Owner cannot read passphrase file: ' + ppfile
@@ -68,8 +68,7 @@ class passphrase(object):
         """
 Passphrase location, order of preference:
 
-1/ The pfile argument (used for initial passphrase creation by the
-register command, and optionally on the command line).
+1/ The pfile argument - used for passphrase creation by "cylc register".
 
 2/ The suite definition directory, because suites may be automatically
 installed (e.g. by Rose) to remote task hosts, and remote tasks know

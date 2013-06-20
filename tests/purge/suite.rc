@@ -49,7 +49,7 @@ title = "Cylc Admin Test Suite"
         command scripting = ${CYLC_TASK_NAME}.sh
         [[[environment]]]
             #TASK_EXE_SECONDS = $( cylc rnd 1 15 )
-            TASK_EXE_SECONDS = 0
+            TASK_EXE_SECONDS = 0 # fast
             WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
             RUNNING    = $WORKSPACE/running
             INPUT_DIR  = $WORKSPACE
@@ -87,7 +87,7 @@ cylc set-runahead -f $CYLC_SUITE_REG_NAME 30"""
     [[X]]
         description = "Retrieve real time data for model A"
         pre-command scripting = """
-sleep 10
+#sleep 10
 CYCLE2=$( cylc cycletime --offset-hours=6 $CYLC_SUITE_INITIAL_CYCLE_TIME )
 if (( CYLC_TASK_CYCLE_TIME == CYCLE2 )); then
     echo "This task ABORTS in the 2nd cycle!"
@@ -107,7 +107,7 @@ fi"""
         command scripting = """
 # insert ColdA:
 AT=$( cylc cycletime --offset-hours=18 )
-cylc insert -f $CYLC_SUITE_REG_NAME ColdA.${AT}
+cylc insert -f $CYLC_SUITE_REG_NAME ColdA ${AT}
 # purge tasks that cannot run:
 TO=$( cylc cycletime --offset-hours=12 )
 cylc purge -f $CYLC_SUITE_REG_NAME X.$CYLC_TASK_CYCLE_TIME ${TO}
@@ -117,7 +117,7 @@ echo DONE"""
     default node attributes = "style=filled"
     [[node attributes]]
         Model = "shape=septagon"
-        Post   = "style=unfilled", "shape=rectangle"
+        Post   = "style=", "shape=rectangle"
         Cold   = "shape=egg", "fillcolor=slateblue"
         X   = "shape=box", "fillcolor=lawngreen"
         A      = "fillcolor=red"

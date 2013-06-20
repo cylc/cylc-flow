@@ -20,7 +20,10 @@ from cylc import which
 import os, re
 from job_submit import job_submit
 
-# TO DO: THIS CLASS MAY NEED UPDATING
+# TODO - THIS CLASS NEEDS TO BE CHECKED AND EITHER UPDATED (for job poll
+# and kill - probably just derive from the main loadleveler class) OR
+# REMOVED. It was used a long time ago for submitting existing
+# job-scripts with built-in loadleveler directives.
 
 class ll_raw( job_submit ):
 

@@ -21,113 +21,101 @@
 import os, sys
 import socket
 import subprocess
-import datetime
+from datetime import datetime
 from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
 from cylc.global_config import gcfg
+from cylc import cylc_mode
 
 class message(object):
     def __init__( self, msg=None, priority='NORMAL', verbose=False ):
 
-        globals = gcfg
-        self.retry_seconds = globals.cfg['task messaging']['retry interval in seconds']
-        self.max_tries = globals.cfg['task messaging']['maximum number of tries']
-        self.try_timeout = globals.cfg['task messaging']['connection timeout in seconds']
-
         self.msg = msg
-        self.verbose = verbose
-        if not verbose:
-            try:
-                if os.environ['CYLC_VERBOSE'] == 'True':
-                    self.verbose = True
-            except:
-                pass
 
-        legal_priority = [ 'NORMAL', 'WARNING', 'CRITICAL' ]
-
-        if priority in legal_priority:
+        if priority in [ 'NORMAL', 'WARNING', 'CRITICAL' ]:
             self.priority = priority
         else:
             raise Exception( 'Illegal message priority ' + priority )
 
-        try:
-            self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'submit'
-        except:
-            self.mode = 'raw' # direct manual execution
+        # load the environment
+        self.env_map = dict(os.environ)
 
-        try:
-            self.task_id = os.environ[ 'CYLC_TASK_ID' ]
-        except:
-            if self.mode == 'raw':
-                self.task_id = '(CYLC_TASK_ID)'
-            else:
-                raise
+        # set some instance variables 
+        for attr, key, default in (
+                ('suite', 'CYLC_SUITE_NAME', '(CYLC_SUITE_NAME)'),
+                ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
+                ('retry_seconds', 'CYLC_TASK_MSG_RETRY_INTVL', '(CYLC_TASK_MSG_RETRY_INTVL)'),
+                ('max_tries',     'CYLC_TASK_MSG_MAX_TRIES',   '(CYLC_TASK_MSG_MAX_TRIES)'),
+                ('try_timeout',   'CYLC_TASK_MSG_TIMEOUT',     '(CYLC_TASK_MSG_TIMEOUT)'),
+                ('owner', 'CYLC_SUITE_OWNER', None),
+                ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
+                ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
+            value = self.env_map.get(key, default)
+            setattr(self, attr, value)
 
+        # conversions from string:
+        if self.try_timeout == 'None':
+            self.try_timeout = None
         try:
-            self.suite = os.environ[ 'CYLC_SUITE_REG_NAME' ]
-        except:
-            if self.mode == 'raw':
-                pass
-            else:
-                raise
-
-        try:
-            self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
-        except:
-            if self.mode == 'raw':
-                pass
-            else:
-                raise
-
-        try:
-            self.host = os.environ[ 'CYLC_SUITE_HOST' ]
-        except:
-            if self.mode == 'raw':
-                self.host = '(CYLC_SUITE_HOST)'
-            else:
-                raise
-
-        try:
-            self.port = os.environ[ 'CYLC_SUITE_PORT' ]
-        except:
-            if self.mode == 'raw':
-                self.port = '(CYLC_SUITE_PORT)'
-            else:
-                raise
-
-        self.utc = False
-        try:
-            if os.environ['CYLC_UTC'] == 'True':
-                self.utc = True
+            self.retry_seconds = float( self.retry_seconds )
+            self.max_tries = int( self.max_tries )
         except:
             pass
-    
-        self.ssh_messaging = False
-        try:
-            if os.environ['CYLC_TASK_SSH_MESSAGING'] == 'True':
-                self.ssh_messaging = True
-        except:
-            pass
+ 
+        self.verbose = verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
 
-        self.ssh_login_shell = True
-        try:
-            if os.environ['CYLC_TASK_SSH_LOGIN_SHELL'] == 'False':
-                self.ssh_login_shell = False
-        except:
-            pass
-            
+        # 'scheduler' or 'submit', (or 'raw' if job script run manually)
+        self.mode = self.env_map.get( 'CYLC_MODE', 'raw' )
+
+        rd = self.env_map.get( 'CYLC_SUITE_RUN_DIR', '.' )
+        self.env_file_path = os.path.join (rd, 'cylc-suite-env' )
+
+        self.utc = self.env_map.get('CYLC_UTC') == 'True'
+        # Record the time the messaging system was called and append it
+        # to the message, in case the message is delayed in some way.
+        if self.utc:
+            self.true_event_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+        else:
+            self.true_event_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+        self.ssh_messaging = (
+                self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' )
+
+        self.polling = (
+                self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'poll' )
+
+        self.ssh_login_shell = (
+                self.env_map.get('CYLC_TASK_SSH_LOGIN_SHELL') != 'False')
+
+    def load_suite_contact_file( self ):
+        # override CYLC_SUITE variables using the contact environment file,
+        # in case the suite was stopped and then restarted on another port:
+        if os.access(self.env_file_path, os.F_OK | os.R_OK):
+            for line in open(self.env_file_path):
+                key, value = line.strip().split('=', 1)
+                self.env_map[key] = value
+        # set some instance variables 
+        for attr, key, default in (
+                ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
+                ('owner', 'CYLC_SUITE_OWNER', None),
+                ('host', 'CYLC_SUITE_HOST', '(CYLC_SUITE_HOST)'),
+                ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
+            value = self.env_map.get(key, default)
+            setattr(self, attr, value)
+           
     def now( self ):
         if self.utc:
-            return datetime.datetime.utcnow()
+            return datetime.utcnow()
         else:
-            return datetime.datetime.now()
+            return datetime.now()
 
     def get_proxy( self ):
         # get passphrase here, not in __init__, because it is not needed
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
         # it is needed, we will end up in this method). 
+
         self.pphrase = passphrase( self.suite, self.owner, self.host,
                 verbose=self.verbose ).get( None, None )
 
@@ -137,7 +125,11 @@ class message(object):
                 self.verbose ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
-        now = strftime( self.now(), "%Y/%m/%d %H:%M:%S" )
+        if self.utc:
+            dt = datetime.utcnow()
+        else:
+            dt = datetime.now()
+        now = strftime( dt, "%Y/%m/%d %H:%M:%S" )
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg
@@ -151,13 +143,20 @@ class message(object):
         elif self.msg:
             msg = self.msg
         if not msg:
-            # nothing to send (To Do: this is not needed?)
+            # nothing to send (TODO - not needed?)
             return
-        if self.mode != 'scheduler':
+
+        # append event time to the message
+        msg += ' at ' + self.true_event_time
+
+        if self.mode != 'scheduler' or self.polling:
             # no suite to communicate with, just print to stdout.
             self.print_msg( msg )
             return
+
         if self.ssh_messaging:
+            self.load_suite_contact_file()
+
             # The suite definition specified that this task should
             # communicate back to the suite by means of using
             # passwordless ssh to re-invoke the messaging command on the
@@ -183,15 +182,17 @@ class message(object):
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
-                    'CYLC_SUITE_REG_NAME', 'CYLC_SUITE_OWNER',
+                    'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
+                    'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
+                    'CYLC_TASK_MSG_RETRY_INTVL',
                     'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
                 # (no exception handling here as these variables should
                 # always be present in the task execution environment)
-                env[var] = os.environ[var]
+                env[var] = self.env_map.get( var, 'UNSET' )
 
             # The path to cylc/bin on the remote end may be required:
-            path = [ os.path.join( os.environ['CYLC_DIR_ON_SUITE_HOST'], 'bin' ) ]
+            path = [ os.path.join( self.env_map['CYLC_DIR_ON_SUITE_HOST'], 'bin' ) ]
 
             if remrun().execute( env=env, path=path ):
                 # Return here if remote re-invocation occurred,
@@ -203,21 +204,23 @@ class message(object):
         self.print_msg( msg )
         self.send_pyro( msg )
 
-    def send_pyro( self, msg ):
 
-        # get a proxy for the remote object (this succeeds even if the
-        # suite isn't actually running -it is just addressing.
-        proxy = self.get_proxy()
-        
+    def send_pyro( self, msg ):
         print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
         sent = False
-        for itry in range( 1, self.max_tries+1 ):
-            print '  ', "Try", itry, "of", self.max_tries, "...",  
+        itry = 0
+        while True:
+            itry += 1
+            print '  ', "Try", itry, "of", str(self.max_tries), "...",  
             try:
-                proxy.incoming( self.priority, msg )
+                # Get a proxy for the remote object and send the message.
+                self.load_suite_contact_file() # might have change between tries
+                self.get_proxy().put( self.priority, msg )
             except Exception, x:
                 print "failed:", str(x)
-                print "   retry in", self.retry_seconds, "seconds ..."
+                if itry >= self.max_tries:
+                    break
+                print "   retry in", str(self.retry_seconds), "seconds ..."
                 sleep( self.retry_seconds )
             else:
                 print "succeeded"
@@ -227,11 +230,13 @@ class message(object):
             # issue a warning and let the task carry on
             print >> sys.stderr, 'WARNING: MESSAGE SEND FAILED'
 
-    def send_succeeded( self ):
-        self.send( self.task_id + ' succeeded' )
-
     def send_started( self ):
         self.send( self.task_id + ' started' )
+        self.task_lock()
+
+    def send_succeeded( self ):
+        self.task_lock( False )
+        self.send( self.task_id + ' succeeded' )
 
     def send_failed( self ):
         self.priority = 'CRITICAL'
@@ -239,7 +244,26 @@ class message(object):
             # send reason for failure first so it does not contaminate
             # the special task failed message.
             self.send()
+        self.task_lock( False )
         self.send( self.task_id + ' failed' )
+ 
+    def task_lock( self, acquire=True ):
+        # acquire or release a task lock if using the lockserver
+        if cylc_mode.mode().is_raw() or self.ssh_messaging:
+            return
+        from cylc.locking.task_lock import task_lock
+        try:
+            if acquire:
+                if not task_lock().acquire():
+                    raise SystemExit( "Failed to acquire a task lock" )
+            else:
+                if not task_lock().release():
+                    raise SystemExit( "Failed to release task lock" )
+        except Exception, z:
+            print >> sys.stderr, z
+            if debug:
+                raise
+            raise SystemExit( "Failed to connect to the lockserver?" )
 
     def shortcut_next_restart( self ):
         self.print_msg( 'next restart file completed' )

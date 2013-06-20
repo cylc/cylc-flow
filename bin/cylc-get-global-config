@@ -18,12 +18,11 @@
 
 import sys
 from optparse import OptionParser
-from cylc.global_config import gcfg
 
 parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS] 
 
 Print settings determined by the cylc site and user configuration files,
-and auto-generate those files will all settings initially commented out.
+and generate example files with all settings initially commented out.
 
 1) $CYLC_DIR/conf/siterc/cfgspec  # legal items and default values
 2) $CYLC_DIR/conf/siterc/site.rc  # site file (overrides defaults)
@@ -41,16 +40,34 @@ parser.add_option( "-u", "--write-user", help="Write a user "
         "Uncomment and modify items in the file as required.",
         action="store_true", default=False, dest="writeuser" )
 
+# See the comment on lazy evaluation in the globalconfig module.
+##parser.add_option( "--strict", help="Abort if either the site "
+##        "or user config file fails validation (otherwise carry "
+##        "on using default values).",
+##        action="store_true", default=False, dest="strict" )
+
+parser.add_option( "--debug",
+        help="Run suites in non-daemon mode, and show exception tracebacks.",
+        action="store_true", default=False, dest="debug" )
+
 (options, args) = parser.parse_args()
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
-globals = gcfg
+try:
+    # This instantiates gcfg, so import here to avoid aborting before
+    # command help can be displayed in case of file parsing errors.
+    from cylc.global_config import gcfg
+    if options.writesite:
+        gcfg.write_rc( 'site' )
+    elif options.writeuser:
+        gcfg.write_rc( 'user' )
+    else:
+        gcfg.dump()
 
-if options.writesite:
-    globals.write_rc( 'site' )
-elif options.writeuser:
-    globals.write_rc( 'user' )
-else:
-    globals.dump()
+    gcfg.print_deprecation_warnings()
+except Exception, x:
+    if options.debug:
+        raise
+    sys.exit( str(x) )
 

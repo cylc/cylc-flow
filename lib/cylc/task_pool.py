@@ -35,7 +35,7 @@ class pool(object):
 
         self.jobqueue = Queue.Queue()
 
-        self.worker = task_batcher( 'Job Queue', self.jobqueue, 
+        self.worker = task_batcher( 'Job Submission', self.jobqueue, 
                 config['cylc']['job submission']['batch size'],
                 config['cylc']['job submission']['delay between batches'],
                 self.wireless, self.run_mode, self.verbose )
@@ -87,7 +87,7 @@ class pool(object):
         flags.pflag = True
         itask.log('DEBUG', "task proxy inserted" )
 
-    def remove( self, task, reason ):
+    def remove( self, task, reason=None ):
         # remove a task from the pool
         try:
             self.pyro.disconnect( task.message_queue )
@@ -104,7 +104,10 @@ class pool(object):
         # remove task from its queue
         queue = self.myq[task.name]
         self.queues[queue].remove( task )
-        task.log( 'DEBUG', "task proxy removed (" + reason + ")" )
+        msg = "task proxy removed" 
+        if reason:
+            msg += " (" + reason + ")"
+        task.log( 'DEBUG', msg )
         del task
 
     def get_tasks( self ):
@@ -140,7 +143,7 @@ class pool(object):
                             readytogo.append(itask)
                         else:
                             # (direct task state reset ok: this executes in the main thread)
-                            itask.reset_state_queued()
+                            itask.set_state_queued()
                     else:
                         readytogo.append(itask)
 
@@ -155,7 +158,7 @@ class pool(object):
 
         for itask in readytogo:
             # (direct task state reset ok: this executes in the main thread)
-            itask.reset_state_submitting()
+            itask.set_state_submitting()
             self.jobqueue.put( itask )
 
         return readytogo

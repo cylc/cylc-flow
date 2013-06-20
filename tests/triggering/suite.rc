@@ -25,7 +25,7 @@ post => !model  # removes failed model to allow suite to auto finish
                     """
 [runtime]
     [[root]]
-        command scripting = "echo Hello" # no sleep
+        command scripting = "/bin/true" # fast
     [[model]]
         description = "A task that succeeds at O UTC and fails at 12 UTC"
         command scripting = """

@@ -33,10 +33,8 @@ parser = cop( """cylc [info] show [OPTIONS] ARGS
 Interrogate a running suite for its title and task list, task
 descriptions, current state of task prerequisites and outputs and, for
 clock-triggered tasks, whether or not the trigger time is up yet.""",
-    pyro=True, 
+    pyro=True, noforce=True,
     argdoc=[('REG', 'Suite name'), ('[NAME['+TaskID.DELIM+'TAG]]', 'Task name or ID')])
-
-parser.remove_option("-f" ) # don't need force
 
 (options, args) = parser.parse_args()
 
@@ -68,22 +66,31 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'suite-info' )
+    title, username = proxy.get( 'suite info' )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-title, username = proxy.get( 'suite info' )
+    sys.exit(x)
 
 if prnt_suite:
     print suite + ' (' + options.owner + ')'
     print title
 
-    for task in proxy.get( 'task list' ):
-        print ' + ', task
+    try:
+        for task in proxy.get( 'task list' ):
+            print ' + ', task
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
 if prnt_name or prnt_id:
-    info = proxy.get( 'task info', [ name ] )
+    try:
+        info = proxy.get( 'task info', [ name ] )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
     idx = name
     if prnt_id:
         idx = task_id
@@ -93,7 +100,12 @@ if prnt_name or prnt_id:
 
 if prnt_id:
     # PREREQUISITES AND OUTPUTS
-    result = proxy.get( 'task requisites', [ task_id ] )
+    try:
+        result = proxy.get( 'task requisites', [ task_id ] )
+    except Exception,x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
     if not result or task_id not in result:
         print "\nTask " + task_id + " not found in " + suite

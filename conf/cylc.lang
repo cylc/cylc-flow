@@ -83,109 +83,101 @@
       </include>
     </context>
     <context id="cylc-options" style-ref="option">
+      <!-- To get an updated version of this list, run something (horrible) like:
+      sed "/^#/d; /^[^=]*$/d; /__many__/d; s/^ *\([^=]*\) =.*$/      <keyword>\1<\/keyword>/g" $CYLC_DIR/conf/suiterc/* | sort | uniq
+      -->
       <keyword>UTC mode</keyword>
-      <keyword>required run mode</keyword>
-      <keyword>maximum simultaneous job submissions</keyword>
       <keyword>abort if any task fails</keyword>
-      <keyword>log resolved dependencies</keyword>
-      <keyword>batch size</keyword>
-      <keyword>delay between batches</keyword>
-      <keyword>enable</keyword>
-      <keyword>simultaneous instances</keyword>
-      <keyword>__many__</keyword>
-      <keyword>startup handler</keyword>
-      <keyword>timeout handler</keyword>
-      <keyword>shutdown handler</keyword>
-      <keyword>timeout</keyword>
-      <keyword>reset timer</keyword>
-      <keyword>abort if startup handler fails</keyword>
       <keyword>abort if shutdown handler fails</keyword>
+      <keyword>abort if startup handler fails</keyword>
       <keyword>abort if timeout handler fails</keyword>
       <keyword>abort on timeout</keyword>
-      <keyword>disable suite event hooks</keyword>
-      <keyword>disable suite event hooks</keyword>
-      <keyword>disable</keyword>
-      <keyword>rate</keyword>
-      <keyword>offset</keyword>
-      <keyword>suite shutdown event handler</keyword>
-      <keyword>required run mode</keyword>
       <keyword>allow task failures</keyword>
-      <keyword>expected task failures</keyword>
-      <keyword>live mode suite timeout</keyword>
-      <keyword>dummy mode suite timeout</keyword>
-      <keyword>simulation mode suite timeout</keyword>
-      <keyword>initial cycle time</keyword>
-      <keyword>final cycle time</keyword>
-      <keyword>cycling</keyword>
-      <keyword>runahead limit</keyword>
-      <keyword>limit</keyword>
-      <keyword>members</keyword>
+      <keyword>bar</keyword>
+      <keyword>batch size</keyword>
       <keyword>clock-triggered</keyword>
-      <keyword>start-up</keyword>
       <keyword>cold-start</keyword>
-      <keyword>sequential</keyword>
-      <keyword>one-off</keyword>
-      <keyword>explicit restart outputs</keyword>
-      <keyword>exclude at start-up</keyword>
-      <keyword>include at start-up</keyword>
-      <keyword>graph</keyword>
-      <keyword>daemon</keyword>
-      <keyword>inherit</keyword>
-      <keyword>title</keyword>
-      <keyword>description</keyword>
-      <keyword>initial scripting</keyword>
-      <keyword>environment scripting</keyword>
-      <keyword>pre-command scripting</keyword>
+      <keyword>collapsed families</keyword>
       <keyword>command scripting</keyword>
-      <keyword>post-command scripting</keyword>
-      <keyword>retry delays</keyword>
-      <keyword>manual completion</keyword>
-      <keyword>extra log files</keyword>
-      <keyword>enable resurrection</keyword>
-      <keyword>log directory</keyword>
-      <keyword>share directory</keyword>
-      <keyword>work directory</keyword>
-      <keyword>run time range</keyword>
-      <keyword>simulate failure</keyword>
-      <keyword>disable task event hooks</keyword>
-      <keyword>disable retries</keyword>
-      <keyword>command scripting</keyword>
-      <keyword>disable pre-command scripting</keyword>
-      <keyword>disable post-command scripting</keyword>
-      <keyword>disable task event hooks</keyword>
-      <keyword>disable retries</keyword>
-      <keyword>method</keyword>
       <keyword>command template</keyword>
-      <keyword>shell</keyword>
-      <keyword>host</keyword>
-      <keyword>owner</keyword>
-      <keyword>cylc directory</keyword>
-      <keyword>suite definition directory</keyword>
-      <keyword>remote shell template</keyword>
-      <keyword>log directory</keyword>
-      <keyword>share directory</keyword>
-      <keyword>work directory</keyword>
-      <keyword>ssh messaging</keyword>
-      <keyword>submitted handler</keyword>
-      <keyword>started handler</keyword>
-      <keyword>succeeded handler</keyword>
-      <keyword>failed handler</keyword>
-      <keyword>submission failed handler</keyword>
-      <keyword>warning handler</keyword>
-      <keyword>retry handler</keyword>
-      <keyword>submission timeout handler</keyword>
-      <keyword>submission timeout</keyword>
+      <keyword>cutoff</keyword>
+      <keyword>cycling</keyword>
+      <keyword>daemon</keyword>
+      <keyword>default edge attributes</keyword>
+      <keyword>default node attributes</keyword>
+      <keyword>delay between batches</keyword>
+      <keyword>description</keyword>
+      <keyword>directory</keyword>
+      <keyword>disable post-command scripting</keyword>
+      <keyword>disable pre-command scripting</keyword>
+      <keyword>disable retries</keyword>
+      <keyword>disable suite event hooks</keyword>
+      <keyword>disable task elimination</keyword>
+      <keyword>disable task event hooks</keyword>
+      <keyword>disable</keyword>
+      <keyword>dummy mode suite timeout</keyword>
+      <keyword>enable live graph movie</keyword>
+      <keyword>enable resurrection</keyword>
+      <keyword>enable</keyword>
+      <keyword>environment scripting</keyword>
+      <keyword>exclude at start-up</keyword>
       <keyword>execution timeout handler</keyword>
       <keyword>execution timeout</keyword>
+      <keyword>expected task failures</keyword>
+      <keyword>explicit restart outputs</keyword>
+      <keyword>extra log files</keyword>
+      <keyword>failed handler</keyword>
+      <keyword>final cycle time</keyword>
+      <keyword>foo</keyword>
+      <keyword>graph</keyword>
+      <keyword>host</keyword>
+      <keyword>include at start-up</keyword>
+      <keyword>inherit</keyword>
+      <keyword>initial cycle time</keyword>
+      <keyword>initial scripting</keyword>
+      <keyword>limit</keyword>
+      <keyword>live mode suite timeout</keyword>
+      <keyword>log resolved dependencies</keyword>
+      <keyword>manual completion</keyword>
+      <keyword>members</keyword>
+      <keyword>method</keyword>
+      <keyword>offset</keyword>
+      <keyword>one-off</keyword>
+      <keyword>owner</keyword>
+      <keyword>post-command scripting</keyword>
+      <keyword>pre-command scripting</keyword>
+      <keyword>rate</keyword>
+      <keyword>required run mode</keyword>
       <keyword>reset timer</keyword>
-      <keyword>collapsed families</keyword>
+      <keyword>retry delays</keyword>
+      <keyword>retry handler</keyword>
+      <keyword>run time range</keyword>
+      <keyword>runahead limit</keyword>
+      <keyword>sequential</keyword>
+      <keyword>shell</keyword>
+      <keyword>shutdown handler</keyword>
+      <keyword>simulate failure</keyword>
+      <keyword>simulation mode suite timeout</keyword>
+      <keyword>simultaneous instances</keyword>
+      <keyword>start-up</keyword>
+      <keyword>started handler</keyword>
+      <keyword>startup handler</keyword>
+      <keyword>submission failed handler</keyword>
+      <keyword>submission retry handler</keyword>
+      <keyword>submission timeout handler</keyword>
+      <keyword>submission timeout</keyword>
+      <keyword>submitted handler</keyword>
+      <keyword>succeeded handler</keyword>
+      <keyword>suite definition directory</keyword>
+      <keyword>suite shutdown event handler</keyword>
+      <keyword>timeout handler</keyword>
+      <keyword>timeout</keyword>
+      <keyword>title</keyword>
       <keyword>use node color for edges</keyword>
-      <keyword>default node attributes</keyword>
-      <keyword>default edge attributes</keyword>
-      <keyword>enable live graph movie</keyword>
-      <keyword>enable</keyword>
-      <keyword>cutoff</keyword>
-      <keyword>directory</keyword>
+      <keyword>use node color for labels</keyword>
+      <keyword>use quick task elimination</keyword>
+      <keyword>warning handler</keyword>
+      <keyword>work sub-directory</keyword>
     </context>
     <context id="cylc-subshell" style-ref="string">
       <match>"""</match>

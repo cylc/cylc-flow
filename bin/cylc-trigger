@@ -25,45 +25,36 @@ if '--use-ssh' in sys.argv[1:]:
 
 from cylc.prompt import prompt
 from cylc import cylc_pyro_client
-from cylc.TaskID import TaskID, TaskIDError
-from cylc.CylcOptionParsers import cop
+from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] trigger [OPTIONS] ARGS
 
-Get a task to trigger immediately (unless the suite is paused, 
-in which case it will trigger when normal operation is resumed).
-This is effected by setting the task to the 'ready' state (all
-prerequisites satisfied) and, for clock-triggered tasks, ignoring
-the designated trigger time.""",
-    pyro=True, 
+Trigger tasks immediately. This is equivalent to using the command  
+"cylc reset --state=ready" but additionally gets clock-triggered tasks
+to ignore their trigger time.
+""" + multitask_usage, pyro=True, multitask=True,
     argdoc=[ ('REG', 'Suite name'),
-             ('TASK', 'Target task')] )
+        ('MATCH', 'Task or family name matching regular expression'),
+        ('TAG', 'Task cycle time or integer tag') ])
 
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-task_id = args[1]
-
-try:
-    tid = TaskID( task_id )
-except TaskIDError,x:
-    raise SystemExit(x)
-else:
-    task_id = tid.getstr()
+name = args[1]
+tag = args[2]
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
+    prompt( 'Trigger task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
+    result = proxy.put( 'trigger task', name, tag, options.is_family )
 except Exception, x:
     if options.debug:
         raise
-    raise SystemExit(x)
-
-prompt( 'Trigger task ' + task_id + ' in ' + suite, options.force )
-result = proxy.put( 'trigger task', task_id )
+    sys.exit(x)
 
 if result[0]:
     print result[1]

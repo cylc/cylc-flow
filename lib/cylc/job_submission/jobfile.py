@@ -20,16 +20,25 @@ from cylc.TaskID import TaskID
 
 import re, os
 import StringIO
-
+from copy import deepcopy
+from cylc.global_config import gcfg
+from cylc.command_env import cv_scripting_ml, cv_export
 
 class jobfile(object):
 
-    def __init__( self, log_root, job_submission_method, task_id, jobconfig ):
+    # These are set by the scheduler object at start-up:
+    suite_env = None       # static variables not be be changed below
+    suite_task_env = None  # copy and change below
+
+    def __init__( self, suite, log_root, job_submission_method, task_id, jobconfig ):
 
         self.log_root = log_root
         self.job_submission_method = job_submission_method
         self.task_id = task_id
         self.jobconfig = jobconfig
+        self.suite = suite
+        self.owner = jobconfig['task owner']
+        self.host = jobconfig['task host']
 
         self.task_name, self.tag = task_id.split( TaskID.DELIM )
 
@@ -52,10 +61,9 @@ class jobfile(object):
 
         self.write_directives()
 
-        self.write_task_job_script_starting()
+        self.write_prelude()
         self.write_err_trap()
 
-        self.write_cylc_access()
         self.write_initial_scripting()
 
         self.write_environment_1()
@@ -84,10 +92,10 @@ class jobfile(object):
         self.FILE.close()
 
     def write_header( self ):
-        self.FILE.write( '#!' + self.jobconfig['job script shell'] )
-        self.FILE.write( '\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++' )
-        self.FILE.write( '\n# Task: ' + self.task_id )
-        self.FILE.write( '\n# To be submitted by method: \'' + self.job_submission_method + '\'' )
+        self.FILE.write( "#!" + self.jobconfig['job script shell'] )
+        self.FILE.write( "\n\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++" )
+        self.FILE.write( "\n# Task '" + self.task_id  + "' in suite '" + self.suite + "'" )
+        self.FILE.write( "\n# Job submission method: '" + self.job_submission_method + "'" )
 
     def write_directives( self ):
         directives = self.jobconfig['directives']
@@ -104,8 +112,10 @@ class jobfile(object):
         if final:
             self.FILE.write( '\n' + final )
 
-    def write_task_job_script_starting( self ):
-        self.FILE.write( '\n\necho "JOB SCRIPT STARTING"')
+    def write_prelude( self ):
+        self.FILE.write( '\n\necho "JOB SCRIPT STARTING"\n')
+        # set cylc version and source profile scripts:
+        self.FILE.write( cv_scripting_ml )
 
     def write_initial_scripting( self, BUFFER=None ):
         iscr = self.jobconfig['initial scripting']
@@ -129,41 +139,51 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
 
-        # Override CYLC_SUITE_DEF_PATH for remotely hosted tasks
-        rsp = self.jobconfig['remote suite path']
-        cenv = self.jobconfig['cylc environment']
-        if rsp:
-            cenv['CYLC_SUITE_DEF_PATH'] = rsp
-        else:
-            # for remote tasks that don't specify a remote suite dir
-            # default to replace home dir with literal '$HOME' (works
-            # for local tasks too):
-            cenv[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', cenv['CYLC_SUITE_DEF_PATH'])
+        BUFFER.write( "\n\n# CYLC SUITE ENVIRONMENT:" )
 
-        BUFFER.write( "\n\n# CYLC LOCATION; SUITE LOCATION, IDENTITY, AND ENVIRONMENT:" )
-        for var, val in cenv.items():
+        # write the static suite variables
+        for var, val in self.__class__.suite_env.items():
             BUFFER.write( "\nexport " + var + "=" + str(val) )
 
-        BUFFER.write( "\n\n# CYLC TASK IDENTITY AND ENVIRONMENT:" )
+        if str(self.__class__.suite_env.get('CYLC_UTC')) == 'True':
+            BUFFER.write( "\nexport TZ=UTC" )
+
+        # override and write task-host-specific suite variables
+        suite_work_dir = gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
+        st_env = deepcopy( self.__class__.suite_task_env ) 
+        st_env[ 'CYLC_SUITE_RUN_DIR'    ] = gcfg.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )
+        st_env[ 'CYLC_SUITE_WORK_DIR'   ] = suite_work_dir
+        st_env[ 'CYLC_SUITE_SHARE_DIR'  ] = gcfg.get_derived_host_item( self.suite, 'suite share directory', self.host, self.owner )
+        st_env[ 'CYLC_SUITE_SHARE_PATH' ] = '$CYLC_SUITE_SHARE_DIR' # DEPRECATED
+        rsp = self.jobconfig['remote suite path']
+        if rsp:
+            st_env[ 'CYLC_SUITE_DEF_PATH' ] = rsp
+        else:
+            # replace home dir with '$HOME' for evaluation on the task host
+            st_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', st_env['CYLC_SUITE_DEF_PATH'] )
+        for var, val in st_env.items():
+            BUFFER.write( "\nexport " + var + "=" + str(val) )
+
+        task_work_dir  = os.path.join( suite_work_dir, self.jobconfig['work sub-directory'] )
+
+        use_login_shell = gcfg.get_host_item( 'use login shell', self.host, self.owner )
+        comms = gcfg.get_host_item( 'task communication method', self.host, self.owner )
+
+        BUFFER.write( "\n\n# CYLC TASK ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( gcfg.cfg['task messaging']['retry interval in seconds']))
+        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( gcfg.cfg['task messaging']['maximum number of tries']))
+        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( gcfg.cfg['task messaging']['connection timeout in seconds']))
         BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
-        BUFFER.write( "\nexport CYLC_TASK_SSH_MESSAGING=" + str(self.jobconfig['use ssh messaging']) )
-        BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(self.jobconfig['use login shell']) )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=" + self.jobconfig['work path'] )
-        BUFFER.write( "\nexport CYLC_SUITE_SHARE_PATH=" + self.jobconfig['share path'] )
-
-    def write_cylc_access( self, BUFFER=None ):
-        if not BUFFER:
-            BUFFER = self.FILE
-        rcp = self.jobconfig['remote cylc path']
-        if rcp:
-            BUFFER.write( "\n\n# ACCESS TO CYLC:" )
-            BUFFER.write( "\nexport PATH=" + rcp + "/bin:$PATH" )
+        BUFFER.write( "\nexport CYLC_TASK_COMMS_METHOD=" + comms )
+        BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
+        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED 
 
     def write_suite_bin_access( self, BUFFER=None ):
         if not BUFFER:
@@ -172,16 +192,20 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
+        """Note that all job-file scripting must be bash- and
+        ksh-compatible, hence use of 'typeset' below instead of the more
+        sensible but bash-specific 'local'."""
+
         self.FILE.write( r"""
 
 # SET ERROR TRAPPING:
 set -u # Fail when using an undefined variable
 # Define the trap handler
 SIGNALS="EXIT ERR TERM XCPU"
-function HANDLE_TRAP() {
-    local SIGNAL=$1
+function HANDLE_TRAP {
+    typeset SIGNAL=$1
     echo "Received signal $SIGNAL"
-    local S=
+    typeset S=
     for S in $SIGNALS; do
         trap "" $S
     done
@@ -189,7 +213,7 @@ function HANDLE_TRAP() {
     if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
         {
             echo "CYLC_JOB_EXIT=$SIGNAL"
-            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
+            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%S'
         } >>$CYLC_TASK_LOG_ROOT.status
     fi
     cylc task failed "Task job script received signal $@"
@@ -206,7 +230,7 @@ done""")
 # SEND TASK STARTED MESSAGE:
 {
     echo "CYLC_JOB_PID=$$"
-    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
+    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%S'
 } >$CYLC_TASK_LOG_ROOT.status
 cylc task started""" )
 
@@ -214,12 +238,12 @@ cylc task started""" )
         self.FILE.write( """
 
 # SHARE DIRECTORY CREATE:
-mkdir -p $CYLC_SUITE_SHARE_PATH || true
+mkdir -p $CYLC_SUITE_SHARE_DIR || true
 
 # WORK DIRECTORY CREATE:
-mkdir -p $(dirname $CYLC_TASK_WORK_PATH) || true
-mkdir -p $CYLC_TASK_WORK_PATH
-cd $CYLC_TASK_WORK_PATH""" )
+mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
+mkdir -p $CYLC_TASK_WORK_DIR
+cd $CYLC_TASK_WORK_DIR""" )
 
     def get_var_assign( self, var, value ):
         # generate an environment variable assignment expression
@@ -277,26 +301,25 @@ cd $CYLC_TASK_WORK_PATH""" )
             self.FILE.write( " " + var )
 
     def write_manual_environment( self ):
-        # TO DO: THIS METHOD NEEDS UPDATING FOR CURRENT SECTIONS
+        # write a transferable environment for detaching tasks
         if not self.jobconfig['use manual completion']:
             return
         strio = StringIO.StringIO()
-        self.write_initial_scripting( strio )
         self.write_environment_1( strio )
-        self.write_cylc_access( strio )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()
+        str += '\n' + cv_export
         str = re.sub('"', '\\"', str )
-        self.FILE.write( '\n\n# SUITE AND TASK IDENTITY FOR CUSTOM TASK WRAPPERS:')
-        self.FILE.write( '\n# (contains embedded newlines so usage may require "QUOTES")' )
+        self.FILE.write( '\n\n# TRANSPLANTABLE SUITE ENVIRONMENT FOR CUSTOM TASK WRAPPERS:')
+        self.FILE.write( '\n# (contains embedded newlines, use may require "QUOTES")' )
         self.FILE.write( '\nexport CYLC_SUITE_ENVIRONMENT="' + str + '"' )
 
     def write_identity_scripting( self ):
-        self.FILE.write( "\n\n# TASK IDENTITY SCRIPTING:" )
+        self.FILE.write( "\n\n# TASK SELF-IDENTIFY:" )
         self.FILE.write( '''
 echo "cylc Suite and Task Identity:"
-echo "  Suite Name  : $CYLC_SUITE_REG_NAME"
+echo "  Suite Name  : $CYLC_SUITE_NAME"
 echo "  Suite Host  : $CYLC_SUITE_HOST"
 echo "  Suite Port  : $CYLC_SUITE_PORT"
 echo "  Suite Owner : $CYLC_SUITE_OWNER"
@@ -339,7 +362,7 @@ echo ""''')
 
 # EMPTY WORK DIRECTORY REMOVE:
 cd
-rmdir $CYLC_TASK_WORK_PATH 2>/dev/null || true""" )
+rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
         if self.jobconfig['use manual completion']:
@@ -353,7 +376,7 @@ trap '' EXIT""")
 # SEND TASK SUCCEEDED MESSAGE:
 {
     echo 'CYLC_JOB_EXIT=SUCCEEDED'
-    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
+    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%S'
 } >>$CYLC_TASK_LOG_ROOT.status
 cylc task succeeded
 

@@ -17,18 +17,19 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, gtk
-from copy import deepcopy
+from copy import deepcopy, copy
 from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
 from validate import Validator
 from cylc.task_state import task_state
 
 class config( object ):
+    """gcylc user configuration"""
 
-    def __init__( self, list_themes=False, force_theme=None ):
+    def __init__( self ):
         spec = os.path.join( os.environ['CYLC_DIR'], 'conf', 'gcylcrc', 'cfgspec' )
         dcfg_file = os.path.join( os.environ['CYLC_DIR'], 'conf', 'gcylcrc', 'themes.rc' )
         ucfg_file = os.path.join( os.environ['HOME'], '.cylc', 'gcylc.rc' )
-                
+
         dcfg = {}
         ucfg = {}
 
@@ -49,9 +50,9 @@ class config( object ):
                 print >> sys.stderr, 'WARNING, failed to load gcylc default config: ' + dcfg_file
 
         if not ucfg and not dcfg:
-            raise SystemExit( 'ERROR: no gcylc config file found' )
+            raise SystemExit( 'ERROR: gcylc config file found' )
 
-        # validate and load defaults
+        # validate and load defaults from the cfgspec file
         cfgs = []
         for cfg in [ ucfg, dcfg ]:
             if cfg:
@@ -85,27 +86,35 @@ class config( object ):
                     print >> sys.stderr, '  ERROR, illegal entry:', extra 
                 raise SystemExit( "ERROR illegal gcylc.rc entry(s) found" )
 
+               
         # combine user config into default config
         self.inherit( dcfg, ucfg )
 
-        # theme inheritance
-        if force_theme:
-            # override
-            dcfg['use theme'] = force_theme
-        my_theme = dcfg['use theme']
-        if my_theme not in dcfg['themes']:
-            raise SystemExit( 'ERROR: theme not defined: ' + my_theme )
+        self.default_theme = "default"
 
+        # select the start-up theme
+        self.use_theme = dcfg['use theme']
+
+        # and check it is valid
+        if self.use_theme not in dcfg['themes']:
+            print >> sys.stderr, "WARNING: theme " + self.use_theme + " not found, using '" + self.default_theme + "'"
+            dcfg['use theme'] = 'default'
+            self.use_theme = self.default_theme
+
+        # theme inheritance
         inherited = []
         for label in dcfg['themes']:
             hierarchy = []
             name = label
             while True:
                 hierarchy.append(name) 
+                if name == "default":
+                    break
                 if dcfg['themes'][name]['inherit']:
                     parent = dcfg['themes'][name]['inherit']
                     if parent not in dcfg['themes']:
-                        raise SystemExit, 'Undefined parent theme: ' + parent
+                        print >> sys.stderr, "WARNING: undefined parent '" + parent + "' (theme '"+ label + "')"
+                        parent = "default"
                 else:
                     break
                 name = parent
@@ -121,51 +130,55 @@ class config( object ):
                 inherited.append( item )
             dcfg['themes'][label] = theme
 
-        if list_themes:
-            for theme in dcfg['themes']:
-                print theme
-            sys.exit(0)
-
         # expand theme data
         cfg_themes = {}
         for theme in dcfg['themes']:
+            for key,val in dcfg['themes'][self.default_theme].items():
+                # if this theme is missing an item take it from the default theme.
+                # (not needed now)
+                #if key not in dcfg['themes'][theme]:
+                #    print >> sys.stderr, "WARNING: missing item '"+ key+ "' in theme '"+theme+"'; using value from default theme '"+ self.default_theme + "'"
+                #    dcfg['themes'][theme][key] = val
+                if not dcfg['themes'][theme][key]:
+                    # (no need to warn now)
+                    #print >> sys.stderr, "WARNING: empty item '"+ key+ "' in theme '"+theme+"'; using value from default theme '"+ self.default_theme + "'"
+                    dcfg['themes'][theme][key] = val
+
             cfg_themes[theme] = {}
-            if 'defaults' in dcfg['themes'][theme]:
-                defs = self.parse_state( theme, 'defaults', dcfg['themes'][theme]['defaults'] )
-            else:
-                # needed?
-                raise SystemExit( 'ERROR, incomplete defaults for ' + theme )
+            defs = self.parse_state( theme, 'defaults', dcfg['themes'][theme]['defaults'] )
+
             for item, val in dcfg['themes'][theme].items():
                 if item in [ 'inherit', 'defaults' ]:
                     continue
                 state = item
                 if state not in task_state.legal:
-                    raise SystemExit( 'ERROR, illegal task state:' + theme + ' -> ' + state )
+                    print >> sys.stderr, "WARNING, ingoring illegal task state '" + state + "' in theme", theme
                 # reverse inherit (override)
                 tcfg = deepcopy(defs)
                 self.inherit( tcfg, self.parse_state(theme, item, val))
                 cfg_themes[theme][state] = tcfg
-
-        # result:
+        
+        # final themes result:
         dcfg['themes'] = cfg_themes
 
-        views = dcfg['initial views']
-        illegal = []
+        
+        # check intial view config
+        views = copy(dcfg['initial views'])
         for view in views:
             if view not in ['dot', 'text', 'graph' ]:
-                illegal.append(view)
-        if len(illegal) != 0:
-            sys.exit( "ERROR, gcylc.rc: illegal view(s): " + ', '.join( illegal))
+                print >> sys.stderr, "WARNING: ignoring illegal view name'" + view + '"'
+                dcfg['initial views'].remove( view )
+        views = dcfg['initial views']
         if len( views ) == 0:
             # at least one view required
+            print >> sys.stderr, "WARNING: no initial views defined, defaulting to 'text'"
             dcfg['initial views'] = ['text']
 
-        # store
+        # store final result
         self.cfg = dcfg
 
     def parse_state( self, theme, name, cfglist=[] ):
         allowed_keys = ['style', 'color', 'fontcolor']
-        allowed_styles = ['filled', 'unfilled']
         cfg = {}
         for item in cfglist:
             key, val = item.split('=')
@@ -188,7 +201,5 @@ class config( object ):
                     target[item] = {}
                 self.inherit( target[item], source[item] )
             else:
-                if source[item]:
-                    target[item] = source[item]
-
+                target[item] = source[item]
 

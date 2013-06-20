@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+from time import sleep
 import os
 import shutil
 import sqlite3
@@ -55,11 +56,11 @@ class RecordBroadcastObject(object):
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
-    def __init__(self, name, cycle, submit_num, event=None, message=None, user_at_host=None):
+    def __init__(self, name, cycle, submit_num, event=None, message=None, misc=None):
         """Records an event in the table"""
         self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
         self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                     submit_num, event, message, user_at_host]
+                     submit_num, event, message, misc]
         self.to_run = True
 
 
@@ -89,14 +90,21 @@ class ThreadedCursor(Thread):
         cnx = sqlite3.Connection(self.db) 
         cursor = cnx.cursor()
         while True:
+            attempt = 0
             req, arg, res = self.reqs.get()
             if req=='--close--': break
-            cursor.execute(req, arg)
-            if res:
-                for rec in cursor:
-                    res.put(rec)
-                res.put('--no more--')
-            cnx.commit()
+            while attempt < 5:
+                try:
+                    cursor.execute(req, arg)
+                    if res:
+                        for rec in cursor:
+                            res.put(rec)
+                        res.put('--no more--')
+                    cnx.commit()
+                    break
+                except:
+                    attempt += 1
+                    sleep(1) 
         cnx.close()
     def execute(self, req, arg=None, res=None):
         self.reqs.put((req, arg or tuple(), res))
@@ -126,7 +134,7 @@ class CylcRuntimeDAO(object):
                     "submit_num INTEGER",
                     "event TEXT",
                     "message TEXT",
-                    "host TEXT"],               # record the host associated with this event
+                    "misc TEXT"],               # e.g. record the user@host associated with this event
             TASK_STATES: [                      # each task gets a status entry that is updated
                     "name TEXT",
                     "cycle TEXT",
@@ -159,7 +167,7 @@ class CylcRuntimeDAO(object):
         try:
             mkdir_p( suite_dir )
         except Exception, x:
-            sys.exit( str(x) )
+            raise Exception( "ERROR: " + str(x) )
 
         if new_mode:
             if os.path.isdir(self.db_file_name):

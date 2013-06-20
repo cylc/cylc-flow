@@ -24,9 +24,8 @@ from TaskID import TaskID
 class state_summary( Pyro.core.ObjBase ):
     """supply suite state summary information to remote cylc clients."""
 
-    def __init__( self, config, run_mode, start_time, from_gui=False ):
+    def __init__( self, config, run_mode, start_time ):
         Pyro.core.ObjBase.__init__(self)
-        self.from_gui = from_gui
         self.task_summary = {}
         self.global_summary = {}
         # external monitors should access config via methods in this
@@ -93,7 +92,6 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'stopping' ] = stopping
         global_summary[ 'will_pause_at' ] = will_pause_at
         global_summary[ 'will_stop_at' ] = will_stop_at
-        global_summary[ 'started from gui' ] = self.from_gui
         global_summary[ 'runahead limit' ] = runahead
         global_summary[ 'states' ] = all_states
 
@@ -114,7 +112,7 @@ class state_summary( Pyro.core.ObjBase ):
 
 def extract_group_state( child_states ):
     """Summarise child states as a group."""
-    ordered_states = ['failed', 'held', 'running', 'submitted',
+    ordered_states = ['submit-failed', 'failed', 'held', 'running', 'submitted',
             'submitting', 'retrying', 'queued', 'waiting',
             'runahead', 'succeeded']
     for state in ordered_states:
@@ -161,3 +159,4 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
     if not text:
         return id_
     return text
+

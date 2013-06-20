@@ -52,6 +52,9 @@ class Yearly( cycler ):
  
     def __init__( self, T=None, step=1 ):
         """Store anniversary date, step, and anchor."""
+
+        self.c_offset = 0
+
         # check input validity
         try:
             T = ct( T ).get() # allows input of just YYYY
@@ -74,6 +77,9 @@ class Yearly( cycler ):
 
     def get_min_cycling_interval( self ):
         return 24 * 366 * self.step
+
+    def get_offset( self ):
+        return 24 * 366 * self.c_offset
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
@@ -124,7 +130,8 @@ class Yearly( cycler ):
         return result
 
     def adjust_state( self, offset ):
-        self.anchorDate = sub_years( ct(self.anchorDate), int(offset) ).get()
+        self.c_offset = int(offset)
+        self.anchorDate = sub_years( ct(self.anchorDate), self.c_offset ).get()
 
 if __name__ == "__main__":
     # UNIT TEST

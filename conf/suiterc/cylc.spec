@@ -1,13 +1,17 @@
 [cylc]
     UTC mode = boolean( default=False )
     required run mode = option( 'live','dummy','simulation', default=None )
+    force run mode = option('live','dummy','simulation', default=None )
     abort if any task fails = boolean( default=False )
     log resolved dependencies = boolean( default=False )
     [[job submission]]
         batch size = integer( min=1, default=10 )
-        delay between batches = integer( min=0, default=15 ) # seconds
-    [[event handler execution]]
-        batch size = integer( min=1, default=5 )
+        delay between batches = integer( min=0, default=0 ) # seconds
+    [[event handler submission]]
+        batch size = integer( min=1, default=10 )
+        delay between batches = integer( min=0, default=0 ) # seconds
+    [[poll and kill command submission]]
+        batch size = integer( min=1, default=10 )
         delay between batches = integer( min=0, default=0 ) # seconds
     [[lockserver]]
         enable = boolean( default=False )

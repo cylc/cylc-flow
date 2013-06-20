@@ -67,10 +67,9 @@ returning the IP address associated with this socket.
     return ipaddr
 
 
-globals = gcfg
-method = globals.cfg['suite host self-identification']['method']
-target = globals.cfg['suite host self-identification']['target']
-hardwired = globals.cfg['suite host self-identification']['host']
+method = gcfg.cfg['suite host self-identification']['method']
+target = gcfg.cfg['suite host self-identification']['target']
+hardwired = gcfg.cfg['suite host self-identification']['host']
 
 hostname = socket.getfqdn()
 
@@ -101,7 +100,7 @@ def is_remote_host(name):
         ipa = socket.gethostbyname(name) 
     except Exception, e:
         print >> sys.stderr, str(e)
-        sys.exit( 'ERROR, host not found: ' + name )
+        raise Exception( 'ERROR, host not found: ' + name )
     return name and ipa != host_ip_address and ipa != local_ip_address
 
 if __name__ == "__main__":

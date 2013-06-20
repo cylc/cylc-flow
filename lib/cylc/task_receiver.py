@@ -26,9 +26,9 @@ class msgqueue( Pyro.core.ObjBase ):
         Pyro.core.ObjBase.__init__(self)
         self.queue = Queue()
 
-    def incoming( self, priority, message ):
+    def put( self, priority, message ):
         res = ( True, 'Message queued' )
-        # To Do: check for legal logging priority?
+        # TODO - check for legal logging priority?
         # queue incoming messages for this task
         self.queue.put( (priority, message) )
         return res

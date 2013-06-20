@@ -31,11 +31,11 @@
 #   GOOD: foo = string_list( default=list('foo','bar'))
 #   BAD:  bar = string_list( default=list('foo','bar' ))
 
-# WARNING: RUNTIME ITEMS ARE NO LONGER VALIDATED AS A MATTER OF COURSE,
-# BECAUSE VALIDATION FLESHES OUT THE FULL DATA STRUCTURE BELOW. This
-# means force_list() does not have the intended effect, except for
-# validation (i.e. single items with no trailing comma will not be
-# coerced into a list value - we must now do this manually in the code. 
+# RUNTIME ITEMS ARE NO LONGER VALIDATED AS A MATTER OF COURSE, BECAUSE
+# VALIDATION FLESHES OUT THE FULL DATA STRUCTURE BELOW. The configobj
+# validation process also coerces non-string values to their intended
+# types, so we now do this manually in config.py:coerce_runtime_values()
+# WHICH MUST BE KEPT UP TO DATE WITH CHANGES IN THIS FILE.
 
 [runtime]
     [[__many__]]
@@ -51,6 +51,9 @@
         manual completion = boolean( default=False )
         extra log files = force_list( default=list())
         enable resurrection = boolean( default=False )
+        work sub-directory = string( default=$CYLC_TASK_ID )
+        submission polling intervals = force_list( default=list() )
+        execution polling intervals = force_list( default=list() )
         [[[simulation mode]]]
             run time range = list( default=list(1,16))
             simulate failure = boolean( default=False )
@@ -66,6 +69,7 @@
             method = string( default=background )
             command template = string( default=None )
             shell = string( default='/bin/bash' )
+            retry delays = force_list( default=list() )
         [[[remote]]]
             host = string( default=None )
             owner = string( default=None )
@@ -82,6 +86,7 @@
             submission failed handler = string( default=None )
             warning handler = string( default=None )
             retry handler = string( default=None )
+            submission retry handler = string( default=None )
 
             submission timeout handler = string( default=None )
             submission timeout = float( default=None )

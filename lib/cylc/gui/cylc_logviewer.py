@@ -44,7 +44,7 @@ class cylc_logviewer( logviewer ):
         self.window = gtk.Window()
         #self.window.set_border_width(5)
         self.window.set_title( "log viewer" )
-        self.window.set_size_request(600, 400)
+        self.window.set_size_request(800, 400)
         self.window.set_icon( get_icon() )
  
         combobox = gtk.combo_box_new_text()
@@ -103,7 +103,7 @@ class cylc_logviewer( logviewer ):
         self.task_filter = filter
         self.update_view()
 
-        # TO DO: CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
+        # TODO - CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
         return False
 
     def custom_filter_log( self, e ):
