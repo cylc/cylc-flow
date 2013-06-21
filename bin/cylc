@@ -169,7 +169,8 @@ categories['license'     ] = ['license', 'GPL' ]
  
 information_commands = OrderedDict()
 
-information_commands['gsummary' ] = ['gsummary']
+information_commands['gsummary' ] = ['gsummary'       ]
+information_commands['gpanel'   ] = ['gpanel'         ]
 information_commands['gui'      ] = ['gui', 'gcylc'   ]
 information_commands['list'     ] = ['list', 'ls'     ]
 information_commands['dump'     ] = ['dump'           ]
@@ -383,6 +384,8 @@ comsum[ 'documentation' ] = 'Display cylc documentation (User Guide etc.)'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'
 comsum[ 'get-global-config' ] = 'print or generate site and user config'
+comsum[ 'gsummary'   ] = 'Summary GUI for monitoring multiple suites'
+comsum[ 'gpanel'     ] = 'Internal interface for GNOME 2 panel applet'
 # control
 comsum[ 'gui'        ] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
 comsum[ 'run'        ] = 'Start a suite at a given cycle time'
