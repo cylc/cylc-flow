@@ -44,7 +44,7 @@ else:
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.stateview import DotMaker
-from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog
+from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog, setup_icons
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
@@ -347,7 +347,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
 
-        self.setup_icons()
+        setup_icons()
 
         self.view_layout_horizontal = False
 
@@ -415,19 +415,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             menu.set_sensitive(True)
 
         self.restart_views()
-
-    def setup_icons( self ):
-        """Set up some extra stock icons for better PyGTK compatibility."""
-        # create a new stock icon for the 'group' action
-        root_img_dir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/group.png' )
-        grp_iconset = gtk.IconSet(pixbuf)
-        pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/ungroup.png' )
-        ungrp_iconset = gtk.IconSet(pixbuf)
-        factory = gtk.IconFactory()
-        factory.add( 'group', grp_iconset )
-        factory.add( 'ungroup', ungrp_iconset )
-        factory.add_default()
 
     def setup_views( self ):
         """Create our view containers."""

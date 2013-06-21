@@ -169,6 +169,7 @@ categories['license'     ] = ['license', 'GPL' ]
  
 information_commands = OrderedDict()
 
+information_commands['gsummary' ] = ['gsummary']
 information_commands['gui'      ] = ['gui', 'gcylc'   ]
 information_commands['list'     ] = ['list', 'ls'     ]
 information_commands['dump'     ] = ['dump'           ]
