@@ -22,7 +22,6 @@ if remrun().execute():
     sys.exit(0)
 
 import gtk
-gtk.gdk.threads_init()
 import warnings
 warnings.filterwarnings('ignore', 'use the new', Warning)
 

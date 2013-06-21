@@ -18,6 +18,7 @@
 
 import copy
 import datetime
+import os
 import re
 import shlex
 import subprocess
@@ -81,10 +82,12 @@ def get_status_tasks(host, suite, owner=None):
 def launch_gcylc(host, suite, owner=None):
     if owner is None:
         owner = user
-    command = "cylc gui --host={0} --owner={1} {2} 1>/dev/null 2>&1".format(
+    stdout = open(os.devnull, "w")
+    stderr = stdout
+    command = "cylc gui --host={0} --owner={1} {2}".format(
                                          host, owner, suite)
     command = shlex.split(command)
-    subprocess.Popen(command)
+    subprocess.Popen(command, stdout=stdout, stderr=stderr)
 
 
 class SummaryApp(object):
@@ -103,10 +106,10 @@ class SummaryApp(object):
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
-        usercfg = config().cfg
-        theme_name = usercfg['use theme'] 
-        theme = usercfg['themes'][ theme_name ]
-        self.dots = DotMaker(theme)
+        self.usercfg = config().cfg
+        self.theme_name = self.usercfg['use theme'] 
+        self.theme = self.usercfg['themes'][self.theme_name]
+        self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(*([str, str, bool, int] + [str] * 20))
         self.suite_treeview = gtk.TreeView(suite_treemodel)
         
@@ -160,28 +163,31 @@ class SummaryApp(object):
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
         self.updater = SummaryAppUpdater(self.hosts, suite_treemodel,
                                          owner=self.owner)
+        self.updater.start()
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
         self.window.set_default_size(200, 100)
         self.window.show()
-        self.updater.start()
 
     def _on_button_press_event(self, treeview, event):
         # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
         if event.button != 3:
             return False
         menu = gtk.Menu()
-        
-        x = int( event.x )
-        y = int( event.y )
+
+        treemodel = treeview.get_model()
+
+        x = int(event.x)
+        y = int(event.y)
         time = event.time
-        pth = treeview.get_path_at_pos(x,y)
+        pth = treeview.get_path_at_pos(x, y)
         
         if pth is not None:
+            # Add a gcylc launcher item.
             path, col, cellx, celly = pth
             
-            iter_ = treeview.get_model().get_iter(path)
-            host, suite = treeview.get_model().get(iter_, 0, 1)
+            iter_ = treemodel.get_iter(path)
+            host, suite = treemodel.get(iter_, 0, 1)
             gcylc_item = gtk.ImageMenuItem(stock_id="gcylc")
             gcylc_item.set_label("Launch gcylc")
             gcylc_item.connect("button-press-event",
@@ -189,21 +195,80 @@ class SummaryApp(object):
                                                    host, suite, self.owner))
             gcylc_item.show()
             menu.append(gcylc_item)
-        view_item = gtk.MenuItem("View...")
+            sep_item = gtk.SeparatorMenuItem()
+            sep_item.show()
+            menu.append(sep_item)
+        
+        # Construct column view chooser items.
+        view_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_INDEX)
+        view_item.set_label("View Column...")
         view_item.show()
         view_menu = gtk.Menu()
         view_item.set_submenu(view_menu)
-        for column in treeview.get_columns():
+        for column_index, column in enumerate(treeview.get_columns()):
             name = column.get_title()
             is_visible = column.get_visible()
             column_item = gtk.CheckMenuItem(name.replace("_", "__"))
-            column_item._connect_args = (column, is_visible)
+            column_item._connect_args = (column_index, is_visible)
             column_item.set_active(is_visible)
             column_item.connect("toggled", self._on_toggle_column_visible)
             column_item.show()
             view_menu.append(column_item)
         menu.append(view_item)
-        return menu.popup( None, None, None, event.button, event.time )
+        sep_item = gtk.SeparatorMenuItem()
+        sep_item.show()
+        menu.append(sep_item)
+        
+        # Construct theme chooser items (same as cylc.gui.SuiteControl).
+        theme_item = gtk.ImageMenuItem('Theme')
+        img = gtk.image_new_from_stock(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
+        theme_item.set_image(img)
+        thememenu = gtk.Menu()
+        theme_item.set_submenu(thememenu)
+        theme_item.show()
+
+        theme_items = {}
+        theme = "default"
+        theme_items[theme] = gtk.RadioMenuItem(label=theme)
+        thememenu.append(theme_items[theme])
+        self._set_tooltip(theme_items[theme], theme + " task state theme")
+        theme_items[theme].theme_name = theme
+        for theme in self.usercfg['themes']:
+            if theme == "default":
+                continue
+            theme_items[theme] = gtk.RadioMenuItem(group=theme_items['default'], label=theme)
+            thememenu.append(theme_items[theme])
+            self._set_tooltip(theme_items[theme], theme + " task state theme")
+            theme_items[theme].theme_name = theme
+
+        # set_active then connect, to avoid causing an unnecessary toggle now.
+        theme_items[self.theme_name].set_active(True)
+        for theme in self.usercfg['themes']:
+            theme_items[theme].show()
+            theme_items[theme].connect('toggled', self._set_theme)       
+
+        menu.append(theme_item)
+        sep_item = gtk.SeparatorMenuItem()
+        sep_item.show()
+        menu.append(sep_item)
+        
+        # Construct a clean stopped suites item.
+        row_iter = treemodel.get_iter_first()
+        has_stopped_suites = False
+        while row_iter is not None:
+            if treemodel.get_value(row_iter, 2):
+                has_stopped_suites = True
+                break
+            row_iter = treemodel.iter_next(row_iter)
+        clear_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_CLEAR)
+        clear_item.set_label("Clear Stopped Suites")
+        clear_item.show()
+        clear_item.set_sensitive(has_stopped_suites)
+        clear_item.connect("button-press-event",
+                           lambda b, e: self.updater.clear_stopped_suites())
+        menu.append(clear_item)
+        menu.popup( None, None, None, event.button, event.time )
+        return False
 
     def _on_destroy_event(self, widget):
         self.updater.quit = True
@@ -211,7 +276,8 @@ class SummaryApp(object):
         return False
 
     def _on_toggle_column_visible(self, menu_item):
-        column, is_visible = menu_item._connect_args
+        column_index, is_visible = menu_item._connect_args
+        column = self.treeview.get_columns()[index]
         column.set_visible(not is_visible)
         return False
 
@@ -238,6 +304,18 @@ class SummaryApp(object):
         time_string = time_object.strftime("%dT%H:%M")
         cell.set_property("text", time_string)
 
+    def _set_theme(self, theme_menu_item):
+        if not theme_menu_item.get_active():
+            return False
+        self.theme_name = theme_menu_item.theme_name
+        self.theme = self.usercfg['themes'][self.theme_name]
+        self.dots = DotMaker(self.theme)
+
+    def _set_tooltip(self, widget, text):
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(widget, text)
+
 
 class SummaryAppUpdater(threading.Thread):
 
@@ -256,7 +334,7 @@ class SummaryAppUpdater(threading.Thread):
         self.quit = False
         super(SummaryAppUpdater, self).__init__()
 
-    def clear_past_suites(self):
+    def clear_stopped_suites(self):
         self.stop_summaries.clear()
 
     def run(self):
@@ -267,8 +345,8 @@ class SummaryAppUpdater(threading.Thread):
             current_time = time.time()
             if (last_update_time is not None and
                 current_time < last_update_time + self.POLL_INTERVAL):
+                time.sleep(1)
                 continue
-            last_update_time = current_time
             host_suites = get_host_suites(self.hosts)
             statuses = {}
             current_suites = []
@@ -293,14 +371,10 @@ class SummaryAppUpdater(threading.Thread):
                     if (self.stop_summaries[host][suite][1] +
                         self.STOPPED_SUITE_CLEAR_TIME < current_time):
                         self.stop_summaries[host].pop(suite)
+            last_update_time = time.time()
             gobject.idle_add(self.update, statuses,
                              self.stop_summaries, current_time)
             time.sleep(1)
-
-    def _set_tooltip(self, widget, text):
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(widget, text)
 
     def update(self, host_suite_statuses, host_suite_stop_summaries,
                update_time):
