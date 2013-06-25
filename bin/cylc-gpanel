@@ -31,7 +31,7 @@ This is a cylc summary panel applet for monitoring running suites on a set of
 hosts in GNOME 2.
 
 To use this applet, follow the instructions in
-$CYLC_DIR/conf/gsummary/cylc.server.
+$CYLC_DIR/conf/gpanel/cylc.server.
 
 This applet can be tested using the --test option.
 
