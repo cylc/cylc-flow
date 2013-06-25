@@ -168,6 +168,7 @@ Class to create an information bar.
         # TODO: Ben: why the "empty" here:
         #self._suite_states = ["empty"]
         self._suite_states = []
+        self._is_suite_stopped = False
         self.state_widget = gtk.HBox()
         self._set_tooltip( self.state_widget, "states" )  
 
@@ -240,11 +241,14 @@ Class to create an information bar.
             text = ""
         gobject.idle_add( self.runahead_widget.set_text, text )
 
-    def set_state(self, suite_states):
+    def set_state(self, suite_states, is_suite_stopped=None):
         """Set state text."""
-        if suite_states == self._suite_states:
+        if (suite_states == self._suite_states and
+            (is_suite_stopped is None or
+             is_suite_stopped == self._is_suite_stopped)):
             return False
         self._suite_states = suite_states
+        self._is_suite_stopped = is_suite_stopped
         gobject.idle_add( self._set_state_widget )
 
     def _set_state_widget(self):
@@ -258,10 +262,15 @@ Class to create an information bar.
         items.sort()
         items.sort( lambda x, y: cmp(y[1], x[1]) )
         for state, num in items:
-            icon = self.dots.get_image( state )
+            icon = self.dots.get_image( state,
+                                        is_stopped=self._is_suite_stopped )
             icon.show()
             self.state_widget.pack_start( icon, False, False )
-            self._set_tooltip( icon, str(num) + " " + state )
+            if self._is_suite_stopped:
+                text = str(num) + " tasks stopped with " + state
+            else:
+                text = str(num) + " tasks " + state
+            self._set_tooltip( icon, text )
 
     def set_status(self, status):
         """Set status text."""
@@ -278,6 +287,8 @@ Class to create an information bar.
         summary = "stopped with '%s'"
         glob, task, fam = summary_maps
         states = [t["state"] for t in task.values() if "state" in t]
+        
+        self.set_state( states, is_suite_stopped=True )
         suite_state = "?"
         if states:
             suite_state = extract_group_state(states)
