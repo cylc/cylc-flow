@@ -208,7 +208,10 @@ window.widget.connect( 'clicked', on_url_clicked, window )
 if options.namespaces:
     window.get_graph()
 else:
-    window.get_graph( group_all=True )
+    if not window.suiterc.vis_families:
+        window.get_graph( group_all=True )
+    else:
+        window.get_graph()
     
 window.connect( 'destroy', gtk.main_quit)
 
