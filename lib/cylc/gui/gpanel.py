@@ -49,7 +49,7 @@ class SummaryPanelApplet(object):
 
     """Panel Applet (GNOME 2) to summarise running suite statuses."""
 
-    def __init__(self, hosts=None, owner=None):
+    def __init__(self, hosts=None, owner=None, poll_interval=None):
         # We can't use gobject.threads_init() for panel applets.
         warnings.filterwarnings('ignore', 'use the new', Warning)
         setup_icons()
@@ -79,7 +79,8 @@ class SummaryPanelApplet(object):
         self.top_hbox.pack_start(dot_eb, expand=False, fill=False, padding=2)
         self.top_hbox.show()
         self.updater = SummaryPanelAppletUpdater(hosts, dot_hbox,
-                                                 owner)
+                                                 owner=owner,
+                                                 poll_interval=poll_interval)
         self.updater.start()
         self.top_hbox.connect("destroy", self.stop)
 
@@ -104,7 +105,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
     
     MAX_INDIVIDUAL_SUITES = 5
     
-    def __init__(self, hosts, dot_hbox, owner=None):
+    def __init__(self, hosts, dot_hbox, owner=None, poll_interval=None):
         self.dot_hbox = dot_hbox
         self.usercfg = config().cfg
         self.theme_name = self.usercfg['use theme'] 
@@ -113,7 +114,8 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self.statuses = {}
         self.stop_summaries = {}
         self.quit = False
-        super(SummaryPanelAppletUpdater, self).__init__(hosts, owner=owner)
+        super(SummaryPanelAppletUpdater, self).__init__(
+                              hosts, owner=owner, poll_interval=poll_interval)
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
@@ -142,6 +144,8 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                 self.theme_name, self._set_theme,
                                 has_stopped_suites,
                                 self.clear_stopped_suites,
+                                program_name="cylc gpanel",
+                                scanned_hosts=self.hosts,
                                 owner=self.owner,
                                 extra_items=extra_items)
         menu.popup( None, None, None, event.button, event.time )

@@ -37,6 +37,7 @@ from cylc.gui.SuiteControl import run_get_stdout
 from cylc.gui.DotMaker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
 from cylc.owner import user
+from cylc.version import cylc_version
 
 
 PYRO_TIMEOUT = 2
@@ -89,6 +90,7 @@ def get_status_tasks(host, suite, owner=None):
 def get_summary_menu(suite_host_tuples,
                      usercfg, theme_name, set_theme_func,
                      has_stopped_suites, clear_stopped_suites_func,
+                     scanned_hosts, program_name,
                      extra_items=None, owner=None):
     """Return a right click menu for summary GUIs.
 
@@ -178,8 +180,39 @@ def get_summary_menu(suite_host_tuples,
     clear_item.set_sensitive(has_stopped_suites)
     clear_item.connect("button-press-event",
                         lambda b, e: clear_stopped_suites_func())
-    menu.append(clear_item) 
+    menu.append(clear_item)
+    sep_item = gtk.SeparatorMenuItem()
+    sep_item.show()
+    menu.append(sep_item)
+
+    info_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_ABOUT)
+    info_item.set_label("About")
+    info_item.show()
+    info_item.connect("button-press-event",
+                      lambda b, e: launch_about_dialog(
+                                          program_name,
+                                          scanned_hosts))
+    menu.append(info_item)
     return menu
+
+
+def launch_about_dialog(program_name, hosts):
+    """Launch a modified version of the SuiteControl.py about dialog."""
+    hosts_text = "Hosts monitored: " + ", ".join(hosts)
+    comments_text = hosts_text
+    about = gtk.AboutDialog()
+    if gtk.gtk_version[0] == 2 and gtk.gtk_version[1] >= 12:
+        # set_program_name() was added in PyGTK 2.12
+        about.set_program_name(program_name)
+    else:
+        comments_text = program_name + "\n" + hosts_text
+
+    about.set_version(cylc_version)
+    about.set_copyright("Copyright (C) 2008-2013 Hilary Oliver, NIWA")
+    about.set_comments(comments_text)
+    about.set_icon(get_icon())
+    about.run()
+    about.destroy()
 
 
 def launch_gcylc(host, suite, owner=None):
@@ -212,7 +245,7 @@ class SummaryApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
 
-    def __init__(self, hosts=None, owner=None):
+    def __init__(self, hosts=None, owner=None, poll_interval=None):
         gobject.threads_init()
         setup_icons()
         if not hosts:
@@ -285,7 +318,8 @@ class SummaryApp(object):
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
         self.updater = SummaryAppUpdater(self.hosts, suite_treemodel,
-                                         owner=self.owner)
+                                         owner=self.owner,
+                                         poll_interval=poll_interval)
         self.updater.start()
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
@@ -338,6 +372,8 @@ class SummaryApp(object):
                                 self._set_theme,
                                 has_stopped_suites,
                                 self.updater.clear_stopped_suites,
+                                program_name="cylc gsummary",
+                                scanned_hosts=self.hosts,
                                 extra_items=[view_item],
                                 owner=self.owner)
         menu.popup( None, None, None, event.button, event.time )
@@ -408,10 +444,13 @@ class BaseSummaryUpdater(threading.Thread):
     POLL_INTERVAL = 60
     STOPPED_SUITE_CLEAR_TIME = 86400
 
-    def __init__(self, hosts, owner=None):
+    def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
         if owner is None:
            owner = user
+        if poll_interval is None:
+            poll_interval = self.POLL_INTERVAL
+        self.poll_interval = poll_interval
         self.owner = owner
         self.statuses = {}
         self.stop_summaries = {}
@@ -429,7 +468,7 @@ class BaseSummaryUpdater(threading.Thread):
         while not self.quit:
             current_time = time.time()
             if (last_update_time is not None and
-                current_time < last_update_time + self.POLL_INTERVAL):
+                current_time < last_update_time + self.poll_interval):
                 time.sleep(1)
                 continue
             host_suites = get_host_suites(self.hosts, owner=self.owner)
@@ -478,10 +517,13 @@ class BaseSummaryTimeoutUpdater(object):
     POLL_INTERVAL = 60
     STOPPED_SUITE_CLEAR_TIME = 86400
 
-    def __init__(self, hosts, owner=None):
+    def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
         if owner is None:
-           owner = user
+            owner = user
+        if poll_interval is None:
+            poll_interval = self.POLL_INTERVAL
+        self.poll_interval = poll_interval
         self.owner = owner
         self.statuses = {}
         self.stop_summaries = {}
@@ -503,7 +545,7 @@ class BaseSummaryTimeoutUpdater(object):
             return False
         current_time = time.time()
         if (self.last_update_time is not None and
-            current_time < self.last_update_time + self.POLL_INTERVAL):
+            current_time < self.last_update_time + self.poll_interval):
             return True
         host_suites = get_host_suites(self.hosts, owner=self.owner)
         self.statuses = {}
@@ -543,9 +585,11 @@ class SummaryAppUpdater(BaseSummaryUpdater):
 
     """Update the summary app."""
     
-    def __init__(self, hosts, suite_treemodel, owner=None):
+    def __init__(self, hosts, suite_treemodel, owner=None,
+                 poll_interval=None):
         self.suite_treemodel = suite_treemodel
-        super(SummaryAppUpdater, self).__init__(hosts, owner=owner)
+        super(SummaryAppUpdater, self).__init__(hosts, owner=owner,
+                                                poll_interval=poll_interval)
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""

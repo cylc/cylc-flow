@@ -34,7 +34,9 @@ parser.add_option( "--host",
                    help="Host names to monitor (override site default).",
                    metavar="HOST", action="append",
                    dest="hosts" )
-
+parser.add_option( "--poll-interval",
+                   help="Polling interval (time between updates) in seconds",
+                   type="int", metavar="SECONDS", dest="interval" )
 
 ( options, args ) = parser.parse_args()
 
@@ -44,5 +46,6 @@ warnings.filterwarnings('ignore', 'use the new', Warning)
 
 from cylc.gui.gsummary import SummaryApp
 
-SummaryApp(hosts=options.hosts, owner=options.owner)
+SummaryApp(hosts=options.hosts, owner=options.owner,
+           poll_interval=options.interval)
 gtk.main()
