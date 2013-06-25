@@ -41,6 +41,7 @@ except ImportError, x:
 else:
     graphing_disabled = False
 
+from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.stateview import DotMaker
@@ -345,7 +346,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.current_views = []
 
-        self.key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
+        self.theme_legend_window = None
 
         setup_icons()
 
@@ -479,7 +480,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 self.switch_view( self.current_views[view_num].name, view_num, force=True )
         self.info_bar.set_theme( self.theme )
         self.info_bar._set_state_widget() # (to update info bar immediately)
-        self.set_key_liststore()
+        self.update_theme_legend()
         return False
 
     def _cb_change_view0_menu( self, item ):
@@ -2174,7 +2175,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         key_item.set_image(img)
         self._set_tooltip( key_item, "Describe what task states the colors represent" )
         self.view_menu.append( key_item )
-        key_item.connect( 'activate', self.popup_key )
+        key_item.connect( 'activate', self.popup_theme_legend )
 
         theme_item = gtk.ImageMenuItem( 'Theme' )
         img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
@@ -2838,42 +2839,24 @@ For more Stop options use the Control menu.""" )
         self.info_bar = InfoBar( self.cfg.host, self.theme,
                                  self._alter_status_toolbar_menu )
 
-    def popup_key( self, b ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "" )
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+    def popup_theme_legend( self, widget=None ):
+        """Popup a theme legend window."""
+        if self.theme_legend_window is None:
+            self.theme_legend_window = ThemeLegendWindow( self.window,
+                                                          self.theme )
+            self.theme_legend_window.connect( "destroy",
+                                              self.destroy_theme_legend )
+        else:
+            self.theme_legend_window.present()
 
-        vbox = gtk.VBox()
+    def update_theme_legend( self ):
+        """Update the theme legend window, if it exists."""
+        if self.theme_legend_window is not None:
+            self.theme_legend_window.update( self.theme )
 
-        treeview = gtk.TreeView( self.key_liststore )
-        treeview.set_headers_visible(False)
-        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
-        tvc = gtk.TreeViewColumn( None )
-
-        self.set_key_liststore()
-
-        cellpb = gtk.CellRendererPixbuf()
-        cell = gtk.CellRendererText()
-
-        tvc.pack_start( cellpb, False )
-        tvc.pack_start( cell, True )
-
-        tvc.set_attributes( cellpb, pixbuf=1 )
-        tvc.set_attributes( cell, text=0 )
-
-        treeview.append_column( tvc )
-
-        window.add( treeview )
-        window.show_all()
-
-    def set_key_liststore( self ):
-        dotm = DotMaker( self.theme )
-        self.key_liststore.clear()
-        for state in task_state.legal:
-            dot = dotm.get_icon( state )
-            self.key_liststore.append( [ state, dot ] )
+    def destroy_theme_legend( self, widget ):
+        """Handle a destroy of the theme legend window."""
+        self.theme_legend_window = None
 
     #def check_connection( self ):
     #    # called on a timeout in the gtk main loop, tell the log viewer

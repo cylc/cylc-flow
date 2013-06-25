@@ -17,32 +17,59 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import OptionParser
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib/')
+cylc_dir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
+if cylc_dir != os.getenv('CYLC_DIR', ''):
+    os.environ['CYLC_DIR'] = cylc_dir
 
 parser = OptionParser( """cylc gpanel [OPTIONS]
 
 This is a cylc summary panel applet for monitoring running suites on a set of
 hosts in GNOME 2.
 
+To use this applet, follow the instructions in
+$CYLC_DIR/conf/gsummary/cylc.server.
+
+This applet can be tested using the --test option.
+
 To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file.""")
 
+parser.add_option("--test",
+                  help="Run in a standalone window.",
+                  default=False,
+                  action="store_true", dest="test" )
 ( options, args ) = parser.parse_args()
 
 import gtk
 import warnings
 warnings.filterwarnings('ignore', 'use the new', Warning)
 
-from cylc.gui.gpanel import SummaryPanelApplet
+import cylc.gui
+
+cylc_dir = os.path.dirname(os.path.dirname(os.path.realpath(os.path.abspath(__file__))))
+if cylc_dir != os.getenv('CYLC_DIR', ''):
+    os.environ['CYLC_DIR'] = cylc_dir
+
+from cylc.gui.gpanel import SummaryPanelApplet, run_in_window
 
 
 def panel_applet_factory(applet, iid):
     my_panel_app = SummaryPanelApplet()
     applet.add(my_panel_app.dot_eb)
-    return gtk.TRUE
+    applet.show_all()
+    return True
 
 
 if __name__ == "__main__":
-    import gnomeapplet
-    gnomeapplet.bonobo_factory("OAFIID:GNOME_CylcSummaryPanelAppletFactory",
-                                gnomeapplet.Applet.__gtype__, 
-                                "cylc gpanel", "0", panel_applet_factory)
+    if options.test:
+        run_in_window()
+    else:
+        import gnomeapplet
+        gnomeapplet.bonobo_factory(
+                    "OAFIID:GNOME_CylcSummaryPanelAppletFactory",
+                    gnomeapplet.Applet.__gtype__,
+                    "cylc gpanel", "0", panel_applet_factory)

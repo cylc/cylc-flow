@@ -32,10 +32,12 @@ import gobject
 
 from cylc.global_config import gcfg
 from cylc.gui.gcylc_config import config
+from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.SuiteControl import run_get_stdout
 from cylc.gui.DotMaker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
 from cylc.owner import user
+
 
 PYRO_TIMEOUT = 2
 
@@ -127,7 +129,7 @@ def get_summary_menu(suite_host_tuples,
             menu.append(item)
         sep_item = gtk.SeparatorMenuItem()
         sep_item.show()
-        menu.append(sep_item)   
+        menu.append(sep_item)
 
     # Construct theme chooser items (same as cylc.gui.SuiteControl).
     theme_item = gtk.ImageMenuItem('Theme')
@@ -158,6 +160,12 @@ def get_summary_menu(suite_host_tuples,
                                               set_theme_func(i.theme_name)))
 
     menu.append(theme_item)
+    theme_legend_item = gtk.MenuItem("Show task state key")
+    theme_legend_item.show()
+    theme_legend_item.connect("button-press-event",
+                              lambda b, e: launch_theme_legend(
+                                        usercfg['themes'][theme_name]))
+    menu.append(theme_legend_item)
     sep_item = gtk.SeparatorMenuItem()
     sep_item.show()
     menu.append(sep_item)
@@ -186,6 +194,20 @@ def launch_gcylc(host, suite, owner=None):
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
 
 
+def launch_gsummary(*args, **kwargs):
+    """Launch gcylc for a given suite and host."""
+    stdout = open(os.devnull, "w")
+    stderr = stdout
+    command = "cylc gsummary"
+    command = shlex.split(command)
+    subprocess.Popen(command, stdout=stdout, stderr=stderr)
+
+
+def launch_theme_legend(theme):
+    """Launch a theme legend window."""
+    ThemeLegendWindow(None, theme)
+
+
 class SummaryApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
@@ -194,7 +216,10 @@ class SummaryApp(object):
         gobject.threads_init()
         setup_icons()
         if not hosts:
-            hosts = gcfg.sitecfg["suite host scanning"]["hosts"]
+            try:
+                hosts = gcfg.sitecfg["suite host scanning"]["hosts"]
+            except KeyError:
+                hosts = ["localhost"]
         self.hosts = hosts
         if owner is None:
             owner = user
@@ -290,7 +315,7 @@ class SummaryApp(object):
             host, suite = treemodel.get(iter_, 0, 1)
             suite_host_tuples.append((suite, host))
 
-        has_stopped_suites = bool(self.stop_summaries)
+        has_stopped_suites = bool(self.updater.stop_summaries)
 
         view_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_INDEX)
         view_item.set_label("View Column...")
@@ -307,12 +332,14 @@ class SummaryApp(object):
             column_item.show()
             view_menu.append(column_item)
 
-        menu = get_summary_right_click_menu(suite_host_tuples,
-                                            self.usercfg,
-                                            self.theme_name,
-                                            has_stopped_suites,
-                                            extra_items=[view_item],
-                                            owner=self.owner)
+        menu = get_summary_menu(suite_host_tuples,
+                                self.usercfg,
+                                self.theme_name,
+                                self._set_theme,
+                                has_stopped_suites,
+                                self.updater.clear_stopped_suites,
+                                extra_items=[view_item],
+                                owner=self.owner)
         menu.popup( None, None, None, event.button, event.time )
         return False
 
@@ -333,8 +360,9 @@ class SummaryApp(object):
             cell.set_property("pixbuf", None)
             cell.set_property("visible", False)
             return
+        is_stopped = model.get_value(iter_, 2)
         state, num_tasks = state_info.rsplit(" ", 1)
-        icon = self.dots.get_icon(state)
+        icon = self.dots.get_icon(state, is_stopped=is_stopped)
         cell.set_property("pixbuf", icon)
         cell.set_property("visible", True)
 
@@ -377,7 +405,7 @@ class BaseSummaryUpdater(threading.Thread):
 
     """
 
-    POLL_INTERVAL = 20
+    POLL_INTERVAL = 60
     STOPPED_SUITE_CLEAR_TIME = 86400
 
     def __init__(self, hosts, owner=None):
@@ -416,8 +444,9 @@ class BaseSummaryUpdater(threading.Thread):
                     self.statuses.setdefault(host, {})
                     self.statuses[host].setdefault(suite, {})
                     self.statuses[host][suite] = status_tasks
-                    if (host, suite) in self.stop_summaries:
-                        self.stop_summaries.pop((host, suite))
+                    if (host in self.stop_summaries and
+                        suite in self.stop_summaries[host]):
+                        self.stop_summaries[host].pop(suite)
                     current_suites.append((host, suite))
             for host, suite in prev_suites:
                 if (host, suite) not in current_suites:
@@ -436,6 +465,78 @@ class BaseSummaryUpdater(threading.Thread):
             last_update_time = time.time()
             gobject.idle_add(self.update, current_time)
             time.sleep(1)
+
+
+class BaseSummaryTimeoutUpdater(object):
+
+    """Retrieve running suite summary information.
+
+    Subclasses must provide an update method.
+
+    """
+
+    POLL_INTERVAL = 60
+    STOPPED_SUITE_CLEAR_TIME = 86400
+
+    def __init__(self, hosts, owner=None):
+        self.hosts = hosts
+        if owner is None:
+           owner = user
+        self.owner = owner
+        self.statuses = {}
+        self.stop_summaries = {}
+        self.quit = False
+        self.last_update_time = None
+        self.prev_suites = {}
+
+    def update(self, update_time=None):
+        """An update method that must be defined in subclasses."""
+        raise NotImplementedError()
+
+    def start(self):
+        """Start looping."""
+        gobject.timeout_add(1000, self.run)
+
+    def run(self):
+        """Extract running suite information at particular intervals."""
+        if self.quit:
+            return False
+        current_time = time.time()
+        if (self.last_update_time is not None and
+            current_time < self.last_update_time + self.POLL_INTERVAL):
+            return True
+        host_suites = get_host_suites(self.hosts, owner=self.owner)
+        self.statuses = {}
+        current_suites = []
+        for host in self.hosts:
+            for suite in host_suites[host]:
+                status_tasks = get_status_tasks(host, suite,
+                                                owner=self.owner)
+                if status_tasks is None:
+                    continue
+                self.statuses.setdefault(host, {})
+                self.statuses[host].setdefault(suite, {})
+                self.statuses[host][suite] = status_tasks
+                if (host, suite) in self.stop_summaries:
+                    self.stop_summaries.pop((host, suite))
+                current_suites.append((host, suite))
+        for host, suite in self.prev_suites:
+            if (host, suite) not in current_suites:
+                self.stop_summaries.setdefault(host, {})
+                summary_statuses = get_status_tasks(host, suite)
+                if summary_statuses is None:
+                    continue
+                self.stop_summaries[host][suite] = (summary_statuses,
+                                                    current_time)
+        self.prev_suites = copy.deepcopy(current_suites)
+        for host in self.stop_summaries:
+            for suite in self.stop_summaries[host].keys():
+                if (self.stop_summaries[host][suite][1] +
+                    self.STOPPED_SUITE_CLEAR_TIME < current_time):
+                    self.stop_summaries[host].pop(suite)
+        self.last_update_time = time.time()
+        gobject.idle_add(self.update, current_time)
+        return True
 
 
 class SummaryAppUpdater(BaseSummaryUpdater):
