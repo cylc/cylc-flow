@@ -21,7 +21,7 @@ from cylc.TaskID import TaskID
 import re, os
 import StringIO
 from copy import deepcopy
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.command_env import cv_scripting_ml, cv_export
 
 class jobfile(object):
@@ -149,6 +149,7 @@ class jobfile(object):
             BUFFER.write( "\nexport TZ=UTC" )
 
         # override and write task-host-specific suite variables
+        gcfg = get_global_cfg()
         suite_work_dir = gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
         st_env = deepcopy( self.__class__.suite_task_env ) 
         st_env[ 'CYLC_SUITE_RUN_DIR'    ] = gcfg.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )

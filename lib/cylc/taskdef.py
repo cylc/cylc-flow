@@ -26,7 +26,6 @@
 # (detection is currently disabled).
 
 import sys, re, os
-from OrderedDict import OrderedDict
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
 from prerequisites.plain_prerequisites import plain_prerequisites
@@ -38,6 +37,7 @@ from cycling import container
 from dictcopy import replicate, override
 from TaskID import TaskID
 from task_output_logs import logfiles
+from OrderedDict import OrderedDict
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -61,7 +61,7 @@ class taskdef(object):
             raise DefinitionError, "ERROR: Illegal task name: " + name
 
         rtcfg = {}
-        replicate( rtcfg, rtdefs.odict()  ) # copy [runtime] default dict
+        replicate( rtcfg, rtdefs  ) # copy [runtime] default dict
         override( rtcfg, rtover )    # override with suite [runtime] settings
 
         self.run_mode = run_mode
@@ -81,11 +81,10 @@ class taskdef(object):
         self.clocktriggered_offset = None
         self.namespace_hierarchy = []
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
-        self.triggers = OrderedDict()
+        self.triggers = {}
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
-        self.cond_triggers = OrderedDict()
-        self.outputs = [] # list of explicit internal outputs; change to
-                          # OrderedDict() if need to vary per cycle.
+        self.cond_triggers = {}
+        self.outputs = [] # list of explicit internal outputs; change to dict if need to vary per cycle.
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name

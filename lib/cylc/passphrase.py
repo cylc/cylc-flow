@@ -21,7 +21,7 @@ from stat import *
 import random
 import string
 from mkdir_p import mkdir_p
-from suite_host import hostname, is_remote_host
+from suite_host import get_hostname, is_remote_host
 from owner import user, is_remote_user
 
 class SecurityError( Exception ):
@@ -47,7 +47,7 @@ class InvalidPassphraseError( SecurityError ):
     pass
 
 class passphrase(object):
-    def __init__( self, suite, owner=user, host=hostname, verbose=False ):
+    def __init__( self, suite, owner=user, host=get_hostname(), verbose=False ):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -103,7 +103,7 @@ that do not actually need the suite definition directory to be installed.
 
             else:
                 # if an explicit location is given, the file must exist
-                raise SecurityError, 'ERROR, file not found on ' + user + '@' + hostname + ': ' + pfile
+                raise SecurityError, 'ERROR, file not found on ' + user + '@' + get_hostname() + ': ' + pfile
 
         # 2/ cylc commands with suite definition directory from local registration
         if not self.location and suitedir:
@@ -176,13 +176,13 @@ that do not actually need the suite definition directory to be installed.
                     break
 
         if not self.location:
-            raise SecurityError, 'ERROR: passphrase not found on ' + user + '@' + hostname
+            raise SecurityError, 'ERROR: passphrase not found on ' + user + '@' + get_hostname()
 
         return self.location
 
     def set_location( self, pfile ):
         if self.verbose:
-            print 'Passphrase detected at', pfile, 'on', user + '@' + hostname
+            print 'Passphrase detected at', pfile, 'on', user + '@' + get_hostname()
         self.location = pfile
 
     def generate( self, dir ):
@@ -203,7 +203,7 @@ that do not actually need the suite definition directory to be installed.
         # set passphrase file permissions to owner-only
         os.chmod( pfile, 0600 )
         if self.verbose:
-            print 'Generated suite passphrase file on', user + '@' + hostname + ':', pfile
+            print 'Generated suite passphrase file on', user + '@' + get_hostname() + ':', pfile
 
     def get( self, pfile=None, suitedir=None ):
         ppfile = self.get_passphrase_file( pfile, suitedir )
@@ -211,9 +211,9 @@ that do not actually need the suite definition directory to be installed.
         lines = psf.readlines()
         psf.close()
         if len(lines) == 0:
-            raise InvalidPassphraseError, 'ERROR, passphrase file is empty, on ' + user + '@' + hostname + ': ' + ppfile
+            raise InvalidPassphraseError, 'ERROR, passphrase file is empty, on ' + user + '@' + get_hostname() + ': ' + ppfile
         if len(lines) > 1:
-            raise InvalidPassphraseError, 'ERROR, passphrase file contains multiple lines, on ' + user + '@' + hostname + ': ' + ppfile
+            raise InvalidPassphraseError, 'ERROR, passphrase file contains multiple lines, on ' + user + '@' + get_hostname() + ': ' + ppfile
         # chomp trailing whitespace and newline
         self.passphrase = lines[0].strip()
         return self.passphrase

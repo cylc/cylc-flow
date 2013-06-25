@@ -25,9 +25,9 @@ import os, re
 import datetime
 from shutil import copy
 import subprocess
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.CylcOptionParsers import cop
-from cylc.include_files import inline_for_editing, \
+from cylc.include_files import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 
 parser = cop( """cylc [prep] edit [OPTIONS] ARGS
@@ -86,6 +86,7 @@ parser.add_option( "--gui", "-g",
 
 suite, suiterc, junk = parser.get_suite()
 
+gcfg = get_global_cfg()
 if options.geditor:
     editor = gcfg.cfg['editors']['gui']
 else:
@@ -152,14 +153,14 @@ if os.path.isfile( suiterc ):
         lines = lines0
     else:
         recovery = False
-        # inline any include files
-        lines = inline_for_editing( suitedir, lines0 )
+        lines = inline( lines0, suitedir, for_edit=True )
 else:
     parser.error("File not found: " + suiterc )
 
 # overwrite the (now backed up) original with the inlined file:
 h = open( suiterc, 'wb' )
-h.writelines( lines )
+for line in lines:
+    h.write( line + '\n' )
 h.close()
 
 print 'PRE-EDIT BACKUPS:'

@@ -1,0 +1,8 @@
+This directory contains specification modules for cylc parsec config files:
+
+ * suite definition files
+ * site/user config files
+ * gcylc config files
+
+ * test config file - to test parsec parsing and validation
+

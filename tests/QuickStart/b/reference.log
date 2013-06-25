@@ -1,81 +1,195 @@
-2012/09/24 20:50:29 CRITICAL - Suite starting at 2012-09-24 20:50:29.299307
-2012/09/24 20:50:29 INFO - Log event clock: real time
-2012/09/24 20:50:29 INFO - Run mode: live
-2012/09/24 20:50:29 INFO - Start tag: 2011010106
-2012/09/24 20:50:29 INFO - Stop tag: 2011010200
-2012/09/24 20:50:29 INFO - Cold Start 2011010106
-2012/09/24 20:50:29 INFO - [Prep.2011010106] -job submitted
-2012/09/24 20:50:29 INFO - [Prep.2011010106] -triggered off []
-2012/09/24 20:50:29 INFO - [Prep.2011010106] -Prep.2011010106 started
-2012/09/24 20:50:29 INFO - [Prep.2011010106] -Prep.2011010106 succeeded
-2012/09/24 20:50:29 INFO - [GetData.2011010106] -job submitted
-2012/09/24 20:50:29 INFO - [ColdModel.2011010106] -job submitted
-2012/09/24 20:50:29 INFO - [GetData.2011010106] -triggered off ['Prep.2011010106']
-2012/09/24 20:50:29 INFO - [ColdModel.2011010106] -triggered off ['Prep.2011010106']
-2012/09/24 20:50:29 INFO - [GetData.2011010112] -job submitted
-2012/09/24 20:50:29 INFO - [GetData.2011010112] -triggered off []
-2012/09/24 20:50:29 INFO - [GetData.2011010118] -HOLDING (runahead limit)
-2012/09/24 20:50:29 INFO - [GetData.2011010106] -GetData.2011010106 started
-2012/09/24 20:50:29 INFO - [ColdModel.2011010106] -ColdModel.2011010106 started
-2012/09/24 20:50:29 INFO - [GetData.2011010112] -GetData.2011010112 started
-2012/09/24 20:50:30 INFO - [GetData.2011010106] -GetData.2011010106 succeeded
-2012/09/24 20:50:30 INFO - [GetData.2011010112] -GetData.2011010112 succeeded
-2012/09/24 20:50:30 INFO - [ColdModel.2011010106] -ColdModel.2011010106 succeeded
-2012/09/24 20:50:30 INFO - [Model.2011010106] -job submitted
-2012/09/24 20:50:30 INFO - [Model.2011010106] -triggered off ['GetData.2011010106', 'ColdModel.2011010106']
-2012/09/24 20:50:30 INFO - [Model.2011010106] -Model.2011010106 started
-2012/09/24 20:50:30 INFO - [Model.2011010106] -Model.2011010106 succeeded
-2012/09/24 20:50:30 INFO - [PostA.2011010106] -job submitted
-2012/09/24 20:50:30 INFO - [PostB.2011010106] -job submitted
-2012/09/24 20:50:30 INFO - [Model.2011010112] -job submitted
-2012/09/24 20:50:30 INFO - [PostA.2011010106] -triggered off ['Model.2011010106']
-2012/09/24 20:50:30 INFO - [PostB.2011010106] -triggered off ['Model.2011010106']
-2012/09/24 20:50:30 INFO - [Model.2011010112] -triggered off ['GetData.2011010112', 'Model.2011010106']
-2012/09/24 20:50:30 INFO - [PostB.2011010118] -HOLDING (runahead limit)
-2012/09/24 20:50:30 INFO - [Model.2011010118] -HOLDING (runahead limit)
-2012/09/24 20:50:30 INFO - [PostA.2011010106] -PostA.2011010106 started
-2012/09/24 20:50:30 INFO - [PostB.2011010106] -PostB.2011010106 started
-2012/09/24 20:50:30 INFO - [Model.2011010112] -Model.2011010112 started
-2012/09/24 20:50:30 INFO - [PostA.2011010106] -PostA.2011010106 succeeded
-2012/09/24 20:50:30 INFO - [PostB.2011010106] -PostB.2011010106 succeeded
-2012/09/24 20:50:30 INFO - [GetData.2011010118] -job submitted
-2012/09/24 20:50:30 INFO - [GetData.2011010118] -triggered off []
-2012/09/24 20:50:30 INFO - [GetData.2011010200] -HOLDING (runahead limit)
-2012/09/24 20:50:30 INFO - [Model.2011010112] -Model.2011010112 succeeded
-2012/09/24 20:50:30 INFO - [PostA.2011010112] -job submitted
-2012/09/24 20:50:30 INFO - [PostA.2011010112] -triggered off ['Model.2011010112']
-2012/09/24 20:50:31 INFO - [GetData.2011010118] -GetData.2011010118 started
-2012/09/24 20:50:31 INFO - [PostA.2011010112] -PostA.2011010112 started
-2012/09/24 20:50:31 INFO - [GetData.2011010118] -GetData.2011010118 succeeded
-2012/09/24 20:50:31 INFO - [Model.2011010118] -job submitted
-2012/09/24 20:50:31 INFO - [Model.2011010118] -triggered off ['GetData.2011010118', 'Model.2011010112']
-2012/09/24 20:50:31 INFO - [Model.2011010200] -HOLDING (runahead limit)
-2012/09/24 20:50:31 INFO - [PostA.2011010112] -PostA.2011010112 succeeded
-2012/09/24 20:50:31 INFO - [GetData.2011010200] -job submitted
-2012/09/24 20:50:31 INFO - [GetData.2011010200] -triggered off []
-2012/09/24 20:50:31 INFO - [GetData.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
-2012/09/24 20:50:31 INFO - [Model.2011010118] -Model.2011010118 started
-2012/09/24 20:50:31 INFO - [GetData.2011010200] -GetData.2011010200 started
-2012/09/24 20:50:31 INFO - [Model.2011010118] -Model.2011010118 succeeded
-2012/09/24 20:50:31 INFO - [PostB.2011010118] -job submitted
-2012/09/24 20:50:31 INFO - [PostA.2011010118] -job submitted
-2012/09/24 20:50:31 INFO - [PostB.2011010118] -triggered off ['Model.2011010118']
-2012/09/24 20:50:31 INFO - [PostA.2011010118] -triggered off ['Model.2011010118']
-2012/09/24 20:50:31 INFO - [PostB.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
-2012/09/24 20:50:31 INFO - [GetData.2011010200] -GetData.2011010200 succeeded
-2012/09/24 20:50:31 INFO - [Model.2011010200] -job submitted
-2012/09/24 20:50:31 INFO - [Model.2011010200] -triggered off ['GetData.2011010200', 'Model.2011010118']
-2012/09/24 20:50:31 INFO - [Model.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
-2012/09/24 20:50:31 INFO - [PostB.2011010118] -PostB.2011010118 started
-2012/09/24 20:50:32 INFO - [PostA.2011010118] -PostA.2011010118 started
-2012/09/24 20:50:32 INFO - [Model.2011010200] -Model.2011010200 started
-2012/09/24 20:50:32 INFO - [PostA.2011010118] -PostA.2011010118 succeeded
-2012/09/24 20:50:32 INFO - [PostB.2011010118] -PostB.2011010118 succeeded
-2012/09/24 20:50:32 INFO - [Model.2011010200] -Model.2011010200 succeeded
-2012/09/24 20:50:32 INFO - [PostA.2011010200] -job submitted
-2012/09/24 20:50:32 INFO - [PostA.2011010200] -triggered off ['Model.2011010200']
-2012/09/24 20:50:32 INFO - [PostA.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
-2012/09/24 20:50:32 INFO - [PostA.2011010200] -PostA.2011010200 started
-2012/09/24 20:50:32 INFO - [PostA.2011010200] -PostA.2011010200 succeeded
-2012/09/24 20:50:32 WARNING - ALL TASKS FINISHED OR HELD
-2012/09/24 20:50:32 CRITICAL - Suite shutting down at 2012-09-24 20:50:32.539209
+2013/07/25 14:01:40 INFO - Thread-2 start (Event Handler Submission)
+2013/07/25 14:01:40 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/07/25 14:01:40 INFO - port:7767
+2013/07/25 14:01:40 CRITICAL - Suite starting at 2013-07-25 14:01:40.358126
+2013/07/25 14:01:40 INFO - Log event clock: real time
+2013/07/25 14:01:40 INFO - Run mode: live
+2013/07/25 14:01:40 INFO - Start tag: 2011010106
+2013/07/25 14:01:40 INFO - Stop tag: 2011010200
+2013/07/25 14:01:40 INFO - Thread-4 start (Job Submission)
+2013/07/25 14:01:40 INFO - Thread-5 start (Request Handling)
+2013/07/25 14:01:40 INFO - Cold Start 2011010106
+2013/07/25 14:01:40 INFO - [Prep.2011010106] -(setting:submitting)
+2013/07/25 14:01:40 INFO - [Prep.2011010106] -triggered off []
+2013/07/25 14:01:41 INFO - [Prep.2011010106] -(current:submitting)> Prep.2011010106 submitting now
+2013/07/25 14:01:41 INFO - [Prep.2011010106] -(current:submitting)> Prep.2011010106 submission succeeded
+2013/07/25 14:01:41 INFO - [Prep.2011010106] -(setting:submitted)
+2013/07/25 14:01:41 INFO - [Prep.2011010106] -(current:submitted)> Prep.2011010106 submit_method_id=2935
+2013/07/25 14:01:42 INFO - [Prep.2011010106] -(current:submitted)> Prep.2011010106 started at 2013-07-25T14:01:41
+2013/07/25 14:01:42 INFO - [Prep.2011010106] -(setting:running)
+2013/07/25 14:01:42 INFO - [Prep.2011010106] -(current:running)> Prep.2011010106 succeeded at 2013-07-25T14:01:42
+2013/07/25 14:01:42 INFO - [Prep.2011010106] -(setting:succeeded)
+2013/07/25 14:01:42 INFO - [ColdModel.2011010106] -(setting:submitting)
+2013/07/25 14:01:42 INFO - [GetData.2011010106] -(setting:submitting)
+2013/07/25 14:01:42 INFO - [ColdModel.2011010106] -triggered off ['Prep.2011010106']
+2013/07/25 14:01:42 INFO - [GetData.2011010106] -triggered off ['Prep.2011010106']
+2013/07/25 14:01:43 INFO - [ColdModel.2011010106] -(current:submitting)> ColdModel.2011010106 submitting now
+2013/07/25 14:01:43 INFO - [ColdModel.2011010106] -(current:submitting)> ColdModel.2011010106 submission succeeded
+2013/07/25 14:01:43 INFO - [ColdModel.2011010106] -(setting:submitted)
+2013/07/25 14:01:43 INFO - [ColdModel.2011010106] -(current:submitted)> ColdModel.2011010106 submit_method_id=3030
+2013/07/25 14:01:43 INFO - [GetData.2011010106] -(current:submitting)> GetData.2011010106 submitting now
+2013/07/25 14:01:44 INFO - [ColdModel.2011010106] -(current:submitted)> ColdModel.2011010106 started at 2013-07-25T14:01:43
+2013/07/25 14:01:44 INFO - [ColdModel.2011010106] -(setting:running)
+2013/07/25 14:01:44 INFO - [ColdModel.2011010106] -(current:running)> ColdModel.2011010106 succeeded at 2013-07-25T14:01:44
+2013/07/25 14:01:44 INFO - [ColdModel.2011010106] -(setting:succeeded)
+2013/07/25 14:01:44 INFO - [GetData.2011010106] -(current:submitting)> GetData.2011010106 started at 2013-07-25T14:01:43
+2013/07/25 14:01:44 INFO - [GetData.2011010106] -(setting:running)
+2013/07/25 14:01:44 INFO - [GetData.2011010106] -(current:running)> GetData.2011010106 succeeded at 2013-07-25T14:01:44
+2013/07/25 14:01:44 INFO - [GetData.2011010106] -(setting:succeeded)
+2013/07/25 14:01:44 WARNING - [GetData.2011010106] -Assuming non-reported outputs were completed:
+GetData.2011010106 submitted
+2013/07/25 14:01:44 INFO - [GetData.2011010106] -(current:succeeded)> GetData.2011010106 submission succeeded
+2013/07/25 14:01:44 INFO - [GetData.2011010106] -(current:succeeded)> GetData.2011010106 submit_method_id=3033
+2013/07/25 14:01:44 INFO - [Model.2011010106] -(setting:submitting)
+2013/07/25 14:01:44 INFO - [Model.2011010106] -triggered off ['ColdModel.2011010106', 'GetData.2011010106']
+2013/07/25 14:01:46 INFO - [Model.2011010106] -(current:submitting)> Model.2011010106 submitting now
+2013/07/25 14:01:46 INFO - [Model.2011010106] -(current:submitting)> Model.2011010106 submission succeeded
+2013/07/25 14:01:46 INFO - [Model.2011010106] -(setting:submitted)
+2013/07/25 14:01:46 INFO - [Model.2011010106] -(current:submitted)> Model.2011010106 submit_method_id=3240
+2013/07/25 14:01:46 INFO - [GetData.2011010112] -(setting:submitting)
+2013/07/25 14:01:46 INFO - [GetData.2011010112] -triggered off []
+2013/07/25 14:01:47 INFO - [Model.2011010106] -(current:submitted)> Model.2011010106 started at 2013-07-25T14:01:46
+2013/07/25 14:01:47 INFO - [Model.2011010106] -(setting:running)
+2013/07/25 14:01:47 INFO - [Model.2011010106] -(current:running)> Model.2011010106 succeeded at 2013-07-25T14:01:47
+2013/07/25 14:01:47 INFO - [Model.2011010106] -(setting:succeeded)
+2013/07/25 14:01:47 INFO - [PostB.2011010106] -(setting:submitting)
+2013/07/25 14:01:47 INFO - [PostA.2011010106] -(setting:submitting)
+2013/07/25 14:01:47 INFO - [PostB.2011010106] -triggered off ['Model.2011010106']
+2013/07/25 14:01:47 INFO - [PostA.2011010106] -triggered off ['Model.2011010106']
+2013/07/25 14:01:48 INFO - [PostB.2011010106] -(current:submitting)> PostB.2011010106 submitting now
+2013/07/25 14:01:48 INFO - [PostA.2011010106] -(current:submitting)> PostA.2011010106 submitting now
+2013/07/25 14:01:48 INFO - [PostA.2011010106] -(current:submitting)> PostA.2011010106 submission succeeded
+2013/07/25 14:01:48 INFO - [PostA.2011010106] -(setting:submitted)
+2013/07/25 14:01:48 INFO - [PostA.2011010106] -(current:submitted)> PostA.2011010106 submit_method_id=3435
+2013/07/25 14:01:48 INFO - [GetData.2011010112] -(current:submitting)> GetData.2011010112 submitting now
+2013/07/25 14:01:48 INFO - [GetData.2011010112] -(current:submitting)> GetData.2011010112 submission succeeded
+2013/07/25 14:01:48 INFO - [GetData.2011010112] -(setting:submitted)
+2013/07/25 14:01:48 INFO - [GetData.2011010112] -(current:submitted)> GetData.2011010112 submit_method_id=3416
+2013/07/25 14:01:48 INFO - [GetData.2011010112] -(current:submitted)> GetData.2011010112 started at 2013-07-25T14:01:48
+2013/07/25 14:01:48 INFO - [GetData.2011010112] -(setting:running)
+2013/07/25 14:01:48 INFO - [GetData.2011010118] -HOLDING (beyond runahead limit)
+2013/07/25 14:01:48 INFO - [GetData.2011010118] -(setting:runahead)
+2013/07/25 14:01:50 INFO - [PostB.2011010106] -(current:submitting)> PostB.2011010106 started at 2013-07-25T14:01:48
+2013/07/25 14:01:50 INFO - [PostB.2011010106] -(setting:running)
+2013/07/25 14:01:50 INFO - [PostB.2011010106] -(current:running)> PostB.2011010106 succeeded at 2013-07-25T14:01:49
+2013/07/25 14:01:50 INFO - [PostB.2011010106] -(setting:succeeded)
+2013/07/25 14:01:50 WARNING - [PostB.2011010106] -Assuming non-reported outputs were completed:
+PostB.2011010106 submitted
+2013/07/25 14:01:50 INFO - [PostB.2011010106] -(current:succeeded)> PostB.2011010106 submission succeeded
+2013/07/25 14:01:50 INFO - [PostB.2011010106] -(current:succeeded)> PostB.2011010106 submit_method_id=3419
+2013/07/25 14:01:50 INFO - [PostA.2011010106] -(current:submitted)> PostA.2011010106 started at 2013-07-25T14:01:48
+2013/07/25 14:01:50 INFO - [PostA.2011010106] -(setting:running)
+2013/07/25 14:01:50 INFO - [PostA.2011010106] -(current:running)> PostA.2011010106 succeeded at 2013-07-25T14:01:49
+2013/07/25 14:01:50 INFO - [PostA.2011010106] -(setting:succeeded)
+2013/07/25 14:01:50 INFO - [GetData.2011010112] -(current:running)> GetData.2011010112 succeeded at 2013-07-25T14:01:49
+2013/07/25 14:01:50 INFO - [GetData.2011010112] -(setting:succeeded)
+2013/07/25 14:01:50 INFO - [GetData.2011010118] -(setting:waiting)
+2013/07/25 14:01:50 INFO - [Model.2011010112] -(setting:submitting)
+2013/07/25 14:01:50 INFO - [GetData.2011010118] -(setting:submitting)
+2013/07/25 14:01:50 INFO - [Model.2011010112] -triggered off ['GetData.2011010112', 'Model.2011010106']
+2013/07/25 14:01:50 INFO - [GetData.2011010118] -triggered off []
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(current:submitting)> Model.2011010112 submitting now
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(current:submitting)> Model.2011010112 submission succeeded
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(setting:submitted)
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(current:submitted)> Model.2011010112 submit_method_id=3677
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(current:submitted)> Model.2011010112 started at 2013-07-25T14:01:51
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(setting:running)
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(current:running)> Model.2011010112 succeeded at 2013-07-25T14:01:52
+2013/07/25 14:01:52 INFO - [Model.2011010112] -(setting:succeeded)
+2013/07/25 14:01:52 INFO - [GetData.2011010118] -(current:submitting)> GetData.2011010118 submitting now
+2013/07/25 14:01:52 INFO - [GetData.2011010118] -(current:submitting)> GetData.2011010118 started at 2013-07-25T14:01:51
+2013/07/25 14:01:52 INFO - [GetData.2011010118] -(setting:running)
+2013/07/25 14:01:52 INFO - [GetData.2011010118] -(current:running)> GetData.2011010118 succeeded at 2013-07-25T14:01:52
+2013/07/25 14:01:52 INFO - [GetData.2011010118] -(setting:succeeded)
+2013/07/25 14:01:52 WARNING - [GetData.2011010118] -Assuming non-reported outputs were completed:
+GetData.2011010118 submitted
+2013/07/25 14:01:52 INFO - [PostA.2011010112] -(setting:submitting)
+2013/07/25 14:01:52 INFO - [PostA.2011010112] -triggered off ['Model.2011010112']
+2013/07/25 14:01:52 INFO - [GetData.2011010200] -HOLDING (beyond runahead limit)
+2013/07/25 14:01:52 INFO - [GetData.2011010200] -(setting:runahead)
+2013/07/25 14:01:53 INFO - [GetData.2011010118] -(current:succeeded)> GetData.2011010118 submission succeeded
+2013/07/25 14:01:53 INFO - [GetData.2011010118] -(current:succeeded)> GetData.2011010118 submit_method_id=3680
+2013/07/25 14:01:53 INFO - [Model.2011010118] -(setting:submitting)
+2013/07/25 14:01:53 INFO - [Model.2011010118] -triggered off ['GetData.2011010118', 'Model.2011010112']
+2013/07/25 14:01:55 INFO - [PostA.2011010112] -(current:submitting)> PostA.2011010112 submitting now
+2013/07/25 14:01:55 INFO - [PostA.2011010112] -(current:submitting)> PostA.2011010112 submission succeeded
+2013/07/25 14:01:55 INFO - [PostA.2011010112] -(setting:submitted)
+2013/07/25 14:01:55 INFO - [PostA.2011010112] -(current:submitted)> PostA.2011010112 submit_method_id=3872
+2013/07/25 14:01:55 INFO - [PostA.2011010112] -(current:submitted)> PostA.2011010112 started at 2013-07-25T14:01:54
+2013/07/25 14:01:55 INFO - [PostA.2011010112] -(setting:running)
+2013/07/25 14:01:55 INFO - [Model.2011010118] -(current:submitting)> Model.2011010118 submitting now
+2013/07/25 14:01:55 INFO - [Model.2011010118] -(current:submitting)> Model.2011010118 started at 2013-07-25T14:01:54
+2013/07/25 14:01:55 INFO - [Model.2011010118] -(setting:running)
+2013/07/25 14:01:55 INFO - [Model.2011010200] -HOLDING (beyond runahead limit)
+2013/07/25 14:01:55 INFO - [Model.2011010200] -(setting:runahead)
+2013/07/25 14:01:56 INFO - [PostA.2011010112] -(current:running)> PostA.2011010112 succeeded at 2013-07-25T14:01:55
+2013/07/25 14:01:56 INFO - [PostA.2011010112] -(setting:succeeded)
+2013/07/25 14:01:56 INFO - [Model.2011010118] -(current:running)> Model.2011010118 succeeded at 2013-07-25T14:01:55
+2013/07/25 14:01:56 INFO - [Model.2011010118] -(setting:succeeded)
+2013/07/25 14:01:56 WARNING - [Model.2011010118] -Assuming non-reported outputs were completed:
+Model.2011010118 submitted
+2013/07/25 14:01:56 INFO - [Model.2011010118] -(current:succeeded)> Model.2011010118 submission succeeded
+2013/07/25 14:01:56 INFO - [Model.2011010118] -(current:succeeded)> Model.2011010118 submit_method_id=3875
+2013/07/25 14:01:56 INFO - [GetData.2011010200] -(setting:waiting)
+2013/07/25 14:01:56 INFO - [Model.2011010200] -(setting:waiting)
+2013/07/25 14:01:56 INFO - [PostB.2011010118] -(setting:submitting)
+2013/07/25 14:01:56 INFO - [GetData.2011010200] -(setting:submitting)
+2013/07/25 14:01:56 INFO - [PostA.2011010118] -(setting:submitting)
+2013/07/25 14:01:56 INFO - [PostB.2011010118] -triggered off ['Model.2011010118']
+2013/07/25 14:01:56 INFO - [GetData.2011010200] -triggered off []
+2013/07/25 14:01:56 INFO - [PostA.2011010118] -triggered off ['Model.2011010118']
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(current:submitting)> PostB.2011010118 submitting now
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(current:submitting)> PostB.2011010118 submission succeeded
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(setting:submitted)
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(current:submitted)> PostB.2011010118 submit_method_id=4106
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(current:submitted)> PostB.2011010118 started at 2013-07-25T14:01:58
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(setting:running)
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(current:running)> PostB.2011010118 succeeded at 2013-07-25T14:01:58
+2013/07/25 14:01:58 INFO - [PostB.2011010118] -(setting:succeeded)
+2013/07/25 14:01:58 INFO - [GetData.2011010200] -(current:submitting)> GetData.2011010200 submitting now
+2013/07/25 14:01:58 INFO - [GetData.2011010200] -(current:submitting)> GetData.2011010200 started at 2013-07-25T14:01:58
+2013/07/25 14:01:58 INFO - [GetData.2011010200] -(setting:running)
+2013/07/25 14:01:58 INFO - [GetData.2011010200] -(current:running)> GetData.2011010200 succeeded at 2013-07-25T14:01:58
+2013/07/25 14:01:58 INFO - [GetData.2011010200] -(setting:succeeded)
+2013/07/25 14:01:58 WARNING - [GetData.2011010200] -Assuming non-reported outputs were completed:
+GetData.2011010200 submitted
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(current:submitting)> PostA.2011010118 submitting now
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(current:submitting)> PostA.2011010118 submission succeeded
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(setting:submitted)
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(current:submitted)> PostA.2011010118 submit_method_id=4138
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(current:submitted)> PostA.2011010118 started at 2013-07-25T14:01:58
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(setting:running)
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(current:running)> PostA.2011010118 succeeded at 2013-07-25T14:01:58
+2013/07/25 14:01:58 INFO - [PostA.2011010118] -(setting:succeeded)
+2013/07/25 14:01:58 INFO - [Model.2011010200] -(setting:submitting)
+2013/07/25 14:01:58 INFO - [Model.2011010200] -triggered off ['GetData.2011010200', 'Model.2011010118']
+2013/07/25 14:01:58 INFO - [PostB.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
+2013/07/25 14:01:58 INFO - [PostB.2011010206] -(setting:held)
+2013/07/25 14:01:58 INFO - [GetData.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
+2013/07/25 14:01:58 INFO - [GetData.2011010206] -(setting:held)
+2013/07/25 14:02:00 INFO - [GetData.2011010200] -(current:succeeded)> GetData.2011010200 submission succeeded
+2013/07/25 14:02:00 INFO - [GetData.2011010200] -(current:succeeded)> GetData.2011010200 submit_method_id=4119
+2013/07/25 14:02:01 INFO - [Model.2011010200] -(current:submitting)> Model.2011010200 submitting now
+2013/07/25 14:02:01 INFO - [Model.2011010200] -(current:submitting)> Model.2011010200 submission succeeded
+2013/07/25 14:02:01 INFO - [Model.2011010200] -(setting:submitted)
+2013/07/25 14:02:01 INFO - [Model.2011010200] -(current:submitted)> Model.2011010200 submit_method_id=4328
+2013/07/25 14:02:01 INFO - [Model.2011010200] -(current:submitted)> Model.2011010200 started at 2013-07-25T14:02:01
+2013/07/25 14:02:01 INFO - [Model.2011010200] -(setting:running)
+2013/07/25 14:02:01 INFO - [Model.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
+2013/07/25 14:02:01 INFO - [Model.2011010206] -(setting:held)
+2013/07/25 14:02:02 INFO - [Model.2011010200] -(current:running)> Model.2011010200 succeeded at 2013-07-25T14:02:01
+2013/07/25 14:02:02 INFO - [Model.2011010200] -(setting:succeeded)
+2013/07/25 14:02:02 INFO - [PostA.2011010200] -(setting:submitting)
+2013/07/25 14:02:02 INFO - [PostA.2011010200] -triggered off ['Model.2011010200']
+2013/07/25 14:02:03 INFO - [PostA.2011010200] -(current:submitting)> PostA.2011010200 submitting now
+2013/07/25 14:02:03 INFO - [PostA.2011010200] -(current:submitting)> PostA.2011010200 submission succeeded
+2013/07/25 14:02:03 INFO - [PostA.2011010200] -(setting:submitted)
+2013/07/25 14:02:03 INFO - [PostA.2011010200] -(current:submitted)> PostA.2011010200 submit_method_id=4436
+2013/07/25 14:02:03 INFO - [PostA.2011010200] -(current:submitted)> PostA.2011010200 started at 2013-07-25T14:02:03
+2013/07/25 14:02:03 INFO - [PostA.2011010200] -(setting:running)
+2013/07/25 14:02:03 INFO - [PostA.2011010206] -HOLDING (beyond suite stop cycle) 2011010200
+2013/07/25 14:02:03 INFO - [PostA.2011010206] -(setting:held)
+2013/07/25 14:02:04 INFO - [PostA.2011010200] -(current:running)> PostA.2011010200 succeeded at 2013-07-25T14:02:03
+2013/07/25 14:02:04 INFO - [PostA.2011010200] -(setting:succeeded)
+2013/07/25 14:02:04 INFO - All normal cycling tasks have spawned past the final cycle 2011010200
+2013/07/25 14:02:04 CRITICAL - Suite shutting down at 2013-07-25 14:02:04.454715

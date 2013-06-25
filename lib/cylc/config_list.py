@@ -19,11 +19,14 @@
 def get_expanded_float_list( cfg, allow_zeroes=True ):
     """
     Expand list-with-multiplier config items, and coerce to float:
-         cfg = [1.0, 2*3.0, 4.0]
+         cfg = [1.0, 2*3.0, 4.0] # string values
        becomes:
-         cfg = [1.0, 3.0, 3.0, 4.0]
+         cfg = [1.0, 3.0, 3.0, 4.0] # float values
     Used for retry delays and polling interval configuration.
     Bad values (including multipliers) raise ValueError.
+
+    TODO - this should take the original string as input
+
     """
     values = []
     for item in cfg:
@@ -32,6 +35,7 @@ def get_expanded_float_list( cfg, allow_zeroes=True ):
         except ValueError:
             # too few values to unpack (single item)
             values.append(float(item))
+            #( raise ValueError again if item is not legal float)
         else:
             # mult * val
             values += int(mult) * [float(val)]

@@ -24,16 +24,14 @@ from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.owner import user
-from cylc.suite_host import hostname as suite_hostname
 import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
 from cylc.command_env import cv_scripting_sl
-
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -55,10 +53,11 @@ class PollTimer( object ):
         self.log = log
         self.current_interval = None
         self.timer_start = None
+        self.gcfg = get_global_cfg()
 
     def set_host( self, host, set_timer=False ):
         # the polling comms method is host-specific
-        if gcfg.get_host_item( 'task communication method', host ) == "poll":
+        if self.gcfg.get_host_item( 'task communication method', host ) == "poll":
             if not self.intervals:
                 self.intervals = copy(self.default_intervals)
                 self.log( 'WARNING', '(polling comms) using default ' + self.name + ' polling intervals' )
@@ -223,11 +222,13 @@ class task( object ):
         self.submission_poll_timer = None
         self.execution_poll_timer = None
 
+        self.gcfg = get_global_cfg()
+
         # sets submit num for restarts or when triggering state prior to submission
         if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
         else:
-            self.db_path = gcfg.get_derived_host_item( self.suite_name, 'suite run directory' )
+            self.db_path = self.gcfg.get_derived_host_item( self.suite_name, 'suite run directory' )
             self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
             submits = self.db.get_task_current_submit_num(self.name, self.c_time)
             if submits > 0:
@@ -327,10 +328,15 @@ class task( object ):
         return ready
 
     def get_resolved_dependencies( self ):
+        """report who I triggered off"""
+        # Used by the test-battery log comparator
         dep = []
         satby = self.prerequisites.get_satisfied_by()
         for label in satby.keys():
             dep.append( satby[ label ] )
+        # order does not matter here; sort to allow comparison with
+        # reference run task with lots of near-simultaneous triggers.
+        dep.sort()
         return dep
 
       
@@ -515,12 +521,12 @@ class task( object ):
 
         self.submission_poll_timer = PollTimer( \
                     copy( rtconfig['submission polling intervals']), 
-                    copy( gcfg.cfg['submission polling intervals']),
+                    copy( self.gcfg.cfg['submission polling intervals']),
                     'submission', self.log )
 
         self.execution_poll_timer = PollTimer( \
                     copy( rtconfig['execution polling intervals']), 
-                    copy( gcfg.cfg['execution polling intervals']),
+                    copy( self.gcfg.cfg['execution polling intervals']),
                     'execution', self.log )
  
     def submit( self, dry_run=False, debug=False, overrides={} ):
@@ -649,9 +655,9 @@ class task( object ):
             # this remote account inside the job-submission thread just
             # prior to job submission.
             self.log( 'NORMAL', 'Copying suite contact file to ' + self.user_at_host )
-            suite_run_dir = gcfg.get_derived_host_item(self.suite_name, 'suite run directory')
+            suite_run_dir = self.gcfg.get_derived_host_item(self.suite_name, 'suite run directory')
             env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
-            r_suite_run_dir = gcfg.get_derived_host_item(
+            r_suite_run_dir = self.gcfg.get_derived_host_item(
                     self.suite_name, 'suite run directory', self.task_host, self.task_owner)
             r_env_file_path = '%s:%s/cylc-suite-env' % ( self.user_at_host, r_suite_run_dir)
             cmd1 = ['ssh', '-oBatchMode=yes', self.user_at_host, 'mkdir', '-p', r_suite_run_dir]

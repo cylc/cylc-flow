@@ -19,7 +19,7 @@
 import sys, os, re
 import subprocess
 from optparse import OptionParser
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from OrderedDict import OrderedDict
 
 parser = OptionParser( """cylc [info] documentation|browse [OPTIONS]
@@ -32,6 +32,7 @@ documentation URL. The browser and PDF reader to use, and the intranet
 URL, is determined by cylc site/user configuration - for details see
   $ cylc get-global-config --help""" )
 
+gcfg = get_global_cfg()
 intranet = gcfg.cfg['documentation']['urls']['local index']
 internet = gcfg.cfg['documentation']['urls']['internet homepage']
 

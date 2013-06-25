@@ -87,7 +87,7 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
     # that '#!cylc-x.y.z' rises to the top.
     # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
     # try:
-    template = env.from_string( ''.join(flines[1:]) )
+    template = env.from_string( '\n'.join(flines[1:]) )
     # except Exception, x:
     #     # This happens if we use an unknown Jinja2 filter, for example.
     ##     # TODO - THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
@@ -115,7 +115,8 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
             continue
             # restoring newlines here is only necessary for display by
         # the cylc view command:
-        suiterc.append(line + '\n')
+        ###suiterc.append(line + '\n')
+        suiterc.append(line)
 
     return suiterc
 

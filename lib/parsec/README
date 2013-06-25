@@ -1,0 +1,36 @@
+PARSEC
+
+A framework for constructing nested ini style config file specs with
+automatic parsing, validation, default values, on-the-fly item
+deprecation, and file combination (e.g. user.rc overrides site.rc
+overrides defaults).
+
+Used in cylc for:
+ * suite definition files
+ * gcylc config files
+ * site/user config files
+
+ How it works:
+ * Parsec reads a nested config file and returns a corresponding nested
+ dict, which can be upgraded (deprecation) on the fly, then validated
+ against a file spec (a nested dict of the same form that specifies
+ legal items and "validators" for their values).
+
+Parsec config files support:
+  * Jinja2
+  * comments #
+  * Line continuation
+  * Trailing comments stripped
+  * Single or double quotes
+  * Triple-quoted multiline strings
+  * String-internal comments retained
+  * Validation against a spec module
+  * Combining two config files (e.g. user.rc overrides site.rc)
+NOT SUPPORTED:
+  * Mixed quote types ( "foo' # ERROR! )
+
+TODO -
+ * Special suite-definition-specific behaviour (graph item) is encoded
+   in the general parser - need a way to specify this sort of thing in
+   config file spec modules.
+
