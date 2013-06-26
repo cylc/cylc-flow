@@ -146,6 +146,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                 self.clear_stopped_suites,
                                 program_name="cylc gpanel",
                                 scanned_hosts=self.hosts,
+                                change_hosts_func=self._set_hosts,
                                 owner=self.owner,
                                 extra_items=extra_items)
         menu.popup( None, None, None, event.button, event.time )
@@ -218,6 +219,11 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
             self.launch_context_menu(event,
                                      suite_host_tuples=widget._connect_args)
         return False
+
+    def _set_hosts(self, new_hosts):
+        del self.hosts[:]
+        for host in new_hosts:
+            self.hosts.append(host)
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name

@@ -90,8 +90,8 @@ def get_status_tasks(host, suite, owner=None):
 def get_summary_menu(suite_host_tuples,
                      usercfg, theme_name, set_theme_func,
                      has_stopped_suites, clear_stopped_suites_func,
-                     scanned_hosts, program_name,
-                     extra_items=None, owner=None):
+                     scanned_hosts, change_hosts_func,
+                     program_name, extra_items=None, owner=None):
     """Return a right click menu for summary GUIs.
 
     suite_host_tuples should be a list of (suite, host) tuples (if any).
@@ -102,6 +102,10 @@ def get_summary_menu(suite_host_tuples,
     stopped suites.
     clear_stopped_suites should be a function with no arguments that
     removes stopped suites from the current view.
+    scanned_hosts should be a list of currently scanned suite hosts.
+    change_hosts_func should be a function accepting a new list of
+    suite hosts to scan.
+    program_name should be a string describing the parent program.
     extra_items (keyword) should be a list of extra menu items to add
     to the right click menu.
     owner (keyword) should be the owner of the suites, if not the
@@ -181,6 +185,15 @@ def get_summary_menu(suite_host_tuples,
     clear_item.connect("button-press-event",
                         lambda b, e: clear_stopped_suites_func())
     menu.append(clear_item)
+
+    hosts_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_PREFERENCES)
+    hosts_item.set_label("Configure Hosts")
+    hosts_item.show()
+    hosts_item.connect("button-press-event",
+                       lambda b, e: launch_hosts_dialog(scanned_hosts,
+                                                        change_hosts_func))
+    menu.append(hosts_item)
+
     sep_item = gtk.SeparatorMenuItem()
     sep_item.show()
     menu.append(sep_item)
@@ -234,6 +247,39 @@ def launch_gsummary(*args, **kwargs):
     command = "cylc gsummary"
     command = shlex.split(command)
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
+
+
+def launch_hosts_dialog(existing_hosts, change_hosts_func):
+    """Launch a dialog for configuring the suite hosts to scan.
+
+    Arguments:
+    existing_hosts should be a list of currently scanned host names.
+    change_hosts_func should be a function accepting a new list of
+    host names to scan.
+
+    """
+    dialog = gtk.Dialog()
+    dialog.set_icon(get_icon())
+    dialog.vbox.set_border_width(5)
+    dialog.set_title("Configure suite hosts")
+    cancel_button = dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+    ok_button = dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+    label = gtk.Label("Enter a comma-delimited list of suite hosts to scan")
+    label.show()
+    label_hbox = gtk.HBox()
+    label_hbox.pack_start(label, expand=False, fill=False)
+    label_hbox.show()
+    entry = gtk.Entry()
+    entry.set_text(", ".join(existing_hosts))
+    entry.connect("activate", lambda e: dialog.response(gtk.RESPONSE_OK))
+    entry.show()
+    dialog.vbox.pack_start(label_hbox, expand=False, fill=False, padding=5)
+    dialog.vbox.pack_start(entry, expand=False, fill=False, padding=5)
+    response = dialog.run()
+    if response == gtk.RESPONSE_OK:
+        new_hosts = [h.strip() for h in entry.get_text().split(",")]
+        change_hosts_func(new_hosts)
+    dialog.destroy()
 
 
 def launch_theme_legend(theme):
@@ -374,6 +420,7 @@ class SummaryApp(object):
                                 self.updater.clear_stopped_suites,
                                 program_name="cylc gsummary",
                                 scanned_hosts=self.hosts,
+                                change_hosts_func=self._set_hosts,
                                 extra_items=[view_item],
                                 owner=self.owner)
         menu.popup( None, None, None, event.button, event.time )
@@ -421,6 +468,11 @@ class SummaryApp(object):
         is_stopped = model.get_value(iter_, 2)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
+
+    def _set_hosts(self, new_hosts):
+        del self.hosts[:]
+        for host in new_hosts:
+            self.hosts.append(host)
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
@@ -559,8 +611,9 @@ class BaseSummaryTimeoutUpdater(object):
                 self.statuses.setdefault(host, {})
                 self.statuses[host].setdefault(suite, {})
                 self.statuses[host][suite] = status_tasks
-                if (host, suite) in self.stop_summaries:
-                    self.stop_summaries.pop((host, suite))
+                if (host in self.stop_summaries and
+                    suite in self.stop_summaries[host]):
+                    self.stop_summaries[host].pop(suite)
                 current_suites.append((host, suite))
         for host, suite in self.prev_suites:
             if (host, suite) not in current_suites:
