@@ -173,7 +173,8 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                 info = self.stop_summaries[host][suite]
                 status_map, suite_time = info
                 is_stopped = True
-            status = extract_group_state(status_map.keys())
+            status = extract_group_state(status_map.keys(),
+                                         is_stopped=is_stopped)
             if number_mode:
                 suite_statuses.setdefault(is_stopped, {})
                 suite_statuses[is_stopped].setdefault(status, [])

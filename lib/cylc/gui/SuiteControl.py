@@ -291,7 +291,7 @@ Class to create an information bar.
         self.set_state( states, is_suite_stopped=True )
         suite_state = "?"
         if states:
-            suite_state = extract_group_state(states)
+            suite_state = extract_group_state( states, is_stopped=True )
         #o>summary = summary.format(suite_state)
         summary = summary % suite_state
         num_failed = 0
