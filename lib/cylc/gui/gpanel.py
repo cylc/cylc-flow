@@ -155,9 +155,11 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
     def update(self, update_time=None):
         """Update the Applet."""
         suite_host_tuples = []
+        statuses = copy.deepcopy(self.statuses)
+        stop_summaries = copy.deepcopy(self.stop_summaries)
         for host in self.hosts:
-            suites = (self.statuses.get(host, {}).keys() +
-                      self.stop_summaries.get(host, {}).keys())
+            suites = (statuses.get(host, {}).keys() +
+                      stop_summaries.get(host, {}).keys())
             for suite in suites:
                 suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
@@ -166,11 +168,11 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         number_mode = (len(suite_host_tuples) > self.MAX_INDIVIDUAL_SUITES)
         suite_statuses = {}
         for suite, host in suite_host_tuples:
-            if suite in self.statuses.get(host, {}):
-                status_map = self.statuses[host][suite]
+            if suite in statuses.get(host, {}):
+                status_map = statuses[host][suite]
                 is_stopped = False
             else:
-                info = self.stop_summaries[host][suite]
+                info = stop_summaries[host][suite]
                 status_map, suite_time = info
                 is_stopped = True
             status = extract_group_state(status_map.keys(),

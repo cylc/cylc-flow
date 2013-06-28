@@ -43,7 +43,7 @@ state_dump_file = dumper( suite ).get_path()
 
 try:
     f = open( state_dump_file, 'rb' )
-except OSError, x:
+except (IOError, OSError), x:
     if options.debug:
         raise
     raise SystemExit(x)

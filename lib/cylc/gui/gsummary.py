@@ -52,12 +52,14 @@ def get_host_suites(hosts, timeout=None, owner=None):
         timeout = PYRO_TIMEOUT
     for host in hosts:
         host_suites_map[host] = []
-        command = ("cylc scan " +
-                   "--host={0} --owner={1} --pyro-timeout={2}".format(
-                                         host, owner, timeout))
-        res, stdout = run_get_stdout(command)
-        if res and stdout:
-            for line in stdout:
+        command = ["cylc", "scan", "--host=%s" % host,
+                   "--owner=%s" % owner, "--pyro-timeout=%s" % timeout]
+        popen = subprocess.Popen( command,
+                                  stdout=subprocess.PIPE )
+        stdout = popen.stdout.read()
+        res = popen.wait()
+        if res == 0 and stdout:
+            for line in stdout.splitlines():
                 if line:
                     host_suites_map[host].append(line.split()[0])
     return host_suites_map
@@ -67,15 +69,14 @@ def get_status_tasks(host, suite, owner=None):
     """Return a dictionary of statuses and tasks, or None."""
     if owner is None:
         owner = user
-    command = "cylc cat-state --host={0} --owner={1} {2}".format(
-                                                 host, owner, suite)
-    try:
-        res, stdout = run_get_stdout(command)
-    except Exception:
+    command = ["cylc", "cat-state", "--host=%s" % host,
+               "--owner=%s" % owner, suite]
+    popen = subprocess.Popen( command,
+                              stdout=subprocess.PIPE )
+    stdout = popen.stdout.read()
+    res = popen.wait()
+    if res != 0:
         return None
-    if not res:
-        return None
-    stdout = "\n".join(stdout)
     status_tasks = {}
     for line in stdout.rpartition("Begin task states")[2].splitlines():
         task_result = re.match("([^ ]+) : status=([^,]+), spawned", line)
@@ -234,7 +235,7 @@ def launch_gcylc(host, suite, owner=None):
         owner = user
     stdout = open(os.devnull, "w")
     stderr = stdout
-    command = "cylc gui --host={0} --owner={1} {2}".format(
+    command = "cylc gui --host=%s --owner=%s %s" % (
                                          host, owner, suite)
     command = shlex.split(command)
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
@@ -506,6 +507,7 @@ class BaseSummaryUpdater(threading.Thread):
         self.owner = owner
         self.statuses = {}
         self.stop_summaries = {}
+        self.prev_suites = []
         self.quit = False
         super(BaseSummaryUpdater, self).__init__()
 
@@ -523,36 +525,17 @@ class BaseSummaryUpdater(threading.Thread):
                 current_time < last_update_time + self.poll_interval):
                 time.sleep(1)
                 continue
-            host_suites = get_host_suites(self.hosts, owner=self.owner)
-            self.statuses = {}
-            current_suites = []
-            for host in self.hosts:
-                for suite in host_suites[host]:
-                    status_tasks = get_status_tasks(host, suite,
-                                                    owner=self.owner)
-                    if status_tasks is None:
-                        continue
-                    self.statuses.setdefault(host, {})
-                    self.statuses[host].setdefault(suite, {})
-                    self.statuses[host][suite] = status_tasks
-                    if (host in self.stop_summaries and
-                        suite in self.stop_summaries[host]):
-                        self.stop_summaries[host].pop(suite)
-                    current_suites.append((host, suite))
-            for host, suite in prev_suites:
-                if (host, suite) not in current_suites:
-                    self.stop_summaries.setdefault(host, {})
-                    summary_statuses = get_status_tasks(host, suite)
-                    if summary_statuses is None:
-                        continue
-                    self.stop_summaries[host][suite] = (summary_statuses,
-                                                        current_time)
-            prev_suites = copy.deepcopy(current_suites)
-            for host in self.stop_summaries:
-                for suite in self.stop_summaries[host].keys():
-                    if (self.stop_summaries[host][suite][1] +
-                        self.STOPPED_SUITE_CLEAR_TIME < current_time):
-                        self.stop_summaries[host].pop(suite)
+            statuses, stop_summaries = get_new_statuses_and_stop_summaries(
+                            self.hosts, self.owner,
+                            prev_stop_summaries=self.stop_summaries,
+                            prev_suites=self.prev_suites)
+            prev_suites = []
+            for host in statuses:
+                for suite in statuses[host]:
+                    prev_suites.append((host, suite))
+            self.prev_suites = prev_suites
+            self.statuses = statuses
+            self.stop_summaries = stop_summaries
             last_update_time = time.time()
             gobject.idle_add(self.update, current_time)
             time.sleep(1)
@@ -581,7 +564,7 @@ class BaseSummaryTimeoutUpdater(object):
         self.stop_summaries = {}
         self.quit = False
         self.last_update_time = None
-        self.prev_suites = {}
+        self.prev_suites = []
 
     def update(self, update_time=None):
         """An update method that must be defined in subclasses."""
@@ -599,36 +582,17 @@ class BaseSummaryTimeoutUpdater(object):
         if (self.last_update_time is not None and
             current_time < self.last_update_time + self.poll_interval):
             return True
-        host_suites = get_host_suites(self.hosts, owner=self.owner)
-        self.statuses = {}
-        current_suites = []
-        for host in self.hosts:
-            for suite in host_suites[host]:
-                status_tasks = get_status_tasks(host, suite,
-                                                owner=self.owner)
-                if status_tasks is None:
-                    continue
-                self.statuses.setdefault(host, {})
-                self.statuses[host].setdefault(suite, {})
-                self.statuses[host][suite] = status_tasks
-                if (host in self.stop_summaries and
-                    suite in self.stop_summaries[host]):
-                    self.stop_summaries[host].pop(suite)
-                current_suites.append((host, suite))
-        for host, suite in self.prev_suites:
-            if (host, suite) not in current_suites:
-                self.stop_summaries.setdefault(host, {})
-                summary_statuses = get_status_tasks(host, suite)
-                if summary_statuses is None:
-                    continue
-                self.stop_summaries[host][suite] = (summary_statuses,
-                                                    current_time)
-        self.prev_suites = copy.deepcopy(current_suites)
-        for host in self.stop_summaries:
-            for suite in self.stop_summaries[host].keys():
-                if (self.stop_summaries[host][suite][1] +
-                    self.STOPPED_SUITE_CLEAR_TIME < current_time):
-                    self.stop_summaries[host].pop(suite)
+        statuses, stop_summaries = get_new_statuses_and_stop_summaries(
+                       self.hosts, self.owner,
+                       prev_stop_summaries=self.stop_summaries,
+                       prev_suites=self.prev_suites)
+        prev_suites = []
+        for host in statuses:
+            for suite in statuses[host]:
+                prev_suites.append((host, suite))
+        self.prev_suites = prev_suites
+        self.statuses = statuses
+        self.stop_summaries = stop_summaries
         self.last_update_time = time.time()
         gobject.idle_add(self.update, current_time)
         return True
@@ -651,23 +615,25 @@ class SummaryAppUpdater(BaseSummaryUpdater):
 
     def update(self, update_time=None):
         """Update the Applet."""
+        statuses = copy.deepcopy(self.statuses)
+        stop_summaries = copy.deepcopy(self.stop_summaries)
         if update_time is None:
             update_time = time.time()
         self.suite_treemodel.clear()
         suite_host_tuples = []
         for host in self.hosts:
-            suites = (self.statuses.get(host, {}).keys() +
-                      self.stop_summaries.get(host, {}).keys())
+            suites = (statuses.get(host, {}).keys() +
+                      stop_summaries.get(host, {}).keys())
             for suite in suites:
                 suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
         for suite, host in suite_host_tuples:
-            if suite in self.statuses.get(host, {}):
-                statuses = self.statuses[host][suite].items()
+            if suite in statuses.get(host, {}):
+                statuses = statuses[host][suite].items()
                 is_stopped = False
                 suite_time = update_time
             else:
-                info = self.stop_summaries[host][suite]
+                info = stop_summaries[host][suite]
                 status_map, suite_time = info
                 statuses = status_map.items()
                 is_stopped = True
@@ -679,3 +645,46 @@ class SummaryAppUpdater(BaseSummaryUpdater):
             model_data += [None] * (24 - len(model_data))
             self.suite_treemodel.append(None, model_data)
         return False
+
+
+def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
+                                        prev_suites=None,
+                                        stop_suite_clear_time=86400):
+    """Return dictionaries of statuses and stop_summaries."""
+    host_suites = get_host_suites(hosts, owner=owner)
+    if prev_stop_summaries is None:
+        prev_stop_summaries = {}
+    if prev_suites is None:
+        prev_suites = []
+    statuses = {}
+    stop_summaries = copy.deepcopy(prev_stop_summaries)
+    current_suites = []
+    for host in hosts:
+        for suite in host_suites[host]:
+            status_tasks = get_status_tasks(host, suite,
+                                            owner=owner)
+            if status_tasks is None:
+                continue
+            statuses.setdefault(host, {})
+            statuses[host].setdefault(suite, {})
+            statuses[host][suite] = status_tasks
+            if (host in stop_summaries and
+                suite in stop_summaries[host]):
+                stop_summaries[host].pop(suite)
+            current_suites.append((host, suite))
+    for host, suite in prev_suites:
+        if (host, suite) not in current_suites:
+            stop_summaries.setdefault(host, {})
+            summary_statuses = get_status_tasks(host, suite,
+                                                owner=owner)
+            if summary_statuses is None:
+                continue
+            stop_summaries[host][suite] = (summary_statuses,
+                                           current_time)
+    prev_suites = copy.deepcopy(current_suites)
+    for host in stop_summaries:
+        for suite in stop_summaries[host].keys():
+            if (stop_summaries[host][suite][1] +
+                stop_suite_clear_time < current_time):
+                stop_summaries[host].pop(suite)
+    return statuses, stop_summaries
