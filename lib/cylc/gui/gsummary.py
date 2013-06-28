@@ -55,7 +55,8 @@ def get_host_suites(hosts, timeout=None, owner=None):
         command = ["cylc", "scan", "--host=%s" % host,
                    "--owner=%s" % owner, "--pyro-timeout=%s" % timeout]
         popen = subprocess.Popen( command,
-                                  stdout=subprocess.PIPE )
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE )
         stdout = popen.stdout.read()
         res = popen.wait()
         if res == 0 and stdout:
@@ -72,7 +73,8 @@ def get_status_tasks(host, suite, owner=None):
     command = ["cylc", "cat-state", "--host=%s" % host,
                "--owner=%s" % owner, suite]
     popen = subprocess.Popen( command,
-                              stdout=subprocess.PIPE )
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE )
     stdout = popen.stdout.read()
     res = popen.wait()
     if res != 0:
@@ -629,17 +631,17 @@ class SummaryAppUpdater(BaseSummaryUpdater):
         suite_host_tuples.sort()
         for suite, host in suite_host_tuples:
             if suite in statuses.get(host, {}):
-                statuses = statuses[host][suite].items()
+                status_map_items = statuses[host][suite].items()
                 is_stopped = False
                 suite_time = update_time
             else:
                 info = stop_summaries[host][suite]
                 status_map, suite_time = info
-                statuses = status_map.items()
+                status_map_items = status_map.items()
                 is_stopped = True
-            statuses.sort()
-            statuses.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
-            states = [s[0] + " " + str(len(s[1])) for s in statuses]
+            status_map_items.sort()
+            status_map_items.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
+            states = [s[0] + " " + str(len(s[1])) for s in status_map_items]
             model_data = [host, suite, is_stopped, suite_time]
             model_data += states[:20]
             model_data += [None] * (24 - len(model_data))
@@ -651,6 +653,7 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
                                         prev_suites=None,
                                         stop_suite_clear_time=86400):
     """Return dictionaries of statuses and stop_summaries."""
+    hosts = copy.deepcopy(hosts)
     host_suites = get_host_suites(hosts, owner=owner)
     if prev_stop_summaries is None:
         prev_stop_summaries = {}
@@ -658,6 +661,7 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
         prev_suites = []
     statuses = {}
     stop_summaries = copy.deepcopy(prev_stop_summaries)
+    current_time = time.time()
     current_suites = []
     for host in hosts:
         for suite in host_suites[host]:
