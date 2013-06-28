@@ -497,7 +497,6 @@ class BaseSummaryUpdater(threading.Thread):
     """
 
     POLL_INTERVAL = 60
-    STOPPED_SUITE_CLEAR_TIME = 86400
 
     def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
@@ -552,7 +551,6 @@ class BaseSummaryTimeoutUpdater(object):
     """
 
     POLL_INTERVAL = 60
-    STOPPED_SUITE_CLEAR_TIME = 86400
 
     def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
