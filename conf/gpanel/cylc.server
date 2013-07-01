@@ -1,49 +1,24 @@
-<!--> This is the GNOME 2 bonobo configuration for the cylc panel applet.
-
-Requirements:
- * GNOME 2, gnome-panel
-
-Installation:
- * Replace occurrences of $CYLC_DIR in this file with the equivalent path
-to your cylc installation.
- * Installing this file:
-   * as root: place this file in /usr/lib/bonobo/servers/ (or equivalent)
-   * as a non-root user: place this file in a ~/.bonobo/
-directory and place this line in your .profile:
-
-export BONOBO_ACTIVATION_PATH=$HOME/.bonobo/
-
-Configuration (site):
- * Configure extra suite hosts by editing the [suite host scanning]hosts entry
-in your site.rc file.
-
-Adding to Panel:
- * Log out, then in again.
- * Right-click within the GNOME 2 panel and select "Add to Panel"
- * Navigate to the Cylc Panel Applet entry and add it.
-<-->
-
 <oaf_info>
-<oaf_server iid="OAFIID:GNOME_CylcSummaryPanelAppletFactory" type="exe"
+<oaf_server iid="OAFIID:GNOME_CylcMonitorFactory" type="exe"
             location="$CYLC_DIR/bin/cylc-gpanel">
 
         <oaf_attribute name="repo_ids" type="stringv">
                 <item value="IDL:Bonobo/GenericFactory:1.0"/>
                 <item value="IDL:Bonobo/Unknown:1.0"/>
         </oaf_attribute>
-        <oaf_attribute name="name" type="string" value="Cylc Panel Applet Factory"/>
+        <oaf_attribute name="name" type="string" value="Cylc Monitor Factory"/>
         <oaf_attribute name="description" type="string" value="Factory to create the cylc panel applet"/>
 </oaf_server>
 
-<oaf_server iid="OAFIID:GNOME_CylcSummaryPanelApplet" type="factory"
-            location="OAFIID:GNOME_CylcSummaryPanelAppletFactory">
+<oaf_server iid="OAFIID:GNOME_CylcMonitor" type="factory"
+            location="OAFIID:GNOME_CylcMonitorFactory">
 
         <oaf_attribute name="repo_ids" type="stringv">
                 <item value="IDL:GNOME/Vertigo/PanelAppletShell:1.0"/>
                 <item value="IDL:Bonobo/Control:1.0"/>
                 <item value="IDL:Bonobo/Unknown:1.0"/>
         </oaf_attribute>
-        <oaf_attribute name="name" type="string" value="Cylc Panel Applet"/>
+        <oaf_attribute name="name" type="string" value="Cylc Monitor Applet"/>
         <oaf_attribute name="description" type="string" value="Monitor running cylc suites"/>
         <oaf_attribute name="panel:category" type="string" value="Amusements"/>
         <oaf_attribute name="panel:icon" type="string" value="$CYLC_DIR/images/icon.png"/>

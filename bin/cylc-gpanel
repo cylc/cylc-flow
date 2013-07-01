@@ -30,19 +30,27 @@ parser = OptionParser( """cylc gpanel [OPTIONS]
 This is a cylc summary panel applet for monitoring running suites on a set of
 hosts in GNOME 2.
 
-To use this applet, follow the instructions in
-$CYLC_DIR/conf/gpanel/cylc.server.
+To install this applet, run "cylc gpanel --install"
+and follow the instructions that it gives you.
 
 This applet can be tested using the --test option.
 
-To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
-$HOME/.cylc/gcylc.rc and follow the instructions in the file.""")
+To customize themes, copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+$HOME/.cylc/gcylc.rc and follow the instructions in the file.
 
+To configure default suite hosts, edit the
+[suite host scanning]hosts entry in your site.rc file.""")
+
+parser.add_option("--install",
+                  help="Install the panel applet.",
+                  default=False,
+                  action="store_true", dest="install")
 parser.add_option("--test",
                   help="Run in a standalone window.",
                   default=False,
-                  action="store_true", dest="test" )
-( options, args ) = parser.parse_args()
+                  action="store_true", dest="test")
+arglist = [a for a in sys.argv[1:] if not a.startswith("--oaf")]
+( options, args ) = parser.parse_args(arglist)
 
 import gtk
 import warnings
@@ -57,9 +65,28 @@ if cylc_dir != os.getenv('CYLC_DIR', ''):
 from cylc.gui.gpanel import SummaryPanelApplet, run_in_window
 
 
+def install_panel_applet():
+    server_file = os.path.join(cylc_dir, "conf", "gpanel", "cylc.server")
+    home = os.path.expanduser("~")
+    dest_dir = os.path.join(home, ".bonobo")
+    if not os.path.isdir(dest_dir):
+        os.mkdir(dest_dir)
+    dest_file = os.path.join(dest_dir, "cylc.server")
+    text = open(server_file, "r").read().replace("$CYLC_DIR", cylc_dir)
+    open(os.path.join(dest_dir, "cylc.server"), "w").write(text)
+    print dest_file, "created.\n"
+    print """Further Instructions:
+ * normal users - place this line in your ~/.profile file:
+export BONOBO_ACTIVATION_PATH=$HOME/.bonobo
+ * (sys)admin users - move the new cylc.server file into your
+/usr/lib/bonobo/servers/ directory, or equivalent.
+ * After logging in and out, right-click within the GNOME 2 panel and
+select "Add to Panel", then select Cylc Monitor Applet."""
+
+
 def panel_applet_factory(applet, iid):
     my_panel_app = SummaryPanelApplet()
-    applet.add(my_panel_app.dot_eb)
+    applet.add(my_panel_app.get_widget())
     applet.show_all()
     return True
 
@@ -67,9 +94,11 @@ def panel_applet_factory(applet, iid):
 if __name__ == "__main__":
     if options.test:
         run_in_window()
+    elif options.install:
+        install_panel_applet()
     else:
         import gnomeapplet
         gnomeapplet.bonobo_factory(
-                    "OAFIID:GNOME_CylcSummaryPanelAppletFactory",
+                    "OAFIID:GNOME_CylcMonitorFactory",
                     gnomeapplet.Applet.__gtype__,
                     "cylc gpanel", "0", panel_applet_factory)

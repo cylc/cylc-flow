@@ -84,6 +84,10 @@ class SummaryPanelApplet(object):
         self.updater.start()
         self.top_hbox.connect("destroy", self.stop)
 
+    def get_widget(self):
+        """Return the topmost widget for embedding in the panel."""
+        return self.top_hbox
+
     def stop(self, widget):
         """Handle a stop."""
         sys.exit()
