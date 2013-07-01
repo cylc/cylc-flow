@@ -94,6 +94,7 @@ def get_summary_menu(suite_host_tuples,
                      usercfg, theme_name, set_theme_func,
                      has_stopped_suites, clear_stopped_suites_func,
                      scanned_hosts, change_hosts_func,
+                     update_now_func,
                      program_name, extra_items=None, owner=None):
     """Return a right click menu for summary GUIs.
 
@@ -116,7 +117,8 @@ def get_summary_menu(suite_host_tuples,
 
     """
     menu = gtk.Menu()
-    
+
+    # Construct gcylc launcher items for each relevant suite.
     for suite, host in suite_host_tuples:
         gcylc_item = gtk.ImageMenuItem(stock_id="gcylc")
         gcylc_item.set_label("Launch gcylc: %s - %s" % (suite, host))
@@ -179,8 +181,15 @@ def get_summary_menu(suite_host_tuples,
     sep_item.show()
     menu.append(sep_item)
     
-    # Construct a clean stopped suites item.
+    # Construct a trigger update item.
+    update_now_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_REFRESH)
+    update_now_item.set_label("Update Now")
+    update_now_item.show()
+    update_now_item.connect("button-press-event",
+                            lambda b, e: update_now_func())
+    menu.append(update_now_item)
 
+    # Construct a clean stopped suites item.
     clear_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_CLEAR)
     clear_item.set_label("Clear Stopped Suites")
     clear_item.show()
@@ -189,6 +198,7 @@ def get_summary_menu(suite_host_tuples,
                         lambda b, e: clear_stopped_suites_func())
     menu.append(clear_item)
 
+    # Construct a configure scanned hosts item.
     hosts_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_PREFERENCES)
     hosts_item.set_label("Configure Hosts")
     hosts_item.show()
@@ -201,6 +211,7 @@ def get_summary_menu(suite_host_tuples,
     sep_item.show()
     menu.append(sep_item)
 
+    # Construct an about dialog item.
     info_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_ABOUT)
     info_item.set_label("About")
     info_item.show()
@@ -316,6 +327,7 @@ class SummaryApp(object):
         self.theme = self.usercfg['themes'][self.theme_name]
         self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(*([str, str, bool, int] + [str] * 20))
+        self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
         
         # Construct the host column.
@@ -358,6 +370,14 @@ class SummaryApp(object):
         self.suite_treeview.append_column(time_column)
         self.suite_treeview.append_column(status_column)
         self.suite_treeview.show()
+        if hasattr(self.suite_treeview, "set_has_tooltip"):
+            self.suite_treeview.set_has_tooltip(True)
+            try:
+                self.suite_treeview.connect('query-tooltip',
+                                            self._on_query_tooltip)
+            except TypeError:
+                # Lower PyGTK version.
+                pass
         self.suite_treeview.connect("button-press-event",
                                     self._on_button_press_event)
         scrolled_window = gtk.ScrolledWindow()
@@ -421,9 +441,10 @@ class SummaryApp(object):
                                 self._set_theme,
                                 has_stopped_suites,
                                 self.updater.clear_stopped_suites,
+                                self.hosts,
+                                self._set_hosts,
+                                self.updater.update_now,
                                 program_name="cylc gsummary",
-                                scanned_hosts=self.hosts,
-                                change_hosts_func=self._set_hosts,
                                 extra_items=[view_item],
                                 owner=self.owner)
         menu.popup( None, None, None, event.button, event.time )
@@ -433,6 +454,48 @@ class SummaryApp(object):
         self.updater.quit = True
         gtk.main_quit()
         return False
+
+    def _on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
+        """Handle a tooltip creation request."""
+        tip_context = self.suite_treeview.get_tooltip_context(x, y, kbd_ctx)
+        if tip_context is None:
+            self._prev_tooltip_location_id = None
+            return False
+        x, y = self.suite_treeview.convert_widget_to_bin_window_coords(x, y)
+        path, column, cell_x, cell_y = self.suite_treeview.get_path_at_pos(
+                                                                    x, y)
+        model = self.suite_treeview.get_model()
+        iter_ = model.get_iter(path)
+        host = model.get_value(iter_, 0)
+        suite = model.get_value(iter_, 1)
+        update_time = model.get_value(iter_, 3)
+        
+        location_id = (host, suite, update_time, column.get_title())
+        if location_id != self._prev_tooltip_location_id:
+            self._prev_tooltip_location_id = location_id
+            tooltip.set_text(None)
+            return False
+        if column.get_title() in ["Host", "Suite"]:
+            tooltip.set_text(suite + " - " + host)
+            return True
+        if column.get_title() == "Updated":
+            time_object = datetime.datetime.fromtimestamp(update_time)
+            text = "Info retrieved at " + time_object.isoformat()
+            tooltip.set_text(text)
+            return True
+        if column.get_title() != "Status":
+            tooltip.set_text(None)
+            return False
+        state_texts = []
+        for i in range(4, 24):
+            state_text = model.get_value(iter_, i)
+            if state_text is None:
+                break
+            status, number = state_text.rsplit(" ", 1)
+            state_texts.append(number + " " + status)
+        text = "Tasks: " + ", ".join(state_texts)
+        tooltip.set_text(text)
+        return True
 
     def _on_toggle_column_visible(self, menu_item):
         column_index, is_visible = menu_item._connect_args
@@ -509,6 +572,7 @@ class BaseSummaryUpdater(threading.Thread):
         self.statuses = {}
         self.stop_summaries = {}
         self.prev_suites = []
+        self._should_force_update = False
         self.quit = False
         super(BaseSummaryUpdater, self).__init__()
 
@@ -516,16 +580,23 @@ class BaseSummaryUpdater(threading.Thread):
         """An update method that must be defined in subclasses."""
         raise NotImplementedError()
 
+    def update_now(self):
+        """Force an update as soon as possible."""
+        self._should_force_update = True
+
     def run(self):
         """Execute the main loop of the thread."""
         prev_suites = {}
         last_update_time = None
         while not self.quit:
             current_time = time.time()
-            if (last_update_time is not None and
-                current_time < last_update_time + self.poll_interval):
+            if (not self._should_force_update and
+                (last_update_time is not None and
+                 current_time < last_update_time + self.poll_interval)):
                 time.sleep(1)
                 continue
+            if self._should_force_update:
+                self._should_force_update = False
             statuses, stop_summaries = get_new_statuses_and_stop_summaries(
                             self.hosts, self.owner,
                             prev_stop_summaries=self.stop_summaries,
@@ -562,6 +633,7 @@ class BaseSummaryTimeoutUpdater(object):
         self.owner = owner
         self.statuses = {}
         self.stop_summaries = {}
+        self._should_force_update = False
         self.quit = False
         self.last_update_time = None
         self.prev_suites = []
@@ -569,6 +641,10 @@ class BaseSummaryTimeoutUpdater(object):
     def update(self, update_time=None):
         """An update method that must be defined in subclasses."""
         raise NotImplementedError()
+
+    def update_now(self):
+        """Force an update as soon as possible."""
+        self._should_force_update = True
 
     def start(self):
         """Start looping."""
@@ -579,9 +655,12 @@ class BaseSummaryTimeoutUpdater(object):
         if self.quit:
             return False
         current_time = time.time()
-        if (self.last_update_time is not None and
-            current_time < self.last_update_time + self.poll_interval):
+        if (not self._should_force_update and
+            (self.last_update_time is not None and
+             current_time < self.last_update_time + self.poll_interval)):
             return True
+        if self._should_force_update:
+            self._should_force_update = False
         statuses, stop_summaries = get_new_statuses_and_stop_summaries(
                        self.hosts, self.owner,
                        prev_stop_summaries=self.stop_summaries,

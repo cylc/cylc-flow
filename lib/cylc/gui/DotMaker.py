@@ -26,6 +26,11 @@ class DotMaker(object):
         self.theme = theme
 
     def get_icon( self, state=None, is_stopped=False ):
+        """Generate a gtk.gdk.Pixbuf for a state.
+
+        if is_stopped, generate a stopped form of the Pixbuf.
+
+        """
         if is_stopped:
             xpm = [
                 "10 10 3 1",
@@ -79,7 +84,7 @@ class DotMaker(object):
         return gtk.gdk.pixbuf_new_from_xpm_data( data=xpm )
 
     def get_image( self, state, is_stopped=False ):
+        """Returns a gtk.Image form of get_icon."""
         img = gtk.Image()
         img.set_from_pixbuf( self.get_icon( state, is_stopped=is_stopped ) )
         return img
-

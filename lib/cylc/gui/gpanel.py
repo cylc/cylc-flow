@@ -140,7 +140,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         gsummary_item.set_label("Launch cylc gsummary")
         gsummary_item.show()
         gsummary_item.connect("button-press-event",
-                                lambda b, e: launch_gsummary())
+                              lambda b, e: launch_gsummary())
 
         extra_items.append(gsummary_item)
 
@@ -148,11 +148,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                 self.theme_name, self._set_theme,
                                 has_stopped_suites,
                                 self.clear_stopped_suites,
+                                self.hosts,
+                                self._set_hosts,
+                                self.update_now,
                                 program_name="cylc gpanel",
-                                scanned_hosts=self.hosts,
-                                change_hosts_func=self._set_hosts,
-                                owner=self.owner,
-                                extra_items=extra_items)
+                                extra_items=extra_items,
+                                owner=self.owner)
         menu.popup( None, None, None, event.button, event.time )
         return False
 
@@ -184,40 +185,67 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
             if number_mode:
                 suite_statuses.setdefault(is_stopped, {})
                 suite_statuses[is_stopped].setdefault(status, [])
-                suite_statuses[is_stopped][status].append((suite, host))
+                suite_statuses[is_stopped][status].append(
+                                           (suite, host, status_map.items()))
             else:
-                self._add_image_box(status, is_stopped, [(suite, host)])
+                self._add_image_box(status, is_stopped,
+                                    [(suite, host, status_map.items())])
         if number_mode:
             for is_stopped in sorted(suite_statuses.keys()):
                 statuses = suite_statuses[is_stopped].items()
                 statuses.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
-                for status, status_suite_host_tuples in statuses:
+                for status, suite_host_states_tuples in statuses:
                     label = gtk.Label(
                                 str(len(status_suite_host_tuples)) + ":")
                     label.show()
                     self.dot_hbox.pack_start(label, expand=False, fill=False)
                     self._add_image_box(status, is_stopped,
-                                        status_suite_host_tuples)
+                                        suite_host_states_tuples)
         return False
 
-    def _add_image_box(self, status, is_stopped, suite_host_tuples):
+    def _add_image_box(self, status, is_stopped, suite_host_states_tuples):
         image_eb = gtk.EventBox()
         image_eb.show()
         image = self.dots.get_image(status, is_stopped=is_stopped)
-        image.show()            
+        image.show()
         image_eb.add(image)
+        suite_host_tuples = [(s, h) for s, h, sts in suite_host_states_tuples]
         image_eb._connect_args = suite_host_tuples
         image_eb.connect("button-press-event",
                          self._on_button_press_event)
         summary = status
         if is_stopped:
             summary = "stopped with " + status
+        
         text_format = "%s - %s - %s"
+        long_text_format = text_format + "\n    Tasks: %s\n"
         text = ""
-        for suite, host in suite_host_tuples:
-            text += text_format % (suite, summary, host) + "\n"
+        tip_vbox = gtk.VBox()  # Only used in PyGTK 2.12+
+        tip_vbox.show()
+        for suite, host, states in suite_host_states_tuples:
+            state_info = []
+            states.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
+            tip_hbox = gtk.HBox()
+            tip_hbox.show()
+            for state_name, tasks in states:
+                state_info.append(str(len(tasks)) + " " + state_name)
+                image = self.dots.get_image(state_name, is_stopped=is_stopped)
+                image.show()
+                tip_hbox.pack_start(image, expand=False, fill=False)
+            states_text = ", ".join(state_info)
+            tip_label = gtk.Label(text_format % (suite, summary, host))
+            tip_label.show()
+            tip_hbox.pack_start(tip_label, expand=False, fill=False,
+                                padding=5)
+            tip_vbox.pack_start(tip_hbox, expand=False, fill=False)
+            text += long_text_format % (suite, summary, host, states_text)
         text = text.rstrip()
-        self._set_tooltip(image_eb, text)
+        if hasattr(gtk, "Tooltip"):
+            image_eb.set_has_tooltip(True)
+            image_eb.connect("query-tooltip", self._on_img_tooltip_query,
+                             tip_vbox)
+        else: 
+            self._set_tooltip(image_eb, text)
         self.dot_hbox.pack_start(image_eb, expand=False, fill=False,
                                  padding=1)
 
@@ -226,6 +254,10 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
             self.launch_context_menu(event,
                                      suite_host_tuples=widget._connect_args)
         return False
+
+    def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
+        tooltip.set_custom(tip_widget)
+        return True
 
     def _set_hosts(self, new_hosts):
         del self.hosts[:]
