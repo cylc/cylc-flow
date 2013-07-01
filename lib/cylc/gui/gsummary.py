@@ -398,7 +398,9 @@ class SummaryApp(object):
 
     def _on_button_press_event(self, treeview, event):
         # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
-        if event.button != 3:
+        
+        if (event.type != gtk.gdk._2BUTTON_PRESS and
+            event.button != 3):
             return False
 
         treemodel = treeview.get_model()
@@ -417,6 +419,11 @@ class SummaryApp(object):
             iter_ = treemodel.get_iter(path)
             host, suite = treemodel.get(iter_, 0, 1)
             suite_host_tuples.append((suite, host))
+
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            if suite_host_tuples:
+                launch_gcylc(host, suite, owner=self.owner)
+            return False
 
         has_stopped_suites = bool(self.updater.stop_summaries)
 
@@ -442,7 +449,7 @@ class SummaryApp(object):
                                 has_stopped_suites,
                                 self.updater.clear_stopped_suites,
                                 self.hosts,
-                                self._set_hosts,
+                                self.updater.set_hosts,
                                 self.updater.update_now,
                                 program_name="cylc gsummary",
                                 extra_items=[view_item],
@@ -535,11 +542,6 @@ class SummaryApp(object):
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
 
-    def _set_hosts(self, new_hosts):
-        del self.hosts[:]
-        for host in new_hosts:
-            self.hosts.append(host)
-
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
         self.theme = self.usercfg['themes'][self.theme_name]
@@ -586,7 +588,7 @@ class BaseSummaryUpdater(threading.Thread):
 
     def run(self):
         """Execute the main loop of the thread."""
-        prev_suites = {}
+        prev_suites = []
         last_update_time = None
         while not self.quit:
             current_time = time.time()
@@ -597,6 +599,15 @@ class BaseSummaryUpdater(threading.Thread):
                 continue
             if self._should_force_update:
                 self._should_force_update = False
+            # Sanitise hosts.
+            for host in self.stop_summaries.keys():
+                if host not in self.hosts:
+                    self.stop_summaries.pop(host)
+            for (host, suite) in list(self.prev_suites):
+                if host not in self.hosts:
+                    self.prev_suites.remove((host, suite))
+                    
+            # Get new information.
             statuses, stop_summaries = get_new_statuses_and_stop_summaries(
                             self.hosts, self.owner,
                             prev_stop_summaries=self.stop_summaries,
@@ -611,6 +622,12 @@ class BaseSummaryUpdater(threading.Thread):
             last_update_time = time.time()
             gobject.idle_add(self.update, current_time)
             time.sleep(1)
+
+    def set_hosts(self, new_hosts):
+        """Set new hosts."""
+        del self.hosts[:]
+        self.hosts.extend(new_hosts)
+        self.update_now()
 
 
 class BaseSummaryTimeoutUpdater(object):
@@ -649,6 +666,7 @@ class BaseSummaryTimeoutUpdater(object):
     def start(self):
         """Start looping."""
         gobject.timeout_add(1000, self.run)
+        return False
 
     def run(self):
         """Extract running suite information at particular intervals."""
@@ -661,6 +679,16 @@ class BaseSummaryTimeoutUpdater(object):
             return True
         if self._should_force_update:
             self._should_force_update = False
+        
+        # Sanitise hosts.
+        for host in self.stop_summaries.keys():
+            if host not in self.hosts:
+                self.stop_summaries.pop(host)
+        for (host, suite) in list(self.prev_suites):
+            if host not in self.hosts:
+                self.prev_suites.remove((host, suite))
+                
+        # Get new information.
         statuses, stop_summaries = get_new_statuses_and_stop_summaries(
                        self.hosts, self.owner,
                        prev_stop_summaries=self.stop_summaries,
@@ -675,6 +703,11 @@ class BaseSummaryTimeoutUpdater(object):
         self.last_update_time = time.time()
         gobject.idle_add(self.update, current_time)
         return True
+
+    def set_hosts(self, new_hosts):
+        del self.hosts[:]
+        self.hosts.extend(new_hosts)
+        self.update_now()
 
 
 class SummaryAppUpdater(BaseSummaryUpdater):

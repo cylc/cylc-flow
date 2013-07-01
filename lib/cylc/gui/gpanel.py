@@ -81,7 +81,7 @@ class SummaryPanelApplet(object):
         self.updater = SummaryPanelAppletUpdater(hosts, dot_hbox,
                                                  owner=owner,
                                                  poll_interval=poll_interval)
-        self.updater.start()
+        gobject.idle_add(self.updater.start)  # Returns False, no loop.
         self.top_hbox.connect("destroy", self.stop)
 
     def get_widget(self):
@@ -149,7 +149,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                 has_stopped_suites,
                                 self.clear_stopped_suites,
                                 self.hosts,
-                                self._set_hosts,
+                                self.set_hosts,
                                 self.update_now,
                                 program_name="cylc gpanel",
                                 extra_items=extra_items,
@@ -258,11 +258,6 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
     def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
         return True
-
-    def _set_hosts(self, new_hosts):
-        del self.hosts[:]
-        for host in new_hosts:
-            self.hosts.append(host)
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
