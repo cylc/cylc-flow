@@ -529,6 +529,9 @@ class task( object ):
         Run db updates as a result of such errors will also be done by
         the main thread in response to receiving the message."""
 
+        # (see ready_to_run() above)
+        self.manual_trigger = False
+
         if self.__class__.run_mode == 'simulation':
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
@@ -540,9 +543,6 @@ class task( object ):
 
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
-
-        # (see ready_to_run() above)
-        self.manual_trigger = False
 
         rtconfig = deepcopy( self.__class__.rtconfig )  # (TODO - replace deepcopy)
         self.override( rtconfig, overrides )
