@@ -36,12 +36,14 @@ from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
 from cylc.global_config import gcfg
 from cylc.envvar import expandvars
+from cylc.command_env import pr_scripting_sl
 
 class job_submit(object):
 
     LOCAL_COMMAND_TEMPLATE = ( "(%(command)s)" )
 
     REMOTE_COMMAND_TEMPLATE = ( " '"
+            + pr_scripting_sl + "; "
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"

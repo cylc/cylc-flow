@@ -35,6 +35,9 @@ s_profile = [
     "test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1"
             ]
 
+# single line profile scripting:
+pr_scripting_sl = '; '.join(s_profile)
+
 # single line cylc version scripting:
 cv_scripting_sl = cv_export + '; ' + '; '.join(s_profile)
 
