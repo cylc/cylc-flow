@@ -196,7 +196,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                 statuses.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
                 for status, suite_host_states_tuples in statuses:
                     label = gtk.Label(
-                                str(len(status_suite_host_tuples)) + ":")
+                                str(len(suite_host_states_tuples)) + ":")
                     label.show()
                     self.dot_hbox.pack_start(label, expand=False, fill=False)
                     self._add_image_box(status, is_stopped,
