@@ -254,12 +254,16 @@ def launch_gcylc(host, suite, owner=None):
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
 
 
-def launch_gsummary(*args, **kwargs):
-    """Launch gcylc for a given suite and host."""
+def launch_gsummary(hosts=None, owner=None):
+    """Launch gsummary for a given list of hosts and/or owner."""
     stdout = open(os.devnull, "w")
     stderr = stdout
-    command = "cylc gsummary"
-    command = shlex.split(command)
+    command = ["cylc", "gsummary"]
+    if hosts is not None:
+        for host in hosts:
+            command += ["--host=%s" % host]
+    if owner is not None:
+        command += ["--owner=%s" % owner]
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
 
 

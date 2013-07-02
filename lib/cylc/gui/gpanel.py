@@ -140,7 +140,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         gsummary_item.set_label("Launch cylc gsummary")
         gsummary_item.show()
         gsummary_item.connect("button-press-event",
-                              lambda b, e: launch_gsummary())
+                              self._on_button_press_event_gsummary)
 
         extra_items.append(gsummary_item)
 
@@ -254,6 +254,9 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
             self.launch_context_menu(event,
                                      suite_host_tuples=widget._connect_args)
         return False
+
+    def _on_button_press_event_gsummary(self, widget, event):
+        launch_gsummary(hosts=self.hosts, owner=self.owner)
 
     def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
