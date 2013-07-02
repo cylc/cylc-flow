@@ -86,6 +86,7 @@ class TreeUpdater(threading.Thread):
         self.info_bar = info_bar
         self.last_update_time = None
         self.ancestors = {}
+        self.descendants = []
 
         self.autoexpand_states = [ 'submitted', 'running', 'failed', 'held' ]
         self._last_autoexpand_me = []
@@ -123,6 +124,7 @@ class TreeUpdater(threading.Thread):
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
+        self.descendants = deepcopy(self.updater.descendants)
         self.updater.set_update(True)
         if self.updater.status == "stopped":
             self.connection_lost()
@@ -438,15 +440,17 @@ class DotUpdater(threading.Thread):
             return False
 
         self.updater.set_update(False)
-        if not self.should_group_families:
-            self.task_list = deepcopy(self.updater.task_list)
-        else:
-            self.task_list = []
 
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
         self.descendants = deepcopy(self.updater.descendants)
+
+        if not self.should_group_families:
+            self.task_list = deepcopy(self.updater.task_list)
+        else:
+            self.task_list = []
+
         self.updater.set_update(True)
 
         if self.should_group_families:
@@ -580,7 +584,7 @@ class DotUpdater(threading.Thread):
         if col_index == 0:
             task_id = ctime
         else:
-            name = self.task_list[col_index - 1]
+            name = self.led_headings[col_index]
             task_id = name + TaskID.DELIM + ctime
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id

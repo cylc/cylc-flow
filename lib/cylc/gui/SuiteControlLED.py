@@ -83,7 +83,7 @@ LED suite control interface.
         column_index = treeview.get_columns().index(col)
         if column_index == 0:
             return False
-        name = self.t.task_list[column_index - 1]
+        name = self.t.led_headings[column_index]
         ctime_column = treeview.get_model().get_n_columns() - 1
         ctime = treeview.get_model().get_value( r_iter, ctime_column )
 
