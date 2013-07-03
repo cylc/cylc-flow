@@ -297,7 +297,7 @@ class task( object ):
         if self.manual_trigger:
             self.retry_delay_timer_start = None
             self.sub_retry_delay_timer_start = None
-            # unset manual trigger flag in submit() because
+            # unset manual trigger flag at set_state_submitting because
             # ready_to_run() is currently called more than once
             # before submission (to test if clock-triggers are ready).
             return True
@@ -407,6 +407,8 @@ class task( object ):
     def set_state_submitting( self ):
         # called by scheduler main thread
         self.set_status( 'submitting' )
+        # See "def ready_to_run" above.
+        self.manual_trigger = False
         self.record_db_update("task_states", self.name, self.c_time, status="submitting")
 
     def set_state_queued( self ):
@@ -528,9 +530,6 @@ class task( object ):
         task failed message being sent for handling by the main thread.
         Run db updates as a result of such errors will also be done by
         the main thread in response to receiving the message."""
-
-        # (see ready_to_run() above)
-        self.manual_trigger = False
 
         if self.__class__.run_mode == 'simulation':
             self.started_time = task.clock.get_datetime()
