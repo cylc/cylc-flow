@@ -396,6 +396,7 @@ class DotUpdater(threading.Thread):
         self.last_update_time = None
         self.state_summary = {}
         self.fam_state_summary = {}
+        self.ancestors_pruned = {}
         self.descendants = []
         self.filter = ""
 
@@ -445,7 +446,7 @@ class DotUpdater(threading.Thread):
 
         self.state_summary = deepcopy(self.updater.state_summary)
         self.fam_state_summary = deepcopy(self.updater.fam_state_summary)
-        self.ancestors = deepcopy(self.updater.ancestors)
+        self.ancestors_pruned = deepcopy(self.updater.ancestors_pruned)
         self.descendants = deepcopy(self.updater.descendants)
 
         if not self.should_group_families:
@@ -456,7 +457,7 @@ class DotUpdater(threading.Thread):
         self.updater.set_update(True)
 
         if self.should_group_families:
-            for key, val in self.ancestors.items():
+            for key, val in self.ancestors_pruned.items():
                 if key == 'root':
                     continue
                 # highest level family name (or plain task) above root

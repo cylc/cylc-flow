@@ -134,12 +134,11 @@ class Updater(threading.Thread):
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
             # on reconnection retrieve static info
-            self.ancestors = self.sinfo.get( 'first-parent ancestors', True )
+            self.ancestors = self.sinfo.get('first-parent ancestors' )
+            self.ancestors_pruned = self.sinfo.get( 'first-parent ancestors', True )
             self.descendants = self.sinfo.get( 'first-parent descendants' )
             self.family_nodes = self.sinfo.get( 'family nodes' )
             self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
-            self.descendants = self.sinfo.get( 'first-parent descendants' )
-            self.ancestors = self.sinfo.get('first-parent ancestors' )
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except Exception, x:
             #print str(x) # (port file not found, if suite not running)
