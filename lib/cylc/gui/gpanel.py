@@ -49,7 +49,8 @@ class SummaryPanelApplet(object):
 
     """Panel Applet (GNOME 2) to summarise running suite statuses."""
 
-    def __init__(self, hosts=None, owner=None, poll_interval=None):
+    def __init__(self, hosts=None, owner=None, poll_interval=None,
+                 is_compact=False):
         # We can't use gobject.threads_init() for panel applets.
         warnings.filterwarnings('ignore', 'use the new', Warning)
         setup_icons()
@@ -58,6 +59,7 @@ class SummaryPanelApplet(object):
                 hosts = gcfg.sitecfg["suite host scanning"]["hosts"]
             except KeyError:
                 hosts = ["localhost"]
+        self.is_compact = is_compact
         self.hosts = hosts
         if owner is None:
             owner = user
@@ -72,16 +74,14 @@ class SummaryPanelApplet(object):
         image_eb = gtk.EventBox()
         image_eb.show()
         image_eb.connect("button-press-event", self._on_button_press_event)
-        self._set_tooltip(image_eb, "Cylc Applet")
         image_eb.add(image)
         self.top_hbox = gtk.HBox()
         self.top_hbox.pack_start(image_eb, expand=False, fill=False)
         self.top_hbox.pack_start(dot_eb, expand=False, fill=False, padding=2)
         self.top_hbox.show()
-        self.updater = SummaryPanelAppletUpdater(hosts, dot_hbox,
+        self.updater = SummaryPanelAppletUpdater(hosts, dot_hbox, image,
                                                  owner=owner,
                                                  poll_interval=poll_interval)
-        gobject.idle_add(self.updater.start)  # Returns False, no loop.
         self.top_hbox.connect("destroy", self.stop)
 
     def get_widget(self):
@@ -107,17 +107,22 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
     """Update the summary panel applet - subclass of gsummary equivalent."""
     
+    IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
     
-    def __init__(self, hosts, dot_hbox, owner=None, poll_interval=None):
+    def __init__(self, hosts, dot_hbox, gcylc_image, owner=None,
+                 poll_interval=None):
+        self.quit = True
         self.dot_hbox = dot_hbox
+        self.gcylc_image = gcylc_image
+        self._set_gcylc_image_tooltip()
+        self.gcylc_image.set_sensitive(False)
         self.usercfg = config().cfg
         self.theme_name = self.usercfg['use theme'] 
         self.theme = self.usercfg['themes'][self.theme_name]
         self.dots = DotMaker(self.theme)
         self.statuses = {}
         self.stop_summaries = {}
-        self.quit = False
         super(SummaryPanelAppletUpdater, self).__init__(
                               hosts, owner=owner, poll_interval=poll_interval)
 
@@ -125,6 +130,16 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         """Clear stopped suite information that may have built up."""
         self.stop_summaries.clear()
         gobject.idle_add(self.update)
+
+    def start(self):
+        self.gcylc_image.set_sensitive(True)
+        super(SummaryPanelAppletUpdater, self).start()
+        self._set_gcylc_image_tooltip()
+
+    def stop(self):
+        self.gcylc_image.set_sensitive(False)
+        super(SummaryPanelAppletUpdater, self).stop()
+        self._set_gcylc_image_tooltip()
 
     def launch_context_menu(self, event, suite_host_tuples=None,
                             extra_items=None):
@@ -136,11 +151,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         if extra_items is None:
             extra_items = []
 
-        gsummary_item = gtk.ImageMenuItem(stock_id="gcylc")
-        gsummary_item.set_label("Launch cylc gsummary")
+        gsummary_item = gtk.ImageMenuItem("Launch cylc gsummary")
+        img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
+        gsummary_item.set_image(img)
         gsummary_item.show()
         gsummary_item.connect("button-press-event",
-                              self._on_button_press_event_gsummary)
+                                self._on_button_press_event_gsummary)
 
         extra_items.append(gsummary_item)
 
@@ -151,9 +167,11 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                 self.hosts,
                                 self.set_hosts,
                                 self.update_now,
+                                self.start,
                                 program_name="cylc gpanel",
                                 extra_items=extra_items,
-                                owner=self.owner)
+                                owner=self.owner,
+                                is_stopped=self.quit)
         menu.popup( None, None, None, event.button, event.time )
         return False
 
@@ -261,6 +279,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
     def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
         return True
+
+    def _set_gcylc_image_tooltip(self):
+        if self.quit:
+            self._set_tooltip(self.gcylc_image, "Cylc Applet - Off")
+        else:
+            self._set_tooltip(self.gcylc_image, "Cylc Applet - Active")
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name

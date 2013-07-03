@@ -41,6 +41,10 @@ $HOME/.cylc/gcylc.rc and follow the instructions in the file.
 To configure default suite hosts, edit the
 [suite host scanning]hosts entry in your site.rc file.""")
 
+parser.add_option("--compact",
+                  help="Switch on compact mode at runtime.",
+                  action="store_true", dest="compact")
+                  
 parser.add_option("--install",
                   help="Install the panel applet.",
                   default=False,
@@ -84,6 +88,12 @@ export BONOBO_ACTIVATION_PATH=$HOME/.bonobo
 select "Add to Panel", then select Cylc Monitor Applet."""
 
 
+def panel_applet_factory_compact(applet, iid):
+    my_panel_app = SummaryPanelApplet(is_compact=True)
+    applet.add(my_panel_app.get_widget())
+    applet.show_all()
+    return True
+
 def panel_applet_factory(applet, iid):
     my_panel_app = SummaryPanelApplet()
     applet.add(my_panel_app.get_widget())
@@ -96,6 +106,12 @@ if __name__ == "__main__":
         run_in_window()
     elif options.install:
         install_panel_applet()
+    elif options.compact:
+        import gnomeapplet
+        gnomeapplet.bonobo_factory(
+                    "OAFIID:GNOME_CylcCompactMonitorFactory",
+                    gnomeapplet.Applet.__gtype__,
+                    "cylc gpanel compact", "0", panel_applet_factory_compact)
     else:
         import gnomeapplet
         gnomeapplet.bonobo_factory(

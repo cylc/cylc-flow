@@ -94,8 +94,9 @@ def get_summary_menu(suite_host_tuples,
                      usercfg, theme_name, set_theme_func,
                      has_stopped_suites, clear_stopped_suites_func,
                      scanned_hosts, change_hosts_func,
-                     update_now_func,
-                     program_name, extra_items=None, owner=None):
+                     update_now_func, start_func,
+                     program_name, extra_items=None, owner=None,
+                     is_stopped=False):
     """Return a right click menu for summary GUIs.
 
     suite_host_tuples should be a list of (suite, host) tuples (if any).
@@ -109,19 +110,35 @@ def get_summary_menu(suite_host_tuples,
     scanned_hosts should be a list of currently scanned suite hosts.
     change_hosts_func should be a function accepting a new list of
     suite hosts to scan.
+    update_now_func should be a function with no arguments that
+    forces an update now or soon.
+    start_func should be a function with no arguments that
+    re-activates idle GUIs.
     program_name should be a string describing the parent program.
     extra_items (keyword) should be a list of extra menu items to add
     to the right click menu.
     owner (keyword) should be the owner of the suites, if not the
     current user.
+    is_stopped (keyword) denotes whether the GUI is in an inactive
+    state.
 
     """
     menu = gtk.Menu()
 
+    if is_stopped:
+        switch_on_item = gtk.ImageMenuItem("Activate")
+        img = gtk.image_new_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_MENU)
+        switch_on_item.set_image(img)
+        switch_on_item.show()
+        switch_on_item.connect("button-press-event",
+                               lambda b, e: start_func())
+        menu.append(switch_on_item)
+
     # Construct gcylc launcher items for each relevant suite.
     for suite, host in suite_host_tuples:
-        gcylc_item = gtk.ImageMenuItem(stock_id="gcylc")
-        gcylc_item.set_label("Launch gcylc: %s - %s" % (suite, host))
+        gcylc_item = gtk.ImageMenuItem("Launch gcylc: %s - %s" % (suite, host))
+        img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
+        gcylc_item.set_image(img)
         gcylc_item._connect_args = (suite, host)
         gcylc_item.connect("button-press-event",
                             lambda b, e: launch_gcylc(
@@ -146,6 +163,7 @@ def get_summary_menu(suite_host_tuples,
     theme_item = gtk.ImageMenuItem('Theme')
     img = gtk.image_new_from_stock(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
     theme_item.set_image(img)
+    theme_item.set_sensitive(not is_stopped)
     thememenu = gtk.Menu()
     theme_item.set_submenu(thememenu)
     theme_item.show()
@@ -173,6 +191,7 @@ def get_summary_menu(suite_host_tuples,
     menu.append(theme_item)
     theme_legend_item = gtk.MenuItem("Show task state key")
     theme_legend_item.show()
+    theme_legend_item.set_sensitive(not is_stopped)
     theme_legend_item.connect("button-press-event",
                               lambda b, e: launch_theme_legend(
                                         usercfg['themes'][theme_name]))
@@ -182,16 +201,19 @@ def get_summary_menu(suite_host_tuples,
     menu.append(sep_item)
     
     # Construct a trigger update item.
-    update_now_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_REFRESH)
-    update_now_item.set_label("Update Now")
+    update_now_item = gtk.ImageMenuItem("Update Now")
+    img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
+    update_now_item.set_image(img)
     update_now_item.show()
+    update_now_item.set_sensitive(not is_stopped)
     update_now_item.connect("button-press-event",
                             lambda b, e: update_now_func())
     menu.append(update_now_item)
 
     # Construct a clean stopped suites item.
-    clear_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_CLEAR)
-    clear_item.set_label("Clear Stopped Suites")
+    clear_item = gtk.ImageMenuItem("Clear Stopped Suites")
+    img = gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU)
+    clear_item.set_image(img)
     clear_item.show()
     clear_item.set_sensitive(has_stopped_suites)
     clear_item.connect("button-press-event",
@@ -199,8 +221,9 @@ def get_summary_menu(suite_host_tuples,
     menu.append(clear_item)
 
     # Construct a configure scanned hosts item.
-    hosts_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_PREFERENCES)
-    hosts_item.set_label("Configure Hosts")
+    hosts_item = gtk.ImageMenuItem("Configure Hosts")
+    img = gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU)
+    hosts_item.set_image(img)
     hosts_item.show()
     hosts_item.connect("button-press-event",
                        lambda b, e: launch_hosts_dialog(scanned_hosts,
@@ -212,8 +235,9 @@ def get_summary_menu(suite_host_tuples,
     menu.append(sep_item)
 
     # Construct an about dialog item.
-    info_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_ABOUT)
-    info_item.set_label("About")
+    info_item = gtk.ImageMenuItem("About")
+    img = gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU)
+    info_item.set_image(img)
     info_item.show()
     info_item.connect("button-press-event",
                       lambda b, e: launch_about_dialog(
@@ -431,8 +455,9 @@ class SummaryApp(object):
 
         has_stopped_suites = bool(self.updater.stop_summaries)
 
-        view_item = gtk.ImageMenuItem(stock_id=gtk.STOCK_INDEX)
-        view_item.set_label("View Column...")
+        view_item = gtk.ImageMenuItem("View Column...")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX, gtk.ICON_SIZE_MENU)
+        view_item.set_image(img)
         view_item.show()
         view_menu = gtk.Menu()
         view_item.set_submenu(view_menu)
@@ -455,6 +480,7 @@ class SummaryApp(object):
                                 self.hosts,
                                 self.updater.set_hosts,
                                 self.updater.update_now,
+                                self.updater.start,
                                 program_name="cylc gsummary",
                                 extra_items=[view_item],
                                 owner=self.owner)
@@ -642,6 +668,7 @@ class BaseSummaryTimeoutUpdater(object):
 
     """
 
+    IDLE_STOPPED_TIME = None
     POLL_INTERVAL = 60
 
     def __init__(self, hosts, owner=None, poll_interval=None):
@@ -655,7 +682,8 @@ class BaseSummaryTimeoutUpdater(object):
         self.statuses = {}
         self.stop_summaries = {}
         self._should_force_update = False
-        self.quit = False
+        self._last_running_time = None
+        self.quit = True
         self.last_update_time = None
         self.prev_suites = []
 
@@ -669,14 +697,24 @@ class BaseSummaryTimeoutUpdater(object):
 
     def start(self):
         """Start looping."""
+        self.quit = False
         gobject.timeout_add(1000, self.run)
         return False
+
+    def stop(self):
+        """Stop looping."""
+        self.quit = True
 
     def run(self):
         """Extract running suite information at particular intervals."""
         if self.quit:
             return False
         current_time = time.time()
+        if (self._last_running_time is not None and
+            self.IDLE_STOPPED_TIME is not None and
+            current_time > self._last_running_time + self.IDLE_STOPPED_TIME):
+            self.stop()
+            return True
         if (not self._should_force_update and
             (self.last_update_time is not None and
              current_time < self.last_update_time + self.poll_interval)):
@@ -704,7 +742,12 @@ class BaseSummaryTimeoutUpdater(object):
         self.prev_suites = prev_suites
         self.statuses = statuses
         self.stop_summaries = stop_summaries
+        
         self.last_update_time = time.time()
+        if self.statuses:
+            self._last_running_time = None
+        else:
+            self._last_running_time = self.last_update_time
         gobject.idle_add(self.update, current_time)
         return True
 
