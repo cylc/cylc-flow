@@ -82,7 +82,8 @@ def install_panel_applet():
         text = f.read().replace("$CYLC_DIR", cylc_dir)
         f.close()
         open(dest_file, "w").write(text)
-        print dest_file, "created.\n"
+        print dest_file, "created."
+    print
     print """Further Instructions:
  * normal users - place this line in your ~/.profile file:
 export BONOBO_ACTIVATION_PATH=$HOME/.bonobo
