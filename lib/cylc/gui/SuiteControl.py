@@ -45,6 +45,7 @@ from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.stateview import DotMaker
+from cylc.gui.updater import Updater
 from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog, setup_icons
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
@@ -349,7 +350,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.cfg = InitData( suite, owner, host, port, db, 
                 pyro_timeout, template_vars, template_vars_file )
-        
+
         # load gcylc.rc
         self.usercfg = config().cfg
         self.theme_name = self.usercfg['use theme'] 
@@ -396,6 +397,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.tool_bar_box.set_sensitive(False)
 
         self.create_info_bar()
+
+        self.updater = Updater(self.cfg, self.info_bar)
+        self.updater.start()
 
         self.views_parent = gtk.VBox()
         bigbox.pack_start( self.views_parent, True )
@@ -616,6 +620,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         container = self.view_containers[view_num]
         self.current_views[view_num] = self.VIEWS[viewname]( 
                                                    self.cfg,
+                                                   self.updater,
                                                    self.theme,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
@@ -700,6 +705,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         for view in self.current_views:
             if view is not None:
                 view.stop()
+        self.updater.stop()
         gtk.main_quit()
 
     def delete_event(self, widget, event, data=None):
@@ -2664,10 +2670,7 @@ This is what my suite does:..."""
     def reset_connection_polling( self, bt ):
         # Force the polling schedule to go back to short intervals so
         # that the GUI can immediately connect to the started suite.
-        for v in self.current_views:
-            if v:
-                # view may be None if one view is closed
-                v.t.poll_schd.t_init = None
+        self.updater.poll_schd.t_init = None
 
     def construct_command_menu( self, menu ):
         ## # JUST CONTROL COMMANDS:

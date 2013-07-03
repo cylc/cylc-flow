@@ -6,8 +6,6 @@
 #      or
 #    (b) inheriting from an existing theme and overriding specific
 #     colors (see the "PinkRun" example below).
-#   3) To see what themes are available (built-in and your own) type
-#   'gcylc -l|--list-themes', or use the View  menu at run time.
 
 initial views = text, dot  # set your default views
 use theme = PinkRun        # set your default theme

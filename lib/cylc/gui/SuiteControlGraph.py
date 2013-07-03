@@ -19,7 +19,7 @@
 import gtk
 import os, re
 import gobject
-from xstateview import xupdater
+from xstateview import GraphUpdater
 from warning_dialog import warning_dialog, info_dialog
 from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
@@ -32,7 +32,8 @@ class ControlGraph(object):
     """
 Dependency graph suite control interface.
     """
-    def __init__(self, cfg, usercfg, info_bar, get_right_click_menu, log_colors ):
+    def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
+                 log_colors ):
         # NOTE: this view has separate family Group and Ungroup buttons
         # instead of a single Group/Ungroup toggle button, unlike the
         # other views the graph view can display intermediate states
@@ -41,6 +42,7 @@ Dependency graph suite control interface.
         # whether it displays a flat list or a proper tree view).
 
         self.cfg = cfg
+        self.updater = updater
         self.usercfg = usercfg
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
@@ -54,7 +56,8 @@ Dependency graph suite control interface.
         self.last_url = None
 
     def get_control_widgets( self ):
-        self.t = xupdater( self.cfg, self.usercfg, self.info_bar, self.xdot )
+        self.t = GraphUpdater( self.cfg, self.updater, self.usercfg,
+                               self.info_bar, self.xdot )
         self.t.start()
         return self.xdot.get()
 

@@ -325,8 +325,8 @@ echo "  Suite Port  : $CYLC_SUITE_PORT"
 echo "  Suite Owner : $CYLC_SUITE_OWNER"
 echo "  Task ID     : $CYLC_TASK_ID"
 if [[ $(uname) == AIX ]]; then
-   # on AIX the hostname command has no '-f' option
-   echo "  Task Host   : $(hostname).$(namerslv -sn | awk '{print $2}')"
+    # on AIX the hostname command has no '-f' option
+    echo "  Task Host   : $(hostname).$(namerslv -sn 2>/dev/null | awk '{print $2}')"
 else
     echo "  Task Host   : $(hostname -f)"
 fi
