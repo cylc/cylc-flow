@@ -80,6 +80,7 @@ class SummaryPanelApplet(object):
         self.top_hbox.pack_start(dot_eb, expand=False, fill=False, padding=2)
         self.top_hbox.show()
         self.updater = SummaryPanelAppletUpdater(hosts, dot_hbox, image,
+                                                 self.is_compact,
                                                  owner=owner,
                                                  poll_interval=poll_interval)
         self.top_hbox.connect("destroy", self.stop)
@@ -110,11 +111,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
     IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
     
-    def __init__(self, hosts, dot_hbox, gcylc_image, owner=None,
+    def __init__(self, hosts, dot_hbox, gcylc_image, is_compact, owner=None,
                  poll_interval=None):
         self.quit = True
         self.dot_hbox = dot_hbox
         self.gcylc_image = gcylc_image
+        self.is_compact = is_compact
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
         self.usercfg = config().cfg
@@ -188,8 +190,10 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         suite_host_tuples.sort()
         for child in self.dot_hbox.get_children():
             self.dot_hbox.remove(child)
-        number_mode = (len(suite_host_tuples) > self.MAX_INDIVIDUAL_SUITES)
+        number_mode = (not self.is_compact and
+                       len(suite_host_tuples) > self.MAX_INDIVIDUAL_SUITES)
         suite_statuses = {}
+        compact_suite_statuses = []
         for suite, host in suite_host_tuples:
             if suite in statuses.get(host, {}):
                 status_map = statuses[host][suite]
@@ -205,9 +209,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                 suite_statuses[is_stopped].setdefault(status, [])
                 suite_statuses[is_stopped][status].append(
                                            (suite, host, status_map.items()))
+            elif self.is_compact:
+                compact_suite_statuses.append((suite, host, status,
+                                               status_map.items(), is_stopped))
             else:
-                self._add_image_box(status, is_stopped,
-                                    [(suite, host, status_map.items())])
+                self._add_image_box([(suite, host, status, status_map.items(),
+                                      is_stopped)])
         if number_mode:
             for is_stopped in sorted(suite_statuses.keys()):
                 statuses = suite_statuses[is_stopped].items()
@@ -217,46 +224,72 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                 str(len(suite_host_states_tuples)) + ":")
                     label.show()
                     self.dot_hbox.pack_start(label, expand=False, fill=False)
-                    self._add_image_box(status, is_stopped,
-                                        suite_host_states_tuples)
+                    suite_info_tuples = []
+                    for suite, host, task_states in suite_host_states_tuples:
+                        suite_info_tuples.append((suite, host, status,
+                                                  task_states, is_stopped))                   
+                    self._add_image_box(suite_info_tuples)
+        if self.is_compact:
+            if not compact_suite_statuses:
+                # No suites running or stopped.
+                self.gcylc_image.show()
+                return False
+            self.gcylc_image.hide()
+            self._add_image_box(compact_suite_statuses)
         return False
 
-    def _add_image_box(self, status, is_stopped, suite_host_states_tuples):
+    def _add_image_box(self, suite_host_info_tuples):
         image_eb = gtk.EventBox()
         image_eb.show()
-        image = self.dots.get_image(status, is_stopped=is_stopped)
+        is_all_stopped = False
+        running_status_list = []
+        status_list = []
+        suite_host_tuples = []
+        for info_tuple in suite_host_info_tuples:
+            suite, host, status, task_states, is_stopped = info_tuple 
+            suite_host_tuples.append((suite, host))
+            if not is_stopped:
+                running_status_list.append(status)
+            status_list.append(status)
+        if running_status_list:
+            status = extract_group_state(running_status_list,
+                                         is_stopped=False)
+            image = self.dots.get_image(status, is_stopped=False)
+        else:
+            status = extract_group_state(status_list, is_stopped=True)
+            image = self.dots.get_image(status, is_stopped=True)
         image.show()
         image_eb.add(image)
-        suite_host_tuples = [(s, h) for s, h, sts in suite_host_states_tuples]
         image_eb._connect_args = suite_host_tuples
         image_eb.connect("button-press-event",
                          self._on_button_press_event)
-        summary = status
-        if is_stopped:
-            summary = "stopped with " + status
         
         text_format = "%s - %s - %s"
         long_text_format = text_format + "\n    Tasks: %s\n"
         text = ""
         tip_vbox = gtk.VBox()  # Only used in PyGTK 2.12+
         tip_vbox.show()
-        for suite, host, states in suite_host_states_tuples:
-            state_info = []
-            states.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
+        for info_tuple in suite_host_info_tuples:
+            suite, host, status, task_states, is_stopped = info_tuple
+            task_states.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
             tip_hbox = gtk.HBox()
             tip_hbox.show()
-            for state_name, tasks in states:
+            state_info = []
+            for state_name, tasks in task_states:
                 state_info.append(str(len(tasks)) + " " + state_name)
                 image = self.dots.get_image(state_name, is_stopped=is_stopped)
                 image.show()
                 tip_hbox.pack_start(image, expand=False, fill=False)
             states_text = ", ".join(state_info)
-            tip_label = gtk.Label(text_format % (suite, summary, host))
+            suite_summary = status
+            if is_stopped:
+                suite_summary = "stopped with " + status
+            tip_label = gtk.Label(text_format % (suite, suite_summary, host))
             tip_label.show()
             tip_hbox.pack_start(tip_label, expand=False, fill=False,
                                 padding=5)
             tip_vbox.pack_start(tip_hbox, expand=False, fill=False)
-            text += long_text_format % (suite, summary, host, states_text)
+            text += long_text_format % (suite, suite_summary, host, states_text)
         text = text.rstrip()
         if hasattr(gtk, "Tooltip"):
             image_eb.set_has_tooltip(True)
@@ -297,9 +330,9 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         tooltip.set_tip(widget, text)
 
 
-def run_in_window():
+def run_in_window(is_compact=False):
     """Run the panel applet in stand-alone mode."""
-    my_panel_app = SummaryPanelApplet()
+    my_panel_app = SummaryPanelApplet(is_compact=is_compact)
     window = gtk.Window()
     window.set_title("cylc panel applet test")
     window.add(my_panel_app.top_hbox)
