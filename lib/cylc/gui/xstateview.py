@@ -113,6 +113,8 @@ class GraphUpdater(threading.Thread):
         #print "Attempting Update"
         if ( self.last_update_time is not None and
              self.last_update_time >= self.updater.last_update_time ):
+            if self.action_required:
+                return True
             return False
         
         if self.updater.status == "stopped":
