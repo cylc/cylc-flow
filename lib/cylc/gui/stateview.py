@@ -102,8 +102,6 @@ class TreeUpdater(threading.Thread):
             self.dots[ state ] = dotm.get_icon( state )
         self.dots['empty'] = dotm.get_icon()
 
-        self.update()
-
     def connection_lost( self ):
         # clear the ttreestore ...
         self.ttreestore.clear()

@@ -109,6 +109,7 @@ class Updater(threading.Thread):
         self.global_summary = {}
         self.stop_summary = None
         self.ancestors = {}
+        self.ancestors_pruned = {}
         self.descendants = []
         self.god = None
         self.mode = "waiting..."
