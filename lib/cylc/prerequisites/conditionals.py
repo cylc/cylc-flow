@@ -32,7 +32,7 @@ class conditional_prerequisites(object):
 
     TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
 
-    def __init__( self, owner_id ):
+    def __init__( self, owner_id, ict=None ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 
@@ -40,6 +40,7 @@ class conditional_prerequisites(object):
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.auto_label = 0
         self.excess_labels = []
+        self.ict = ict
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
@@ -76,6 +77,26 @@ class conditional_prerequisites(object):
         # 'foo:fail | foo'
         # 'foo[T-6]:out1 | baz'
 
+        print >> sys.stdout, "Expression set " 
+        print >> sys.stdout, str(expr)
+        print >> sys.stdout, self.messages
+
+        drop_these = []
+        print type(self.messages)
+        for k in self.messages:
+            print k
+            print "Message k: "+ self.messages[k]
+            if self.ict:
+                task = re.search( r'(.*).(.*) ', self.messages[k])
+                if task.group:
+                    try:
+                        if (int(task.group().split(".")[1]) < int(self.ict) and 
+                            int(task.group().split(".")[1]) != 1):
+                            drop_these.append(k)
+                    except IndexError:
+                        pass
+        print "To drop: " + str(drop_these)
+
         # make into a python expression
         self.raw_conditional_expression = expr
         for label in self.messages:
@@ -85,6 +106,9 @@ class conditional_prerequisites(object):
             # treat duplicate triggers as always satisfied
             expr = re.sub( r'\b' + label + r'\b', 'True', expr )
             self.raw_conditional_expression = re.sub( r'\b' + label + r'\b', 'True', self.raw_conditional_expression )
+
+        print >> sys.stdout, "Processed label: " + str(expr)
+        print >> sys.stdout, "Processed conditional: " + str(self.raw_conditional_expression)
 
         self.conditional_expression = expr
 

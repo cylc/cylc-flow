@@ -27,16 +27,26 @@ class plain_prerequisites(object):
 
     TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
 
-    def __init__( self, owner_id ):
+    def __init__( self, owner_id, ict=None ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.auto_label = 0
         self.owner_id = owner_id
+        self.ict = ict
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
+        if self.ict:
+            task = re.search( r'(.*).(.*) ', message)
+            if task.group:
+                try:
+                    if (int(task.group().split(".")[1]) < int(self.ict) and 
+                        int(task.group().split(".")[1]) != 1):
+                        return 
+                except IndexError:
+                    pass
         if label:
             pass
         else:
