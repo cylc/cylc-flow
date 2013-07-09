@@ -183,6 +183,7 @@ class config( CylcConfigObj ):
         self.cyclers = []
         self.taskdefs = OrderedDict()
         self.validation = validation
+        self.first_graph = True
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -369,12 +370,12 @@ class config( CylcConfigObj ):
         #debugging:
         #self.print_inheritance()
 
-        collapsed_rc = self['visualization']['collapsed families']
+        self.collapsed_families_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
             # this overrides the rc file item
             self.closed_families = collapsed
         else:
-            self.closed_families = collapsed_rc
+            self.closed_families = self.collapsed_families_rc
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
@@ -1533,8 +1534,16 @@ Some translations were performed on the fly."""
         actual edges for a concrete range of cycle times."""
         members = self.runtime['first-parent descendants']
         hierarchy = self.runtime['first-parent ancestors']
-        #members = self.runtime['descendants']
-        #hierarchy = self.runtime['linearized ancestors']
+
+        if self.first_graph:
+            # initially group by "[visualization]collapsed families"
+            # if defined, or else default to all families collapsed.
+            self.first_graph = False
+            if self.collapsed_families_rc:
+                group_nodes = self.collapsed_families_rc
+                group_all = False
+            else:
+                group_all = True
 
         if group_all:
             # Group all family nodes
