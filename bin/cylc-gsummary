@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from optparse import OptionParser
+
+parser = OptionParser( """cylc gsummary [OPTIONS]
+cylc gsummary [OPTIONS]
+
+This is the cylc summary gui for monitoring running suites on a set of
+hosts.
+
+To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+$HOME/.cylc/gcylc.rc and follow the instructions in the file.""")
+parser.add_option( "--owner",
+                   help="User account name (defaults to $USER).",
+                   metavar="USER", default=None,
+                   action="store", dest="owner" )
+parser.add_option( "--host",
+                   help="Host names to monitor (override site default).",
+                   metavar="HOST", action="append",
+                   dest="hosts" )
+parser.add_option( "--poll-interval",
+                   help="Polling interval (time between updates) in seconds",
+                   type="int", metavar="SECONDS", dest="interval" )
+
+( options, args ) = parser.parse_args()
+
+import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
+
+from cylc.gui.gsummary import SummaryApp
+
+SummaryApp(hosts=options.hosts, owner=options.owner,
+           poll_interval=options.interval)
+gtk.main()

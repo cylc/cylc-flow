@@ -209,3 +209,8 @@ execution polling intervals = force_list( default=list(1.0))
     # For the hardwired method, put the host name or IP address here:
     host = string( default=None )
 
+# SUITE HOST SCANNING: This specifies which suite hosts to scan for
+# utilities such as cylc gsummary. The default is to just scan localhost.
+[suite host scanning]
+    # Hosts: A comma-delimited list of hosts to scan.
+    hosts = force_list( default=list("localhost"))

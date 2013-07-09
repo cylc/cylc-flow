@@ -1,0 +1,26 @@
+<oaf_info>
+<oaf_server iid="OAFIID:GNOME_CylcMonitorFactory" type="exe"
+            location="$CYLC_DIR/bin/cylc-gpanel">
+
+        <oaf_attribute name="repo_ids" type="stringv">
+                <item value="IDL:Bonobo/GenericFactory:1.0"/>
+                <item value="IDL:Bonobo/Unknown:1.0"/>
+        </oaf_attribute>
+        <oaf_attribute name="name" type="string" value="Cylc Monitor Factory"/>
+        <oaf_attribute name="description" type="string" value="Factory to create the cylc panel applet"/>
+</oaf_server>
+
+<oaf_server iid="OAFIID:GNOME_CylcMonitor" type="factory"
+            location="OAFIID:GNOME_CylcMonitorFactory">
+
+        <oaf_attribute name="repo_ids" type="stringv">
+                <item value="IDL:GNOME/Vertigo/PanelAppletShell:1.0"/>
+                <item value="IDL:Bonobo/Control:1.0"/>
+                <item value="IDL:Bonobo/Unknown:1.0"/>
+        </oaf_attribute>
+        <oaf_attribute name="name" type="string" value="Cylc Monitor Applet"/>
+        <oaf_attribute name="description" type="string" value="Monitor running cylc suites"/>
+        <oaf_attribute name="panel:category" type="string" value="Amusements"/>
+        <oaf_attribute name="panel:icon" type="string" value="$CYLC_DIR/images/icon.png"/>
+</oaf_server>
+</oaf_info>
