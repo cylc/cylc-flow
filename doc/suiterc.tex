@@ -575,13 +575,16 @@ A list of member tasks, or task family names, to assign to this queue
 
 \subsubsection[{[[}special tasks{]]}]{[scheduling] $\rightarrow$ [[special tasks]]}
 
-This section identifies any tasks with special behaviour. By default
-(i.e.\ non ``special'' behaviour) tasks submit (or queue) as soon as
-their prerequisites are satisfied, and they spawn a successor at the
-next valid cycle time for the task as soon as they enter the submitted 
-state\footnote{Spawning any earlier than this brings no advantage in
-terms of functional parallelism and would cause uncontrolled
-proliferation of waiting tasks.}
+This section is used to identify any tasks with several kinds of special
+behaviour. By default (i.e.\ non ``special'' behaviour) tasks submit (or
+queue) as soon as their prerequisites are satisfied, and they spawn a
+successor as soon as they enter the submitted state.\footnote{Spawning
+any earlier than this brings no advantage in terms of functional
+parallelism and would cause uncontrolled proliferation of waiting
+tasks.}  Family names used here are interpreted purely as shorthand for
+the list of all member tasks. A sequential family, therefore, is a
+family of sequential tasks, not a family that behaves ``sequentially''
+as a whole.
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
