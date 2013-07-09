@@ -1483,14 +1483,10 @@ show the full suite.
 
 A list of family (namespace) names to be shown in the collapsed state
 (i.e.\ the family members will be replaced by a single family node) when
-the suite is plotted in the graph viewer or the gcylc graph view. This
-item determines how family groups are shown 
-{\em initially} in the suite control GUI; subsequently you can use the
-interactive controls to group and ungroup nodes at will. For the same
-reason (presence of interactive grouping controls) this item is ignored
-if the suite is reparsed during graph viewing (other changes to graph
-styling will be picked up and applied if the graph viewer detects that
-the suite.rc file has changed). 
+the suite is first plotted in the graph viewer or the gcylc graph view.
+If this item is not set, the default is to collapse all families at first.
+Interactive GUI controls can then be used to group and ungroup family
+nodes at will.
 
 \begin{myitemize}
     \item {\em type:} list of family names
