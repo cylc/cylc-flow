@@ -1536,13 +1536,10 @@ Some translations were performed on the fly."""
         hierarchy = self.runtime['first-parent ancestors']
 
         if self.first_graph:
-            # initially group by "[visualization]collapsed families"
-            # if defined, or else default to all families collapsed.
             self.first_graph = False
-            if self.collapsed_families_rc:
-                group_nodes = self.collapsed_families_rc
-                group_all = False
-            else:
+            if not self.collapsed_families_rc:
+                # initially default to collapsing all families if
+                # "[visualization]collapsed families" not defined
                 group_all = True
 
         if group_all:
@@ -1557,11 +1554,10 @@ Some translations were performed on the fly."""
         elif len(group_nodes) > 0:
             # Group chosen family nodes
             for node in group_nodes:
-                #if node != 'root':
-                    parent = hierarchy[node][1]
-                    if parent not in self.closed_families:
-                        if parent != 'root':
-                            self.closed_families.append( parent )
+                parent = hierarchy[node][1]
+                if parent not in self.closed_families:
+                    if parent != 'root':
+                        self.closed_families.append( parent )
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
