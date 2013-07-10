@@ -98,13 +98,18 @@ class conditional_prerequisites(object):
         for label in self.messages:
             # match label start and end on on word boundary
             expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
+            
         for label in self.excess_labels:
             # treat duplicate triggers as always satisfied
             expr = re.sub( r'\b' + label + r'\b', 'True', expr )
             self.raw_conditional_expression = re.sub( r'\b' + label + r'\b', 'True', self.raw_conditional_expression )
 
-        print >> sys.stdout, "Processed label: " + str(expr)
-        print >> sys.stdout, "Processed conditional: " + str(self.raw_conditional_expression)
+        for label in drop_these:
+            if self.messages.get(label):
+                msg = self.messages[label]
+                self.messages.pop(label)
+                self.satisfied.pop(label)
+                self.labels.pop(msg)
 
         self.conditional_expression = expr
 
