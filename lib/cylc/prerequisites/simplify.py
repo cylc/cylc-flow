@@ -2,6 +2,7 @@ import re
 import ast
 import copy
 
+
 class conditional_simplifier( object ):
     
     def __init__( self, expr, clean ):
