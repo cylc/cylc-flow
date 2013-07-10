@@ -114,8 +114,6 @@ suite = args[0]
 # re-invocation on the db host account).
 run_dir = os.path.expandvars( os.path.expanduser( options.run_dir ))
 
-print options
-
 spoller = suite_poller( "requested state", options.timeout,
         options.interval, args={
             'suite'   : suite,
