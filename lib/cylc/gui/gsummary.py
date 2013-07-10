@@ -338,7 +338,7 @@ class SummaryApp(object):
         setup_icons()
         if not hosts:
             try:
-                hosts = gcfg.sitecfg["suite host scanning"]["hosts"]
+                hosts = gcfg.cfg["suite host scanning"]["hosts"]
             except KeyError:
                 hosts = ["localhost"]
         self.hosts = hosts
