@@ -87,7 +87,7 @@ class GraphUpdater(threading.Thread):
         self.group = []
         self.ungroup = []
         self.ungroup_recursive = False
-        self.group_all = True
+        self.group_all = False
         self.ungroup_all = False
 
         self.graph_frame_count = 0
@@ -113,6 +113,8 @@ class GraphUpdater(threading.Thread):
         #print "Attempting Update"
         if ( self.last_update_time is not None and
              self.last_update_time >= self.updater.last_update_time ):
+            if self.action_required:
+                return True
             return False
         
         if self.updater.status == "stopped":
@@ -317,7 +319,7 @@ class GraphUpdater(threading.Thread):
                     if name in self.graphed_family_nodes:
                         node.attr['shape'] = 'doubleoctagon'
                     else:
-                        node.attr['shape'] = 'doublecircle'
+                        node.attr['shape'] = 'tripleoctagon'
 
             # CROPPING
             if self.crop:

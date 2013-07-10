@@ -452,7 +452,7 @@ class MyDotWindow( xdot.DotWindow ):
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'
                 else:
-                    node.attr['shape'] = 'doublecircle'
+                    node.attr['shape'] = 'tripleoctagon'
 
         self.set_dotcode( graph.string() )
         self.graph = graph

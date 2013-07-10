@@ -22,6 +22,9 @@ from cylc.TaskID import TaskID
 
 def get_stop_state(suite, owner=None, host=None):
     """Return the contents of the last 'state' file."""
+    if not suite:
+        # this occurs if we run gcylc with no suite argument
+        return None
     command = "cylc cat-state"
     if host:
         command += " --host=" +host

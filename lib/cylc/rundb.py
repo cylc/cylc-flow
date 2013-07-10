@@ -209,14 +209,14 @@ class CylcRuntimeDAO(object):
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
-        args = [name, cycle, "submitted"]
+        args = [name, cycle, "submitting now"]
         count = self.c.select(s_fmt, args).next()[0]
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
     
     def get_task_current_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
-        args = [name, cycle, "submitted"]
+        args = [name, cycle, "submitting now"]
         count = self.c.select(s_fmt, args).next()[0]
         return count
 
