@@ -3302,18 +3302,16 @@ applying common style attributes. See the suite.rc reference
 \end{lstlisting}
 \lstset{language=transcript}
 
-Nested families from the namespace inheritance hierarchy, even if 
-they are not used as family triggers in the graph, can be expanded or
-collapsed in suite graphs and the gcylc suite views.
+Nested families from the runtime inheritance hierarchy can be expanded
+and collapsed in suite graphs and the gcylc graph view. All families 
+are displayed in the collapsed state at first, unless
+\lstinline=[visualization]collapsed families= is used to single out
+specific families for initial collapsing.
 
-In the graph view ungraphed tasks, which includes the members of
-collapsed families, are automatically plotted as rectangular nodes to
-the right of the main graph if they are doing anything interesting
-(submitted, running, or failed).
-
-Note that family relationships can be defined purely for visualization
-purposes - you can group tasks at root level in the inheritance
-hierarchy prior to defining real properties at higher levels.
+In the gcylc graph view, nodes outside of the main graph (such as the
+members of collapsed families) are plotted as rectangular nodes to
+the right if they are doing anything interesting (submitted, running,
+failed).
 
 Figure~\ref{fig-namespaces} illustrates successive expansion of nested task
 families in the {\em namespaces} example suite.

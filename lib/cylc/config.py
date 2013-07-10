@@ -185,6 +185,7 @@ class config( CylcConfigObj ):
         self.cyclers = []
         self.taskdefs = OrderedDict()
         self.validation = validation
+        self.first_graph = True
         self.clock_offsets = {}
 
         self.async_oneoff_edges = []
@@ -390,12 +391,12 @@ class config( CylcConfigObj ):
                             self.clock_offsets[ member ] = float( offset )
             self['scheduling']['special tasks'][type] = result
 
-        collapsed_rc = self['visualization']['collapsed families']
+        self.collapsed_families_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
             # this overrides the rc file item
             self.closed_families = collapsed
         else:
-            self.closed_families = collapsed_rc
+            self.closed_families = self.collapsed_families_rc
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
@@ -1553,6 +1554,13 @@ Some translations were performed on the fly."""
         members = self.runtime['first-parent descendants']
         hierarchy = self.runtime['first-parent ancestors']
 
+        if self.first_graph:
+            self.first_graph = False
+            if not self.collapsed_families_rc:
+                # initially default to collapsing all families if
+                # "[visualization]collapsed families" not defined
+                group_all = True
+
         if group_all:
             # Group all family nodes
             for fam in members:
@@ -1565,11 +1573,10 @@ Some translations were performed on the fly."""
         elif len(group_nodes) > 0:
             # Group chosen family nodes
             for node in group_nodes:
-                #if node != 'root':
-                    parent = hierarchy[node][1]
-                    if parent not in self.closed_families:
-                        if parent != 'root':
-                            self.closed_families.append( parent )
+                parent = hierarchy[node][1]
+                if parent not in self.closed_families:
+                    if parent != 'root':
+                        self.closed_families.append( parent )
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
