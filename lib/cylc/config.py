@@ -49,6 +49,8 @@ from TaskID import TaskID
 from C3MRO import C3
 from config_list import get_expanded_float_list
 
+CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
+
 try:
     import graphing
 except ImportError:
@@ -184,6 +186,7 @@ class config( CylcConfigObj ):
         self.taskdefs = OrderedDict()
         self.validation = validation
         self.first_graph = True
+        self.clock_offsets = {}
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -325,20 +328,6 @@ class config( CylcConfigObj ):
         self.runtime_defaults = dense['runtime']['defaults']
 
         if self.verbose:
-            print "Parsing clock-triggered tasks"
-        self.clock_offsets = {}
-        for item in self['scheduling']['special tasks']['clock-triggered']:
-            m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
-            if m:
-                task, offset = m.groups()
-                try:
-                    self.clock_offsets[ task ] = float( offset )
-                except ValueError:
-                    raise SuiteConfigError, "ERROR: Illegal clock-trigger offset: " + offset
-            else:
-                raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
-
-        if self.verbose:
             print "Parsing runtime name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. 
@@ -369,6 +358,38 @@ class config( CylcConfigObj ):
         self.compute_inheritance()
         #debugging:
         #self.print_inheritance()
+
+        # [special tasks]: parse clock-offsets, and replace families with members
+        if self.verbose:
+            print "Parsing [special tasks]"
+        for type in self['scheduling']['special tasks']:
+            result = copy( self['scheduling']['special tasks'][type] )
+            for item in self['scheduling']['special tasks'][type]:
+                if type != 'clock-triggered':
+                    name = item
+                    extn = ''
+                else:
+                    m = re.match( CLOCK_OFFSET_RE, item )
+                    if m:
+                        name, offset = m.groups()
+                        try:
+                            float( offset )
+                        except ValueError:
+                            raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
+                        extn = '(' + offset + ')'
+                    else:
+                        raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
+                if name in self.runtime['descendants']:
+                    # is a family
+                    result.remove( item )
+                    for member in self.runtime['descendants'][name]:
+                        if member in self.runtime['descendants']:
+                            # is a sub-family
+                            continue
+                        result.append( member + extn )
+                        if type == 'clock-triggered':
+                            self.clock_offsets[ member ] = float( offset )
+            self['scheduling']['special tasks'][type] = result
 
         self.collapsed_families_rc = self['visualization']['collapsed families']
         if len( collapsed ) > 0:
@@ -1048,8 +1069,6 @@ Some translations were performed on the fly."""
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self['runtime']:
                     raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.' 
-                if type == 'sequential' and name in self.runtime['descendants']:
-                    raise SuiteConfigError, 'ERROR: family names cannot be declared ' + type + ': ' + name 
 
         try:
             import Pyro.constants
@@ -1663,7 +1682,6 @@ Some translations were performed on the fly."""
         formatted=False
 
         members = self.runtime['first-parent descendants']
-        #members = self.runtime['descendants']
 
         lname, ltag = None, None
         rname, rtag = None, None
