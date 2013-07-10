@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from optparse import OptionParser
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib/')
+cylc_dir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
+if cylc_dir != os.getenv('CYLC_DIR', ''):
+    os.environ['CYLC_DIR'] = cylc_dir
+
+parser = OptionParser( """cylc gpanel [OPTIONS]
+
+This is a cylc summary panel applet for monitoring running suites on a set of
+hosts in GNOME 2.
+
+To install this applet, run "cylc gpanel --install"
+and follow the instructions that it gives you.
+
+This applet can be tested using the --test option.
+
+To customize themes, copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+$HOME/.cylc/gcylc.rc and follow the instructions in the file.
+
+To configure default suite hosts, edit the
+[suite host scanning]hosts entry in your site.rc file.""")
+
+parser.add_option("--compact",
+                  help="Switch on compact mode at runtime.",
+                  action="store_true", dest="compact")
+                  
+parser.add_option("--install",
+                  help="Install the panel applet.",
+                  default=False,
+                  action="store_true", dest="install")
+parser.add_option("--test",
+                  help="Run in a standalone window.",
+                  default=False,
+                  action="store_true", dest="test")
+arglist = [a for a in sys.argv[1:] if not a.startswith("--oaf")]
+( options, args ) = parser.parse_args(arglist)
+
+import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
+
+import cylc.gui
+
+cylc_dir = os.path.dirname(os.path.dirname(os.path.realpath(os.path.abspath(__file__))))
+if cylc_dir != os.getenv('CYLC_DIR', ''):
+    os.environ['CYLC_DIR'] = cylc_dir
+
+from cylc.gui.gpanel import SummaryPanelApplet, run_in_window
+
+
+def install_panel_applet():
+    home = os.path.expanduser("~")
+    dest_dir = os.path.join(home, ".bonobo")
+    if not os.path.isdir(dest_dir):
+        os.mkdir(dest_dir)
+    for server_filename in ["cylc.server", "cylc-compact.server"]:
+        source_file = os.path.join(cylc_dir, "conf", "gpanel",
+                                   server_filename)
+        dest_file = os.path.join(dest_dir, server_filename)
+        f = open(source_file, "r")
+        text = f.read().replace("$CYLC_DIR", cylc_dir)
+        f.close()
+        open(dest_file, "w").write(text)
+        print dest_file, "created."
+    print
+    print """Further Instructions:
+ * normal users - place this line in your ~/.profile file:
+export BONOBO_ACTIVATION_PATH=$HOME/.bonobo
+ * (sys)admin users - move the new cylc.server and cylc-compact.server
+files into your /usr/lib/bonobo/servers/ directory, or equivalent.
+ * After logging in and out, right-click within the GNOME 2 panel and
+select "Add to Panel", then choose a Cylc Applet."""
+
+
+def panel_applet_factory_compact(applet, iid):
+    my_panel_app = SummaryPanelApplet(is_compact=True)
+    applet.add(my_panel_app.get_widget())
+    applet.show_all()
+    return True
+
+def panel_applet_factory(applet, iid):
+    my_panel_app = SummaryPanelApplet()
+    applet.add(my_panel_app.get_widget())
+    applet.show_all()
+    return True
+
+
+if __name__ == "__main__":
+    if options.test:
+        run_in_window(options.compact)
+    elif options.install:
+        install_panel_applet()
+    elif options.compact:
+        import gnomeapplet
+        gnomeapplet.bonobo_factory(
+                    "OAFIID:GNOME_CylcCompactMonitorFactory",
+                    gnomeapplet.Applet.__gtype__,
+                    "cylc gpanel compact", "0", panel_applet_factory_compact)
+    else:
+        import gnomeapplet
+        gnomeapplet.bonobo_factory(
+                    "OAFIID:GNOME_CylcMonitorFactory",
+                    gnomeapplet.Applet.__gtype__,
+                    "cylc gpanel", "0", panel_applet_factory)

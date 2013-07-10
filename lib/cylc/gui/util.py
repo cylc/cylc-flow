@@ -114,3 +114,19 @@ def get_logo():
     logo_path = os.path.join(get_image_dir(), "logo.png")
     return gtk.gdk.pixbuf_new_from_file(logo_path)
 
+
+def setup_icons():
+    """Set up some extra stock icons for better PyGTK compatibility."""
+    # create a new stock icon for the 'group' action
+    root_img_dir = get_image_dir()
+    pixbuf = get_icon()
+    gcylc_iconset = gtk.IconSet(pixbuf)
+    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/group.png' )
+    grp_iconset = gtk.IconSet(pixbuf)
+    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/ungroup.png' )
+    ungrp_iconset = gtk.IconSet(pixbuf)
+    factory = gtk.IconFactory()
+    factory.add( 'gcylc', gcylc_iconset )
+    factory.add( 'group', grp_iconset )
+    factory.add( 'ungroup', ungrp_iconset )
+    factory.add_default()
