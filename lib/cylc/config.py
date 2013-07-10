@@ -214,7 +214,7 @@ class config( CylcConfigObj ):
         # (first-parents are used for visualization purposes)
         # (tasks - leaves on the tree - do not appear in 'descendants')
 
-        self.families_used_in_graph = []
+        self.triggering_families = []
 
         self.suite = suite
         self.file = suiterc
@@ -400,7 +400,6 @@ class config( CylcConfigObj ):
             if cfam not in self.runtime['descendants']:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
                 self.closed_families.remove( cfam )
-        self.vis_families = list(self.closed_families)
 
         # check for run mode override at suite level
         if self['cylc']['force run mode']:
@@ -1175,8 +1174,8 @@ Some translations were performed on the fly."""
         m.reverse() # ... then last
         for grp in m:
             exclam, foffset = grp 
-            if fam not in self.families_used_in_graph:
-                self.families_used_in_graph.append(fam)
+            if fam not in self.triggering_families:
+                self.triggering_families.append(fam)
             mems = paren_open + connector.join( [ exclam + i + foffset + repl for i in members ] ) + paren_close
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line

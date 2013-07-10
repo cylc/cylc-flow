@@ -54,9 +54,9 @@ class GraphUpdater(threading.Thread):
         self.state_filter = None
 
         self.should_group_families = False
-        self.descendants = []
-        self.family_nodes = []
-        self.graphed_family_nodes = []
+        self.descendants = {}
+        self.all_families = []
+        self.triggering_families = []
         self.live_graph_movie = False
 
         self.prev_graph_id = ()
@@ -132,8 +132,8 @@ class GraphUpdater(threading.Thread):
         fam_states_full = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
         self.descendants = deepcopy(self.updater.descendants)
-        self.family_nodes = deepcopy(self.updater.family_nodes)
-        self.graphed_family_nodes = deepcopy(self.updater.graphed_family_nodes)
+        self.all_families = deepcopy(self.updater.all_families)
+        self.triggering_families = deepcopy(self.updater.triggering_families)
         self.global_summary = deepcopy(self.updater.global_summary)
         self.updater.set_update(True)
 
@@ -269,24 +269,19 @@ class GraphUpdater(threading.Thread):
         except Exception:  # PyroError
             return False
 
+        # find nodes not present in the main graph
         extra_ids = []
-
+        omit = []
         for id in self.state_summary:
-            try:
-                node = self.graphw.get_node( id )
-            except AttributeError:
-                # No graphw yet.
-                break
-            except KeyError:
+            if not any( id in edge for edge in gr_edges ):
+                # this node is not present in the main graph
                 name, tag = id.split(TaskID.DELIM)
-                if any( [name in self.descendants[fam] for
-                         fam in self.graphed_family_nodes] ):
-                    # if task name is a member of a family omit it
-                    #print 'Not graphing family-collapsed node', id
+                if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
+                    # must be a member of a collapsed family, don't graph it
+                    omit.append(name)
                     continue
-
                 state = self.state_summary[id]['state']
-                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
+                if state in ['submitted','submit-failed','running','failed']:
                     if id not in extra_ids:
                         extra_ids.append( id )
 
@@ -315,8 +310,8 @@ class GraphUpdater(threading.Thread):
         if needs_redraw:
             for node in self.graphw.nodes():
                 name, tag = node.get_name().split(TaskID.DELIM)
-                if name in self.family_nodes:
-                    if name in self.graphed_family_nodes:
+                if name in self.all_families:
+                    if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
                     else:
                         node.attr['shape'] = 'doublecircle'
@@ -373,10 +368,8 @@ class GraphUpdater(threading.Thread):
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
                 name, tag = id.split(TaskID.DELIM)
-                if any( [name in self.descendants[fam] for
-                         fam in self.graphed_family_nodes] ):
-                    # if task name is a member of a family omit it
-                    #print 'Not graphing family-collapsed node', id
+                if name in omit:
+                    # (see above)
                     continue
 
                 if id not in self.graph_warned or not self.graph_warned[id]:
