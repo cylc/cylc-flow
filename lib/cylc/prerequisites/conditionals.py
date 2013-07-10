@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys
+from simplify import conditional_simplifier
 
 # label1 => "foo ready for <TAG>
 # label2 => "bar.<TAG> succeeded"
@@ -95,7 +96,13 @@ class conditional_prerequisites(object):
                             drop_these.append(k)
                     except IndexError:
                         pass
+        print "String:  " + str(expr)
         print "To drop: " + str(drop_these)
+
+        simpler = conditional_simplifier(expr, drop_these)
+        expr = simpler.get_cleaned()
+        
+        print "Simplfied:" + str(expr)
 
         # make into a python expression
         self.raw_conditional_expression = expr
