@@ -14,7 +14,6 @@
         The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
         <RegExpr attribute='Keyword' String=' work sub-directory '/>
         <RegExpr attribute='Keyword' String=' warning handler '/>
-        <RegExpr attribute='Keyword' String=' use quick task elimination '/>
         <RegExpr attribute='Keyword' String=' use node color for labels '/>
         <RegExpr attribute='Keyword' String=' use node color for edges '/>
         <RegExpr attribute='Keyword' String=' title '/>
