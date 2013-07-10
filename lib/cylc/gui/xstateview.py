@@ -319,7 +319,7 @@ class GraphUpdater(threading.Thread):
                     if name in self.graphed_family_nodes:
                         node.attr['shape'] = 'doubleoctagon'
                     else:
-                        node.attr['shape'] = 'doublecircle'
+                        node.attr['shape'] = 'tripleoctagon'
 
             # CROPPING
             if self.crop:
