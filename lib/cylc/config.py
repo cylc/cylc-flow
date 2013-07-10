@@ -266,6 +266,12 @@ class config( CylcConfigObj ):
         # handle cylc continuation lines
         suiterc = join( suiterc )
 
+        if self.verbose:
+            print "Writing out the processed suite definition"
+        f = open( self.file + '.processed', 'w' )
+        f.write(''.join(suiterc))
+        f.close()
+
         # parse the file into a sparse data structure
         try:
             CylcConfigObj.__init__( self, suiterc, interpolation=False )
