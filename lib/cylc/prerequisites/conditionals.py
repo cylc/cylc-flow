@@ -78,15 +78,8 @@ class conditional_prerequisites(object):
         # 'foo:fail | foo'
         # 'foo[T-6]:out1 | baz'
 
-        print >> sys.stdout, "Expression set " 
-        print >> sys.stdout, str(expr)
-        print >> sys.stdout, self.messages
-
         drop_these = []
-        print type(self.messages)
         for k in self.messages:
-            print k
-            print "Message k: "+ self.messages[k]
             if self.ict:
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
@@ -96,13 +89,9 @@ class conditional_prerequisites(object):
                             drop_these.append(k)
                     except IndexError:
                         pass
-        print "String:  " + str(expr)
-        print "To drop: " + str(drop_these)
 
         simpler = conditional_simplifier(expr, drop_these)
         expr = simpler.get_cleaned()
-        
-        print "Simplfied:" + str(expr)
 
         # make into a python expression
         self.raw_conditional_expression = expr
