@@ -56,7 +56,7 @@ class SummaryPanelApplet(object):
         setup_icons()
         if not hosts:
             try:
-                hosts = gcfg.sitecfg["suite host scanning"]["hosts"]
+                hosts = gcfg.cfg["suite host scanning"]["hosts"]
             except KeyError:
                 hosts = ["localhost"]
         self.is_compact = is_compact
