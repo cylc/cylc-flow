@@ -30,18 +30,25 @@ from cylc.poll import poller
 class suite_poller( poller ):
     """A polling object that checks suite state."""
 
-    def connect( self, poll=True ):
+    def connect( self, poll=True, verbose=False ):
         """Connect to the suite db, polling if necessary in case the
         suite has not been started up yet."""
 
         # Returns True if connected, otherwise (one-off failed to
         # connect, or timed out polling) False
         connected = False
+        
+        if verbose:
+            print ("Trying to connect to database for: " + 
+                  self.args['run_dir'] + "/" + self.args['suite'])
+        
         while not ( connected or self._timed_out()):
             try:
                 self.checker = CylcSuiteDBChecker(self.args['run_dir'], self.args['suite'])
                 connected = True
             except DBNotFoundError:
+                if verbose:
+                    print >> sys.stderr, "Suite database not found"
                 if not poll:
                     break
                 else:
@@ -107,6 +114,8 @@ suite = args[0]
 # re-invocation on the db host account).
 run_dir = os.path.expandvars( os.path.expanduser( options.run_dir ))
 
+print options
+
 spoller = suite_poller( "requested state", options.timeout,
         options.interval, args={
             'suite'   : suite,
@@ -116,7 +125,7 @@ spoller = suite_poller( "requested state", options.timeout,
             'status'  : options.status
             })
 
-if not spoller.connect():
+if not spoller.connect(verbose=options.verbose):
     sys.exit( "ERROR: cannot connect to the suite DB" )
 
 if options.status and options.task and options.cycle:
