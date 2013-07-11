@@ -779,7 +779,7 @@ class scheduler(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, False )
+                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup )
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
