@@ -897,9 +897,6 @@ class scheduler(object):
             # raises port_scan.SuiteNotFound error:
             self.lockserver_port = lockserver( self.host ).get_port()
 
-        # USE QUICK TASK ELIMINATION?
-        self.use_quick = self.config['development']['use quick task elimination']
-
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']
 
