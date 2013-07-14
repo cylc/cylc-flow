@@ -327,7 +327,7 @@ class config( CylcConfigObj ):
         self.runtime_defaults = dense['runtime']['defaults']
 
         if self.verbose:
-            print "Parsing runtime name lists"
+            print "Expanding [runtime] name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. 
         for item in self['runtime']:
@@ -523,7 +523,7 @@ class config( CylcConfigObj ):
             if bad:
                 print >> sys.stderr, "  WARNING: undefined node attribute targets"
                 for na in bad:
-                    print " + " + na
+                    print >> sys.stderr, " + " + na
 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
