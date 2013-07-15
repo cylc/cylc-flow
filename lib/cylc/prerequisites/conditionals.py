@@ -90,8 +90,9 @@ class conditional_prerequisites(object):
                     except IndexError:
                         pass
 
-        simpler = conditional_simplifier(expr, drop_these)
-        expr = simpler.get_cleaned()
+        if drop_these:
+            simpler = conditional_simplifier(expr, drop_these)
+            expr = simpler.get_cleaned()
 
         # make into a python expression
         self.raw_conditional_expression = expr
