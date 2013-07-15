@@ -334,7 +334,7 @@ class config( CylcConfigObj ):
         self.runtime_defaults = dense['runtime']['defaults']
 
         if self.verbose:
-            print "Parsing runtime name lists"
+            print "Expanding [runtime] name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. 
         for item in self['runtime']:
@@ -404,8 +404,8 @@ class config( CylcConfigObj ):
         else:
             self.closed_families = self.collapsed_families_rc
         for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants']:
-                print >> sys.stderr, 'WARNING, [visualization][collapsed families]: ignoring ' + cfam + ' (not a family)'
+            if cfam not in self.runtime['descendants'] and self.verbose:
+                print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
                 self.closed_families.remove( cfam )
         self.vis_families = list(self.closed_families)
 
@@ -504,7 +504,34 @@ class config( CylcConfigObj ):
         for fam in self.runtime['descendants']:
             if fam not in ngs:
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
- 
+
+        if self.verbose:
+            print "Checking [visualization] node attributes"
+            # 1. node groups should contain valid namespace names 
+            nspaces = self['runtime'].keys()
+            bad = {}
+            for ng,mems in ngs.items():
+                n_bad = []
+                for m in mems:
+                    if m not in nspaces:
+                        n_bad.append(m)
+                if n_bad:
+                    bad[ng] = n_bad
+            if bad:
+                print >> sys.stderr, "  WARNING: undefined node group members"
+                for ng,mems in bad.items():
+                    print >> sys.stderr, " + " + ng + ":", ','.join(mems)
+
+            # 2. node attributes must refer to node groups or namespaces
+            bad = []
+            for na in self['visualization']['node attributes']:
+                if na not in ngs and na not in nspaces:
+                    bad.append(na)
+            if bad:
+                print >> sys.stderr, "  WARNING: undefined node attribute targets"
+                for na in bad:
+                    print >> sys.stderr, " + " + na
+
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
         # because putting default attributes for root in the suite.rc spec
