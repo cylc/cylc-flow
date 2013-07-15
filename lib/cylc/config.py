@@ -395,6 +395,8 @@ class config( CylcConfigObj ):
                         result.append( member + extn )
                         if type == 'clock-triggered':
                             self.clock_offsets[ member ] = float( offset )
+                else:
+                    self.clock_offsets[ name ] = float( offset )
             self['scheduling']['special tasks'][type] = result
 
         self.collapsed_families_rc = self['visualization']['collapsed families']
