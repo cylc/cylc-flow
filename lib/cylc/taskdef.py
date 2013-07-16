@@ -250,6 +250,7 @@ class taskdef(object):
 
             sself.cycon = container.cycon( self.cyclers )
             sself.intercycle_offset = self.intercycle_offset
+            sself.startup = startup
             if self.cycling: # and startup:
                 # adjust only needed at start-up but it does not hurt to
                 # do it every time as after the first adjust we're already
