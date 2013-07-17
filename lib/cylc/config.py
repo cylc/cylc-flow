@@ -73,14 +73,12 @@ def str2list( st ):
 def str2bool( st ):
     return str(st).lower() in ( 'true' )
 
-def str2float( st ):
-    return float( st )
-
 def coerce_runtime_values( rdict ):
     """Coerce non-string values as would be done by [runtime]
     validation. This must be kept up to date with any new non-string
     items added the runtime configspec."""
-
+    # NOTE THIS MAY NOT BE NEEDED IF/WHEN WE REPLACE CONFIGOBJ
+ 
     # coerce list values from string
     # (required for single values with no trailing comma)
     for item in [
@@ -122,12 +120,24 @@ def coerce_runtime_values( rdict ):
     # coerce float values from string
     for item in [
             ('event hooks', 'submission timeout' ),
-            ('event hooks', 'execution timeout' ) ]:
+            ('event hooks', 'execution timeout' ),
+            ('suite state polling', 'timeout' ),
+            ('suite state polling', 'interval' ) ]:
         try:
             if isinstance( item, tuple ):
-                rdict[item[0]][item[1]] = str2float( rdict[item[0]][item[1]] )
+                rdict[item[0]][item[1]] = float( rdict[item[0]][item[1]] )
             else:
-                rdict[item] = str2float( rdict[item] )
+                rdict[item] = float( rdict[item] )
+        except KeyError:
+            pass
+
+    # coerce integer values from string
+    for item in [ ('suite state polling', 'offset' ) ]:
+        try:
+            if isinstance( item, tuple ):
+                rdict[item[0]][item[1]] = int( rdict[item[0]][item[1]] )
+            else:
+                rdict[item] = int( rdict[item] )
         except KeyError:
             pass
 
@@ -151,6 +161,22 @@ def coerce_runtime_values( rdict ):
         except ValueError, x:
             print >> sys.stderr, x
             raise SuiteConfigError( "ERROR: illegal value in '" + str(item) + "'" )
+
+
+class Replacement(object):
+    """A class to remember match group information in re.sub() calls"""
+    def __init__(self, replacement):
+        self.replacement = replacement
+        self.substitutions = []
+        self.match_groups = []
+
+    def __call__(self, match):
+        matched = match.group(0)
+        replaced = match.expand(self.replacement)
+        self.substitutions.append((matched, replaced))
+        self.match_groups.append( match.groups() )
+        return replaced
+
 
 class SuiteConfigError( Exception ):
     """
@@ -187,6 +213,7 @@ class config( CylcConfigObj ):
         self.validation = validation
         self.first_graph = True
         self.clock_offsets = {}
+        self.suite_polling_tasks = {}
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -1206,6 +1233,7 @@ Some translations were performed on the fly."""
             raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
         repl = orig[:-4]
 
+        # TODO - can we use Replacement here instead of findall and sub:
         m = re.findall( "(!){0,1}" + r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
         m.sort() # put empty offset '' first ...
         m.reverse() # ... then last
@@ -1244,6 +1272,15 @@ Some translations were performed on the fly."""
         # line = re.sub( r':start(ed){0,1}\b', ':start', line )
         # Replace "foo:finish(ed)" or "foo:complete(ed)" with "( foo | foo:fail )"
         # line = re.sub(  r'\b(\w+(\[.*?]){0,1}):(complete(d){0,1}|finish(ed){0,1})\b', r'( \1 | \1:fail )', line )
+
+        # Find any dependence on other suites, record the polling target
+        # info and replace with just the local task name, e.g.:
+        # "foo<SUITE.TASK> => bar"  becomes "foo => bar"
+        # (and record that foo must automatically poll for TASK in SUITE)
+        repl = Replacement( '\\1' )
+        line = re.sub( '(\w+)<(\w+).(\w+)>', repl, line )
+        for item in repl.match_groups:
+            self.suite_polling_tasks[ item[0] ] = ( item[1:] )
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.runtime['descendants']:
@@ -1472,6 +1509,7 @@ Some translations were performed on the fly."""
                 self.runtime['descendants']['root'].append(name)
                 self.runtime['first-parent descendants']['root'].append(name)
 
+            # check task name legality and create the taskdef
             if name not in self.taskdefs:
                 try:
                     self.taskdefs[ name ] = self.get_taskdef( name )
@@ -1494,6 +1532,11 @@ Some translations were performed on the fly."""
                 self.taskdefs[name].cycling = True
                 if name not in self.cycling_tasks:
                     self.cycling_tasks.append(name)
+
+            if name in self.suite_polling_tasks:
+                self.taskdefs[name].suite_polling_cfg = {
+                        'suite' : self.suite_polling_tasks[name][0],
+                        'task'  : self.suite_polling_tasks[name][1] }
 
             if offset:
                 # adjust cycler state and add

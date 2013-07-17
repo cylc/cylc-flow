@@ -27,6 +27,7 @@ from cylc.strftime import strftime
 from cylc.global_config import gcfg
 from cylc.owner import user
 from cylc.suite_host import hostname as suite_hostname
+from cylc.cycle_time import ct
 import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
@@ -592,6 +593,25 @@ class task( object ):
         else:
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
+
+        if self.suite_polling_cfg:
+            # generate automatic suite state polling command scripting
+            offset =  rtconfig['suite state polling']['offset']
+            if offset:
+                foo = ct( self.c_time )
+                foo.decrement( hours=offset )
+                cycle = foo.get()
+            else:
+                cycle = self.c_time
+            comstr = "cylc suite-state " + self.suite_polling_cfg['suite'] + \
+                      " --task=" + self.suite_polling_cfg['task'] + \
+                      " --cycle=" + cycle + \
+                      " --status=" + rtconfig['suite state polling']['status'] + \
+                      " --host=" + rtconfig['suite state polling']['host'] + \
+                      " --timeout=" + str( rtconfig['suite state polling']['timeout']*60 ) + \
+                      " --interval=" + str( rtconfig['suite state polling']['interval']*60 ) + \
+                      " --wait"
+            command = "echo " + comstr + "\n" + comstr
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.

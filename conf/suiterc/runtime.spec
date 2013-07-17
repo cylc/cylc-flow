@@ -95,7 +95,12 @@
             execution timeout = float( default=None )
 
             reset timer = boolean( default=False )
-
+        [[[suite state polling]]]
+            timeout = float( default=10 )
+            interval = float( default=1 )
+            status = string( default='succeeded' )
+            host = string( default='localhost' )
+            offset = integer( default=0 )
         [[[environment]]]
             __many__ = string
         [[[directives]]]
