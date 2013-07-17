@@ -1275,10 +1275,10 @@ Some translations were performed on the fly."""
 
         # Find any dependence on other suites, record the polling target
         # info and replace with just the local task name, e.g.:
-        # "foo<SUITE.TASK> => bar"  becomes "foo => bar"
+        # "foo<SUITE::TASK> => bar"  becomes "foo => bar"
         # (and record that foo must automatically poll for TASK in SUITE)
         repl = Replacement( '\\1' )
-        line = re.sub( '(\w+)<(\w+).(\w+)>', repl, line )
+        line = re.sub( '(\w+)<(\w+)::(\w+)>', repl, line )
         for item in repl.match_groups:
             self.suite_polling_tasks[ item[0] ] = ( item[1:] )
 
