@@ -54,7 +54,7 @@ class DefinitionError( Error ):
 
 class taskdef(object):
 
-    def __init__( self, name, rtdefs, rtover, run_mode ):
+    def __init__( self, name, rtdefs, rtover, run_mode, ict ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
@@ -66,6 +66,7 @@ class taskdef(object):
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
+        self.ict = ict
 
         # some defaults
         self.intercycle = False
@@ -188,9 +189,9 @@ class taskdef(object):
             # valid member of cyclerX's sequence of cycle times.
 
             # 1) non-conditional triggers
-            pp = plain_prerequisites( sself.id )
-            sp = plain_prerequisites( sself.id )
-            lp = loose_prerequisites( sself.id )
+            pp = plain_prerequisites( sself.id, self.ict )
+            sp = plain_prerequisites( sself.id, self.ict )
+            lp = loose_prerequisites( sself.id, self.ict )
             for cyc in self.triggers:
                 for trig in self.triggers[ cyc ]:
                     if trig.startup and not startup:
@@ -211,7 +212,7 @@ class taskdef(object):
                         if trig.suicide:
                             sp.add( trig.get( tag, cycler ))
                         else:
-                            pp.add( trig.get( tag, cycler ))
+                            pp.add( trig.get( tag, cycler))
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
@@ -232,7 +233,7 @@ class taskdef(object):
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
-                    cp = conditional_prerequisites( sself.id )
+                    cp = conditional_prerequisites( sself.id, self.ict )
                     for label in ctrig:
                         trig = ctrig[label]
                         cp.add( trig.get( tag, cycler ), label )
@@ -269,8 +270,8 @@ class taskdef(object):
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
             # prerequisites
-            sself.prerequisites = prerequisites()
-            sself.suicide_prerequisites = prerequisites()
+            sself.prerequisites = prerequisites( self.ict )
+            sself.suicide_prerequisites = prerequisites( self.ict )
             sself.add_prerequisites( startup, sself.cycon, sself.tag )
 
             sself.logfiles = logfiles()
