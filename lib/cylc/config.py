@@ -175,7 +175,8 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False, collapsed=[] ):
+            verbose=False, validation=False, strict=False, collapsed=[],
+            override=None, is_restart=False ):
 
         self.run_mode = run_mode
         self.verbose = verbose
@@ -185,6 +186,8 @@ class config( CylcConfigObj ):
         self.cyclers = []
         self.taskdefs = OrderedDict()
         self.validation = validation
+        self.override = override
+        self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
 
@@ -1832,7 +1835,15 @@ Some translations were performed on the fly."""
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
 
-        taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode )
+        if self.override:
+            ict = self.override
+        elif self['scheduling']['initial cycle time'] and not self.is_restart:
+                # Use suite.rc initial cycle time
+            ict = str(self['scheduling']['initial cycle time'])
+        else:
+            ict = None
+
+        taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode, ict ) 
 
         # TODO - put all taskd.foo items in a single config dict
         # SET ONE-OFF AND COLD-START TASK INDICATORS
