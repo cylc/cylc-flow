@@ -87,7 +87,7 @@ class GraphUpdater(threading.Thread):
         self.group = []
         self.ungroup = []
         self.ungroup_recursive = False
-        self.group_all = True
+        self.group_all = False
         self.ungroup_all = False
 
         self.graph_frame_count = 0
@@ -314,7 +314,7 @@ class GraphUpdater(threading.Thread):
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
                     else:
-                        node.attr['shape'] = 'doublecircle'
+                        node.attr['shape'] = 'tripleoctagon'
 
             # CROPPING
             if self.crop:
