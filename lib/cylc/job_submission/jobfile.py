@@ -89,15 +89,6 @@ class jobfile(object):
 
         self.write_task_succeeded()
         self.write_eof()
-
-        # Ensure that the job file is flushed and synced to the file system.
-        # This is to prevent errors that look like this:
-        #     /bin/bash: SCRIPT: /bin/bash: bad interpreter: Text file busy
-        # which means that the OS thinks that the job file is still being
-        # written to when it is being executed.
-        self.FILE.flush()
-        os.fsync(self.FILE.fileno())
-
         self.FILE.close()
 
     def write_header( self ):
