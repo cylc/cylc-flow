@@ -243,7 +243,8 @@ class job_submit(object):
                 str(self.jobconfig.get('submission try number')) + ',' + \
                 str( self.jobconfig.get('try number')) + '):', command
         try:
-            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
+            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE,
+                       close_fds=True )
         except OSError, e:
             if debug:
                 raise
