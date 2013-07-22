@@ -262,7 +262,7 @@ class GraphUpdater(threading.Thread):
         # TODO - mv ct().get() out of this call (for error checking):
         # TODO - remote connection exception handling?
         try:
-            gr_edges = self.updater.sinfo.get(
+            gr_edges, suite_polling_tasks = self.updater.sinfo.get(
                     'graph raw', ct(oldest).get(), ct(newest).get(),
                     rawx, self.group, self.ungroup, self.ungroup_recursive, 
                     self.group_all, self.ungroup_all) 
@@ -294,7 +294,7 @@ class GraphUpdater(threading.Thread):
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
-            self.graphw = graphing.CGraphPlain( self.cfg.suite )
+            self.graphw = graphing.CGraphPlain( self.cfg.suite, suite_polling_tasks )
             self.graphw.add_edges( gr_edges, ignore_suicide=self.ignore_suicide )
 
         for n in self.graphw.nodes(): # base node defaults

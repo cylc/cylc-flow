@@ -428,6 +428,7 @@ class MyDotWindow( xdot.DotWindow ):
             ungroup_recursive=False, ungroup_all=False, group_all=False ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.families_used_in_graph
+        suite_polling_tasks = self.suiterc.suite_polling_tasks
 
         if self.ctime != None and self.stop_after != None:
             one = self.ctime
