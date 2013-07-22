@@ -115,14 +115,17 @@ class conditional_prerequisites(object):
         self.conditional_expression = expr
 
     def all_satisfied( self ):
-        try:
-            res = eval( self.conditional_expression )
-        except Exception, x:
-            print >> sys.stderr, 'ERROR:', x
-            if str(x).find("unexpected EOF") != -1:
-                print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
-            raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
-        return res
+        if self.conditional_expression == "()":
+            return True
+        else:
+            try:
+                res = eval( self.conditional_expression )
+            except Exception, x:
+                print >> sys.stderr, 'ERROR:', x
+                if str(x).find("unexpected EOF") != -1:
+                    print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
+                raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
+            return res
             
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prequisites?
