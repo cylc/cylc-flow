@@ -95,11 +95,16 @@
             execution timeout = float( default=None )
 
             reset timer = boolean( default=False )
+
         [[[suite state polling]]]
-            timeout = float( default=10 )
-            interval = float( default=1 )
-            host = string( default='localhost' )
-            offset = integer( default=0 )
+            owner = string( default=None )
+            host = string( default=None )
+            interval = float( default=None )
+            timeout = float( default=None )
+            wait = boolean( default=None )
+            run directory = string( default=None )
+            verbose mode = boolean( default=None )
+
         [[[environment]]]
             __many__ = string
         [[[directives]]]

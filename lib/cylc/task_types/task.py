@@ -596,21 +596,31 @@ class task( object ):
 
         if self.suite_polling_cfg:
             # generate automatic suite state polling command scripting
-            offset =  rtconfig['suite state polling']['offset']
-            if offset:
-                foo = ct( self.c_time )
-                foo.decrement( hours=offset )
-                cycle = foo.get()
-            else:
-                cycle = self.c_time
-            comstr = "cylc suite-state " + self.suite_polling_cfg['suite'] + \
-                      " --task=" + self.suite_polling_cfg['task'] + \
-                      " --cycle=" + cycle + \
-                      " --status=" + self.suite_polling_cfg['status'] + \
-                      " --host=" + rtconfig['suite state polling']['host'] + \
-                      " --timeout=" + str( rtconfig['suite state polling']['timeout']*60 ) + \
-                      " --interval=" + str( rtconfig['suite state polling']['interval']*60 ) + \
-                      " --wait"
+            #____
+            # for an additional cycle time offset for --cycle:
+            #offset =  rtconfig['suite state polling']['offset']
+            #if offset:
+            #    foo = ct( self.c_time )
+            #    foo.decrement( hours=offset )
+            #    cycle = foo.get()
+            #else:
+            #    cycle = self.c_time
+            #____
+            comstr = "cylc suite-state " + \
+                     " --task=" + self.suite_polling_cfg['task'] + \
+                     " --cycle=" + self.c_time + \
+                     " --status=" + self.suite_polling_cfg['status']
+            if rtconfig['suite state polling']['owner']:
+                comstr += " --owner=" + rtconfig['suite state polling']['owner']
+            if rtconfig['suite state polling']['host']:
+                comstr += " --host=" + rtconfig['suite state polling']['host']
+            if rtconfig['suite state polling']['interval']:
+                comstr += " --interval=" + str(rtconfig['suite state polling']['interval'])
+            if rtconfig['suite state polling']['timeout']:
+                comstr += " --timeout=" + str(rtconfig['suite state polling']['timeout'])
+            if rtconfig['suite state polling']['wait']:
+                comstr += " --wait"
+            comstr += " " + self.suite_polling_cfg['suite']
             command = "echo " + comstr + "\n" + comstr
 
         # Determine task host settings now, just before job submission,
