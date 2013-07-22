@@ -172,9 +172,8 @@ class scheduler(object):
                 'suite info'        : self.info_get_suite_info,
                 'task list'         : self.info_get_task_list,
                 'task info'         : self.info_get_task_info,
-                'family nodes'      : self.info_get_family_nodes,
-                'graphed family nodes' : self.info_get_graphed_family_nodes,
-                'vis families'      : self.info_get_vis_families,
+                'all families'      : self.info_get_all_families,
+                'triggering families' : self.info_get_triggering_families,
                 'first-parent ancestors'    : self.info_get_first_parent_ancestors,
                 'first-parent descendants'  : self.info_get_first_parent_descendants,
                 'do live graph movie'       : self.info_do_live_graph_movie,
@@ -444,14 +443,15 @@ class scheduler(object):
                 info[ name ] = ['ERROR: no such task type']
         return info
 
-    def info_get_family_nodes( self ):
-        return self.config.get_first_parent_descendants().keys()
+    def info_get_all_families( self, exclude_root=False ):
+        fams = self.config.get_first_parent_descendants().keys()
+        if exclude_root:
+            return fams[:-1]
+        else:
+            return fams
 
-    def info_get_graphed_family_nodes( self ):
-        return self.config.families_used_in_graph
-
-    def info_get_vis_families( self ):
-        return self.config.vis_families
+    def info_get_triggering_families( self ):
+        return self.config.triggering_families
 
     def info_get_first_parent_descendants( self ):
         # families for single-inheritance hierarchy based on first parents
