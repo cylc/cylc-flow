@@ -98,7 +98,6 @@
         [[[suite state polling]]]
             timeout = float( default=10 )
             interval = float( default=1 )
-            status = string( default='succeeded' )
             host = string( default='localhost' )
             offset = integer( default=0 )
         [[[environment]]]

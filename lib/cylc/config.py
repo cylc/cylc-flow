@@ -50,7 +50,8 @@ from C3MRO import C3
 from config_list import get_expanded_float_list
 
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
-
+TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
+ 
 try:
     import graphing
 except ImportError:
@@ -1275,12 +1276,17 @@ Some translations were performed on the fly."""
 
         # Find any dependence on other suites, record the polling target
         # info and replace with just the local task name, e.g.:
-        # "foo<SUITE::TASK> => bar"  becomes "foo => bar"
+        # "foo<SUITE::TASK:fail> => bar"  becomes "foo => bar"
         # (and record that foo must automatically poll for TASK in SUITE)
         repl = Replacement( '\\1' )
-        line = re.sub( '(\w+)<(\w+)::(\w+)>', repl, line )
+        line = re.sub( '(\w+)<(\w+)::(\w+)(:\w+)?>', repl, line )
         for item in repl.match_groups:
-            self.suite_polling_tasks[ item[0] ] = ( item[1:] )
+            l_task, r_suite, r_task, r_status = item
+            if r_status:
+                r_status = r_status[1:]
+            else: # default
+                r_status = 'succeed'
+            self.suite_polling_tasks[ l_task ] = ( r_suite, r_task, r_status )
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.runtime['descendants']:
@@ -1304,9 +1310,9 @@ Some translations were performed on the fly."""
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
-                line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
-                line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
+            for trig_type in TRIGGER_TYPES:
+                line = self.replace_family_triggers( line, fam, members, ':'+trig_type + '-all' )
+                line = self.replace_family_triggers( line, fam, members, ':'+trig_type + '-any' )
 
             if re.search( r"\b" + fam + r"\b:", line ):
                 # fam:illegal
@@ -1535,8 +1541,9 @@ Some translations were performed on the fly."""
 
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
-                        'suite' : self.suite_polling_tasks[name][0],
-                        'task'  : self.suite_polling_tasks[name][1] }
+                        'suite'  : self.suite_polling_tasks[name][0],
+                        'task'   : self.suite_polling_tasks[name][1],
+                        'status' : self.suite_polling_tasks[name][2] }
 
             if offset:
                 # adjust cycler state and add

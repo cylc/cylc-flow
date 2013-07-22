@@ -566,7 +566,7 @@ class task( object ):
         # NOTE: not using__import__() keyword arguments:
         #mod = __import__( module_name, fromlist=[class_name] )
         # as these were only introduced in Python 2.5.
-        # TODO - UPGRADE TO THE 2.5 FORM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # TODO - UPGRADE TO THE 2.5 FORM
         try:
             # try to import built-in job submission classes first
             mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
@@ -606,7 +606,7 @@ class task( object ):
             comstr = "cylc suite-state " + self.suite_polling_cfg['suite'] + \
                       " --task=" + self.suite_polling_cfg['task'] + \
                       " --cycle=" + cycle + \
-                      " --status=" + rtconfig['suite state polling']['status'] + \
+                      " --status=" + self.suite_polling_cfg['status'] + \
                       " --host=" + rtconfig['suite state polling']['host'] + \
                       " --timeout=" + str( rtconfig['suite state polling']['timeout']*60 ) + \
                       " --interval=" + str( rtconfig['suite state polling']['interval']*60 ) + \
