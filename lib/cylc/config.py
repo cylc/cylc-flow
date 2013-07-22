@@ -1617,6 +1617,9 @@ Some translations were performed on the fly."""
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
+                if node not in self.runtime['descendants']:
+                    # not a family node
+                    continue
                 if node in self.closed_families:
                     self.closed_families.remove(node)
                 if ungroup_recursive:
