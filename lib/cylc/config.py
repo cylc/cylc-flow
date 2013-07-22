@@ -1873,6 +1873,15 @@ Some translations were performed on the fly."""
             # generate pygraphviz graph nodes and edges, and task definitions
             self.process_graph_line( line, section, ttype, cyclr )
 
+        # Check command scripting not defined for automatic suite polling tasks
+        for l_task in self.suite_polling_tasks:
+            try:
+                cs = self['runtime'][l_task]['command scripting']
+            except:
+                pass
+            else:
+                raise SuiteConfigError( "ERROR: command scripting defined in automatic suite polling task " + l_task )
+
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
 
