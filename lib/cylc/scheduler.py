@@ -663,11 +663,7 @@ class scheduler(object):
             name, tag = task_id.split( TaskID.DELIM )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
             new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
-            if self.check_new_task_proxy( new_task ):
-                self.pool.add( new_task )
-            else:
-                new_task.prepare_for_death()
-                del new_task
+            self.add_new_task_proxy( new_task )
 
     def command_nudge( self ):
         # just to cause the task processing loop to be invoked
@@ -757,7 +753,8 @@ class scheduler(object):
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
                     self.pool.remove( itask, '(suite definition reload)' )
-                    self.pool.add( new_task )
+                    self.add_new_task_proxy( new_task )
+
         self.reconfiguring = found
 
     def parse_commandline( self ):
@@ -1551,20 +1548,26 @@ class scheduler(object):
 
         return True
 
+    def add_new_task_proxy( self, new_task ):
+        """Add a given new task proxy to the pool, or destroy it."""
+        added = False
+        if self.check_new_task_proxy( new_task, new_task ):
+            if self.pool.add( new_task ):
+                added = True
+        if not added:
+            new_task.prepare_for_death()
+            del new_task
+        return added
+
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
             return None
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if self.check_new_task_proxy( new_task, itask ):
-            if self.pool.add( new_task ):
-                return new_task
-            else:
-                return None
+        if self.add_new_task_proxy( new_task ):
+            return new_task
         else:
-            new_task.prepare_for_death()
-            del new_task
             return None
 
     def spawn( self ):

@@ -72,7 +72,7 @@ class pool(object):
             # already in the pool, or if an inserted cycling task
             # catches up with an existing one with the same ID.
             self.log.warning( itask.id + ' cannot be added: task ID already exists' )
-            return
+            return False
         # Connect the new task to the pyro daemon
         try:
             self.pyro.connect( itask.message_queue, itask.id )
@@ -81,7 +81,7 @@ class pool(object):
                 raise
             print >> sys.stderr, x
             self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )
-            return
+            return False
         # add the new task to the appropriate queue
         queue = self.myq[itask.name]
         if queue not in self.queues:
@@ -90,6 +90,7 @@ class pool(object):
             self.queues[queue].append(itask)
         flags.pflag = True
         itask.log('DEBUG', "task proxy added to the pool" )
+        return True
 
     def remove( self, task, reason=None ):
         # remove a task from the pool
