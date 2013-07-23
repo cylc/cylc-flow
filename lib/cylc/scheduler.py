@@ -172,9 +172,8 @@ class scheduler(object):
                 'suite info'        : self.info_get_suite_info,
                 'task list'         : self.info_get_task_list,
                 'task info'         : self.info_get_task_info,
-                'family nodes'      : self.info_get_family_nodes,
-                'graphed family nodes' : self.info_get_graphed_family_nodes,
-                'vis families'      : self.info_get_vis_families,
+                'all families'      : self.info_get_all_families,
+                'triggering families' : self.info_get_triggering_families,
                 'first-parent ancestors'    : self.info_get_first_parent_ancestors,
                 'first-parent descendants'  : self.info_get_first_parent_descendants,
                 'do live graph movie'       : self.info_do_live_graph_movie,
@@ -280,6 +279,21 @@ class scheduler(object):
         if self.stop_tag:
             self.stop_tag = self.ctexpand( self.stop_tag)
 
+        # initial cycle time
+        if self.is_restart:
+            # self.ict is set by "cylc restart" after loading state dump
+            pass
+        else:
+            if self.options.warm:
+                if self.options.set_ict:
+                    self.ict = self.start_tag
+                else:
+                    self.ict = None
+            elif self.options.raw:
+                self.ict = None
+            else:
+                self.ict = self.start_tag
+
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
@@ -299,21 +313,6 @@ class scheduler(object):
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
         self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime )
         self.pyro.connect( self.suite_state, 'state_summary')
-
-        # initial cycle time
-        if self.is_restart:
-            # self.ict is set by "cylc restart" after loading state dump
-            pass
-        else:
-            if self.options.warm:
-                if self.options.set_ict:
-                    self.ict = self.start_tag
-                else:
-                    self.ict = None
-            elif self.options.raw:
-                self.ict = None
-            else:
-                self.ict = self.start_tag
 
         self.state_dumper.set_cts( self.ict, self.stop_tag )
         self.configure_suite_environment()
@@ -444,14 +443,15 @@ class scheduler(object):
                 info[ name ] = ['ERROR: no such task type']
         return info
 
-    def info_get_family_nodes( self ):
-        return self.config.get_first_parent_descendants().keys()
+    def info_get_all_families( self, exclude_root=False ):
+        fams = self.config.get_first_parent_descendants().keys()
+        if exclude_root:
+            return fams[:-1]
+        else:
+            return fams
 
-    def info_get_graphed_family_nodes( self ):
-        return self.config.families_used_in_graph
-
-    def info_get_vis_families( self ):
-        return self.config.vis_families
+    def info_get_triggering_families( self ):
+        return self.config.triggering_families
 
     def info_get_first_parent_descendants( self ):
         # families for single-inheritance hierarchy based on first parents
@@ -815,10 +815,30 @@ class scheduler(object):
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
+        # initial cycle time override
+        override = None
+        if self.is_restart:
+            # self.ict is set by "cylc restart" after loading state dump
+            pass
+        else:
+            if self.options.warm:
+                if self.options.set_ict:
+                    override = self.start_tag
+                else:
+                    override = None
+            elif self.options.raw:
+                override = None
+            else:
+                override = self.start_tag    
+        
+        # will need adjusting for ISO8601 time specification  
+        if override == "now":
+            override = datetime.datetime.now().strftime("%Y%m%d%H") 
+
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose )
+                verbose=self.verbose, override=override, is_restart=self.is_restart )
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -1729,12 +1749,10 @@ class scheduler(object):
 
     def command_add_prerequisite( self, task_id, message ):
         # find the task to reset
-        found = False
         for itask in self.pool.get_tasks():
             if itask.id == task_id:
-                found = True
                 break
-        if not found:
+        else:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
 
         pp = plain_prerequisites( task_id ) 

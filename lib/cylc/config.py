@@ -202,7 +202,8 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite, suiterc, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False, collapsed=[] ):
+            verbose=False, validation=False, strict=False, collapsed=[],
+            override=None, is_restart=False ):
 
         self.run_mode = run_mode
         self.verbose = verbose
@@ -212,6 +213,8 @@ class config( CylcConfigObj ):
         self.cyclers = []
         self.taskdefs = OrderedDict()
         self.validation = validation
+        self.override = override
+        self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
         self.suite_polling_tasks = {}
@@ -243,7 +246,7 @@ class config( CylcConfigObj ):
         # (first-parents are used for visualization purposes)
         # (tasks - leaves on the tree - do not appear in 'descendants')
 
-        self.families_used_in_graph = []
+        self.triggering_families = []
 
         self.suite = suite
         self.file = suiterc
@@ -437,7 +440,6 @@ class config( CylcConfigObj ):
             if cfam not in self.runtime['descendants'] and self.verbose:
                 print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
                 self.closed_families.remove( cfam )
-        self.vis_families = list(self.closed_families)
 
         # check for run mode override at suite level
         if self['cylc']['force run mode']:
@@ -1240,8 +1242,8 @@ Some translations were performed on the fly."""
         m.reverse() # ... then last
         for grp in m:
             exclam, foffset = grp 
-            if fam not in self.families_used_in_graph:
-                self.families_used_in_graph.append(fam)
+            if fam not in self.triggering_families:
+                self.triggering_families.append(fam)
             mems = paren_open + connector.join( [ exclam + i + foffset + repl for i in members ] ) + paren_close
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
@@ -1665,6 +1667,9 @@ Some translations were performed on the fly."""
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
+                if node not in self.runtime['descendants']:
+                    # not a family node
+                    continue
                 if node in self.closed_families:
                     self.closed_families.remove(node)
                 if ungroup_recursive:
@@ -1891,7 +1896,15 @@ Some translations were performed on the fly."""
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
 
-        taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode )
+        if self.override:
+            ict = self.override
+        elif self['scheduling']['initial cycle time'] and not self.is_restart:
+                # Use suite.rc initial cycle time
+            ict = str(self['scheduling']['initial cycle time'])
+        else:
+            ict = None
+
+        taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode, ict ) 
 
         # TODO - put all taskd.foo items in a single config dict
         # SET ONE-OFF AND COLD-START TASK INDICATORS

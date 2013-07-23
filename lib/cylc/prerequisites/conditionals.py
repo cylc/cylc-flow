@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys
+from simplify import conditional_simplifier
 
 # label1 => "foo ready for <TAG>
 # label2 => "bar.<TAG> succeeded"
@@ -32,7 +33,7 @@ class conditional_prerequisites(object):
 
     TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
 
-    def __init__( self, owner_id ):
+    def __init__( self, owner_id, ict=None ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 
@@ -40,6 +41,7 @@ class conditional_prerequisites(object):
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.auto_label = 0
         self.excess_labels = []
+        self.ict = ict
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
@@ -76,27 +78,54 @@ class conditional_prerequisites(object):
         # 'foo:fail | foo'
         # 'foo[T-6]:out1 | baz'
 
+        drop_these = []
+        for k in self.messages:
+            if self.ict:
+                task = re.search( r'(.*).(.*) ', self.messages[k])
+                if task.group:
+                    try:
+                        if (int(task.group().split(".")[1]) < int(self.ict) and 
+                            int(task.group().split(".")[1]) != 1):
+                            drop_these.append(k)
+                    except IndexError:
+                        pass
+
+        if drop_these:
+            simpler = conditional_simplifier(expr, drop_these)
+            expr = simpler.get_cleaned()
+
         # make into a python expression
         self.raw_conditional_expression = expr
         for label in self.messages:
             # match label start and end on on word boundary
             expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
+            
         for label in self.excess_labels:
             # treat duplicate triggers as always satisfied
             expr = re.sub( r'\b' + label + r'\b', 'True', expr )
             self.raw_conditional_expression = re.sub( r'\b' + label + r'\b', 'True', self.raw_conditional_expression )
 
+        for label in drop_these:
+            if self.messages.get(label):
+                msg = self.messages[label]
+                self.messages.pop(label)
+                self.satisfied.pop(label)
+                self.labels.pop(msg)
+
         self.conditional_expression = expr
 
     def all_satisfied( self ):
-        try:
-            res = eval( self.conditional_expression )
-        except Exception, x:
-            print >> sys.stderr, 'ERROR:', x
-            if str(x).find("unexpected EOF") != -1:
-                print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
-            raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
-        return res
+        if self.conditional_expression == "()":
+            return True
+        else:
+            try:
+                res = eval( self.conditional_expression )
+            except Exception, x:
+                print >> sys.stderr, 'ERROR:', x
+                if str(x).find("unexpected EOF") != -1:
+                    print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
+                raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
+            return res
             
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prequisites?

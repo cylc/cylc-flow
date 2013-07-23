@@ -24,14 +24,14 @@ from plain_prerequisites import plain_prerequisites
 
 class loose_prerequisites( plain_prerequisites ):
     is_loose = True
-    def __init__( self, owner_id ):
+    def __init__( self, owner_id, ict=None ):
         self.match_group = {}
-        plain_prerequisites.__init__( self, owner_id )
+        plain_prerequisites.__init__( self, owner_id, ict )
 
-    def add( self, message ):
+    def add( self, message, startup = False ):
         # TODO - CHECK FOR LOOSE PATTERN HERE
         # see fuzzy_prerequisites for example
-        plain_prerequisites.add( self, message )
+        plain_prerequisites.add( self, message, startup )
 
     def sharpen_up( self, loose, sharp ):
         # replace a loose prerequisite with the actual output message
