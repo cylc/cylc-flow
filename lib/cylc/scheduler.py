@@ -1534,19 +1534,22 @@ class scheduler(object):
                 return True
 
         # hold tasks with future triggers beyond the final cycle time
-        if self.stop_tag:
-            res = False
-            for pct in new_task.prerequisites.get_target_tags():
-                if int( ct(pct).get() ) > int(self.stop_tag):
-                    res = True
-                    break
-            if res:
-                new_task.log( "NORMAL", "HOLDING (future trigger beyond stop cycle)" )
-                self.held_future_tasks.append( new_task.id )
-                new_task.reset_state_held()
-                return True
+        if self.task_has_future_trigger_overrun( new_task ):
+            new_task.log( "NORMAL", "HOLDING (future trigger beyond stop cycle)" )
+            self.held_future_tasks.append( new_task.id )
+            new_task.reset_state_held()
+            return True
 
         return True
+
+    def task_has_future_trigger_overrun( self, itask ):
+        # check for future triggers extending beyond the final cycle
+        if not self.stop_tag:
+            return
+        for pct in itask.prerequisites.get_target_tags():
+            if int( ct(pct).get() ) > int(self.stop_tag):
+                return True
+        return False
 
     def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
