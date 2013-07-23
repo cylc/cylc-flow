@@ -1493,20 +1493,20 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_new_task_proxy( self, new_task, old_task=None ):
+    def check_new_task_proxy( self, new_task, prev_instance=None ):
         """Adjust new task proxy and return True, or False to reject it."""
 
         # tasks with configured stop cycles
-        if old_task:
-            if old_task.stop_c_time:
+        if prev_instance:
+            if prev_instance.stop_c_time:
                 # this task has a stop cycle
-                if int( new_task.c_time ) > int( old_task.stop_c_time ):
+                if int( new_task.c_time ) > int( prev_instance.stop_c_time ):
                     # stop cycle reached
                     self.log.info( "Rejecting new task beyond its stop cycle: " + new_task.id )
                     return False
                 else:
                     # stop cycle not reached, perpetuate it
-                    new_task.stop_c_time = old_task.stop_c_time
+                    new_task.stop_c_time = prev_instance.stop_c_time
 
         # hold the new task if necessary
         hold = False
@@ -1551,10 +1551,10 @@ class scheduler(object):
                 return True
         return False
 
-    def add_new_task_proxy( self, new_task ):
+    def add_new_task_proxy( self, new_task, prev_instance=None ):
         """Add a given new task proxy to the pool, or destroy it."""
         added = False
-        if self.check_new_task_proxy( new_task, new_task ):
+        if self.check_new_task_proxy( new_task, prev_instance ):
             if self.pool.add( new_task ):
                 added = True
         if not added:
@@ -1568,7 +1568,7 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if self.add_new_task_proxy( new_task ):
+        if self.add_new_task_proxy( new_task, itask ):
             return new_task
         else:
             return None
