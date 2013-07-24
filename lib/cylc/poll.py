@@ -25,7 +25,7 @@ class poller( object ):
     check_once() instead of poll() for a one-off check on the condition."""
 
     @classmethod
-    def add_to_cmd_options( cls, parser ):
+    def add_to_cmd_options( cls, parser, default_interval=5 ):
         """Add common command line options for polling."""
 
         # Only long option names to reduce chance of conflicts,
@@ -42,8 +42,9 @@ class poller( object ):
             action="store", dest="timeout", default=None )
 
         parser.add_option( "--interval",
-            help="(with -w/--wait) Polling interval in seconds (default=5).",
-            action="store", dest="interval", default=5 )
+            help="(with -w/--wait) Polling interval in seconds (default " + \
+                    str(default_interval) + ").",
+            action="store", dest="interval", default=default_interval )
 
     def __init__( self, condition, timeout=None, interval=5, args={} ):
 
