@@ -134,6 +134,8 @@ class scheduler(object):
         self.state_dumper = None
         self.runtime_graph_on = None
 
+        self.held_future_tasks = []
+
         # COMMANDLINE OPTIONS
 
         self.parser.add_option( "--until", 
@@ -659,44 +661,9 @@ class scheduler(object):
 
         for task_id in task_ids:
             name, tag = task_id.split( TaskID.DELIM )
-            gotit = False
-            try:
-                itask = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
-            except KeyError, x:
-                try:
-                    # TODO - do we still need this?
-                    itask = self.config.get_task_proxy_raw( name, tag, 'waiting', stop_tag, startup=False )
-                except SuiteConfigError,x:
-                    self.log.warning( str(x) )
-                else:
-                    gotit = True
-            else: 
-                gotit = True
-
-            if not gotit:
-                continue
-
-            # The cycle time can be altered during task init so create the task before
-            # checking if it already exists or if its stop time has been reached.
-            rject = False
-            for jtask in self.pool.get_tasks():
-                if itask.id == jtask.id:
-                    # reject
-                    self.log.warning( 'Rejecting insertion task ' + itask.id + '(already exists)' )
-                    itask.prepare_for_death()
-                    del itask
-                    rject = True
-                    break
-            if not rject:
-                # insert
-                if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                    itask.log( "NORMAL", "HOLDING at configured suite stop time " + self.stop_tag )
-                    itask.reset_state_held()
-                if itask.stop_tag and int( itask.tag ) > int( itask.stop_tag ):
-                    # this task has a stop time configured, and we've reached it
-                    itask.log( "NORMAL", "HOLDING at configured task stop time " + itask.stop_tag )
-                    itask.reset_state_held()
-                self.pool.add( itask )
+            # TODO - insertion of start-up tasks? (startup=False is assumed here)
+            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
+            self.add_new_task_proxy( new_task )
 
     def command_nudge( self ):
         # just to cause the task processing loop to be invoked
@@ -786,7 +753,8 @@ class scheduler(object):
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
                     self.pool.remove( itask, '(suite definition reload)' )
-                    self.pool.add( new_task )
+                    self.add_new_task_proxy( new_task )
+
         self.reconfiguring = found
 
     def parse_commandline( self ):
@@ -1525,52 +1493,74 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
+    def check_new_task_proxy( self, new_task, prev_instance=None ):
+        """Adjust new task proxy and return True, or False to reject it."""
 
-    def future_trigger_stopped( self, itask ):
-        """If a future-triggered task reaches beyond the suite final
-        cycle time, we hold it so the suite can shut down normally when
-        other non future-triggered tasks are held beyond the final cycle."""
-        res = False
+        # tasks with configured stop cycles
+        if prev_instance:
+            if prev_instance.stop_c_time:
+                # this task has a stop cycle
+                if int( new_task.c_time ) > int( prev_instance.stop_c_time ):
+                    # stop cycle reached
+                    self.log.info( "Rejecting new task beyond its stop cycle: " + new_task.id )
+                    return False
+                else:
+                    # stop cycle not reached, perpetuate it
+                    new_task.stop_c_time = prev_instance.stop_c_time
+
+        # hold the new task if necessary
+        hold = False
+        if self.hold_suite_now:
+            hold = True
+            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+        if self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
+            hold = True
+            new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+        if self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
+            hold = True
+            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+        if hold:
+            new_task.reset_state_held()
+            return True
+
+        # tasks beyond the runahead limit
+        if self.runahead_limit:
+            ouct = self.get_runahead_base()
+            foo = ct( new_task.c_time )
+            foo.decrement( hours=self.runahead_limit )
+            if int( foo.get() ) >= int( ouct ):
+                new_task.log( "NORMAL", "HOLDING (beyond runahead limit)" )
+                new_task.reset_state_runahead()
+                return True
+
+        # hold tasks with future triggers beyond the final cycle time
+        if self.task_has_future_trigger_overrun( new_task ):
+            new_task.log( "NORMAL", "HOLDING (future trigger beyond stop cycle)" )
+            self.held_future_tasks.append( new_task.id )
+            new_task.reset_state_held()
+            return True
+
+        return True
+
+    def task_has_future_trigger_overrun( self, itask ):
+        # check for future triggers extending beyond the final cycle
+        if not self.stop_tag:
+            return
         for pct in itask.prerequisites.get_target_tags():
             if int( ct(pct).get() ) > int(self.stop_tag):
-                res = True
-                break
-        return res
+                return True
+        return False
 
-
-    def check_hold_spawned_task( self, old_task, new_task ):
-        if self.hold_suite_now:
-            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
-            new_task.reset_state_held()
-        elif self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
-            # we've reached the suite stop time
-            new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
-            new_task.reset_state_held()
-        elif self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
-            # we've reached the suite hold time
-            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
-            new_task.reset_state_held()
-        elif old_task.stop_c_time and int( new_task.c_time ) > int( old_task.stop_c_time ):
-            # this task has a stop time configured, and we've reached it
-            new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + old_task.stop_c_time )
-            new_task.reset_state_held()
-        else:
-            held = False
-            if self.runahead_limit:
-                ouct = self.get_runahead_base()
-                foo = ct( new_task.c_time )
-                foo.decrement( hours=self.runahead_limit )
-                if int( foo.get() ) >= int( ouct ):
-                    # beyond the runahead limit
-                    new_task.log( "NORMAL", "HOLDING (runahead limit)" )
-                    new_task.reset_state_runahead()
-                    held = True
-
-            if not held and self.stop_tag:
-                # check for future triggers beyond the final cycle time
-                if self.future_trigger_stopped( new_task ):
-                    new_task.log( "NORMAL", "HOLDING (future trigger beyond stop time)" )
-                    new_task.reset_state_held()
+    def add_new_task_proxy( self, new_task, prev_instance=None ):
+        """Add a given new task proxy to the pool, or destroy it."""
+        added = False
+        if self.check_new_task_proxy( new_task, prev_instance ):
+            if self.pool.add( new_task ):
+                added = True
+        if not added:
+            new_task.prepare_for_death()
+            del new_task
+        return added
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -1578,11 +1568,10 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        self.check_hold_spawned_task( itask, new_task )
-        # perpetuate the task stop time, if there is one
-        new_task.stop_c_time = itask.stop_c_time
-        self.pool.add( new_task )
-        return new_task
+        if self.add_new_task_proxy( new_task, itask ):
+            return new_task
+        else:
+            return None
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -1951,12 +1940,10 @@ class scheduler(object):
                 if self.stop_tag:
                     if int( itask.c_time ) <= int( self.stop_tag ):
                         if itask.state.is_currently('succeeded') and itask.has_spawned():
-                            # a succeeded task that is earlier than the
-                            # stop cycle can be ignored if it has
-                            # spawned, in which case the successor matters.
+                            # ignore spawned succeeded tasks - their successors matter
                             pass
-                        elif itask.state.is_currently('held') and self.future_trigger_stopped(itask):
-                            # held because it's triggers reache beyond the stop time
+                        elif itask.id in self.held_future_tasks:
+                            # unless held because a future trigger reaches beyond the stop cycle
                             i_fut = True
                             pass
                         else:

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import os, re
+import os, sys, re
 import datetime
+from difflib import unified_diff
 
 class LogAnalyserError( Exception ):
     def __init__( self, msg ):
@@ -83,6 +84,8 @@ class LogAnalyser( object ):
         ref.sort()
 
         if new != ref:
+            diff = unified_diff( new, ref )
+            print >> sys.stderr, '\n'.join(diff)
             raise LogAnalyserError( "ERROR: triggering is NOT consistent with the reference log" )
         else:
             print "LogAnalyser: triggering is consistent with the reference log"
