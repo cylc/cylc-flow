@@ -66,39 +66,43 @@ class pool(object):
             self.queues = self.new_queues
 
     def add( self, itask ):
+        """Add the given new task if one with the same ID does not already exist"""
+        if self.id_exists( itask.id ):
+            # This can happen by manual insertion of task that is
+            # already in the pool, or if an inserted cycling task
+            # catches up with an existing one with the same ID.
+            self.log.warning( itask.id + ' cannot be added: task ID already exists' )
+            return False
+        # Connect the new task to the pyro daemon
         try:
             self.pyro.connect( itask.message_queue, itask.id )
-        except NamingError, x:
-            # Attempted insertion of a task that already exists.
-            print >> sys.stderr, x
-            self.log.critical( itask.id + ' CANNOT BE INSERTED (already exists)' )
-            return
         except Exception, x:
+            if self.debug:
+                raise
             print >> sys.stderr, x
-            self.log.critical( itask.id + ' CANNOT BE INSERTED (unknown error)' )
-            return
-
-        # add task to the appropriate queue
+            self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )
+            return False
+        # add the new task to the appropriate queue
         queue = self.myq[itask.name]
         if queue not in self.queues:
             self.queues[queue] = [itask]
         else:
             self.queues[queue].append(itask)
         flags.pflag = True
-        itask.log('DEBUG', "task proxy inserted" )
+        itask.log('DEBUG', "task proxy added to the pool" )
+        return True
 
     def remove( self, task, reason=None ):
         # remove a task from the pool
         try:
             self.pyro.disconnect( task.message_queue )
         except NamingError, x:
-            # Attempted removal of a task that does not exist.
             print >> sys.stderr, x
-            self.log.critical( task.id + ' CANNOT BE REMOVED (no such task)' )
+            self.log.critical( task.id + ' cannot be removed (task not found)' )
             return
         except Exception, x:
             print >> sys.stderr, x
-            self.log.critical( task.id + ' CANNOT BE REMOVED (unknown error)' )
+            self.log.critical( task.id + ' cannot be removed (unknown error)' )
             return
         task.prepare_for_death()
         # remove task from its queue
@@ -111,11 +115,20 @@ class pool(object):
         del task
 
     def get_tasks( self ):
+        """Return a list of all task proxies"""
         tasks = []
         for queue in self.queues:
             tasks += self.queues[queue]
         #tasks.sort() # sorting any use here?
         return tasks
+
+    def id_exists( self, id ):
+        """Check if a task with the given ID is in the pool"""
+        for queue in self.queues:
+            for task in self.queues[queue]:
+                if task.id == id:
+                    return True
+        return False
 
     def process( self ):
         readytogo = []

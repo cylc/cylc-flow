@@ -31,9 +31,19 @@ from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] insert [OPTIONS] ARGS
 
-Insert tasks into a running suite.
+Insert task proxies into a running suite. Uses of insertion include:
+ 1) insert a task that was excluded by the suite definition at start-up.
+ 2) reinstate a task that was previously removed from a running suite.
+ 3) re-run an old task that cannot be retriggered because its task proxy
+ is no longer live in the a suite.
 
-See also 'cylc submit', for running single tasks outside of the scheduler.
+Be aware that inserted cycling tasks keep on cycling as normal, even if
+another instance of the same task exists at a later cycle (instances of
+the same task at different cycles can coexist, but a newly spawned task
+will not be added to the pool if it catches up to another task with the
+same ID).
+
+See also 'cylc submit', for running tasks without the scheduler.
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"), 
         ('MATCH', 'Task or family name matching regular expression'),
