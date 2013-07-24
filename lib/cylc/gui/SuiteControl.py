@@ -398,8 +398,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.create_info_bar()
 
-        self.updater = Updater(self.cfg, self.info_bar)
-        self.updater.start()
+        self.updater = None
 
         self.views_parent = gtk.VBox()
         bigbox.pack_start( self.views_parent, True )
@@ -429,6 +428,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.tool_bar_box.set_sensitive(True)
         for menu in self.suite_menus:
             menu.set_sensitive(True)
+
+        if self.updater is not None:
+            self.updater.stop()
+        self.updater = Updater(self.cfg, self.info_bar)
+        self.updater.start()
 
         self.restart_views()
 
