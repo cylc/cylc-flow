@@ -698,6 +698,7 @@ class BaseSummaryTimeoutUpdater(object):
     def start(self):
         """Start looping."""
         self.quit = False
+        self._last_running_time = None
         gobject.timeout_add(1000, self.run)
         return False
 
