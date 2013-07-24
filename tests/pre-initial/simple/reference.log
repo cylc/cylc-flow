@@ -1,0 +1,49 @@
+2013/07/23 15:29:18 INFO - Thread-2 start (Event Handler Submission)
+2013/07/23 15:29:18 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/07/23 15:29:18 INFO - port:7766
+2013/07/23 15:29:18 CRITICAL - Suite starting at 2013-07-23 15:29:18.050996
+2013/07/23 15:29:18 INFO - Log event clock: real time
+2013/07/23 15:29:18 INFO - Run mode: live
+2013/07/23 15:29:18 INFO - Start tag: 2010010100
+2013/07/23 15:29:18 INFO - Stop tag: 2010010200
+2013/07/23 15:29:18 INFO - Thread-4 start (Job Submission)
+2013/07/23 15:29:18 INFO - Thread-5 start (Request Handling)
+2013/07/23 15:29:18 INFO - Cold Start 2010010100
+2013/07/23 15:29:18 INFO - [a.2010010100] -(setting:submitting)
+2013/07/23 15:29:18 INFO - [a.2010010100] -triggered off []
+2013/07/23 15:29:19 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
+2013/07/23 15:29:19 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
+2013/07/23 15:29:19 INFO - [a.2010010100] -(setting:submitted)
+2013/07/23 15:29:19 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=17828
+2013/07/23 15:29:20 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-07-23T15:29:19
+2013/07/23 15:29:20 INFO - [a.2010010100] -(setting:running)
+2013/07/23 15:29:21 INFO - [a.2010010118] -(setting:submitting)
+2013/07/23 15:29:21 INFO - [a.2010010118] -triggered off []
+2013/07/23 15:29:22 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-07-23T15:29:21
+2013/07/23 15:29:22 INFO - [a.2010010100] -(setting:succeeded)
+2013/07/23 15:29:22 INFO - [a.2010010118] -(current:submitting)> a.2010010118 submitting now
+2013/07/23 15:29:22 INFO - [a.2010010118] -(current:submitting)> a.2010010118 submission succeeded
+2013/07/23 15:29:22 INFO - [a.2010010118] -(setting:submitted)
+2013/07/23 15:29:22 INFO - [a.2010010118] -(current:submitted)> a.2010010118 submit_method_id=17934
+2013/07/23 15:29:23 INFO - [a.2010010118] -(current:submitted)> a.2010010118 started at 2013-07-23T15:29:22
+2013/07/23 15:29:23 INFO - [a.2010010118] -(setting:running)
+2013/07/23 15:29:25 INFO - [a.2010010118] -(current:running)> a.2010010118 succeeded at 2013-07-23T15:29:24
+2013/07/23 15:29:25 INFO - [a.2010010118] -(setting:succeeded)
+2013/07/23 15:29:25 INFO - [a.2010010200] -(setting:submitting)
+2013/07/23 15:29:25 INFO - [a.2010010200] -triggered off ['a.2010010118']
+2013/07/23 15:29:26 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submitting now
+2013/07/23 15:29:26 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submission succeeded
+2013/07/23 15:29:26 INFO - [a.2010010200] -(setting:submitted)
+2013/07/23 15:29:26 INFO - [a.2010010200] -(current:submitted)> a.2010010200 submit_method_id=18040
+2013/07/23 15:29:27 INFO - [a.2010010200] -(current:submitted)> a.2010010200 started at 2013-07-23T15:29:26
+2013/07/23 15:29:27 INFO - [a.2010010200] -(setting:running)
+2013/07/23 15:29:27 INFO - [a.2010010218] -HOLDING (beyond suite stop cycle) 2010010200
+2013/07/23 15:29:27 INFO - [a.2010010218] -(setting:held)
+2013/07/23 15:29:29 INFO - [a.2010010200] -(current:running)> a.2010010200 succeeded at 2013-07-23T15:29:28
+2013/07/23 15:29:29 INFO - [a.2010010200] -(setting:succeeded)
+2013/07/23 15:29:29 INFO - All normal cycling tasks have spawned past the final cycle 2010010200
+2013/07/23 15:29:29 CRITICAL - Suite shutting down at 2013-07-23 15:29:29.252008
+2013/07/23 15:29:30 INFO - Thread-4 exit (Job Submission)
+2013/07/23 15:29:31 INFO - Thread-2 exit (Event Handler Submission)
+2013/07/23 15:29:32 INFO - Thread-3 exit (Poll and Kill Command Submission)
+2013/07/23 15:29:32 INFO - Thread-5 exit (Request Handling)

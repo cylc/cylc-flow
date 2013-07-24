@@ -1,0 +1,13 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time = 2010010200
+    [[dependencies]]
+        [[[0, 6, 12, 18]]]
+            graph = "a[T-6] & b[T-6] => a"
+[runtime]
+    [[a, b]]
+        command scripting = "sleep 1"
