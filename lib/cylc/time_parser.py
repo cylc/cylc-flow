@@ -34,7 +34,7 @@ time for inter-cycle task references such as "foo[-P6Y] => foo".
 import re
 import unittest
 
-import CylcError
+import cylc.CylcError
 import isodatetime
 
 
