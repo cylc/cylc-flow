@@ -25,6 +25,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 
 import gtk
 import gobject
@@ -125,6 +126,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self.dots = DotMaker(self.theme)
         self.statuses = {}
         self.stop_summaries = {}
+        self._set_exception_hook()
         super(SummaryPanelAppletUpdater, self).__init__(
                               hosts, owner=owner, poll_interval=poll_interval)
 
@@ -312,6 +314,23 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
     def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
         return True
+
+    def _set_exception_hook(self):
+        # Handle an uncaught exception.
+        normal_hook = sys.excepthook
+        sys.excepthook = (lambda e_class, e, trace:
+                          self._handle_exception(e_class, e, trace,
+                                                 normal_hook))
+
+    def _handle_exception(self, exception_class, exception, trace, hook):
+        self.gcylc_image.set_from_stock(gtk.STOCK_DIALOG_ERROR,
+                                        gtk.ICON_SIZE_MENU)
+        error_text = "cylc gpanel failed with:\n"
+        error_text += "".join(traceback.format_exception(
+                                        exception_class, exception, trace))
+        error_text = error_text.rstrip()
+        self._set_tooltip(self.gcylc_image, error_text)
+        hook(exception_class, exception, trace)
 
     def _set_gcylc_image_tooltip(self):
         if self.quit:
