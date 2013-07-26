@@ -300,7 +300,7 @@ class TreeUpdater(threading.Thread):
         """Expand a row if it matches expand_me ctimes and names."""
         ctime_name_tuple = self._get_row_id( model, rpath )
         if ctime_name_tuple in expand_me:
-            self.ttreeview.expand_row( rpath, False )
+            self.ttreeview.expand_to_path( rpath )
         return False
 
     def _update_path_info( self, row_iter, descendant_state, descendant_name ):
