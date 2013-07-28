@@ -216,7 +216,7 @@ Arguments:"""
 
         if self.jset:
             if options.templatevars_file:
-                options.templatevars_file = os.path.abspath( options.templatevars_file )
+                options.templatevars_file = os.path.abspath( os.path.expanduser( options.templatevars_file ))
 
         if self.prep:
             # allow file path or suite name 
