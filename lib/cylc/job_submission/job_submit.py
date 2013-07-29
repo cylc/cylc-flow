@@ -243,7 +243,11 @@ class job_submit(object):
                 str(self.jobconfig.get('submission try number')) + ',' + \
                 str( self.jobconfig.get('try number')) + '):', command
         try:
-            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE )
+            # "close_fds=True" required here to prevent the process from
+            # hanging on to the file descriptor that was used to write the job
+            # script, the root cause of the random "text file busy" error.
+            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE,
+                       close_fds=True )
         except OSError, e:
             if debug:
                 raise

@@ -60,4 +60,3 @@ except Exception, x:
 else:
     print "Triggering check passed"
 
-

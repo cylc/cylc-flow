@@ -104,8 +104,8 @@ class Updater(threading.Thread):
         self.task_list = []
         self.state_summary = {}
         self.fam_state_summary = {}
-        self.family_nodes = {}
-        self.graphed_family_nodes = {}
+        self.all_families = {}
+        self.triggering_families = {}
         self.global_summary = {}
         self.stop_summary = None
         self.ancestors = {}
@@ -138,8 +138,8 @@ class Updater(threading.Thread):
             self.ancestors = self.sinfo.get('first-parent ancestors' )
             self.ancestors_pruned = self.sinfo.get( 'first-parent ancestors', True )
             self.descendants = self.sinfo.get( 'first-parent descendants' )
-            self.family_nodes = self.sinfo.get( 'family nodes' )
-            self.graphed_family_nodes = self.sinfo.get( 'graphed family nodes' )
+            self.all_families = self.sinfo.get( 'all families' )
+            self.triggering_families = self.sinfo.get( 'triggering families' )
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except Exception, x:
             #print str(x) # (port file not found, if suite not running)

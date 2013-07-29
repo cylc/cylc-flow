@@ -104,7 +104,7 @@ parser.add_option( "-S", "--status",
         help="Specify a particular status to check for.",
         action="store", dest="status", default=None )
         
-suite_poller.add_to_cmd_options( parser )
+suite_poller.add_to_cmd_options( parser, default_interval=60 )
 
 ( options, args ) = parser.parse_args()
 
