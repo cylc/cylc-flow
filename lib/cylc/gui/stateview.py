@@ -536,7 +536,10 @@ class DotUpdater(threading.Thread):
             self.led_treeview.remove_column(tvc)
 
         self.led_treeview.set_model( self.led_liststore )
-        self.led_treeview.get_selection().set_mode( gtk.SELECTION_NONE )
+        selection = self.led_treeview.get_selection()
+        if selection is not None:
+            # Occasionally, selection can be None (perhaps on closing).
+            selection.set_mode( gtk.SELECTION_NONE )
 
         if hasattr(self.led_treeview, "set_has_tooltip"):
             self.led_treeview.set_has_tooltip(True)
