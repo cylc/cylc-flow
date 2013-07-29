@@ -1880,7 +1880,7 @@ Some translations were performed on the fly."""
             except:
                 pass
             else:
-                raise SuiteConfigError( "ERROR: command scripting defined in automatic suite polling task " + l_task )
+                raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
