@@ -637,13 +637,11 @@ class task( object ):
             self.task_owner = user
 
         self.user_at_host = self.task_owner + "@" + self.task_host
-
-
         self.submission_poll_timer.set_host( self.task_host )
         self.execution_poll_timer.set_host( self.task_host )
 
-        if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
-                self.user_at_host != user + '@localhost':
+        if self.task_host not in self.__class__.suite_contact_env_hosts and \
+                self.task_host != 'localhost':
             # If the suite contact file has not been copied to user@host
             # host yet, do so. This will happen for the first task on
             # this remote account inside the job-submission thread just
@@ -653,13 +651,13 @@ class task( object ):
             env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
             r_suite_run_dir = gcfg.get_derived_host_item(
                     self.suite_name, 'suite run directory', self.task_host, self.task_owner)
-            r_env_file_path = '%s:%s/cylc-suite-env' % ( self.user_at_host, r_suite_run_dir)
+            r_env_file_path = '%s:%s/cylc-suite-env' % ( self.task_host, r_suite_run_dir)
             cmd1 = ['ssh', '-oBatchMode=yes', self.user_at_host, 'mkdir', '-p', r_suite_run_dir]
             cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
             for cmd in [cmd1,cmd2]:
                 if subprocess.call(cmd): # return non-zero
                     raise Exception("ERROR: " + str(cmd))
-            self.__class__.suite_contact_env_hosts.append( self.user_at_host )
+            self.__class__.suite_contact_env_hosts.append( self.task_host )
         
         self.record_db_update("task_states", self.name, self.c_time, submit_method=module_name, host=self.user_at_host)
 
