@@ -225,7 +225,10 @@ class job_submit(object):
         else:
             command = self.REMOTE_COMMAND_TEMPLATE % {
                       "jobfile_path": self.jobfile_path, "command": self.command}
-            destination = self.task_owner + "@" + self.task_host
+            if self.task_owner != os.environ['USER']:
+                destination = self.task_owner + "@" + self.task_host
+            else:
+                destination = self.task_host
             command = self.remote_shell_template % destination + command
 
         # execute the local command to submit the job
