@@ -25,26 +25,25 @@ class poller( object ):
     check_once() instead of poll() for a one-off check on the condition."""
 
     @classmethod
-    def add_to_cmd_options( cls, parser, default_interval=5 ):
+    def add_to_cmd_options( cls, parser, d_interval=60, 
+            d_timeout=300, once=False ):
         """Add common command line options for polling."""
 
         # Only long option names to reduce chance of conflicts,
         # but if necessary could take variable and option name args.
 
-        parser.add_option( "--wait",
-            help="Wait for the suite to stop before exiting",
-            action="store_true", dest="wait", default=False )
+        parser.add_option( "-o", "--once",
+            help="Check once rather than repeatedly (ignore --interval).",
+            action="store_true", dest="once", default=False )
 
         parser.add_option( "--timeout",
-            help="(with -w/--wait) Maximum time in seconds to "
-            "wait for the result before exiting with error "
-            "status (default: no timeout).",
-            action="store", dest="timeout", default=None )
+            help="Time to wait for a result before exiting with error "
+            "status (default " + str(d_timeout) + " seconds).",
+            action="store", dest="timeout", default=d_timeout )
 
         parser.add_option( "--interval",
-            help="(with -w/--wait) Polling interval in seconds (default " + \
-                    str(default_interval) + ").",
-            action="store", dest="interval", default=default_interval )
+            help="Polling interval in seconds (default " + str(d_interval) + ").",
+            action="store", dest="interval", default=d_interval )
 
     def __init__( self, condition, timeout=None, interval=5, args={} ):
 

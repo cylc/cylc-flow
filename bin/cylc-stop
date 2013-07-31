@@ -109,9 +109,9 @@ if options.shutdownnow and options.kill:
     print >> sys.stderr, "WARNING: ignoring --now ( not compatible with --kill)"
     options.shutdownnow = False
 
-if options.wait:
-    spoller = stop_poller( "suite stopped", options.timeout,
-            options.interval, args={
+if not options.once:
+    spoller = stop_poller( "suite stopped", options.timeout, options.interval,
+            args={
                 'suite'   : suite,
                 'pphrase' : pphrase,
                 'owner'   : options.owner,
