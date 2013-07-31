@@ -636,7 +636,7 @@ class task( object ):
         if not self.task_owner:
             self.task_owner = user
 
-        if self.task_owner == os.environ['USER']:
+        if self.task_owner == os.environ['USER'] and self.task_host is not "localhost":
             self.user_at_host = self.task_host
         else:
             self.user_at_host = self.task_owner + "@" + self.task_host
@@ -711,7 +711,10 @@ class task( object ):
         # TODO - REPLACE DEEPCOPY():
         rtconfig = deepcopy( self.__class__.rtconfig )
 
-        owner, host = user_at_host.split('@')
+        if '@' in user_at_host: 
+            owner, host = user_at_host.split('@')
+        else:
+            owner, host = None, user_at_host
 
         # dynamic instantiation - don't know job sub method till run time.
         module_name = rtconfig['job submission']['method']
