@@ -636,14 +636,10 @@ class task( object ):
         if not self.task_owner:
             self.task_owner = user
 
-        self.message_queue.put( 'CRITICAL', (" ").join([self.id, self.task_owner, user, os.environ['USER']]))
-
         if self.task_owner == os.environ['USER']:
             self.user_at_host = self.task_host
-            self.message_queue.put( 'CRITICAL', "Shuld nix " + self.task_owner )
         else:
             self.user_at_host = self.task_owner + "@" + self.task_host
-            self.message_queue.put( 'CRITICAL', "Using " + self.task_owner )
         self.submission_poll_timer.set_host( self.task_host )
         self.execution_poll_timer.set_host( self.task_host )
 
