@@ -30,7 +30,9 @@ NOT SUPPORTED:
   * Mixed quote types ( "foo' # ERROR! )
 
 TODO -
- * Special suite-definition-specific behaviour (graph item) is encoded
-   in the general parser - need a way to specify this sort of thing in
-   config file spec modules.
+ * A little special suite-definition-specific behaviour (combining
+   identical graph sections) is encoded in the general parser - we need
+   a way to specify this sort of thing in file-specific spec modules.
+ * (low priority) move [runtime] inheritance out of cylc/config.py into 
+   parsec and cylc/cfgspec/suite_spec.py.
 
