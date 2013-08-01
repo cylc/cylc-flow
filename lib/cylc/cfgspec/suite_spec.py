@@ -220,7 +220,7 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False,
     if not cfg:
         cfg = parse( fpath, verbose, template_vars, template_vars_file )
 
-        u = upgrader( cfg, 'suite definition', verbose )
+        u = upgrader( cfg, SPEC, 'suite definition', verbose )
         u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
         u.upgrade()
 

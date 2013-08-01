@@ -45,9 +45,10 @@ class converter( object ):
 class upgrader( object ):
     """Handles upgrading of deprecated config values."""
 
-    def __init__( self, cfg, descr, verbose=True ):
+    def __init__( self, cfg, spec, descr, verbose=True ):
         """Store the config dict to be upgraded if necessary."""
         self.cfg = cfg
+        self.spec = spec
         self.descr = descr
         self.verbose = verbose
         # upgrades must be ordered in case several act on the same item
@@ -119,7 +120,7 @@ class upgrader( object ):
             if k == "__MANY__":
                 pre = okeys[:i]
                 post = okeys[i+1:]
-                tmp = self.cfg
+                tmp = self.spec
                 for j in pre:
                     tmp = tmp[j]
                 many = tmp.keys()

@@ -113,7 +113,7 @@ SPEC = {
 def upg( cfg, descr, verbose ):
     add_bin_dir = converter( lambda x: x + '/bin', "Added + '/bin' to path" )
     use_ssh = converter( lambda x: "ssh", "set to 'ssh'" )
-    u = upgrader(cfg, descr, verbose )
+    u = upgrader(cfg, SPEC, descr, verbose )
     u.deprecate( '5.1.1', ['editors','in-terminal'], ['editors','terminal'] )
     u.deprecate( '5.1.1', ['task hosts'], ['hosts'] )
     u.deprecate( '5.1.1', ['hosts','local'], ['hosts','localhost'] )
