@@ -709,7 +709,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         for view in self.current_views:
             if view is not None:
                 view.stop()
-        self.updater.stop()
+        if self.updater is not None:
+            self.updater.stop()
         gtk.main_quit()
 
     def delete_event(self, widget, event, data=None):
