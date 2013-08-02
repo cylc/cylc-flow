@@ -116,7 +116,7 @@ initial and final cycle time variables persists across suite restarts."""
                 else:
                     # no initial cycle time: we can't load cycling tasks
                     continue
-            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True )
+            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag) )
             # check stop cycle in case the user has set a very quick stop
             if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
                 # we've reached the stop cycle already: delete the new task 
@@ -147,7 +147,7 @@ initial and final cycle time variables persists across suite restarts."""
                 else:
                     # no initial cycle time: we can't load cycling tasks
                     continue
-            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
+            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag) )
             if name in coldstart_tasks:
                 itask.log( "NORMAL", "warm start: starting in succeeded state" )
                 itask.state.set_status( 'succeeded' )
@@ -190,7 +190,7 @@ initial and final cycle time variables persists across suite restarts."""
                 else:
                     # no initial cycle time: we can't load cycling tasks
                     continue
-            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False )
+            itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag) )
             if name in coldstart_tasks or name in startup_tasks:
                 itask.log( "NORMAL", "This is a raw start: I will self-destruct." )
                 itask.prepare_for_death()

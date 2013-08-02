@@ -1879,12 +1879,12 @@ Some translations were performed on the fly."""
 
         return taskd
    
-    def get_task_proxy( self, name, ctime, state, stopctime, startup ):
+    def get_task_proxy( self, name, ctime, state, stopctime, startup, submit_num, is_firsttime ):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
             raise TaskNotDefinedError("ERROR, No such task name: " + name )
-        return tdef.get_task_class()( ctime, state, stopctime, startup )
+        return tdef.get_task_class()( ctime, state, stopctime, startup, submit_num=submit_num, is_firsttime=is_firsttime )
 
     def get_task_proxy_raw( self, name, tag, state, stoptag, startup ):
         # Used by 'cylc submit' to submit tasks defined by runtime

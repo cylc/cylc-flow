@@ -663,7 +663,7 @@ class scheduler(object):
         for task_id in task_ids:
             name, tag = task_id.split( TaskID.DELIM )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
-            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
+            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag))
             self.add_new_task_proxy( new_task )
 
     def command_nudge( self ):
@@ -747,7 +747,7 @@ class scheduler(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup )
+                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag) )
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:

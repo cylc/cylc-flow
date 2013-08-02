@@ -224,24 +224,31 @@ class task( object ):
         self.execution_poll_timer = None
 
         # sets submit num for restarts or when triggering state prior to submission
+        #if self.validate: # if in validate mode bypass db operations
+        #    self.submit_num = 0
+        #else:
+        #    self.db_path = gcfg.get_derived_host_item( self.suite_name, 'suite run directory' )
+        #    self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
+        #    submits = self.db.get_task_current_submit_num(self.name, self.c_time)
+        #    if submits > 0:
+        #        self.submit_num = submits
+        #        self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status()) #is this redundant?
+        #    else:
+        #        self.submit_num = 0
+
+        #    if not self.db.get_task_state_exists(self.name, self.c_time):
+        #        try:
+        #            self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
+        #        except:
+        #            pass
+        #    self.db.close()
+
         if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
-        else:
-            self.db_path = gcfg.get_derived_host_item( self.suite_name, 'suite run directory' )
-            self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=self.db_path)
-            submits = self.db.get_task_current_submit_num(self.name, self.c_time)
-            if submits > 0:
-                self.submit_num = submits
-                self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status()) #is this redundant?
-            else:
-                self.submit_num = 0
-
-            if not self.db.get_task_state_exists(self.name, self.c_time):
-                try:
-                    self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status()) #queued call
-                except:
-                    pass
-            self.db.close()
+        if self.submit_num > 0:
+            self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status())
+        if not self.is_firsttime:
+            self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status())
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )

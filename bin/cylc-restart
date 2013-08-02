@@ -321,7 +321,7 @@ where they got to while the suite was down."""
 
             try:
                 # startup is True only for a cold start
-                itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
+                itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag) )
             except Exception, x:
                 print >> sys.stderr, str(x)
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"

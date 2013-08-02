@@ -224,7 +224,7 @@ else:
     tag = ctime
 try:
     # try to get a graphed task of the given name
-    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True )
+    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True, submit_num=self.db.get_task_current_submit_num(name, tag), is_firsttime=self.db.get_task_state_exists(name, tag) )
 except TaskNotDefinedError, x:
     print >> sys.stderr, 'WARNING: "' + task_name + \
             '" type and validity are not constrained by the graph.'
