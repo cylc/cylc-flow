@@ -37,8 +37,8 @@ SPEC = {
     'disable interactive command prompts' : vdr( vtype='boolean', default=True ),
     'enable run directory housekeeping'   : vdr( vtype='boolean', default=False ),
     'run directory rolling archive length': vdr( vtype='integer', vmin=0, default=2 ),
-    'submission polling intervals'        : vdr( vtype='float_list', allow_zeroes=False, default=[1.0]), 
-    'execution polling intervals'         : vdr( vtype='float_list', allow_zeroes=False, default=[1.0]),
+    'submission polling intervals'        : vdr( vtype='m_float_list', allow_zeroes=False, default=[1.0]), 
+    'execution polling intervals'         : vdr( vtype='m_float_list', allow_zeroes=False, default=[1.0]),
 
     'task messaging' : {
         'retry interval in seconds'       : vdr( vtype='float', vmin=1, default=5 ),
