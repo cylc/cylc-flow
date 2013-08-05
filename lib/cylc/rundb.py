@@ -222,9 +222,24 @@ class CylcRuntimeDAO(object):
 
     def get_task_state_exists(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        args = [name, cycle,]
+        args = [name, cycle]
         count = self.c.select(s_fmt, args).next()[0]
         return count > 0
+
+    def get_task_location(self, name, cycle):
+        s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==? 
+                   AND event=="submission succeeded" AND misc!=""
+                   ORDER BY submit_num DESC LIMIT 1"""
+        args = [name, cycle]
+        res = self.c.select(s_fmt, args).next()
+        return res
+
+    def get_task_sumbit_method_id_and_try(self, name, cycle):
+        s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==? 
+                   ORDER BY submit_num DESC LIMIT 1"""
+        args = [name, cycle]
+        res = self.c.select(s_fmt, args).next()
+        return res        
 
     def run_db_op(self, db_oper):
         self.c.execute(db_oper.s_fmt, db_oper.args)
