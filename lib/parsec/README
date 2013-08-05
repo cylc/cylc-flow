@@ -1,38 +1,91 @@
-PARSEC
+________________________________________________________________________
+PARSEC CONFIG FILE PARSER
 
-A framework for constructing nested ini style config file specs with
+A framework for constructing nested-INI-style config file formats with
 automatic parsing, validation, default values, on-the-fly item
-deprecation, and file combination (e.g. user.rc overrides site.rc
-overrides defaults).
+deprecation and upgrading, and file combination (e.g. user.rc overrides
+site.rc overrides system default values).
+_____________________________
+  USED IN CYLC FOR:
+   * suite definition files
+   * gcylc config files
+   * site/user config files
 
-Used in cylc for:
- * suite definition files
- * gcylc config files
- * site/user config files
+________________________________________________________________________
+DESIGN AND IMPLEMENTATION
+______________
+  PARSING
+  lib/parsec/fileparse.py
 
- How it works:
- * Parsec reads a nested config file and returns a corresponding nested
- dict, which can be upgraded (deprecation) on the fly, then validated
- against a file spec (a nested dict of the same form that specifies
- legal items and "validators" for their values).
+Parses any nested-INI format file into a corresponding nested dict
+structure, after "%include"-inlining, Jinja2 processing, and line
+continuation joining. Also: trailing comments are stripped; single-,
+double-, or un-quoted values; and triple-quoted multiline string values.
+string-internal comments are retained. 
 
-Parsec config files support:
-  * Jinja2
-  * comments #
-  * Line continuation
-  * Trailing comments stripped
-  * Single or double quotes
-  * Triple-quoted multiline strings
-  * String-internal comments retained
-  * Validation against a spec module
-  * Combining two config files (e.g. user.rc overrides site.rc)
-NOT SUPPORTED:
-  * Mixed quote types ( "foo' # ERROR! )
+______________
+  VALIDATION
+  lib/parsec/validate.py
 
-TODO -
- * A little special suite-definition-specific behaviour (combining
-   identical graph sections) is encoded in the general parser - we need
-   a way to specify this sort of thing in file-specific spec modules.
- * (low priority) move [runtime] inheritance out of cylc/config.py into 
-   parsec and cylc/cfgspec/suite_spec.py.
+Validates a config structure (from the parser) against a file spec that
+defines the "file format" (next).
+
+______________
+  FILE SPEC
+  e.g. lib/parsec/test_spec.py for lib/parsec/test.rc
+  and cylc file specs in lib/cylc/cfgspec/
+
+A nested dict that contains all legal items in their proper place, and
+"values" that are *validator* objects prescribing the type of the value
+(string, integer, etc.), other requirements, and default values. There
+are pre-defined validators for string, integer, float; list (of strings,
+integers, floats, and lists with multipliers as for cylc "retry
+delays"); and cylc times. Other validators can be defined.
+
+______________
+  DEPRECATION AND AUTOMATIC UPGRADE
+  lib/parsec/upgrade.py
+
+Allows the file spec module to specify mapping between deprecated items
+and their new counterparts, along with an upgrader object to do any
+value transformation required.  If affected items are found in the
+config file, a deprecation warning will be emitted and the item upgraded
+on-the-fly for compatibility with the current file spec.
+
+______________
+  HIGH LEVEL "INTERFACE"(?)
+  lib/parsec/loadcfg.py
+  
+Defines functions that combine parsing and validation for (presumably)
+common use cases. Includes combine two config files with precedence
+order.
+
+________________________________________________________________________
+TESTING
+
+  * lib/parsec/test.rc
+  An example config file that does (or should/will) contain all types of
+  config item that parsec is supposed to support.
+
+  * lib/parsec/test_spec.py
+  Defines a spec for test.rc, and a unit test to parse, validate, and
+  print the config file. Does not test deprecation/upgrade at this stage.
+
+  * lib/cylc/parsec/upgrade.py
+  Contains a unit test to test on-the-fly upgrade of deprecated items.
+
+  * lib/cylc/cfgspec/
+  Contains file specs for CYLC suite definition, site config, and gcylc
+  config file formats. Can be tested with examples files and respectively,
+  "cylc validate", "cylc get-global-config", and "gcylc --print-config".
+
+________________________________________________________________________
+TODO
+ * A small amount of special suite-definition-specific behaviour
+   (namely combining identical graph sections) is encoded in the general
+   parser - we need a way to specify this sort of thing in file-specific
+   spec modules.
+
+ * (cylc - low priority) move [runtime] inheritance out of
+   cylc/config.py into parsec.
 

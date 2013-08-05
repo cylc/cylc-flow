@@ -1,17 +1,6 @@
 #!Jinja2
 
-# SUPPORTED:
-#  * Jinja2
-#  * comments #
-#  * Line continuation
-#  * Trailing comments stripped
-#  * Single or double quotes
-#  * Triple-quoted multiline strings
-#  * String-internal comments retained
-#  * Validation against a spec module
-#
-# NOT SUPPORTED:
-#  * Mixed quote types ( "foo' # ERROR! )
+# use with test_spec.py
 
 unquoted = the quick # comment
 continuation = the quick \
