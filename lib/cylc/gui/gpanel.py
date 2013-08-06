@@ -317,20 +317,20 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
     def _set_exception_hook(self):
         # Handle an uncaught exception.
-        normal_hook = sys.excepthook
-        sys.excepthook = (lambda e_class, e, trace:
-                          self._handle_exception(e_class, e, trace,
-                                                 normal_hook))
+        old_hook = sys.excepthook
+        sys.excepthook = (lambda *a:
+                          self._handle_exception(*a, old_hook=old_hook))
 
-    def _handle_exception(self, exception_class, exception, trace, hook):
+    def _handle_exception(self, e_type, e_value, e_traceback,
+                          old_hook=None):
         self.gcylc_image.set_from_stock(gtk.STOCK_DIALOG_ERROR,
                                         gtk.ICON_SIZE_MENU)
-        error_text = "cylc gpanel failed with:\n"
-        error_text += "".join(traceback.format_exception(
-                                        exception_class, exception, trace))
-        error_text = error_text.rstrip()
-        self._set_tooltip(self.gcylc_image, error_text)
-        hook(exception_class, exception, trace)
+        exc_lines = traceback.format_exception(e_type, e_value, e_traceback)
+        exc_text = "".join(exc_lines)
+        info = "cylc gpanel has crashed.\n\n%s" % exc_text
+        self._set_tooltip(self.gcylc_image, info.rstrip())
+        if old_hook is not None:
+            old_hook(exception_class, exception, trace)
 
     def _set_gcylc_image_tooltip(self):
         if self.quit:

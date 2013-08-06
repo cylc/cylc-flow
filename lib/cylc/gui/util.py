@@ -126,7 +126,7 @@ def _launch_exception_hook_dialog(e_type, e_value, e_traceback,
     exc_text = "".join(exc_lines)
     info = "%s has crashed.\n\n%s" % (program_name, exc_text)
     dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                               message_format=info)
+                               message_format=info.rstrip())
     dialog.set_icon(get_icon())
     dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
     dialog.run()
