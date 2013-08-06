@@ -1068,7 +1068,6 @@ class scheduler(object):
             event_recorders = []
             other = []
             for itask in self.pool.get_tasks():
-                db_ops += itask.get_db_ops()
                 opers = itask.get_db_ops()
                 for oper in opers:
                     if isinstance(oper, cylc.rundb.UpdateObject):
@@ -1094,6 +1093,7 @@ class scheduler(object):
                         db_opers += [db_ops[i]]
             else:
                 db_opers = db_ops
+            
             for d in db_opers:
                 self.db.run_db_op(d)
             
