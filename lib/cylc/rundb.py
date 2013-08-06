@@ -99,7 +99,11 @@ class ThreadedCursor(Thread):
     def run(self):
         cnx = sqlite3.Connection(self.db) 
         cursor = cnx.cursor()
+        counter = 0
         while True:
+            if (counter % 10) == 0 or self.reqs.qsize() == 0:
+                counter = 0
+                cnx.commit()
             attempt = 0
             req, arg, res, bulk = self.reqs.get()
             if req=='--close--': break
@@ -117,7 +121,8 @@ class ThreadedCursor(Thread):
                     break
                 except:
                     attempt += 1
-                    sleep(1) 
+                    sleep(1)
+            counter += 1
         cnx.close()
     def execute(self, req, arg=None, res=None, bulk=False):
         self.reqs.put((req, arg or tuple(), res, bulk))

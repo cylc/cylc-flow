@@ -1084,11 +1084,14 @@ class scheduler(object):
             if len(db_ops) > 1:
                 db_opers = [db_ops[0]]
                 for i in range(1,len(db_ops)):
-                    if db_opers[-1].s_fmt == db_ops[i].s_fmt and len(db_opers[-1].args) < 50: #break into blocks of 50 so as to not lock the db down completely
-                        new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
-                        new_oper.add_oper(db_ops[i])
-                        db_opers.pop(-1)
-                        db_opers += [new_oper]
+                    if db_opers[-1].s_fmt == db_ops[i].s_fmt:
+                        if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
+                            db_opers[-1].add_oper(db_ops[i])
+                        else:
+                            new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
+                            new_oper.add_oper(db_ops[i])
+                            db_opers.pop(-1)
+                            db_opers += [new_oper]
                     else:
                         db_opers += [db_ops[i]]
             else:
