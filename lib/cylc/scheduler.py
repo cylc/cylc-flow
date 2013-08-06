@@ -1063,22 +1063,23 @@ class scheduler(object):
 
             # process queued database operations
             db_ops = []
-            for itask in self.pool.get_tasks():
-                db_ops += itask.get_db_ops()
-            
             state_recorders = []
             state_updaters = []
             event_recorders = []
             other = []
-            for oper in db_ops:
-                if isinstance(oper, cylc.rundb.UpdateObject):
-                    state_updaters += [oper]
-                elif isinstance(oper, cylc.rundb.RecordStateObject):
-                    state_recorders += [oper]
-                elif isinstance(oper, cylc.rundb.RecordEventObject):
-                    event_recorders += [oper]
-                else:
-                    other += [oper]
+            for itask in self.pool.get_tasks():
+                db_ops += itask.get_db_ops()
+                opers = itask.get_db_ops()
+                for oper in opers:
+                    if isinstance(oper, cylc.rundb.UpdateObject):
+                        state_updaters += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordStateObject):
+                        state_recorders += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordEventObject):
+                        event_recorders += [oper]
+                    else:
+                        other += [oper]
+            #precedence is record states > update_states > record_events > anything_else
             db_ops = state_recorders + state_updaters + event_recorders + other 
             # compact the set of operations
             if len(db_ops) > 1:
@@ -1093,7 +1094,6 @@ class scheduler(object):
                         db_opers += [db_ops[i]]
             else:
                 db_opers = db_ops
-            
             for d in db_opers:
                 self.db.run_db_op(d)
             
