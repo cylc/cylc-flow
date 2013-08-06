@@ -1066,6 +1066,20 @@ class scheduler(object):
             for itask in self.pool.get_tasks():
                 db_ops += itask.get_db_ops()
             
+            state_recorders = []
+            state_updaters = []
+            event_recorders = []
+            other = []
+            for oper in db_ops:
+                if isinstance(oper, cylc.rundb.UpdateObject):
+                    state_updaters += [oper]
+                elif isinstance(oper, cylc.rundb.RecordStateObject):
+                    state_recorders += [oper]
+                elif isinstance(oper, cylc.rundb.RecordEventObject):
+                    event_recorders += [oper]
+                else:
+                    other += [oper]
+            db_ops = state_recorders + state_updaters + event_recorders + other 
             # compact the set of operations
             if len(db_ops) > 1:
                 db_opers = [db_ops[0]]
