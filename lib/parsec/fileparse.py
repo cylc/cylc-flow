@@ -367,6 +367,9 @@ def parse( fpath, verbose=False,
             if m:
                 # matched a key=value item
                 indent, key, val = m.groups()
+                if not val:
+                    # empty value - same as item not present
+                    continue
                 if val[:3] in ['"""', "'''"]:
                     # triple quoted - may be a multiline value
                     val, index = multiline( flines, val, index, maxline )
