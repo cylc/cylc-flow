@@ -499,12 +499,6 @@ class scheduler(object):
                 except AttributeError:
                     # not a clocktriggered task
                     pass
-                # extra info for catchup_clocktriggered tasks
-                try:
-                    extra_info[ itask.__class__.name + ' caught up' ] = itask.__class__.get_class_var( 'caughtup' )
-                except:
-                    # not a catchup_clocktriggered task
-                    pass
                 # extra info for cycling tasks
                 try:
                     extra_info[ 'Valid cycles' ] = itask.valid_hours
@@ -593,7 +587,7 @@ class scheduler(object):
  
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                if itask.state.is_currently('waiting', 'queued', 'retrying' ):
+                if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
                     itask.reset_state_held()
 
     def command_hold_suite( self ):
@@ -738,7 +732,7 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_currently('waiting', 'queued', 'retrying'):
+                    if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -1322,7 +1316,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued','waiting','retrying'):
+                if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.reset_state_held()
