@@ -1062,10 +1062,26 @@ class scheduler(object):
                 itask.process_incoming_messages()
 
             # process queued database operations
+            db_ops = []
             for itask in self.pool.get_tasks():
-                db_ops = itask.get_db_ops()
-                for d in db_ops:
-                    self.db.run_db_op(d)
+                db_ops += itask.get_db_ops()
+            
+            # compact the set of operations
+            if len(db_ops) > 1:
+                db_opers = [db_ops[0]]
+                for i in range(1,len(db_ops)):
+                    if db_opers[-1].s_fmt == db_ops[i].s_fmt and len(db_opers[-1].args) < 50: #break into blocks of 50 so as to not lock the db down completely
+                        new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
+                        new_oper.add_oper(db_ops[i])
+                        db_opers.pop(-1)
+                        db_opers += [new_oper]
+                    else:
+                        db_opers += [db_ops[i]]
+            else:
+                db_opers = db_ops
+            
+            for d in db_opers:
+                self.db.run_db_op(d)
             
             # record any broadcast settings to be dumped out
             if self.wireless:

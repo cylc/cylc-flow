@@ -79,6 +79,16 @@ class RecordStateObject(object):
                      submit_method, submit_method_id, status]
         self.to_run = True
 
+class BulkDBOperObject(object):
+    """BulkDBOperObject for grouping together related operations"""
+    def __init__(self, base_object):
+        self.s_fmt = base_object.s_fmt
+        self.args = []
+        self.args.append(base_object.args)
+    def add_oper(self, db_object):
+        if db_object.s_fmt != self.s_fmt:
+            raise Exception( "ERROR: cannot combine different types of database operation" )
+        self.args.append(db_object.args)
 
 class ThreadedCursor(Thread):
     def __init__(self, db):
@@ -91,11 +101,14 @@ class ThreadedCursor(Thread):
         cursor = cnx.cursor()
         while True:
             attempt = 0
-            req, arg, res = self.reqs.get()
+            req, arg, res, bulk = self.reqs.get()
             if req=='--close--': break
             while attempt < 5:
                 try:
-                    cursor.execute(req, arg)
+                    if bulk:
+                        cursor.executemany(req, arg)
+                    else:
+                        cursor.execute(req, arg)
                     if res:
                         for rec in cursor:
                             res.put(rec)
@@ -106,8 +119,8 @@ class ThreadedCursor(Thread):
                     attempt += 1
                     sleep(1) 
         cnx.close()
-    def execute(self, req, arg=None, res=None):
-        self.reqs.put((req, arg or tuple(), res))
+    def execute(self, req, arg=None, res=None, bulk=False):
+        self.reqs.put((req, arg or tuple(), res, bulk))
     def select(self, req, arg=None):
         res=Queue()
         self.execute(req, arg, res)
@@ -227,5 +240,8 @@ class CylcRuntimeDAO(object):
         return count > 0
 
     def run_db_op(self, db_oper):
-        self.c.execute(db_oper.s_fmt, db_oper.args)
+        if isinstance(db_oper, BulkDBOperObject):
+            self.c.execute(db_oper.s_fmt, db_oper.args, bulk=True)
+        else:
+            self.c.execute(db_oper.s_fmt, db_oper.args)
     
