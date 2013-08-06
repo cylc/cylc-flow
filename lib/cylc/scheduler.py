@@ -848,13 +848,14 @@ class scheduler(object):
         if not self.start_tag and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
-        # PAUSE TIME?
-        self.hold_suite_now = False
-        self.hold_time = None
-        if self.options.hold_time:
-            # raises CycleTimeError:
-            self.hold_time = ct( self.options.hold_time ).get()
-            #    self.parser.error( "invalid cycle time: " + self.hold_time )
+        if not reconfigure:
+            # PAUSE TIME?
+            self.hold_suite_now = False
+            self.hold_time = None
+            if self.options.hold_time:
+                # raises CycleTimeError:
+                self.hold_time = ct( self.options.hold_time ).get()
+                #    self.parser.error( "invalid cycle time: " + self.hold_time )
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['cylc']['lockserver']['enable']
