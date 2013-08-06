@@ -20,11 +20,11 @@ import re
 from job_submit import job_submit
 
 class sge( job_submit ):
-    """
-SGE qsub job submission.
-    """
+
+    "SGE qsub job submission"
 
     COMMAND_TEMPLATE = "qsub %s"
+    REC_ID = re.compile(r"\D+(?P<id>\d+)\D+")  
 
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "#$"
@@ -41,13 +41,63 @@ SGE qsub job submission.
         defaults[ '-e' ] = re.sub( '\$HOME/', '', self.stderr_file )
 
         # In case the user wants to override the above defaults:
-        for d,val in self.jobconfig['directives']:
+        for d,val in self.jobconfig['directives'].items():
             defaults[ d ] = val
         self.jobconfig['directives'] = defaults
 
     def construct_jobfile_submission_command( self ):
+        """
+        Construct a command to submit this job to run.
+        """
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
+
+    def get_id( self, out, err ):
+        """
+        Extract the job submit ID from job submission command
+        output.
+        """
+        for line in str(out).splitlines():
+            match = self.REC_ID.match(line)
+            if match:
+                return match.group("id")
+
+    def get_job_poll_command( self, jid ):
+        """
+        Given the job submit ID, return a command string that uses
+        'cylc get-task-status' (on the task host) to determine current
+        job status:
+           cylc get-job-status <QUEUED> <RUNNING>
+        where:
+            QUEUED  = true if job is waiting or running, else false
+            RUNNING = true if job is running, else false
+
+        WARNING: 'cylc get-task-status' prints a task status message -
+        the final result - to stdout, so any stdout from scripting prior
+        to the call must be dumped to /dev/null.
+
+        SGE possible job state I think we need:
+          * 'qw' (queueing) = waiting in the SGE queue
+          * 'r' (running) = running
+        """
+        cmd = ( "RUNNING=false; QUEUED=false; "
+                + "qstat | grep " + jid
+                + " | awk \"{ print \$5 }\" | egrep \"^r$\" > /dev/null; "
+                + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
+                + "if ! $QUEUED; then "
+                + "  qstat | grep " + jid
+                + "   | awk \"{ print \$5 }\" | egrep \"^qw$\" > /dev/null; "
+                + "  [[ $? == 0 ]] && QUEUED=true; "
+                + "fi; "
+            + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
+        return cmd
+
+    def get_job_kill_command( self, jid ):
+        """
+        Given the job submit ID, return a command to kill the job.
+        """
+        cmd = "qdel " + jid
+        return cmd
 

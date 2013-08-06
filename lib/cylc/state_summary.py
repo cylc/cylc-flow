@@ -77,8 +77,8 @@ class state_summary( Pyro.core.ObjBase ):
                 if state is None:
                     continue
                 family_summary[f_id] = {'name': fam,
-                                             'label': ctime,
-                                             'state': state}
+                                        'label': ctime,
+                                        'state': state}
         
         all_states.sort()
 
