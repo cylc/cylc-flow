@@ -321,7 +321,7 @@ where they got to while the suite was down."""
 
             try:
                 # startup is True only for a cold start
-                itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False )
+                itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag) )
             except Exception, x:
                 print >> sys.stderr, str(x)
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
@@ -347,15 +347,9 @@ where they got to while the suite was down."""
 
             elif itask.state.is_currently('submitted', 'running'):  
                 itask.prerequisites.set_all_satisfied()
-                c = itask.db.connect()
                 # get user_at_host from run-db
                 user_at_host = None
-                c.execute(r"""
-                        SELECT misc FROM task_events
-                        WHERE name==? AND cycle==? AND
-                              event=="submission succeeded" AND misc!=""
-                        ORDER BY submit_num DESC LIMIT 1""", (name, tag))
-                row = c.fetchone()
+                row = self.db.get_task_location(name, tag)
                 if row and row[0]:
                     user_at_host = row[0]
                     self.old_user_at_host_set.add(str(user_at_host))
@@ -364,16 +358,11 @@ where they got to while the suite was down."""
 
                 # get submit_method_id and try_num from run-db
                 submit_method_id = try_num = None
-                c.execute(r"""
-                        SELECT submit_method_id, try_num FROM task_states
-                        WHERE name==? AND cycle==? 
-                        ORDER BY submit_num DESC LIMIT 1""", (name, tag))
-                row = c.fetchone()
+                row = self.db.get_task_sumbit_method_id_and_try(name, tag)
                 if row and row[0]:
                     submit_method_id, try_num = row
                 else:
                     print >> sys.stderr, "WARNING:", id, "failed to read submit_method_id and try_num from run-db!"
-                c.close()
 
                 if None in [ user_at_host, submit_method_id, try_num ]:
                     print >> sys.stderr, "WARNING: cannot determine what happened to " + id

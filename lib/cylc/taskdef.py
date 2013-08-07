@@ -246,11 +246,13 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False ):
+        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False, submit_num=0, exists=False ):
 
             sself.cycon = container.cycon( self.cyclers )
             sself.intercycle_offset = self.intercycle_offset
             sself.startup = startup
+            sself.submit_num = submit_num
+            sself.exists=exists
             if self.cycling: # and startup:
                 # adjust only needed at start-up but it does not hurt to
                 # do it every time as after the first adjust we're already
