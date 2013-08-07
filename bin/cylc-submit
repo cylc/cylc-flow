@@ -224,14 +224,14 @@ else:
     tag = ctime
 try:
     # try to get a graphed task of the given name
-    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True )
+    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
 except TaskNotDefinedError, x:
     print >> sys.stderr, 'WARNING: "' + task_name + \
             '" type and validity are not constrained by the graph.'
     print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
     try:
         # try to get an ungraphed task of the given name
-        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stoptag=None, startup=True )
+        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stoptag=None, startup=True, submit_num=0, exists=False )
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
