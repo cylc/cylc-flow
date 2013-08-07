@@ -119,9 +119,9 @@ def _coerce_float( value, keys, args ):
 
 def _coerce_boolean( value, keys, args ):
     """Coerce value to a boolean."""
-    if value == 'True':
+    if value in ['True','true']:
         return True
-    elif value == 'False':
+    elif value in ['False','false']:
         return False
     else:
         raise IllegalValueError( 'boolean', keys, value )
