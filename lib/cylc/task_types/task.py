@@ -293,27 +293,31 @@ class task( object ):
         else:
             return False
 
+    def retry_delay_done( self ):
+        done = False
+        if self.retry_delay_timer_start:
+            diff = task.clock.get_datetime() - self.retry_delay_timer_start
+            foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
+            if diff >= foo:
+                done = True
+        elif self.sub_retry_delay_timer_start:
+            diff = task.clock.get_datetime() - self.sub_retry_delay_timer_start
+            foo = datetime.timedelta( 0,0,0,0,self.sub_retry_delay,0,0 )
+            if diff >= foo:
+                done = True
+        return done
+
     def ready_to_run( self ):
         if self.trigger_now():
-            # (derived task types overriding ready_to_run() must do this too)
             return True
-        ready = False
-        if self.state.is_currently('queued') or \
-            self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
-             self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
-                if self.retry_delay_timer_start:
-                     diff = task.clock.get_datetime() - self.retry_delay_timer_start
-                     foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
-                     if diff >= foo:
-                        ready = True
-                elif self.sub_retry_delay_timer_start:
-                     diff = task.clock.get_datetime() - self.sub_retry_delay_timer_start
-                     foo = datetime.timedelta( 0,0,0,0,self.sub_retry_delay,0,0 )
-                     if diff >= foo:
-                        ready = True
-                else:
-                    ready = True
-        return ready
+        elif self.state.is_currently('queued'): # ready by definition
+            return True
+        elif self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+            return True
+        elif self.state.is_currently( 'submit-retrying', 'retrying') and self.retry_delay_done():
+            return True
+        else:
+            return False
 
     def get_resolved_dependencies( self ):
         dep = []
@@ -1005,9 +1009,9 @@ class task( object ):
                 self.log( "NORMAL", msg )
                 self.sub_retry_delay_timer_start = task.clock.get_datetime()
                 self.sub_try_number += 1
-                self.set_status( 'retrying' )
-                self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
-                self.record_db_event(event="submission failed", message="retrying in " + str(self.sub_retry_delay) )
+                self.set_status( 'submit-retrying' )
+                self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="submit-retrying")
+                self.record_db_event(event="submission failed", message="submit-retrying in " + str(self.sub_retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
                 # Handle submission retry events

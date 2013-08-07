@@ -33,9 +33,10 @@ class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     DB_FILE_BASE_NAME = "cylc-suite.db"
     STATE_ALIASES = {}
-    STATE_ALIASES['finish'] = ['failed', 'succeeded']
-    STATE_ALIASES['start'] = ['running', 'succeeded', 'failed', 'retrying']
-    STATE_ALIASES['fail'] = ['failed']
+    STATE_ALIASES['finish' ] = ['failed', 'succeeded']
+    STATE_ALIASES['start'  ] = ['running', 'succeeded', 'failed', 'retrying']
+    STATE_ALIASES['submit' ] = ['submitted', 'submit-retrying', 'running','succeeded','failed','retrying']
+    STATE_ALIASES['fail'   ] = ['failed']
     STATE_ALIASES['succeed'] = ['succeeded']
 
     def __init__(self, suite_dir, suite, dbname=None): # possible to set suite_dir to system default cylc-run dir?

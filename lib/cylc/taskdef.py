@@ -288,9 +288,6 @@ class taskdef(object):
                     sself.outputs.add( msg )
             sself.outputs.register()
 
-            if 'catchup_clocktriggered' in self.modifiers:
-                catchup_clocktriggered.__init__( sself )
-
             if stop_c_time:
                 # cycling tasks with a final cycle time set
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )

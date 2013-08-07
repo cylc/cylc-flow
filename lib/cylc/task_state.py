@@ -20,11 +20,7 @@ import re
 import sys
 
 """
-Store task state information, and provide methods to dump and reload
-this information from the cylc state dump file. Use of a dict data
-structure allows derived task classes to set arbitrary new state
-variables that will automatically be written to and read from the state
-dump file.
+Task states, plus dump and reload from the suite state dump file.
 """
 
 class TaskStateError( Exception ):
@@ -42,6 +38,7 @@ class task_state(object):
               'submitting',
               'submitted',
               'submit-failed',
+              'submit-retrying',
               'running',
               'succeeded',
               'failed',
@@ -57,7 +54,8 @@ class task_state(object):
             'queued'     : '_queued',
             'submitting' : 'su_bmitting',
             'submitted'  : 'sub_mitted',
-            'submit-failed'  : 'submit-f_ailed',
+            'submit-failed' : 'submit-f_ailed',
+            'submit-retrying' : 'submit-retryin_g',
             'running'    : '_running',
             'succeeded'  : '_succeeded',
             'failed'     : '_failed',
@@ -71,7 +69,8 @@ class task_state(object):
             'queued'     : "\033[1;38;44m",
             'submitting' : "\033[1;32m",
             'submitted'  : "\033[1;33m",
-            'submit-failed'  : "\033[1;34m",
+            'submit-failed' : "\033[1;34m",
+            'submit-retrying'   : "\033[1;31m",
             'running'    : "\033[1;37;42m",
             'succeeded'  : "\033[0m",
             'failed'     : "\033[1;37;41m",
