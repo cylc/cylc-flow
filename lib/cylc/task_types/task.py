@@ -343,7 +343,6 @@ class task( object ):
 
     def reset_state_ready( self ):
         self.set_status( 'waiting' )
-        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num, status="waiting")
         self.record_db_event(event="reset to ready")
         self.prerequisites.set_all_satisfied()
         self.unfail()
@@ -353,7 +352,6 @@ class task( object ):
     def reset_state_waiting( self ):
         # waiting and all prerequisites UNsatisified.
         self.set_status( 'waiting' )
-        self.record_db_update("task_states", self.name, self.c_time, status="waiting")
         self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
@@ -363,7 +361,6 @@ class task( object ):
     def reset_state_succeeded( self, manual=True ):
         # all prerequisites satisified and all outputs complete
         self.set_status( 'succeeded' )
-        self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
         if manual:
             self.record_db_event(event="reset to succeeded")
         else:
@@ -378,7 +375,6 @@ class task( object ):
     def reset_state_failed( self ):
         # all prerequisites satisified and no outputs complete
         self.set_status( 'failed' )
-        self.record_db_update("task_states", self.name, self.c_time, status="failed")
         self.record_db_event(event="reset to failed")
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
@@ -388,26 +384,22 @@ class task( object ):
 
     def reset_state_held( self ):
         self.set_status( 'held' )
-        self.record_db_update("task_states", self.name, self.c_time, status="held")
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
 
     def reset_state_runahead( self ):
         self.set_status( 'runahead' )
         self.turn_off_timeouts()
-        self.record_db_update("task_states", self.name, self.c_time, status="runahead")
 
     def set_state_submitting( self ):
         # called by scheduler main thread
         self.set_status( 'submitting' )
         # See "def ready_to_run" above.
         self.manual_trigger = False
-        self.record_db_update("task_states", self.name, self.c_time, status="submitting")
 
     def set_state_queued( self ):
         # called by scheduler main thread
         self.set_status( 'queued' )
-        self.record_db_update("task_states", self.name, self.c_time, status="queued")
 
     def override( self, target, sparse ):
         for key,val in sparse.items():
@@ -972,7 +964,6 @@ class task( object ):
                 # to 'submitted' and set the job submission timer if
                 # currently still in the 'submitting'state.
                 self.set_status( 'submitted' )
-                self.record_db_update("task_states", self.name, self.c_time, status="submitted")
                 self.submission_timer_start = self.submitted_time
                 self.submission_poll_timer.set_timer()
 
@@ -997,7 +988,6 @@ class task( object ):
                 self.outputs.add( outp )
                 self.outputs.set_completed( outp )
                 self.set_status( 'submit-failed' )
-                self.record_db_update("task_states", self.name, self.c_time, status="submit-failed")
                 self.record_db_event(event="submission failed" )
                 handler = self.event_handlers['submission failed']
                 if handler:
@@ -1010,7 +1000,6 @@ class task( object ):
                 self.sub_retry_delay_timer_start = task.clock.get_datetime()
                 self.sub_try_number += 1
                 self.set_status( 'submit-retrying' )
-                self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="submit-retrying")
                 self.record_db_event(event="submission failed", message="submit-retrying in " + str(self.sub_retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
@@ -1025,7 +1014,6 @@ class task( object ):
 
             flags.pflag = True
             self.set_status( 'running' )
-            self.record_db_update("task_states", self.name, self.c_time, status="running")
             self.record_db_event(event="started" )
             self.started_time = task.clock.get_datetime()
             self.started_time_real = datetime.datetime.now()
@@ -1051,7 +1039,6 @@ class task( object ):
             self.succeeded_time = task.clock.get_datetime()
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
             self.set_status( 'succeeded' )
-            self.record_db_update("task_states", self.name, self.c_time, status="succeeded")
             self.record_db_event(event="succeeded" )
             handler = self.event_handlers['succeeded']
             if handler:
@@ -1084,7 +1071,6 @@ class task( object ):
                 self.outputs.add( message )
                 self.outputs.set_completed( message )
                 self.set_status( 'failed' )
-                self.record_db_update("task_states", self.name, self.c_time, status="failed")
                 self.record_db_event(event="failed" )
                 handler = self.event_handlers['failed']
                 if handler:
@@ -1097,7 +1083,6 @@ class task( object ):
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
                 self.set_status( 'retrying' )
-                self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status="retrying")
                 self.record_db_event(event="failed", message="retrying in " + str( self.retry_delay) )
                 self.prerequisites.set_all_satisfied()
                 self.outputs.set_all_incomplete()
@@ -1119,8 +1104,12 @@ class task( object ):
             self.log('DEBUG', '(current:' + self.state.get_status() + ') unhandled: ' + content )
 
     def set_status( self, status ):
-        self.log( 'NORMAL', '(setting:' + status + ')' )
-        self.state.set_status( status )
+        if status != self.state.get_status():
+            self.log( 'NORMAL', '(setting:' + status + ')' )
+            self.state.set_status( status )
+            self.record_db_update("task_states", self.name, self.c_time, 
+                                  submit_num=self.submit_num, try_num=self.try_number, 
+                                  status=status)
 
     def update( self, reqs ):
         for req in reqs.get_list():
