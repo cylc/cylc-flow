@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, re
-from cylc.config_list import get_expanded_float_list
 from OrderedDict import OrderedDict
 from cylc.dictcopy import m_override, override, un_many, replicate
 from copy import copy
@@ -38,7 +37,7 @@ class ValidationError( Exception ):
 
 class IllegalValueError( ValidationError ):
     def __init__( self, vtype, keys, value ):
-        msg = 'Illegal ' + vtype + ' value ' + \
+        msg = 'Illegal value for ' + vtype + \
                 ': [' + ']['.join(keys) + '] = ' + str(value)
         ValidationError.__init__( self, msg )
 
@@ -162,20 +161,35 @@ def _coerce_float_list( value, keys, args ):
     return lvalues
 
 def _coerce_m_float_list( value, keys, args ):
-    """Coerce value to a list of floats (comma-separated
-    with optional multipliers e.g. suite 'retry delays')."""
-    values = re.split( '\s*,\s*', value )
-    if '' in values: # from trailing comma
-        values.remove('')
-    try:
-        lvalues = get_expanded_float_list( values, args['allow zeroes'] )
-    except:
-        raise
-        raise IllegalValueError( "float list", keys, value )
-    else:
-        if '' in lvalues: # from trailing comma
-            lvalues.remove('')
-        return lvalues
+    """Coerce a list with optional multipliers to float values:
+       ['1.0', '2*3.0', '4.0'] => [1.0, 3.0, 3.0, 4.0]""" 
+    str_values = re.split( '\s*,\s*', value )
+    if '' in str_values: # from trailing comma
+        str_values.remove('')
+
+    # expand the multiplier list
+    lvalues = []
+    for item in str_values:
+        try:
+            mult, val = item.split('*')
+        except ValueError:
+            # too few values to unpack: no multiplier
+            try:
+                lvalues.append(float(item))
+            except ValueError:
+                raise IllegalValueError( "float list", keys, value )
+        else:
+            # mult * val
+            try:
+                lvalues += int(mult) * [float(val)]
+            except ValueError:
+                raise IllegalValueError( "float list", keys, value )
+
+    if not args['allow zeroes']:
+        if 0.0 in lvalues:
+            raise IllegalValueError( "float list with no zeroes", keys, value )
+
+    return lvalues
 
 coercers = {
     'boolean'      : _coerce_boolean,
@@ -194,7 +208,7 @@ class validator(object):
     Validators for single values.
     """
     def __init__( self, vtype='string', default=None,
-            options=[], vmin=None, vmax=None, allow_zeroes=False):
+            options=[], vmin=None, vmax=None, allow_zeroes=True):
         self.coercer = coercers[vtype]
         self.args = {
                 'options'      : options,
