@@ -1107,7 +1107,9 @@ class task( object ):
         if status != self.state.get_status():
             self.log( 'NORMAL', '(setting:' + status + ')' )
             self.state.set_status( status )
-            self.record_db_update("task_states", self.name, self.c_time, try_num=self.try_number, status=status)
+            self.record_db_update("task_states", self.name, self.c_time, 
+                                  submit_num=self.submit_num, try_num=self.try_number, 
+                                  status=status)
 
     def update( self, reqs ):
         for req in reqs.get_list():
