@@ -48,6 +48,7 @@ SPEC = {
             'succeeded'     : vdr( vtype='string_list' ),
             'failed'        : vdr( vtype='string_list' ),
             'retrying'      : vdr( vtype='string_list' ),
+            'submit-retrying' : vdr( vtype='string_list' ),
             },
         },
     }
