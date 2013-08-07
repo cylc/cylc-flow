@@ -117,6 +117,10 @@ class config( object ):
                 verbose=verbose )
         self.runtime_defaults = get_defaults_rt()
 
+        # allow test suites with no [runtime]:
+        if 'runtime' not in self.cfg:
+            self.cfg['runtime'] = {}
+
         if 'root' not in self.cfg['runtime']:
             self.cfg['runtime']['root'] = {}
 
