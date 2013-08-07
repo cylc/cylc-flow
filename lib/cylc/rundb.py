@@ -123,6 +123,7 @@ class ThreadedCursor(Thread):
                     attempt += 1
                     sleep(1)
             counter += 1
+        cnx.commit()
         cnx.close()
     def execute(self, req, arg=None, res=None, bulk=False):
         self.reqs.put((req, arg or tuple(), res, bulk))
