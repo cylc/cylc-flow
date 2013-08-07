@@ -327,7 +327,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                         gtk.ICON_SIZE_MENU)
         exc_lines = traceback.format_exception(e_type, e_value, e_traceback)
         exc_text = "".join(exc_lines)
-        info = "cylc gpanel has crashed.\n\n%s" % exc_text
+        info = "cylc gpanel has a problem.\n\n%s" % exc_text
         self._set_tooltip(self.gcylc_image, info.rstrip())
         if old_hook is not None:
             old_hook(exception_class, exception, trace)
