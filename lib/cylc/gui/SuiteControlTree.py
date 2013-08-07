@@ -107,10 +107,11 @@ Text Treeview suite control interface.
 
     def check_tfilter_buttons(self, tb):
         del self.tfilter_states[:]
-        for b in self.tfilterbox.get_children():
-            if not b.get_active():
-                # sub '_' from button label keyboard mnemonics
-                self.tfilter_states.append( re.sub('_', '', b.get_label()))
+        for subbox in self.tfilterbox.get_children():
+            for b in subbox.get_children():
+                if not b.get_active():
+                    # sub '_' from button label keyboard mnemonics
+                    self.tfilter_states.append( re.sub('_', '', b.get_label()))
         self.tmodelfilter.refilter()
 
     def check_filter_entry( self, e ):
