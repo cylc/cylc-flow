@@ -1063,7 +1063,6 @@ class scheduler(object):
                 itask.process_incoming_messages()
 
             # process queued database operations
-            db_ops = []
             state_recorders = []
             state_updaters = []
             event_recorders = []
