@@ -342,11 +342,12 @@ class scheduler(object):
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                     user_at_host, r_suite_run_dir)
             # just in case the remote dir was deleted:
-            cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
-            cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-            for cmd in [cmd1,cmd2]:
-                if subprocess.call(cmd): # return non-zero
-                    raise Exception("ERROR: " + str(cmd))
+            if host != 'localhost':
+                cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
+                cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
+                for cmd in [cmd1,cmd2]:
+                    if subprocess.call(cmd): # return non-zero
+                        raise Exception("ERROR: " + str(cmd))
             task.task.suite_contact_env_hosts.append( user_at_host )
 
         self.already_timed_out = False
@@ -498,12 +499,6 @@ class scheduler(object):
                 except AttributeError:
                     # not a clocktriggered task
                     pass
-                # extra info for catchup_clocktriggered tasks
-                try:
-                    extra_info[ itask.__class__.name + ' caught up' ] = itask.__class__.get_class_var( 'caughtup' )
-                except:
-                    # not a catchup_clocktriggered task
-                    pass
                 # extra info for cycling tasks
                 try:
                     extra_info[ 'Valid cycles' ] = itask.valid_hours
@@ -592,7 +587,7 @@ class scheduler(object):
  
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                if itask.state.is_currently('waiting', 'queued', 'retrying' ):
+                if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
                     itask.reset_state_held()
 
     def command_hold_suite( self ):
@@ -662,7 +657,7 @@ class scheduler(object):
         for task_id in task_ids:
             name, tag = task_id.split( TaskID.DELIM )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
-            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
+            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
             self.add_new_task_proxy( new_task )
 
     def command_nudge( self ):
@@ -737,7 +732,7 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_currently('waiting', 'queued', 'retrying'):
+                    if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -746,7 +741,7 @@ class scheduler(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup )
+                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
@@ -847,13 +842,14 @@ class scheduler(object):
         if not self.start_tag and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
-        # PAUSE TIME?
-        self.hold_suite_now = False
-        self.hold_time = None
-        if self.options.hold_time:
-            # raises CycleTimeError:
-            self.hold_time = ct( self.options.hold_time ).get()
-            #    self.parser.error( "invalid cycle time: " + self.hold_time )
+        if not reconfigure:
+            # PAUSE TIME?
+            self.hold_suite_now = False
+            self.hold_time = None
+            if self.options.hold_time:
+                # raises CycleTimeError:
+                self.hold_time = ct( self.options.hold_time ).get()
+                #    self.parser.error( "invalid cycle time: " + self.hold_time )
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config.cfg['cylc']['lockserver']['enable']
@@ -1321,7 +1317,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued','waiting','retrying'):
+                if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.reset_state_held()

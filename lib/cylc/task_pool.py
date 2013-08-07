@@ -156,7 +156,8 @@ class pool(object):
                             readytogo.append(itask)
                         else:
                             # (direct task state reset ok: this executes in the main thread)
-                            itask.set_state_queued()
+                            if not itask.state.is_currently('queued'):
+                                itask.set_state_queued()
                     else:
                         readytogo.append(itask)
 

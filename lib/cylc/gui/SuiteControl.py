@@ -46,7 +46,8 @@ from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.stateview import DotMaker
 from cylc.gui.updater import Updater
-from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog, setup_icons
+from cylc.gui.util import (get_icon, get_image_dir, get_logo, EntryTempText,
+                           EntryDialog, setup_icons, set_exception_hook_dialog)
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
@@ -351,6 +352,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.usercfg = config().cfg
 
         gobject.threads_init()
+
+        set_exception_hook_dialog("gcylc")
 
         self.cfg = InitData( suite, owner, host, port, db, 
                 pyro_timeout, template_vars, template_vars_file )
@@ -711,7 +714,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         for view in self.current_views:
             if view is not None:
                 view.stop()
-        self.updater.stop()
+        if self.updater is not None:
+            self.updater.stop()
         gtk.main_quit()
 
     def delete_event(self, widget, event, data=None):

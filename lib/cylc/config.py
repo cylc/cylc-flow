@@ -1566,14 +1566,14 @@ class config( object ):
 
         return taskd
    
-    def get_task_proxy( self, name, ctime, state, stopctime, startup ):
+    def get_task_proxy( self, name, ctime, state, stopctime, startup, submit_num, exists ):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
             raise TaskNotDefinedError("ERROR, No such task name: " + name )
-        return tdef.get_task_class()( ctime, state, stopctime, startup )
+        return tdef.get_task_class()( ctime, state, stopctime, startup, submit_num=submit_num, exists=exists )
 
-    def get_task_proxy_raw( self, name, tag, state, stoptag, startup ):
+    def get_task_proxy_raw( self, name, tag, state, stoptag, startup, submit_num, exists ):
         # Used by 'cylc submit' to submit tasks defined by runtime
         # config but not currently present in the graph (so we must
         # assume that the given tag is valid for the task).
@@ -1590,7 +1590,7 @@ class config( object ):
         else:
             # assume input cycle is valid
             tdef.hours = [ int( foo.hour ) ]
-        return tdef.get_task_class()( tag, state, stoptag, startup )
+        return tdef.get_task_class()( tag, state, stoptag, startup, submit_num=submit_num, exists=exists )
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()

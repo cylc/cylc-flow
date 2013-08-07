@@ -23,6 +23,8 @@ import StringIO
 from copy import deepcopy
 from cylc.global_config import get_global_cfg
 from cylc.command_env import cv_scripting_ml, cv_export
+from subprocess import call, PIPE
+from time import sleep 
 
 class jobfile(object):
 
@@ -90,6 +92,16 @@ class jobfile(object):
         self.write_task_succeeded()
         self.write_eof()
         self.FILE.close()
+        # Wait for job file to properly close to prevent errors that look like
+        # this:
+        #     /bin/bash: SCRIPT: /bin/bash: bad interpreter: Text file busy
+        # which means that the OS thinks that the job file is still connected
+        # to a process when it is being executed.
+        try:
+            while call(["lsof", path], stderr=PIPE, stdout=PIPE) == 0:
+                sleep(0.1)
+        except OSError: # OSError is triggered if "lsof" command not available
+            pass
 
     def write_header( self ):
         self.FILE.write( "#!" + self.jobconfig['job script shell'] )

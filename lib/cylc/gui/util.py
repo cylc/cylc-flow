@@ -17,6 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
+import traceback
 
 import gtk
 
@@ -87,6 +89,7 @@ class EntryDialog(gtk.MessageDialog):
             text = None
         return text
 
+
 def get_image_dir():
     """Return the root directory for cylc images."""
     try:
@@ -114,6 +117,31 @@ def get_logo():
     logo_path = os.path.join(get_image_dir(), "logo.png")
     return gtk.gdk.pixbuf_new_from_file(logo_path)
 
+
+def _launch_exception_hook_dialog(e_type, e_value, e_traceback,
+                                  old_hook=None, program_name=None):
+    if program_name is None:
+        program_name = "This program"
+    exc_lines = traceback.format_exception(e_type, e_value, e_traceback)
+    exc_text = "".join(exc_lines)
+    info = "%s has a problem.\n\n%s" % (program_name, exc_text)
+    dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
+                               message_format=info.rstrip())
+    dialog.set_icon(get_icon())
+    dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
+    dialog.run()
+    dialog.destroy()
+    if old_hook is not None:
+        old_hook(e_type, e_value, e_traceback)
+
+
+def set_exception_hook_dialog(program_name=None):
+    """Set a custom uncaught exception hook for launching an error dialog."""
+    old_hook = sys.excepthook
+    sys.excepthook = lambda *a: _launch_exception_hook_dialog(
+                                                  *a, old_hook=old_hook,
+                                                  program_name=program_name)
+    
 
 def setup_icons():
     """Set up some extra stock icons for better PyGTK compatibility."""

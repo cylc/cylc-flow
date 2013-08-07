@@ -35,7 +35,7 @@ from cylc.gui.gcylc_config import config
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.SuiteControl import run_get_stdout
 from cylc.gui.DotMaker import DotMaker
-from cylc.gui.util import get_icon, setup_icons
+from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.owner import user
 from cylc.version import cylc_version
 
@@ -335,6 +335,7 @@ class SummaryApp(object):
 
     def __init__(self, hosts=None, owner=None, poll_interval=None):
         gobject.threads_init()
+        set_exception_hook_dialog("cylc gsummary")
         setup_icons()
         if not hosts:
             gcfg = get_global_cfg()
@@ -427,7 +428,7 @@ class SummaryApp(object):
 
     def _on_button_press_event(self, treeview, event):
         # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
-        
+
         if (event.type != gtk.gdk._2BUTTON_PRESS and
             event.button != 3):
             return False
