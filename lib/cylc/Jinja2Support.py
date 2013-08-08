@@ -99,13 +99,13 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
     
     # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
     # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.
-    # (converting unicode to plain string; configobj doesn't like?)
+    # Convert unicode to plain str, ToDo - still needed for parsec?)
     #try:
     rendered = str( template.render( template_vars ) )
     #except Exception, x:
     #    raise TemplateError( x )
 
-    xlines = rendered.split('\n') # pass a list of lines to configobj
+    xlines = rendered.split('\n')
     suiterc = []
     for line in xlines:
         # Jinja2 leaves blank lines where source lines contain

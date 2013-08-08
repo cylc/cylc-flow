@@ -610,7 +610,7 @@ class task( object ):
             #   host = $ENV_VAR
 
             n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', self.task_host )
-            # any string quotes are stripped by configobj parsing 
+            # any string quotes are stripped by file parsing 
             if n:
                 var = n.groups()[0]
                 try:
