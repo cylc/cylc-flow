@@ -54,15 +54,11 @@ class DefinitionError( Error ):
 
 class taskdef(object):
 
-    def __init__( self, name, rtdefs, rtover, run_mode, ict ):
+    def __init__( self, name, rtcfg, run_mode, ict ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
             raise DefinitionError, "ERROR: Illegal task name: " + name
-
-        rtcfg = {}
-        replicate( rtcfg, rtdefs  ) # copy [runtime] default dict
-        override( rtcfg, rtover )    # override with suite [runtime] settings
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg

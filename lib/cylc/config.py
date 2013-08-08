@@ -150,6 +150,7 @@ class config( object ):
 
         self.check_env()
 
+        # Do sparse [runtime] inheritance
         self.compute_family_tree()
         self.compute_inheritance()
 
@@ -1536,7 +1537,17 @@ class config( object ):
         else:
             ict = None
 
-        taskd = taskdef.taskdef( name, self.runtime_defaults, taskcfg, self.run_mode, ict ) 
+        # Get full dense task [runtime] by applying runtime defaults now.
+        # TODO - this should be done right after sparse inheritance, but
+        # we need to retain sparse config for self.get_config(). Once
+        # inheritance is moved into parsec get-config command should
+        # do its own parsing independent of config.py.
+        rtcfg = {}
+        replicate( rtcfg, self.runtime_defaults ) # copy [runtime] default dict
+        doverride( rtcfg, taskcfg )    # override with suite [runtime] settings
+    
+        # Get the taskdef object for generating the task proxy class
+        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict ) 
 
         # TODO - put all taskd.foo items in a single config dict
         # SET ONE-OFF AND COLD-START TASK INDICATORS
