@@ -29,8 +29,8 @@ from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
-from dictcopy import replicate
-from dictcopy import override as doverride
+from parsec.util import replicate, un_many
+from parsec.util import override as doverride
 from TaskID import TaskID
 from C3MRO import C3
 

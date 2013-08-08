@@ -18,7 +18,7 @@
 
 import sys, re
 from OrderedDict import OrderedDict
-from cylc.dictcopy import m_override, override, un_many, replicate
+from util import m_override, override, un_many, replicate
 from copy import copy
 
 """
