@@ -1057,10 +1057,42 @@ class scheduler(object):
                 itask.process_incoming_messages()
 
             # process queued database operations
+            state_recorders = []
+            state_updaters = []
+            event_recorders = []
+            other = []
             for itask in self.pool.get_tasks():
-                db_ops = itask.get_db_ops()
-                for d in db_ops:
-                    self.db.run_db_op(d)
+                opers = itask.get_db_ops()
+                for oper in opers:
+                    if isinstance(oper, cylc.rundb.UpdateObject):
+                        state_updaters += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordStateObject):
+                        state_recorders += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordEventObject):
+                        event_recorders += [oper]
+                    else:
+                        other += [oper]
+            #precedence is record states > update_states > record_events > anything_else
+            db_ops = state_recorders + state_updaters + event_recorders + other 
+            # compact the set of operations
+            if len(db_ops) > 1:
+                db_opers = [db_ops[0]]
+                for i in range(1,len(db_ops)):
+                    if db_opers[-1].s_fmt == db_ops[i].s_fmt:
+                        if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
+                            db_opers[-1].add_oper(db_ops[i])
+                        else:
+                            new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
+                            new_oper.add_oper(db_ops[i])
+                            db_opers.pop(-1)
+                            db_opers += [new_oper]
+                    else:
+                        db_opers += [db_ops[i]]
+            else:
+                db_opers = db_ops
+            
+            for d in db_opers:
+                self.db.run_db_op(d)
             
             # record any broadcast settings to be dumped out
             if self.wireless:

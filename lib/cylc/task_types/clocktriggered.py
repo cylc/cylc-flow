@@ -46,9 +46,9 @@ class clocktriggered(object):
 
     def ready_to_run( self ):
         if task.ready_to_run( self ) and self.start_time_reached():
-            print '(ready)'
+            #print '(ready)'
             return True
         else:
-            print '(not ready)'
+            #print '(not ready)'
             return False
 
