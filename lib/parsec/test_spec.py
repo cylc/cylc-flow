@@ -24,7 +24,7 @@ if __name__ == "__main__":
 from fileparse import parse
 from util import printcfg
 from validate import validator as vdr
-from validate import validate, expand, override
+from validate import validate, expand
 
 """
 Legal items and validators for the parsec test config file.

@@ -18,7 +18,8 @@
 
 import os, sys
 from fileparse import parse, FileNotFoundError
-from validate import validate, expand, override
+from validate import validate, expand
+from util import replicate
 from upgrade import UpgradeError
 
 """Some high-level functions for handling parsec config files."""
@@ -76,7 +77,7 @@ def load_combined( FILE1, descr1,
     cfg1 = load_single( FILE1, SPEC, descr1, upgrader, False, verbose )
     cfg2 = load_single( FILE2, SPEC, descr2, upgrader, False, verbose )
     if cfg2:
-        override( cfg1, cfg2 )
+        replicate( cfg1, cfg2 )
     if do_expand:
         cfg = expand( cfg1, SPEC )
     else:

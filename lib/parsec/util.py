@@ -17,10 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
-from copy import copy
 from OrderedDict import OrderedDict
 
-"""Utility functions for manipulating parsec nested dicts."""
+"""
+Utility functions for printing and manipulating PARSEC NESTED DICTS.
+The copy and override functions below assume values are either dicts
+(nesting) or shallow collections of simple types.
+"""
 
 def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
     """
@@ -43,9 +46,13 @@ def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
         printcfg( val, level=level+1, indent=indent+1, prefix=prefix, omitNone=omitNone)
 
 
+
 def replicate( target, source ):
-    """Fast deepcopy for a nested dict in which elements may be
-    simple types or lists of simple types."""
+    """
+    Replicate source *into* target. Source elements need not exist in
+    target already, so source overrides common elements in target and
+    otherwise adds elements to it.
+    """
     for key,val in source.items():
         if isinstance( val, dict ):
             if key not in target:
@@ -55,38 +62,55 @@ def replicate( target, source ):
                     target[key] = {}
             replicate( target[key], val )
         elif isinstance( val, list ):
-            target[key] = copy(val)
+            target[key] = val[:]
         else:
             target[key] = val
 
-def override( target, sparse ):
-    """Override items in a target dict, all target keys must already exist."""
+def pdeepcopy( source):
+    """Make a deep copy of a pdict source"""
+    target = {}
+    replicate( target, source )
+    return target
+
+def poverride( target, sparse ):
+    """Override items in a target pdict, target sub-dicts must already exist."""
     for key,val in sparse.items():
         if isinstance( val, dict ):
-            override( target[key], val )
+            poverride( target[key], val )
         elif isinstance( val, list ):
-            target[key] = copy(val)
+            target[key] = val[:]
         else:
             target[key] = val
 
 def m_override( target, sparse ):
-    """Override items in a target dict. All target keys must already exist
-    unless there is a "__MANY__" key in the right position."""
+    """Override items in a target pdict. Target keys must already exist
+    unless there is a "__MANY__" placeholder in the right position."""
 
     for key,val in sparse.items():
         if isinstance( val, dict ):
             if key not in target:
                 if '__MANY__' in target:
                     if key in ['environment','directives']:
-                        target[key] = tar()
+                        target[key] = OrderedDict()
                     else:
                         target[key] = {}
                     replicate( target[key], target['__MANY__'] )
+                else:
+                    print "ERROR 1" # TODO: RAISE (validation prevents this though)
             m_override( target[key], val )
-        elif isinstance( val, list ):
-            target[key] = copy(val)
         else:
-            target[key] = val
+            if key not in target:
+                if '__MANY__' in target:
+                    if isinstance( val, list ):
+                        target[key] = val[:]
+                    else:
+                        target[key] = val
+                else:
+                    print "ERROR 1"
+            if isinstance( val, list ):
+                target[key] = val[:]
+            else:
+                target[key] = val
 
 def un_many( cfig ):
     """Remove any '__MANY__' items from a nested dict, in-place."""
@@ -95,21 +119,4 @@ def un_many( cfig ):
             del cfig[key]
         elif isinstance( val, dict ):
             un_many( cfig[key] )
-
-def un_many_replicate( nfig, ofig ):
-    """replicate a nested dict, avoiding any '__MANY__' items."""
-    for key,val in ofig.items():
-        if key == '__MANY__':
-            continue
-        if isinstance( val, dict ):
-            if key not in nfig:
-                if key in ['environment','directives']:
-                    nfig[key] = OrderedDict()
-                else:
-                    nfig[key] = {}
-            un_many_replicate( nfig[key], ofig[key] )
-        elif isinstance( val, list ):
-            nfig[key] = copy(val)
-        else:
-            nfig[key] = val
 

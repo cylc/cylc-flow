@@ -19,7 +19,7 @@
 import os, sys, re
 import datetime
 import subprocess
-from copy import copy, deepcopy
+from copy import copy
 from random import randrange
 from collections import deque
 from cylc import task_state
@@ -32,6 +32,7 @@ from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
 from cylc.command_env import cv_scripting_sl
+from parsec.util import pdeepcopy, poverride
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -406,13 +407,6 @@ class task( object ):
         # called by scheduler main thread
         self.set_status( 'queued' )
 
-    def override( self, target, sparse ):
-        for key,val in sparse.items():
-            if isinstance( val, dict ):
-                self.override( target[key], val )
-            else:
-                target[key] = val
-
     def set_from_rtconfig( self, cfg={} ):
         """Some [runtime] config requiring consistency checking on reload, 
         and self variables requiring updating for the same."""
@@ -533,8 +527,8 @@ class task( object ):
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
 
-        rtconfig = deepcopy( self.__class__.rtconfig )  # (TODO - replace deepcopy)
-        self.override( rtconfig, overrides )
+        rtconfig = pdeepcopy( self.__class__.rtconfig )
+        poverride( rtconfig, overrides )
         
         self.set_from_rtconfig( rtconfig )
 

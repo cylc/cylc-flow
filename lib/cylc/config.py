@@ -29,8 +29,7 @@ from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
-from parsec.util import replicate, un_many
-from parsec.util import override as doverride
+from parsec.util import pdeepcopy, poverride, replicate, un_many
 from TaskID import TaskID
 from C3MRO import C3
 
@@ -139,12 +138,7 @@ class config( object ):
                 continue
             # generate task configuration for each list member
             for name in task_names:
-                # create a new task config section
-                tconfig = {}
-                # replicate the actual task config
-                replicate( tconfig, self.cfg['runtime'][item] )
-                # record it under the task name
-                self.cfg['runtime'][name] = tconfig
+                self.cfg['runtime'][name] = pdeepcopy( self.cfg['runtime'][item] )
             # delete the original multi-task section
             del self.cfg['runtime'][item]
 
@@ -523,18 +517,18 @@ class config( object ):
             # load and override runtime defaults
             if len(args) > 1:
                 # a single namespace
-                target = {}
-                replicate( target, self.runtime_defaults )
-                doverride( target, self.cfg['runtime'][args[1]] )
+                target = pdeepcopy( self.runtime_defaults )
+                poverride( target, self.cfg['runtime'][args[1]] )
+                un_many(target)
                 keys = args[2:]
             else:
                 # all namespaces requested
                 target = {}
                 keys = []
                 for ns in self.cfg['runtime'].keys():
-                    target[ns] = {}
-                    replicate( target[ns], self.runtime_defaults )
-                    doverride( target[ns], self.cfg['runtime'][ns] )
+                    target[ns] = pdeepcopy( self.runtime_defaults )
+                    poverride( target[ns], self.cfg['runtime'][ns] )
+                    un_many(target[ns])
         else:
             target = self.cfg
             keys = args
@@ -1542,9 +1536,9 @@ class config( object ):
         # we need to retain sparse config for self.get_config(). Once
         # inheritance is moved into parsec get-config command should
         # do its own parsing independent of config.py.
-        rtcfg = {}
-        replicate( rtcfg, self.runtime_defaults ) # copy [runtime] default dict
-        doverride( rtcfg, taskcfg )    # override with suite [runtime] settings
+        rtcfg = pdeepcopy( self.runtime_defaults ) # copy [runtime] default dict
+        poverride( rtcfg, taskcfg )    # override with suite [runtime] settings
+        un_many(rtcfg)
     
         # Get the taskdef object for generating the task proxy class
         taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict ) 

@@ -231,6 +231,7 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False,
                 if key not in cfg:
                     cfg[key] = {} # TODO - ordered dict?
                 cfg[key] = expand( cfg[key], SPEC[key] )
+
     return cfg
 
 def get_defaults_rt():

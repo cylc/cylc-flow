@@ -18,7 +18,7 @@
 
 import sys, re
 from OrderedDict import OrderedDict
-from util import m_override, override, un_many, replicate
+from util import m_override, un_many
 from copy import copy
 
 """
@@ -55,20 +55,6 @@ def validate( cfig, spec, keys=[] ):
             validate( val, spec[speckey], keys+[key] )
         else:
             cfig[key] = spec[speckey].check( val, keys+[key] )
-
-def override( target, source ):
-    """Override values in nested dict target with those in source. Item
-    keys do not have to exist in target already (so this will return a
-    copy of source if target is emtpy)."""
-    for key,val in source.items():
-        if isinstance( val, dict ):
-            if key not in target:
-                target[key] = {}
-            override( target[key], val )
-        elif isinstance( val, list ):
-            target[key] = copy(val)
-        else:
-            target[key] = val
 
 def _populate_spec_defaults( defs, spec ):
     """Populate a nested dict with default values from a spec."""
