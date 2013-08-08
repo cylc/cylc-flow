@@ -5605,25 +5605,7 @@ operation as required.
 
 \pagebreak
 
-\section{Site/User Config File Reference}
-\label{SiteUserConfig}
-
-Cylc now has a site config file for settings that apply to all suites:
-    \lstinline=$CYLC_DIR/conf/site/site.rc=.
-Prior to cylc-5.0 some of these settings (e.g. log directory locations)
-had to be put in suite definitions, and some (e.g. preferred editors) 
-were specified in the user's environment.
-Many of the site settings can be overridden by users: 
-    \lstinline=$HOME/.cylc/user.rc=
-
-See also \lstinline=cylc get-global-config --help=, which can be used to
-write an initial site or user config file with internal documentation
-and all items commented out.
-
-As a temporary measure the self-documenting {\em configspec} for 
-site/user config files is included verbatim here.  
-
-\lstinputlisting{../conf/siterc/cfgspec}
+\input{siterc.tex}
 
 \pagebreak
 
