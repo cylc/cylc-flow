@@ -20,7 +20,6 @@ from OrderedDict import OrderedDict
 from parsec.validate import validator as vdr
 from parsec.validate import validate, expand, get_defaults
 from parsec.upgrade import upgrader, converter
-from parsec.printcfg import print_nested
 from parsec.fileparse import parse
 
 """
@@ -232,7 +231,6 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False,
                 if key not in cfg:
                     cfg[key] = {} # TODO - ordered dict?
                 cfg[key] = expand( cfg[key], SPEC[key] )
-    #print_nested(cfg)
     return cfg
 
 def get_defaults_rt():

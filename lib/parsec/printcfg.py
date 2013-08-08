@@ -27,7 +27,7 @@ def print_nested( dct, level=0, indent=0, prefix='', omitNone=False ):
         if isinstance( val, dict ):
             # print top level items before recursing
             delayed.append((key,val))
-        elif val != None:
+        elif val != None or not omitNone:
             if isinstance( val, list ):
                 v = ', '.join([str(f) for f in val])
             else:
