@@ -95,7 +95,6 @@ SPEC = {
             'task communication method'   : vdr( vtype='string', options=["pyro","ssh","poll"] ),
             'remote shell template'       : vdr( vtype='string' ),
             'use login shell'             : vdr( vtype='boolean', default=True ),
-            'cylc bin directory'          : vdr( vtype='string', default=None ),
             },
         },
 
