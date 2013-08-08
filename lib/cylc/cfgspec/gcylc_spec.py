@@ -19,7 +19,7 @@
 import os
 from parsec.loadcfg import load_combined
 from parsec.validate import validator as vdr
-from parsec.printcfg import print_nested
+from parsec.util import printcfg
 
 """
 Define items and validators for gcylc config files,
@@ -62,5 +62,5 @@ def get_cfg( verbose=False ):
     return cfg
 
 def print_cfg():
-    print_nested(get_cfg())
+    printcfg(get_cfg())
 

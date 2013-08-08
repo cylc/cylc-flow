@@ -22,7 +22,7 @@ if remrun().execute():
     sys.exit(0)
 
 import re
-from parsec.printcfg import print_nested
+from parsec.util import printcfg
 from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
 
@@ -178,7 +178,7 @@ else:
             if options.pnative:
                 print d
             else:
-                print_nested( d, level=len(args[1:]), prefix=prefix)
+                printcfg( d, level=len(args[1:]), prefix=prefix)
         else:
             print prefix + str(d)
 

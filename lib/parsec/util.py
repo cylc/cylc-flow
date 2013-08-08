@@ -16,13 +16,32 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os, sys
 from copy import copy
 from OrderedDict import OrderedDict
 
-# Note that I've tried increasing the efficiency of replicate() and
-# override() by inlining the recursive call or using dict.update(),
-# knowing that [runtime] dicts are only two deep, but it seems to make
-# no appreciable difference, even on suites that take ~30s to validate.
+"""Utility functions for manipulating parsec nested dicts."""
+
+def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
+    """
+    Recursively print a nested dict in nested INI format.
+    """
+    delayed=[]
+    for key,val in dct.items():
+        if isinstance( val, dict ):
+            # print top level items before recursing
+            delayed.append((key,val))
+        elif val != None or not omitNone:
+            if isinstance( val, list ):
+                v = ', '.join([str(f) for f in val])
+            else:
+                v = str(val)
+            print prefix + '   '*indent + str(key) + ' = ' + v
+    for key,val in delayed:
+        if val != None:
+            print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
+        printcfg( val, level=level+1, indent=indent+1, prefix=prefix, omitNone=omitNone)
+
 
 def replicate( target, source ):
     """Fast deepcopy for a nested dict in which elements may be

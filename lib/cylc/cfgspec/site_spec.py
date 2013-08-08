@@ -20,7 +20,7 @@ import os
 from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader, converter
 from parsec.loadcfg import load_combined
-from parsec.printcfg import print_nested
+from parsec.util import printcfg
 
 """
 Define items and validators for cylc site and user config files.
@@ -131,5 +131,5 @@ def get_cfg( verbose=False ):
     return cfg
 
 def print_cfg():
-    print_nested(get_cfg())
+    printcfg(get_cfg())
 

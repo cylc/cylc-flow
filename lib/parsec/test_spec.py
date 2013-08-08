@@ -22,7 +22,7 @@ if __name__ == "__main__":
     sys.path.append( os.path.join( os.path.dirname(os.path.abspath(__file__)), '..' ))
 
 from fileparse import parse
-from printcfg import print_nested
+from util import printcfg
 from validate import validator as vdr
 from validate import validate, expand, override
 
@@ -82,7 +82,7 @@ def get_cfg( cfile=TEST_FILE, verbose=False, template_vars=[], template_vars_fil
     return cfg
 
 def print_cfg():
-    print_nested(get_cfg())
+    printcfg(get_cfg())
 
 if __name__ == '__main__':
     try:

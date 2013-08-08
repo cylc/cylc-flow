@@ -178,7 +178,7 @@ class upgrader( object ):
 
 
 if __name__ == "__main__":
-    from printcfg import print_nested
+    from util import printcfg
 
     cfg = {
             'item one' : 1,
@@ -204,7 +204,7 @@ if __name__ == "__main__":
             }
     x2 = converter( lambda x: 2*x, 'value x 2' )
 
-    print_nested(cfg)
+    printcfg(cfg)
     print
 
     upg = upgrader( cfg, 'test file' )
@@ -221,5 +221,5 @@ if __name__ == "__main__":
     upg.upgrade()
 
     print
-    print_nested(cfg)
+    printcfg(cfg)
 
