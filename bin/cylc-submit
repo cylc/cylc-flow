@@ -109,7 +109,7 @@ except Exception,x:
 
 use_lockserver = False
 lockserver_port = None
-if config['cylc']['lockserver']['enable']:
+if config.cfg['cylc']['lockserver']['enable']:
     hostname = get_hostname()
     use_lockserver = True
     try:
@@ -128,7 +128,7 @@ if config['cylc']['lockserver']['enable']:
 # no scheduler instance watching for task failure etc. 
 
 # Running in UTC time? (else just use the system clock)
-utc = config['cylc']['UTC mode']
+utc = config.cfg['cylc']['UTC mode']
 dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
 # create log (after CYLC_MODE is exported)
@@ -143,8 +143,8 @@ slog.pimp( clock=dclock )
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 
-ict = config['scheduling']['initial cycle time']
-fct = config['scheduling']['final cycle time'  ]
+ict = config.cfg['scheduling']['initial cycle time']
+fct = config.cfg['scheduling']['final cycle time'  ]
 
 # static cylc and suite-specific variables:
 suite_env = {
@@ -215,7 +215,7 @@ f.close()
 os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
 
 # User defined local variables that may be required by event handlers
-cenv = config['cylc']['environment']
+cenv = config.cfg['cylc']['environment']
 for var in cenv:
     os.environ[var] = os.path.expandvars(cenv[var])
 
