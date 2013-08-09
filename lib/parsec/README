@@ -81,11 +81,17 @@ TESTING
 
 ________________________________________________________________________
 TODO
- * A small amount of special suite-definition-specific behaviour
-   (namely combining identical graph sections) is encoded in the general
-   parser - we need a way to specify this sort of thing in file-specific
-   spec modules.
+ * Some suite-definition-specific special behaviour (namely combining
+   identical graph sections, and use of OrderedDicts for environment and
+   directives sections) is encoded in parsec - we need a way to specify
+   this sort of thing in file-specific spec modules.
 
- * (cylc - low priority) move [runtime] inheritance out of
-   cylc/config.py into parsec.
+ * Figure out how to use OrderedDicts *only* for environment (and
+   directives?) sections from the outset. Currently all sections are
+   added as OrderedDicts by the fileparser.
+
+ * move [runtime] inheritance out of cylc/config.py into parsec, and 
+   then move application of [runtime] defaults to immediately after 
+   inheritance processing, and don't use config.py for the get-config
+   command (which can print sparse [runtime] dicts).
 
