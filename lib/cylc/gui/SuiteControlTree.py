@@ -107,10 +107,11 @@ Text Treeview suite control interface.
 
     def check_tfilter_buttons(self, tb):
         del self.tfilter_states[:]
-        for b in self.tfilterbox.get_children():
-            if not b.get_active():
-                # sub '_' from button label keyboard mnemonics
-                self.tfilter_states.append( re.sub('_', '', b.get_label()))
+        for subbox in self.tfilterbox.get_children():
+            for b in subbox.get_children():
+                if not b.get_active():
+                    # sub '_' from button label keyboard mnemonics
+                    self.tfilter_states.append( re.sub('_', '', b.get_label()))
         self.tmodelfilter.refilter()
 
     def check_filter_entry( self, e ):
@@ -195,13 +196,22 @@ Text Treeview suite control interface.
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( self.ttreeview )
 
-        self.tfilterbox = gtk.HBox()
+        self.tfilterbox = gtk.VBox()
+        subbox1 = gtk.HBox(homogeneous=True)
+        subbox2 = gtk.HBox(homogeneous=True)
+        self.tfilterbox.pack_start(subbox1)
+        self.tfilterbox.pack_start(subbox2)
 
         self.tfilter_states = []
 
+        cnt = 0
         for st in task_state.legal:
             b = gtk.CheckButton( task_state.labels[st] )
-            self.tfilterbox.pack_start(b)
+            cnt += 1
+            if cnt > len(task_state.legal)/2:
+                subbox2.pack_start(b)
+            else:
+                subbox1.pack_start(b)
             if st in self.tfilter_states:
                 b.set_active(False)
             else:

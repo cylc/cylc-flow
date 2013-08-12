@@ -499,12 +499,6 @@ class scheduler(object):
                 except AttributeError:
                     # not a clocktriggered task
                     pass
-                # extra info for catchup_clocktriggered tasks
-                try:
-                    extra_info[ itask.__class__.name + ' caught up' ] = itask.__class__.get_class_var( 'caughtup' )
-                except:
-                    # not a catchup_clocktriggered task
-                    pass
                 # extra info for cycling tasks
                 try:
                     extra_info[ 'Valid cycles' ] = itask.valid_hours
@@ -593,7 +587,7 @@ class scheduler(object):
  
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                if itask.state.is_currently('waiting', 'queued', 'retrying' ):
+                if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
                     itask.reset_state_held()
 
     def command_hold_suite( self ):
@@ -663,7 +657,7 @@ class scheduler(object):
         for task_id in task_ids:
             name, tag = task_id.split( TaskID.DELIM )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
-            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False )
+            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
             self.add_new_task_proxy( new_task )
 
     def command_nudge( self ):
@@ -738,7 +732,7 @@ class scheduler(object):
                 itask.reconfigure_me = False
                 if itask.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_currently('waiting', 'queued', 'retrying'):
+                    if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
                         # if not started running yet, remove it.
                         self.pool.remove( itask, '(task orphaned by suite reload)' )
                     else:
@@ -747,7 +741,7 @@ class scheduler(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup )
+                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     # succeeded tasks need their outputs set completed:
@@ -848,13 +842,14 @@ class scheduler(object):
         if not self.start_tag and not self.is_restart:
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
-        # PAUSE TIME?
-        self.hold_suite_now = False
-        self.hold_time = None
-        if self.options.hold_time:
-            # raises CycleTimeError:
-            self.hold_time = ct( self.options.hold_time ).get()
-            #    self.parser.error( "invalid cycle time: " + self.hold_time )
+        if not reconfigure:
+            # PAUSE TIME?
+            self.hold_suite_now = False
+            self.hold_time = None
+            if self.options.hold_time:
+                # raises CycleTimeError:
+                self.hold_time = ct( self.options.hold_time ).get()
+                #    self.parser.error( "invalid cycle time: " + self.hold_time )
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config['cylc']['lockserver']['enable']
@@ -1062,10 +1057,42 @@ class scheduler(object):
                 itask.process_incoming_messages()
 
             # process queued database operations
+            state_recorders = []
+            state_updaters = []
+            event_recorders = []
+            other = []
             for itask in self.pool.get_tasks():
-                db_ops = itask.get_db_ops()
-                for d in db_ops:
-                    self.db.run_db_op(d)
+                opers = itask.get_db_ops()
+                for oper in opers:
+                    if isinstance(oper, cylc.rundb.UpdateObject):
+                        state_updaters += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordStateObject):
+                        state_recorders += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordEventObject):
+                        event_recorders += [oper]
+                    else:
+                        other += [oper]
+            #precedence is record states > update_states > record_events > anything_else
+            db_ops = state_recorders + state_updaters + event_recorders + other 
+            # compact the set of operations
+            if len(db_ops) > 1:
+                db_opers = [db_ops[0]]
+                for i in range(1,len(db_ops)):
+                    if db_opers[-1].s_fmt == db_ops[i].s_fmt:
+                        if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
+                            db_opers[-1].add_oper(db_ops[i])
+                        else:
+                            new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
+                            new_oper.add_oper(db_ops[i])
+                            db_opers.pop(-1)
+                            db_opers += [new_oper]
+                    else:
+                        db_opers += [db_ops[i]]
+            else:
+                db_opers = db_ops
+            
+            for d in db_opers:
+                self.db.run_db_op(d)
             
             # record any broadcast settings to be dumped out
             if self.wireless:
@@ -1322,7 +1349,7 @@ class scheduler(object):
             self.hold_suite_now = True
             self.log.warning( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued','waiting','retrying'):
+                if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                     # (not runahead: we don't want these converted to
                     # held or they'll be released immediately on restart)
                     itask.reset_state_held()
