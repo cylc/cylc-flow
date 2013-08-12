@@ -22,7 +22,7 @@ import re, os
 import StringIO
 from copy import deepcopy
 from cylc.global_config import get_global_cfg
-from cylc.command_env import cv_scripting_ml, cv_export
+from cylc.command_env import cv_scripting_ml
 from subprocess import call, PIPE
 from time import sleep 
 
@@ -126,7 +126,8 @@ class jobfile(object):
 
     def write_prelude( self ):
         self.FILE.write( '\n\necho "JOB SCRIPT STARTING"\n')
-        # set cylc version and source profile scripts:
+        # set cylc version and source profile scripts before turning on
+        # error trapping so that profile errors do not abort the job
         self.FILE.write( cv_scripting_ml )
 
     def write_initial_scripting( self, BUFFER=None ):
@@ -322,7 +323,8 @@ cd $CYLC_TASK_WORK_DIR""" )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()
-        str += '\n' + cv_export
+        # set cylc version and source profiles in the detached job
+        str += '\n' + cv_scripting_ml + '\n'
         str = re.sub('"', '\\"', str )
         self.FILE.write( '\n\n# TRANSPLANTABLE SUITE ENVIRONMENT FOR CUSTOM TASK WRAPPERS:')
         self.FILE.write( '\n# (contains embedded newlines, use may require "QUOTES")' )
