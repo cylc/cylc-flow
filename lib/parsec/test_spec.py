@@ -53,6 +53,7 @@ SPEC = {
             'level 2_2' :
             {
                 'multiline value' : vdr( vtype="string" ),
+                '__MANY__' : vdr( vtype = "string" ),
                 },
             },
         'level 1_1' :

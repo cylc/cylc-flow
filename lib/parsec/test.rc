@@ -19,6 +19,8 @@ brown fox
 brown \
 fox jumped over # internal
 the lazy dog""" # comment
+        line one = "the quick brown fox"
+        line two = "jumped over the lazy dog"
         
 [level 1_1] # comment
     unquoted list = the, quick, brown # comment

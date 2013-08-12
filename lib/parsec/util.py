@@ -45,8 +45,6 @@ def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
             print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
         printcfg( val, level=level+1, indent=indent+1, prefix=prefix, omitNone=omitNone)
 
-
-
 def replicate( target, source ):
     """
     Replicate source *into* target. Source elements need not exist in
@@ -96,7 +94,8 @@ def m_override( target, sparse ):
                         target[key] = {}
                     replicate( target[key], target['__MANY__'] )
                 else:
-                    print "ERROR 1" # TODO: RAISE (validation prevents this though)
+                    # TODO - validation prevents this, but handle properly for completeness.
+                    raise Exception( "parsec dict override: no __MANY__ placeholder" )
             m_override( target[key], val )
         else:
             if key not in target:
@@ -106,7 +105,8 @@ def m_override( target, sparse ):
                     else:
                         target[key] = val
                 else:
-                    print "ERROR 1"
+                    # TODO - validation prevents this, but handle properly for completeness.
+                    raise Exception( "parsec dict override: no __MANY__ placeholder" )
             if isinstance( val, list ):
                 target[key] = val[:]
             else:
@@ -119,4 +119,5 @@ def un_many( cfig ):
             del cfig[key]
         elif isinstance( val, dict ):
             un_many( cfig[key] )
+
 
