@@ -42,7 +42,7 @@
     [[high-contrast]]
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=white"
         waiting   = "color=#008eb1"
-        runahead  = "color=#0808a2",
+        runahead  = "color=#0808a2"
         held      = "color=#fc00ff"
         queued    = "color=#c6b542", "fontcolor=black"
         submitting= "color=#7c6300"

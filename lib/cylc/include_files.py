@@ -20,9 +20,6 @@ import re, os, sys
 import datetime
 from shutil import copy
 
-# TODO - the four file inclusion functions below are very similar and
-# should be combined into one.
-
 class IncludeFileError( Exception ):
     """
     Attributes:
@@ -34,166 +31,91 @@ class IncludeFileError( Exception ):
         return repr(self.msg)
 
 done = []
-included = []
 modtimes = {}
 backups = {}
 newfiles = []
 
-def inline( lines, dir ):
+def inline( lines, dir,
+        for_grep=False, for_edit=False,
+        viewcfg={}, level=None ):
     """Recursive inlining of suite.rc include-files"""
-    outf = []
-    for line in lines:
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
-        if m:
-            # include statement found
-            match = m.groups()[0]
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
-            inc = os.path.join( dir, match )
-            if os.path.isfile(inc):
-                #print "Inlining", inc
-                h = open(inc, 'rb')
-                inc = h.readlines()
-                h.close()
-                # recursive inclusion
-                outf.extend( inline( inc, dir ))
-            else:
-                raise IncludeFileError( "ERROR, include-file not found: " + inc )
-        else:
-            # no match
-            outf.append( line )
-    return outf
 
-def inline_for_viewing( dir, lines, mark=False, single=False, label=False, level=None ):
-    """
-    Recursive inlining of suite.rc include-files.
-    This version marks ups the result for display by the cylc view command.
-    """
+    single = False
+    mark = False
+    label = False
+    if viewcfg:
+        mark=viewcfg['mark']
+        single=viewcfg['single']
+        label=viewcfg['label']
 
     global done
+    global modtimes
+
     outf = []
 
     if level == None:
         level = ''
+        if for_edit:
+            outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
+# !WARNING! This is an inlined suite.rc file; include-files are split
+# !WARNING! out again on exiting the edit session.  If you are editing
+# !WARNING! this file manually then a previous inlined session may have
+# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this 
+# !WARNING! will split the file up again on exiting).""")
+
     else:
         if mark:
             level += '!'
+        elif for_edit:
+            level += ' > '
 
-    for line in lines:
+    if for_edit:
+        msg = ' (DO NOT MODIFY THIS LINE!)'
+    else:
+        msg = ''
+
+    for oline in lines:
+        line = oline.rstrip()
         m = re.match( '\s*%include\s+(.*)\s*$', line )
         if m:
-            match = m.groups()[0]
             # include statement found
+            match = m.groups()[0]
             # strip off possible quotes: %include "foo.inc"
             match = match.replace('"','')
             match = match.replace("'",'')
             inc = os.path.join( dir, match )
             if inc not in done:
-                if single:
+                if single or for_edit:
                     done.append(inc)
+                if for_edit:
+                    backup(inc)
+                    # store original modtime
+                    modtimes[inc] = os.stat( inc ).st_mtime
                 if os.path.isfile(inc):
-                    print " + inlining", inc
-                    if single or label:
-                        outf.append('++++ START INLINED INCLUDE FILE ' + match + '\n' )
+                    if for_grep or single or label or for_edit:
+                        outf.append('++++ START INLINED INCLUDE FILE ' + match + msg )
                     h = open(inc, 'rb')
-                    inc = h.readlines()
+                    inc = [ line.rstrip() for line in h ]
                     h.close()
                     # recursive inclusion
-                    outf.extend( inline_for_viewing( dir, inc, mark, single, label, level ))
-                    if single or label:
-                        outf.append('---- END INLINED INCLUDE FILE ' + match + '\n' )
+                    outf.extend( inline( inc, dir, for_grep,for_edit,viewcfg,level ))
+                    if for_grep or single or label or for_edit:
+                        outf.append('++++ END INLINED INCLUDE FILE ' + match + msg )
                 else:
-                    raise SystemExit( "File not found: " + inc )
+                    raise IncludeFileError( "ERROR, include-file not found: " + inc )
             else:
-                outf.append(level + line)
-        else:
-            # no match
-            outf.append(level + line)
-    return outf
-
-def inline_for_search( suitedir, inf ):
-    """
-    Recursive inlining of suite.rc include-files.
-    This version marks ups the result for use by the cylc grep command.
-    """
-
-    outf = []
-    for line in inf:
-        m = re.match( '\s*%include\s+([\w/\.\-]+)\s*$', line )
-        if m:
-            match = m.groups()[0]
-            inc = os.path.join( suitedir, match )
-            if os.path.isfile(inc):
-                #print "Inlining", inc
-                outf.append('++++ START INLINED INCLUDE FILE ' + match + '\n')
-                h = open(inc, 'rb')
-                inc = h.readlines()
-                h.close()
-                # recursive inclusion
-                outf.extend( inline_for_search( suitedir, inc ))
-                outf.append('++++ END INLINED INCLUDE FILE ' + match + '\n')
-            else:
-                raise SystemExit( "File not found: " + inc )
-        else:
-            # no match
-            outf.append( line )
-    return outf
-
-def inline_for_editing( dir, lines, level=None ):
-    """
-    Recursive inlining of suite.rc include-files.
-    This version marks ups the result for display by the cylc edit command.
-    """
-
-    # using globals here for commonality across recursive calls:
-    global included
-    global modtimes
-    outf = []
-    if level == None:
-        # suite.rc itself
-        level = ''
-        outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
-# !WARNING! This is an inlined suite.rc file; include-files are split
-# !WARNING! out again on exiting the edit session.  If you are editing
-# !WARNING! this file manually then a previous inlined session may have
-# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this 
-# !WARNING! will split the file up again on exiting).\n""")
-    else:
-        level += ' > '
-    for line in lines:
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
-        if m:
-            match = m.groups()[0]
-            # include statement found
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
-            inc = os.path.join( dir, match )
-            if inc not in included:
-                # new include file detected
-                # back up the original
-                included.append(inc)
-                backup( inc )
-                # store original modtime
-                modtimes[inc] = os.stat( inc ).st_mtime
-                if os.path.isfile(inc):
-                    #print " + inlining", inc
-                    outf.append('#++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT MODIFY THIS LINE!)\n')
-                    h = open(inc, 'rb')
-                    inc = h.readlines()
-                    h.close()
-                    # recursive inclusion
-                    outf.extend( inline_for_editing( dir, inc, level ))
-                    outf.append('#---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT MODIFY THIS LINE!)\n')
+                if not for_edit:
+                    outf.append( level + line )
                 else:
-                    raise SystemExit( "ERROR, Include-file not found: " + inc )
-            else:
-                outf.append(line)
+                    outf.append( line )
         else:
             # no match
-            outf.append(line)
+            if not for_edit:
+                outf.append( level + line )
+            else:
+                outf.append( line )
     return outf
+
 
 def cleanup( suitedir ):
     print 'CLEANUP REQUESTED, deleting:'
@@ -202,6 +124,7 @@ def cleanup( suitedir ):
             if re.search( '\.EDIT\..*$', file ):
                 print ' + ' + re.sub( suitedir + '/', '', file )
                 os.unlink( os.path.join( root, file ))
+
 
 def backup(src, tag='' ):
     if not os.path.exists(src):
@@ -237,7 +160,7 @@ def split_file( dir, lines, file, recovery=False, level=None ):
         if re.match( '^# !WARNING!', line ):
             continue
         if not match_on:
-            m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
+            m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+) \(DO NOT MODIFY THIS LINE!\)', line )
             if m:
                 match_on = True
                 inc_filename = m.groups()[0]
@@ -247,7 +170,7 @@ def split_file( dir, lines, file, recovery=False, level=None ):
                 fnew.write(line)
         elif match_on:
             # match on, go to end of the 'on' include-file
-            m = re.match('^#\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
+            m = re.match('^\+\+\+\+ END INLINED INCLUDE FILE ' + inc_filename + ' \(DO NOT MODIFY THIS LINE!\)', line )
             if m:
                 match_on = False
                 # now split this lot, in case of nested inclusions

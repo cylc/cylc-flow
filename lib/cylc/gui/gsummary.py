@@ -30,7 +30,7 @@ import gobject
 #import pygtk
 #pygtk.require('2.0')
 
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.gui.gcylc_config import config
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.SuiteControl import run_get_stdout
@@ -338,6 +338,7 @@ class SummaryApp(object):
         set_exception_hook_dialog("cylc gsummary")
         setup_icons()
         if not hosts:
+            gcfg = get_global_cfg()
             try:
                 hosts = gcfg.cfg["suite host scanning"]["hosts"]
             except KeyError:

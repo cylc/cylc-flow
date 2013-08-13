@@ -1,0 +1,97 @@
+________________________________________________________________________
+PARSEC CONFIG FILE PARSER
+
+A framework for constructing nested-INI-style config file formats with
+automatic parsing, validation, default values, on-the-fly item
+deprecation and upgrading, and file combination (e.g. user.rc overrides
+site.rc overrides system default values).
+_____________________________
+  USED IN CYLC FOR:
+   * suite definition files
+   * gcylc config files
+   * site/user config files
+
+________________________________________________________________________
+DESIGN AND IMPLEMENTATION
+______________
+  PARSING
+  lib/parsec/fileparse.py
+
+Parses any nested-INI format file into a corresponding nested dict
+structure, after "%include"-inlining, Jinja2 processing, and line
+continuation joining. Also: trailing comments are stripped; single-,
+double-, or un-quoted values; and triple-quoted multiline string values.
+string-internal comments are retained. 
+
+______________
+  VALIDATION
+  lib/parsec/validate.py
+
+Validates a config structure (from the parser) against a file spec that
+defines the "file format" (next).
+
+______________
+  FILE SPEC
+  e.g. lib/parsec/test_spec.py for lib/parsec/test.rc
+  and cylc file specs in lib/cylc/cfgspec/
+
+A nested dict that contains all legal items in their proper place, and
+"values" that are *validator* objects prescribing the type of the value
+(string, integer, etc.), other requirements, and default values. There
+are pre-defined validators for string, integer, float; list (of strings,
+integers, floats, and lists with multipliers as for cylc "retry
+delays"); and cylc times. Other validators can be defined.
+
+______________
+  DEPRECATION AND AUTOMATIC UPGRADE
+  lib/parsec/upgrade.py
+
+Allows the file spec module to specify mapping between deprecated items
+and their new counterparts, along with an upgrader object to do any
+value transformation required.  If affected items are found in the
+config file, a deprecation warning will be emitted and the item upgraded
+on-the-fly for compatibility with the current file spec.
+
+______________
+  HIGH LEVEL "INTERFACE"(?)
+  lib/parsec/loadcfg.py
+  
+Defines functions that combine parsing and validation for (presumably)
+common use cases. Includes combine two config files with precedence
+order.
+
+________________________________________________________________________
+TESTING
+
+  * lib/parsec/test.rc
+  An example config file that does (or should/will) contain all types of
+  config item that parsec is supposed to support.
+
+  * lib/parsec/test_spec.py
+  Defines a spec for test.rc, and a unit test to parse, validate, and
+  print the config file. Does not test deprecation/upgrade at this stage.
+
+  * lib/cylc/parsec/upgrade.py
+  Contains a unit test to test on-the-fly upgrade of deprecated items.
+
+  * lib/cylc/cfgspec/
+  Contains file specs for CYLC suite definition, site config, and gcylc
+  config file formats. Can be tested with examples files and respectively,
+  "cylc validate", "cylc get-global-config", and "gcylc --print-config".
+
+________________________________________________________________________
+TODO
+ * Some suite-definition-specific special behaviour (namely combining
+   identical graph sections, and use of OrderedDicts for environment and
+   directives sections) is encoded in parsec - we need a way to specify
+   this sort of thing in file-specific spec modules.
+
+ * Figure out how to use OrderedDicts *only* for environment (and
+   directives?) sections from the outset. Currently all sections are
+   added as OrderedDicts by the fileparser.
+
+ * move [runtime] inheritance out of cylc/config.py into parsec, and 
+   then move application of [runtime] defaults to immediately after 
+   inheritance processing, and don't use config.py for the get-config
+   command (which can print sparse [runtime] dicts).
+

@@ -545,15 +545,8 @@ Here's how to solve the problem:
 
 \subsection{Other Software Used Internally By Cylc}
 
-Cylc has absorbed the following in modified form (no need to install these separately): 
-\begin{myitemize}
-    \item xdot, a graph viewer
-        (\url{http://code.google.com/p/jrfonseca/wiki/XDot},
-        LGPL license)
-    \item ConfigObj and Validate 
-        (\url{http://www.voidspace.org.uk/python}, %configobj.html,
-        BSD license)
-\end{myitemize}
+Cylc uses a custom-modified copy of a graph viewer called {\em xdot} 
+( \url{http://code.google.com/p/jrfonseca/wiki/XDot}, LGPL license).
 
 
 \section{Installation} 
@@ -636,12 +629,6 @@ These files can be auto-generated with all settings
 intially commented out by running this command:
 \begin{lstlisting}
 % cylc get-global-config --write-site/--write-user
-\end{lstlisting}
-
-The content of these config files, in terms of legal items and
-default values, is defined by the {\em ConfigObj configspec} file,
-\begin{lstlisting}
-$CYLC_DIR/conf/site/cfgspec 
 \end{lstlisting}
 
 The site config file should be adapted to set sensible defaults for all
@@ -1712,20 +1699,14 @@ A typical example:
 \subsection{Suite.rc File Overview}
 \label{SuiteRCFile}
 
-Suite.rc files conform to the ConfigObj extended INI format
-(\url{http://www.voidspace.org.uk/python/configobj.html}) 
-with several modifications to allow continuation lines and include-files,
-and to make it legal to redefine environment variables and scheduler 
-directives (duplicate config item definitions are normally flagged as an
-error).
+Suite.rc files are an extended INI format with section nesting.
 
-Additionally, embedded template processor expressions may be used in the 
-file, to programatically generate the final suite definition
-seen by cylc.  Currently the Jinja2 template engine is supported
-(\url{http://jinja.pocoo.org/docs}). In the future cylc may provide a
+Embedded template processor expressions may also be used in the file, to
+programatically generate the final suite definition seen by
+cylc.  Currently the Jinja2 template processor is supported
+(\url{http://jinja.pocoo.org/docs}); see {\em Jinja2 Suite Templates}
+(Section~\ref{Jinja2}) for examples. In the future cylc may provide a
 plug-in interface to allow use of other template engines too.
-See {\em Jinja2 Suite Templates}
-(Section~\ref{Jinja2}) for some examples. 
 
 \subsubsection{Syntax}
 
@@ -5624,25 +5605,7 @@ operation as required.
 
 \pagebreak
 
-\section{Site/User Config File Reference}
-\label{SiteUserConfig}
-
-Cylc now has a site config file for settings that apply to all suites:
-    \lstinline=$CYLC_DIR/conf/site/site.rc=.
-Prior to cylc-5.0 some of these settings (e.g. log directory locations)
-had to be put in suite definitions, and some (e.g. preferred editors) 
-were specified in the user's environment.
-Many of the site settings can be overridden by users: 
-    \lstinline=$HOME/.cylc/user.rc=
-
-See also \lstinline=cylc get-global-config --help=, which can be used to
-write an initial site or user config file with internal documentation
-and all items commented out.
-
-As a temporary measure the self-documenting {\em configspec} for 
-site/user config files is included verbatim here.  
-
-\lstinputlisting{../conf/siterc/cfgspec}
+\input{siterc.tex}
 
 \pagebreak
 

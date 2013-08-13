@@ -24,7 +24,7 @@ if remrun().execute():
 from cylc.CylcOptionParsers import cop
 from cylc.version import cylc_version
 from cylc.config import config
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 
 parser = cop( """cylc [prep] validate [OPTIONS] ARGS
 
@@ -63,5 +63,5 @@ except Exception,x:
 
 print "Suite " + suite + " is valid for cylc-" + cylc_version
 
-gcfg.print_deprecation_warnings()
+gcfg = get_global_cfg()
 

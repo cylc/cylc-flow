@@ -19,7 +19,7 @@
 import os, sys
 from suite_host import is_remote_host
 from owner import user, is_remote_user
-from global_config import gcfg
+from global_config import get_global_cfg
 
 """Processes connecting to a running suite must know which port the
 suite server is listening on: at start-up cylc writes the port to
@@ -53,6 +53,7 @@ class port_file( object ):
         self.suite = suite 
 
         # the ports directory is assumed to exist
+        gcfg = get_global_cfg()
         pdir = gcfg.cfg['pyro']['ports directory']
  
         self.local_path = os.path.join( pdir, suite )
@@ -94,6 +95,7 @@ class port_retriever( object ):
         self.owner = owner
         self.locn = None
 
+        gcfg = get_global_cfg()
         self.local_path = os.path.join( gcfg.cfg['pyro']['ports directory'], suite )
 
     def get_local( self ):
