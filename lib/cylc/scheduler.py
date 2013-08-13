@@ -20,7 +20,7 @@ from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
 from job_submission import jobfile
 from prerequisites.plain_prerequisites import plain_prerequisites
-from suite_host import suite_host
+from suite_host import get_suite_host
 from owner import user
 from shutil import copy as shcopy
 from copy import deepcopy
@@ -36,7 +36,7 @@ from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
-from global_config import gcfg
+from global_config import get_global_cfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
@@ -102,7 +102,7 @@ class scheduler(object):
         self.owner = user
 
         # SUITE HOST
-        self.host= suite_host
+        self.host= get_suite_host()
 
         # DEPENDENCY BROKER
         self.broker = broker()
@@ -164,7 +164,7 @@ class scheduler(object):
 
         self.parse_commandline()
 
-        gcfg.print_deprecation_warnings()
+        self.gcfg = get_global_cfg()
 
     def configure( self ):
         # read-only commands to expose directly to the network
@@ -231,35 +231,35 @@ class scheduler(object):
         self.suite_id = identifier( self.suite, self.owner )
         self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
 
-        reqmode = self.config['cylc']['required run mode']
+        reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
             if reqmode != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite requires the ' + reqmode + ' run mode'
         
-        # TODO - self.config.dir can be used instead of self.suite_dir
-        self.reflogfile = os.path.join(self.config.dir,'reference.log')
+        # TODO - self.config.fdir can be used instead of self.suite_dir
+        self.reflogfile = os.path.join(self.config.fdir,'reference.log')
 
         if self.options.genref:
-            self.config['cylc']['log resolved dependencies'] = True
+            self.config.cfg['cylc']['log resolved dependencies'] = True
 
         elif self.options.reftest:
-            req = self.config['cylc']['reference test']['required run mode']
+            req = self.config.cfg['cylc']['reference test']['required run mode']
             if req and req != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
             handler = self.config.event_handlers['shutdown']
             if handler: 
                 print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
-            self.config.event_handlers['shutdown'] = self.config['cylc']['reference test']['suite shutdown event handler']
-            self.config['cylc']['log resolved dependencies'] = True
+            self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
+            self.config.cfg['cylc']['log resolved dependencies'] = True
             self.config.abort_if_shutdown_handler_fails = True
             spec = LogSpec( self.reflogfile )
             self.start_tag = spec.get_start_tag()
             self.stop_tag = spec.get_stop_tag()
-            self.ref_test_allowed_failures = self.config['cylc']['reference test']['expected task failures']
-            if not self.config['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
-                self.config['cylc']['abort if any task fails'] = True
+            self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
+            if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
+                self.config.cfg['cylc']['abort if any task fails'] = True
             self.config.abort_on_timeout = True
-            timeout = self.config['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
+            timeout = self.config.cfg['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
             self.config.suite_timeout = timeout
@@ -321,7 +321,7 @@ class scheduler(object):
 
         # Write suite contact environment variables.
         # 1) local file (os.path.expandvars is called automatically for local)
-        suite_run_dir = gcfg.get_derived_host_item(self.suite, 'suite run directory')
+        suite_run_dir = self.gcfg.get_derived_host_item(self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
         for key, value in self.suite_contact_env.items():
@@ -329,7 +329,7 @@ class scheduler(object):
         f.close()
         # 2) restart only: copy to other accounts with still-running tasks 
         r_suite_run_dir = os.path.expandvars(
-                gcfg.get_derived_host_item(self.suite, 'suite run directory'))
+                self.gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
             self.log.info( 'Restart: copying suite contact file to ' + user_at_host )
             if '@' in user_at_host:
@@ -337,7 +337,7 @@ class scheduler(object):
             else:
                 user, host = None, user_at_host
             # this handles defaulting to localhost:
-            r_suite_run_dir = gcfg.get_derived_host_item(
+            r_suite_run_dir = self.gcfg.get_derived_host_item(
                     self.suite, 'suite run directory', host, user)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                     user_at_host, r_suite_run_dir)
@@ -355,7 +355,7 @@ class scheduler(object):
             self.set_suite_timer()
 
         self.runtime_graph_on = False
-        if self.config['visualization']['runtime graph']['enable']:
+        if self.config.cfg['visualization']['runtime graph']['enable']:
             try:
                 from RuntimeGraph import rGraph
             except ImportError, x:
@@ -432,7 +432,7 @@ class scheduler(object):
             return result( True, task_id + " is currently running" )
 
     def info_get_suite_info( self ):
-        return [ self.config['title'], user ]
+        return [ self.config.cfg['title'], user ]
 
     def info_get_task_list( self, logit=True ):
         return self.config.get_task_name_list()
@@ -461,8 +461,8 @@ class scheduler(object):
         return deepcopy(self.config.get_first_parent_descendants())
 
     def info_do_live_graph_movie( self ):
-        return ( self.config['visualization']['enable live graph movie'],
-                 self.config['visualization']['runtime graph']['directory'] ) 
+        return ( self.config.cfg['visualization']['enable live graph movie'],
+                 self.config.cfg['visualization']['runtime graph']['directory'] ) 
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
@@ -708,7 +708,7 @@ class scheduler(object):
  
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
-        self.pool.qconfig = self.config['scheduling']['queues']
+        self.pool.qconfig = self.config.cfg['scheduling']['queues']
         self.pool.verbose = self.verbose
         self.pool.assign( reload=True )
         self.suite_state.config = self.config
@@ -764,8 +764,8 @@ class scheduler(object):
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir, 
-                gcfg.cfg['pyro']['base port'],
-                gcfg.cfg['pyro']['maximum number of ports'] )
+                self.gcfg.cfg['pyro']['base port'],
+                self.gcfg.cfg['pyro']['maximum number of ports'] )
         self.port = self.pyro.get_port()
 
         try:
@@ -807,7 +807,7 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
-            run_dir = gcfg.get_derived_host_item( self.suite, 'suite run directory' )
+            run_dir = self.gcfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
@@ -822,16 +822,16 @@ class scheduler(object):
         # (self.start_tag is set already if provided on the command line).
         if not self.start_tag:
             # No initial cycle time on the command line
-            if self.config['scheduling']['initial cycle time']:
+            if self.config.cfg['scheduling']['initial cycle time']:
                 # Use suite.rc initial cycle time
-                self.start_tag = str(self.config['scheduling']['initial cycle time'])
+                self.start_tag = str(self.config.cfg['scheduling']['initial cycle time'])
 
         if self.options.stop_tag:
             # A final cycle time was provided on the command line.
             self.stop_tag = self.options.stop_tag
-        elif self.config['scheduling']['final cycle time']:
+        elif self.config.cfg['scheduling']['final cycle time']:
             # Use suite.rc final cycle time
-            self.stop_tag = str(self.config['scheduling']['final cycle time'])
+            self.stop_tag = str(self.config.cfg['scheduling']['final cycle time'])
 
         # could be async tags:
         ##if self.stop_tag:
@@ -852,7 +852,7 @@ class scheduler(object):
                 #    self.parser.error( "invalid cycle time: " + self.hold_time )
 
         # USE LOCKSERVER?
-        self.use_lockserver = self.config['cylc']['lockserver']['enable']
+        self.use_lockserver = self.config.cfg['cylc']['lockserver']['enable']
         self.lockserver_port = None
         if self.use_lockserver:
             # check that user is running a lockserver
@@ -862,17 +862,17 @@ class scheduler(object):
             self.lockserver_port = lockserver( self.host ).get_port()
 
         # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
-        self.exclusive_suite_lock = not self.config['cylc']['lockserver']['simultaneous instances']
+        self.exclusive_suite_lock = not self.config.cfg['cylc']['lockserver']['simultaneous instances']
 
         # Running in UTC time? (else just use the system clock)
-        self.utc = self.config['cylc']['UTC mode']
+        self.utc = self.config.cfg['cylc']['UTC mode']
         if self.utc:
             os.environ['TZ'] = 'UTC'
 
         # ACCELERATED CLOCK for simulation and dummy run modes
-        rate = self.config['cylc']['accelerated clock']['rate']
-        offset = self.config['cylc']['accelerated clock']['offset']
-        disable = self.config['cylc']['accelerated clock']['disable']
+        rate = self.config.cfg['cylc']['accelerated clock']['rate']
+        offset = self.config.cfg['cylc']['accelerated clock']['offset']
+        disable = self.config.cfg['cylc']['accelerated clock']['disable']
         if self.run_mode == 'live':
             disable = True
         if not reconfigure:
@@ -899,8 +899,8 @@ class scheduler(object):
             task.task.event_queue = self.event_queue
             self.evworker = event_batcher( 
                     'Event Handler Submission', self.event_queue, 
-                    self.config['cylc']['event handler submission']['batch size'],
-                    self.config['cylc']['event handler submission']['delay between batches'],
+                    self.config.cfg['cylc']['event handler submission']['batch size'],
+                    self.config.cfg['cylc']['event handler submission']['delay between batches'],
                     self.suite, self.verbose )
             self.evworker.start()
 
@@ -908,8 +908,8 @@ class scheduler(object):
             task.task.poll_and_kill_queue = self.poll_and_kill_queue
             self.poll_and_kill_worker = poll_and_kill_batcher( 
                     'Poll and Kill Command Submission', self.poll_and_kill_queue, 
-                    self.config['cylc']['poll and kill command submission']['batch size'],
-                    self.config['cylc']['poll and kill command submission']['delay between batches'],
+                    self.config.cfg['cylc']['poll and kill command submission']['batch size'],
+                    self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
                     self.suite, self.verbose )
             self.poll_and_kill_worker.start()
 
@@ -955,13 +955,13 @@ class scheduler(object):
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
         self.suite_task_env = {
-                'CYLC_SUITE_RUN_DIR'    : gcfg.get_derived_host_item( self.suite, 'suite run directory' ),
-                'CYLC_SUITE_WORK_DIR'   : gcfg.get_derived_host_item( self.suite, 'suite work directory' ),
-                'CYLC_SUITE_SHARE_DIR'  : gcfg.get_derived_host_item( self.suite, 'suite share directory' ),
+                'CYLC_SUITE_RUN_DIR'    : self.gcfg.get_derived_host_item( self.suite, 'suite run directory' ),
+                'CYLC_SUITE_WORK_DIR'   : self.gcfg.get_derived_host_item( self.suite, 'suite work directory' ),
+                'CYLC_SUITE_SHARE_DIR'  : self.gcfg.get_derived_host_item( self.suite, 'suite share directory' ),
                 'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
                 'CYLC_SUITE_DEF_PATH'   : self.suite_dir
                 }
-        # (note gcfg automatically expands environment variables in local paths)
+        # (note global config automatically expands environment variables in local paths)
 
         # Add to the scheduler environment for possible use by event handlers
         for var,val in self.suite_env.items():
@@ -980,7 +980,7 @@ class scheduler(object):
         os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
 
         # User defined local variables that may be required by event handlers
-        cenv = self.config['cylc']['environment']
+        cenv = self.config.cfg['cylc']['environment']
         for var in cenv:
             os.environ[var] = os.path.expandvars(cenv[var])
 
@@ -1035,7 +1035,7 @@ class scheduler(object):
 
                 self.spawn()
 
-                if not self.config['development']['disable task elimination']:
+                if not self.config.cfg['development']['disable task elimination']:
                     self.remove_spent_tasks()
 
                 self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
@@ -1119,7 +1119,7 @@ class scheduler(object):
 
             # hard abort? (TODO - will a normal shutdown suffice here?)
             # 1) "abort if any task fails" is set, and one or more tasks failed
-            if self.config['cylc']['abort if any task fails']:
+            if self.config.cfg['cylc']['abort if any task fails']:
                 if self.any_task_failed():
                     raise SchedulerError( 'One or more tasks failed and "abort if any task fails" is set' )
 
@@ -1157,7 +1157,7 @@ class scheduler(object):
         for itask in tasks:
             if self.runtime_graph_on:
                 self.runtime_graph.update( itask, self.get_oldest_c_time(), self.get_oldest_async_tag() )
-            if self.config['cylc']['log resolved dependencies']:
+            if self.config.cfg['cylc']['log resolved dependencies']:
                 itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
 
     def check_suite_timer( self ):
@@ -1885,8 +1885,8 @@ class scheduler(object):
         return result
 
     def filter_initial_task_list( self, inlist ):
-        included_by_rc  = self.config['scheduling']['special tasks']['include at start-up']
-        excluded_by_rc  = self.config['scheduling']['special tasks']['exclude at start-up']
+        included_by_rc  = self.config.cfg['scheduling']['special tasks']['include at start-up']
+        excluded_by_rc  = self.config.cfg['scheduling']['special tasks']['exclude at start-up']
         outlist = []
         for name in inlist:
             if name in excluded_by_rc:

@@ -19,21 +19,20 @@
 import os, sys, re
 import datetime
 import subprocess
-from copy import copy, deepcopy
+from copy import copy
 from random import randrange
 from collections import deque
 from cylc import task_state
 from cylc.strftime import strftime
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.owner import user
-from cylc.suite_host import hostname as suite_hostname
 import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.run_get_stdout import run_get_stdout
 from cylc.command_env import cv_scripting_sl
-
+from parsec.util import pdeepcopy, poverride
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -55,10 +54,11 @@ class PollTimer( object ):
         self.log = log
         self.current_interval = None
         self.timer_start = None
+        self.gcfg = get_global_cfg()
 
     def set_host( self, host, set_timer=False ):
         # the polling comms method is host-specific
-        if gcfg.get_host_item( 'task communication method', host ) == "poll":
+        if self.gcfg.get_host_item( 'task communication method', host ) == "poll":
             if not self.intervals:
                 self.intervals = copy(self.default_intervals)
                 self.log( 'WARNING', '(polling comms) using default ' + self.name + ' polling intervals' )
@@ -223,6 +223,8 @@ class task( object ):
         self.submission_poll_timer = None
         self.execution_poll_timer = None
 
+        self.gcfg = get_global_cfg()
+
         if self.validate: # if in validate mode bypass db operations
             self.submit_num = 0
         else:
@@ -230,7 +232,6 @@ class task( object ):
                 self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status())
             if self.submit_num > 0:
                 self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status())
-
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -320,10 +321,15 @@ class task( object ):
             return False
 
     def get_resolved_dependencies( self ):
+        """report who I triggered off"""
+        # Used by the test-battery log comparator
         dep = []
         satby = self.prerequisites.get_satisfied_by()
         for label in satby.keys():
             dep.append( satby[ label ] )
+        # order does not matter here; sort to allow comparison with
+        # reference run task with lots of near-simultaneous triggers.
+        dep.sort()
         return dep
 
       
@@ -400,13 +406,6 @@ class task( object ):
     def set_state_queued( self ):
         # called by scheduler main thread
         self.set_status( 'queued' )
-
-    def override( self, target, sparse ):
-        for key,val in sparse.items():
-            if isinstance( val, dict ):
-                self.override( target[key], val )
-            else:
-                target[key] = val
 
     def set_from_rtconfig( self, cfg={} ):
         """Some [runtime] config requiring consistency checking on reload, 
@@ -500,12 +499,12 @@ class task( object ):
 
         self.submission_poll_timer = PollTimer( \
                     copy( rtconfig['submission polling intervals']), 
-                    copy( gcfg.cfg['submission polling intervals']),
+                    copy( self.gcfg.cfg['submission polling intervals']),
                     'submission', self.log )
 
         self.execution_poll_timer = PollTimer( \
                     copy( rtconfig['execution polling intervals']), 
-                    copy( gcfg.cfg['execution polling intervals']),
+                    copy( self.gcfg.cfg['execution polling intervals']),
                     'execution', self.log )
  
     def submit( self, dry_run=False, debug=False, overrides={} ):
@@ -528,8 +527,8 @@ class task( object ):
         self.submit_num += 1
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
 
-        rtconfig = deepcopy( self.__class__.rtconfig )  # (TODO - replace deepcopy)
-        self.override( rtconfig, overrides )
+        rtconfig = pdeepcopy( self.__class__.rtconfig )
+        poverride( rtconfig, overrides )
         
         self.set_from_rtconfig( rtconfig )
 
@@ -605,7 +604,7 @@ class task( object ):
             #   host = $ENV_VAR
 
             n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', self.task_host )
-            # any string quotes are stripped by configobj parsing 
+            # any string quotes are stripped by file parsing 
             if n:
                 var = n.groups()[0]
                 try:
@@ -635,9 +634,9 @@ class task( object ):
             # this remote account inside the job-submission thread just
             # prior to job submission.
             self.log( 'NORMAL', 'Copying suite contact file to ' + self.user_at_host )
-            suite_run_dir = gcfg.get_derived_host_item(self.suite_name, 'suite run directory')
+            suite_run_dir = self.gcfg.get_derived_host_item(self.suite_name, 'suite run directory')
             env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
-            r_suite_run_dir = gcfg.get_derived_host_item(
+            r_suite_run_dir = self.gcfg.get_derived_host_item(
                     self.suite_name, 'suite run directory', self.task_host, self.task_owner)
             r_env_file_path = '%s:%s/cylc-suite-env' % ( self.user_at_host, r_suite_run_dir)
             cmd1 = ['ssh', '-oBatchMode=yes', self.user_at_host, 'mkdir', '-p', r_suite_run_dir]
@@ -693,8 +692,7 @@ class task( object ):
         state or on suite restart)."""
         # TODO - refactor to get easier access to polling commands!
 
-        # TODO - REPLACE DEEPCOPY():
-        rtconfig = deepcopy( self.__class__.rtconfig )
+        rtconfig = pdeepcopy( self.__class__.rtconfig )
 
         if '@' in user_at_host: 
             owner, host = user_at_host.split('@')

@@ -26,7 +26,6 @@ from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
-from cylc.global_config import gcfg
 from cylc import cylc_mode
 
 class message(object):

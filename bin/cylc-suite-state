@@ -24,7 +24,7 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.poll import poller
 
 class suite_poller( poller ):
@@ -82,6 +82,7 @@ Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.
 
 The command can be run in polling mode with the --wait option.""")
 
+gcfg = get_global_cfg()
 default_run_dir = gcfg.get_host_item( 'run directory', replace=True )
 
 parser.remove_option("--db")

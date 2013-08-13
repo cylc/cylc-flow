@@ -34,7 +34,7 @@ from subprocess import Popen, PIPE
 from cylc.owner import user, is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
 
@@ -64,6 +64,7 @@ class job_submit(object):
         # (used by both local and remote tasks)
         tag = task_id + TaskID.DELIM + submit_num
 
+        gcfg = get_global_cfg()
         self.local_jobfile_path = os.path.join( \
                 gcfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )
 

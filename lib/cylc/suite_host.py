@@ -17,7 +17,11 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys, socket
-from global_config import gcfg
+from global_config import get_global_cfg
+
+hostname = None
+suite_host = None
+host_ip_address = None
 
 def get_local_ip_address( target ):
     """
@@ -66,30 +70,40 @@ returning the IP address associated with this socket.
         pass
     return ipaddr
 
+def get_hostname():
+    global hostname
+    if hostname is None:
+        hostname = socket.getfqdn()
+    return hostname
 
-method = gcfg.cfg['suite host self-identification']['method']
-target = gcfg.cfg['suite host self-identification']['target']
-hardwired = gcfg.cfg['suite host self-identification']['host']
+def get_host_ip_address( verbose=False ):
+    global host_ip_address
+    if host_ip_address is None:
+        gcfg = get_global_cfg( verbose=verbose )
+        target = gcfg.cfg['suite host self-identification']['target']
+        # external IP address of the suite host:
+        host_ip_address = get_local_ip_address( target )
+    return host_ip_address
 
-hostname = socket.getfqdn()
+def get_suite_host( verbose=False ):
+    global suite_host
+    if suite_host is None:
+        gcfg = get_global_cfg( verbose=verbose )
+        hardwired = gcfg.cfg['suite host self-identification']['host']
+        method = gcfg.cfg['suite host self-identification']['method']
+        # the following is for suite host self-identfication in task job scripts:
+        if method == 'name':
+            suite_host = hostname
+        elif method == 'address':
+            suite_host = host_ip_address
+        elif method == 'hardwired':
+            if not hardwired:
+                sys.exit( 'ERROR, no hardwired hostname is configured' )
+            suite_host = hardwired
+        else:
+            sys.exit( 'ERROR, unknown host method: ' + method )
+    return suite_host
 
-# external IP address of the suite host:
-host_ip_address = get_local_ip_address( target )
-# local IP address of the suite host (may be 127.0.0.1, for e.g.)
-local_ip_address = socket.gethostbyname(hostname) 
-
-# the following is for suite host self-identfication in task job scripts:
-if method == 'name':
-    suite_host = hostname
-elif method == 'address':
-    suite_host = host_ip_address
-elif method == 'hardwired':
-    if not hardwired:
-        sys.exit( 'ERROR, no hardwired hostname is configured' )
-    suite_host = hardwired
-else:
-    sys.exit( 'ERROR, unknown host method: ' + method )
- 
 def is_remote_host(name):
     """Return True if name has different IP address than the current host.
     Return False if name is None.  Abort if host is unknown.
@@ -101,6 +115,9 @@ def is_remote_host(name):
     except Exception, e:
         print >> sys.stderr, str(e)
         raise Exception( 'ERROR, host not found: ' + name )
+    host_ip_address = get_host_ip_address()
+    # local IP address of the suite host (may be 127.0.0.1, for e.g.)
+    local_ip_address = socket.gethostbyname(get_hostname()) 
     return name and ipa != host_ip_address and ipa != local_ip_address
 
 if __name__ == "__main__":

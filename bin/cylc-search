@@ -24,7 +24,7 @@ if remrun().execute():
 import os, re
 from collections import deque
 from cylc.CylcOptionParsers import cop
-from cylc.include_files import inline_for_search
+from cylc.include_files import inline
 
 def section_level( heading ):
     # e.g. foo => 0
@@ -79,11 +79,11 @@ suitedir = os.path.dirname( suiterc )
 
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
-    lines0 = h.readlines()
+    lines = h.readlines()
     h.close()
-    lines = inline_for_search( suitedir, lines0 )
+    lines = inline( lines, suitedir, for_grep=True )
 else:
-    parser.error("Suite " + suite + " config file not found: " + suiterc )
+    parser.error("File not found: " + suiterc )
 
 sections = deque( ['(top)'] )
 

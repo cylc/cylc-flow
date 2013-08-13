@@ -21,7 +21,7 @@
 import sys
 from daemonize import daemonize
 from version import cylc_version
-from global_config import gcfg
+from global_config import get_global_cfg
 
 def print_blurb():
     lines = []
@@ -57,6 +57,7 @@ def main(name, start):
 
     try:
         if server.__class__.__name__ != 'restart':
+            gcfg = get_global_cfg()
             gcfg.create_cylc_run_tree( server.suite, server.options.verbose )
         server.configure_pyro()
     except Exception, x:

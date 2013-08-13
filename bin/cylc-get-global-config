@@ -18,36 +18,36 @@
 
 import sys
 from optparse import OptionParser
+from cylc.version import cylc_version
 
 parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS] 
 
-Print settings determined by the cylc site and user configuration files,
-and generate example files with all settings initially commented out.
+Print settings from the cylc site and user config files.
 
-1) $CYLC_DIR/conf/siterc/cfgspec  # legal items and default values
-2) $CYLC_DIR/conf/siterc/site.rc  # site file (overrides defaults)
-3) $HOME/.cylc/user.rc            # user file (overrides site)
+0) defaults (internal cylc config file spec)
+1) $CYLC_DIR/conf/siterc/site.rc  # site file (overrides defaults)
+2) $HOME/.cylc/user.rc            # user file (overrides site)
 
-Without options, this command prints all global settings to stdout.""" )
+Without options, just validates combined site/user config files.
 
-parser.add_option( "-s", "--write-site", help="Write a site "
-        "configuration file to $CYLC_DIR/conf/site/site.rc. "
-        "Uncomment and modify items in the file as required.",
-        action="store_true", default=False, dest="writesite" )
+To create a new site or user config file, e.g.:
+  % cylc get-global-config --print > $HOME/.cylc/user.rc
+""" )
 
-parser.add_option( "-u", "--write-user", help="Write a user "
-        "configuration file to $HOME/.cylc/user.rc. "
-        "Uncomment and modify items in the file as required.",
-        action="store_true", default=False, dest="writeuser" )
+parser.add_option( "--print", help="Write parsed site/user "
+        "settings to stdout.",
+        action="store_true", default=False, dest="stdout" )
 
-# See the comment on lazy evaluation in the globalconfig module.
-##parser.add_option( "--strict", help="Abort if either the site "
-##        "or user config file fails validation (otherwise carry "
-##        "on using default values).",
-##        action="store_true", default=False, dest="strict" )
+parser.add_option( "-v", "--verbose", help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
+parser.add_option( "--strict", help="Abort if either the site "
+        "or user config file fails validation (otherwise carry "
+        "on using default values).", action="store_true",
+        default=False, dest="strict" )
 
 parser.add_option( "--debug",
-        help="Run suites in non-daemon mode, and show exception tracebacks.",
+        help="Show exception tracebacks.",
         action="store_true", default=False, dest="debug" )
 
 (options, args) = parser.parse_args()
@@ -55,17 +55,14 @@ if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
 try:
-    # This instantiates gcfg, so import here to avoid aborting before
-    # command help can be displayed in case of file parsing errors.
-    from cylc.global_config import gcfg
-    if options.writesite:
-        gcfg.write_rc( 'site' )
-    elif options.writeuser:
-        gcfg.write_rc( 'user' )
+    # import gcfg here to avoid aborting before command help is printed
+    from cylc.global_config import get_global_cfg, print_global_cfg
+    gcfg = get_global_cfg(strict=options.strict, verbose=options.verbose)
+    if options.stdout:
+        print_global_cfg()
     else:
-        gcfg.dump()
+        print "Combined site/user config is valid for cylc-" + cylc_version
 
-    gcfg.print_deprecation_warnings()
 except Exception, x:
     if options.debug:
         raise
