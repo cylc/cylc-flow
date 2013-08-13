@@ -24,8 +24,6 @@ import logging, os, sys
 import cPickle as pickle
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from rundb import RecordBroadcastObject
-from parsec.validate import validate
-from cfgspec.suite_spec import SPEC
 
 class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
@@ -68,24 +66,16 @@ class broadcast( Pyro.core.ObjBase ):
                     del target[key]
 
     def put( self, namespaces, cycles, settings ):
-        valset = {}
-        for s in settings:
-            valset['(namespace)'] = s
-
-        try:
-            validate( {'runtime' : valset }, SPEC )
-        except Exception, x:
-            return ( False, x )
-
+        """Add or prune new validated broadcast settings."""
         for setting in settings:
             for cycle in cycles:
-                if cycle not in self.settings:
+                if cycle not in self.settings.keys():
                     self.settings[cycle] = {}
                 for namespace in namespaces:
                     if namespace not in self.settings[cycle]:
                         self.settings[cycle][namespace] = {}
                     self.addict( self.settings[cycle][namespace], setting )
-        # prune emtpy settings tree branches
+        # prune empty settings
         while True:
             tmp = deepcopy( self.settings )
             self.prune( self.settings )
