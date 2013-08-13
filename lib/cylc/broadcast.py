@@ -168,19 +168,40 @@ class broadcast( Pyro.core.ObjBase ):
 
         return apply
 
-    def expire( self, expire=None ):
-        if not expire:
+    def expire( self, cutoff ):
+        """Clear all settings targetting cycle times earlier than cutoff."""
+        if not cutoff:
             self.log.warning( 'Expiring all broadcast settings now' ) 
             self.settings = {}
         for ctime in self.settings.keys():
             if ctime == 'all':
                 continue
-            elif ctime < expire:
+            elif ctime < cutoff:
                 self.log.warning( 'Expiring ' + ctime + ' broadcast settings now' ) 
                 del self.settings[ ctime ]
 
-    def clear( self ):
-        self.settings = {}
+    def clear( self, namespaces, tags ):
+        """
+        Clear settings globally, or for listed namespaces and/or tags.
+        """
+        if not namespaces and not tags:
+            # clear all settings
+            self.settings = {}
+        elif tags:
+            # clear all settings specific to given tags 
+            for tag in tags:
+                try:
+                    del self.settings[tag]
+                except:
+                    pass
+        elif namespaces:
+            # clear all settings specific to given namespaces
+            for tag in self.settings.keys():
+                for ns in namespaces:
+                    try:
+                        del self.settings[tag][ns]
+                    except:
+                        pass
         if self.get_dump() != self.last_settings:
             self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
             self.last_settings = self.settings
