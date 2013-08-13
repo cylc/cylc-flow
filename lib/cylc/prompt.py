@@ -18,9 +18,10 @@
 
 import sys
 
-from global_config import gcfg
+from global_config import get_global_cfg
 
 def prompt( reason, force=False ):
+    gcfg = get_global_cfg()
     if force or gcfg.cfg['disable interactive command prompts']:
         return
     response = raw_input( reason + ' (y/n)? ' )

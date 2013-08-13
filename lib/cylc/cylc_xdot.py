@@ -433,8 +433,8 @@ class MyDotWindow( xdot.DotWindow ):
             one = self.ctime
             two = self.stop_after
         else:
-            one = str( self.suiterc['visualization']['initial cycle time'])
-            two = str(self.suiterc['visualization']['final cycle time'])
+            one = str( self.suiterc.cfg['visualization']['initial cycle time'])
+            two = str(self.suiterc.cfg['visualization']['final cycle time'])
 
         # TODO: move ct().get() out of this call (for error checking): 
         graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(),

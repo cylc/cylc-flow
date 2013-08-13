@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cylc.suite_host import hostname
+from cylc.suite_host import get_hostname
 from optparse import OptionParser
 from time import sleep
 from cylc.cycle_time import ct, CycleTimeError
@@ -139,6 +139,7 @@ See also:
     
     owner = os.environ[ 'USER' ]
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
+    hostname = get_hostname()
 
     try:
         if options.acquire:

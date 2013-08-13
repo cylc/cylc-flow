@@ -18,7 +18,7 @@
 
 import os, sys, re
 import logging, logging.handlers
-from global_config import gcfg
+from global_config import get_global_cfg
 
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
@@ -37,6 +37,7 @@ class LogFilter(logging.Filter):
 
 class suite_log( object ):
     def __init__( self, suite ):
+        gcfg = get_global_cfg()
         self.ldir = gcfg.get_derived_host_item( suite, 'suite log directory' )
         self.path = os.path.join( self.ldir, 'log' ) 
         self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']

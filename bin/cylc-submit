@@ -35,12 +35,12 @@ from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
 from cylc.task_types import clocktriggered
 from cylc import accelerated_clock
-from cylc.suite_host import suite_host, hostname
+from cylc.suite_host import get_suite_host, get_hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -109,7 +109,8 @@ except Exception,x:
 
 use_lockserver = False
 lockserver_port = None
-if config['cylc']['lockserver']['enable']:
+if config.cfg['cylc']['lockserver']['enable']:
+    hostname = get_hostname()
     use_lockserver = True
     try:
         lockserver_port = lockserver( hostname ).get_port()
@@ -127,12 +128,13 @@ if config['cylc']['lockserver']['enable']:
 # no scheduler instance watching for task failure etc. 
 
 # Running in UTC time? (else just use the system clock)
-utc = config['cylc']['UTC mode']
+utc = config.cfg['cylc']['UTC mode']
 dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
 
 # create log (after CYLC_MODE is exported)
 os.environ['CYLC_MODE'] = 'submit'
 
+gcfg = get_global_cfg( verbose=options.verbose )
 gcfg.create_cylc_run_tree( suite, options.verbose )
 slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
@@ -141,8 +143,8 @@ slog.pimp( clock=dclock )
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 
-ict = config['scheduling']['initial cycle time']
-fct = config['scheduling']['final cycle time'  ]
+ict = config.cfg['scheduling']['initial cycle time']
+fct = config.cfg['scheduling']['final cycle time'  ]
 
 # static cylc and suite-specific variables:
 suite_env = {
@@ -155,7 +157,7 @@ suite_env = {
         'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
         'CYLC_SUITE_NAME'        : suite,
         'CYLC_SUITE_REG_NAME'    : suite, # DEPRECATED
-        'CYLC_SUITE_HOST'        : str( suite_host ),
+        'CYLC_SUITE_HOST'        : str( get_suite_host() ),
         'CYLC_SUITE_OWNER'       : owner,
         'CYLC_SUITE_PORT'        : 'None',
         'CYLC_SUITE_REG_PATH'    : RegPath( suite ).get_fpath(), # DEPRECATED
@@ -213,7 +215,7 @@ f.close()
 os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
 
 # User defined local variables that may be required by event handlers
-cenv = config['cylc']['environment']
+cenv = config.cfg['cylc']['environment']
 for var in cenv:
     os.environ[var] = os.path.expandvars(cenv[var])
 

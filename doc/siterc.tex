@@ -1,153 +1,512 @@
-\section{Site.rc Reference}
+
+\section{Site/User Config File Reference}
 \label{SiteRCReference}
 
 \lstset{language=bash}
 
-*** NOT USED YET - FROM SUITE DEF ITEMS CUT FROM OLD SUITERC.TEX - To Be Completed ***
+This appendix defines all cylc site and user config items - settings
+that apply globally to all suites. If a site file exists 
+(\lstinline=$CYLC_DIR/conf/siterc/site.rc=) any settings it will
+override the system defaults. If a user file exists 
+(\lstinline=$HOME/.cylc/user.rc=) any settings in it will  
+override the site or system defaults.
 
-\subsection[run directory]{suite run directory}
+To generate an initial site or user config file:
+\begin{lstlisting}
+$ cylc get-global-config --print > site.rc # or user.rc
+\end{lstlisting}
+then comment out or delete any items that do not need to be overridden, 
+and copy the file to the appropriate location.
 
-Cylc writes the following files to a special ``run'' directory:
+{\em Note that Jinja2 expressions can be embedded in site and user
+config files to programmatically generate the final result parsed by
+cylc.}  Use of Jinja2 in suite definitions is documented in
+Section~\ref{Jinja2}.
 
-\begin{myitemize}
-    \item suite event log, and stdout and stderr logs, in \lstinline=SUITE/log/suite/=
-    \item task stdout and stderr logs, in \lstinline=SUITE/log/job/= 
-    \item suite state dump files used for restarts, in \lstinline=SUITE/state/=)
-\end{myitemize}
-Where \lstinline=SUITE= is the suite name.
+\subsection{Top Level Items}
 
-\begin{myitemize}
-    \item {\em type:} string (directory path, may contain environment variables)
-\end{myitemize}
+\subsubsection{temporary directory}
 
-\subsection[state dump rolling archive length]{[cylc] $\rightarrow$ state dump rolling archive length}
-
-This is the length, in number of changes, of the automatic rolling
-archive of state dump files that allows you to restart a suite from a
-previous state.  Every time a task changes state cylc updates the state
-dump and rolls previous states back one on the archive. You'll probably
-only ever need the latest (most recent) state dump, which is
-automatically used in a restart, but any previous state still in the
-archive can be used.  Additionally, special labeled state dumps are
-written prior to actioning any suite intervention, and their filenames
-are logged by cylc.
+A temporary directory is needed by a few cylc commands, and is cleaned
+automatically on exit. Leave unset for the default (usually
+\lstinline=$TMPDIR=).
 
 \begin{myitemize}
-    \item {\em type:} integer ($\geq 1$)
-    \item {\em default:} $10$
-\end{myitemize}
-
-
-\subsection{[logging]}
-
-\subsubsection[roll over at start-up]{[suite logging] $\rightarrow$ roll over at start-up}
-
-Suite logs roll over (start anew) automatically when they reach the
-configured maximum size, and whenever the suite is started or restarted.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} True
-\end{myitemize}
-
-
-\subparagraph[cylc directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ cylc directory}
-
-The path to the remote cylc installation, required if cylc
-is not in the default search path on the remote host.
-
-\begin{myitemize}
-\item {\em type:} string (a valid directory path on the remote host)
+\item {\em type:} string (directory path)
 \item {\em default:} (none)
+\item {\em example:} \lstinline@temporary directory = /tmp/$USER/cylc@
 \end{myitemize}
 
-\subparagraph[remote shell template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ remote shell template }
+\subsubsection{state dump rolling archive length}
 
-A template for the remote shell command for a submitting a remote task.
-The template's first \%s will be substituted by the remote user@host.
+A rolling archive of suite state dumps is maintained under the suite run
+directory, and is used for restarts; this item determines the number of
+previous states retained. The most recent saved state file is called
+\lstinline=state=. Sucessively older files have increasing integer
+values appended, starting from $1$.
 
 \begin{myitemize}
-\item {\em type:} string (a string template)
-\item {\em root default:} \lstinline@ssh -oBatchMode=yes %s@
+\item {\em type:} integer
+\item {\em default:} 10
+\item {\em example:} \lstinline@state dump rolling archive length = 20@
 \end{myitemize}
 
-\subparagraph[log directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ log directory }
+\subsubsection{disable interactive command prompts}
 
-This log directory is used for the stdout and stderr logs of remote
-tasks. The directory will be created on the fly if necessary. If not
-specified, the local job submission log path will be used
-(see~\ref{LocalLog}) with the
-suite owner's home directory path, if present, replaced by
-\lstinline='$HOME'= for interpretation on the remote host. The stdout
-and stderr log file names are the same as for local tasks, and are
-recorded by the task proxies for access via gcylc. Suite identity
-variables can be used in the path, but {\em not task identity variables}
-such as \lstinline=$CYLC_TASK_NAME= and \lstinline=$CYLC_TASK_CYCLE_TIME=, 
-because the log directory is created before the task runs.
+Commands that intervene in running suites can be made to ask for
+confirmation before acting. Some find this annoying and ineffective as a
+safety measure, however, so command prompts are disabled by default.
 
 \begin{myitemize}
-\item {\em type:} string (a valid directory path on the remote host)
-\item {\em default:} (local log path with \lstinline=$HOME= replaced)
+\item {\em type:} boolean
+\item {\em default:} True
 \end{myitemize}
 
-\subparagraph[share directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ share directory}
+\subsubsection{enable run directory housekeeping}
 
-Use this item if you need to override the local share directory 
-(see~\ref{LocalShare}). If omitted, the local directory will be used
-with the suite owner's home directory path, if present, replaced by
-\lstinline='$HOME'= for interpretation on the remote host.
-
-\begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} (local task share path with \lstinline=$HOME= replaced)
-\end{myitemize}
-
-\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ ssh messaging}
-
-If your network configuration or firewall blocks the TCP/IP sockets
-required for remote tasks to communicate with their parent suite
-you can tell cylc to use passwordless ssh (from remote host to suite
-host) instead, to invoke local messaging commands on the suite host.
+The suite run directory tree is created anew with every suite start
+(not restart) but output from the most recent previous runs can be 
+retained in a rolling archive. Set length to 0 to keep no backups.
+{\bf This is incompatible with current rose suite housekeeping} so it is
+disabled by default, in which case (if you are not using Rose) new suite
+run files will overwrite existing ones in the same run directory tree,
+which can in some cases result in incorrect task polling results.
 
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em default:} False
 \end{myitemize}
 
-This item affects the behaviour of the cylc messaging commands by means
-of the task execution environment, so no special cylc configuration is
-required on the remote host itself. Eventually it may be moved to a site
-and host configuration file (yet to be implemented) because it is host-
-rather than task-specific. For the moment though you can still set it
-just once in a namespace inherited by all tasks on the affected host.
+\subsubsection{run directory rolling archive length}
 
-Note that you can use a remote section with this item in it even for
-tasks that are local as far as cylc is concerned, but which end up
-running on the affected remote host due to the action of the local batch
-queueing system or resource manager.
+The number of old run directory trees to retain if run directory
+housekeeping is enabled.
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} 2
+\end{myitemize}
+
+\subsubsection{execution polling intervals}
+
+Cylc can poll running jobs to catch problems that prevent task messages
+from being sent back to the suite, such as hard job kills, network
+outages, or unplanned task host shutdown. Routine polling is done only 
+for the polling {\em task communication method} (below) unless 
+suite-specific polling is configured in the suite definition.
+A list of interval values can be specified, with the last value used
+repeatedly until the task is finished - this allows more frequent
+polling near the beginning and end of the anticipated task run time.
+Multipliers can be used as shorthand as in the example below.
+
+\begin{myitemize}
+\item {\em type:} list of float minutes with optional multipliers
+\item {\em default:} 1.0
+\item {\em example:} \lstinline@execution polling intervals = 5*1.0, 10*5.0, 5*1.0@
+\end{myitemize}
 
 
-\subparagraph[ssh messaging]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ use login shell}
+\subsubsection{submission polling intervals}
 
-By default Cylc will submit remote ssh commands using a login shell. For
-security reasons some institutions do not allow unattended commands to start
-login shells, setting this item to false will disable that behaviour.
+Cylc can also poll submitted jobs to catch problems that prevent the
+submitted job from executing at all, such as deletion from an external 
+batch scheduler queue. Routine polling is done only for the polling {\em
+task communication method} (below) unless suite-specific polling
+is configured in the suite definition. A list of interval
+values can be specified as for execution polling (above) but a single
+value is probably sufficient for job submission polling. 
 
-When this option is set to True Cylc will start a Bash login shell to run
-remote ssh commands, e.g. \lstinline=ssh user@host 'bash --login cylc task'=
-which will source the files \lstinline=/etc/profile= and \lstinline=~/.profile=
-in order to set up the user environment. Without the login option Cylc will be
-run directly by ssh, e.g. \lstinline=ssh user@host 'cylc task'= which will use
-the default shell on the remote machine. In this case the environment will be
-set up by sourcing the files \lstinline=~/.bashrc= or \lstinline=~/.cshrc=,
-depending on the shell type of the remote machine.
+\begin{myitemize}
+\item {\em type:} list of float minutes with optional multipliers
+\item {\em default:} 1.0 (single value)
+\item {\em example:} (see the execution polling example above)
+\end{myitemize}
 
-In either case the PATH environment variable on the remote machine should
-include \lstinline=$CYLC_DIR/bin= in order for the Cylc executable to be
-found.
+\subsection{[task messaging]}
+
+This section contains configuration items that affect task-to-suite
+communications.
+
+\subsubsection[retry interval in seconds]{[task messaging] $\rightarrow$ retry interval in seconds}
+
+If a send fails, the messaging code will retry after a configured
+delay interval.
+
+\begin{myitemize}
+\item {\em type:} float
+\item {\em minimum:} 1.0
+\item {\em default:} 5.0
+\end{myitemize}
+
+\subsubsection[maximum number of tries]{[task messaging] $\rightarrow$ maximum number of tries}
+
+If successive sends fail, the messaging code will give up after a
+configured number of tries. 
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em minimum:} 1
+\item {\em default:} 7
+\end{myitemize}
+
+\subsubsection[connection timeout in seconds]{[task messaging] $\rightarrow$ connection timeout in seconds}
+
+This is the same as the \lstinline=--pyro-timeout= option in cylc
+commands. Without a timeout Pyro connections to unresponsive
+suites can hang indefinitely (suites suspended with Ctrl-Z for instance).
+
+\begin{myitemize}
+\item {\em type:} float
+\item {\em minimum:} 1.0
+\item {\em default:} 30.0
+\end{myitemize}
+
+\subsection{[suite logging]}
+
+The suite event log, held under the suite run directory, is maintained
+as a rolling archive. Logs are rolled over (backed up and started anew)
+when they reach a configurable limit size.
+
+\subsubsection[roll over at start-up]{[suite logging] $\rightarrow$ roll over at start-up}
+
+If true, a new suite log will be started for a new suite run.
 
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em default:} True
+\end{myitemize}
+
+\subsubsection[rolling archive length]{[suite logging] $\rightarrow$ rolling archive length}
+
+How many rolled logs to retain in the archive.
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em minimum:} 1
+\item {\em default:} 5
+\end{myitemize}
+
+\subsubsection[maximum size in bytes]{[suite logging] $\rightarrow$ maximum size in bytes}
+
+Suite event logs are rolled over when they reach this file size. 
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} 1000000 
+\end{myitemize}
+
+\subsection{[documentation]}
+
+Documentation locations for the \lstinline=cylc doc= command and gcylc
+Help menus. 
+
+\subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [files]}
+
+File locations of documentation held locally on the cylc host server.
+
+\paragraph[html index]{[documentation] $\rightarrow$ [files] $\rightarrow$ html index }
+
+File location of the main cylc documentation index.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline=$CYLC_DIR/doc/index.html=
+\end{myitemize}
+
+\paragraph[pdf user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ pdf user guide }
+
+File location of the cylc User Guide, PDF version.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline=$CYLC_DIR/doc/cug-pdf.pdf=
+\end{myitemize}
+
+\paragraph[multi-page html user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ multi-page html user guide }
+
+File location of the cylc User Guide, multi-page HTML version.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline=$CYLC_DIR/doc/html/multi/cug-html.html=
+\end{myitemize}
+
+\paragraph[single-page html user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ single-page html user guide }
+
+File location of the cylc User Guide, single-page HTML version.
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline=$CYLC_DIR/doc/html/single/cug-html.html=
+\end{myitemize}
+
+\subsubsection[{[[}urls{]]}]{[documentation] $\rightarrow$ [urls]}
+
+Online documentation URLs.
+
+\paragraph[internet homepage]{[documentation] $\rightarrow$ [urls] $\rightarrow$ internet homepage }
+
+URL of the cylc internet homepage, with links to documentation for the
+latest official release.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} http://cylc.github.com/cylc/
+\end{myitemize}
+
+\paragraph[local index]{[documentation] $\rightarrow$ [urls] $\rightarrow$ local index}
+
+Local intranet URL of the main cylc documentation index.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\end{myitemize}
+
+\subsection{[document viewers]}
+
+PDF and HTML viewers can be launched by cylc to view the documentation.
+
+\subsubsection[pdf]{[document viewers] $\rightarrow$ pdf}
+
+Your preferred PDF viewer program.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} evince
+\end{myitemize}
+
+\subsubsection[html]{[document viewers] $\rightarrow$ html}
+
+Your preferred web browser.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} firefox
+\end{myitemize}
+
+\subsection{[editors]}
+
+Choose your favourite text editor for editing suite definitions.
+
+\subsubsection[terminal]{[editors] $\rightarrow$ terminal}
+
+The editor to be invoked by the cylc command line interface.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline=vim=
+\item {\em examples:}
+    \begin{myitemize}
+            \item \lstinline@terminal = emacs -nw@ (emacs non-GUI)
+            \item \lstinline@terminal = emacs@ (emacs GUI)
+            \item \lstinline@terminal = gvim -f@ (vim GUI)
+    \end{myitemize}
+\end{myitemize}
+
+\subsubsection[gui]{[editors] $\rightarrow$ gui}
+
+The editor to be invoked by the cylc GUI.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline=gvim -f=
+\item {\em examples:}
+    \begin{myitemize}
+            \item \lstinline@gui = emacs@
+            \item \lstinline@gui = xterm -e vim@
+    \end{myitemize}
+\end{myitemize}
+
+
+\subsection{[Pyro]}
+
+Pyro is the RPC layer used for network communication between cylc
+clients (suite-connecting commands and guis) servers (running suites).
+Each suite listens on a dedicated network port, binding on the first
+available starting at the configured base port.
+
+\subsubsection[base port]{[Pyro] $\rightarrow$ base port }
+
+The first port that cylc is allowed to use.
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} 7766
+\end{myitemize}
+
+\subsubsection[maximum number of ports]{[Pyro] $\rightarrow$ maximum number of ports}
+
+This determines the maximum number of suites that can run at once on the
+suite host.
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} 100
+\end{myitemize}
+
+\subsubsection[ports directory]{[Pyro] $\rightarrow$ ports directory}
+
+Each suite stores its port number, by suite name, under this directory.
+
+\begin{myitemize}
+\item {\em type:} string (directory path)
+\item {\em default:} \lstinline@$HOME/.cylc/ports/"@
+\end{myitemize}
+
+\subsection{[hosts]}
+
+The [hosts] section configures some important host-specific settings for
+the suite host (`localhost') and remote task hosts. Note that {\em
+site/user config settings on the suite host, not the task host,
+determine remote task behaviour}. 
+
+\subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ HOST}
+
+The default task HOST is the suite host, {\bf localhost}. Use a   
+\lstinline=[hosts][[localhost]]= section to override the default
+settings below. Local settings are also used as defaults for remote task
+hosts, with the local home directory replaced in directory paths with
+literal \lstinline=`$HOME'= for evaluation on the remote host.  Explicit 
+task host sections are only needed if the automatically modified local
+defaults are not sufficient.
+
+\paragraph[run directory]{[hosts] $\rightarrow$ HOST $\rightarrow$ run directory }
+
+The top level of the directory tree that holds suite-specific output logs,
+state dump files, run database, etc.
+
+\begin{myitemize}
+\item {\em type:} string (directory path)
+\item {\em default:} \lstinline=$HOME/cylc-run=
+\end{myitemize}
+
+\paragraph[work directory]{[hosts] $\rightarrow$ HOST $\rightarrow$ work directory }
+
+The top level for suite work and share directories.
+
+\begin{myitemize}
+\item {\em type:} string (directory path)
+\item {\em localhost default:} \lstinline@$HOME/cylc-run@
+\end{myitemize}
+
+
+\paragraph[task communication method]{[hosts] $\rightarrow$ HOST $\rightarrow$ task communication method }
+
+The means by which task progress messages are reported back to the running suite.
+See above for default polling intervals for the poll method.
+
+\begin{myitemize}
+\item {\em type:} string (must be one of the following three options)
+\item {\em options:}
+    \begin{myitemize}
+    \item {\bf pyro} - direct client-server RPC via network ports
+    \item {\bf ssh} - use ssh to re-invoke the Pyro messaging commands on the suite server
+    \item {\bf poll} - the suite polls for the status of tasks (no task messaging)
+  \end{myitemize}
+\item {\em localhost default:} pyro
+\end{myitemize}
+
+\paragraph[remote shell template]{[hosts] $\rightarrow$ HOST $\rightarrow$ remote shell template }
+
+A string template, containing \lstinline@%s@ as a placeholder for the host name,
+for the command used to invoke commands on this host.
+This is not used on the suite host unless you run local tasks under
+another user account.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em localhost default:} \lstinline@ssh -oBatchMode=yes %s@ )
+\end{myitemize}
+
+\paragraph[use login shell]{[hosts] $\rightarrow$ HOST $\rightarrow$ use login shell }
+
+Whether to use a login shell or not for remote command invocation. By
+default cylc runs remote ssh commands using a login shell,
+\begin{lstlisting}
+  ssh user@host 'bash --login cylc ...'
+\end{lstlisting}
+which will source \lstinline=/etc/profile= and 
+\lstinline=~/.profile= to set up the user environment.  However, for
+security reasons some institutions do not allow unattended commands to
+start login shells, so you can turn off this behaviour to get,
+\begin{lstlisting}
+  ssh user@host 'cylc ...'
+\end{lstlisting}
+which will use the default shell on the remote machine,
+sourcing \lstinline=~/.bashrc= (or \lstinline=~/.cshrc=) to set up the
+environment.
+In either case \lstinline=$PATH= on the remote machine should include
+\lstinline@$CYLC_DIR/bin@ in order for the remote cylc program to be found.
+
+{\em NOTE: this setting does not currently apply to job submission
+commands (which execute on the suite host to submit remote tasks). }
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em localhost default:} true
+\end{myitemize}
+
+\subsection{[suite host self-identification] }
+
+The suite host's identity must be determined locally by cylc and passed
+to running tasks (via \lstinline@$CYLC_SUITE_HOST@) so that task messages
+can target the right suite on the right host.
+
+%(TO DO: is it conceivable that different remote task hosts at the same
+%site might see the suite host differently? If so we would need to be
+%able to override the target in suite definitions.)
+
+\subsubsection[method]{[suite host self-identification] $\rightarrow$ method }
+
+This item determines how cylc finds the identity of the suite host. For
+the default {\em name} method cylc asks the suite host for its host
+name. This should resolve on remote task hosts to the IP address of the
+suite host; if it doesn't, adjust network settings or use one of the
+other methods. For the {\em address} method, cylc attempts to use a
+special external ``target address'' to determine the IP address of the
+suite host as seen by remote task hosts (in-source documentation in
+\lstinline=$CYLC_DIR/lib/cylc/suite_host.py= explains how this works).
+And finally, as a last resort, you can choose the {\em hardwired} method
+and manually specify the host name or IP address of the suite host.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em options:} 
+\begin{myitemize}
+    \item name - self-identified host name
+    \item address - automatically determined IP address (requires {\em target}, below)
+    \item hardwired - manually specified host name or IP address (requires {\em host}, below)
+\end{myitemize}
+\item {\em default:} name
+\end{myitemize}
+
+\subsubsection[target]{[suite host self-identification] $\rightarrow$ target }
+
+This item is required for the {\em address} self-identification method.
+If your suite host sees the internet, a common address such as
+\lstinline@google.com@ will do; otherwise choose a host visible on your
+intranet.
+\begin{myitemize}
+\item {\em type:} string (an inter- or intranet URL visible from the suite host)
+\item {\em default:} \lstinline@google.com@
+\end{myitemize}
+
+
+\subsubsection[host]{[suite host self-identification] $\rightarrow$ host }
+
+Use this item to explicitly set the name or IP address of the suite host  
+if you have to use the {\em hardwired} self-identification method.
+\begin{myitemize}
+\item {\em type:} string (host name or IP address)
+\item {\em default:} (none)
+\end{myitemize}
+
+\subsection{[suite host scanning]}
+
+Utilities such as \lstinline=cylc gsummary= need to scan hosts for
+running suites.
+
+\subsubsection[hosts]{[suite host scanning] $\rightarrow$ hosts }
+
+A list of hosts to scan for running suites.
+\begin{myitemize}
+\item {\em type:} comma-separated list of host names or IP addresses.
+\item {\em default:} localhost
 \end{myitemize}
 
