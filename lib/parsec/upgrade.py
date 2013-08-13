@@ -149,6 +149,7 @@ class upgrader( object ):
 
     def upgrade( self ):
         warnings = OrderedDict()
+        do_warn = False
         for vn, upgs in self.upgrades.items():
             warnings[vn] = []
 
@@ -167,10 +168,11 @@ class upgrader( object ):
                             upg['new'] = upg['old']
                         msg += " - " + upg['cvt'].describe()
                         warnings[vn].append( msg )
+                        do_warn = True
                         self.del_item( upg['old'] )
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
                             self.put_item( upg['new'], upg['cvt'].convert(old) )
-        if warnings and self.verbose:
+        if do_warn and self.verbose:
             print >> sys.stderr, "WARNING: deprecated items were automatically upgraded in '" + self.descr + "':"
             for vn,msgs in warnings.items():
                 for m in msgs:
