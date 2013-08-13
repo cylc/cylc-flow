@@ -64,7 +64,7 @@ usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 Override [runtime] namespace config items in a running suite.
 
 Broadcasts can target any task or family (including root), at specific
-cycle times, or all all cycle times. Item override occurs just before
+cycle times, or all cycle times. Item override occurs just before
 job submission.
 
 Uses include: temporary manual changes to task behaviour at run time;
