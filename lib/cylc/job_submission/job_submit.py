@@ -75,6 +75,7 @@ class job_submit(object):
         task_owner  = jobconfig.get('task owner')
 
         self.remote_shell_template = gcfg.get_host_item( 'remote shell template', task_host, task_owner )
+        print "template is ", self.remote_shell_template
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
@@ -82,7 +83,7 @@ class job_submit(object):
             if task_owner:
                 self.task_owner = task_owner
             else:
-                self.task_owner = user
+                self.task_owner = None
 
             if task_host:
                 self.task_host = task_host
@@ -102,7 +103,9 @@ class job_submit(object):
             # Record paths of remote log files for access by gui
             if True:
                 # by ssh URL
-                url_prefix = self.task_owner + '@' + self.task_host
+                url_prefix = self.task_host
+                if self.task_owner:
+                    url_prefix = self.task_owner + "@" + url_prefix
                 self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
                 self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
             else:
@@ -121,7 +124,7 @@ class job_submit(object):
         else:
             # LOCAL TASKS
             self.local = True
-            self.task_owner = user
+            self.task_owner = None
             # Used in command construction:
             self.jobfile_path = self.local_jobfile_path
 
@@ -226,7 +229,7 @@ class job_submit(object):
         else:
             command = self.REMOTE_COMMAND_TEMPLATE % {
                       "jobfile_path": self.jobfile_path, "command": self.command}
-            if self.task_owner != os.environ['USER']:
+            if self.task_owner:
                 destination = self.task_owner + "@" + self.task_host
             else:
                 destination = self.task_host
