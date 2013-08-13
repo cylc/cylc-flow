@@ -96,13 +96,13 @@ To unset active broadcasts:
   % cylc broadcast -n NAME -u 'command scripting' REG
   % cylc broadcast --clear REG # clear all broadcast settings
   
-LIMITATIONS:
- 1) Broadcast cannot change [runtime] inheritance (use "cylc reload").
- 2) Clearing an item from a specific cycle does not result in its
-    exclusion from an all-cycles broadcast of the same item.
- 3) Clearing an item from a specific namespace does not result in
-    its exclusion from broadcasts of the same item to descendent
-    namespaces (this is arguably desirable and not a limitation).
+Clearing an item from a specific cycle does not result in its exclusion
+from an all-cycles broadcast of the same item.
+
+Clearing an item from a specific namespace does not result in its
+exclusion from broadcasts of the same item to descendent namespaces.
+
+Note that broadcast cannot change [runtime] inheritance. 
 
 See also 'cylc reload' - reload a modified suite definition at run time."""
 
