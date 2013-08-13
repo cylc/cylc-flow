@@ -691,8 +691,7 @@ class task( object ):
         state or on suite restart)."""
         # TODO - refactor to get easier access to polling commands!
 
-        # TODO - REPLACE DEEPCOPY():
-        rtconfig = deepcopy( self.__class__.rtconfig )
+        rtconfig = pdeepcopy( self.__class__.rtconfig )
 
         owner, host = user_at_host.split('@')
 
