@@ -101,11 +101,14 @@ See also 'cylc reload' - reload a modified suite definition at run time."""
 parser = cop( usage, pyro=True )
 
 parser.add_option( "-t", "--tag", metavar="TAG",
-        help="Target cycle time or tag, defaults to 'all-cycles'.",
+        help="Target cycle time or tag. Defaults "
+        "to 'all-cycles' with --set and --cancel, "
+        "and nothing with --clear.",
         action="append", dest="tags", default=[] )
 
 parser.add_option( "-n", "--namespace", metavar="NAME", 
-        help="Target namespace, defaults to 'root'.",
+        help="Target namespace. Defaults to 'root' with "
+        "--set and --cancel, and nothing with --clear.",
         action="append", dest="namespaces", default=[] )
 
 parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE", 
@@ -213,11 +216,9 @@ if options.expire:
         sys.exit(0)
 
 # implement namespace and tag defaults here
-# 
 namespaces = options.namespaces
 if not namespaces:
     namespaces = ["root"]
-
 tags = options.tags
 if not tags:
     tags = ["all-cycles"]
