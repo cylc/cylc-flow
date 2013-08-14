@@ -26,7 +26,6 @@
 # (detection is currently disabled).
 
 import sys, re, os
-from OrderedDict import OrderedDict
 from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
 from prerequisites.plain_prerequisites import plain_prerequisites
@@ -35,9 +34,9 @@ from task_output_logs import logfiles
 from outputs import outputs
 from cycle_time import ct
 from cycling import container
-from dictcopy import replicate, override
 from TaskID import TaskID
 from task_output_logs import logfiles
+from OrderedDict import OrderedDict
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -54,15 +53,11 @@ class DefinitionError( Error ):
 
 class taskdef(object):
 
-    def __init__( self, name, rtdefs, rtover, run_mode, ict ):
+    def __init__( self, name, rtcfg, run_mode, ict ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
             raise DefinitionError, "ERROR: Illegal task name: " + name
-
-        rtcfg = {}
-        replicate( rtcfg, rtdefs.odict()  ) # copy [runtime] default dict
-        override( rtcfg, rtover )    # override with suite [runtime] settings
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
@@ -82,11 +77,10 @@ class taskdef(object):
         self.clocktriggered_offset = None
         self.namespace_hierarchy = []
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
-        self.triggers = OrderedDict()
+        self.triggers = {}
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
-        self.cond_triggers = OrderedDict()
-        self.outputs = [] # list of explicit internal outputs; change to
-                          # OrderedDict() if need to vary per cycle.
+        self.cond_triggers = {}
+        self.outputs = [] # list of explicit internal outputs; change to dict if need to vary per cycle.
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name
@@ -247,11 +241,13 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False ):
+        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False, submit_num=0, exists=False ):
 
             sself.cycon = container.cycon( self.cyclers )
             sself.intercycle_offset = self.intercycle_offset
             sself.startup = startup
+            sself.submit_num = submit_num
+            sself.exists=exists
             if self.cycling: # and startup:
                 # adjust only needed at start-up but it does not hurt to
                 # do it every time as after the first adjust we're already
@@ -286,9 +282,6 @@ class taskdef(object):
                 if not sself.outputs.exists( msg ):
                     sself.outputs.add( msg )
             sself.outputs.register()
-
-            if 'catchup_clocktriggered' in self.modifiers:
-                catchup_clocktriggered.__init__( sself )
 
             if stop_c_time:
                 # cycling tasks with a final cycle time set

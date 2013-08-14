@@ -24,7 +24,7 @@ except ImportError, x:
     print >> sys.stderr, x
     sys.exit( "ERROR: Pyro is not installed" )
 from passphrase import passphrase
-from suite_host import hostname
+from suite_host import get_hostname
 from owner import user
 
 class pyro_server( object ):
@@ -46,7 +46,7 @@ class pyro_server( object ):
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
-        self.daemon.setAllowedIdentifications( [passphrase(suite,user,hostname).get(suitedir=suitedir)] )
+        self.daemon.setAllowedIdentifications( [passphrase(suite,user,get_hostname()).get(suitedir=suitedir)] )
 
     def shutdown( self ):
         self.daemon.shutdown(True)

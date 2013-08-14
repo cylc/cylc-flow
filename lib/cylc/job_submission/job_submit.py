@@ -34,7 +34,7 @@ from subprocess import Popen, PIPE
 from cylc.owner import user, is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
 
@@ -64,6 +64,7 @@ class job_submit(object):
         # (used by both local and remote tasks)
         tag = task_id + TaskID.DELIM + submit_num
 
+        gcfg = get_global_cfg()
         self.local_jobfile_path = os.path.join( \
                 gcfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )
 
@@ -81,7 +82,7 @@ class job_submit(object):
             if task_owner:
                 self.task_owner = task_owner
             else:
-                self.task_owner = user
+                self.task_owner = None
 
             if task_host:
                 self.task_host = task_host
@@ -101,7 +102,9 @@ class job_submit(object):
             # Record paths of remote log files for access by gui
             if True:
                 # by ssh URL
-                url_prefix = self.task_owner + '@' + self.task_host
+                url_prefix = self.task_host
+                if self.task_owner:
+                    url_prefix = self.task_owner + "@" + url_prefix
                 self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
                 self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
             else:
@@ -120,7 +123,7 @@ class job_submit(object):
         else:
             # LOCAL TASKS
             self.local = True
-            self.task_owner = user
+            self.task_owner = None
             # Used in command construction:
             self.jobfile_path = self.local_jobfile_path
 
@@ -225,7 +228,10 @@ class job_submit(object):
         else:
             command = self.REMOTE_COMMAND_TEMPLATE % {
                       "jobfile_path": self.jobfile_path, "command": self.command}
-            destination = self.task_owner + "@" + self.task_host
+            if self.task_owner:
+                destination = self.task_owner + "@" + self.task_host
+            else:
+                destination = self.task_host
             command = self.remote_shell_template % destination + command
 
         # execute the local command to submit the job

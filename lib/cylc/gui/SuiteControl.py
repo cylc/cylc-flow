@@ -46,7 +46,8 @@ from cylc.gui.SuiteControlLED import ControlLED
 from cylc.gui.SuiteControlTree import ControlTree
 from cylc.gui.stateview import DotMaker
 from cylc.gui.updater import Updater
-from cylc.gui.util import get_icon, get_image_dir, get_logo, EntryTempText, EntryDialog, setup_icons
+from cylc.gui.util import (get_icon, get_image_dir, get_logo, EntryTempText,
+                           EntryDialog, setup_icons, set_exception_hook_dialog)
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 from cylc.cycle_time import ct, CycleTimeError
@@ -64,7 +65,7 @@ from cylc.passphrase import passphrase
 
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.gui.gcylc_config import config
 
 def run_get_stdout( command, filter=False ):
@@ -122,8 +123,9 @@ Class to hold initialisation data.
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
 
-        self.cylc_tmpdir = gcfg.get_tmpdir()
-        self.no_prompt = gcfg.cfg['disable interactive command prompts']
+        self.gcfg = get_global_cfg()
+        self.cylc_tmpdir = self.gcfg.get_tmpdir()
+        self.no_prompt = self.gcfg.cfg['disable interactive command prompts']
 
         self.imagedir = get_image_dir()
 
@@ -346,13 +348,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def __init__( self, suite, db, owner, host, port, pyro_timeout,
             template_vars, template_vars_file ):
 
+        # load gcylc.rc
+        self.usercfg = config().cfg
+
         gobject.threads_init()
+
+        set_exception_hook_dialog("gcylc")
 
         self.cfg = InitData( suite, owner, host, port, db, 
                 pyro_timeout, template_vars, template_vars_file )
 
-        # load gcylc.rc
-        self.usercfg = config().cfg
         self.theme_name = self.usercfg['use theme'] 
         self.theme = self.usercfg['themes'][ self.theme_name ]
 
@@ -398,8 +403,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.create_info_bar()
 
-        self.updater = Updater(self.cfg, self.info_bar)
-        self.updater.start()
+        self.updater = None
 
         self.views_parent = gtk.VBox()
         bigbox.pack_start( self.views_parent, True )
@@ -429,6 +433,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.tool_bar_box.set_sensitive(True)
         for menu in self.suite_menus:
             menu.set_sensitive(True)
+
+        if self.updater is not None:
+            self.updater.stop()
+        self.updater = Updater(self.cfg, self.info_bar)
+        self.updater.start()
 
         self.restart_views()
 
@@ -705,7 +714,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         for view in self.current_views:
             if view is not None:
                 view.stop()
-        self.updater.stop()
+        if self.updater is not None:
+            self.updater.stop()
         gtk.main_quit()
 
     def delete_event(self, widget, event, data=None):
@@ -2501,7 +2511,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
   
         doc_menu.append( gtk.SeparatorMenuItem() )
 
-        if gcfg.cfg['documentation']['urls']['local index']:
+        if self.cfg.gcfg.cfg['documentation']['urls']['local index']:
             cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
             img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
             cug_www_item.set_image(img)

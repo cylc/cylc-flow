@@ -23,9 +23,7 @@ from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
-from configobj import ConfigObj, ConfigObjError, get_extra_values, flatten_errors, Section
 from rundb import RecordBroadcastObject
-from validate import Validator
 
 class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
@@ -41,50 +39,7 @@ class broadcast( Pyro.core.ObjBase ):
         self.new_settings = False
         self.settings_queue = []
         self.linearized_ancestors = linearized_ancestors
-        self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc', 'runtime.spec')
         Pyro.core.ObjBase.__init__(self)
-
-    def validate( self, settings ):
-        # validate new broadcast settings against the suite.rc spec file
-        try:
-            cfg = ConfigObj( infile=settings, configspec=self.spec )
-        except ConfigObjError, x:
-            print >> sys.stderr, x # shouldn't happen
-            return ( False, 'ERROR: failed to load new broadcast settings' )
-
-        val = Validator()
-        test = cfg.validate( val, preserve_errors=False )
-        if test != True:
-            msg = "Broadcast validation failed:"
-            failed_items = flatten_errors( cfg, test )
-            # Always print reason for validation failure
-            for item in failed_items:
-                sections, key, result = item
-                msg += ' '
-                for sec in sections:
-                    msg += sec + ' / '
-                msg += key
-                if result == False:
-                    msg += "\n required item missing."
-                else:
-                    msg += "\n " + str( result )
-            ### return ( False, msg )
-            ### We do not currently have any required suite.rc items
-            # (i.e. items with no defaults supplied) but even if we did
-            # this would not be an error for broadcasting purposes.
-
-        extras = []
-        for sections, name in get_extra_values( cfg ):
-            extra = ' '
-            for sec in sections:
-                extra += sec + ' / '
-            extras.append( extra + name )
-        if len(extras) != 0:
-            msg = "Broadcast validation failed: illegal items:"
-            for extra in extras:
-                msg += '\n' + extra 
-            return ( False, msg )
-        return ( True, "OK" )
 
     def prune( self, target ):
         # remove empty leaves left by unsetting broadcast values
@@ -111,22 +66,16 @@ class broadcast( Pyro.core.ObjBase ):
                     del target[key]
 
     def put( self, namespaces, cycles, settings ):
-        valset = {}
-        for s in settings:
-            valset['(namespace)'] = s
-        res, msg = self.validate( {'runtime' : valset } )
-        if not res:
-            return ( res, msg )
-
+        """Add or prune new validated broadcast settings."""
         for setting in settings:
             for cycle in cycles:
-                if cycle not in self.settings:
+                if cycle not in self.settings.keys():
                     self.settings[cycle] = {}
                 for namespace in namespaces:
                     if namespace not in self.settings[cycle]:
                         self.settings[cycle][namespace] = {}
                     self.addict( self.settings[cycle][namespace], setting )
-        # prune emtpy settings tree branches
+        # prune empty settings
         while True:
             tmp = deepcopy( self.settings )
             self.prune( self.settings )

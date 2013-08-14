@@ -44,8 +44,5 @@ cv_scripting_sl = cv_export + '; ' + '; '.join(s_profile)
 # multi line cylc version scripting:
 cv_scripting_ml = """
 """ + cv_export + """
-
-# Source .profile before turning on error trapping
-# so that errors here do not abort the job script.
 """ + '\n'.join( s_profile )
 

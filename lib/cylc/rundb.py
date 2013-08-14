@@ -79,6 +79,16 @@ class RecordStateObject(object):
                      submit_method, submit_method_id, status]
         self.to_run = True
 
+class BulkDBOperObject(object):
+    """BulkDBOperObject for grouping together related operations"""
+    def __init__(self, base_object):
+        self.s_fmt = base_object.s_fmt
+        self.args = []
+        self.args.append(base_object.args)
+    def add_oper(self, db_object):
+        if db_object.s_fmt != self.s_fmt:
+            raise Exception( "ERROR: cannot combine different types of database operation" )
+        self.args.append(db_object.args)
 
 class ThreadedCursor(Thread):
     def __init__(self, db):
@@ -89,13 +99,20 @@ class ThreadedCursor(Thread):
     def run(self):
         cnx = sqlite3.Connection(self.db) 
         cursor = cnx.cursor()
+        counter = 0
         while True:
+            if (counter % 10) == 0 or self.reqs.qsize() == 0:
+                counter = 0
+                cnx.commit()
             attempt = 0
-            req, arg, res = self.reqs.get()
+            req, arg, res, bulk = self.reqs.get()
             if req=='--close--': break
             while attempt < 5:
                 try:
-                    cursor.execute(req, arg)
+                    if bulk:
+                        cursor.executemany(req, arg)
+                    else:
+                        cursor.execute(req, arg)
                     if res:
                         for rec in cursor:
                             res.put(rec)
@@ -104,10 +121,12 @@ class ThreadedCursor(Thread):
                     break
                 except:
                     attempt += 1
-                    sleep(1) 
+                    sleep(1)
+            counter += 1
+        cnx.commit()
         cnx.close()
-    def execute(self, req, arg=None, res=None):
-        self.reqs.put((req, arg or tuple(), res))
+    def execute(self, req, arg=None, res=None, bulk=False):
+        self.reqs.put((req, arg or tuple(), res, bulk))
     def select(self, req, arg=None):
         res=Queue()
         self.execute(req, arg, res)
@@ -222,10 +241,28 @@ class CylcRuntimeDAO(object):
 
     def get_task_state_exists(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        args = [name, cycle,]
+        args = [name, cycle]
         count = self.c.select(s_fmt, args).next()[0]
         return count > 0
 
+    def get_task_location(self, name, cycle):
+        s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==? 
+                   AND event=="submission succeeded" AND misc!=""
+                   ORDER BY submit_num DESC LIMIT 1"""
+        args = [name, cycle]
+        res = self.c.select(s_fmt, args).next()
+        return res
+
+    def get_task_sumbit_method_id_and_try(self, name, cycle):
+        s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==? 
+                   ORDER BY submit_num DESC LIMIT 1"""
+        args = [name, cycle]
+        res = self.c.select(s_fmt, args).next()
+        return res        
+
     def run_db_op(self, db_oper):
-        self.c.execute(db_oper.s_fmt, db_oper.args)
+        if isinstance(db_oper, BulkDBOperObject):
+            self.c.execute(db_oper.s_fmt, db_oper.args, bulk=True)
+        else:
+            self.c.execute(db_oper.s_fmt, db_oper.args)
     

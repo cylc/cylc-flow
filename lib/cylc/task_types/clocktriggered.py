@@ -19,6 +19,7 @@
 import sys
 import datetime
 from cylc.cycle_time import ct
+from task import task
 
 # TODO - the task base class now has clock-triggering functionality too, to
 # handle retry delays, so this class could probably disappear now to leave
@@ -44,24 +45,10 @@ class clocktriggered(object):
         return reached
 
     def ready_to_run( self ):
-        if self.trigger_now():
+        if task.ready_to_run( self ) and self.start_time_reached():
+            #print '(ready)'
             return True
-        # not ready unless delayed start time is up too.
-        ready = False
-        if self.state.is_currently('queued') or \
-                self.state.is_currently('waiting') and self.prerequisites.all_satisfied() or \
-                 self.state.is_currently('retrying') and self.prerequisites.all_satisfied():
-            if self.start_time_reached():
-                # We've reached the clock-trigger time
-                if self.retry_delay_timer_start:
-                    diff = clocktriggered.clock.get_datetime() - self.retry_delay_timer_start
-                    foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
-                    if diff >= foo:
-                        # ... we've reached the retry delay time
-                        ready = True
-                else:
-                    ready = True
-            else:
-                self.log( 'DEBUG', 'prerequisites satisfied but waiting on delayed start time' )
-        return ready
+        else:
+            #print '(not ready)'
+            return False
 

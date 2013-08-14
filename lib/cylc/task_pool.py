@@ -28,7 +28,7 @@ class pool(object):
         self.log = log
         self.verbose = verbose
         self.debug = debug
-        self.qconfig = config['scheduling']['queues'] 
+        self.qconfig = config.cfg['scheduling']['queues'] 
         self.config = config
         self.assign()
         self.wireless = wireless
@@ -36,8 +36,8 @@ class pool(object):
         self.jobqueue = Queue.Queue()
 
         self.worker = task_batcher( 'Job Submission', self.jobqueue, 
-                config['cylc']['job submission']['batch size'],
-                config['cylc']['job submission']['delay between batches'],
+                config.cfg['cylc']['job submission']['batch size'],
+                config.cfg['cylc']['job submission']['delay between batches'],
                 self.wireless, self.run_mode, self.verbose )
 
         self.worker.start()
@@ -156,7 +156,8 @@ class pool(object):
                             readytogo.append(itask)
                         else:
                             # (direct task state reset ok: this executes in the main thread)
-                            itask.set_state_queued()
+                            if not itask.state.is_currently('queued'):
+                                itask.set_state_queued()
                     else:
                         readytogo.append(itask)
 

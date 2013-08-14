@@ -18,7 +18,7 @@
 
 import os, re
 from optparse import OptionParser
-from suite_host import hostname
+from suite_host import get_hostname
 from owner import user
 from cylc.command_prep import prep_file
 
@@ -111,7 +111,7 @@ Arguments:"""
 
         self.add_option( "--host",
                 help="Host name (defaults to localhost).",
-                metavar="HOST", action="store", default=hostname,
+                metavar="HOST", action="store", default=get_hostname(),
                 dest="host" )
 
         self.add_option( "-v", "--verbose",
@@ -216,7 +216,7 @@ Arguments:"""
 
         if self.jset:
             if options.templatevars_file:
-                options.templatevars_file = os.path.abspath( options.templatevars_file )
+                options.templatevars_file = os.path.abspath( os.path.expanduser( options.templatevars_file ))
 
         if self.prep:
             # allow file path or suite name 

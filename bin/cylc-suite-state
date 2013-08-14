@@ -19,12 +19,14 @@
 import os, sys
 from time import sleep, time
 from cylc.remote import remrun
+from cylc.task_state import task_state
+
 if remrun().execute():
     sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
-from cylc.global_config import gcfg
+from cylc.global_config import get_global_cfg
 from cylc.poll import poller
 
 class suite_poller( poller ):
@@ -73,6 +75,8 @@ options). In polling mode the command will wait until the requested
 state is achieved, with an optional timeout abort. The suite database
 does not need to exist at the time polling commences.
 
+N.B. even in a non-cycling suite a value for cycle must be provided (--cycle=1).
+
 Example usage:
 
 cylc suite-state REG \
@@ -82,6 +86,7 @@ Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.
 
 The command can be run in polling mode with the --wait option.""")
 
+gcfg = get_global_cfg()
 default_run_dir = gcfg.get_host_item( 'run directory', replace=True )
 
 parser.remove_option("--db")
@@ -100,8 +105,15 @@ parser.add_option( "-d", "--run-dir",
         "to the local site/user config: " + default_run_dir + ".",
         action="store", dest="run_dir", default=default_run_dir )
 
+conds = ("Valid triggering conditions to check for include: '" + 
+         ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) + 
+         "' and '" + sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[-1] + "'. ")
+states = ("Valid states to check for include: '" + 
+         ("', '").join(sorted(task_state.legal)[:-1]) + "' and '" + 
+         sorted(task_state.legal)[-1] + "'.")
+
 parser.add_option( "-S", "--status", 
-        help="Specify a particular status to check for.",
+        help="Specify a particular status or triggering condition to check for. " + conds + states,
         action="store", dest="status", default=None )
         
 suite_poller.add_to_cmd_options( parser, default_interval=60 )
@@ -126,8 +138,15 @@ spoller = suite_poller( "requested state", options.timeout,
 if not spoller.connect(verbose=options.verbose):
     sys.exit( "ERROR: cannot connect to the suite DB" )
 
+if options.status:
+    if options.status in task_state.legal or options.status in CylcSuiteDBChecker.STATE_ALIASES:
+        pass
+    else:
+        sys.exit( "ERROR: invalid status '" + options.status + "'" )
+
 if options.status and options.task and options.cycle:
     """check a task status"""
+    spoller.condition = options.status
     if options.wait:
         if not spoller.poll():
             sys.exit(1)

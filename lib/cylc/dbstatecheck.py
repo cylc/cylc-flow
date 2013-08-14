@@ -33,9 +33,10 @@ class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     DB_FILE_BASE_NAME = "cylc-suite.db"
     STATE_ALIASES = {}
-    STATE_ALIASES['finish'] = ['failed', 'succeeded']
-    STATE_ALIASES['start'] = ['running', 'succeeded', 'failed', 'retrying']
-    STATE_ALIASES['fail'] = ['failed']
+    STATE_ALIASES['finish' ] = ['failed', 'succeeded']
+    STATE_ALIASES['start'  ] = ['running', 'succeeded', 'failed', 'retrying']
+    STATE_ALIASES['submit' ] = ['submitted', 'submit-retrying', 'running','succeeded','failed','retrying']
+    STATE_ALIASES['fail'   ] = ['failed']
     STATE_ALIASES['succeed'] = ['succeeded']
 
     def __init__(self, suite_dir, suite, dbname=None): # possible to set suite_dir to system default cylc-run dir?
@@ -49,8 +50,11 @@ class CylcSuiteDBChecker(object):
         self.c = self.conn.cursor()
 
     def display_maps(self, res):
-        for row in res:
-            sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
+        if not res:
+            sys.stderr.write("INFO: No results to display.\n")
+        else:
+            for row in res:
+                sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
             
     def state_lookup(self, state): #allows for multiple states to be searched via a status alias
         if self.STATE_ALIASES.has_key(state):

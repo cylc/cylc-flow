@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from global_config import gcfg
+from global_config import get_global_cfg
 from rolling_archive import rolling_archive
 
 class dumper( object ):
@@ -27,6 +27,7 @@ class dumper( object ):
         self.clock = clock
         self.ict = ict
         self.stop_tag = stop_tag
+        gcfg = get_global_cfg()
         self.dir = gcfg.get_derived_host_item( suite, 'suite state directory' )
         self.path = os.path.join( self.dir, 'state' )
         arclen = gcfg.cfg[ 'state dump rolling archive length' ]

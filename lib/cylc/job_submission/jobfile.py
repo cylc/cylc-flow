@@ -21,8 +21,10 @@ from cylc.TaskID import TaskID
 import re, os
 import StringIO
 from copy import deepcopy
-from cylc.global_config import gcfg
-from cylc.command_env import cv_scripting_ml, cv_export
+from cylc.global_config import get_global_cfg
+from cylc.command_env import cv_scripting_ml
+from subprocess import call, PIPE
+from time import sleep 
 
 class jobfile(object):
 
@@ -90,6 +92,16 @@ class jobfile(object):
         self.write_task_succeeded()
         self.write_eof()
         self.FILE.close()
+        # Wait for job file to properly close to prevent errors that look like
+        # this:
+        #     /bin/bash: SCRIPT: /bin/bash: bad interpreter: Text file busy
+        # which means that the OS thinks that the job file is still connected
+        # to a process when it is being executed.
+        try:
+            while call(["lsof", path], stderr=PIPE, stdout=PIPE) == 0:
+                sleep(0.1)
+        except OSError: # OSError is triggered if "lsof" command not available
+            pass
 
     def write_header( self ):
         self.FILE.write( "#!" + self.jobconfig['job script shell'] )
@@ -114,7 +126,8 @@ class jobfile(object):
 
     def write_prelude( self ):
         self.FILE.write( '\n\necho "JOB SCRIPT STARTING"\n')
-        # set cylc version and source profile scripts:
+        # set cylc version and source profile scripts before turning on
+        # error trapping so that profile errors do not abort the job
         self.FILE.write( cv_scripting_ml )
 
     def write_initial_scripting( self, BUFFER=None ):
@@ -149,6 +162,7 @@ class jobfile(object):
             BUFFER.write( "\nexport TZ=UTC" )
 
         # override and write task-host-specific suite variables
+        gcfg = get_global_cfg()
         suite_work_dir = gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
         st_env = deepcopy( self.__class__.suite_task_env ) 
         st_env[ 'CYLC_SUITE_RUN_DIR'    ] = gcfg.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )
@@ -309,7 +323,8 @@ cd $CYLC_TASK_WORK_DIR""" )
         # now escape quotes in the environment string
         str = strio.getvalue()
         strio.close()
-        str += '\n' + cv_export
+        # set cylc version and source profiles in the detached job
+        str += '\n' + cv_scripting_ml + '\n'
         str = re.sub('"', '\\"', str )
         self.FILE.write( '\n\n# TRANSPLANTABLE SUITE ENVIRONMENT FOR CUSTOM TASK WRAPPERS:')
         self.FILE.write( '\n# (contains embedded newlines, use may require "QUOTES")' )
