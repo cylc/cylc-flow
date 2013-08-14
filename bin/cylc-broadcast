@@ -67,10 +67,10 @@ Uses for broadcast include making temporary changes to task behaviour,
 and task-to-downstream-task communication via environment variables.
 
 A broadcast can target any [runtime] namespace for all cycles or for a
-specific cycle.  If a namespace is affected by specific-cycle and
-all-cycle broadcasts at once, the specific takes precedence. If a task
-is affected by broadcasts to multiple ancestor namespaces, the result is
-determined by normal [runtime] inheritance.
+specific cycle.  If a task is affected by specific-cycle and all-cycle
+broadcasts at once, the specific takes precedence. If a task is affected
+by broadcasts to multiple ancestor namespaces, the result is determined
+by normal [runtime] inheritance.
 
 Broadcasts persist, even across suite restarts, until they expire when
 their target cycle time is older than the oldest current in the suite,
