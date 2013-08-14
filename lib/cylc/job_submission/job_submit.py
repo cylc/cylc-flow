@@ -75,7 +75,6 @@ class job_submit(object):
         task_owner  = jobconfig.get('task owner')
 
         self.remote_shell_template = gcfg.get_host_item( 'remote shell template', task_host, task_owner )
-        print "template is ", self.remote_shell_template
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
