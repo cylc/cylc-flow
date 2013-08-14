@@ -121,7 +121,7 @@ parser.add_option( "-u", "--unset", metavar="[SEC]ITEM",
 parser.add_option( "-C", "--clear", 
         help="Cancel all broadcasts, or with -t/--tag, "
         "-n/--namespace, cancel all broadcasts to targeted "
-        "namespaces and cycle times. Use '-C -t all-cycles' "
+        "namespaces and/or cycle times. Use '-C -t all-cycles' "
         "to cancel all all-cycle broadcasts without canceling "
         "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
@@ -132,11 +132,11 @@ parser.add_option( "-e", "--expire", metavar="CYCLE",
         action="store", default=None, dest="expire" )
 
 parser.add_option( "-d", "--display", 
-        help="Display current active broadcast settings.",
+        help="Display active broadcasts.",
         action="store_true", default=False, dest="show" )
 
 parser.add_option( "-k", "--display-task", metavar="TASKID",
-        help="Print current active broadcasts for a given task "
+        help="Print active broadcasts for a given task "
         "(NAME"+TaskID.DELIM+"TAG).",
         action="store", default=None, dest="showtask" )
 
