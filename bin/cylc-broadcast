@@ -87,8 +87,10 @@ to cancel); and you cannot broadcast to "all members of FAMILY except
 member_n" with a general broadcast to FAMILY followed by a cancel to
 member_n (there is no direct broadcast to member_n to cancel).
 
-Arguments with internal spaces must be quoted, e.g.:
+To broadcast a variable to all tasks (quote items with internal spaces):
   % cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
+To cancel the same broadcast:
+  % cylc broadcast --cancel "[environment]VERSE" REG
 
 Use -d/--display to see active broadcasts. Multiple set or cancel
 options can be used on the same command line. Broadcast cannot change
@@ -113,10 +115,6 @@ parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE",
 parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM", 
         help="An item-specific broadcast to cancel.",
         action="append", dest="cancel", default=[] )
-
-parser.add_option( "-u", "--unset", metavar="[SEC]ITEM", 
-        help="Deprecated: same as -c/--cancel.",
-        action="append", dest="unset", default=[] )
 
 parser.add_option( "-C", "--clear", 
         help="Cancel all broadcasts, or with -t/--tag, "
@@ -154,12 +152,6 @@ parser.add_option( "-r", "--raw",
 suite = args[0]
 
 suite, pphrase = prep_pyro( suite, options ).execute()
-
-# deprecation of -u/--unset
-if options.unset and options.cancel:
-    parser.error( "--unset and --cancel are the same, please choose one." )
-elif options.unset:
-    options.cancel = options.unset
 
 debug = False
 if options.debug:
