@@ -158,9 +158,9 @@ def addsect( cfig, sname, parents, verbose ):
         # drop down the parent list
         cfig = cfig[p]
     if sname in cfig:
-        # already defined - maybe be ok (graph strings)
+        # this doesn't warrant a warning unless contained items are repeated
         if verbose:
-            print >> sys.stderr, 'WARNING: section [' + ']['.join(parents + [sname]) + '] already encountered'
+            print 'Section [' + ']['.join(parents + [sname]) + '] already encountered'
     else:
         cfig[sname] = OrderedDict()
 
@@ -179,17 +179,14 @@ def addict( cfig, key, val, parents, verbose ):
                 pass
             else:
                 if verbose:
-                    print >> sys.stderr, 'WARNING: Merging graph strings under [' + ']['.join(parents) + ']'
+                    print 'Merging graph strings under [' + ']['.join(parents) + ']'
         else:
             if verbose:
                 print >> sys.stderr, 'WARNING: overriding [' + ']['.join(parents) + ']' + key
-                print >> sys.stderr, ' old: ' + cfig[key]
-                print >> sys.stderr, ' new: ' + val
+                print >> sys.stderr, ' old value: ' + cfig[key]
+                print >> sys.stderr, ' new value: ' + val
+            cfig[key] = val
     else:
-        #if val:
-        #    cfig[key] = _single_unquote(val)
-        #else:
-        #    cfig[key] = val # e.g. {}
         cfig[key] = val
 
 def multiline( flines, value, index, maxline ):
