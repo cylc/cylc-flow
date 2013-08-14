@@ -119,10 +119,11 @@ parser.add_option( "-u", "--unset", metavar="[SEC]ITEM",
         action="append", dest="unset", default=[] )
 
 parser.add_option( "-C", "--clear", 
-        help="Cancel all current broadcasts, or with -t/--tag, "
-        "-n/--namespace, cancel all broadcasts from targeted "
-        "namespaces and cycle times. Use -C -t all-cycles to "
-        "cancel just the all-cycle broadcasts.",
+        help="Cancel all broadcasts, or with -t/--tag, "
+        "-n/--namespace, cancel all broadcasts to targeted "
+        "namespaces and cycle times. Use '-C -t all-cycles' "
+        "to cancel all all-cycle broadcasts without canceling "
+        "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
 
 parser.add_option( "-e", "--expire", metavar="CYCLE",
