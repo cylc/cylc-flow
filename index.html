@@ -141,7 +141,6 @@
             <div id="screenshots">
 				<h4 class="foo"><span>Screen Shots</span></h4>
 				<ul>
-				  <li> <a href="screenshots/gcylc-db.png">The cylc suite database viewer, one suite running on port 7766</a></li>
 				  <li> <a href="screenshots/suiterc-jinja2.png">A cylc suite definition in the vim editor</a></li>
 				  <li> <a href="screenshots/graph-viewer.png">Interactive suite graph viewer</a></li>
 				  <li> <a href="screenshots/control1.png">The gcylc GUI, dot and text views</a></li>
@@ -267,17 +266,15 @@
     <ul>
         <li> Operating System: Linux or Unix</li>
 
-        <li> Python Version: 2.4 or later, but not Python
-        3.x as yet.
-        <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup></li>
+        <li> Python Version: 2.5 or later (not 3.x as yet).</li>
+<!-- <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup> -->
         
         <li> <a href="http://www.pygtk.org">PyGTK</a>, 
         a Python wrapper for the GTK+ graphical user
         interface toolkit, included in most Linux Distributions.</li>
         
-        <li> <a href="http://www.xs4all.nl/~irmen/pyro3">Pyro 3</a>
-        (Python Remote Objects) - latest version tested 3.14.
-        <sup><a href="#fn3" id="fnr3" title="click to see footnote">3</a></sup></li>
+        <li> <a href="https://pypi.python.org/pypi/Pyro/">Pyro 3</a>
+        (Python Remote Objects) - latest version 3.16 (not Pyro4 as  yet).</li>
         
         <li> The <a href="http://www.graphviz.org">graphviz</a> graph
         layout engine (latest version tested: 2.28.0).</li>
@@ -302,16 +299,9 @@ definitions.
 </span></p>
 
 <p class="p1"><span>
-Cylc has absorbed the following software in slightly modified form (you
-do not need to install them separately): 
+    Cylc has also absorbed <a href="http://code.google.com/p/jrfonseca/wiki/XDot">xdot</a> 
+    (LGPL license) in modified form (no need to install separately).  
 </span></p>
-<ul>
-    <li> <a href="http://code.google.com/p/jrfonseca/wiki/XDot">xdot</a>, a
-    graph viewer (LGPL license)</li>
-    <li> the 
-    <a href="http://www.voidspace.org.uk/python">ConfigObj and Validate</a>
-    Python modules (BSD license)</li>
-</ul>
 
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
 </div> <!--requirements-->
@@ -444,36 +434,26 @@ do not need to install them separately):
 
 </div> <!--development-->
 
+<!--
 <div id="acknowledgements">
     <h3><span>Acknowledgements</span></h3>
-
-    <p class="p1"><span>We thank the authors of Pyro, graphviz, and
-        pygraphviz, each of which cylc depends on; and of ConfigObj
-        (and Validate) and xdot, modified versions of which are used by
-        cylc.</span></p>
-
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
 </div> <!--acknowledgements-->
+-->
 
+<!--
 <div id="footnotes">
 <hr/>
     <h3><span>footnotes</span></h3>
 
     <ol>
-<li> <a id="fn2" href="#fnr2" title="This is a footnote; return to main
-    text.">(back)</a> Python 3 is not backward compatible with 2. As of mid
-2011, Python 2.7 is the standard for new Linux distributions.
-</li>
-
-<li> <a id="fn3" href="#fnr3" title="This is a footnote; return to main text.">(back)</a>
-Pyro 4, which is compatible with Python 3, is now recommended for
-production use, but does not yet have the connection authentication used
-by cylc (apparently it will in an upcoming release).
-</li>
-     </ol>
-
+        <li> <a id="fn2" href="#fnr2" title="This is a footnote; return to main text.">(back)</a>
+        footnote text... 
+        </li>
+    </ol>
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
- </div> <!--footnotes-->
+</div> <!--footnotes-->
+-->
 
  <p>
 <a href="http://validator.w3.org/check?uri=referer">
