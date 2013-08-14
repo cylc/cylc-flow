@@ -102,11 +102,8 @@ class config( object ):
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
-<<<<<<< HEAD
         self.suite_polling_tasks = {}
-=======
         self.triggering_families = []
->>>>>>> master
 
         self.async_oneoff_edges = []
         self.async_oneoff_tasks = []
@@ -1431,11 +1428,7 @@ class config( object ):
                 group_nodes, ungroup_nodes, ungroup_recursive,
                 group_all, ungroup_all )
 
-<<<<<<< HEAD
         graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self['visualization'] )
-=======
-        graph = graphing.CGraph( self.suite, self.cfg['visualization'] )
->>>>>>> master
         graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
