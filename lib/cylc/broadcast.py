@@ -31,7 +31,7 @@ class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
 
     # examples:
-    #self.settings[ 'all' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
+    #self.settings[ 'all-cycles' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
     #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
 
     def __init__( self, linearized_ancestors ):
@@ -148,8 +148,8 @@ class broadcast( Pyro.core.ObjBase ):
         name, tag = task_id.split( TaskID.DELIM )
 
         apply = {}
-        for cycle in [ 'all', tag ]:
-            # 'all' first so it can be overridden by specific cycle
+        for cycle in [ 'all-cycles', tag ]:
+            # 'all-cycles' first so it can be overridden by specific cycle
             if cycle not in self.settings:
                 continue
             nslist = []
@@ -174,7 +174,7 @@ class broadcast( Pyro.core.ObjBase ):
             self.log.warning( 'Expiring all broadcast settings now' ) 
             self.settings = {}
         for ctime in self.settings.keys():
-            if ctime == 'all':
+            if ctime == 'all-cycles':
                 continue
             elif ctime < cutoff:
                 self.log.warning( 'Expiring ' + ctime + ' broadcast settings now' ) 

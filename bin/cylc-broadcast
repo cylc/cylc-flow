@@ -61,80 +61,72 @@ def get_rdict( left, right=None ):
  
 usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 
-Override [runtime] namespace config items in a running suite.
+Override [runtime] config in targeted namespaces in a running suite.
 
-Broadcasts can target any task or family (including root), at specific
-cycle times, or all cycle times. Item override occurs just before
-job submission.
+Uses for broadcast include making temporary changes to task behaviour,
+and task-to-downstream-task communication via environment variables.
 
-Uses include: temporary manual changes to task behaviour at run time;
-tasks communicating to other downstream tasks via environment variables.
+A broadcast can target any [runtime] namespace for all cycles or for a
+specific cycle.  If a namespace is affected by specific-cycle and
+all-cycle broadcasts at once, the specific takes precedence. If a task
+is affected by broadcasts to multiple ancestor namespaces, the result is
+determined by normal [runtime] inheritance.
 
-Broadcasts persist across suite restarts, but they can be unset,
-cleared, or expired using this command, and cylc automatically expires
-any that target cycle times beyond the oldest current in the suite.
+Broadcasts persist, even across suite restarts, until they expire when
+their target cycle time is older than the oldest current in the suite,
+or until they are explicitly cancelled with this command.  All-cycle
+broadcasts do not expire.
 
-For config items affected by multiple broadcasts the precedence is:
- 1) specific cycle broadcasts override all-cycle broadcasts; then
- 2) the most specific namespace (farthest from root) takes precedence.
+For each task the final effect of all broadcasts to all namespaces is
+computed on the fly just prior to job submission.  The --cancel and
+--clear options simply cancel (remove) active broadcasts, they do not
+act directly on the final task-level result. Consequently, for example,
+you cannot broadcast to "all cycles except Tn" with an all-cycle
+broadcast followed by a cancel to Tn (there is no direct broadcast to Tn
+to cancel); and you cannot broadcast to "all members of FAMILY except
+member_n" with a general broadcast to FAMILY followed by a cancel to
+member_n (there is no direct broadcast to member_n to cancel).
 
-The -s/--set and -u/--unset options target named config items for all
-tasks in all cycles, more specifically with -t/--tag or -n/--namespace.
-
-The -c/--clear option by itself clears *all* broadcasts to the suite, or 
-more specifically with -t/--tag or -n/--namespace. Use with --tag=all to
-clear all specific-cycle and all-cycle broadcasts.
-
-Items with internal spaces must be quoted, e.g.:
+Arguments with internal spaces must be quoted, e.g.:
   % cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
-  
-To view current active broadcasts:
-  % cylc broadcast --display REG
-  % cylc broadcast --display-task=TASKID REG
- 
-To unset active broadcasts:
-  % cylc broadcast -n NAME -u 'command scripting' REG
-  % cylc broadcast --clear REG # clear all broadcast settings
-  
-Clearing an item from a specific cycle does not result in its exclusion
-from an all-cycles broadcast of the same item.
 
-Clearing an item from a specific namespace does not result in its
-exclusion from broadcasts of the same item to descendent namespaces.
-
-Note that broadcast cannot change [runtime] inheritance. 
+Use -d/--display to see active broadcasts. Multiple set or cancel
+options can be used on the same command line. Broadcast cannot change
+[runtime] inheritance. 
 
 See also 'cylc reload' - reload a modified suite definition at run time."""
 
 parser = cop( usage, pyro=True )
 
-parser.add_option( "-n", "--namespace", metavar="NAME", 
-        help="The target [runtime] namespace (default 'root'). "
-        "Use multiple times to target multiple namespaces at once.", 
-        action="append", dest="namespaces", default=[] )
-
 parser.add_option( "-t", "--tag", metavar="TAG",
-        help="The target cycle time or integer tag (default 'all'). "
-        "Use multiple times to target multiple cycles at once.", 
+        help="Target cycle time or tag, defaults to 'all-cycles'.",
         action="append", dest="tags", default=[] )
 
+parser.add_option( "-n", "--namespace", metavar="NAME", 
+        help="Target namespace, defaults to 'root'.",
+        action="append", dest="namespaces", default=[] )
+
 parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE", 
-        help="The [runtime] config item to override by broadcast. "
-        "Use multiple times to set multiple items at once.",
+        help="A [runtime] config item and value to broadcast.",
         action="append", dest="set", default=[] )
 
+parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM", 
+        help="An item-specific broadcast to cancel.",
+        action="append", dest="cancel", default=[] )
+
 parser.add_option( "-u", "--unset", metavar="[SEC]ITEM", 
-        help="The [runtime] config item to clear of broadcasts. "
-        "Use multiple times to unset multiple items at once.",
+        help="Deprecated: same as -c/--cancel.",
         action="append", dest="unset", default=[] )
 
-parser.add_option( "-c", "--clear", 
-        help="Clear current broadcast settings globally or, with "
-        "-t/--tag and/or -n/--namespace, more specifically.",
+parser.add_option( "-C", "--clear", 
+        help="Cancel all current broadcasts, or with -t/--tag, "
+        "-n/--namespace, cancel all broadcasts from targeted "
+        "namespaces and cycle times. Use -C -t all-cycles to "
+        "cancel just the all-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
 
 parser.add_option( "-e", "--expire", metavar="CYCLE",
-        help="Clear any broadcasts that target cycle "
+        help="Cancel any broadcasts that target cycle "
         "times earlier than, but not inclusive of, CYCLE.",
         action="store", default=None, dest="expire" )
 
@@ -143,7 +135,7 @@ parser.add_option( "-d", "--display",
         action="store_true", default=False, dest="show" )
 
 parser.add_option( "-k", "--display-task", metavar="TASKID",
-        help="Print current active broadcast for a given task "
+        help="Print current active broadcasts for a given task "
         "(NAME"+TaskID.DELIM+"TAG).",
         action="store", default=None, dest="showtask" )
 
@@ -161,6 +153,12 @@ parser.add_option( "-r", "--raw",
 suite = args[0]
 
 suite, pphrase = prep_pyro( suite, options ).execute()
+
+# deprecation of -u/--unset
+if options.unset and options.cancel:
+    parser.error( "--unset and --cancel are the same, please choose one." )
+elif options.unset:
+    options.cancel = options.unset
 
 debug = False
 if options.debug:
@@ -221,13 +219,15 @@ if options.expire:
     else:
         sys.exit(0)
 
+# implement namespace and tag defaults here
+# 
 namespaces = options.namespaces
 if not namespaces:
     namespaces = ["root"]
 
 tags = options.tags
 if not tags:
-    tags = ["all"]
+    tags = ["all-cycles"]
 
 settings = []
 for s in options.set:
@@ -244,11 +244,11 @@ for s in options.set:
     coerce_runtime_values( rdict )
     settings.append( rdict )
 
-for u in options.unset:
+for u in options.cancel:
     if u == 'inherit':
         raise SystemExit( "ERROR: Inheritance cannot be changed by broadcast" )
     if '=' in u:
-        raise SystemExit( "ERROR: --unset does not take a value" )
+        raise SystemExit( "ERROR: --cancel does not take a value" )
     settings.append( get_rdict( u ) )
 
 try:
