@@ -87,7 +87,6 @@ SPEC = {
             'task communication method'   : vdr( vtype='string', options=[ "pyro", "ssh", "poll"], default="pyro" ),
             'remote shell template'       : vdr( vtype='string', default='ssh -oBatchMode=yes %s' ),
             'use login shell'             : vdr( vtype='boolean', default=True ),
-            'cylc bin directory'          : vdr( vtype='string', default=None ),
             },
         '__MANY__' : {
             'run directory'               : vdr( vtype='string', default=None ),
