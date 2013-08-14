@@ -105,12 +105,14 @@ parser.add_option( "-d", "--run-dir",
         action="store", dest="run_dir", default=default_run_dir )
 
 conds = ("Valid triggering conditions to check for include: '" + 
-         ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())) + "'. ")
-stats = ("Valid states to check for include: '" + 
-         ("', '").join(sorted(task_state.legal)) + "'.")
+         ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) + 
+         "' and '" + sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[-1] + "'. ")
+states = ("Valid states to check for include: '" + 
+         ("', '").join(sorted(task_state.legal)[:-1]) + "' and '" + 
+         sorted(task_state.legal)[-1] + "'.")
 
 parser.add_option( "-S", "--status", 
-        help="Specify a particular status or triggering condition to check for. " + conds + stats,
+        help="Specify a particular status or triggering condition to check for. " + conds + states,
         action="store", dest="status", default=None )
         
 suite_poller.add_to_cmd_options( parser )
@@ -143,6 +145,7 @@ if options.status:
 
 if options.status and options.task and options.cycle:
     """check a task status"""
+    spoller.condition = options.status
     if options.wait:
         if not spoller.poll():
             sys.exit(1)
