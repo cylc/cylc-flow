@@ -270,9 +270,9 @@ Class to create an information bar.
             icon.show()
             self.state_widget.pack_start( icon, False, False )
             if self._is_suite_stopped:
-                text = str(num) + " tasks stopped with " + state
+                text = str(num) + " tasks stopped with " + str(state)
             else:
-                text = str(num) + " tasks " + state
+                text = str(num) + " tasks " + str(state)
             self._set_tooltip( icon, text )
 
     def set_status(self, status):
