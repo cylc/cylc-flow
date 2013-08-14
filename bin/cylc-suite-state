@@ -104,14 +104,13 @@ parser.add_option( "-d", "--run-dir",
         "to the local site/user config: " + default_run_dir + ".",
         action="store", dest="run_dir", default=default_run_dir )
 
-
 conds = ("Valid triggering conditions to check for include: '" + 
          ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())) + "'. ")
 stats = ("Valid states to check for include: '" + 
          ("', '").join(sorted(task_state.legal)) + "'.")
 
 parser.add_option( "-S", "--status", 
-        help="Specify a particular status or triggering condition to check for.\n" + conds + stats,
+        help="Specify a particular status or triggering condition to check for. " + conds + stats,
         action="store", dest="status", default=None )
         
 suite_poller.add_to_cmd_options( parser )
