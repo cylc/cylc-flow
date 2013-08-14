@@ -531,10 +531,10 @@ class scheduler(object):
 
     def command_stop_after_clock_time( self, arg ):
         # format: YYYY/MM/DD-HH:mm
-        date, time = arg.split('-')
-        yyyy, mm, dd = date.split('/')
-        HH,MM = time.split(':')
-        dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
+        sdate, stime = arg.split('-')
+        yyyy, mm, dd = sdate.split('/')
+        HH,MM = stime.split(':')
+        dtime = datetime.datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
         self.set_stop_clock( dtime )
 
     def command_stop_after_task( self, tid ):
