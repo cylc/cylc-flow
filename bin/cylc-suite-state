@@ -19,6 +19,8 @@
 import os, sys
 from time import sleep, time
 from cylc.remote import remrun
+from cylc.task_state import task_state
+
 if remrun().execute():
     sys.exit(0)
 
@@ -73,6 +75,8 @@ options). In polling mode the command will wait until the requested
 state is achieved, with an optional timeout abort. The suite database
 does not need to exist at the time polling commences.
 
+N.B. even in a non-cycling suite a value for cycle must be provided (--cycle=1).
+
 Example usage:
 
 cylc suite-state REG \
@@ -100,8 +104,14 @@ parser.add_option( "-d", "--run-dir",
         "to the local site/user config: " + default_run_dir + ".",
         action="store", dest="run_dir", default=default_run_dir )
 
+
+conds = ("Valid triggering conditions to check for include: '" + 
+         ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())) + "'. ")
+stats = ("Valid states to check for include: '" + 
+         ("', '").join(sorted(task_state.legal)) + "'.")
+
 parser.add_option( "-S", "--status", 
-        help="Specify a particular status to check for.",
+        help="Specify a particular status or triggering condition to check for.\n" + conds + stats,
         action="store", dest="status", default=None )
         
 suite_poller.add_to_cmd_options( parser )
@@ -125,6 +135,12 @@ spoller = suite_poller( "requested state", options.timeout,
 
 if not spoller.connect(verbose=options.verbose):
     sys.exit( "ERROR: cannot connect to the suite DB" )
+
+if options.status:
+    if options.status in task_state.legal or options.status in CylcSuiteDBChecker.STATE_ALIASES:
+        pass
+    else:
+        sys.exit( "ERROR: invalid status '" + options.status + "'" )
 
 if options.status and options.task and options.cycle:
     """check a task status"""

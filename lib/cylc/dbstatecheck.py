@@ -50,8 +50,11 @@ class CylcSuiteDBChecker(object):
         self.c = self.conn.cursor()
 
     def display_maps(self, res):
-        for row in res:
-            sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
+        if not res:
+            sys.stderr.write("INFO: No results to display.\n")
+        else:
+            for row in res:
+                sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
             
     def state_lookup(self, state): #allows for multiple states to be searched via a status alias
         if self.STATE_ALIASES.has_key(state):
