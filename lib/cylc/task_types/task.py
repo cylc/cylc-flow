@@ -213,8 +213,8 @@ class task( object ):
         # local (we can't know the correct host prior to this because 
         # dynamic host selection could be used).
         self.task_host = 'localhost'
-        self.task_owner = user 
-        self.user_at_host = self.task_owner + "@" + self.task_host
+        self.task_owner = None 
+        self.user_at_host = self.task_host
 
         self.submit_method_id = None
         self.job_sub_method = None
@@ -617,17 +617,16 @@ class task( object ):
             self.task_host = "localhost"
 
         self.task_owner = rtconfig['remote']['owner']
-        if not self.task_owner:
-            self.task_owner = user
 
-        self.user_at_host = self.task_owner + "@" + self.task_host
-
-
+        if self.task_owner:
+            self.user_at_host = self.task_owner + "@" + self.task_host
+        else:
+            self.user_at_host = self.task_host
         self.submission_poll_timer.set_host( self.task_host )
         self.execution_poll_timer.set_host( self.task_host )
 
-        if self.user_at_host not in self.__class__.suite_contact_env_hosts and \
-                self.user_at_host != user + '@localhost':
+        if self.task_host not in self.__class__.suite_contact_env_hosts and \
+                self.task_host != 'localhost':
             # If the suite contact file has not been copied to user@host
             # host yet, do so. This will happen for the first task on
             # this remote account inside the job-submission thread just
@@ -643,7 +642,7 @@ class task( object ):
             for cmd in [cmd1,cmd2]:
                 if subprocess.call(cmd): # return non-zero
                     raise Exception("ERROR: " + str(cmd))
-            self.__class__.suite_contact_env_hosts.append( self.user_at_host )
+            self.__class__.suite_contact_env_hosts.append( self.task_host )
         
         self.record_db_update("task_states", self.name, self.c_time, submit_method=module_name, host=self.user_at_host)
 
@@ -684,7 +683,7 @@ class task( object ):
         else:
             return (p,self.launcher)
 
-    def presubmit( self, user_at_host, subnum ):
+    def presubmit( self, owner, host, subnum ):
         """A cut down version of submit, without the job submission,
         just to provide access to the launcher-specific job poll
         commands before the task is submitted (polling in submitted
@@ -692,8 +691,6 @@ class task( object ):
         # TODO - refactor to get easier access to polling commands!
 
         rtconfig = pdeepcopy( self.__class__.rtconfig )
-
-        owner, host = user_at_host.split('@')
 
         # dynamic instantiation - don't know job sub method till run time.
         module_name = rtconfig['job submission']['method']
@@ -1255,7 +1252,7 @@ class task( object ):
 
         launcher = self.launcher
         if not launcher:
-            launcher = self.presubmit( self.user_at_host, self.submit_num )
+            launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_poll_command' ):
             # (for job submission methods that do not handle polling yet)
@@ -1288,7 +1285,7 @@ class task( object ):
 
         launcher = self.launcher
         if not launcher:
-            self.presubmit( self.user_at_host, self.submit_num )
+            self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_kill_command' ):
             # (for job submission methods that do not handle polling yet)
