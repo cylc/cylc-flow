@@ -75,6 +75,7 @@ Arguments:"""
         self.unlimited_args = False
         self.pyro = pyro
         self.jset = jset
+        self.noforce = noforce
 
         self.multitask = multitask
 
@@ -104,6 +105,7 @@ Arguments:"""
         
         OptionParser.__init__( self, usage )
 
+    def add_std_options( self ):
         self.add_option( "--owner",
                 help="User account name (defaults to $USER).",
                 metavar="USER", default=user,
@@ -128,7 +130,7 @@ Arguments:"""
                 "Defaults to $HOME/.cylc/DB.",
                 metavar="DB", action="store", default=None, dest="db" )
 
-        if pyro:
+        if self.pyro:
             self.add_option( "--port",
                 help="Suite port number on the suite host. NOTE: this is retrieved "
                 "automatically if passwordless ssh is configured to the suite host.",
@@ -150,7 +152,7 @@ Arguments:"""
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
-            if not noforce:
+            if not self.noforce:
                 self.add_option( "-f", "--force",
                         help="Do not ask for confirmation before acting. Note that "
                         "it is not necessary to use this option if interactive command "
@@ -201,6 +203,9 @@ Arguments:"""
         return suite, suiterc, watchers
 
     def parse_args( self ):
+
+        self.add_std_options()
+
         (options, args) = OptionParser.parse_args( self )
 
         if len(args) < self.n_compulsory_args:
