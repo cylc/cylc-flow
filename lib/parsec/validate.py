@@ -61,18 +61,14 @@ def _populate_spec_defaults( defs, spec ):
     for key,val in spec.items():
         if isinstance( val, dict ):
             if key not in defs:
-                if key in ['environment','directives']:
-                    # TODO - IS THIS NECESSARY?
-                    defs[key] = OrderedDict()
-                else:
-                    defs[key] = {}
+                defs[key] = OrderedDict()
             _populate_spec_defaults( defs[key], spec[key] )
         else:
             defs[key] = spec[key].args['default']
 
 def get_defaults( spec ):
     """Return a nested dict of default values from a parsec spec."""
-    defs = {}
+    defs = OrderedDict()
     _populate_spec_defaults( defs, spec )
     return defs
 
