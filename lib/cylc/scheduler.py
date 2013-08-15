@@ -742,8 +742,12 @@ class scheduler(object):
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
                     new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
+                    # set reloaded task's spawn status (else task state init doesn't get
+                    # this right for reloaded sequential tasks TODO - fix this properly)
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
+                    else:
+                        new_task.state.set_unspawned()
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
@@ -1524,6 +1528,16 @@ class scheduler(object):
     def check_new_task_proxy( self, new_task, prev_instance=None ):
         """Adjust new task proxy and return True, or False to reject it."""
 
+        # check for general suite hold
+        if self.hold_suite_now:
+            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+            new_task.reset_state_held()
+            return True
+
+        # further checks only apply to cycling tasks
+        if not new_task.is_cycling():
+            return True
+
         # tasks with configured stop cycles
         if prev_instance:
             if prev_instance.stop_c_time:
@@ -1536,18 +1550,13 @@ class scheduler(object):
                     # stop cycle not reached, perpetuate it
                     new_task.stop_c_time = prev_instance.stop_c_time
 
-        # hold the new task if necessary
-        hold = False
-        if self.hold_suite_now:
-            hold = True
-            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+        # check cycle stop or hold conditions
         if self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
-            hold = True
             new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+            new_task.reset_state_held()
+            return True
         if self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
-            hold = True
             new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
-        if hold:
             new_task.reset_state_held()
             return True
 
