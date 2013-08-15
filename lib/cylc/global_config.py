@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os, sys, re
-from copy import deepcopy
 from cylc.owner import user
 import atexit
 import shutil
@@ -45,7 +44,7 @@ class globalcfg( object ):
         self.cfg['pyro']['ports directory'] = expandvars( self.cfg['pyro']['ports directory'] )
 
         for key,val in self.cfg['hosts']['localhost'].items():
-            if val and key and key.endswith('directory'):
+            if val and 'directory' in key:
                 self.cfg['hosts']['localhost'][key] = expandvars( val )
 
     def get_tmpdir( self ):
@@ -74,26 +73,22 @@ class globalcfg( object ):
         """This allows use of hosts with no entry in the config file to
         default to appropriately modified localhost settings."""
 
-        value = None
-        if host and host != 'localhost':
-            # see if we have an explicit entry for this host item
-            try:
-                value = self.cfg['hosts'][host][item]
-            except KeyError:
-                # no we don't
-                pass
+        # (method may be called with explicit None values for localhost and owner)
+        if not host:
+            host = 'localhost'
+        if not owner:
+            owner = user
 
-        if not value:
-            # default to the value for localhost.
+        if host in self.cfg['hosts']:
+            # explicit non-localhost entry
+            value = self.cfg['hosts'][host][item]
+            # (localhost defaulting and home dir translation already done in site_spec module)
+        else:
+            # a host with no entry
             value = self.cfg['hosts']['localhost'][item]
-
-        if value:
-            # localhost items may default to None too (e.g. cylc bin directory)
-            if (host and host != 'localhost') or (owner and owner != user ) or replace:
-                # item requested for a remote account
-                if 'directory' in item:
-                    # Replace local home directory, if it appears, with
-                    # literal '$HOME' for evaluation on the remote account.
+            if value and 'directory' in item:
+                if host != 'localhost' or owner != user or replace:
+                    # Replace local home dir with $HOME for evaluation on other host
                     value = value.replace( os.environ['HOME'], '$HOME' )
         return value
 
