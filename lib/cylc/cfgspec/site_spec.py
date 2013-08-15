@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from parsec.validate import get_defaults
 from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader, converter
 from parsec.loadcfg import load_combined
@@ -81,18 +82,11 @@ SPEC = {
         },
 
     'hosts' : {
-        'localhost' : {
+        '__MANY__' : {
             'run directory'               : vdr( vtype='string', default="$HOME/cylc-run" ),
             'work directory'              : vdr( vtype='string', default="$HOME/cylc-run" ),
             'task communication method'   : vdr( vtype='string', options=[ "pyro", "ssh", "poll"], default="pyro" ),
             'remote shell template'       : vdr( vtype='string', default='ssh -oBatchMode=yes %s' ),
-            'use login shell'             : vdr( vtype='boolean', default=True ),
-            },
-        '__MANY__' : {
-            'run directory'               : vdr( vtype='string', default=None ),
-            'work directory'              : vdr( vtype='string', default=None),
-            'task communication method'   : vdr( vtype='string', options=["pyro","ssh","poll"] ),
-            'remote shell template'       : vdr( vtype='string' ),
             'use login shell'             : vdr( vtype='boolean', default=True ),
             },
         },
@@ -124,9 +118,15 @@ def upg( cfg, descr, verbose ):
 def get_cfg( verbose=False ):
     global cfg
     if not cfg:
-        cfg = load_combined( SITE_FILE, "site config",
-                             USER_FILE, "user config",
-                             SPEC, upg, True, verbose )
+        cfg = load_combined(
+                SITE_FILE, "site config",
+                USER_FILE, "user config",
+                SPEC, upg, True, verbose )
+
+    if 'localhost' not in cfg['hosts']:
+        # localhosts section is required
+        cfg['hosts']['localhost'] = get_defaults( SPEC['hosts']['__MANY__'] )
+
     return cfg
 
 def print_cfg():
