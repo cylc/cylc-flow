@@ -135,7 +135,7 @@ def get_cfg( verbose=False ):
         for item, value in cfg['hosts'][host].items():
             newvalue = value or cfg['hosts']['localhost'][item]
             if newvalue and 'directory' in item:
-                # Replace local home dir with $HOME for evaluation on other host
+                # replace local home dir with $HOME for evaluation on other host
                 newvalue = newvalue.replace( os.environ['HOME'], '$HOME' )
             cfg['hosts'][host][item] = newvalue
 

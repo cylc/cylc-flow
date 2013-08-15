@@ -70,26 +70,43 @@ class globalcfg( object ):
         return tmpdir
 
     def get_host_item( self, item, host=None, owner=None, replace=False ):
-        """This allows use of hosts with no entry in the config file to
-        default to appropriately modified localhost settings."""
+        """This allows hosts with no matching entry in the config file
+        to default to appropriately modified localhost settings."""
 
-        # (method may be called with explicit None values for localhost and owner)
+        # (this may be called with explicit None values for localhost
+        # and owner, so we can't use proper defaults in the arg list)
         if not host:
+            # if no host is given the caller is asking about localhost
             host = 'localhost'
         if not owner:
             owner = user
 
-        if host in self.cfg['hosts']:
-            # explicit non-localhost entry
-            value = self.cfg['hosts'][host][item]
-            # (localhost defaulting and home dir translation already done in site_spec module)
+        # is there a matching host section?
+        host_key = None
+        if host:
+            if host in self.cfg['hosts']:
+                # there's an entry for this host
+                host_key = host
+            else:
+                # try for a pattern match
+                for h in self.cfg['hosts']:
+                    if re.match( h, host ):
+                        host_key = h
+                        break
+        modify_dirs = False
+        if host_key:
+            # entry exists, any unset items under it have already
+            # defaulted to modified localhost values (see site cfgspec)
+            value = self.cfg['hosts'][host_key][item]
         else:
-            # a host with no entry
+            # no entry so default to localhost and modify appropriately
             value = self.cfg['hosts']['localhost'][item]
-            if value and 'directory' in item:
-                if host != 'localhost' or owner != user or replace:
-                    # Replace local home dir with $HOME for evaluation on other host
-                    value = value.replace( os.environ['HOME'], '$HOME' )
+            modify_dirs = True
+
+        if value and ( 'directory' in item ) and ( modify_dirs or owner != user or replace ):
+            # replace local home dir with $HOME for evaluation on other host
+            value = value.replace( os.environ['HOME'], '$HOME' )
+
         return value
 
     def get_derived_host_item( self, suite, item, host=None, owner=None, replace=False ):
