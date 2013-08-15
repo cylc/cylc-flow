@@ -89,11 +89,11 @@ SPEC = {
             'use login shell'             : vdr( vtype='boolean', default=True ),
             },
         '__MANY__' : {
-            'run directory'               : vdr( vtype='string', default=None ),
-            'work directory'              : vdr( vtype='string', default=None),
-            'task communication method'   : vdr( vtype='string', options=["pyro","ssh","poll"] ),
-            'remote shell template'       : vdr( vtype='string' ),
-            'use login shell'             : vdr( vtype='boolean', default=True ),
+            'run directory'               : vdr( vtype='string'  ),
+            'work directory'              : vdr( vtype='string'  ),
+            'task communication method'   : vdr( vtype='string', options=[ "pyro", "ssh", "poll"] ),
+            'remote shell template'       : vdr( vtype='string'  ),
+            'use login shell'             : vdr( vtype='boolean' ),
             },
         },
 
@@ -127,6 +127,18 @@ def get_cfg( verbose=False ):
         cfg = load_combined( SITE_FILE, "site config",
                              USER_FILE, "user config",
                              SPEC, upg, True, verbose )
+
+    # host item values of None default to modified localhost values
+    for host in cfg['hosts']:
+        if host == 'localhost':
+            continue
+        for item, value in cfg['hosts'][host].items():
+            newvalue = value or cfg['hosts']['localhost'][item]
+            if newvalue and 'directory' in item:
+                # Replace local home dir with $HOME for evaluation on other host
+                newvalue = newvalue.replace( os.environ['HOME'], '$HOME' )
+            cfg['hosts'][host][item] = newvalue
+
     return cfg
 
 def print_cfg():
