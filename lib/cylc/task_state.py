@@ -107,6 +107,9 @@ class task_state(object):
     def set_spawned( self ):
         self.state[ 'spawned' ] = 'true'
 
+    def set_unspawned( self ):
+        self.state[ 'spawned' ] = 'false'
+
     def has_spawned( self ):
         return self.state[ 'spawned' ] == 'true'
 

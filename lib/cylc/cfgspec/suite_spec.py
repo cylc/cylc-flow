@@ -224,12 +224,19 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False,
 
         validate( cfg, SPEC )
 
-        # load non-runtime defaults
+        # load defaults for everything except [runtime]
+        # (keep runtime sparse for efficient inheritance)
         for key,val in SPEC.items():
-            if isinstance(val,dict) and key != 'runtime':
+            if isinstance(val,dict):
+                if key != 'runtime':
+                    # all main sections except for runtime
+                    if key not in cfg:
+                        cfg[key] = {} # TODO - ordered dict?
+                    cfg[key] = expand( cfg[key], SPEC[key] )
+            else:
+                # top level (no section) items
                 if key not in cfg:
-                    cfg[key] = {} # OrderedDict not needed here (see parsec.README)
-                cfg[key] = expand( cfg[key], SPEC[key] )
+                    cfg[key] = val.args['default']
 
     return cfg
 
