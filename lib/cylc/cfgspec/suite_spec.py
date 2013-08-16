@@ -236,7 +236,8 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False,
                     cfg[key] = expand( cfg[key], SPEC[key] )
             else:
                 # top level (no section) items
-                cfg[key] = val.args['default']
+                if key not in cfg:
+                    cfg[key] = val.args['default']
 
     return cfg
 
