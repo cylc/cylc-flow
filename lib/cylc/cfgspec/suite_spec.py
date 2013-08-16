@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from OrderedDict import OrderedDict
 from parsec.validate import validator as vdr
 from parsec.validate import validate, expand, get_defaults
 from parsec.upgrade import upgrader, converter
@@ -53,9 +52,9 @@ SPEC = {
             'enable'                          : vdr( vtype='boolean', default=False ),
             'simultaneous instances'          : vdr( vtype='boolean', default=False ),
             },
-        'environment' : OrderedDict([
-            ('__MANY__',                        vdr( vtype='string' )),
-            ]),
+        'environment' : {
+            '__MANY__'                        : vdr( vtype='string' ),
+            },
         'event hooks' : {
             'startup handler'                 : vdr( vtype='string' ),
             'timeout handler'                 : vdr( vtype='string' ),
@@ -177,12 +176,12 @@ SPEC = {
                 'execution timeout'           : vdr( vtype='float'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
                 },
-            'environment' : OrderedDict([
-                ('__MANY__',                    vdr( vtype='string' )),
-                ]),
-            'directives' : OrderedDict([
-                ('__MANY__',                    vdr( vtype='string' )),
-                ]),
+            'environment' : {
+                '__MANY__'                    : vdr( vtype='string' ),
+                },
+            'directives' : {
+                '__MANY__'                    : vdr( vtype='string' ),
+                },
             'outputs' : {
                 '__MANY__'                    : vdr( vtype='string' ),
                 },
