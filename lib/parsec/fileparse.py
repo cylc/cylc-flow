@@ -374,7 +374,7 @@ def parse( fpath, verbose=False,
                         val = m.groups()[0]
                         #print 'SINGLE      ', key, ' = ', val
                     else:
-                        m = re.match( _SQ_VALUE, val )
+                        m = re.match( _DQ_VALUE, val )
                         if m:
                             # double quoted value: unquote and strip comment
                             val = m.groups()[0]
