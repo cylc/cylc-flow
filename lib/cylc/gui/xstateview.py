@@ -86,11 +86,10 @@ class GraphUpdater(threading.Thread):
         self.group = []
         self.ungroup = []
         self.ungroup_recursive = False
+        self.ungroup_all = False
         if "graph" in self.cfg.grouped_views:
-            self.ungroup_all = False
             self.group_all = True
         else:
-            self.ungroup_all = True
             self.group_all = False
 
         self.graph_frame_count = 0
