@@ -91,7 +91,7 @@ class TreeUpdater(threading.Thread):
         self.autoexpand_states = [ 'queued', 'submitting', 'submitted', 'running', 'failed' ]
         self._last_autoexpand_me = []
         self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
-        self.should_group_families = True
+        self.should_group_families = ("text" in self.cfg.grouped_views)
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
@@ -263,11 +263,14 @@ class TreeUpdater(threading.Thread):
                     autoexpand_me.remove(row_id)
             expand_me += autoexpand_me
             self._last_autoexpand_me = autoexpand_me
-        self.ttreeview.get_model().get_model().refilter()
-        self.ttreeview.get_model().sort_column_changed()
+        model = self.ttreeview.get_model()
+        if model is None:
+            return
+        model.get_model().refilter()
+        model.sort_column_changed()
 
         # Expand all the rows that were user-expanded or need auto-expansion.
-        self.ttreeview.get_model().foreach( self._expand_row, expand_me )
+        model.foreach( self._expand_row, expand_me )
 
         return False
 
@@ -291,7 +294,8 @@ class TreeUpdater(threading.Thread):
     def _get_user_expanded_row_ids( self ):
         """Return a list of row ctimes and names that were user expanded."""
         names = []
-        if self.ttreeview.get_model().get_iter_first() is None:
+        model = self.ttreeview.get_model()
+        if model is None or model.get_iter_first() is None:
             return names
         self.ttreeview.map_expanded_rows( self._add_expanded_row, names )
         return names
@@ -384,7 +388,7 @@ class DotUpdater(threading.Thread):
         self.quit = False
         self.autoexpand = True
         self.should_hide_headings = False
-        self.should_group_families = True
+        self.should_group_families = ("dot" in cfg.grouped_views)
 
         self.cfg = cfg
         self.updater = updater
@@ -649,8 +653,12 @@ class DotUpdater(threading.Thread):
                     state_list.append( self.dots[state] )
                 else:
                     state_list.append( self.dots['empty'] )
-
-            self.led_liststore.append( self.digitize( ctime ) + state_list + [ctime])
+            try:
+                self.led_liststore.append( self.digitize( ctime ) +
+                                           state_list + [ctime])
+            except ValueError:
+                # A very laggy store can change the columns and raise this.
+                return False
 
         return False
 

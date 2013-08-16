@@ -331,8 +331,12 @@ Dependency graph suite control interface.
     def group_all( self, w, group ):
         if group:
             self.t.group_all = True
+            if "graph" not in self.cfg.grouped_views:
+                self.cfg.grouped_views.append("graph")
         else:
             self.t.ungroup_all = True
+            if "graph" in self.cfg.grouped_views:
+                self.cfg.grouped_views.remove("graph")
         self.t.action_required = True
         self.t.best_fit = True
 
