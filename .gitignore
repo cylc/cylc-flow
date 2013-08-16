@@ -24,3 +24,7 @@ VERSION
 
 # ordereddict-0.4.5 build 
 ext/ordereddict-0.4.5/build
+
+# site configuration and processed configuration
+conf/siterc
+conf/*/*.rc.processed
