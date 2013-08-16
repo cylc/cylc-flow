@@ -300,12 +300,13 @@ def parse( fpath, verbose=False,
     flines = read_and_proc( fpath, verbose, 
             template_vars, template_vars_file )
     # write the processed 
-    fp = fpath + '.processed'
-    if verbose:
-        print "Writing file" + fp
-    f = open( fp, 'w' )
-    f.write('\n'.join(flines))
-    f.close()
+    if fpath.endswith("suite.rc"):
+        fp = fpath + '.processed'
+        if verbose:
+            print "Writing file" + fp
+        f = open( fp, 'w' )
+        f.write('\n'.join(flines))
+        f.close()
 
     nesting_level = 0
     config = OrderedDict()
