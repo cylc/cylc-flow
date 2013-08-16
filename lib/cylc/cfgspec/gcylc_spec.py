@@ -32,6 +32,7 @@ cfg = None
 
 SPEC = {
     'initial views' : vdr( vtype='string_list', default=["text","dot"] ),
+    'grouped views' : vdr( vtype='string_list', default=["text","dot"] ),
     'use theme'     : vdr( vtype='string', default="default" ),
     'themes' : {
         '__MANY__' : {

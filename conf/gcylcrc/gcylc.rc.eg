@@ -7,8 +7,9 @@
 #    (b) inheriting from an existing theme and overriding specific
 #     colors (see the "PinkRun" example below).
 
-initial views = text, dot  # set your default views
-use theme = PinkRun        # set your default theme
+initial views = text, dot     # set your default views
+grouped views = text, dot     # set your initially grouped views
+use theme = PinkRun           # set your default theme
 
 [themes]
     [[PinkRun]] # override the 'running' color in the 'default' theme

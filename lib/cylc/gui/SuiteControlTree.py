@@ -124,6 +124,11 @@ Text Treeview suite control interface.
         group_on = toggle_item.get_active()
         if group_on == self.t.should_group_families:
             return False
+        if group_on:
+            if "text" not in self.cfg.grouped_views:
+                self.cfg.grouped_views.append("text")
+        elif "text" in self.cfg.grouped_views:
+            self.cfg.grouped_views.remove("text")
         self.t.should_group_families = group_on
         if isinstance( toggle_item, gtk.ToggleToolButton ):
             if group_on:
