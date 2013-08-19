@@ -1582,10 +1582,14 @@ class scheduler(object):
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
         if not self.stop_tag:
-            return
+            return False
         for pct in itask.prerequisites.get_target_tags():
-            if int( ct(pct).get() ) > int(self.stop_tag):
-                return True
+            try:
+                if int( ct(pct).get() ) > int(self.stop_tag):
+                    return True
+            except:
+                # pct invalid cycle time => is an asynch trigger
+                pass
         return False
 
     def add_new_task_proxy( self, new_task, prev_instance=None ):
