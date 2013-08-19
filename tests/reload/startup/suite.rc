@@ -1,0 +1,17 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time = 2010010200
+    [[special tasks]]
+        start-up = start
+    [[dependencies]]
+        [[[0, 6]]]
+            graph = "start => a => b => c"
+[runtime]
+    [[a,c,cold]]
+        command scripting = "sleep 5"
+    [[b]]
+        command scripting = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"
