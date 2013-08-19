@@ -1,0 +1,14 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.8
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time = 2010010500
+    [[dependencies]]
+        [[[0, 6, 12, 18]]]
+            graph = "c[T-6] => a => stopper => c"
+[runtime]
+    [[a,c]]
+        command scripting = "true"
+    [[stopper]]
+        command scripting = "cylc shutdown $CYLC_SUITE_REG_NAME 2010010100"
