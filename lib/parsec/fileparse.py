@@ -360,10 +360,7 @@ def parse( fpath, verbose=False,
             if m:
                 # matched a key=value item
                 indent, key, val = m.groups()
-                if not val:
-                    # empty value - same as item not present
-                    continue
-                if val[:3] in ['"""', "'''"]:
+                if val.startswith('"""') or val.startswith("'''"):
                     # triple quoted - may be a multiline value
                     val, index = multiline( flines, val, index, maxline )
                 else:
@@ -378,7 +375,7 @@ def parse( fpath, verbose=False,
                             # double quoted value: unquote and strip comment
                             val = m.groups()[0]
                             #print 'DOUBLE      ', key, ' = ', val
-                        elif val[0] in ["'", '"']:
+                        elif val.startswith("'") or val.startswith('"'):
                             # must be a quoted list: unquote and strip comment
                             #print 'QUOTED LIST ', key, ' = ', val
                             if val[0] == "'":
