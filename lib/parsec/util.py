@@ -54,10 +54,7 @@ def replicate( target, source ):
     for key,val in source.items():
         if isinstance( val, dict ):
             if key not in target:
-                if key in ['environment','directives']:
-                    target[key] = OrderedDict()
-                else:
-                    target[key] = {}
+                target[key] = OrderedDict()
             replicate( target[key], val )
         elif isinstance( val, list ):
             target[key] = val[:]
@@ -66,7 +63,7 @@ def replicate( target, source ):
 
 def pdeepcopy( source):
     """Make a deep copy of a pdict source"""
-    target = {}
+    target = OrderedDict()
     replicate( target, source )
     return target
 
@@ -88,10 +85,7 @@ def m_override( target, sparse ):
         if isinstance( val, dict ):
             if key not in target:
                 if '__MANY__' in target:
-                    if key in ['environment','directives']:
-                        target[key] = OrderedDict()
-                    else:
-                        target[key] = {}
+                    target[key] = OrderedDict()
                     replicate( target[key], target['__MANY__'] )
                 else:
                     # TODO - validation prevents this, but handle properly for completeness.

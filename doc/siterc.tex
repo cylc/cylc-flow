@@ -353,18 +353,46 @@ Each suite stores its port number, by suite name, under this directory.
 
 The [hosts] section configures some important host-specific settings for
 the suite host (`localhost') and remote task hosts. Note that {\em
-site/user config settings on the suite host, not the task host,
-determine remote task behaviour}. 
+remote task behaviour is determined by the site/user config file on the
+suite host, not on the task host}. Suites can specify task hosts that 
+are not listed here, in which case local settings will be assumed,
+with the local home directory path, if present, replaced by
+\lstinline=$HOME= in items that configure directory locations.
 
 \subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ HOST}
 
-The default task HOST is the suite host, {\bf localhost}. Use a   
-\lstinline=[hosts][[localhost]]= section to override the default
-settings below. Local settings are also used as defaults for remote task
-hosts, with the local home directory replaced in directory paths with
-literal \lstinline=`$HOME'= for evaluation on the remote host.  Explicit 
-task host sections are only needed if the automatically modified local
-defaults are not sufficient.
+The default task HOST is the suite host, {\bf localhost}, with default 
+values as listed below. Use an explicit \lstinline=[hosts][[localhost]]=
+section if you need to override the defaults. Localhost settings are
+then also used as defaults for other hosts, with the local home
+directory path replaced as described above. This applies to items
+omitted from an explicit host section, and to hosts that are not listed
+at all in the site/user config files.  Explicit host sections are only
+needed if the automatically modified local defaults are not sufficient.
+
+Host section headings can also be {\em regular expressions} to match 
+multiple hostnames.  Note that the general regular expression wildcard
+is `\lstinline=.*=' (zero or more of any character), not 
+`\lstinline=*='.
+Hostname matching regular expressions are used as-is in the Python
+\lstinline=re.match()= function. As such they match from the beginning 
+of the hostname string (as specified in the suite definition) and they
+do not have to match through to the end of the string (use the
+string-end matching character `\lstinline=$=' in the expression to 
+force this).
+
+A hierachy of host match expressions from specific to general can be 
+used because config items are processed in the order specified in the
+file.
+
+\begin{myitemize}
+\item {\em type:} string (hostname or regular expression)
+\item {\em examples:}
+\begin{myitemize}
+    \item \lstinline@server1.niwa.co.nz@ - explicit host name
+    \item  \lstinline@server\d.niwa.co.nz@ - regular expression
+\end{myitemize}
+\end{myitemize}
 
 \paragraph[run directory]{[hosts] $\rightarrow$ HOST $\rightarrow$ run directory }
 

@@ -95,3 +95,18 @@ TODO
    inheritance processing, and don't use config.py for the get-config
    command (which can print sparse [runtime] dicts).
 
+________________________________________________________________________
+NOTE ON USE OF ORDERED DICTS
+
+Files are parsed into ordered dicts, in case order is important. In cylc
+it is important in at least two places: variables defined in [runtime]
+[environment] sections may depend on other varialbes previously defined 
+in the same section; and in site/user config files, parsed host sections
+need to remain ordered in case of an ordered hierarchy (specific to
+general) of hostname match patterns.
+
+This generally only matters for items parsed from config files, not for 
+the default values defined in file spec modules - so there is no need to
+use ordered dicts in file specs unless the order of defaults matters.
+
+

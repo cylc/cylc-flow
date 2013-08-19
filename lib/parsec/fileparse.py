@@ -22,8 +22,7 @@ from OrderedDict import OrderedDict
 from cylc.include_files import inline, IncludeFileError
 
 """
-Module to parse a cylc parsec config file into a nested dict of
-key=value pairs, with line continuation and Jinja2 processing.
+Module to parse a cylc parsec config file into a nested ordered dict.
 """
 
 try:
