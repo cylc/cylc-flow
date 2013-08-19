@@ -35,6 +35,9 @@ class Daily( cycler ):
  
     def __init__( self, T=None, step=1 ):
         """Store HH, step, and anchor."""
+
+        self.c_offset = 0
+
         # check input validity
         try:
             T = ct( T ).get()
@@ -55,7 +58,10 @@ class Daily( cycler ):
             raise SystemExit( "ERROR: step must be a positive integer: " + step )
 
     def get_min_cycling_interval( self ):
-        return self.step
+        return 24 * self.step
+
+    def get_offset( self ):
+        return 24 * self.c_offset
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
@@ -108,5 +114,6 @@ class Daily( cycler ):
     def adjust_state( self, offset ):
         foo = ct( self.anchorYYYYMMDD )
         foo.decrement( days=int(offset) )
+        self.c_offset = int(offset)
         self.anchorYYYYMMDD = foo.get()[0:8]
 
