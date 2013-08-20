@@ -2968,7 +2968,7 @@ For more Stop options use the Control menu.""" )
             if type == 'out':
                 xopts = ' --stdout '
             elif type == 'err':
-                xopts == ' --stderr '
+                xopts = ' --stderr '
             else:
                 xopts = ' '
 
