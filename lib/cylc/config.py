@@ -1279,17 +1279,20 @@ class config( object ):
 
         if self.first_graph:
             self.first_graph = False
-            if not self.collapsed_families_rc:
+            if not self.collapsed_families_rc and not ungroup_all:
                 # initially default to collapsing all families if
                 # "[visualization]collapsed families" not defined
                 group_all = True
 
         if group_all:
             # Group all family nodes
-            for fam in members:
-                if fam != 'root':
-                    if fam not in self.closed_families:
-                        self.closed_families.append( fam )
+            if self.collapsed_families_rc:
+                self.closed_families = copy(self.collapsed_families_rc)
+            else:
+                for fam in members:
+                    if fam != 'root':
+                        if fam not in self.closed_families:
+                            self.closed_families.append( fam )
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []
