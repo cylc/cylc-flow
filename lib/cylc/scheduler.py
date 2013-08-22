@@ -1528,7 +1528,7 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_and_adjust_task_proxy( self, new_task, prev_instance=None ):
+    def check_and_adjust_task_proxy( self, new_task ):
 
         # check for general suite hold
         if self.hold_suite_now:
@@ -1541,17 +1541,12 @@ class scheduler(object):
             return
 
         # tasks with configured stop cycles
-        if prev_instance:
-            if prev_instance.stop_c_time:
-                # this task has a stop cycle
-                if int( new_task.c_time ) > int( prev_instance.stop_c_time ):
-                    # stop cycle reached
-                    new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + prev_instance.stop_c_time )
-                    new_task.reset_state_held()
-                    return
-                else:
-                    # stop cycle not reached, perpetuate it
-                    new_task.stop_c_time = prev_instance.stop_c_time
+
+        if new_task.stop_c_time:
+            if int( new_task.c_time ) > int( new_task.stop_c_time ):
+                new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + new_task.stop_c_time )
+                new_task.reset_state_held()
+                return
 
         # check cycle stop or hold conditions
         if self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
@@ -1593,10 +1588,10 @@ class scheduler(object):
                 pass
         return False
 
-    def add_new_task_proxy( self, new_task, prev_instance=None ):
+    def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
         added = False
-        self.check_and_adjust_task_proxy( new_task, prev_instance )
+        self.check_and_adjust_task_proxy( new_task )
         if not self.pool.add( new_task ):
             new_task.prepare_for_death()
             del new_task
@@ -1608,7 +1603,7 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if self.add_new_task_proxy( new_task, itask ):
+        if self.add_new_task_proxy( new_task ):
             return new_task
         else:
             return None
