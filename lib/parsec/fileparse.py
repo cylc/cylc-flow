@@ -383,6 +383,10 @@ def parse( fpath, verbose=False,
                             else:
                                 reg = _DQ_VALUE
                             vals = re.split( '\s*,\s*', val )
+                            if len(vals) == 1:
+                                # not a list
+                                print >> sys.stderr, line
+                                raise ParseError( 'Invalid line (1) at ' + str(index+1) )
                             val = ''
                             for v in vals:
                                 m = re.match(reg, v)
