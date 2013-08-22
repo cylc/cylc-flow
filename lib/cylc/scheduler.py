@@ -1595,11 +1595,12 @@ class scheduler(object):
 
     def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
-        added = False
-        if not self.pool.add( new_task ):
+        if self.pool.add( new_task ):
+            return True
+        else:
             new_task.prepare_for_death()
             del new_task
-        return added
+            return False
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
