@@ -83,9 +83,14 @@ LED suite control interface.
         column_index = treeview.get_columns().index(col)
         if column_index == 0:
             return False
-        name = self.t.led_headings[column_index]
-        ctime_column = treeview.get_model().get_n_columns() - 1
-        ctime = treeview.get_model().get_value( r_iter, ctime_column )
+        
+        if self.t.is_transposed:
+            ctime = self.t.led_headings[column_index]
+            name = treeview.get_model().get_value( r_iter, 0 )
+        else:
+            name = self.t.led_headings[column_index]
+            ctime_column = treeview.get_model().get_n_columns() - 1
+            ctime = treeview.get_model().get_value( r_iter, ctime_column )
 
         task_id = name + TaskID.DELIM + ctime
 
@@ -108,7 +113,13 @@ LED suite control interface.
         menu.append( group_item )
         group_item.connect( 'toggled', self.toggle_grouping )
         group_item.show()
-        
+
+        transpose_menu_item = gtk.CheckMenuItem( 'Toggle _Transpose View' )
+        transpose_menu_item.set_active( self.t.should_transpose_view )
+        menu.append( transpose_menu_item )
+        transpose_menu_item.connect( 'toggled', self.toggle_transpose )
+        transpose_menu_item.show()
+
         menu.popup( None, None, None, event.button, event.time )
 
         # TODO - popup menus are not automatically destroyed and can be
@@ -121,8 +132,7 @@ LED suite control interface.
     def check_filter_entry( self, e ):
         ftxt = self.filter_entry.get_text()
         self.t.filter = self.filter_entry.get_text()
-        self.t.update()
-        self.t.update_gui()
+        self.t.action_required = True
 
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
@@ -146,8 +156,7 @@ LED suite control interface.
             if toggle_item != self.group_menu_item:
                 self.group_menu_item.set_active( group_on )
             self.group_toolbutton.set_active( group_on )
-        self.t.update()           
-        self.t.update_gui()
+        self.t.action_required = True
         return False
 
     def toggle_headings(self, toggle_item):
@@ -157,7 +166,18 @@ LED suite control interface.
         self.t.should_hide_headings = headings_off
         if toggle_item != self.headings_menu_item:
             self.headings_menu_item.set_active( headings_off )
-        self.t.set_led_headings()
+        self.t.action_required = True
+
+    def toggle_transpose( self, toggle_item ):
+        """Toggle transpose (rows-as-columns, etc) table view."""
+        transpose_on = toggle_item.get_active()
+        if transpose_on == self.t.should_transpose_view:
+            return False
+        self.t.should_transpose_view = transpose_on
+        if toggle_item != self.transpose_menu_item:
+            self.transpose_menu_item.set_active( transpose_on )
+        self.t.action_required = True
+        return False
 
     def stop(self):
         self.t.quit = True
@@ -186,6 +206,11 @@ LED suite control interface.
         self.group_menu_item.set_active( self.t.should_group_families )
         items.append( self.group_menu_item )
         self.group_menu_item.connect( 'toggled', self.toggle_grouping )
+
+        self.transpose_menu_item = gtk.CheckMenuItem( 'Toggle _Transpose View' )
+        self.transpose_menu_item.set_active( self.t.should_transpose_view )
+        items.append( self.transpose_menu_item )
+        self.transpose_menu_item.connect( 'toggled', self.toggle_transpose )
         return items
 
     def get_toolitems( self ):

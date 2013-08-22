@@ -386,9 +386,12 @@ class DotUpdater(threading.Thread):
         super(DotUpdater, self).__init__()
 
         self.quit = False
+        self.action_required = False
         self.autoexpand = True
         self.should_hide_headings = False
         self.should_group_families = ("dot" in cfg.grouped_views)
+        self.should_transpose_view = False
+        self.is_transposed = False
 
         self.cfg = cfg
         self.updater = updater
@@ -402,9 +405,18 @@ class DotUpdater(threading.Thread):
         self.descendants = []
         self.filter = ""
 
+        self.led_headings = []
         self.led_treeview = treeview
         self.led_liststore = treeview.get_model()
         self._prev_tooltip_task_id = None
+        if hasattr(self.led_treeview, "set_has_tooltip"):
+            self.led_treeview.set_has_tooltip(True)
+            try:
+                self.led_treeview.connect('query-tooltip',
+                                          self.on_query_tooltip)
+            except TypeError:
+                # Lower PyGTK version.
+                pass
 
         self.task_list = []
 
@@ -436,11 +448,12 @@ class DotUpdater(threading.Thread):
 
     def update(self):
         #print "Attempting Update"
-        if ( self.last_update_time is not None and
-             self.last_update_time >= self.updater.last_update_time ):
+        if not self.action_required and (
+          self.last_update_time is not None and
+          self.last_update_time >= self.updater.last_update_time ):
             return False
         self.last_update_time = self.updater.last_update_time
-        if self.updater.status == "stopped":
+        if not self.action_required and self.updater.status == "stopped":
             gobject.idle_add(self.connection_lost)
             return False
 
@@ -457,6 +470,17 @@ class DotUpdater(threading.Thread):
             self.task_list = []
 
         self.updater.set_update(True)
+        
+        self.ctimes = []
+        state_summary = {}
+        state_summary.update(self.state_summary)
+        state_summary.update(self.fam_state_summary)
+
+        for id_ in state_summary:
+            name, ctime = id_.split( TaskID.DELIM )
+            if ctime not in self.ctimes:
+                self.ctimes.append(ctime)
+        self.ctimes.sort()
 
         if self.should_group_families:
             for key, val in self.ancestors_pruned.items():
@@ -465,7 +489,10 @@ class DotUpdater(threading.Thread):
                 # highest level family name (or plain task) above root
                 name = val[-2]
                 if name not in self.task_list:
-                    self.task_list.append( name )
+                    for ctime in self.ctimes:
+                        if name + TaskID.DELIM + ctime in state_summary:
+                            self.task_list.append( name )
+                            break
 
         self.task_list.sort()
         if self.filter:
@@ -504,10 +531,16 @@ class DotUpdater(threading.Thread):
         return led_ctime
 
     def set_led_headings( self ):
-        self.led_headings = ['Tag' ] + self.task_list
+        if self.should_transpose_view:
+            new_headings = [ 'Name' ] + self.ctimes
+        else:
+            new_headings = ['Tag' ] + self.task_list
+        if new_headings == self.led_headings:
+            return False
+        self.led_headings = new_headings
         tvcs = self.led_treeview.get_columns()
         labels = []
-        for n in range( 1,1+len( self.task_list) ):
+        for n in range( 1, len(self.led_headings) ):
             text = self.led_headings[n]
             tip = self.led_headings[n]
             if self.should_hide_headings:
@@ -532,42 +565,89 @@ class DotUpdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)) + [str])
-        self.led_liststore = gtk.ListStore( *types )
+    
+        # this is how to set background color of the entire treeview to black:
+        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
+
+        if self.should_transpose_view:
+            types = [str] + [gtk.gdk.Pixbuf] * len( self.ctimes )
+        else:
+            types = [gtk.gdk.Pixbuf] * (10 + len( self.task_list)) + [str]
+        new_led_liststore = gtk.ListStore( *types )
+        old_types = []
+        for i in range(self.led_liststore.get_n_columns()):
+            old_types.append(self.led_liststore.get_column_type(i))
+        new_types = []
+        for i in range(new_led_liststore.get_n_columns()):
+            new_types.append(new_led_liststore.get_column_type(i))
+        treeview_has_content = bool(len(self.led_treeview.get_columns()))
+        
+        if old_types == new_types and treeview_has_content:
+            self.set_led_headings()
+            self.led_liststore.clear()
+            self.is_transposed = self.should_transpose_view
+            return False
+
+        # hardwired 10px lamp image width!
+        lamp_width = 10
+
+        self.led_liststore = new_led_liststore
+
+        if (self.is_transposed == self.should_transpose_view and
+            treeview_has_content):
+            tvcs_for_removal = []
+            for i in range(len(new_types) - 1, len(old_types) - 1):
+                if self.should_transpose_view:
+                    col_index = i
+                else:
+                    col_index = i - 9
+  
+                tvc = self.led_treeview.get_column(col_index)
+                if tvc is not None:
+                    tvcs_for_removal.append(tvc)
+            for tvc in tvcs_for_removal:
+                self.led_treeview.remove_column(tvc)
+            self.led_treeview.set_model(self.led_liststore)
+            for n in range(len(old_types) - 1, len(new_types) - 1):
+                if new_types[n] == gobject.TYPE_STRING:
+                    continue
+                cr = gtk.CellRendererPixbuf()
+                #cr.set_property( 'cell_background', 'black' )
+                cr.set_property( 'xalign', 0 )
+                tvc = gtk.TreeViewColumn( ""  )
+                tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
+                tvc.pack_end( cr, True )
+                tvc.set_attributes( cr, pixbuf=n )
+                self.led_treeview.append_column( tvc )
+            self.set_led_headings()
+            return False
 
         tvcs = self.led_treeview.get_columns()
         for tvc in tvcs:
             self.led_treeview.remove_column(tvc)
 
         self.led_treeview.set_model( self.led_liststore )
-        selection = self.led_treeview.get_selection()
-        if selection is not None:
-            # Occasionally, selection can be None (perhaps on closing).
-            selection.set_mode( gtk.SELECTION_NONE )
 
-        if hasattr(self.led_treeview, "set_has_tooltip"):
-            self.led_treeview.set_has_tooltip(True)
-            try:
-                self.led_treeview.connect('query-tooltip',
-                                          self.on_query_tooltip)
-            except TypeError:
-                # Lower PyGTK version.
-                pass
-        # this is how to set background color of the entire treeview to black:
-        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
-
-        tvc = gtk.TreeViewColumn( 'Task Tag' )
-        for i in range(10):
-            cr = gtk.CellRendererPixbuf()
-            # cr.set_property( 'cell-background', 'black' )
+        if self.should_transpose_view:
+            tvc = gtk.TreeViewColumn( 'Name' )
+            cr = gtk.CellRendererText()
             tvc.pack_start( cr, False )
-            tvc.set_attributes( cr, pixbuf=i )
+            tvc.set_attributes( cr, text=0 )
+        else:
+            tvc = gtk.TreeViewColumn( 'Task Tag' )
+            for i in range(10):
+                cr = gtk.CellRendererPixbuf()
+                # cr.set_property( 'cell-background', 'black' )
+                tvc.pack_start( cr, False )
+                tvc.set_attributes( cr, pixbuf=i )
+        
         self.led_treeview.append_column( tvc )
 
-        # hardwired 10px lamp image width!
-        lamp_width = 10
-
-        for n in range( 10, 10+len( self.task_list )):
+        if self.should_transpose_view:
+            data_range = range(1, len( self.ctimes ) + 1)
+        else:
+            data_range = range(10, len( self.task_list ) + 10)
+        for n in data_range:
             cr = gtk.CellRendererPixbuf()
             #cr.set_property( 'cell_background', 'black' )
             cr.set_property( 'xalign', 0 )
@@ -576,8 +656,8 @@ class DotUpdater(threading.Thread):
             tvc.pack_end( cr, True )
             tvc.set_attributes( cr, pixbuf=n )
             self.led_treeview.append_column( tvc )
-
         self.set_led_headings()
+        self.is_transposed = self.should_transpose_view
 
     def on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
         """Handle a tooltip creation request."""
@@ -588,12 +668,31 @@ class DotUpdater(threading.Thread):
         x, y = self.led_treeview.convert_widget_to_bin_window_coords(x, y)
         path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
         col_index = self.led_treeview.get_columns().index(column)
-        ctime = self.ctimes[path[0]]
-        if col_index == 0:
-            task_id = ctime
+        if self.is_transposed:
+            iter_ = self.led_treeview.get_model().get_iter(path)
+            name = self.led_treeview.get_model().get_value(iter_, 0)
+            try:
+                ctime = self.led_headings[col_index]
+            except IndexError:
+                # This can occur for a tooltip while switching from transposed.
+                return False
+            if col_index == 0:
+                task_id = name
+            else:
+                task_id = name + TaskID.DELIM + ctime
         else:
-            name = self.led_headings[col_index]
-            task_id = name + TaskID.DELIM + ctime
+            try:
+                ctime = self.ctimes[path[0]]
+            except IndexError:
+                return False
+            if col_index == 0:
+                task_id = ctime
+            else:
+                try:
+                    name = self.led_headings[col_index]
+                except IndexError:
+                    return False
+                task_id = name + TaskID.DELIM + ctime
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
@@ -614,60 +713,66 @@ class DotUpdater(threading.Thread):
         state_summary = {}
         state_summary.update( self.state_summary )
         state_summary.update( self.fam_state_summary )
-        for id in state_summary:
-            name, ctime = id.split( TaskID.DELIM )
-            if ctime not in new_data:
-                new_data[ ctime ] = {}
-            state = state_summary[ id ].get( 'state' )
-            message = state_summary[ id ].get( 'latest_message' )
-            tsub = state_summary[ id ].get( 'submitted_time' )
-            tstt = state_summary[ id ].get( 'started_time' )
-            meant = state_summary[ id ].get( 'mean total elapsed time' )
-            tetc = state_summary[ id ].get( 'Tetc' )
-            priority = state_summary[ id ].get( 'latest_message_priority' )
-            new_data[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc ]
-
         self.ledview_widgets()
 
-        tasks = {}
-        for id in state_summary:
-            name, ctime = id.split( TaskID.DELIM )
-            if ctime not in tasks:
-                tasks[ ctime ] = [ name ]
-            else:
-                tasks[ ctime ].append( name )
+        tasks_by_ctime = {}
+        tasks_by_name = {}
+        for id_ in state_summary:
+            name, ctime = id_.split( TaskID.DELIM )
+            tasks_by_ctime.setdefault( ctime, [] )
+            tasks_by_ctime[ctime].append(name)
+            tasks_by_name.setdefault( name, [] )
+            tasks_by_name[name].append(ctime)
 
         # flat (a liststore would do)
-        ctimes = tasks.keys()
-        ctimes.sort()
-
+        names = tasks_by_name.keys()
+        names.sort()
         tvcs = self.led_treeview.get_columns()
-        self.ctimes = []
-        for ctime in ctimes:
-            self.ctimes.append(ctime)
-            tasks_at_ctime = tasks[ ctime ]
-            state_list = [ ]
-            for name in self.task_list:
-                if name in tasks_at_ctime:
-                    state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
-                    state_list.append( self.dots[state] )
-                else:
-                    state_list.append( self.dots['empty'] )
-            try:
-                self.led_liststore.append( self.digitize( ctime ) +
-                                           state_list + [ctime])
-            except ValueError:
-                # A very laggy store can change the columns and raise this.
-                return False
 
+        if self.is_transposed:
+            for name in self.task_list:
+                ctimes_for_tasks = tasks_by_name.get( name, [] )
+                if not ctimes_for_tasks:
+                    continue
+                state_list = [ ]
+                for ctime in self.ctimes:
+                    if ctime in ctimes_for_tasks:
+                        state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
+                        state_list.append( self.dots[state] )
+                    else:
+                        state_list.append( self.dots['empty'] )
+                try:
+                    self.led_liststore.append( [name] + state_list )
+                except ValueError:
+                    # A very laggy store can change the columns and raise this.
+                    return False
+        else:
+            for ctime in self.ctimes:
+                tasks_at_ctime = tasks_by_ctime[ ctime ]
+                state_list = [ ]
+                for name in self.task_list:
+                    if name in tasks_at_ctime:
+                        state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
+                        state_list.append( self.dots[state] )
+                    else:
+                        state_list.append( self.dots['empty'] )
+                try:
+                    self.led_liststore.append( self.digitize( ctime ) +
+                                               state_list + [ctime])
+                except ValueError:
+                    # A very laggy store can change the columns and raise this.
+                    return False
+
+        self.led_treeview.columns_autosize()
         return False
 
     def run(self):
         glbl = None
         states = {}
         while not self.quit:
-            if self.update():
+            if self.update() or self.action_required:
                 gobject.idle_add( self.update_gui )
+                self.action_required = False
             sleep(0.2)
         else:
             pass
