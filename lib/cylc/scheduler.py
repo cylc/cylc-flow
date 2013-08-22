@@ -1034,8 +1034,8 @@ class scheduler(object):
 
                 self.negotiate()
 
-                submitted = self.pool.process()
-                self.process_resolved( submitted )
+                ready = self.pool.process()
+                self.process_resolved( ready )
 
                 self.spawn()
 
