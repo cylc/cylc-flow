@@ -1108,6 +1108,9 @@ class scheduler(object):
             # process queued commands
             self.process_command_queue()
 
+            for itask in self.pool.get_tasks():
+                self.check_and_adjust_task_proxy( itask )
+
             #print '<Pyro'
             if flags.iflag or self.do_update_state_summary:
                 flags.iflag = False
@@ -1525,18 +1528,17 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_new_task_proxy( self, new_task, prev_instance=None ):
-        """Adjust new task proxy and return True, or False to reject it."""
+    def check_and_adjust_task_proxy( self, new_task, prev_instance=None ):
 
         # check for general suite hold
         if self.hold_suite_now:
             new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
             new_task.reset_state_held()
-            return True
+            return
 
         # further checks only apply to cycling tasks
         if not new_task.is_cycling():
-            return True
+            return
 
         # tasks with configured stop cycles
         if prev_instance:
@@ -1544,8 +1546,9 @@ class scheduler(object):
                 # this task has a stop cycle
                 if int( new_task.c_time ) > int( prev_instance.stop_c_time ):
                     # stop cycle reached
-                    self.log.info( "Rejecting new task beyond its stop cycle: " + new_task.id )
-                    return False
+                    new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + prev_instance.stop_c_time )
+                    new_task.reset_state_held()
+                    return
                 else:
                     # stop cycle not reached, perpetuate it
                     new_task.stop_c_time = prev_instance.stop_c_time
@@ -1554,11 +1557,11 @@ class scheduler(object):
         if self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
             new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
             new_task.reset_state_held()
-            return True
+            return
         if self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
             new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
             new_task.reset_state_held()
-            return True
+            return
 
         # tasks beyond the runahead limit
         if self.runahead_limit:
@@ -1568,16 +1571,14 @@ class scheduler(object):
             if int( foo.get() ) >= int( ouct ):
                 new_task.log( "NORMAL", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()
-                return True
+                return
 
         # hold tasks with future triggers beyond the final cycle time
         if self.task_has_future_trigger_overrun( new_task ):
             new_task.log( "NORMAL", "HOLDING (future trigger beyond stop cycle)" )
             self.held_future_tasks.append( new_task.id )
             new_task.reset_state_held()
-            return True
-
-        return True
+            return
 
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
@@ -1595,10 +1596,8 @@ class scheduler(object):
     def add_new_task_proxy( self, new_task, prev_instance=None ):
         """Add a given new task proxy to the pool, or destroy it."""
         added = False
-        if self.check_new_task_proxy( new_task, prev_instance ):
-            if self.pool.add( new_task ):
-                added = True
-        if not added:
+        self.check_and_adjust_task_proxy( new_task, prev_instance )
+        if not self.pool.add( new_task ):
             new_task.prepare_for_death()
             del new_task
         return added
