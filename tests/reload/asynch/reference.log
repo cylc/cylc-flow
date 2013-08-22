@@ -1,0 +1,166 @@
+2013/08/20 10:51:16 INFO - Thread-2 start (Event Handler Submission)
+2013/08/20 10:51:16 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/08/20 10:51:16 INFO - port:7766
+2013/08/20 10:51:16 CRITICAL - Suite starting at 2013-08-20 10:51:16.746157
+2013/08/20 10:51:16 INFO - Log event clock: real time
+2013/08/20 10:51:16 INFO - Run mode: live
+2013/08/20 10:51:16 INFO - Start tag: 2010010100
+2013/08/20 10:51:16 INFO - Stop tag: 2010010200
+2013/08/20 10:51:16 INFO - Thread-4 start (Job Submission)
+2013/08/20 10:51:16 INFO - Thread-5 start (Request Handling)
+2013/08/20 10:51:16 INFO - Cold Start 2010010100
+2013/08/20 10:51:16 INFO - [asynch.1] -(setting:submitting)
+2013/08/20 10:51:16 INFO - [asynch.1] -triggered off []
+2013/08/20 10:51:17 INFO - [asynch.1] -(current:submitting)> asynch.1 submitting now
+2013/08/20 10:51:18 INFO - [asynch.1] -(current:submitting)> asynch.1 submission succeeded
+2013/08/20 10:51:18 INFO - [asynch.1] -(setting:submitted)
+2013/08/20 10:51:18 INFO - [asynch.1] -(current:submitted)> asynch.1 submit_method_id=4821
+2013/08/20 10:51:19 INFO - [asynch.1] -(current:submitted)> asynch.1 started at 2013-08-20T10:51:18
+2013/08/20 10:51:19 INFO - [asynch.1] -(setting:running)
+2013/08/20 10:51:19 INFO - [asynch.1] -(current:running)> asynch.1 succeeded at 2013-08-20T10:51:19
+2013/08/20 10:51:19 INFO - [asynch.1] -(setting:succeeded)
+2013/08/20 10:51:19 INFO - [a.2010010100] -(setting:submitting)
+2013/08/20 10:51:19 INFO - [a.2010010100] -triggered off ['asynch.1']
+2013/08/20 10:51:20 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
+2013/08/20 10:51:20 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
+2013/08/20 10:51:20 INFO - [a.2010010100] -(setting:submitted)
+2013/08/20 10:51:20 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=4960
+2013/08/20 10:51:21 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-08-20T10:51:20
+2013/08/20 10:51:21 INFO - [a.2010010100] -(setting:running)
+2013/08/20 10:51:21 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-08-20T10:51:21
+2013/08/20 10:51:21 INFO - [a.2010010100] -(setting:succeeded)
+2013/08/20 10:51:21 INFO - [b.2010010100] -(setting:submitting)
+2013/08/20 10:51:21 INFO - [b.2010010100] -triggered off ['a.2010010100']
+2013/08/20 10:51:22 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submitting now
+2013/08/20 10:51:22 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submission succeeded
+2013/08/20 10:51:22 INFO - [b.2010010100] -(setting:submitted)
+2013/08/20 10:51:22 INFO - [b.2010010100] -(current:submitted)> b.2010010100 submit_method_id=5105
+2013/08/20 10:51:23 INFO - [b.2010010100] -(current:submitted)> b.2010010100 started at 2013-08-20T10:51:23
+2013/08/20 10:51:23 INFO - [b.2010010100] -(setting:running)
+2013/08/20 10:51:24 INFO - Command succeeded: reload suite()
+2013/08/20 10:51:24 WARNING - RELOADING TASK DEFINITION FOR a.2010010100
+2013/08/20 10:51:24 WARNING - RELOADING TASK DEFINITION FOR asynch.1
+2013/08/20 10:51:24 WARNING - RELOADING TASK DEFINITION FOR c.2010010100
+2013/08/20 10:51:24 WARNING - RELOADING TASK DEFINITION FOR a.2010010106
+2013/08/20 10:51:24 WARNING - RELOADING TASK DEFINITION FOR b.2010010106
+2013/08/20 10:51:29 INFO - [b.2010010100] -(current:running)> b.2010010100 succeeded at 2013-08-20T10:51:29
+2013/08/20 10:51:29 INFO - [b.2010010100] -(setting:succeeded)
+2013/08/20 10:51:29 WARNING - RELOADING TASK DEFINITION FOR b.2010010100
+2013/08/20 10:51:29 INFO - [c.2010010100] -(setting:submitting)
+2013/08/20 10:51:29 INFO - [c.2010010100] -triggered off ['b.2010010100']
+2013/08/20 10:51:30 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submitting now
+2013/08/20 10:51:30 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submission succeeded
+2013/08/20 10:51:30 INFO - [c.2010010100] -(setting:submitted)
+2013/08/20 10:51:30 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=5245
+2013/08/20 10:51:31 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2013-08-20T10:51:31
+2013/08/20 10:51:31 INFO - [c.2010010100] -(setting:running)
+2013/08/20 10:51:32 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-08-20T10:51:31
+2013/08/20 10:51:32 INFO - [c.2010010100] -(setting:succeeded)
+2013/08/20 10:51:32 INFO - [a.2010010106] -(setting:submitting)
+2013/08/20 10:51:32 INFO - [a.2010010106] -triggered off ['c.2010010100']
+2013/08/20 10:51:34 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submitting now
+2013/08/20 10:51:34 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submission succeeded
+2013/08/20 10:51:34 INFO - [a.2010010106] -(setting:submitted)
+2013/08/20 10:51:34 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=5351
+2013/08/20 10:51:35 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2013-08-20T10:51:34
+2013/08/20 10:51:35 INFO - [a.2010010106] -(setting:running)
+2013/08/20 10:51:35 INFO - [a.2010010200] -HOLDING (beyond runahead limit)
+2013/08/20 10:51:35 INFO - [a.2010010200] -(setting:runahead)
+2013/08/20 10:51:36 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2013-08-20T10:51:35
+2013/08/20 10:51:36 INFO - [a.2010010106] -(setting:succeeded)
+2013/08/20 10:51:36 INFO - [b.2010010106] -(setting:submitting)
+2013/08/20 10:51:36 INFO - [b.2010010106] -triggered off ['a.2010010106']
+2013/08/20 10:51:37 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submitting now
+2013/08/20 10:51:37 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submission succeeded
+2013/08/20 10:51:37 INFO - [b.2010010106] -(setting:submitted)
+2013/08/20 10:51:37 INFO - [b.2010010106] -(current:submitted)> b.2010010106 submit_method_id=5457
+2013/08/20 10:51:38 INFO - [b.2010010106] -(current:submitted)> b.2010010106 started at 2013-08-20T10:51:37
+2013/08/20 10:51:38 INFO - [b.2010010106] -(setting:running)
+2013/08/20 10:51:38 INFO - [b.2010010200] -HOLDING (beyond runahead limit)
+2013/08/20 10:51:38 INFO - [b.2010010200] -(setting:runahead)
+2013/08/20 10:51:39 INFO - Command succeeded: reload suite()
+2013/08/20 10:51:39 WARNING - RELOADING TASK DEFINITION FOR asynch.1
+2013/08/20 10:51:39 WARNING - RELOADING TASK DEFINITION FOR c.2010010100
+2013/08/20 10:51:39 WARNING - RELOADING TASK DEFINITION FOR a.2010010106
+2013/08/20 10:51:39 WARNING - RELOADING TASK DEFINITION FOR c.2010010106
+2013/08/20 10:51:39 WARNING - RELOADING TASK DEFINITION FOR a.2010010200
+2013/08/20 10:51:39 INFO - [a.2010010200] -HOLDING (beyond runahead limit)
+2013/08/20 10:51:39 WARNING - RELOADING TASK DEFINITION FOR b.2010010200
+2013/08/20 10:51:39 INFO - [b.2010010200] -HOLDING (beyond runahead limit)
+2013/08/20 10:51:44 INFO - [b.2010010106] -(current:running)> b.2010010106 succeeded at 2013-08-20T10:51:44
+2013/08/20 10:51:44 INFO - [b.2010010106] -(setting:succeeded)
+2013/08/20 10:51:44 WARNING - RELOADING TASK DEFINITION FOR b.2010010106
+2013/08/20 10:51:44 INFO - [c.2010010106] -(setting:submitting)
+2013/08/20 10:51:44 INFO - [c.2010010106] -triggered off ['b.2010010106']
+2013/08/20 10:51:45 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submitting now
+2013/08/20 10:51:46 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submission succeeded
+2013/08/20 10:51:46 INFO - [c.2010010106] -(setting:submitted)
+2013/08/20 10:51:46 INFO - [c.2010010106] -(current:submitted)> c.2010010106 submit_method_id=5573
+2013/08/20 10:51:46 INFO - [c.2010010106] -(current:submitted)> c.2010010106 started at 2013-08-20T10:51:45
+2013/08/20 10:51:46 INFO - [c.2010010106] -(setting:running)
+2013/08/20 10:51:46 INFO - [c.2010010118] -HOLDING (beyond runahead limit)
+2013/08/20 10:51:46 INFO - [c.2010010118] -(setting:runahead)
+2013/08/20 10:51:47 INFO - [c.2010010106] -(current:running)> c.2010010106 succeeded at 2013-08-20T10:51:46
+2013/08/20 10:51:47 INFO - [c.2010010106] -(setting:succeeded)
+2013/08/20 10:51:47 INFO - [a.2010010200] -(setting:waiting)
+2013/08/20 10:51:47 INFO - [b.2010010200] -(setting:waiting)
+2013/08/20 10:51:47 INFO - [c.2010010118] -(setting:waiting)
+2013/08/20 10:51:47 INFO - [c.2010010118] -(setting:submitting)
+2013/08/20 10:51:47 INFO - [c.2010010118] -triggered off []
+2013/08/20 10:51:48 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submitting now
+2013/08/20 10:51:48 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submission succeeded
+2013/08/20 10:51:48 INFO - [c.2010010118] -(setting:submitted)
+2013/08/20 10:51:48 INFO - [c.2010010118] -(current:submitted)> c.2010010118 submit_method_id=5679
+2013/08/20 10:51:49 INFO - [c.2010010118] -(current:submitted)> c.2010010118 started at 2013-08-20T10:51:48
+2013/08/20 10:51:49 INFO - [c.2010010118] -(setting:running)
+2013/08/20 10:51:49 INFO - [c.2010010118] -(current:running)> c.2010010118 succeeded at 2013-08-20T10:51:48
+2013/08/20 10:51:49 INFO - [c.2010010118] -(setting:succeeded)
+2013/08/20 10:51:49 INFO - [a.2010010200] -(setting:submitting)
+2013/08/20 10:51:49 INFO - [a.2010010200] -triggered off ['c.2010010118']
+2013/08/20 10:51:50 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submitting now
+2013/08/20 10:51:50 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submission succeeded
+2013/08/20 10:51:50 INFO - [a.2010010200] -(setting:submitted)
+2013/08/20 10:51:50 INFO - [a.2010010200] -(current:submitted)> a.2010010200 submit_method_id=5785
+2013/08/20 10:51:50 INFO - [a.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/20 10:51:50 INFO - [a.2010010206] -(setting:held)
+2013/08/20 10:51:51 INFO - [a.2010010200] -(current:submitted)> a.2010010200 started at 2013-08-20T10:51:50
+2013/08/20 10:51:51 INFO - [a.2010010200] -(setting:running)
+2013/08/20 10:51:51 INFO - [a.2010010200] -(current:running)> a.2010010200 succeeded at 2013-08-20T10:51:51
+2013/08/20 10:51:51 INFO - [a.2010010200] -(setting:succeeded)
+2013/08/20 10:51:51 INFO - [b.2010010200] -(setting:submitting)
+2013/08/20 10:51:51 INFO - [b.2010010200] -triggered off ['a.2010010200']
+2013/08/20 10:51:52 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submitting now
+2013/08/20 10:51:52 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submission succeeded
+2013/08/20 10:51:52 INFO - [b.2010010200] -(setting:submitted)
+2013/08/20 10:51:52 INFO - [b.2010010200] -(current:submitted)> b.2010010200 submit_method_id=5891
+2013/08/20 10:51:53 INFO - [b.2010010200] -(current:submitted)> b.2010010200 started at 2013-08-20T10:51:52
+2013/08/20 10:51:53 INFO - [b.2010010200] -(setting:running)
+2013/08/20 10:51:53 INFO - [b.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/20 10:51:53 INFO - [b.2010010206] -(setting:held)
+2013/08/20 10:51:54 INFO - Command succeeded: reload suite()
+2013/08/20 10:51:54 WARNING - RELOADING TASK DEFINITION FOR asynch.1
+2013/08/20 10:51:54 WARNING - RELOADING TASK DEFINITION FOR a.2010010200
+2013/08/20 10:51:54 WARNING - RELOADING TASK DEFINITION FOR c.2010010118
+2013/08/20 10:51:54 WARNING - RELOADING TASK DEFINITION FOR c.2010010200
+2013/08/20 10:51:54 WARNING - RELOADING TASK DEFINITION FOR a.2010010206
+2013/08/20 10:51:54 INFO - [a.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/20 10:51:54 WARNING - RELOADING TASK DEFINITION FOR b.2010010206
+2013/08/20 10:51:54 INFO - [b.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/20 10:51:59 INFO - [b.2010010200] -(current:running)> b.2010010200 succeeded at 2013-08-20T10:51:59
+2013/08/20 10:51:59 INFO - [b.2010010200] -(setting:succeeded)
+2013/08/20 10:51:59 WARNING - RELOADING TASK DEFINITION FOR b.2010010200
+2013/08/20 10:51:59 INFO - [c.2010010200] -(setting:submitting)
+2013/08/20 10:51:59 INFO - [c.2010010200] -triggered off ['b.2010010200']
+2013/08/20 10:52:00 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submitting now
+2013/08/20 10:52:00 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submission succeeded
+2013/08/20 10:52:00 INFO - [c.2010010200] -(setting:submitted)
+2013/08/20 10:52:00 INFO - [c.2010010200] -(current:submitted)> c.2010010200 submit_method_id=6007
+2013/08/20 10:52:01 INFO - [c.2010010200] -(current:submitted)> c.2010010200 started at 2013-08-20T10:52:00
+2013/08/20 10:52:01 INFO - [c.2010010200] -(setting:running)
+2013/08/20 10:52:01 INFO - [c.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/20 10:52:01 INFO - [c.2010010206] -(setting:held)
+2013/08/20 10:52:02 INFO - [c.2010010200] -(current:running)> c.2010010200 succeeded at 2013-08-20T10:52:01
+2013/08/20 10:52:02 INFO - [c.2010010200] -(setting:succeeded)
+2013/08/20 10:52:02 INFO - All normal cycling tasks have spawned past the final cycle 2010010200
+2013/08/20 10:52:02 INFO - All non-cycling tasks have succeeded
+2013/08/20 10:52:02 CRITICAL - Suite shutting down at 2013-08-20 10:52:02.506775
