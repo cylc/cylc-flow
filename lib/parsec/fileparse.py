@@ -386,7 +386,7 @@ def parse( fpath, verbose=False,
                             if len(vals) == 1:
                                 # not a list
                                 print >> sys.stderr, line
-                                raise ParseError( 'Invalid line (1) at ' + str(index+1) )
+                                raise ParseError( 'Invalid line at ' + str(index+1) )
                             val = ''
                             for v in vals:
                                 m = re.match(reg, v)
@@ -401,11 +401,11 @@ def parse( fpath, verbose=False,
                                 #print 'UNQUOTED    ', key, ' = ', val
                             else:
                                 print >> sys.stderr, line
-                                raise ParseError( 'Invalid line (1) at ' + str(index+1) )
+                                raise ParseError( 'Invalid line at ' + str(index+1) )
                 addict( config, key, val, parents, verbose )
             else:
                 # no match
                 print >> sys.stderr, line
-                raise ParseError( 'Invalid line (2) at line ' + str(index+1) )
+                raise ParseError( 'Invalid line at ' + str(index+1) )
     return config
 
