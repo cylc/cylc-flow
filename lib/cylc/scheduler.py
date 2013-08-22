@@ -1108,8 +1108,11 @@ class scheduler(object):
             # process queued commands
             self.process_command_queue()
 
+            # Hold waiting tasks if beyond stop cycle etc:
+            # (a) newly spawned beyond existing stop cycle
+            # (b) new stop cycle set by command
             for itask in self.pool.get_tasks():
-                self.check_and_adjust_task_proxy( itask )
+                self.check_hold_waiting_tasks( itask )
 
             #print '<Pyro'
             if flags.iflag or self.do_update_state_summary:
@@ -1528,7 +1531,9 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_and_adjust_task_proxy( self, new_task ):
+    def check_hold_waiting_tasks( self, new_task ):
+        if not new_task.state.is_currently('waiting'):
+            return
 
         # check for general suite hold
         if self.hold_suite_now:
@@ -1591,7 +1596,6 @@ class scheduler(object):
     def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
         added = False
-        self.check_and_adjust_task_proxy( new_task )
         if not self.pool.add( new_task ):
             new_task.prepare_for_death()
             del new_task
