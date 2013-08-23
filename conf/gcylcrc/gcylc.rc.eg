@@ -8,7 +8,7 @@
 #     colors (see the "PinkRun" example below).
 
 initial views = text, dot     # set your default views
-grouped views = text, dot     # set your initially grouped views
+ungrouped views = graph       # set your initially ungrouped views
 use theme = PinkRun           # set your default theme
 
 [themes]

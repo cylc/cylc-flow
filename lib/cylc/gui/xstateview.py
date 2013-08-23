@@ -86,11 +86,12 @@ class GraphUpdater(threading.Thread):
         self.group = []
         self.ungroup = []
         self.ungroup_recursive = False
-        self.ungroup_all = False
-        if "graph" in self.cfg.grouped_views:
-            self.group_all = True
-        else:
+        if "graph" in self.cfg.ungrouped_views:
+            self.ungroup_all = True
             self.group_all = False
+        else:
+            self.ungroup_all = False
+            self.group_all = True
 
         self.graph_frame_count = 0
 
@@ -296,12 +297,6 @@ class GraphUpdater(threading.Thread):
             n.attr['color'] = '#888888'
             n.attr['fillcolor'] = 'white'
             n.attr['fontcolor'] = '#888888'
-
-        self.group = []
-        self.ungroup = []
-        self.group_all = False
-        self.ungroup_all = False
-        self.ungroup_recursive = False
 
         self.rem_nodes = []
 

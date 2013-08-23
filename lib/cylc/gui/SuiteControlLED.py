@@ -130,10 +130,10 @@ LED suite control interface.
         if group_on == self.t.should_group_families:
             return False
         if group_on:
-            if "dot" not in self.cfg.grouped_views:
-                self.cfg.grouped_views.append("dot")
-        elif "dot" in self.cfg.grouped_views:
-            self.cfg.grouped_views.remove("dot")
+            if "dot" in self.cfg.ungrouped_views:
+                self.cfg.ungrouped_views.remove("dot")
+        elif "dot" not in self.cfg.ungrouped_views:
+            self.cfg.ungrouped_views.append("dot")
         self.t.should_group_families = group_on
         if isinstance( toggle_item, gtk.ToggleToolButton ):
             if group_on:
