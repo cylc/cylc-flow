@@ -195,6 +195,8 @@ Dependency graph suite control interface.
 
     def grouping( self, w, name, group, rec=False ):
         self.t.ungroup_recursive = rec
+        self.t.group_all = False
+        self.t.ungroup_all = False
         if group:
             self.t.group.append(name)
         else:
@@ -331,12 +333,14 @@ Dependency graph suite control interface.
     def group_all( self, w, group ):
         if group:
             self.t.group_all = True
-            if "graph" not in self.cfg.grouped_views:
-                self.cfg.grouped_views.append("graph")
+            self.t.ungroup_all = False
+            if "graph" in self.cfg.ungrouped_views:
+                self.cfg.ungrouped_views.remove("graph")
         else:
             self.t.ungroup_all = True
-            if "graph" in self.cfg.grouped_views:
-                self.cfg.grouped_views.remove("graph")
+            self.t.group_all = False
+            if "graph" not in self.cfg.ungrouped_views:
+                self.cfg.ungrouped_views.append("graph")
         self.t.action_required = True
         self.t.best_fit = True
 

@@ -91,7 +91,7 @@ class TreeUpdater(threading.Thread):
         self.autoexpand_states = [ 'queued', 'submitting', 'submitted', 'running', 'failed' ]
         self._last_autoexpand_me = []
         self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
-        self.should_group_families = ("text" in self.cfg.grouped_views)
+        self.should_group_families = ("text" not in self.cfg.ungrouped_views)
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
@@ -388,7 +388,7 @@ class DotUpdater(threading.Thread):
         self.quit = False
         self.autoexpand = True
         self.should_hide_headings = False
-        self.should_group_families = ("dot" in cfg.grouped_views)
+        self.should_group_families = ("dot" not in cfg.ungrouped_views)
 
         self.cfg = cfg
         self.updater = updater
