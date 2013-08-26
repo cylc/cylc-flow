@@ -22,7 +22,9 @@ ImportError due to pygraphviz/graphviz not being installed."""
 import re
 import pygraphviz
 from TaskID import TaskID, AsyncTag
-from graphnode import OFFSET_RE
+
+OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
+
 # TODO: Do we still need autoURL below?
 
 ddmmhh = TaskID.DELIM_RE
