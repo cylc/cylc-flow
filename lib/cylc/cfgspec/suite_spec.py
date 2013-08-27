@@ -213,9 +213,9 @@ SPEC = {
         },
     }
 
-def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False, verbose=False ):
+def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False, verbose=False, is_reload=False ):
     global cfg
-    if not cfg:
+    if is_reload or not cfg:
         cfg = parse( fpath, verbose, template_vars, template_vars_file )
 
         u = upgrader( cfg, SPEC, 'suite definition', verbose )

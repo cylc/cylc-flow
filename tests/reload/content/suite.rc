@@ -1,0 +1,27 @@
+
+title = content reload test
+description = """two tasks: the second will fail, causing the test to
+fail, unless the first reloads the suite definition after modifying it."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = "reloader => foo"
+
+[runtime]
+    [[reloader]]
+        command scripting = """
+# change the value of $FALSE to "true" in foo's environment:
+perl -pi -e 's/(FALSE = )false( # marker)/\1true\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+"""
+    [[foo]]
+        command scripting = "$FALSE"
+        [[[environment]]]
+            FALSE = false # marker
+    

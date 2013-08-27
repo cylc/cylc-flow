@@ -805,7 +805,8 @@ class scheduler(object):
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, override=override, is_restart=self.is_restart )
+                verbose=self.verbose, override=override, is_restart=self.is_restart,
+                is_reload=reconfigure)
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
