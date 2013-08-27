@@ -1348,8 +1348,12 @@ class scheduler(object):
         self.stop_clock_time = dtime
 
     def set_stop_task( self, taskid ):
-        self.log.warning( "Setting stop task: " + taskid )
-        self.stop_task = taskid
+        name, tag = taskid.split(TaskID.DELIM)
+        if name in self.config.get_task_name_list():
+            self.log.warning( "Setting stop task: " + taskid )
+            self.stop_task = taskid
+        else:
+            self.log.warning( "Requested stop task name does not exist: " + name )
 
     def hold_suite( self, ctime = None ):
         if ctime:
