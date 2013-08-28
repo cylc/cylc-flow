@@ -31,7 +31,7 @@ class ControlTree(object):
 Text Treeview suite control interface.
     """
     def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
-                 log_colors ):
+                 log_colors, insert_task_popup ):
 
         self.cfg = cfg
         self.updater = updater
@@ -39,6 +39,7 @@ Text Treeview suite control interface.
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
+        self.insert_task_popup = insert_task_popup
 
         self.gcapture_windows = []
 
