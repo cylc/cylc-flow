@@ -106,7 +106,7 @@ class config( object ):
                 # (not including the final tasks)
                 'descendants' : {},
                 # lists of all descendant namespaces from the first-parent hierarchy
-                # (first parents are collapsible in suite visualization)
+                # (first parents are used as visualization and triggering families)
                 'first-parent descendants' : {}
                 }
 
@@ -173,9 +173,11 @@ class config( object ):
                         raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
                 if name in self.runtime['descendants']:
                     # is a family
+                    if name not in self.runtime['first-parent descendants']:
+                        raise SuiteConfigError, "ERROR: non first-parent family name in special tasks: " + name
                     result.remove( item )
-                    for member in self.runtime['descendants'][name]:
-                        if member in self.runtime['descendants']:
+                    for member in self.runtime['first-parent descendants'][name]:
+                        if member in self.runtime['first-parent descendants']:
                             # is a sub-family
                             continue
                         result.append( member + extn )
@@ -195,7 +197,7 @@ class config( object ):
             self.closed_families = self.collapsed_families_rc
             fromrc = True
         for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants']:
+            if cfam not in self.runtime['first-parent descendants']:
                 self.closed_families.remove( cfam )
                 if fromrc and self.verbose:
                     print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
@@ -284,14 +286,15 @@ class config( object ):
             replace[ng] = []
             for mem in mems:
                 replace[ng] += [mem]
-                if mem in self.runtime['descendants']:
-                    replace[ng] += self.runtime['descendants'][mem]
+                if mem in self.runtime['first-parent descendants']:
+                    replace[ng] += self.runtime['first-parent descendants'][mem]
         for ng in replace:
             ngs[ng] = replace[ng]
 
         # Define family node groups automatically so that family and
         # member nodes can be styled together using the family name.
         # Users can override this for individual nodes or sub-groups.
+        # (not just first-parents in this case, for graph styling)
         for fam in self.runtime['descendants']:
             if fam not in ngs:
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
@@ -573,16 +576,18 @@ class config( object ):
             qmembers = []
             for qmember in queues[queue]['members']:
                 if qmember in self.runtime['descendants']:
+                    if qmember not in self.runtime['first-parent descendants']:
+                        raise SuiteConfigError, "ERROR: non first-parent family name in queue config: " + qmember
                     # qmember is a family so replace it with member tasks. Note that 
-                    # self.runtime['descendants'][fam] includes sub-families too.
-                    for fmem in self.runtime['descendants'][qmember]:
+                    # self.runtime['first-parent descendants'][fam] includes sub-families too.
+                    for fmem in self.runtime['first-parent descendants'][qmember]:
                         if qmember not in qmembers:
                             try:
                                 queues['default']['members'].remove( fmem )
                             except ValueError:
                                 # no need to check for naked dummy tasks here as
                                 # families are defined by runtime entries.
-                                if self.verbose and fmem not in self.runtime['descendants']:
+                                if self.verbose and fmem not in self.runtime['first-parent descendants']:
                                     # family members that are themselves families should be ignored as we only need tasks in the queues.
                                     print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + fmem + ' of family ' + qmember + ' (task not used in the graph)'
                             else:
@@ -939,12 +944,16 @@ class config( object ):
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.runtime['descendants']:
-            members = copy(self.runtime['descendants'][fam])
+            if fam not in line:
+                continue
+            if fam not in self.runtime['first-parent descendants']:
+                raise SuiteConfigError, "ERROR: non first-parent family name in graph: " + fam
+            members = copy(self.runtime['first-parent descendants'][fam])
             for member in copy(members):
                 # (another copy here: don't remove items from the iterating list) 
                 # remove family names from the member list, leave just tasks
                 # (allows using higher-level family names in the graph)
-                if member in self.runtime['descendants']:
+                if member in self.runtime['first-parent descendants']:
                     members.remove(member)
             # Note, in the regular expressions below, the word boundary
             # marker before the time offset pattern is required to close
@@ -954,9 +963,6 @@ class config( object ):
             # raw strings (r'\bfoo\b') are needed to protect special
             # backslashed re markers like \b from being interpreted as
             # normal escapeded characters.
-
-            if fam not in line:
-                continue
 
             # Replace family triggers with member triggers
             for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
@@ -1310,7 +1316,7 @@ class config( object ):
         elif len(ungroup_nodes) > 0:
             # Ungroup chosen family nodes
             for node in ungroup_nodes:
-                if node not in self.runtime['descendants']:
+                if node not in self.runtime['first-parent descendants']:
                     # not a family node
                     continue
                 if node in self.closed_families:
