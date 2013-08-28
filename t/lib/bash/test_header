@@ -40,12 +40,12 @@
 #         Run COMMAND with any following options/arguments and store stdout
 #         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
 #         This is expected to have a non-zero return code, which ok's the test.
-#     cmp_ok TEST_NAME FILE_TEST [FILE_CONTROL]
+#     cmp_ok FILE_TEST [FILE_CONTROL]
 #         Compare FILE_TEST with a file or stdin given by FILE_CONTROL
 #         (stdin if FILE_CONTROL is "-" or missing). If $TEST_DEBUG_CMP
 #         is set, show differences using xxdiff.
-#     grep_ok TEST_NAME GREP_BRE FILE
-#         Run "grep -q GREP_BRE FILE".
+#     grep_ok PATTERN FILE
+#         Run "grep -q PATTERN FILE".
 #     init_suite SUITE_NAME
 #         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
 #     purge_suite SUITE_NAME
@@ -105,7 +105,7 @@ function run_fail() {
 function cmp_ok() {
     local FILE_TEST=$1
     local FILE_CONTROL=${2:--}
-    local TEST_NAME=$(basename $FILE_TEST)
+    local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
     local CMP_COMMAND="cmp"
     if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
         CMP_COMMAND="xxdiff -D"
@@ -118,9 +118,9 @@ function cmp_ok() {
 }
 
 function grep_ok() {
-    local TEST_NAME=$1
-    local BRE=$2
-    local FILE=$3
+    local BRE=$1
+    local FILE=$2
+    local TEST_NAME=$(basename $FILE)-grep-ok
     if grep -q -e "$BRE" $FILE; then
         ok $TEST_NAME
         return
