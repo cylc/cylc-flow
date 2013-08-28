@@ -186,15 +186,19 @@ class config( object ):
             self.cfg['scheduling']['special tasks'][type] = result
 
         self.collapsed_families_rc = self.cfg['visualization']['collapsed families']
-        if len( collapsed ) > 0:
-            # this overrides the rc file item
+        if is_reload:
+            # on suite reload retain an existing state of collapse
+            # (used by the "cylc graph" viewer)
             self.closed_families = collapsed
+            fromrc = False
         else:
             self.closed_families = self.collapsed_families_rc
+            fromrc = True
         for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants'] and self.verbose:
-                print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
+            if cfam not in self.runtime['descendants']:
                 self.closed_families.remove( cfam )
+                if fromrc and self.verbose:
+                    print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
 
         # check for run mode override at suite level
         if self.cfg['cylc']['force run mode']:
