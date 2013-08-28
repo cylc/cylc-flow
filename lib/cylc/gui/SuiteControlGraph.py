@@ -172,7 +172,10 @@ Dependency graph suite control interface.
             img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
             insert_item.set_image(img)
             menu.append( insert_item )
-            insert_item.connect( 'button-press-event', self.insert_task_popup )
+            insert_item.connect( 'button-press-event',
+                                lambda *a: self.insert_task_popup(
+                                           is_fam=(name in self.t.descendants), 
+                                           name=name, tag=ctime ))
             menu.append( gtk.SeparatorMenuItem() )
 
         menu.append( timezoom_item_direct )

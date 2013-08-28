@@ -1982,7 +1982,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def insert_task_popup( self, *b ):
+    def insert_task_popup( self, *b, **kwargs ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
@@ -2003,12 +2003,18 @@ shown here in the state they were in at the time of triggering.''' )
         fam_cb = gtk.CheckButton( "Insert a family?" )
         vbox.pack_start( fam_cb, True )
 
+        if "is_fam" in kwargs:
+            fam_cb.set_active(kwargs['is_fam'])
+
         hbox = gtk.HBox()
         label = gtk.Label( 'MATCH' )
         hbox.pack_start( label, True )
         entry_match = gtk.Entry()
         hbox.pack_start (entry_match, True)
         vbox.pack_start(hbox)
+
+        if "name" in kwargs:
+            entry_match.set_text(kwargs['name'])
 
         hbox = gtk.HBox()
         label = gtk.Label( 'TAG' )
@@ -2017,6 +2023,8 @@ shown here in the state they were in at the time of triggering.''' )
         hbox.pack_start (entry_tag, True)
         vbox.pack_start(hbox)
 
+        if "tag" in kwargs:
+            entry_tag.set_text(kwargs['tag'])
 
         hbox = gtk.HBox()
         label = gtk.Label( '[STOP]' )
