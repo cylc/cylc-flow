@@ -33,7 +33,7 @@ class ControlGraph(object):
 Dependency graph suite control interface.
     """
     def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
-                 log_colors ):
+                 log_colors, insert_task_popup ):
         # NOTE: this view has separate family Group and Ungroup buttons
         # instead of a single Group/Ungroup toggle button, unlike the
         # other views the graph view can display intermediate states
@@ -47,6 +47,7 @@ Dependency graph suite control interface.
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
+        self.insert_task_popup = insert_task_popup
 
         self.gcapture_windows = []
 
@@ -165,6 +166,14 @@ Dependency graph suite control interface.
         menu.append( title_item )
 
         menu.append( gtk.SeparatorMenuItem() )
+
+        if type is not 'live task':
+            insert_item = gtk.ImageMenuItem( 'Insert ...' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+            insert_item.set_image(img)
+            menu.append( insert_item )
+            insert_item.connect( 'button-press-event', self.insert_task_popup )
+            menu.append( gtk.SeparatorMenuItem() )
 
         menu.append( timezoom_item_direct )
         menu.append( timezoom_item )

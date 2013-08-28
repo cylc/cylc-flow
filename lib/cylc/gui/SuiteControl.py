@@ -636,7 +636,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                                                    self.theme,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
-                                                   self.log_colors )
+                                                   self.log_colors,
+                                                   self.insert_task_popup )
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
@@ -1981,7 +1982,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def insert_task_popup( self, b ):
+    def insert_task_popup( self, *b ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
