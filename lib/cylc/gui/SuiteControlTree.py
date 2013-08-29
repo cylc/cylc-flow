@@ -31,7 +31,7 @@ class ControlTree(object):
 Text Treeview suite control interface.
     """
     def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
-                 log_colors ):
+                 log_colors, insert_task_popup ):
 
         self.cfg = cfg
         self.updater = updater
@@ -39,6 +39,7 @@ Text Treeview suite control interface.
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
+        self.insert_task_popup = insert_task_popup
 
         self.gcapture_windows = []
 
@@ -125,10 +126,10 @@ Text Treeview suite control interface.
         if group_on == self.t.should_group_families:
             return False
         if group_on:
-            if "text" not in self.cfg.grouped_views:
-                self.cfg.grouped_views.append("text")
-        elif "text" in self.cfg.grouped_views:
-            self.cfg.grouped_views.remove("text")
+            if "text" in self.cfg.ungrouped_views:
+                self.cfg.ungrouped_views.remove("text")
+        elif "text" not in self.cfg.ungrouped_views:
+            self.cfg.ungrouped_views.append("text")
         self.t.should_group_families = group_on
         if isinstance( toggle_item, gtk.ToggleToolButton ):
             if group_on:

@@ -1120,7 +1120,10 @@ class task( object ):
 
     def spawn( self, state ):
         self.state.set_spawned()
-        return self.__class__( self.next_tag(), state )
+        successor = self.__class__( self.next_tag(), state )
+        # propagate task stop time
+        successor.stop_c_time = self.stop_c_time
+        return successor
 
     def has_spawned( self ):
         # the one off task type modifier overrides this.

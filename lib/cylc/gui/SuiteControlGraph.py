@@ -33,7 +33,7 @@ class ControlGraph(object):
 Dependency graph suite control interface.
     """
     def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
-                 log_colors ):
+                 log_colors, insert_task_popup ):
         # NOTE: this view has separate family Group and Ungroup buttons
         # instead of a single Group/Ungroup toggle button, unlike the
         # other views the graph view can display intermediate states
@@ -47,6 +47,7 @@ Dependency graph suite control interface.
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
+        self.insert_task_popup = insert_task_popup
 
         self.gcapture_windows = []
 
@@ -166,6 +167,17 @@ Dependency graph suite control interface.
 
         menu.append( gtk.SeparatorMenuItem() )
 
+        if type is not 'live task':
+            insert_item = gtk.ImageMenuItem( 'Insert ...' )
+            img = gtk.image_new_from_stock(  gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_MENU )
+            insert_item.set_image(img)
+            menu.append( insert_item )
+            insert_item.connect( 'button-press-event',
+                                lambda *a: self.insert_task_popup(
+                                           is_fam=(name in self.t.descendants), 
+                                           name=name, tag=ctime ))
+            menu.append( gtk.SeparatorMenuItem() )
+
         menu.append( timezoom_item_direct )
         menu.append( timezoom_item )
         menu.append( timezoom_reset_item )
@@ -195,6 +207,8 @@ Dependency graph suite control interface.
 
     def grouping( self, w, name, group, rec=False ):
         self.t.ungroup_recursive = rec
+        self.t.group_all = False
+        self.t.ungroup_all = False
         if group:
             self.t.group.append(name)
         else:
@@ -331,12 +345,14 @@ Dependency graph suite control interface.
     def group_all( self, w, group ):
         if group:
             self.t.group_all = True
-            if "graph" not in self.cfg.grouped_views:
-                self.cfg.grouped_views.append("graph")
+            self.t.ungroup_all = False
+            if "graph" in self.cfg.ungrouped_views:
+                self.cfg.ungrouped_views.remove("graph")
         else:
             self.t.ungroup_all = True
-            if "graph" in self.cfg.grouped_views:
-                self.cfg.grouped_views.remove("graph")
+            self.t.group_all = False
+            if "graph" not in self.cfg.ungrouped_views:
+                self.cfg.ungrouped_views.append("graph")
         self.t.action_required = True
         self.t.best_fit = True
 

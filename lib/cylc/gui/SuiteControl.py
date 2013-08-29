@@ -105,7 +105,7 @@ Class to hold initialisation data.
     """
     def __init__( self, suite, owner, host, port, db,
             pyro_timeout, template_vars, template_vars_file,
-            grouped_views ):
+            ungrouped_views ):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -123,7 +123,7 @@ Class to hold initialisation data.
             self.template_vars_opts += " --set-file " + template_vars_file
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
-        self.grouped_views = grouped_views
+        self.ungrouped_views = ungrouped_views
 
         self.gcfg = get_global_cfg()
         self.cylc_tmpdir = self.gcfg.get_tmpdir()
@@ -359,7 +359,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.cfg = InitData( suite, owner, host, port, db, 
                 pyro_timeout, template_vars, template_vars_file,
-                self.usercfg["grouped views"] )
+                self.usercfg["ungrouped views"] )
 
         self.theme_name = self.usercfg['use theme'] 
         self.theme = self.usercfg['themes'][ self.theme_name ]
@@ -636,7 +636,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                                                    self.theme,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
-                                                   self.log_colors )
+                                                   self.log_colors,
+                                                   self.insert_task_popup )
         view = self.current_views[view_num]
         view.name = viewname
         if view_num == 1:
@@ -1981,7 +1982,7 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def insert_task_popup( self, b ):
+    def insert_task_popup( self, *b, **kwargs ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
@@ -2002,12 +2003,18 @@ shown here in the state they were in at the time of triggering.''' )
         fam_cb = gtk.CheckButton( "Insert a family?" )
         vbox.pack_start( fam_cb, True )
 
+        if "is_fam" in kwargs:
+            fam_cb.set_active(kwargs['is_fam'])
+
         hbox = gtk.HBox()
         label = gtk.Label( 'MATCH' )
         hbox.pack_start( label, True )
         entry_match = gtk.Entry()
         hbox.pack_start (entry_match, True)
         vbox.pack_start(hbox)
+
+        if "name" in kwargs:
+            entry_match.set_text(kwargs['name'])
 
         hbox = gtk.HBox()
         label = gtk.Label( 'TAG' )
@@ -2016,6 +2023,8 @@ shown here in the state they were in at the time of triggering.''' )
         hbox.pack_start (entry_tag, True)
         vbox.pack_start(hbox)
 
+        if "tag" in kwargs:
+            entry_tag.set_text(kwargs['tag'])
 
         hbox = gtk.HBox()
         label = gtk.Label( '[STOP]' )
@@ -2968,7 +2977,7 @@ For more Stop options use the Control menu.""" )
             if type == 'out':
                 xopts = ' --stdout '
             elif type == 'err':
-                xopts == ' --stderr '
+                xopts = ' --stderr '
             else:
                 xopts = ' '
 
