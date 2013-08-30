@@ -1,0 +1,11 @@
+[cylc]
+    force run mode = simulation
+    [[reference test]]
+        simulation mode suite timeout = 1.0
+[scheduling]
+    [[dependencies]]
+        graph = "a => b => c"
+[runtime]
+    [[a, b, c]]
+        [[[simulation mode]]]
+            run time range = 1,2

@@ -1,0 +1,38 @@
+title = "triggering off internal task outputs"
+
+description = """
+This is a self contained example (task implementation, including output
+messaging, is entirely contained within the suite definition)."""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.8
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time = 2010080900
+    [[dependencies]]
+        [[[0]]]
+          graph = "foo:out1 => bar"
+        [[[12]]]
+          graph = "foo[T-12]:out2 => baz"
+[runtime]
+    [[foo]]
+        command scripting = """
+echo HELLO
+sleep 1
+cylc message "foo uploaded file set 1 for $CYLC_TASK_CYCLE_TIME"
+sleep 1
+cylc message "foo uploaded file set 2 for $CYLC_TASK_CYCLE_TIME"
+sleep 1
+echo BYE"""
+        [[[outputs]]]
+            # use cylc placeholder variables here
+            out1 = "foo uploaded file set 1 for [T]"
+            out2 = "foo uploaded file set 2 for [T]"
+
+# For a graphical run-time triggering check:
+#[visualization]
+#    [[runtime graph]]
+#        enable = True
+#        cutoff = 48

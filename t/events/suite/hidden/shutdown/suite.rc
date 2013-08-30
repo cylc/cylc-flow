@@ -1,0 +1,13 @@
+[cylc]
+    [[event hooks]]
+        shutdown handler = "/bin/false"
+        abort if shutdown handler fails = True
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+
+[runtime]
+    [[root]]
+        command scripting = "/bin/true" # no sleep
+

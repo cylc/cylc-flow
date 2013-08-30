@@ -1,0 +1,182 @@
+2013/07/25 14:02:54 INFO - Thread-2 start (Event Handler Submission)
+2013/07/25 14:02:54 INFO - port:7768
+2013/07/25 14:02:54 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/07/25 14:02:54 CRITICAL - Suite starting at 2013-07-25 14:02:54.626019
+2013/07/25 14:02:54 INFO - Log event clock: real time
+2013/07/25 14:02:54 INFO - Run mode: live
+2013/07/25 14:02:54 INFO - Start tag: 2010010100
+2013/07/25 14:02:54 INFO - Stop tag: 2010010200
+2013/07/25 14:02:54 INFO - Thread-4 start (Job Submission)
+2013/07/25 14:02:54 INFO - Thread-5 start (Request Handling)
+2013/07/25 14:02:54 INFO - Cold Start 2010010100
+2013/07/25 14:02:54 INFO - [c.2010010100] -(setting:submitting)
+2013/07/25 14:02:54 INFO - [b.2010010100] -(setting:submitting)
+2013/07/25 14:02:54 INFO - [c.2010010100] -triggered off []
+2013/07/25 14:02:54 INFO - [b.2010010100] -triggered off []
+2013/07/25 14:02:55 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submitting now
+2013/07/25 14:02:55 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submission succeeded
+2013/07/25 14:02:55 INFO - [c.2010010100] -(setting:submitted)
+2013/07/25 14:02:55 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=7019
+2013/07/25 14:02:55 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submitting now
+2013/07/25 14:02:56 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2013-07-25T14:02:56
+2013/07/25 14:02:56 INFO - [c.2010010100] -(setting:running)
+2013/07/25 14:02:56 INFO - [b.2010010100] -(current:submitting)> b.2010010100 started at 2013-07-25T14:02:56
+2013/07/25 14:02:56 INFO - [b.2010010100] -(setting:running)
+2013/07/25 14:02:56 INFO - [b.2010010100] -(current:running)> b.2010010100 submission succeeded
+2013/07/25 14:02:57 INFO - [b.2010010100] -(current:running)> b.2010010100 submit_method_id=7022
+2013/07/25 14:02:58 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-07-25T14:02:57
+2013/07/25 14:02:58 INFO - [c.2010010100] -(setting:succeeded)
+2013/07/25 14:02:58 INFO - [b.2010010100] -(current:running)> b.2010010100 succeeded at 2013-07-25T14:02:57
+2013/07/25 14:02:58 INFO - [b.2010010100] -(setting:succeeded)
+2013/07/25 14:02:58 INFO - [a.2010010100] -(setting:submitting)
+2013/07/25 14:02:58 INFO - [c.2010010106] -(setting:submitting)
+2013/07/25 14:02:58 INFO - [b.2010010106] -(setting:submitting)
+2013/07/25 14:02:58 INFO - [a.2010010100] -triggered off ['b.2010010100']
+2013/07/25 14:02:58 INFO - [c.2010010106] -triggered off []
+2013/07/25 14:02:58 INFO - [b.2010010106] -triggered off []
+2013/07/25 14:02:59 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
+2013/07/25 14:02:59 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
+2013/07/25 14:02:59 INFO - [a.2010010100] -(setting:submitted)
+2013/07/25 14:02:59 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=7134
+2013/07/25 14:02:59 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-07-25T14:02:59
+2013/07/25 14:02:59 INFO - [a.2010010100] -(setting:running)
+2013/07/25 14:02:59 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submitting now
+2013/07/25 14:02:59 INFO - [c.2010010106] -(current:submitting)> c.2010010106 started at 2013-07-25T14:02:59
+2013/07/25 14:02:59 INFO - [c.2010010106] -(setting:running)
+2013/07/25 14:02:59 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submitting now
+2013/07/25 14:02:59 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submission succeeded
+2013/07/25 14:02:59 INFO - [b.2010010106] -(setting:submitted)
+2013/07/25 14:02:59 INFO - [b.2010010106] -(current:submitted)> b.2010010106 submit_method_id=7151
+2013/07/25 14:02:59 INFO - [b.2010010106] -(current:submitted)> b.2010010106 started at 2013-07-25T14:02:59
+2013/07/25 14:02:59 INFO - [b.2010010106] -(setting:running)
+2013/07/25 14:02:59 INFO - [c.2010010112] -HOLDING (beyond runahead limit)
+2013/07/25 14:02:59 INFO - [c.2010010112] -(setting:runahead)
+2013/07/25 14:03:00 INFO - [b.2010010112] -HOLDING (beyond runahead limit)
+2013/07/25 14:03:00 INFO - [b.2010010112] -(setting:runahead)
+2013/07/25 14:03:01 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-07-25T14:03:00
+2013/07/25 14:03:01 INFO - [a.2010010100] -(setting:succeeded)
+2013/07/25 14:03:01 INFO - [c.2010010106] -(current:running)> c.2010010106 submission succeeded
+2013/07/25 14:03:01 INFO - [c.2010010106] -(current:running)> c.2010010106 submit_method_id=7137
+2013/07/25 14:03:01 INFO - [c.2010010106] -(current:running)> c.2010010106 succeeded at 2013-07-25T14:03:00
+2013/07/25 14:03:01 INFO - [c.2010010106] -(setting:succeeded)
+2013/07/25 14:03:01 INFO - [b.2010010106] -(current:running)> b.2010010106 succeeded at 2013-07-25T14:03:00
+2013/07/25 14:03:01 INFO - [b.2010010106] -(setting:succeeded)
+2013/07/25 14:03:01 INFO - [c.2010010112] -(setting:waiting)
+2013/07/25 14:03:01 INFO - [b.2010010112] -(setting:waiting)
+2013/07/25 14:03:01 INFO - [a.2010010106] -(setting:submitting)
+2013/07/25 14:03:01 INFO - [c.2010010112] -(setting:submitting)
+2013/07/25 14:03:01 INFO - [b.2010010112] -(setting:submitting)
+2013/07/25 14:03:01 INFO - [a.2010010106] -triggered off ['a.2010010100', 'b.2010010106', 'c.2010010100']
+2013/07/25 14:03:01 INFO - [c.2010010112] -triggered off []
+2013/07/25 14:03:01 INFO - [b.2010010112] -triggered off []
+2013/07/25 14:03:02 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submitting now
+2013/07/25 14:03:02 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submission succeeded
+2013/07/25 14:03:02 INFO - [a.2010010106] -(setting:submitted)
+2013/07/25 14:03:02 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=7315
+2013/07/25 14:03:02 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2013-07-25T14:03:02
+2013/07/25 14:03:02 INFO - [a.2010010106] -(setting:running)
+2013/07/25 14:03:02 INFO - [c.2010010112] -(current:submitting)> c.2010010112 submitting now
+2013/07/25 14:03:02 INFO - [c.2010010112] -(current:submitting)> c.2010010112 started at 2013-07-25T14:03:02
+2013/07/25 14:03:02 INFO - [c.2010010112] -(setting:running)
+2013/07/25 14:03:02 INFO - [b.2010010112] -(current:submitting)> b.2010010112 submitting now
+2013/07/25 14:03:02 INFO - [b.2010010112] -(current:submitting)> b.2010010112 submission succeeded
+2013/07/25 14:03:02 INFO - [b.2010010112] -(setting:submitted)
+2013/07/25 14:03:02 INFO - [b.2010010112] -(current:submitted)> b.2010010112 submit_method_id=7350
+2013/07/25 14:03:02 INFO - [b.2010010112] -(current:submitted)> b.2010010112 started at 2013-07-25T14:03:02
+2013/07/25 14:03:02 INFO - [b.2010010112] -(setting:running)
+2013/07/25 14:03:02 INFO - [c.2010010118] -HOLDING (beyond runahead limit)
+2013/07/25 14:03:02 INFO - [c.2010010118] -(setting:runahead)
+2013/07/25 14:03:02 INFO - [b.2010010118] -HOLDING (beyond runahead limit)
+2013/07/25 14:03:02 INFO - [b.2010010118] -(setting:runahead)
+2013/07/25 14:03:03 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2013-07-25T14:03:03
+2013/07/25 14:03:03 INFO - [a.2010010106] -(setting:succeeded)
+2013/07/25 14:03:03 INFO - [c.2010010112] -(current:running)> c.2010010112 submission succeeded
+2013/07/25 14:03:03 INFO - [c.2010010112] -(current:running)> c.2010010112 submit_method_id=7329
+2013/07/25 14:03:03 INFO - [c.2010010112] -(current:running)> c.2010010112 succeeded at 2013-07-25T14:03:03
+2013/07/25 14:03:03 INFO - [c.2010010112] -(setting:succeeded)
+2013/07/25 14:03:03 INFO - [b.2010010112] -(current:running)> b.2010010112 succeeded at 2013-07-25T14:03:03
+2013/07/25 14:03:03 INFO - [b.2010010112] -(setting:succeeded)
+2013/07/25 14:03:03 INFO - [c.2010010118] -(setting:waiting)
+2013/07/25 14:03:03 INFO - [b.2010010118] -(setting:waiting)
+2013/07/25 14:03:03 INFO - [a.2010010112] -(setting:submitting)
+2013/07/25 14:03:03 INFO - [c.2010010118] -(setting:submitting)
+2013/07/25 14:03:03 INFO - [b.2010010118] -(setting:submitting)
+2013/07/25 14:03:03 INFO - [a.2010010112] -triggered off ['a.2010010106', 'b.2010010112', 'c.2010010106']
+2013/07/25 14:03:03 INFO - [c.2010010118] -triggered off []
+2013/07/25 14:03:03 INFO - [b.2010010118] -triggered off []
+2013/07/25 14:03:04 INFO - [a.2010010112] -(current:submitting)> a.2010010112 submitting now
+2013/07/25 14:03:05 INFO - [a.2010010112] -(current:submitting)> a.2010010112 submission succeeded
+2013/07/25 14:03:05 INFO - [a.2010010112] -(setting:submitted)
+2013/07/25 14:03:05 INFO - [a.2010010112] -(current:submitted)> a.2010010112 submit_method_id=7697
+2013/07/25 14:03:05 INFO - [a.2010010112] -(current:submitted)> a.2010010112 started at 2013-07-25T14:03:05
+2013/07/25 14:03:05 INFO - [a.2010010112] -(setting:running)
+2013/07/25 14:03:05 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submitting now
+2013/07/25 14:03:06 INFO - [c.2010010118] -(current:submitting)> c.2010010118 started at 2013-07-25T14:03:05
+2013/07/25 14:03:06 INFO - [c.2010010118] -(setting:running)
+2013/07/25 14:03:06 INFO - [c.2010010118] -(current:running)> c.2010010118 submission succeeded
+2013/07/25 14:03:06 INFO - [c.2010010118] -(current:running)> c.2010010118 submit_method_id=7711
+2013/07/25 14:03:06 INFO - [b.2010010118] -(current:submitting)> b.2010010118 submitting now
+2013/07/25 14:03:06 INFO - [b.2010010118] -(current:submitting)> b.2010010118 submission succeeded
+2013/07/25 14:03:06 INFO - [b.2010010118] -(setting:submitted)
+2013/07/25 14:03:06 INFO - [b.2010010118] -(current:submitted)> b.2010010118 submit_method_id=7737
+2013/07/25 14:03:06 INFO - [b.2010010118] -(current:submitted)> b.2010010118 started at 2013-07-25T14:03:05
+2013/07/25 14:03:06 INFO - [b.2010010118] -(setting:running)
+2013/07/25 14:03:06 INFO - [c.2010010200] -HOLDING (beyond runahead limit)
+2013/07/25 14:03:06 INFO - [c.2010010200] -(setting:runahead)
+2013/07/25 14:03:06 INFO - [b.2010010200] -HOLDING (beyond runahead limit)
+2013/07/25 14:03:06 INFO - [b.2010010200] -(setting:runahead)
+2013/07/25 14:03:07 INFO - [a.2010010112] -(current:running)> a.2010010112 succeeded at 2013-07-25T14:03:06
+2013/07/25 14:03:07 INFO - [a.2010010112] -(setting:succeeded)
+2013/07/25 14:03:07 INFO - [c.2010010118] -(current:running)> c.2010010118 succeeded at 2013-07-25T14:03:06
+2013/07/25 14:03:07 INFO - [c.2010010118] -(setting:succeeded)
+2013/07/25 14:03:07 INFO - [b.2010010118] -(current:running)> b.2010010118 succeeded at 2013-07-25T14:03:06
+2013/07/25 14:03:07 INFO - [b.2010010118] -(setting:succeeded)
+2013/07/25 14:03:07 INFO - [c.2010010200] -(setting:waiting)
+2013/07/25 14:03:07 INFO - [b.2010010200] -(setting:waiting)
+2013/07/25 14:03:07 INFO - [a.2010010118] -(setting:submitting)
+2013/07/25 14:03:07 INFO - [c.2010010200] -(setting:submitting)
+2013/07/25 14:03:07 INFO - [b.2010010200] -(setting:submitting)
+2013/07/25 14:03:07 INFO - [a.2010010118] -triggered off ['a.2010010112', 'b.2010010118', 'c.2010010112']
+2013/07/25 14:03:07 INFO - [c.2010010200] -triggered off []
+2013/07/25 14:03:07 INFO - [b.2010010200] -triggered off []
+2013/07/25 14:03:08 INFO - [a.2010010118] -(current:submitting)> a.2010010118 submitting now
+2013/07/25 14:03:08 INFO - [a.2010010118] -(current:submitting)> a.2010010118 submission succeeded
+2013/07/25 14:03:08 INFO - [a.2010010118] -(setting:submitted)
+2013/07/25 14:03:08 INFO - [a.2010010118] -(current:submitted)> a.2010010118 submit_method_id=7937
+2013/07/25 14:03:08 INFO - [a.2010010118] -(current:submitted)> a.2010010118 started at 2013-07-25T14:03:08
+2013/07/25 14:03:08 INFO - [a.2010010118] -(setting:running)
+2013/07/25 14:03:08 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submitting now
+2013/07/25 14:03:08 INFO - [c.2010010200] -(current:submitting)> c.2010010200 started at 2013-07-25T14:03:08
+2013/07/25 14:03:08 INFO - [c.2010010200] -(setting:running)
+2013/07/25 14:03:08 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submitting now
+2013/07/25 14:03:08 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submission succeeded
+2013/07/25 14:03:08 INFO - [b.2010010200] -(setting:submitted)
+2013/07/25 14:03:08 INFO - [b.2010010200] -(current:submitted)> b.2010010200 submit_method_id=7954
+2013/07/25 14:03:08 INFO - [b.2010010200] -(current:submitted)> b.2010010200 started at 2013-07-25T14:03:08
+2013/07/25 14:03:08 INFO - [b.2010010200] -(setting:running)
+2013/07/25 14:03:08 INFO - [c.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/07/25 14:03:08 INFO - [c.2010010206] -(setting:held)
+2013/07/25 14:03:08 INFO - [b.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/07/25 14:03:08 INFO - [b.2010010206] -(setting:held)
+2013/07/25 14:03:09 INFO - [a.2010010118] -(current:running)> a.2010010118 succeeded at 2013-07-25T14:03:09
+2013/07/25 14:03:09 INFO - [a.2010010118] -(setting:succeeded)
+2013/07/25 14:03:09 INFO - [c.2010010200] -(current:running)> c.2010010200 submission succeeded
+2013/07/25 14:03:09 INFO - [c.2010010200] -(current:running)> c.2010010200 submit_method_id=7944
+2013/07/25 14:03:09 INFO - [c.2010010200] -(current:running)> c.2010010200 succeeded at 2013-07-25T14:03:09
+2013/07/25 14:03:09 INFO - [c.2010010200] -(setting:succeeded)
+2013/07/25 14:03:10 INFO - [b.2010010200] -(current:running)> b.2010010200 succeeded at 2013-07-25T14:03:09
+2013/07/25 14:03:10 INFO - [b.2010010200] -(setting:succeeded)
+2013/07/25 14:03:10 INFO - [a.2010010200] -(setting:submitting)
+2013/07/25 14:03:10 INFO - [a.2010010200] -triggered off ['a.2010010118', 'b.2010010200', 'c.2010010118']
+2013/07/25 14:03:11 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submitting now
+2013/07/25 14:03:11 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submission succeeded
+2013/07/25 14:03:11 INFO - [a.2010010200] -(setting:submitted)
+2013/07/25 14:03:11 INFO - [a.2010010200] -(current:submitted)> a.2010010200 submit_method_id=8112
+2013/07/25 14:03:12 INFO - [a.2010010200] -(current:submitted)> a.2010010200 started at 2013-07-25T14:03:11
+2013/07/25 14:03:12 INFO - [a.2010010200] -(setting:running)
+2013/07/25 14:03:12 INFO - [a.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/07/25 14:03:12 INFO - [a.2010010206] -(setting:held)
+2013/07/25 14:03:13 INFO - [a.2010010200] -(current:running)> a.2010010200 succeeded at 2013-07-25T14:03:12
+2013/07/25 14:03:13 INFO - [a.2010010200] -(setting:succeeded)
+2013/07/25 14:03:13 INFO - All normal cycling tasks have spawned past the final cycle 2010010200
+2013/07/25 14:03:13 CRITICAL - Suite shutting down at 2013-07-25 14:03:13.312754

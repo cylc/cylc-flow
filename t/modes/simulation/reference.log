@@ -1,0 +1,13 @@
+2013/05/31 10:45:47 CRITICAL - Suite starting at 2013-05-31 10:45:42.262882
+2013/05/31 10:45:48 INFO - Start tag: None
+2013/05/31 10:45:48 INFO - Stop tag: None
+2013/05/31 10:46:01 INFO - [a.1] -triggered off []
+2013/05/31 11:40:19 INFO - [a.1] -> a.1 submitted
+2013/05/31 11:40:19 INFO - [a.1] -> a.1 succeeded
+2013/05/31 11:40:21 INFO - [b.1] -triggered off ['a.1']
+2013/05/31 13:22:41 INFO - [b.1] -> b.1 submitted
+2013/05/31 13:22:41 INFO - [b.1] -> b.1 succeeded
+2013/05/31 13:22:43 INFO - [c.1] -triggered off ['b.1']
+2013/05/31 14:41:02 INFO - [c.1] -> c.1 submitted
+2013/05/31 14:41:02 INFO - [c.1] -> c.1 succeeded
+2013/05/31 14:41:03 CRITICAL - Suite shutting down at 2013-05-31 10:46:21.473987

@@ -1,0 +1,27 @@
+title = "Quick Start Example B"
+description = "(Quick Start a plus a cold-start task)"
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+
+[scheduling]
+    initial cycle time = 2011010106
+    final cycle time = 2011010200
+    [[special tasks]]
+        start-up        = Prep
+        cold-start      = ColdModel
+        clock-triggered = GetData(1)
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph  = """Prep => GetData & ColdModel
+                        GetData => Model => PostA
+                        ColdModel | Model[T-6] => Model"""
+        [[[6,18]]]
+            graph = "Model => PostB"
+
+[runtime]
+    [[root]]
+        command scripting = "/bin/true" # fast
+        
