@@ -1,0 +1,58 @@
+2013/08/19 15:29:00 INFO - Thread-2 start (Event Handler Submission)
+2013/08/19 15:29:00 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/08/19 15:29:00 INFO - port:7766
+2013/08/19 15:29:00 CRITICAL - Suite starting at 2013-08-19 15:29:00.251098
+2013/08/19 15:29:00 INFO - Log event clock: real time
+2013/08/19 15:29:00 INFO - Run mode: live
+2013/08/19 15:29:00 INFO - Start tag: 2010010100
+2013/08/19 15:29:00 INFO - Stop tag: 2010010200
+2013/08/19 15:29:00 INFO - Thread-4 start (Job Submission)
+2013/08/19 15:29:00 INFO - Thread-5 start (Request Handling)
+2013/08/19 15:29:00 INFO - Cold Start 2010010100
+2013/08/19 15:29:00 INFO - [monthly.2010010100] -(setting:submitting)
+2013/08/19 15:29:00 INFO - [yearly.2010010100] -(setting:submitting)
+2013/08/19 15:29:00 INFO - [daily.2010010100] -(setting:submitting)
+2013/08/19 15:29:00 INFO - [monthly.2010010100] -triggered off []
+2013/08/19 15:29:00 INFO - [yearly.2010010100] -triggered off []
+2013/08/19 15:29:00 INFO - [daily.2010010100] -triggered off []
+2013/08/19 15:29:01 INFO - [monthly.2010010100] -(current:submitting)> monthly.2010010100 submitting now
+2013/08/19 15:29:02 INFO - [monthly.2010010100] -(current:submitting)> monthly.2010010100 submission succeeded
+2013/08/19 15:29:02 INFO - [monthly.2010010100] -(setting:submitted)
+2013/08/19 15:29:02 INFO - [monthly.2010010100] -(current:submitted)> monthly.2010010100 submit_method_id=22597
+2013/08/19 15:29:02 INFO - [yearly.2010010100] -(current:submitting)> yearly.2010010100 submitting now
+2013/08/19 15:29:02 INFO - [daily.2010010100] -(current:submitting)> daily.2010010100 submitting now
+2013/08/19 15:29:02 INFO - [daily.2010010100] -(current:submitting)> daily.2010010100 submission succeeded
+2013/08/19 15:29:02 INFO - [daily.2010010100] -(setting:submitted)
+2013/08/19 15:29:02 INFO - [daily.2010010100] -(current:submitted)> daily.2010010100 submit_method_id=22763
+2013/08/19 15:29:03 INFO - [monthly.2010010100] -(current:submitted)> monthly.2010010100 started at 2013-08-19T15:29:02
+2013/08/19 15:29:03 INFO - [monthly.2010010100] -(setting:running)
+2013/08/19 15:29:03 INFO - [monthly.2010010100] -(current:running)> monthly.2010010100 succeeded at 2013-08-19T15:29:03
+2013/08/19 15:29:03 INFO - [monthly.2010010100] -(setting:succeeded)
+2013/08/19 15:29:03 INFO - [yearly.2010010100] -(current:submitting)> yearly.2010010100 started at 2013-08-19T15:29:02
+2013/08/19 15:29:03 INFO - [yearly.2010010100] -(setting:running)
+2013/08/19 15:29:03 INFO - [yearly.2010010100] -(current:running)> yearly.2010010100 submission succeeded
+2013/08/19 15:29:03 INFO - [yearly.2010010100] -(current:running)> yearly.2010010100 submit_method_id=22664
+2013/08/19 15:29:03 INFO - [yearly.2010010100] -(current:running)> yearly.2010010100 succeeded at 2013-08-19T15:29:03
+2013/08/19 15:29:03 INFO - [yearly.2010010100] -(setting:succeeded)
+2013/08/19 15:29:03 INFO - [daily.2010010100] -(current:submitted)> daily.2010010100 started at 2013-08-19T15:29:02
+2013/08/19 15:29:03 INFO - [daily.2010010100] -(setting:running)
+2013/08/19 15:29:03 INFO - [monthly.2010020100] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/19 15:29:03 INFO - [monthly.2010020100] -(setting:held)
+2013/08/19 15:29:03 INFO - [yearly.2011010100] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/19 15:29:03 INFO - [yearly.2011010100] -(setting:held)
+2013/08/19 15:29:04 INFO - [daily.2010010100] -(current:running)> daily.2010010100 succeeded at 2013-08-19T15:29:03
+2013/08/19 15:29:04 INFO - [daily.2010010100] -(setting:succeeded)
+2013/08/19 15:29:04 INFO - [daily.2010010200] -(setting:submitting)
+2013/08/19 15:29:04 INFO - [daily.2010010200] -triggered off []
+2013/08/19 15:29:05 INFO - [daily.2010010200] -(current:submitting)> daily.2010010200 submitting now
+2013/08/19 15:29:05 INFO - [daily.2010010200] -(current:submitting)> daily.2010010200 submission succeeded
+2013/08/19 15:29:05 INFO - [daily.2010010200] -(setting:submitted)
+2013/08/19 15:29:05 INFO - [daily.2010010200] -(current:submitted)> daily.2010010200 submit_method_id=22919
+2013/08/19 15:29:06 INFO - [daily.2010010200] -(current:submitted)> daily.2010010200 started at 2013-08-19T15:29:05
+2013/08/19 15:29:06 INFO - [daily.2010010200] -(setting:running)
+2013/08/19 15:29:06 INFO - [daily.2010010300] -HOLDING (beyond suite stop cycle) 2010010200
+2013/08/19 15:29:06 INFO - [daily.2010010300] -(setting:held)
+2013/08/19 15:29:07 INFO - [daily.2010010200] -(current:running)> daily.2010010200 succeeded at 2013-08-19T15:29:06
+2013/08/19 15:29:07 INFO - [daily.2010010200] -(setting:succeeded)
+2013/08/19 15:29:07 INFO - All normal cycling tasks have spawned past the final cycle 2010010200
+2013/08/19 15:29:07 CRITICAL - Suite shutting down at 2013-08-19 15:29:07.357437

@@ -1,0 +1,12 @@
+2012/08/24 13:40:20 CRITICAL - Suite starting at 2012-08-24 13:40:20.373348
+2012/08/24 13:40:20 INFO - Log event clock: real time
+2012/08/24 13:40:20 INFO - Run mode: live
+2012/08/24 13:40:20 INFO - Start tag: None
+2012/08/24 13:40:20 INFO - Stop tag: None
+2012/08/24 13:40:20 WARNING - Calling startup event handler in the foreground
+2012/08/24 13:40:20 INFO - [foo.1] -job submitted
+2012/08/24 13:40:20 INFO - [foo.1] -triggered off []
+2012/08/24 13:40:21 INFO - [foo.1] -foo.1 started
+2012/08/24 13:40:31 INFO - [foo.1] -foo.1 succeeded
+2012/08/24 13:40:31 WARNING - ALL TASKS FINISHED OR HELD
+2012/08/24 13:40:31 CRITICAL - Suite shutting down at 2012-08-24 13:40:31.387626

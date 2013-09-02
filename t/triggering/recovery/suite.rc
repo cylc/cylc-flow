@@ -1,0 +1,41 @@
+title = "automated failure recovery example"
+
+description = """
+Model task failure triggers diagnosis and recovery tasks, which
+otherwise take themselves out of the suite if model succeeds.
+Model post processing triggers off model or recovery tasks."""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.8
+        expected task failures = model.2011010112
+        
+[scheduling]
+    initial cycle time = 2011010100
+    final cycle time = 2011010112
+
+    [[dependencies]]
+        [[[0,12]]]
+            graph = """
+pre:finish => model  # finish trigger
+model:fail => diagnose => recover # fail trigger
+model => !diagnose & !recover  # explicit success trigger
+model:succeed | recover => post  # conditional and explicit success 
+post => !model  # removes failed model to allow suite to auto finish
+                    """
+[runtime]
+    [[root]]
+        command scripting = "/bin/true" # fast
+    [[model]]
+        description = "A task that succeeds at O UTC and fails at 12 UTC"
+        command scripting = """
+echo Hello from $CYLC_TASK_ID
+#sleep 10
+if [[ $(cylc util cycletime --print-hour) == 12 ]]; then 
+    echo "FAILING NOW!"
+    false
+else
+    echo "Succeeded"
+    true
+fi"""
+

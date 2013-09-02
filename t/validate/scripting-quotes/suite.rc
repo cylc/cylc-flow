@@ -1,0 +1,6 @@
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        command scripting = "foo"bar"baz"
