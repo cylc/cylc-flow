@@ -1536,8 +1536,13 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_hold_waiting_tasks( self, new_task ):
+    def check_hold_waiting_tasks( self, new_task, is_newly_added=False ):
         if not new_task.state.is_currently('waiting'):
+            return
+
+        if is_newly_added and self.hold_suite_now:
+            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+            new_task.reset_state_held()
             return
 
         # further checks only apply to cycling tasks
@@ -1594,6 +1599,7 @@ class scheduler(object):
 
     def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
+        self.check_hold_waiting_tasks( new_task, is_newly_added=True )
         if self.pool.add( new_task ):
             return True
         else:
@@ -1607,8 +1613,6 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if self.hold_suite_now:
-            new_task.reset_state_held()
         if self.add_new_task_proxy( new_task ):
             return new_task
         else:
