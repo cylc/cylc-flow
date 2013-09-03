@@ -19,7 +19,7 @@
 export CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
 export CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
 
-cd $CYLC_HOME/t
+cd $CYLC_HOME/tests
 if (($# == 0)); then
     exec prove -j 9 -r -s
 else
