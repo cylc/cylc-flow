@@ -1540,12 +1540,6 @@ class scheduler(object):
         if not new_task.state.is_currently('waiting'):
             return
 
-        # check for general suite hold
-        if self.hold_suite_now:
-            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
-            new_task.reset_state_held()
-            return
-
         # further checks only apply to cycling tasks
         if not new_task.is_cycling():
             return
@@ -1613,6 +1607,8 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
+        if self.hold_suite_now:
+            new_task.reset_state_held()
         if self.add_new_task_proxy( new_task ):
             return new_task
         else:
