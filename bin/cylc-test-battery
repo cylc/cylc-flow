@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA

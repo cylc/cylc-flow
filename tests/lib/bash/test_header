@@ -131,7 +131,7 @@ function grep_ok() {
 }
 
 function init_suite() {
-    SUITE_NAME=cylc_test_$(basename $TEST_SOURCE_DIR)_${1}
+    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_${1}
     mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
     cat >$TEST_DIR/$SUITE_NAME/suite.rc
     cylc unregister $SUITE_NAME 2>&1
@@ -140,7 +140,7 @@ function init_suite() {
 }
 
 function install_suite() {
-    SUITE_NAME=cylc_test_$(basename $TEST_SOURCE_DIR)_${1}
+    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_${1}
     mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
     cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME 2>&1
     cylc unregister $SUITE_NAME 2>&1
