@@ -53,6 +53,7 @@
 #-------------------------------------------------------------------------------
 set -eu
 
+FAILURES=0
 SIGNALS="EXIT INT"
 TEST_DIR=
 function FINALLY() {
@@ -79,6 +80,7 @@ function ok() {
 }
 
 function fail() {
+    ((++FAILURES))
     echo "not ok $((++TEST_NUMBER)) - $@"
 }
 
@@ -147,6 +149,9 @@ function install_suite() {
 }
 
 function purge_suite() {
+    if [[ $FAILURES -eq 0 ]]; then
+        rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME
+    fi
     cd $TEST_DIR
     if [[ -n ${SUITE_NAME:-} ]]; then
         cylc unregister $SUITE_NAME || true
