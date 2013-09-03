@@ -1568,7 +1568,7 @@ class scheduler(object):
             return
 
         # tasks beyond the runahead limit
-        if self.runahead_limit:
+        if is_newly_added and self.runahead_limit:
             ouct = self.get_runahead_base()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
