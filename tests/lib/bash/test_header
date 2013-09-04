@@ -150,6 +150,10 @@ function install_suite() {
 
 function purge_suite() {
     if [[ $FAILURES -eq 0 ]]; then
+        while [ $(lsof | grep $(cylc get-global-config --print-run-dir)/$SUITE_NAME | wc -l) -gt 0 ]
+        do
+            sleep 1
+        done    
         rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME
     fi
     cd $TEST_DIR
