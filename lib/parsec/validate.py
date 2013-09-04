@@ -53,7 +53,8 @@ def validate( cfig, spec, keys=[] ):
             speckey = key
         if isinstance( val, dict ):
             validate( val, spec[speckey], keys+[key] )
-        else:
+        elif val:
+            # (if val is null we're only checking item validity)
             cfig[key] = spec[speckey].check( val, keys+[key] )
 
 def _populate_spec_defaults( defs, spec ):

@@ -43,15 +43,24 @@ class broadcast( Pyro.core.ObjBase ):
 
     def prune( self, target ):
         # remove empty leaves left by unsetting broadcast values
-        for key, val in target.items():
-            if isinstance( val, dict ):
-                if val == {}:
-                    del target[key]
+        def _prune( target ):
+            # recursive sub-function
+            pruned = False
+            for key, val in target.items():
+                if isinstance( val, dict ):
+                    if not val:
+                        del target[key]
+                        pruned = True
+                    else:
+                        pruned = _prune( target[key] )
                 else:
-                    self.prune( target[key] )
-            else:
-                if not val:
-                    del target[key]
+                    if not val:
+                        del target[key]
+                        pruned = True
+            return pruned
+        # prune until no further changes
+        while _prune( target ):
+            continue
  
     def addict( self, target, source ):
         for key, val in source.items():
@@ -66,7 +75,7 @@ class broadcast( Pyro.core.ObjBase ):
                     del target[key]
 
     def put( self, namespaces, cycles, settings ):
-        """Add or prune new validated broadcast settings."""
+        """Add new broadcast settings, or prune newly unset ones"""
         for setting in settings:
             for cycle in cycles:
                 if cycle not in self.settings.keys():
@@ -75,12 +84,8 @@ class broadcast( Pyro.core.ObjBase ):
                     if namespace not in self.settings[cycle]:
                         self.settings[cycle][namespace] = {}
                     self.addict( self.settings[cycle][namespace], setting )
-        # prune empty settings
-        while True:
-            tmp = deepcopy( self.settings )
-            self.prune( self.settings )
-            if tmp == self.settings:
-                break
+        # prune any empty branches
+        self.prune( self.settings )
 
         if self.get_dump() != self.last_settings:
             self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
