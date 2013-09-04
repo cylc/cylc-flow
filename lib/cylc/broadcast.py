@@ -75,7 +75,7 @@ class broadcast( Pyro.core.ObjBase ):
                     del target[key]
 
     def put( self, namespaces, cycles, settings ):
-        """Add or prune new validated broadcast settings."""
+        """Add new broadcast settings, or prune newly unset ones"""
         for setting in settings:
             for cycle in cycles:
                 if cycle not in self.settings.keys():
