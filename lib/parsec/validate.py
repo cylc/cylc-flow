@@ -43,7 +43,7 @@ class IllegalValueError( ValidationError ):
 
 class IllegalItemError( ValidationError ):
     def __init__( self, keys, key ):
-        msg = 'Illegal item : [' + ']['.join(keys) + ']' + key
+        msg = 'Illegal item: [' + ']['.join(keys) + ']' + key
         ValidationError.__init__( self, msg )
 
 def validate( cfig, spec, keys=[] ):
