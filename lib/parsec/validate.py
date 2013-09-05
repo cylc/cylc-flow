@@ -42,10 +42,9 @@ class IllegalValueError( ValidationError ):
         ValidationError.__init__( self, msg )
 
 class IllegalItemError( ValidationError ):
-    def __init__( self, keys ):
-        msg = 'Illegal item : [' + ']['.join(keys) + ']'
+    def __init__( self, keys, key ):
+        msg = 'Illegal item : [' + ']['.join(keys) + ']' + key
         ValidationError.__init__( self, msg )
-
 
 def validate( cfig, spec, keys=[] ):
     """Validate and coerce a nested dict against a parsec spec."""
@@ -62,7 +61,7 @@ def validate( cfig, spec, keys=[] ):
                         ( not val_is_dict and not spc_is_dict ):
                     speckey = '__MANY__'
                 else:
-                    raise ValidationError('ERROR: illegal item: ' + key )
+                    raise IllegalItemError( keys, key )
         else:
             speckey = key
         if isinstance( val, dict ):
