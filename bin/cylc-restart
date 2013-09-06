@@ -385,9 +385,9 @@ where they got to while the suite was down."""
                     itask.submission_poll_timer.set_host( host, set_timer=True )
                     itask.execution_poll_timer.set_host( host, set_timer=True )
                     
-            elif itask.state.is_currently( 'queued', 'submitting','submit-retrying', 'retrying', 'failed'):  
+            elif itask.state.is_currently( 'queued', 'submitting','submit-retrying', 'submit-failed', 'retrying', 'failed'):
                 itask.prerequisites.set_all_satisfied()
-                if not itask.state.is_currently( 'failed' ):
+                if not itask.state.is_currently( 'failed', 'submit-failed' ):
                     # reset to waiting as these had not been submitted yet.
                     itask.state.set_status('waiting')
 

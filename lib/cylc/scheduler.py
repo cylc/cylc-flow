@@ -1536,12 +1536,11 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_hold_waiting_tasks( self, new_task ):
+    def check_hold_waiting_tasks( self, new_task, is_newly_added=False ):
         if not new_task.state.is_currently('waiting'):
             return
 
-        # check for general suite hold
-        if self.hold_suite_now:
+        if is_newly_added and self.hold_suite_now:
             new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
             new_task.reset_state_held()
             return
@@ -1569,7 +1568,7 @@ class scheduler(object):
             return
 
         # tasks beyond the runahead limit
-        if self.runahead_limit:
+        if is_newly_added and self.runahead_limit:
             ouct = self.get_runahead_base()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
@@ -1600,6 +1599,7 @@ class scheduler(object):
 
     def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
+        self.check_hold_waiting_tasks( new_task, is_newly_added=True )
         if self.pool.add( new_task ):
             return True
         else:
