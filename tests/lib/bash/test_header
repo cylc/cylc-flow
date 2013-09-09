@@ -64,6 +64,9 @@ function FINALLY() {
         cd ~
         rm -rf $TEST_DIR
     fi
+    if [[ $FAILURES -gt 0 ]]; then
+        echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" > /dev/tty
+    fi
 }
 for S in $SIGNALS; do
     trap "FINALLY $S" $S
@@ -89,6 +92,9 @@ function run_ok() {
     shift 1
     if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         fail $TEST_NAME
+        mkdir -p $TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
         return
     fi
     ok $TEST_NAME
@@ -99,6 +105,9 @@ function run_fail() {
     shift 1
     if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         fail $TEST_NAME
+        mkdir -p $TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
         return
     fi
     ok $TEST_NAME
@@ -172,5 +181,6 @@ TEST_NAME_BASE=$(basename $0 .t)
 TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
 TEST_DIR=$(mktemp -d)
 cd $TEST_DIR
+TEST_LOG_DIR=$TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
 
 set +e
