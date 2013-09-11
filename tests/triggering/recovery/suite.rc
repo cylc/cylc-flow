@@ -17,15 +17,15 @@ Model post processing triggers off model or recovery tasks."""
     [[dependencies]]
         [[[0,12]]]
             graph = """
-pre:finish => model  # finish trigger
-model:fail => diagnose => recover # fail trigger
-model => !diagnose & !recover  # explicit success trigger
-model:succeed | recover => post  # conditional and explicit success 
-post => !model  # removes failed model to allow suite to auto finish
+                       pre:finish => model  # finish trigger
+                       model:fail => diagnose => recover # fail trigger
+                       model => !diagnose & !recover  # explicit success trigger
+                       model:succeed | recover => post  # conditional and explicit success 
+                       post => !model  # removes failed model to allow suite to auto finish
                     """
 [runtime]
     [[root]]
-        command scripting = "/bin/true" # fast
+        command scripting = "true" # fast
     [[model]]
         description = "A task that succeeds at O UTC and fails at 12 UTC"
         command scripting = """
