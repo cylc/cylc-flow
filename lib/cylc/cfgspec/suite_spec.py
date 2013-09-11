@@ -128,7 +128,7 @@ SPEC = {
             'initial scripting'               : vdr( vtype='string' ),
             'environment scripting'           : vdr( vtype='string' ),
             'pre-command scripting'           : vdr( vtype='string' ),
-            'command scripting'               : vdr( vtype='string', default='echo Default command scripting; sleep $(cylc rnd 1 16)'),
+            'command scripting'               : vdr( vtype='string', default='echo Hello World!; sleep $(cylc rnd 1 16)'),
             'post-command scripting'          : vdr( vtype='string' ),
             'retry delays'                    : vdr( vtype='m_float_list', default=[] ),
             'manual completion'               : vdr( vtype='boolean', default=False ),
@@ -144,7 +144,7 @@ SPEC = {
                 'disable retries'             : vdr( vtype='boolean', default=True ),
                 },
             'dummy mode' : {
-                'command scripting'              : vdr( vtype='string', default='echo Dummy command scripting; sleep $(cylc rnd 1 16)'),
+                'command scripting'              : vdr( vtype='string', default='echo Hello World!; sleep $(cylc rnd 1 16)'),
                 'disable pre-command scripting'  : vdr( vtype='boolean', default=True ),
                 'disable post-command scripting' : vdr( vtype='boolean', default=True ),
                 'disable task event hooks'       : vdr( vtype='boolean', default=True ),
