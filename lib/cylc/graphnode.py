@@ -17,7 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
+NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-]\s*\d+)\s*\]){0,1}(:[\w-]+){0,1}$')
+
 
 class GraphNodeError( Exception ):
     """
@@ -41,26 +42,50 @@ class graphnode( object ):
         # - intercycle dependence: foo[T-6]
         # These may be combined: foo[T-6]:m1
 
-        # Defaults:
-        self.intercycle = False
-        self.special_output = False
-
-        self.offset = None # negative offset (e.g. foo[T-N] -> N)
-        self.output = None
-
-        # parse and strip special output: foo[T-6]:m1 -> foo[T-6]
-        m = re.match( '(.*):([\w-]+)', node )
+        m = re.match( NODE_RE, node )
         if m:
-            self.special_output = True
-            node, self.output = m.groups()
+            name, offset, outp = m.groups()
 
-        # parse and strip intercyle: foo[T-6] or foo[T-nd] --> foo
-        m = re.match( OFFSET_RE, node )
+            if outp:
+                self.special_output = True
+                self.output = outp[1:] # strip ':'
+            else:
+                self.special_output = False
+                self.output = None
+
+            if name:
+                self.name = name
+            else:
+                raise GraphNodeError( 'Illegal graph node: ' + node )
+
+            if offset:
+                self.intercycle = True
+                # negative offset is normal (foo[T-N])
+                self.offset = str( -int( offset ))
+            else:
+                self.intercycle = False
+                self.offset = None
+
+        else:
+            raise GraphNodeError( 'Illegal graph node: ' + node )
+
+if __name__ == '__main__':
+    nodes = [
+        'foo[T-24]:outx',
+        'foo[T-24]',
+        'foo:outx',
+        ':out1', # error
+        '[T-24]', # error
+        'outx:[T-24]', # error
+        '[T-6]:outx', # error
+        'foo:m1[T-24]' # error
+        ]
+
+    for n in nodes:
+        print n, '...',
+        m = re.match( NODE_RE, n )
         if m:
-            self.intercycle = True
-            node, offset = m.groups()
-            # change sign to get self.offset:
-            self.offset = str( -int( offset ))
-        # only name left now
-        self.name = node
+            print m.groups()
+        else:
+            print 'ERROR!'
 

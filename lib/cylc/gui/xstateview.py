@@ -53,7 +53,6 @@ class GraphUpdater(threading.Thread):
         self.filter_exclude = None
         self.state_filter = None
 
-        self.should_group_families = False
         self.descendants = {}
         self.all_families = []
         self.triggering_families = []
@@ -87,8 +86,12 @@ class GraphUpdater(threading.Thread):
         self.group = []
         self.ungroup = []
         self.ungroup_recursive = False
-        self.group_all = False
-        self.ungroup_all = False
+        if "graph" in self.cfg.ungrouped_views:
+            self.ungroup_all = True
+            self.group_all = False
+        else:
+            self.ungroup_all = False
+            self.group_all = True
 
         self.graph_frame_count = 0
 
@@ -122,10 +125,7 @@ class GraphUpdater(threading.Thread):
             return False
 
         self.updater.set_update(False)
-        if not self.should_group_families:
-            self.task_list = deepcopy(self.updater.task_list)
-        else:
-            self.task_list = []
+        self.task_list = deepcopy(self.updater.task_list)
         self.live_graph_movie = self.updater.live_graph_movie
         self.live_graph_dir = self.updater.live_graph_dir
         states_full = deepcopy(self.updater.state_summary)
@@ -297,12 +297,6 @@ class GraphUpdater(threading.Thread):
             n.attr['color'] = '#888888'
             n.attr['fillcolor'] = 'white'
             n.attr['fontcolor'] = '#888888'
-
-        self.group = []
-        self.ungroup = []
-        self.group_all = False
-        self.ungroup_all = False
-        self.ungroup_recursive = False
 
         self.rem_nodes = []
 

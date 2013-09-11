@@ -29,7 +29,7 @@ class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
 
     # examples:
-    #self.settings[ 'all' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
+    #self.settings[ 'all-cycles' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
     #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
 
     def __init__( self, linearized_ancestors ):
@@ -43,15 +43,24 @@ class broadcast( Pyro.core.ObjBase ):
 
     def prune( self, target ):
         # remove empty leaves left by unsetting broadcast values
-        for key, val in target.items():
-            if isinstance( val, dict ):
-                if val == {}:
-                    del target[key]
+        def _prune( target ):
+            # recursive sub-function
+            pruned = False
+            for key, val in target.items():
+                if isinstance( val, dict ):
+                    if not val:
+                        del target[key]
+                        pruned = True
+                    else:
+                        pruned = _prune( target[key] )
                 else:
-                    self.prune( target[key] )
-            else:
-                if not val:
-                    del target[key]
+                    if not val:
+                        del target[key]
+                        pruned = True
+            return pruned
+        # prune until no further changes
+        while _prune( target ):
+            continue
  
     def addict( self, target, source ):
         for key, val in source.items():
@@ -66,7 +75,7 @@ class broadcast( Pyro.core.ObjBase ):
                     del target[key]
 
     def put( self, namespaces, cycles, settings ):
-        """Add or prune new validated broadcast settings."""
+        """Add new broadcast settings, or prune newly unset ones"""
         for setting in settings:
             for cycle in cycles:
                 if cycle not in self.settings.keys():
@@ -75,12 +84,8 @@ class broadcast( Pyro.core.ObjBase ):
                     if namespace not in self.settings[cycle]:
                         self.settings[cycle][namespace] = {}
                     self.addict( self.settings[cycle][namespace], setting )
-        # prune empty settings
-        while True:
-            tmp = deepcopy( self.settings )
-            self.prune( self.settings )
-            if tmp == self.settings:
-                break
+        # prune any empty branches
+        self.prune( self.settings )
 
         if self.get_dump() != self.last_settings:
             self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
@@ -97,8 +102,8 @@ class broadcast( Pyro.core.ObjBase ):
         name, tag = task_id.split( TaskID.DELIM )
 
         apply = {}
-        for cycle in [ 'all', tag ]:
-            # 'all' first so it can be overridden by specific cycle
+        for cycle in [ 'all-cycles', tag ]:
+            # 'all-cycles' first so it can be overridden by specific cycle
             if cycle not in self.settings:
                 continue
             nslist = []
@@ -117,19 +122,40 @@ class broadcast( Pyro.core.ObjBase ):
 
         return apply
 
-    def expire( self, expire=None ):
-        if not expire:
+    def expire( self, cutoff ):
+        """Clear all settings targetting cycle times earlier than cutoff."""
+        if not cutoff:
             self.log.warning( 'Expiring all broadcast settings now' ) 
             self.settings = {}
         for ctime in self.settings.keys():
-            if ctime == 'all':
+            if ctime == 'all-cycles':
                 continue
-            elif ctime < expire:
+            elif ctime < cutoff:
                 self.log.warning( 'Expiring ' + ctime + ' broadcast settings now' ) 
                 del self.settings[ ctime ]
 
-    def clear( self ):
-        self.settings = {}
+    def clear( self, namespaces, tags ):
+        """
+        Clear settings globally, or for listed namespaces and/or tags.
+        """
+        if not namespaces and not tags:
+            # clear all settings
+            self.settings = {}
+        elif tags:
+            # clear all settings specific to given tags 
+            for tag in tags:
+                try:
+                    del self.settings[tag]
+                except:
+                    pass
+        elif namespaces:
+            # clear all settings specific to given namespaces
+            for tag in self.settings.keys():
+                for ns in namespaces:
+                    try:
+                        del self.settings[tag][ns]
+                    except:
+                        pass
         if self.get_dump() != self.last_settings:
             self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
             self.last_settings = self.settings

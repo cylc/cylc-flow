@@ -531,10 +531,10 @@ class scheduler(object):
 
     def command_stop_after_clock_time( self, arg ):
         # format: YYYY/MM/DD-HH:mm
-        date, time = arg.split('-')
-        yyyy, mm, dd = date.split('/')
-        HH,MM = time.split(':')
-        dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
+        sdate, stime = arg.split('-')
+        yyyy, mm, dd = sdate.split('/')
+        HH,MM = stime.split(':')
+        dtime = datetime.datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
         self.set_stop_clock( dtime )
 
     def command_stop_after_task( self, tid ):
@@ -742,8 +742,12 @@ class scheduler(object):
                 else:
                     self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
                     new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
+                    # set reloaded task's spawn status (else task state init doesn't get
+                    # this right for reloaded sequential tasks TODO - fix this properly)
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
+                    else:
+                        new_task.state.set_unspawned()
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
@@ -784,24 +788,19 @@ class scheduler(object):
             # self.ict is set by "cylc restart" after loading state dump
             pass
         else:
-            if self.options.warm:
-                if self.options.set_ict:
-                    override = self.start_tag
-                else:
-                    override = None
-            elif self.options.raw:
+            if self.options.raw:
                 override = None
             else:
                 override = self.start_tag    
-        
-        # will need adjusting for ISO8601 time specification  
+        # will need adjusting for ISO8601 time specification
         if override == "now":
             override = datetime.datetime.now().strftime("%Y%m%d%H") 
 
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, override=override, is_restart=self.is_restart )
+                verbose=self.verbose, override=override, is_restart=self.is_restart,
+                is_reload=reconfigure)
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -1030,8 +1029,8 @@ class scheduler(object):
 
                 self.negotiate()
 
-                submitted = self.pool.process()
-                self.process_resolved( submitted )
+                ready = self.pool.process()
+                self.process_resolved( ready )
 
                 self.spawn()
 
@@ -1103,6 +1102,12 @@ class scheduler(object):
                 
             # process queued commands
             self.process_command_queue()
+
+            # Hold waiting tasks if beyond stop cycle etc:
+            # (a) newly spawned beyond existing stop cycle
+            # (b) new stop cycle set by command
+            for itask in self.pool.get_tasks():
+                self.check_hold_waiting_tasks( itask )
 
             #print '<Pyro'
             if flags.iflag or self.do_update_state_summary:
@@ -1338,8 +1343,12 @@ class scheduler(object):
         self.stop_clock_time = dtime
 
     def set_stop_task( self, taskid ):
-        self.log.warning( "Setting stop task: " + taskid )
-        self.stop_task = taskid
+        name, tag = taskid.split(TaskID.DELIM)
+        if name in self.config.get_task_name_list():
+            self.log.warning( "Setting stop task: " + taskid )
+            self.stop_task = taskid
+        else:
+            self.log.warning( "Requested stop task name does not exist: " + name )
 
     def hold_suite( self, ctime = None ):
         if ctime:
@@ -1521,74 +1530,76 @@ class scheduler(object):
                             itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
                             itask.reset_state_waiting()
 
-    def check_new_task_proxy( self, new_task, prev_instance=None ):
-        """Adjust new task proxy and return True, or False to reject it."""
+    def check_hold_waiting_tasks( self, new_task, is_newly_added=False ):
+        if not new_task.state.is_currently('waiting'):
+            return
+
+        if is_newly_added and self.hold_suite_now:
+            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+            new_task.reset_state_held()
+            return
+
+        # further checks only apply to cycling tasks
+        if not new_task.is_cycling():
+            return
 
         # tasks with configured stop cycles
-        if prev_instance:
-            if prev_instance.stop_c_time:
-                # this task has a stop cycle
-                if int( new_task.c_time ) > int( prev_instance.stop_c_time ):
-                    # stop cycle reached
-                    self.log.info( "Rejecting new task beyond its stop cycle: " + new_task.id )
-                    return False
-                else:
-                    # stop cycle not reached, perpetuate it
-                    new_task.stop_c_time = prev_instance.stop_c_time
 
-        # hold the new task if necessary
-        hold = False
-        if self.hold_suite_now:
-            hold = True
-            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+        if new_task.stop_c_time:
+            if int( new_task.c_time ) > int( new_task.stop_c_time ):
+                new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + new_task.stop_c_time )
+                new_task.reset_state_held()
+                return
+
+        # check cycle stop or hold conditions
         if self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
-            hold = True
             new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
-        if self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
-            hold = True
-            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
-        if hold:
             new_task.reset_state_held()
-            return True
+            return
+        if self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
+            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+            new_task.reset_state_held()
+            return
 
         # tasks beyond the runahead limit
-        if self.runahead_limit:
+        if is_newly_added and self.runahead_limit:
             ouct = self.get_runahead_base()
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
             if int( foo.get() ) >= int( ouct ):
                 new_task.log( "NORMAL", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()
-                return True
+                return
 
         # hold tasks with future triggers beyond the final cycle time
         if self.task_has_future_trigger_overrun( new_task ):
             new_task.log( "NORMAL", "HOLDING (future trigger beyond stop cycle)" )
             self.held_future_tasks.append( new_task.id )
             new_task.reset_state_held()
-            return True
-
-        return True
+            return
 
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
         if not self.stop_tag:
-            return
+            return False
         for pct in itask.prerequisites.get_target_tags():
-            if int( ct(pct).get() ) > int(self.stop_tag):
-                return True
+            try:
+                if int( ct(pct).get() ) > int(self.stop_tag):
+                    return True
+            except:
+                # pct invalid cycle time => is an asynch trigger
+                pass
         return False
 
-    def add_new_task_proxy( self, new_task, prev_instance=None ):
+    def add_new_task_proxy( self, new_task ):
         """Add a given new task proxy to the pool, or destroy it."""
-        added = False
-        if self.check_new_task_proxy( new_task, prev_instance ):
-            if self.pool.add( new_task ):
-                added = True
-        if not added:
+        self.check_hold_waiting_tasks( new_task, is_newly_added=True )
+        if self.pool.add( new_task ):
+            return True
+        else:
             new_task.prepare_for_death()
             del new_task
-        return added
+            return False
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -1596,7 +1607,7 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if self.add_new_task_proxy( new_task, itask ):
+        if self.add_new_task_proxy( new_task ):
             return new_task
         else:
             return None

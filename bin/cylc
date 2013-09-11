@@ -275,6 +275,7 @@ for dct in [
         utility_commands,
         task_commands,
         admin_commands,
+        hook_commands,
         license_commands ]:
     for com in dct.keys():
         all_commands[com] = dct[com]

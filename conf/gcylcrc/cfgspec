@@ -5,6 +5,10 @@
 # One or two of "text", "dot", "graph".
 initial views = force_list( default=list("text", "dot") )
 
+# Views to load in a grouped-by-family state.
+# Any (or zero) of "text", "dot", "graph".
+ungrouped views = force_list( default=list() )
+
 # Task state color themes are defined in
 #   $CYLC_DIR/conf/gcylcrc/themes.rc
 # (note the "default" theme MUST be defined in themes.rc)

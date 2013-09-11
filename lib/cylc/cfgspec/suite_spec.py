@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from OrderedDict import OrderedDict
 from parsec.validate import validator as vdr
 from parsec.validate import validate, expand, get_defaults
 from parsec.upgrade import upgrader, converter
@@ -53,9 +52,9 @@ SPEC = {
             'enable'                          : vdr( vtype='boolean', default=False ),
             'simultaneous instances'          : vdr( vtype='boolean', default=False ),
             },
-        'environment' : OrderedDict([
-            ('__MANY__',                        vdr( vtype='string' )),
-            ]),
+        'environment' : {
+            '__MANY__'                        : vdr( vtype='string' ),
+            },
         'event hooks' : {
             'startup handler'                 : vdr( vtype='string' ),
             'timeout handler'                 : vdr( vtype='string' ),
@@ -186,12 +185,12 @@ SPEC = {
                 'run directory'               : vdr( vtype='string' ),
                 'verbose mode'                : vdr( vtype='boolean' ),
                 },
-            'environment' : OrderedDict([
-                ('__MANY__',                    vdr( vtype='string' )),
-                ]),
-            'directives' : OrderedDict([
-                ('__MANY__',                    vdr( vtype='string' )),
-                ]),
+            'environment' : {
+                '__MANY__'                    : vdr( vtype='string' ),
+                },
+            'directives' : {
+                '__MANY__'                    : vdr( vtype='string' ),
+                },
             'outputs' : {
                 '__MANY__'                    : vdr( vtype='string' ),
                 },
@@ -223,9 +222,9 @@ SPEC = {
         },
     }
 
-def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False, verbose=False ):
+def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False, verbose=False, is_reload=False ):
     global cfg
-    if not cfg:
+    if is_reload or not cfg:
         cfg = parse( fpath, verbose, template_vars, template_vars_file )
 
         u = upgrader( cfg, SPEC, 'suite definition', verbose )
@@ -234,12 +233,19 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file, do_expand=False,
 
         validate( cfg, SPEC )
 
-        # load non-runtime defaults
+        # load defaults for everything except [runtime]
+        # (keep runtime sparse for efficient inheritance)
         for key,val in SPEC.items():
-            if isinstance(val,dict) and key != 'runtime':
+            if isinstance(val,dict):
+                if key != 'runtime':
+                    # all main sections except for runtime
+                    if key not in cfg:
+                        cfg[key] = {} # TODO - ordered dict?
+                    cfg[key] = expand( cfg[key], SPEC[key] )
+            else:
+                # top level (no section) items
                 if key not in cfg:
-                    cfg[key] = {} # TODO - ordered dict?
-                cfg[key] = expand( cfg[key], SPEC[key] )
+                    cfg[key] = val.args['default']
 
     return cfg
 

@@ -22,8 +22,7 @@ from OrderedDict import OrderedDict
 from cylc.include_files import inline, IncludeFileError
 
 """
-Module to parse a cylc parsec config file into a nested dict of
-key=value pairs, with line continuation and Jinja2 processing.
+Module to parse a cylc parsec config file into a nested ordered dict.
 """
 
 try:
@@ -300,12 +299,13 @@ def parse( fpath, verbose=False,
     flines = read_and_proc( fpath, verbose, 
             template_vars, template_vars_file )
     # write the processed 
-    fp = fpath + '.processed'
-    if verbose:
-        print "Writing file" + fp
-    f = open( fp, 'w' )
-    f.write('\n'.join(flines))
-    f.close()
+    if fpath.endswith("suite.rc"):
+        fp = fpath + '.processed'
+        if verbose:
+            print "Writing file" + fp
+        f = open( fp, 'w' )
+        f.write('\n'.join(flines))
+        f.close()
 
     nesting_level = 0
     config = OrderedDict()
@@ -360,10 +360,7 @@ def parse( fpath, verbose=False,
             if m:
                 # matched a key=value item
                 indent, key, val = m.groups()
-                if not val:
-                    # empty value - same as item not present
-                    continue
-                if val[:3] in ['"""', "'''"]:
+                if val.startswith('"""') or val.startswith("'''"):
                     # triple quoted - may be a multiline value
                     val, index = multiline( flines, val, index, maxline )
                 else:
@@ -373,12 +370,12 @@ def parse( fpath, verbose=False,
                         val = m.groups()[0]
                         #print 'SINGLE      ', key, ' = ', val
                     else:
-                        m = re.match( _SQ_VALUE, val )
+                        m = re.match( _DQ_VALUE, val )
                         if m:
                             # double quoted value: unquote and strip comment
                             val = m.groups()[0]
                             #print 'DOUBLE      ', key, ' = ', val
-                        elif val[0] in ["'", '"']:
+                        elif val.startswith("'") or val.startswith('"'):
                             # must be a quoted list: unquote and strip comment
                             #print 'QUOTED LIST ', key, ' = ', val
                             if val[0] == "'":
@@ -386,6 +383,10 @@ def parse( fpath, verbose=False,
                             else:
                                 reg = _DQ_VALUE
                             vals = re.split( '\s*,\s*', val )
+                            if len(vals) == 1:
+                                # not a list
+                                print >> sys.stderr, line
+                                raise ParseError( 'Invalid line at ' + str(index+1) )
                             val = ''
                             for v in vals:
                                 m = re.match(reg, v)
@@ -400,11 +401,11 @@ def parse( fpath, verbose=False,
                                 #print 'UNQUOTED    ', key, ' = ', val
                             else:
                                 print >> sys.stderr, line
-                                raise ParseError( 'Invalid line (1) at ' + str(index+1) )
+                                raise ParseError( 'Invalid line at ' + str(index+1) )
                 addict( config, key, val, parents, verbose )
             else:
                 # no match
                 print >> sys.stderr, line
-                raise ParseError( 'Invalid line (2) at line ' + str(index+1) )
+                raise ParseError( 'Invalid line at ' + str(index+1) )
     return config
 

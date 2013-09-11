@@ -41,6 +41,11 @@ class IllegalValueError( ValidationError ):
                 ': [' + ']['.join(keys) + '] = ' + str(value)
         ValidationError.__init__( self, msg )
 
+class IllegalItemError( ValidationError ):
+    def __init__( self, keys, key ):
+        msg = 'Illegal item: [' + ']['.join(keys) + ']' + key
+        ValidationError.__init__( self, msg )
+
 def validate( cfig, spec, keys=[] ):
     """Validate and coerce a nested dict against a parsec spec."""
     for key,val in cfig.items():
@@ -48,12 +53,21 @@ def validate( cfig, spec, keys=[] ):
             if '__MANY__' not in spec:
                 raise ValidationError('ERROR: illegal item: ' + key )
             else:
-                speckey = '__MANY__'
+                # only accept the item if it's value is of the same type
+                # as that of the __MANY__  item, i.e. dict or not-dict.
+                val_is_dict = isinstance( val, dict )
+                spc_is_dict = isinstance( spec['__MANY__'], dict )
+                if ( val_is_dict and spc_is_dict ) or \
+                        ( not val_is_dict and not spc_is_dict ):
+                    speckey = '__MANY__'
+                else:
+                    raise IllegalItemError( keys, key )
         else:
             speckey = key
         if isinstance( val, dict ):
             validate( val, spec[speckey], keys+[key] )
-        else:
+        elif val:
+            # (if val is null we're only checking item validity)
             cfig[key] = spec[speckey].check( val, keys+[key] )
 
 def _populate_spec_defaults( defs, spec ):
@@ -61,18 +75,14 @@ def _populate_spec_defaults( defs, spec ):
     for key,val in spec.items():
         if isinstance( val, dict ):
             if key not in defs:
-                if key in ['environment','directives']:
-                    # TODO - IS THIS NECESSARY?
-                    defs[key] = OrderedDict()
-                else:
-                    defs[key] = {}
+                defs[key] = OrderedDict()
             _populate_spec_defaults( defs[key], spec[key] )
         else:
             defs[key] = spec[key].args['default']
 
 def get_defaults( spec ):
     """Return a nested dict of default values from a parsec spec."""
-    defs = {}
+    defs = OrderedDict()
     _populate_spec_defaults( defs, spec )
     return defs
 

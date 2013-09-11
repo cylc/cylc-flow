@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
+from OrderedDict import OrderedDict
 from fileparse import parse, FileNotFoundError
 from validate import validate, expand
 from util import replicate
@@ -29,7 +30,7 @@ def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, verbose=True
     Parse, upgrade, validate, combine, and expand a single parsec config file.
     If FILE fails to parse or validate just fall back on spec defaults.
     """
-    cfg = {}
+    cfg = OrderedDict()
     try:
         cfg = parse( FILE )
     except FileNotFoundError, x:
@@ -76,6 +77,7 @@ def load_combined( FILE1, descr1,
     """
     cfg1 = load_single( FILE1, SPEC, descr1, upgrader, False, verbose )
     cfg2 = load_single( FILE2, SPEC, descr2, upgrader, False, verbose )
+
     if cfg2:
         replicate( cfg1, cfg2 )
     if do_expand:

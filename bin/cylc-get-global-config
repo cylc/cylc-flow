@@ -50,6 +50,10 @@ parser.add_option( "--debug",
         help="Show exception tracebacks.",
         action="store_true", default=False, dest="debug" )
 
+parser.add_option( "--print-run-dir",
+        help="Display the site configured run directory",
+        action="store_true", default=False, dest="run_dir" )
+
 (options, args) = parser.parse_args()
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
@@ -60,6 +64,8 @@ try:
     gcfg = get_global_cfg(strict=options.strict, verbose=options.verbose)
     if options.stdout:
         print_global_cfg()
+    elif options.run_dir:
+        print gcfg.get_host_item('run directory')
     else:
         print "Combined site/user config is valid for cylc-" + cylc_version
 

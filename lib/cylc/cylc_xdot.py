@@ -28,8 +28,35 @@ from cycle_time import ct
 from graphing import CGraphPlain
 from TaskID import TaskID
 
-class MyDotWindow2( xdot.DotWindow ):
+"""
+Cylc-modified xdot windows for the "cylc graph" command.
+TODO - factor more commonality out of MyDotWindow, MyDotWindow2
+"""
+
+class CylcDotViewerCommon( xdot.DotWindow ):
+    def load_config( self ):
+        print 'loading the suite definition'
+        if self.suiterc:
+            is_reload = True
+            collapsed = self.suiterc.closed_families
+        else:
+            is_reload = False
+            collapsed = []
+        try:
+            self.suiterc = config.config( self.suite, self.file,
+                    template_vars=self.template_vars,
+                    template_vars_file=self.template_vars_file,
+                    is_reload=is_reload, collapsed=collapsed )
+        except Exception, x:
+            print >> sys.stderr, "Failed - parsing error?"
+            print >> sys.stderr, x
+            return False
+        self.inherit = self.suiterc.get_parent_lists()
+        return True
+ 
+class MyDotWindow2( CylcDotViewerCommon ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
+    # used by "cylc graph" to plot runtime namespace graphs
 
     ui = '''
     <ui>
@@ -52,6 +79,7 @@ class MyDotWindow2( xdot.DotWindow ):
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
+        self.suiterc = None
         self.watch = []
         self.orientation = orientation
         self.template_vars = template_vars
@@ -149,30 +177,6 @@ class MyDotWindow2( xdot.DotWindow ):
             else:
                 time.sleep(1)
 
-    def load_config( self, reload=False ):
-        if reload:
-            print 'Reloading the suite.rc file.'
-            try:
-                self.suiterc = config.config( self.suite, self.file,
-                        template_vars=self.template_vars,
-                        template_vars_file=self.template_vars_file,
-                        collapsed=self.suiterc.closed_families )
-            except Exception, x:
-                print >> sys.stderr, "Failed to reload suite.rc file (parsing error?)."
-                print >> sys.stderr, x
-                return False
-        else:
-            try:
-                self.suiterc = config.config( self.suite, self.file,
-                        template_vars=self.template_vars,
-                        template_vars_file=self.template_vars_file )
-            except Exception, x:
-                print >> sys.stderr, "Failed to load suite.rc file (parsing error?)."
-                print >> sys.stderr, x
-                return False
-        self.inherit = self.suiterc.get_parent_lists()
-        return True
-
     def get_graph( self ):
         title = self.suite + ' runtime namespace inheritance graph'
         graph = CGraphPlain( title )
@@ -251,15 +255,16 @@ class MyDotWindow2( xdot.DotWindow ):
                     break
         if reparse:
             while True:
-                if self.load_config(reload=True):
+                if self.load_config():
                     break
                 else:
                     time.sleep(1)
             self.get_graph()
         return True
 
-class MyDotWindow( xdot.DotWindow ):
+class MyDotWindow( CylcDotViewerCommon ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
+    # used by "cylc graph" to plot dependency graphs
 
     ui = '''
     <ui>
@@ -287,6 +292,7 @@ class MyDotWindow( xdot.DotWindow ):
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
+        self.suiterc = None
         self.ctime = ctime
         self.raw = False
         self.stop_after = stop_after
@@ -395,29 +401,6 @@ class MyDotWindow( xdot.DotWindow ):
             else:
                 time.sleep(1)
 
-    def load_config( self, reload=False ):
-        if reload:
-            print 'Reloading the suite.rc file.'
-            try:
-                self.suiterc = config.config( self.suite, self.file, 
-                        template_vars=self.template_vars,
-                        template_vars_file=self.template_vars_file,
-                        collapsed=self.suiterc.closed_families )
-            except Exception, x:
-                print >> sys.stderr, "Failed to reload suite.rc file (parsing error?):"
-                print >> sys.stderr, x
-                return False
-        else:
-            try:
-                self.suiterc = config.config( self.suite, self.file,
-                        template_vars=self.template_vars,
-                        template_vars_file=self.template_vars_file )
-            except Exception, x:
-                print >> sys.stderr, "Failed to load suite.rc file (parsing error?):"
-                print >> sys.stderr, x
-                return False
-        return True
-
     def group_all( self, w ):
         self.get_graph( group_all=True )
 
@@ -524,7 +507,7 @@ class MyDotWindow( xdot.DotWindow ):
                     break
         if reparse:
             while True:
-                if self.load_config(reload=True):
+                if self.load_config():
                     break
                 else:
                     time.sleep(1)
@@ -657,6 +640,4 @@ class xdot_widgets(object):
 
     def on_reload(self, action):
         self.widget.reload()
-        
-
 

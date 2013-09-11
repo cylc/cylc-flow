@@ -89,9 +89,6 @@ The command can be run in polling mode with the --wait option.""")
 gcfg = get_global_cfg()
 default_run_dir = gcfg.get_host_item( 'run directory', replace=True )
 
-parser.remove_option("--db")
-parser.remove_option("--debug")
-
 parser.add_option( "-t", "--task", 
         help="Specify a task to check the state of.",
         action="store", dest="task", default=None )
@@ -119,6 +116,9 @@ parser.add_option( "-S", "--status",
 suite_poller.add_to_cmd_options( parser, default_interval=60 )
 
 ( options, args ) = parser.parse_args()
+
+parser.remove_option("--db")
+parser.remove_option("--debug")
 
 suite = args[0]
 

@@ -84,7 +84,7 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False, collapsed=[],
-            override=None, is_restart=False ):
+            override=None, is_restart=False, is_reload=False ):
 
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
@@ -131,7 +131,7 @@ class config( object ):
         # parse, upgrade, validate the suite, but don't expand [runtime]
         self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
                 template_vars_file=template_vars_file, do_expand=False,
-                verbose=verbose )
+                verbose=verbose, is_reload=is_reload )
         self.runtime_defaults = get_defaults_rt()
 
         # allow test suites with no [runtime]:
@@ -204,15 +204,19 @@ class config( object ):
             self.cfg['scheduling']['special tasks'][type] = result
 
         self.collapsed_families_rc = self.cfg['visualization']['collapsed families']
-        if len( collapsed ) > 0:
-            # this overrides the rc file item
+        if is_reload:
+            # on suite reload retain an existing state of collapse
+            # (used by the "cylc graph" viewer)
             self.closed_families = collapsed
+            fromrc = False
         else:
             self.closed_families = self.collapsed_families_rc
+            fromrc = True
         for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants'] and self.verbose:
-                print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
+            if cfam not in self.runtime['descendants']:
                 self.closed_families.remove( cfam )
+                if fromrc and self.verbose:
+                    print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
 
         # check for run mode override at suite level
         if self.cfg['cylc']['force run mode']:
@@ -1319,17 +1323,20 @@ class config( object ):
 
         if self.first_graph:
             self.first_graph = False
-            if not self.collapsed_families_rc:
+            if not self.collapsed_families_rc and not ungroup_all:
                 # initially default to collapsing all families if
                 # "[visualization]collapsed families" not defined
                 group_all = True
 
         if group_all:
             # Group all family nodes
-            for fam in members:
-                if fam != 'root':
-                    if fam not in self.closed_families:
-                        self.closed_families.append( fam )
+            if self.collapsed_families_rc:
+                self.closed_families = copy(self.collapsed_families_rc)
+            else:
+                for fam in members:
+                    if fam != 'root':
+                        if fam not in self.closed_families:
+                            self.closed_families.append( fam )
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []
