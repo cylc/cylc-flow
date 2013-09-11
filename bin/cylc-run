@@ -34,7 +34,7 @@ class start( scheduler ):
 Start a suite running at a specified initial cycle time. To restart from
 a previous state see the 'cylc restart' command.
 
-Suites run in daemon mode unless -n/--non-daemon or --debug is used.
+Suites run in daemon mode unless -n/--no-detach or --debug is used.
 
 The following are all equivalent if no intercycle dependence exists:
   1/ Cold start (default)    : use special cold-start tasks 
@@ -61,7 +61,11 @@ initial and final cycle time variables persists across suite restarts."""
                          the suite has no cycling tasks. Overrides an 
                          initial cycle time in the suite definition.""")])
 
-        self.parser.add_option( "-n", "--non-daemon",
+        self.parser.add_option( "--non-daemon",
+                help="(deprecated: use --no-detach)",
+                action="store_true", default=False, dest="no_detach" )
+
+        self.parser.add_option( "-n", "--no-detach",
                 help="Do not daemonize the suite",
                 action="store_true", default=False, dest="no_detach" )
 
