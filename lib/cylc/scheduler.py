@@ -788,17 +788,11 @@ class scheduler(object):
             # self.ict is set by "cylc restart" after loading state dump
             pass
         else:
-            if self.options.warm:
-                if self.options.set_ict:
-                    override = self.start_tag
-                else:
-                    override = None
-            elif self.options.raw:
+            if self.options.raw:
                 override = None
             else:
                 override = self.start_tag    
-        
-        # will need adjusting for ISO8601 time specification  
+        # will need adjusting for ISO8601 time specification
         if override == "now":
             override = datetime.datetime.now().strftime("%Y%m%d%H") 
 
