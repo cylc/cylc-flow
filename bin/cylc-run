@@ -50,7 +50,7 @@ succeeded state, to stand in for a previous cycle. The variable
 $CYLC_SUITE_INITIAL_CYCLE_TIME will be set to 'None' in task environments
 unless '--ict' is used.
 
-3/ RAW START -- do not insert nay cold-start tasks (mainly for testing).
+3/ RAW START -- do not insert any cold-start tasks (mainly for testing).
 
 In task environments, $CYLC_SUITE_FINAL_CYCLE_TIME is always set to the 
 final cycle time if one is set (by suite.rc file or command line). The 
