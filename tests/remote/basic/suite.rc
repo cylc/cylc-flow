@@ -13,14 +13,17 @@
     [[reference test]]
         live mode suite timeout = 0.5
         suite shutdown event handler = cleanup.sh
-
 [scheduling]
     [[dependencies]]
-        graph = "foo"
+        graph = "foo => bar"
 [runtime]
     [[foo]]
         command scripting = "/bin/true" # fast
         [[[remote]]]
             host = {{ HOST }}
             owner = {{ OWNER }}
+    [[bar]]
+        command scripting = "/bin/true"
+        [[[remote]]]
+            host = {{ HOST }}
 
