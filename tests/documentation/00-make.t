@@ -15,24 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: job script torture test
+#C: Test documentation can be made
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE torture
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-jobscript-match
-run_ok $TEST_NAME cylc jobscript test foo.1
-sed '/export CYLC_VERSION=/d' $TEST_NAME.stdout > jobfile
-cp jobfile ~/jobfile
-
-cmp_ok jobfile $TEST_SOURCE_DIR/torture/jobfile
-
-purge_suite $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE-make-docs
+run_ok $TEST_NAME make -C $CYLC_DIR/doc
