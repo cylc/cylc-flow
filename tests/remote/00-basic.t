@@ -15,10 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test basic remote host settings.
+#C: Test remote host settings.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE basic
 #-------------------------------------------------------------------------------
@@ -26,6 +26,19 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-userathost
+SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
+echo $CYLC_TEST_TASK_OWNER@$CYLC_TEST_TASK_HOST > userathost
+cmp_ok userathost - <<__OUT__
+$(sqlite3 $SUITE_RUN_DIR/cylc-suite.db "select host from task_states where name='foo'")
+__OUT__
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-hostonly
+echo $CYLC_TEST_TASK_HOST > hostonly
+cmp_ok hostonly - <<__OUT__
+$(sqlite3 $SUITE_RUN_DIR/cylc-suite.db "select host from task_states where name='bar'")
+__OUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
