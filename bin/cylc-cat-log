@@ -22,87 +22,98 @@ from cylc.TaskID import TaskID
 if remrun().execute():
     sys.exit(0)
 
-import re
+import re, os
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
 from cylc.suite_output import suite_output
+from cylc.global_config import get_global_cfg
 
 parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS 
-Print and filter cylc suite (not task) log files.""" )
+Print various log files for suites and tasks that are currently running,
+or have previously finished.""",
+    argdoc=[ ("REG", "Suite name"), 
+    ("[TASK-ID]", """Print the stdout or stderr log
+of the identified task""" )])
 
 parser.add_option( "-l", "--location", 
-        help="Print the suite log file location and exit.",
+        help="Just print the location of the requested log file.",
         action="store_true", default=False, dest="print_location" )
 
-parser.add_option( "-t", "--task", 
-        help="Filter the log for messages from a specific task",
-        metavar="TASK", action="store", default=None, dest="taskfilter" )
-
-parser.add_option( "-f", "--filter", 
-        help="Filter the log with a Python-style regular expression "
-        "e.g. '\[(foo|bar).*(started|succeeded)'",
-        metavar="RE", action="store", default=None, dest="regexfilter" )
-
 parser.add_option( "-r", "--rotation", 
-        help="Rotation number (to view older, rotated logs)",
+        help="Rotation number (to view older, rotated suite logs)",
         metavar="INT", action="store", default="0", dest="rotation" )
 
 parser.add_option( "-o", "--stdout", 
-        help="Print the suite stdout log (the default is the suite event log).",
+        help="Print suite or task stdout logs "
+        "(for suites, the default is to print the event log; "
+        " for tasks, the default is to print the job script).",
         action="store_true", default=False, dest="print_stdout" )
 
 parser.add_option( "-e", "--stderr", 
-        help="Print the suite stderr log (the default is the suite event log).",
+        help="Print suite or task stderr logs (see --stdout for defaults).",
         action="store_true", default=False, dest="print_stderr" )
+
+parser.add_option( "-t", "--try-number", 
+        help="Task try number (default 1).",
+        metavar='INT', action="store", default="1", dest="tryext" )
 
 ( options, args ) = parser.parse_args()
 
 suite, suiterc = prep_file( args[0], options ).execute()
 owner = options.db_owner
 
-if options.print_stdout:
-    filename = suite_output( suite ).get_path()
-elif options.print_stderr:
-    filename = suite_output( suite ).get_path(True)
+gcfg = get_global_cfg()
+
+if len(args) == 2:
+    # task log requested
+    taskid = args[1]
+    logname = taskid + '.' + options.tryext
+    sjld = gcfg.get_derived_host_item( suite, 'suite job log directory' )
+    if options.print_stdout:
+        fpath = os.path.join( sjld, logname + '.out' )
+    elif options.print_stderr:
+        fpath = os.path.join( sjld, logname + '.err' )
+    else:
+        fpath = os.path.join( sjld, logname )
+
 else:
-    filename = suite_log( suite ).get_path()
- 
-if options.rotation != "0":
-    filename = filename + '.' + options.rotation
+    # suite log requested
+    sld = gcfg.get_derived_host_item( suite, 'suite log directory' )
+    if options.print_stdout:
+        fpath = os.path.join( sld, 'out' )
+    elif options.print_stderr:
+        fpath = os.path.join( sld, 'err' )
+    else:
+        fpath = os.path.join( sld, 'log' )
+        if options.rotation != "0":
+            fpath += '.' + options.rotation
 
 if options.print_location:
-    print filename
+    print fpath
     sys.exit(0)
 
-filter = None
-if options.taskfilter:
-    filter = re.compile( '\\[' + options.taskfilter + TaskID.DELIM_RE + '\d+\\]' )
-elif options.regexfilter:
-    filter = re.compile( options.regexfilter )
-
-# TODO - exception handling for large files that exceed memory capacity?
-# apparently readline() one line at a time is much slower than readlines()
 try:
-    LOG = open( filename )
+    LOG = open( fpath )
 except IOError, x:
     if options.debug:
         raise
-    print >> sys.stderr, str(x)
-    sys.exit( 'ERROR: suite log file not found' )
+    sys.exit( str(x) )
 
-
-lines = LOG.readlines()
-LOG.close()
-
-if filter:
-    filtered = []
+try:
+    # read all lines at once - fast
+    lines = LOG.readlines()
     for line in lines:
-        if re.search( filter, line ):
-            filtered.append(line)
-else:
-    filtered = lines
+        print line.rstrip()
+except:
+    try:
+        # very large file? read one line at a time
+        for line in LOG.readline():
+            print line.rstrip()
+    except Exception, x:
+        if options.debug:
+            raise
+        sys.exit(x)
 
-for line in filtered:
-    print line.rstrip()
+LOG.close()
 
