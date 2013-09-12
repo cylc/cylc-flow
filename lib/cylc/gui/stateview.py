@@ -571,8 +571,10 @@ class DotUpdater(threading.Thread):
 
         if self.should_transpose_view:
             types = [str] + [gtk.gdk.Pixbuf] * len( self.ctimes )
+            num_new_columns = len(types)
         else:
             types = [gtk.gdk.Pixbuf] * (10 + len( self.task_list)) + [str]
+            num_new_columns = 1 + len(self.task_list)
         new_led_liststore = gtk.ListStore( *types )
         old_types = []
         for i in range(self.led_liststore.get_n_columns()):
@@ -582,7 +584,7 @@ class DotUpdater(threading.Thread):
             new_types.append(new_led_liststore.get_column_type(i))
         treeview_has_content = bool(len(self.led_treeview.get_columns()))
         
-        if old_types == new_types and treeview_has_content:
+        if treeview_has_content and old_types == new_types:
             self.set_led_headings()
             self.led_liststore.clear()
             self.is_transposed = self.should_transpose_view
@@ -593,31 +595,31 @@ class DotUpdater(threading.Thread):
 
         self.led_liststore = new_led_liststore
 
-        if (self.is_transposed == self.should_transpose_view and
-            treeview_has_content):
-            tvcs_for_removal = []
-            for i in range(len(new_types) - 1, len(old_types) - 1):
-                if self.should_transpose_view:
-                    col_index = i
-                else:
-                    col_index = i - 9
-  
-                tvc = self.led_treeview.get_column(col_index)
-                if tvc is not None:
-                    tvcs_for_removal.append(tvc)
+        if (treeview_has_content and
+                self.is_transposed == self.should_transpose_view):
+
+            tvcs_for_removal = self.led_treeview.get_columns()[
+                 num_new_columns:]
+            
             for tvc in tvcs_for_removal:
-                self.led_treeview.remove_column(tvc)
+                self.led_treeview.remove_column(tvc) 
+
             self.led_treeview.set_model(self.led_liststore)
-            for n in range(len(old_types) - 1, len(new_types) - 1):
-                if new_types[n] == gobject.TYPE_STRING:
-                    continue
+            num_columns = len(self.led_treeview.get_columns())
+            extra_columns = range(num_columns, num_new_columns)
+            if self.is_transposed:
+                extra_model_columns = extra_columns
+            else:
+                extra_model_columns = [9 + n for n in extra_columns]
+            for model_col_num in extra_model_columns:
+                # Add newly-needed columns.
                 cr = gtk.CellRendererPixbuf()
                 #cr.set_property( 'cell_background', 'black' )
                 cr.set_property( 'xalign', 0 )
                 tvc = gtk.TreeViewColumn( ""  )
                 tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
                 tvc.pack_end( cr, True )
-                tvc.set_attributes( cr, pixbuf=n )
+                tvc.set_attributes( cr, pixbuf=model_col_num )
                 self.led_treeview.append_column( tvc )
             self.set_led_headings()
             return False
