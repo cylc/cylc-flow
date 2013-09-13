@@ -37,7 +37,7 @@ class restart( scheduler ):
 Restart a cylc suite from a previous state. To start from scratch see
 the 'cylc run' command.
 
-Suites run in daemon mode unless -n/--non-daemon or --debug is used.
+Suites run in daemon mode unless -n/--no-detach or --debug is used.
 
 The most recent previous state is loaded by default, but other states
 can be specified on the command line (cylc writes special state dumps
@@ -51,10 +51,14 @@ where they got to while the suite was down."""
                         suite state dump directory unless an absolute path
                         is given. Defaults to the most recent suite state.""")]) 
 
-        self.parser.add_option( "-n", "--non-daemon",
-                help="Do not daemonize the suite",
+        self.parser.add_option( "--non-daemon",
+                help="(deprecated: use --no-detach)",
                 action="store_true", default=False, dest="no_detach" )
 
+        self.parser.add_option( "-n", "--no-detach",
+                help="Do not daemonize the suite",
+                action="store_true", default=False, dest="no_detach" )
+ 
         self.parser.add_option( "--ignore-final-cycle", 
             help="Ignore the final cycle time in the state dump. If one is"
             "specified in the suite definition it will be used, however.",
