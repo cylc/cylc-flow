@@ -81,7 +81,7 @@ r"""
       )*                  # finish {(special normal*)*} construct.
     )                     # end string contents.
     ')             # closing quote
-    (?:\s*\#.*)?$    # optional trailing comment
+    (?:\s*(?:\#.*)?)?$    # optional trailing comment
     """, re.VERBOSE )
 
 _DQ_VALUE = re.compile( 
@@ -95,7 +95,7 @@ r"""
       )*                  # finish {(special normal*)*} construct.
     )                     # end string contents.
     ")             # closing quote
-    (?:\s*\#.*)?$    # optional trailing comment
+    (?:\s*(?:\#.*)?)?$    # optional trailing comment
     """, re.VERBOSE )
 
 
