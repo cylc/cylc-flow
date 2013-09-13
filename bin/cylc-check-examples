@@ -6,7 +6,7 @@ usage() {
     echo ""
     echo "USAGE: cylc [admin] check-examples"
     echo ""
-    echo "Check that all cylc example suites validate successfully."
+    echo "Check that all cylc example suites validate."
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
@@ -14,38 +14,18 @@ if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
     exit 0
 fi
 
-# seconds since epoch
-SSE=$( date +%s )
-
-COPYLOC=$(mktemp -d)
-echo "COPYING EXAMPLE SUITES TO $COPYLOC"
-cp -r $CYLC_DIR/examples $COPYLOC
- 
-echo
-echo "REGISTERING ALL EXAMPLE SUITES:"
-for DIR in $( find $COPYLOC/examples -name suite.rc ); do
-    REG=${SSE}$( dirname $DIR | sed -e 's@.*examples@@' | tr '/' '.' )
-    cylc db reg $REG $DIR
-done
-
-echo
-echo "VALIDATING ALL EXAMPLE SUITES:"
 BAD=''
-for SUITE in $(cylc db pr -xy $SSE ); do 
-    cylc val $SUITE || BAD="$BAD $( cylc db get-dir $SUITE)"
+for SUITE in $( find $CYLC_DIR/examples -name suite.rc ); do
+    cylc val $SUITE || BAD="$BAD $SUITE"
 done
 # chomp list
 BAD=${BAD# *}
 
 echo
-echo "UNREGISTERING ALL EXAMPLE SUITES:"
-cylc db unreg "${SSE}\..*"
-
-echo
 if [[ -z $BAD ]]; then
-    echo 'ALL SUITES VALIDATE OK'
+    echo 'All suites validate OK'
 else
-    echo 'ONE OR MORE EXAMPLE SUITES FAILED VALIDATION:'
+    echo 'ERROR: one or more example suites fail validation:'
     for DIR in $BAD; do
         echo "   $DIR"
     done
