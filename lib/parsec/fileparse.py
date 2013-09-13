@@ -298,12 +298,13 @@ def parse( fpath, verbose=False,
     # read and process the file (jinja2, include-files, line continuation)
     flines = read_and_proc( fpath, verbose, 
             template_vars, template_vars_file )
-    # write the processed 
-    if fpath.endswith("suite.rc"):
-        fp = fpath + '.processed'
+    # write the processed for suite.rc if it lives in a writable directory
+    if (fpath.endswith('suite.rc') and
+        os.access(os.path.dirname(fpath), os.W_OK)):
+        fpath_processed = fpath + '.processed'
         if verbose:
-            print "Writing file" + fp
-        f = open( fp, 'w' )
+            print "Writing file " + fpath_processed
+        f = open( fpath_processed, 'w' )
         f.write('\n'.join(flines))
         f.close()
 
