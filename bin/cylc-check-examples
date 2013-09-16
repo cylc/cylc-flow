@@ -16,7 +16,7 @@ fi
 
 BAD=''
 for SUITE in $( find $CYLC_DIR/examples -name suite.rc ); do
-    cylc val $SUITE || BAD="$BAD $SUITE"
+    cylc val --no-write $SUITE || BAD="$BAD $SUITE"
 done
 # chomp list
 BAD=${BAD# *}
