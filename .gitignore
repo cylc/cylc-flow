@@ -28,3 +28,7 @@ ext/ordereddict-0.4.5/build
 # site configuration and processed configuration
 conf/siterc
 conf/*/*.rc.processed
+
+# processed suite definitions
+*.rc.processed
+
