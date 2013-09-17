@@ -163,15 +163,14 @@ Class to create an information bar.
     """
 
     def __init__( self, host, theme, 
-                  status_changed_hook=lambda s: False ):
+                  status_changed_hook=lambda s: False,
+                  log_launch_hook=lambda: False ):
         super(InfoBar, self).__init__()
 
         self.host = host
 
         self.set_theme( theme )
 
-        # TODO: Ben: why the "empty" here:
-        #self._suite_states = ["empty"]
         self._suite_states = []
         self._is_suite_stopped = False
         self.state_widget = gtk.HBox()
@@ -181,6 +180,23 @@ Class to create an information bar.
         self.notify_status_changed = status_changed_hook
         self.status_widget = gtk.Label()
         self._set_tooltip( self.status_widget, "status" )
+
+        self._log_content = ""
+        self._log_size = 0
+        self.log_launch_hook = log_launch_hook
+        self.log_widget = gtk.HBox()
+        eb = gtk.EventBox()
+        eb.connect('enter-notify-event',
+            lambda b, e: b.set_state(gtk.STATE_ACTIVE))
+        eb.connect('leave-notify-event',
+            lambda b, e: b.set_state(gtk.STATE_NORMAL))
+        self._log_widget_image = gtk.image_new_from_stock(
+            gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_MENU )
+        eb.add(self._log_widget_image)
+        eb.connect('button-press-event', self._log_widget_launch_hook)
+        self._log_widget_image.set_sensitive(False)
+        self.log_widget.pack_start( eb, expand=False )
+        self._set_tooltip( self.log_widget, "log" )
 
         self._mode = "mode..."
         self.mode_widget = gtk.Label()
@@ -225,8 +241,38 @@ Class to create an information bar.
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
         hbox.pack_start( eb, False )
 
+        eb = gtk.EventBox()
+        eb.add( self.log_widget )
+        hbox.pack_start( eb, False )
+
     def set_theme( self, theme ):
         self.dots = DotMaker( theme )
+
+    def set_log(self, log_text, log_size):
+        """Set log text."""
+        if log_size == 0:
+            self._log_widget_image.hide()
+        else:
+            self._log_widget_image.show()
+        if log_size == self._log_size:
+            return False
+        self._log_widget_image.set_sensitive(True)
+        if hasattr(self.log_widget, "set_tooltip_markup"):
+            for snippet, colour in [( "WARNING", "orange" ),
+                                    ( "ERROR", "red" ),
+                                    ( "CRITICAL", "purple" )]:
+                log_text = log_text.replace(
+                    snippet,
+                    "<span background='%s' foreground='black'>%s</span>" % (
+                        colour, snippet))
+            self._log_content = log_text
+            gobject.idle_add( self.log_widget.set_tooltip_markup,
+                self._log_content )
+        else:
+            self._log_content = log_text
+            gobject.idle_add( self._set_tooltip, self.log_widget,
+                self._log_content )
+        self._log_size = log_size
 
     def set_mode(self, mode):
         """Set mode text."""
@@ -322,6 +368,9 @@ Class to create an information bar.
         tooltip.enable()
         tooltip.set_tip(widget, text)
 
+    def _log_widget_launch_hook(self, widget, event):
+        self._log_widget_image.set_sensitive(False)
+        self.log_launch_hook()
 
 class ControlApp(object):
     """
@@ -2872,8 +2921,10 @@ For more Stop options use the Control menu.""" )
         self.run_pause_toolbutton.click_func = click_func
 
     def create_info_bar( self ):
-        self.info_bar = InfoBar( self.cfg.host, self.theme,
-                                 self._alter_status_toolbar_menu )
+        self.info_bar = InfoBar(
+            self.cfg.host, self.theme,
+            self._alter_status_toolbar_menu,
+            lambda: self.run_suite_log(None, type="err"))
 
     def popup_theme_legend( self, widget=None ):
         """Popup a theme legend window."""
@@ -2981,9 +3032,6 @@ For more Stop options use the Control menu.""" )
             else:
                 xopts = ' '
 
-            warning_dialog( \
-"""The full-function GUI log viewer is only available
-for local suites; I will call "cylc cat-log" instead.""" ).warn()
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
                         xopts + self.cfg.suite )
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )

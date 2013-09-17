@@ -1,7 +1,7 @@
 2013/07/25 13:45:32 INFO - Thread-2 start (Event Handler Submission)
 2013/07/25 13:45:32 INFO - Thread-3 start (Poll and Kill Command Submission)
 2013/07/25 13:45:32 INFO - port:7766
-2013/07/25 13:45:32 CRITICAL - Suite starting at 2013-07-25 13:45:32.468735
+2013/07/25 13:45:32 INFO - Suite starting at 2013-07-25 13:45:32.468735
 2013/07/25 13:45:32 INFO - Log event clock: real time
 2013/07/25 13:45:32 INFO - Run mode: live
 2013/07/25 13:45:32 INFO - Start tag: 2010010106
@@ -18,7 +18,7 @@
 2013/07/25 13:45:34 INFO - [prep.2010010106] -(current:submitted)> prep.2010010106 started at 2013-07-25T13:45:34
 2013/07/25 13:45:34 INFO - [prep.2010010106] -(setting:running)
 2013/07/25 13:45:35 INFO - [prep.2010010106] -(current:running)> Setting stop cycle 2010010206 at 2013-07-25T13:45:35
-2013/07/25 13:45:35 WARNING - Setting stop cycle time: 2010010206
+2013/07/25 13:45:35 INFO - Setting stop cycle time: 2010010206
 2013/07/25 13:45:35 INFO - Command succeeded: stop after tag(2010010206)
 2013/07/25 13:45:36 INFO - [prep.2010010106] -(current:running)> prep.2010010106 succeeded at 2013-07-25T13:45:36
 2013/07/25 13:45:36 INFO - [prep.2010010106] -(setting:succeeded)
@@ -172,7 +172,7 @@ X.2010010200 submitted
 2013/07/25 13:45:52 INFO - [recover.2010010112] -(setting:running)
 2013/07/25 13:45:52 INFO - [recover.2010010112] -(current:running)> recover.2010010112 submission succeeded
 2013/07/25 13:45:52 INFO - [recover.2010010112] -(current:running)> recover.2010010112 submit_method_id=19196
-2013/07/25 13:45:53 WARNING - pre-insertion state dump: state.2013:7:25:13:45:52
+2013/07/25 13:45:53 INFO - pre-insertion state dump: state.2013:7:25:13:45:52
 2013/07/25 13:45:53 INFO - Command succeeded: insert task(ColdA,2010010206,False,None)
 2013/07/25 13:45:53 INFO - [ColdA.2010010206] -(setting:submitting)
 2013/07/25 13:45:53 INFO - [ColdA.2010010206] -triggered off []
@@ -182,7 +182,7 @@ X.2010010200 submitted
 2013/07/25 13:45:54 INFO - [X.2010010206] -(setting:succeeded)
 2013/07/25 13:45:54 INFO - [recover.2010010112] -(current:running)> recover.2010010112 succeeded at 2013-07-25T13:45:53
 2013/07/25 13:45:54 INFO - [recover.2010010112] -(setting:succeeded)
-2013/07/25 13:45:54 WARNING - pre-purge state dump: state.2013:7:25:13:45:54
+2013/07/25 13:45:54 INFO - pre-purge state dump: state.2013:7:25:13:45:54
 2013/07/25 13:45:54 INFO - [X.2010010112] -(setting:succeeded)
 2013/07/25 13:45:54 INFO - [A.2010010112] -(setting:succeeded)
 2013/07/25 13:45:54 INFO - [B.2010010112] -(setting:succeeded)
@@ -284,4 +284,4 @@ X.2010010200 submitted
 2013/07/25 13:46:05 INFO - [recover.2010010212] -HOLDING (beyond suite stop cycle) 2010010206
 2013/07/25 13:46:05 INFO - [recover.2010010212] -(setting:held)
 2013/07/25 13:46:06 INFO - All normal cycling tasks have spawned past the final cycle 2010010206
-2013/07/25 13:46:06 CRITICAL - Suite shutting down at 2013-07-25 13:46:06.137587
+2013/07/25 13:46:06 INFO - Suite shutting down at 2013-07-25 13:46:06.137587

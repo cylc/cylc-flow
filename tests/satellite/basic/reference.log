@@ -1,7 +1,7 @@
 2013/06/06 16:25:44 INFO - Thread-2 start (Event Handler Submission)
 2013/06/06 16:25:44 INFO - Thread-3 start (Poll and Kill Command Submission)
 2013/06/06 16:25:44 INFO - port:7766
-2013/06/06 16:25:44 CRITICAL - Suite starting at 2013-06-06 16:25:44.368764
+2013/06/06 16:25:44 INFO - Suite starting at 2013-06-06 16:25:44.368764
 2013/06/06 16:25:44 INFO - Log event clock: real time
 2013/06/06 16:25:44 INFO - Run mode: live
 2013/06/06 16:25:44 INFO - Start tag: None
@@ -76,7 +76,7 @@ archive.2 submitted
 2013/06/06 16:25:54 INFO - [watcher.1] -> watcher.1 succeeded at 2013-06-06T16:25:54
 2013/06/06 16:25:54 WARNING - [watcher.1] -Assuming non-reported outputs were completed:
 <ASYNCID> ready for processing
-2013/06/06 16:25:54 WARNING - Holding all waiting or queued tasks now
+2013/06/06 16:25:54 INFO - Holding all waiting or queued tasks now
 2013/06/06 16:25:54 INFO - Command succeeded: stop cleanly(False)
 2013/06/06 16:25:54 INFO - Stopping now: all current tasks completed
-2013/06/06 16:25:54 CRITICAL - Suite shutting down at 2013-06-06 16:25:54.605347
+2013/06/06 16:25:54 INFO - Suite shutting down at 2013-06-06 16:25:54.605347

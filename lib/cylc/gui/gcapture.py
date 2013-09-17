@@ -39,16 +39,22 @@ Lines containing:
 are displayed in red.
     $ capture "echo foo && echox bar"
     """
-    def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False ):
+    def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False,
+                  title=None ):
         self.standalone=standalone
         self.command = command
         self.ignore_command = ignore_command
         self.stdout = stdoutfile
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_border_width( 5 )
-        self.window.set_title( 'subprocess output capture' )
+        if title is None:
+            self.window.set_title( 'Command Output' )
+        else:
+            self.window.set_title( title )
+         
+        self.window.set_title( command )
         self.window.connect("delete_event", self.quit)
-        self.window.set_size_request(width, height)
+        self.window.set_default_size(width, height)
         self.window.set_icon( get_icon() )
         self.quit_already = False
 
