@@ -1,0 +1,24 @@
+[scheduling]
+    [[dependencies]]
+        graph = "a => FAM"
+[runtime]
+    [[a]]
+        command scripting = echo this is a set variable
+    [[FAM]]
+        [[[environment]]]
+            TITLE="member"
+    [[member_0]]
+        inherit = FAM
+        command scripting = echo I am $TITLE 0
+    [[member_1]]
+        inherit = FAM
+        command scripting = echo I am $TITLE 1
+    [[member_2]]
+        inherit = FAM
+        command scripting = echo I am $TITLE 2
+    [[member_3]]
+        inherit = FAM
+        command scripting = echo I am $TITLE 3
+    [[member_4]]
+        inherit = FAM
+        command scripting = echo I am $TITLE 4
