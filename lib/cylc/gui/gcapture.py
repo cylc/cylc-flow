@@ -271,6 +271,7 @@ are displayed in red.
         return False
 
 class gcapture_tmpfile( gcapture ):
-    def __init__( self, command, tmpdir, width=400, height=400, standalone=False ):
+    def __init__( self, command, tmpdir, width=400, height=400, standalone=False, title=None ):
         stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
-        gcapture.__init__(self, command, stdout, width=width, height=height, standalone=standalone )
+        gcapture.__init__(self, command, stdout, width=width, height=height, standalone=standalone,
+                          title=title )

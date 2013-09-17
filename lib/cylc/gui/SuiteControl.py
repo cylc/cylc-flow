@@ -3034,7 +3034,8 @@ For more Stop options use the Control menu.""" )
 
             command = ( "cylc cat-log --notify-completion" + self.get_remote_run_opts() + \
                         xopts + self.cfg.suite )
-            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
+            foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400,
+                                    title="%s %s" % (self.cfg.suite, type) )
             self.gcapture_windows.append(foo)
             foo.run()
             return
