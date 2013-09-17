@@ -37,6 +37,7 @@ from cylc.gui.SuiteControl import run_get_stdout
 from cylc.gui.DotMaker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.owner import user
+from cylc.registration import localdb
 from cylc.version import cylc_version
 
 
@@ -356,10 +357,11 @@ class SummaryApp(object):
         self.theme_name = self.usercfg['use theme'] 
         self.theme = self.usercfg['themes'][self.theme_name]
         self.dots = DotMaker(self.theme)
-        suite_treemodel = gtk.TreeStore(*([str, str, bool, int] + [str] * 20))
+        suite_treemodel = gtk.TreeStore(*([str, str, bool, str, int] +
+            [str] * 20))
         self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
-        
+
         # Construct the host column.
         host_name_column = gtk.TreeViewColumn("Host")
         cell_text_host = gtk.CellRendererText()
@@ -369,27 +371,36 @@ class SummaryApp(object):
         host_name_column.set_sort_column_id(0)
         host_name_column.set_visible(False)
         
-        # Construct the suite column.
+        # Construct the suite name column.
         suite_name_column = gtk.TreeViewColumn("Suite")
         cell_text_name = gtk.CellRendererText()
         suite_name_column.pack_start(cell_text_name, expand=False)
         suite_name_column.set_cell_data_func(
                    cell_text_name, self._set_cell_text_name)
         suite_name_column.set_sort_column_id(1)
- 
+
+        # Construct the suite title column.
+        suite_title_column = gtk.TreeViewColumn("Title")
+        cell_text_title = gtk.CellRendererText()
+        suite_title_column.pack_start(cell_text_title, expand=False)
+        suite_title_column.set_cell_data_func(
+                   cell_text_title, self._set_cell_text_title)
+        suite_title_column.set_sort_column_id(3)
+        suite_title_column.set_visible(False)
+
         # Construct the update time column.
         time_column = gtk.TreeViewColumn("Updated")
         cell_text_time = gtk.CellRendererText()
         time_column.pack_start(cell_text_time, expand=False)
         time_column.set_cell_data_func(
                     cell_text_time, self._set_cell_text_time)
-        time_column.set_sort_column_id(2)
+        time_column.set_sort_column_id(4)
         time_column.set_visible(False)
 
         # Construct the status column.
         status_column = gtk.TreeViewColumn("Status")
-        status_column.set_sort_column_id(4)
-        for i in range(4, 24):
+        status_column.set_sort_column_id(5)
+        for i in range(5, 25):
             cell_pixbuf_state = gtk.CellRendererPixbuf()
             status_column.pack_start(cell_pixbuf_state, expand=False)
             status_column.set_cell_data_func(
@@ -397,6 +408,7 @@ class SummaryApp(object):
         
         self.suite_treeview.append_column(host_name_column)
         self.suite_treeview.append_column(suite_name_column)
+        self.suite_treeview.append_column(suite_title_column)
         self.suite_treeview.append_column(time_column)
         self.suite_treeview.append_column(status_column)
         self.suite_treeview.show()
@@ -507,7 +519,7 @@ class SummaryApp(object):
         iter_ = model.get_iter(path)
         host = model.get_value(iter_, 0)
         suite = model.get_value(iter_, 1)
-        update_time = model.get_value(iter_, 3)
+        update_time = model.get_value(iter_, 4)
         
         location_id = (host, suite, update_time, column.get_title())
         if location_id != self._prev_tooltip_location_id:
@@ -526,7 +538,7 @@ class SummaryApp(object):
             tooltip.set_text(None)
             return False
         state_texts = []
-        for i in range(4, 24):
+        for i in range(5, 25):
             state_text = model.get_value(iter_, i)
             if state_text is None:
                 break
@@ -566,8 +578,14 @@ class SummaryApp(object):
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", name)
 
+    def _set_cell_text_title(self, column, cell, model, iter_):
+        title = model.get_value(iter_, 3)
+        is_stopped = model.get_value(iter_, 2)
+        cell.set_property("sensitive", not is_stopped)
+        cell.set_property("text", title)
+
     def _set_cell_text_time(self, column, cell, model, iter_):
-        update_time = model.get_value(iter_, 3)
+        update_time = model.get_value(iter_, 4)
         time_object = datetime.datetime.fromtimestamp(update_time)
         time_string = time_object.strftime("%H:%M:%S")
         is_stopped = model.get_value(iter_, 2)
@@ -767,6 +785,7 @@ class SummaryAppUpdater(BaseSummaryUpdater):
     def __init__(self, hosts, suite_treemodel, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
+        self._fetch_suite_titles()
         super(SummaryAppUpdater, self).__init__(hosts, owner=owner,
                                                 poll_interval=poll_interval)
 
@@ -789,6 +808,7 @@ class SummaryAppUpdater(BaseSummaryUpdater):
             for suite in suites:
                 suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
+        self._fetch_suite_titles()
         for suite, host in suite_host_tuples:
             if suite in statuses.get(host, {}):
                 status_map_items = statuses[host][suite].items()
@@ -802,11 +822,27 @@ class SummaryAppUpdater(BaseSummaryUpdater):
             status_map_items.sort()
             status_map_items.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
             states = [s[0] + " " + str(len(s[1])) for s in status_map_items]
-            model_data = [host, suite, is_stopped, suite_time]
+            title = self.suite_titles.get(suite)
+            model_data = [host, suite, is_stopped, title, suite_time]
             model_data += states[:20]
-            model_data += [None] * (24 - len(model_data))
+            model_data += [None] * (25 - len(model_data))
             self.suite_treemodel.append(None, model_data)
         return False
+
+    def _fetch_suite_titles(self):
+        try:
+            dbfile = None
+            if self.owner is not None:
+                dbfile = os.path.join('~' + self.owner, '.cylc', 'DB')
+                dbfile = os.path.expanduser(dbfile)
+            db = localdb(file=dbfile)
+            db.load_from_file()
+            suite_metadata = db.get_list()
+        except Exception:
+            suite_metadata = []
+        self.suite_titles = {}
+        for suite, suite_dir, suite_title in suite_metadata:
+            self.suite_titles[suite] = suite_title
 
 
 def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,

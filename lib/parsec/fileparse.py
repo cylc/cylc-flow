@@ -81,7 +81,7 @@ r"""
       )*                  # finish {(special normal*)*} construct.
     )                     # end string contents.
     ')             # closing quote
-    (?:\s*\#.*)?$    # optional trailing comment
+    (?:\s*(?:\#.*)?)?$    # optional trailing comment
     """, re.VERBOSE )
 
 _DQ_VALUE = re.compile( 
@@ -95,7 +95,7 @@ r"""
       )*                  # finish {(special normal*)*} construct.
     )                     # end string contents.
     ")             # closing quote
-    (?:\s*\#.*)?$    # optional trailing comment
+    (?:\s*(?:\#.*)?)?$    # optional trailing comment
     """, re.VERBOSE )
 
 
@@ -290,7 +290,7 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
 
     return flines
 
-def parse( fpath, verbose=False,
+def parse( fpath, verbose=False, write_processed_file=False, 
         template_vars=[], template_vars_file=None ):
     """
     Parse a nested config file and return a corresponding nested dict.
@@ -298,12 +298,13 @@ def parse( fpath, verbose=False,
     # read and process the file (jinja2, include-files, line continuation)
     flines = read_and_proc( fpath, verbose, 
             template_vars, template_vars_file )
-    # write the processed 
-    if fpath.endswith("suite.rc"):
-        fp = fpath + '.processed'
+    # write the processed for suite.rc if it lives in a writable directory
+    if write_processed_file and \
+            os.access(os.path.dirname(fpath), os.W_OK):
+        fpath_processed = fpath + '.processed'
         if verbose:
-            print "Writing file" + fp
-        f = open( fp, 'w' )
+            print "Writing file " + fpath_processed
+        f = open( fpath_processed, 'w' )
         f.write('\n'.join(flines))
         f.close()
 

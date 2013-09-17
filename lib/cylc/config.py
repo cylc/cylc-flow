@@ -67,7 +67,8 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False, collapsed=[],
-            override=None, is_restart=False, is_reload=False ):
+            override=None, is_restart=False, is_reload=False,
+            write_processed_file=True ):
 
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
@@ -113,7 +114,8 @@ class config( object ):
         # parse, upgrade, validate the suite, but don't expand [runtime]
         self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
                 template_vars_file=template_vars_file, do_expand=False,
-                verbose=verbose, is_reload=is_reload )
+                verbose=verbose, is_reload=is_reload,
+                write_processed_file=write_processed_file )
         self.runtime_defaults = get_defaults_rt()
 
         # allow test suites with no [runtime]:
