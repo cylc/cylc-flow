@@ -21,4 +21,10 @@
 set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-make-docs
-run_ok $TEST_NAME make -C $CYLC_DIR/doc
+
+if [ -w $CYLC_DIR/doc ]; then
+    run_ok $TEST_NAME make -C $CYLC_DIR/doc
+else
+    run_ok $TEST_NAME echo bypassing building documentation
+    echo -e "\nbypassing building documentation" > /dev/tty
+fi
