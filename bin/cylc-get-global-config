@@ -75,8 +75,7 @@ try:
         import re
         get_these = []
         for i in options.item:
-            # construct lists in item nest ordering from --item inputs, i.e.:
-            # "[runtime][foo]command scripting" -> [runtime, foo, "command scripting"
+            # construct lists in item nest ordering from --item inputs
             i = i.lstrip('[')
             i = i.rstrip(']')
             j = re.split( '\]\[*', i )
