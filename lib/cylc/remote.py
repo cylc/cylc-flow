@@ -105,7 +105,6 @@ class remrun( object ):
         # ssh command and options (X forwarding)
         command = ["ssh", "-oBatchMode=yes", "-Y", user_at_host] + command
 
-        print "Remote command re-invocation for", user_at_host
         if self.verbose:
             # Wordwrap the command, quoting arguments so they can be run
             # properly from the command line
@@ -121,6 +120,5 @@ class remrun( object ):
         except OSError, e:
             sys.exit("ERROR: remote command invocation failed %s" % str(e))
         else:
-            print "Remote command re-invocation done"
             return True
 

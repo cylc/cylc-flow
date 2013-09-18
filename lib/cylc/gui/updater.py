@@ -101,6 +101,9 @@ class Updater(threading.Thread):
 
         self.live_graph_movie = False
         self.live_graph_dir = None
+        self.err_log_lines = []
+        self._err_num_log_lines = 10
+        self.err_log_size = 0
         self.task_list = []
         self.state_summary = {}
         self.fam_state_summary = {}
@@ -134,6 +137,7 @@ class Updater(threading.Thread):
                     self.cfg.port )
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
+            self.log = client.get_proxy( 'log' )
             # on reconnection retrieve static info
             self.ancestors = self.sinfo.get('first-parent ancestors' )
             self.ancestors_pruned = self.sinfo.get( 'first-parent ancestors', True )
@@ -152,6 +156,8 @@ class Updater(threading.Thread):
             return False
         else:
             self.stop_summary = None
+            self.err_log_lines = []
+            self.err_log_size = 0
             self.status = "connected"
             self.poll_schd.stop()
             self._flag_new_update()
@@ -182,10 +188,19 @@ class Updater(threading.Thread):
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.god.get_task_name_list()
+            new_err_content, new_err_size = self.log.get_err_content(
+                prev_size=self.err_log_size,
+                max_lines=self._err_num_log_lines)
         except Exception, x:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
+
+        err_log_changed = (new_err_size != self.err_log_size)
+        if err_log_changed:
+            self.err_log_lines += new_err_content.splitlines()
+            self.err_log_lines = self.err_log_lines[-self._err_num_log_lines:]
+            self.err_log_size = new_err_size
 
         self.task_list.sort()
 
@@ -213,7 +228,8 @@ class Updater(threading.Thread):
             self.global_summary = glbl
 
         # only update states if a change occurred
-        if compare_dict_of_dict( states, self.state_summary ):
+        if (not err_log_changed and
+                compare_dict_of_dict( states, self.state_summary )):
             #print "STATE UNCHANGED"
             # only update if state changed
             return False
@@ -229,6 +245,8 @@ class Updater(threading.Thread):
         self.info_bar.set_mode( self.mode )
         self.info_bar.set_time( self.dt )
         self.info_bar.set_status( self.status )
+        self.info_bar.set_log( "\n".join(self.err_log_lines),
+                               self.err_log_size )
         return False
 
     def stop(self):
