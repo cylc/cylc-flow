@@ -189,7 +189,6 @@ class Updater(threading.Thread):
             [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.god.get_task_name_list()
         except Exception:
-            #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
 
@@ -197,8 +196,8 @@ class Updater(threading.Thread):
             new_err_content, new_err_size = self.log.get_err_content(
                 prev_size=self.err_log_size,
                 max_lines=self._err_num_log_lines)
-        except Exception as x:
-            print type(x), x
+        except Exception:
+            # TODO: post-backwards compatibility concerns, remove this handling.
             new_err_content = ""
             new_err_size = self.err_log_size
 
