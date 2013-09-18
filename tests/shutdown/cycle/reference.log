@@ -1,7 +1,7 @@
 2013/08/19 15:51:11 INFO - Thread-2 start (Event Handler Submission)
 2013/08/19 15:51:11 INFO - Thread-3 start (Poll and Kill Command Submission)
 2013/08/19 15:51:11 INFO - port:7766
-2013/08/19 15:51:11 CRITICAL - Suite starting at 2013-08-19 15:51:11.535859
+2013/08/19 15:51:11 INFO - Suite starting at 2013-08-19 15:51:11.535859
 2013/08/19 15:51:11 INFO - Log event clock: real time
 2013/08/19 15:51:11 INFO - Run mode: live
 2013/08/19 15:51:11 INFO - Start tag: 2010010100
@@ -27,7 +27,7 @@
 2013/08/19 15:51:15 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 submit_method_id=27525
 2013/08/19 15:51:16 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 started at 2013-08-19T15:51:15
 2013/08/19 15:51:16 INFO - [stopper.2010010100] -(setting:running)
-2013/08/19 15:51:16 WARNING - Setting stop cycle time: 2010010100
+2013/08/19 15:51:16 INFO - Setting stop cycle time: 2010010100
 2013/08/19 15:51:16 INFO - Command succeeded: stop after tag(2010010100)
 2013/08/19 15:51:17 INFO - [stopper.2010010100] -(current:running)> stopper.2010010100 succeeded at 2013-08-19T15:51:17
 2013/08/19 15:51:17 INFO - [stopper.2010010100] -(setting:succeeded)
@@ -44,4 +44,4 @@
 2013/08/19 15:51:20 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-08-19T15:51:19
 2013/08/19 15:51:20 INFO - [c.2010010100] -(setting:succeeded)
 2013/08/19 15:51:20 INFO - All normal cycling tasks have spawned past the final cycle 2010010100
-2013/08/19 15:51:20 CRITICAL - Suite shutting down at 2013-08-19 15:51:20.684490
+2013/08/19 15:51:20 INFO - Suite shutting down at 2013-08-19 15:51:20.684490

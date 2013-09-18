@@ -15,24 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: job script torture test and check jobscript is generated correctly
+#C: Test cylc get-config
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE torture
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
-run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
-sed 's/\(export CYLC_.*=\).*/\1/g' $TEST_NAME.stdout > jobfile
-echo "" >> jobfile
-sed 's/##suitename##/'$SUITE_NAME'/' $TEST_SOURCE_DIR/torture/foo.ref-jobfile > reffile
-cmp_ok jobfile reffile
-purge_suite $SUITE_NAME
-rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME-submit
+TEST_NAME=$TEST_NAME_BASE-check-examples
+run_ok $TEST_NAME cylc check-examples
