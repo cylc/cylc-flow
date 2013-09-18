@@ -18,6 +18,7 @@
 
 from tailer import tailer
 import gtk
+import gobject
 import pango
 import tempfile
 import os, re, sys
@@ -39,16 +40,20 @@ Lines containing:
 are displayed in red.
     $ capture "echo foo && echox bar"
     """
-    def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False ):
+    def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False,
+                  title=None ):
         self.standalone=standalone
         self.command = command
         self.ignore_command = ignore_command
         self.stdout = stdoutfile
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_border_width( 5 )
-        self.window.set_title( 'subprocess output capture' )
+        if title is None:
+            self.window.set_title( 'Command Output' )
+        else:
+            self.window.set_title( title )
         self.window.connect("delete_event", self.quit)
-        self.window.set_size_request(width, height)
+        self.window.set_default_size(width, height)
         self.window.set_icon( get_icon() )
         self.quit_already = False
 
@@ -58,6 +63,7 @@ are displayed in red.
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
+        sw.show()
 
         self.textview = gtk.TextView()
         self.textview.set_editable(False)
@@ -66,47 +72,70 @@ are displayed in red.
         # illegal font description has no effect.
         self.textview.modify_font( pango.FontDescription("monospace") )
         tb = self.textview.get_buffer()
+        self.textview.show()
 
-        self.blue = tb.create_tag( None, foreground = "darkblue" )
         self.ftag = tb.create_tag( None, background="#70FFA9" )
 
         self.warning_re = 'WARNING'
         self.critical_re = 'CRITICAL|ERROR'
 
-        if not self.ignore_command:
-            tb.insert_with_tags( tb.get_end_iter(), 'command: ' + command + '\n', self.blue )
-        tb.insert_with_tags( tb.get_end_iter(),     'output : ' + stdoutfile.name + '\n\n', self.blue )
-
         vbox = gtk.VBox()
+        vbox.show()
+
+        if not self.ignore_command:
+            self.progress_bar = gtk.ProgressBar()
+            self.progress_bar.set_text( command )
+            self.progress_bar.set_pulse_step( 0.04 )
+            self.progress_bar.show()
+            vbox.pack_start( self.progress_bar, expand=False )
+        self.command_label = gtk.Label( self.command )
+        if self.ignore_command:
+            self.command_label.show()
+        vbox.pack_start( self.command_label, expand=False )
+
+
         sw.add(self.textview)
 
         frame = gtk.Frame()
         frame.add(sw)
+        frame.show()
         vbox.add(frame)
 
         save_button = gtk.Button( "Save As" )
         save_button.connect("clicked", self.save, self.textview )
+        save_button.show()
 
         hbox = gtk.HBox()
         hbox.pack_start( save_button, False )
+        hbox.show()
+
+        output_label = gtk.Label( 'output : ' + stdoutfile.name )
+        output_label.show()
+        hbox.pack_start( output_label, expand=True )
 
         self.freeze_button = gtk.ToggleButton( "_Disconnect" )
         self.freeze_button.set_active(False)
         self.freeze_button.connect("toggled", self.freeze )
+        self.freeze_button.show()
 
         searchbox = gtk.HBox()
+        searchbox.show()
         entry = gtk.Entry()
+        entry.show()
         entry.connect( "activate", self.enter_clicked )
         searchbox.pack_start (entry, True)
         b = gtk.Button ("Find Next")
         b.connect_object ('clicked', self.on_find_clicked, entry)
+        b.show()
         searchbox.pack_start (b, False)
         searchbox.pack_start( self.freeze_button, False )
 
         close_button = gtk.Button( "_Close" )
         close_button.connect("clicked", self.quit, None, None )
+        close_button.show()
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", helpwindow.capture )
+        help_button.show()
 
         hbox.pack_end(close_button, False)
         hbox.pack_end(help_button, False)
@@ -116,15 +145,28 @@ are displayed in red.
 
         self.window.add(vbox)
         close_button.grab_focus()
-        self.window.show_all()
+        self.window.show()
 
     def run( self ):
         if not self.ignore_command:
             self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=subprocess.STDOUT, shell=True )
             self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, warning_re=self.warning_re, critical_re=self.critical_re )
+            gobject.timeout_add(40, self.pulse_proc_progress)
         else:
             self.stdout_updater = tailer( self.textview, self.stdout.name, warning_re=self.warning_re, critical_re=self.critical_re )
         self.stdout_updater.start()
+
+    def pulse_proc_progress( self ):
+        """While the process is running, pulse the progress bar a bit."""
+        self.progress_bar.pulse()
+        self.proc.poll()
+        if self.proc.returncode is None and not self.stdout_updater.freeze:
+            # Continue gobject.timeout_add loop.
+            return True
+        self.progress_bar.set_fraction(1.0)
+        gobject.idle_add(self._handle_proc_completed)
+        # Break gobject.timeout_add loop.
+        return False
 
     def freeze( self, b ):
         if b.get_active():
@@ -220,7 +262,16 @@ are displayed in red.
             self.find_current = needle
             tv.scroll_to_iter( f, 0 )
 
+    def _handle_proc_completed(self):
+        self.progress_bar.hide()
+        if self.proc.returncode is not None and self.proc.returncode != 0:
+            self.command_label.modify_fg(gtk.STATE_NORMAL,
+                                         gtk.gdk.color_parse("red"))
+        self.command_label.show()
+        return False
+
 class gcapture_tmpfile( gcapture ):
-    def __init__( self, command, tmpdir, width=400, height=400, standalone=False ):
+    def __init__( self, command, tmpdir, width=400, height=400, standalone=False, title=None ):
         stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
-        gcapture.__init__(self, command, stdout, width=width, height=height, standalone=standalone )
+        gcapture.__init__(self, command, stdout, width=width, height=height, standalone=standalone,
+                          title=title )

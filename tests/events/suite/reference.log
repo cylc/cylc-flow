@@ -1,4 +1,4 @@
-2012/08/26 18:28:18 CRITICAL - Suite starting at 2012-08-26 18:28:18.259887
+2012/08/26 18:28:18 INFO - Suite starting at 2012-08-26 18:28:18.259887
 2012/08/26 18:28:18 INFO - Log event clock: real time
 2012/08/26 18:28:18 INFO - Run mode: live
 2012/08/26 18:28:18 INFO - Start tag: None
@@ -15,5 +15,4 @@
 2012/08/26 18:28:20 INFO - [shutdown.1] -triggered off ['timeout.1']
 2012/08/26 18:28:20 INFO - [shutdown.1] -shutdown.1 started
 2012/08/26 18:28:24 INFO - [shutdown.1] -shutdown.1 succeeded
-2012/08/26 18:28:24 WARNING - ALL TASKS FINISHED OR HELD
-2012/08/26 18:28:24 CRITICAL - Suite shutting down at 2012-08-26 18:28:24.427975
+2012/08/26 18:28:24 INFO - Suite shutting down at 2012-08-26 18:28:24.427975

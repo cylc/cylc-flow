@@ -40,9 +40,13 @@ class suite_log( object ):
         gcfg = get_global_cfg()
         self.ldir = gcfg.get_derived_host_item( suite, 'suite log directory' )
         self.path = os.path.join( self.ldir, 'log' ) 
+        self.err_path = os.path.join( self.ldir, 'err' )
         self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']
         self.n_keep = gcfg.cfg['suite logging']['rolling archive length']
         self.max_bytes = gcfg.cfg['suite logging']['maximum size in bytes']
+
+    def get_err_path( self ):
+        return self.err_path
 
     def get_dir( self ):
         return self.ldir

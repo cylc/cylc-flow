@@ -1,7 +1,7 @@
 <<<<<<< Updated upstream
 2013/05/20 22:04:58 INFO - Starting Event Handler Submission thread
 2013/05/20 22:04:58 INFO - port:7766
-2013/05/20 22:04:58 CRITICAL - Suite starting at 2013-05-20 22:04:58.349005
+2013/05/20 22:04:58 INFO - Suite starting at 2013-05-20 22:04:58.349005
 2013/05/20 22:04:58 INFO - Log event clock: real time
 2013/05/20 22:04:58 INFO - Run mode: live
 2013/05/20 22:04:58 INFO - Start tag: None
@@ -113,11 +113,11 @@
 2013/05/20 22:05:10 INFO - [foo.1] -> foo.1 succeeded at 2013-05-20T22:05:10
 2013/05/20 22:05:10 INFO - [foo.1] -Queueing succeeded event handler
 2013/05/20 22:05:10 INFO - All non-cycling tasks have succeeded
-2013/05/20 22:05:10 CRITICAL - Suite shutting down at 2013-05-20 22:05:10.456430
+2013/05/20 22:05:10 INFO - Suite shutting down at 2013-05-20 22:05:10.456430
 =======
 2013/05/17 17:18:58 INFO - Starting Event Handler Submission thread
 2013/05/17 17:18:58 INFO - port:7766
-2013/05/17 17:18:58 CRITICAL - Suite starting at 2013-05-17 17:18:58.832830
+2013/05/17 17:18:58 INFO - Suite starting at 2013-05-17 17:18:58.832830
 2013/05/17 17:18:58 INFO - Log event clock: real time
 2013/05/17 17:18:58 INFO - Run mode: live
 2013/05/17 17:18:58 INFO - Start tag: None
@@ -216,5 +216,5 @@
 2013/05/17 17:19:11 INFO - [foo.1] -> foo.1 succeeded at 2013-05-17T17:19:11
 2013/05/17 17:19:11 INFO - [foo.1] -Queueing succeeded event handler
 2013/05/17 17:19:11 INFO - All non-cycling tasks have succeeded
-2013/05/17 17:19:11 CRITICAL - Suite shutting down at 2013-05-17 17:19:11.930916
+2013/05/17 17:19:11 INFO - Suite shutting down at 2013-05-17 17:19:11.930916
 >>>>>>> Stashed changes
