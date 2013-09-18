@@ -1,0 +1,87 @@
+2013/09/18 14:50:45 INFO - Thread-2 start (Event Handler Submission)
+2013/09/18 14:50:45 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/18 14:50:45 INFO - port:7766
+2013/09/18 14:50:46 INFO - Suite starting at 2013-09-18 14:50:42.696077
+2013/09/18 14:50:46 INFO - Log event clock: accelerated
+2013/09/18 14:50:46 INFO - Run mode: dummy
+2013/09/18 14:50:46 INFO - Start tag: None
+2013/09/18 14:50:47 INFO - Stop tag: None
+2013/09/18 14:50:47 INFO - Thread-4 start (Job Submission)
+2013/09/18 14:50:47 INFO - Thread-5 start (Request Handling)
+2013/09/18 14:50:49 DEBUG - [a.1] -task proxy added to the pool
+2013/09/18 14:50:49 DEBUG - [c.1] -task proxy added to the pool
+2013/09/18 14:50:50 DEBUG - [b.1] -task proxy added to the pool
+2013/09/18 14:50:51 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 14:50:51 INFO - [a.1] -(setting:submitting)
+2013/09/18 14:50:52 INFO - [a.1] -triggered off []
+2013/09/18 14:50:56 DEBUG - END TASK PROCESSING (took 0.013576 sec)
+2013/09/18 14:56:48 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/18 14:56:57 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/09/18 14:56:57 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:02:58 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/09/18 15:02:58 INFO - [a.1] -(setting:submitted)
+2013/09/18 15:02:58 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=22368
+2013/09/18 15:02:59 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:02:59 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:03:06 DEBUG - END TASK PROCESSING (took 0.016958 sec)
+2013/09/18 15:04:12 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.234207
+  All 1 items succeeded
+2013/09/18 15:09:06 INFO - [a.1] -(current:submitted)> a.1 started at 2013-09-18T14:50:44
+2013/09/18 15:09:07 INFO - [a.1] -(setting:running)
+2013/09/18 15:09:07 CRITICAL - [a.1] -(current:running)> Task job script received signal ERR at 2013-09-18T14:50:45
+2013/09/18 15:09:07 CRITICAL - [a.1] -(current:running)> a.1 failed at 2013-09-18T14:50:45
+2013/09/18 15:09:08 INFO - [a.1] -(setting:failed)
+2013/09/18 15:09:08 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:09:09 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:09:09 INFO - [b.1] -(setting:submitting)
+2013/09/18 15:09:09 INFO - [b.1] -triggered off ['a.1']
+2013/09/18 15:09:19 DEBUG - END TASK PROCESSING (took 0.028538 sec)
+2013/09/18 15:10:13 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/18 15:15:20 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/09/18 15:15:20 INFO - [b.1] -(current:submitting)> b.1 submission succeeded
+2013/09/18 15:15:21 INFO - [b.1] -(setting:submitted)
+2013/09/18 15:15:21 INFO - [b.1] -(current:submitted)> b.1 submit_method_id=22474
+2013/09/18 15:15:22 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:15:22 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:15:31 DEBUG - END TASK PROCESSING (took 0.022294 sec)
+2013/09/18 15:17:23 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.194033
+  All 1 items succeeded
+2013/09/18 15:21:31 INFO - [b.1] -(current:submitted)> b.1 started at 2013-09-18T14:50:47
+2013/09/18 15:21:32 INFO - [b.1] -(setting:running)
+2013/09/18 15:21:32 CRITICAL - [b.1] -(current:running)> Task job script received signal ERR at 2013-09-18T14:50:47
+2013/09/18 15:21:32 CRITICAL - [b.1] -(current:running)> b.1 failed at 2013-09-18T14:50:47
+2013/09/18 15:21:33 INFO - [b.1] -(setting:failed)
+2013/09/18 15:21:33 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:21:33 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:21:34 INFO - [c.1] -(setting:submitting)
+2013/09/18 15:21:34 INFO - [c.1] -triggered off ['b.1']
+2013/09/18 15:21:41 DEBUG - END TASK PROCESSING (took 0.020464 sec)
+2013/09/18 15:23:23 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/18 15:27:42 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/09/18 15:27:42 INFO - [c.1] -(current:submitting)> c.1 submission succeeded
+2013/09/18 15:27:42 INFO - [c.1] -(setting:submitted)
+2013/09/18 15:27:43 INFO - [c.1] -(current:submitted)> c.1 submit_method_id=22580
+2013/09/18 15:27:43 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:27:44 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:27:50 DEBUG - END TASK PROCESSING (took 0.017051 sec)
+2013/09/18 15:30:41 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.215832
+  All 1 items succeeded
+2013/09/18 15:33:51 INFO - [c.1] -(current:submitted)> c.1 started at 2013-09-18T14:50:49
+2013/09/18 15:33:51 INFO - [c.1] -(setting:running)
+2013/09/18 15:33:51 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:33:52 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:34:00 DEBUG - END TASK PROCESSING (took 0.023147 sec)
+2013/09/18 15:40:01 CRITICAL - [c.1] -(current:running)> Task job script received signal ERR at 2013-09-18T14:50:50
+2013/09/18 15:40:02 CRITICAL - [c.1] -(current:running)> c.1 failed at 2013-09-18T14:50:50
+2013/09/18 15:40:02 INFO - [c.1] -(setting:failed)
+2013/09/18 15:40:02 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:40:03 DEBUG - BEGIN TASK PROCESSING
+2013/09/18 15:40:03 DEBUG - [a.1] -task proxy removed (suicide)
+2013/09/18 15:40:03 DEBUG - [c.1] -task proxy removed (suicide)
+2013/09/18 15:40:04 DEBUG - [b.1] -task proxy removed (suicide)
+2013/09/18 15:40:09 DEBUG - END TASK PROCESSING (took 0.016694 sec)
+2013/09/18 15:46:09 DEBUG - UPDATING STATE SUMMARY
+2013/09/18 15:46:10 INFO - Suite shutting down at 2013-09-18 14:50:51.929778
