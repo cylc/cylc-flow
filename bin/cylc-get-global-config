@@ -54,6 +54,11 @@ parser.add_option( "--print-run-dir",
         help="Display the site configured run directory",
         action="store_true", default=False, dest="run_dir" )
 
+parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+        help="The config item to print. Can be used multiple "
+        "times on the same command line.",
+        action="append", dest="item", default=[] )
+
 (options, args) = parser.parse_args()
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
@@ -66,6 +71,24 @@ try:
         print_global_cfg()
     elif options.run_dir:
         print gcfg.get_host_item('run directory')
+    elif options.item:
+        import re
+        get_these = []
+        for i in options.item:
+            # construct lists in item nest ordering from --item inputs, i.e.:
+            # "[runtime][foo]command scripting" -> [runtime, foo, "command scripting"
+            i = i.lstrip('[')
+            i = i.rstrip(']')
+            j = re.split( '\]\[*', i )
+            get_these.append(j)
+        for key in get_these:
+            value = gcfg.cfg
+            for element in key:
+                if element in value:
+                    value = value[element]
+                else:
+                    sys.exit( "Key not found: " + str(key))
+            print value
     else:
         print "Combined site/user config is valid for cylc-" + cylc_version
 
