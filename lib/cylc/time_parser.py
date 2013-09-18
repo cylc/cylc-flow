@@ -38,7 +38,7 @@ import cylc.CylcError
 import isodatetime
 
 
-class CylcTimeSyntaxError(CylcError.CylcError):
+class CylcTimeSyntaxError(cylc.CylcError.CylcError):
 
     """An error denoting invalid ISO/Cylc input syntax."""
 
