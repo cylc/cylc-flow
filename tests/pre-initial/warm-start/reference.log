@@ -1,7 +1,7 @@
 2013/09/11 10:42:03 INFO - Thread-2 start (Event Handler Submission)
 2013/09/11 10:42:03 INFO - Thread-3 start (Poll and Kill Command Submission)
 2013/09/11 10:42:03 INFO - port:7766
-2013/09/11 10:42:03 CRITICAL - Suite starting at 2013-09-11 10:42:03.211179
+2013/09/11 10:42:03 INFO - Suite starting at 2013-09-11 10:42:03.211179
 2013/09/11 10:42:03 INFO - Log event clock: real time
 2013/09/11 10:42:03 INFO - Run mode: live
 2013/09/11 10:42:03 INFO - Start tag: 2013010100
@@ -133,4 +133,4 @@
 2013/09/11 10:42:19 INFO - [foo.2013010200] -(setting:succeeded)
 2013/09/11 10:42:19 DEBUG - UPDATING STATE SUMMARY
 2013/09/11 10:42:19 INFO - All normal cycling tasks have spawned past the final cycle 2013010200
-2013/09/11 10:42:19 CRITICAL - Suite shutting down at 2013-09-11 10:42:19.470837
+2013/09/11 10:42:19 INFO - Suite shutting down at 2013-09-11 10:42:19.470837

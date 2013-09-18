@@ -50,6 +50,7 @@ from suite_logging import suite_log
 import threading
 from suite_cmd_interface import comqueue
 from suite_info_interface import info_interface
+from suite_log_interface import log_interface
 from TaskID import TaskID, TaskIDError
 from task_pool import pool
 import flags
@@ -267,7 +268,7 @@ class scheduler(object):
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.critical( 'Suite starting at ' + str( datetime.datetime.now()) )
+        self.log.info( 'Suite starting at ' + str( datetime.datetime.now()) )
         if self.run_mode == 'live':
             self.log.info( 'Log event clock: real time' )
         else:
@@ -628,7 +629,7 @@ class scheduler(object):
         return result(True, 'OK')
 
     def command_remove_cycle( self, tag, spawn ):
-        self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        self.log.info( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.tag == tag:
                 if spawn:
@@ -636,7 +637,7 @@ class scheduler(object):
                 self.pool.remove( itask, 'by request' )
 
     def command_remove_task( self, name, tag, is_family, spawn ):
-        self.log.warning( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        self.log.info( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
@@ -648,7 +649,7 @@ class scheduler(object):
                 self.pool.remove( itask, 'by request' )
 
     def command_insert_task( self, name, tag, is_family, stop_tag ):
-        self.log.warning( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        self.log.info( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
@@ -740,7 +741,7 @@ class scheduler(object):
                         itask.state.set_spawned()
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
-                    self.log.warning( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
+                    self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
                     new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
                     # set reloaded task's spawn status (else task state init doesn't get
                     # this right for reloaded sequential tasks TODO - fix this properly)
@@ -915,6 +916,9 @@ class scheduler(object):
             self.info_interface = info_interface( self.info_commands )
             self.pyro.connect( self.info_interface, 'suite-info' )
 
+            self.log_interface = log_interface( slog )
+            self.pyro.connect( self.log_interface, 'log' )
+
             self.log.info( "port:" +  str( self.port ))
 
     def configure_suite_environment( self ):
@@ -997,7 +1001,7 @@ class scheduler(object):
             self.hold_suite( self.hold_time )
 
         if self.options.start_held:
-            self.log.warning( "Held on start-up (no tasks will be submitted)")
+            self.log.info( "Held on start-up (no tasks will be submitted)")
             self.hold_suite()
 
         handler = self.config.event_handlers['startup']
@@ -1144,7 +1148,7 @@ class scheduler(object):
             self.release_runahead()
 
         # END MAIN LOOP
-        self.log.critical( "Suite shutting down at " + str(datetime.datetime.now()) )
+        self.log.info( "Suite shutting down at " + str(datetime.datetime.now()) )
 
         if self.options.genref:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
@@ -1335,28 +1339,28 @@ class scheduler(object):
         # EXIT
 
     def set_stop_ctime( self, stop_tag ):
-        self.log.warning( "Setting stop cycle time: " + stop_tag )
+        self.log.info( "Setting stop cycle time: " + stop_tag )
         self.stop_tag = stop_tag
 
     def set_stop_clock( self, dtime ):
-        self.log.warning( "Setting stop clock time: " + dtime.isoformat() )
+        self.log.info( "Setting stop clock time: " + dtime.isoformat() )
         self.stop_clock_time = dtime
 
     def set_stop_task( self, taskid ):
         name, tag = taskid.split(TaskID.DELIM)
         if name in self.config.get_task_name_list():
-            self.log.warning( "Setting stop task: " + taskid )
+            self.log.info( "Setting stop task: " + taskid )
             self.stop_task = taskid
         else:
             self.log.warning( "Requested stop task name does not exist: " + name )
 
     def hold_suite( self, ctime = None ):
         if ctime:
-            self.log.warning( "Setting suite hold cycle time: " + ctime )
+            self.log.info( "Setting suite hold cycle time: " + ctime )
             self.hold_time = ctime
         else:
             self.hold_suite_now = True
-            self.log.warning( "Holding all waiting or queued tasks now")
+            self.log.info( "Holding all waiting or queued tasks now")
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                     # (not runahead: we don't want these converted to
@@ -1365,7 +1369,7 @@ class scheduler(object):
 
     def release_suite( self ):
         if self.hold_suite_now:
-            self.log.warning( "RELEASE: new tasks will be queued when ready")
+            self.log.info( "RELEASE: new tasks will be queued when ready")
             self.hold_suite_now = False
             self.hold_time = None
         for itask in self.pool.get_tasks():
@@ -1702,7 +1706,7 @@ class scheduler(object):
  
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                self.log.warning( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+                self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
                 itask.log( "NORMAL", "manual trigger now" )
                 itask.reset_state_ready()
                 itask.manual_trigger = True
@@ -1816,7 +1820,7 @@ class scheduler(object):
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
 
-        self.log.warning( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
+        self.log.info( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         # Purge is an infrequently used power tool, so print 
         # comprehensive information on what it does to stdout.
@@ -1953,7 +1957,7 @@ class scheduler(object):
                             stop = False
                             break
             if stop:
-                self.log.warning( "Stop task " + name + TaskID.DELIM + tag + " finished" )
+                self.log.info( "Stop task " + name + TaskID.DELIM + tag + " finished" )
                 if self.no_tasks_submitted_or_running():
                     return True
                 else:

@@ -66,6 +66,9 @@ function FINALLY() {
     fi
     if [[ $FAILURES -gt 0 ]]; then
         echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" > /dev/tty
+        if $SUITE_RUN_FAILS; then
+            echo -e "    suite logs can be found under: $SUITE_LOG_DIR" > /dev/tty
+        fi
     fi
 }
 for S in $SIGNALS; do
@@ -121,6 +124,7 @@ function suite_run_ok() {
         SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
         cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
         cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
+        SUITE_RUN_FAILS=true
         return
     fi
     ok $TEST_NAME
@@ -134,6 +138,7 @@ function suite_run_fail() {
         SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
         cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
         cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
+        SUITE_RUN_FAILS=true
         return
     fi
     ok $TEST_NAME
@@ -209,5 +214,6 @@ TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
 TEST_DIR=$(mktemp -d)
 cd $TEST_DIR
 TEST_LOG_DIR=$TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+SUITE_RUN_FAILS=false
 
 set +e

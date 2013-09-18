@@ -1,7 +1,7 @@
 2013/08/27 09:11:58 INFO - Thread-2 start (Event Handler Submission)
 2013/08/27 09:11:58 INFO - Thread-3 start (Poll and Kill Command Submission)
 2013/08/27 09:11:58 INFO - port:7766
-2013/08/27 09:11:58 CRITICAL - Suite starting at 2013-08-27 09:11:58.219142
+2013/08/27 09:11:58 INFO - Suite starting at 2013-08-27 09:11:58.219142
 2013/08/27 09:11:58 INFO - Log event clock: real time
 2013/08/27 09:11:58 INFO - Run mode: live
 2013/08/27 09:11:58 INFO - Start tag: None
@@ -19,8 +19,8 @@
 2013/08/27 09:12:00 INFO - [reloader.1] -(current:running)> reloader.1 succeeded at 2013-08-27T09:11:59
 2013/08/27 09:12:00 INFO - [reloader.1] -(setting:succeeded)
 2013/08/27 09:12:00 INFO - Command succeeded: reload suite()
-2013/08/27 09:12:00 WARNING - RELOADING TASK DEFINITION FOR reloader.1
-2013/08/27 09:12:00 WARNING - RELOADING TASK DEFINITION FOR foo.1
+2013/08/27 09:12:00 INFO - RELOADING TASK DEFINITION FOR reloader.1
+2013/08/27 09:12:00 INFO - RELOADING TASK DEFINITION FOR foo.1
 2013/08/27 09:12:00 INFO - [foo.1] -(setting:submitting)
 2013/08/27 09:12:02 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
 2013/08/27 09:12:02 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
@@ -31,4 +31,4 @@
 2013/08/27 09:12:02 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-08-27T09:12:01
 2013/08/27 09:12:02 INFO - [foo.1] -(setting:succeeded)
 2013/08/27 09:12:02 INFO - All non-cycling tasks have succeeded
-2013/08/27 09:12:02 CRITICAL - Suite shutting down at 2013-08-27 09:12:02.249212
+2013/08/27 09:12:02 INFO - Suite shutting down at 2013-08-27 09:12:02.249212
