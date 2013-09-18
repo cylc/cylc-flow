@@ -188,13 +188,19 @@ class Updater(threading.Thread):
         try:
             [glbl, states, fam_states] = self.god.get_state_summary()
             self.task_list = self.god.get_task_name_list()
-            new_err_content, new_err_size = self.log.get_err_content(
-                prev_size=self.err_log_size,
-                max_lines=self._err_num_log_lines)
-        except Exception, x:
+        except Exception:
             #print >> sys.stderr, x
             gobject.idle_add( self.connection_lost )
             return False
+
+        try:
+            new_err_content, new_err_size = self.log.get_err_content(
+                prev_size=self.err_log_size,
+                max_lines=self._err_num_log_lines)
+        except Exception as x:
+            print type(x), x
+            new_err_content = ""
+            new_err_size = self.err_log_size
 
         err_log_changed = (new_err_size != self.err_log_size)
         if err_log_changed:
