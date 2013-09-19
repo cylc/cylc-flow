@@ -59,6 +59,10 @@ parser.add_option( "-i", "--item", metavar="[SEC...]ITEM",
         "times on the same command line.",
         action="append", dest="item", default=[] )
 
+parser.add_option( "-p", "--python",
+        help="Write out the config data structure in Python native format.",
+        action="store_true", default=False, dest="pnative" )
+
 (options, args) = parser.parse_args()
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
@@ -66,6 +70,7 @@ if len(args) != 0:
 try:
     # import gcfg here to avoid aborting before command help is printed
     from cylc.global_config import get_global_cfg, print_global_cfg
+    from parsec.util import printcfg
     gcfg = get_global_cfg(strict=options.strict, verbose=options.verbose)
     if options.stdout:
         print_global_cfg()
@@ -87,7 +92,11 @@ try:
                     value = value[element]
                 else:
                     sys.exit( "Key not found: " + str(key))
-            print value
+            if isinstance( value, dict ):
+                if options.pnative:
+                    print value
+                else:
+                    printcfg( value, level=len(args[1:]) )
     else:
         print "Combined site/user config is valid for cylc-" + cylc_version
 
