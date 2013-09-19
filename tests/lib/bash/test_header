@@ -178,6 +178,10 @@ function init_suite() {
     cylc unregister $SUITE_NAME 2>&1
     cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>&1
     cd $TEST_DIR/$SUITE_NAME 2>&1
+    while [[ ! $(cylc get-directory $SUITE_NAME) ]]
+    do
+        sleep 1
+    done
 }
 
 function install_suite() {
