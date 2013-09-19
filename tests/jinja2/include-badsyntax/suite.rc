@@ -1,0 +1,9 @@
+#!Jinja2
+{% set MYVAR = "this is a set variable" %}
+
+[scheduling]
+    [[dependencies]]
+        graph = "a => FAM"
+
+[runtime]
+{% include 'runtime-bad.rc' %}
