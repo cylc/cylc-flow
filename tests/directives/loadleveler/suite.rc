@@ -1,0 +1,17 @@
+#!Jinja2
+{% set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
+[scheduling]
+    [[dependencies]]
+        graph = "rem1"
+[runtime]
+    [[rem1]]
+        command scripting = "sleep 10; true"
+        [[[job submission]]]
+            method = loadleveler
+        [[[directives]]]
+            class            = serial
+            job_type         = serial
+            notification     = error
+            wall_clock_limit = '120,60'
+        [[[remote]]]
+            host = {{ HOST }}
