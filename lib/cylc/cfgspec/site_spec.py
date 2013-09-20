@@ -97,6 +97,13 @@ SPEC = {
             },
         },
 
+    'directive tests' : {
+        'loadleveler-host'                : vdr( vtype='string' ),
+        'pbs-host'                        : vdr( vtype='string' ),
+        'sge-host'                        : vdr( vtype='string' ),
+        'slurm-host'                      : vdr( vtype='string' ),
+        },
+
     'suite host self-identification' : {
         'method'                          : vdr( vtype='string', options=["name","address","hardwired"], default="name" ),
         'target'                          : vdr( vtype='string', default="google.com" ),
