@@ -43,6 +43,7 @@ then
         TEST_NAME=$TEST_NAME_BASE-run
         suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
+        echo $TEST_DIR/$SUITE_NAME/ > /dev/tty
         purge_suite $SUITE_NAME
         if [[ -n $SUITE_NAME ]]
         then

@@ -1,11 +1,17 @@
 #!Jinja2
 {% set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 2.5 # minutes
+       expected task failures = rem2.1
 [scheduling]
     [[dependencies]]
-        graph = "rem1"
+        graph = """rem1 => rem2
+                   rem2:start => killer => !rem2
+                   """
 [runtime]
-    [[rem1]]
-        command scripting = "sleep 10; true"
+    [[LLSETTINGS]]
         [[[job submission]]]
             method = loadleveler
         [[[directives]]]
@@ -15,3 +21,12 @@
             wall_clock_limit = '120,60'
         [[[remote]]]
             host = {{ HOST }}
+    [[rem1]]
+        inherit = LLSETTINGS
+        command scripting = "sleep 10; true"
+    [[rem2]]
+        inherit = LLSETTINGS
+        command scripting = "sleep 30"
+    [[killer]]
+        command scripting = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10
+
