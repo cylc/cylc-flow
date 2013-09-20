@@ -10,8 +10,8 @@
 2013/09/20 15:17:44 INFO - Thread-5 start (Request Handling)
 2013/09/20 15:17:44 INFO - [rem1.1] -(setting:submitting)
 2013/09/20 15:17:44 INFO - [rem1.1] -triggered off []
-2013/09/20 15:17:45 INFO - [rem1.1] -Task host: hpc2e
-2013/09/20 15:17:45 INFO - [rem1.1] -Copying suite contact file to hpc2e
+2013/09/20 15:17:45 INFO - [rem1.1] -Task host: remotehost
+2013/09/20 15:17:45 INFO - [rem1.1] -Copying suite contact file to remotehost
 2013/09/20 15:17:45 INFO - [rem1.1] -(current:submitting)> rem1.1 submitting now
 2013/09/20 15:17:48 INFO - [rem1.1] -(current:submitting)> rem1.1 submission succeeded
 2013/09/20 15:17:48 INFO - [rem1.1] -(setting:submitted)
@@ -22,7 +22,7 @@
 2013/09/20 15:18:06 INFO - [rem1.1] -(setting:succeeded)
 2013/09/20 15:18:06 INFO - [rem2.1] -(setting:submitting)
 2013/09/20 15:18:06 INFO - [rem2.1] -triggered off ['rem1.1']
-2013/09/20 15:18:06 INFO - [rem2.1] -Task host: hpc2e
+2013/09/20 15:18:06 INFO - [rem2.1] -Task host: remotehost
 2013/09/20 15:18:07 INFO - [rem2.1] -(current:submitting)> rem2.1 submitting now
 2013/09/20 15:18:08 INFO - [rem2.1] -(current:submitting)> rem2.1 submission succeeded
 2013/09/20 15:18:08 INFO - [rem2.1] -(setting:submitted)
