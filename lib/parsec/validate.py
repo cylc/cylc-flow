@@ -52,7 +52,7 @@ def validate( cfig, spec, keys=[] ):
     for key,val in cfig.items():
         if key not in spec:
             if '__MANY__' not in spec:
-                raise ValidationError('ERROR: illegal item: ' + key )
+                raise IllegalItemError( keys, key )
             else:
                 # only accept the item if it's value is of the same type
                 # as that of the __MANY__  item, i.e. dict or not-dict.
