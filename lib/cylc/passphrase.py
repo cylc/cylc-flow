@@ -176,7 +176,7 @@ that do not actually need the suite definition directory to be installed.
                     break
 
         if not self.location:
-            raise SecurityError, 'ERROR: passphrase not found on ' + user + '@' + get_hostname()
+            raise SecurityError, 'ERROR: passphrase for suite ' + self.suite + ' not found on ' + user + '@' + get_hostname()
 
         return self.location
 

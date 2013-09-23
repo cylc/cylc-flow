@@ -136,25 +136,15 @@ Class to hold initialisation data.
 
     def reset( self, suite ):
         self.suite = suite
-
         suitedir = None
         # dealias the suite name (an aliased name may be given for local suites)
         if not is_remote_host( self.host ) and not is_remote_user( self.owner ):
             db = localdb(file=self.db)
             db.load_from_file()
-            try:
-                self.suite = db.unalias( suite )
-                suitedir = db.getdir( suite )
-            except Exception, x:
-                warning_dialog( "ERROR in suite name de-aliasing!\n" + str(x) ).warn()
-                self.suite = suite
-                #self.quit()
-        try:
-            self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
-        except Exception, x:
-            warning_dialog( "ERROR in suite passphrase hunt!\n" + str(x) ).warn()
-            self.pphrase = None
-
+            self.suite = db.unalias( suite )
+            suitedir = db.getdir( suite )
+        # get the suite passphrase (required for local or remote suites)
+        self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
         self.logdir = suite_log( suite ).get_dir()
 
 class InfoBar(gtk.VBox):
