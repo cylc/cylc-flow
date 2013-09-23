@@ -1,57 +1,650 @@
-2012/11/13 15:15:40 INFO - Suite starting at 2012-11-13 15:15:40.352851
-2012/11/13 15:15:40 INFO - Log event clock: real time
-2012/11/13 15:15:40 INFO - Run mode: live
-2012/11/13 15:15:40 INFO - Start tag: 2010080800
-2012/11/13 15:15:40 INFO - Stop tag: 2010080900
-2012/11/13 15:15:40 INFO - Cold Start 2010080800
-2012/11/13 15:15:40 INFO - [prep.2010080800] -job submitted
-2012/11/13 15:15:40 INFO - [prep.2010080800] -triggered off []
-2012/11/13 15:15:40 INFO - [prep.2010080800] -prep.2010080800 started
-2012/11/13 15:15:43 INFO - [prep.2010080800] -prep.2010080800 succeeded
-2012/11/13 15:15:43 INFO - [foo.2010080800] -job submitted
-2012/11/13 15:15:43 INFO - [foo.2010080800] -triggered off ['prep.2010080800']
-2012/11/13 15:15:43 INFO - [foo.2010080900] -job submitted
-2012/11/13 15:15:43 INFO - [foo.2010080900] -triggered off []
-2012/11/13 15:15:43 INFO - [foo.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
-2012/11/13 15:15:43 INFO - [foo.2010080800] -foo.2010080800 started
-2012/11/13 15:15:43 INFO - [foo.2010080900] -foo.2010080900 started
-2012/11/13 15:15:43 INFO - [foo.2010080800] -foo.2010080800 succeeded
-2012/11/13 15:15:43 INFO - [m1.2010080800] -job submitted
-2012/11/13 15:15:43 INFO - [m2.2010080800] -job submitted
-2012/11/13 15:15:43 INFO - [m3.2010080800] -job submitted
-2012/11/13 15:15:43 INFO - [m1.2010080800] -triggered off ['foo.2010080800']
-2012/11/13 15:15:43 INFO - [m2.2010080800] -triggered off ['foo.2010080800']
-2012/11/13 15:15:43 INFO - [m3.2010080800] -triggered off ['foo.2010080800']
-2012/11/13 15:15:43 INFO - [foo.2010080900] -foo.2010080900 succeeded
-2012/11/13 15:15:43 INFO - [m1.2010080900] -job submitted
-2012/11/13 15:15:43 INFO - [m2.2010080900] -job submitted
-2012/11/13 15:15:43 INFO - [m3.2010080900] -job submitted
-2012/11/13 15:15:43 INFO - [m1.2010080900] -triggered off ['foo.2010080900']
-2012/11/13 15:15:43 INFO - [m2.2010080900] -triggered off ['foo.2010080900']
-2012/11/13 15:15:43 INFO - [m3.2010080900] -triggered off ['foo.2010080900']
-2012/11/13 15:15:43 INFO - [m1.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
-2012/11/13 15:15:43 INFO - [m2.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
-2012/11/13 15:15:43 INFO - [m3.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
-2012/11/13 15:15:43 INFO - [m1.2010080800] -m1.2010080800 started
-2012/11/13 15:15:44 INFO - [m3.2010080800] -m3.2010080800 started
-2012/11/13 15:15:44 INFO - [m2.2010080800] -m2.2010080800 started
-2012/11/13 15:15:44 INFO - [m1.2010080900] -m1.2010080900 started
-2012/11/13 15:15:44 INFO - [m2.2010080900] -m2.2010080900 started
-2012/11/13 15:15:44 INFO - [m3.2010080900] -m3.2010080900 started
-2012/11/13 15:15:44 INFO - [m1.2010080800] -m1.2010080800 succeeded
-2012/11/13 15:15:44 INFO - [m3.2010080800] -m3.2010080800 succeeded
-2012/11/13 15:15:44 INFO - [m2.2010080800] -m2.2010080800 succeeded
-2012/11/13 15:15:44 INFO - [bar.2010080800] -job submitted
-2012/11/13 15:15:44 INFO - [bar.2010080800] -triggered off ['m1.2010080800', 'm2.2010080800', 'm3.2010080800']
-2012/11/13 15:15:44 INFO - [m1.2010080900] -m1.2010080900 succeeded
-2012/11/13 15:15:44 INFO - [m2.2010080900] -m2.2010080900 succeeded
-2012/11/13 15:15:44 INFO - [m3.2010080900] -m3.2010080900 succeeded
-2012/11/13 15:15:44 INFO - [bar.2010080900] -job submitted
-2012/11/13 15:15:44 INFO - [bar.2010080900] -triggered off ['m1.2010080900', 'm2.2010080900', 'm3.2010080900']
-2012/11/13 15:15:44 INFO - [bar.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
-2012/11/13 15:15:44 INFO - [bar.2010080800] -bar.2010080800 started
-2012/11/13 15:15:45 INFO - [bar.2010080900] -bar.2010080900 started
-2012/11/13 15:15:45 INFO - [bar.2010080800] -bar.2010080800 succeeded
-2012/11/13 15:15:45 INFO - Expiring 2010080800 broadcast settings now
-2012/11/13 15:15:45 INFO - [bar.2010080900] -bar.2010080900 succeeded
-2012/11/13 15:15:45 INFO - Suite shutting down at 2012-11-13 15:15:45.325960
+2013/09/20 17:16:28 INFO - Thread-2 start (Event Handler Submission)
+2013/09/20 17:16:28 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/20 17:16:28 INFO - port:7766
+2013/09/20 17:16:28 INFO - Suite starting at 2013-09-20 17:16:28.061245
+2013/09/20 17:16:28 INFO - Log event clock: real time
+2013/09/20 17:16:28 INFO - Run mode: live
+2013/09/20 17:16:28 INFO - Start tag: 2010080800
+2013/09/20 17:16:28 INFO - Stop tag: 2010080900
+2013/09/20 17:16:28 INFO - Thread-4 start (Job Submission)
+2013/09/20 17:16:28 INFO - Thread-5 start (Request Handling)
+2013/09/20 17:16:28 INFO - Cold Start 2010080800
+2013/09/20 17:16:28 DEBUG - [bar.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [wobble.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [qux.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m2.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [baz.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m8.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m5.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m4.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m7.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m6.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m1.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m3.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [wibble.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [n1.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [foo.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [m9.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [prep.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - [o1.2010080800] -task proxy added to the pool
+2013/09/20 17:16:28 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:28 INFO - [prep.2010080800] -(setting:submitting)
+2013/09/20 17:16:28 INFO - [prep.2010080800] -triggered off []
+2013/09/20 17:16:28 DEBUG - END TASK PROCESSING (took 0.009157 sec)
+2013/09/20 17:16:29 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/20 17:16:29 INFO - [prep.2010080800] -(current:submitting)> prep.2010080800 submitting now
+2013/09/20 17:16:29 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:30 INFO - [prep.2010080800] -(current:submitting)> prep.2010080800 submission succeeded
+2013/09/20 17:16:30 INFO - [prep.2010080800] -(setting:submitted)
+2013/09/20 17:16:30 INFO - [prep.2010080800] -(current:submitted)> prep.2010080800 submit_method_id=11573
+2013/09/20 17:16:30 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:30 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:30 DEBUG - END TASK PROCESSING (took 0.004352 sec)
+2013/09/20 17:16:30 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.330856
+  All 1 items succeeded
+2013/09/20 17:16:31 INFO - [prep.2010080800] -(current:submitted)> prep.2010080800 started at 2013-09-20T17:16:30
+2013/09/20 17:16:31 INFO - [prep.2010080800] -(setting:running)
+2013/09/20 17:16:31 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:31 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:31 DEBUG - END TASK PROCESSING (took 0.006763 sec)
+2013/09/20 17:16:32 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:43 INFO - [prep.2010080800] -(current:running)> prep.2010080800 succeeded at 2013-09-20T17:16:42
+2013/09/20 17:16:43 INFO - [prep.2010080800] -(setting:succeeded)
+2013/09/20 17:16:43 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:43 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:43 INFO - [foo.2010080800] -(setting:submitting)
+2013/09/20 17:16:43 INFO - [foo.2010080800] -triggered off ['prep.2010080800']
+2013/09/20 17:16:43 DEBUG - END TASK PROCESSING (took 0.009217 sec)
+2013/09/20 17:16:43 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/20 17:16:44 INFO - [foo.2010080800] -(current:submitting)> foo.2010080800 submitting now
+2013/09/20 17:16:44 INFO - [foo.2010080800] -(current:submitting)> foo.2010080800 submission succeeded
+2013/09/20 17:16:44 INFO - [foo.2010080800] -(setting:submitted)
+2013/09/20 17:16:44 INFO - [foo.2010080800] -(current:submitted)> foo.2010080800 submit_method_id=11957
+2013/09/20 17:16:44 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:44 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:44 DEBUG - [foo.2010080800] -forced spawning
+2013/09/20 17:16:44 DEBUG - [foo.2010080900] -task proxy added to the pool
+2013/09/20 17:16:44 DEBUG - END TASK PROCESSING (took 0.015515 sec)
+2013/09/20 17:16:44 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.238559
+  All 1 items succeeded
+2013/09/20 17:16:45 INFO - [foo.2010080800] -(current:submitted)> foo.2010080800 started at 2013-09-20T17:16:44
+2013/09/20 17:16:45 INFO - [foo.2010080800] -(setting:running)
+2013/09/20 17:16:45 INFO - [foo.2010080800] -(current:running)> foo.2010080800 succeeded at 2013-09-20T17:16:44
+2013/09/20 17:16:45 INFO - [foo.2010080800] -(setting:succeeded)
+2013/09/20 17:16:45 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:45 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:45 INFO - [bar.2010080800] -(setting:submitting)
+2013/09/20 17:16:45 INFO - [qux.2010080800] -(setting:submitting)
+2013/09/20 17:16:45 INFO - [baz.2010080800] -(setting:submitting)
+2013/09/20 17:16:45 INFO - [wibble.2010080800] -(setting:submitting)
+2013/09/20 17:16:45 INFO - [foo.2010080900] -(setting:submitting)
+2013/09/20 17:16:45 INFO - [bar.2010080800] -triggered off ['foo.2010080800']
+2013/09/20 17:16:45 INFO - [qux.2010080800] -triggered off ['foo.2010080800']
+2013/09/20 17:16:45 INFO - [baz.2010080800] -triggered off ['foo.2010080800']
+2013/09/20 17:16:45 INFO - [wibble.2010080800] -triggered off ['foo.2010080800']
+2013/09/20 17:16:45 INFO - [foo.2010080900] -triggered off []
+2013/09/20 17:16:45 DEBUG - END TASK PROCESSING (took 0.016142 sec)
+2013/09/20 17:16:45 DEBUG - Job Submission batch 1/1 (5 members):
+2013/09/20 17:16:46 INFO - [bar.2010080800] -(current:submitting)> bar.2010080800 submitting now
+2013/09/20 17:16:46 INFO - [qux.2010080800] -(current:submitting)> qux.2010080800 submitting now
+2013/09/20 17:16:46 INFO - [baz.2010080800] -(current:submitting)> baz.2010080800 submitting now
+2013/09/20 17:16:46 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:47 INFO - [bar.2010080800] -(current:submitting)> bar.2010080800 started at 2013-09-20T17:16:46
+2013/09/20 17:16:47 INFO - [bar.2010080800] -(setting:running)
+2013/09/20 17:16:47 INFO - [bar.2010080800] -(current:running)> bar.2010080800 submission succeeded
+2013/09/20 17:16:47 INFO - [bar.2010080800] -(current:running)> bar.2010080800 submit_method_id=12078
+2013/09/20 17:16:47 INFO - [qux.2010080800] -(current:submitting)> qux.2010080800 started at 2013-09-20T17:16:46
+2013/09/20 17:16:47 INFO - [qux.2010080800] -(setting:running)
+2013/09/20 17:16:47 INFO - [baz.2010080800] -(current:submitting)> baz.2010080800 submission succeeded
+2013/09/20 17:16:47 INFO - [baz.2010080800] -(setting:submitted)
+2013/09/20 17:16:47 INFO - [baz.2010080800] -(current:submitted)> baz.2010080800 submit_method_id=12244
+2013/09/20 17:16:47 INFO - [baz.2010080800] -(current:submitted)> baz.2010080800 started at 2013-09-20T17:16:47
+2013/09/20 17:16:47 INFO - [baz.2010080800] -(setting:running)
+2013/09/20 17:16:47 INFO - [wibble.2010080800] -(current:submitting)> wibble.2010080800 submitting now
+2013/09/20 17:16:47 INFO - [foo.2010080900] -(current:submitting)> foo.2010080900 submitting now
+2013/09/20 17:16:47 INFO - [foo.2010080900] -(current:submitting)> foo.2010080900 submission succeeded
+2013/09/20 17:16:47 INFO - [foo.2010080900] -(setting:submitted)
+2013/09/20 17:16:47 INFO - [foo.2010080900] -(current:submitted)> foo.2010080900 submit_method_id=12444
+2013/09/20 17:16:47 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:47 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:47 DEBUG - [bar.2010080800] -forced spawning
+2013/09/20 17:16:47 DEBUG - [bar.2010080900] -task proxy added to the pool
+2013/09/20 17:16:47 DEBUG - [qux.2010080800] -forced spawning
+2013/09/20 17:16:47 DEBUG - [qux.2010080900] -task proxy added to the pool
+2013/09/20 17:16:47 DEBUG - [baz.2010080800] -forced spawning
+2013/09/20 17:16:47 DEBUG - [baz.2010080900] -task proxy added to the pool
+2013/09/20 17:16:47 DEBUG - [foo.2010080900] -forced spawning
+2013/09/20 17:16:47 INFO - [foo.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:16:47 INFO - [foo.2010081000] -(setting:held)
+2013/09/20 17:16:47 DEBUG - [foo.2010081000] -task proxy added to the pool
+2013/09/20 17:16:47 DEBUG - END TASK PROCESSING (took 0.0415 sec)
+2013/09/20 17:16:48 INFO - [bar.2010080800] -(current:running)> bar.2010080800 succeeded at 2013-09-20T17:16:47
+2013/09/20 17:16:48 INFO - [bar.2010080800] -(setting:succeeded)
+2013/09/20 17:16:48 INFO - [qux.2010080800] -(current:running)> qux.2010080800 succeeded at 2013-09-20T17:16:47
+2013/09/20 17:16:48 INFO - [qux.2010080800] -(setting:succeeded)
+2013/09/20 17:16:48 WARNING - [qux.2010080800] -Assuming non-reported outputs were completed:
+qux.2010080800 submitted
+2013/09/20 17:16:48 INFO - [qux.2010080800] -(current:succeeded)> qux.2010080800 submission succeeded
+2013/09/20 17:16:48 INFO - [qux.2010080800] -(current:succeeded)> qux.2010080800 submit_method_id=12159
+2013/09/20 17:16:48 INFO - [baz.2010080800] -(current:running)> baz.2010080800 succeeded at 2013-09-20T17:16:47
+2013/09/20 17:16:48 INFO - [baz.2010080800] -(setting:succeeded)
+2013/09/20 17:16:48 INFO - [wibble.2010080800] -(current:submitting)> wibble.2010080800 started at 2013-09-20T17:16:47
+2013/09/20 17:16:48 INFO - [wibble.2010080800] -(setting:running)
+2013/09/20 17:16:48 INFO - [wibble.2010080800] -(current:running)> wibble.2010080800 succeeded at 2013-09-20T17:16:48
+2013/09/20 17:16:48 INFO - [wibble.2010080800] -(setting:succeeded)
+2013/09/20 17:16:48 WARNING - [wibble.2010080800] -Assuming non-reported outputs were completed:
+wibble.2010080800 submitted
+2013/09/20 17:16:48 INFO - [foo.2010080900] -(current:submitted)> foo.2010080900 started at 2013-09-20T17:16:47
+2013/09/20 17:16:48 INFO - [foo.2010080900] -(setting:running)
+2013/09/20 17:16:48 INFO - [foo.2010080900] -(current:running)> foo.2010080900 succeeded at 2013-09-20T17:16:48
+2013/09/20 17:16:48 INFO - [foo.2010080900] -(setting:succeeded)
+2013/09/20 17:16:48 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:48 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:48 INFO - [m2.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m8.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m5.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m4.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m7.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m6.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m1.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m3.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [n1.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m9.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [o1.2010080800] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [bar.2010080900] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [qux.2010080900] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [baz.2010080900] -(setting:submitting)
+2013/09/20 17:16:48 INFO - [m2.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m8.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m5.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m4.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m7.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m6.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m1.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m3.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [n1.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [m9.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [o1.2010080800] -triggered off ['bar.2010080800', 'baz.2010080800', 'qux.2010080800', 'wibble.2010080800']
+2013/09/20 17:16:48 INFO - [bar.2010080900] -triggered off ['foo.2010080900']
+2013/09/20 17:16:48 INFO - [qux.2010080900] -triggered off ['foo.2010080900']
+2013/09/20 17:16:48 INFO - [baz.2010080900] -triggered off ['foo.2010080900']
+2013/09/20 17:16:48 DEBUG - [wibble.2010080800] -forced spawning
+2013/09/20 17:16:48 DEBUG - [wibble.2010080900] -task proxy added to the pool
+2013/09/20 17:16:48 DEBUG - END TASK PROCESSING (took 0.037076 sec)
+2013/09/20 17:16:49 INFO - [wibble.2010080800] -(current:succeeded)> wibble.2010080800 submission succeeded
+2013/09/20 17:16:49 INFO - [wibble.2010080800] -(current:succeeded)> wibble.2010080800 submit_method_id=12337
+2013/09/20 17:16:49 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:49 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:49 INFO - [wibble.2010080900] -(setting:submitting)
+2013/09/20 17:16:49 INFO - [wibble.2010080900] -triggered off ['foo.2010080900']
+2013/09/20 17:16:49 DEBUG - END TASK PROCESSING (took 0.016692 sec)
+2013/09/20 17:16:49 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:04.234026
+  All 5 items succeeded
+2013/09/20 17:16:50 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:50 DEBUG - Job Submission batch 1/2 (10 members):
+2013/09/20 17:16:51 INFO - [m2.2010080800] -(current:submitting)> m2.2010080800 submitting now
+2013/09/20 17:16:51 INFO - [m8.2010080800] -(current:submitting)> m8.2010080800 submitting now
+2013/09/20 17:16:51 INFO - [m5.2010080800] -(current:submitting)> m5.2010080800 submitting now
+2013/09/20 17:16:51 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:52 INFO - [m2.2010080800] -(current:submitting)> m2.2010080800 started at 2013-09-20T17:16:51
+2013/09/20 17:16:52 INFO - [m2.2010080800] -(setting:running)
+2013/09/20 17:16:52 INFO - [m8.2010080800] -(current:submitting)> m8.2010080800 started at 2013-09-20T17:16:52
+2013/09/20 17:16:52 INFO - [m8.2010080800] -(setting:running)
+2013/09/20 17:16:52 INFO - [m5.2010080800] -(current:submitting)> m5.2010080800 started at 2013-09-20T17:16:52
+2013/09/20 17:16:52 INFO - [m5.2010080800] -(setting:running)
+2013/09/20 17:16:52 INFO - [m4.2010080800] -(current:submitting)> m4.2010080800 submitting now
+2013/09/20 17:16:52 INFO - [m7.2010080800] -(current:submitting)> m7.2010080800 submitting now
+2013/09/20 17:16:52 INFO - [m6.2010080800] -(current:submitting)> m6.2010080800 submitting now
+2013/09/20 17:16:52 INFO - [m1.2010080800] -(current:submitting)> m1.2010080800 submitting now
+2013/09/20 17:16:52 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:52 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:52 DEBUG - [m2.2010080800] -forced spawning
+2013/09/20 17:16:52 DEBUG - [m2.2010080900] -task proxy added to the pool
+2013/09/20 17:16:52 DEBUG - [m8.2010080800] -forced spawning
+2013/09/20 17:16:52 DEBUG - [m8.2010080900] -task proxy added to the pool
+2013/09/20 17:16:52 DEBUG - [m5.2010080800] -forced spawning
+2013/09/20 17:16:52 DEBUG - [m5.2010080900] -task proxy added to the pool
+2013/09/20 17:16:52 DEBUG - END TASK PROCESSING (took 0.068784 sec)
+2013/09/20 17:16:53 INFO - [m2.2010080800] -(current:running)> m2.2010080800 succeeded at 2013-09-20T17:16:52
+2013/09/20 17:16:53 INFO - [m2.2010080800] -(setting:succeeded)
+2013/09/20 17:16:53 WARNING - [m2.2010080800] -Assuming non-reported outputs were completed:
+m2.2010080800 submitted
+2013/09/20 17:16:53 INFO - [m2.2010080800] -(current:succeeded)> m2.2010080800 submission succeeded
+2013/09/20 17:16:53 INFO - [m2.2010080800] -(current:succeeded)> m2.2010080800 submit_method_id=12646
+2013/09/20 17:16:53 INFO - [m8.2010080800] -(current:running)> m8.2010080800 succeeded at 2013-09-20T17:16:52
+2013/09/20 17:16:53 INFO - [m8.2010080800] -(setting:succeeded)
+2013/09/20 17:16:53 WARNING - [m8.2010080800] -Assuming non-reported outputs were completed:
+m8.2010080800 submitted
+2013/09/20 17:16:53 INFO - [m5.2010080800] -(current:running)> m5.2010080800 succeeded at 2013-09-20T17:16:53
+2013/09/20 17:16:53 INFO - [m5.2010080800] -(setting:succeeded)
+2013/09/20 17:16:53 WARNING - [m5.2010080800] -Assuming non-reported outputs were completed:
+m5.2010080800 submitted
+2013/09/20 17:16:53 INFO - [m5.2010080800] -(current:succeeded)> m5.2010080800 submission succeeded
+2013/09/20 17:16:53 INFO - [m5.2010080800] -(current:succeeded)> m5.2010080800 submit_method_id=12819
+2013/09/20 17:16:53 INFO - [m4.2010080800] -(current:submitting)> m4.2010080800 started at 2013-09-20T17:16:52
+2013/09/20 17:16:53 INFO - [m4.2010080800] -(setting:running)
+2013/09/20 17:16:53 INFO - [m4.2010080800] -(current:running)> m4.2010080800 succeeded at 2013-09-20T17:16:53
+2013/09/20 17:16:53 INFO - [m4.2010080800] -(setting:succeeded)
+2013/09/20 17:16:53 WARNING - [m4.2010080800] -Assuming non-reported outputs were completed:
+m4.2010080800 submitted
+2013/09/20 17:16:53 INFO - [m7.2010080800] -(current:submitting)> m7.2010080800 started at 2013-09-20T17:16:52
+2013/09/20 17:16:53 INFO - [m7.2010080800] -(setting:running)
+2013/09/20 17:16:53 INFO - [m7.2010080800] -(current:running)> m7.2010080800 submission succeeded
+2013/09/20 17:16:53 INFO - [m7.2010080800] -(current:running)> m7.2010080800 submit_method_id=13012
+2013/09/20 17:16:53 INFO - [m6.2010080800] -(current:submitting)> m6.2010080800 started at 2013-09-20T17:16:53
+2013/09/20 17:16:53 INFO - [m6.2010080800] -(setting:running)
+2013/09/20 17:16:53 INFO - [m1.2010080800] -(current:submitting)> m1.2010080800 submission succeeded
+2013/09/20 17:16:53 INFO - [m1.2010080800] -(setting:submitted)
+2013/09/20 17:16:53 INFO - [m1.2010080800] -(current:submitted)> m1.2010080800 submit_method_id=13219
+2013/09/20 17:16:53 INFO - [m1.2010080800] -(current:submitted)> m1.2010080800 started at 2013-09-20T17:16:53
+2013/09/20 17:16:53 INFO - [m1.2010080800] -(setting:running)
+2013/09/20 17:16:53 INFO - [m3.2010080800] -(current:submitting)> m3.2010080800 submitting now
+2013/09/20 17:16:53 INFO - [n1.2010080800] -(current:submitting)> n1.2010080800 submitting now
+2013/09/20 17:16:53 INFO - [n1.2010080800] -(current:submitting)> n1.2010080800 submission succeeded
+2013/09/20 17:16:53 INFO - [n1.2010080800] -(setting:submitted)
+2013/09/20 17:16:53 INFO - [n1.2010080800] -(current:submitted)> n1.2010080800 submit_method_id=13450
+2013/09/20 17:16:53 INFO - [m9.2010080800] -(current:submitting)> m9.2010080800 submitting now
+2013/09/20 17:16:53 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:53 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:53 DEBUG - [m4.2010080800] -forced spawning
+2013/09/20 17:16:53 DEBUG - [m4.2010080900] -task proxy added to the pool
+2013/09/20 17:16:53 DEBUG - [m7.2010080800] -forced spawning
+2013/09/20 17:16:53 DEBUG - [m7.2010080900] -task proxy added to the pool
+2013/09/20 17:16:53 DEBUG - [m6.2010080800] -forced spawning
+2013/09/20 17:16:53 DEBUG - [m6.2010080900] -task proxy added to the pool
+2013/09/20 17:16:53 DEBUG - [m1.2010080800] -forced spawning
+2013/09/20 17:16:53 DEBUG - [m1.2010080900] -task proxy added to the pool
+2013/09/20 17:16:53 DEBUG - [n1.2010080800] -forced spawning
+2013/09/20 17:16:53 DEBUG - [n1.2010080900] -task proxy added to the pool
+2013/09/20 17:16:53 DEBUG - END TASK PROCESSING (took 0.044558 sec)
+2013/09/20 17:16:54 INFO - [m8.2010080800] -(current:succeeded)> m8.2010080800 submission succeeded
+2013/09/20 17:16:54 INFO - [m8.2010080800] -(current:succeeded)> m8.2010080800 submit_method_id=12721
+2013/09/20 17:16:54 INFO - [m7.2010080800] -(current:running)> m7.2010080800 succeeded at 2013-09-20T17:16:53
+2013/09/20 17:16:54 INFO - [m7.2010080800] -(setting:succeeded)
+2013/09/20 17:16:54 INFO - [m6.2010080800] -(current:running)> m6.2010080800 succeeded at 2013-09-20T17:16:53
+2013/09/20 17:16:54 INFO - [m6.2010080800] -(setting:succeeded)
+2013/09/20 17:16:54 WARNING - [m6.2010080800] -Assuming non-reported outputs were completed:
+m6.2010080800 submitted
+2013/09/20 17:16:54 INFO - [m6.2010080800] -(current:succeeded)> m6.2010080800 submission succeeded
+2013/09/20 17:16:54 INFO - [m6.2010080800] -(current:succeeded)> m6.2010080800 submit_method_id=13116
+2013/09/20 17:16:54 INFO - [m1.2010080800] -(current:running)> m1.2010080800 succeeded at 2013-09-20T17:16:54
+2013/09/20 17:16:54 INFO - [m1.2010080800] -(setting:succeeded)
+2013/09/20 17:16:54 INFO - [m3.2010080800] -(current:submitting)> m3.2010080800 started at 2013-09-20T17:16:53
+2013/09/20 17:16:54 INFO - [m3.2010080800] -(setting:running)
+2013/09/20 17:16:54 INFO - [m3.2010080800] -(current:running)> m3.2010080800 succeeded at 2013-09-20T17:16:54
+2013/09/20 17:16:54 INFO - [m3.2010080800] -(setting:succeeded)
+2013/09/20 17:16:54 WARNING - [m3.2010080800] -Assuming non-reported outputs were completed:
+m3.2010080800 submitted
+2013/09/20 17:16:54 INFO - [n1.2010080800] -(current:submitted)> n1.2010080800 started at 2013-09-20T17:16:53
+2013/09/20 17:16:54 INFO - [n1.2010080800] -(setting:running)
+2013/09/20 17:16:54 INFO - [m9.2010080800] -(current:submitting)> m9.2010080800 started at 2013-09-20T17:16:54
+2013/09/20 17:16:54 INFO - [m9.2010080800] -(setting:running)
+2013/09/20 17:16:54 INFO - [m9.2010080800] -(current:running)> m9.2010080800 submission succeeded
+2013/09/20 17:16:54 INFO - [m9.2010080800] -(current:running)> m9.2010080800 submit_method_id=13559
+2013/09/20 17:16:54 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:54 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:54 DEBUG - [m3.2010080800] -forced spawning
+2013/09/20 17:16:54 DEBUG - [m3.2010080900] -task proxy added to the pool
+2013/09/20 17:16:54 DEBUG - [m9.2010080800] -forced spawning
+2013/09/20 17:16:54 DEBUG - [m9.2010080900] -task proxy added to the pool
+2013/09/20 17:16:54 DEBUG - END TASK PROCESSING (took 0.0276 sec)
+2013/09/20 17:16:55 INFO - [m4.2010080800] -(current:succeeded)> m4.2010080800 submission succeeded
+2013/09/20 17:16:55 INFO - [m4.2010080800] -(current:succeeded)> m4.2010080800 submit_method_id=12908
+2013/09/20 17:16:55 INFO - [n1.2010080800] -(current:running)> n1.2010080800 succeeded at 2013-09-20T17:16:54
+2013/09/20 17:16:55 INFO - [n1.2010080800] -(setting:succeeded)
+2013/09/20 17:16:55 INFO - [m9.2010080800] -(current:running)> m9.2010080800 succeeded at 2013-09-20T17:16:54
+2013/09/20 17:16:55 INFO - [m9.2010080800] -(setting:succeeded)
+2013/09/20 17:16:55 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:55 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:55 DEBUG - END TASK PROCESSING (took 0.019007 sec)
+2013/09/20 17:16:56 INFO - [m3.2010080800] -(current:succeeded)> m3.2010080800 submission succeeded
+2013/09/20 17:16:56 INFO - [m3.2010080800] -(current:succeeded)> m3.2010080800 submit_method_id=13337
+2013/09/20 17:16:56 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:56 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:56 DEBUG - END TASK PROCESSING (took 0.018597 sec)
+2013/09/20 17:16:57 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:06.519467
+  All 10 items succeeded
+2013/09/20 17:16:57 DEBUG - Job Submission batch 2/2 (5 members):
+2013/09/20 17:16:57 INFO - [o1.2010080800] -(current:submitting)> o1.2010080800 submitting now
+2013/09/20 17:16:57 INFO - [bar.2010080900] -(current:submitting)> bar.2010080900 submitting now
+2013/09/20 17:16:57 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:58 INFO - [o1.2010080800] -(current:submitting)> o1.2010080800 started at 2013-09-20T17:16:58
+2013/09/20 17:16:58 INFO - [o1.2010080800] -(setting:running)
+2013/09/20 17:16:58 INFO - [o1.2010080800] -(current:running)> o1.2010080800 submission succeeded
+2013/09/20 17:16:58 INFO - [o1.2010080800] -(current:running)> o1.2010080800 submit_method_id=13769
+2013/09/20 17:16:58 INFO - [qux.2010080900] -(current:submitting)> qux.2010080900 submitting now
+2013/09/20 17:16:58 INFO - [qux.2010080900] -(current:submitting)> qux.2010080900 submission succeeded
+2013/09/20 17:16:58 INFO - [qux.2010080900] -(setting:submitted)
+2013/09/20 17:16:58 INFO - [qux.2010080900] -(current:submitted)> qux.2010080900 submit_method_id=13930
+2013/09/20 17:16:58 INFO - [baz.2010080900] -(current:submitting)> baz.2010080900 submitting now
+2013/09/20 17:16:58 INFO - [wibble.2010080900] -(current:submitting)> wibble.2010080900 submitting now
+2013/09/20 17:16:58 INFO - [wibble.2010080900] -(current:submitting)> wibble.2010080900 submission succeeded
+2013/09/20 17:16:58 INFO - [wibble.2010080900] -(setting:submitted)
+2013/09/20 17:16:58 INFO - [wibble.2010080900] -(current:submitted)> wibble.2010080900 submit_method_id=14128
+2013/09/20 17:16:58 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:58 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:58 DEBUG - [o1.2010080800] -forced spawning
+2013/09/20 17:16:58 DEBUG - [o1.2010080900] -task proxy added to the pool
+2013/09/20 17:16:58 DEBUG - [qux.2010080900] -forced spawning
+2013/09/20 17:16:58 INFO - [qux.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:16:58 INFO - [qux.2010081000] -(setting:held)
+2013/09/20 17:16:58 DEBUG - [qux.2010081000] -task proxy added to the pool
+2013/09/20 17:16:58 DEBUG - [wibble.2010080900] -forced spawning
+2013/09/20 17:16:58 INFO - [wibble.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:16:58 INFO - [wibble.2010081000] -(setting:held)
+2013/09/20 17:16:58 DEBUG - [wibble.2010081000] -task proxy added to the pool
+2013/09/20 17:16:58 DEBUG - END TASK PROCESSING (took 0.039372 sec)
+2013/09/20 17:16:59 INFO - [o1.2010080800] -(current:running)> o1.2010080800 succeeded at 2013-09-20T17:16:59
+2013/09/20 17:16:59 INFO - [o1.2010080800] -(setting:succeeded)
+2013/09/20 17:16:59 INFO - [bar.2010080900] -(current:submitting)> bar.2010080900 started at 2013-09-20T17:16:58
+2013/09/20 17:16:59 INFO - [bar.2010080900] -(setting:running)
+2013/09/20 17:16:59 INFO - [bar.2010080900] -(current:running)> bar.2010080900 succeeded at 2013-09-20T17:16:59
+2013/09/20 17:16:59 INFO - [bar.2010080900] -(setting:succeeded)
+2013/09/20 17:16:59 WARNING - [bar.2010080900] -Assuming non-reported outputs were completed:
+bar.2010080900 submitted
+2013/09/20 17:16:59 INFO - [bar.2010080900] -(current:succeeded)> bar.2010080900 submission succeeded
+2013/09/20 17:16:59 INFO - [bar.2010080900] -(current:succeeded)> bar.2010080900 submit_method_id=13851
+2013/09/20 17:16:59 INFO - [qux.2010080900] -(current:submitted)> qux.2010080900 started at 2013-09-20T17:16:58
+2013/09/20 17:16:59 INFO - [qux.2010080900] -(setting:running)
+2013/09/20 17:16:59 INFO - [qux.2010080900] -(current:running)> qux.2010080900 succeeded at 2013-09-20T17:16:59
+2013/09/20 17:16:59 INFO - [qux.2010080900] -(setting:succeeded)
+2013/09/20 17:16:59 INFO - [baz.2010080900] -(current:submitting)> baz.2010080900 started at 2013-09-20T17:16:59
+2013/09/20 17:16:59 INFO - [baz.2010080900] -(setting:running)
+2013/09/20 17:16:59 INFO - [wibble.2010080900] -(current:submitted)> wibble.2010080900 started at 2013-09-20T17:16:59
+2013/09/20 17:16:59 INFO - [wibble.2010080900] -(setting:running)
+2013/09/20 17:16:59 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:16:59 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:16:59 INFO - [wobble.2010080800] -(setting:submitting)
+2013/09/20 17:16:59 INFO - [wobble.2010080800] -triggered off ['m1.2010080800', 'm2.2010080800', 'm3.2010080800', 'm4.2010080800', 'm5.2010080800', 'm6.2010080800', 'm7.2010080800', 'm8.2010080800', 'm9.2010080800', 'n1.2010080800', 'o1.2010080800']
+2013/09/20 17:16:59 DEBUG - [bar.2010080900] -forced spawning
+2013/09/20 17:16:59 INFO - [bar.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:16:59 INFO - [bar.2010081000] -(setting:held)
+2013/09/20 17:16:59 DEBUG - [bar.2010081000] -task proxy added to the pool
+2013/09/20 17:16:59 DEBUG - [baz.2010080900] -forced spawning
+2013/09/20 17:16:59 INFO - [baz.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:16:59 INFO - [baz.2010081000] -(setting:held)
+2013/09/20 17:16:59 DEBUG - [baz.2010081000] -task proxy added to the pool
+2013/09/20 17:16:59 DEBUG - [bar.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [qux.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m2.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [baz.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m8.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m5.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m4.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m7.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m6.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m1.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m3.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [wibble.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [n1.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [foo.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [m9.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [prep.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - [o1.2010080800] -task proxy removed
+2013/09/20 17:16:59 DEBUG - END TASK PROCESSING (took 0.050219 sec)
+2013/09/20 17:17:00 INFO - [baz.2010080900] -(current:running)> baz.2010080900 succeeded at 2013-09-20T17:16:59
+2013/09/20 17:17:00 INFO - [baz.2010080900] -(setting:succeeded)
+2013/09/20 17:17:00 WARNING - [baz.2010080900] -Assuming non-reported outputs were completed:
+baz.2010080900 submitted
+2013/09/20 17:17:00 INFO - [baz.2010080900] -(current:succeeded)> baz.2010080900 submission succeeded
+2013/09/20 17:17:00 INFO - [baz.2010080900] -(current:succeeded)> baz.2010080900 submit_method_id=14024
+2013/09/20 17:17:00 INFO - [wibble.2010080900] -(current:running)> wibble.2010080900 succeeded at 2013-09-20T17:17:00
+2013/09/20 17:17:00 INFO - [wibble.2010080900] -(setting:succeeded)
+2013/09/20 17:17:00 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:00 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:00 INFO - [m2.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m8.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m5.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m4.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m7.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m6.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m1.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [n1.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m3.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m9.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [o1.2010080900] -(setting:submitting)
+2013/09/20 17:17:00 INFO - [m2.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m8.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m5.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m4.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m7.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m6.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m1.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [n1.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m3.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [m9.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 INFO - [o1.2010080900] -triggered off ['bar.2010080900', 'baz.2010080900', 'qux.2010080900', 'wibble.2010080900']
+2013/09/20 17:17:00 DEBUG - END TASK PROCESSING (took 0.033584 sec)
+2013/09/20 17:17:01 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:04.203737
+  All 5 items succeeded
+2013/09/20 17:17:01 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:02 DEBUG - Job Submission batch 1/2 (10 members):
+2013/09/20 17:17:02 INFO - [wobble.2010080800] -(current:submitting)> wobble.2010080800 submitting now
+2013/09/20 17:17:02 INFO - [m2.2010080900] -(current:submitting)> m2.2010080900 submitting now
+2013/09/20 17:17:02 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:03 INFO - [wobble.2010080800] -(current:submitting)> wobble.2010080800 started at 2013-09-20T17:17:03
+2013/09/20 17:17:03 INFO - [wobble.2010080800] -(setting:running)
+2013/09/20 17:17:03 INFO - [m2.2010080900] -(current:submitting)> m2.2010080900 started at 2013-09-20T17:17:03
+2013/09/20 17:17:03 INFO - [m2.2010080900] -(setting:running)
+2013/09/20 17:17:03 INFO - [m8.2010080900] -(current:submitting)> m8.2010080900 submitting now
+2013/09/20 17:17:03 INFO - [m5.2010080900] -(current:submitting)> m5.2010080900 submitting now
+2013/09/20 17:17:03 INFO - [m4.2010080900] -(current:submitting)> m4.2010080900 submitting now
+2013/09/20 17:17:03 INFO - [m7.2010080900] -(current:submitting)> m7.2010080900 submitting now
+2013/09/20 17:17:03 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:03 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:03 DEBUG - [wobble.2010080800] -forced spawning
+2013/09/20 17:17:03 DEBUG - [wobble.2010080900] -task proxy added to the pool
+2013/09/20 17:17:03 DEBUG - [m2.2010080900] -forced spawning
+2013/09/20 17:17:03 INFO - [m2.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:03 INFO - [m2.2010081000] -(setting:held)
+2013/09/20 17:17:03 DEBUG - [m2.2010081000] -task proxy added to the pool
+2013/09/20 17:17:04 DEBUG - END TASK PROCESSING (took 0.043258 sec)
+2013/09/20 17:17:05 INFO - [wobble.2010080800] -(current:running)> wobble.2010080800 succeeded at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [wobble.2010080800] -(setting:succeeded)
+2013/09/20 17:17:05 WARNING - [wobble.2010080800] -Assuming non-reported outputs were completed:
+wobble.2010080800 submitted
+2013/09/20 17:17:05 INFO - [m2.2010080900] -(current:running)> m2.2010080900 succeeded at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [m2.2010080900] -(setting:succeeded)
+2013/09/20 17:17:05 WARNING - [m2.2010080900] -Assuming non-reported outputs were completed:
+m2.2010080900 submitted
+2013/09/20 17:17:05 INFO - [m8.2010080900] -(current:submitting)> m8.2010080900 started at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [m8.2010080900] -(setting:running)
+2013/09/20 17:17:05 INFO - [m8.2010080900] -(current:running)> m8.2010080900 succeeded at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [m8.2010080900] -(setting:succeeded)
+2013/09/20 17:17:05 WARNING - [m8.2010080900] -Assuming non-reported outputs were completed:
+m8.2010080900 submitted
+2013/09/20 17:17:05 INFO - [m5.2010080900] -(current:submitting)> m5.2010080900 started at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [m5.2010080900] -(setting:running)
+2013/09/20 17:17:05 INFO - [m4.2010080900] -(current:submitting)> m4.2010080900 started at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [m4.2010080900] -(setting:running)
+2013/09/20 17:17:05 INFO - [m7.2010080900] -(current:submitting)> m7.2010080900 started at 2013-09-20T17:17:04
+2013/09/20 17:17:05 INFO - [m7.2010080900] -(setting:running)
+2013/09/20 17:17:05 INFO - [m6.2010080900] -(current:submitting)> m6.2010080900 submitting now
+2013/09/20 17:17:05 INFO - [m1.2010080900] -(current:submitting)> m1.2010080900 submitting now
+2013/09/20 17:17:05 INFO - [n1.2010080900] -(current:submitting)> n1.2010080900 submitting now
+2013/09/20 17:17:05 INFO - [m3.2010080900] -(current:submitting)> m3.2010080900 submitting now
+2013/09/20 17:17:05 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:05 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:05 DEBUG - [m8.2010080900] -forced spawning
+2013/09/20 17:17:05 INFO - [m8.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:05 INFO - [m8.2010081000] -(setting:held)
+2013/09/20 17:17:05 DEBUG - [m8.2010081000] -task proxy added to the pool
+2013/09/20 17:17:05 DEBUG - [m5.2010080900] -forced spawning
+2013/09/20 17:17:05 INFO - [m5.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:05 INFO - [m5.2010081000] -(setting:held)
+2013/09/20 17:17:05 DEBUG - [m5.2010081000] -task proxy added to the pool
+2013/09/20 17:17:05 DEBUG - [m4.2010080900] -forced spawning
+2013/09/20 17:17:05 INFO - [m4.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:05 INFO - [m4.2010081000] -(setting:held)
+2013/09/20 17:17:05 DEBUG - [m4.2010081000] -task proxy added to the pool
+2013/09/20 17:17:05 DEBUG - [m7.2010080900] -forced spawning
+2013/09/20 17:17:05 INFO - [m7.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:05 INFO - [m7.2010081000] -(setting:held)
+2013/09/20 17:17:05 DEBUG - [m7.2010081000] -task proxy added to the pool
+2013/09/20 17:17:05 DEBUG - [wobble.2010080800] -task proxy removed
+2013/09/20 17:17:05 INFO - Expiring 2010080800 broadcast settings now
+2013/09/20 17:17:05 DEBUG - END TASK PROCESSING (took 0.04951 sec)
+2013/09/20 17:17:06 INFO - [m8.2010080900] -(current:succeeded)> m8.2010080900 submission succeeded
+2013/09/20 17:17:06 INFO - [m8.2010080900] -(current:succeeded)> m8.2010080900 submit_method_id=14503
+2013/09/20 17:17:06 INFO - [m5.2010080900] -(current:running)> m5.2010080900 succeeded at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m5.2010080900] -(setting:succeeded)
+2013/09/20 17:17:06 WARNING - [m5.2010080900] -Assuming non-reported outputs were completed:
+m5.2010080900 submitted
+2013/09/20 17:17:06 INFO - [m4.2010080900] -(current:running)> m4.2010080900 submission succeeded
+2013/09/20 17:17:06 INFO - [m4.2010080900] -(current:running)> m4.2010080900 submit_method_id=14699
+2013/09/20 17:17:06 INFO - [m4.2010080900] -(current:running)> m4.2010080900 succeeded at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m4.2010080900] -(setting:succeeded)
+2013/09/20 17:17:06 INFO - [m7.2010080900] -(current:running)> m7.2010080900 succeeded at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m7.2010080900] -(setting:succeeded)
+2013/09/20 17:17:06 WARNING - [m7.2010080900] -Assuming non-reported outputs were completed:
+m7.2010080900 submitted
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(current:submitting)> m6.2010080900 submission succeeded
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(setting:submitted)
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(current:submitted)> m6.2010080900 submit_method_id=14912
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(current:submitted)> m6.2010080900 started at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(setting:running)
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(current:running)> m6.2010080900 succeeded at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m6.2010080900] -(setting:succeeded)
+2013/09/20 17:17:06 INFO - [m1.2010080900] -(current:submitting)> m1.2010080900 started at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m1.2010080900] -(setting:running)
+2013/09/20 17:17:06 INFO - [n1.2010080900] -(current:submitting)> n1.2010080900 submission succeeded
+2013/09/20 17:17:06 INFO - [n1.2010080900] -(setting:submitted)
+2013/09/20 17:17:06 INFO - [n1.2010080900] -(current:submitted)> n1.2010080900 submit_method_id=15136
+2013/09/20 17:17:06 INFO - [n1.2010080900] -(current:submitted)> n1.2010080900 started at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [n1.2010080900] -(setting:running)
+2013/09/20 17:17:06 INFO - [m3.2010080900] -(current:submitting)> m3.2010080900 started at 2013-09-20T17:17:05
+2013/09/20 17:17:06 INFO - [m3.2010080900] -(setting:running)
+2013/09/20 17:17:06 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:06 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:06 DEBUG - [m6.2010080900] -forced spawning
+2013/09/20 17:17:06 INFO - [m6.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:06 INFO - [m6.2010081000] -(setting:held)
+2013/09/20 17:17:06 DEBUG - [m6.2010081000] -task proxy added to the pool
+2013/09/20 17:17:06 DEBUG - [m1.2010080900] -forced spawning
+2013/09/20 17:17:06 INFO - [m1.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:06 INFO - [m1.2010081000] -(setting:held)
+2013/09/20 17:17:06 DEBUG - [m1.2010081000] -task proxy added to the pool
+2013/09/20 17:17:06 DEBUG - [n1.2010080900] -forced spawning
+2013/09/20 17:17:06 INFO - [n1.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:06 INFO - [n1.2010081000] -(setting:held)
+2013/09/20 17:17:06 DEBUG - [n1.2010081000] -task proxy added to the pool
+2013/09/20 17:17:06 DEBUG - [m3.2010080900] -forced spawning
+2013/09/20 17:17:06 INFO - [m3.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:06 INFO - [m3.2010081000] -(setting:held)
+2013/09/20 17:17:06 DEBUG - [m3.2010081000] -task proxy added to the pool
+2013/09/20 17:17:06 DEBUG - END TASK PROCESSING (took 0.047572 sec)
+2013/09/20 17:17:07 INFO - [m2.2010080900] -(current:succeeded)> m2.2010080900 submission succeeded
+2013/09/20 17:17:07 INFO - [m2.2010080900] -(current:succeeded)> m2.2010080900 submit_method_id=14410
+2013/09/20 17:17:07 INFO - [m5.2010080900] -(current:succeeded)> m5.2010080900 submission succeeded
+2013/09/20 17:17:07 INFO - [m5.2010080900] -(current:succeeded)> m5.2010080900 submit_method_id=14586
+2013/09/20 17:17:07 INFO - [m7.2010080900] -(current:succeeded)> m7.2010080900 submission succeeded
+2013/09/20 17:17:07 INFO - [m7.2010080900] -(current:succeeded)> m7.2010080900 submit_method_id=14808
+2013/09/20 17:17:07 INFO - [m1.2010080900] -(current:running)> m1.2010080900 succeeded at 2013-09-20T17:17:06
+2013/09/20 17:17:07 INFO - [m1.2010080900] -(setting:succeeded)
+2013/09/20 17:17:07 WARNING - [m1.2010080900] -Assuming non-reported outputs were completed:
+m1.2010080900 submitted
+2013/09/20 17:17:07 INFO - [n1.2010080900] -(current:running)> n1.2010080900 succeeded at 2013-09-20T17:17:06
+2013/09/20 17:17:07 INFO - [n1.2010080900] -(setting:succeeded)
+2013/09/20 17:17:07 INFO - [m3.2010080900] -(current:running)> m3.2010080900 submission succeeded
+2013/09/20 17:17:07 INFO - [m3.2010080900] -(current:running)> m3.2010080900 submit_method_id=15240
+2013/09/20 17:17:07 INFO - [m3.2010080900] -(current:running)> m3.2010080900 succeeded at 2013-09-20T17:17:06
+2013/09/20 17:17:07 INFO - [m3.2010080900] -(setting:succeeded)
+2013/09/20 17:17:07 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:07 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:07 DEBUG - END TASK PROCESSING (took 0.017603 sec)
+2013/09/20 17:17:08 INFO - [m1.2010080900] -(current:succeeded)> m1.2010080900 submission succeeded
+2013/09/20 17:17:08 INFO - [m1.2010080900] -(current:succeeded)> m1.2010080900 submit_method_id=15026
+2013/09/20 17:17:08 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:08 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:08 DEBUG - END TASK PROCESSING (took 0.018221 sec)
+2013/09/20 17:17:09 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:06.510811
+  All 10 items succeeded
+2013/09/20 17:17:09 DEBUG - Job Submission batch 2/2 (2 members):
+2013/09/20 17:17:09 INFO - [m9.2010080900] -(current:submitting)> m9.2010080900 submitting now
+2013/09/20 17:17:09 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:10 INFO - [m9.2010080900] -(current:submitting)> m9.2010080900 submission succeeded
+2013/09/20 17:17:10 INFO - [m9.2010080900] -(setting:submitted)
+2013/09/20 17:17:10 INFO - [m9.2010080900] -(current:submitted)> m9.2010080900 submit_method_id=15454
+2013/09/20 17:17:10 INFO - [m9.2010080900] -(current:submitted)> m9.2010080900 started at 2013-09-20T17:17:10
+2013/09/20 17:17:10 INFO - [m9.2010080900] -(setting:running)
+2013/09/20 17:17:10 INFO - [o1.2010080900] -(current:submitting)> o1.2010080900 submitting now
+2013/09/20 17:17:10 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:10 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:10 DEBUG - [m9.2010080900] -forced spawning
+2013/09/20 17:17:10 INFO - [m9.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:10 INFO - [m9.2010081000] -(setting:held)
+2013/09/20 17:17:10 DEBUG - [m9.2010081000] -task proxy added to the pool
+2013/09/20 17:17:10 DEBUG - END TASK PROCESSING (took 0.024108 sec)
+2013/09/20 17:17:11 INFO - [m9.2010080900] -(current:running)> m9.2010080900 succeeded at 2013-09-20T17:17:10
+2013/09/20 17:17:11 INFO - [m9.2010080900] -(setting:succeeded)
+2013/09/20 17:17:11 INFO - [o1.2010080900] -(current:submitting)> o1.2010080900 submission succeeded
+2013/09/20 17:17:11 INFO - [o1.2010080900] -(setting:submitted)
+2013/09/20 17:17:11 INFO - [o1.2010080900] -(current:submitted)> o1.2010080900 submit_method_id=15535
+2013/09/20 17:17:11 INFO - [o1.2010080900] -(current:submitted)> o1.2010080900 started at 2013-09-20T17:17:10
+2013/09/20 17:17:11 INFO - [o1.2010080900] -(setting:running)
+2013/09/20 17:17:11 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:11 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:11 DEBUG - [o1.2010080900] -forced spawning
+2013/09/20 17:17:11 INFO - [o1.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:11 INFO - [o1.2010081000] -(setting:held)
+2013/09/20 17:17:11 DEBUG - [o1.2010081000] -task proxy added to the pool
+2013/09/20 17:17:11 DEBUG - END TASK PROCESSING (took 0.02213 sec)
+2013/09/20 17:17:11 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:02.511216
+  All 2 items succeeded
+2013/09/20 17:17:12 INFO - [o1.2010080900] -(current:running)> o1.2010080900 succeeded at 2013-09-20T17:17:11
+2013/09/20 17:17:12 INFO - [o1.2010080900] -(setting:succeeded)
+2013/09/20 17:17:12 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:12 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:12 INFO - [wobble.2010080900] -(setting:submitting)
+2013/09/20 17:17:12 INFO - [wobble.2010080900] -triggered off ['m1.2010080900', 'm2.2010080900', 'm3.2010080900', 'm4.2010080900', 'm5.2010080900', 'm6.2010080900', 'm7.2010080900', 'm8.2010080900', 'm9.2010080900', 'n1.2010080900', 'o1.2010080900']
+2013/09/20 17:17:12 DEBUG - [foo.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [bar.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [qux.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [baz.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [wibble.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m2.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m8.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m5.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m4.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m7.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m6.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m1.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [n1.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m3.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [m9.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - [o1.2010080900] -task proxy removed
+2013/09/20 17:17:12 DEBUG - END TASK PROCESSING (took 0.028375 sec)
+2013/09/20 17:17:12 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/20 17:17:13 INFO - [wobble.2010080900] -(current:submitting)> wobble.2010080900 submitting now
+2013/09/20 17:17:13 INFO - [wobble.2010080900] -(current:submitting)> wobble.2010080900 submission succeeded
+2013/09/20 17:17:13 INFO - [wobble.2010080900] -(setting:submitted)
+2013/09/20 17:17:13 INFO - [wobble.2010080900] -(current:submitted)> wobble.2010080900 submit_method_id=15693
+2013/09/20 17:17:13 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:13 DEBUG - BEGIN TASK PROCESSING
+2013/09/20 17:17:13 DEBUG - [wobble.2010080900] -forced spawning
+2013/09/20 17:17:13 INFO - [wobble.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2013/09/20 17:17:13 INFO - [wobble.2010081000] -(setting:held)
+2013/09/20 17:17:13 DEBUG - [wobble.2010081000] -task proxy added to the pool
+2013/09/20 17:17:13 DEBUG - END TASK PROCESSING (took 0.023022 sec)
+2013/09/20 17:17:13 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.285312
+  All 1 items succeeded
+2013/09/20 17:17:14 INFO - [wobble.2010080900] -(current:submitted)> wobble.2010080900 started at 2013-09-20T17:17:13
+2013/09/20 17:17:14 INFO - [wobble.2010080900] -(setting:running)
+2013/09/20 17:17:14 INFO - [wobble.2010080900] -(current:running)> wobble.2010080900 succeeded at 2013-09-20T17:17:14
+2013/09/20 17:17:14 INFO - [wobble.2010080900] -(setting:succeeded)
+2013/09/20 17:17:14 DEBUG - UPDATING STATE SUMMARY
+2013/09/20 17:17:14 INFO - All normal cycling tasks have spawned past the final cycle 2010080900
+2013/09/20 17:17:14 INFO - Suite shutting down at 2013-09-20 17:17:14.368211
+2013/09/20 17:17:14 INFO - Thread-4 exit (Job Submission)
+2013/09/20 17:17:15 INFO - Thread-2 exit (Event Handler Submission)
+2013/09/20 17:17:15 INFO - Thread-3 exit (Poll and Kill Command Submission)
+2013/09/20 17:17:15 INFO - Thread-5 exit (Request Handling)
+2013/09/20 17:17:15 INFO - Calling shutdown handler in the foreground
