@@ -1,5 +1,6 @@
 #!Jinja2
 {% set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
+{% set SITE_DIRECTIVES = environ['CYLC_LL_TEST_SITE_DIRECTIVES'] %}
 [cylc]
    [[reference test]]
        required run mode = live
@@ -19,6 +20,7 @@
             job_type         = serial
             notification     = error
             wall_clock_limit = '120,60'
+            {{SITE_DIRECTIVES}}
         [[[remote]]]
             host = {{ HOST }}
     [[rem1]]
