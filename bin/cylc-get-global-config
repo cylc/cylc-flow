@@ -97,6 +97,8 @@ try:
                     print value
                 else:
                     printcfg( value, level=len(args[1:]) )
+            else:
+                print value
     else:
         print "Combined site/user config is valid for cylc-" + cylc_version
 

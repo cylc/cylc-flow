@@ -1,0 +1,19 @@
+
+Site/user configuration required for this test:
+
+[test battery]
+
+    [[directives]]  # (test name)
+        loadleveler host = my.loadleveler.host # required
+
+        [[[loadleveler directives]]]           # optional
+            class = General
+            account_no = HAFS1301
+
+If 'loadleveler host' is not supplied, the test will be skipped.
+
+Any 'loadleveler directives' supplied will be added to those used in the
+test suite.  This can be used, for instance, to override 'class =
+serial' in the suite if your site does not have a 'serial' class; and to
+add a job accounting code, if that is required at your site.
+
