@@ -97,6 +97,27 @@ SPEC = {
             },
         },
 
+    'test battery' : {
+       'directives' : {
+            'loadleveler host'            : vdr( vtype='string' ),
+            'loadleveler directives' : { 
+                 '__MANY__'               : vdr( vtype='string' ),
+                  },
+            'pbs host'                    : vdr( vtype='string' ),
+            'pbs directives' : { 
+                 '__MANY__'               : vdr( vtype='string' ),
+                 },
+            'sge host'                    : vdr( vtype='string' ),
+            'sge directives' : { 
+                 '__MANY__'               : vdr( vtype='string' ),
+                 },
+            'slurm host'                  : vdr( vtype='string' ),
+            'slurm directives' : { 
+                 '__MANY__'               : vdr( vtype='string' ),
+                 },
+            },
+        },
+
     'suite host self-identification' : {
         'method'                          : vdr( vtype='string', options=["name","address","hardwired"], default="name" ),
         'target'                          : vdr( vtype='string', default="google.com" ),
