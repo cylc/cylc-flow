@@ -24,7 +24,8 @@ set_test_number 2
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
-export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[directive tests]loadleveler-host')
+export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
+export CYLC_LL_TEST_SITE_DIRECTIVES=$(cylc get-global-config -i '[test battery][directives][loadleveler directives]')
 if [[ -n $CYLC_LL_TEST_TASK_HOST ]]
 then
     # check the host is reachable
