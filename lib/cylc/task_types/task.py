@@ -283,17 +283,6 @@ class task( object ):
                 item.to_run = False
         return ops
 
-    def trigger_now( self ):
-        if self.manual_trigger:
-            self.retry_delay_timer_start = None
-            self.sub_retry_delay_timer_start = None
-            # unset manual trigger flag at set_state_submitting because
-            # ready_to_run() is currently called more than once
-            # before submission (to test if clock-triggers are ready).
-            return True
-        else:
-            return False
-
     def retry_delay_done( self ):
         done = False
         if self.retry_delay_timer_start:
@@ -309,9 +298,7 @@ class task( object ):
         return done
 
     def ready_to_run( self ):
-        if self.trigger_now():
-            return True
-        elif self.state.is_currently('queued'): # ready by definition
+        if self.state.is_currently('queued'): # ready by definition
             return True
         elif self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
             return True

@@ -1697,7 +1697,6 @@ class scheduler(object):
         for itask in spent:
             self.pool.remove( itask )
 
-
     def command_trigger_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
@@ -1708,7 +1707,8 @@ class scheduler(object):
             if itask.id in task_ids:
                 self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
                 itask.log( "NORMAL", "manual trigger now" )
-                itask.reset_state_ready()
+                if not itask.state.is_currently('queued'):
+                    itask.reset_state_ready()
                 itask.manual_trigger = True
 
     def get_matching_tasks( self, name, is_family=False ):

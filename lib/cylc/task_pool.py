@@ -145,20 +145,37 @@ class pool(object):
                         n_active += 1
                     # compute difference from the limit
                     n_release = n_limit - n_active
-                    if n_release <= 0:
-                        # the limit is currently full
-                        continue
+                    # if n_release <= 0 the queue is limiting
             for itask in self.queues[queue]:
                 if itask.ready_to_run():
-                    if n_limit:
+                    if itask.manual_trigger:
+                        # reset the flag
+                        itask.manual_trigger = False
+                        # unset retry delay timers
+                        itask.retry_delay_timer_start = None
+                        itask.sub_retry_delay_timer_start = None
+                        # if queued, submit
+                        if itask.state.is_currently('queued'):
+                            if n_release > 0:
+                                n_release -= 1
+                            readytogo.append(itask)
+                        else:
+                            # just set to queued
+                            itask.set_state_queued()
+
+                    elif n_limit:
+                        # queue has a limit
                         if n_release > 0:
+                            # limit not reached yet: task can trigger
                             n_release -= 1
                             readytogo.append(itask)
                         else:
-                            # (direct task state reset ok: this executes in the main thread)
+                            # limit reached, just queue
+                            # (direct state reset ok: executes in the main thread)
                             if not itask.state.is_currently('queued'):
                                 itask.set_state_queued()
                     else:
+                        # queue has no limit: task can trigger
                         readytogo.append(itask)
 
         if len(readytogo) == 0:
