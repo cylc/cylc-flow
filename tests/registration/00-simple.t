@@ -15,20 +15,38 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test cat-check against suite database
+#C: Test cylc suite registration
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 8
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE basic
+SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_regtest
+mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
+cp -r $TEST_SOURCE_DIR/basic/* $TEST_DIR/$SUITE_NAME 2>&1
+cylc unregister $SUITE_NAME 2>&1
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
+TEST_NAME=$TEST_NAME_BASE-register
+run_ok $TEST_NAME cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-get-dir
+run_ok $TEST_NAME cylc get-directory $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-val
+cd .. # necessary so the suite is being validated via the database not filepath
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE-print-db
+cylc print 1> dboutput
+run_ok $TEST_NAME grep $SUITE_NAME dboutput
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-cat-check
-run_ok $TEST_NAME python $TEST_SOURCE_DIR/basic/state-check.py $SUITE_NAME $(cylc get-global-conf --print-run-dir)
+TEST_NAME=$TEST_NAME_BASE-unreg
+run_ok $TEST_NAME cylc unregister $SUITE_NAME
+run_fail $TEST_NAME-check cylc get-directory $SUITE_NAME
+cylc print 1> dboutput-unregd
+run_fail $TEST_NAME-unreg-dbcheck grep $SUITE_NAME dboutput-unregd
+run_fail $TEST_NAME-val-fail cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+if [[ -n ${TEST_DIR:-} ]]; then
+    rm -rf $TEST_DIR/$SUITE_NAME/
+fi
+#-------------------------------------------------------------------------------
