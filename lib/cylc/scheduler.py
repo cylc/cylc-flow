@@ -123,6 +123,7 @@ class scheduler(object):
 
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
+        self.suite_id = None
         self.clock = None
         self.wireless = None
         self.suite_state = None
