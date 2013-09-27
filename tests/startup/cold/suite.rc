@@ -1,0 +1,17 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.5
+        expected task failures = cold.2010010100
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time   = 2010010106
+    [[special tasks]]
+        cold-start = cold
+    [[dependencies]]
+        [[[0,6]]]
+            graph = "cold:fail | foo[T-6] => foo => !cold"
+[runtime]
+    [[cold]]
+        command scripting = false
+    [[foo]]
+        command scripting = true
