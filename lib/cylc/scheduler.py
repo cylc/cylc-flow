@@ -1706,10 +1706,6 @@ class scheduler(object):
         self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                itask.log( "NORMAL", "manual trigger now" )
-                if not itask.state.is_currently('queued'):
-                    # (not necessary if task already queued)
-                    itask.reset_state_ready()
                 # set manual trigger flag
                 itask.manual_trigger = True
 

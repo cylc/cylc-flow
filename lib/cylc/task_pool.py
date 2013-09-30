@@ -135,32 +135,29 @@ class pool(object):
         for queue in self.queues:
             n_active = 0
             n_limit = self.qconfig[queue]['limit']
-            for itask in self.queues[queue]:
-                if n_limit:
-                    # there is a limit on this queue
-                    if (itask.state.is_currently('submitted') or
-                        itask.state.is_currently('running') or
-                        itask.state.is_currently('submitting')):
-                        # count active tasks in this queue
+            if n_limit:
+                # there is a limit on this queue, count current active tasks
+                for itask in self.queues[queue]:
+                    if itask.state.is_currently('submitting','submitted','running'):
                         n_active += 1
-                    # compute difference from the limit
-                    n_release = n_limit - n_active
-                    # if n_release <= 0 the queue is limiting
+                # compute how many queued tasks can be released
+                n_release = n_limit - n_active
             for itask in self.queues[queue]:
-                if itask.ready_to_run():
+                if itask.manual_trigger or itask.ready_to_run():
                     if itask.manual_trigger:
-                        # reset the flag
+                        # reset the manual trigger flag
                         itask.manual_trigger = False
-                        # unset retry delay timers
+                        # unset any retry delay timers
                         itask.retry_delay_timer_start = None
                         itask.sub_retry_delay_timer_start = None
-                        # if queued, submit
                         if itask.state.is_currently('queued'):
-                            if n_release > 0:
-                                n_release -= 1
+                            # if queued, submit
+                            if n_limit:
+                                if n_release > 0:
+                                    n_release -= 1
                             readytogo.append(itask)
                         else:
-                            # just set to queued
+                            # if not queued, queue
                             itask.set_state_queued()
 
                     elif n_limit:
