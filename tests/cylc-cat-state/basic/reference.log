@@ -1,0 +1,79 @@
+2013/09/25 12:04:21 INFO - Thread-2 start (Event Handler Submission)
+2013/09/25 12:04:21 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/25 12:04:21 INFO - port:7767
+2013/09/25 12:04:21 INFO - Suite starting at 2013-09-25 12:04:21.653087
+2013/09/25 12:04:21 INFO - Log event clock: real time
+2013/09/25 12:04:21 INFO - Run mode: live
+2013/09/25 12:04:21 INFO - Start tag: None
+2013/09/25 12:04:21 INFO - Stop tag: None
+2013/09/25 12:04:21 INFO - Thread-4 start (Job Submission)
+2013/09/25 12:04:21 INFO - Thread-5 start (Request Handling)
+2013/09/25 12:04:21 DEBUG - [a.1] -task proxy added to the pool
+2013/09/25 12:04:21 DEBUG - [c.1] -task proxy added to the pool
+2013/09/25 12:04:21 DEBUG - [b.1] -task proxy added to the pool
+2013/09/25 12:04:21 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:21 INFO - [a.1] -(setting:submitting)
+2013/09/25 12:04:21 INFO - [a.1] -triggered off []
+2013/09/25 12:04:21 DEBUG - END TASK PROCESSING (took 0.020905 sec)
+2013/09/25 12:04:22 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/25 12:04:22 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/09/25 12:04:22 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:23 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/09/25 12:04:23 INFO - [a.1] -(setting:submitted)
+2013/09/25 12:04:23 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=13295
+2013/09/25 12:04:23 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:23 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:23 DEBUG - END TASK PROCESSING (took 0.012854 sec)
+2013/09/25 12:04:23 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.228377
+  All 1 items succeeded
+2013/09/25 12:04:24 INFO - [a.1] -(current:submitted)> a.1 started at 2013-09-25T12:04:23
+2013/09/25 12:04:24 INFO - [a.1] -(setting:running)
+2013/09/25 12:04:24 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-09-25T12:04:24
+2013/09/25 12:04:24 INFO - [a.1] -(setting:succeeded)
+2013/09/25 12:04:24 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:24 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:24 INFO - [b.1] -(setting:submitting)
+2013/09/25 12:04:24 INFO - [b.1] -triggered off ['a.1']
+2013/09/25 12:04:24 DEBUG - END TASK PROCESSING (took 0.013935 sec)
+2013/09/25 12:04:24 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/25 12:04:25 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/09/25 12:04:25 INFO - [b.1] -(current:submitting)> b.1 submission succeeded
+2013/09/25 12:04:25 INFO - [b.1] -(setting:submitted)
+2013/09/25 12:04:25 INFO - [b.1] -(current:submitted)> b.1 submit_method_id=13486
+2013/09/25 12:04:25 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:25 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:25 DEBUG - END TASK PROCESSING (took 0.013228 sec)
+2013/09/25 12:04:26 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.208932
+  All 1 items succeeded
+2013/09/25 12:04:26 INFO - [b.1] -(current:submitted)> b.1 started at 2013-09-25T12:04:25
+2013/09/25 12:04:26 INFO - [b.1] -(setting:running)
+2013/09/25 12:04:26 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-09-25T12:04:26
+2013/09/25 12:04:26 INFO - [b.1] -(setting:succeeded)
+2013/09/25 12:04:26 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:26 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:26 INFO - [c.1] -(setting:submitting)
+2013/09/25 12:04:26 INFO - [c.1] -triggered off ['b.1']
+2013/09/25 12:04:26 DEBUG - END TASK PROCESSING (took 0.021843 sec)
+2013/09/25 12:04:27 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/25 12:04:27 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/09/25 12:04:27 INFO - [c.1] -(current:submitting)> c.1 submission succeeded
+2013/09/25 12:04:27 INFO - [c.1] -(setting:submitted)
+2013/09/25 12:04:27 INFO - [c.1] -(current:submitted)> c.1 submit_method_id=13860
+2013/09/25 12:04:27 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:27 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:27 DEBUG - END TASK PROCESSING (took 0.015808 sec)
+2013/09/25 12:04:28 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.210916
+  All 1 items succeeded
+2013/09/25 12:04:28 INFO - [c.1] -(current:submitted)> c.1 started at 2013-09-25T12:04:28
+2013/09/25 12:04:28 INFO - [c.1] -(setting:running)
+2013/09/25 12:04:28 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:28 DEBUG - BEGIN TASK PROCESSING
+2013/09/25 12:04:28 DEBUG - END TASK PROCESSING (took 0.017422 sec)
+2013/09/25 12:04:29 INFO - [c.1] -(current:running)> c.1 succeeded at 2013-09-25T12:04:28
+2013/09/25 12:04:29 INFO - [c.1] -(setting:succeeded)
+2013/09/25 12:04:29 DEBUG - UPDATING STATE SUMMARY
+2013/09/25 12:04:29 INFO - All non-cycling tasks have succeeded
+2013/09/25 12:04:29 INFO - Suite shutting down at 2013-09-25 12:04:29.835791

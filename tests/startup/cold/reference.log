@@ -1,0 +1,88 @@
+2013/09/27 10:08:06 INFO - Thread-2 start (Event Handler Submission)
+2013/09/27 10:08:06 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/27 10:08:06 INFO - port:7766
+2013/09/27 10:08:06 INFO - Suite starting at 2013-09-27 10:08:06.149999
+2013/09/27 10:08:06 INFO - Log event clock: real time
+2013/09/27 10:08:06 INFO - Run mode: live
+2013/09/27 10:08:06 INFO - Start tag: 2010010100
+2013/09/27 10:08:06 INFO - Stop tag: 2010010106
+2013/09/27 10:08:06 INFO - Thread-4 start (Job Submission)
+2013/09/27 10:08:06 INFO - Thread-5 start (Request Handling)
+2013/09/27 10:08:06 INFO - Cold Start 2010010100
+2013/09/27 10:08:06 DEBUG - [cold.2010010100] -task proxy added to the pool
+2013/09/27 10:08:06 DEBUG - [foo.2010010100] -task proxy added to the pool
+2013/09/27 10:08:06 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:06 INFO - [cold.2010010100] -(setting:submitting)
+2013/09/27 10:08:06 INFO - [cold.2010010100] -triggered off []
+2013/09/27 10:08:06 DEBUG - END TASK PROCESSING (took 0.013981 sec)
+2013/09/27 10:08:07 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/27 10:08:07 INFO - [cold.2010010100] -(current:submitting)> cold.2010010100 submitting now
+2013/09/27 10:08:07 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:08 INFO - [cold.2010010100] -(current:submitting)> cold.2010010100 submission succeeded
+2013/09/27 10:08:08 INFO - [cold.2010010100] -(setting:submitted)
+2013/09/27 10:08:08 INFO - [cold.2010010100] -(current:submitted)> cold.2010010100 submit_method_id=9216
+2013/09/27 10:08:08 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:08 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:08 DEBUG - END TASK PROCESSING (took 0.013374 sec)
+2013/09/27 10:08:08 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.240366
+  All 1 items succeeded
+2013/09/27 10:08:09 INFO - [cold.2010010100] -(current:submitted)> cold.2010010100 started at 2013-09-27T10:08:08
+2013/09/27 10:08:09 INFO - [cold.2010010100] -(setting:running)
+2013/09/27 10:08:09 CRITICAL - [cold.2010010100] -(current:running)> Task job script received signal ERR at 2013-09-27T10:08:08
+2013/09/27 10:08:09 CRITICAL - [cold.2010010100] -(current:running)> cold.2010010100 failed at 2013-09-27T10:08:08
+2013/09/27 10:08:09 INFO - [cold.2010010100] -(setting:failed)
+2013/09/27 10:08:09 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:09 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:09 INFO - [foo.2010010100] -(setting:submitting)
+2013/09/27 10:08:09 INFO - [foo.2010010100] -triggered off ['cold.2010010100']
+2013/09/27 10:08:09 DEBUG - END TASK PROCESSING (took 0.015462 sec)
+2013/09/27 10:08:09 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/27 10:08:10 INFO - [foo.2010010100] -(current:submitting)> foo.2010010100 submitting now
+2013/09/27 10:08:10 INFO - [foo.2010010100] -(current:submitting)> foo.2010010100 submission succeeded
+2013/09/27 10:08:10 INFO - [foo.2010010100] -(setting:submitted)
+2013/09/27 10:08:10 INFO - [foo.2010010100] -(current:submitted)> foo.2010010100 submit_method_id=9322
+2013/09/27 10:08:10 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:10 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:10 DEBUG - [foo.2010010100] -forced spawning
+2013/09/27 10:08:10 DEBUG - [foo.2010010106] -task proxy added to the pool
+2013/09/27 10:08:10 DEBUG - END TASK PROCESSING (took 0.02078 sec)
+2013/09/27 10:08:10 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.208522
+  All 1 items succeeded
+2013/09/27 10:08:11 INFO - [foo.2010010100] -(current:submitted)> foo.2010010100 started at 2013-09-27T10:08:10
+2013/09/27 10:08:11 INFO - [foo.2010010100] -(setting:running)
+2013/09/27 10:08:11 INFO - [foo.2010010100] -(current:running)> foo.2010010100 succeeded at 2013-09-27T10:08:11
+2013/09/27 10:08:11 INFO - [foo.2010010100] -(setting:succeeded)
+2013/09/27 10:08:11 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:11 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:11 INFO - [foo.2010010106] -(setting:submitting)
+2013/09/27 10:08:11 INFO - [foo.2010010106] -triggered off ['foo.2010010100']
+2013/09/27 10:08:11 DEBUG - [cold.2010010100] -task proxy removed (suicide)
+2013/09/27 10:08:11 DEBUG - [foo.2010010100] -task proxy removed
+2013/09/27 10:08:11 DEBUG - END TASK PROCESSING (took 0.016569 sec)
+2013/09/27 10:08:11 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/27 10:08:12 INFO - [foo.2010010106] -(current:submitting)> foo.2010010106 submitting now
+2013/09/27 10:08:12 INFO - [foo.2010010106] -(current:submitting)> foo.2010010106 submission succeeded
+2013/09/27 10:08:12 INFO - [foo.2010010106] -(setting:submitted)
+2013/09/27 10:08:12 INFO - [foo.2010010106] -(current:submitted)> foo.2010010106 submit_method_id=9428
+2013/09/27 10:08:12 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:12 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:12 DEBUG - [foo.2010010106] -forced spawning
+2013/09/27 10:08:12 INFO - [foo.2010010118] -HOLDING (beyond suite stop cycle) 2010010106
+2013/09/27 10:08:12 INFO - [foo.2010010118] -(setting:held)
+2013/09/27 10:08:12 DEBUG - [foo.2010010118] -task proxy added to the pool
+2013/09/27 10:08:12 DEBUG - END TASK PROCESSING (took 0.018949 sec)
+2013/09/27 10:08:12 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.233657
+  All 1 items succeeded
+2013/09/27 10:08:13 INFO - [foo.2010010106] -(current:submitted)> foo.2010010106 started at 2013-09-27T10:08:13
+2013/09/27 10:08:13 INFO - [foo.2010010106] -(setting:running)
+2013/09/27 10:08:13 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:13 DEBUG - BEGIN TASK PROCESSING
+2013/09/27 10:08:13 DEBUG - END TASK PROCESSING (took 0.012846 sec)
+2013/09/27 10:08:14 INFO - [foo.2010010106] -(current:running)> foo.2010010106 succeeded at 2013-09-27T10:08:13
+2013/09/27 10:08:14 INFO - [foo.2010010106] -(setting:succeeded)
+2013/09/27 10:08:14 DEBUG - UPDATING STATE SUMMARY
+2013/09/27 10:08:14 INFO - All normal cycling tasks have spawned past the final cycle 2010010106
+2013/09/27 10:08:14 INFO - Suite shutting down at 2013-09-27 10:08:14.327099
