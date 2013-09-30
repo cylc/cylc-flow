@@ -1,0 +1,37 @@
+2013/09/30 16:30:07 INFO - Thread-2 start (Event Handler Submission)
+2013/09/30 16:30:07 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/30 16:30:07 INFO - port:7766
+2013/09/30 16:30:07 INFO - Suite starting at 2013-09-30 16:30:07.134385
+2013/09/30 16:30:07 INFO - Log event clock: real time
+2013/09/30 16:30:07 INFO - Run mode: live
+2013/09/30 16:30:07 INFO - Start tag: None
+2013/09/30 16:30:07 INFO - Stop tag: None
+2013/09/30 16:30:07 INFO - Thread-4 start (Job Submission)
+2013/09/30 16:30:07 INFO - Thread-5 start (Request Handling)
+2013/09/30 16:30:07 DEBUG - [foo.1] -task proxy added to the pool
+2013/09/30 16:30:07 DEBUG - BEGIN TASK PROCESSING
+2013/09/30 16:30:07 INFO - [foo.1] -(setting:submitting)
+2013/09/30 16:30:07 INFO - [foo.1] -triggered off []
+2013/09/30 16:30:07 DEBUG - END TASK PROCESSING (took 0.018429 sec)
+2013/09/30 16:30:08 DEBUG - Job Submission batch 1/1 (1 members):
+2013/09/30 16:30:08 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/09/30 16:30:08 DEBUG - UPDATING STATE SUMMARY
+2013/09/30 16:30:09 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/09/30 16:30:09 INFO - [foo.1] -(setting:submitted)
+2013/09/30 16:30:09 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=21567
+2013/09/30 16:30:09 DEBUG - UPDATING STATE SUMMARY
+2013/09/30 16:30:09 DEBUG - BEGIN TASK PROCESSING
+2013/09/30 16:30:09 DEBUG - END TASK PROCESSING (took 0.013215 sec)
+2013/09/30 16:30:09 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.252602
+  All 1 items succeeded
+2013/09/30 16:30:10 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-09-30T16:30:09
+2013/09/30 16:30:10 INFO - [foo.1] -(setting:running)
+2013/09/30 16:30:10 DEBUG - UPDATING STATE SUMMARY
+2013/09/30 16:30:10 DEBUG - BEGIN TASK PROCESSING
+2013/09/30 16:30:10 DEBUG - END TASK PROCESSING (took 0.014516 sec)
+2013/09/30 16:30:11 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-09-30T16:30:10
+2013/09/30 16:30:11 INFO - [foo.1] -(setting:succeeded)
+2013/09/30 16:30:11 DEBUG - UPDATING STATE SUMMARY
+2013/09/30 16:30:11 INFO - All non-cycling tasks have succeeded
+2013/09/30 16:30:11 INFO - Suite shutting down at 2013-09-30 16:30:11.215839
