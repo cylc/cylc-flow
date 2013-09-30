@@ -387,8 +387,6 @@ class task( object ):
     def set_state_submitting( self ):
         # called by scheduler main thread
         self.set_status( 'submitting' )
-        # See "def ready_to_run" above.
-        self.manual_trigger = False
 
     def set_state_queued( self ):
         # called by scheduler main thread
