@@ -131,63 +131,68 @@ class pool(object):
         return False
 
     def process( self ):
+        """
+        1) queue tasks that are ready to run (prerequisites satisfied,
+        clock-trigger time up) or if their manual trigger flag is set.
+        
+        2) then submit queued tasks if their queue limit has not been
+        reached or their manual trigger flag is set.  
+
+        The "queued" task state says the task will submit as soon as its
+        internal queue allows (or immediately if manually triggered first).
+
+        Use of "cylc trigger" sets a task's manual trigger flag. Then,
+        below, an unqueued task will be queued whether or not it is
+        ready to run; and a queued task will be submitted whether or not
+        its queue limit has been reached. The flag is immediately unset
+        after use so that two manual trigger ops are required to submit
+        an initially unqueued task that is queue-limited.
+        """
+
+        # (task state resets below are ok as this executes in main thread)
+
+        # 1) queue unqueued tasks that are ready to run or manually forced
+        for itask in self.get_tasks():
+            if not itask.state.is_currently( 'queued' ):
+                # only need to check that unqueued tasks are ready
+                if itask.manual_trigger or itask.ready_to_run():
+                    # queue the task
+                    itask.set_state_queued()
+                    if itask.manual_trigger:
+                        itask.reset_manual_trigger()
+
+        # 2) submit queued tasks if manually forced or not queue-limited
         readytogo = []
         for queue in self.queues:
+            # 2.1) count active tasks and compare to queue limit
             n_active = 0
+            n_release = 0
             n_limit = self.qconfig[queue]['limit']
             if n_limit:
-                # there is a limit on this queue, count current active tasks
                 for itask in self.queues[queue]:
                     if itask.state.is_currently('submitting','submitted','running'):
                         n_active += 1
-                # compute how many queued tasks can be released
                 n_release = n_limit - n_active
+
+            # 2.2) release queued tasks if not limited or if manually forced
             for itask in self.queues[queue]:
-                if itask.manual_trigger or itask.ready_to_run():
+                if not itask.state.is_currently( 'queued' ):
+                    continue
+                if itask.manual_trigger or not n_limit or n_release > 0:
+                    # manual release, or no limit, or not currently limited
+                    n_release -= 1
+                    readytogo.append(itask)
                     if itask.manual_trigger:
-                        # reset the manual trigger flag
-                        itask.manual_trigger = False
-                        # unset any retry delay timers
-                        itask.retry_delay_timer_start = None
-                        itask.sub_retry_delay_timer_start = None
-                        if itask.state.is_currently('queued'):
-                            # if queued, submit
-                            if n_limit:
-                                if n_release > 0:
-                                    n_release -= 1
-                            readytogo.append(itask)
-                        else:
-                            # if not queued, queue
-                            itask.set_state_queued()
+                        itask.reset_manual_trigger()
+                # else leaved queued
 
-                    elif n_limit:
-                        # queue has a limit
-                        if n_release > 0:
-                            # limit not reached yet: task can trigger
-                            n_release -= 1
-                            readytogo.append(itask)
-                        else:
-                            # limit reached, just queue
-                            # (direct state reset ok: executes in the main thread)
-                            if not itask.state.is_currently('queued'):
-                                itask.set_state_queued()
-                    else:
-                        # queue has no limit: task can trigger
-                        readytogo.append(itask)
-
-        if len(readytogo) == 0:
-            if self.verbose:
-                print "(No tasks ready to run)"
-            return []
-
-        print
-        n_tasks = len(readytogo)
-        print n_tasks, 'TASKS READY TO BE SUBMITTED'
-
-        for itask in readytogo:
-            # (direct task state reset ok: this executes in the main thread)
-            itask.set_state_submitting()
-            self.jobqueue.put( itask )
+        n_ready = len(readytogo)
+        if n_ready > 0:
+            print
+            print n_ready, 'TASKS READY TO BE SUBMITTED'
+            for itask in readytogo:
+                itask.set_state_submitting()
+                self.jobqueue.put( itask )
 
         return readytogo
 

@@ -392,6 +392,13 @@ class task( object ):
         # called by scheduler main thread
         self.set_status( 'queued' )
 
+    def reset_manual_trigger( self ):
+        # call immediately after manual trigger flag used
+        self.manual_trigger = False
+        # unset any retry delay timers
+        self.retry_delay_timer_start = None
+        self.sub_retry_delay_timer_start = None
+
     def set_from_rtconfig( self, cfg={} ):
         """Some [runtime] config requiring consistency checking on reload, 
         and self variables requiring updating for the same."""
