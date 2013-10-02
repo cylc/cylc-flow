@@ -36,7 +36,7 @@ START_TIME=$(date +%s)
 run_ok $TEST_NAME bash <<__SCRIPT__
 while [[ -e $HOME/.cylc/ports/$SUITE_NAME || ! -e $TEST_DIR/suite-stopping ]]; do
     if [[ $(date +%s) > $(( START_TIME + 120 )) ]]; then
-        echo "[ERROR] Suite Timeout - shutting down..." >/dev/tty
+        echo "[ERROR] Suite Timeout - shutting down..." >&2
         cylc shutdown --now --kill $SUITE_NAME >&2
         exit 1
     fi
