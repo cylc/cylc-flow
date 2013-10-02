@@ -1,0 +1,109 @@
+2013/10/02 11:54:04 INFO - Thread-2 start (Event Handler Submission)
+2013/10/02 11:54:04 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/02 11:54:04 INFO - port:7766
+2013/10/02 11:54:04 INFO - Suite starting at 2013-10-02 11:54:04.122967
+2013/10/02 11:54:04 INFO - Log event clock: real time
+2013/10/02 11:54:04 INFO - Run mode: live
+2013/10/02 11:54:04 INFO - Start tag: None
+2013/10/02 11:54:04 INFO - Stop tag: None
+2013/10/02 11:54:04 INFO - Thread-4 start (Job Submission)
+2013/10/02 11:54:04 INFO - Thread-5 start (Request Handling)
+2013/10/02 11:54:04 DEBUG - [a.1] -task proxy added to the pool
+2013/10/02 11:54:04 DEBUG - [cleaner.1] -task proxy added to the pool
+2013/10/02 11:54:04 DEBUG - [c.1] -task proxy added to the pool
+2013/10/02 11:54:04 DEBUG - [b.1] -task proxy added to the pool
+2013/10/02 11:54:04 DEBUG - [d.1] -task proxy added to the pool
+2013/10/02 11:54:04 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:04 INFO - [a.1] -(setting:submitting)
+2013/10/02 11:54:04 INFO - [a.1] -triggered off []
+2013/10/02 11:54:04 DEBUG - END TASK PROCESSING (took 0.014935 sec)
+2013/10/02 11:54:05 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/02 11:54:05 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/10/02 11:54:05 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:06 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/10/02 11:54:06 INFO - [a.1] -(setting:submitted)
+2013/10/02 11:54:06 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=25576
+2013/10/02 11:54:06 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:06 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:06 DEBUG - END TASK PROCESSING (took 0.013286 sec)
+2013/10/02 11:54:06 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.185311
+  All 1 items succeeded
+2013/10/02 11:54:07 INFO - [a.1] -(current:submitted)> a.1 started at 2013-10-02T11:54:06
+2013/10/02 11:54:07 INFO - [a.1] -(setting:running)
+2013/10/02 11:54:07 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-10-02T11:54:06
+2013/10/02 11:54:07 INFO - [a.1] -(setting:succeeded)
+2013/10/02 11:54:07 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:07 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:07 INFO - [b.1] -(setting:submitting)
+2013/10/02 11:54:07 INFO - [b.1] -triggered off ['a.1']
+2013/10/02 11:54:07 DEBUG - END TASK PROCESSING (took 0.01466 sec)
+2013/10/02 11:54:07 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/02 11:54:08 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/10/02 11:54:08 INFO - [b.1] -(current:submitting)> b.1 submission succeeded
+2013/10/02 11:54:08 INFO - [b.1] -(setting:submitted)
+2013/10/02 11:54:08 INFO - [b.1] -(current:submitted)> b.1 submit_method_id=25682
+2013/10/02 11:54:08 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:08 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:08 DEBUG - END TASK PROCESSING (took 0.013617 sec)
+2013/10/02 11:54:08 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.191488
+  All 1 items succeeded
+2013/10/02 11:54:09 INFO - [b.1] -(current:submitted)> b.1 started at 2013-10-02T11:54:08
+2013/10/02 11:54:09 INFO - [b.1] -(setting:running)
+2013/10/02 11:54:09 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-10-02T11:54:08
+2013/10/02 11:54:09 INFO - [b.1] -(setting:succeeded)
+2013/10/02 11:54:09 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:09 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:09 INFO - [c.1] -(setting:submitting)
+2013/10/02 11:54:09 INFO - [c.1] -triggered off ['b.1']
+2013/10/02 11:54:09 DEBUG - END TASK PROCESSING (took 0.014815 sec)
+2013/10/02 11:54:09 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/02 11:54:10 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/10/02 11:54:10 INFO - [c.1] -(current:submitting)> c.1 submission succeeded
+2013/10/02 11:54:10 INFO - [c.1] -(setting:submitted)
+2013/10/02 11:54:10 INFO - [c.1] -(current:submitted)> c.1 submit_method_id=25788
+2013/10/02 11:54:10 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:10 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:10 DEBUG - END TASK PROCESSING (took 0.014225 sec)
+2013/10/02 11:54:10 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.184002
+  All 1 items succeeded
+2013/10/02 11:54:11 INFO - [c.1] -(current:submitted)> c.1 started at 2013-10-02T11:54:10
+2013/10/02 11:54:11 INFO - [c.1] -(setting:running)
+2013/10/02 11:54:11 CRITICAL - [c.1] -(current:running)> Task job script received signal ERR at 2013-10-02T11:54:11
+2013/10/02 11:54:11 CRITICAL - [c.1] -(current:running)> c.1 failed at 2013-10-02T11:54:11
+2013/10/02 11:54:11 INFO - [c.1] -(setting:failed)
+2013/10/02 11:54:11 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:11 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:11 INFO - [cleaner.1] -(setting:submitting)
+2013/10/02 11:54:11 INFO - [cleaner.1] -triggered off ['c.1']
+2013/10/02 11:54:11 DEBUG - END TASK PROCESSING (took 0.015074 sec)
+2013/10/02 11:54:11 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/02 11:54:12 INFO - [cleaner.1] -(current:submitting)> cleaner.1 submitting now
+2013/10/02 11:54:12 INFO - [cleaner.1] -(current:submitting)> cleaner.1 submission succeeded
+2013/10/02 11:54:12 INFO - [cleaner.1] -(setting:submitted)
+2013/10/02 11:54:12 INFO - [cleaner.1] -(current:submitted)> cleaner.1 submit_method_id=25894
+2013/10/02 11:54:12 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:12 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:12 DEBUG - END TASK PROCESSING (took 0.014522 sec)
+2013/10/02 11:54:12 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.224283
+  All 1 items succeeded
+2013/10/02 11:54:13 INFO - [cleaner.1] -(current:submitted)> cleaner.1 started at 2013-10-02T11:54:12
+2013/10/02 11:54:13 INFO - [cleaner.1] -(setting:running)
+2013/10/02 11:54:13 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:13 DEBUG - BEGIN TASK PROCESSING
+2013/10/02 11:54:13 DEBUG - END TASK PROCESSING (took 0.019058 sec)
+2013/10/02 11:54:14 INFO - pre-kill state dump: state.2013:10:2:11:54:14
+2013/10/02 11:54:14 DEBUG - [c.1] -task proxy removed (by request)
+2013/10/02 11:54:14 INFO - Command succeeded: remove task(c,1,False,True)
+2013/10/02 11:54:14 INFO - pre-kill state dump: state.2013:10:2:11:54:14
+2013/10/02 11:54:14 DEBUG - [d.1] -task proxy removed (by request)
+2013/10/02 11:54:14 INFO - Command succeeded: remove task(d,1,False,True)
+2013/10/02 11:54:14 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:15 INFO - [cleaner.1] -(current:running)> cleaner.1 succeeded at 2013-10-02T11:54:14
+2013/10/02 11:54:15 INFO - [cleaner.1] -(setting:succeeded)
+2013/10/02 11:54:15 DEBUG - UPDATING STATE SUMMARY
+2013/10/02 11:54:15 INFO - All non-cycling tasks have succeeded
+2013/10/02 11:54:15 INFO - Suite shutting down at 2013-10-02 11:54:15.356446
