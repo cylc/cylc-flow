@@ -76,8 +76,8 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 With -k/--kill tasks currently submitted or running will be killed
 before the suite shuts down.
 
-The command exits immediately after queueing the stop request unless
-polling is used (--max-polls=N where N>1) to wait for the suite to stop.""",
+The command exits immediately unless polling to wait for suite shutdown
+first (--wait activates the polling options --max-polls and --interval).""",
     pyro=True, argdoc=[ ("REG", "Suite name"), 
     ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
