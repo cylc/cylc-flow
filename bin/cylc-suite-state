@@ -76,17 +76,23 @@ class suite_poller( poller ):
 
 parser = cop( usage = """cylc suite-state REG [OPTIONS]
 
-Print task states retrieved from a suite database, or poll until a task
-reaches a particular state (by using the --task, --cycle, and --status
-options with --interval and --max-polls). For a one-off check instead 
-of polling, use --max-polls=1. The suite database does not need to exist
-at the time polling commences, but polls are consumed waiting for it.
+Print task states retrieved from a suite database; or (with --task,
+--cycle, and --status) poll until a given task reaches a given state.
+Polling is configurable with --interval and --max-polls; for a one-off
+check use --max-polls=1. The suite database does not need to exist at
+the time polling commences but allocated polls are consumed waiting for
+it (consider max-polls*interval as an overall timeout).
 
-Note, for non-cycling tasks --cycle=1 must be provided.
+Note for non-cycling tasks --cycle=1 must be provided.
+
+For your own suites the database location is determined by your
+site/user config. For other suites, e.g. those owned by others, or
+mirrored suite databases, use --run-dir=DIR to specify the location.
 
 Example usage:
   cylc suite-state REG --task=TASK --cycle=CYCLE --status=STATUS
-Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.""")
+returns 0 if TASK.CYCLE reaches STATUS before the maximum number of
+polls, otherwise returns 1.""")
 
 parser.add_option( "-t", "--task", 
         help="Specify a task to check the state of.",
@@ -96,13 +102,11 @@ parser.add_option( "-c", "--cycle",
         help="Specify the cycle to check task states for.",
         action="store", dest="cycle", default=None )
 
-# TODO - this should not be necessary.  If --host is used the command
-# will be re-invoked on the suite host where the run directory is
-# determined by site/user config. Or is it for testing purposes?
 parser.add_option( "-d", "--run-dir", 
-        help="Specify the top level cylc run directory, if not as "
-        "determined by site/user config on the suite host.",
-        action="store", dest="run_dir", default=None )
+        help="The top level cylc run directory if non-standard. The "
+        "database should be DIR/REG/cylc-suite.db. Use to interrogate "
+        "suites owned by others, etc.; see note above.",
+        metavar=DIR, action="store", dest="run_dir", default=None )
 
 conds = ("Valid triggering conditions to check for include: '" + 
          ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) + 
@@ -115,8 +119,7 @@ parser.add_option( "-S", "--status",
         help="Specify a particular status or triggering condition to check for. " + conds + states,
         action="store", dest="status", default=None )
         
-suite_poller.add_to_cmd_options(parser)
-
+suite_poller.add_to_cmd_options(parser) 
 ( options, args ) = parser.parse_args( remove_opts=["--db", "--debug"] )
 
 suite = args[0]
