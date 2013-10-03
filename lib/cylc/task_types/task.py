@@ -601,6 +601,8 @@ class task( object ):
                 comstr += " --interval=" + str(rtconfig['suite state polling']['interval'])
             if rtconfig['suite state polling']['max-polls']:
                 comstr += " --max-polls=" + str(rtconfig['suite state polling']['max-polls'])
+            if rtconfig['suite state polling']['run-dir']:
+                comstr += " --run-dir=" + str(rtconfig['suite state polling']['run-dir'])
             comstr += " " + self.suite_polling_cfg['suite']
             command = "echo " + comstr + "\n" + comstr
 

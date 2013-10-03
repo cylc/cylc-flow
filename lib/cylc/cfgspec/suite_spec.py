@@ -181,7 +181,7 @@ SPEC = {
                 'host'                        : vdr( vtype='string' ),
                 'interval'                    : vdr( vtype='integer' ),
                 'max-polls'                   : vdr( vtype='integer' ),
-                'run directory'               : vdr( vtype='string' ),
+                'run-dir'                     : vdr( vtype='string' ),
                 'verbose mode'                : vdr( vtype='boolean' ),
                 },
             'environment' : {
