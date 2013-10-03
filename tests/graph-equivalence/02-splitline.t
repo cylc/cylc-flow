@@ -21,7 +21,7 @@
 #C:                 b => c"""
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 5
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE test3
 #-------------------------------------------------------------------------------
@@ -31,4 +31,18 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-check-a
+cylc run $SUITE_NAME --hold
+cylc show $SUITE_NAME a.1 | sed -n "/PREREQUISITES/,/OUTPUTS/p" > a-prereqs
+cmp_ok $TEST_SOURCE_DIR/splitline_refs/a-ref a-prereqs
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-check-b
+cylc show $SUITE_NAME b.1 | sed -n "/PREREQUISITES/,/OUTPUTS/p" > b-prereqs
+cmp_ok $TEST_SOURCE_DIR/splitline_refs/b-ref b-prereqs
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-check-c
+cylc show $SUITE_NAME c.1 | sed -n "/PREREQUISITES/,/OUTPUTS/p" > c-prereqs
+cmp_ok $TEST_SOURCE_DIR/splitline_refs/c-ref c-prereqs
+#-------------------------------------------------------------------------------
+cylc shutdown $SUITE_NAME --now -f
 purge_suite $SUITE_NAME

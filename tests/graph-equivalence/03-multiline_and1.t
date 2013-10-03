@@ -21,7 +21,7 @@
 #C:                 b => c"""
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE multiline_and1
 #-------------------------------------------------------------------------------
@@ -30,5 +30,11 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-check-c
+cylc run $SUITE_NAME --hold
+cylc show $SUITE_NAME c.1 | sed -n "/PREREQUISITES/,/OUTPUTS/p" > c-prereqs
+cmp_ok $TEST_SOURCE_DIR/multiline_and_refs/c-ref c-prereqs
+cylc shutdown $SUITE_NAME --now -f
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
