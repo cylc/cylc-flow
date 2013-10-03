@@ -59,8 +59,8 @@ class poller( object ):
         Return True if condition met, or False if polling exhausted."""
 
         if self.max_polls == 0:
-            print >> sys.stderr, "WARNING, --max-polls=0: nothing to do"
-            sys.exit(0)
+            # exit 1 as we can't know if the condition is satisfied 
+            sys.exit( "WARNING: nothing to do (--max-polls=0)" )
         elif self.max_polls == 1:
             sys.stdout.write( "checking " )
         else:

@@ -44,14 +44,17 @@ class suite_poller( poller ):
             sys.stdout.write("connecting to suite db for " + 
                   self.args['run_dir'] + "/" + self.args['suite'])
         
+        # Attempt db connection even if no polls for condition are
+        # requested, as failure to connect is useful information.
+        max_polls = self.max_polls or 1
         # max_polls*interval is equivalent to a timeout, and we
         # include time taken to connect to the run db in this...
-        while ( not connected and self.n_polls < self.max_polls ):
+        while ( not connected and self.n_polls < max_polls ):
             self.n_polls += 1
             try:
                 self.checker = CylcSuiteDBChecker(self.args['run_dir'], self.args['suite'])
                 connected = True
-                # ... but ensure we at least get one proper poll of the db 
+                # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
             except DBNotFoundError:
                 if verbose:
