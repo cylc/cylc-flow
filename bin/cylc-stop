@@ -91,7 +91,12 @@ parser.add_option( "-k", "--kill",
         help="Kill submitted and running tasks before shutdown.",
         action="store_true", default=False, dest="kill" )
 
-stop_poller.add_to_cmd_options( parser, d_max_polls=1 )
+parser.add_option( "-w", "--wait", 
+        help="Use the polling options (--interval, --max-polls) "
+        "and wait on suite shutdown before exiting.",
+        action="store_true", default=False, dest="wait" )
+
+stop_poller.add_to_cmd_options( parser )
 
 (options, args) = parser.parse_args()
 
@@ -109,7 +114,7 @@ if options.shutdownnow and options.kill:
     print >> sys.stderr, "WARNING: ignoring --now ( not compatible with --kill)"
     options.shutdownnow = False
 
-if options.max_polls > 1:
+if options.wait:
     spoller = stop_poller( "suite stopped", options.interval, options.max_polls, 
             args={
                 'suite'   : suite,
@@ -210,7 +215,7 @@ else:
     # (should not happen)
     sys.exit( result[1] )
 
-if options.max_polls > 1:
+if options.wait:
     if not spoller.connect():
         # (should not happen if we got the command proxy above)
         sys.exit( "ERROR: cannot connect to the suite info proxy" )
