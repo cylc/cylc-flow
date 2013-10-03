@@ -874,6 +874,8 @@ class task( object ):
         TODO - formalize state ordering, for: 'if new_state < old_state'
         """
 
+        # print incoming messages to stdout
+        print '  *', message
         # Log every incoming task message. Prepend '>' to distinguish
         # from other non-task message log entries.
         self.log( priority, '(current:' + self.state.get_status() + ')> ' + message )

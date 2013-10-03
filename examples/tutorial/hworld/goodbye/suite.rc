@@ -1,0 +1,10 @@
+title = "Hello and Goodbye World!"
+[scheduling]
+    [[dependencies]]
+        graph = "hello => goodbye"
+[runtime]
+    [[hello]]
+        command scripting = "echo Hello World!"
+    [[goodbye]]
+        command scripting = "echo Goodbye World!"
+

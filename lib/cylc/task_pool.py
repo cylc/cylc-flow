@@ -162,13 +162,17 @@ class pool(object):
                         readytogo.append(itask)
 
         if len(readytogo) == 0:
-            if self.verbose:
-                print "(No tasks ready to run)"
+            #if self.verbose:
+            #    print "(No tasks ready to run)"
             return []
 
         print
         n_tasks = len(readytogo)
-        print n_tasks, 'TASKS READY TO BE SUBMITTED'
+        if n_tasks == 1:
+            print '1 task ready'
+        else:
+            print n_tasks, 'tasks ready'
+
 
         for itask in readytogo:
             # (direct task state reset ok: this executes in the main thread)

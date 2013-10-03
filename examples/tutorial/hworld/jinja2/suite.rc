@@ -1,0 +1,32 @@
+#!jinja2
+
+{% set MULTI = True %}
+{% set N_GOODBYES = 3 %}
+
+{% if MULTI %}
+    {% set STYPE = "multi" %}
+{% else %}
+    {% set STYPE = "single" %}
+{% endif %}
+
+title = "A cylc {{STYPE}} Hello World! suite"
+[scheduling]
+    [[dependencies]]
+{% if MULTI %}
+        graph = "hello => BYE"
+{% else %}
+        graph = "hello"
+{% endif %}
+
+[runtime]
+    [[hello]]
+        command scripting = "sleep 10; echo Hello World!"
+{% if MULTI %}
+    [[BYE]]
+        command scripting = "sleep 10; echo Goodbye World!"
+    {% for I in range(0,N_GOODBYES) %}
+    [[ goodbye_{{I}} ]]
+        inherit = BYE
+    {% endfor %}
+{% endif %}
+

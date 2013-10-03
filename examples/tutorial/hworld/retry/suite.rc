@@ -1,0 +1,15 @@
+title = "A task with automatic retry on failure"
+[scheduling]
+    [[dependencies]]
+        graph = "hello"
+[runtime]
+    [[hello]]
+        retry delays = 2*0.1 # retry twice after 0.1 minute delays
+        command scripting = """
+if [[ $CYLC_TASK_TRY_NUMBER < 3 ]]; then
+    echo "Hello ... aborting!"
+    exit 1
+else
+    echo "Hello World!"
+fi"""
+

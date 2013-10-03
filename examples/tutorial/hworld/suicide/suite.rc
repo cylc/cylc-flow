@@ -1,0 +1,14 @@
+title = "Hello, Goodbye, Suicide"
+[scheduling]
+    [[dependencies]]
+        graph = """hello => goodbye
+           goodbye:fail => really_goodbye
+           goodbye => !ready_goodbye"""
+[runtime]
+    [[hello]]
+        command scripting = "echo Hello World!"
+    [[goodbye]]
+        command scripting = """
+echo Goodbye ... oops!
+/bin/false # FAIL"""
+

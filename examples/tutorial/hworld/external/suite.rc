@@ -1,0 +1,10 @@
+title = "Hello World! from an external task script"
+[scheduling]
+    [[dependencies]]
+        graph = "hello"
+[runtime]
+    [[hello]]
+        command scripting = hello.sh
+        [[[environment]]]
+            GREETING = Hello
+
