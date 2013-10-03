@@ -39,7 +39,7 @@ class poller( object ):
 
         """check max_polls is an int"""
         try:
-            self.max_polls = int(max_polls) or 1 # (do at least one poll)
+            self.max_polls = int(max_polls)
         except:
             sys.stderr.write("max_polls must be an int\n")
             sys.exit(1)
@@ -58,10 +58,13 @@ class poller( object ):
         """Poll for the condition embodied by self.check().
         Return True if condition met, or False if polling exhausted."""
 
-        if self.max_polls > 1:
-            sys.stdout.write( "polling " )
-        else:
+        if self.max_polls == 0:
+            print >> sys.stderr, "WARNING, --max-polls=0: nothing to do"
+            sys.exit(0)
+        elif self.max_polls == 1:
             sys.stdout.write( "checking " )
+        else:
+            sys.stdout.write( "polling " )
         sys.stdout.write( "for '" + self.condition + "'" )
 
         done = False 

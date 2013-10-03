@@ -76,8 +76,8 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 With -k/--kill tasks currently submitted or running will be killed
 before the suite shuts down.
 
-The command exits immediately unless polling to wait for suite shutdown
-first (--wait activates the polling options --max-polls and --interval).""",
+The command exits immediately unless --max-polls is greater than zero
+in which case it polls to wait for suite shutdown.""",
     pyro=True, argdoc=[ ("REG", "Suite name"), 
     ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
@@ -91,12 +91,7 @@ parser.add_option( "-k", "--kill",
         help="Kill submitted and running tasks before shutdown.",
         action="store_true", default=False, dest="kill" )
 
-parser.add_option( "-w", "--wait", 
-        help="Use the polling options (--interval, --max-polls) "
-        "and wait on suite shutdown before exiting.",
-        action="store_true", default=False, dest="wait" )
-
-stop_poller.add_to_cmd_options( parser )
+stop_poller.add_to_cmd_options( parser, d_max_polls=0 )
 
 (options, args) = parser.parse_args()
 
@@ -114,16 +109,17 @@ if options.shutdownnow and options.kill:
     print >> sys.stderr, "WARNING: ignoring --now ( not compatible with --kill)"
     options.shutdownnow = False
 
-if options.wait:
+if int(options.max_polls) > 0:
+    # (test to avoid the "nothing to do" warning for # --max-polls=0)
     spoller = stop_poller( "suite stopped", options.interval, options.max_polls, 
-            args={
-                'suite'   : suite,
-                'pphrase' : pphrase,
-                'owner'   : options.owner,
-                'host'    : options.host,
-                'pyro_timeout' : options.pyro_timeout,
-                'port'    : options.port
-                })
+        args={
+            'suite'   : suite,
+            'pphrase' : pphrase,
+            'owner'   : options.owner,
+            'host'    : options.host,
+            'pyro_timeout' : options.pyro_timeout,
+            'port'    : options.port
+            })
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout, options.port,
@@ -215,7 +211,8 @@ else:
     # (should not happen)
     sys.exit( result[1] )
 
-if options.wait:
+if int(options.max_polls) > 0:
+    # (test to avoid the "nothing to do" warning for # --max-polls=0)
     if not spoller.connect():
         # (should not happen if we got the command proxy above)
         sys.exit( "ERROR: cannot connect to the suite info proxy" )
