@@ -227,7 +227,6 @@ admin_commands = OrderedDict()
 admin_commands['test-db'         ] = [ 'test-db']
 admin_commands['test-battery'    ] = [ 'test-battery']
 admin_commands['import-examples' ] = [ 'import-examples']
-admin_commands['check-examples'  ] = [ 'check-examples']
 admin_commands['check-software'  ] = [ 'check-software']
 
 license_commands = OrderedDict()
@@ -353,7 +352,6 @@ comsum = OrderedDict()
 # admin
 comsum[ 'test-db'    ] = 'Run an automated suite database test'
 comsum[ 'test-battery' ] = 'Run a battery of self-diagnosing test suites'
-comsum[ 'check-examples' ] = 'Check all example suites validate'
 comsum[ 'import-examples' ] = 'Import example suites your user database'
 comsum[ 'check-software' ] = 'Check required software is installed.'
 # license
@@ -380,7 +378,7 @@ comsum[ 'list'       ] = 'List suite tasks and family namespaces'
 comsum[ 'dump'       ] = 'Print the state of tasks in a running suite'
 comsum[ 'cat-state'  ] = 'Print the state of tasks from the state dump'
 comsum[ 'show'       ] = 'Print task state (prerequisites and outputs etc.)'
-comsum[ 'cat-log'    ] = 'Print filtered suite logs'
+comsum[ 'cat-log'    ] = 'Print various suite and task log files'
 comsum[ 'documentation' ] = 'Display cylc documentation (User Guide etc.)'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
 comsum[ 'get-config' ] = 'Parse a suite and report configuration values'

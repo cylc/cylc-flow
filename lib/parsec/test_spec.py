@@ -77,7 +77,9 @@ SPEC = {
 def get_cfg( cfile=TEST_FILE, verbose=False, template_vars=[], template_vars_file=None ):
     global cfg
     if not cfg:
-        cfg = parse( cfile, verbose, template_vars, template_vars_file )
+        cfg = parse( cfile, verbose=verbose,
+                template_vars=template_vars,
+                template_vars_file=template_vars_file )
         validate( cfg, SPEC )
         cfg = expand( cfg, SPEC )
     return cfg

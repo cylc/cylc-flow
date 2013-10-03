@@ -20,6 +20,7 @@ import sys, re
 from OrderedDict import OrderedDict
 from util import m_override, un_many
 from copy import copy
+from cylc.cycle_time import ct
 
 """
 Validate a nested dict parsed from a config file against a spec file:
@@ -51,7 +52,7 @@ def validate( cfig, spec, keys=[] ):
     for key,val in cfig.items():
         if key not in spec:
             if '__MANY__' not in spec:
-                raise ValidationError('ERROR: illegal item: ' + key )
+                raise IllegalItemError( keys, key )
             else:
                 # only accept the item if it's value is of the same type
                 # as that of the __MANY__  item, i.e. dict or not-dict.
@@ -123,10 +124,9 @@ def _coerce_boolean( value, keys, args ):
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle time."""
-    # TODO - HANDLE PROPER CYCLE TIMES
-    if re.match( '^[0-9]{10}$', value ):
-        return int(value)
-    else:
+    try:
+        return ct( value ).get()
+    except:
         raise IllegalValueError( 'cycle time', keys, value )
 
 def _coerce_str_list( value, keys, args ):

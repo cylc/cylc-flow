@@ -50,6 +50,8 @@
 #         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
 #     purge_suite SUITE_NAME
 #         Tidy up test directories for SUITE_NAME.
+#     skip_tests N SKIP_REASON
+#         echo "ok $((++T)) # skip SKIP_REASON" N times, where the number to skip.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -66,6 +68,9 @@ function FINALLY() {
     fi
     if [[ $FAILURES -gt 0 ]]; then
         echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" > /dev/tty
+        if $SUITE_RUN_FAILS; then
+            echo -e "    suite logs can be found under: $SUITE_LOG_DIR" > /dev/tty
+        fi
     fi
 }
 for S in $SIGNALS; do
@@ -121,6 +126,7 @@ function suite_run_ok() {
         SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
         cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
         cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
+        SUITE_RUN_FAILS=true
         return
     fi
     ok $TEST_NAME
@@ -134,6 +140,7 @@ function suite_run_fail() {
         SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
         cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
         cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
+        SUITE_RUN_FAILS=true
         return
     fi
     ok $TEST_NAME
@@ -173,6 +180,10 @@ function init_suite() {
     cylc unregister $SUITE_NAME 2>&1
     cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>&1
     cd $TEST_DIR/$SUITE_NAME 2>&1
+    while [[ ! $(cylc get-directory $SUITE_NAME) ]]
+    do
+        sleep 1
+    done
 }
 
 function install_suite() {
@@ -201,6 +212,15 @@ function purge_suite() {
     fi
 }
 
+function skip() {
+    local N_TO_SKIP=$1
+    shift 1
+    local COUNT=0
+    while ((COUNT++ < N_TO_SKIP)); do
+        echo "ok $((++TEST_NUMBER)) # skip $@"
+    done
+}
+
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}
 PATH=$CYLC_DIR/bin:$PATH
 
@@ -209,5 +229,6 @@ TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
 TEST_DIR=$(mktemp -d)
 cd $TEST_DIR
 TEST_LOG_DIR=$TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+SUITE_RUN_FAILS=false
 
 set +e

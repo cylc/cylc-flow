@@ -971,6 +971,11 @@ class task( object ):
             # (A fake task message from the job submission thread).
             # (note it is possible for 'task started' to arrive first).
             
+            # flag another round through the task processing loop to
+            # allow submitted tasks to spawn even if nothing else is
+            # happening
+            flags.pflag = True
+ 
             # TODO - should we use the real event time from the message here?
             self.submitted_time = task.clock.get_datetime()
 

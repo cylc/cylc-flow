@@ -1,0 +1,12 @@
+[cylc]
+    force run mode = dummy
+    [[reference test]]
+        dummy mode suite timeout = 1.0
+        allow task failures = True
+[scheduling]
+    [[dependencies]]
+        graph = "a:fail => b:fail => c:fail => !a & !b & !c"
+[runtime]
+    [[a, b, c]]
+        [[[dummy mode]]]
+            command scripting = false

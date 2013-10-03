@@ -1,4 +1,4 @@
-2013/04/30 09:18:53 CRITICAL - Suite starting at 2013-04-30 09:18:53.515014
+2013/04/30 09:18:53 INFO - Suite starting at 2013-04-30 09:18:53.515014
 2013/04/30 09:18:53 INFO - Log event clock: real time
 2013/04/30 09:18:53 INFO - Run mode: live
 2013/04/30 09:18:53 INFO - Start tag: None
@@ -10,4 +10,4 @@
 2013/04/30 09:18:55 INFO - [foo.1] -> foo.1 submit_method_id=11749
 2013/04/30 09:18:55 INFO - [foo.1] -> foo.1 started at 2013-04-30T09:18:54
 2013/04/30 09:19:05 INFO - [foo.1] -> foo.1 succeeded at 2013-04-30T09:19:04
-2013/04/30 09:19:05 CRITICAL - Suite shutting down at 2013-04-30 09:19:05.596576
+2013/04/30 09:19:05 INFO - Suite shutting down at 2013-04-30 09:19:05.596576

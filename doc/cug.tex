@@ -4992,7 +4992,7 @@ This can be used, for example, for demo suites that necessarily run out
 of their original context; or to temporarily prevent accidental
 execution of expensive real tasks during suite development.
 
-Dummy task command scripting just prints a message and sleeps for ten
+Dummy mode task command scripting just prints a message and sleeps for ten
 seconds by default, but you can override this behaviour for particular
 tasks or task groups if you like. Here's how to make a task sleep for
 twenty seconds and then fail in dummy mode:
@@ -5002,7 +5002,8 @@ twenty seconds and then fail in dummy mode:
 [runtime]
     [[foo]]
         command scripting = "run-real-task.sh"
-        dummy mode command scripting = """
+        [[[dummy mode]]]
+            command scripting = """
 echo "hello from dummy task $CYLC_TASK_ID"
 sleep 20
 echo "ABORTING"

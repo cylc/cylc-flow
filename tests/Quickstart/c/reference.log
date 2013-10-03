@@ -1,7 +1,7 @@
 2013/07/25 14:02:13 INFO - Thread-2 start (Event Handler Submission)
 2013/07/25 14:02:13 INFO - Thread-3 start (Poll and Kill Command Submission)
 2013/07/25 14:02:13 INFO - port:7767
-2013/07/25 14:02:13 CRITICAL - Suite starting at 2013-07-25 14:02:13.043095
+2013/07/25 14:02:13 INFO - Suite starting at 2013-07-25 14:02:13.043095
 2013/07/25 14:02:13 INFO - Log event clock: real time
 2013/07/25 14:02:13 INFO - Run mode: live
 2013/07/25 14:02:13 INFO - Start tag: 2011010106
@@ -184,4 +184,4 @@
 2013/07/25 14:02:36 INFO - [PostA.2011010200] -(current:running)> PostA.2011010200 succeeded at 2013-07-25T14:02:36
 2013/07/25 14:02:36 INFO - [PostA.2011010200] -(setting:succeeded)
 2013/07/25 14:02:36 INFO - All normal cycling tasks have spawned past the final cycle 2011010200
-2013/07/25 14:02:36 CRITICAL - Suite shutting down at 2013-07-25 14:02:36.619317
+2013/07/25 14:02:36 INFO - Suite shutting down at 2013-07-25 14:02:36.619317

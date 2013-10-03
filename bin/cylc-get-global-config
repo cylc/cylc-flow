@@ -54,6 +54,15 @@ parser.add_option( "--print-run-dir",
         help="Display the site configured run directory",
         action="store_true", default=False, dest="run_dir" )
 
+parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+        help="The config item to print. Can be used multiple "
+        "times on the same command line.",
+        action="append", dest="item", default=[] )
+
+parser.add_option( "-p", "--python",
+        help="Write out the config data structure in Python native format.",
+        action="store_true", default=False, dest="pnative" )
+
 (options, args) = parser.parse_args()
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
@@ -61,11 +70,35 @@ if len(args) != 0:
 try:
     # import gcfg here to avoid aborting before command help is printed
     from cylc.global_config import get_global_cfg, print_global_cfg
+    from parsec.util import printcfg
     gcfg = get_global_cfg(strict=options.strict, verbose=options.verbose)
     if options.stdout:
         print_global_cfg()
     elif options.run_dir:
         print gcfg.get_host_item('run directory')
+    elif options.item:
+        import re
+        get_these = []
+        for i in options.item:
+            # construct lists in item nest ordering from --item inputs
+            i = i.lstrip('[')
+            i = i.rstrip(']')
+            j = re.split( '\]\[*', i )
+            get_these.append(j)
+        for key in get_these:
+            value = gcfg.cfg
+            for element in key:
+                if element in value:
+                    value = value[element]
+                else:
+                    sys.exit( "Key not found: " + str(key))
+            if isinstance( value, dict ):
+                if options.pnative:
+                    print value
+                else:
+                    printcfg( value, level=len(args[1:]) )
+            else:
+                print value
     else:
         print "Combined site/user config is valid for cylc-" + cylc_version
 
