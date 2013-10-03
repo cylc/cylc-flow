@@ -27,34 +27,38 @@ if remrun().execute():
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
 from cylc.global_config import get_global_cfg
-from cylc.poll import poller
+from cylc.command_polling import poller
 
 class suite_poller( poller ):
     """A polling object that checks suite state."""
 
-    def connect( self, poll=True, verbose=False ):
+    def connect( self, verbose=False ):
         """Connect to the suite db, polling if necessary in case the
         suite has not been started up yet."""
 
         # Returns True if connected, otherwise (one-off failed to
-        # connect, or timed out polling) False
+        # connect, or max number of polls exhausted) False
         connected = False
         
         if verbose:
-            print ("Trying to connect to database for: " + 
+            sys.stdout.write("connecting to suite db for " + 
                   self.args['run_dir'] + "/" + self.args['suite'])
         
-        while not ( connected or self._timed_out()):
+        # max_polls*interval is equivalent to a timeout, and we
+        # include time taken to connect to the run db in this...
+        while ( not connected and self.n_polls < self.max_polls ):
+            self.n_polls += 1
             try:
                 self.checker = CylcSuiteDBChecker(self.args['run_dir'], self.args['suite'])
                 connected = True
+                # ... but ensure we at least get one proper poll of the db 
+                self.n_polls -= 1
             except DBNotFoundError:
                 if verbose:
-                    print >> sys.stderr, "Suite database not found"
-                if not poll:
-                    break
-                else:
-                    sleep(self.interval)
+                    sys.stdout.write('.')
+                sleep(self.interval)
+        if verbose:
+            sys.stdout.write('\n')
         return connected
 
     def check( self ):
@@ -69,25 +73,17 @@ class suite_poller( poller ):
 
 parser = cop( usage = """cylc suite-state REG [OPTIONS]
 
-Print task states retrieved from a suite database, or query if a task
-has reached a particular state (by using the task, cycle, and status
-options). In polling mode the command will wait until the requested 
-state is achieved, with an optional timeout abort. The suite database
-does not need to exist at the time polling commences.
+Print task states retrieved from a suite database, or poll until a task
+reaches a particular state (by using the --task, --cycle, and --status
+options with --interval and --max-polls). For a one-off check instead 
+of polling, use --max-polls=1. The suite database does not need to exist
+at the time polling commences, but polls are consumed waiting for it.
 
-N.B. even in a non-cycling suite a value for cycle must be provided (--cycle=1).
+Note, for non-cycling tasks --cycle=1 must be provided.
 
 Example usage:
-
-cylc suite-state REG \
---task=TASK --cycle=CYCLE --run-dir=CYLC-RUN --status=STATUS
-
-Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.
-
-The command can be run in polling mode with the --wait option.""")
-
-gcfg = get_global_cfg()
-default_run_dir = gcfg.get_host_item( 'run directory', replace=True )
+  cylc suite-state REG --task=TASK --cycle=CYCLE --status=STATUS
+Returns 0 if TASK at CYCLE has reached STATUS, 1 otherwise.""")
 
 parser.add_option( "-t", "--task", 
         help="Specify a task to check the state of.",
@@ -97,10 +93,13 @@ parser.add_option( "-c", "--cycle",
         help="Specify the cycle to check task states for.",
         action="store", dest="cycle", default=None )
 
+# TODO - this should not be necessary.  If --host is used the command
+# will be re-invoked on the suite host where the run directory is
+# determined by site/user config. Or is it for testing purposes?
 parser.add_option( "-d", "--run-dir", 
-        help="Specify the top level cylc run directory. Defaults "
-        "to the local site/user config: " + default_run_dir + ".",
-        action="store", dest="run_dir", default=default_run_dir )
+        help="Specify the top level cylc run directory, if not as "
+        "determined by site/user config on the suite host.",
+        action="store", dest="run_dir", default=None )
 
 conds = ("Valid triggering conditions to check for include: '" + 
          ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) + 
@@ -113,21 +112,19 @@ parser.add_option( "-S", "--status",
         help="Specify a particular status or triggering condition to check for. " + conds + states,
         action="store", dest="status", default=None )
         
-suite_poller.add_to_cmd_options( parser, default_interval=60 )
+suite_poller.add_to_cmd_options(parser)
 
-( options, args ) = parser.parse_args()
-
-parser.remove_option("--db")
-parser.remove_option("--debug")
+( options, args ) = parser.parse_args( remove_opts=["--db", "--debug"] )
 
 suite = args[0]
 
-# this only runs locally (use of --host or --owner results in
-# re-invocation on the db host account).
-run_dir = os.path.expandvars( os.path.expanduser( options.run_dir ))
+# this only runs locally (use of --host results in re-invocation on the suite host account).
+gcfg = get_global_cfg()
+run_dir = options.run_dir or gcfg.get_host_item( 'run directory' )
 
-spoller = suite_poller( "requested state", options.timeout,
-        options.interval, args={
+spoller = suite_poller( "requested state",
+        options.interval, options.max_polls,
+        args={
             'suite'   : suite,
             'run_dir' : run_dir,
             'task'    : options.task,
@@ -147,12 +144,8 @@ if options.status:
 if options.status and options.task and options.cycle:
     """check a task status"""
     spoller.condition = options.status
-    if options.wait:
-        if not spoller.poll():
-            sys.exit(1)
-    else:
-        if not spoller.check_once():
-            sys.exit(1)
+    if not spoller.poll():
+        sys.exit(1)
 else:
     """just display query results"""
     spoller.checker.display_maps(

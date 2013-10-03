@@ -599,10 +599,8 @@ class task( object ):
                 comstr += " --host=" + rtconfig['suite state polling']['host']
             if rtconfig['suite state polling']['interval']:
                 comstr += " --interval=" + str(rtconfig['suite state polling']['interval'])
-            if rtconfig['suite state polling']['timeout']:
-                comstr += " --timeout=" + str(rtconfig['suite state polling']['timeout'])
-            if rtconfig['suite state polling']['wait']:
-                comstr += " --wait"
+            if rtconfig['suite state polling']['max-polls']:
+                comstr += " --max-polls=" + str(rtconfig['suite state polling']['max-polls'])
             comstr += " " + self.suite_polling_cfg['suite']
             command = "echo " + comstr + "\n" + comstr
 

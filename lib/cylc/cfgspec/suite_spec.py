@@ -179,9 +179,8 @@ SPEC = {
             'suite state polling' : {
                 'owner'                       : vdr( vtype='string' ),
                 'host'                        : vdr( vtype='string' ),
-                'interval'                    : vdr( vtype='float' ),
-                'timeout'                     : vdr( vtype='float' ),
-                'wait'                        : vdr( vtype='boolean' ),
+                'interval'                    : vdr( vtype='integer' ),
+                'max-polls'                   : vdr( vtype='integer' ),
                 'run directory'               : vdr( vtype='string' ),
                 'verbose mode'                : vdr( vtype='boolean' ),
                 },

@@ -1437,7 +1437,7 @@ class config( object ):
                 group_nodes, ungroup_nodes, ungroup_recursive,
                 group_all, ungroup_all )
 
-        graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self['visualization'] )
+        graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
         graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
@@ -1566,7 +1566,7 @@ class config( object ):
         # Check command scripting not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
             try:
-                cs = self['runtime'][l_task]['command scripting']
+                cs = self.cfg['runtime'][l_task]['command scripting']
             except:
                 pass
             else:
