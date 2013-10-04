@@ -106,7 +106,7 @@ parser.add_option( "-d", "--run-dir",
         help="The top level cylc run directory if non-standard. The "
         "database should be DIR/REG/cylc-suite.db. Use to interrogate "
         "suites owned by others, etc.; see note above.",
-        metavar=DIR, action="store", dest="run_dir", default=None )
+        metavar="DIR", action="store", dest="run_dir", default=None )
 
 conds = ("Valid triggering conditions to check for include: '" + 
          ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) + 
