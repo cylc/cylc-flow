@@ -1,0 +1,19 @@
+[cylc]
+    [[reference test]]
+        required run mode = live
+        expected task failures = c.1
+        live mode suite timeout = 1 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = """a => b => c
+                   c:fail => cleaner
+                   cleaner => d"""
+[runtime]
+    [[a,b]]
+        command scripting = true
+    [[c]]
+        command scripting = false
+    [[d]]
+    [[cleaner]]
+        command scripting = cylc remove $CYLC_SUITE_NAME c 1; cylc remove $CYLC_SUITE_NAME d 1

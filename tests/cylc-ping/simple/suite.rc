@@ -1,0 +1,12 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+[scheduling]
+    [[dependencies]]
+        graph = "foo => bar"
+[runtime]
+    [[foo]]
+        command scripting = cylc ping $CYLC_SUITE_NAME
+    [[bar]]
+        command scripting = [[ ! $(cylc ping $CYLC_SUITE_NAME-non-existant) ]]
