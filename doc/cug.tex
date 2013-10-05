@@ -898,10 +898,10 @@ suites using the \lstinline=cylc print= command:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc db print examples.tutorial -y
-examples.tutorial.hworld.jinja2   /tmp/examples/tutorial/hworld/jinja2
+examples.tutorial.oneoff.jinja2   /tmp/examples/tutorial/oneoff/jinja2
 examples.tutorial.cycling.two     /tmp/examples/tutorial/cycling/two
 examples.tutorial.cycling.three   /tmp/examples/tutorial/cycling/three
-examples.tutorial.hworld.remote   /tmp/examples/tutorial/hworld/remote
+examples.tutorial.oneoff.remote   /tmp/examples/tutorial/oneoff/remote
 # ...
 \end{lstlisting}
 See \lstinline=cylc db print --help= for other display options. The
@@ -913,16 +913,15 @@ to their source directory paths, although they are in this case):
 shell$ cylc db pr --tree -x examples.tutorial
 examples         
  `-tutorial      
-   `-minimal      the minimal complete runnable cylc suite
-   |-cycling     
+   `-cycling
    | |-four       Inter-cycle dependence + a start-up task
-   | # ...
+   | | ...
    | |-two        Two cycling tasks with inter-cycle dependence
    | `-three      Intercycle dependence + an asynchronous task
-   `-hello       
+   `-oneoff       
      |-retry      A task with automatic retry on failure
      |-remote     Hello World! on a remote host
-     # ...
+     | ...
      |-basic      The cylc Hello World! suite
      `-jobsub     Hello World! by 'at' job submission
 \end{lstlisting}
@@ -933,10 +932,10 @@ Rename (re-register) the tutorial suites to make their names a bit
 shorter:
 \begin{lstlisting}
 $ cylc rereg examples.tutorial tut
-REREGISTER examples.tutorial.hworld.jinja2 to tut.hworld.jinja2
+REREGISTER examples.tutorial.oneoff.jinja2 to tut.oneoff.jinja2
 #...
 shell$ cylc db print -x tutorial
-tut.hworld.external   Hello World! from an external task script
+tut.oneoff.external   Hello World! from an external task script
 # ...
 \end{lstlisting}
 
@@ -948,8 +947,8 @@ the suite.
 \lstset{language=transcript}
 \begin{lstlisting}
 # pass:
-shell$ cylc validate tut.hworld.basic
-Suite tut.hworld.basic is valid for cylc-5.3.0
+shell$ cylc validate tut.oneoff.basic
+Suite tut.oneoff.basic is valid for cylc-5.3.0
 shell$ echo $?
 0
 # fail:
@@ -961,13 +960,13 @@ shell$ echo $?
 
 \subsection{Hello World in Cylc}
 
-\hilight{ suite: \lstinline=tut.hworld.basic= }
+\hilight{ suite: \lstinline=tut.oneoff.basic= }
 \vspace{3mm}
 
 Here's the traditional {\em Hello World} program rendered as a cylc
 suite:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/hworld/basic/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/basic/suite.rc}
 \lstset{language=transcript}
 
 Cylc suites feature a clean separation of scheduling configuration,
@@ -988,7 +987,7 @@ prototyping of new suites, is submitted to run as a background job on
 the suite host. In fact cylc even provides a default task implementation
 that makes the entire \lstinline=[runtime]= section technically optional:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/minimal/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/minimal/suite.rc}
 \lstset{language=transcript}
 (the resulting {\em dummy task} just prints out some identifying
 information and exits).
@@ -1002,13 +1001,13 @@ just above and open the {\em Hello World} suite definition in your text
 editor:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc edit tut.hworld.basic # in-terminal
-shell$ cylc edit -g tut.hworld.basic & # or GUI
+shell$ cylc edit tut.oneoff.basic # in-terminal
+shell$ cylc edit -g tut.oneoff.basic & # or GUI
 \end{lstlisting}
 Alternatively, start gcylc on the suite,
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ gcylc tut.hworld.basic &
+shell$ gcylc tut.oneoff.basic &
 \end{lstlisting}
 and choose {\em Suite } $\rightarrow$ {\em Edit} from the menu.
 
@@ -1026,7 +1025,7 @@ Run the suite at the terminal with the \lstinline=cylc run= command:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.hworld.basic
+shell$ cylc run --no-detach tut.oneoff.basic
 *************************************************************************
 *             The Cylc Suite Engine [5.3.0-436-ge9ba-dirty]             *
 *              Copyright (C) 2008-2013 Hilary Oliver, NIWA              *
@@ -1040,9 +1039,9 @@ WARNING: No initial cycle time provided - no cycling tasks will be loaded.
 1 task ready
   * hello.1 submitting now
 SUBMIT No.1(1,1):
-    (/home/hilary/cylc-run/tut.hworld.basic/log/job/hello.1.1 </dev/null
-    1>/home/hilary/cylc-run/tut.hworld.basic/log/job/hello.1.1.out
-    2>/home/hilary/cylc-run/tut.hworld.basic/log/job/hello.1.1.err &
+    (/home/hilary/cylc-run/tut.oneoff.basic/log/job/hello.1.1 </dev/null
+    1>/home/hilary/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out
+    2>/home/hilary/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err &
     echo $!; wait )
   * hello.1 submission succeeded
   * hello.1 submit_method_id=28480
@@ -1066,7 +1065,7 @@ when all tasks have succeeded.
 The cylc GUI can also start and stop suites, or connect to running
 suites. Start \lstinline=gcylc= for the tutorial example,
 \begin{lstlisting}
-shell$ cylc gui tut.hworld.basic &
+shell$ cylc gui tut.oneoff.basic &
 \end{lstlisting}
 and use the tool bar {\em Play} button, or the {\em Control}
 $\rightarrow$ {\em Run Suite} menu item, to run the suite again.
@@ -1111,7 +1110,7 @@ still has to be used to target the task instance with cylc commands.
 
 \subsection{Job Submission: How Tasks Are Executed}
 
-\hilight{ suite: \lstinline=tut.hworld.jobsub= }
+\hilight{ suite: \lstinline=tut.oneoff.jobsub= }
 \vspace{3mm}
 
 Task {\em job scripts} are generated by cylc to wrap the task
@@ -1123,12 +1122,12 @@ submission commands printed to suite stdout.  They can be viewed by
 right-clicking on the task in the cylc GUI, or printed to the terminal:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc log tut.hworld.basic hello.1
+shell$ cylc log tut.oneoff.basic hello.1
 \end{lstlisting}
 Or a new job script can be generated on the fly for inspection,
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc jobscript tut.hworld.basic hello.1
+shell$ cylc jobscript tut.oneoff.basic hello.1
 \end{lstlisting}
 
 Take a look at the job script generated for \lstinline=hello.1= during 
@@ -1138,7 +1137,7 @@ toward the bottom of the file.
 The \lstinline=hello= task defaults to running as a background job on
 the suite host. To submit it to the Unix \lstinline=at= scheduler
 instead, configure its job submission settings as in 
-\lstinline=tut.hworld.jobsub=:
+\lstinline=tut.oneoff.jobsub=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -1153,14 +1152,14 @@ If you run the suite (first check that the {\em at daemon}
 to stdout:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.hworld.jobsub
+shell$ cylc run --no-detach tut.oneoff.jobsub
 #...
 1 task ready
   * hello.1 submitting now
 SUBMIT No.1(1,1):
-    (echo "/home/hilary/cylc-run/tut.hworld.jobsub/hello.1.1 \
-     1>/home/hilary/cylc-run/tut.hworld.jobsub/hello.1.1.out \
-     2>/home/hilary/cylc-run/tut.hworld.jobsub/hello.1.1.err" | at now)
+    (echo "/home/hilary/cylc-run/tut.oneoff.jobsub/hello.1.1 \
+     1>/home/hilary/cylc-run/tut.oneoff.jobsub/hello.1.1.out \
+     2>/home/hilary/cylc-run/tut.oneoff.jobsub/hello.1.1.err" | at now)
   * hello.1 submission succeeded
   * hello.1 started at 2013-09-28T17:25:07
   * hello.1 submit_method_id=2191
@@ -1187,7 +1186,7 @@ time-stamped suite log file, and task job scripts and job logs
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ tree $HOME/cylc-run/tut.hworld.basic/
+shell$ tree $HOME/cylc-run/tut.oneoff.basic/
 |-- cylc-suite.db       # suite run database
 |-- cylc-suite-env      # suite environment file
 |-- log                 # suite log files
@@ -1228,13 +1227,13 @@ with the \lstinline=cylc log= command:
 \lstset{language=transcript}
 \begin{lstlisting}
 # suite logs:
-shell$ cylc log    tut.hworld.basic           # suite event log
-shell$ cylc log -o tut.hworld.basic           # suite stdout log
-shell$ cylc log -e tut.hworld.basic           # suite stderr log
+shell$ cylc log    tut.oneoff.basic           # suite event log
+shell$ cylc log -o tut.oneoff.basic           # suite stdout log
+shell$ cylc log -e tut.oneoff.basic           # suite stderr log
 # task logs:
-shell$ cylc log    tut.hworld.basic hello.1   # task job script
-shell$ cylc log -o tut.hworld.basic hello.1   # task stdout log
-shell$ cylc log -e tut.hworld.basic hello.1   # task stderr log
+shell$ cylc log    tut.oneoff.basic hello.1   # task job script
+shell$ cylc log -o tut.oneoff.basic hello.1   # task stdout log
+shell$ cylc log -e tut.oneoff.basic hello.1   # task stderr log
 \end{lstlisting}
 For a more sophisticated web-based interface to suite and task logs, 
 see {\em Rose} in Section~\ref{SuiteStorageEtc}.
@@ -1247,12 +1246,12 @@ see {\em Rose} in Section~\ref{SuiteStorageEtc}.
 \subsection{Remote Tasks}
 \label{RemoteTasks}
 
-\hilight{ suite: \lstinline=tut.hworld.remote= }
+\hilight{ suite: \lstinline=tut.oneoff.remote= }
 \vspace{3mm}
 
 The \lstinline=hello= task defaults to running on the suite host. To
 make it run on a remote host instead change its runtime configuration 
-as in \lstinline=tut.hworld.remote=:
+as in \lstinline=tut.oneoff.remote=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -1303,20 +1302,20 @@ to run there by the configured job submission method:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.hworld.remote
+shell$ cylc run --no-detach tut.oneoff.remote
 # ...
 1 task ready
   * hello.1 submitting now
 SUBMIT No.1(1,1): ssh -oBatchMode=yes server1.niwa.co.nz \
     "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; \
      test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; \
-     mkdir -p $(dirname $HOME/cylc-run/tut.hworld.remote/log/job/hello.1.1) \
-     && cat >$HOME/cylc-run/tut.hworld.remote/log/job/hello.1.1 && \
-     chmod +x $HOME/cylc-run/tut.hworld.remote/log/job/hello.1.1 && \
-     (($HOME/cylc-run/tut.hworld.remote/log/job/hello.1.1 </dev/null \
-     1>$HOME/cylc-run/tut.hworld.remote/log/job/hello.1.1.out \
-     2>$HOME/cylc-run/tut.hworld.remote/log/job/hello.1.1.err) & echo $!; wait )" \
-     < /home/hilary/cylc-run/tut.hworld.remote/log/job/hello.1.1
+     mkdir -p $(dirname $HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1) \
+     && cat >$HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1 && \
+     chmod +x $HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1 && \
+     (($HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1 </dev/null \
+     1>$HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1.out \
+     2>$HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1.err) & echo $!; wait )" \
+     < /home/hilary/cylc-run/tut.oneoff.remote/log/job/hello.1.1
   * hello.1 submission succeeded
   * hello.1 started at 2013-09-28T17:45:13
   * hello.1 submit_method_id=27256
@@ -1340,12 +1339,12 @@ the suite host.
 
 \subsection{Task Triggering}
 
-\hilight{ suite: \lstinline=tut.hworld.goodbye= }
+\hilight{ suite: \lstinline=tut.oneoff.goodbye= }
 \vspace{3mm}
 
 To make a second task called \lstinline=goodbye= trigger after  
 \lstinline=hello= finishes successfully, alter the suite graph 
-as in \lstinline=tut.hworld.goodbye=:
+as in \lstinline=tut.oneoff.goodbye=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -1367,18 +1366,18 @@ and configure the new task's behaviour under \lstinline=[runtime]=:
         command scripting = "sleep 10; echo Goodbye World!"
 \end{lstlisting}
 
-Run \lstinline=tut.hworld.goodbye= and check the output from the new
+Run \lstinline=tut.oneoff.goodbye= and check the output from the new
 task:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cat ~/cylc-run/tut.hworld.goodbye/log/job/goodbye.1.1.out 
-# (or cylc log -o tut.hworld.goodbye goodbye.1
+shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/goodbye.1.1.out 
+# (or cylc log -o tut.oneoff.goodbye goodbye.1
 JOB SCRIPT STARTING
 cylc (scheduler - 2013/09/23 18:15:09): goodbye.1 started at 2013-09-23T18:15:09
 Sending message (connection timeout is 30) ...
    Try 1 of 7 ... succeeded
 cylc Suite and Task Identity:
-  Suite Name  : tut.hworld.goodbye
+  Suite Name  : tut.oneoff.goodbye
   Suite Host  : server0
   Suite Port  : 7766
   Suite Owner : hilary
@@ -1397,7 +1396,7 @@ JOB SCRIPT EXITING (TASK SUCCEEDED)
 
 \subsubsection{Failure And Suicide Triggering}
 
-\hilight{ suite: \lstinline=tut.hworld.suicide= }
+\hilight{ suite: \lstinline=tut.oneoff.suicide= }
 \vspace{3mm}
 
 Task names in the graph string can be qualified with a state indicator
@@ -1436,7 +1435,7 @@ This means if \lstinline=goodbye= fails, trigger
 \lstinline=really_goodbye=; and otherwise, if \lstinline=goodbye=
 succeeds, remove \lstinline=really_goodbye= from the suite. 
 
-Try running \lstinline=tut.hworld.suicide=, which also configures
+Try running \lstinline=tut.oneoff.suicide=, which also configures
 the \lstinline=hello= task's runtime to make it fail, to see how this
 works.
 \begin{myitemize}
@@ -1446,7 +1445,7 @@ works.
 
 \subsection{Runtime Inheritance}
 
-\hilight{ suite: \lstinline=tut.hworld.inherit= }
+\hilight{ suite: \lstinline=tut.oneoff.inherit= }
 \vspace{3mm}
 
 The \lstinline=[runtime]= section is actually a {\em multiple
@@ -1455,7 +1454,7 @@ represents a task, or if it inherits from other namespaces, a {\em
 family}.  This allows common configuration to be factored out of related
 tasks very efficiently.
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/hworld/inherit/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/inherit/suite.rc}
 The \lstinline=[root]= namespace is at the root of all runtime  
 hierarchies. It provides defaults for all tasks in the suite. Here both
 tasks inherit command scripting from \lstinline=root=, which they
@@ -1470,7 +1469,7 @@ is required, as shown below.
 
 \subsection{Triggering Families}
 
-\hilight{ suite: \lstinline=tut.hworld.ftrigger1= }
+\hilight{ suite: \lstinline=tut.oneoff.ftrigger1= }
 \vspace{3mm}
 
 Task families defined by runtime inheritance can also be used as 
@@ -1495,13 +1494,13 @@ i.e.\ if \lstinline=foo= succeeds, trigger all members of
 \lstinline=GREETERS= at once.  Here's the full suite with runtime
 hierarchy shown:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/hworld/ftrigger1/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/ftrigger1/suite.rc}
 
 Verbose validation shows the family member substitution done by cylc
 when the suite definition is parsed:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.hworld.ftr1gger1
+shell$ cylc val -v tut.oneoff.ftr1gger1
 ...
 Graph line substitutions occurred:
   IN: foo => GREETERS
@@ -1509,12 +1508,12 @@ Graph line substitutions occurred:
 ...
 \end{lstlisting}
 
-Experiment with the \lstinline=tut.hworld.ftrigger1= suite to see
+Experiment with the \lstinline=tut.oneoff.ftrigger1= suite to see
 how this works.
 
 \subsection{Triggering Off Families}
 
-\hilight{ suite: \lstinline=tut.hworld.ftrigger2= }
+\hilight{ suite: \lstinline=tut.oneoff.ftrigger2= }
 \vspace{3mm}
 
 Tasks (or families) can also trigger {\em off} other families, but 
@@ -1531,7 +1530,7 @@ the upstream family members. Here's how to trigger another task
 Verbose validation in this case reports:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.hworld.ftrigger2
+shell$ cylc val -v tut.oneoff.ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:succeed-all => bar
@@ -1567,7 +1566,7 @@ family triggers can simplify complex graphs, even for this tiny
 two-member family:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.hworld.ftrigger2
+shell$ cylc val -v tut.oneoff.ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:finish-all & GREETERS:succeed-any => bar
@@ -1577,7 +1576,7 @@ Graph line substitutions occurred:
 ...
 \end{lstlisting}
 
-Experiment with \lstinline=tut.hworld.ftrigger2= to see how this
+Experiment with \lstinline=tut.oneoff.ftrigger2= to see how this
 works.
 
 \begin{myitemize}
@@ -1589,7 +1588,7 @@ works.
 \lstset{language=suiterc}
 Suite definitions can style dependency graphs with an 
 optional \lstinline=[visualization]= section as at the 
-end of \lstinline=tut.hworld.ftrigger2=:
+end of \lstinline=tut.oneoff.ftrigger2=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [visualization]
@@ -1603,8 +1602,8 @@ end of \lstinline=tut.hworld.ftrigger2=:
 To display the graph in an interactive viewer,
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc graph tut.hworld.ftrigger2 &    # dependency graph
-shell$ cylc graph -n tut.hworld.ftrigger2 & # runtime inheritance graph
+shell$ cylc graph tut.oneoff.ftrigger2 &    # dependency graph
+shell$ cylc graph -n tut.oneoff.ftrigger2 & # runtime inheritance graph
 \end{lstlisting}
 It should look like Figure~\ref{fig-tut-hello-multi} (with the
 GREETERS family node expanded on the right).
@@ -1616,7 +1615,7 @@ GREETERS family node expanded on the right).
         \hspace{20mm}
         \includegraphics[height=0.3\textheight]{graphics/png/orig/tut-hello-multi-3.png}
     \end{center}
-    \caption{The {\em tut.hworld.ftrigger2} dependency and runtime inheritance graphs}
+    \caption{The {\em tut.oneoff.ftrigger2} dependency and runtime inheritance graphs}
 \label{fig-tut-hello-multi}
 \end{figure}
 
@@ -1626,7 +1625,7 @@ Graph styling can be applied to entire families at once, and custom
 
 \subsection{External Task Scripts}
 
-\hilight{ suite: \lstinline=tut.hworld.external= }
+\hilight{ suite: \lstinline=tut.oneoff.external= }
 \vspace{3mm}
 
 The tasks in our examples so far have all had inlined implementation, in
@@ -1636,11 +1635,11 @@ basic Hello World suite and cut the implementation of the task
 \lstinline=hello= out to a file \lstinline=hello.sh= in the suite  
 bin directory:
 \lstset{language=bash}
-\lstinputlisting{../examples/tutorial/hworld/external/bin/hello.sh}
+\lstinputlisting{../examples/tutorial/oneoff/external/bin/hello.sh}
 Make the task script executable, and change the \lstinline=hello= task
 runtime section to invoke it:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/hworld/external/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/external/suite.rc}
 
 If you run the suite now the new greeting from the external task script 
 should appear in the \lstinline=hello= task stdout log. This works 
@@ -1852,18 +1851,18 @@ Cylc has built in support for the Jinja2 template processor, by which
 we can embed code in a suite definition to generate the final result
 seen by cylc.
 
-The \lstinline=tut.hworld.jinja2= suite illustrates two common 
+The \lstinline=tut.oneoff.jinja2= suite illustrates two common 
 uses of Jinja2: changing suite content or structure based on the value
 of a logical switch; and iteratively generating dependencies and runtime
 configuration for groups of related tasks:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/hworld/jinja2/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/jinja2/suite.rc}
 
 To view the result of Jinja2 processing with the Jinja2 flag 
 \lstinline@MULTI@ set to \lstinline=False=:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc view --jinja2 --stdout tut.hworld.jinja2
+shell$ cylc view --jinja2 --stdout tut.oneoff.jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1879,7 +1878,7 @@ title = "A cylc single Hello World! suite"
 And with \lstinline=MULTI= set to \lstinline=True=:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc view --jinja2 --stdout tut.hworld.jinja2
+shell$ cylc view --jinja2 --stdout tut.oneoff.jinja2
 \end{lstlisting}
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1902,7 +1901,7 @@ title = "A cylc multi Hello World! suite"
 
 \subsection{Task Retry On Failure}
 
-\hilight{ suite: \lstinline=tut.hworld.retry= }
+\hilight{ suite: \lstinline=tut.oneoff.retry= }
 \vspace{3mm}
 
 Tasks can be configured to retry a number of times if they fail. 
@@ -1910,14 +1909,14 @@ An environment variable \lstinline=$CYLC_TASK_TRY_NUBMER= increments
 from $1$ on each successive try, and is passed to the task to allow
 different behaviour on the retry:
 \lstset{language=suiterc}
-\lstinputlisting{../examples/tutorial/hworld/retry/suite.rc}
+\lstinputlisting{../examples/tutorial/oneoff/retry/suite.rc}
 
 When a task with configured retries fails, its cylc task proxy goes 
 into the {\em retrying} state until the next retry delay is up, then it
 resubmits.  It only enters the {\em failed} state on the final definitive
 failure.
 
-Experiment with \lstinline=tut.hworld.retry= to see how this works.
+Experiment with \lstinline=tut.oneoff.retry= to see how this works.
 
 \subsection{Other Users' Suites}
 
@@ -4568,11 +4567,11 @@ if the same task is re-triggered multiple times:
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
-~/cylc-run/tut.hworld.basic/log/job/hello.1.1
+~/cylc-run/tut.oneoff.basic/log/job/hello.1.1
 # task stdout:
-~/cylc-run/tut.hworld.basic/log/job/hello.1.out 
+~/cylc-run/tut.oneoff.basic/log/job/hello.1.out 
 # task stderr:
-~/cylc-run/tut.hworld.basic/log/job/hello.1.err
+~/cylc-run/tut.oneoff.basic/log/job/hello.1.err
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends

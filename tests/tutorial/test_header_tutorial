@@ -1,0 +1,45 @@
+#!/bin/bash
+
+function alter_suite() {
+    # runs after install_suite in the installed suite dir
+
+    # 1) ensure all all tasks sleep 0 (for speed)
+    cat >> suite.rc <<EOF
+[runtime]
+    [[root]]
+        command scripting = /bin/true
+EOF
+    perl -pi -e "s/sleep \d+/sleep 0/" suite.rc
+
+    # 2) cp stored reference logs to the installed suite dir
+    if [[ -f $TEST_SOURCE_DIR/reflogs/$ORIG_SUITE_NAME ]]; then 
+        # (the function is also used when generating reference logs)
+        cp $TEST_SOURCE_DIR/reflogs/$ORIG_SUITE_NAME reference.log
+    fi
+
+    # 3) replace any example 'host = ' item with $CYLC_TEST_TASK_HOST
+    perl -pi -e "s/host = .*$/host = \$CYLC_TEST_TASK_HOST/" suite.rc
+
+    # 4) warn of expected task failures (else reference test aborts)
+    # *** WARNING: ASSUMING FAILED TASKS ARE CLEANED UP BY THE SUITE.
+    FAILS=$( grep -Po '[^\s]+(?=:fail)' suite.rc )
+    FSTRG=""
+    for FAIL in $FAILS; do
+        FSTRG="${FAIL}.1, $FSTRG"
+    done
+    if [[ -n $FAILS ]]; then 
+        cat >> suite.rc <<EOF
+[cylc]
+    [[reference test]]
+        expected task failures = $FSTRG
+EOF
+    fi
+
+    # 5) ensure cycling suites run only two cycles (for speed)
+    # *** WARNING: ASSUMING ALL THE SUITES HAVE A 12-HOURLY CYCLE
+    # (this is just for consistency - reference tests actually take
+    # initial and final cycles from reference log, not the suite def).
+    perl -pi -e "s/(initial cycle time\s*=)\s*.*/\1 2013080800/g" suite.rc
+    perl -pi -e "s/(final cycle time\s*=)\s*.*/\1 2013080812/g" suite.rc
+}
+
