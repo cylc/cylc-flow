@@ -1501,7 +1501,7 @@ Verbose validation shows the family member substitution done by cylc
 when the suite definition is parsed:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v non-cycling/multi/suite.rc
+shell$ cylc val -v tut.hworld.ftr1gger1
 ...
 Graph line substitutions occurred:
   IN: foo => GREETERS
@@ -1531,7 +1531,7 @@ the upstream family members. Here's how to trigger another task
 Verbose validation in this case reports:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v non-cycling/multi/suite.rc
+shell$ cylc val -v tut.hworld.ftrigger2
 ...
 Graph line substitutions occurred:
   IN: GREETERS:succeed-all => bar
