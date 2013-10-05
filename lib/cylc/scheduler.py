@@ -1054,8 +1054,6 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            time.sleep(1)
-
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
@@ -1123,10 +1121,6 @@ class scheduler(object):
             if self.config.suite_timeout:
                 self.check_suite_timer()
 
-            # initiate normal suite shutdown?
-            if self.check_suite_shutdown():
-                break
-
             # hard abort? (TODO - will a normal shutdown suffice here?)
             # 1) "abort if any task fails" is set, and one or more tasks failed
             if self.config.cfg['cylc']['abort if any task fails']:
@@ -1147,6 +1141,11 @@ class scheduler(object):
                     itask.check_timers()
 
             self.release_runahead()
+
+            # initiate normal suite shutdown?
+            if self.check_suite_shutdown():
+                break
+            time.sleep(1)
 
         # END MAIN LOOP
         self.log.info( "Suite shutting down at " + str(datetime.datetime.now()) )
