@@ -112,13 +112,13 @@ class job_batcher( threading.Thread ):
         # determine the success of each job submission in the batch
         n_succ = 0
         n_fail = 0
-        while len( jobs ) > 0:
+        while True:
             for jobinfo in jobs:
                 res = self.follow_up_item( jobinfo )
                 if res is None:
                     # process not done yet
                     continue
-                elif res != 0:
+                if res != 0:
                     if res < 0:
                         print >> sys.stderr, "ERROR: process terminated by signal " + str(res)
                     elif res > 0:
@@ -130,6 +130,9 @@ class job_batcher( threading.Thread ):
                     self.item_succeeded_hook( jobinfo )
                 jobs.remove( jobinfo )
                 self.jobqueue.task_done()
+
+            if len( jobs ) == 0:
+                break
             time.sleep(1)
         after = datetime.datetime.now()
 
