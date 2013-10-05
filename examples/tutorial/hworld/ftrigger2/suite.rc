@@ -1,18 +1,13 @@
-title = "Trigger off a family of tasks"
+title = "Trigger *off* a family of tasks"
 [scheduling]
     [[dependencies]]
-        graph = """
-          foo => GREETERS
-      GREETERS:succeed-all => bar
-                """
+        graph = """foo => GREETERS
+            GREETERS:succeed-all => bar"""
 [runtime]
     [[root]]
-        # slow fast test tasks down a bit
         pre-command scripting = "sleep 10"
-    [[foo]]
-        # empty (dummy task)
-    [[bar]]
-        # empty (dummy task)
+    [[foo,bar]]
+        # empty (dummy tasks)
     [[GREETERS]]
         command scripting = "echo $GREETING World!"
     [[greeter_1]]
@@ -21,5 +16,6 @@ title = "Trigger off a family of tasks"
             GREETING = Hello
     [[greeter_2]]
         inherit = GREETERS
-        command scripting = HelloWorld.sh
+        [[[environment]]]
+            GREETING = Goodbye
 

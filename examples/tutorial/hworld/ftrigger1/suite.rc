@@ -1,4 +1,4 @@
-title = "Triggering all family members at once"
+title = "Triggering a family of tasks"
 [scheduling]
     [[dependencies]]
         graph = "foo => GREETERS"
