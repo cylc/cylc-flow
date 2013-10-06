@@ -55,11 +55,15 @@ export CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
 cd $CYLC_DIR/tests
 
 if (($# == 0)); then
-    if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-        exec prove -j 9 -r -s
-    else
-        exec prove -r -s
-    fi
+    ARGS=""
 else
-    exec prove "$@"
+    ARGS="$@"
 fi
+
+if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
+    exec prove -j 9 -r -s $ARGS
+else
+    echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
+    exec prove -r -s $ARGS
+fi
+
