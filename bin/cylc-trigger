@@ -30,9 +30,13 @@ from cylc.command_prep import prep_pyro
 
 parser = cop( """cylc [control] trigger [OPTIONS] ARGS
 
-Trigger tasks immediately. This is equivalent to using the command  
-"cylc reset --state=ready" but additionally gets clock-triggered tasks
-to ignore their trigger time.
+Manually trigger tasks. Triggering an unqueued task sets it "ready to
+run" and queues it for job submission (cylc internal queues). If the
+queue is not limited the task will submit immediately, otherwise it will
+submit when released by its queue. Triggering a queued task overrides the 
+queue limiting mechanism and causes the task to submit immediately (be
+aware that this results in a greater number of active tasks than the
+queue limit specifies).
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[ ('REG', 'Suite name'),
         ('MATCH', 'Task or family name matching regular expression'),

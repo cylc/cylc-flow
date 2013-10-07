@@ -1153,7 +1153,7 @@ The Cylc Suite Engine.
 
             items.append( gtk.SeparatorMenuItem() )
 
-        trigger_now_item = gtk.ImageMenuItem( 'Trigger Now' )
+        trigger_now_item = gtk.ImageMenuItem( 'Trigger' )
         img = gtk.image_new_from_stock(  gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU )
         trigger_now_item.set_image(img)
         items.append( trigger_now_item )
