@@ -3,13 +3,7 @@
 {% set MULTI = True %}
 {% set N_GOODBYES = 3 %}
 
-{% if MULTI %}
-    {% set STYPE = "multi" %}
-{% else %}
-    {% set STYPE = "single" %}
-{% endif %}
-
-title = "A cylc {{STYPE}} Hello World! suite"
+title = "A Jinja2 Hello World! suite"
 [scheduling]
     [[dependencies]]
 {% if MULTI %}
