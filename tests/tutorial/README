@@ -1,0 +1,40 @@
+CYLC DEV NOTES
+
+________________________
+update-tutorial-tests.sh
+
+This script does the following for suites under examples/tutorial/:
+
+1) it (re)makes symlinks to all suites
+2) it runs cylc to generate a reference log for any suite that does
+   not already have one.
+3) it (re)makes the ".t" test scripts for all suites.
+
+After adding a new tutorial suite, run this script and commit the
+resulting '.t' test script and suite reference log.
+
+After changing an existing tutorial suite, delete its reference log
+under reference-logs/, run this script and commit the resulting log.
+
+All symlinks and .t scripts are regenerated each time, because that
+takes no time; ref logs are not, because that takes a few minutes.
+
+The suites are slightly modified on the fly, as described below, before
+running them to generate the reference logs.
+
+_________
+THE TESTS
+
+The example suites are modified slightly, by test_header_tutorial, after
+installation to the temporary test directory so that the originals don't
+have to be complicated by reference test configuration details.
+ 1) set task 'sleep' intervals to zero, to make tasks run faster
+ 2) replace any 'host = HOST' item with 'host = $CYLC_TEST_TASK_HOST'
+ 3) detect and declare expected task failures (else the test will abort)
+ 4) set initial and final cycle times to cover two 12-hourly cycles 
+
+ ASSUMPTIONS: - failed tasks are automatically cleaned up by the suite
+ (else the suite will time out) cycling suites are on a 12-hour cycle
+ (else the modified test suite will not run two cycles). If new tutorial
+ suites violate these assumptions test_header_tutorial will need changes.
+

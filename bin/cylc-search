@@ -72,8 +72,6 @@ suite, suiterc, junk = parser.get_suite()
 
 # cylc search SUITE PATTERN
 pattern = '|'.join(args[1:])
-print 'SUITE:', suite, suiterc
-print 'PATTERN:', pattern
 
 suitedir = os.path.dirname( suiterc )
 

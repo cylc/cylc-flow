@@ -1,0 +1,17 @@
+
+title = "Two cycling tasks with inter-cycle dependence"
+[scheduling]
+    #runahead limit = 120
+    initial cycle time = 2013080800
+    final cycle time = 2013081200
+    [[dependencies]]
+        # cycle times of 00 and 12 UTC every day:
+        [[[0,12]]]
+            graph = "foo[T-12] => foo => bar"
+[visualization]
+    initial cycle time = 2013080800
+    final cycle time = 2013080900
+    [[node attributes]]
+        foo = "color=red"
+        bar = "color=blue"
+

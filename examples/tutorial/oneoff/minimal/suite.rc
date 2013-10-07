@@ -1,0 +1,6 @@
+title = "The minimal complete runnable cylc suite"
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+# (actually, 'title' is optional ... and so is this comment)
+

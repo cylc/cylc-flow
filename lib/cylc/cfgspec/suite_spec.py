@@ -82,9 +82,9 @@ SPEC = {
             'required run mode'               : vdr( vtype='string', options=[ 'live','simulation','dummy'] ),
             'allow task failures'             : vdr( vtype='boolean', default=False ),
             'expected task failures'          : vdr( vtype='string_list', default=[] ),
-            'live mode suite timeout'         : vdr( vtype='float' ),
-            'dummy mode suite timeout'        : vdr( vtype='float' ),
-            'simulation mode suite timeout'   : vdr( vtype='float' ),
+            'live mode suite timeout'         : vdr( vtype='float', default=1.0 ),
+            'dummy mode suite timeout'        : vdr( vtype='float', default=1.0 ),
+            'simulation mode suite timeout'   : vdr( vtype='float', default=1.0 ),
             },
         },
     'scheduling' : {

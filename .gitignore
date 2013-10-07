@@ -32,3 +32,6 @@ conf/*/*.rc.processed
 # processed suite definitions
 *.rc.processed
 
+# suite passphrases
+passphrase
+

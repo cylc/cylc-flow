@@ -1,6 +1,0 @@
-This directory contains the example suites packaged with cylc; they
-should be uploaded to the central suite database at installation time
-using 'cylc admin create-cdb'.
-
-It is suggested that users maintain their own suites in revision control
-repositories tagged for compatibility with particular cylc versions.

@@ -189,7 +189,7 @@ class pool(object):
         n_ready = len(readytogo)
         if n_ready > 0:
             print
-            print n_ready, 'TASKS READY TO BE SUBMITTED'
+            print n_ready, 'task(s) ready'
             for itask in readytogo:
                 itask.set_state_submitting()
                 self.jobqueue.put( itask )

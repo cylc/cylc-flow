@@ -93,7 +93,8 @@ if options.obliterate and len(dirs) > 0:
                 rmtree(dir)
             except OSError, x:
                 print >> sys.stderr, "ERROR, could not remove directory: " + dir
-                #print >> sys.stderr, x
+                print >> sys.stderr, x
+                continue
             # recursively remove empty superdirs
             tmp = dir
             while True:
