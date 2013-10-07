@@ -12,7 +12,7 @@ description = "EcoConnect Operation, circa August 2011"
 # make efficient use of common configuration settings.
 
 [cylc]
-    required run mode = simulation # demo suite, taken out of context
+    force run mode = simulation # demo suite out of context
     [[accelerated clock]]
         offset = 0
 
