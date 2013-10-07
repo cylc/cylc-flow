@@ -283,17 +283,6 @@ class task( object ):
                 item.to_run = False
         return ops
 
-    def trigger_now( self ):
-        if self.manual_trigger:
-            self.retry_delay_timer_start = None
-            self.sub_retry_delay_timer_start = None
-            # unset manual trigger flag at set_state_submitting because
-            # ready_to_run() is currently called more than once
-            # before submission (to test if clock-triggers are ready).
-            return True
-        else:
-            return False
-
     def retry_delay_done( self ):
         done = False
         if self.retry_delay_timer_start:
@@ -309,9 +298,7 @@ class task( object ):
         return done
 
     def ready_to_run( self ):
-        if self.trigger_now():
-            return True
-        elif self.state.is_currently('queued'): # ready by definition
+        if self.state.is_currently('queued'): # ready by definition
             return True
         elif self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
             return True
@@ -400,12 +387,17 @@ class task( object ):
     def set_state_submitting( self ):
         # called by scheduler main thread
         self.set_status( 'submitting' )
-        # See "def ready_to_run" above.
-        self.manual_trigger = False
 
     def set_state_queued( self ):
         # called by scheduler main thread
         self.set_status( 'queued' )
+
+    def reset_manual_trigger( self ):
+        # call immediately after manual trigger flag used
+        self.manual_trigger = False
+        # unset any retry delay timers
+        self.retry_delay_timer_start = None
+        self.sub_retry_delay_timer_start = None
 
     def set_from_rtconfig( self, cfg={} ):
         """Some [runtime] config requiring consistency checking on reload, 

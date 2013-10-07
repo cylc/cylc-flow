@@ -1697,18 +1697,16 @@ class scheduler(object):
         for itask in spent:
             self.pool.remove( itask )
 
-
     def command_trigger_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ i + TaskID.DELIM + tag for i in matches ]
  
+        self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-                itask.log( "NORMAL", "manual trigger now" )
-                itask.reset_state_ready()
+                # set manual trigger flag
                 itask.manual_trigger = True
 
     def get_matching_tasks( self, name, is_family=False ):
