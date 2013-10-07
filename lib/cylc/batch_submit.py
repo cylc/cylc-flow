@@ -52,9 +52,7 @@ class job_batcher( threading.Thread ):
 
         while True:
             if self.quit:
-                if self.finish_before_exiting and self.jobqueue.qsize() > 0:
-                    pass
-                else:
+                if not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
                     break
             batches = []
             batch = []
@@ -71,13 +69,18 @@ class job_batcher( threading.Thread ):
             # submit each batch in sequence
             n = len(batches) 
             i = 0
-            while len(batches) > 0:
+            while True:
                 i += 1
-                self.process_batch( batches.pop(0), i, n )  # index 0 => pop from left
-                # only delay if there's another batch left
-                if len(batches) > 0:
-                    #self.log.info(  "  batch delay " )
+                try:
+                    self.process_batch( batches.pop(0), i, n )  # pop left
+                except IndexError:
+                    # no batches left
+                    break
+                else:
+                    # some batches left
                     time.sleep( self.batch_delay )
+
+            # main loop sleep for the thread:
             time.sleep( 1 )
 
         self.log.info(  self.thread_id + " exit (" + self.queue_name + ")" )
@@ -112,13 +115,13 @@ class job_batcher( threading.Thread ):
         # determine the success of each job submission in the batch
         n_succ = 0
         n_fail = 0
-        while len( jobs ) > 0:
+        while True:
             for jobinfo in jobs:
                 res = self.follow_up_item( jobinfo )
                 if res is None:
                     # process not done yet
                     continue
-                elif res != 0:
+                if res != 0:
                     if res < 0:
                         print >> sys.stderr, "ERROR: process terminated by signal " + str(res)
                     elif res > 0:
@@ -130,6 +133,9 @@ class job_batcher( threading.Thread ):
                     self.item_succeeded_hook( jobinfo )
                 jobs.remove( jobinfo )
                 self.jobqueue.task_done()
+
+            if len( jobs ) == 0:
+                break
             time.sleep(1)
         after = datetime.datetime.now()
 
