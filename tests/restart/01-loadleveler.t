@@ -49,11 +49,12 @@ then
         # Sleep until penultimate task (the suite stops and starts, so port files alone won't help)
         TEST_NAME=$TEST_NAME_BASE-monitor
         START_TIME=$(date +%s)
-        run_ok $TEST_NAME bash <<__SCRIPT__
+        export START_TIME SUITE_NAME
+        run_ok $TEST_NAME bash <<'__SCRIPT__'
 while [[ -e $HOME/.cylc/ports/$SUITE_NAME || ! -e $TEST_DIR/suite-stopping ]]; do
-    if [[ $(date +%s) > $(( START_TIME + 120 )) ]]; then
+    if [[ $(date +%s) > $(( START_TIME + 150 )) ]]; then
         echo "[ERROR] Suite Timeout - shutting down..." >&2
-        cylc shutdown --now --kill $SUITE_NAME >&2
+        cylc shutdown --now --kill $SUITE_NAME &
         exit 1
     fi
     sleep 1
@@ -61,7 +62,7 @@ done
 __SCRIPT__
         cmp_ok "$TEST_NAME.stderr" </dev/null
         state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
-        cp $state_dir/{state,state-*-restart-*} $TEST_DIR/
+        cp $state_dir/state $TEST_DIR/
         for state_file in $(ls $TEST_DIR/state*); do
             sed -i "/^suite time : /d" $state_file
         done
