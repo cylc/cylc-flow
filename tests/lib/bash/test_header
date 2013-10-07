@@ -124,6 +124,7 @@ function suite_run_ok() {
     if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         fail $TEST_NAME
         SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
+        mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
         cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
         cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
         SUITE_RUN_FAILS=true
@@ -174,7 +175,8 @@ function grep_ok() {
 }
 
 function init_suite() {
-    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_${1}
+    SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
+    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_${SNAME}_${1}
     mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
     cat >$TEST_DIR/$SUITE_NAME/suite.rc
     cylc unregister $SUITE_NAME 2>&1
@@ -188,12 +190,17 @@ function init_suite() {
 
 function install_suite() {
     ORIG_SUITE_NAME=$2
-    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_${1}
+    SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
+    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_${SNAME}_${1}
     mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
     cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME 2>&1
     cylc unregister $SUITE_NAME 2>&1
     cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>&1
     cd $TEST_DIR/$SUITE_NAME 2>&1
+    while [[ ! $(cylc get-directory $SUITE_NAME) ]]
+    do
+        sleep 1
+    done
 }
 
 function purge_suite() {
