@@ -4,7 +4,7 @@ title = "Hello and Goodbye World!"
         graph = "hello => goodbye"
 [runtime]
     [[hello]]
-        command scripting = "echo Hello World!"
+        command scripting = "sleep 10; echo Hello World!"
     [[goodbye]]
-        command scripting = "echo Goodbye World!"
+        command scripting = "sleep 10; echo Goodbye World!"
 
