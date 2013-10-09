@@ -22,7 +22,6 @@
 #-------------------------------------------------------------------------------
 set_test_number 15
 export TEST_DIR
-TEST_DEBUG_CMP=true
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
@@ -445,9 +444,9 @@ __DB_DUMP__
             ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
         fi
     else
-        skip 3 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
+        skip 15 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
     fi
 else
-    skip 3 '[directive tests]loadleveler host not defined'
+    skip 15 '[directive tests]loadleveler host not defined'
 fi
 unset $CYLC_LL_TEST_TASK_HOST

@@ -1,9 +1,5 @@
 #!jinja2
 [cylc]
-#   [[reference test]]
-#       required run mode = live
-#       live mode suite timeout = 10.0 # minutes
-#       suite shutdown event handler = restart_me
 {%- set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
 {%- set SITE_DIRECTIVES = environ['CYLC_LL_TEST_SITE_DIRECTIVES'] %}
 {%- set TEST_DIR = environ['TEST_DIR'] %}

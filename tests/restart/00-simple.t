@@ -22,7 +22,6 @@ set_test_number 15
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE simple
 export TEST_DIR
-TEST_DEBUG_CMP=true
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
