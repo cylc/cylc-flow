@@ -1,0 +1,21 @@
+title = "Trigger *off* a family of tasks"
+[scheduling]
+    [[dependencies]]
+        graph = """foo => GREETERS
+            GREETERS:succeed-all => bar"""
+[runtime]
+    [[root]]
+        pre-command scripting = "sleep 10"
+    [[foo,bar]]
+        # empty (dummy tasks)
+    [[GREETERS]]
+        command scripting = "echo $GREETING World!"
+    [[greeter_1]]
+        inherit = GREETERS
+        [[[environment]]]
+            GREETING = Hello
+    [[greeter_2]]
+        inherit = GREETERS
+        [[[environment]]]
+            GREETING = Goodbye
+

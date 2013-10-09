@@ -1,26 +1,18 @@
 
-\section{Site/User Config File Reference}
+\section{Site And User Config File Reference}
 \label{SiteRCReference}
 
 \lstset{language=bash}
 
-This appendix defines all cylc site and user config items - settings
-that apply globally to all suites. If a site file exists 
-(\lstinline=$CYLC_DIR/conf/siterc/site.rc=) any settings it will
-override the system defaults. If a user file exists 
-(\lstinline=$HOME/.cylc/user.rc=) any settings in it will  
-override the site or system defaults.
+This section defines all legal items and values for cylc site and 
+user config files. See {\em Site And User Config Files} 
+(Section~\ref{SiteAndUserConfiguration}) for file locations, intended
+usage, and how to generate the files using the
+\lstinline=cylc get-global-config= command.
 
-To generate an initial site or user config file:
-\begin{lstlisting}
-$ cylc get-global-config --print > site.rc # or user.rc
-\end{lstlisting}
-then comment out or delete any items that do not need to be overridden, 
-and copy the file to the appropriate location.
-
-{\em Note that Jinja2 expressions can be embedded in site and user
-config files to programmatically generate the final result parsed by
-cylc.}  Use of Jinja2 in suite definitions is documented in
+{\em As for suite definitions, Jinja2 expressions can be embedded in
+site and user config files to generate the final result parsed by cylc.}
+Use of Jinja2 in suite definitions is documented in
 Section~\ref{Jinja2}.
 
 \subsection{Top Level Items}
@@ -67,10 +59,11 @@ safety measure, however, so command prompts are disabled by default.
 The suite run directory tree is created anew with every suite start
 (not restart) but output from the most recent previous runs can be 
 retained in a rolling archive. Set length to 0 to keep no backups.
-{\bf This is incompatible with current rose suite housekeeping} so it is
-disabled by default, in which case (if you are not using Rose) new suite
-run files will overwrite existing ones in the same run directory tree,
-which can in some cases result in incorrect task polling results.
+{\bf This is incompatible with current Rose suite housekeeping} (see
+Section~\ref{SuiteStorageEtc} for more on Rose) so it is disabled by
+default, in which case new suite run files will overwrite existing ones
+in the same run directory tree. Rarely, this can result in incorrect
+polling results due to the presence of old task status files.
 
 \begin{myitemize}
 \item {\em type:} boolean
@@ -346,14 +339,14 @@ Each suite stores its port number, by suite name, under this directory.
 
 \begin{myitemize}
 \item {\em type:} string (directory path)
-\item {\em default:} \lstinline@$HOME/.cylc/ports/"@
+\item {\em default:} \lstinline@$HOME/.cylc/ports/@
 \end{myitemize}
 
 \subsection{[hosts]}
 
 The [hosts] section configures some important host-specific settings for
 the suite host (`localhost') and remote task hosts. Note that {\em
-remote task behaviour is determined by the site/user config file on the
+remote task behaviour is determined by the site/user config on the
 suite host, not on the task host}. Suites can specify task hosts that 
 are not listed here, in which case local settings will be assumed,
 with the local home directory path, if present, replaced by
@@ -361,13 +354,13 @@ with the local home directory path, if present, replaced by
 
 \subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ HOST}
 
-The default task HOST is the suite host, {\bf localhost}, with default 
+The default task host is the suite host, {\bf localhost}, with default 
 values as listed below. Use an explicit \lstinline=[hosts][[localhost]]=
 section if you need to override the defaults. Localhost settings are
 then also used as defaults for other hosts, with the local home
 directory path replaced as described above. This applies to items
 omitted from an explicit host section, and to hosts that are not listed
-at all in the site/user config files.  Explicit host sections are only
+at all in the site and user config files.  Explicit host sections are only
 needed if the automatically modified local defaults are not sufficient.
 
 Host section headings can also be {\em regular expressions} to match 

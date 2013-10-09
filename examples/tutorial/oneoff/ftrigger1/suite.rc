@@ -1,0 +1,20 @@
+title = "Triggering a family of tasks"
+[scheduling]
+    [[dependencies]]
+        graph = "foo => GREETERS"
+[runtime]
+    [[root]]
+        pre-command scripting = "sleep 10"
+    [[foo]]
+        # empty (creates a dummy task)
+    [[GREETERS]]
+        command scripting = "echo $GREETING World!"
+    [[greeter_1]]
+        inherit = GREETERS
+        [[[environment]]]
+            GREETING = Hello
+    [[greeter_2]]
+        inherit = GREETERS
+        [[[environment]]]
+            GREETING = Goodbye
+

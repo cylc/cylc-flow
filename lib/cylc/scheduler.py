@@ -1248,7 +1248,7 @@ class scheduler(object):
         return process
 
     def shutdown( self, reason='' ):
-        print "\nMain thread shutting down ",
+        print "\nInitiating suite shutdown ",
         if reason != '':
             print '(' + reason + ')'
         else:
@@ -1336,7 +1336,7 @@ class scheduler(object):
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 
-        # EXIT
+        print "DONE" # main thread exit
 
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )

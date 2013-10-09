@@ -1,0 +1,32 @@
+2013/10/06 23:32:42 INFO - Thread-2 start (Event Handler Submission)
+2013/10/06 23:32:42 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/06 23:32:42 INFO - port:7766
+2013/10/06 23:32:42 INFO - Suite starting at 2013-10-06 23:32:42.379969
+2013/10/06 23:32:42 INFO - Log event clock: real time
+2013/10/06 23:32:42 INFO - Run mode: live
+2013/10/06 23:32:42 INFO - Start tag: None
+2013/10/06 23:32:42 INFO - Stop tag: None
+2013/10/06 23:32:42 INFO - Thread-4 start (Job Submission)
+2013/10/06 23:32:42 INFO - Thread-5 start (Request Handling)
+2013/10/06 23:32:42 INFO - [hello.1] -(setting:submitting)
+2013/10/06 23:32:42 INFO - [hello.1] -triggered off []
+2013/10/06 23:32:43 INFO - [hello.1] -(current:submitting)> hello.1 submitting now
+2013/10/06 23:32:44 INFO - [hello.1] -(current:submitting)> hello.1 submission succeeded
+2013/10/06 23:32:44 INFO - [hello.1] -(setting:submitted)
+2013/10/06 23:32:44 INFO - [hello.1] -(current:submitted)> hello.1 submit_method_id=1780
+2013/10/06 23:32:44 INFO - [hello.1] -(current:submitted)> hello.1 started at 2013-10-06T23:32:43
+2013/10/06 23:32:44 INFO - [hello.1] -(setting:running)
+2013/10/06 23:32:44 INFO - [hello.1] -(current:running)> hello.1 succeeded at 2013-10-06T23:32:43
+2013/10/06 23:32:44 INFO - [hello.1] -(setting:succeeded)
+2013/10/06 23:32:44 INFO - [goodbye.1] -(setting:submitting)
+2013/10/06 23:32:44 INFO - [goodbye.1] -triggered off ['hello.1']
+2013/10/06 23:32:46 INFO - [goodbye.1] -(current:submitting)> goodbye.1 submitting now
+2013/10/06 23:32:46 INFO - [goodbye.1] -(current:submitting)> goodbye.1 submission succeeded
+2013/10/06 23:32:46 INFO - [goodbye.1] -(setting:submitted)
+2013/10/06 23:32:46 INFO - [goodbye.1] -(current:submitted)> goodbye.1 submit_method_id=1825
+2013/10/06 23:32:46 INFO - [goodbye.1] -(current:submitted)> goodbye.1 started at 2013-10-06T23:32:45
+2013/10/06 23:32:46 INFO - [goodbye.1] -(setting:running)
+2013/10/06 23:32:46 INFO - [goodbye.1] -(current:running)> goodbye.1 succeeded at 2013-10-06T23:32:45
+2013/10/06 23:32:46 INFO - [goodbye.1] -(setting:succeeded)
+2013/10/06 23:32:46 INFO - All non-cycling tasks have succeeded
+2013/10/06 23:32:46 INFO - Suite shutting down at 2013-10-06 23:32:46.397353

@@ -1,0 +1,14 @@
+title = "Simple runtime inheritance example"
+[scheduling]
+    [[dependencies]]
+        graph = "hello => goodbye"
+[runtime]
+    [[root]]
+        command scripting = "sleep 10; echo $GREETING World!"
+    [[hello]]
+        [[[environment]]]
+            GREETING = Hello
+    [[goodbye]]
+        [[[environment]]]
+            GREETING = Goodbye
+
