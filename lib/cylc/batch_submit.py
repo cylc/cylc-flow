@@ -169,6 +169,10 @@ class job_batcher( threading.Thread ):
         res = p.poll()
         if res is not None:
             jobinfo['out'], jobinfo['err'] = p.communicate()
+            for handle, key in [(sys.stderr, "err"), (sys.stdout, "out")]:
+                if jobinfo[key]:
+                    for line in jobinfo[key].splitlines():
+                        print >>handle, "[%s] %s" % (jobinfo["descr"], line)
         return res
 
 
