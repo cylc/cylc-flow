@@ -53,6 +53,6 @@ then
         skip 2 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
     fi
 else
-    skip 2 '[directive tests]loadleveler-host not defined'
+    skip 2 '[directive tests]loadleveler host not defined'
 fi
 unset $CYLC_LL_TEST_TASK_HOST
