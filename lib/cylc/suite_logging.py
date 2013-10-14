@@ -61,9 +61,9 @@ class suite_log( object ):
     def pimp( self, level=logging.INFO, clock=None ):
         log = logging.getLogger( 'main' )
         log.setLevel( level )
-        max_bytes = 1000000
 
-        h = logging.handlers.RotatingFileHandler( self.path, 'a', max_bytes, self.n_keep )
+        h = logging.handlers.RotatingFileHandler(
+                    self.path, 'a', self.max_bytes, self.n_keep )
         # The above creates a zero-sized log file if it doesn't already exist.
         if self.roll_at_startup:
             if os.path.getsize( self.path ) > 0:
