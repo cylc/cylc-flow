@@ -49,7 +49,7 @@ class suite_poller( poller ):
         max_polls = self.max_polls or 1
         # max_polls*interval is equivalent to a timeout, and we
         # include time taken to connect to the run db in this...
-        while ( not connected and self.n_polls < max_polls ):
+        while not connected:
             self.n_polls += 1
             try:
                 self.checker = CylcSuiteDBChecker(self.args['run_dir'], self.args['suite'])
@@ -59,6 +59,8 @@ class suite_poller( poller ):
             except DBNotFoundError:
                 if verbose:
                     sys.stdout.write('.')
+                if self.n_polls >= max_polls:
+                    break
                 sleep(self.interval)
         if verbose:
             sys.stdout.write('\n')
