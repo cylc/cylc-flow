@@ -228,9 +228,13 @@ class Updater(threading.Thread):
             except Exception as e:
                 gobject.idle_add( self.connection_lost )
                 return False
-       
+
+            if not glbl:
+                self.task_list = []
+                return False
+
             self.task_list.sort()
-        
+
             if glbl['stopping']:
                 self.status = 'stopping'
 
