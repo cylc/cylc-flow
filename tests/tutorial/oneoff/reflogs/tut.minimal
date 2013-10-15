@@ -1,0 +1,22 @@
+2013/10/06 23:33:16 INFO - Thread-2 start (Event Handler Submission)
+2013/10/06 23:33:16 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/06 23:33:16 INFO - port:7766
+2013/10/06 23:33:16 INFO - Suite starting at 2013-10-06 23:33:16.205120
+2013/10/06 23:33:16 INFO - Log event clock: real time
+2013/10/06 23:33:16 INFO - Run mode: live
+2013/10/06 23:33:16 INFO - Start tag: None
+2013/10/06 23:33:16 INFO - Stop tag: None
+2013/10/06 23:33:16 INFO - Thread-4 start (Job Submission)
+2013/10/06 23:33:16 INFO - Thread-5 start (Request Handling)
+2013/10/06 23:33:16 INFO - [foo.1] -(setting:submitting)
+2013/10/06 23:33:16 INFO - [foo.1] -triggered off []
+2013/10/06 23:33:17 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/10/06 23:33:18 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/10/06 23:33:18 INFO - [foo.1] -(setting:submitted)
+2013/10/06 23:33:18 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=2663
+2013/10/06 23:33:18 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-10-06T23:33:17
+2013/10/06 23:33:18 INFO - [foo.1] -(setting:running)
+2013/10/06 23:33:18 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-10-06T23:33:17
+2013/10/06 23:33:18 INFO - [foo.1] -(setting:succeeded)
+2013/10/06 23:33:18 INFO - All non-cycling tasks have succeeded
+2013/10/06 23:33:18 INFO - Suite shutting down at 2013-10-06 23:33:18.215216

@@ -1,0 +1,54 @@
+2013/10/06 23:33:50 INFO - Thread-2 start (Event Handler Submission)
+2013/10/06 23:33:50 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/06 23:33:50 INFO - port:7766
+2013/10/06 23:33:50 INFO - Suite starting at 2013-10-06 23:33:50.156551
+2013/10/06 23:33:50 INFO - Log event clock: real time
+2013/10/06 23:33:50 INFO - Run mode: live
+2013/10/06 23:33:50 INFO - Start tag: None
+2013/10/06 23:33:50 INFO - Stop tag: None
+2013/10/06 23:33:50 INFO - Thread-4 start (Job Submission)
+2013/10/06 23:33:50 INFO - Thread-5 start (Request Handling)
+2013/10/06 23:33:50 INFO - [ready_goodbye.1] -(setting:submitting)
+2013/10/06 23:33:50 INFO - [hello.1] -(setting:submitting)
+2013/10/06 23:33:50 INFO - [ready_goodbye.1] -triggered off []
+2013/10/06 23:33:50 INFO - [hello.1] -triggered off []
+2013/10/06 23:33:51 INFO - [ready_goodbye.1] -(current:submitting)> ready_goodbye.1 submitting now
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:submitting)> ready_goodbye.1 submission succeeded
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(setting:submitted)
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:submitted)> ready_goodbye.1 submit_method_id=3164
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:submitted)> ready_goodbye.1 started at 2013-10-06T23:33:51
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(setting:running)
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:running)> ready_goodbye.1 succeeded at 2013-10-06T23:33:51
+2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(setting:succeeded)
+2013/10/06 23:33:52 INFO - [hello.1] -(current:submitting)> hello.1 submitting now
+2013/10/06 23:33:52 INFO - [hello.1] -(current:submitting)> hello.1 started at 2013-10-06T23:33:51
+2013/10/06 23:33:52 INFO - [hello.1] -(setting:running)
+2013/10/06 23:33:52 INFO - [hello.1] -(current:running)> hello.1 succeeded at 2013-10-06T23:33:51
+2013/10/06 23:33:52 INFO - [hello.1] -(setting:succeeded)
+2013/10/06 23:33:52 WARNING - [hello.1] -Assuming non-reported outputs were completed:
+hello.1 submitted
+2013/10/06 23:33:52 INFO - [goodbye.1] -(setting:submitting)
+2013/10/06 23:33:52 INFO - [goodbye.1] -triggered off ['hello.1']
+2013/10/06 23:33:53 INFO - [hello.1] -(current:succeeded)> hello.1 submission succeeded
+2013/10/06 23:33:53 INFO - [hello.1] -(current:succeeded)> hello.1 submit_method_id=3189
+2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitting)> goodbye.1 submitting now
+2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitting)> goodbye.1 submission succeeded
+2013/10/06 23:33:55 INFO - [goodbye.1] -(setting:submitted)
+2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitted)> goodbye.1 submit_method_id=3251
+2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitted)> goodbye.1 started at 2013-10-06T23:33:54
+2013/10/06 23:33:55 INFO - [goodbye.1] -(setting:running)
+2013/10/06 23:33:55 CRITICAL - [goodbye.1] -(current:running)> Task job script received signal ERR at 2013-10-06T23:33:54
+2013/10/06 23:33:55 CRITICAL - [goodbye.1] -(current:running)> goodbye.1 failed at 2013-10-06T23:33:54
+2013/10/06 23:33:55 INFO - [goodbye.1] -(setting:failed)
+2013/10/06 23:33:55 INFO - [really_goodbye.1] -(setting:submitting)
+2013/10/06 23:33:55 INFO - [really_goodbye.1] -triggered off ['goodbye.1']
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitting)> really_goodbye.1 submitting now
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitting)> really_goodbye.1 submission succeeded
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(setting:submitted)
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitted)> really_goodbye.1 submit_method_id=3295
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitted)> really_goodbye.1 started at 2013-10-06T23:33:56
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(setting:running)
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:running)> really_goodbye.1 succeeded at 2013-10-06T23:33:56
+2013/10/06 23:33:57 INFO - [really_goodbye.1] -(setting:succeeded)
+2013/10/06 23:33:58 INFO - All non-cycling tasks have succeeded
+2013/10/06 23:33:58 INFO - Suite shutting down at 2013-10-06 23:33:58.194901

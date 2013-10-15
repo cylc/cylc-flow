@@ -1054,8 +1054,6 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            time.sleep(1)
-
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
@@ -1123,10 +1121,6 @@ class scheduler(object):
             if self.config.suite_timeout:
                 self.check_suite_timer()
 
-            # initiate normal suite shutdown?
-            if self.check_suite_shutdown():
-                break
-
             # hard abort? (TODO - will a normal shutdown suffice here?)
             # 1) "abort if any task fails" is set, and one or more tasks failed
             if self.config.cfg['cylc']['abort if any task fails']:
@@ -1147,6 +1141,11 @@ class scheduler(object):
                     itask.check_timers()
 
             self.release_runahead()
+
+            # initiate normal suite shutdown?
+            if self.check_suite_shutdown():
+                break
+            time.sleep(1)
 
         # END MAIN LOOP
         self.log.info( "Suite shutting down at " + str(datetime.datetime.now()) )
@@ -1249,7 +1248,7 @@ class scheduler(object):
         return process
 
     def shutdown( self, reason='' ):
-        print "\nMain thread shutting down ",
+        print "\nInitiating suite shutdown ",
         if reason != '':
             print '(' + reason + ')'
         else:
@@ -1337,7 +1336,7 @@ class scheduler(object):
             else:
                 print '\nSUITE REFERENCE TEST PASSED'
 
-        # EXIT
+        print "DONE" # main thread exit
 
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
@@ -1698,18 +1697,16 @@ class scheduler(object):
         for itask in spent:
             self.pool.remove( itask )
 
-
     def command_trigger_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ i + TaskID.DELIM + tag for i in matches ]
  
+        self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
-                itask.log( "NORMAL", "manual trigger now" )
-                itask.reset_state_ready()
+                # set manual trigger flag
                 itask.manual_trigger = True
 
     def get_matching_tasks( self, name, is_family=False ):

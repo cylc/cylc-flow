@@ -1,0 +1,22 @@
+2013/10/06 23:32:13 INFO - Thread-2 start (Event Handler Submission)
+2013/10/06 23:32:13 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/06 23:32:13 INFO - port:7766
+2013/10/06 23:32:13 INFO - Suite starting at 2013-10-06 23:32:13.823575
+2013/10/06 23:32:13 INFO - Log event clock: real time
+2013/10/06 23:32:13 INFO - Run mode: live
+2013/10/06 23:32:13 INFO - Start tag: None
+2013/10/06 23:32:13 INFO - Stop tag: None
+2013/10/06 23:32:13 INFO - Thread-4 start (Job Submission)
+2013/10/06 23:32:13 INFO - Thread-5 start (Request Handling)
+2013/10/06 23:32:13 INFO - [hello.1] -(setting:submitting)
+2013/10/06 23:32:13 INFO - [hello.1] -triggered off []
+2013/10/06 23:32:14 INFO - [hello.1] -(current:submitting)> hello.1 submitting now
+2013/10/06 23:32:15 INFO - [hello.1] -(current:submitting)> hello.1 submission succeeded
+2013/10/06 23:32:15 INFO - [hello.1] -(setting:submitted)
+2013/10/06 23:32:15 INFO - [hello.1] -(current:submitted)> hello.1 submit_method_id=1080
+2013/10/06 23:32:15 INFO - [hello.1] -(current:submitted)> hello.1 started at 2013-10-06T23:32:15
+2013/10/06 23:32:15 INFO - [hello.1] -(setting:running)
+2013/10/06 23:32:15 INFO - [hello.1] -(current:running)> hello.1 succeeded at 2013-10-06T23:32:15
+2013/10/06 23:32:15 INFO - [hello.1] -(setting:succeeded)
+2013/10/06 23:32:15 INFO - All non-cycling tasks have succeeded
+2013/10/06 23:32:15 INFO - Suite shutting down at 2013-10-06 23:32:15.834065

@@ -1,0 +1,41 @@
+2013/09/30 15:37:47 INFO - Thread-2 start (Event Handler Submission)
+2013/09/30 15:37:47 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/30 15:37:47 INFO - port:7766
+2013/09/30 15:37:47 INFO - Suite starting at 2013-09-30 15:37:47.021615
+2013/09/30 15:37:47 INFO - Log event clock: real time
+2013/09/30 15:37:47 INFO - Run mode: live
+2013/09/30 15:37:47 INFO - Start tag: None
+2013/09/30 15:37:47 INFO - Stop tag: None
+2013/09/30 15:37:47 INFO - Thread-4 start (Job Submission)
+2013/09/30 15:37:47 INFO - Thread-5 start (Request Handling)
+2013/09/30 15:37:47 INFO - [a.1] -(setting:submitting)
+2013/09/30 15:37:47 INFO - [b.1] -(setting:submitting)
+2013/09/30 15:37:47 INFO - [a.1] -triggered off []
+2013/09/30 15:37:47 INFO - [b.1] -triggered off []
+2013/09/30 15:37:48 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/09/30 15:37:49 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/09/30 15:37:49 INFO - [a.1] -(setting:submitted)
+2013/09/30 15:37:49 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=17826
+2013/09/30 15:37:49 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/09/30 15:37:50 INFO - [a.1] -(current:submitted)> a.1 started at 2013-09-30T15:37:49
+2013/09/30 15:37:50 INFO - [a.1] -(setting:running)
+2013/09/30 15:37:50 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-09-30T15:37:49
+2013/09/30 15:37:50 INFO - [a.1] -(setting:succeeded)
+2013/09/30 15:37:50 INFO - [b.1] -(current:submitting)> b.1 started at 2013-09-30T15:37:49
+2013/09/30 15:37:50 INFO - [b.1] -(setting:running)
+2013/09/30 15:37:50 INFO - [b.1] -(current:running)> b.1 submission succeeded
+2013/09/30 15:37:50 INFO - [b.1] -(current:running)> b.1 submit_method_id=17897
+2013/09/30 15:37:51 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-09-30T15:37:50
+2013/09/30 15:37:51 INFO - [b.1] -(setting:succeeded)
+2013/09/30 15:37:51 INFO - [c.1] -(setting:submitting)
+2013/09/30 15:37:51 INFO - [c.1] -triggered off ['a.1', 'b.1']
+2013/09/30 15:37:52 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/09/30 15:37:52 INFO - [c.1] -(current:submitting)> c.1 submission succeeded
+2013/09/30 15:37:52 INFO - [c.1] -(setting:submitted)
+2013/09/30 15:37:52 INFO - [c.1] -(current:submitted)> c.1 submit_method_id=18038
+2013/09/30 15:37:53 INFO - [c.1] -(current:submitted)> c.1 started at 2013-09-30T15:37:52
+2013/09/30 15:37:53 INFO - [c.1] -(setting:running)
+2013/09/30 15:37:53 INFO - [c.1] -(current:running)> c.1 succeeded at 2013-09-30T15:37:53
+2013/09/30 15:37:53 INFO - [c.1] -(setting:succeeded)
+2013/09/30 15:37:53 INFO - All non-cycling tasks have succeeded
+2013/09/30 15:37:53 INFO - Suite shutting down at 2013-09-30 15:37:53.136826

@@ -1,0 +1,11 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+[scheduling]
+    [[dependencies]]
+        graph = """a => c
+                   b => c"""
+[runtime]
+    [[a,b,c]]
+        command scripting = true

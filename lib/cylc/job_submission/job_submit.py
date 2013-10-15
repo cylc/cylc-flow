@@ -206,8 +206,9 @@ class job_submit(object):
                  stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH )
         os.chmod( self.local_jobfile_path, mode )
 
-        # this is needed by the 'cylc jobscript' command:
-        print "JOB SCRIPT: " + self.local_jobfile_path
+        if dry_run:
+            # this is needed by the 'cylc jobscript' command:
+            print "JOB SCRIPT: " + self.local_jobfile_path
 
         # Construct self.command, the command to submit the jobfile to run
         try:
@@ -244,7 +245,7 @@ class job_submit(object):
             # direct the local jobfile across the ssh tunnel via stdin
             command = command + ' < ' + self.local_jobfile_path
 
-        print 'SUBMIT #' + \
+        print 'SUBMIT No.' + \
                 str(self.jobconfig.get('absolute submit number')) + '(' + \
                 str(self.jobconfig.get('submission try number')) + ',' + \
                 str( self.jobconfig.get('try number')) + '):', command

@@ -1,4 +1,4 @@
-title = "Uncomment #BAD below to get a bad runtime multiple inheritance hierarchy"
+title = "A suite that can be modified to get a bad inheritance hierarchy"
 
 description = """Uncomment #BAD for an inheritance structure for which the C3
 linearization algorithm fails. It follows an example in the Python
