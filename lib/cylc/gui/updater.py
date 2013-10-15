@@ -22,7 +22,6 @@ from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
-from cylc.gui.stateview import compare_dict_of_dict
 import gobject
 import gtk
 import re
@@ -101,6 +100,8 @@ class Updater(threading.Thread):
 
         self.live_graph_movie = False
         self.live_graph_dir = None
+        self._summary_update_time = None
+        self._task_list_update_time = None
         self.err_log_lines = []
         self._err_num_log_lines = 10
         self.err_log_size = 0
@@ -164,6 +165,7 @@ class Updater(threading.Thread):
             return True
 
     def connection_lost( self ):
+        self._summary_update_time = None
         self.state_summary = {}
         self.fam_state_summary = {}
         self.status = "stopped"
@@ -185,10 +187,8 @@ class Updater(threading.Thread):
 
     def update(self):
         #print "Attempting Update"
-        try:
-            [glbl, states, fam_states] = self.god.get_state_summary()
-            self.task_list = self.god.get_task_name_list()
-        except Exception:
+        
+        if self.god is None:
             gobject.idle_add( self.connection_lost )
             return False
 
@@ -206,44 +206,58 @@ class Updater(threading.Thread):
             self.err_log_lines += new_err_content.splitlines()
             self.err_log_lines = self.err_log_lines[-self._err_num_log_lines:]
             self.err_log_size = new_err_size
+        
+        update_summaries = False
+        try:
+            summary_update_time = self.god.get_summary_update_time()
+            if (summary_update_time is None or
+                    self._summary_update_time is None or
+                    summary_update_time != self._summary_update_time):
+                self._summary_update_time = summary_update_time
+                update_summaries = True
+        except Exception:
+            # TODO: post-backwards compatibility concerns, remove this handling.
+            
+            # Force an update for daemons using the old API.
+            update_summaries = True
 
-        self.task_list.sort()
+        if update_summaries:
+            try:
+                [glbl, states, fam_states] = self.god.get_state_summary()
+                self.task_list = self.god.get_task_name_list()
+            except Exception as e:
+                gobject.idle_add( self.connection_lost )
+                return False
+       
+            self.task_list.sort()
+        
+            if glbl['stopping']:
+                self.status = 'stopping'
 
-        if glbl['stopping']:
-            self.status = 'stopping'
+            elif glbl['paused']:
+                self.status = 'held'
 
-        elif glbl['paused']:
-            self.status = 'held'
+            elif glbl['will_pause_at']:
+                self.status = 'hold at ' + glbl[ 'will_pause_at' ]
 
-        elif glbl['will_pause_at']:
-            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
+            elif glbl['will_stop_at']:
+                self.status = 'running to ' + glbl[ 'will_stop_at' ]
 
-        elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl[ 'will_stop_at' ]
+            else:
+                self.status = 'running'
 
-        else:
-            self.status = 'running'
+            self.mode = glbl['run_mode']
 
-        self.mode = glbl['run_mode']
+            dt = glbl[ 'last_updated' ]
+            self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
 
-        dt = glbl[ 'last_updated' ]
-        self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
-
-        if not self.global_summary:  # Update global info at the start.
-            self.global_summary = glbl
-
-        # only update states if a change occurred
-        if (not err_log_changed and
-                compare_dict_of_dict( states, self.state_summary )):
-            #print "STATE UNCHANGED"
-            # only update if state changed
-            return False
-        else:
-            #print "STATE CHANGED"
             self.global_summary = glbl
             self.state_summary = states
             self.fam_state_summary = fam_states
+
+        if update_summaries or err_log_changed:
             return True
+        return False
 
     def update_globals( self ):
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )

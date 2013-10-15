@@ -18,9 +18,8 @@
 
 from cylc import cylc_pyro_client, dump, graphing
 from cylc.cycle_time import ct
-from cylc.gui.stateview import compare_dict_of_dict
 from cylc.mkdir_p import mkdir_p
-from cylc.state_summary import get_id_summary
+from cylc.state_summary import compare_dict_of_dict, get_id_summary
 from cylc.strftime import strftime
 from cylc.TaskID import TaskID
 from copy import deepcopy
