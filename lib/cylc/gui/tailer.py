@@ -20,6 +20,7 @@ import gobject
 import threading, subprocess
 import os, sys, re, time
 from cylc import tail
+from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
     def __init__( self, logview, log, proc=None, tag=None, warning_re=None, critical_re=None ):
@@ -84,9 +85,10 @@ class tailer(threading.Thread):
             #    return
             try:
                 gen = tail.tail( open( self.logfile ))
-            except Exception, x:
+            except Exception as x:
                 # e.g. file not found
-                print >> sys.stderr, x
+                dialog = warning_dialog( type(x).__name__ + ": " + str(x) )
+                gobject.idle_add(dialog.warn)
                 return
 
             while not self.quit:
