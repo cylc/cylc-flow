@@ -20,6 +20,7 @@ import subprocess
 import threading
 import datetime
 import logging
+import os
 import sys
 import time
 
@@ -51,6 +52,8 @@ class job_batcher( threading.Thread ):
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
+            t0 = time.time()
+            print "BATCH LOOP START: %s, pid=%s" % (t0, os.getpid())
             if self.quit:
                 if not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
                     break
@@ -78,9 +81,11 @@ class job_batcher( threading.Thread ):
                     break
                 else:
                     # some batches left
+                    print "    BATCH LOOP WAIT: %s" % self.batch_delay
                     time.sleep( self.batch_delay )
 
             # main loop sleep for the thread:
+            print "BATCH_LOOP_END: t: %s dt: %s" % (time.time(), time.time() - t0)
             time.sleep( 1 )
 
         self.log.info(  self.thread_id + " exit (" + self.queue_name + ")" )

@@ -89,7 +89,10 @@ class request_handler( threading.Thread ):
 
     def run( self ):
         while True:
+            t0 = time.time()
+          #  print "REQUEST LOOP START t: %s, pid=%s" % (t0, os.getpid())
             self.pyro.handleRequests(timeout=1)
+           # print "REQUEST LOOP STOP t:%s, dt:%s" % (time.time(), time.time() - t0)
             if self.quit:
                 break
         self.log.info(  str(self.getName()) + " exit (Request Handling)")
@@ -1018,26 +1021,41 @@ class scheduler(object):
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
                 raise SchedulerError, x
 
+        pid = os.getpid()
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
+            t0 = time.time()
+            print "MAIN LOOP STARTS, t: %s, n-tasks=%d, cmd-q-len=%d" % (t0, len(self.pool.get_tasks()), self.pool.jobqueue.qsize())
+            subprocess.call(["ps", "-oc,%cpu,time", str(pid)])
+            print "    MAIN Monitor: dt: %s" % (time.time() - t0)
 
+            u0 = time.time()
             if self.reconfiguring:
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
+            print "    MAIN RELOAD?: dt: %s" % (time.time() - u0)
 
+            u0 = time.time()
             if self.process_tasks():
+                print "    MAIN PROCESS_TASKS: dt: %s" % (time.time() - u0)
                 if self.options.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     # loop timing: use real clock even in sim mode
                     main_loop_start_time = datetime.datetime.now()
 
+                u0 = time.time()
                 self.negotiate()
+                print "    MAIN NEGOTIATE: dt: %s" % (time.time() - u0)
 
+                u0 = time.time()
                 ready = self.pool.process()
                 self.process_resolved( ready )
+                print "    MAIN POOL PROCESS: dt: %s" % (time.time() - u0)
 
+                u0 = time.time()
                 self.spawn()
+                print "    MAIN SPAWN: dt: %s" % (time.time() - u0)
 
                 if not self.config.cfg['development']['disable task elimination']:
                     self.remove_spent_tasks()
@@ -1053,11 +1071,16 @@ class scheduler(object):
                     delta = datetime.datetime.now() - main_loop_start_time
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
+            else:
+                print "    MAIN PROCESS_TASKS: dt: %s" % (time.time() - u0)
 
+            u0 = time.time()
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
+            print "    MAIN INCOMING MSG: dt: %s" % (time.time() - u0)
 
+            u0 = time.time()
             # process queued database operations
             state_recorders = []
             state_updaters = []
@@ -1095,29 +1118,39 @@ class scheduler(object):
             
             for d in db_opers:
                 self.db.run_db_op(d)
+            print "    MAIN DB TASK OP: dt: %s" % (time.time() - u0)
             
+            u0 = time.time()
             # record any broadcast settings to be dumped out
             if self.wireless:
                 if self.wireless.new_settings:
                     db_ops = self.wireless.get_db_ops()
                     for d in db_ops:
                         self.db.run_db_op(d)
-                
+            print "    MAIN DB BCAST OP: dt: %s" % (time.time() - u0)
+
+            u0 = time.time()
             # process queued commands
             self.process_command_queue()
+            print "    MAIN PROCESS QUEUE: dt: %s" % (time.time() - u0)
 
+            u0 = time.time()
             # Hold waiting tasks if beyond stop cycle etc:
             # (a) newly spawned beyond existing stop cycle
             # (b) new stop cycle set by command
             for itask in self.pool.get_tasks():
                 self.check_hold_waiting_tasks( itask )
+            print "    MAIN HOLD: dt: %s" % (time.time() - u0)
 
             #print '<Pyro'
+            u0 = time.time()
             if flags.iflag or self.do_update_state_summary:
                 flags.iflag = False
                 self.do_update_state_summary = False
                 self.update_state_summary()
+            print "    MAIN UPDATE_STATE: dt: %s" % (time.time() - u0)
 
+            u0 = time.time()
             if self.config.suite_timeout:
                 self.check_suite_timer()
 
@@ -1141,10 +1174,16 @@ class scheduler(object):
                     itask.check_timers()
 
             self.release_runahead()
+            print "    MAIN END STUFF: dt: %s" % (time.time() - u0)
 
             # initiate normal suite shutdown?
+            u0 = time.time()
             if self.check_suite_shutdown():
                 break
+            print "    MAIN CHECK_SHUTDOWN: dt: %s" % (time.time() - u0)
+            t1 = time.time()
+            print "MAIN LOOP ENDS, t: %s, dt: %s, n-tasks=%d, cmd-q-len=%d" % (t1, t1 - t0, len(self.pool.get_tasks()), self.pool.jobqueue.qsize())
+            subprocess.call(["ps", "-oc,%cpu,time", str(pid)])
             time.sleep(1)
 
         # END MAIN LOOP
@@ -1502,19 +1541,25 @@ class scheduler(object):
 
         self.broker.reset()
 
+        u0 = time.time()
         for itask in self.pool.get_tasks():
             # register task outputs
             self.broker.register( itask )
+        print "        MAIN NEGOTIATE REGISTER: dt: %s" % (time.time() - u0)
 
+        u0 = time.time()
         for itask in self.pool.get_tasks():
             # try to satisfy me (itask) if I'm not already satisfied.
             if itask.not_fully_satisfied():
                 self.broker.negotiate( itask )
+        print "        MAIN NEGOTIATE NEGOTIATE: dt: %s" % (time.time() - u0)
 
+        u0 = time.time()
         for itask in self.pool.get_tasks():
             # (TODO - only used by repeating async tasks now)
             if not itask.not_fully_satisfied():
                 itask.check_requisites()
+        print "        MAIN NEGOTIATE CHECK REQUISITES: dt: %s" % (time.time() - u0)
 
     def release_runahead( self ):
         if self.runahead_limit:
