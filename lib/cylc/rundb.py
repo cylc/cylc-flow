@@ -102,7 +102,7 @@ class ThreadedCursor(Thread):
         counter = 0
         while True:
             t0 = time.time()
-            print "DB LOOP START t: %s, qsize=%s" % (t0, self.reqs.qsize())
+         #   print "DB LOOP START t: %s, qsize=%s" % (t0, self.reqs.qsize())
             if (counter % 10) == 0 or self.reqs.qsize() == 0:
                 counter = 0
                 cnx.commit()
@@ -123,9 +123,9 @@ class ThreadedCursor(Thread):
                     break
                 except:
                     attempt += 1
-                    print "    DB LOOP WAIT", 1
+           #         print "    DB LOOP WAIT", 1
                     time.sleep(1)
-            print "DB LOOP END t:", time.time(), "dt:", time.time() - t0
+          #  print "DB LOOP END t:", time.time(), "dt:", time.time() - t0
             counter += 1
         cnx.commit()
         cnx.close()

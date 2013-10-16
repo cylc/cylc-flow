@@ -245,10 +245,10 @@ class job_submit(object):
             # direct the local jobfile across the ssh tunnel via stdin
             command = command + ' < ' + self.local_jobfile_path
 
-        print 'SUBMIT No.' + \
-                str(self.jobconfig.get('absolute submit number')) + '(' + \
-                str(self.jobconfig.get('submission try number')) + ',' + \
-                str( self.jobconfig.get('try number')) + '):', command
+   #     print 'SUBMIT No.' + \
+   #             str(self.jobconfig.get('absolute submit number')) + '(' + \
+   #             str(self.jobconfig.get('submission try number')) + ',' + \
+   #             str( self.jobconfig.get('try number')) + '):', command
         try:
             # "close_fds=True" required here to prevent the process from
             # hanging on to the file descriptor that was used to write the job

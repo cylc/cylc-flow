@@ -53,7 +53,7 @@ class job_batcher( threading.Thread ):
 
         while True:
             t0 = time.time()
-            print "BATCH LOOP START: %s, pid=%s" % (t0, os.getpid())
+            print "BATCH LOOP START"
             if self.quit:
                 if not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
                     break
@@ -85,7 +85,7 @@ class job_batcher( threading.Thread ):
                     time.sleep( self.batch_delay )
 
             # main loop sleep for the thread:
-            print "BATCH_LOOP_END: t: %s dt: %s" % (time.time(), time.time() - t0)
+            print "BATCH_LOOP_END: dt: %.3f" % (time.time() - t0)
             time.sleep( 1 )
 
         self.log.info(  self.thread_id + " exit (" + self.queue_name + ")" )
