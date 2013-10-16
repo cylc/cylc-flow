@@ -99,14 +99,7 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'runahead limit' ] = runahead
         global_summary[ 'states' ] = all_states
 
-        if (self._summary_update_time is None or
-                sorted(task_name_list) != sorted(self.task_name_list) or
-                not compare_dict_of_dict(task_summary, self.task_summary) or
-                not _compare_global_summaries(global_summary,
-                                              self.global_summary) or
-                not compare_dict_of_dict(family_summary, self.family_summary)):
-            # Store the time of the change.
-            self._summary_update_time = time.time()
+        self._summary_update_time = time.time()
         # replace the originals
         self.task_name_list = task_name_list
         self.task_summary = task_summary
@@ -126,41 +119,6 @@ class state_summary( Pyro.core.ObjBase ):
     def get_summary_update_time( self ):
         """Return the last time the summaries were changed (Unix time)."""
         return self._summary_update_time
-
-
-def compare_dict_of_dict( one, two ):
-    """Return True if one == two, else return False."""
-    for key in one:
-        if key not in two:
-            return False
-        for subkey in one[ key ]:
-            if subkey not in two[ key ]:
-                return False
-            if one[key][subkey] != two[key][subkey]:
-                return False
-
-    for key in two:
-        if key not in one:
-            return False
-        for subkey in two[ key ]:
-            if subkey not in one[ key ]:
-                return False
-            if two[key][subkey] != one[key][subkey]:
-                return False
-
-    return True
-
-
-def _compare_global_summaries( one, two ):
-    """Compare global summaries - return True if one == two."""
-    if set(one.keys()) ^ set(two.keys()):
-        # Non-shared keys.
-        return False
-    for key, one_value in one.items():
-        two_value = two[ key ]
-        if one_value != two_value:
-            return False
-    return True        
 
 
 def extract_group_state( child_states, is_stopped=False ):

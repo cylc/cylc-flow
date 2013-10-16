@@ -101,7 +101,6 @@ class Updater(threading.Thread):
         self.live_graph_movie = False
         self.live_graph_dir = None
         self._summary_update_time = None
-        self._task_list_update_time = None
         self.err_log_lines = []
         self._err_num_log_lines = 10
         self.err_log_size = 0
