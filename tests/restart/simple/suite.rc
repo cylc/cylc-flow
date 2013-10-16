@@ -1,9 +1,12 @@
 #!jinja2
-[cylc]
 {%- set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
 {%- set SITE_DIRECTIVES = environ['CYLC_LL_TEST_SITE_DIRECTIVES'] %}
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 {%- set USE_LOADLEVELER = false %}
+[cylc]
+    [[event hooks]]
+        timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
+        timeout = 3
 [scheduling]
     initial cycle time = 2013092300
     final cycle time   = 2013092306
