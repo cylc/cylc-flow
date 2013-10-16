@@ -19,12 +19,14 @@
 import gtk
 import pygtk
 ####pygtk.require('2.0')
+from util import get_icon
 
 class warning_dialog(object):
     def __init__( self, msg, parent=None ):
         self.dialog = gtk.MessageDialog( parent,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
                 gtk.BUTTONS_CLOSE, msg )
+        self.dialog.set_icon(get_icon())
 
     def warn( self ):
         self.dialog.run()
@@ -35,6 +37,7 @@ class info_dialog(object):
         self.dialog = gtk.MessageDialog( parent,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_INFO,
                 gtk.BUTTONS_OK, msg )
+        self.dialog.set_icon(get_icon())
 
     def inform( self ):
         self.dialog.run()
@@ -45,6 +48,7 @@ class question_dialog(object):
         self.dialog = gtk.MessageDialog( parent,
                 gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION,
                 gtk.BUTTONS_YES_NO, msg )
+        self.dialog.set_icon(get_icon())
 
     def ask( self ):
         response = self.dialog.run()
