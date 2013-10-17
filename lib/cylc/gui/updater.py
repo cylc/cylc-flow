@@ -24,6 +24,7 @@ from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
 import gobject
 import gtk
+import Pyro
 import re
 import string
 import sys
@@ -195,10 +196,13 @@ class Updater(threading.Thread):
             new_err_content, new_err_size = self.log.get_err_content(
                 prev_size=self.err_log_size,
                 max_lines=self._err_num_log_lines)
-        except Exception:
+        except AttributeError:
             # TODO: post-backwards compatibility concerns, remove this handling.
             new_err_content = ""
             new_err_size = self.err_log_size
+        except Pyro.errors.ProtocolError:
+            gobject.idle_add( self.connection_lost )
+            return False
 
         err_log_changed = (new_err_size != self.err_log_size)
         if err_log_changed:
@@ -214,17 +218,19 @@ class Updater(threading.Thread):
                     summary_update_time != self._summary_update_time):
                 self._summary_update_time = summary_update_time
                 update_summaries = True
-        except Exception:
+        except AttributeError as e:
             # TODO: post-backwards compatibility concerns, remove this handling.
-            
             # Force an update for daemons using the old API.
             update_summaries = True
+        except Pyro.errors.ProtocolError:
+            gobject.idle_add( self.connection_lost )
+            return False
 
         if update_summaries:
             try:
                 [glbl, states, fam_states] = self.god.get_state_summary()
                 self.task_list = self.god.get_task_name_list()
-            except Exception as e:
+            except Pyro.errors.ProtocolError:
                 gobject.idle_add( self.connection_lost )
                 return False
 
