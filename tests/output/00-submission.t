@@ -30,6 +30,6 @@ while [ $(cylc ping $SUITE_NAME) ]; do
     sleep 1
 done
 TEST_NAME=$TEST_NAME_BASE-check
-run_ok $TEST_NAME grep "[foo.1. job submission] job.*at" $(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/err
+run_ok $TEST_NAME grep "[foo.1 job submission] job.*at" $(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/err
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

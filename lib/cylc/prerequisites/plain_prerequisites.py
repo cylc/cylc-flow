@@ -79,7 +79,7 @@ class plain_prerequisites(object):
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prerequisites?
         for label, message in self.messages.items():
-            if message in outputs:
+            if label in self.satisfied and message in outputs:
                 self.satisfied[ label ] = True
                 self.satisfied_by[ label ] = outputs[message] # owner_id
 
