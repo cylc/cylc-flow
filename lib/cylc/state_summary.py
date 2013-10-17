@@ -18,7 +18,6 @@
 
 import Pyro.core
 import logging
-import time
 from TaskID import TaskID
 from cylc.strftime import strftime
 

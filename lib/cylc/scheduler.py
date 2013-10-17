@@ -89,10 +89,7 @@ class request_handler( threading.Thread ):
 
     def run( self ):
         while True:
-            t0 = time.time()
-          #  print "REQUEST LOOP START t: %s, pid=%s" % (t0, os.getpid())
             self.pyro.handleRequests(timeout=1)
-           # print "REQUEST LOOP STOP t:%s, dt:%s" % (time.time(), time.time() - t0)
             if self.quit:
                 break
         self.log.info(  str(self.getName()) + " exit (Request Handling)")

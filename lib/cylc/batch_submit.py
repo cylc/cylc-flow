@@ -20,7 +20,6 @@ import subprocess
 import threading
 import datetime
 import logging
-import os
 import sys
 import time
 
