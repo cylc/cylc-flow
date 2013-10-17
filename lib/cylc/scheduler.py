@@ -1512,25 +1512,17 @@ class scheduler(object):
 
         self.broker.reset()
 
-        u0 = time.time()
         self.broker.register( self.pool.get_tasks() )
-        print "        MAIN NEGOTIATE REGISTER : dt: %.3f" % (time.time() - u0)
 
-        print "            MAIN NEGOTIATE REGISTER NUM OUTPUTS:", len(self.broker.all_outputs)
-
-        u0 = time.time()
         for itask in self.pool.get_tasks():
             # try to satisfy me (itask) if I'm not already satisfied.
             if itask.not_fully_satisfied():
                 self.broker.negotiate( itask )
-        print "        MAIN NEGOTIATE NEGOTIATE: dt: %.3f" % (time.time() - u0)
 
-        u0 = time.time()
         for itask in self.pool.get_tasks():
             # (TODO - only used by repeating async tasks now)
             if not itask.not_fully_satisfied():
                 itask.check_requisites()
-        print "        MAIN NEGOTIATE CHECK REQ: dt: %.3f" % (time.time() - u0)
 
     def release_runahead( self ):
         if self.runahead_limit:
