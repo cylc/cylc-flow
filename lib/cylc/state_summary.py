@@ -20,6 +20,7 @@ import Pyro.core
 import logging
 import time
 from TaskID import TaskID
+from cylc.strftime import strftime
 
 
 class state_summary( Pyro.core.ObjBase ):
@@ -39,8 +40,6 @@ class state_summary( Pyro.core.ObjBase ):
     def update( self, tasks, clock, oldest, newest,
             paused, will_pause_at, stopping, will_stop_at, runahead ):
 
-        u0 = time.time()
-
         task_name_list = []
         task_summary = {}
         global_summary = {}
@@ -53,13 +52,8 @@ class state_summary( Pyro.core.ObjBase ):
             task_states.setdefault(ctime, {})
             task_states[ctime][name] = task_summary[task.id]['state']
             task_name_list.append(name)
-            
-        task_name_list = list(set(task_name_list))
 
-        print "        MAIN UPDATE STATE TASKS : dt: %.3f" % (time.time() - u0)      
-
-
-        u0 = time.time()
+        task_name_list = list(set(task_name_list))   
 
         fam_states = {}
         all_states = []
@@ -68,7 +62,7 @@ class state_summary( Pyro.core.ObjBase ):
             # based on the first-parent single-inheritance tree
 
             c_fam_task_states = {}
-            
+
             for key, parent_list in self.config.get_first_parent_ancestors().items():
                 state = task_states.get(ctime, {}).get(key)
                 if state is None:
@@ -91,10 +85,6 @@ class state_summary( Pyro.core.ObjBase ):
         
         all_states.sort()
 
-        print "        MAIN UPDATE STATE FAMILY : dt: %.3f" % (time.time() - u0)      
-
-        u0 = time.time()
-
         global_summary[ 'start time' ] = self.start_time
         global_summary[ 'oldest cycle time' ] = oldest
         global_summary[ 'newest cycle time' ] = newest
@@ -107,8 +97,6 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'will_stop_at' ] = will_stop_at
         global_summary[ 'runahead limit' ] = runahead
         global_summary[ 'states' ] = all_states
-
-        print "        MAIN UPDATE STATE FAMILY : dt: %.3f" % (time.time() - u0)      
 
         # replace the originals
         self.task_name_list = task_name_list

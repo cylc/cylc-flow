@@ -1028,34 +1028,23 @@ class scheduler(object):
             t0 = time.time()
             print "MAIN LOOP STARTS, t: %s, n-tasks=%d, cmd-q-len=%d" % (t0, len(self.pool.get_tasks()), self.pool.jobqueue.qsize())
             subprocess.call(["ps", "-oc,%cpu,time", str(pid)])
-            print "    MAIN Monitor: dt: %.3f" % (time.time() - t0)
 
-            u0 = time.time()
             if self.reconfiguring:
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
-            print "    MAIN RELOAD?      : dt: %.3f" % (time.time() - u0)
 
-            u0 = time.time()
             if self.process_tasks():
-                print "    MAIN PROCESS_TASKS: dt: %.3f" % (time.time() - u0)
                 if self.options.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     # loop timing: use real clock even in sim mode
                     main_loop_start_time = datetime.datetime.now()
 
-                u0 = time.time()
                 self.negotiate()
-                print "    MAIN NEGOTIATE    : dt: %.3f" % (time.time() - u0)
 
-                u0 = time.time()
                 ready = self.pool.process()
                 self.process_resolved( ready )
-                print "    MAIN POOL PROCESS : dt: %.3f" % (time.time() - u0)
 
-                u0 = time.time()
                 self.spawn()
-                print "    MAIN SPAWN        : dt: %.3f" % (time.time() - u0)
 
                 if not self.config.cfg['development']['disable task elimination']:
                     self.remove_spent_tasks()
@@ -1071,16 +1060,11 @@ class scheduler(object):
                     delta = datetime.datetime.now() - main_loop_start_time
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
-            else:
-                print "    MAIN PROCESS_TASKS: dt: %.3f" % (time.time() - u0)
 
-            u0 = time.time()
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
-            print "    MAIN INCOMING MSG : dt: %.3f" % (time.time() - u0)
 
-            u0 = time.time()
             # process queued database operations
             state_recorders = []
             state_updaters = []
@@ -1118,39 +1102,29 @@ class scheduler(object):
             
             for d in db_opers:
                 self.db.run_db_op(d)
-            print "    MAIN DB TASK OP   : dt: %.3f" % (time.time() - u0)
             
-            u0 = time.time()
             # record any broadcast settings to be dumped out
             if self.wireless:
                 if self.wireless.new_settings:
                     db_ops = self.wireless.get_db_ops()
                     for d in db_ops:
                         self.db.run_db_op(d)
-            print "    MAIN DB BCAST OP  : dt: %.3f" % (time.time() - u0)
 
-            u0 = time.time()
             # process queued commands
             self.process_command_queue()
-            print "    MAIN PROCESS QUEUE: dt: %.3f" % (time.time() - u0)
 
-            u0 = time.time()
             # Hold waiting tasks if beyond stop cycle etc:
             # (a) newly spawned beyond existing stop cycle
             # (b) new stop cycle set by command
             for itask in self.pool.get_tasks():
                 self.check_hold_waiting_tasks( itask )
-            print "    MAIN HOLD         : dt: %.3f" % (time.time() - u0)
 
             #print '<Pyro'
-            u0 = time.time()
             if flags.iflag or self.do_update_state_summary:
                 flags.iflag = False
                 self.do_update_state_summary = False
                 self.update_state_summary()
-            print "    MAIN UPDATE STATE : dt: %.3f" % (time.time() - u0)
 
-            u0 = time.time()
             if self.config.suite_timeout:
                 self.check_suite_timer()
 
@@ -1174,13 +1148,10 @@ class scheduler(object):
                     itask.check_timers()
 
             self.release_runahead()
-            print "    MAIN END STUFF    : dt: %.3f" % (time.time() - u0)
 
             # initiate normal suite shutdown?
-            u0 = time.time()
             if self.check_suite_shutdown():
                 break
-            print "    MAIN CHECK_SHUTDOW: dt: %.3f" % (time.time() - u0)
             t1 = time.time()
             print "MAIN LOOP ENDS, t: %s, dt: %.3f, n-tasks=%d, cmd-q-len=%d" % (t1, t1 - t0, len(self.pool.get_tasks()), self.pool.jobqueue.qsize())
             subprocess.call(["ps", "-oc,%cpu,time", str(pid)])
