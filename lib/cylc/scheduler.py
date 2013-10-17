@@ -1018,13 +1018,9 @@ class scheduler(object):
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
                 raise SchedulerError, x
 
-        pid = os.getpid()
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
-            t0 = time.time()
-            print "MAIN LOOP STARTS, t: %s, n-tasks=%d, cmd-q-len=%d" % (t0, len(self.pool.get_tasks()), self.pool.jobqueue.qsize())
-            subprocess.call(["ps", "-oc,%cpu,time", str(pid)])
 
             if self.reconfiguring:
                 # user has requested a suite definition reload
@@ -1149,9 +1145,6 @@ class scheduler(object):
             # initiate normal suite shutdown?
             if self.check_suite_shutdown():
                 break
-            t1 = time.time()
-            print "MAIN LOOP ENDS, t: %s, dt: %.3f, n-tasks=%d, cmd-q-len=%d" % (t1, t1 - t0, len(self.pool.get_tasks()), self.pool.jobqueue.qsize())
-            subprocess.call(["ps", "-oc,%cpu,time", str(pid)])
             time.sleep(1)
 
         # END MAIN LOOP

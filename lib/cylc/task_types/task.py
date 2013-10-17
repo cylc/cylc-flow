@@ -1181,7 +1181,6 @@ class task( object ):
         # timedelta = re.sub( '\.\d*$', '', timedelta )
 
         # TODO - the following section could probably be streamlined a bit
-        
         if self.__class__.mean_total_elapsed_time:
             met = self.__class__.mean_total_elapsed_time
             summary[ 'mean total elapsed time' ] =  str(met)
