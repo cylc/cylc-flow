@@ -181,10 +181,14 @@ class TreeUpdater(threading.Thread):
                 
                 tsub = summary[ id ].get( 'submitted_time' )
                 if isinstance(tsub, basestring) and tsub != "*":
-                    tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") ) 
+                    if "T" in tsub:
+                        # TODO: get rid of this condition (here for backwards compatibility)
+                        tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") ) 
                 tstt = summary[ id ].get( 'started_time' )
                 if isinstance(tstt, basestring) and tstt != "*":
-                    tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") ) 
+                    if "T" in tstt:
+                        # TODO: get rid of this condition (here for backwards compatibility)
+                        tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") ) 
                 meant = _time_trim( summary[ id ].get( 'mean total elapsed time' ) )
                 tetc = _time_trim( summary[ id ].get( 'Tetc' ) )
                 priority = summary[ id ].get( 'latest_message_priority' )
