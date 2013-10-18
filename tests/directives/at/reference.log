@@ -1,0 +1,98 @@
+2013/10/15 12:23:16 INFO - Thread-2 start (Event Handler Submission)
+2013/10/15 12:23:16 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/15 12:23:16 INFO - port:7766
+2013/10/15 12:23:16 INFO - Suite starting at 2013-10-15 12:23:16.005216
+2013/10/15 12:23:16 INFO - Log event clock: real time
+2013/10/15 12:23:16 INFO - Run mode: live
+2013/10/15 12:23:16 INFO - Start tag: None
+2013/10/15 12:23:16 INFO - Stop tag: None
+2013/10/15 12:23:16 INFO - Thread-4 start (Job Submission)
+2013/10/15 12:23:16 INFO - Thread-5 start (Request Handling)
+2013/10/15 12:23:16 DEBUG - [rem1.1] -task proxy added to the pool
+2013/10/15 12:23:16 DEBUG - [rem2.1] -task proxy added to the pool
+2013/10/15 12:23:16 DEBUG - [killer.1] -task proxy added to the pool
+2013/10/15 12:23:16 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:16 INFO - [rem1.1] -(setting:queued)
+2013/10/15 12:23:16 INFO - [rem1.1] -(setting:submitting)
+2013/10/15 12:23:16 INFO - [rem1.1] -triggered off []
+2013/10/15 12:23:16 DEBUG - END TASK PROCESSING (took 0.020136 sec)
+2013/10/15 12:23:16 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:17 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/15 12:23:17 INFO - [rem1.1] -(current:submitting)> rem1.1 submitting now
+2013/10/15 12:23:17 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:18 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.281523
+  All 1 items succeeded
+2013/10/15 12:23:19 INFO - [rem1.1] -(current:submitting)> rem1.1 submission succeeded
+2013/10/15 12:23:19 INFO - [rem1.1] -(setting:submitted)
+2013/10/15 12:23:19 INFO - [rem1.1] -(current:submitted)> rem1.1 submit_method_id=2567
+2013/10/15 12:23:19 INFO - [rem1.1] -(current:submitted)> rem1.1 started at 2013-10-15T12:23:18
+2013/10/15 12:23:19 INFO - [rem1.1] -(setting:running)
+2013/10/15 12:23:19 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:20 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:20 DEBUG - END TASK PROCESSING (took 0.012367 sec)
+2013/10/15 12:23:20 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:30 INFO - [rem1.1] -(current:running)> rem1.1 succeeded at 2013-10-15T12:23:29
+2013/10/15 12:23:30 INFO - [rem1.1] -(setting:succeeded)
+2013/10/15 12:23:30 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:31 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:31 INFO - [rem2.1] -(setting:queued)
+2013/10/15 12:23:31 INFO - [rem2.1] -(setting:submitting)
+2013/10/15 12:23:31 INFO - [rem2.1] -triggered off ['rem1.1']
+2013/10/15 12:23:31 DEBUG - END TASK PROCESSING (took 0.023426 sec)
+2013/10/15 12:23:31 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:31 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/15 12:23:32 INFO - [rem2.1] -(current:submitting)> rem2.1 submitting now
+2013/10/15 12:23:32 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:32 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.202857
+  All 1 items succeeded
+2013/10/15 12:23:33 INFO - [rem2.1] -(current:submitting)> rem2.1 started at 2013-10-15T12:23:32
+2013/10/15 12:23:33 INFO - [rem2.1] -(setting:running)
+2013/10/15 12:23:33 INFO - [rem2.1] -(current:running)> rem2.1 submission succeeded
+2013/10/15 12:23:33 INFO - [rem2.1] -(current:running)> rem2.1 submit_method_id=2568
+2013/10/15 12:23:33 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:34 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:34 INFO - [killer.1] -(setting:queued)
+2013/10/15 12:23:34 INFO - [killer.1] -(setting:submitting)
+2013/10/15 12:23:34 INFO - [killer.1] -triggered off ['rem2.1']
+2013/10/15 12:23:34 DEBUG - END TASK PROCESSING (took 0.015129 sec)
+2013/10/15 12:23:34 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:34 DEBUG - Job Submission batch 1/1 (1 members):
+2013/10/15 12:23:34 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.192227
+  All 1 items succeeded
+2013/10/15 12:23:35 INFO - [killer.1] -(current:submitting)> killer.1 submitting now
+2013/10/15 12:23:35 INFO - [killer.1] -(current:submitting)> killer.1 submission succeeded
+2013/10/15 12:23:35 INFO - [killer.1] -(setting:submitted)
+2013/10/15 12:23:35 INFO - [killer.1] -(current:submitted)> killer.1 submit_method_id=17447
+2013/10/15 12:23:35 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:36 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:36 DEBUG - END TASK PROCESSING (took 0.012761 sec)
+2013/10/15 12:23:36 INFO - [killer.1] -(current:submitted)> killer.1 started at 2013-10-15T12:23:35
+2013/10/15 12:23:36 INFO - [killer.1] -(setting:running)
+2013/10/15 12:23:36 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:37 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:37 DEBUG - END TASK PROCESSING (took 0.012799 sec)
+2013/10/15 12:23:37 CRITICAL - [rem2.1] -Killing job
+2013/10/15 12:23:37 INFO - Command succeeded: kill tasks(rem2,1,False)
+2013/10/15 12:23:37 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:38 DEBUG - Poll and Kill Command Submission batch 1/1 (1 members):
+2013/10/15 12:23:39 DEBUG - Poll and Kill Command Submission: batch completed
+  Time taken: 0:00:01.004907
+  All 1 items succeeded
+2013/10/15 12:23:39 INFO - [rem2.1] -(current:running)> kill command succeeded
+2013/10/15 12:23:39 INFO - [rem2.1] -(setting:failed)
+2013/10/15 12:23:39 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:40 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:40 DEBUG - END TASK PROCESSING (took 0.013397 sec)
+2013/10/15 12:23:40 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:48 INFO - [killer.1] -(current:running)> killer.1 succeeded at 2013-10-15T12:23:47
+2013/10/15 12:23:48 INFO - [killer.1] -(setting:succeeded)
+2013/10/15 12:23:48 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:49 DEBUG - BEGIN TASK PROCESSING
+2013/10/15 12:23:49 DEBUG - [rem2.1] -task proxy removed (suicide)
+2013/10/15 12:23:49 DEBUG - END TASK PROCESSING (took 0.013538 sec)
+2013/10/15 12:23:49 DEBUG - UPDATING STATE SUMMARY
+2013/10/15 12:23:49 INFO - All non-cycling tasks have succeeded
+2013/10/15 12:23:49 INFO - Suite shutting down at 2013-10-15 12:23:49.236011
