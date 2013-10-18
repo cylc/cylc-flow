@@ -291,8 +291,6 @@ class event_batcher( job_batcher ):
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, suite, verbose ):
         job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.suite = suite
-        self.finish_before_exiting = True
-
 
     def submit_item( self, item, jobinfo ):
         event, handler, taskid, msg = item
@@ -315,8 +313,6 @@ class poll_and_kill_batcher( job_batcher ):
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, run_mode, verbose ):
         job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
-        self.finish_before_exiting = False
-
 
     def process_batch( self, batch, i, n ):
         # TODO - get rid of simulation checks in here
