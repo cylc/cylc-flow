@@ -1287,14 +1287,14 @@ class task( object ):
 
         launcher = self.launcher
         if not launcher:
-            self.presubmit( self.task_owner, self.task_host, self.submit_num )
+            launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_kill_command' ):
             # (for job submission methods that do not handle polling yet)
             self.log( 'WARNING', "'" + self.job_sub_method + "' job submission does not support killing" )
             return
 
-        cmd = self.launcher.get_job_kill_command( self.submit_method_id )
+        cmd = launcher.get_job_kill_command( self.submit_method_id )
         if self.user_at_host != user + '@localhost':
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"

@@ -1,0 +1,5 @@
+[scheduling]
+    [[dependencies]]
+        graph = "Foo => bar"
+[runtime]
+    [[foo]]
