@@ -28,6 +28,9 @@ from cylc.command_env import cv_scripting_sl
 class job_batcher( threading.Thread ):
     """Batch-submit queued subprocesses in parallel, with a delay between batches."""
 
+NEED QUIT CHECK IN MULTIPLE PLACES, AND REPLACE SLEEP(FOO) WITH 1 SECOND
+CHECKS ON QUIT NOW.
+
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ):
         threading.Thread.__init__(self)
         self.thread_id = str(self.getName()) 
