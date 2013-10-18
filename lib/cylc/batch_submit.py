@@ -28,9 +28,6 @@ from cylc.command_env import cv_scripting_sl
 class job_batcher( threading.Thread ):
     """Batch-submit queued subprocesses in parallel, with a delay between batches."""
 
-NEED QUIT CHECK IN MULTIPLE PLACES, AND REPLACE SLEEP(FOO) WITH 1 SECOND
-CHECKS ON QUIT NOW.
-
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ):
         threading.Thread.__init__(self)
         self.thread_id = str(self.getName()) 
@@ -45,6 +42,19 @@ CHECKS ON QUIT NOW.
         self.log = logging.getLogger( 'main' )
         self.quit = False
 
+    def do_batch_delay( self, seconds ):
+        if self.finish_before_exiting:
+            time.sleep(seconds)
+            return
+        # if not finish_before_exiting, check regularly during the delay
+        # to see if the the suite has been told to shut down.
+        count = 0
+        while count <= seconds:
+            if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+                break
+            time.sleep(1) 
+            count += 1
+
     def run( self ):
         """The thread run method."""
 
@@ -54,9 +64,8 @@ CHECKS ON QUIT NOW.
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
-            if self.quit:
-                if not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
-                    break
+            if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+                break
             batches = []
             batch = []
             # divide current queued jobs into batches
@@ -73,6 +82,8 @@ CHECKS ON QUIT NOW.
             n = len(batches) 
             i = 0
             while True:
+                if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+                    break
                 i += 1
                 try:
                     self.process_batch( batches.pop(0), i, n )  # pop left
@@ -81,7 +92,7 @@ CHECKS ON QUIT NOW.
                     break
                 else:
                     # some batches left
-                    time.sleep( self.batch_delay )
+                    self.do_batch_delay( self.batch_delay )
 
             # main loop sleep for the thread:
             time.sleep( 1 )
@@ -119,6 +130,8 @@ CHECKS ON QUIT NOW.
         n_succ = 0
         n_fail = 0
         while True:
+            if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+                break
             for jobinfo in jobs:
                 res = self.follow_up_item( jobinfo )
                 if res is None:
@@ -136,7 +149,6 @@ CHECKS ON QUIT NOW.
                     self.item_succeeded_hook( jobinfo )
                 jobs.remove( jobinfo )
                 self.jobqueue.task_done()
-
             if len( jobs ) == 0:
                 break
             time.sleep(1)
