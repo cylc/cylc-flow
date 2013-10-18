@@ -6,7 +6,7 @@
 [cylc]
     [[event hooks]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
-        timeout = 3
+        timeout = 30
 [scheduling]
     initial cycle time = 2013092300
     final cycle time   = 2013092306
@@ -15,10 +15,10 @@
         [[[0,6,12,18]]]
             graph = """
                 restart_tidy[T-6] => PRE_RESTART_TASKS
-                failed_task:fail => force_restart
-                succeed_task:succeed => force_restart
-                submit_fail_task:submit-fail => force_restart
-                send_a_broadcast_task => force_restart
+                failed_task:fail => retrying_task & running_task
+                succeed_task:succeed => retrying_task & running_task
+                submit_fail_task:submit-fail => retrying_task & running_task
+                send_a_broadcast_task => retrying_task & running_task
                 retrying_task:start => force_restart
                 running_task:start => force_restart
                 force_restart => restart_ok
