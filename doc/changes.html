@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.0">5.4.0</a></li>
 		<li><a href="#5.3.0">5.3.0</a></li>
 		<li><a href="#5.2.0">5.2.0</a></li>
 		<li><a href="#5.1.1">5.1.1</a></li>
@@ -28,9 +29,51 @@
 </ul>
 </div>
 
-<p><b>This document summarizes changes between cylc versions.</b>
-Minor changes and bug fixes, and routine updates to the user guide may
-be omitted. The definitive guide to changes is the repository commit log.<p>
+<p>Minor bug fixes and enhancements may be omitted below - 
+see the cylc repository log for details.</p>
+
+<a name="5.4.0"/>
+		<h2>5.4.0</h2>
+
+
+		<ul>
+				<li>dependence on tasks before the initial cycle time is now
+				ignored - so cold-start tasks are no longer strictly necessary
+				in suites with inter-cycle dependence</li>
+
+				<li>a User Guide <em>Tutorial</em> replaces the old <em>Quick Start Guide</em> </li>
+
+				<li>a multi-suite summary gui, <code>cylc gsummary</code></li>
+
+				<li>a <code>submit-retry</code> task state</li>
+
+				<li>processed suite definitions are now written out to the suite directory</li>
+
+				<li>gcylc</li>
+				<ul>
+						<li> single updater thread for multiple suite views</li>
+						<li> updates only if the suite state has changed (lower network traffic)</li>
+						<li> optional transposed dot view</li>
+				</ul>
+
+				<li>extract specific site/user config items with <code>cylc
+				get-global-config</code></li>
+
+				<li> replaced ConfigObj with a custom config file parser and
+				validator, "parsec" - 2 x faster for large suites</li>
+
+				<li>task poll and kill for Sun Grid Engine (other job submission
+				methods got this at 5.3.0)</li>
+
+				<li>repeated headings and items are now allowed in suite definitions</li>
+
+				<li><code>cylc cat-log</code> now prints task as well as suite logs</li>
+
+				<li>a greatly expanded automated test battery using a new Perl
+				<code>prove</code>-based framework</li>
+
+		</ul>
+	
 
 <a name="5.3.0"/>
 		<h2>5.3.0</h2>
