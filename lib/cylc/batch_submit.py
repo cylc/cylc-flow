@@ -38,19 +38,15 @@ class job_batcher( threading.Thread ):
         self.batch_delay = int( batch_delay )
         self.verbose = verbose
 
-        self.finish_before_exiting = False
         self.log = logging.getLogger( 'main' )
         self.quit = False
 
     def do_batch_delay( self, seconds ):
-        if self.finish_before_exiting:
-            time.sleep(seconds)
-            return
-        # if not finish_before_exiting, check regularly during the delay
-        # to see if the the suite has been told to shut down.
+        # check regularly during the delay to see if the the suite has
+        # been told to shut down.
         count = 0
         while count <= seconds:
-            if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+            if self.quit:
                 break
             time.sleep(1) 
             count += 1
@@ -64,7 +60,7 @@ class job_batcher( threading.Thread ):
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
-            if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+            if self.quit:
                 break
             batches = []
             batch = []
@@ -82,7 +78,7 @@ class job_batcher( threading.Thread ):
             n = len(batches) 
             i = 0
             while True:
-                if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+                if self.quit:
                     break
                 i += 1
                 try:
@@ -130,7 +126,7 @@ class job_batcher( threading.Thread ):
         n_succ = 0
         n_fail = 0
         while True:
-            if self.quit and not ( self.finish_before_exiting and self.jobqueue.qsize() > 0 ):
+            if self.quit:
                 break
             for jobinfo in jobs:
                 res = self.follow_up_item( jobinfo )
@@ -211,8 +207,6 @@ class task_batcher( job_batcher ):
         job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
         self.wireless = wireless
-        self.finish_before_exiting = False
-
 
     def submit_item( self, itask, jobinfo ):
         jobinfo['descr'] = itask.id + ' job submission'
@@ -226,7 +220,6 @@ class task_batcher( job_batcher ):
             return False
         else:
             return True
-
 
     def follow_up_item( self, jobinfo ):
         if self.run_mode == 'simulation':
@@ -253,7 +246,6 @@ class task_batcher( job_batcher ):
             res = job_batcher.follow_up_item( self, jobinfo )
         return res
 
-
     def item_succeeded_hook( self, jobinfo ):
         if self.run_mode == 'simulation':
             return
@@ -269,7 +261,6 @@ class task_batcher( job_batcher ):
             if submit_method_id:
                 itask.message_queue.put('NORMAL', itask.id + ' submit_method_id=' + submit_method_id )
 
-
     def item_failed_hook( self, jobinfo ):
         job_batcher.item_failed_hook( self, jobinfo )
         out = jobinfo['out']
@@ -281,7 +272,6 @@ class task_batcher( job_batcher ):
             itask.message_queue.put( 'WARNING', err )
         itask.message_queue.put( 'CRITICAL', itask.id + ' submission failed' )
  
-
 
 class event_batcher( job_batcher ):
     """Batched execution of task event handlers; item is (event-label,
@@ -304,7 +294,6 @@ class event_batcher( job_batcher ):
             return False
         else:
             return True
-
 
 
 class poll_and_kill_batcher( job_batcher ):
