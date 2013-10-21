@@ -19,6 +19,7 @@
 import Pyro.core
 import logging
 from TaskID import TaskID
+import time
 
 
 class state_summary( Pyro.core.ObjBase ):
@@ -28,12 +29,15 @@ class state_summary( Pyro.core.ObjBase ):
         Pyro.core.ObjBase.__init__(self)
         self.task_summary = {}
         self.global_summary = {}
+        self.task_name_list = []
+        self.family_summary = {}
         # external monitors should access config via methods in this
         # class, in case config items are ever updated dynamically by
         # remote control
         self.config = config
         self.run_mode = run_mode
         self.start_time = start_time
+        self._summary_update_time = None
  
     def update( self, tasks, clock, oldest, newest,
             paused, will_pause_at, stopping, will_stop_at, runahead ):
@@ -95,6 +99,7 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'runahead limit' ] = runahead
         global_summary[ 'states' ] = all_states
 
+        self._summary_update_time = time.time()
         # replace the originals
         self.task_name_list = task_name_list
         self.task_summary = task_summary
@@ -103,11 +108,17 @@ class state_summary( Pyro.core.ObjBase ):
         task_states = {}
 
     def get_task_name_list( self ):
+        """Return the list of active task ids."""
         self.task_name_list.sort()
         return self.task_name_list
             
     def get_state_summary( self ):
+        """Return the global, task, and family summary data structures."""
         return [ self.global_summary, self.task_summary, self.family_summary ]
+
+    def get_summary_update_time( self ):
+        """Return the last time the summaries were changed (Unix time)."""
+        return self._summary_update_time
 
 
 def extract_group_state( child_states, is_stopped=False ):
