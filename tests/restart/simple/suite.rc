@@ -6,7 +6,7 @@
 [cylc]
     [[event hooks]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
-        timeout = 30
+        timeout = 3
 [scheduling]
     initial cycle time = 2013092300
     final cycle time   = 2013092306
@@ -15,10 +15,10 @@
         [[[0,6,12,18]]]
             graph = """
                 restart_tidy[T-6] => PRE_RESTART_TASKS
-                failed_task:fail => retrying_task & running_task
-                succeed_task:succeed => retrying_task & running_task
-                submit_fail_task:submit-fail => retrying_task & running_task
-                send_a_broadcast_task => retrying_task & running_task
+                failed_task:fail => force_restart
+                succeed_task:succeed => force_restart
+                submit_fail_task:submit-fail => force_restart
+                send_a_broadcast_task => force_restart
                 retrying_task:start => force_restart
                 running_task:start => force_restart
                 force_restart => restart_ok
@@ -70,6 +70,7 @@
         inherit = PRE_RESTART_TASKS
         command scripting = """
             if [[ $CYLC_TASK_TRY_NUMBER -le 3 ]]; then
+                sleep 1
                 exit 1
             fi
         """
@@ -151,10 +152,8 @@
                 touch {{ TEST_DIR }}/suite-stopping
             fi
             # Remove the following block once retrying initial tasks are fixed.
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
-                if grep -q 'retrying_task.*status=waiting' <<< $(cylc cat-state $CYLC_SUITE_REG_NAME); then
-                    cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME 'retrying_task' $CYLC_TASK_CYCLE_TIME
-                fi
+            if grep -q 'retrying_task.*status=waiting' <<< $(cylc cat-state $CYLC_SUITE_REG_NAME); then
+                cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME 'retrying_task' $CYLC_TASK_CYCLE_TIME
             fi
             sleep 5
         """
