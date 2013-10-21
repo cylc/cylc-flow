@@ -3280,30 +3280,22 @@ same before the suite is started - in which case the initial task can
 just report itself successfully completed after checking that the 
 required files are present.
 
-\paragraph{Warm-Starting A Suite}
+\paragraph{Warm-Starting Suites}
 
-Cold-start tasks have to be declared as such in the suite definition
-so that cylc knows they are one-off (non-spawning) initial tasks, but
-also because they play a critical role in suite warm-starts. A suite
-that has previously been running and then shut down can be warm-started
-at a particular cycle time as an alternative to {\em restarting} from the 
-pre-shutdown suite state (although restarting is the preferred option
-because a warm start is likely to involve re-running some tasks).
-A warm-start assumes the existence of a previous cycle (i.e.\ that any
-files from the previous cycle required by the new cycle are already in
-place) so cold-start tasks do not need to run {\em but} cylc itself
-does not know the details of the previous cycle (it does in a restart,
-but not in a warm-start) so it still has to solve the bootstrapping
-problem to get the suite started. It does this by starting the suite
-with designated cold start tasks in the {\em succeeded} state - in other
-words finished cold start tasks stand in for the previous finished cycle,
-rather than pretending to be a running previous cycle as they do in a
-cold-start.
-
+For suites with inter-cycle dependence a {\em warm-start} is essentially
+an implicit restart. Rather than loading tasks from a previous recorded
+suite state, it loads all cycling tasks at a given cycle time assuming
+that the previous cycle was completed earlier suite run. Any initial
+tasks - asynchronous, start-up, or cold-start - therefore do not need to
+run again. Dependence on tasks from before the start cycle is still
+ignored, but cold-start tasks have to be loaded in the {\em succeeded}
+state because dependence on them (in the cold-start OR construct) is
+retained throughout the suite run as is explained above in
+Section~\ref{IntercycleTriggers}.
 
 \paragraph{Future Triggers}
 
-Tasks can also trigger off others in {\em the future} (with respect to
+Cylc also supports inter-cycle triggering off tasks in the future (with respect to
 cycle time!):
 \begin{lstlisting}
 [dependencies]
@@ -3311,7 +3303,11 @@ cycle time!):
         # B triggers off A in the next cycle
         graph = "A[T+6] => B"
 \end{lstlisting}
-
+In contrast to normal inter-cycle triggers, future triggers present a problem at the 
+suite stop time rather than at start-up - in the final cycle \lstinline=B= wants to 
+to trigger off \lsintline=A= at a future cycle time that does not exist.  To avoid   
+this problem cylc prevents tasks from spawning successors that depend on tasks in 
+a non-existent future cycle.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
