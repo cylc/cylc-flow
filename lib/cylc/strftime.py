@@ -23,7 +23,12 @@ def strftime( dt, template ):
     earlier than 1900 (or beyond 2048?)."""
 
     iso = dt.isoformat()
-    d,t = iso.split('T')
+    return isoformat_strftime( iso, template )
+
+
+def isoformat_strftime( iso_string, template ):
+    """Re-template a datetime.datetime isoformat string."""
+    d,t = iso_string.split('T')
     Y,m,d = d.split('-')
     H,M,S = t.split(':')
     t = template.replace('%Y', Y )
@@ -33,6 +38,7 @@ def strftime( dt, template ):
     t = t.replace('%M', M )
     t = t.replace('%S', S[0:2] )
     return t
+
 
 if __name__ == '__main__':
     dt1 = datetime.datetime(1900,1,1)

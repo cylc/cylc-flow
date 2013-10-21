@@ -1102,7 +1102,7 @@ class scheduler(object):
                     db_ops = self.wireless.get_db_ops()
                     for d in db_ops:
                         self.db.run_db_op(d)
-                
+
             # process queued commands
             self.process_command_queue()
 
@@ -1502,9 +1502,7 @@ class scheduler(object):
 
         self.broker.reset()
 
-        for itask in self.pool.get_tasks():
-            # register task outputs
-            self.broker.register( itask )
+        self.broker.register( self.pool.get_tasks() )
 
         for itask in self.pool.get_tasks():
             # try to satisfy me (itask) if I'm not already satisfied.
