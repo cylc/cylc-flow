@@ -2520,16 +2520,16 @@ left side of a pair:
 \end{lstlisting}
 \lstset{language=transcript}
 This means B[T] triggers off A[T-12] for cycle times T with hours
-matching $0$ or $12$. Note that {\em T must be left implicit unless
-there is a cycle time offset} (this helps to keep graphs clean and
-concise because the majority of tasks in a typical suite will only
-depend on others with the same cycle time) and that {\em cycle time
-offsets can only appear on the left} (because each pair defines a
-trigger for the right task at cycle time T).
+matching $0$ or $12$. T must be implicit unless there is a cycle time
+offset - this keeps graphs clean and concise because the majority of
+tasks will typically depend only on others with the same cycle time. 
+Cycle time offsets can only appear on the left of a pair, because a 
+pairs define triggers for the right task at cycle time T.  However,
+\lstinline@A => B[T-6]@, which is illegal, can be reformulated as a  
+{\em future trigger} \lstinline@A[T+12] => B@ (see
+Section~\ref{IntercycleTriggers}).
 
-Now, having explained that dependency graphs are interpreted pairwise,
-you can optionally chain pairs together to ``follow a path'' through the
-graph. So this,
+Triggers can be chained together. This graph:
 \lstset{language=suiterc}
 \begin{lstlisting}
     graph = """A => B  # B triggers off A
@@ -2539,22 +2539,6 @@ is equivalent to this:
 \begin{lstlisting}
     graph = "A => B => C"
 \end{lstlisting}
-
-Cycle time offsets, if they appear in a chain of triggers, must be
-leftmost (because, as explained previously they can't appear on the
-right of any pair). So this is legal:
-\begin{lstlisting}
-    graph = "A[T-6] => B => C"  # OK
-\end{lstlisting}
-but this isn't:
-\begin{lstlisting}
-    graph = "A => B[T-6] => C"  # ERROR!
-\end{lstlisting}
-The trigger \lstinline@A => B[T-6]@ does not make sense in any case -
-if this kind of relationship seems necessary it probably means that B
-should be ``reassigned'' to the next cycle (keep in mind that cycle
-time is really just a label used to define the relatonships between
-tasks).
 
 {\em Each trigger in the graph must be unique} but {\em the same task
 can appear in multiple pairs or chains}. Separately defined triggers
@@ -5152,7 +5136,7 @@ offset plus one minimum cycling interval.
 
 A manually set runahead limit should not stall the suite even if set to
 less than the minimum cycling interval, unless it does not extend out
-past any future triggers.
+past any future triggers (see Section~\ref{IntercycleTriggers}.
 
 Succeeded and failed tasks are ignored when applying the runahead limit
 (but tasks that can't run because they depend on a failed task are not
