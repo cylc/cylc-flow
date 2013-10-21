@@ -14,16 +14,16 @@
     [[dependencies]]
         [[[0,6,12,18]]]
             graph = """
-                restart_tidy[T-6] => PRE_RESTART_TASKS
+                tidy[T-6] => PRE_RESTART_TASKS
                 failed_task:fail => force_restart
                 succeed_task:succeed => force_restart
                 submit_fail_task:submit-fail => force_restart
                 send_a_broadcast_task => force_restart
                 retrying_task:start => force_restart
                 running_task:start => force_restart
-                force_restart => restart_ok
-                restart_ok => POST_RESTART_TASKS
-                POST_RESTART_TASKS:finish-all & running_task => restart_tidy
+                force_restart => output_states
+                output_states => POST_RESTART_TASKS
+                POST_RESTART_TASKS:finish-all & running_task => tidy
                 send_a_broadcast_task => broadcast_task
                 
                 runahead_task
@@ -81,7 +81,7 @@
         command scripting = """
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
                 # Needs to still be running on suite restart
-                cylc suite-state --interval=1 --task=restart_ok --cycle=$CYLC_TASK_CYCLE_TIME \
+                cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
                 --wait --timeout=60 --status=succeeded $CYLC_SUITE_REG_NAME
                 sleep 10
             else
@@ -130,12 +130,12 @@
             fi
         """
         description = "Force a shutdown and restart of the suite"
-    [[restart_ok]]
+    [[output_states]]
         command scripting = """
             while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do
                 sleep 0.1
             done
-            cylc suite-state --interval=1 --task=restart_ok --cycle=$CYLC_TASK_CYCLE_TIME \
+            cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
                 --wait --timeout=10 --status=running $CYLC_SUITE_REG_NAME
             sleep 5  # Wait a few typical loops so that the states make it into the database.
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
@@ -145,7 +145,7 @@
             cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-post-restart-$CYLC_TASK_CYCLE_TIME
         """
         description = "Wait for the restart to complete"
-    [[restart_tidy]]
+    [[tidy]]
         command scripting = """
             cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME '.*fail.*task' $CYLC_TASK_CYCLE_TIME
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
