@@ -1,0 +1,14 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time = 2010110500
+    runahead limit = 24 # enforce sequential running
+    [[dependencies]]
+        [[[Monthly(201001,3)]]]
+            graph = "a"
+[runtime]
+    [[a]]
+        command scripting = "sleep 1"
