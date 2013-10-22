@@ -1162,17 +1162,17 @@ class task( object ):
         summary[ 'latest_message_priority' ] = self.latest_message_priority
 
         if self.submitted_time:
-            summary[ 'submitted_time' ] = strftime( self.submitted_time, "%H:%M:%S" )
+            summary[ 'submitted_time' ] = self.submitted_time.isoformat()
         else:
             summary[ 'submitted_time' ] = '*'
 
         if self.started_time:
-            summary[ 'started_time' ] =  strftime( self.started_time, "%H:%M:%S" )
+            summary[ 'started_time' ] = self.started_time.isoformat()
         else:
             summary[ 'started_time' ] =  '*'
 
         if self.succeeded_time:
-            summary[ 'succeeded_time' ] =  strftime( self.succeeded_time, "%H:%M:%S" )
+            summary[ 'succeeded_time' ] = self.succeeded_time.isoformat()
         else:
             summary[ 'succeeded_time' ] =  '*'
 
@@ -1183,7 +1183,7 @@ class task( object ):
         # TODO - the following section could probably be streamlined a bit
         if self.__class__.mean_total_elapsed_time:
             met = self.__class__.mean_total_elapsed_time
-            summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
+            summary[ 'mean total elapsed time' ] =  str(met)
             if self.started_time:
                 if not self.succeeded_time:
                     # started but not succeeded yet, compute ETC

@@ -19,6 +19,7 @@
 import Pyro.core
 import logging
 from TaskID import TaskID
+from cylc.strftime import strftime
 import time
 
 
@@ -53,8 +54,9 @@ class state_summary( Pyro.core.ObjBase ):
             name, ctime = task.id.split(TaskID.DELIM)
             task_states.setdefault(ctime, {})
             task_states[ctime][name] = task_summary[task.id]['state']
-            if name not in task_name_list:
-                task_name_list.append(name)
+            task_name_list.append(name)
+
+        task_name_list = list(set(task_name_list))   
 
         fam_states = {}
         all_states = []
@@ -63,7 +65,7 @@ class state_summary( Pyro.core.ObjBase ):
             # based on the first-parent single-inheritance tree
 
             c_fam_task_states = {}
-            
+
             for key, parent_list in self.config.get_first_parent_ancestors().items():
                 state = task_states.get(ctime, {}).get(key)
                 if state is None:
