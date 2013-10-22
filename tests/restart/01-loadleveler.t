@@ -22,7 +22,6 @@
 #-------------------------------------------------------------------------------
 set_test_number 15
 export TEST_DIR
-export TEST_DEBUG_CMP=true
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
@@ -397,9 +396,9 @@ tidy.2013092312 : status=held, spawned=false
 waiting_task.2013092312 : status=held, spawned=false
 __STATE__
         sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
- "select name, cycle, submit_num, try_num, status
-  from task_states
-  order by name, cycle;" > $TEST_DIR/states-db
+         "select name, cycle, submit_num, try_num, status
+          from task_states
+          order by name, cycle;" > $TEST_DIR/states-db
         cmp_ok $TEST_DIR/states-db <<__DB_DUMP__
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded

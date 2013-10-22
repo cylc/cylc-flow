@@ -22,7 +22,6 @@ set_test_number 15
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE simple
 export TEST_DIR
-export TEST_DEBUG_CMP=true
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -34,7 +33,6 @@ suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-monitor
 START_TIME=$(date +%s)
 export START_TIME SUITE_NAME
-cylc gui $SUITE_NAME &
 run_ok $TEST_NAME bash <<'__SCRIPT__'
 while [[ -e $HOME/.cylc/ports/$SUITE_NAME || ! -e $TEST_DIR/suite-stopping ]]; do
     if [[ $(date +%s) > $(( START_TIME + 120 )) ]]; then
