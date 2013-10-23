@@ -621,17 +621,19 @@ else:
             else:
                 command_args = []
 
-# check for help anywhere in the arg list and transform to '--help'
 args_new = []
 for item in command_args:
     if is_help( item ):
+        # transform all legal help options to '--help'
         args_new.append( '--help' )
+    elif item.startswith('--owner'):
+        # deprecate '--owner' to '--user'
+        args_new.append( item.replace('--owner','--user'))
     else:
         args_new.append( item )
 args = args_new
 
-# construct command to execute
-# DEPRECATED TASK COMMANDS (backward compatibility):
+# deprecated commands
 if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' ]:
     command = re.sub( '^task-', '', command )
 
