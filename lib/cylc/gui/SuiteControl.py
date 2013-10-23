@@ -916,7 +916,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         item2 = " -i '[scheduling]final cycle time'"
         command = "cylc get-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
-                " --owner=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
+                " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
                 self.cfg.suite 
         res = run_get_stdout( command, filter=True ) # (T/F,['ct ct'])
 
@@ -997,7 +997,7 @@ been defined for this suite""").inform()
             options += group.get_options()
         window.destroy()
 
-        options += ' --owner=' + self.cfg.owner + ' --host=' + self.cfg.host
+        options += ' --user=' + self.cfg.owner + ' --host=' + self.cfg.host
 
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + ctime
 
@@ -1041,7 +1041,7 @@ The Cylc Suite Engine.
         about.destroy()
 
     def view_task_descr( self, w, e, task_id ):
-        command = "cylc show --host=" + self.cfg.host + " --owner=" + \
+        command = "cylc show --host=" + self.cfg.host + " --user=" + \
                 self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
@@ -2129,7 +2129,7 @@ or remove task definitions without restarting the suite."""
         if response != gtk.RESPONSE_OK:
             return
 
-        command = "cylc reload -f --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+        command = "cylc reload -f --host=" + self.cfg.host + " --user=" + self.cfg.owner + " " + self.cfg.suite
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -3050,7 +3050,7 @@ For more Stop options use the Control menu.""" )
         return False
 
     def get_remote_run_opts( self ):
-        return " --host=" + self.cfg.host + " --owner=" + self.cfg.owner
+        return " --host=" + self.cfg.host + " --user=" + self.cfg.owner
 
     def browse( self, b, option='' ):
         command = 'cylc doc ' + option

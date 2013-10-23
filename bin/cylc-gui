@@ -36,7 +36,7 @@ This is the cylc Graphical User Interface.
 
 Local suites can be opened and switched between from within gcylc. To
 connect to running remote suites (whose passphrase you have installed)
-you must currently use --host and/or --owner on the gcylc command line.
+you must currently use --host and/or --user on the gcylc command line.
 
 Available task state color themes are shown under the View menu. To
 customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
