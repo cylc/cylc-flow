@@ -122,7 +122,7 @@ parser.remove_option("--debug")
 
 suite = args[0]
 
-# this only runs locally (use of --host or --owner results in
+# this only runs locally (use of --host or --user results in
 # re-invocation on the db host account).
 run_dir = os.path.expandvars( os.path.expanduser( options.run_dir ))
 

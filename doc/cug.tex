@@ -1939,7 +1939,7 @@ of the running suite, which can be found in their account:
 \end{lstlisting}
 Once you have this information, you can run
 \begin{lstlisting}
-shell$ cylc monitor --owner=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
+shell$ cylc monitor --user=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
 \end{lstlisting}
 to view the progress of their suite.
 
@@ -5051,15 +5051,15 @@ provided by the suite (via the task job script).
 So, to connect to a suite running on another account you must install
 the suite passphrase (Section~\ref{passphrases}), and configure
 passwordless ssh so that the port number can be retrieved from the
-remote port file. Then use the \lstinline=--owner= and
+remote port file. Then use the \lstinline=--user= and
 \lstinline=--host= command options to connect:
 \begin{lstlisting}
-shell$ cylc monitor --owner=USER --host=HOST SUITE
+shell$ cylc monitor --user=USER --host=HOST SUITE
 \end{lstlisting}
 If you know the port number of the target suite, give it on the command
 line to prevent the port-retrieving ssh connection being attempted:
 \begin{lstlisting}
-shell$ cylc monitor --owner=USER --host=HOST --port=PORT SUITE
+shell$ cylc monitor --user=USER --host=HOST --port=PORT SUITE
 \end{lstlisting}
 
 Possession of a suite passphrase gives full control over the suite, and
