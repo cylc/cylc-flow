@@ -626,9 +626,9 @@ for item in command_args:
     if is_help( item ):
         # transform all legal help options to '--help'
         args_new.append( '--help' )
-    elif item.startswith('--owner'):
+    elif item.startswith( '--owner' ):
         # deprecate '--owner' to '--user'
-        args_new.append( item.replace('--owner','--user'))
+        args_new.append( item.replace( '--owner', '--user' ))
     else:
         args_new.append( item )
 args = args_new
