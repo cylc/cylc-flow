@@ -514,9 +514,15 @@ class scheduler(object):
         else:
             return dump
     
-    # CONTROL_COMMANDS__________________________________________________
+    def stop_submission_threads( self ):
+        self.pool.worker.quit = True
+        self.evworker.quit = True
+        self.poll_and_kill_worker.quit = True
+
+     # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
+        self.stop_submission_threads()
         if kill_first:
             for itask in self.pool.get_tasks():
                 # (state check done in task module)
@@ -525,6 +531,7 @@ class scheduler(object):
         self.suite_halt = True
 
     def command_stop_now( self ):
+        self.stop_submission_threads()
         self.hold_suite()
         self.suite_halt_now = True
 
@@ -1144,6 +1151,7 @@ class scheduler(object):
 
             # initiate normal suite shutdown?
             if self.check_suite_shutdown():
+                self.stop_submission_threads()
                 break
             time.sleep(1)
 
