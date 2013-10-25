@@ -516,8 +516,8 @@ class scheduler(object):
     
     def stop_submission_threads( self ):
         self.pool.worker.quit = True
-        self.evworker.quit = True
-        self.poll_and_kill_worker.quit = True
+        #self.evworker.quit = True
+        #self.poll_and_kill_worker.quit = True
 
      # CONTROL_COMMANDS__________________________________________________
 
