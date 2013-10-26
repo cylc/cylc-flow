@@ -38,15 +38,20 @@ class job_batcher( threading.Thread ):
         self.batch_delay = int( batch_delay )
         self.verbose = verbose
 
+        self.finish_before_exiting = False
         self.log = logging.getLogger( 'main' )
         self.quit = False
+
+    def can_quit(self):
+        return self.quit and not ( self.finish_before_exiting and
+                                   self.jobqueue.qsize() > 0 )
 
     def do_batch_delay( self, seconds ):
         # check regularly during the delay to see if the the suite has
         # been told to shut down.
         count = 0
         while count <= seconds:
-            if self.quit:
+            if self.can_quit():
                 break
             time.sleep(1) 
             count += 1
@@ -60,7 +65,7 @@ class job_batcher( threading.Thread ):
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
-            if self.quit:
+            if self.can_quit():
                 break
             batches = []
             batch = []
@@ -78,8 +83,8 @@ class job_batcher( threading.Thread ):
             n = len(batches) 
             i = 0
             while True:
-                if self.quit:
-                    break
+                #if self.can_quit():
+                #    break
                 i += 1
                 try:
                     self.process_batch( batches.pop(0), i, n )  # pop left
@@ -126,7 +131,7 @@ class job_batcher( threading.Thread ):
         n_succ = 0
         n_fail = 0
         while True:
-            if self.quit:
+            if self.can_quit():
                 break
             for jobinfo in jobs:
                 res = self.follow_up_item( jobinfo )
@@ -281,6 +286,7 @@ class event_batcher( job_batcher ):
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, suite, verbose ):
         job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.suite = suite
+        self.finish_before_exiting = True
 
     def submit_item( self, item, jobinfo ):
         event, handler, taskid, msg = item
