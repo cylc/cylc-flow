@@ -62,13 +62,14 @@ class stop_poller( poller ):
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
-1/ Shut down a suite when all currently running tasks have finished. 
-   No other tasks will be submitted to run in the meantime.
+1/ Shut down a suite when all current submitted or running tasks have
+   finished. No new tasks will be submitted in the meantime, but
+   event handlers and job poll-and-kill commands will, until shutdown.
 
 2/ With [--now], shut down immediately. Any orphaned tasks will be
-   polled on restarting the suite to determine their final status.
+   polled on restarting the suite to determine their status.
 
-3/ With [STOP], shut down a suite AFTER on of the following events:
+3/ With [STOP], shut down a suite AFTER one of the following events:
     a/ all tasks have passed the TAG STOP (cycle time or async tag)
     b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
     c/ the task STOP (TASK.TAG) has finished
