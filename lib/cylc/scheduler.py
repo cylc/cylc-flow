@@ -527,6 +527,7 @@ class scheduler(object):
                 # (state check done in task module)
                 itask.kill()
         self.hold_suite()
+        self.pool.worker.stop = True
         self.suite_halt = True
 
     def command_stop_now( self ):

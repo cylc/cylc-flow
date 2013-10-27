@@ -40,6 +40,7 @@ class job_batcher( threading.Thread ):
 
         self.log = logging.getLogger( 'main' )
         self.quit = False
+        self.stop = False
 
     def do_batch_delay( self, seconds ):
         # check regularly during the delay to see if the the suite has
@@ -62,6 +63,9 @@ class job_batcher( threading.Thread ):
         while True:
             if self.quit:
                 break
+            if self.stop:
+                time.sleep(1)
+                continue
             batches = []
             batch = []
             # divide current queued jobs into batches
@@ -80,6 +84,9 @@ class job_batcher( threading.Thread ):
             while True:
                 if self.quit:
                     break
+                if self.stop:
+                    time.sleep(1)
+                    continue
                 i += 1
                 try:
                     self.process_batch( batches.pop(0), i, n )  # pop left
@@ -128,6 +135,9 @@ class job_batcher( threading.Thread ):
         while True:
             if self.quit:
                 break
+            if self.stop:
+                time.sleep(1)
+                continue
             for jobinfo in jobs:
                 res = self.follow_up_item( jobinfo )
                 if res is None:
