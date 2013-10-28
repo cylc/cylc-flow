@@ -106,13 +106,15 @@ Arguments:"""
         OptionParser.__init__( self, usage )
 
     def add_std_options( self ):
-        self.add_option( "--owner",
-                help="User account name (defaults to $USER).",
+        self.add_option( "--user",
+                help="Other user account name. This results in "
+                "command reinvocation on the remote account.",
                 metavar="USER", default=user,
                 action="store", dest="owner" )
 
         self.add_option( "--host",
-                help="Host name (defaults to localhost).",
+                help="Other host name. This results in "
+                "command reinvocation on the remote account.",
                 metavar="HOST", action="store", default=get_hostname(),
                 dest="host" )
 

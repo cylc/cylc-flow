@@ -18,7 +18,6 @@
 
 from cylc import cylc_pyro_client, dump, graphing
 from cylc.cycle_time import ct
-from cylc.gui.stateview import compare_dict_of_dict
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
@@ -30,6 +29,30 @@ import re
 import sys
 import threading
 from time import sleep
+
+
+def compare_dict_of_dict( one, two ):
+    """Return True if one == two, else return False."""
+    for key in one:
+        if key not in two:
+            return False
+        for subkey in one[ key ]:
+            if subkey not in two[ key ]:
+                return False
+            if one[key][subkey] != two[key][subkey]:
+                return False
+
+    for key in two:
+        if key not in one:
+            return False
+        for subkey in two[ key ]:
+            if subkey not in one[ key ]:
+                return False
+            if two[key][subkey] != one[key][subkey]:
+                return False
+
+    return True
+
 
 class GraphUpdater(threading.Thread):
     def __init__(self, cfg, updater, theme, info_bar, xdot ):

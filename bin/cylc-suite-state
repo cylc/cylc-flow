@@ -126,9 +126,11 @@ suite_poller.add_to_cmd_options(parser)
 
 suite = args[0]
 
-# this only runs locally (use of --host results in re-invocation on the suite host account).
+# this only runs locally (use of --host or --user results in remote re-invocation).
 gcfg = get_global_cfg()
-run_dir = options.run_dir or gcfg.get_host_item( 'run directory' )
+run_dir = os.path.expandvars( \
+          os.path.expanduser( \
+          options.run_dir or gcfg.get_host_item( 'run directory' )))
 
 spoller = suite_poller( "requested state",
         options.interval, options.max_polls,

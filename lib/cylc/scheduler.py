@@ -514,9 +514,15 @@ class scheduler(object):
         else:
             return dump
     
-    # CONTROL_COMMANDS__________________________________________________
+    def stop_submission_threads( self ):
+        self.pool.worker.quit = True
+        self.evworker.quit = True
+        self.poll_and_kill_worker.quit = True
+
+     # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
+        self.stop_submission_threads()
         if kill_first:
             for itask in self.pool.get_tasks():
                 # (state check done in task module)
@@ -525,6 +531,7 @@ class scheduler(object):
         self.suite_halt = True
 
     def command_stop_now( self ):
+        self.stop_submission_threads()
         self.hold_suite()
         self.suite_halt_now = True
 
@@ -1102,7 +1109,7 @@ class scheduler(object):
                     db_ops = self.wireless.get_db_ops()
                     for d in db_ops:
                         self.db.run_db_op(d)
-                
+
             # process queued commands
             self.process_command_queue()
 
@@ -1144,6 +1151,7 @@ class scheduler(object):
 
             # initiate normal suite shutdown?
             if self.check_suite_shutdown():
+                self.stop_submission_threads()
                 break
             time.sleep(1)
 
@@ -1502,9 +1510,7 @@ class scheduler(object):
 
         self.broker.reset()
 
-        for itask in self.pool.get_tasks():
-            # register task outputs
-            self.broker.register( itask )
+        self.broker.register( self.pool.get_tasks() )
 
         for itask in self.pool.get_tasks():
             # try to satisfy me (itask) if I'm not already satisfied.

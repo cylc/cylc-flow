@@ -163,7 +163,7 @@ class message(object):
 
             # The remote_run() function expects command line options
             # to identify the target user and host names:
-            sys.argv.append( '--owner=' + self.owner )
+            sys.argv.append( '--user=' + self.owner )
             sys.argv.append( '--host=' + self.host )
             if self.verbose:
                 sys.argv.append( '-v' )

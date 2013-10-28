@@ -15,21 +15,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test job submission reporting.
+#C: Test broadcasts
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE submission
+install_suite $TEST_NAME_BASE dependencies
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-cylc run $SUITE_NAME
-while [ $(cylc ping $SUITE_NAME) ]; do
-    sleep 1
-done
-TEST_NAME=$TEST_NAME_BASE-check
-run_ok $TEST_NAME grep "[foo.1 job submission] job.*at" $(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/err
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
