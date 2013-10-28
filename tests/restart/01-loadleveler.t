@@ -89,8 +89,7 @@ failed_task.2013092300 : status=failed, spawned=true
 failed_task.2013092306 : status=runahead, spawned=false
 force_restart.2013092300 : status=running, spawned=true
 force_restart.2013092306 : status=runahead, spawned=false
-restart_ok.2013092300 : status=waiting, spawned=false
-restart_tidy.2013092300 : status=waiting, spawned=false
+output_states.2013092300 : status=waiting, spawned=false
 retrying_task.2013092300 : status=retrying, spawned=true
 retrying_task.2013092306 : status=runahead, spawned=false
 runahead_task.2013092300 : status=succeeded, spawned=true
@@ -102,6 +101,7 @@ send_a_broadcast_task.2013092306 : status=runahead, spawned=false
 submit_fail_task.2013092300 : status=submit-failed, spawned=false
 succeed_task.2013092300 : status=succeeded, spawned=true
 succeed_task.2013092306 : status=runahead, spawned=false
+tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
         cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<__DB_DUMP__
@@ -110,8 +110,7 @@ failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
 force_restart|2013092300|1|1|running
 force_restart|2013092306|0|1|runahead
-restart_ok|2013092300|0|1|waiting
-restart_tidy|2013092300|0|1|waiting
+output_states|2013092300|0|1|waiting
 retrying_task|2013092300|1|2|retrying
 retrying_task|2013092306|0|1|runahead
 runahead_task|2013092300|1|1|succeeded
@@ -123,6 +122,7 @@ send_a_broadcast_task|2013092306|0|1|runahead
 submit_fail_task|2013092300|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|0|1|runahead
+tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
         cmp_ok $TEST_DIR/state-post-restart-2013092300 <<__STATE__
@@ -149,9 +149,8 @@ failed_task.2013092300 : status=failed, spawned=true
 failed_task.2013092306 : status=runahead, spawned=false
 force_restart.2013092300 : status=succeeded, spawned=true
 force_restart.2013092306 : status=runahead, spawned=false
-restart_ok.2013092300 : status=running, spawned=true
-restart_ok.2013092306 : status=runahead, spawned=false
-restart_tidy.2013092300 : status=waiting, spawned=false
+output_states.2013092300 : status=running, spawned=true
+output_states.2013092306 : status=runahead, spawned=false
 retrying_task.2013092300 : status=waiting, spawned=true
 retrying_task.2013092306 : status=runahead, spawned=false
 runahead_task.2013092300 : status=succeeded, spawned=true
@@ -163,6 +162,7 @@ send_a_broadcast_task.2013092306 : status=runahead, spawned=false
 submit_fail_task.2013092300 : status=submit-failed, spawned=false
 succeed_task.2013092300 : status=succeeded, spawned=true
 succeed_task.2013092306 : status=runahead, spawned=false
+tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
         cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<__DB_DUMP__
@@ -171,9 +171,8 @@ failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|0|1|runahead
-restart_ok|2013092300|1|1|running
-restart_ok|2013092306|0|1|runahead
-restart_tidy|2013092300|0|1|waiting
+output_states|2013092300|1|1|running
+output_states|2013092306|0|1|runahead
 retrying_task|2013092300|1|2|held
 retrying_task|2013092306|0|1|runahead
 runahead_task|2013092300|1|1|succeeded
@@ -185,6 +184,7 @@ send_a_broadcast_task|2013092306|0|1|runahead
 submit_fail_task|2013092300|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|0|1|runahead
+tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
         cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<__STATE__
@@ -224,9 +224,7 @@ failed_task.2013092306 : status=failed, spawned=true
 failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092306 : status=running, spawned=true
 force_restart.2013092312 : status=held, spawned=false
-restart_ok.2013092306 : status=waiting, spawned=false
-restart_tidy.2013092300 : status=succeeded, spawned=true
-restart_tidy.2013092306 : status=waiting, spawned=false
+output_states.2013092306 : status=waiting, spawned=false
 retrying_task.2013092306 : status=retrying, spawned=true
 retrying_task.2013092312 : status=held, spawned=false
 runahead_task.2013092306 : status=succeeded, spawned=true
@@ -238,6 +236,8 @@ send_a_broadcast_task.2013092312 : status=held, spawned=false
 submit_fail_task.2013092306 : status=submit-failed, spawned=false
 succeed_task.2013092306 : status=succeeded, spawned=true
 succeed_task.2013092312 : status=held, spawned=false
+tidy.2013092300 : status=succeeded, spawned=true
+tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
         cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<__DB_DUMP__
@@ -249,10 +249,8 @@ failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
 force_restart|2013092312|0|1|held
-restart_ok|2013092300|1|1|succeeded
-restart_ok|2013092306|0|1|waiting
-restart_tidy|2013092300|1|1|succeeded
-restart_tidy|2013092306|0|1|waiting
+output_states|2013092300|1|1|succeeded
+output_states|2013092306|0|1|waiting
 retrying_task|2013092300|1|2|held
 retrying_task|2013092306|1|2|retrying
 retrying_task|2013092312|0|1|held
@@ -270,6 +268,8 @@ submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
 succeed_task|2013092312|0|1|held
+tidy|2013092300|1|1|succeeded
+tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
@@ -310,10 +310,8 @@ failed_task.2013092306 : status=failed, spawned=true
 failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092306 : status=succeeded, spawned=true
 force_restart.2013092312 : status=held, spawned=false
-restart_ok.2013092306 : status=running, spawned=true
-restart_ok.2013092312 : status=held, spawned=false
-restart_tidy.2013092300 : status=succeeded, spawned=true
-restart_tidy.2013092306 : status=waiting, spawned=false
+output_states.2013092306 : status=running, spawned=true
+output_states.2013092312 : status=held, spawned=false
 retrying_task.2013092306 : status=retrying, spawned=true
 retrying_task.2013092312 : status=held, spawned=false
 runahead_task.2013092306 : status=succeeded, spawned=true
@@ -325,6 +323,8 @@ send_a_broadcast_task.2013092312 : status=held, spawned=false
 submit_fail_task.2013092306 : status=submit-failed, spawned=false
 succeed_task.2013092306 : status=succeeded, spawned=true
 succeed_task.2013092312 : status=held, spawned=false
+tidy.2013092300 : status=succeeded, spawned=true
+tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
         cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<__DB_DUMP__
@@ -336,11 +336,9 @@ failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 force_restart|2013092312|0|1|held
-restart_ok|2013092300|1|1|succeeded
-restart_ok|2013092306|1|1|running
-restart_ok|2013092312|0|1|held
-restart_tidy|2013092300|1|1|succeeded
-restart_tidy|2013092306|0|1|held
+output_states|2013092300|1|1|succeeded
+output_states|2013092306|1|1|running
+output_states|2013092312|0|1|held
 retrying_task|2013092300|1|2|held
 retrying_task|2013092306|2|2|retrying
 retrying_task|2013092312|0|1|held
@@ -358,6 +356,8 @@ submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
 succeed_task|2013092312|0|1|held
+tidy|2013092300|1|1|succeeded
+tidy|2013092306|0|1|held
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|held
 __DB_DUMP__
@@ -383,9 +383,7 @@ Begin task states
 broadcast_task.2013092312 : status=held, spawned=false
 failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092312 : status=held, spawned=false
-restart_ok.2013092312 : status=held, spawned=false
-restart_tidy.2013092306 : status=succeeded, spawned=true
-restart_tidy.2013092312 : status=held, spawned=false
+output_states.2013092312 : status=held, spawned=false
 retrying_task.2013092306 : status=succeeded, spawned=true
 retrying_task.2013092312 : status=held, spawned=false
 runahead_task.2013092312 : status=held, spawned=false
@@ -393,6 +391,8 @@ running_task.2013092312 : status=held, spawned=false
 send_a_broadcast_task.2013092312 : status=held, spawned=false
 submit_fail_task.2013092312 : status=held, spawned=false
 succeed_task.2013092312 : status=held, spawned=false
+tidy.2013092306 : status=succeeded, spawned=true
+tidy.2013092312 : status=held, spawned=false
 waiting_task.2013092312 : status=held, spawned=false
 __STATE__
         sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
@@ -409,12 +409,9 @@ failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 force_restart|2013092312|0|1|held
-restart_ok|2013092300|1|1|succeeded
-restart_ok|2013092306|1|1|succeeded
-restart_ok|2013092312|0|1|held
-restart_tidy|2013092300|1|1|succeeded
-restart_tidy|2013092306|1|1|succeeded
-restart_tidy|2013092312|0|1|held
+output_states|2013092300|1|1|succeeded
+output_states|2013092306|1|1|succeeded
+output_states|2013092312|0|1|held
 retrying_task|2013092300|1|2|held
 retrying_task|2013092306|5|4|succeeded
 retrying_task|2013092312|0|1|held
@@ -433,6 +430,9 @@ submit_fail_task|2013092312|0|1|held
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
 succeed_task|2013092312|0|1|held
+tidy|2013092300|1|1|succeeded
+tidy|2013092306|1|1|succeeded
+tidy|2013092312|0|1|held
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|1|1|succeeded
 waiting_task|2013092312|0|1|held
