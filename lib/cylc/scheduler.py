@@ -514,11 +514,6 @@ class scheduler(object):
         else:
             return dump
     
-    def stop_submission_threads( self ):
-        self.pool.worker.quit = True
-        self.evworker.quit = True
-        self.poll_and_kill_worker.quit = True
-
      # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
@@ -1030,6 +1025,7 @@ class scheduler(object):
                 print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
                 raise SchedulerError, x
 
+        shutting_down = False
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
@@ -1155,9 +1151,22 @@ class scheduler(object):
             self.release_runahead()
 
             # initiate normal suite shutdown?
-            if self.check_suite_shutdown():
-                self.stop_submission_threads()
-                break
+            if shutting_down or self.check_suite_shutdown():
+                shutting_down = True
+                # tell command execution threads to exit
+                self.pool.worker.quit = True
+                self.evworker.quit = True
+                self.poll_and_kill_worker.quit = True
+                # exit once the command execution threads have exited
+                # (otherwise user commands and suite status updates will
+                # not be processed while remaining commands are executed)
+                if not self.pool.worker.is_alive() and \
+                        not self.evworker.is_alive() and \
+                        not self.poll_and_kill_worker.is_alive():
+                            break
+                # TODO - consider what parts of the main loop above can
+                # be ommitted if shutting_down is True.
+
             time.sleep(1)
 
         # END MAIN LOOP

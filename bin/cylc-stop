@@ -64,22 +64,21 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
 1/ cylc stop REG 
    Clean shutdown - cease submitting tasks then shut down after all
-current submitted or running tasks have finished *and* all queued event
-handlers and job poll or kill commands have executed.
+tasks currently in the submitted or running states have finished, and
+all queued event handlers and job poll and kill commands have executed.
 
 2/ cylc stop --quick REG 
    Quick shutdown - cease submitting tasks then shut down after all
 queued event handlers and job poll and kill commands have executed, but
-without waiting for any tasks currently in the submitted or running
-states to finish. If the suite is restarted orphaned tasks will be
-polled to determine their current status.
+do not wait for any tasks currently in the submitted or running states
+to finish. If the suite is restarted orphaned tasks will be polled to
+determine their status.
 
 3/ cylc stop --now REG 
    Immediate shutdown - shut down immediately regardless of any tasks
-currently in the submitted or running states, and without waiting for 
-queued event handlers and job poll and kill commands to executed.
-If the suite is restarted orphaned tasks will be polled to determine
-their current status.
+currently in the submitted or running states, and regardless of any 
+queued event handlers and job poll and kill commands. If the suite is
+restarted orphaned tasks will be polled to determine their status.
 
 3/ cylc stop --kill REG
    Initiate a clean shutdown (1/ above) after killing any current
