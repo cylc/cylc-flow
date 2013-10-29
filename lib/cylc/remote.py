@@ -46,8 +46,8 @@ class remrun( object ):
         # detect and replace host and owner options
         while argv:
             arg = argv.pop(0)
-            if arg.startswith("--owner="):
-                self.owner = arg.replace("--owner=", "")
+            if arg.startswith("--user="):
+                self.owner = arg.replace("--user=", "")
             elif arg.startswith("--host="):
                 self.host = arg.replace("--host=", "")
             elif arg == "--login":

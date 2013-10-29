@@ -303,7 +303,7 @@ class hkitem:
 
     def execute( self ):
         # construct the command to execute
-        command = os.path.join( os.environ['CYLC_DIR'], 'util', '__hk_' + self.operation ) 
+        command = os.path.join( os.environ['CYLC_DIR'], 'bin', '__hk_' + self.operation ) 
         # ... as a list, for the subprocess module
         comlist = [ command ]
 
