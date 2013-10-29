@@ -94,7 +94,6 @@ class request_handler( threading.Thread ):
                 break
         self.log.info(  str(self.getName()) + " exit (Request Handling)")
 
-
 class scheduler(object):
 
     def __init__( self, is_restart=False ):

@@ -34,20 +34,32 @@ class job_batcher( threading.Thread ):
 
         self.queue_name = queue_name 
         self.jobqueue = jobqueue
+        self.batches = []
         self.batch_size = int( batch_size )
         self.batch_delay = int( batch_delay )
         self.verbose = verbose
 
         self.log = logging.getLogger( 'main' )
+        # The quit flag allows the thread to exit
         self.quit = False
+        # The empty_me flag allows exit without emptying the job queue
+        self.empty_me = True
+        # The stop flag stops the thread processing queued jobs without
+        # actually exiting (this potentially allows us to "un-stop" a
+        # thread in the future)
         self.stop = False
+
+    def can_quit(self):
+        return self.quit and \
+                not ( self.empty_me and \
+                ( self.jobqueue.qsize() > 0 or self.batches ))
 
     def do_batch_delay( self, seconds ):
         # check regularly during the delay to see if the the suite has
         # been told to shut down.
         count = 0
         while count <= seconds:
-            if self.quit:
+            if self.can_quit():
                 break
             time.sleep(1) 
             count += 1
@@ -61,35 +73,35 @@ class job_batcher( threading.Thread ):
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
-            if self.quit:
+            if self.can_quit():
                 break
             if self.stop:
                 time.sleep(1)
                 continue
-            batches = []
+            self.batches = []
             batch = []
             # divide current queued jobs into batches
             while self.jobqueue.qsize() > 0:
                 if len(batch) < self.batch_size:
                     batch.append( self.jobqueue.get() )
                 else:
-                    batches.append( batch )
+                    self.batches.append( batch )
                     batch = []
             if len(batch) > 0:
-                batches.append( batch )
+                self.batches.append( batch )
 
             # submit each batch in sequence
-            n = len(batches) 
+            n = len(self.batches) 
             i = 0
             while True:
-                if self.quit:
+                if self.can_quit():
                     break
                 if self.stop:
                     time.sleep(1)
                     continue
                 i += 1
                 try:
-                    self.process_batch( batches.pop(0), i, n )  # pop left
+                    self.process_batch( self.batches.pop(0), i, n )  # pop left
                 except IndexError:
                     # no batches left
                     break
@@ -100,8 +112,9 @@ class job_batcher( threading.Thread ):
             # main loop sleep for the thread:
             time.sleep( 1 )
 
-        self.log.info(  self.thread_id + " exit (" + self.queue_name + ")" )
-
+        msg = self.thread_id + " exit (" + self.queue_name + ")"
+        self.log.info( msg )
+        print msg
 
     def process_batch( self, batch, i, n ):
         """Submit a batch of jobs in parallel, then wait and collect results."""
@@ -133,7 +146,7 @@ class job_batcher( threading.Thread ):
         n_succ = 0
         n_fail = 0
         while True:
-            if self.quit:
+            if self.can_quit():
                 break
             if self.stop:
                 time.sleep(1)
@@ -217,6 +230,7 @@ class task_batcher( job_batcher ):
         job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
         self.wireless = wireless
+        self.empty_me = False
 
     def submit_item( self, itask, jobinfo ):
         jobinfo['descr'] = itask.id + ' job submission'
