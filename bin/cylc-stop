@@ -62,20 +62,24 @@ class stop_poller( poller ):
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
-1/ Shut down a suite when all current submitted or running tasks have
-   finished. No new tasks will be submitted in the meantime, but
-   event handlers and job poll-and-kill commands will, until shutdown.
+1/ Clean shutdown - cease submitting tasks, then shut down after all
+current submitted or running tasks have finished *and* all queued event
+handlers and job poll or kill commands have executed. Use [--kill] to
+kill active tasks before shutdown.
 
-2/ With [--now], shut down immediately. Any orphaned tasks will be
-   polled on restarting the suite to determine their status.
+2/ Quick shutdown [--now] - cease submitting tasks, then shut down
+after all queued event handlers and job poll and kill commands have
+executed, but do not wait for current submitted or running tasks to
+finish. If the suite is restarted such orphaned tasks will be polled to
+determine their current status.
 
-3/ With [STOP], shut down a suite AFTER one of the following events:
-    a/ all tasks have passed the TAG STOP (cycle time or async tag)
-    b/ the clock time has reached STOP (YYYY/MM/DD-HH:mm)
-    c/ the task STOP (TASK.TAG) has finished
+3/ With [STOP], initiate a clean shutdown (1/ above) as soon as the
+given condition is satisfied: a/ all tasks have passed STOP (cycle
+time or async tag); b/ the clock time has reached STOP
+(YYYY/MM/DD-HH:mm); or c/ the task STOP (TASK.TAG) has finished. 
 
-With -k/--kill tasks currently submitted or running will be killed
-before the suite shuts down.
+4/ With [--kill], initiate a clean shutdown (1/ above) after killing any
+current submitting or running tasks.
 
 The command exits immediately after queueing the stop request unless
 polling mode (-w/--wait) forces it to wait for the suite to stop.""",
@@ -85,11 +89,12 @@ polling mode (-w/--wait) forces it to wait for the suite to stop.""",
                         c/ TASK (task ID).""")] )
 
 parser.add_option( "--now", 
-        help="Shut down immediately.",
+        help="Shut down as soon as possible regardless of "
+        "current submitted or running tasks.",
         action="store_true", default=False, dest="shutdownnow" )
 
 parser.add_option( "-k", "--kill", 
-        help="Kill submitted and running tasks before shutdown.",
+        help="Shut down after Killing current submitted or running tasks.",
         action="store_true", default=False, dest="kill" )
 
 stop_poller.add_to_cmd_options( parser )
@@ -107,7 +112,9 @@ if len( args ) == 2:
         options.kill = False
  
 if options.shutdownnow and options.kill:
-    print >> sys.stderr, "WARNING: ignoring --now ( not compatible with --kill)"
+    # --kill requires a clean shut down in order to confirm the kill
+    # commands worked.
+    print >> sys.stderr, "WARNING: ignoring --now (not compatible with --kill)"
     options.shutdownnow = False
 
 if options.wait:
