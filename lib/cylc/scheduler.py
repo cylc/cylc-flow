@@ -187,6 +187,7 @@ class scheduler(object):
         # control commands to expose indirectly via a command queue
         self.control_commands = {
                 'stop cleanly'          : self.command_stop_cleanly,
+                'stop quickly'          : self.command_stop_quickly,
                 'stop now'              : self.command_stop_now,
                 'stop after tag'        : self.command_stop_after_tag,
                 'stop after clock time' : self.command_stop_after_clock_time,
@@ -530,6 +531,12 @@ class scheduler(object):
         self.suite_halt = True
 
     def command_stop_now( self ):
+        self.hold_suite()
+        self.suite_halt_now = True
+        self.evworker.empty_me = False
+        self.poll_and_kill_worker.empty_me = False
+
+    def command_stop_quickly( self ):
         self.hold_suite()
         self.suite_halt_now = True
 
