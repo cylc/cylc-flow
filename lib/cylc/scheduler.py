@@ -382,7 +382,7 @@ class scheduler(object):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
         if n > 0:
-            print 'Processing ~' + str(n) + ' queued commands'
+            print 'Processing ' + str(n) + ' queued command(s)'
         else:
             return
 
@@ -522,7 +522,7 @@ class scheduler(object):
      # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
-        self.pool.worker.stop( empty_before_exit=False )
+        self.pool.worker.request_stop( empty_before_exit=False )
         if kill_first:
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently( 'submitted', 'running' ):
@@ -531,12 +531,12 @@ class scheduler(object):
         self.threads_stopped = False
 
     def command_stop_quickly( self ):
-        self.pool.worker.stop( empty_before_exit=False )
+        self.pool.worker.request_stop( empty_before_exit=False )
         self.do_shutdown = 'quick'
         self.threads_stopped = False
 
     def command_stop_now( self ):
-        self.pool.worker.stop( empty_before_exit=False )
+        self.pool.worker.request_stop( empty_before_exit=False )
         self.do_shutdown = 'now'
         self.threads_stopped = False
 
@@ -910,7 +910,7 @@ class scheduler(object):
             self.event_queue = Queue()
             task.task.event_queue = self.event_queue
             self.eventq_worker = event_batcher( 
-                    'Event Handler Submission', self.event_queue, 
+                    'Event Handlers', self.event_queue, 
                     self.config.cfg['cylc']['event handler submission']['batch size'],
                     self.config.cfg['cylc']['event handler submission']['delay between batches'],
                     self.suite, self.verbose )
@@ -919,7 +919,7 @@ class scheduler(object):
             self.poll_and_kill_queue = Queue()
             task.task.poll_and_kill_queue = self.poll_and_kill_queue
             self.pollkq_worker = poll_and_kill_batcher( 
-                    'Poll and Kill Command Submission', self.poll_and_kill_queue, 
+                    'Poll & Kill Commands', self.poll_and_kill_queue, 
                     self.config.cfg['cylc']['poll and kill command submission']['batch size'],
                     self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
                     self.suite, self.verbose )
@@ -1167,8 +1167,8 @@ class scheduler(object):
                 # that 'stop --now' can override other stops in progress.
                 if not self.threads_stopped and self.do_shutdown == 'now':
                     self.threads_stopped = True
-                    self.eventq_worker.stop( empty_before_exit=False )
-                    self.pollkq_worker.stop( empty_before_exit=False )
+                    self.eventq_worker.request_stop( empty_before_exit=False )
+                    self.pollkq_worker.request_stop( empty_before_exit=False )
                 elif not self.threads_stopped and \
                         ( self.do_shutdown == 'quick' or \
                         self.do_shutdown == 'clean' and self.no_active_tasks() ):
@@ -1177,8 +1177,8 @@ class scheduler(object):
                     # while there are still active tasks, because they
                     # could exit early if their queues temporarily empty
                     # while the final tasks are running.
-                    self.eventq_worker.stop( empty_before_exit=True )
-                    self.pollkq_worker.stop( empty_before_exit=True )
+                    self.eventq_worker.request_stop( empty_before_exit=True )
+                    self.pollkq_worker.request_stop( empty_before_exit=True )
 
             if self.do_shutdown and \
                     not self.pool.worker.is_alive() and \
@@ -1190,12 +1190,7 @@ class scheduler(object):
 
         # END MAIN LOOP
 
-        msg = "Suite shutting down at " + str(datetime.datetime.now())
-        print msg
-        self.log.info( msg )
-        if not self.no_active_tasks():
-            self.log.warning( "some active tasks will be orphaned" )
- 
+
         if self.options.genref:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
@@ -1293,12 +1288,14 @@ class scheduler(object):
         return process
 
     def shutdown( self, reason='' ):
-        print "\nSuite shutting down ",
-        if reason != '':
-            print '(' + reason + ')'
-        else:
-            print
-        
+        msg = "Suite shutting down at " + str(datetime.datetime.now())
+        if reason:
+            msg += ' (' + reason + ')'
+        print msg
+        self.log.info( msg )
+        if not self.no_active_tasks():
+            self.log.warning( "some active tasks will be orphaned" )
+       
         if self.pool:
             self.pool.worker.quit = True # (should be done already)
             self.pool.worker.join()

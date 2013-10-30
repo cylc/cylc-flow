@@ -26,6 +26,11 @@ from Queue import Empty
 
 from cylc.command_env import cv_scripting_sl
 
+class QuitThread( Exception ):
+    # used to bust out of multiple levels of loops and functions
+    pass
+
+
 class job_batcher( threading.Thread ):
     "Batch-submit queued subprocesses in parallel, with a delay between batches."
 
@@ -46,69 +51,81 @@ class job_batcher( threading.Thread ):
         # Do we need to empty the queue before exiting?
         self.empty_before_exit = True
 
-    def stop( self, empty_before_exit=None ):
+    def request_stop( self, empty_before_exit=None ):
+        # called from the main thread
+        if not self.is_alive():
+            return
+
         self.quit = True
         if empty_before_exit is not None:
             self.empty_before_exit = empty_before_exit
-        print "Stopping " + self.queue_name,
+
+        # count remaining items
+        rem = self.jobqueue.qsize()
+        for b in self.batches:
+            rem += len(b)
+
+        msg = "Requesting " + self.queue_name + " stop - "
         if self.empty_before_exit:
-            print "after ~" + str(self.jobqueue.qsize()) + " more items"
+            msg += "after remaining items (currently " + str(rem) + ")"
         else:
-            print
-            
-    def can_quit(self):
-        return self.quit and not ( self.empty_before_exit and \
-                ( self.jobqueue.qsize() > 0 or self.batches ))
+            msg += "ignoring remaining items (currently " + str(rem) + ")"
+        print msg
+
+    def do_quit(self):
+        if self.quit and not ( self.empty_before_exit and \
+                ( self.jobqueue.qsize() > 0 or self.batches )):
+            raise QuitThread
 
     def do_batch_delay( self, seconds ):
         # check regularly during the delay to see if the the suite has
         # been told to shut down.
         count = 0
         while count <= seconds:
-            if self.can_quit():
-                break
+            self.do_quit()
             time.sleep(1) 
             count += 1
 
     def run( self ):
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
-        while True:
-            if self.can_quit():
-                break
-            self.batches = []
-            batch = []
-            # divide current queued jobs into batches
+        try:
             while True:
-                try:
-                    if len(batch) < self.batch_size:
-                        batch.append( self.jobqueue.get(False) )
+                self.do_quit()
+                self.batches = []
+                batch = []
+                # divide current queued jobs into batches
+                while True:
+                    try:
+                        if len(batch) < self.batch_size:
+                            batch.append( self.jobqueue.get(False) )
+                        else:
+                            self.batches.append( batch )
+                            batch = []
+                    except Empty:
+                        break
+                if len(batch) > 0:
+                    self.batches.append( batch )
+    
+                # submit each batch in sequence
+                n = len(self.batches) 
+                i = 0
+                while True:
+                    self.do_quit()
+                    i += 1
+                    try:
+                        self.process_batch( self.batches.pop(0), i, n )  # pop left
+                    except IndexError:
+                        # no batches left
+                        break
                     else:
-                        self.batches.append( batch )
-                        batch = []
-                except Empty:
-                    break
-            if len(batch) > 0:
-                self.batches.append( batch )
-
-            # submit each batch in sequence
-            n = len(self.batches) 
-            i = 0
-            while True:
-                if self.can_quit():
-                    break
-                i += 1
-                try:
-                    self.process_batch( self.batches.pop(0), i, n )  # pop left
-                except IndexError:
-                    # no batches left
-                    break
-                else:
-                    # some batches left
-                    self.do_batch_delay( self.batch_delay )
-
-            # main loop sleep for the thread:
-            time.sleep( 1 )
+                        # some batches left
+                        self.do_batch_delay( self.batch_delay )
+    
+                # main loop sleep for the thread:
+                time.sleep( 1 )
+        except QuitThread:
+            pass
 
         msg = self.thread_id + " exit (" + self.queue_name + ")"
         self.log.info( msg )
@@ -145,8 +162,7 @@ class job_batcher( threading.Thread ):
         n_fail = 0
         while True:
             for jobinfo in jobs:
-                if self.can_quit():
-                    break
+                self.do_quit()
                 res = self.follow_up_item( jobinfo )
                 if res is None:
                     # process not done yet
@@ -163,8 +179,9 @@ class job_batcher( threading.Thread ):
                     self.item_succeeded_hook( jobinfo )
                 jobs.remove( jobinfo )
                 self.jobqueue.task_done()
-            if not jobs or self.can_quit():
+            if not jobs:
                 break
+            self.do_quit()
             time.sleep(1)
         after = datetime.datetime.now()
 
