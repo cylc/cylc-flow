@@ -67,6 +67,7 @@ class result:
         self.reason = reason
         self.value = value
 
+
 class SchedulerError( Exception ):
     """
     Attributes:
@@ -93,6 +94,7 @@ class request_handler( threading.Thread ):
             if self.quit:
                 break
         self.log.info(  str(self.getName()) + " exit (Request Handling)")
+
 
 class scheduler(object):
 
@@ -1203,7 +1205,9 @@ class scheduler(object):
                 self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
-        # process resolved dependencies (what actually triggers off what at run time).
+        # process resolved dependencies (what actually triggers off what
+        # at run time). Note 'triggered off' means 'prerequisites
+        # satisfied by', but necessarily 'started running' too.
         for itask in tasks:
             if self.runtime_graph_on:
                 self.runtime_graph.update( itask, self.get_oldest_c_time(), self.get_oldest_async_tag() )
@@ -1943,12 +1947,13 @@ class scheduler(object):
         elif self.stop_task:
             name, tag = self.stop_task.split(TaskID.DELIM)
             for itask in self.pool.get_tasks():
-                if itask.name == name:
+                iname, itag = itask.id.split(TaskID.DELIM)
+                if itask.name == name and int(itag) == int(tag):
+                    # found the stop task
                     if itask.state.is_currently('succeeded'):
-                        iname, itag = itask.id.split(TaskID.DELIM)
-                        if int(itag) > int(tag):
-                            self.log.info( "Stop task " + stop_task + " finished" )
-                            stop = True
+                        self.log.info( "Stop task " + self.stop_task + " finished" )
+                        stop = True
+                    break
 
         else:
             # all cycling tasks are held past the suite stop cycle and
@@ -1987,11 +1992,11 @@ class scheduler(object):
             if stop:
                 msg = "Stopping: "
                 if i_fut:
-                    msg += "all future-triggered tasks have run as far as possible toward " + self.stop_tag
+                    msg += "\n  + all future-triggered tasks have run as far as possible toward " + self.stop_tag
                 if i_cyc:
-                    msg += "all normal cycling tasks have spawned past the final cycle " + self.stop_tag
+                    msg += "\n  + all cycling tasks have spawned past the final cycle " + self.stop_tag
                 if i_asy:
-                    msg += "All non-cycling tasks have succeeded"
+                    msg += "\n  + all non-cycling tasks have succeeded"
                 print msg
                 self.log.info( msg )
 
