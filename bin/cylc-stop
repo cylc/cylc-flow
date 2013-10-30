@@ -105,7 +105,7 @@ parser.add_option( "-k", "--kill",
         "in the submitted or running states.",
         action="store_true", default=False, dest="kill" )
 
-parser.add_option( "-q", "--quick", 
+parser.add_option( "-Q", "--quick", 
         help="Shut down after Killing current submitted or running tasks.",
         action="store_true", default=False, dest="quick" )
 
