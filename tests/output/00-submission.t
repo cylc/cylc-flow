@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 cylc run $SUITE_NAME
-while [ $(cylc ping $SUITE_NAME) ]; do
+while $(cylc ping $SUITE_NAME > /dev/null 2>&1); do
     sleep 1
 done
 TEST_NAME=$TEST_NAME_BASE-check
