@@ -22,11 +22,12 @@ import datetime
 import logging
 import sys
 import time
+from Queue import Empty
 
 from cylc.command_env import cv_scripting_sl
 
 class job_batcher( threading.Thread ):
-    """Batch-submit queued subprocesses in parallel, with a delay between batches."""
+    "Batch-submit queued subprocesses in parallel, with a delay between batches."
 
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ):
         threading.Thread.__init__(self)
@@ -42,16 +43,21 @@ class job_batcher( threading.Thread ):
         self.log = logging.getLogger( 'main' )
         # The quit flag allows the thread to exit
         self.quit = False
-        # The empty_me flag allows exit without emptying the job queue
-        self.empty_me = True
-        # The stop flag stops the thread processing queued jobs without
-        # actually exiting (this potentially allows us to "un-stop" a
-        # thread in the future)
-        self.stop = False
+        # Do we need to empty the queue before exiting?
+        self.empty_before_exit = True
 
+    def stop( self, empty_before_exit=None ):
+        self.quit = True
+        if empty_before_exit is not None:
+            self.empty_before_exit = empty_before_exit
+        print "Stopping " + self.queue_name,
+        if self.empty_before_exit:
+            print "after ~" + str(self.jobqueue.qsize()) + " more items"
+        else:
+            print
+            
     def can_quit(self):
-        return self.quit and \
-                not ( self.empty_me and \
+        return self.quit and not ( self.empty_before_exit and \
                 ( self.jobqueue.qsize() > 0 or self.batches ))
 
     def do_batch_delay( self, seconds ):
@@ -65,28 +71,23 @@ class job_batcher( threading.Thread ):
             count += 1
 
     def run( self ):
-        """The thread run method."""
-
-        # NOTE: Queue.get() blocks if the queue is empty
-        # AND: Queue.task_done() doesn't block the producer; it is for
-        # queue.join() to block until all queued data is processed.
         self.log.info(  self.thread_id + " start (" + self.queue_name + ")")
 
         while True:
             if self.can_quit():
                 break
-            if self.stop:
-                time.sleep(1)
-                continue
             self.batches = []
             batch = []
             # divide current queued jobs into batches
-            while self.jobqueue.qsize() > 0:
-                if len(batch) < self.batch_size:
-                    batch.append( self.jobqueue.get() )
-                else:
-                    self.batches.append( batch )
-                    batch = []
+            while True:
+                try:
+                    if len(batch) < self.batch_size:
+                        batch.append( self.jobqueue.get(False) )
+                    else:
+                        self.batches.append( batch )
+                        batch = []
+                except Empty:
+                    break
             if len(batch) > 0:
                 self.batches.append( batch )
 
@@ -96,9 +97,6 @@ class job_batcher( threading.Thread ):
             while True:
                 if self.can_quit():
                     break
-                if self.stop:
-                    time.sleep(1)
-                    continue
                 i += 1
                 try:
                     self.process_batch( self.batches.pop(0), i, n )  # pop left
@@ -146,12 +144,9 @@ class job_batcher( threading.Thread ):
         n_succ = 0
         n_fail = 0
         while True:
-            if self.can_quit():
-                break
-            if self.stop:
-                time.sleep(1)
-                continue
             for jobinfo in jobs:
+                if self.can_quit():
+                    break
                 res = self.follow_up_item( jobinfo )
                 if res is None:
                     # process not done yet
@@ -168,7 +163,7 @@ class job_batcher( threading.Thread ):
                     self.item_succeeded_hook( jobinfo )
                 jobs.remove( jobinfo )
                 self.jobqueue.task_done()
-            if len( jobs ) == 0:
+            if not jobs or self.can_quit():
                 break
             time.sleep(1)
         after = datetime.datetime.now()
@@ -187,7 +182,6 @@ class job_batcher( threading.Thread ):
   All """ + str(batch_size) + " items succeeded"
         self.log.debug( self.queue_name + ": " + msg )
 
-
     def submit_item( self, item, jobinfo ):
         """
         Submit a single item and update the jobinfo structure above. Any
@@ -195,7 +189,6 @@ class job_batcher( threading.Thread ):
         also be added to jobinfo['data'] here.
         """
         raise SystemExit( "ERROR: job_batcher.submit_item() must be overridden" )
- 
 
     def follow_up_item( self, jobinfo ):
         """Determine the result of a single process without blocking."""
@@ -209,18 +202,16 @@ class job_batcher( threading.Thread ):
                         print >>handle, "[%s] %s" % (jobinfo["descr"], line)
         return res
 
-
     def item_succeeded_hook( self, jobinfo ):
         #self.log.info( jobinfo['descr'] + ' succeeded' )
         pass
-
 
     def item_failed_hook( self, jobinfo ):
         self.log.warning( jobinfo['descr'] + ' failed' )
 
 
 class task_batcher( job_batcher ):
-    """Batched task job submission; item is a task proxy object."""
+    "Batched task job submission; item is a task proxy object."
 
     # Task state changes as a result of job submission are effected by
     # sending fake task messages to be processed in the main thread - we
@@ -230,7 +221,7 @@ class task_batcher( job_batcher ):
         job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
         self.run_mode = run_mode
         self.wireless = wireless
-        self.empty_me = False
+        self.empty_before_exit = False
 
     def submit_item( self, itask, jobinfo ):
         jobinfo['descr'] = itask.id + ' job submission'
@@ -335,7 +326,6 @@ class poll_and_kill_batcher( job_batcher ):
         else:
             job_batcher.process_batch( self, batch, i, n )
 
-
     def submit_item( self, item, jobinfo ):
         command, itask, jtype = item
         jobinfo['data'] = itask
@@ -350,14 +340,12 @@ class poll_and_kill_batcher( job_batcher ):
         else:
             return True
 
-
     def item_failed_hook( self, jobinfo ):
         job_batcher.item_failed_hook( self, jobinfo )
         print >> sys.stderr, jobinfo['err']
         print jobinfo['out']
         itask = jobinfo['data']
         itask.message_queue.put( 'CRITICAL', jobinfo['jtype'] + ' command failed' )
- 
 
     def item_succeeded_hook( self, jobinfo ):
         job_batcher.item_succeeded_hook( self, jobinfo )

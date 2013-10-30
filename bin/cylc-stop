@@ -64,30 +64,27 @@ parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
 1/ cylc stop REG 
    Clean shutdown - cease submitting tasks then shut down after all
-tasks currently in the submitted or running states have finished, and
-all queued event handlers and job poll and kill commands have executed.
+submitted or running tasks have finished and all queued event handlers
+and job poll and kill commands have executed.
 
 2/ cylc stop --quick REG 
-   Quick shutdown - cease submitting tasks then shut down after all
-queued event handlers and job poll and kill commands have executed, but
-do not wait for any tasks currently in the submitted or running states
-to finish. If the suite is restarted orphaned tasks will be polled to
-determine their status.
+   Quick shutdown - cease submitting tasks and shut down without waiting
+for submitted or running tasks to finish, but do wait for remaining
+event handlers and job poll and kill commands to be executed.
 
 3/ cylc stop --now REG 
-   Immediate shutdown - shut down immediately regardless of any tasks
-currently in the submitted or running states, and regardless of any 
-queued event handlers and job poll and kill commands. If the suite is
-restarted orphaned tasks will be polled to determine their status.
+   Immediate shutdown - cease submitting tasks and shut down without
+waiting for submitted or running tasks to finish, or for remaining
+queued event handlers and job poll and kill commands to execute.
 
-3/ cylc stop --kill REG
+4/ cylc stop --kill REG
    Initiate a clean shutdown (1/ above) after killing any current
 submitted or running tasks.
 
-4/ cylc stop REG STOP
+5/ cylc stop REG STOP
    Initiate a clean shutdown (1/ above) as soon as all tasks have passed
-cycle time STOP, or wall clock time STOP (YYYY/MM/DD-HH:mm), or task ID 
-STOP has finished. 
+cycle time or wall clock time STOP, or after task ID STOP has finished.
+Wall clock time format is YYYY/MM/DD-HH:mm.
 
 The command exits immediately after queueing the stop request unless
 polling mode (-w/--wait) forces it to wait for the suite to stop.""",
