@@ -1537,6 +1537,10 @@ class config( object ):
         elif self.cfg['scheduling']['initial cycle time'] and not self.is_restart:
                 # Use suite.rc initial cycle time
             ict = str(self.cfg['scheduling']['initial cycle time'])
+        elif self.is_restart:
+            # We may want to put in some handling for cases of changing the
+            # initial cycle via restart (accidentally or otherwise).
+            ict = str(self.cfg['scheduling']['initial cycle time'])
         else:
             ict = None
 
