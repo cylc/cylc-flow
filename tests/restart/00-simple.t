@@ -227,7 +227,7 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<__DB_DUMP__
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -247,7 +247,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
@@ -314,7 +314,7 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<__DB_DUMP__
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|held
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -335,7 +335,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
@@ -387,7 +387,7 @@ cmp_ok $TEST_DIR/states-db <<__DB_DUMP__
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded
 broadcast_task|2013092312|0|1|held
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -408,7 +408,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 submit_fail_task|2013092312|0|1|held
 succeed_task|2013092300|1|1|succeeded

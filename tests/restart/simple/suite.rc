@@ -25,12 +25,13 @@
                 output_states => POST_RESTART_TASKS
                 POST_RESTART_TASKS:finish-all & running_task => tidy
                 send_a_broadcast_task => broadcast_task
-                
+                tidy => !FAIL_TASKS
                 runahead_task
             """
 [runtime]
     [[root]]
         command scripting = "sleep 1"
+    [[FAIL_TASKS]]
     [[RESTART_TASKS]]
         {%- if USE_LOADLEVELER %}
         [[[job submission]]]
@@ -53,14 +54,14 @@
         """
         description = "Broadcast setup task"
     [[failed_task]]
-        inherit = PRE_RESTART_TASKS
+        inherit = PRE_RESTART_TASKS, FAIL_TASKS
         command scripting = "exit 1"
         description = "Failed state task for restart"
     [[succeed_task]]
         inherit = PRE_RESTART_TASKS
         description = "Succeeded state task for restart"
     [[submit_fail_task]]
-        inherit = PRE_RESTART_TASKS
+        inherit = PRE_RESTART_TASKS, FAIL_TASKS
         description = "Submit-fail state task for restart"
         [[[job submission]]] 
             method = at
@@ -147,7 +148,7 @@
         description = "Wait for the restart to complete"
     [[tidy]]
         command scripting = """
-            cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME '.*fail.*task' $CYLC_TASK_CYCLE_TIME
+            #cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME '.*fail.*task' $CYLC_TASK_CYCLE_TIME
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
                 touch {{ TEST_DIR }}/suite-stopping
             fi
