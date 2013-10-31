@@ -148,7 +148,6 @@
         description = "Wait for the restart to complete"
     [[tidy]]
         command scripting = """
-            #cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME '.*fail.*task' $CYLC_TASK_CYCLE_TIME
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
                 touch {{ TEST_DIR }}/suite-stopping
             fi
