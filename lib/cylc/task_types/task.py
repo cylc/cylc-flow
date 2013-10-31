@@ -1254,6 +1254,11 @@ class task( object ):
 
         launcher = self.launcher
         if not launcher:
+            if self.user_at_host:
+                if "@" in self.user_at_host:
+                    self.task_owner, self.task_host = user_at_host.split('@', 1)
+                else:
+                    self.task_host = self.user_at_host
             launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_poll_command' ):
@@ -1262,7 +1267,7 @@ class task( object ):
             return
 
         cmd = launcher.get_job_poll_command( self.submit_method_id )
-        if self.user_at_host != user + '@localhost':
+        if self.user_at_host not in [user + '@localhost', 'localhost']:
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
 
