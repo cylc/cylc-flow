@@ -27,11 +27,10 @@ export TEST_DIR
 # select a compute node and have that same host used by the suite.
 export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
 export CYLC_LL_TEST_SITE_DIRECTIVES=$(cylc get-global-config -i '[test battery][directives][loadleveler directives]')
-if [[ -n $CYLC_LL_TEST_TASK_HOST ]]
+if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != 'None' ]]
 then
     # check the host is reachable
-    if [[ $(ping -c 1 $CYLC_LL_TEST_TASK_HOST) ]]
-    then
+    if ping -c 1 $CYLC_LL_TEST_TASK_HOST 1>/dev/null 2>&1; then
         install_suite $TEST_NAME_BASE simple
 #-------------------------------------------------------------------------------
 # copy across passphrase as not all remote hosts will have a shared file system
@@ -65,7 +64,7 @@ __SCRIPT__
         for state_file in $(ls $TEST_DIR/state*); do
             sed -i "/^suite time : /d" $state_file
         done
-        cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<__STATE__
+        cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -104,7 +103,7 @@ succeed_task.2013092306 : status=runahead, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
-        cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
@@ -125,7 +124,7 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-post-restart-2013092300 <<__STATE__
+        cmp_ok $TEST_DIR/state-post-restart-2013092300 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -165,7 +164,7 @@ succeed_task.2013092306 : status=runahead, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
-        cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
@@ -187,7 +186,7 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<__STATE__
+        cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -240,10 +239,10 @@ tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
-        cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -263,7 +262,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
@@ -273,7 +272,7 @@ tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-post-restart-2013092306 <<__STATE__
+        cmp_ok $TEST_DIR/state-post-restart-2013092306 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -327,10 +326,10 @@ tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
-        cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|held
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -351,7 +350,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
@@ -361,7 +360,7 @@ tidy|2013092306|0|1|held
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|held
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state <<__STATE__
+        cmp_ok $TEST_DIR/state <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -399,11 +398,11 @@ __STATE__
          "select name, cycle, submit_num, try_num, status
           from task_states
           order by name, cycle;" > $TEST_DIR/states-db
-        cmp_ok $TEST_DIR/states-db <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded
 broadcast_task|2013092312|0|1|held
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -424,7 +423,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 submit_fail_task|2013092312|0|1|held
 succeed_task|2013092300|1|1|succeeded
@@ -439,8 +438,7 @@ waiting_task|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
         purge_suite $SUITE_NAME
-        if [[ -n $SUITE_NAME ]]
-        then
+        if [[ -n $SUITE_NAME ]]; then
             ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
         fi
     else

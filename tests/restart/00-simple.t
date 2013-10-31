@@ -29,7 +29,8 @@ cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
-# Sleep until penultimate task (the suite stops and starts, so port files alone won't help)
+# Sleep until penultimate task (the suite stops and starts, so port files alone
+# won't help)
 TEST_NAME=$TEST_NAME_BASE-monitor
 START_TIME=$(date +%s)
 export START_TIME SUITE_NAME
@@ -49,7 +50,7 @@ cp $state_dir/state $TEST_DIR/
 for state_file in $(ls $TEST_DIR/state*); do
     sed -i "/^suite time : /d" $state_file
 done
-cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<__STATE__
+cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -88,7 +89,7 @@ succeed_task.2013092306 : status=runahead, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<__DB_DUMP__
+cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
@@ -109,7 +110,7 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-cmp_ok $TEST_DIR/state-post-restart-2013092300 <<__STATE__
+cmp_ok $TEST_DIR/state-post-restart-2013092300 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -149,7 +150,7 @@ succeed_task.2013092306 : status=runahead, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<__DB_DUMP__
+cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
@@ -171,7 +172,7 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<__STATE__
+cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -224,7 +225,7 @@ tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<__DB_DUMP__
+cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
 failed_task|2013092300|1|1|failed
@@ -257,7 +258,7 @@ tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
-cmp_ok $TEST_DIR/state-post-restart-2013092306 <<__STATE__
+cmp_ok $TEST_DIR/state-post-restart-2013092306 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -311,7 +312,7 @@ tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<__DB_DUMP__
+cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|held
 failed_task|2013092300|1|1|failed
@@ -345,7 +346,7 @@ tidy|2013092306|0|1|held
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|held
 __DB_DUMP__
-cmp_ok $TEST_DIR/state <<__STATE__
+cmp_ok $TEST_DIR/state <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -383,7 +384,7 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
   order by name, cycle;" > $TEST_DIR/states-db
-cmp_ok $TEST_DIR/states-db <<__DB_DUMP__
+cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded
 broadcast_task|2013092312|0|1|held
