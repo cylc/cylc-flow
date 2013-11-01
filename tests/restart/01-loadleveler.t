@@ -133,7 +133,7 @@ force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|0|1|runahead
 output_states|2013092300|1|1|running
 output_states|2013092306|0|1|runahead
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|2|2|retrying
 retrying_task|2013092306|0|1|runahead
 runahead_task|2013092300|1|1|succeeded
 runahead_task|2013092306|0|1|runahead
@@ -211,7 +211,7 @@ force_restart|2013092306|1|1|running
 force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|5|4|succeeded
 retrying_task|2013092306|1|2|retrying
 retrying_task|2013092312|0|1|held
 runahead_task|2013092300|1|1|succeeded
@@ -246,7 +246,7 @@ force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
 output_states|2013092312|0|1|held
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|5|4|succeeded
 retrying_task|2013092306|2|2|retrying
 retrying_task|2013092312|0|1|held
 runahead_task|2013092300|1|1|succeeded
@@ -319,7 +319,7 @@ force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
 output_states|2013092312|0|1|held
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|5|4|succeeded
 retrying_task|2013092306|5|4|succeeded
 retrying_task|2013092312|0|1|held
 runahead_task|2013092300|1|1|succeeded
