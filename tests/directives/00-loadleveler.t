@@ -26,11 +26,9 @@ set_test_number 2
 # select a compute node and have that same host used by the suite.
 export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
 export CYLC_LL_TEST_SITE_DIRECTIVES=$(cylc get-global-config -i '[test battery][directives][loadleveler directives]')
-if [[ -n $CYLC_LL_TEST_TASK_HOST ]]
-then
+if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != None ]]; then
     # check the host is reachable
-    if [[ $(ping -c 1 $CYLC_LL_TEST_TASK_HOST) ]]
-    then
+    if ping -c 1 $CYLC_LL_TEST_TASK_HOST 1>/dev/null 2>&1; then
         install_suite $TEST_NAME_BASE loadleveler
 #-------------------------------------------------------------------------------
 # copy across passphrase as not all remote hosts will have a shared file system
@@ -45,8 +43,7 @@ then
         suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
         purge_suite $SUITE_NAME
-        if [[ -n $SUITE_NAME ]]
-        then
+        if [[ -n $SUITE_NAME ]]; then
             ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
         fi
     else
@@ -56,3 +53,4 @@ else
     skip 2 '[directive tests]loadleveler host not defined'
 fi
 unset $CYLC_LL_TEST_TASK_HOST
+
