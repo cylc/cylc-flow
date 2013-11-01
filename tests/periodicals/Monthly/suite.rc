@@ -3,8 +3,8 @@
        required run mode = live
        live mode suite timeout = 1.0 # minutes
 [scheduling]
-    initial cycle time = 2010010100
-    final cycle time = 2010110500
+    initial cycle time = 201002
+    final cycle time = 201008
     runahead limit = 24 # enforce sequential running
     [[dependencies]]
         [[[Monthly(201001,3)]]]
