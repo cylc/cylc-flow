@@ -1,54 +1,40 @@
-2013/10/15 12:56:32 INFO - Thread-2 start (Event Handler Submission)
-2013/10/15 12:56:32 INFO - Thread-3 start (Poll and Kill Command Submission)
-2013/10/15 12:56:32 INFO - port:7766
-2013/10/15 12:56:32 INFO - Suite starting at 2013-10-15 12:56:32.684141
-2013/10/15 12:56:32 INFO - Log event clock: real time
-2013/10/15 12:56:32 INFO - Run mode: live
-2013/10/15 12:56:32 INFO - Start tag: 2010010100
-2013/10/15 12:56:32 INFO - Stop tag: 2010010500
-2013/10/15 12:56:32 INFO - Thread-4 start (Job Submission)
-2013/10/15 12:56:32 INFO - Thread-5 start (Request Handling)
-2013/10/15 12:56:32 INFO - Cold Start 2010010100
-2013/10/15 12:56:32 INFO - [a.2010010100] -(setting:queued)
-2013/10/15 12:56:32 INFO - [a.2010010100] -(setting:submitting)
-2013/10/15 12:56:32 INFO - [a.2010010100] -triggered off []
-2013/10/15 12:56:33 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
-2013/10/15 12:56:34 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
-2013/10/15 12:56:34 INFO - [a.2010010100] -(setting:submitted)
-2013/10/15 12:56:34 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=19672
-2013/10/15 12:56:35 INFO - [a.2010010300] -HOLDING (beyond runahead limit)
-2013/10/15 12:56:35 INFO - [a.2010010300] -(setting:runahead)
-2013/10/15 12:56:35 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-10-15T12:56:34
-2013/10/15 12:56:35 INFO - [a.2010010100] -(setting:running)
-2013/10/15 12:56:36 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-10-15T12:56:36
-2013/10/15 12:56:36 INFO - [a.2010010100] -(setting:succeeded)
-2013/10/15 12:56:36 INFO - [a.2010010300] -(setting:waiting)
-2013/10/15 12:56:37 INFO - [a.2010010300] -(setting:queued)
-2013/10/15 12:56:37 INFO - [a.2010010300] -(setting:submitting)
-2013/10/15 12:56:37 INFO - [a.2010010300] -triggered off []
-2013/10/15 12:56:38 INFO - [a.2010010300] -(current:submitting)> a.2010010300 submitting now
-2013/10/15 12:56:38 INFO - [a.2010010300] -(current:submitting)> a.2010010300 submission succeeded
-2013/10/15 12:56:38 INFO - [a.2010010300] -(setting:submitted)
-2013/10/15 12:56:38 INFO - [a.2010010300] -(current:submitted)> a.2010010300 submit_method_id=19783
-2013/10/15 12:56:39 INFO - [a.2010010500] -HOLDING (beyond runahead limit)
-2013/10/15 12:56:39 INFO - [a.2010010500] -(setting:runahead)
-2013/10/15 12:56:39 INFO - [a.2010010300] -(current:submitted)> a.2010010300 started at 2013-10-15T12:56:38
-2013/10/15 12:56:39 INFO - [a.2010010300] -(setting:running)
-2013/10/15 12:56:40 INFO - [a.2010010300] -(current:running)> a.2010010300 succeeded at 2013-10-15T12:56:40
-2013/10/15 12:56:40 INFO - [a.2010010300] -(setting:succeeded)
-2013/10/15 12:56:40 INFO - [a.2010010500] -(setting:waiting)
-2013/10/15 12:56:41 INFO - [a.2010010500] -(setting:queued)
-2013/10/15 12:56:41 INFO - [a.2010010500] -(setting:submitting)
-2013/10/15 12:56:41 INFO - [a.2010010500] -triggered off []
-2013/10/15 12:56:42 INFO - [a.2010010500] -(current:submitting)> a.2010010500 submitting now
-2013/10/15 12:56:42 INFO - [a.2010010500] -(current:submitting)> a.2010010500 submission succeeded
-2013/10/15 12:56:42 INFO - [a.2010010500] -(setting:submitted)
-2013/10/15 12:56:42 INFO - [a.2010010500] -(current:submitted)> a.2010010500 submit_method_id=19894
-2013/10/15 12:56:43 INFO - [a.2010010700] -HOLDING (beyond suite stop cycle) 2010010500
-2013/10/15 12:56:43 INFO - [a.2010010700] -(setting:held)
-2013/10/15 12:56:43 INFO - [a.2010010500] -(current:submitted)> a.2010010500 started at 2013-10-15T12:56:43
-2013/10/15 12:56:43 INFO - [a.2010010500] -(setting:running)
-2013/10/15 12:56:45 INFO - [a.2010010500] -(current:running)> a.2010010500 succeeded at 2013-10-15T12:56:44
-2013/10/15 12:56:45 INFO - [a.2010010500] -(setting:succeeded)
-2013/10/15 12:56:45 INFO - All normal cycling tasks have spawned past the final cycle 2010010500
-2013/10/15 12:56:45 INFO - Suite shutting down at 2013-10-15 12:56:45.866663
+2013/11/01 15:40:38 INFO - Thread-2 start (Event Handler Submission)
+2013/11/01 15:40:38 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/11/01 15:40:38 INFO - port:7766
+2013/11/01 15:40:38 INFO - Suite starting at 2013-11-01 15:40:38.253388
+2013/11/01 15:40:38 INFO - Log event clock: real time
+2013/11/01 15:40:38 INFO - Run mode: live
+2013/11/01 15:40:38 INFO - Start tag: 2010011100
+2013/11/01 15:40:38 INFO - Stop tag: 2010011800
+2013/11/01 15:40:38 INFO - Thread-4 start (Job Submission)
+2013/11/01 15:40:38 INFO - Thread-5 start (Request Handling)
+2013/11/01 15:40:38 INFO - Cold Start 2010011100
+2013/11/01 15:40:38 INFO - [a.2010011300] -(setting:queued)
+2013/11/01 15:40:38 INFO - [a.2010011300] -(setting:submitting)
+2013/11/01 15:40:38 INFO - [a.2010011300] -triggered off []
+2013/11/01 15:40:40 INFO - [a.2010011300] -(current:submitting)> a.2010011300 submitting now
+2013/11/01 15:40:40 INFO - [a.2010011300] -(current:submitting)> a.2010011300 submission succeeded
+2013/11/01 15:40:40 INFO - [a.2010011300] -(setting:submitted)
+2013/11/01 15:40:40 INFO - [a.2010011300] -(current:submitted)> a.2010011300 submit_method_id=8817
+2013/11/01 15:40:41 INFO - [a.2010011600] -HOLDING (beyond runahead limit)
+2013/11/01 15:40:41 INFO - [a.2010011600] -(setting:runahead)
+2013/11/01 15:40:41 INFO - [a.2010011300] -(current:submitted)> a.2010011300 started at 2013-11-01T15:40:40
+2013/11/01 15:40:41 INFO - [a.2010011300] -(setting:running)
+2013/11/01 15:40:43 INFO - [a.2010011300] -(current:running)> a.2010011300 succeeded at 2013-11-01T15:40:42
+2013/11/01 15:40:43 INFO - [a.2010011300] -(setting:succeeded)
+2013/11/01 15:40:43 INFO - [a.2010011600] -(setting:waiting)
+2013/11/01 15:40:44 INFO - [a.2010011600] -(setting:queued)
+2013/11/01 15:40:44 INFO - [a.2010011600] -(setting:submitting)
+2013/11/01 15:40:44 INFO - [a.2010011600] -triggered off []
+2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitting)> a.2010011600 submitting now
+2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitting)> a.2010011600 submission succeeded
+2013/11/01 15:40:45 INFO - [a.2010011600] -(setting:submitted)
+2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitted)> a.2010011600 submit_method_id=8875
+2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitted)> a.2010011600 started at 2013-11-01T15:40:45
+2013/11/01 15:40:45 INFO - [a.2010011600] -(setting:running)
+2013/11/01 15:40:46 INFO - [a.2010011900] -HOLDING (beyond suite stop cycle) 2010011800
+2013/11/01 15:40:46 INFO - [a.2010011900] -(setting:held)
+2013/11/01 15:40:47 INFO - [a.2010011600] -(current:running)> a.2010011600 succeeded at 2013-11-01T15:40:46
+2013/11/01 15:40:47 INFO - [a.2010011600] -(setting:succeeded)
+2013/11/01 15:40:47 INFO - All normal cycling tasks have spawned past the final cycle 2010011800
+2013/11/01 15:40:47 INFO - Suite shutting down at 2013-11-01 15:40:47.624505
