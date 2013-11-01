@@ -20,7 +20,7 @@
 #C:     site/user config in order to run, otherwise it will be bypassed
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 15
+set_test_number 13
 export TEST_DIR
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
@@ -124,46 +124,7 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-post-restart-2013092300 <<'__STATE__'
-initial cycle : 2013092300
-final cycle : 2013092306
-(dp1
-S'2013092300'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_TIME'
-p8
-S'2013092300'
-p9
-ssss.
-Begin task states
-broadcast_task.2013092300 : status=waiting, spawned=false
-failed_task.2013092300 : status=failed, spawned=true
-failed_task.2013092306 : status=runahead, spawned=false
-force_restart.2013092300 : status=succeeded, spawned=true
-force_restart.2013092306 : status=runahead, spawned=false
-output_states.2013092300 : status=running, spawned=true
-output_states.2013092306 : status=runahead, spawned=false
-retrying_task.2013092300 : status=waiting, spawned=true
-retrying_task.2013092306 : status=runahead, spawned=false
-runahead_task.2013092300 : status=succeeded, spawned=true
-runahead_task.2013092306 : status=runahead, spawned=false
-running_task.2013092300 : status=running, spawned=true
-running_task.2013092306 : status=runahead, spawned=false
-send_a_broadcast_task.2013092300 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092306 : status=runahead, spawned=false
-submit_fail_task.2013092300 : status=submit-failed, spawned=false
-succeed_task.2013092300 : status=succeeded, spawned=true
-succeed_task.2013092306 : status=runahead, spawned=false
-tidy.2013092300 : status=waiting, spawned=false
-waiting_task.2013092300 : status=waiting, spawned=false
-__STATE__
+
         cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
@@ -272,60 +233,7 @@ tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-post-restart-2013092306 <<'__STATE__'
-initial cycle : 2013092300
-final cycle : 2013092306
-(dp1
-S'2013092300'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_TIME'
-p8
-S'2013092300'
-p9
-ssssS'2013092306'
-p10
-(dp11
-S'broadcast_task'
-p12
-(dp13
-S'environment'
-p14
-(dp15
-S'MY_TIME'
-p16
-S'2013092306'
-p17
-ssss.
-Begin task states
-broadcast_task.2013092306 : status=waiting, spawned=false
-failed_task.2013092306 : status=failed, spawned=true
-failed_task.2013092312 : status=held, spawned=false
-force_restart.2013092306 : status=succeeded, spawned=true
-force_restart.2013092312 : status=held, spawned=false
-output_states.2013092306 : status=running, spawned=true
-output_states.2013092312 : status=held, spawned=false
-retrying_task.2013092306 : status=retrying, spawned=true
-retrying_task.2013092312 : status=held, spawned=false
-runahead_task.2013092306 : status=succeeded, spawned=true
-runahead_task.2013092312 : status=held, spawned=false
-running_task.2013092306 : status=succeeded, spawned=true
-running_task.2013092312 : status=held, spawned=false
-send_a_broadcast_task.2013092306 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092312 : status=held, spawned=false
-submit_fail_task.2013092306 : status=submit-failed, spawned=false
-succeed_task.2013092306 : status=succeeded, spawned=true
-succeed_task.2013092312 : status=held, spawned=false
-tidy.2013092300 : status=succeeded, spawned=true
-tidy.2013092306 : status=waiting, spawned=false
-waiting_task.2013092306 : status=waiting, spawned=false
-__STATE__
+
         cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|held
@@ -442,9 +350,9 @@ __DB_DUMP__
             ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
         fi
     else
-        skip 15 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
+        skip 13 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
     fi
 else
-    skip 15 '[directive tests]loadleveler host not defined'
+    skip 13 '[directive tests]loadleveler host not defined'
 fi
 unset $CYLC_LL_TEST_TASK_HOST
