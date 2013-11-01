@@ -103,8 +103,7 @@ class Yearly( cycler ):
         # now adjust year up if necessary, according to anchor step
         diff = int(self.anchorDate[0:4]) - int(T[0:4])
         rem = diff % self.step
-        if rem > 0:
-            T = add_years( ct( T ), self.step - rem ).get()[0:4] + self.MMDDHHmmss
+        T = add_years( ct( T ), rem ).get()[0:4] + self.MMDDHHmmss
 
         return T
 

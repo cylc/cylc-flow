@@ -15,17 +15,16 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test Monthly cycling
+# Test Daily cycling
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE Monthly
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+install_suite $TEST_NAME_BASE Daily
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
+perl -pi -e 's/(Start tag: ).*$/${1}20100113/' $TEST_DIR/$SUITE_NAME/reference.log
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
+
