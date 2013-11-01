@@ -143,7 +143,6 @@
                 "select name, cycle, submit_num, try_num, status
                  from task_states
                  order by name, cycle;" > {{ TEST_DIR }}/states-db-post-restart-$CYLC_TASK_CYCLE_TIME
-            cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-post-restart-$CYLC_TASK_CYCLE_TIME
         """
         description = "Wait for the restart to complete"
     [[tidy]]
