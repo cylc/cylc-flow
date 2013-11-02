@@ -34,8 +34,8 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [OPTIONS] ARGS
 
-Restart a cylc suite from a previous state. To start from scratch see
-the 'cylc run' command.
+Restart a suite from a previous state. To start from scratch see the
+'cylc run' command.
 
 Suites run in daemon mode unless -n/--no-detach or --debug is used.
 

@@ -31,8 +31,8 @@ class start( scheduler ):
     def __init__( self ):
         usage = """cylc [control] run|start [OPTIONS] ARGS
 
-Start a suite running at a specified initial cycle time. To restart from
-a previous state see the 'cylc restart' command.
+Start a suite from scratch. To restart from a previous state see the
+'cylc restart' command.
 
 Suites run in daemon mode unless -n/--no-detach or --debug is used.
 
@@ -56,10 +56,7 @@ In task environments, $CYLC_SUITE_FINAL_CYCLE_TIME is always set to the
 final cycle time if one is set (by suite.rc file or command line). The 
 initial and final cycle time variables persists across suite restarts.""" 
 
-        self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"), 
-                ("[START]", """Initial cycle time or 'now'. Not required if
-                         the suite has no cycling tasks. Overrides an 
-                         initial cycle time in the suite definition.""")])
+        self.parser = cop( usage, jset=True )
 
         self.parser.add_option( "--non-daemon",
                 help="(deprecated: use --no-detach)",
@@ -88,10 +85,6 @@ initial and final cycle time variables persists across suite restarts."""
         self.suite, self.suiterc = prep_file( self.args[0], self.options ).execute()
 
         self.suite_dir = os.path.dirname( self.suiterc )
-
-        self.start_tag = None
-        if len( self.args ) == 2:
-            self.start_tag = self.args[1]
 
         scheduler.parse_commandline( self )
         self.verbose = self.options.verbose

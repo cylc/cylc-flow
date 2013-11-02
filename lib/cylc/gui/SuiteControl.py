@@ -54,7 +54,6 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.TaskID import TaskID, TaskIDError
 from cylc.version import cylc_version
 from cylc.strftime import strftime
-from option_group import controlled_option_group
 from color_rotator import rotator
 from cylc_logviewer import cylc_logviewer
 from textload import textload
@@ -911,39 +910,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #else:
             #    info_dialog( result[1], self.window ).inform()
 
-    def loadctimes( self, bt, startentry, stopentry ):
-        item1 = " -i '[scheduling]initial cycle time'"
-        item2 = " -i '[scheduling]final cycle time'"
-        command = "cylc get-config --mark-up --host=" + self.cfg.host + \
-                " " + self.cfg.template_vars_opts + " " + \
-                " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
-                self.cfg.suite 
-        res = run_get_stdout( command, filter=True ) # (T/F,['ct ct'])
-
-        if res[0]:
-            out1, out2 = res[1][0].split()
-            if out1 == "None" and out2 == "None":  # (default value from suite.rc spec)
-                info_dialog( """Initial and final cycle times have not
-been defined for this suite""").inform()
-            elif out1 == "None":
-                info_dialog( """An initial cycle time has not
-been defined for this suite""").inform()
-                stopentry.set_text( out2 )
-            elif out2 == "None":
-                info_dialog( """A final cycle time has not
-been defined for this suite""").inform()
-                startentry.set_text( out1 )
-            else:
-                startentry.set_text( out1 )
-                stopentry.set_text( out2 )
-        else: 
-            pass # error dialogs done by run_get_stdout()
-
     def startsuite( self, bt, window, 
-            coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-            entry_ctime, stoptime_entry, statedump_entry,
-            optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
-            holdtime_entry ):
+            coldstart_rb, warmstart_rb, restart_rb,
+            statedump_entry, debug_cb, nodet_cb, mode_live_rb, mode_sim_rb,
+            mode_dum_rb, hold_cb, holdtime_entry ):
 
         command = 'cylc run ' + self.cfg.template_vars_opts
         options = ''
@@ -953,9 +923,6 @@ been defined for this suite""").inform()
         elif warmstart_rb.get_active():
             method = 'warmstart'
             options += ' -w'
-        elif rawstart_rb.get_active():
-            method = 'rawstart'
-            options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
             command = 'cylc restart ' + self.cfg.template_vars_opts
@@ -967,39 +934,22 @@ been defined for this suite""").inform()
         elif mode_dum_rb.get_active():
             command += ' --mode=dummy'
 
-        ctime = ''
-        if method != 'restart':
-            # start time
-            ctime = entry_ctime.get_text()
-            if ctime != '':
-                try:
-                    ct(ctime)
-                except CycleTimeError,x:
-                    warning_dialog( str(x), self.window ).warn()
-                    return
-
-        ste = stoptime_entry.get_text()
-        if ste:
-            try:
-                ct(ste)
-            except CycleTimeError,x:
-                warning_dialog( str(x), self.window ).warn()
-                return
-            options += ' --until=' + ste
- 
         hetxt = holdtime_entry.get_text()
         if hold_cb.get_active():
             options += ' --hold'
         elif hetxt != '':
             options += ' --hold-after=' + hetxt
 
-        for group in optgroups:
-            options += group.get_options()
+        if debug_cb.get_active():
+            options += ' --debug'
+        if nodet_cb.get_active():
+            options += ' --no-detach'
+
         window.destroy()
 
         options += ' --user=' + self.cfg.owner + ' --host=' + self.cfg.host
 
-        command += ' ' + options + ' ' + self.cfg.suite + ' ' + ctime
+        command += ' ' + options + ' ' + self.cfg.suite
 
         print command 
 
@@ -1797,16 +1747,12 @@ shown here in the state they were in at the time of triggering.''' )
         else:
             box.set_sensitive(True)
 
-    def startup_method( self, b, meth, ic_box, is_box ):
+    def startup_method( self, b, meth, is_box ):
         if meth in ['cold', 'warm', 'raw']:
-            for ch in ic_box.get_children():
-                ch.set_sensitive( True )
             for ch in is_box.get_children():
                 ch.set_sensitive( False )
         else:
             # restart
-            for ch in ic_box.get_children():
-                ch.set_sensitive( False )
             for ch in is_box.get_children():
                 ch.set_sensitive( True )
 
@@ -1822,58 +1768,26 @@ shown here in the state they were in at the time of triggering.''' )
         vbox = gtk.VBox()
 
         box = gtk.HBox()
-        coldstart_rb = gtk.RadioButton( None, "Cold-start" )
-        box.pack_start (coldstart_rb, True)
-        restart_rb = gtk.RadioButton( coldstart_rb, "Restart" )
-        box.pack_start (restart_rb, True)
-        warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm-start" )
-        box.pack_start (warmstart_rb, True)
-        rawstart_rb = gtk.RadioButton( coldstart_rb, "Raw-start" )
-        box.pack_start (rawstart_rb, True)
-        coldstart_rb.set_active(True)
+        box.pack_start(gtk.Label( 'Run Mode:' ),True)
+        mode_live_rb = gtk.RadioButton( None, "live" )
+        mode_live_rb.set_active(True)
+        box.pack_start (mode_live_rb, True)
+        mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
+        box.pack_start (mode_dum_rb, True)
+        mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
+        box.pack_start (mode_sim_rb, True)
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        box.pack_start(gtk.Label( 'Mode' ),True)
-        mode_live_rb = gtk.RadioButton( None, "live" )
-        box.pack_start (mode_live_rb, True)
-        mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
-        box.pack_start (mode_sim_rb, True)
-        mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
-        box.pack_start (mode_dum_rb, True)
-
-        mode_live_rb.set_active(True)
+        box.pack_start(gtk.Label( 'Start-up:' ),True)
+        coldstart_rb = gtk.RadioButton( None, "cold" )
+        box.pack_start (coldstart_rb, True)
+        coldstart_rb.set_active(True)
+        warmstart_rb = gtk.RadioButton( coldstart_rb, "warm" )
+        box.pack_start (warmstart_rb, True)
+        restart_rb = gtk.RadioButton( coldstart_rb, "restart" )
+        box.pack_start (restart_rb, True)
         vbox.pack_start( box )
-
-        nvbox = gtk.VBox()
-        nhbox = gtk.HBox()
-
-        ic_box = gtk.HBox()
-        label = gtk.Label( 'START' )
-        ic_box.pack_start( label, True )
-        ctime_entry = gtk.Entry()
-        ctime_entry.set_max_length(14)
-        ic_box.pack_start (ctime_entry, True)
-
-        nvbox.pack_start( ic_box )
-
-        fc_box = gtk.HBox()
-        label = gtk.Label( '[STOP]' )
-        fc_box.pack_start( label, True )
-        stoptime_entry = gtk.Entry()
-        stoptime_entry.set_max_length(14)
-        fc_box.pack_start (stoptime_entry, True)
-
-        nvbox.pack_start( fc_box )
-
-        nhbox.pack_start(nvbox)
-
-        load_button = gtk.Button( "_Load" )
-        load_button.connect("clicked", self.loadctimes, ctime_entry, stoptime_entry )
-
-        nhbox.pack_start(load_button)
-
-        vbox.pack_start(nhbox)
 
         is_box = gtk.HBox()
         label = gtk.Label( '[State Dump FILE]' )
@@ -1885,10 +1799,9 @@ shown here in the state they were in at the time of triggering.''' )
         is_box.pack_start (statedump_entry, True)
         vbox.pack_start(is_box)
 
-        coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box )
-        warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box )
-        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box )
-        restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box )
+        coldstart_rb.connect( "toggled", self.startup_method, "cold", is_box )
+        warmstart_rb.connect( "toggled", self.startup_method, "warm", is_box )
+        restart_rb.connect(   "toggled", self.startup_method, "re",   is_box )
         
         hbox = gtk.HBox()
 
@@ -1908,28 +1821,20 @@ shown here in the state they were in at the time of triggering.''' )
         hold_cb.connect( "toggled", self.hold_cb_toggled, hold_box )
 
         hbox = gtk.HBox()
-        hbox.pack_start( gtk.Label('Options'),True)
-        debug_group = controlled_option_group( "Debug", "--debug" )
-        debug_group.pack( hbox )
-
-        refgen_group = controlled_option_group( "Ref-log", "--reference-log" )
-        refgen_group.pack( hbox )
-
-        reftest_group = controlled_option_group( "Ref-test", "--reference-test" )
-        reftest_group.pack( hbox )
+        nodet_cb = gtk.CheckButton( "Don't detach" )
+        hbox.pack_start(nodet_cb,True)
+        debug_cb = gtk.CheckButton( "Debug" )
+        hbox.pack_start(debug_cb,True)
 
         vbox.pack_start(hbox)
-
-        optgroups = [ debug_group, refgen_group, reftest_group ]
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "_Start" )
+        start_button = gtk.Button( "_GO" )
         start_button.connect("clicked", self.startsuite, window,
-                coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-                ctime_entry, stoptime_entry, 
-                statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
+                coldstart_rb, warmstart_rb, restart_rb,
+                statedump_entry, debug_cb, nodet_cb, mode_live_rb, mode_sim_rb,
                 mode_dum_rb, hold_cb, holdtime_entry )
 
         help_run_button = gtk.Button( "_Help Run" )
@@ -1941,8 +1846,8 @@ shown here in the state they were in at the time of triggering.''' )
         hbox = gtk.HBox()
         hbox.pack_start( start_button, False )
         hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_run_button, False )
         hbox.pack_end( help_restart_button, False )
+        hbox.pack_end( help_run_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
@@ -1988,36 +1893,6 @@ shown here in the state they were in at the time of triggering.''' )
         hbox.pack_start( cancel_button, True )
         vbox.pack_start( hbox )
 
-        window.add( vbox )
-        window.show_all()
-
-    def ctime_entry_popup( self, b, callback, title ):
-        window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
-                gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title( title )
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-        #window.set_size_request(800, 300)
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-
-        vbox = gtk.VBox()
-
-        hbox = gtk.HBox()
-        label = gtk.Label( 'Cycle Time' )
-        hbox.pack_start( label, True )
-        entry_ctime = gtk.Entry()
-        entry_ctime.set_max_length(14)
-        hbox.pack_start (entry_ctime, True)
-        vbox.pack_start(hbox)
-
-        go_button = gtk.Button( "Go" )
-        go_button.connect("clicked", callback, window, entry_ctime )
-        vbox.pack_start(go_button)
- 
         window.add( vbox )
         window.show_all()
 
