@@ -81,12 +81,10 @@ class Daily( cycler ):
                 foo.parse( foo.strvalue[0:8] + self.HH )
                 foo.increment( days=1 )
 
-        # now adjust up relative to the anchor cycle and step
-        diff = foo.subtract( ct(self.anchorYYYYMMDD) )
+        # now adjust up to the next on-sequence cycle
+        diff = ct(self.anchorYYYYMMDD).subtract( foo )
         rem = diff.days % self.step
-        if rem > 0:
-            n = self.step - rem
-            foo.increment( days=n )
+        foo.increment( days=rem )
             
         return foo.get()
 
