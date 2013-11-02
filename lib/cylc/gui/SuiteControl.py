@@ -913,7 +913,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, restart_rb,
             statedump_entry, debug_cb, nodet_cb, mode_live_rb, mode_sim_rb,
-            mode_dum_rb, hold_cb, holdtime_entry ):
+            mode_dum_rb, hold_cb, holdtime_entry, otheropts_entry ):
 
         command = 'cylc run ' + self.cfg.template_vars_opts
         options = ''
@@ -944,6 +944,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             options += ' --debug'
         if nodet_cb.get_active():
             options += ' --no-detach'
+
+        options += ' ' + otheropts_entry.get_text()
 
         window.destroy()
 
@@ -1828,6 +1830,13 @@ shown here in the state they were in at the time of triggering.''' )
 
         vbox.pack_start(hbox)
 
+        hbox = gtk.HBox()
+        label = gtk.Label( 'Other options' )
+        hbox.pack_start(label,True)
+        otheropts_entry = gtk.Entry()
+        hbox.pack_start( otheropts_entry, True )
+        vbox.pack_start(hbox)
+
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
@@ -1835,7 +1844,7 @@ shown here in the state they were in at the time of triggering.''' )
         start_button.connect("clicked", self.startsuite, window,
                 coldstart_rb, warmstart_rb, restart_rb,
                 statedump_entry, debug_cb, nodet_cb, mode_live_rb, mode_sim_rb,
-                mode_dum_rb, hold_cb, holdtime_entry )
+                mode_dum_rb, hold_cb, holdtime_entry, otheropts_entry )
 
         help_run_button = gtk.Button( "_Help Run" )
         help_run_button.connect("clicked", self.command_help, "control", "run" )
