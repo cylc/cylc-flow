@@ -1534,9 +1534,11 @@ class config( object ):
 
         if self.override:
             ict = self.override
-        elif self.cfg['scheduling']['initial cycle time'] and not self.is_restart:
-                # Use suite.rc initial cycle time
+        elif self.cfg['scheduling']['initial cycle time']:
+            # Use suite.rc initial cycle time
             ict = str(self.cfg['scheduling']['initial cycle time'])
+            # We may want to put in some handling for cases of changing the
+            # initial cycle via restart (accidentally or otherwise).
         else:
             ict = None
 

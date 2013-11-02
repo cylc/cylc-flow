@@ -2701,13 +2701,12 @@ and yearly cycling modules:
         [[[Yearly(2010,2)]]]
             graph = "apple => orange"
 \end{lstlisting}
-In the examples above the section headings define an infinite sequence of 
-cycle times {\em anchored} on the first (date-time) argument and {\em
-stepped} by the second (integer) argument. The anchoring serves to
-generate the same sequence, as opposed to some off-set sequence,
-regardless of the initial cycle time from which the suite is started.
-The anchor date can lie outside of the suite's initial and final cycle
-times.
+The section heading arguments here are an {\em anchor} datetime and an 
+integer {\em step}. The cycle sequence always passes through the anchor
+regardless of the suite's initial cycle time. So, for example,
+\lstinline=Yearly(2010,3)= defines a 3-yearly sequence that always lands
+on the year 2010, not 2011 or 2012, regardless of the initial cycle time
+- which can be before or after 2010. 
 
 Note that hours-of-the-day graph section headings can also be written
 to explicitly reference the associated cycling module:

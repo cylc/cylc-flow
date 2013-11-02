@@ -1,0 +1,17 @@
+Stepped Daily, Monthly, and Yearly cycling tests:
+
+Cycler(<anchor>,<step>)
+
+Each test suite defines a single task on a 3-unit cycle:
+
+Daily(20100110,3): 20100110, 20100113, 20100116, ...
+Monthly(201001,3): 201001,   201004,   201007,   ...
+Yearly(2010,3)   : 2010,     2013,     2016,     ...
+
+The reference log is for a test run starting one unit in from the anchor
+cycle time. Cylc should get exactly the same result for test runs that
+start one, two, or three units in because the initial cycle time gets
+adjusted up to the next on-sequence cycle time, so additional tests are
+done to confirm this - by modifying the test start time in the installed
+reference log on the fly.
+

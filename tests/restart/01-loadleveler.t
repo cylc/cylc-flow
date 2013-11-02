@@ -20,18 +20,17 @@
 #C:     site/user config in order to run, otherwise it will be bypassed
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 15
+set_test_number 13
 export TEST_DIR
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
 export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
 export CYLC_LL_TEST_SITE_DIRECTIVES=$(cylc get-global-config -i '[test battery][directives][loadleveler directives]')
-if [[ -n $CYLC_LL_TEST_TASK_HOST ]]
+if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != 'None' ]]
 then
     # check the host is reachable
-    if [[ $(ping -c 1 $CYLC_LL_TEST_TASK_HOST) ]]
-    then
+    if ping -c 1 $CYLC_LL_TEST_TASK_HOST 1>/dev/null 2>&1; then
         install_suite $TEST_NAME_BASE simple
 #-------------------------------------------------------------------------------
 # copy across passphrase as not all remote hosts will have a shared file system
@@ -65,7 +64,7 @@ __SCRIPT__
         for state_file in $(ls $TEST_DIR/state*); do
             sed -i "/^suite time : /d" $state_file
         done
-        cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<__STATE__
+        cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -104,7 +103,7 @@ succeed_task.2013092306 : status=runahead, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 waiting_task.2013092300 : status=waiting, spawned=false
 __STATE__
-        cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
@@ -125,47 +124,8 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-post-restart-2013092300 <<__STATE__
-initial cycle : 2013092300
-final cycle : 2013092306
-(dp1
-S'2013092300'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_TIME'
-p8
-S'2013092300'
-p9
-ssss.
-Begin task states
-broadcast_task.2013092300 : status=waiting, spawned=false
-failed_task.2013092300 : status=failed, spawned=true
-failed_task.2013092306 : status=runahead, spawned=false
-force_restart.2013092300 : status=succeeded, spawned=true
-force_restart.2013092306 : status=runahead, spawned=false
-output_states.2013092300 : status=running, spawned=true
-output_states.2013092306 : status=runahead, spawned=false
-retrying_task.2013092300 : status=waiting, spawned=true
-retrying_task.2013092306 : status=runahead, spawned=false
-runahead_task.2013092300 : status=succeeded, spawned=true
-runahead_task.2013092306 : status=runahead, spawned=false
-running_task.2013092300 : status=running, spawned=true
-running_task.2013092306 : status=runahead, spawned=false
-send_a_broadcast_task.2013092300 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092306 : status=runahead, spawned=false
-submit_fail_task.2013092300 : status=submit-failed, spawned=false
-succeed_task.2013092300 : status=succeeded, spawned=true
-succeed_task.2013092306 : status=runahead, spawned=false
-tidy.2013092300 : status=waiting, spawned=false
-waiting_task.2013092300 : status=waiting, spawned=false
-__STATE__
-        cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<__DB_DUMP__
+
+        cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|runahead
@@ -173,7 +133,7 @@ force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|0|1|runahead
 output_states|2013092300|1|1|running
 output_states|2013092306|0|1|runahead
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|2|2|retrying
 retrying_task|2013092306|0|1|runahead
 runahead_task|2013092300|1|1|succeeded
 runahead_task|2013092306|0|1|runahead
@@ -187,7 +147,7 @@ succeed_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<__STATE__
+        cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -240,10 +200,10 @@ tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__
-        cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -251,7 +211,7 @@ force_restart|2013092306|1|1|running
 force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|5|4|succeeded
 retrying_task|2013092306|1|2|retrying
 retrying_task|2013092312|0|1|held
 runahead_task|2013092300|1|1|succeeded
@@ -263,7 +223,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
@@ -273,64 +233,11 @@ tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state-post-restart-2013092306 <<__STATE__
-initial cycle : 2013092300
-final cycle : 2013092306
-(dp1
-S'2013092300'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_TIME'
-p8
-S'2013092300'
-p9
-ssssS'2013092306'
-p10
-(dp11
-S'broadcast_task'
-p12
-(dp13
-S'environment'
-p14
-(dp15
-S'MY_TIME'
-p16
-S'2013092306'
-p17
-ssss.
-Begin task states
-broadcast_task.2013092306 : status=waiting, spawned=false
-failed_task.2013092306 : status=failed, spawned=true
-failed_task.2013092312 : status=held, spawned=false
-force_restart.2013092306 : status=succeeded, spawned=true
-force_restart.2013092312 : status=held, spawned=false
-output_states.2013092306 : status=running, spawned=true
-output_states.2013092312 : status=held, spawned=false
-retrying_task.2013092306 : status=retrying, spawned=true
-retrying_task.2013092312 : status=held, spawned=false
-runahead_task.2013092306 : status=succeeded, spawned=true
-runahead_task.2013092312 : status=held, spawned=false
-running_task.2013092306 : status=succeeded, spawned=true
-running_task.2013092312 : status=held, spawned=false
-send_a_broadcast_task.2013092306 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092312 : status=held, spawned=false
-submit_fail_task.2013092306 : status=submit-failed, spawned=false
-succeed_task.2013092306 : status=succeeded, spawned=true
-succeed_task.2013092312 : status=held, spawned=false
-tidy.2013092300 : status=succeeded, spawned=true
-tidy.2013092306 : status=waiting, spawned=false
-waiting_task.2013092306 : status=waiting, spawned=false
-__STATE__
-        cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<__DB_DUMP__
+
+        cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|held
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -339,7 +246,7 @@ force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
 output_states|2013092312|0|1|held
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|5|4|succeeded
 retrying_task|2013092306|2|2|retrying
 retrying_task|2013092312|0|1|held
 runahead_task|2013092300|1|1|succeeded
@@ -351,7 +258,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
@@ -361,7 +268,7 @@ tidy|2013092306|0|1|held
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|held
 __DB_DUMP__
-        cmp_ok $TEST_DIR/state <<__STATE__
+        cmp_ok $TEST_DIR/state <<'__STATE__'
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -399,11 +306,11 @@ __STATE__
          "select name, cycle, submit_num, try_num, status
           from task_states
           order by name, cycle;" > $TEST_DIR/states-db
-        cmp_ok $TEST_DIR/states-db <<__DB_DUMP__
+        cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded
 broadcast_task|2013092312|0|1|held
-failed_task|2013092300|1|1|succeeded
+failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
@@ -412,7 +319,7 @@ force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
 output_states|2013092312|0|1|held
-retrying_task|2013092300|1|2|held
+retrying_task|2013092300|5|4|succeeded
 retrying_task|2013092306|5|4|succeeded
 retrying_task|2013092312|0|1|held
 runahead_task|2013092300|1|1|succeeded
@@ -424,7 +331,7 @@ running_task|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
-submit_fail_task|2013092300|1|1|succeeded
+submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 submit_fail_task|2013092312|0|1|held
 succeed_task|2013092300|1|1|succeeded
@@ -439,14 +346,13 @@ waiting_task|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
         purge_suite $SUITE_NAME
-        if [[ -n $SUITE_NAME ]]
-        then
+        if [[ -n $SUITE_NAME ]]; then
             ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
         fi
     else
-        skip 15 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
+        skip 13 "Host "$CYLC_LL_TEST_TASK_HOST" unreachable"
     fi
 else
-    skip 15 '[directive tests]loadleveler host not defined'
+    skip 13 '[directive tests]loadleveler host not defined'
 fi
 unset $CYLC_LL_TEST_TASK_HOST
