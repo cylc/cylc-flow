@@ -4006,89 +4006,59 @@ shell$ cylc get-config -i [runtime][airs]directives SUITE
 -I = ncpus=9
 \end{lstlisting}
 
-\subsubsection{Jinja2 Default Values And Template Inputs}
+\subsubsection{Jinja2 Template Inputs And Default Values}
 
-The values of Jinja2 variables can be passed in from the cylc command
-line rather than hardwired in the suite definition. Here's an example,
-from \lstinline=$CYLC_DIR/examples/jinja2/defaults=:
+Jinja2 variable values can be passed in from the cylc command
+line using the \lstinline=--set= and \lstinline=--set-file= options.
+If a Jinja2 variable is not set to a value in-suite then a value must be
+passed in for it, unless it has a default value.
 
+For example, here's a suite that takes its initial cycle time from
+the command line:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #!Jinja2
-
-title = "Jinja2 example: use of defaults and external input"
-
-description = """
-The template variable FIRST_TASK must be given on the cylc command line
-using --set or --set-file=FILE; two other variables, LAST_TASK and
-N_MEMBERS can be set similarly, but if not they have default values.""" 
-
-{% set LAST_TASK = LAST_TASK | default( 'baz' ) %}
-{% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
-
-{# input of FIRST_TASK is required - no default #}
-
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time   = 2010081600
+    initial cycle time = {{ START }}
     [[dependencies]]
-        [[[0]]]
-            graph = """{{ FIRST_TASK }} => ens
-                 ens:succeed-all => {{ LAST_TASK }}"""
-[runtime]
-    [[ens]]
-{% for I in range( 0, N_MEMBERS ) %}
-    [[ mem_{{ I }} ]]
-        inherit = ens
-{% endfor %}
+        [[[Yearly(2010,3)]]]
+            graph = "foo"
 \end{lstlisting}
-
-Here's the result:
-
+This will fail validation unless a value is passed in:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc list SUITE
+# with no value set on the command line:
+shell$ cylc val my.suite
 Jinja2 Template Error
-'FIRST_TASK' is undefined
-cylc-list foo  failed:  1
+UndefinedError('START' is undefined)
 
-shell$ cylc list --set FIRST_TASK=bob foo
-bob
-baz
-mem_2
-mem_1
-mem_0
-
-shell$ cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
-bob
-alice
-mem_2
-mem_1
-mem_0
-
-list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
-mem_9
-mem_8
-mem_7
-mem_6
-mem_5
-mem_4
-mem_3
-mem_2
-mem_1
-mem_0
-baz
-bob
+# with a value set on the command line:
+shell$ cylc val --set START=2010 my.suite
+Suite my.suite is valid for cylc-5.4.0
+\end{lstlisting}
+However, if you define a default value like this,
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+[scheduling]
+    initial cycle time = {{ START | default(2010) }}
+    [[dependencies]]
+        [[[Yearly(2010,3)]]]
+            graph = "foo"
+\end{lstlisting}
+then the suite will validate (and run etc.) with no value passed in from
+the command line:
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc val my.suite
+Suite my.suite is valid for cylc-5.4.0
 \end{lstlisting}
 
-\lstset{language=suiterc}
-Note also that 
-\lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
-suite with the Jinja2 variables as set.
+The \lstinline=$CYLC_DIR/examples/jinja2/defaults= is another example.
 
-{\em Warning:} suites started with template variables set on the command
-line do not currently {\em restart} with the same settings - you have to 
-set them again on the \lstinline=cylc restart= command line.
+{\em Warning:} suites started with template variables on the command
+line do not restart with the same values set - they must be set again on
+the restart command line.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}
@@ -5675,6 +5645,8 @@ you wish:
         abort if shutdown handler fails = True
         abort on timeout = True
 \end{lstlisting}
+
+
 
 \section{Other Topics In Brief}
 
