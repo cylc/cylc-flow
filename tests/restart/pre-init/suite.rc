@@ -14,8 +14,8 @@
                 foo[T-24] => foo => bar"""
 [runtime]
     [[p1]]
-        command scripting = cylc shutdown --now --wait $CYLC_SUITE_REG_NAME && \
-                            cylc restart $CYLC_SUITE_REG_NAME && sleep 5
+        command scripting = cylc shutdown --now --max-polls=30 --interval=2 $CYLC_SUITE_NAME && \
+                            cylc restart $CYLC_SUITE_NAME && sleep 5
     [[foo, p2]]
         command scripting = sleep 5
     [[bar]]
