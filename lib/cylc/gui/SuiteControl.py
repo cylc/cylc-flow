@@ -820,11 +820,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #    info_dialog( result[1], self.window ).inform()
 
     def stopsuite( self, bt, window, kill_cb, 
-            stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
+            stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
             stoptag_entry, stopclock_entry, stoptask_entry ):
         stop = False
         stopat = False
         stopnow = False
+        stopquick = False
         stopclock = False
         stoptask = False
         killfirst = False
@@ -852,6 +853,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         elif stopnow_rb.get_active():
             stopnow = True
+
+        elif stopquick_rb.get_active():
+            stopquick = True
 
         elif stopct_rb.get_active():
             stopclock = True
@@ -899,6 +903,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 result = god.put( 'stop after tag', stoptag )
             elif stopnow:
                 result = god.put( 'stop now' )
+            elif stopquick:
+                result = god.put( 'stop quickly' )
             elif stopclock:
                 result = god.put( 'stop after clock time', stopclock_time )
             elif stoptask:
@@ -1703,8 +1709,16 @@ shown here in the state they were in at the time of triggering.''' )
         kill_cb.set_active(False)
         kill_cb.set_sensitive(True)
  
-        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware orphaned tasks)" )
+        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (see Help)" )
         vbox.pack_start (stopnow_rb, True)
+
+        stopquick_rb = gtk.RadioButton( stop_rb, "Quickly (see Help)" )
+        vbox.pack_start (stopquick_rb, True)
+
+        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
+        vbox.pack_start (stopat_rb, True)
+
+
         stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
         vbox.pack_start (stopat_rb, True)
 
@@ -1748,6 +1762,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box, kill_cb )
         stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box, kill_cb )
         stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box, kill_cb )
+        stopquick_rb.connect( "toggled", self.stop_method, "stopquick", st_box, sc_box, tt_box, kill_cb )
         stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box, kill_cb )
         stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box, kill_cb )
 
@@ -1756,7 +1771,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         stop_button = gtk.Button( "_Stop" )
         stop_button.connect("clicked", self.stopsuite, window, kill_cb,
-                stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
+                stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
                 stoptime_entry, stopclock_entry, stoptask_entry )
 
         help_button = gtk.Button( "_Help" )
@@ -1776,7 +1791,7 @@ shown here in the state they were in at the time of triggering.''' )
             ch.set_sensitive( False )
         if meth == 'stop':
             kill_cb.set_sensitive(True)
-        elif meth == 'stopnow':
+        elif meth == 'stopnow' or meth == 'stopquick':
             kill_cb.set_sensitive(False)
         elif meth == 'stopat':
             kill_cb.set_sensitive(False)
