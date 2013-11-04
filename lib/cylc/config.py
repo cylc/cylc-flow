@@ -84,7 +84,7 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False, collapsed=[],
-            override=None, is_restart=False, is_reload=False,
+            is_restart=False, is_reload=False,
             write_processed_file=True ):
 
         self.suite = suite  # suite name
@@ -99,7 +99,6 @@ class config( object ):
         self.cyclers = []
         self.taskdefs = {}
         self.validation = validation
-        self.override = override
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
@@ -1581,10 +1580,7 @@ class config( object ):
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
 
-        if self.override:
-            ict = self.override
-        elif self.cfg['scheduling']['initial cycle time']:
-            # Use suite.rc initial cycle time
+        if self.cfg['scheduling']['initial cycle time']:
             ict = str(self.cfg['scheduling']['initial cycle time'])
             # We may want to put in some handling for cases of changing the
             # initial cycle via restart (accidentally or otherwise).

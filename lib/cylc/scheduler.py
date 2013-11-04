@@ -144,10 +144,6 @@ class scheduler(object):
 
         # COMMANDLINE OPTIONS
 
-        self.parser.add_option( "--until", 
-                help="Shut down after all tasks have PASSED this cycle time.",
-                metavar="CYCLE", action="store", dest="stop_tag" )
-
         self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
                 action="store_true", default=False, dest="start_held" )
@@ -282,11 +278,6 @@ class scheduler(object):
         self.log.info( 'Run mode: ' + self.run_mode )
         self.log.info( 'Start tag: ' + str(self.start_tag) )
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
-
-        if self.start_tag:
-            self.start_tag = self.ctexpand( self.start_tag)
-        if self.stop_tag:
-            self.stop_tag = self.ctexpand( self.stop_tag)
 
         # initial cycle time
         if self.is_restart:
@@ -689,23 +680,6 @@ class scheduler(object):
         self.suite_timer_start = now
         print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
 
-    def ctexpand( self, tag ):
-        # expand truncated cycle times (2012 => 2012010100)
-        try:
-            # cycle time
-            tag = ct(tag).get()
-        except CycleTimeError,x:
-            try:
-                # async integer tag
-                int( tag )
-            except ValueError:
-                raise Exception( "ERROR:, invalid task tag : " + tag )
-            else:
-                pass
-        else:
-            pass
-        return tag
-
     def reconfigure( self ):
         # reload the suite definition while the suite runs
         print "RELOADING the suite definition"
@@ -797,24 +771,11 @@ class scheduler(object):
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
-        # initial cycle time override
-        override = None
-        if self.is_restart:
-            # self.ict is set by "cylc restart" after loading state dump
-            pass
-        else:
-            if self.options.raw:
-                override = None
-            else:
-                override = self.start_tag    
-        # will need adjusting for ISO8601 time specification
-        if override == "now":
-            override = datetime.datetime.now().strftime("%Y%m%d%H") 
 
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, override=override, is_restart=self.is_restart,
+                verbose=self.verbose, is_restart=self.is_restart,
                 is_reload=reconfigure)
 
         if self.run_mode != self.config.run_mode:
@@ -829,23 +790,10 @@ class scheduler(object):
 
         self.stop_task = None
 
-        # START and STOP CYCLE TIMES
-        self.stop_tag = None
         self.stop_clock_time = None
 
-        # (self.start_tag is set already if provided on the command line).
-        if not self.start_tag:
-            # No initial cycle time on the command line
-            if self.config.cfg['scheduling']['initial cycle time']:
-                # Use suite.rc initial cycle time
-                self.start_tag = str(self.config.cfg['scheduling']['initial cycle time'])
-
-        if self.options.stop_tag:
-            # A final cycle time was provided on the command line.
-            self.stop_tag = self.options.stop_tag
-        elif self.config.cfg['scheduling']['final cycle time']:
-            # Use suite.rc final cycle time
-            self.stop_tag = str(self.config.cfg['scheduling']['final cycle time'])
+        self.start_tag = self.config.cfg['scheduling']['initial cycle time']
+        self.stop_tag = self.config.cfg['scheduling']['final cycle time']
 
         # could be async tags:
         ##if self.stop_tag:

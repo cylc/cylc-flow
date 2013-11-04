@@ -4006,89 +4006,59 @@ shell$ cylc get-config -i [runtime][airs]directives SUITE
 -I = ncpus=9
 \end{lstlisting}
 
-\subsubsection{Jinja2 Default Values And Template Inputs}
+\subsubsection{Jinja2 Template Inputs And Default Values}
 
-The values of Jinja2 variables can be passed in from the cylc command
-line rather than hardwired in the suite definition. Here's an example,
-from \lstinline=$CYLC_DIR/examples/jinja2/defaults=:
+Jinja2 variable values can be passed in from the cylc command
+line using the \lstinline=--set= and \lstinline=--set-file= options.
+If a Jinja2 variable is not set to a value in-suite then a value must be
+passed in for it, unless it has a default value.
 
+For example, here's a suite that takes its initial cycle time from
+the command line:
 \lstset{language=suiterc}
 \begin{lstlisting}
 #!Jinja2
-
-title = "Jinja2 example: use of defaults and external input"
-
-description = """
-The template variable FIRST_TASK must be given on the cylc command line
-using --set or --set-file=FILE; two other variables, LAST_TASK and
-N_MEMBERS can be set similarly, but if not they have default values.""" 
-
-{% set LAST_TASK = LAST_TASK | default( 'baz' ) %}
-{% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
-
-{# input of FIRST_TASK is required - no default #}
-
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time   = 2010081600
+    initial cycle time = {{ START }}
     [[dependencies]]
-        [[[0]]]
-            graph = """{{ FIRST_TASK }} => ens
-                 ens:succeed-all => {{ LAST_TASK }}"""
-[runtime]
-    [[ens]]
-{% for I in range( 0, N_MEMBERS ) %}
-    [[ mem_{{ I }} ]]
-        inherit = ens
-{% endfor %}
+        [[[Yearly(2010,3)]]]
+            graph = "foo"
 \end{lstlisting}
-
-Here's the result:
-
+This will fail validation unless a value is passed in:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc list SUITE
+# with no value set on the command line:
+shell$ cylc val my.suite
 Jinja2 Template Error
-'FIRST_TASK' is undefined
-cylc-list foo  failed:  1
+UndefinedError('START' is undefined)
 
-shell$ cylc list --set FIRST_TASK=bob foo
-bob
-baz
-mem_2
-mem_1
-mem_0
-
-shell$ cylc list --set FIRST_TASK=bob --set LAST_TASK=alice foo
-bob
-alice
-mem_2
-mem_1
-mem_0
-
-list --set FIRST_TASK=bob --set N_MEMBERS=10 foo
-mem_9
-mem_8
-mem_7
-mem_6
-mem_5
-mem_4
-mem_3
-mem_2
-mem_1
-mem_0
-baz
-bob
+# with a value set on the command line:
+shell$ cylc val --set START=2010 my.suite
+Suite my.suite is valid for cylc-5.4.0
+\end{lstlisting}
+However, if you define a default value like this,
+\lstset{language=suiterc}
+\begin{lstlisting}
+#!Jinja2
+[scheduling]
+    initial cycle time = {{ START | default(2010) }}
+    [[dependencies]]
+        [[[Yearly(2010,3)]]]
+            graph = "foo"
+\end{lstlisting}
+then the suite will validate (and run etc.) with no value passed in from
+the command line:
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc val my.suite
+Suite my.suite is valid for cylc-5.4.0
 \end{lstlisting}
 
-\lstset{language=suiterc}
-Note also that 
-\lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
-suite with the Jinja2 variables as set.
+The \lstinline=$CYLC_DIR/examples/jinja2/defaults= is another example.
 
-{\em Warning:} suites started with template variables set on the command
-line do not currently {\em restart} with the same settings - you have to 
-set them again on the \lstinline=cylc restart= command line.
+{\em Warning:} suites started with template variables on the command
+line do not restart with the same values set - they must be set again on
+the restart command line.
 
 \subsection{Special Placeholder Variables}
 \label{SPHV}
@@ -5379,40 +5349,19 @@ targetted at a task name persist throughout the suite run, even across
 restarts, unless manually cleared using the broadcast command - and so
 should be used sparingly. 
 
-\subsection{The Meaning And Use Of Initial Cycle Time}
+\subsection[CYLC\_SUITE\_INITIAL\_CYCLE\_TIME]{The CYLC\_SUITE\_INITIAL\_CYCLE\_TIME variable}
 
-When a suite is started with the \lstinline=cylc run= command (cold or
-warm start) the cycle time at which it starts can be given on the
-command line or hardwired into the suite.rc file:
-\begin{lstlisting}
-cylc run foo 2012080806
-\end{lstlisting}
-or,
-\begin{lstlisting}
-[scheduling]
-    initial cycle time = 2010080806
-\end{lstlisting}
-An initial cycle time given on the command line will override one in the
-suite.rc file.
-
-\subsubsection[CYLC\_SUITE\_INITIAL\_CYCLE\_TIME]{The Environment Variable CYLC\_SUITE\_INITIAL\_CYCLE\_TIME}
-
-In the case of {\em cold starts only} the initial cycle time will also
-be passed through to task execution environments as
-\lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=.  The intended use of this
-variable is to allow tasks to determine whether they are running in the
-initial cold-start cycle (when different behaviour may be required) or
-in a normal mid-run cycle. {\em This is not done for warm starts}
-because a warm start is really an implicit restart - it does not
-reference a particular previous suite state but it does assume that a 
-previous cycle (for each task) has been run and completed entirely.
-It follows that in a warm start tasks are really in a normal mid-run
-cycle, and because no actual previous state is referenced
+For a suite {\em cold start} the initial cycle time is passed to task
+execution environments as \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=.
+This allows tasks to determine whether or not they are running in the
+initial cold-start cycle, when different behaviour may be required.
+This is not done by default for warm starts because a warm start is
+really an implicit restart that does not reference a particular previous
+suite state - so cylc can't know what the original initial cycle was and
 \lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME= gets the value
-\lstinline=None=. After a cold-start, however, the value of the 
+\lstinline=None=.  After a cold-start, however, the value of the 
 environment variable does persist across restarts because the original
 cold-start cycle time is stored in suite state dump files. 
-
 
 \subsection{The Simulation And Dummy Run Modes} 
 \label{SimulationMode}
@@ -5697,6 +5646,8 @@ you wish:
         abort on timeout = True
 \end{lstlisting}
 
+
+
 \section{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.
@@ -5738,16 +5689,8 @@ The following topics have yet to be documented in detail.
     %    within limits, instance of an upstream task
 
     \item Sub-suites: to run another suite inside a task, just invoke the 
-        subsuite, with appropriate start and end cycles (probably a
-        single cycle), in the host task's command scripting:
-
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[foo]]
-        command scripting = \
-        "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
-\end{lstlisting}
+        subsuite, with appropriate start and end cycles - probably just a
+        single cycle - in the host task's command scripting.
 
     \item Dependence between suites: cylc will eventually support this
         directly, via special graph syntax. For the moment dependence on

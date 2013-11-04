@@ -294,11 +294,6 @@ but no implicit string end character ('$'). Examples:
 %i (foo|bar) - match 'foo' or 'bar' followed by anything""")
     help.show()
 
-def todo( b) :
-    help = helpwindow( "Commands or command options not yet implemented in the GUI", 300, """
-%h2 'cylc restart --no-release' option: don't release held tasks on restarting a suite.""")
-    help.show()
-
 def capture( b ):
     help = helpwindow( "Subprocess Capture Help", 200, """
 This window captures stdout and stderr messages, in real time, from
