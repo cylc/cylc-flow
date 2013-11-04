@@ -57,6 +57,7 @@ class loose_prerequisites( plain_prerequisites ):
                     self.sharpen_up( premsg, outmsg )
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs[outmsg] # owner_id
+                    break
 
     def dump( self ):
         return plain_prerequisites.dump(self)

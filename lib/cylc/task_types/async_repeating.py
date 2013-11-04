@@ -81,6 +81,7 @@ class async_repeating( nopid, task ):
 
                         self.env_vars[ 'ASYNCID' ] = mg 
                         self.asyncid = mg
+                        break
 
     def set_requisites( self ):
         # On reload from state dump, replace match patterns with literal strings.
