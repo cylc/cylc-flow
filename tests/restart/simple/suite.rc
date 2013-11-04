@@ -83,7 +83,7 @@
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
                 # Needs to still be running on suite restart
                 cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
-                --wait --timeout=60 --status=succeeded $CYLC_SUITE_REG_NAME
+                --max-polls=60 --status=succeeded $CYLC_SUITE_REG_NAME
                 sleep 10
             else
                 # Needs to run only until shutdown (no --now)
@@ -111,7 +111,7 @@
         pre-command scripting = """
             # We need to make sure that the results stay consistent.
             cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
-                --wait --status=retrying $CYLC_SUITE_REG_NAME
+                --max-polls=60 --status=retrying $CYLC_SUITE_REG_NAME
             sleep 2
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status
@@ -120,12 +120,12 @@
             cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-pre-restart-$CYLC_TASK_CYCLE_TIME
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
                 cd $CYLC_SUITE_RUN_DIR && \
-                    cylc shutdown --now --wait $CYLC_SUITE_REG_NAME && \
+                    cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
                     cylc restart $CYLC_SUITE_REG_NAME &&
                     touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
             else
                 cd $CYLC_SUITE_RUN_DIR && \
-                    cylc shutdown --wait $CYLC_SUITE_REG_NAME && \
+                    cylc shutdown --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
                     cylc restart $CYLC_SUITE_REG_NAME &&
                     touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
             fi
@@ -137,7 +137,7 @@
                 sleep 0.1
             done
             cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
-                --wait --timeout=10 --status=running $CYLC_SUITE_REG_NAME
+                --max-polls=10 --status=running $CYLC_SUITE_REG_NAME
             sleep 5  # Wait a few typical loops so that the states make it into the database.
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status

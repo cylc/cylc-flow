@@ -204,9 +204,14 @@ Arguments:"""
             watchers = prepper.get_rcfiles()
         return suite, suiterc, watchers
 
-    def parse_args( self ):
+    def parse_args( self, remove_opts=[] ):
 
         self.add_std_options()
+        for opt in remove_opts:
+            try:
+                self.remove_option( opt )
+            except:
+                pass
 
         (options, args) = OptionParser.parse_args( self )
 

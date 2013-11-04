@@ -38,8 +38,8 @@ class graphnode( object ):
         # Get task name and properties from a graph node name.
 
         # Graph node name is task name optionally followed by:
-        # - a special output indicator: foo:m1
-        # - an intercycle dependency indicator: foo[T-6]
+        # - output label: foo:m1
+        # - intercycle dependence: foo[T-6]
         # These may be combined: foo[T-6]:m1
 
         m = re.match( NODE_RE, node )

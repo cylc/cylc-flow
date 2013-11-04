@@ -71,6 +71,7 @@ class taskdef(object):
         self.modifiers = []
         self.is_coldstart = False
         self.cyclers = []
+        self.suite_polling_cfg = {}
 
         self.follow_on_task = None
         self.clocktriggered_offset = None
@@ -290,6 +291,7 @@ class taskdef(object):
                 sself.stop_c_time = '99991231230000'
                 super( sself.__class__, sself ).__init__( initial_state, validate=validate )
 
+            sself.suite_polling_cfg = self.suite_polling_cfg
             sself.reconfigure_me = False
             sself.is_coldstart = self.is_coldstart
             sself.set_from_rtconfig()

@@ -1,0 +1,31 @@
+2013/10/04 16:54:07 INFO - Thread-2 start (Event Handler Submission)
+2013/10/04 16:54:07 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/10/04 16:54:07 INFO - port:7767
+2013/10/04 16:54:07 INFO - Suite starting at 2013-10-04 16:54:07.529632
+2013/10/04 16:54:07 INFO - Log event clock: real time
+2013/10/04 16:54:07 INFO - Run mode: live
+2013/10/04 16:54:07 INFO - Start tag: None
+2013/10/04 16:54:07 INFO - Stop tag: None
+2013/10/04 16:54:07 INFO - Thread-4 start (Job Submission)
+2013/10/04 16:54:07 INFO - Thread-5 start (Request Handling)
+2013/10/04 16:54:07 INFO - [lbad.1] -(setting:submitting)
+2013/10/04 16:54:07 INFO - [lgood.1] -(setting:submitting)
+2013/10/04 16:54:07 INFO - [lbad.1] -triggered off []
+2013/10/04 16:54:07 INFO - [lgood.1] -triggered off []
+2013/10/04 16:54:08 INFO - [lbad.1] -(current:submitting)> lbad.1 submitting now
+2013/10/04 16:54:09 INFO - [lbad.1] -(current:submitting)> lbad.1 submission succeeded
+2013/10/04 16:54:09 INFO - [lbad.1] -(setting:submitted)
+2013/10/04 16:54:09 INFO - [lbad.1] -(current:submitted)> lbad.1 submit_method_id=25214
+2013/10/04 16:54:09 INFO - [lbad.1] -(current:submitted)> lbad.1 started at 2013-10-04T16:54:08
+2013/10/04 16:54:09 INFO - [lbad.1] -(setting:running)
+2013/10/04 16:54:09 INFO - [lgood.1] -(current:submitting)> lgood.1 submitting now
+2013/10/04 16:54:09 INFO - [lgood.1] -(current:submitting)> lgood.1 started at 2013-10-04T16:54:08
+2013/10/04 16:54:09 INFO - [lgood.1] -(setting:running)
+2013/10/04 16:54:10 INFO - [lgood.1] -(current:running)> lgood.1 submission succeeded
+2013/10/04 16:54:10 INFO - [lgood.1] -(current:running)> lgood.1 submit_method_id=25239
+2013/10/04 16:54:21 INFO - [lbad.1] -(current:running)> lbad.1 succeeded at 2013-10-04T16:54:21
+2013/10/04 16:54:21 INFO - [lbad.1] -(setting:succeeded)
+2013/10/04 16:54:21 INFO - [lgood.1] -(current:running)> lgood.1 succeeded at 2013-10-04T16:54:21
+2013/10/04 16:54:21 INFO - [lgood.1] -(setting:succeeded)
+2013/10/04 16:54:21 INFO - All non-cycling tasks have succeeded
+2013/10/04 16:54:21 INFO - Suite shutting down at 2013-10-04 16:54:21.561269

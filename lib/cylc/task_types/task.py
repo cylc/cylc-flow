@@ -541,7 +541,7 @@ class task( object ):
         # NOTE: not using__import__() keyword arguments:
         #mod = __import__( module_name, fromlist=[class_name] )
         # as these were only introduced in Python 2.5.
-        # TODO - UPGRADE TO THE 2.5 FORM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # TODO - UPGRADE TO THE 2.5 FORM
         try:
             # try to import built-in job submission classes first
             mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
@@ -568,6 +568,35 @@ class task( object ):
         else:
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
+
+        if self.suite_polling_cfg:
+            # generate automatic suite state polling command scripting
+            #____
+            # for an additional cycle time offset for --cycle:
+            #offset =  rtconfig['suite state polling']['offset']
+            #if offset:
+            #    foo = ct( self.c_time )
+            #    foo.decrement( hours=offset )
+            #    cycle = foo.get()
+            #else:
+            #    cycle = self.c_time
+            #____
+            comstr = "cylc suite-state " + \
+                     " --task=" + self.suite_polling_cfg['task'] + \
+                     " --cycle=" + self.c_time + \
+                     " --status=" + self.suite_polling_cfg['status']
+            if rtconfig['suite state polling']['owner']:
+                comstr += " --owner=" + rtconfig['suite state polling']['owner']
+            if rtconfig['suite state polling']['host']:
+                comstr += " --host=" + rtconfig['suite state polling']['host']
+            if rtconfig['suite state polling']['interval']:
+                comstr += " --interval=" + str(rtconfig['suite state polling']['interval'])
+            if rtconfig['suite state polling']['max-polls']:
+                comstr += " --max-polls=" + str(rtconfig['suite state polling']['max-polls'])
+            if rtconfig['suite state polling']['run-dir']:
+                comstr += " --run-dir=" + str(rtconfig['suite state polling']['run-dir'])
+            comstr += " " + self.suite_polling_cfg['suite']
+            command = "echo " + comstr + "\n" + comstr
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
