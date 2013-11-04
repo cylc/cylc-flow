@@ -474,7 +474,7 @@ class scheduler(object):
             ungroup_recursive, group_all, ungroup_all ):
         # TODO - CAN WE OMIT THE MIDDLE MAN HERE?
         return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
-                ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
+                ungroup_nodes, ungroup_recursive, group_all, ungroup_all), self.config.suite_polling_tasks
 
     def info_get_task_requisites( self, in_ids ):
         in_ids_real = {}

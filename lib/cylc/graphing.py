@@ -27,18 +27,17 @@ OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
 
 # TODO: Do we still need autoURL below?
 
-ddmmhh = TaskID.DELIM_RE
-tformat = r'\\n'
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
 
-    def __init__( self, title ):
+    def __init__( self, title, suite_polling_tasks={} ):
         self.title = title
         pygraphviz.AGraph.__init__( self, directed=True )
         # graph attributes
         # - label (suite name)
         self.graph_attr['label'] = title
+        self.suite_polling_tasks = suite_polling_tasks
 
     def node_attr_by_taskname( self, n ):
         name = re.sub( TaskID.DELIM_RE+'.*', '', n )
@@ -52,7 +51,11 @@ class CGraphPlain( pygraphviz.AGraph ):
 
     def style_node( self, n, autoURL, base=False ):
         node = self.get_node(n)
-        label = re.sub( ddmmhh, tformat, n )
+        name, tag = re.split( TaskID.DELIM_RE, n )
+        label = name
+        if name in self.suite_polling_tasks:
+            label += "\\n" + self.suite_polling_tasks[name][3]
+        label += "\\n" + tag
         node.attr[ 'label' ] = label
         if autoURL:
             if base:
@@ -115,12 +118,11 @@ class CGraph( CGraphPlain ):
     This class automatically adds node and edge attributes 
     according to the suite.rc file visualization config."""
 
-    def __init__( self, title, vizconfig ):
+    def __init__( self, title, suite_polling_tasks={}, vizconfig={} ):
 
         # suite.rc visualization config section
         self.vizconfig = vizconfig
-
-        CGraphPlain.__init__( self, title )
+        CGraphPlain.__init__( self, title, suite_polling_tasks )
 
         # graph attributes
         # - default node attributes
