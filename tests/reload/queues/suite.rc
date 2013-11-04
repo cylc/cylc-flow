@@ -1,0 +1,28 @@
+title = queue size reload test
+description = """change the size of a queue via a reload."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.5 # minutes
+
+[scheduling]
+    [[ queues ]]
+        [[[ q_fam ]]]
+            limit = 5 # marker
+            members = reloader, FAM
+    [[dependencies]]
+        graph = reloader:start => FAM
+[runtime]
+    [[FAM]]
+        command scripting = sleep 10
+    [[a,b,c,d,e,f,g,h,i,j,k,l]]
+        inherit = FAM
+    [[reloader]]
+        command scripting = """
+sleep 5
+# change the limit on number of members of q_fam:
+perl -pi -e 's/(limit = )5( # marker)/\1 3 \2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+"""

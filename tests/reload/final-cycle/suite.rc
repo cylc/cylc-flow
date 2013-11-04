@@ -1,0 +1,27 @@
+title = final cycle reload test
+description = """change final cycle."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time =  2010010112 # marker
+    [[dependencies]]
+        [[[0]]]
+            graph = "reloader => a"
+        [[[0,6,12,18]]]
+        graph = "a[T-6] => a"
+[runtime]
+    [[reloader]]
+        command scripting = """
+# change the order of FOO and BAR in the graphing section:
+perl -pi -e 's/(final cycle time = )2010010200( # marker)/\1 2010010112\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+sleep 5
+"""
+    [[a]]
+        command scripting = sleep 1
