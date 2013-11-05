@@ -17,7 +17,7 @@ description = """change final cycle."""
 [runtime]
     [[reloader]]
         command scripting = """
-# change the order of FOO and BAR in the graphing section:
+# change the final cycle:
 perl -pi -e 's/(final cycle time = )2010010200( # marker)/\1 2010010112\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
