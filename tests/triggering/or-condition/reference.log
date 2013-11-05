@@ -1,0 +1,105 @@
+2013/11/05 15:08:51 INFO - Thread-2 start (Event Handlers)
+2013/11/05 15:08:51 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/05 15:08:51 INFO - port:7766
+2013/11/05 15:08:51 INFO - Suite starting at 2013-11-05 15:08:51.959151
+2013/11/05 15:08:51 INFO - Log event clock: real time
+2013/11/05 15:08:51 INFO - Run mode: live
+2013/11/05 15:08:51 INFO - Start tag: None
+2013/11/05 15:08:51 INFO - Stop tag: None
+2013/11/05 15:08:51 INFO - Thread-4 start (Job Submission)
+2013/11/05 15:08:51 INFO - Thread-5 start (Request Handling)
+2013/11/05 15:08:51 DEBUG - [a.1] -task proxy added to the pool
+2013/11/05 15:08:51 DEBUG - [c.1] -task proxy added to the pool
+2013/11/05 15:08:51 DEBUG - [b.1] -task proxy added to the pool
+2013/11/05 15:08:51 DEBUG - [e.1] -task proxy added to the pool
+2013/11/05 15:08:51 DEBUG - [d.1] -task proxy added to the pool
+2013/11/05 15:08:51 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:08:51 INFO - [a.1] -(setting:queued)
+2013/11/05 15:08:51 INFO - [b.1] -(setting:queued)
+2013/11/05 15:08:51 INFO - [a.1] -(setting:submitting)
+2013/11/05 15:08:51 INFO - [b.1] -(setting:submitting)
+2013/11/05 15:08:51 INFO - [a.1] -triggered off []
+2013/11/05 15:08:51 INFO - [b.1] -triggered off []
+2013/11/05 15:08:51 DEBUG - END TASK PROCESSING (took 0.01991 sec)
+2013/11/05 15:08:52 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/05 15:08:53 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/11/05 15:08:54 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/11/05 15:08:54 INFO - [a.1] -(setting:submitted)
+2013/11/05 15:08:54 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=29893
+2013/11/05 15:08:54 INFO - [a.1] -(current:submitted)> a.1 started at 2013-11-05T15:08:53
+2013/11/05 15:08:54 INFO - [a.1] -(setting:running)
+2013/11/05 15:08:54 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-11-05T15:08:53
+2013/11/05 15:08:54 INFO - [a.1] -(setting:succeeded)
+2013/11/05 15:08:54 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/11/05 15:08:54 INFO - [b.1] -(current:submitting)> b.1 started at 2013-11-05T15:08:53
+2013/11/05 15:08:54 INFO - [b.1] -(setting:running)
+2013/11/05 15:08:54 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.413823
+  All 2 items succeeded
+2013/11/05 15:08:55 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:08:55 INFO - [c.1] -(setting:queued)
+2013/11/05 15:08:55 INFO - [d.1] -(setting:queued)
+2013/11/05 15:08:55 INFO - [c.1] -(setting:submitting)
+2013/11/05 15:08:55 INFO - [d.1] -(setting:submitting)
+2013/11/05 15:08:55 INFO - [c.1] -triggered off ['a.1']
+2013/11/05 15:08:55 INFO - [d.1] -triggered off ['a.1']
+2013/11/05 15:08:55 DEBUG - END TASK PROCESSING (took 0.017342 sec)
+2013/11/05 15:08:55 INFO - [b.1] -(current:running)> b.1 submission succeeded
+2013/11/05 15:08:55 INFO - [b.1] -(current:running)> b.1 submit_method_id=29983
+2013/11/05 15:08:56 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:08:56 DEBUG - END TASK PROCESSING (took 0.012521 sec)
+2013/11/05 15:08:56 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/05 15:08:57 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/11/05 15:08:57 INFO - [c.1] -(current:submitting)> c.1 submission succeeded
+2013/11/05 15:08:57 INFO - [c.1] -(setting:submitted)
+2013/11/05 15:08:57 INFO - [c.1] -(current:submitted)> c.1 submit_method_id=30173
+2013/11/05 15:08:57 INFO - [d.1] -(current:submitting)> d.1 submitting now
+2013/11/05 15:08:57 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.412023
+  All 2 items succeeded
+2013/11/05 15:08:58 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:08:58 DEBUG - END TASK PROCESSING (took 0.012674 sec)
+2013/11/05 15:08:58 INFO - [c.1] -(current:submitted)> c.1 started at 2013-11-05T15:08:57
+2013/11/05 15:08:58 INFO - [c.1] -(setting:running)
+2013/11/05 15:08:58 INFO - [d.1] -(current:submitting)> d.1 started at 2013-11-05T15:08:57
+2013/11/05 15:08:58 INFO - [d.1] -(setting:running)
+2013/11/05 15:08:58 INFO - [d.1] -(current:running)> d.1 succeeded at 2013-11-05T15:08:57
+2013/11/05 15:08:58 INFO - [d.1] -(setting:succeeded)
+2013/11/05 15:08:58 WARNING - [d.1] -Assuming non-reported outputs were completed:
+d.1 submitted
+2013/11/05 15:08:58 INFO - [d.1] -(current:succeeded)> d.1 submission succeeded
+2013/11/05 15:08:58 INFO - [d.1] -(current:succeeded)> d.1 submit_method_id=30240
+2013/11/05 15:08:59 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:08:59 INFO - [e.1] -(setting:queued)
+2013/11/05 15:08:59 INFO - [e.1] -(setting:submitting)
+2013/11/05 15:08:59 INFO - [e.1] -triggered off ['d.1']
+2013/11/05 15:08:59 DEBUG - END TASK PROCESSING (took 0.014552 sec)
+2013/11/05 15:08:59 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 15:09:00 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.210060
+  All 1 items succeeded
+2013/11/05 15:09:00 INFO - [e.1] -(current:submitting)> e.1 submitting now
+2013/11/05 15:09:00 INFO - [e.1] -(current:submitting)> e.1 submission succeeded
+2013/11/05 15:09:00 INFO - [e.1] -(setting:submitted)
+2013/11/05 15:09:00 INFO - [e.1] -(current:submitted)> e.1 submit_method_id=30456
+2013/11/05 15:09:01 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:09:01 DEBUG - END TASK PROCESSING (took 0.012762 sec)
+2013/11/05 15:09:01 INFO - [e.1] -(current:submitted)> e.1 started at 2013-11-05T15:09:00
+2013/11/05 15:09:01 INFO - [e.1] -(setting:running)
+2013/11/05 15:09:01 INFO - [e.1] -(current:running)> e.1 succeeded at 2013-11-05T15:09:00
+2013/11/05 15:09:01 INFO - [e.1] -(setting:succeeded)
+2013/11/05 15:09:02 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:09:02 DEBUG - END TASK PROCESSING (took 0.014508 sec)
+2013/11/05 15:09:05 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-11-05T15:09:04
+2013/11/05 15:09:05 INFO - [b.1] -(setting:succeeded)
+2013/11/05 15:09:06 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:09:06 DEBUG - END TASK PROCESSING (took 0.012802 sec)
+2013/11/05 15:09:08 INFO - [c.1] -(current:running)> c.1 succeeded at 2013-11-05T15:09:07
+2013/11/05 15:09:08 INFO - [c.1] -(setting:succeeded)
+2013/11/05 15:09:08 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/05 15:09:08 INFO - Thread-2 exit (Event Handlers)
+2013/11/05 15:09:08 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/05 15:09:09 INFO - Thread-4 exit (Job Submission)
+2013/11/05 15:09:09 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 15:09:09 DEBUG - END TASK PROCESSING (took 0.013528 sec)
