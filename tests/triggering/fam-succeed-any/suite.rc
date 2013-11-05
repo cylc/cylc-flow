@@ -7,7 +7,7 @@
 
 [scheduling]
     [[dependencies]]
-        graph = """FAM:finish-all => foo
+        graph = """FAM:succeed-any => foo
                    foo => !FAM"""
 [runtime]
     [[FAM]]
