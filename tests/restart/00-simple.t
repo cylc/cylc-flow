@@ -221,7 +221,7 @@ __DB_DUMP__
 
 cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
-broadcast_task|2013092306|0|1|held
+broadcast_task|2013092306|0|1|waiting
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 failed_task|2013092312|0|1|held
@@ -249,9 +249,9 @@ succeed_task|2013092300|1|1|succeeded
 succeed_task|2013092306|1|1|succeeded
 succeed_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
-tidy|2013092306|0|1|held
+tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
-waiting_task|2013092306|0|1|held
+waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state <<'__STATE__'
 initial cycle : 2013092300
@@ -276,7 +276,6 @@ broadcast_task.2013092312 : status=held, spawned=false
 failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092312 : status=held, spawned=false
 output_states.2013092312 : status=held, spawned=false
-retrying_task.2013092306 : status=succeeded, spawned=true
 retrying_task.2013092312 : status=held, spawned=false
 runahead_task.2013092312 : status=held, spawned=false
 running_task.2013092312 : status=held, spawned=false
