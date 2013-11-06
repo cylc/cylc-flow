@@ -1,0 +1,19 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.5 # minutes
+
+[scheduling]
+    [[dependencies]] # marker
+        graph = reloader => foo
+[runtime]
+    [[reloader]]
+        command scripting = """
+sleep 5
+# change the dependencies section name to garbage:
+perl -pi -e 's/(\[\[)dependencies(\]\] # marker)/\1garbage\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+"""
+    [[foo]]
+        command scripting = true

@@ -1,0 +1,59 @@
+2013/11/06 10:27:36 INFO - Thread-2 start (Event Handlers)
+2013/11/06 10:27:36 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/06 10:27:36 INFO - port:7766
+2013/11/06 10:27:36 INFO - Suite starting at 2013-11-06 10:27:36.267230
+2013/11/06 10:27:36 INFO - Log event clock: real time
+2013/11/06 10:27:36 INFO - Run mode: live
+2013/11/06 10:27:36 INFO - Start tag: None
+2013/11/06 10:27:36 INFO - Stop tag: None
+2013/11/06 10:27:36 INFO - Thread-4 start (Job Submission)
+2013/11/06 10:27:36 INFO - Thread-5 start (Request Handling)
+2013/11/06 10:27:36 DEBUG - [reloader.1] -task proxy added to the pool
+2013/11/06 10:27:36 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/06 10:27:36 DEBUG - BEGIN TASK PROCESSING
+2013/11/06 10:27:36 INFO - [reloader.1] -(setting:queued)
+2013/11/06 10:27:36 INFO - [reloader.1] -(setting:submitting)
+2013/11/06 10:27:36 INFO - [reloader.1] -triggered off []
+2013/11/06 10:27:36 DEBUG - END TASK PROCESSING (took 0.014173 sec)
+2013/11/06 10:27:37 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/06 10:27:37 INFO - [reloader.1] -(current:submitting)> reloader.1 submitting now
+2013/11/06 10:27:37 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.193827
+  All 1 items succeeded
+2013/11/06 10:27:38 INFO - [reloader.1] -(current:submitting)> reloader.1 submission succeeded
+2013/11/06 10:27:38 INFO - [reloader.1] -(setting:submitted)
+2013/11/06 10:27:38 INFO - [reloader.1] -(current:submitted)> reloader.1 submit_method_id=31419
+2013/11/06 10:27:38 INFO - [reloader.1] -(current:submitted)> reloader.1 started at 2013-11-06T10:27:38
+2013/11/06 10:27:38 INFO - [reloader.1] -(setting:running)
+2013/11/06 10:27:39 DEBUG - BEGIN TASK PROCESSING
+2013/11/06 10:27:39 DEBUG - END TASK PROCESSING (took 0.013326 sec)
+2013/11/06 10:27:44 INFO - [reloader.1] -(current:running)> reloader.1 succeeded at 2013-11-06T10:27:43
+2013/11/06 10:27:44 INFO - [reloader.1] -(setting:succeeded)
+2013/11/06 10:27:44 WARNING - 'Illegal item: [scheduling]garbage'
+2013/11/06 10:27:44 WARNING - Command failed: reload suite()
+2013/11/06 10:27:45 DEBUG - BEGIN TASK PROCESSING
+2013/11/06 10:27:45 INFO - [foo.1] -(setting:queued)
+2013/11/06 10:27:45 INFO - [foo.1] -(setting:submitting)
+2013/11/06 10:27:45 INFO - [foo.1] -triggered off ['reloader.1']
+2013/11/06 10:27:45 DEBUG - END TASK PROCESSING (took 0.015533 sec)
+2013/11/06 10:27:45 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/06 10:27:45 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.203945
+  All 1 items succeeded
+2013/11/06 10:27:46 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/06 10:27:46 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/06 10:27:46 INFO - [foo.1] -(setting:submitted)
+2013/11/06 10:27:46 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=31595
+2013/11/06 10:27:46 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-06T10:27:46
+2013/11/06 10:27:46 INFO - [foo.1] -(setting:running)
+2013/11/06 10:27:47 DEBUG - BEGIN TASK PROCESSING
+2013/11/06 10:27:47 DEBUG - END TASK PROCESSING (took 0.012165 sec)
+2013/11/06 10:27:47 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-11-06T10:27:46
+2013/11/06 10:27:47 INFO - [foo.1] -(setting:succeeded)
+2013/11/06 10:27:47 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/06 10:27:47 INFO - Thread-4 exit (Job Submission)
+2013/11/06 10:27:48 INFO - Thread-2 exit (Event Handlers)
+2013/11/06 10:27:48 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/06 10:27:48 DEBUG - BEGIN TASK PROCESSING
+2013/11/06 10:27:48 DEBUG - END TASK PROCESSING (took 0.011831 sec)
