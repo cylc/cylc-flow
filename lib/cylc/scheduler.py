@@ -142,7 +142,12 @@ class scheduler(object):
         self.do_shutdown = None
         self.threads_stopped = False
 
-        # COMMANDLINE OPTIONS
+        self.stop_task = None
+        self.stop_clock_time = None
+
+        self.start_tag = None
+        self.stop_tag = None
+        self.cli_start_tag = None
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -283,26 +288,6 @@ class scheduler(object):
         self.log.info( 'Start tag: ' + str(self.start_tag) )
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
 
-        if self.start_tag:
-            self.start_tag = self.ctexpand( self.start_tag)
-        if self.stop_tag:
-            self.stop_tag = self.ctexpand( self.stop_tag)
-
-        # initial cycle time
-        if self.is_restart:
-            # self.ict is set by "cylc restart" after loading state dump
-            pass
-        else:
-            if self.options.warm:
-                if self.options.set_ict:
-                    self.ict = self.start_tag
-                else:
-                    self.ict = None
-            elif self.options.raw:
-                self.ict = None
-            else:
-                self.ict = self.start_tag
-
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
@@ -323,7 +308,7 @@ class scheduler(object):
         self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime )
         self.pyro.connect( self.suite_state, 'state_summary')
 
-        self.state_dumper.set_cts( self.ict, self.stop_tag )
+        self.state_dumper.set_cts( self.start_tag, self.stop_tag )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
@@ -689,23 +674,6 @@ class scheduler(object):
         self.suite_timer_start = now
         print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
 
-    def ctexpand( self, tag ):
-        # expand truncated cycle times (2012 => 2012010100)
-        try:
-            # cycle time
-            tag = ct(tag).get()
-        except CycleTimeError,x:
-            try:
-                # async integer tag
-                int( tag )
-            except ValueError:
-                raise Exception( "ERROR:, invalid task tag : " + tag )
-            else:
-                pass
-        else:
-            pass
-        return tag
-
     def reconfigure( self ):
         # reload the suite definition while the suite runs
         print "RELOADING the suite definition"
@@ -797,25 +765,23 @@ class scheduler(object):
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
-        # initial cycle time override
-        override = None
-        if self.is_restart:
-            # self.ict is set by "cylc restart" after loading state dump
-            pass
-        else:
-            if self.options.raw:
-                override = None
-            else:
-                override = self.start_tag    
-        # will need adjusting for ISO8601 time specification
-        if override == "now":
-            override = datetime.datetime.now().strftime("%Y%m%d%H") 
 
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, override=override, is_restart=self.is_restart,
-                is_reload=reconfigure)
+                verbose=self.verbose, cli_start_tag=self.cli_start_tag,
+                is_restart=self.is_restart, is_reload=reconfigure)
+
+        # Initial and final cycle times - command line takes precedence
+        self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle time']
+        self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle time']
+        if self.start_tag:
+            self.start_tag = ct(self.start_tag).get()
+        if self.stop_tag:
+            self.stop_tag = ct(self.stop_tag).get()
+
+        if not self.start_tag and not self.is_restart:
+            print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -826,35 +792,6 @@ class scheduler(object):
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
-
-        self.stop_task = None
-
-        # START and STOP CYCLE TIMES
-        self.stop_tag = None
-        self.stop_clock_time = None
-
-        # (self.start_tag is set already if provided on the command line).
-        if not self.start_tag:
-            # No initial cycle time on the command line
-            if self.config.cfg['scheduling']['initial cycle time']:
-                # Use suite.rc initial cycle time
-                self.start_tag = str(self.config.cfg['scheduling']['initial cycle time'])
-
-        if self.options.stop_tag:
-            # A final cycle time was provided on the command line.
-            self.stop_tag = self.options.stop_tag
-        elif self.config.cfg['scheduling']['final cycle time']:
-            # Use suite.rc final cycle time
-            self.stop_tag = str(self.config.cfg['scheduling']['final cycle time'])
-
-        # could be async tags:
-        ##if self.stop_tag:
-        ##    self.stop_tag = ct( self.stop_tag ).get()
-        ##if self.start_tag:
-        ##    self.start_tag = ct( self.start_tag ).get()
-
-        if not self.start_tag and not self.is_restart:
-            print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if not reconfigure:
             # PAUSE TIME?
@@ -953,7 +890,7 @@ class scheduler(object):
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
-                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.ict ), # may be "None"
+                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.start_tag ), # may be "None"
                 'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_tag ), # may be "None"
                 'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
                 }
