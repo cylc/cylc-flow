@@ -66,7 +66,7 @@ function FINALLY() {
         cd ~
         rm -rf $TEST_DIR
     fi
-    if [[ $FAILURES -gt 0 ]]; then
+    if (($FAILURES > 0)); then
         echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" > /dev/tty
         if $SUITE_RUN_FAILS; then
             echo -e "    suite logs can be found under: $SUITE_LOG_DIR" > /dev/tty
@@ -177,43 +177,45 @@ function grep_ok() {
 function init_suite() {
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
     SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_${SNAME}_${1}
-    mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
+    mkdir $TEST_DIR/$SUITE_NAME/ 
     cat >$TEST_DIR/$SUITE_NAME/suite.rc
-    cylc unregister $SUITE_NAME 2>&1
-    cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>&1
-    cd $TEST_DIR/$SUITE_NAME 2>&1
-    while [[ ! $(cylc get-directory $SUITE_NAME) ]]
-    do
+    cylc unregister $SUITE_NAME 2>/dev/null
+    cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
+    while ! cylc get-directory $SUITE_NAME 1>/dev/null 2>&1; do
         sleep 1
+        cylc unregister $SUITE_NAME
+        cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME
     done
+    cd $TEST_DIR/$SUITE_NAME
 }
 
 function install_suite() {
     ORIG_SUITE_NAME=$2
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
     SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_${SNAME}_${1}
-    mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
-    cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME 2>&1
-    cylc unregister $SUITE_NAME 2>&1
-    cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>&1
-    cd $TEST_DIR/$SUITE_NAME 2>&1
-    while [[ ! $(cylc get-directory $SUITE_NAME) ]]
-    do
+    mkdir $TEST_DIR/$SUITE_NAME/
+    cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME
+    cylc unregister $SUITE_NAME 2>/dev/null
+    cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
+    while ! cylc get-directory $SUITE_NAME 1>/dev/null 2>&1; do
         sleep 1
+        cylc unregister $SUITE_NAME 2>/dev/null
+        cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
     done
+    cd $TEST_DIR/$SUITE_NAME
 }
 
 function purge_suite() {
-    if [[ $FAILURES -eq 0 ]]; then
-        while [ $(lsof | grep $(cylc get-global-config --print-run-dir)/$SUITE_NAME | wc -l) -gt 0 ]
-        do
+    if (($FAILURES == 0)); then
+        SUITE_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
+        while lsof | grep -q $SUITE_DIR; do
             sleep 1
         done    
-        rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME
+        rm -rf $SUITE_DIR
     fi
     cd $TEST_DIR
     if [[ -n ${SUITE_NAME:-} ]]; then
-        cylc unregister $SUITE_NAME || true
+        cylc unregister $SUITE_NAME 2>/dev/null || true
         if [[ -n ${TEST_DIR:-} ]]; then
             rm -rf $TEST_DIR/$SUITE_NAME/
         fi
