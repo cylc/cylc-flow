@@ -1,0 +1,15 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = """FAM:succeed-all => foo"""
+[runtime]
+    [[FAM]]
+        command scripting = "true"
+    [[a,b,c]]
+        inherit = FAM
+    [[foo]]
+        command scripting = "true"

@@ -1,161 +1,410 @@
-2013/08/20 10:56:01 INFO - Thread-2 start (Event Handler Submission)
-2013/08/20 10:56:01 INFO - Thread-3 start (Poll and Kill Command Submission)
-2013/08/20 10:56:01 INFO - port:7766
-2013/08/20 10:56:01 INFO - Suite starting at 2013-08-20 10:56:01.463627
-2013/08/20 10:56:01 INFO - Log event clock: real time
-2013/08/20 10:56:01 INFO - Run mode: live
-2013/08/20 10:56:01 INFO - Start tag: 2010010100
-2013/08/20 10:56:01 INFO - Stop tag: 2010010200
-2013/08/20 10:56:01 INFO - Thread-4 start (Job Submission)
-2013/08/20 10:56:01 INFO - Thread-5 start (Request Handling)
-2013/08/20 10:56:01 INFO - Cold Start 2010010100
-2013/08/20 10:56:01 INFO - [start.2010010100] -(setting:submitting)
-2013/08/20 10:56:01 INFO - [start.2010010100] -triggered off []
-2013/08/20 10:56:02 INFO - [start.2010010100] -(current:submitting)> start.2010010100 submitting now
-2013/08/20 10:56:03 INFO - [start.2010010100] -(current:submitting)> start.2010010100 submission succeeded
-2013/08/20 10:56:03 INFO - [start.2010010100] -(setting:submitted)
-2013/08/20 10:56:03 INFO - [start.2010010100] -(current:submitted)> start.2010010100 submit_method_id=8443
-2013/08/20 10:56:04 INFO - [start.2010010100] -(current:submitted)> start.2010010100 started at 2013-08-20T10:56:03
-2013/08/20 10:56:04 INFO - [start.2010010100] -(setting:running)
-2013/08/20 10:56:19 INFO - [start.2010010100] -(current:running)> start.2010010100 succeeded at 2013-08-20T10:56:18
-2013/08/20 10:56:19 INFO - [start.2010010100] -(setting:succeeded)
-2013/08/20 10:56:19 INFO - [a.2010010100] -(setting:submitting)
-2013/08/20 10:56:19 INFO - [a.2010010100] -triggered off ['start.2010010100']
-2013/08/20 10:56:20 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
-2013/08/20 10:56:20 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
-2013/08/20 10:56:20 INFO - [a.2010010100] -(setting:submitted)
-2013/08/20 10:56:20 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=8654
-2013/08/20 10:56:21 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-08-20T10:56:20
-2013/08/20 10:56:21 INFO - [a.2010010100] -(setting:running)
-2013/08/20 10:56:26 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-08-20T10:56:26
-2013/08/20 10:56:26 INFO - [a.2010010100] -(setting:succeeded)
-2013/08/20 10:56:26 INFO - [b.2010010100] -(setting:submitting)
-2013/08/20 10:56:26 INFO - [b.2010010100] -triggered off ['a.2010010100']
-2013/08/20 10:56:27 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submitting now
-2013/08/20 10:56:27 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submission succeeded
-2013/08/20 10:56:27 INFO - [b.2010010100] -(setting:submitted)
-2013/08/20 10:56:27 INFO - [b.2010010100] -(current:submitted)> b.2010010100 submit_method_id=8761
-2013/08/20 10:56:28 INFO - [b.2010010100] -(current:submitted)> b.2010010100 started at 2013-08-20T10:56:27
-2013/08/20 10:56:28 INFO - [b.2010010100] -(setting:running)
-2013/08/20 10:56:29 INFO - Command succeeded: reload suite()
-2013/08/20 10:56:29 INFO - RELOADING TASK DEFINITION FOR a.2010010100
-2013/08/20 10:56:29 INFO - RELOADING TASK DEFINITION FOR start.2010010100
-2013/08/20 10:56:29 INFO - RELOADING TASK DEFINITION FOR c.2010010100
-2013/08/20 10:56:29 INFO - RELOADING TASK DEFINITION FOR a.2010010106
-2013/08/20 10:56:29 INFO - RELOADING TASK DEFINITION FOR b.2010010106
-2013/08/20 10:56:34 INFO - [b.2010010100] -(current:running)> b.2010010100 succeeded at 2013-08-20T10:56:34
-2013/08/20 10:56:34 INFO - [b.2010010100] -(setting:succeeded)
-2013/08/20 10:56:34 INFO - RELOADING TASK DEFINITION FOR b.2010010100
-2013/08/20 10:56:34 INFO - [c.2010010100] -(setting:submitting)
-2013/08/20 10:56:34 INFO - [c.2010010100] -triggered off ['b.2010010100']
-2013/08/20 10:56:35 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submitting now
-2013/08/20 10:56:35 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submission succeeded
-2013/08/20 10:56:35 INFO - [c.2010010100] -(setting:submitted)
-2013/08/20 10:56:35 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=8877
-2013/08/20 10:56:36 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2013-08-20T10:56:36
-2013/08/20 10:56:36 INFO - [c.2010010100] -(setting:running)
-2013/08/20 10:56:41 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-08-20T10:56:41
-2013/08/20 10:56:41 INFO - [c.2010010100] -(setting:succeeded)
-2013/08/20 10:56:41 INFO - [a.2010010106] -(setting:submitting)
-2013/08/20 10:56:41 INFO - [a.2010010106] -triggered off ['c.2010010100']
-2013/08/20 10:56:42 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submitting now
-2013/08/20 10:56:42 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submission succeeded
-2013/08/20 10:56:42 INFO - [a.2010010106] -(setting:submitted)
-2013/08/20 10:56:42 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=8984
-2013/08/20 10:56:43 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2013-08-20T10:56:43
-2013/08/20 10:56:43 INFO - [a.2010010106] -(setting:running)
-2013/08/20 10:56:43 INFO - [a.2010010200] -HOLDING (beyond runahead limit)
-2013/08/20 10:56:43 INFO - [a.2010010200] -(setting:runahead)
-2013/08/20 10:56:49 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2013-08-20T10:56:48
-2013/08/20 10:56:49 INFO - [a.2010010106] -(setting:succeeded)
-2013/08/20 10:56:49 INFO - [b.2010010106] -(setting:submitting)
-2013/08/20 10:56:49 INFO - [b.2010010106] -triggered off ['a.2010010106']
-2013/08/20 10:56:50 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submitting now
-2013/08/20 10:56:50 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submission succeeded
-2013/08/20 10:56:50 INFO - [b.2010010106] -(setting:submitted)
-2013/08/20 10:56:50 INFO - [b.2010010106] -(current:submitted)> b.2010010106 submit_method_id=9091
-2013/08/20 10:56:51 INFO - [b.2010010106] -(current:submitted)> b.2010010106 started at 2013-08-20T10:56:51
-2013/08/20 10:56:51 INFO - [b.2010010106] -(setting:running)
-2013/08/20 10:56:51 INFO - [b.2010010200] -HOLDING (beyond runahead limit)
-2013/08/20 10:56:51 INFO - [b.2010010200] -(setting:runahead)
-2013/08/20 10:56:52 INFO - Command succeeded: reload suite()
-2013/08/20 10:56:52 INFO - RELOADING TASK DEFINITION FOR c.2010010100
-2013/08/20 10:56:52 INFO - RELOADING TASK DEFINITION FOR a.2010010106
-2013/08/20 10:56:52 INFO - RELOADING TASK DEFINITION FOR c.2010010106
-2013/08/20 10:56:52 INFO - RELOADING TASK DEFINITION FOR a.2010010200
-2013/08/20 10:56:52 INFO - [a.2010010200] -HOLDING (beyond runahead limit)
-2013/08/20 10:56:52 INFO - RELOADING TASK DEFINITION FOR b.2010010200
-2013/08/20 10:56:52 INFO - [b.2010010200] -HOLDING (beyond runahead limit)
-2013/08/20 10:56:59 INFO - [b.2010010106] -(current:running)> b.2010010106 succeeded at 2013-08-20T10:56:57
-2013/08/20 10:56:59 INFO - [b.2010010106] -(setting:succeeded)
-2013/08/20 10:56:59 INFO - RELOADING TASK DEFINITION FOR b.2010010106
-2013/08/20 10:56:59 INFO - [c.2010010106] -(setting:submitting)
-2013/08/20 10:56:59 INFO - [c.2010010106] -triggered off ['b.2010010106']
-2013/08/20 10:57:00 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submitting now
-2013/08/20 10:57:00 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submission succeeded
-2013/08/20 10:57:00 INFO - [c.2010010106] -(setting:submitted)
-2013/08/20 10:57:00 INFO - [c.2010010106] -(current:submitted)> c.2010010106 submit_method_id=9210
-2013/08/20 10:57:02 INFO - [c.2010010106] -(current:submitted)> c.2010010106 started at 2013-08-20T10:57:01
-2013/08/20 10:57:02 INFO - [c.2010010106] -(setting:running)
-2013/08/20 10:57:02 INFO - [c.2010010118] -HOLDING (beyond runahead limit)
-2013/08/20 10:57:02 INFO - [c.2010010118] -(setting:runahead)
-2013/08/20 10:57:07 INFO - [c.2010010106] -(current:running)> c.2010010106 succeeded at 2013-08-20T10:57:06
-2013/08/20 10:57:07 INFO - [c.2010010106] -(setting:succeeded)
-2013/08/20 10:57:07 INFO - [a.2010010200] -(setting:waiting)
-2013/08/20 10:57:07 INFO - [b.2010010200] -(setting:waiting)
-2013/08/20 10:57:07 INFO - [c.2010010118] -(setting:waiting)
-2013/08/20 10:57:07 INFO - [c.2010010118] -(setting:submitting)
-2013/08/20 10:57:07 INFO - [c.2010010118] -triggered off []
-2013/08/20 10:57:08 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submitting now
-2013/08/20 10:57:08 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submission succeeded
-2013/08/20 10:57:08 INFO - [c.2010010118] -(setting:submitted)
-2013/08/20 10:57:08 INFO - [c.2010010118] -(current:submitted)> c.2010010118 submit_method_id=9317
-2013/08/20 10:57:09 INFO - [c.2010010118] -(current:submitted)> c.2010010118 started at 2013-08-20T10:57:09
-2013/08/20 10:57:09 INFO - [c.2010010118] -(setting:running)
-2013/08/20 10:57:15 INFO - [c.2010010118] -(current:running)> c.2010010118 succeeded at 2013-08-20T10:57:14
-2013/08/20 10:57:15 INFO - [c.2010010118] -(setting:succeeded)
-2013/08/20 10:57:15 INFO - [a.2010010200] -(setting:submitting)
-2013/08/20 10:57:15 INFO - [a.2010010200] -triggered off ['c.2010010118']
-2013/08/20 10:57:16 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submitting now
-2013/08/20 10:57:17 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submission succeeded
-2013/08/20 10:57:17 INFO - [a.2010010200] -(setting:submitted)
-2013/08/20 10:57:17 INFO - [a.2010010200] -(current:submitted)> a.2010010200 submit_method_id=9426
-2013/08/20 10:57:17 INFO - [a.2010010200] -(current:submitted)> a.2010010200 started at 2013-08-20T10:57:17
-2013/08/20 10:57:17 INFO - [a.2010010200] -(setting:running)
-2013/08/20 10:57:17 INFO - [a.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
-2013/08/20 10:57:17 INFO - [a.2010010206] -(setting:held)
-2013/08/20 10:57:23 INFO - [a.2010010200] -(current:running)> a.2010010200 succeeded at 2013-08-20T10:57:22
-2013/08/20 10:57:23 INFO - [a.2010010200] -(setting:succeeded)
-2013/08/20 10:57:23 INFO - [b.2010010200] -(setting:submitting)
-2013/08/20 10:57:23 INFO - [b.2010010200] -triggered off ['a.2010010200']
-2013/08/20 10:57:24 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submitting now
-2013/08/20 10:57:24 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submission succeeded
-2013/08/20 10:57:24 INFO - [b.2010010200] -(setting:submitted)
-2013/08/20 10:57:24 INFO - [b.2010010200] -(current:submitted)> b.2010010200 submit_method_id=9533
-2013/08/20 10:57:25 INFO - [b.2010010200] -(current:submitted)> b.2010010200 started at 2013-08-20T10:57:24
-2013/08/20 10:57:25 INFO - [b.2010010200] -(setting:running)
-2013/08/20 10:57:25 INFO - Command succeeded: reload suite()
-2013/08/20 10:57:25 INFO - RELOADING TASK DEFINITION FOR a.2010010200
-2013/08/20 10:57:25 INFO - RELOADING TASK DEFINITION FOR c.2010010118
-2013/08/20 10:57:25 INFO - RELOADING TASK DEFINITION FOR c.2010010200
-2013/08/20 10:57:25 INFO - RELOADING TASK DEFINITION FOR a.2010010206
-2013/08/20 10:57:25 INFO - [a.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
-2013/08/20 10:57:25 INFO - [b.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
-2013/08/20 10:57:25 INFO - [b.2010010206] -(setting:held)
-2013/08/20 10:57:31 INFO - [b.2010010200] -(current:running)> b.2010010200 succeeded at 2013-08-20T10:57:30
-2013/08/20 10:57:31 INFO - [b.2010010200] -(setting:succeeded)
-2013/08/20 10:57:31 INFO - RELOADING TASK DEFINITION FOR b.2010010200
-2013/08/20 10:57:31 INFO - [c.2010010200] -(setting:submitting)
-2013/08/20 10:57:31 INFO - [c.2010010200] -triggered off ['b.2010010200']
-2013/08/20 10:57:32 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submitting now
-2013/08/20 10:57:32 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submission succeeded
-2013/08/20 10:57:32 INFO - [c.2010010200] -(setting:submitted)
-2013/08/20 10:57:32 INFO - [c.2010010200] -(current:submitted)> c.2010010200 submit_method_id=9649
-2013/08/20 10:57:33 INFO - [c.2010010200] -(current:submitted)> c.2010010200 started at 2013-08-20T10:57:32
-2013/08/20 10:57:33 INFO - [c.2010010200] -(setting:running)
-2013/08/20 10:57:33 INFO - [c.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
-2013/08/20 10:57:33 INFO - [c.2010010206] -(setting:held)
-2013/08/20 10:57:38 INFO - [c.2010010200] -(current:running)> c.2010010200 succeeded at 2013-08-20T10:57:38
-2013/08/20 10:57:38 INFO - [c.2010010200] -(setting:succeeded)
-2013/08/20 10:57:38 INFO - All normal cycling tasks have spawned past the final cycle 2010010200
-2013/08/20 10:57:38 INFO - Suite shutting down at 2013-08-20 10:57:38.624803
+2013/11/05 11:02:17 INFO - Thread-2 start (Event Handler Submission)
+2013/11/05 11:02:17 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/11/05 11:02:17 INFO - port:7766
+2013/11/05 11:02:17 INFO - Suite starting at 2013-11-05 11:02:17.831243
+2013/11/05 11:02:17 INFO - Log event clock: real time
+2013/11/05 11:02:17 INFO - Run mode: live
+2013/11/05 11:02:17 INFO - Start tag: 2010010100
+2013/11/05 11:02:17 INFO - Stop tag: 2010010200
+2013/11/05 11:02:17 INFO - Thread-5 start (Request Handling)
+2013/11/05 11:02:17 INFO - Thread-4 start (Job Submission)
+2013/11/05 11:02:17 INFO - Cold Start 2010010100
+2013/11/05 11:02:17 DEBUG - [a.2010010100] -task proxy added to the pool
+2013/11/05 11:02:17 DEBUG - [start.2010010100] -task proxy added to the pool
+2013/11/05 11:02:17 DEBUG - [c.2010010100] -task proxy added to the pool
+2013/11/05 11:02:17 DEBUG - [b.2010010100] -task proxy added to the pool
+2013/11/05 11:02:17 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:17 INFO - [start.2010010100] -(setting:queued)
+2013/11/05 11:02:17 INFO - [start.2010010100] -(setting:submitting)
+2013/11/05 11:02:17 INFO - [start.2010010100] -triggered off []
+2013/11/05 11:02:18 DEBUG - END TASK PROCESSING (took 0.088615 sec)
+2013/11/05 11:02:18 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:18 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:02:19 INFO - [start.2010010100] -(current:submitting)> start.2010010100 submitting now
+2013/11/05 11:02:19 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:19 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.219530
+  All 1 items succeeded
+2013/11/05 11:02:20 INFO - [start.2010010100] -(current:submitting)> start.2010010100 submission succeeded
+2013/11/05 11:02:20 INFO - [start.2010010100] -(setting:submitted)
+2013/11/05 11:02:20 INFO - [start.2010010100] -(current:submitted)> start.2010010100 submit_method_id=21549
+2013/11/05 11:02:20 INFO - [start.2010010100] -(current:submitted)> start.2010010100 started at 2013-11-05T11:02:19
+2013/11/05 11:02:20 INFO - [start.2010010100] -(setting:running)
+2013/11/05 11:02:20 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:21 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:21 DEBUG - END TASK PROCESSING (took 0.012259 sec)
+2013/11/05 11:02:21 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:27 INFO - [start.2010010100] -(current:running)> start.2010010100 succeeded at 2013-11-05T11:02:26
+2013/11/05 11:02:27 INFO - [start.2010010100] -(setting:succeeded)
+2013/11/05 11:02:27 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:28 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:28 INFO - [a.2010010100] -(setting:queued)
+2013/11/05 11:02:28 INFO - [a.2010010100] -(setting:submitting)
+2013/11/05 11:02:28 INFO - [a.2010010100] -triggered off ['start.2010010100']
+2013/11/05 11:02:28 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:02:28 DEBUG - END TASK PROCESSING (took 0.017694 sec)
+2013/11/05 11:02:28 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
+2013/11/05 11:02:28 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:28 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.255216
+  All 1 items succeeded
+2013/11/05 11:02:29 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
+2013/11/05 11:02:29 INFO - [a.2010010100] -(setting:submitted)
+2013/11/05 11:02:29 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=21664
+2013/11/05 11:02:29 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-11-05T11:02:28
+2013/11/05 11:02:29 INFO - [a.2010010100] -(setting:running)
+2013/11/05 11:02:29 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:30 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:30 DEBUG - [a.2010010100] -forced spawning
+2013/11/05 11:02:30 DEBUG - [a.2010010106] -task proxy added to the pool
+2013/11/05 11:02:30 DEBUG - END TASK PROCESSING (took 0.015218 sec)
+2013/11/05 11:02:30 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:31 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:31 DEBUG - END TASK PROCESSING (took 0.012385 sec)
+2013/11/05 11:02:31 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:34 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-11-05T11:02:34
+2013/11/05 11:02:34 INFO - [a.2010010100] -(setting:succeeded)
+2013/11/05 11:02:34 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:35 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:35 INFO - [b.2010010100] -(setting:queued)
+2013/11/05 11:02:35 INFO - [b.2010010100] -(setting:submitting)
+2013/11/05 11:02:35 INFO - [b.2010010100] -triggered off ['a.2010010100']
+2013/11/05 11:02:35 DEBUG - END TASK PROCESSING (took 0.014374 sec)
+2013/11/05 11:02:35 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:35 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:02:35 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.208275
+  All 1 items succeeded
+2013/11/05 11:02:36 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submitting now
+2013/11/05 11:02:36 INFO - [b.2010010100] -(current:submitting)> b.2010010100 submission succeeded
+2013/11/05 11:02:36 INFO - [b.2010010100] -(setting:submitted)
+2013/11/05 11:02:36 INFO - [b.2010010100] -(current:submitted)> b.2010010100 submit_method_id=21771
+2013/11/05 11:02:36 INFO - [b.2010010100] -(current:submitted)> b.2010010100 started at 2013-11-05T11:02:36
+2013/11/05 11:02:36 INFO - [b.2010010100] -(setting:running)
+2013/11/05 11:02:36 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:37 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:37 DEBUG - [b.2010010100] -forced spawning
+2013/11/05 11:02:37 DEBUG - [b.2010010106] -task proxy added to the pool
+2013/11/05 11:02:37 DEBUG - END TASK PROCESSING (took 0.016491 sec)
+2013/11/05 11:02:37 INFO - Command succeeded: reload suite()
+2013/11/05 11:02:37 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:38 INFO - RELOADING TASK DEFINITION FOR a.2010010100
+2013/11/05 11:02:38 DEBUG - [a.2010010100] -task proxy removed ((suite definition reload))
+2013/11/05 11:02:38 DEBUG - [a.2010010100] -task proxy added to the pool
+2013/11/05 11:02:38 INFO - RELOADING TASK DEFINITION FOR start.2010010100
+2013/11/05 11:02:38 DEBUG - [start.2010010100] -task proxy removed ((suite definition reload))
+2013/11/05 11:02:38 DEBUG - [start.2010010100] -task proxy added to the pool
+2013/11/05 11:02:38 INFO - RELOADING TASK DEFINITION FOR c.2010010100
+2013/11/05 11:02:38 DEBUG - [c.2010010100] -task proxy removed ((suite definition reload))
+2013/11/05 11:02:38 DEBUG - [c.2010010100] -task proxy added to the pool
+2013/11/05 11:02:38 INFO - RELOADING TASK DEFINITION FOR a.2010010106
+2013/11/05 11:02:38 DEBUG - [a.2010010106] -task proxy removed ((suite definition reload))
+2013/11/05 11:02:38 DEBUG - [a.2010010106] -task proxy added to the pool
+2013/11/05 11:02:38 INFO - RELOADING TASK DEFINITION FOR b.2010010106
+2013/11/05 11:02:38 DEBUG - [b.2010010106] -task proxy removed ((suite definition reload))
+2013/11/05 11:02:38 DEBUG - [b.2010010106] -task proxy added to the pool
+2013/11/05 11:02:38 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:38 DEBUG - END TASK PROCESSING (took 0.012195 sec)
+2013/11/05 11:02:38 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:42 INFO - [b.2010010100] -(current:running)> b.2010010100 succeeded at 2013-11-05T11:02:41
+2013/11/05 11:02:42 INFO - [b.2010010100] -(setting:succeeded)
+2013/11/05 11:02:42 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:43 INFO - RELOADING TASK DEFINITION FOR b.2010010100
+2013/11/05 11:02:43 DEBUG - [b.2010010100] -task proxy removed ((suite definition reload))
+2013/11/05 11:02:43 DEBUG - [b.2010010100] -task proxy added to the pool
+2013/11/05 11:02:43 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:43 INFO - [c.2010010100] -(setting:queued)
+2013/11/05 11:02:43 INFO - [c.2010010100] -(setting:submitting)
+2013/11/05 11:02:43 INFO - [c.2010010100] -triggered off ['b.2010010100']
+2013/11/05 11:02:43 DEBUG - [a.2010010100] -task proxy removed
+2013/11/05 11:02:43 DEBUG - [start.2010010100] -task proxy removed
+2013/11/05 11:02:43 DEBUG - [b.2010010100] -task proxy removed
+2013/11/05 11:02:43 DEBUG - END TASK PROCESSING (took 0.024107 sec)
+2013/11/05 11:02:43 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:43 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:02:43 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.244908
+  All 1 items succeeded
+2013/11/05 11:02:44 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submitting now
+2013/11/05 11:02:44 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submission succeeded
+2013/11/05 11:02:44 INFO - [c.2010010100] -(setting:submitted)
+2013/11/05 11:02:44 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=21887
+2013/11/05 11:02:44 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:45 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:45 DEBUG - [c.2010010100] -forced spawning
+2013/11/05 11:02:45 DEBUG - [c.2010010106] -task proxy added to the pool
+2013/11/05 11:02:45 DEBUG - END TASK PROCESSING (took 0.015997 sec)
+2013/11/05 11:02:45 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2013-11-05T11:02:44
+2013/11/05 11:02:45 INFO - [c.2010010100] -(setting:running)
+2013/11/05 11:02:45 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:46 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:46 DEBUG - END TASK PROCESSING (took 0.012335 sec)
+2013/11/05 11:02:46 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:50 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-11-05T11:02:49
+2013/11/05 11:02:50 INFO - [c.2010010100] -(setting:succeeded)
+2013/11/05 11:02:50 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:51 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:51 INFO - [a.2010010106] -(setting:queued)
+2013/11/05 11:02:51 INFO - [a.2010010106] -(setting:submitting)
+2013/11/05 11:02:51 INFO - [a.2010010106] -triggered off ['c.2010010100']
+2013/11/05 11:02:51 DEBUG - END TASK PROCESSING (took 0.014616 sec)
+2013/11/05 11:02:51 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:51 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:02:52 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.222079
+  All 1 items succeeded
+2013/11/05 11:02:52 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submitting now
+2013/11/05 11:02:52 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submission succeeded
+2013/11/05 11:02:52 INFO - [a.2010010106] -(setting:submitted)
+2013/11/05 11:02:52 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=21994
+2013/11/05 11:02:52 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:53 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:53 DEBUG - [a.2010010106] -forced spawning
+2013/11/05 11:02:53 INFO - [a.2010010200] -HOLDING (beyond runahead limit)
+2013/11/05 11:02:53 INFO - [a.2010010200] -(setting:runahead)
+2013/11/05 11:02:53 DEBUG - [a.2010010200] -task proxy added to the pool
+2013/11/05 11:02:53 DEBUG - END TASK PROCESSING (took 0.017925 sec)
+2013/11/05 11:02:53 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2013-11-05T11:02:52
+2013/11/05 11:02:53 INFO - [a.2010010106] -(setting:running)
+2013/11/05 11:02:53 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:54 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:54 DEBUG - END TASK PROCESSING (took 0.011845 sec)
+2013/11/05 11:02:54 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:58 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2013-11-05T11:02:58
+2013/11/05 11:02:58 INFO - [a.2010010106] -(setting:succeeded)
+2013/11/05 11:02:58 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:02:59 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:02:59 INFO - [b.2010010106] -(setting:queued)
+2013/11/05 11:02:59 INFO - [b.2010010106] -(setting:submitting)
+2013/11/05 11:02:59 INFO - [b.2010010106] -triggered off ['a.2010010106']
+2013/11/05 11:02:59 DEBUG - END TASK PROCESSING (took 0.016332 sec)
+2013/11/05 11:02:59 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:00 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:03:00 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.221571
+  All 1 items succeeded
+2013/11/05 11:03:00 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submitting now
+2013/11/05 11:03:00 INFO - [b.2010010106] -(current:submitting)> b.2010010106 submission succeeded
+2013/11/05 11:03:00 INFO - [b.2010010106] -(setting:submitted)
+2013/11/05 11:03:00 INFO - [b.2010010106] -(current:submitted)> b.2010010106 submit_method_id=22101
+2013/11/05 11:03:00 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:01 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:01 DEBUG - [b.2010010106] -forced spawning
+2013/11/05 11:03:01 INFO - [b.2010010200] -HOLDING (beyond runahead limit)
+2013/11/05 11:03:01 INFO - [b.2010010200] -(setting:runahead)
+2013/11/05 11:03:01 DEBUG - [b.2010010200] -task proxy added to the pool
+2013/11/05 11:03:01 DEBUG - END TASK PROCESSING (took 0.015885 sec)
+2013/11/05 11:03:01 INFO - [b.2010010106] -(current:submitted)> b.2010010106 started at 2013-11-05T11:03:00
+2013/11/05 11:03:01 INFO - [b.2010010106] -(setting:running)
+2013/11/05 11:03:01 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:02 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:02 DEBUG - END TASK PROCESSING (took 0.012232 sec)
+2013/11/05 11:03:02 INFO - Command succeeded: reload suite()
+2013/11/05 11:03:02 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:03 INFO - RELOADING TASK DEFINITION FOR c.2010010100
+2013/11/05 11:03:03 DEBUG - [c.2010010100] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:03 DEBUG - [c.2010010100] -task proxy added to the pool
+2013/11/05 11:03:03 INFO - RELOADING TASK DEFINITION FOR a.2010010106
+2013/11/05 11:03:03 DEBUG - [a.2010010106] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:03 DEBUG - [a.2010010106] -task proxy added to the pool
+2013/11/05 11:03:03 INFO - RELOADING TASK DEFINITION FOR c.2010010106
+2013/11/05 11:03:03 DEBUG - [c.2010010106] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:03 DEBUG - [c.2010010106] -task proxy added to the pool
+2013/11/05 11:03:03 INFO - RELOADING TASK DEFINITION FOR a.2010010200
+2013/11/05 11:03:03 DEBUG - [a.2010010200] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:03 DEBUG - [a.2010010200] -task proxy added to the pool
+2013/11/05 11:03:03 INFO - RELOADING TASK DEFINITION FOR b.2010010200
+2013/11/05 11:03:03 DEBUG - [b.2010010200] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:03 DEBUG - [b.2010010200] -task proxy added to the pool
+2013/11/05 11:03:03 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:03 DEBUG - END TASK PROCESSING (took 0.012544 sec)
+2013/11/05 11:03:03 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:07 INFO - [b.2010010106] -(current:running)> b.2010010106 succeeded at 2013-11-05T11:03:06
+2013/11/05 11:03:07 INFO - [b.2010010106] -(setting:succeeded)
+2013/11/05 11:03:07 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:08 INFO - RELOADING TASK DEFINITION FOR b.2010010106
+2013/11/05 11:03:08 DEBUG - [b.2010010106] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:08 DEBUG - [b.2010010106] -task proxy added to the pool
+2013/11/05 11:03:08 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:08 INFO - [c.2010010106] -(setting:queued)
+2013/11/05 11:03:08 INFO - [c.2010010106] -(setting:submitting)
+2013/11/05 11:03:08 INFO - [c.2010010106] -triggered off ['b.2010010106']
+2013/11/05 11:03:08 DEBUG - [c.2010010100] -task proxy removed
+2013/11/05 11:03:08 DEBUG - [a.2010010106] -task proxy removed
+2013/11/05 11:03:08 DEBUG - [b.2010010106] -task proxy removed
+2013/11/05 11:03:08 DEBUG - END TASK PROCESSING (took 0.016077 sec)
+2013/11/05 11:03:08 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:09 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:03:09 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.225376
+  All 1 items succeeded
+2013/11/05 11:03:09 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submitting now
+2013/11/05 11:03:09 INFO - [c.2010010106] -(current:submitting)> c.2010010106 submission succeeded
+2013/11/05 11:03:09 INFO - [c.2010010106] -(setting:submitted)
+2013/11/05 11:03:09 INFO - [c.2010010106] -(current:submitted)> c.2010010106 submit_method_id=22218
+2013/11/05 11:03:09 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:10 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:10 DEBUG - [c.2010010106] -forced spawning
+2013/11/05 11:03:10 INFO - [c.2010010118] -HOLDING (beyond runahead limit)
+2013/11/05 11:03:10 INFO - [c.2010010118] -(setting:runahead)
+2013/11/05 11:03:10 DEBUG - [c.2010010118] -task proxy added to the pool
+2013/11/05 11:03:10 DEBUG - END TASK PROCESSING (took 0.015703 sec)
+2013/11/05 11:03:10 INFO - [c.2010010106] -(current:submitted)> c.2010010106 started at 2013-11-05T11:03:09
+2013/11/05 11:03:10 INFO - [c.2010010106] -(setting:running)
+2013/11/05 11:03:10 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:11 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:11 DEBUG - END TASK PROCESSING (took 0.023882 sec)
+2013/11/05 11:03:11 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:15 INFO - [c.2010010106] -(current:running)> c.2010010106 succeeded at 2013-11-05T11:03:15
+2013/11/05 11:03:15 INFO - [c.2010010106] -(setting:succeeded)
+2013/11/05 11:03:15 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:15 DEBUG - [a.2010010200] -Releasing runahead (to waiting)
+2013/11/05 11:03:15 INFO - [a.2010010200] -(setting:waiting)
+2013/11/05 11:03:15 DEBUG - [b.2010010200] -Releasing runahead (to waiting)
+2013/11/05 11:03:15 INFO - [b.2010010200] -(setting:waiting)
+2013/11/05 11:03:15 DEBUG - [c.2010010118] -Releasing runahead (to waiting)
+2013/11/05 11:03:15 INFO - [c.2010010118] -(setting:waiting)
+2013/11/05 11:03:16 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:16 INFO - [c.2010010118] -(setting:queued)
+2013/11/05 11:03:16 INFO - [c.2010010118] -(setting:submitting)
+2013/11/05 11:03:16 INFO - [c.2010010118] -triggered off []
+2013/11/05 11:03:16 DEBUG - [c.2010010106] -task proxy removed
+2013/11/05 11:03:16 DEBUG - END TASK PROCESSING (took 0.014818 sec)
+2013/11/05 11:03:16 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:17 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:03:17 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submitting now
+2013/11/05 11:03:17 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:17 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.200185
+  All 1 items succeeded
+2013/11/05 11:03:18 INFO - [c.2010010118] -(current:submitting)> c.2010010118 submission succeeded
+2013/11/05 11:03:18 INFO - [c.2010010118] -(setting:submitted)
+2013/11/05 11:03:18 INFO - [c.2010010118] -(current:submitted)> c.2010010118 submit_method_id=22326
+2013/11/05 11:03:18 INFO - [c.2010010118] -(current:submitted)> c.2010010118 started at 2013-11-05T11:03:18
+2013/11/05 11:03:18 INFO - [c.2010010118] -(setting:running)
+2013/11/05 11:03:18 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:19 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:19 DEBUG - [c.2010010118] -forced spawning
+2013/11/05 11:03:19 DEBUG - [c.2010010200] -task proxy added to the pool
+2013/11/05 11:03:19 DEBUG - END TASK PROCESSING (took 0.017034 sec)
+2013/11/05 11:03:19 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:20 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:20 DEBUG - END TASK PROCESSING (took 0.012062 sec)
+2013/11/05 11:03:20 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:23 INFO - [c.2010010118] -(current:running)> c.2010010118 succeeded at 2013-11-05T11:03:23
+2013/11/05 11:03:23 INFO - [c.2010010118] -(setting:succeeded)
+2013/11/05 11:03:23 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:24 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:24 INFO - [a.2010010200] -(setting:queued)
+2013/11/05 11:03:24 INFO - [a.2010010200] -(setting:submitting)
+2013/11/05 11:03:24 INFO - [a.2010010200] -triggered off ['c.2010010118']
+2013/11/05 11:03:24 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:03:24 DEBUG - END TASK PROCESSING (took 0.018458 sec)
+2013/11/05 11:03:24 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submitting now
+2013/11/05 11:03:24 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:25 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.273391
+  All 1 items succeeded
+2013/11/05 11:03:25 INFO - [a.2010010200] -(current:submitting)> a.2010010200 submission succeeded
+2013/11/05 11:03:25 INFO - [a.2010010200] -(setting:submitted)
+2013/11/05 11:03:25 INFO - [a.2010010200] -(current:submitted)> a.2010010200 submit_method_id=22434
+2013/11/05 11:03:25 INFO - [a.2010010200] -(current:submitted)> a.2010010200 started at 2013-11-05T11:03:25
+2013/11/05 11:03:25 INFO - [a.2010010200] -(setting:running)
+2013/11/05 11:03:25 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:26 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:26 DEBUG - [a.2010010200] -forced spawning
+2013/11/05 11:03:26 INFO - [a.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/11/05 11:03:26 INFO - [a.2010010206] -(setting:held)
+2013/11/05 11:03:26 DEBUG - [a.2010010206] -task proxy added to the pool
+2013/11/05 11:03:26 DEBUG - END TASK PROCESSING (took 0.032258 sec)
+2013/11/05 11:03:26 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:27 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:27 DEBUG - END TASK PROCESSING (took 0.012505 sec)
+2013/11/05 11:03:27 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:31 INFO - [a.2010010200] -(current:running)> a.2010010200 succeeded at 2013-11-05T11:03:30
+2013/11/05 11:03:31 INFO - [a.2010010200] -(setting:succeeded)
+2013/11/05 11:03:31 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:32 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:32 INFO - [b.2010010200] -(setting:queued)
+2013/11/05 11:03:32 INFO - [b.2010010200] -(setting:submitting)
+2013/11/05 11:03:32 INFO - [b.2010010200] -triggered off ['a.2010010200']
+2013/11/05 11:03:32 DEBUG - END TASK PROCESSING (took 0.015254 sec)
+2013/11/05 11:03:32 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:33 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:03:33 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.191282
+  All 1 items succeeded
+2013/11/05 11:03:33 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submitting now
+2013/11/05 11:03:33 INFO - [b.2010010200] -(current:submitting)> b.2010010200 submission succeeded
+2013/11/05 11:03:33 INFO - [b.2010010200] -(setting:submitted)
+2013/11/05 11:03:33 INFO - [b.2010010200] -(current:submitted)> b.2010010200 submit_method_id=22542
+2013/11/05 11:03:33 INFO - [b.2010010200] -(current:submitted)> b.2010010200 started at 2013-11-05T11:03:33
+2013/11/05 11:03:33 INFO - [b.2010010200] -(setting:running)
+2013/11/05 11:03:33 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:34 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:34 DEBUG - [b.2010010200] -forced spawning
+2013/11/05 11:03:34 INFO - [b.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/11/05 11:03:34 INFO - [b.2010010206] -(setting:held)
+2013/11/05 11:03:34 DEBUG - [b.2010010206] -task proxy added to the pool
+2013/11/05 11:03:34 DEBUG - END TASK PROCESSING (took 0.017243 sec)
+2013/11/05 11:03:34 INFO - Command succeeded: reload suite()
+2013/11/05 11:03:34 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:35 INFO - RELOADING TASK DEFINITION FOR a.2010010200
+2013/11/05 11:03:35 DEBUG - [a.2010010200] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:35 DEBUG - [a.2010010200] -task proxy added to the pool
+2013/11/05 11:03:35 INFO - RELOADING TASK DEFINITION FOR c.2010010118
+2013/11/05 11:03:35 DEBUG - [c.2010010118] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:35 DEBUG - [c.2010010118] -task proxy added to the pool
+2013/11/05 11:03:35 INFO - RELOADING TASK DEFINITION FOR c.2010010200
+2013/11/05 11:03:35 DEBUG - [c.2010010200] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:35 DEBUG - [c.2010010200] -task proxy added to the pool
+2013/11/05 11:03:35 INFO - RELOADING TASK DEFINITION FOR a.2010010206
+2013/11/05 11:03:35 DEBUG - [a.2010010206] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:35 DEBUG - [a.2010010206] -task proxy added to the pool
+2013/11/05 11:03:35 INFO - RELOADING TASK DEFINITION FOR b.2010010206
+2013/11/05 11:03:35 DEBUG - [b.2010010206] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:35 DEBUG - [b.2010010206] -task proxy added to the pool
+2013/11/05 11:03:35 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:35 DEBUG - END TASK PROCESSING (took 0.013013 sec)
+2013/11/05 11:03:35 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:39 INFO - [b.2010010200] -(current:running)> b.2010010200 succeeded at 2013-11-05T11:03:39
+2013/11/05 11:03:39 INFO - [b.2010010200] -(setting:succeeded)
+2013/11/05 11:03:39 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:40 INFO - RELOADING TASK DEFINITION FOR b.2010010200
+2013/11/05 11:03:40 DEBUG - [b.2010010200] -task proxy removed ((suite definition reload))
+2013/11/05 11:03:40 DEBUG - [b.2010010200] -task proxy added to the pool
+2013/11/05 11:03:40 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:40 INFO - [c.2010010200] -(setting:queued)
+2013/11/05 11:03:40 INFO - [c.2010010200] -(setting:submitting)
+2013/11/05 11:03:40 INFO - [c.2010010200] -triggered off ['b.2010010200']
+2013/11/05 11:03:40 DEBUG - [a.2010010200] -task proxy removed
+2013/11/05 11:03:40 DEBUG - [c.2010010118] -task proxy removed
+2013/11/05 11:03:40 DEBUG - [b.2010010200] -task proxy removed
+2013/11/05 11:03:40 DEBUG - END TASK PROCESSING (took 0.016858 sec)
+2013/11/05 11:03:40 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:41 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 11:03:41 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.229022
+  All 1 items succeeded
+2013/11/05 11:03:41 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submitting now
+2013/11/05 11:03:41 INFO - [c.2010010200] -(current:submitting)> c.2010010200 submission succeeded
+2013/11/05 11:03:41 INFO - [c.2010010200] -(setting:submitted)
+2013/11/05 11:03:41 INFO - [c.2010010200] -(current:submitted)> c.2010010200 submit_method_id=22658
+2013/11/05 11:03:41 INFO - [c.2010010200] -(current:submitted)> c.2010010200 started at 2013-11-05T11:03:41
+2013/11/05 11:03:41 INFO - [c.2010010200] -(setting:running)
+2013/11/05 11:03:41 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:42 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:42 DEBUG - [c.2010010200] -forced spawning
+2013/11/05 11:03:42 INFO - [c.2010010206] -HOLDING (beyond suite stop cycle) 2010010200
+2013/11/05 11:03:42 INFO - [c.2010010206] -(setting:held)
+2013/11/05 11:03:42 DEBUG - [c.2010010206] -task proxy added to the pool
+2013/11/05 11:03:42 DEBUG - END TASK PROCESSING (took 0.020502 sec)
+2013/11/05 11:03:42 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:43 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 11:03:44 DEBUG - END TASK PROCESSING (took 0.012504 sec)
+2013/11/05 11:03:44 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:48 INFO - [c.2010010200] -(current:running)> c.2010010200 succeeded at 2013-11-05T11:03:47
+2013/11/05 11:03:48 INFO - [c.2010010200] -(setting:succeeded)
+2013/11/05 11:03:48 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 11:03:48 INFO - All normal cycling tasks have spawned past the final cycle 2010010200
+2013/11/05 11:03:48 INFO - Suite shutting down at 2013-11-05 11:03:48.020702

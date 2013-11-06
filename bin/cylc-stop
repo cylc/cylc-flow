@@ -44,7 +44,8 @@ class stop_poller( poller ):
                     self.args['host'],
                     self.args['pyro_timeout'],
                     self.args['port'] ).get_proxy('suite-info')
-        except:
+        except Exception, x:
+            print >> sys.stderr, x
             return False
         else:
             return True
@@ -141,9 +142,9 @@ try:
             options.host, options.pyro_timeout, options.port,
             options.verbose ).get_proxy( 'command-interface' )
 except PortFileError, x:
-    # suite not running: this is OK for the 'stop' command
     print >> sys.stderr, x
-    print >> sys.stderr, "WARNING: suite not running (OK for \"cylc stop\")"
+    print "The suite is apparently not running"
+    # (this is OK for the stop command)
     sys.exit(0)
 except Exception, x:
     if options.debug:
@@ -222,6 +223,7 @@ elif options.quick:
 
 else:
     prompt( 'Shut down ' + suite, options.force )
+    print "Telling the suite to shut down ..."
     try:
         result = proxy.put( 'stop cleanly', options.kill )
     except Exception,x:
@@ -239,8 +241,8 @@ else:
 if int(options.max_polls) > 0:
     # (test to avoid the "nothing to do" warning for # --max-polls=0)
     if not spoller.connect():
-        # (should not happen if we got the command proxy above)
-        sys.exit( "ERROR: cannot connect to the suite info proxy" )
+        print >> sys.stderr, "Could not connect to suite: it has apparently shut down already"
+        sys.exit(0)
     if not spoller.poll():
         sys.exit(1)
 

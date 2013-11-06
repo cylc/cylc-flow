@@ -1,0 +1,21 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+       allow task failures = True
+       expected task failures = b.1
+
+[scheduling]
+    [[dependencies]]
+        graph = """FAM:fail-any => foo
+                   foo => !FAM"""
+[runtime]
+    [[FAM]]
+        command scripting = "true"
+    [[a,c]]
+        inherit = FAM
+    [[b]]
+        inherit = FAM
+        command scripting = "false"
+    [[foo]]
+        command scripting = "true"

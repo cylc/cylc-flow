@@ -139,6 +139,11 @@ class scheduler(object):
 
         self.held_future_tasks = []
 
+        # provide a variable to allow persistance of reference test settings 
+        # across reloads
+        self.reference_test_mode = False
+        self.gen_reference_log = False
+
         self.do_shutdown = None
         self.threads_stopped = False
 
@@ -246,31 +251,8 @@ class scheduler(object):
         # TODO - self.config.fdir can be used instead of self.suite_dir
         self.reflogfile = os.path.join(self.config.fdir,'reference.log')
 
-        if self.options.genref:
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-
-        elif self.options.reftest:
-            req = self.config.cfg['cylc']['reference test']['required run mode']
-            if req and req != self.run_mode:
-                raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
-            handler = self.config.event_handlers['shutdown']
-            if handler: 
-                print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
-            self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-            self.config.abort_if_shutdown_handler_fails = True
-            spec = LogSpec( self.reflogfile )
-            self.start_tag = spec.get_start_tag()
-            self.stop_tag = spec.get_stop_tag()
-            self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
-            if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
-                self.config.cfg['cylc']['abort if any task fails'] = True
-            self.config.abort_on_timeout = True
-            timeout = self.config.cfg['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
-            if not timeout:
-                raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
-            self.config.suite_timeout = timeout
-            self.config.reset_timer = False
+        if self.gen_reference_log or self.reference_test_mode:
+            self.configure_reftest()
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -732,6 +714,9 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             itask.reconfigure_me = True
 
+        if self.gen_reference_log or self.reference_test_mode:
+            self.configure_reftest(recon=True)
+
     def reload_taskdefs( self ):
         found = False
         for itask in self.pool.get_tasks():
@@ -779,6 +764,12 @@ class scheduler(object):
             self.logging_level = logging.DEBUG
         else:
             self.logging_level = logging.INFO
+
+        if self.options.reftest:
+            self.reference_test_mode = self.options.reftest
+        
+        if self.options.genref:
+            self.gen_reference_log = self.options.genref
 
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
@@ -1001,6 +992,34 @@ class scheduler(object):
         for var in cenv:
             os.environ[var] = os.path.expandvars(cenv[var])
 
+    def configure_reftest( self, recon=False ):
+        if self.gen_reference_log:
+            self.config.cfg['cylc']['log resolved dependencies'] = True
+
+        elif self.reference_test_mode:
+            req = self.config.cfg['cylc']['reference test']['required run mode']
+            if req and req != self.run_mode:
+                raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
+            handler = self.config.event_handlers['shutdown']
+            if handler: 
+                print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
+            self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
+            self.config.cfg['cylc']['log resolved dependencies'] = True
+            self.config.abort_if_shutdown_handler_fails = True
+            if not recon:
+                spec = LogSpec( self.reflogfile )
+                self.start_tag = spec.get_start_tag()
+                self.stop_tag = spec.get_stop_tag()
+            self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
+            if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
+                self.config.cfg['cylc']['abort if any task fails'] = True
+            self.config.abort_on_timeout = True
+            timeout = self.config.cfg['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
+            if not timeout:
+                raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
+            self.config.suite_timeout = timeout
+            self.config.reset_timer = False
+
     def run( self ):
 
         if self.use_lockserver:
@@ -1141,7 +1160,7 @@ class scheduler(object):
                     raise SchedulerError( 'One or more tasks failed and "abort if any task fails" is set' )
 
             # 4) the run is a reference test, and any disallowed failures occured
-            if self.options.reftest:
+            if self.reference_test_mode:
                 if len( self.ref_test_allowed_failures ) > 0:
                     for itask in self.get_failed_tasks():
                         if itask.id not in self.ref_test_allowed_failures:
@@ -1193,7 +1212,7 @@ class scheduler(object):
         # END MAIN LOOP
 
 
-        if self.options.genref:
+        if self.gen_reference_log:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
 
@@ -1355,7 +1374,7 @@ class scheduler(object):
             try:
                 RunHandler( 'shutdown', handler, self.suite, msg=reason, fg=foreground )
             except Exception, x:
-                if self.options.reftest:
+                if self.reference_test_mode:
                     sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
                 else:
                     # Note: tests suites depend on the following message:

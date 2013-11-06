@@ -1,0 +1,26 @@
+title = queue size reload test
+description = """change inheritance via a reload."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = reloader => inheritor
+[runtime]
+    [[FAM1]]
+        command scripting = false
+    [[FAM2]]
+        command scripting = true
+    [[reloader]]
+        command scripting = """
+# change the inheritance of inheritor:
+perl -pi -e 's/(inherit = )FAM1( # marker)/\1FAM2\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+sleep 5
+"""
+    [[inheritor]]
+        inherit = FAM1 # marker

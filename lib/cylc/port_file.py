@@ -118,9 +118,8 @@ class port_retriever( object ):
         err = ssh.stderr.readline()
         res = ssh.wait()
         if err:
-            print >> sys.stderr, "Remote port get:", err.rstrip('\n')
+            print >> sys.stderr, err.rstrip('\n')
         if res != 0:
-            print >> sys.stderr, "ERROR failed to get", self.locn 
             raise PortFileError( "ERROR, remote port file not found" )
         return str_port
 

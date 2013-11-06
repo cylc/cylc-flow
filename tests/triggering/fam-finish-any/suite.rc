@@ -1,0 +1,18 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = """FAM:finish-any => foo"""
+[runtime]
+    [[FAM]]
+        command scripting = "sleep 10"
+    [[a,c]]
+        inherit = FAM
+    [[b]]
+        inherit = FAM
+        command scripting = "true"
+    [[foo]]
+        command scripting = "true"
