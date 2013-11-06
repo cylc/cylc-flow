@@ -183,8 +183,8 @@ function init_suite() {
     cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
     while ! cylc get-directory $SUITE_NAME 1>/dev/null 2>&1; do
         sleep 1
-        cylc unregister $SUITE_NAME
-        cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME
+        cylc unregister $SUITE_NAME 2>/dev/null
+        cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
     done
     cd $TEST_DIR/$SUITE_NAME
 }
