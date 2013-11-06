@@ -109,14 +109,25 @@ class Monthly( cycler ):
         except CycleTimeError, x:
             raise CyclerError, str(x)
 
-        # now adjust up to the next on-sequence cycle
-        ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
-        tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
+        # first get the monthiversary date DDHHmmss right
+        if T[6:] < self.DDHHmmss:
+            # just round up
+            T = T[0:6] + self.DDHHmmss
+        elif T[6:] > self.DDHHmmss:
+            # increment the moth and round up
+            T = add_months( ct( T ), 1 ).get()[0:6] + self.DDHHmmss
+        else:
+            # equal: no need to adjust
+            pass
+
+        # now adjust up if necessary, according to step
+        ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6])
+        tc = 12 * int(T[0:4]) + int(T[4:6])
         diff = ta - tc # difference in months from anchor date
 
         rem = diff % self.step
 
-        return add_months( ct( T ), rem ).get()
+        return add_months( ct( T ), rem ).get()[0:6] + self.DDHHmmss
 
     def next( self, T ):
         """Add step months to get to the next anniversary after T."""
