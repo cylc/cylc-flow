@@ -1,0 +1,135 @@
+2013/11/06 15:18:03 INFO - Thread-2 start (Event Handlers)
+2013/11/06 15:18:03 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/06 15:18:03 INFO - port:7766
+2013/11/06 15:18:03 INFO - Suite starting at 2013-11-06 15:18:03.424400
+2013/11/06 15:18:03 INFO - Log event clock: real time
+2013/11/06 15:18:03 INFO - Run mode: live
+2013/11/06 15:18:03 INFO - Start tag: 2013013000
+2013/11/06 15:18:03 INFO - Stop tag: 2013020200
+2013/11/06 15:18:03 INFO - Thread-4 start (Job Submission)
+2013/11/06 15:18:03 INFO - Thread-5 start (Request Handling)
+2013/11/06 15:18:03 INFO - Cold Start 2013013000
+2013/11/06 15:18:03 INFO - [dummy.2013013000] -(setting:queued)
+2013/11/06 15:18:03 INFO - [daily.2013013000] -(setting:queued)
+2013/11/06 15:18:03 INFO - [dummy.2013013000] -(setting:submitting)
+2013/11/06 15:18:03 INFO - [daily.2013013000] -(setting:submitting)
+2013/11/06 15:18:03 INFO - [dummy.2013013000] -triggered off []
+2013/11/06 15:18:03 INFO - [daily.2013013000] -triggered off []
+2013/11/06 15:18:04 INFO - [dummy.2013013000] -(current:submitting)> dummy.2013013000 submitting now
+2013/11/06 15:18:05 INFO - [dummy.2013013000] -(current:submitting)> dummy.2013013000 submission succeeded
+2013/11/06 15:18:05 INFO - [dummy.2013013000] -(setting:submitted)
+2013/11/06 15:18:05 INFO - [dummy.2013013000] -(current:submitted)> dummy.2013013000 submit_method_id=25834
+2013/11/06 15:18:05 INFO - [dummy.2013013000] -(current:submitted)> dummy.2013013000 started at 2013-11-06T15:18:05
+2013/11/06 15:18:05 INFO - [dummy.2013013000] -(setting:running)
+2013/11/06 15:18:05 INFO - [daily.2013013000] -(current:submitting)> daily.2013013000 submitting now
+2013/11/06 15:18:05 INFO - [daily.2013013000] -(current:submitting)> daily.2013013000 started at 2013-11-06T15:18:05
+2013/11/06 15:18:05 INFO - [daily.2013013000] -(setting:running)
+2013/11/06 15:18:06 INFO - [dummy.2013013100] -HOLDING (beyond runahead limit)
+2013/11/06 15:18:06 INFO - [dummy.2013013100] -(setting:runahead)
+2013/11/06 15:18:06 INFO - [daily.2013013100] -HOLDING (beyond runahead limit)
+2013/11/06 15:18:06 INFO - [daily.2013013100] -(setting:runahead)
+2013/11/06 15:18:06 INFO - [dummy.2013013000] -(current:running)> dummy.2013013000 succeeded at 2013-11-06T15:18:06
+2013/11/06 15:18:06 INFO - [dummy.2013013000] -(setting:succeeded)
+2013/11/06 15:18:06 INFO - [daily.2013013000] -(current:running)> daily.2013013000 submission succeeded
+2013/11/06 15:18:06 INFO - [daily.2013013000] -(current:running)> daily.2013013000 submit_method_id=25855
+2013/11/06 15:18:07 INFO - [daily.2013013000] -(current:running)> daily.2013013000 succeeded at 2013-11-06T15:18:06
+2013/11/06 15:18:07 INFO - [daily.2013013000] -(setting:succeeded)
+2013/11/06 15:18:07 INFO - [dummy.2013013100] -(setting:waiting)
+2013/11/06 15:18:07 INFO - [daily.2013013100] -(setting:waiting)
+2013/11/06 15:18:08 INFO - [dummy.2013013100] -(setting:queued)
+2013/11/06 15:18:08 INFO - [daily.2013013100] -(setting:queued)
+2013/11/06 15:18:08 INFO - [dummy.2013013100] -(setting:submitting)
+2013/11/06 15:18:09 INFO - [daily.2013013100] -(setting:submitting)
+2013/11/06 15:18:09 INFO - [dummy.2013013100] -triggered off ['daily.2013013000']
+2013/11/06 15:18:09 INFO - [daily.2013013100] -triggered off []
+2013/11/06 15:18:10 INFO - [dummy.2013013100] -(current:submitting)> dummy.2013013100 submitting now
+2013/11/06 15:18:10 INFO - [dummy.2013013100] -(current:submitting)> dummy.2013013100 submission succeeded
+2013/11/06 15:18:10 INFO - [dummy.2013013100] -(setting:submitted)
+2013/11/06 15:18:10 INFO - [dummy.2013013100] -(current:submitted)> dummy.2013013100 submit_method_id=25992
+2013/11/06 15:18:10 INFO - [daily.2013013100] -(current:submitting)> daily.2013013100 submitting now
+2013/11/06 15:18:11 INFO - [dummy.2013020100] -HOLDING (beyond runahead limit)
+2013/11/06 15:18:11 INFO - [dummy.2013020100] -(setting:runahead)
+2013/11/06 15:18:11 INFO - [dummy.2013013100] -(current:submitted)> dummy.2013013100 started at 2013-11-06T15:18:10
+2013/11/06 15:18:11 INFO - [dummy.2013013100] -(setting:running)
+2013/11/06 15:18:11 INFO - [daily.2013013100] -(current:submitting)> daily.2013013100 started at 2013-11-06T15:18:10
+2013/11/06 15:18:11 INFO - [daily.2013013100] -(setting:running)
+2013/11/06 15:18:11 INFO - [daily.2013013100] -(current:running)> daily.2013013100 submission succeeded
+2013/11/06 15:18:11 INFO - [daily.2013013100] -(current:running)> daily.2013013100 submit_method_id=26021
+2013/11/06 15:18:12 INFO - [daily.2013020100] -HOLDING (beyond runahead limit)
+2013/11/06 15:18:12 INFO - [daily.2013020100] -(setting:runahead)
+2013/11/06 15:18:12 INFO - [dummy.2013013100] -(current:running)> dummy.2013013100 succeeded at 2013-11-06T15:18:11
+2013/11/06 15:18:12 INFO - [dummy.2013013100] -(setting:succeeded)
+2013/11/06 15:18:12 INFO - [daily.2013013100] -(current:running)> daily.2013013100 succeeded at 2013-11-06T15:18:11
+2013/11/06 15:18:12 INFO - [daily.2013013100] -(setting:succeeded)
+2013/11/06 15:18:12 INFO - [dummy.2013020100] -(setting:waiting)
+2013/11/06 15:18:12 INFO - [daily.2013020100] -(setting:waiting)
+2013/11/06 15:18:13 INFO - [dummy.2013020100] -(setting:queued)
+2013/11/06 15:18:13 INFO - [daily.2013020100] -(setting:queued)
+2013/11/06 15:18:13 INFO - [dummy.2013020100] -(setting:submitting)
+2013/11/06 15:18:13 INFO - [daily.2013020100] -(setting:submitting)
+2013/11/06 15:18:13 INFO - [dummy.2013020100] -triggered off ['daily.2013013100']
+2013/11/06 15:18:13 INFO - [daily.2013020100] -triggered off []
+2013/11/06 15:18:14 INFO - [dummy.2013020100] -(current:submitting)> dummy.2013020100 submitting now
+2013/11/06 15:18:14 INFO - [dummy.2013020100] -(current:submitting)> dummy.2013020100 submission succeeded
+2013/11/06 15:18:14 INFO - [dummy.2013020100] -(setting:submitted)
+2013/11/06 15:18:14 INFO - [dummy.2013020100] -(current:submitted)> dummy.2013020100 submit_method_id=26172
+2013/11/06 15:18:14 INFO - [daily.2013020100] -(current:submitting)> daily.2013020100 submitting now
+2013/11/06 15:18:15 INFO - [dummy.2013020200] -HOLDING (beyond runahead limit)
+2013/11/06 15:18:15 INFO - [dummy.2013020200] -(setting:runahead)
+2013/11/06 15:18:15 INFO - [dummy.2013020100] -(current:submitted)> dummy.2013020100 started at 2013-11-06T15:18:14
+2013/11/06 15:18:15 INFO - [dummy.2013020100] -(setting:running)
+2013/11/06 15:18:15 INFO - [daily.2013020100] -(current:submitting)> daily.2013020100 started at 2013-11-06T15:18:14
+2013/11/06 15:18:15 INFO - [daily.2013020100] -(setting:running)
+2013/11/06 15:18:15 INFO - [daily.2013020100] -(current:running)> daily.2013020100 submission succeeded
+2013/11/06 15:18:15 INFO - [daily.2013020100] -(current:running)> daily.2013020100 submit_method_id=26199
+2013/11/06 15:18:16 INFO - [daily.2013020200] -HOLDING (beyond runahead limit)
+2013/11/06 15:18:16 INFO - [daily.2013020200] -(setting:runahead)
+2013/11/06 15:18:16 INFO - [dummy.2013020100] -(current:running)> dummy.2013020100 succeeded at 2013-11-06T15:18:16
+2013/11/06 15:18:16 INFO - [dummy.2013020100] -(setting:succeeded)
+2013/11/06 15:18:16 INFO - [daily.2013020100] -(current:running)> daily.2013020100 succeeded at 2013-11-06T15:18:16
+2013/11/06 15:18:16 INFO - [daily.2013020100] -(setting:succeeded)
+2013/11/06 15:18:17 INFO - [monthly.2013020100] -(setting:queued)
+2013/11/06 15:18:17 INFO - [monthly.2013020100] -(setting:submitting)
+2013/11/06 15:18:17 INFO - [monthly.2013020100] -triggered off ['dummy.2013020100']
+2013/11/06 15:18:18 INFO - [monthly.2013020100] -(current:submitting)> monthly.2013020100 submitting now
+2013/11/06 15:18:18 INFO - [monthly.2013020100] -(current:submitting)> monthly.2013020100 submission succeeded
+2013/11/06 15:18:18 INFO - [monthly.2013020100] -(setting:submitted)
+2013/11/06 15:18:18 INFO - [monthly.2013020100] -(current:submitted)> monthly.2013020100 submit_method_id=26326
+2013/11/06 15:18:19 INFO - [monthly.2013030100] -HOLDING (beyond suite stop cycle) 2013020200
+2013/11/06 15:18:19 INFO - [monthly.2013030100] -(setting:held)
+2013/11/06 15:18:19 INFO - [monthly.2013020100] -(current:submitted)> monthly.2013020100 started at 2013-11-06T15:18:18
+2013/11/06 15:18:19 INFO - [monthly.2013020100] -(setting:running)
+2013/11/06 15:18:20 INFO - [monthly.2013020100] -(current:running)> monthly.2013020100 succeeded at 2013-11-06T15:18:20
+2013/11/06 15:18:20 INFO - [monthly.2013020100] -(setting:succeeded)
+2013/11/06 15:18:20 INFO - [dummy.2013020200] -(setting:waiting)
+2013/11/06 15:18:20 INFO - [daily.2013020200] -(setting:waiting)
+2013/11/06 15:18:22 INFO - [dummy.2013020200] -(setting:queued)
+2013/11/06 15:18:22 INFO - [daily.2013020200] -(setting:queued)
+2013/11/06 15:18:22 INFO - [dummy.2013020200] -(setting:submitting)
+2013/11/06 15:18:22 INFO - [daily.2013020200] -(setting:submitting)
+2013/11/06 15:18:22 INFO - [dummy.2013020200] -triggered off ['daily.2013020100']
+2013/11/06 15:18:22 INFO - [daily.2013020200] -triggered off []
+2013/11/06 15:18:23 INFO - [dummy.2013020200] -(current:submitting)> dummy.2013020200 submitting now
+2013/11/06 15:18:23 INFO - [dummy.2013020200] -(current:submitting)> dummy.2013020200 submission succeeded
+2013/11/06 15:18:23 INFO - [dummy.2013020200] -(setting:submitted)
+2013/11/06 15:18:23 INFO - [dummy.2013020200] -(current:submitted)> dummy.2013020200 submit_method_id=26461
+2013/11/06 15:18:23 INFO - [dummy.2013020200] -(current:submitted)> dummy.2013020200 started at 2013-11-06T15:18:23
+2013/11/06 15:18:23 INFO - [dummy.2013020200] -(setting:running)
+2013/11/06 15:18:23 INFO - [daily.2013020200] -(current:submitting)> daily.2013020200 submitting now
+2013/11/06 15:18:24 INFO - [dummy.2013020300] -HOLDING (beyond suite stop cycle) 2013020200
+2013/11/06 15:18:24 INFO - [dummy.2013020300] -(setting:held)
+2013/11/06 15:18:24 INFO - [daily.2013020200] -(current:submitting)> daily.2013020200 started at 2013-11-06T15:18:23
+2013/11/06 15:18:24 INFO - [daily.2013020200] -(setting:running)
+2013/11/06 15:18:24 INFO - [daily.2013020200] -(current:running)> daily.2013020200 submission succeeded
+2013/11/06 15:18:24 INFO - [daily.2013020200] -(current:running)> daily.2013020200 submit_method_id=26481
+2013/11/06 15:18:25 INFO - [daily.2013020300] -HOLDING (beyond suite stop cycle) 2013020200
+2013/11/06 15:18:25 INFO - [daily.2013020300] -(setting:held)
+2013/11/06 15:18:25 INFO - [dummy.2013020200] -(current:running)> dummy.2013020200 succeeded at 2013-11-06T15:18:24
+2013/11/06 15:18:25 INFO - [dummy.2013020200] -(setting:succeeded)
+2013/11/06 15:18:25 INFO - [daily.2013020200] -(current:running)> daily.2013020200 succeeded at 2013-11-06T15:18:24
+2013/11/06 15:18:25 INFO - [daily.2013020200] -(setting:succeeded)
+2013/11/06 15:18:25 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2013020200
+2013/11/06 15:18:25 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/06 15:18:25 INFO - Thread-2 exit (Event Handlers)
+2013/11/06 15:18:25 INFO - Thread-4 exit (Job Submission)

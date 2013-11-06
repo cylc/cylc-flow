@@ -34,8 +34,8 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [OPTIONS] ARGS
 
-Restart a cylc suite from a previous state. To start from scratch see
-the 'cylc run' command.
+Restart a suite from a previous state. To start from scratch see the
+'cylc run' command.
 
 Suites run in daemon mode unless -n/--no-detach or --debug is used.
 
@@ -70,7 +70,6 @@ where they got to while the suite was down."""
             "restart this is only used to set $CYLC_SUITE_INITIAL_CYCLE_TIME.",
             action="store_true", default=False, dest="ignore_startcycle" )
 
-        self.start_tag = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self, is_restart=True )
 
     def parse_commandline( self ):
@@ -206,8 +205,6 @@ where they got to while the suite was down."""
                 # reinstate the former start cycle
                 self.start_tag = oldstartcycle
  
-        self.ict = self.start_tag
-
         index += 1
         line3 = lines[index]
         line3 = line3.rstrip()
