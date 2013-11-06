@@ -174,8 +174,7 @@ class taskdef(object):
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
-        def tclass_add_prerequisites( sself, startup, cycler, tag  ):
-
+        def tclass_add_prerequisites( sself, startup, tag  ):
             # NOTE: Task objects hold all triggers defined for the task
             # in all cycling graph sections in this data structure:
             #     self.triggers[cycler] = [list of triggers for this cycler]
@@ -192,22 +191,18 @@ class taskdef(object):
                     if trig.startup and not startup:
                             continue
                     if trig.cycling and not cyc.valid( ct(sself.tag) ):
-                        # This trigger is not used in current cycle.
-                        # (see NOTE just above)
-                        ##DEBUGGING:
-                        ##print >> sys.stderr, sself.name + ': this trigger not used for', sself.tag + ':'
-                        ##print >> sys.stderr, ' ', trig.get(sself.tag, cyc)
+                        # This trigger is not used in current cycle (see NOTE just above)
                         continue
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
                     # in which case cyc.valid( at(sself.tag)) will fail.
                     if trig.async_repeating:
-                        lp.add( trig.get( tag, cycler ))
+                        lp.add( trig.get( tag, cyc ))
                     else:
                         if trig.suicide:
-                            sp.add( trig.get( tag, cycler ))
+                            sp.add( trig.get( tag, cyc ))
                         else:
-                            pp.add( trig.get( tag, cycler))
+                            pp.add( trig.get( tag, cyc))
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
@@ -219,11 +214,7 @@ class taskdef(object):
                     if ctrig[foo].startup and not startup:
                         continue
                     if ctrig[foo].cycling and not cyc.valid( ct(sself.tag)):
-                        # This trigger is not valid for current cycle.
-                        # (see NOTE just above)
-                        ##DEBUGGING:
-                        ##print >> sys.stderr, sself.name + ': this trigger not used for', sself.tag + ':'
-                        ##print >> sys.stderr, ' ', trig.get(sself.tag, cyc)
+                        # This trigger is not valid for current cycle (see NOTE just above)
                         continue
                     # NOTE that if we need to check validity of async
                     # tags, async tasks can appear in cycling sections
@@ -231,7 +222,7 @@ class taskdef(object):
                     cp = conditional_prerequisites( sself.id, self.ict )
                     for label in ctrig:
                         trig = ctrig[label]
-                        cp.add( trig.get( tag, cycler ), label )
+                        cp.add( trig.get( tag, cyc ), label )
                     cp.set_condition( exp )
                     if ctrig[foo].suicide:
                         sself.suicide_prerequisites.add_requisites( cp )
@@ -269,7 +260,7 @@ class taskdef(object):
             # prerequisites
             sself.prerequisites = prerequisites( self.ict )
             sself.suicide_prerequisites = prerequisites( self.ict )
-            sself.add_prerequisites( startup, sself.cycon, sself.tag )
+            sself.add_prerequisites( startup, sself.tag )
 
             sself.logfiles = logfiles()
             for lfile in self.rtconfig[ 'extra log files' ]:
