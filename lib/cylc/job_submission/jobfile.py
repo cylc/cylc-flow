@@ -23,8 +23,9 @@ import StringIO
 from copy import deepcopy
 from cylc.global_config import get_global_cfg
 from cylc.command_env import cv_scripting_ml
-from subprocess import call, PIPE
-from time import sleep 
+import signal
+from subprocess import Popen, PIPE
+from time import time, sleep 
 
 class jobfile(object):
 
@@ -98,7 +99,26 @@ class jobfile(object):
         # which means that the OS thinks that the job file is still connected
         # to a process when it is being executed.
         try:
-            while call(["lsof", path], stderr=PIPE, stdout=PIPE) == 0:
+            # lsof may hang or never return 0.
+            t_init_0 = time()
+            while time() - t_init_0 <= 10.0: # 10s should not take that long
+                proc = Popen(["lsof", path], stderr=PIPE, stdout=PIPE)
+                rc = 0
+                t_init = time()
+                while time() - t_init <= 2.0: # 2s should not take that long
+                    sleep(0.1)
+                    rc = proc.poll()
+                    if rc is not None:
+                        break
+                if rc:
+                    break
+                elif rc is None:
+                    if hasattr(proc, "kill"):
+                        proc.kill()
+                    else:
+                        os.kill(proc.pid, signal.SIGKILL)
+                    proc.wait()
+                    break
                 sleep(0.1)
         except OSError: # OSError is triggered if "lsof" command not available
             pass
