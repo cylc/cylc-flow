@@ -1,0 +1,28 @@
+title = cycling period change
+description = """change cycle times"""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time = 2010010118
+    [[dependencies]]
+        [[[0]]]
+            graph = "reloader => a"
+        [[[0,12]]] # marker
+            graph = "a[T-12] => a"
+[runtime]
+    [[reloader]]
+        command scripting = """
+# change the order of FOO and BAR in the graphing section:
+perl -pi -e 's/(\[\[\[)0,12(\]\]\] # marker)/\1 0,6,12,18\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(graph = ")a\[T-12\]( => a")/\1a\[T-6\]\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+sleep 5
+"""
+    [[a]]
+        command scripting = sleep 1

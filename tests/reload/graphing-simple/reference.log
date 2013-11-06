@@ -1,0 +1,101 @@
+2013/11/05 10:59:35 INFO - Thread-2 start (Event Handler Submission)
+2013/11/05 10:59:35 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/11/05 10:59:35 INFO - port:7766
+2013/11/05 10:59:35 INFO - Suite starting at 2013-11-05 10:59:35.327244
+2013/11/05 10:59:35 INFO - Log event clock: real time
+2013/11/05 10:59:35 INFO - Run mode: live
+2013/11/05 10:59:35 INFO - Start tag: None
+2013/11/05 10:59:35 INFO - Stop tag: None
+2013/11/05 10:59:35 INFO - Thread-4 start (Job Submission)
+2013/11/05 10:59:35 INFO - Thread-5 start (Request Handling)
+2013/11/05 10:59:35 DEBUG - [reloader.1] -task proxy added to the pool
+2013/11/05 10:59:35 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/05 10:59:35 DEBUG - [bar.1] -task proxy added to the pool
+2013/11/05 10:59:35 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:35 INFO - [reloader.1] -(setting:queued)
+2013/11/05 10:59:35 INFO - [reloader.1] -(setting:submitting)
+2013/11/05 10:59:35 INFO - [reloader.1] -triggered off []
+2013/11/05 10:59:35 DEBUG - END TASK PROCESSING (took 0.015111 sec)
+2013/11/05 10:59:35 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:36 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 10:59:36 INFO - [reloader.1] -(current:submitting)> reloader.1 submitting now
+2013/11/05 10:59:36 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:36 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.237664
+  All 1 items succeeded
+2013/11/05 10:59:37 INFO - [reloader.1] -(current:submitting)> reloader.1 submission succeeded
+2013/11/05 10:59:37 INFO - [reloader.1] -(setting:submitted)
+2013/11/05 10:59:37 INFO - [reloader.1] -(current:submitted)> reloader.1 submit_method_id=19086
+2013/11/05 10:59:37 INFO - [reloader.1] -(current:submitted)> reloader.1 started at 2013-11-05T10:59:37
+2013/11/05 10:59:37 INFO - [reloader.1] -(setting:running)
+2013/11/05 10:59:37 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:38 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:38 DEBUG - END TASK PROCESSING (took 0.01236 sec)
+2013/11/05 10:59:38 INFO - Command succeeded: reload suite()
+2013/11/05 10:59:38 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:39 INFO - RELOADING TASK DEFINITION FOR foo.1
+2013/11/05 10:59:39 DEBUG - [foo.1] -task proxy removed ((suite definition reload))
+2013/11/05 10:59:39 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/05 10:59:39 INFO - RELOADING TASK DEFINITION FOR bar.1
+2013/11/05 10:59:39 DEBUG - [bar.1] -task proxy removed ((suite definition reload))
+2013/11/05 10:59:39 DEBUG - [bar.1] -task proxy added to the pool
+2013/11/05 10:59:39 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:39 DEBUG - END TASK PROCESSING (took 0.011735 sec)
+2013/11/05 10:59:39 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:43 INFO - [reloader.1] -(current:running)> reloader.1 succeeded at 2013-11-05T10:59:43
+2013/11/05 10:59:43 INFO - [reloader.1] -(setting:succeeded)
+2013/11/05 10:59:43 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:44 INFO - RELOADING TASK DEFINITION FOR reloader.1
+2013/11/05 10:59:44 DEBUG - [reloader.1] -task proxy removed ((suite definition reload))
+2013/11/05 10:59:44 DEBUG - [reloader.1] -task proxy added to the pool
+2013/11/05 10:59:44 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:44 INFO - [foo.1] -(setting:queued)
+2013/11/05 10:59:44 INFO - [foo.1] -(setting:submitting)
+2013/11/05 10:59:44 INFO - [foo.1] -triggered off ['reloader.1']
+2013/11/05 10:59:44 DEBUG - END TASK PROCESSING (took 0.014714 sec)
+2013/11/05 10:59:44 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:44 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 10:59:44 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.235432
+  All 1 items succeeded
+2013/11/05 10:59:45 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/05 10:59:45 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/05 10:59:45 INFO - [foo.1] -(setting:submitted)
+2013/11/05 10:59:45 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=19203
+2013/11/05 10:59:45 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-05T10:59:45
+2013/11/05 10:59:45 INFO - [foo.1] -(setting:running)
+2013/11/05 10:59:45 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:46 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:46 DEBUG - END TASK PROCESSING (took 0.012443 sec)
+2013/11/05 10:59:46 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:51 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-11-05T10:59:50
+2013/11/05 10:59:51 INFO - [foo.1] -(setting:succeeded)
+2013/11/05 10:59:51 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:52 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:52 INFO - [bar.1] -(setting:queued)
+2013/11/05 10:59:52 INFO - [bar.1] -(setting:submitting)
+2013/11/05 10:59:52 INFO - [bar.1] -triggered off ['foo.1']
+2013/11/05 10:59:52 DEBUG - END TASK PROCESSING (took 0.014002 sec)
+2013/11/05 10:59:52 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:52 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/05 10:59:53 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.195810
+  All 1 items succeeded
+2013/11/05 10:59:53 INFO - [bar.1] -(current:submitting)> bar.1 submitting now
+2013/11/05 10:59:53 INFO - [bar.1] -(current:submitting)> bar.1 submission succeeded
+2013/11/05 10:59:53 INFO - [bar.1] -(setting:submitted)
+2013/11/05 10:59:53 INFO - [bar.1] -(current:submitted)> bar.1 submit_method_id=19310
+2013/11/05 10:59:53 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:54 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:54 DEBUG - END TASK PROCESSING (took 0.012164 sec)
+2013/11/05 10:59:54 INFO - [bar.1] -(current:submitted)> bar.1 started at 2013-11-05T10:59:53
+2013/11/05 10:59:54 INFO - [bar.1] -(setting:running)
+2013/11/05 10:59:54 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:55 DEBUG - BEGIN TASK PROCESSING
+2013/11/05 10:59:55 DEBUG - END TASK PROCESSING (took 0.012034 sec)
+2013/11/05 10:59:55 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:59 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2013-11-05T10:59:58
+2013/11/05 10:59:59 INFO - [bar.1] -(setting:succeeded)
+2013/11/05 10:59:59 DEBUG - UPDATING STATE SUMMARY
+2013/11/05 10:59:59 INFO - All non-cycling tasks have succeeded
+2013/11/05 10:59:59 INFO - Suite shutting down at 2013-11-05 10:59:59.553441
