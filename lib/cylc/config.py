@@ -84,7 +84,7 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False, collapsed=[],
-            override=None, is_restart=False, is_reload=False,
+            cli_start_tag=None, is_restart=False, is_reload=False,
             write_processed_file=True ):
 
         self.suite = suite  # suite name
@@ -99,7 +99,7 @@ class config( object ):
         self.cyclers = []
         self.taskdefs = {}
         self.validation = validation
-        self.override = override
+        self.cli_start_tag = cli_start_tag
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
@@ -1581,16 +1581,6 @@ class config( object ):
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
 
-        if self.override:
-            ict = self.override
-        elif self.cfg['scheduling']['initial cycle time']:
-            # Use suite.rc initial cycle time
-            ict = str(self.cfg['scheduling']['initial cycle time'])
-            # We may want to put in some handling for cases of changing the
-            # initial cycle via restart (accidentally or otherwise).
-        else:
-            ict = None
-
         # Get full dense task [runtime] by applying runtime defaults now.
         # TODO - this should be done right after sparse inheritance, but
         # we need to retain sparse config for self.get_config(). Once
@@ -1600,6 +1590,10 @@ class config( object ):
         poverride( rtcfg, taskcfg )    # override with suite [runtime] settings
         un_many(rtcfg)
     
+        ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle time']
+        # We may want to put in some handling for cases of changing the
+        # initial cycle via restart (accidentally or otherwise).
+
         # Get the taskdef object for generating the task proxy class
         taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict ) 
 
