@@ -24,7 +24,6 @@ import pango
 import os, re, sys
 import socket
 import subprocess
-import helpwindow
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from dbchooser import dbchooser
@@ -139,7 +138,7 @@ Class to hold initialisation data.
         suitedir = None
         if not is_remote_host( self.host ) and not is_remote_user( self.owner ):
             db = localdb(file=self.db)
-            suitedir = db.getdir( suite )
+            suitedir = db.get_suitedir( suite )
         # get the suite passphrase (required for local or remote suites)
         self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
         self.logdir = suite_log( suite ).get_dir()

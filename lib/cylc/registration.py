@@ -103,13 +103,13 @@ class localdb(object):
             raise RegistrationError, 'ERROR, ' + suite + ' suite registration corrupted?: ' + fpath
         return data
 
-    def get( self, reg ):
+    def get_suitedir( self, reg ):
         data = self.get_suite_data( reg )
-        return data['path'], data['title']
+        return data['path']
 
-    def get_suite( self, reg ):
+    def get_suiterc( self, reg ):
         data = self.get_suite_data( reg )
-        return reg, os.path.join( data['path'], 'suite.rc' )
+        return os.path.join( data['path'], 'suite.rc' )
 
     def get_list( self, regfilter=None ):
         # Return a filtered list of registered suites
@@ -225,8 +225,7 @@ class localdb(object):
 
     def get_rcfiles ( self, suite ):
         # return a list of all include-files used by this suite
-        # TODO - THIS NEEDS TO BE MADE RECURSIVE
-        # (only used by cylc_xdot to check if graph has changed).
+        # TODO - this needs to be made recursive
         rcfiles = []
         data = self.get_suite_data(suite)
         dir = data['path']

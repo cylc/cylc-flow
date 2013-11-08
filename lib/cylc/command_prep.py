@@ -35,7 +35,7 @@ class prep( object ):
         if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
             self.db = localdb(file=options.db, verbose=options.verbose)
             try:
-                self.suiterc = self.db.getrc( suite )
+                self.suiterc = self.db.get_suiterc( suite )
                 self.suitedir = os.path.dirname( self.suiterc )
             except Exception, x:
                 if options.debug:
