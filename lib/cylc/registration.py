@@ -82,15 +82,25 @@ class localdb(object):
 
     def get_suite_data( self, suite ): 
         suite = RegPath(suite).get()
-        if not os.path.isfile( os.path.join( self.dbpath, suite )):
+        fpath = os.path.join( self.dbpath, suite )
+        if not os.path.isfile( fpath ):
             raise RegistrationError, "ERROR: Suite not found " + suite
         data = {}
-        with open( os.path.join( self.dbpath, suite ), 'r' ) as file:
+        with open( fpath, 'r' ) as file:
             lines = file.readlines()
+        count = 0
         for line in lines:
+            count += 1
             line = line.rstrip()
-            key,val = line.split('=')
+            try:
+                key,val = line.split('=')
+            except ValueError:
+                print >> sys.stderr, 'ERROR: failed to parse line ' + str(count) + ' from ' + fpath + ':'
+                print >> sys.stderr, '  ', line
+                continue
             data[key] = val
+        if 'title' not in data or 'path' not in data:
+            raise RegistrationError, 'ERROR, ' + suite + ' suite registration corrupted?: ' + fpath
         return data
 
     def get( self, reg ):
