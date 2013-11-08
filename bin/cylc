@@ -335,7 +335,7 @@ optional, but they organize help and disambiguate abbreviated commands:
 
 CYLC SUITE NAMES AND YOUR REGISTRATION DATABASE
   Suites are addressed by hierarchical names such as suite1, nwp.oper,
-nwp.test.LAM2, etc. in a "name registration database" ($HOME/.cylc/DB)
+nwp.test.LAM2, etc. in a "name registration database" ($HOME/.cylc/REGDB)
 that simply associates names with the suite definition locations.  The
 '--db=' command option can be used to view and copy suites from other
 users, with access governed by normal filesystem permissions. 

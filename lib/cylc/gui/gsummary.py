@@ -833,7 +833,7 @@ class SummaryAppUpdater(BaseSummaryUpdater):
         try:
             dbfile = None
             if self.owner is not None:
-                dbfile = os.path.join('~' + self.owner, '.cylc', 'DB')
+                dbfile = os.path.join('~' + self.owner, '.cylc', 'REGDB')
                 dbfile = os.path.expanduser(dbfile)
             db = localdb(file=dbfile)
             suite_metadata = db.get_list()
