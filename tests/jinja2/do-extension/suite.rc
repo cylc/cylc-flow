@@ -1,0 +1,12 @@
+#!Jinja2
+
+title = "Jinja2 'do' extension test"
+description = "This will fail validation if the do extension is not loaded."
+
+{% set MYDICT = {} %}
+{% do MYDICT.update( { 'foo' : 2 } ) %}
+
+[scheduling]
+    [[dependencies]]
+        graph = foo
+
