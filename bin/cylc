@@ -236,7 +236,6 @@ license_commands['conditions'] = [ 'conditions']
 database_commands = OrderedDict()
 database_commands['register'  ] = [ 'register' ]
 database_commands['reregister'] = [ 'reregister','rename' ]
-database_commands['alias'     ] = [ 'alias' ]
 database_commands['unregister'] = [ 'unregister' ]
 database_commands['copy'      ] = [ 'copy', 'cp' ]
 database_commands['print'     ] = [ 'print' ]
@@ -360,7 +359,6 @@ comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
 # database
 comsum[ 'register'   ] = 'Register a suite for use'
 comsum[ 'reregister' ] = 'Change the name of a suite'
-comsum[ 'alias'      ] = 'Register an alternative name for a suite'
 comsum[ 'unregister' ] = 'Unregister and optionally delete suites'
 comsum[ 'copy'       ] = 'Copy a suite or a group of suites'
 comsum[ 'print'      ] = 'Print registered suites'

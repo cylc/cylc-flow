@@ -35,8 +35,6 @@ Here's an easy way to move to a suite directory:
 reg = args[0]
 db = localdb( file=options.db, verbose=options.verbose )
 try:
-    with db.lock():
-        db.load_from_file()
     suite, suiterc = db.get_suite(reg)
 except Exception, x:
     if options.debug:

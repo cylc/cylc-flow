@@ -836,7 +836,6 @@ class SummaryAppUpdater(BaseSummaryUpdater):
                 dbfile = os.path.join('~' + self.owner, '.cylc', 'DB')
                 dbfile = os.path.expanduser(dbfile)
             db = localdb(file=dbfile)
-            db.load_from_file()
             suite_metadata = db.get_list()
         except Exception:
             suite_metadata = []

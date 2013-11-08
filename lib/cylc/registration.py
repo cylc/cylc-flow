@@ -17,385 +17,146 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-import pickle
-import datetime, time
-import random
 from regpath import RegPath
-from owner import user
 
-# NOTE:ABSPATH (see below)
-#   dir = os.path.abspath( dir )
-# On GPFS os.path.abspath() returns the full path with fileset
-# prefix which can make filenames (for files stored under the 
-# cylc suite directory) too long for hardwired limits in the
-# UM, which then core dumps. Manual use of $PWD to absolutize a relative
-# path, on GPFS, results in a shorter string ... so I use this for now.
+"""Simple suite name registration database."""
 
-"""
-Suite registration database code. WARNING: the file lock here is not
-atomic (I think) so problems are possible in the unlikely event that
-multiple processes try to access a user reg db at once. However, retry
-on db unpickle errors seems to be good enough to prevent such problems
-in the test battery and in the following stress test:
-
-#!/bin/bash
-SUITE_DIR=$1
-COUNT=0
-MAX=30
-# make sure the db is loaded:
-cylc admin import-examples ${TMPDIR:-/tmp/$USER/$$} >/dev/null
-cylc db reg frzoz-0 $SUITE_DIR
-while (( COUNT < MAX )); do
-    (( COUNT += 1 ))
-    cylc db reg fzroz-${COUNT} > /dev/null & 
-    cylc db get fzroz-0 > /dev/null & 
-done
-"""
-
-# location of the suite registration database:
-regdb_path = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
-
-from contextlib import contextmanager
+regdb_path = os.path.join( os.environ['HOME'], '.cylc', 'REGDB' )
 
 class RegistrationError( Exception ):
-    """
-    Attributes:
-        message - what the problem is. 
-    """
     def __init__( self, msg ):
         self.msg = msg
     def __str__( self ):
         return repr(self.msg)
 
-class InvalidFilterError( RegistrationError ):
-    def __init__( self, regfilter ):
-        self.msg = "ERROR, Invalid filter expression: " + regfilter
-
-class SuiteNotFoundError( RegistrationError ):
-    def __init__( self, suite ):
-        self.msg = "ERROR, suite not found: " + suite
-
-class SuiteOrGroupNotFoundError( RegistrationError ):
-    def __init__( self, sog ):
-        self.msg = "ERROR, suite or group not found: " + sog
-
-class SuiteTakenError( RegistrationError ):
-    def __init__( self, suite, owner=None ):
-        self.msg = "ERROR: " + suite + " is already a registered suite."
-        if owner:
-            self.msg += ' (' + owner + ')'
-
-class NotAGroupError( RegistrationError ):
-    def __init__( self, reg ):
-        self.msg = "ERROR: " + reg + " is a registered suite, not a group."
-
-class IsAGroupError( RegistrationError ):
-    def __init__( self, reg ):
-        self.msg = "ERROR: " + reg + " is already a registered group."
-
-class SuiteNotRegisteredError( RegistrationError ):
-    def __init__( self, suite ):
-        self.msg = "ERROR: Suite not found " + suite
-
-class GroupNotFoundError( RegistrationError ):
-    def __init__( self, group, owner=None ):
-        self.msg = "ERROR: group not found " + group
-        if owner:
-            self.msg += ' (' + owner + ')'
-
-class GroupAlreadyExistsError( RegistrationError ):
-    def __init__( self, group, owner=None ):
-        self.msg = "ERROR: group already exists " + group
-        if owner:
-            self.msg += ' (' + owner + ')'
-
-class RegistrationNotValidError( RegistrationError ):
-    pass
-
-class DatabaseLockedError( RegistrationError ):
-    pass
-
-class DatabaseUnpickleError( RegistrationError ):
-    pass
-
-class OwnerError( RegistrationError ):
-    pass
-
-class regdb(object):
-    """
-    A simple suite registration database.
-    """
-    def __init__( self, dir, file, verbose=False ):
+class localdb(object):
+    def __init__( self, file=None, verbose=False):
+        dbpath = file # (back compat)
+        global regdb_path
+        self.dbpath = dbpath or regdb_path
         self.verbose = verbose
-        self.dir = dir
-        self.file = file
-        # items[one][two]...[name] = (dir,title)
-        self.items = {}
         # create initial database directory if necessary
-        # TODO - CREATE ONLY WHEN REGISTERING?
-        if not os.path.exists( self.dir ):
+        if not os.path.exists( self.dbpath ):
             try:
-                os.makedirs( self.dir )
+                os.makedirs( self.dbpath )
             except Exception,x:
-                print >> sys.stderr, "ERROR, failed to create directory:", self.dir
-                print >> sys.stderr, x
-                sys.exit(1)
-        self.mtime_at_load = None
-        self.lockfile = self.file + '.lock'
-        self.statehash = None
+                sys.exit( str(x) )
 
-    @contextmanager
-    def lock( self ):
-        if self.verbose:
-            print "locking reg db"
-        attempts = 0
-        max_attempts = 5 
-        while os.path.exists(self.lockfile):
-            attempts += 1
-            if attempts > max_attempts:
-                raise DatabaseLockedError, 'ERROR, reg db locked: ' + self.lockfile
-            print >> sys.stderr, "WARNING: reg db locked (attempt " + str( attempts ) + "/" + str(max_attempts) + ")"
-            time.sleep(random.randint(1,5))
-        open(self.lockfile, 'w').write("1")
+    def list_all_suites( self ):
         try:
-            yield
-        finally:
-            if self.verbose:
-                print "unlocking reg db"
-            try:
-                os.remove(self.lockfile)
-            except OSError, x:
-                pass
+            suites = os.listdir( self.dbpath )
+        except Exception, x:
+            sys.exit(str(x))
+        return suites
 
-    def get_hash(self):
-        return hash( str(sorted(self.items.items())))
-
-    def changed_on_disk( self ):
-        # use to detect ONE change in database since we read it,
-        # while we have read-only access.
-        try:
-            st_mtime = os.stat( self.file ).st_mtime 
-        except OSError:
-            # file not found => no suites registered.
-            return False
-
-        if st_mtime != self.mtime_at_load:
-            return True
-        else:
-            return False
-        
-    def load_from_file( self ):
-        if self.verbose:
-            print "LOADING DATABASE " + self.file
-
-        # create an empty DB if no suites registered yet
-        if not os.path.isfile( self.file ):
-            print >> sys.stderr, "WARNING: file not found:", self.file
-            print "Creating an empty suite database:", self.file
-            self.dump_to_file()
-
-        # get file timestamp
-        self.mtime_at_load = os.stat(self.file).st_mtime
-
-        # retries should not be necessary here, but our locking
-        # mechanism is not atomic (in case of many near-simultaneous
-        # access attempts)
-        attempts = 0
-        max_attempts = 5 
-        while True:
-            attempts += 1
-            if attempts > max_attempts:
-                raise DatabaseUnpickleError, "ERROR: failed to unpickle the reg db" 
-            try:
-                inp = open( self.file, 'rb' )
-                self.items = pickle.load( inp )
-                inp.close()
-            except:
-                print >> sys.stderr, "WARNING: reg db unpickle error (attempt " + str( attempts ) + "/" + str(max_attempts) + ")"
-                time.sleep(random.randint(1,5))
-            else:
-                break
-
-        # record state at load
-        self.statehash = self.get_hash()
-
-    def dump( self ):
-        for i, j in self.items.items():
-            print i, j
-
-    def dump_to_file( self ):
-        newhash = self.get_hash()
-        if newhash != self.statehash:
-            if self.verbose:
-                print "REWRITING DATABASE"
-            output = open( self.file, 'w' )
-            pickle.dump( self.items, output )
-            output.close()
-            self.statehash = newhash
-        else:
-            if self.verbose:
-                print "   (database unchanged)"
-
-    def register( self, suite, dir ):
-
-        suite = RegPath(suite).get()
-        for key in self.items:
-            if key == suite:
-                # there is already a suite of the same name
-                raise SuiteTakenError, suite
-            elif key.startswith(suite + RegPath.delimiter ):
-                # there is already a group of the same name
-                raise IsAGroupError, suite
-            elif suite.startswith(key + RegPath.delimiter ):
+    def register( self, name, dir ):
+        name = RegPath(name).get()
+        for suite in self.list_all_suites():
+            if name == suite:
+                raise RegistrationError, "ERROR: " + name + " is already registered."
+            elif suite.startswith( name + RegPath.delimiter ):
+                raise RegistrationError, "ERROR: " + name + " is a registered group."
+            elif name.startswith( suite + RegPath.delimiter ):
                 # suite starts with, to some level, an existing suite name
-                raise NotAGroupError, key
+                raise RegistrationError, "ERROR: " + suite + " is a registered suite."
+        dir = dir.rstrip( '/' )  # strip trailing '/'
+        dir = re.sub( '^\./', '', dir ) # strip leading './'
+        if not dir.startswith( '/' ):
+            # On AIX on GPFS os.path.abspath(dir) returns the path with
+            # full 'fileset' prefix. Manual use of $PWD to absolutize a
+            # relative path gives a cleaner result.
+            dir = os.path.join( os.environ['PWD'], dir )
+        try:
+            title = self.get_suite_title( name, path=dir )
+        except Exception, x:
+            print >> sys.stderr, 'WARNING: an error occurred parsing the suite definition:\n  ', x
+            print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
+            print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
+            title = "SUITE PARSE ERROR"
+        
+        title = title.split('\n')[0] # use the first of multiple lines
+        print 'REGISTER', name + ':', dir
+        with open( os.path.join( self.dbpath, name ), 'w' ) as file:
+            file.write( 'path=' + dir + '\n' )
+            file.write( 'title=' + title + '\n' )
 
-        if dir.startswith( '->' ):
-            # (alias: dir points to target suite reg)
-            # parse the suite for the title
-            try:
-                title = self.get_suite_title( dir[2:] )
-            # parse the suite for the title
-            except Exception, x:
-                print >> sys.stderr, 'WARNING: an error occurred parsing the suite definition:\n  ', x
-                print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
-                print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
-                title = "SUITE PARSE ERROR"
-            # use the lowest level alias
-            target = self.unalias( dir[2:] )
-            dir = '->' + target
-        else:
-            # Remove trailing '/'
-            dir = dir.rstrip( '/' )
-            # Remove leading './'
-            dir = re.sub( '^\.\/', '', dir )
-            # Make registered path absolute # see NOTE:ABSPATH above
-            if not re.search( '^/', dir ):
-                dir = os.path.join( os.environ['PWD'], dir )
-            # parse the suite for the title
-            try:
-                title = self.get_suite_title( suite, path=dir )
-            except Exception, x:
-                print >> sys.stderr, 'WARNING: an error occurred parsing the suite definition:\n  ', x
-                print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
-                print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
-                title = "SUITE PARSE ERROR"
-
-        #if self.verbose:
-        print 'REGISTER', suite + ':', dir
-
-        # if title contains newlines we just use the first line here
-        title = title.split('\n')[0]
-        self.items[suite] = dir, title
+    def get_suite_data( self, suite ): 
+        suite = RegPath(suite).get()
+        if not os.path.isfile( os.path.join( self.dbpath, suite )):
+            raise RegistrationError, "ERROR: Suite not found " + suite
+        data = {}
+        with open( os.path.join( self.dbpath, suite ), 'r' ) as file:
+            lines = file.readlines()
+        for line in lines:
+            line = line.rstrip()
+            key,val = line.split('=')
+            data[key] = val
+        return data
 
     def get( self, reg ):
-        suite = self.unalias(reg)
-        try:
-            dir, title = self.items[suite]
-        except KeyError:
-            raise SuiteNotRegisteredError, "Suite not registered: " + suite
-        return dir, title
+        data = self.get_suite_data( reg )
+        return data['path'], data['title']
 
     def get_suite( self, reg ):
-        suite = self.unalias(reg)
-        try:
-            dir, title = self.items[suite]
-        except KeyError:
-            raise SuiteNotRegisteredError, "Suite not registered: " + suite
-        return suite, os.path.join( dir, 'suite.rc' )
-
-    def getrc( self, reg ):
-        dir, junk = self.get( reg )
-        return os.path.join( dir, 'suite.rc' )
-
-    def getdir( self, reg ):
-        dir, junk = self.get( reg )
-        return dir
+        data = self.get_suite_data( reg )
+        return reg, os.path.join( data['path'], 'suite.rc' )
 
     def get_list( self, regfilter=None ):
-        # Return a list of all registered suites, or a filtered list.
-        # The list can be empty if no suites are registered, or if 
-        # the filter rejects all registered suites.
+        # Return a filtered list of registered suites
         res = []
-        for suite in self.items:
+        for suite in self.list_all_suites():
             if regfilter:
                 try:
                     if not re.search(regfilter, suite):
                         continue
                 except:
-                    raise InvalidFilterError, regfilter
-            dir, title = self.items[suite]
+                    raise RegistrationError, "ERROR, Invalid filter expression: " + regfilter
+            data = self.get_suite_data( suite )
+            dir, title = data['path'], data['title']
             res.append( [suite, dir, title] )
         return res
 
     def unregister( self, exp ):
-        dirs = []
-        for key in self.items.keys():
+        suitedirs = []
+        for key in self.list_all_suites():
             if re.search( exp + '$', key ):
-                #if self.verbose:
-                dir, junk = self.items[key]
-                print 'UNREGISTER', key + ':', dir 
-                if dir not in dirs:
-                    # (there could be multiple registrations of the same
-                    # suite definition).
-                    dirs.append(dir)
-                del self.items[key]
-        # check for aliases that now need to be unregistered
-        for key in self.items.keys():
-            dir, junk = self.items[key]
-            if dir.startswith('->'):
-                if re.search( exp, dir[2:] ):
-                    #if self.verbose:
-                    print 'UNREGISTER (invalidated alias)', key + ':', dir 
-                    del self.items[key]
-        return dirs
+                data = self.get_suite_data(key)
+                dir = data['path'] 
+                print 'UNREGISTER', key + ':', dir
+                os.unlink( os.path.join( self.dbpath, key ) )
+                if dir not in suitedirs:
+                    # (could be multiple registrations of the same suite).
+                    suitedirs.append(dir)
+        return suitedirs
 
     def reregister( self, srce, targ ):
-        srce = RegPath(srce).get()
         targ = RegPath(targ).get()
-        for key in self.items:
-            if key == targ:
-                # There is already a suite of the same name as targ.
-                raise SuiteTakenError, targ
-            elif key.startswith(targ + RegPath.delimiter):
-                # There is already a group of the same name as targ.
-                raise IsAGroupError, targ
-            elif targ.startswith(key + RegPath.delimiter ):
-                # targ starts with, to some level, an existing suite name
-                raise NotAGroupError, key
         found = False
-        for key in self.items.keys():
-            if key.startswith(srce):
-                dir, title = self.items[key]
-                newkey = re.sub( '^'+srce, targ, key )
-                #if self.verbose:
-                print 'REREGISTER', key, 'to', newkey
-                del self.items[key]
-                self.items[newkey] = dir, title
+        for suite in self.list_all_suites():
+            if suite == srce:
+                # single suite
+                newsuite = targ
+                data = self.get_suite_data( suite )
+                dir, title = data['path'], data['title']
+                self.register( targ, data['path'] )
+                self.unregister( suite )
+                found = True
+            elif suite.startswith( srce + RegPath.delimiter ):
+                # group of suites
+                data = self.get_suite_data( suite )
+                dir, title = data['path'], data['title']
+                newsuite = re.sub( '^' + srce, targ, suite )
+                self.register( newsuite, data['path'] )
+                self.unregister( suite )
                 found = True
         if not found:
-            raise SuiteOrGroupNotFoundError, srce
-
-    def alias( self, suite, alias ):
-        pseudodir = '->' + suite
-        self.register( alias, pseudodir )
-
-    def unalias( self, alias ):
-        try:
-            dir, title = self.items[alias]
-        except KeyError:
-            raise SuiteNotFoundError, alias
-        if dir.startswith('->'):
-            target = self.unalias( dir[2:] )
-        else:
-            target = alias
-        return target
+            raise RegistrationError, "ERROR, suite or group not found: " + srce
 
     def get_invalid( self ):
         invalid = []
-        for reg in self.items:
-            suite = self.unalias(reg)
-            dir, junk = self.items[suite]
+        for reg in self.list_all_suites():
+            data = self.get_suite_data(reg)
+            dir = data['path']
             rcfile = os.path.join( dir, 'suite.rc' )
             if not os.path.isfile( rcfile ): 
                 invalid.append( reg )
@@ -403,11 +164,10 @@ class regdb(object):
 
     def get_suite_title( self, suite, path=None ):
         "Determine the suite title without a full file parse"
-        if path:
-            suiterc = os.path.join( path, 'suite.rc' )
-        else:
-            suite = self.unalias(suite)
-            suiterc = self.getrc( suite )
+        if not path:
+            data = self.get_suite_data( suite )
+            path = data['path']
+        suiterc = os.path.join( path, 'suite.rc' )
 
         title = ""
         found_start = False
@@ -440,7 +200,8 @@ class regdb(object):
         return title
 
     def refresh_suite_title( self, suite ):
-        dir, title = self.items[suite]
+        data = self.get_suite_data(suite)
+        dir, title = data['path'], data['title']
         new_title = self.get_suite_title( suite )
         if title == new_title:
             #if self.verbose:
@@ -453,15 +214,12 @@ class regdb(object):
         return changed
 
     def get_rcfiles ( self, suite ):
-        suite = self.unalias(suite)
         # return a list of all include-files used by this suite
         # TODO - THIS NEEDS TO BE MADE RECURSIVE
         # (only used by cylc_xdot to check if graph has changed).
         rcfiles = []
-        try:
-            dir, junk = self.items[suite]
-        except KeyError:
-            raise SuiteNotFoundError, suite
+        data = self.get_suite_data(suite)
+        dir = data['path']
         suiterc = os.path.join( dir, 'suite.rc' )
         rcfiles.append( suiterc )
         for line in open( suiterc, 'rb' ):
@@ -469,19 +227,4 @@ class regdb(object):
             if m:
                 rcfiles.append(os.path.join( dir, m.groups()[0]))
         return rcfiles
-
-class localdb( regdb ):
-    # TODO - REABSORB THIS BACK INTO THE MAIN regdb CLASS
-    # (it dates back to when we had a central db as well).
-
-    """
-    Local (user-specific) suite registration database.
-    """
-
-    def __init__( self, file=None, verbose=False):
-        global regdb_path
-        if not file:
-            file = regdb_path
-        dir = os.path.dirname( file )
-        regdb.__init__(self, dir, file, verbose)
 

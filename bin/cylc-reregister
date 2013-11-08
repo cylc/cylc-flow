@@ -40,10 +40,7 @@ arg_to = args[1]
 db = localdb( file=options.db, verbose=options.verbose )
 
 try:
-    with db.lock():
-        db.load_from_file()
-        db.reregister( arg_from, arg_to )
-        db.dump_to_file()
+    db.reregister( arg_from, arg_to )
 except Exception, x:
     if options.debug:
         raise

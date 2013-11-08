@@ -225,7 +225,6 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, verbose=False, silent
 
     # load my suite passphrases 
     reg = localdb(db)
-    reg.load_from_file()
     reg_suites = reg.get_list()
     my_passphrases = {}
     for item in reg_suites:
