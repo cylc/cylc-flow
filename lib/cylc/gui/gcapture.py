@@ -25,7 +25,6 @@ import os, re, sys
 from warning_dialog import warning_dialog, info_dialog
 from util import get_icon
 import subprocess
-import helpwindow
 
 # unit test: see the command $CYLC_DIR/bin/gcapture
 
@@ -133,12 +132,8 @@ are displayed in red.
         close_button = gtk.Button( "_Close" )
         close_button.connect("clicked", self.quit, None, None )
         close_button.show()
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", helpwindow.capture )
-        help_button.show()
 
         hbox.pack_end(close_button, False)
-        hbox.pack_end(help_button, False)
 
         vbox.pack_start( searchbox, False )
         vbox.pack_start( hbox, False )

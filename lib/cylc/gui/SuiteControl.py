@@ -24,7 +24,6 @@ import pango
 import os, re, sys
 import socket
 import subprocess
-import helpwindow
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from dbchooser import dbchooser
@@ -137,12 +136,9 @@ Class to hold initialisation data.
     def reset( self, suite ):
         self.suite = suite
         suitedir = None
-        # dealias the suite name (an aliased name may be given for local suites)
         if not is_remote_host( self.host ) and not is_remote_user( self.owner ):
             db = localdb(file=self.db)
-            db.load_from_file()
-            self.suite = db.unalias( suite )
-            suitedir = db.getdir( suite )
+            suitedir = db.get_suitedir( suite )
         # get the suite passphrase (required for local or remote suites)
         self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
         self.logdir = suite_log( suite ).get_dir()
@@ -2544,17 +2540,9 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         tools_menu.append( log_item )
         log_item.connect( 'activate', self.run_suite_log, 'log' )
 
-
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
-
-        ## TODO: a better (and up to date) gcylc Quick Guide
-        ##guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
-        ##img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
-        ##guide_item.set_image(img)
-        ##help_menu.append( guide_item )
-        ##guide_item.connect( 'activate', helpwindow.userguide )
 
         doc_menu = gtk.Menu()
         doc_item = gtk.ImageMenuItem( "_Documentation" )

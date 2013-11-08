@@ -62,9 +62,6 @@ class db_updater(threading.Thread):
         self.running_choices = []
         self.newtree = {}
 
-        self.db.load_from_file()
-
-        self.regd_choices = []
         self.regd_choices = self.db.get_list(filtr)
 
         # not needed:
@@ -218,7 +215,7 @@ class db_updater(threading.Thread):
         if debug:
             print '* thread', self.me, 'starting'
         while not self.quit:
-            if self.running_choices_changed() or self.regd_choices_changed() or self.reload:
+            if self.running_choices_changed() or self.reload:
                 gobject.idle_add( self.update )
             time.sleep(1)
         else:
@@ -233,17 +230,6 @@ class db_updater(threading.Thread):
         suites = scan( pyro_timeout=self.pyro_timeout, silent=True )
         if suites != self.running_choices:
             self.running_choices = suites
-            return True
-        else:
-            return False
-
-    def regd_choices_changed( self ):
-        if not self.db.changed_on_disk():
-            return False
-        self.db.load_from_file()
-        regs = self.db.get_list(self.filtr)
-        if regs != self.regd_choices:
-            self.regd_choices = regs
             return True
         else:
             return False
@@ -553,10 +539,6 @@ class dbchooser(object):
             menu.append( copy_item )
             copy_item.connect( 'activate', self.copy_popup, reg )
 
-            alias_item = gtk.MenuItem( '_Alias' )
-            menu.append( alias_item )
-            alias_item.connect( 'activate', self.alias_popup, reg )
-    
             reregister_item = gtk.MenuItem( '_Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_popup, reg )
@@ -578,22 +560,6 @@ class dbchooser(object):
         # TODO - POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return False
-
-    def alias_popup( self, w, reg ):
-
-        window = EntryDialog( parent=self.window,
-                flags=0,
-                type=gtk.MESSAGE_QUESTION,
-                buttons=gtk.BUTTONS_OK_CANCEL,
-                message_format="Alias Suite Name " + reg )
-
-        alias = window.run()
-        window.destroy()
-        if alias:
-            command = "cylc alias " + reg + ' ' + alias
-            res, out = run_get_stdout( command )
-            if not res:
-                warning_dialog( '\n'.join(out), self.window ).warn()
 
     def unregister_popup( self, w, reg, is_group=False ):
 
