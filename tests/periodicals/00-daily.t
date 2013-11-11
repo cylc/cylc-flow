@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test Daily cycling
+# Test Daily cycling
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -29,3 +29,4 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
+

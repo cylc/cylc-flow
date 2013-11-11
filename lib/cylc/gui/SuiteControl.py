@@ -24,7 +24,6 @@ import pango
 import os, re, sys
 import socket
 import subprocess
-import helpwindow
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from dbchooser import dbchooser
@@ -137,12 +136,9 @@ Class to hold initialisation data.
     def reset( self, suite ):
         self.suite = suite
         suitedir = None
-        # dealias the suite name (an aliased name may be given for local suites)
         if not is_remote_host( self.host ) and not is_remote_user( self.owner ):
             db = localdb(file=self.db)
-            db.load_from_file()
-            self.suite = db.unalias( suite )
-            suitedir = db.getdir( suite )
+            suitedir = db.get_suitedir( suite )
         # get the suite passphrase (required for local or remote suites)
         self.pphrase = passphrase( suite, self.owner, self.host ).get( suitedir=suitedir )
         self.logdir = suite_log( suite ).get_dir()
@@ -820,11 +816,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #    info_dialog( result[1], self.window ).inform()
 
     def stopsuite( self, bt, window, kill_cb, 
-            stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
+            stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
             stoptag_entry, stopclock_entry, stoptask_entry ):
         stop = False
         stopat = False
         stopnow = False
+        stopquick = False
         stopclock = False
         stoptask = False
         killfirst = False
@@ -852,6 +849,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         elif stopnow_rb.get_active():
             stopnow = True
+
+        elif stopquick_rb.get_active():
+            stopquick = True
 
         elif stopct_rb.get_active():
             stopclock = True
@@ -899,6 +899,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 result = god.put( 'stop after tag', stoptag )
             elif stopnow:
                 result = god.put( 'stop now' )
+            elif stopquick:
+                result = god.put( 'stop quickly' )
             elif stopclock:
                 result = god.put( 'stop after clock time', stopclock_time )
             elif stoptask:
@@ -916,7 +918,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         item2 = " -i '[scheduling]final cycle time'"
         command = "cylc get-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
-                " --owner=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
+                " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
                 self.cfg.suite 
         res = run_get_stdout( command, filter=True ) # (T/F,['ct ct'])
 
@@ -997,7 +999,7 @@ been defined for this suite""").inform()
             options += group.get_options()
         window.destroy()
 
-        options += ' --owner=' + self.cfg.owner + ' --host=' + self.cfg.host
+        options += ' --user=' + self.cfg.owner + ' --host=' + self.cfg.host
 
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + ctime
 
@@ -1041,7 +1043,7 @@ The Cylc Suite Engine.
         about.destroy()
 
     def view_task_descr( self, w, e, task_id ):
-        command = "cylc show --host=" + self.cfg.host + " --owner=" + \
+        command = "cylc show --host=" + self.cfg.host + " --user=" + \
                 self.cfg.owner + " " + self.cfg.suite + " " + task_id
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
@@ -1703,8 +1705,16 @@ shown here in the state they were in at the time of triggering.''' )
         kill_cb.set_active(False)
         kill_cb.set_sensitive(True)
  
-        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (beware orphaned tasks)" )
+        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (see Help)" )
         vbox.pack_start (stopnow_rb, True)
+
+        stopquick_rb = gtk.RadioButton( stop_rb, "Quickly (see Help)" )
+        vbox.pack_start (stopquick_rb, True)
+
+        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
+        vbox.pack_start (stopat_rb, True)
+
+
         stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
         vbox.pack_start (stopat_rb, True)
 
@@ -1748,6 +1758,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box, kill_cb )
         stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box, kill_cb )
         stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box, kill_cb )
+        stopquick_rb.connect( "toggled", self.stop_method, "stopquick", st_box, sc_box, tt_box, kill_cb )
         stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box, kill_cb )
         stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box, kill_cb )
 
@@ -1756,7 +1767,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         stop_button = gtk.Button( "_Stop" )
         stop_button.connect("clicked", self.stopsuite, window, kill_cb,
-                stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb,
+                stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
                 stoptime_entry, stopclock_entry, stoptask_entry )
 
         help_button = gtk.Button( "_Help" )
@@ -1776,7 +1787,7 @@ shown here in the state they were in at the time of triggering.''' )
             ch.set_sensitive( False )
         if meth == 'stop':
             kill_cb.set_sensitive(True)
-        elif meth == 'stopnow':
+        elif meth == 'stopnow' or meth == 'stopquick':
             kill_cb.set_sensitive(False)
         elif meth == 'stopat':
             kill_cb.set_sensitive(False)
@@ -2129,7 +2140,7 @@ or remove task definitions without restarting the suite."""
         if response != gtk.RESPONSE_OK:
             return
 
-        command = "cylc reload -f --host=" + self.cfg.host + " --owner=" + self.cfg.owner + " " + self.cfg.suite
+        command = "cylc reload -f --host=" + self.cfg.host + " --user=" + self.cfg.owner + " " + self.cfg.suite
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 600, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2529,17 +2540,9 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         tools_menu.append( log_item )
         log_item.connect( 'activate', self.run_suite_log, 'log' )
 
-
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( '_Help' )
         help_menu_root.set_submenu( help_menu )
-
-        ## TODO: a better (and up to date) gcylc Quick Guide
-        ##guide_item = gtk.ImageMenuItem( '_GUI Quick Guide' )
-        ##img = gtk.image_new_from_stock(  gtk.STOCK_HELP, gtk.ICON_SIZE_MENU )
-        ##guide_item.set_image(img)
-        ##help_menu.append( guide_item )
-        ##guide_item.connect( 'activate', helpwindow.userguide )
 
         doc_menu = gtk.Menu()
         doc_item = gtk.ImageMenuItem( "_Documentation" )
@@ -3050,7 +3053,7 @@ For more Stop options use the Control menu.""" )
         return False
 
     def get_remote_run_opts( self ):
-        return " --host=" + self.cfg.host + " --owner=" + self.cfg.owner
+        return " --host=" + self.cfg.host + " --user=" + self.cfg.owner
 
     def browse( self, b, option='' ):
         command = 'cylc doc ' + option

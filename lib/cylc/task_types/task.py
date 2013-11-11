@@ -541,7 +541,7 @@ class task( object ):
         # NOTE: not using__import__() keyword arguments:
         #mod = __import__( module_name, fromlist=[class_name] )
         # as these were only introduced in Python 2.5.
-        # TODO - UPGRADE TO THE 2.5 FORM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # TODO - UPGRADE TO THE 2.5 FORM
         try:
             # try to import built-in job submission classes first
             mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
@@ -568,6 +568,35 @@ class task( object ):
         else:
             precommand = rtconfig['pre-command scripting'] 
             postcommand = rtconfig['post-command scripting'] 
+
+        if self.suite_polling_cfg:
+            # generate automatic suite state polling command scripting
+            #____
+            # for an additional cycle time offset for --cycle:
+            #offset =  rtconfig['suite state polling']['offset']
+            #if offset:
+            #    foo = ct( self.c_time )
+            #    foo.decrement( hours=offset )
+            #    cycle = foo.get()
+            #else:
+            #    cycle = self.c_time
+            #____
+            comstr = "cylc suite-state " + \
+                     " --task=" + self.suite_polling_cfg['task'] + \
+                     " --cycle=" + self.c_time + \
+                     " --status=" + self.suite_polling_cfg['status']
+            if rtconfig['suite state polling']['owner']:
+                comstr += " --owner=" + rtconfig['suite state polling']['owner']
+            if rtconfig['suite state polling']['host']:
+                comstr += " --host=" + rtconfig['suite state polling']['host']
+            if rtconfig['suite state polling']['interval']:
+                comstr += " --interval=" + str(rtconfig['suite state polling']['interval'])
+            if rtconfig['suite state polling']['max-polls']:
+                comstr += " --max-polls=" + str(rtconfig['suite state polling']['max-polls'])
+            if rtconfig['suite state polling']['run-dir']:
+                comstr += " --run-dir=" + str(rtconfig['suite state polling']['run-dir'])
+            comstr += " " + self.suite_polling_cfg['suite']
+            command = "echo " + comstr + "\n" + comstr
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
@@ -1162,17 +1191,17 @@ class task( object ):
         summary[ 'latest_message_priority' ] = self.latest_message_priority
 
         if self.submitted_time:
-            summary[ 'submitted_time' ] = strftime( self.submitted_time, "%H:%M:%S" )
+            summary[ 'submitted_time' ] = self.submitted_time.isoformat()
         else:
             summary[ 'submitted_time' ] = '*'
 
         if self.started_time:
-            summary[ 'started_time' ] =  strftime( self.started_time, "%H:%M:%S" )
+            summary[ 'started_time' ] = self.started_time.isoformat()
         else:
             summary[ 'started_time' ] =  '*'
 
         if self.succeeded_time:
-            summary[ 'succeeded_time' ] =  strftime( self.succeeded_time, "%H:%M:%S" )
+            summary[ 'succeeded_time' ] = self.succeeded_time.isoformat()
         else:
             summary[ 'succeeded_time' ] =  '*'
 
@@ -1183,7 +1212,7 @@ class task( object ):
         # TODO - the following section could probably be streamlined a bit
         if self.__class__.mean_total_elapsed_time:
             met = self.__class__.mean_total_elapsed_time
-            summary[ 'mean total elapsed time' ] =  re.sub( '\.\d*$', '', str(met) )
+            summary[ 'mean total elapsed time' ] =  str(met)
             if self.started_time:
                 if not self.succeeded_time:
                     # started but not succeeded yet, compute ETC
@@ -1254,6 +1283,11 @@ class task( object ):
 
         launcher = self.launcher
         if not launcher:
+            if self.user_at_host:
+                if "@" in self.user_at_host:
+                    self.task_owner, self.task_host = user_at_host.split('@', 1)
+                else:
+                    self.task_host = self.user_at_host
             launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
         if not hasattr( launcher, 'get_job_poll_command' ):
@@ -1262,7 +1296,7 @@ class task( object ):
             return
 
         cmd = launcher.get_job_poll_command( self.submit_method_id )
-        if self.user_at_host != user + '@localhost':
+        if self.user_at_host not in [user + '@localhost', 'localhost']:
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
 

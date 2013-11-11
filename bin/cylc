@@ -227,6 +227,7 @@ admin_commands = OrderedDict()
 admin_commands['test-db'         ] = [ 'test-db']
 admin_commands['test-battery'    ] = [ 'test-battery']
 admin_commands['import-examples' ] = [ 'import-examples']
+admin_commands['upgrade-db'      ] = [ 'upgrade-db']
 admin_commands['check-software'  ] = [ 'check-software']
 
 license_commands = OrderedDict()
@@ -236,7 +237,6 @@ license_commands['conditions'] = [ 'conditions']
 database_commands = OrderedDict()
 database_commands['register'  ] = [ 'register' ]
 database_commands['reregister'] = [ 'reregister','rename' ]
-database_commands['alias'     ] = [ 'alias' ]
 database_commands['unregister'] = [ 'unregister' ]
 database_commands['copy'      ] = [ 'copy', 'cp' ]
 database_commands['print'     ] = [ 'print' ]
@@ -307,7 +307,15 @@ catsum = OrderedDict()
 catsum['all'    ]        = "The complete command set."
 catsum['admin'       ]   = "Cylc installation, testing, and example suites."
 catsum['license'     ]   = "Software licensing information (GPL v3.0)."
-catsum['database'    ]   = "Suite registration, copying, deletion, etc."
+catsum['database'    ]   = """Suite name registration, copying, deletion, etc.
+
+Prior to cylc-5.4 the suite name registration DB was a Python pickle
+file stored at $HOME/.cylc/DB.  Since cylc-5.4 it is a directory
+$HOME/.cylc/REGDB/ containing one file per registered suite. The 
+filenames are the suite names, and the file contains key=value pairs:
+  shell$ cat $HOME/.cylc/REGDB/my.suite
+  title=my suite title
+  path=/path/to/my/suite"""
 catsum['information' ]   = "Interrogate suite definitions and running suites."
 catsum['preparation' ]   = "Suite editing, validation, visualization, etc."
 catsum['discovery'   ]   = "Detect running suites."
@@ -327,8 +335,8 @@ optional, but they organize help and disambiguate abbreviated commands:
 
 CYLC SUITE NAMES AND YOUR REGISTRATION DATABASE
   Suites are addressed by hierarchical names such as suite1, nwp.oper,
-nwp.test.LAM2, etc. in a "registration database" ($HOME/.cylc/DB) that
-simply associates names with the suite definition locations.  The
+nwp.test.LAM2, etc. in a "name registration database" ($HOME/.cylc/REGDB)
+that simply associates names with the suite definition locations.  The
 '--db=' command option can be used to view and copy suites from other
 users, with access governed by normal filesystem permissions. 
 
@@ -350,17 +358,17 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum[ 'test-db'    ] = 'Run an automated suite database test'
+comsum[ 'test-db'    ] = 'Run an automated suite name database test'
 comsum[ 'test-battery' ] = 'Run a battery of self-diagnosing test suites'
-comsum[ 'import-examples' ] = 'Import example suites your user database'
-comsum[ 'check-software' ] = 'Check required software is installed.'
+comsum[ 'import-examples' ] = 'Import example suites your suite name database'
+comsum[ 'upgrade-db'      ] = 'Upgrade a pre-cylc-5.4 suite name database'
+comsum[ 'check-software'  ] = 'Check required software is installed.'
 # license
 comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
 comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
 # database
 comsum[ 'register'   ] = 'Register a suite for use'
 comsum[ 'reregister' ] = 'Change the name of a suite'
-comsum[ 'alias'      ] = 'Register an alternative name for a suite'
 comsum[ 'unregister' ] = 'Unregister and optionally delete suites'
 comsum[ 'copy'       ] = 'Copy a suite or a group of suites'
 comsum[ 'print'      ] = 'Print registered suites'
@@ -621,17 +629,19 @@ else:
             else:
                 command_args = []
 
-# check for help anywhere in the arg list and transform to '--help'
 args_new = []
 for item in command_args:
     if is_help( item ):
+        # transform all legal help options to '--help'
         args_new.append( '--help' )
+    elif item.startswith( '--owner' ):
+        # deprecate '--owner' to '--user'
+        args_new.append( item.replace( '--owner', '--user' ))
     else:
         args_new.append( item )
 args = args_new
 
-# construct command to execute
-# DEPRECATED TASK COMMANDS (backward compatibility):
+# deprecated commands
 if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' ]:
     command = re.sub( '^task-', '', command )
 

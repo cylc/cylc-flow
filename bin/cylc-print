@@ -87,8 +87,6 @@ else:
 
 db = localdb(file=options.db, verbose=options.verbose)
 try:
-    with db.lock():
-        db.load_from_file()
     allsuites = db.get_list(regfilter)
     if options.fail and len(allsuites) == 0:
         raise SystemExit( 'ERROR: no suites matched.' )

@@ -21,7 +21,7 @@ from cylc.task_state import task_state
 from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
-from cylc.strftime import strftime
+from cylc.strftime import isoformat_strftime
 from copy import deepcopy
 import gobject
 import gtk
@@ -156,8 +156,17 @@ class TreeUpdater(threading.Thread):
                     dest[ ctime ] = {}
                 state = summary[ id ].get( 'state' )
                 message = summary[ id ].get( 'latest_message', )
-                tsub = _time_trim( summary[ id ].get( 'submitted_time' ) )
-                tstt = _time_trim( summary[ id ].get( 'started_time' ) )
+                
+                tsub = summary[ id ].get( 'submitted_time' )
+                if isinstance(tsub, basestring) and tsub != "*":
+                    if "T" in tsub:
+                        # TODO: get rid of this condition (here for backwards compatibility)
+                        tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") ) 
+                tstt = summary[ id ].get( 'started_time' )
+                if isinstance(tstt, basestring) and tstt != "*":
+                    if "T" in tstt:
+                        # TODO: get rid of this condition (here for backwards compatibility)
+                        tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") ) 
                 meant = _time_trim( summary[ id ].get( 'mean total elapsed time' ) )
                 tetc = _time_trim( summary[ id ].get( 'Tetc' ) )
                 priority = summary[ id ].get( 'latest_message_priority' )

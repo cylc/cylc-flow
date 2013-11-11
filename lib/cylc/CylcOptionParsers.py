@@ -106,13 +106,15 @@ Arguments:"""
         OptionParser.__init__( self, usage )
 
     def add_std_options( self ):
-        self.add_option( "--owner",
-                help="User account name (defaults to $USER).",
+        self.add_option( "--user",
+                help="Other user account name. This results in "
+                "command reinvocation on the remote account.",
                 metavar="USER", default=user,
                 action="store", dest="owner" )
 
         self.add_option( "--host",
-                help="Host name (defaults to localhost).",
+                help="Other host name. This results in "
+                "command reinvocation on the remote account.",
                 metavar="HOST", action="store", default=get_hostname(),
                 dest="host" )
 
@@ -125,10 +127,9 @@ Arguments:"""
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",
-                help="Suite database: 'u:USERNAME' for another user's "
-                "default database, or PATH to an explicit location. "
-                "Defaults to $HOME/.cylc/DB.",
-                metavar="DB", action="store", default=None, dest="db" )
+                help="Alternative suite registration database location, "
+                "defaults to $HOME/.cylc/REGDB.",
+                metavar="PATH", action="store", default=None, dest="db" )
 
         if self.pyro:
             self.add_option( "--port",
@@ -202,9 +203,14 @@ Arguments:"""
             watchers = prepper.get_rcfiles()
         return suite, suiterc, watchers
 
-    def parse_args( self ):
+    def parse_args( self, remove_opts=[] ):
 
         self.add_std_options()
+        for opt in remove_opts:
+            try:
+                self.remove_option( opt )
+            except:
+                pass
 
         (options, args) = OptionParser.parse_args( self )
 

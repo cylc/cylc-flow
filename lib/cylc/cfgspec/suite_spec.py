@@ -176,6 +176,14 @@ SPEC = {
                 'execution timeout'           : vdr( vtype='float'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
                 },
+            'suite state polling' : {
+                'owner'                       : vdr( vtype='string' ),
+                'host'                        : vdr( vtype='string' ),
+                'interval'                    : vdr( vtype='integer' ),
+                'max-polls'                   : vdr( vtype='integer' ),
+                'run-dir'                     : vdr( vtype='string' ),
+                'verbose mode'                : vdr( vtype='boolean' ),
+                },
             'environment' : {
                 '__MANY__'                    : vdr( vtype='string' ),
                 },

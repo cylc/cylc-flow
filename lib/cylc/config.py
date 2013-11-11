@@ -39,13 +39,30 @@ checking, then construct task proxy objects and graph structures.
 """
 
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
-
+TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
+ 
 try:
     import graphing
 except ImportError:
     graphing_disabled = True
 else:
     graphing_disabled = False
+
+
+class Replacement(object):
+    """A class to remember match group information in re.sub() calls"""
+    def __init__(self, replacement):
+        self.replacement = replacement
+        self.substitutions = []
+        self.match_groups = []
+
+    def __call__(self, match):
+        matched = match.group(0)
+        replaced = match.expand(self.replacement)
+        self.substitutions.append((matched, replaced))
+        self.match_groups.append( match.groups() )
+        return replaced
+
 
 class SuiteConfigError( Exception ):
     """
@@ -67,7 +84,7 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             verbose=False, validation=False, strict=False, collapsed=[],
-            override=None, is_restart=False, is_reload=False,
+            cli_start_tag=None, is_restart=False, is_reload=False,
             write_processed_file=True ):
 
         self.suite = suite  # suite name
@@ -82,10 +99,11 @@ class config( object ):
         self.cyclers = []
         self.taskdefs = {}
         self.validation = validation
-        self.override = override
+        self.cli_start_tag = cli_start_tag
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
+        self.suite_polling_tasks = {}
         self.triggering_families = []
 
         self.async_oneoff_edges = []
@@ -900,6 +918,7 @@ class config( object ):
             raise SuiteConfigError, 'ERROR, illegal family trigger type: ' + orig
         repl = orig[:-4]
 
+        # TODO - can we use Replacement here instead of findall and sub:
         m = re.findall( "(!){0,1}" + r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line )
         m.sort() # put empty offset '' first ...
         m.reverse() # ... then last
@@ -939,6 +958,20 @@ class config( object ):
         # Replace "foo:finish(ed)" or "foo:complete(ed)" with "( foo | foo:fail )"
         # line = re.sub(  r'\b(\w+(\[.*?]){0,1}):(complete(d){0,1}|finish(ed){0,1})\b', r'( \1 | \1:fail )', line )
 
+        # Find any dependence on other suites, record the polling target
+        # info and replace with just the local task name, e.g.:
+        # "foo<SUITE::TASK:fail> => bar"  becomes "foo => bar"
+        # (and record that foo must automatically poll for TASK in SUITE)
+        repl = Replacement( '\\1' )
+        line = re.sub( '(\w+)(<([\w-]+)::(\w+)(:\w+)?>)', repl, line )
+        for item in repl.match_groups:
+            l_task, r_all, r_suite, r_task, r_status = item
+            if r_status:
+                r_status = r_status[1:]
+            else: # default
+                r_status = 'succeed'
+            self.suite_polling_tasks[ l_task ] = ( r_suite, r_task, r_status, r_all )
+
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
         for fam in self.runtime['descendants']:
             members = copy(self.runtime['descendants'][fam])
@@ -961,9 +994,9 @@ class config( object ):
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in [ ':submit', ':submit-fail', ':start', ':succeed', ':fail', ':finish' ]:
-                line = self.replace_family_triggers( line, fam, members, trig_type + '-all' )
-                line = self.replace_family_triggers( line, fam, members, trig_type + '-any' )
+            for trig_type in TRIGGER_TYPES:
+                line = self.replace_family_triggers( line, fam, members, ':'+trig_type + '-all' )
+                line = self.replace_family_triggers( line, fam, members, ':'+trig_type + '-any' )
 
             if re.search( r"\b" + fam + r"\b:", line ):
                 # fam:illegal
@@ -1166,6 +1199,7 @@ class config( object ):
                 self.runtime['descendants']['root'].append(name)
                 self.runtime['first-parent descendants']['root'].append(name)
 
+            # check task name legality and create the taskdef
             if name not in self.taskdefs:
                 try:
                     self.taskdefs[ name ] = self.get_taskdef( name )
@@ -1188,6 +1222,12 @@ class config( object ):
                 self.taskdefs[name].cycling = True
                 if name not in self.cycling_tasks:
                     self.cycling_tasks.append(name)
+
+            if name in self.suite_polling_tasks:
+                self.taskdefs[name].suite_polling_cfg = {
+                        'suite'  : self.suite_polling_tasks[name][0],
+                        'task'   : self.suite_polling_tasks[name][1],
+                        'status' : self.suite_polling_tasks[name][2] }
 
             if offset:
                 # adjust cycler state and add
@@ -1397,7 +1437,7 @@ class config( object ):
                 group_nodes, ungroup_nodes, ungroup_recursive,
                 group_all, ungroup_all )
 
-        graph = graphing.CGraph( self.suite, self.cfg['visualization'] )
+        graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
         graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
@@ -1523,6 +1563,15 @@ class config( object ):
             # generate pygraphviz graph nodes and edges, and task definitions
             self.process_graph_line( line, section, ttype, cyclr )
 
+        # Check command scripting not defined for automatic suite polling tasks
+        for l_task in self.suite_polling_tasks:
+            try:
+                cs = self.cfg['runtime'][l_task]['command scripting']
+            except:
+                pass
+            else:
+                raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
+
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
 
@@ -1531,14 +1580,6 @@ class config( object ):
             taskcfg = self.cfg['runtime'][name]
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
-
-        if self.override:
-            ict = self.override
-        elif self.cfg['scheduling']['initial cycle time'] and not self.is_restart:
-                # Use suite.rc initial cycle time
-            ict = str(self.cfg['scheduling']['initial cycle time'])
-        else:
-            ict = None
 
         # Get full dense task [runtime] by applying runtime defaults now.
         # TODO - this should be done right after sparse inheritance, but
@@ -1549,6 +1590,10 @@ class config( object ):
         poverride( rtcfg, taskcfg )    # override with suite [runtime] settings
         un_many(rtcfg)
     
+        ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle time']
+        # We may want to put in some handling for cases of changing the
+        # initial cycle via restart (accidentally or otherwise).
+
         # Get the taskdef object for generating the task proxy class
         taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict ) 
 

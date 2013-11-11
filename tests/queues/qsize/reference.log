@@ -1,0 +1,335 @@
+2013/11/07 12:01:39 INFO - Thread-2 start (Event Handlers)
+2013/11/07 12:01:39 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/07 12:01:39 INFO - port:7766
+2013/11/07 12:01:39 INFO - Suite starting at 2013-11-07 12:01:39.571655
+2013/11/07 12:01:39 INFO - Log event clock: real time
+2013/11/07 12:01:39 INFO - Run mode: live
+2013/11/07 12:01:39 INFO - Start tag: None
+2013/11/07 12:01:39 INFO - Stop tag: None
+2013/11/07 12:01:39 INFO - Thread-4 start (Job Submission)
+2013/11/07 12:01:39 INFO - Thread-5 start (Request Handling)
+2013/11/07 12:01:39 DEBUG - [a.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [c.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [b.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [e.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [monitor.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [g.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [f.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [i.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [h.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [k.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [j.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [l.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - [d.1] -task proxy added to the pool
+2013/11/07 12:01:39 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:39 INFO - [monitor.1] -(setting:queued)
+2013/11/07 12:01:39 INFO - [monitor.1] -(setting:submitting)
+2013/11/07 12:01:39 INFO - [monitor.1] -triggered off []
+2013/11/07 12:01:39 DEBUG - END TASK PROCESSING (took 0.015609 sec)
+2013/11/07 12:01:40 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 12:01:40 INFO - [monitor.1] -(current:submitting)> monitor.1 submitting now
+2013/11/07 12:01:40 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.236869
+  All 1 items succeeded
+2013/11/07 12:01:41 INFO - [monitor.1] -(current:submitting)> monitor.1 submission succeeded
+2013/11/07 12:01:41 INFO - [monitor.1] -(setting:submitted)
+2013/11/07 12:01:41 INFO - [monitor.1] -(current:submitted)> monitor.1 submit_method_id=5718
+2013/11/07 12:01:41 INFO - [monitor.1] -(current:submitted)> monitor.1 started at 2013-11-07T12:01:41
+2013/11/07 12:01:41 INFO - [monitor.1] -(setting:running)
+2013/11/07 12:01:42 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:42 INFO - [a.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [c.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [b.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [e.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [g.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [f.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [i.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [h.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [k.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [j.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [l.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [d.1] -(setting:queued)
+2013/11/07 12:01:42 INFO - [a.1] -(setting:submitting)
+2013/11/07 12:01:42 INFO - [c.1] -(setting:submitting)
+2013/11/07 12:01:42 INFO - [a.1] -triggered off ['monitor.1']
+2013/11/07 12:01:42 INFO - [c.1] -triggered off ['monitor.1']
+2013/11/07 12:01:42 DEBUG - END TASK PROCESSING (took 0.025247 sec)
+2013/11/07 12:01:42 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/07 12:01:43 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:43 DEBUG - END TASK PROCESSING (took 0.013498 sec)
+2013/11/07 12:01:43 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/11/07 12:01:43 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/11/07 12:01:43 INFO - [a.1] -(setting:submitted)
+2013/11/07 12:01:43 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=5827
+2013/11/07 12:01:43 INFO - [a.1] -(current:submitted)> a.1 started at 2013-11-07T12:01:43
+2013/11/07 12:01:43 INFO - [a.1] -(setting:running)
+2013/11/07 12:01:43 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/11/07 12:01:44 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.395701
+  All 2 items succeeded
+2013/11/07 12:01:44 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:44 DEBUG - END TASK PROCESSING (took 0.01247 sec)
+2013/11/07 12:01:44 INFO - [c.1] -(current:submitting)> c.1 started at 2013-11-07T12:01:43
+2013/11/07 12:01:44 INFO - [c.1] -(setting:running)
+2013/11/07 12:01:44 INFO - [c.1] -(current:running)> c.1 submission succeeded
+2013/11/07 12:01:44 INFO - [c.1] -(current:running)> c.1 submit_method_id=5894
+2013/11/07 12:01:45 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:45 DEBUG - END TASK PROCESSING (took 0.014181 sec)
+2013/11/07 12:01:46 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:46 DEBUG - END TASK PROCESSING (took 0.01291 sec)
+2013/11/07 12:01:47 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:47 DEBUG - END TASK PROCESSING (took 0.012569 sec)
+2013/11/07 12:01:48 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:48 DEBUG - END TASK PROCESSING (took 0.016118 sec)
+2013/11/07 12:01:49 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:49 DEBUG - END TASK PROCESSING (took 0.012666 sec)
+2013/11/07 12:01:50 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:50 DEBUG - END TASK PROCESSING (took 0.012736 sec)
+2013/11/07 12:01:51 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:51 DEBUG - END TASK PROCESSING (took 0.013042 sec)
+2013/11/07 12:01:52 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:52 DEBUG - END TASK PROCESSING (took 0.012968 sec)
+2013/11/07 12:01:53 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:53 DEBUG - END TASK PROCESSING (took 0.013803 sec)
+2013/11/07 12:01:54 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:54 DEBUG - END TASK PROCESSING (took 0.014127 sec)
+2013/11/07 12:01:54 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-11-07T12:01:53
+2013/11/07 12:01:54 INFO - [a.1] -(setting:succeeded)
+2013/11/07 12:01:54 INFO - [c.1] -(current:running)> c.1 succeeded at 2013-11-07T12:01:53
+2013/11/07 12:01:54 INFO - [c.1] -(setting:succeeded)
+2013/11/07 12:01:55 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:55 INFO - [b.1] -(setting:submitting)
+2013/11/07 12:01:55 INFO - [e.1] -(setting:submitting)
+2013/11/07 12:01:55 INFO - [b.1] -triggered off ['monitor.1']
+2013/11/07 12:01:55 INFO - [e.1] -triggered off ['monitor.1']
+2013/11/07 12:01:55 DEBUG - END TASK PROCESSING (took 0.015512 sec)
+2013/11/07 12:01:56 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/07 12:01:56 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:56 DEBUG - END TASK PROCESSING (took 0.013405 sec)
+2013/11/07 12:01:56 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/11/07 12:01:56 INFO - [b.1] -(current:submitting)> b.1 submission succeeded
+2013/11/07 12:01:56 INFO - [b.1] -(setting:submitted)
+2013/11/07 12:01:56 INFO - [b.1] -(current:submitted)> b.1 submit_method_id=6228
+2013/11/07 12:01:56 INFO - [e.1] -(current:submitting)> e.1 submitting now
+2013/11/07 12:01:57 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.416048
+  All 2 items succeeded
+2013/11/07 12:01:57 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:57 DEBUG - END TASK PROCESSING (took 0.013578 sec)
+2013/11/07 12:01:57 INFO - [b.1] -(current:submitted)> b.1 started at 2013-11-07T12:01:56
+2013/11/07 12:01:57 INFO - [b.1] -(setting:running)
+2013/11/07 12:01:57 INFO - [e.1] -(current:submitting)> e.1 started at 2013-11-07T12:01:57
+2013/11/07 12:01:57 INFO - [e.1] -(setting:running)
+2013/11/07 12:01:57 INFO - [e.1] -(current:running)> e.1 submission succeeded
+2013/11/07 12:01:57 INFO - [e.1] -(current:running)> e.1 submit_method_id=6310
+2013/11/07 12:01:58 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:58 DEBUG - END TASK PROCESSING (took 0.012784 sec)
+2013/11/07 12:01:59 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:01:59 DEBUG - END TASK PROCESSING (took 0.012569 sec)
+2013/11/07 12:02:00 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:00 DEBUG - END TASK PROCESSING (took 0.01256 sec)
+2013/11/07 12:02:01 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:01 DEBUG - END TASK PROCESSING (took 0.012771 sec)
+2013/11/07 12:02:02 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:03 DEBUG - END TASK PROCESSING (took 0.013053 sec)
+2013/11/07 12:02:04 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:04 DEBUG - END TASK PROCESSING (took 0.012849 sec)
+2013/11/07 12:02:05 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:05 DEBUG - END TASK PROCESSING (took 0.012487 sec)
+2013/11/07 12:02:06 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:06 DEBUG - END TASK PROCESSING (took 0.012614 sec)
+2013/11/07 12:02:07 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:07 DEBUG - END TASK PROCESSING (took 0.026888 sec)
+2013/11/07 12:02:08 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:08 DEBUG - END TASK PROCESSING (took 0.013361 sec)
+2013/11/07 12:02:08 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-11-07T12:02:07
+2013/11/07 12:02:08 INFO - [b.1] -(setting:succeeded)
+2013/11/07 12:02:08 INFO - [e.1] -(current:running)> e.1 succeeded at 2013-11-07T12:02:07
+2013/11/07 12:02:08 INFO - [e.1] -(setting:succeeded)
+2013/11/07 12:02:09 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:09 INFO - [g.1] -(setting:submitting)
+2013/11/07 12:02:09 INFO - [f.1] -(setting:submitting)
+2013/11/07 12:02:09 INFO - [g.1] -triggered off ['monitor.1']
+2013/11/07 12:02:09 INFO - [f.1] -triggered off ['monitor.1']
+2013/11/07 12:02:09 DEBUG - END TASK PROCESSING (took 0.016844 sec)
+2013/11/07 12:02:09 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/07 12:02:10 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:10 DEBUG - END TASK PROCESSING (took 0.013825 sec)
+2013/11/07 12:02:10 INFO - [g.1] -(current:submitting)> g.1 submitting now
+2013/11/07 12:02:10 INFO - [g.1] -(current:submitting)> g.1 submission succeeded
+2013/11/07 12:02:10 INFO - [g.1] -(setting:submitted)
+2013/11/07 12:02:10 INFO - [g.1] -(current:submitted)> g.1 submit_method_id=6663
+2013/11/07 12:02:10 INFO - [f.1] -(current:submitting)> f.1 submitting now
+2013/11/07 12:02:11 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.401079
+  All 2 items succeeded
+2013/11/07 12:02:11 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:11 DEBUG - END TASK PROCESSING (took 0.013782 sec)
+2013/11/07 12:02:11 INFO - [g.1] -(current:submitted)> g.1 started at 2013-11-07T12:02:10
+2013/11/07 12:02:11 INFO - [g.1] -(setting:running)
+2013/11/07 12:02:11 INFO - [f.1] -(current:submitting)> f.1 started at 2013-11-07T12:02:10
+2013/11/07 12:02:11 INFO - [f.1] -(setting:running)
+2013/11/07 12:02:11 INFO - [f.1] -(current:running)> f.1 submission succeeded
+2013/11/07 12:02:11 INFO - [f.1] -(current:running)> f.1 submit_method_id=6730
+2013/11/07 12:02:12 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:12 DEBUG - END TASK PROCESSING (took 0.012462 sec)
+2013/11/07 12:02:13 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:13 DEBUG - END TASK PROCESSING (took 0.01275 sec)
+2013/11/07 12:02:14 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:14 DEBUG - END TASK PROCESSING (took 0.012827 sec)
+2013/11/07 12:02:15 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:15 DEBUG - END TASK PROCESSING (took 0.012647 sec)
+2013/11/07 12:02:16 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:16 DEBUG - END TASK PROCESSING (took 0.013067 sec)
+2013/11/07 12:02:17 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:17 DEBUG - END TASK PROCESSING (took 0.012805 sec)
+2013/11/07 12:02:18 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:18 DEBUG - END TASK PROCESSING (took 0.012729 sec)
+2013/11/07 12:02:19 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:19 DEBUG - END TASK PROCESSING (took 0.01311 sec)
+2013/11/07 12:02:20 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:20 DEBUG - END TASK PROCESSING (took 0.012874 sec)
+2013/11/07 12:02:21 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:21 DEBUG - END TASK PROCESSING (took 0.013008 sec)
+2013/11/07 12:02:21 INFO - [g.1] -(current:running)> g.1 succeeded at 2013-11-07T12:02:20
+2013/11/07 12:02:21 INFO - [g.1] -(setting:succeeded)
+2013/11/07 12:02:21 INFO - [f.1] -(current:running)> f.1 succeeded at 2013-11-07T12:02:20
+2013/11/07 12:02:21 INFO - [f.1] -(setting:succeeded)
+2013/11/07 12:02:22 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:22 INFO - [i.1] -(setting:submitting)
+2013/11/07 12:02:22 INFO - [h.1] -(setting:submitting)
+2013/11/07 12:02:22 INFO - [i.1] -triggered off ['monitor.1']
+2013/11/07 12:02:22 INFO - [h.1] -triggered off ['monitor.1']
+2013/11/07 12:02:22 DEBUG - END TASK PROCESSING (took 0.016562 sec)
+2013/11/07 12:02:23 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/07 12:02:23 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:23 DEBUG - END TASK PROCESSING (took 0.012878 sec)
+2013/11/07 12:02:23 INFO - [i.1] -(current:submitting)> i.1 submitting now
+2013/11/07 12:02:23 INFO - [h.1] -(current:submitting)> h.1 submitting now
+2013/11/07 12:02:24 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:24 DEBUG - END TASK PROCESSING (took 0.012583 sec)
+2013/11/07 12:02:24 INFO - [i.1] -(current:submitting)> i.1 submission succeeded
+2013/11/07 12:02:24 INFO - [i.1] -(setting:submitted)
+2013/11/07 12:02:24 INFO - [i.1] -(current:submitted)> i.1 submit_method_id=7098
+2013/11/07 12:02:24 INFO - [i.1] -(current:submitted)> i.1 started at 2013-11-07T12:02:23
+2013/11/07 12:02:24 INFO - [i.1] -(setting:running)
+2013/11/07 12:02:24 INFO - [h.1] -(current:submitting)> h.1 started at 2013-11-07T12:02:23
+2013/11/07 12:02:24 INFO - [h.1] -(setting:running)
+2013/11/07 12:02:24 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.374912
+  All 2 items succeeded
+2013/11/07 12:02:25 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:25 DEBUG - END TASK PROCESSING (took 0.012641 sec)
+2013/11/07 12:02:25 INFO - [h.1] -(current:running)> h.1 submission succeeded
+2013/11/07 12:02:25 INFO - [h.1] -(current:running)> h.1 submit_method_id=7169
+2013/11/07 12:02:26 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:26 DEBUG - END TASK PROCESSING (took 0.013037 sec)
+2013/11/07 12:02:27 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:27 DEBUG - END TASK PROCESSING (took 0.014195 sec)
+2013/11/07 12:02:28 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:28 DEBUG - END TASK PROCESSING (took 0.012535 sec)
+2013/11/07 12:02:29 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:29 DEBUG - END TASK PROCESSING (took 0.012488 sec)
+2013/11/07 12:02:30 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:30 DEBUG - END TASK PROCESSING (took 0.012561 sec)
+2013/11/07 12:02:31 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:31 DEBUG - END TASK PROCESSING (took 0.012832 sec)
+2013/11/07 12:02:32 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:32 DEBUG - END TASK PROCESSING (took 0.012769 sec)
+2013/11/07 12:02:33 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:33 DEBUG - END TASK PROCESSING (took 0.012835 sec)
+2013/11/07 12:02:34 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:34 DEBUG - END TASK PROCESSING (took 0.012658 sec)
+2013/11/07 12:02:34 INFO - [i.1] -(current:running)> i.1 succeeded at 2013-11-07T12:02:33
+2013/11/07 12:02:34 INFO - [i.1] -(setting:succeeded)
+2013/11/07 12:02:34 INFO - [h.1] -(current:running)> h.1 succeeded at 2013-11-07T12:02:34
+2013/11/07 12:02:34 INFO - [h.1] -(setting:succeeded)
+2013/11/07 12:02:35 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:35 INFO - [k.1] -(setting:submitting)
+2013/11/07 12:02:35 INFO - [j.1] -(setting:submitting)
+2013/11/07 12:02:35 INFO - [k.1] -triggered off ['monitor.1']
+2013/11/07 12:02:35 INFO - [j.1] -triggered off ['monitor.1']
+2013/11/07 12:02:35 DEBUG - END TASK PROCESSING (took 0.015768 sec)
+2013/11/07 12:02:36 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/07 12:02:36 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:36 DEBUG - END TASK PROCESSING (took 0.01327 sec)
+2013/11/07 12:02:36 INFO - [k.1] -(current:submitting)> k.1 submitting now
+2013/11/07 12:02:37 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:37 DEBUG - END TASK PROCESSING (took 0.013222 sec)
+2013/11/07 12:02:37 INFO - [k.1] -(current:submitting)> k.1 submission succeeded
+2013/11/07 12:02:37 INFO - [k.1] -(setting:submitted)
+2013/11/07 12:02:37 INFO - [k.1] -(current:submitted)> k.1 submit_method_id=7532
+2013/11/07 12:02:37 INFO - [k.1] -(current:submitted)> k.1 started at 2013-11-07T12:02:37
+2013/11/07 12:02:37 INFO - [k.1] -(setting:running)
+2013/11/07 12:02:37 INFO - [j.1] -(current:submitting)> j.1 submitting now
+2013/11/07 12:02:37 INFO - [j.1] -(current:submitting)> j.1 started at 2013-11-07T12:02:37
+2013/11/07 12:02:37 INFO - [j.1] -(setting:running)
+2013/11/07 12:02:37 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.421833
+  All 2 items succeeded
+2013/11/07 12:02:38 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:38 DEBUG - END TASK PROCESSING (took 0.013361 sec)
+2013/11/07 12:02:38 INFO - [j.1] -(current:running)> j.1 submission succeeded
+2013/11/07 12:02:38 INFO - [j.1] -(current:running)> j.1 submit_method_id=7599
+2013/11/07 12:02:39 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:39 DEBUG - END TASK PROCESSING (took 0.012752 sec)
+2013/11/07 12:02:40 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:40 DEBUG - END TASK PROCESSING (took 0.012794 sec)
+2013/11/07 12:02:41 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:41 DEBUG - END TASK PROCESSING (took 0.012824 sec)
+2013/11/07 12:02:42 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:42 DEBUG - END TASK PROCESSING (took 0.014692 sec)
+2013/11/07 12:02:43 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:43 DEBUG - END TASK PROCESSING (took 0.013411 sec)
+2013/11/07 12:02:44 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:44 DEBUG - END TASK PROCESSING (took 0.013074 sec)
+2013/11/07 12:02:45 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:45 DEBUG - END TASK PROCESSING (took 0.012699 sec)
+2013/11/07 12:02:46 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:46 DEBUG - END TASK PROCESSING (took 0.013676 sec)
+2013/11/07 12:02:47 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:47 DEBUG - END TASK PROCESSING (took 0.013412 sec)
+2013/11/07 12:02:47 INFO - [k.1] -(current:running)> k.1 succeeded at 2013-11-07T12:02:47
+2013/11/07 12:02:47 INFO - [k.1] -(setting:succeeded)
+2013/11/07 12:02:47 INFO - [j.1] -(current:running)> j.1 succeeded at 2013-11-07T12:02:47
+2013/11/07 12:02:47 INFO - [j.1] -(setting:succeeded)
+2013/11/07 12:02:48 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:48 INFO - [l.1] -(setting:submitting)
+2013/11/07 12:02:48 INFO - [d.1] -(setting:submitting)
+2013/11/07 12:02:48 INFO - [l.1] -triggered off ['monitor.1']
+2013/11/07 12:02:48 INFO - [d.1] -triggered off ['monitor.1']
+2013/11/07 12:02:48 DEBUG - END TASK PROCESSING (took 0.017253 sec)
+2013/11/07 12:02:48 DEBUG - Job Submission batch 1/1 (2 members):
+2013/11/07 12:02:49 INFO - [l.1] -(current:submitting)> l.1 submitting now
+2013/11/07 12:02:49 INFO - [l.1] -(current:submitting)> l.1 submission succeeded
+2013/11/07 12:02:49 INFO - [l.1] -(setting:submitted)
+2013/11/07 12:02:49 INFO - [l.1] -(current:submitted)> l.1 submit_method_id=7946
+2013/11/07 12:02:49 INFO - [l.1] -(current:submitted)> l.1 started at 2013-11-07T12:02:49
+2013/11/07 12:02:49 INFO - [l.1] -(setting:running)
+2013/11/07 12:02:49 INFO - [d.1] -(current:submitting)> d.1 submitting now
+2013/11/07 12:02:50 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.433142
+  All 2 items succeeded
+2013/11/07 12:02:50 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:50 DEBUG - END TASK PROCESSING (took 0.013611 sec)
+2013/11/07 12:02:50 INFO - [d.1] -(current:submitting)> d.1 started at 2013-11-07T12:02:49
+2013/11/07 12:02:50 INFO - [d.1] -(setting:running)
+2013/11/07 12:02:50 INFO - [d.1] -(current:running)> d.1 submission succeeded
+2013/11/07 12:02:50 INFO - [d.1] -(current:running)> d.1 submit_method_id=8019
+2013/11/07 12:02:51 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:02:51 DEBUG - END TASK PROCESSING (took 0.012709 sec)
+2013/11/07 12:03:00 INFO - [l.1] -(current:running)> l.1 succeeded at 2013-11-07T12:02:59
+2013/11/07 12:03:00 INFO - [l.1] -(setting:succeeded)
+2013/11/07 12:03:00 INFO - [d.1] -(current:running)> d.1 succeeded at 2013-11-07T12:03:00
+2013/11/07 12:03:00 INFO - [d.1] -(setting:succeeded)
+2013/11/07 12:03:01 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:03:01 DEBUG - END TASK PROCESSING (took 0.013283 sec)
+2013/11/07 12:03:03 INFO - [monitor.1] -(current:running)> monitor.1 succeeded at 2013-11-07T12:03:02
+2013/11/07 12:03:03 INFO - [monitor.1] -(setting:succeeded)
+2013/11/07 12:03:03 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/07 12:03:04 INFO - Thread-4 exit (Job Submission)
+2013/11/07 12:03:04 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/07 12:03:04 INFO - Thread-2 exit (Event Handlers)
+2013/11/07 12:03:04 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 12:03:04 DEBUG - END TASK PROCESSING (took 0.014484 sec)

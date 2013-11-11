@@ -34,24 +34,13 @@ class broker(object):
          self.log = logging.getLogger( 'main' )
          self.all_outputs = {}   # all_outputs[ message ] = taskid
 
-    def register( self, task ):
-        # because task ids are unique, and all tasks register their
-        # outputs anew in each dependency negotiation round, register 
-        # should only be called once by each task
+    def register( self, tasks ):
 
-        owner_id = task.id
-        outputs = task.outputs.completed
-
-        if owner_id in self.all_outputs.keys():
-            self.log.critical(  owner_id + "has already registered its outputs!" )
-            self.log.critical( "(perhaps you inserted an already-spawned task?")
-            raise SystemExit("ABORTING")
-
-        self.all_outputs.update( outputs )
-
-        # TODO - SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
-        # (note that successive tasks of the same type can register
-        # identical outputs if they write staggered restart files).
+        for task in tasks:
+            self.all_outputs.update( task.outputs.completed )
+            # TODO - SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
+            # (note that successive tasks of the same type can register
+            # identical outputs if they write staggered restart files).
 
     def reset( self ):
         # throw away all messages

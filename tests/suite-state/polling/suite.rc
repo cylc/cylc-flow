@@ -1,0 +1,15 @@
+#!jinja2
+
+title = "polls for success and failure tasks in another suite"
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 1.0
+[scheduling]
+    [[dependencies]]
+        graph = "lgood<{{UPSTREAM}}::good> & lbad<{{UPSTREAM}}::bad:fail>"
+[runtime]
+    [[lgood,lbad]]
+        [[[suite state polling]]]
+            interval = 2
+            max-polls = 20
+

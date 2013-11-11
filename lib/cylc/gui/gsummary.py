@@ -54,7 +54,7 @@ def get_host_suites(hosts, timeout=None, owner=None):
     for host in hosts:
         host_suites_map[host] = []
         command = ["cylc", "scan", "--host=%s" % host,
-                   "--owner=%s" % owner, "--pyro-timeout=%s" % timeout]
+                   "--user=%s" % owner, "--pyro-timeout=%s" % timeout]
         popen = subprocess.Popen( command,
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE )
@@ -72,7 +72,7 @@ def get_status_tasks(host, suite, owner=None):
     if owner is None:
         owner = user
     command = ["cylc", "cat-state", "--host=%s" % host,
-               "--owner=%s" % owner, suite]
+               "--user=%s" % owner, suite]
     popen = subprocess.Popen( command,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE )
@@ -273,7 +273,7 @@ def launch_gcylc(host, suite, owner=None):
         owner = user
     stdout = open(os.devnull, "w")
     stderr = stdout
-    command = "cylc gui --host=%s --owner=%s %s" % (
+    command = "cylc gui --host=%s --user=%s %s" % (
                                          host, owner, suite)
     command = shlex.split(command)
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
@@ -288,7 +288,7 @@ def launch_gsummary(hosts=None, owner=None):
         for host in hosts:
             command += ["--host=%s" % host]
     if owner is not None:
-        command += ["--owner=%s" % owner]
+        command += ["--user=%s" % owner]
     subprocess.Popen(command, stdout=stdout, stderr=stderr)
 
 
@@ -833,10 +833,9 @@ class SummaryAppUpdater(BaseSummaryUpdater):
         try:
             dbfile = None
             if self.owner is not None:
-                dbfile = os.path.join('~' + self.owner, '.cylc', 'DB')
+                dbfile = os.path.join('~' + self.owner, '.cylc', 'REGDB')
                 dbfile = os.path.expanduser(dbfile)
             db = localdb(file=dbfile)
-            db.load_from_file()
             suite_metadata = db.get_list()
         except Exception:
             suite_metadata = []

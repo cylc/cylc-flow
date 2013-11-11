@@ -63,8 +63,8 @@ fi
 TOPDIR=$DIR/$TOPGRP
 
 if [[ -d $TOPDIR ]]; then
-    echo "ERROR: directory $TOPDIR already exists." >&2
-    echo "Remove it, or choose another DIR ($DIR)." >&2
+    echo "ERROR: $TOPDIR already exists." >&2
+    echo "Remove it or choose another DIR." >&2
     exit 1
 fi
 

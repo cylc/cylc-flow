@@ -1,0 +1,22 @@
+title = queue size reload test
+description = """change graphing order via a reload."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = reloader => bar => foo # marker
+[runtime]
+    [[reloader]]
+        command scripting = """
+# change the order of foo and bar in the graphing section:
+perl -pi -e 's/(graph = reloader => )bar => foo( # marker)/\1foo => bar\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+# reload
+cylc reload -f $CYLC_SUITE_NAME
+sleep 5
+"""
+    [[foo, bar]]
+        command scripting = sleep 5

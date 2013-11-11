@@ -25,7 +25,7 @@ import os, re
 import shutil
 from cylc.CylcOptionParsers import cop
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import localdb, SuiteTakenError
+from cylc.registration import localdb, RegistrationError
 from cylc.regpath import RegPath
 
 parser = cop( usage = """cylc [db] copy|cp [OPTIONS] REG REG2 TOPDIR
@@ -80,65 +80,65 @@ EXAMPLES (using the three suites above):
           ("REG2", "Target suite name"), 
           ("TOPDIR", "Top level target directory.")] )
 
+parser.add_option( "--db-from", 
+        help="Copy suites from another DB (defaults to --db).",
+        metavar='PATH', action="store", default=None, dest="dbfrom" )
+
 ( options, args ) = parser.parse_args()
 
 arg_from = args[0]
 arg_to = args[1]
 arg_dir = args[2]
 
+if options.dbfrom:
+    dbfrom = localdb( file=options.dbfrom, verbose=options.verbose )
+else:
+    dbfrom = localdb( file=options.db, verbose=options.verbose )
 db = localdb( file=options.db, verbose=options.verbose )
 
 try:
-    with db.lock():
-        db.load_from_file()
+    flist = dbfrom.get_list( '^' + arg_from + r'\b' )
+    if len(flist) == 0:
+        sys.exit( 'ERROR, no suites matched: ' + arg_from )
 
-        flist = db.get_list( '^' + arg_from + r'\b' )
-        if len(flist) == 0:
-            sys.exit( 'ERROR, no suites matched: ' + arg_from )
+    for item in flist:
+        freg, fdir, ftitle = item
+        treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
 
-        for item in flist:
-            freg, fdir, ftitle = item
-             # if freg is aliased, get the target suite definition dir
-            fdir, junk = db.get( freg )
+        tdir = RegPath(treg).get_fpath()
+        tdir = os.path.join( arg_dir, tdir )
 
-            treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
+        if os.path.exists( tdir ):
+            print >> sys.stderr, 'SKIPPING, directory already exists: ' + tdir
+            continue
 
-            tdir = RegPath(treg).get_fpath()
-            tdir = os.path.join( arg_dir, tdir )
+        tdir = os.path.abspath( tdir )
+        #print 'Making directory ', tdir
+        try:
+            mkdir_p( os.path.dirname(tdir))
+        except Exception,x:
+            print >> sys.stderr, 'ERROR, illegal target directory?', tdir
+            print >> sys.stderr, x
+            continue
 
-            if os.path.exists( tdir ):
-                print >> sys.stderr, 'SKIPPING, directory already exists: ' + tdir
-                continue
-
-            tdir = os.path.abspath( tdir )
-            #print 'Making directory ', tdir
-            try:
-                mkdir_p( os.path.dirname(tdir))
-            except Exception,x:
-                print >> sys.stderr, 'ERROR, illegal target directory?', tdir
-                print >> sys.stderr, x
-                continue
-
-            print 'COPY', fdir, '\n  TO', tdir 
-            try:
-                shutil.copytree( fdir, tdir )
-            except OSError, x:
-                print >> sys.stderr,x
-                continue
-            except shutil.Error, x:
-                # if one or more files could not be read
-                print 'WARNINGS:'
-                for e in x.args[0]:
-                    src, trg, err = e
-                    print >> sys.stderr, "  ", src, '-->', trg
-                    print >> sys.stderr, "     ", err
-            try:
-                db.register( treg, tdir )
-            except SuiteTakenError, x:
-                print >> sys.stderr, 'ERROR, ' + str(x)
-                continue
-
-        db.dump_to_file()
+        print 'COPY', fdir, '\n  TO', tdir 
+        try:
+            shutil.copytree( fdir, tdir )
+        except OSError, x:
+            print >> sys.stderr,x
+            continue
+        except shutil.Error, x:
+            # if one or more files could not be read
+            print 'WARNINGS:'
+            for e in x.args[0]:
+                src, trg, err = e
+                print >> sys.stderr, "  ", src, '-->', trg
+                print >> sys.stderr, "     ", err
+        try:
+            db.register( treg, tdir )
+        except RegistrationError, x:
+            print >> sys.stderr, 'ERROR, ' + str(x)
+            continue
 
 except Exception, x:
     if options.debug:

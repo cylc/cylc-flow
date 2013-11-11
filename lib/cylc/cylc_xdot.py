@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import xdot
-from gui import helpwindow, util
+from gui import util
 import subprocess
 import gtk
 import time
@@ -69,7 +69,6 @@ class MyDotWindow2( CylcDotViewerCommon ):
             <toolitem action="Landscape"/>
             <separator expand="true"/>
             <toolitem action="Save"/>
-            <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
@@ -127,7 +126,6 @@ class MyDotWindow2( CylcDotViewerCommon ):
             ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
             ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
-            ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
         actiongroup.add_toggle_actions((
             ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
@@ -281,7 +279,6 @@ class MyDotWindow( CylcDotViewerCommon ):
             <toolitem action="IgnoreColdStart"/>
             <separator expand="true"/>
             <toolitem action="Save"/> 
-            <toolitem action="Help"/>
         </toolbar>
     </ui>
     '''
@@ -345,7 +342,6 @@ class MyDotWindow( CylcDotViewerCommon ):
             ('Group', 'group', None, None, 'Group All Families', self.group_all),
             ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
             ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
-            ('Help', gtk.STOCK_HELP, None, None, 'Help', helpwindow.graph_viewer ),
         ))
         actiongroup.add_toggle_actions((
             ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
@@ -411,6 +407,7 @@ class MyDotWindow( CylcDotViewerCommon ):
             ungroup_recursive=False, ungroup_all=False, group_all=False ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.triggering_families
+        suite_polling_tasks = self.suiterc.suite_polling_tasks
 
         if self.ctime != None and self.stop_after != None:
             one = self.ctime

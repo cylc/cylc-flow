@@ -135,6 +135,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -143,7 +144,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = 
    [[event hooks]]
@@ -174,6 +174,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -188,6 +195,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -196,7 +204,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = OPS, SERIAL
    [[event hooks]]
@@ -228,6 +235,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -242,6 +256,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -250,7 +265,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = OPS, SERIAL
    [[event hooks]]
@@ -282,6 +296,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -296,6 +317,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -304,7 +326,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = OPS, PARALLEL
    [[event hooks]]
@@ -336,6 +357,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -350,6 +378,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -358,7 +387,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = 
    [[event hooks]]
@@ -389,6 +417,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -403,6 +438,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -411,7 +447,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = OPS, PARALLEL
    [[event hooks]]
@@ -443,6 +478,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -457,6 +499,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -465,7 +508,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = 
    [[event hooks]]
@@ -497,6 +539,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -511,6 +560,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -519,7 +569,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = 
    [[event hooks]]
@@ -550,6 +599,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -564,6 +620,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -572,7 +629,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = VAR, PARALLEL
    [[event hooks]]
@@ -604,6 +660,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -618,6 +681,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -626,7 +690,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = VAR, PARALLEL
    [[event hooks]]
@@ -658,6 +721,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -672,6 +742,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -680,7 +751,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = VAR, SERIAL
    [[event hooks]]
@@ -712,6 +782,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -726,6 +803,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -734,7 +812,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = 
    [[event hooks]]
@@ -766,6 +843,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None
@@ -780,6 +864,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
+   environment scripting = None
    execution polling intervals = 
    title = No title provided
    extra log files = 
@@ -788,7 +873,6 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    description = No description provided
    initial scripting = None
    pre-command scripting = None
-   environment scripting = None
    post-command scripting = None
    inherit = VAR, SERIAL
    [[event hooks]]
@@ -820,6 +904,13 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       simulate failure = False
       disable retries = True
       disable task event hooks = True
+   [[suite state polling]]
+      interval = None
+      run-dir = None
+      max-polls = None
+      host = None
+      owner = None
+      verbose mode = None
    [[remote]]
       owner = None
       suite definition directory = None

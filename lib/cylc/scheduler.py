@@ -55,7 +55,7 @@ from TaskID import TaskID, TaskIDError
 from task_pool import pool
 import flags
 import cylc.rundb
-from Queue import Queue
+from Queue import Queue, Empty
 from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 
@@ -66,6 +66,7 @@ class result:
         self.success = success
         self.reason = reason
         self.value = value
+
 
 class SchedulerError( Exception ):
     """
@@ -129,8 +130,8 @@ class scheduler(object):
         self.suite_state = None
         self.command_queue = None
         self.pool = None
-        self.evworker = None
-        self.poll_and_kill_worker = None
+        self.eventq_worker = None
+        self.pollkq_worker = None
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
@@ -138,7 +139,20 @@ class scheduler(object):
 
         self.held_future_tasks = []
 
-        # COMMANDLINE OPTIONS
+        # provide a variable to allow persistance of reference test settings 
+        # across reloads
+        self.reference_test_mode = False
+        self.gen_reference_log = False
+
+        self.do_shutdown = None
+        self.threads_stopped = False
+
+        self.stop_task = None
+        self.stop_clock_time = None
+
+        self.start_tag = None
+        self.stop_tag = None
+        self.cli_start_tag = None
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -188,10 +202,11 @@ class scheduler(object):
         # control commands to expose indirectly via a command queue
         self.control_commands = {
                 'stop cleanly'          : self.command_stop_cleanly,
+                'stop quickly'          : self.command_stop_quickly,
                 'stop now'              : self.command_stop_now,
-                'stop after tag'        : self.command_stop_after_tag,
-                'stop after clock time' : self.command_stop_after_clock_time,
-                'stop after task'       : self.command_stop_after_task,
+                'stop after tag'        : self.command_set_stop_after_tag,
+                'stop after clock time' : self.command_set_stop_after_clock_time,
+                'stop after task'       : self.command_set_stop_after_task,
                 'release suite'         : self.command_release_suite,
                 'release task'          : self.command_release_task,
                 'remove cycle'          : self.command_remove_cycle,
@@ -241,31 +256,8 @@ class scheduler(object):
         # TODO - self.config.fdir can be used instead of self.suite_dir
         self.reflogfile = os.path.join(self.config.fdir,'reference.log')
 
-        if self.options.genref:
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-
-        elif self.options.reftest:
-            req = self.config.cfg['cylc']['reference test']['required run mode']
-            if req and req != self.run_mode:
-                raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
-            handler = self.config.event_handlers['shutdown']
-            if handler: 
-                print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
-            self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
-            self.config.cfg['cylc']['log resolved dependencies'] = True
-            self.config.abort_if_shutdown_handler_fails = True
-            spec = LogSpec( self.reflogfile )
-            self.start_tag = spec.get_start_tag()
-            self.stop_tag = spec.get_stop_tag()
-            self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
-            if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
-                self.config.cfg['cylc']['abort if any task fails'] = True
-            self.config.abort_on_timeout = True
-            timeout = self.config.cfg['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
-            if not timeout:
-                raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
-            self.config.suite_timeout = timeout
-            self.config.reset_timer = False
+        if self.gen_reference_log or self.reference_test_mode:
+            self.configure_reftest()
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -277,26 +269,6 @@ class scheduler(object):
         self.log.info( 'Run mode: ' + self.run_mode )
         self.log.info( 'Start tag: ' + str(self.start_tag) )
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
-
-        if self.start_tag:
-            self.start_tag = self.ctexpand( self.start_tag)
-        if self.stop_tag:
-            self.stop_tag = self.ctexpand( self.stop_tag)
-
-        # initial cycle time
-        if self.is_restart:
-            # self.ict is set by "cylc restart" after loading state dump
-            pass
-        else:
-            if self.options.warm:
-                if self.options.set_ict:
-                    self.ict = self.start_tag
-                else:
-                    self.ict = None
-            elif self.options.raw:
-                self.ict = None
-            else:
-                self.ict = self.start_tag
 
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
@@ -318,7 +290,7 @@ class scheduler(object):
         self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime )
         self.pyro.connect( self.suite_state, 'state_summary')
 
-        self.state_dumper.set_cts( self.ict, self.stop_tag )
+        self.state_dumper.set_cts( self.start_tag, self.stop_tag )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
@@ -375,18 +347,20 @@ class scheduler(object):
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
 
-        self.suite_halt = False
-        self.suite_halt_now = False
-
     def process_command_queue( self ):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
         if n > 0:
-            print 'Processing', n, 'queued commands'
+            print 'Processing ' + str(n) + ' queued command(s)'
         else:
             return
-        while queue.qsize() > 0:
-            name, args = queue.get()
+
+        while True:
+            try:
+                name, args = queue.get(False)
+            except Empty:
+                break
+            print '  +', name
             cmdstr = name + '(' + ','.join( [ str(a) for a in args ]) + ')'
             try:
                 self.control_commands[ name ]( *args )
@@ -474,7 +448,7 @@ class scheduler(object):
             ungroup_recursive, group_all, ungroup_all ):
         # TODO - CAN WE OMIT THE MIDDLE MAN HERE?
         return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
-                ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
+                ungroup_nodes, ungroup_recursive, group_all, ungroup_all), self.config.suite_polling_tasks
 
     def info_get_task_requisites( self, in_ids ):
         in_ids_real = {}
@@ -514,24 +488,31 @@ class scheduler(object):
         else:
             return dump
     
-    # CONTROL_COMMANDS__________________________________________________
+     # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
+        self.pool.worker.request_stop( empty_before_exit=False )
         if kill_first:
             for itask in self.pool.get_tasks():
-                # (state check done in task module)
-                itask.kill()
-        self.hold_suite()
-        self.suite_halt = True
+                if itask.state.is_currently( 'submitted', 'running' ):
+                    itask.kill()
+        self.do_shutdown = 'clean'
+        self.threads_stopped = False
+
+    def command_stop_quickly( self ):
+        self.pool.worker.request_stop( empty_before_exit=False )
+        self.do_shutdown = 'quick'
+        self.threads_stopped = False
 
     def command_stop_now( self ):
-        self.hold_suite()
-        self.suite_halt_now = True
+        self.pool.worker.request_stop( empty_before_exit=False )
+        self.do_shutdown = 'now'
+        self.threads_stopped = False
 
-    def command_stop_after_tag( self, tag ):
+    def command_set_stop_after_tag( self, tag ):
         self.set_stop_ctime( tag )
 
-    def command_stop_after_clock_time( self, arg ):
+    def command_set_stop_after_clock_time( self, arg ):
         # format: YYYY/MM/DD-HH:mm
         sdate, stime = arg.split('-')
         yyyy, mm, dd = sdate.split('/')
@@ -539,7 +520,7 @@ class scheduler(object):
         dtime = datetime.datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
         self.set_stop_clock( dtime )
 
-    def command_stop_after_task( self, tid ):
+    def command_set_stop_after_task( self, tid ):
         tid = TaskID( tid )
         arg = tid.getstr()
         self.set_stop_task( arg )
@@ -579,7 +560,6 @@ class scheduler(object):
 
     def command_release_suite( self ):
         self.release_suite()
-        self.suite_halt = False
 
     def command_hold_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -676,23 +656,6 @@ class scheduler(object):
         self.suite_timer_start = now
         print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
 
-    def ctexpand( self, tag ):
-        # expand truncated cycle times (2012 => 2012010100)
-        try:
-            # cycle time
-            tag = ct(tag).get()
-        except CycleTimeError,x:
-            try:
-                # async integer tag
-                int( tag )
-            except ValueError:
-                raise Exception( "ERROR:, invalid task tag : " + tag )
-            else:
-                pass
-        else:
-            pass
-        return tag
-
     def reconfigure( self ):
         # reload the suite definition while the suite runs
         print "RELOADING the suite definition"
@@ -718,6 +681,9 @@ class scheduler(object):
         self.reconfiguring = True
         for itask in self.pool.get_tasks():
             itask.reconfigure_me = True
+
+        if self.gen_reference_log or self.reference_test_mode:
+            self.configure_reftest(recon=True)
 
     def reload_taskdefs( self ):
         found = False
@@ -767,6 +733,12 @@ class scheduler(object):
         else:
             self.logging_level = logging.INFO
 
+        if self.options.reftest:
+            self.reference_test_mode = self.options.reftest
+        
+        if self.options.genref:
+            self.gen_reference_log = self.options.genref
+
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir, 
@@ -784,25 +756,23 @@ class scheduler(object):
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
-        # initial cycle time override
-        override = None
-        if self.is_restart:
-            # self.ict is set by "cylc restart" after loading state dump
-            pass
-        else:
-            if self.options.raw:
-                override = None
-            else:
-                override = self.start_tag    
-        # will need adjusting for ISO8601 time specification
-        if override == "now":
-            override = datetime.datetime.now().strftime("%Y%m%d%H") 
 
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, override=override, is_restart=self.is_restart,
-                is_reload=reconfigure)
+                verbose=self.verbose, cli_start_tag=self.cli_start_tag,
+                is_restart=self.is_restart, is_reload=reconfigure)
+
+        # Initial and final cycle times - command line takes precedence
+        self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle time']
+        self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle time']
+        if self.start_tag:
+            self.start_tag = ct(self.start_tag).get()
+        if self.stop_tag:
+            self.stop_tag = ct(self.stop_tag).get()
+
+        if not self.start_tag and not self.is_restart:
+            print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -813,35 +783,6 @@ class scheduler(object):
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
-
-        self.stop_task = None
-
-        # START and STOP CYCLE TIMES
-        self.stop_tag = None
-        self.stop_clock_time = None
-
-        # (self.start_tag is set already if provided on the command line).
-        if not self.start_tag:
-            # No initial cycle time on the command line
-            if self.config.cfg['scheduling']['initial cycle time']:
-                # Use suite.rc initial cycle time
-                self.start_tag = str(self.config.cfg['scheduling']['initial cycle time'])
-
-        if self.options.stop_tag:
-            # A final cycle time was provided on the command line.
-            self.stop_tag = self.options.stop_tag
-        elif self.config.cfg['scheduling']['final cycle time']:
-            # Use suite.rc final cycle time
-            self.stop_tag = str(self.config.cfg['scheduling']['final cycle time'])
-
-        # could be async tags:
-        ##if self.stop_tag:
-        ##    self.stop_tag = ct( self.stop_tag ).get()
-        ##if self.start_tag:
-        ##    self.start_tag = ct( self.start_tag ).get()
-
-        if not self.start_tag and not self.is_restart:
-            print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if not reconfigure:
             # PAUSE TIME?
@@ -898,21 +839,21 @@ class scheduler(object):
 
             self.event_queue = Queue()
             task.task.event_queue = self.event_queue
-            self.evworker = event_batcher( 
-                    'Event Handler Submission', self.event_queue, 
+            self.eventq_worker = event_batcher( 
+                    'Event Handlers', self.event_queue, 
                     self.config.cfg['cylc']['event handler submission']['batch size'],
                     self.config.cfg['cylc']['event handler submission']['delay between batches'],
                     self.suite, self.verbose )
-            self.evworker.start()
+            self.eventq_worker.start()
 
             self.poll_and_kill_queue = Queue()
             task.task.poll_and_kill_queue = self.poll_and_kill_queue
-            self.poll_and_kill_worker = poll_and_kill_batcher( 
-                    'Poll and Kill Command Submission', self.poll_and_kill_queue, 
+            self.pollkq_worker = poll_and_kill_batcher( 
+                    'Poll & Kill Commands', self.poll_and_kill_queue, 
                     self.config.cfg['cylc']['poll and kill command submission']['batch size'],
                     self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
                     self.suite, self.verbose )
-            self.poll_and_kill_worker.start()
+            self.pollkq_worker.start()
 
             self.info_interface = info_interface( self.info_commands )
             self.pyro.connect( self.info_interface, 'suite-info' )
@@ -940,7 +881,7 @@ class scheduler(object):
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
-                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.ict ), # may be "None"
+                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.start_tag ), # may be "None"
                 'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_tag ), # may be "None"
                 'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
                 }
@@ -987,6 +928,34 @@ class scheduler(object):
         cenv = self.config.cfg['cylc']['environment']
         for var in cenv:
             os.environ[var] = os.path.expandvars(cenv[var])
+
+    def configure_reftest( self, recon=False ):
+        if self.gen_reference_log:
+            self.config.cfg['cylc']['log resolved dependencies'] = True
+
+        elif self.reference_test_mode:
+            req = self.config.cfg['cylc']['reference test']['required run mode']
+            if req and req != self.run_mode:
+                raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
+            handler = self.config.event_handlers['shutdown']
+            if handler: 
+                print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
+            self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
+            self.config.cfg['cylc']['log resolved dependencies'] = True
+            self.config.abort_if_shutdown_handler_fails = True
+            if not recon:
+                spec = LogSpec( self.reflogfile )
+                self.start_tag = spec.get_start_tag()
+                self.stop_tag = spec.get_stop_tag()
+            self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
+            if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
+                self.config.cfg['cylc']['abort if any task fails'] = True
+            self.config.abort_on_timeout = True
+            timeout = self.config.cfg['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
+            if not timeout:
+                raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
+            self.config.suite_timeout = timeout
+            self.config.reset_timer = False
 
     def run( self ):
 
@@ -1102,7 +1071,7 @@ class scheduler(object):
                     db_ops = self.wireless.get_db_ops()
                     for d in db_ops:
                         self.db.run_db_op(d)
-                
+
             # process queued commands
             self.process_command_queue()
 
@@ -1128,7 +1097,7 @@ class scheduler(object):
                     raise SchedulerError( 'One or more tasks failed and "abort if any task fails" is set' )
 
             # 4) the run is a reference test, and any disallowed failures occured
-            if self.options.reftest:
+            if self.reference_test_mode:
                 if len( self.ref_test_allowed_failures ) > 0:
                     for itask in self.get_failed_tasks():
                         if itask.id not in self.ref_test_allowed_failures:
@@ -1142,27 +1111,59 @@ class scheduler(object):
 
             self.release_runahead()
 
-            # initiate normal suite shutdown?
-            if self.check_suite_shutdown():
+            if not self.do_shutdown:
+                # check if the suite should shut down automatically now
+                if self.check_clean_stop_conditions():
+                    self.command_stop_cleanly()
+
+            if self.do_shutdown:
+                # Tell the non job-submission command threads to stop
+                # now or when their queues are empty, according to the
+                # type of shutdown. The job submission thread has been
+                # stopped already by the stop commands. Note that the 
+                # threads_stopped flag is reset by the stop commands so
+                # that 'stop --now' can override other stops in progress.
+                if not self.threads_stopped and self.do_shutdown == 'now':
+                    self.threads_stopped = True
+                    self.eventq_worker.request_stop( empty_before_exit=False )
+                    self.pollkq_worker.request_stop( empty_before_exit=False )
+                elif not self.threads_stopped and \
+                        ( self.do_shutdown == 'quick' or \
+                        self.do_shutdown == 'clean' and self.no_active_tasks() ):
+                    self.threads_stopped = True
+                    # In a clean shutdown we don't stop the threads
+                    # while there are still active tasks, because they
+                    # could exit early if their queues temporarily empty
+                    # while the final tasks are running.
+                    self.eventq_worker.request_stop( empty_before_exit=True )
+                    self.pollkq_worker.request_stop( empty_before_exit=True )
+
+            if self.do_shutdown and \
+                    not self.pool.worker.is_alive() and \
+                    not self.eventq_worker.is_alive() and \
+                    not self.pollkq_worker.is_alive():
                 break
+
             time.sleep(1)
 
         # END MAIN LOOP
-        self.log.info( "Suite shutting down at " + str(datetime.datetime.now()) )
 
-        if self.options.genref:
+
+        if self.gen_reference_log:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
 
     def update_state_summary( self ):
-        self.log.debug( "UPDATING STATE SUMMARY" )
+        #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), self.clock,
                 self.get_oldest_c_time(), self.get_newest_c_time(), self.paused(),
-                self.will_pause_at(), self.suite_halt,
+                self.will_pause_at(), self.do_shutdown is not None,
                 self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
-        # process resolved dependencies (what actually triggers off what at run time).
+        # process resolved dependencies (what actually triggers off what
+        # at run time). Note 'triggered off' means 'prerequisites
+        # satisfied by', but necessarily 'started running' too.
         for itask in tasks:
             if self.runtime_graph_on:
                 self.runtime_graph.update( itask, self.get_oldest_c_time(), self.get_oldest_async_tag() )
@@ -1197,7 +1198,6 @@ class scheduler(object):
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
-
         process = False
 
         if self.do_process_tasks:
@@ -1248,15 +1248,16 @@ class scheduler(object):
         return process
 
     def shutdown( self, reason='' ):
-        print "\nInitiating suite shutdown ",
-        if reason != '':
-            print '(' + reason + ')'
-        else:
-            print
-        
-        # tell other threads to shut down
+        msg = "Suite shutting down at " + str(datetime.datetime.now())
+        if reason:
+            msg += ' (' + reason + ')'
+        print msg
+        self.log.info( msg )
+        if not self.no_active_tasks():
+            self.log.warning( "some active tasks will be orphaned" )
+       
         if self.pool:
-            self.pool.worker.quit = True
+            self.pool.worker.quit = True # (should be done already)
             self.pool.worker.join()
             # disconnect task message queues
             for itask in self.pool.get_tasks():
@@ -1265,38 +1266,20 @@ class scheduler(object):
             if self.state_dumper:
                 self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
 
-        if self.evworker:
-            self.evworker.quit = True
-            self.evworker.join()
+        for q in [ self.eventq_worker, self.pollkq_worker, self.request_handler ]:
+            if q:
+                q.quit = True # (should be done already)
+                q.join()
 
-        if self.poll_and_kill_worker:
-            self.poll_and_kill_worker.quit = True
-            self.poll_and_kill_worker.join()
-
-        if self.request_handler:
-            self.request_handler.quit = True
-            self.request_handler.join()
-
-        if self.command_queue:
-            self.pyro.disconnect( self.command_queue )
-
-        if self.clock:
-            self.pyro.disconnect( self.clock )
-
-        if self.wireless:
-            self.pyro.disconnect( self.wireless )
-
-        if self.suite_id:
-            self.pyro.disconnect( self.suite_id )
-
-        if self.suite_state:
-            self.pyro.disconnect( self.suite_state )
+        for i in [ self.command_queue, self.clock, self.wireless,
+                self.suite_id, self.suite_state ]:
+            if i:
+                self.pyro.disconnect( i )
 
         if self.pyro:
             self.pyro.shutdown()
 
         if self.use_lockserver:
-            # do this last
             if self.lock_acquired:
                 lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 try:
@@ -1328,7 +1311,7 @@ class scheduler(object):
             try:
                 RunHandler( 'shutdown', handler, self.suite, msg=reason, fg=foreground )
             except Exception, x:
-                if self.options.reftest:
+                if self.reference_test_mode:
                     sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
                 else:
                     # Note: tests suites depend on the following message:
@@ -1476,7 +1459,7 @@ class scheduler(object):
                 newest = itask.c_time
         return newest
 
-    def no_tasks_submitted_or_running( self ):
+    def no_active_tasks( self ):
         for itask in self.pool.get_tasks():
             if itask.state.is_currently('running', 'submitted'):
                 return False
@@ -1502,9 +1485,7 @@ class scheduler(object):
 
         self.broker.reset()
 
-        for itask in self.pool.get_tasks():
-            # register task outputs
-            self.broker.register( itask )
+        self.broker.register( self.pool.get_tasks() )
 
         for itask in self.pool.get_tasks():
             # try to satisfy me (itask) if I'm not already satisfied.
@@ -1910,104 +1891,70 @@ class scheduler(object):
             outlist.append( name ) 
         return outlist
 
-    def check_suite_shutdown( self ):
+    def check_clean_stop_conditions( self ):
+        stop = False
 
-        # 1) shutdown requested NOW
-        if self.suite_halt_now:
-            if not self.no_tasks_submitted_or_running():
-                self.log.warning( "STOPPING NOW: some running tasks will be orphaned" )
-            return True
-
-        # 2) normal shutdown requested and no tasks submitted or running
-        if self.suite_halt and self.no_tasks_submitted_or_running():
-            self.log.info( "Stopping now: all current tasks completed" )
-            return True
-
-        # 3) if a suite stop time (wall clock) is set and has gone by,
-        # get 2) above to finish when current tasks have completed.
         if self.stop_clock_time:
-            now = self.clock.get_datetime()
-            if now > self.stop_clock_time:
+            if self.clock.get_datetime() > self.stop_clock_time:
                 self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
-                if self.no_tasks_submitted_or_running():
-                    return True
-                else:
-                    # reset self.stop_clock_time and delegate to 2) above
-                    # TODO - rationalize use of hold_suite and suite_halt?
-                    self.log.info( "The suite will shutdown when all running tasks have finished" )
-                    self.hold_suite()
-                    self.suite_halt = True
-                    self.stop_clock_time = None
+                self.stop_clock_time = None
+                stop = True
 
-        # 4) if a suite stop task is set and has completed, 
-        # get 2) above to finish when current tasks have completed.
-        if self.stop_task:
+        elif self.stop_task:
             name, tag = self.stop_task.split(TaskID.DELIM)
-            stop = True
             for itask in self.pool.get_tasks():
-                if itask.name == name:
-                    # TODO - the task must still be present in the pool
-                    # (this should be OK; but the potential loophole
-                    # will be closed by the upcoming task event databse).
-                    if not itask.state.is_currently('succeeded'):
-                        iname, itag = itask.id.split(TaskID.DELIM)
-                        if int(itag) <= int(tag):
-                            stop = False
-                            break
-            if stop:
-                self.log.info( "Stop task " + name + TaskID.DELIM + tag + " finished" )
-                if self.no_tasks_submitted_or_running():
-                    return True
-                else:
-                    # reset self.stop_task and delegate to 2) above
-                    self.log.info( "The suite will shutdown when all running tasks have finished" )
-                    self.hold_suite()
-                    self.suite_halt = True
-                    self.stop_task = None
+                iname, itag = itask.id.split(TaskID.DELIM)
+                if itask.name == name and int(itag) == int(tag):
+                    # found the stop task
+                    if itask.state.is_currently('succeeded'):
+                        self.log.info( "Stop task " + self.stop_task + " finished" )
+                        stop = True
+                    break
 
-        # 5) (i) all cycling tasks are held past the suite stop cycle, 
-        # and (ii) all async tasks have succeeded (failed). The suite should
-        # not shut down if any failed tasks exist, but there's no need
-        # to check for that if (i) and (ii) are satisfied.
-        stop = True
-        
-        i_cyc = False
-        i_asy = False
-        i_fut = False
-        for itask in self.pool.get_tasks():
-            if itask.is_cycling():
-                i_cyc = True
-                # don't stop if a cycling task has not passed the stop cycle
-                if self.stop_tag:
-                    if int( itask.c_time ) <= int( self.stop_tag ):
-                        if itask.state.is_currently('succeeded') and itask.has_spawned():
-                            # ignore spawned succeeded tasks - their successors matter
-                            pass
-                        elif itask.id in self.held_future_tasks:
-                            # unless held because a future trigger reaches beyond the stop cycle
-                            i_fut = True
-                            pass
-                        else:
-                            stop = False
-                            break
-                else:
-                    # don't stop if there are cycling tasks and no stop cycle set
-                    stop = False
-                    break
-            else:
-                i_asy = True
-                # don't stop if an async task has not succeeded yet
-                if not itask.state.is_currently('succeeded'):
-                    stop = False
-                    break
-        if stop:
-            if i_fut:
-                self.log.info( "All future-triggered tasks have run as far as possible toward " + self.stop_tag )
-            if i_cyc:
-                self.log.info( "All normal cycling tasks have spawned past the final cycle " + self.stop_tag )
-            if i_asy:
-                self.log.info( "All non-cycling tasks have succeeded" )
-            return True
         else:
-            return False
+            # all cycling tasks are held past the suite stop cycle and
+            # all async tasks have succeeded. 
+            stop = True
+        
+            i_cyc = False
+            i_asy = False
+            i_fut = False
+            for itask in self.pool.get_tasks():
+                if itask.is_cycling():
+                    i_cyc = True
+                    # don't stop if a cycling task has not passed the stop cycle
+                    if self.stop_tag:
+                        if int( itask.c_time ) <= int( self.stop_tag ):
+                            if itask.state.is_currently('succeeded') and itask.has_spawned():
+                                # ignore spawned succeeded tasks - their successors matter
+                                pass
+                            elif itask.id in self.held_future_tasks:
+                                # unless held because a future trigger reaches beyond the stop cycle
+                                i_fut = True
+                                pass
+                            else:
+                                stop = False
+                                break
+                    else:
+                        # don't stop if there are cycling tasks and no stop cycle set
+                        stop = False
+                        break
+                else:
+                    i_asy = True
+                    # don't stop if an async task has not succeeded yet
+                    if not itask.state.is_currently('succeeded'):
+                        stop = False
+                        break
+            if stop:
+                msg = "Stopping: "
+                if i_fut:
+                    msg += "\n  + all future-triggered tasks have run as far as possible toward " + self.stop_tag
+                if i_cyc:
+                    msg += "\n  + all cycling tasks have spawned past the final cycle " + self.stop_tag
+                if i_asy:
+                    msg += "\n  + all non-cycling tasks have succeeded"
+                print msg
+                self.log.info( msg )
+
+        return stop
 

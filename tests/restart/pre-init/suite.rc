@@ -1,0 +1,22 @@
+#!jinja2
+{%- set TEST_DIR = environ['TEST_DIR'] %}
+[cylc]
+    [[event hooks]]
+        timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
+        timeout = 1
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time = 2010080806
+    [[dependencies]]
+        graph = "p1 => p2"
+        [[[0]]]
+            graph = """p2 => foo  
+                foo[T-24] => foo => bar"""
+[runtime]
+    [[p1]]
+        command scripting = cylc shutdown --now --max-polls=30 --interval=2 $CYLC_SUITE_NAME && \
+                            cylc restart $CYLC_SUITE_NAME && sleep 5
+    [[foo, p2]]
+        command scripting = sleep 5
+    [[bar]]
+        command scripting = touch {{ TEST_DIR }}/suite-stopping

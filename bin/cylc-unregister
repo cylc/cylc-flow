@@ -51,10 +51,7 @@ arg = args[0]
 db = localdb( file=options.db, verbose=options.verbose )
 
 try:
-    with db.lock():
-        db.load_from_file()
-        dirs = db.unregister( arg )
-        db.dump_to_file()
+    dirs = db.unregister( arg )
 except Exception, x:
     if options.debug:
         raise
@@ -66,11 +63,6 @@ if n == 0:
     sys.exit(0)
 
 print len(dirs), 'suites unregistered.'
-
-for dir in dirs:
-    if dir.startswith('->'):
-        # this is an alias; don't delete the original directory.
-        dirs.remove( dir )
 
 if options.obliterate and len(dirs) > 0:
     for dir in dirs:

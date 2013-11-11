@@ -103,24 +103,31 @@ class Monthly( cycler ):
 
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
-
         try:
             # is T a legal cycle time 
             ct( T )
         except CycleTimeError, x:
             raise CyclerError, str(x)
-        
-        ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
-        tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
-        diff = tc - ta
+
+        # first get the monthiversary date DDHHmmss right
+        if T[6:] < self.DDHHmmss:
+            # just round up
+            T = T[0:6] + self.DDHHmmss
+        elif T[6:] > self.DDHHmmss:
+            # increment the moth and round up
+            T = add_months( ct( T ), 1 ).get()[0:6] + self.DDHHmmss
+        else:
+            # equal: no need to adjust
+            pass
+
+        # now adjust up if necessary, according to step
+        ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6])
+        tc = 12 * int(T[0:4]) + int(T[4:6])
+        diff = ta - tc # difference in months from anchor date
+
         rem = diff % self.step
 
-        nT = add_months( ct( self.anchorDate ), diff - rem ).get()
-        
-        while nT < T: 
-            nT = add_months( ct( nT ), self.step ).get()
-
-        return nT
+        return add_months( ct( T ), rem ).get()[0:6] + self.DDHHmmss
 
     def next( self, T ):
         """Add step months to get to the next anniversary after T."""

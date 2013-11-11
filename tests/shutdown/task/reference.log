@@ -1,55 +1,64 @@
-2013/08/19 15:52:46 INFO - Thread-2 start (Event Handler Submission)
-2013/08/19 15:52:46 INFO - Thread-3 start (Poll and Kill Command Submission)
-2013/08/19 15:52:46 INFO - port:7766
-2013/08/19 15:52:46 INFO - Suite starting at 2013-08-19 15:52:46.390013
-2013/08/19 15:52:46 INFO - Log event clock: real time
-2013/08/19 15:52:46 INFO - Run mode: live
-2013/08/19 15:52:46 INFO - Start tag: 2010010100
-2013/08/19 15:52:46 INFO - Stop tag: 2010010500
-2013/08/19 15:52:46 INFO - Thread-4 start (Job Submission)
-2013/08/19 15:52:46 INFO - Thread-5 start (Request Handling)
-2013/08/19 15:52:46 INFO - Cold Start 2010010100
-2013/08/19 15:52:46 INFO - [a.2010010100] -(setting:submitting)
-2013/08/19 15:52:46 INFO - [a.2010010100] -triggered off []
-2013/08/19 15:52:47 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
-2013/08/19 15:52:48 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
-2013/08/19 15:52:48 INFO - [a.2010010100] -(setting:submitted)
-2013/08/19 15:52:48 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=27967
-2013/08/19 15:52:48 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-08-19T15:52:48
-2013/08/19 15:52:48 INFO - [a.2010010100] -(setting:running)
-2013/08/19 15:52:49 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-08-19T15:52:48
-2013/08/19 15:52:49 INFO - [a.2010010100] -(setting:succeeded)
-2013/08/19 15:52:49 INFO - [stopper.2010010100] -(setting:submitting)
-2013/08/19 15:52:49 INFO - [stopper.2010010100] -triggered off ['a.2010010100']
-2013/08/19 15:52:50 INFO - [stopper.2010010100] -(current:submitting)> stopper.2010010100 submitting now
-2013/08/19 15:52:50 INFO - [stopper.2010010100] -(current:submitting)> stopper.2010010100 submission succeeded
-2013/08/19 15:52:50 INFO - [stopper.2010010100] -(setting:submitted)
-2013/08/19 15:52:50 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 submit_method_id=28073
-2013/08/19 15:52:51 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 started at 2013-08-19T15:52:50
-2013/08/19 15:52:51 INFO - [stopper.2010010100] -(setting:running)
-2013/08/19 15:52:52 INFO - [stopper.2010010100] -(current:running)> stopper.2010010100 succeeded at 2013-08-19T15:52:52
-2013/08/19 15:52:52 INFO - [stopper.2010010100] -(setting:succeeded)
-2013/08/19 15:52:52 INFO - Setting stop task: a.2010010106
-2013/08/19 15:52:52 INFO - Command succeeded: stop after task(a.2010010106)
-2013/08/19 15:52:52 INFO - [c.2010010100] -(setting:submitting)
-2013/08/19 15:52:52 INFO - [c.2010010100] -triggered off ['stopper.2010010100']
-2013/08/19 15:52:53 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submitting now
-2013/08/19 15:52:53 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submission succeeded
-2013/08/19 15:52:53 INFO - [c.2010010100] -(setting:submitted)
-2013/08/19 15:52:53 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=28188
-2013/08/19 15:52:54 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2013-08-19T15:52:53
-2013/08/19 15:52:54 INFO - [c.2010010100] -(setting:running)
-2013/08/19 15:52:55 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-08-19T15:52:54
-2013/08/19 15:52:55 INFO - [c.2010010100] -(setting:succeeded)
-2013/08/19 15:52:55 INFO - [a.2010010106] -(setting:submitting)
-2013/08/19 15:52:55 INFO - [a.2010010106] -triggered off ['c.2010010100']
-2013/08/19 15:52:56 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submitting now
-2013/08/19 15:52:56 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submission succeeded
-2013/08/19 15:52:56 INFO - [a.2010010106] -(setting:submitted)
-2013/08/19 15:52:56 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=28294
-2013/08/19 15:52:57 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2013-08-19T15:52:57
-2013/08/19 15:52:57 INFO - [a.2010010106] -(setting:running)
-2013/08/19 15:52:58 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2013-08-19T15:52:57
-2013/08/19 15:52:58 INFO - [a.2010010106] -(setting:succeeded)
-2013/08/19 15:52:58 INFO - Stop task a.2010010106 finished
-2013/08/19 15:52:58 INFO - Suite shutting down at 2013-08-19 15:52:58.581823
+2013/10/31 01:27:58 INFO - Thread-2 start (Event Handlers)
+2013/10/31 01:27:58 INFO - port:7768
+2013/10/31 01:27:58 INFO - Suite starting at 2013-10-31 01:27:58.502150
+2013/10/31 01:27:58 INFO - Log event clock: real time
+2013/10/31 01:27:58 INFO - Run mode: live
+2013/10/31 01:27:58 INFO - Start tag: 2010010100
+2013/10/31 01:27:58 INFO - Stop tag: 2010010500
+2013/10/31 01:27:58 INFO - Thread-3 start (Poll & Kill Commands)
+2013/10/31 01:27:58 INFO - Thread-5 start (Request Handling)
+2013/10/31 01:27:58 INFO - Thread-4 start (Job Submission)
+2013/10/31 01:27:58 INFO - Cold Start 2010010100
+2013/10/31 01:27:58 INFO - [a.2010010100] -(setting:queued)
+2013/10/31 01:27:58 INFO - [a.2010010100] -(setting:submitting)
+2013/10/31 01:27:58 INFO - [a.2010010100] -triggered off []
+2013/10/31 01:27:59 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submitting now
+2013/10/31 01:28:00 INFO - [a.2010010100] -(current:submitting)> a.2010010100 submission succeeded
+2013/10/31 01:28:00 INFO - [a.2010010100] -(setting:submitted)
+2013/10/31 01:28:00 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=50634
+2013/10/31 01:28:00 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2013-10-31T01:27:59
+2013/10/31 01:28:00 INFO - [a.2010010100] -(setting:running)
+2013/10/31 01:28:05 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2013-10-31T01:28:04
+2013/10/31 01:28:05 INFO - [a.2010010100] -(setting:succeeded)
+2013/10/31 01:28:06 INFO - [stopper.2010010100] -(setting:queued)
+2013/10/31 01:28:06 INFO - [stopper.2010010100] -(setting:submitting)
+2013/10/31 01:28:06 INFO - [stopper.2010010100] -triggered off ['a.2010010100']
+2013/10/31 01:28:07 INFO - [stopper.2010010100] -(current:submitting)> stopper.2010010100 submitting now
+2013/10/31 01:28:07 INFO - [stopper.2010010100] -(current:submitting)> stopper.2010010100 submission succeeded
+2013/10/31 01:28:07 INFO - [stopper.2010010100] -(setting:submitted)
+2013/10/31 01:28:07 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 submit_method_id=50678
+2013/10/31 01:28:07 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 started at 2013-10-31T01:28:06
+2013/10/31 01:28:07 INFO - [stopper.2010010100] -(setting:running)
+2013/10/31 01:28:07 INFO - Setting stop task: a.2010010106
+2013/10/31 01:28:07 INFO - Command succeeded: stop after task(a.2010010106)
+2013/10/31 01:28:12 INFO - [stopper.2010010100] -(current:running)> stopper.2010010100 succeeded at 2013-10-31T01:28:12
+2013/10/31 01:28:12 INFO - [stopper.2010010100] -(setting:succeeded)
+2013/10/31 01:28:13 INFO - [c.2010010100] -(setting:queued)
+2013/10/31 01:28:13 INFO - [c.2010010100] -(setting:submitting)
+2013/10/31 01:28:13 INFO - [c.2010010100] -triggered off ['stopper.2010010100']
+2013/10/31 01:28:14 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submitting now
+2013/10/31 01:28:14 INFO - [c.2010010100] -(current:submitting)> c.2010010100 submission succeeded
+2013/10/31 01:28:14 INFO - [c.2010010100] -(setting:submitted)
+2013/10/31 01:28:14 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=50732
+2013/10/31 01:28:14 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2013-10-31T01:28:14
+2013/10/31 01:28:14 INFO - [c.2010010100] -(setting:running)
+2013/10/31 01:28:19 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2013-10-31T01:28:19
+2013/10/31 01:28:19 INFO - [c.2010010100] -(setting:succeeded)
+2013/10/31 01:28:20 INFO - [a.2010010106] -(setting:queued)
+2013/10/31 01:28:20 INFO - [a.2010010106] -(setting:submitting)
+2013/10/31 01:28:20 INFO - [a.2010010106] -triggered off ['c.2010010100']
+2013/10/31 01:28:21 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submitting now
+2013/10/31 01:28:21 INFO - [a.2010010106] -(current:submitting)> a.2010010106 submission succeeded
+2013/10/31 01:28:21 INFO - [a.2010010106] -(setting:submitted)
+2013/10/31 01:28:21 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=50776
+2013/10/31 01:28:21 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2013-10-31T01:28:21
+2013/10/31 01:28:21 INFO - [a.2010010106] -(setting:running)
+2013/10/31 01:28:26 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2013-10-31T01:28:26
+2013/10/31 01:28:26 INFO - [a.2010010106] -(setting:succeeded)
+2013/10/31 01:28:26 INFO - Stop task a.2010010106 finished
+2013/10/31 01:28:27 INFO - Thread-4 exit (Job Submission)
+2013/10/31 01:28:27 INFO - Thread-2 exit (Event Handlers)
+2013/10/31 01:28:27 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/10/31 01:28:27 INFO - [stopper.2010010106] -(setting:queued)
+2013/10/31 01:28:27 INFO - [stopper.2010010106] -(setting:submitting)
+2013/10/31 01:28:27 INFO - [stopper.2010010106] -triggered off ['a.2010010106']

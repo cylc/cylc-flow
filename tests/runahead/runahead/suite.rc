@@ -1,0 +1,16 @@
+[cylc]
+    [[event hooks]]
+        timeout = 0.1
+        abort on timeout = True
+[scheduling]
+    runahead limit = 18
+    initial cycle time = 2010010100
+    final cycle time = 2010010500
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "foo => bar"
+[runtime]
+    [[foo]]
+        command scripting = false
+    [[bar]]
+        command scripting = true
