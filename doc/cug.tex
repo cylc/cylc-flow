@@ -2012,23 +2012,25 @@ as the suite runs.
 \section{Suite Name Registration And Passphrases}
 \label{SuiteRegistration}
 
-Cylc commands target particular suites via names registered in a {\em
-suite database}, so that you don't need to remember and continually
-refer to the actual location of the suite definition on disk. A suite
-name is a hierarchical name akin to a directory path but
-delimited by the `.' character; this allows suites to be organised in
-nested tree-like structures:
+Cylc commands target suites via names registered in a {\em suite name
+database} located at \lstinline=$HOME/.cylc/REGDB/=.  Suite names are
+hierarchical like directory paths, allowing nested tree-like grouping,
+but use the `.' character as a delimiter. This :
 \begin{lstlisting}
 shell$ cylc db print -t nwp
 nwp          
  |-oper      
- | |-region1  Local Model Region1       /oper/nwp/suite_defs/LocalModel/nested/Region1
- | `-region2  Local Model Region2       /oper/nwp/suite_defs/LocalModel/nested/Region2
+ | |-region1  Local Model Region1       /oper/nwp/suites/LocalModel/nested/Region1
+ | `-region2  Local Model Region2       /oper/nwp/suites/LocalModel/nested/Region2
  `-test      
-   `-region1  Local Model TEST Region1  /home/hilary/nwp_suites/Regional/TESTING/Region1
+   `-region1  Local Model TEST Region1  /home/hilary/suites/Regional/TESTS/Region1
 \end{lstlisting}
 
-Note that name groups are entirely virtual, they do not need to be
+Suite titles held in the name database are parsed from the suite
+definition at the time of initial suite registration. If you change the
+title later use \lstinline=cylc db refresh= to update the database.
+
+Name groups are entirely virtual, they do not need to be
 explicitly created before use, and they automatically disappear if all
 tasks are removed from them.  From the listing above, for example, to
 move the suite \lstinline=nwp.oper.region2= into the
@@ -2069,20 +2071,7 @@ exist yet unless you specify the entire target suite name.
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
-\subsection{Suite Name Databases}
-
-Each user has a database that associates registered suite names
-with their respective suite definition directory locations. Hierarchical
-suite names stored in the database can be displayed in a tree structure.
-
-Note that the suite title held in the name database is parsed
-from the suite definition at the time of initial registration; if you
-change the title (by editing the suite.rc file) use 
-\lstinline=cylc db refresh= to update the database.
-
-The user suite database file is \lstinline=$HOME/.cylc/DB=.
-
-\subsubsection{Database Operations}
+\subsection{Database Operations}
 
 On the command line, the  `database' (or `db') command category contains
 commands to implement the aforementioned operations.
@@ -2091,6 +2080,11 @@ commands to implement the aforementioned operations.
 \begin{lstlisting}
 shell$ cylc db help
 CATEGORY: db|database - Suite name registration, copying, deletion, etc.
+
+Suite name registrations are held in a simple database $HOME/.cylc/REGDB
+shell$ cat $HOME/.cylc/REGDB/my.suite
+   title=my suite title
+   path=/path/to/my/suite
 
 HELP: cylc [db|database] COMMAND help,--help
   You can abbreviate db|database and COMMAND.
@@ -2339,10 +2333,7 @@ the file.  See \lstinline=cylc prep edit --help= for more information.
 
 \paragraph{Include-Files via Jinja2}
 
-Jinja2 (Section~\ref{Jinja2}) provides template inclusion functionality
-although this is more akin to Python module import than simple text
-inclusion, and the implications of this for suite design have not yet
-been explored.
+Jinja2 (Section~\ref{Jinja2}) also has template inclusion functionality.
 
 \subsubsection{Syntax Highlighting For Suite Definitions}
 \label{SyntaxHighlighting}
@@ -2382,7 +2373,7 @@ configuration items grouped under several top level section headings:
             \item a nested family hierarchy with common properties
                 inherited by related tasks
         \end{myitemize}
-    \item {\bf [visualization] } - configures suite graphing.
+    \item {\bf [visualization] } - suite graph styling
 \end{myitemize}
 
 
@@ -3303,7 +3294,7 @@ cycle time!):
 \end{lstlisting}
 In contrast to normal inter-cycle triggers, future triggers present a problem at the 
 suite stop time rather than at start-up - in the final cycle \lstinline=B= wants to 
-to trigger off \lsintline=A= at a future cycle time that does not exist.  To avoid   
+to trigger off \lstinline=A= at a future cycle time that does not exist.  To avoid   
 this problem cylc prevents tasks from spawning successors that depend on tasks in 
 a non-existent future cycle.
 
@@ -5702,6 +5693,79 @@ you wish:
         abort on timeout = True
 \end{lstlisting}
 
+
+\subsection{Triggering Off Tasks In Other Suites}
+
+The \lstinline=cylc suite-state= command, which interrogates suite run
+databases, has a polling mode that waits on a given task achieving a
+given state.  See \lstinline=cylc suite-state --help= for command
+options and defaults.
+
+The suite graph notation also allows you to define local tasks that, in
+effect, represent tasks in other suites by automatically polling for 
+them using the \lstinline=cylc suite-state= command. Here's how to
+trigger a task \lstinline=bar= off a task \lstinline=foo= in another
+suite called \lstinline=other.suite=:
+\begin{lstlisting}
+[scheduling]
+    [[ dependencies]]
+        [[[0,12]]]
+            graph = "FOO<other.suite::foo> => bar"
+\end{lstlisting}
+Local task \lstinline=FOO= will poll for the success of \lstinline=foo=
+in suite \lstinline=other.suite= at the same cycle time. Other task
+states can be polled like this,
+\begin{lstlisting}
+   graph = "FOO<other.suite::foo:fail> => bar"
+\end{lstlisting}
+
+Default polling parameters (the maximum number of polls and the interval
+between them) are printed by \lstinline=cylc suite-state --help=. 
+These can be configured if necessary under the local polling task
+runtime section:
+\begin{lstlisting}
+[scheduling]
+    [[ dependencies]]
+        [[[0,12]]]
+            graph = "FOO<other.suite::foo> => bar"
+[runtime]
+    [[FOO]]
+        [[[suite state polling]]]
+            max-polls = 100
+            interval = 10 # seconds
+\end{lstlisting}
+
+The remote suite does not have to be running when polling commences (or
+at all if the remote condition has already been achieved) because the
+command interrogates the suite run database, not the suite server
+process.
+
+For suites owned by others or those with run databases in non-standard
+locations use the \lstinline=--run-dir= option or, in-suite,
+\begin{lstlisting}
+[runtime]
+    [[FOO]]
+        [[[suite state polling]]]
+            run-dir = /path/to/top/level/cylc/run-directory
+\end{lstlisting}
+
+To trigger off remote tasks with different cycle times just arrange for
+the local polling task to be on the same cycling sequence as the remote
+task that it represents. For instance, if local task \lstinline=cat= 
+cycles 6-hourly at \lstinline=0,6,12,18= but needs to trigger off a
+remote task \lstinline=dog= with cycle times of \lstinline=3,9,15,21=
+hours,
+\begin{lstlisting}
+[scheduling]
+    [[ dependencies]]
+        [[[0,6,12,18]]]
+            graph = "DOG<other.suite::dog>[T-3] => cat"
+\end{lstlisting}
+This results in \lstinline=DOG= having cycle times of 
+\lstinline=3,9,15,21= - the sames as \lstinline=dog= in
+\lstinline=other.suite=.
+
+
 \section{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.
@@ -5753,12 +5817,6 @@ The following topics have yet to be documented in detail.
         command scripting = \
         "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
 \end{lstlisting}
-
-    \item Dependence between suites: cylc will eventually support this
-        directly, via special graph syntax. For the moment dependence on
-        other suites can be implemented easily, within task scripting,
-        using the command \lstinline=cylc suite-state=, which has a
-        polling mode and reads the other suite's run database.
 
 \end{myitemize}
 \lstset{language=transcript}
