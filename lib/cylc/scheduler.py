@@ -1453,8 +1453,10 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
-            if nonrunahead and itask.state.is_currently( 'runahead' ):
-                continue
+            if nonrunahead:
+                if itask.state.is_currently( 'runahead' ) or \
+                    ( self.stop_tag and ( int(itask.c_time) > int( self.stop_tag ))):
+                        continue
             # avoid daemon tasks
             #if itask.is_daemon():
             #    continue
