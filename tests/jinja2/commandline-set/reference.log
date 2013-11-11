@@ -1,0 +1,40 @@
+2013/11/08 22:20:16 INFO - Thread-2 start (Event Handlers)
+2013/11/08 22:20:16 INFO - port:7766
+2013/11/08 22:20:16 INFO - Suite starting at 2013-11-08 22:20:16.941435
+2013/11/08 22:20:16 INFO - Log event clock: real time
+2013/11/08 22:20:16 INFO - Run mode: live
+2013/11/08 22:20:16 INFO - Start tag: 2010010100
+2013/11/08 22:20:16 INFO - Stop tag: 2012010100
+2013/11/08 22:20:16 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/08 22:20:16 INFO - Thread-5 start (Request Handling)
+2013/11/08 22:20:16 INFO - Thread-4 start (Job Submission)
+2013/11/08 22:20:16 INFO - Cold Start 2010010100
+2013/11/08 22:20:16 INFO - [foo.2010010100] -(setting:queued)
+2013/11/08 22:20:16 INFO - [foo.2010010100] -(setting:submitting)
+2013/11/08 22:20:16 INFO - [foo.2010010100] -triggered off []
+2013/11/08 22:20:17 INFO - [foo.2010010100] -(current:submitting)> foo.2010010100 submitting now
+2013/11/08 22:20:18 INFO - [foo.2010010100] -(current:submitting)> foo.2010010100 submission succeeded
+2013/11/08 22:20:18 INFO - [foo.2010010100] -(setting:submitted)
+2013/11/08 22:20:18 INFO - [foo.2010010100] -(current:submitted)> foo.2010010100 submit_method_id=2984
+2013/11/08 22:20:20 INFO - [foo.2012010100] -(setting:queued)
+2013/11/08 22:20:20 INFO - [foo.2012010100] -(setting:submitting)
+2013/11/08 22:20:20 INFO - [foo.2012010100] -triggered off []
+2013/11/08 22:20:20 INFO - [foo.2010010100] -(current:submitted)> foo.2010010100 started at 2013-11-08T22:20:18
+2013/11/08 22:20:20 INFO - [foo.2010010100] -(setting:running)
+2013/11/08 22:20:22 INFO - [foo.2012010100] -(current:submitting)> foo.2012010100 submitting now
+2013/11/08 22:20:22 INFO - [foo.2012010100] -(current:submitting)> foo.2012010100 submission succeeded
+2013/11/08 22:20:22 INFO - [foo.2012010100] -(setting:submitted)
+2013/11/08 22:20:22 INFO - [foo.2012010100] -(current:submitted)> foo.2012010100 submit_method_id=3033
+2013/11/08 22:20:23 INFO - [foo.2014010100] -HOLDING (beyond suite stop cycle) 2012010100
+2013/11/08 22:20:23 INFO - [foo.2014010100] -(setting:held)
+2013/11/08 22:20:24 INFO - [foo.2012010100] -(current:submitted)> foo.2012010100 started at 2013-11-08T22:20:21
+2013/11/08 22:20:24 INFO - [foo.2012010100] -(setting:running)
+2013/11/08 22:20:38 INFO - [foo.2010010100] -(current:running)> foo.2010010100 succeeded at 2013-11-08T22:20:35
+2013/11/08 22:20:38 INFO - [foo.2010010100] -(setting:succeeded)
+2013/11/08 22:20:39 INFO - [foo.2012010100] -(current:running)> foo.2012010100 succeeded at 2013-11-08T22:20:36
+2013/11/08 22:20:39 INFO - [foo.2012010100] -(setting:succeeded)
+2013/11/08 22:20:39 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2012010100
+2013/11/08 22:20:39 INFO - Thread-4 exit (Job Submission)
+2013/11/08 22:20:39 INFO - Thread-2 exit (Event Handlers)
+2013/11/08 22:20:39 INFO - Thread-3 exit (Poll & Kill Commands)

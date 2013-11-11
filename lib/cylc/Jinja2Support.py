@@ -56,7 +56,7 @@ def load_template_vars( pairs, pairs_file, verbose=False ):
     return res
 
 def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
-    env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined )
+    env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined, extensions=['jinja2.ext.do'] )
 
     # Load any custom Jinja2 filters in the suite definition directory
     # Example: a filter to pad integer values some fill character:
