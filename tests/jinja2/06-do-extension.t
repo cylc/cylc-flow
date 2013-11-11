@@ -18,12 +18,20 @@
 #C: test that the jinja2 do extension is loaded.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE do-extension
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-list
+cylc list $SUITE_NAME > list.out
+cmp_ok list.out <<__ENDLIST
+mem_0
+mem_1
+mem_2
+__ENDLIST
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 
