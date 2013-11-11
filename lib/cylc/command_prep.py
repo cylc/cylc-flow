@@ -32,13 +32,10 @@ class prep( object ):
         self.suite = suite
         self.suiterc = None
         self.suitedir = None
-        # dealias the suite name (an aliased name may be given for local suites)
         if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
             self.db = localdb(file=options.db, verbose=options.verbose)
-            self.db.load_from_file()
             try:
-                self.suite = self.db.unalias( suite )
-                self.suiterc = self.db.getrc( suite )
+                self.suiterc = self.db.get_suiterc( suite )
                 self.suitedir = os.path.dirname( self.suiterc )
             except Exception, x:
                 if options.debug:

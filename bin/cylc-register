@@ -78,10 +78,7 @@ suite = args[0]
 
 db = localdb( file=options.db, verbose=options.verbose )
 try:
-    with db.lock():
-        db.load_from_file()
-        db.register( suite, rdir )
-        db.dump_to_file()
+    db.register( suite, rdir )
 except Exception, x:
     if options.debug:
         raise

@@ -127,10 +127,9 @@ Arguments:"""
                 action="store_true", default=False, dest="debug" )
 
         self.add_option( "--db",
-                help="Suite database: 'u:USERNAME' for another user's "
-                "default database, or PATH to an explicit location. "
-                "Defaults to $HOME/.cylc/DB.",
-                metavar="DB", action="store", default=None, dest="db" )
+                help="Alternative suite registration database location, "
+                "defaults to $HOME/.cylc/REGDB.",
+                metavar="PATH", action="store", default=None, dest="db" )
 
         if self.pyro:
             self.add_option( "--port",

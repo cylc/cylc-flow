@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os,sys
+import sys
 from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb
 
@@ -35,13 +35,9 @@ Here's an easy way to move to a suite directory:
 reg = args[0]
 db = localdb( file=options.db, verbose=options.verbose )
 try:
-    with db.lock():
-        db.load_from_file()
-    suite, suiterc = db.get_suite(reg)
+    print db.get_suitedir(reg)
 except Exception, x:
     if options.debug:
         raise
     raise SystemExit(x)
-
-print os.path.dirname(suiterc)
 

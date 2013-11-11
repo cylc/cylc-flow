@@ -37,7 +37,6 @@ def print_heading( heading ):
 
 def check_suite_spec( name ):
     reg = localdb()
-    reg.load_from_file()
     try:
         suite_dir, title = reg.get( name )
     except RegistrationError,x:
