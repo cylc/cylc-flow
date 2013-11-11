@@ -1,0 +1,15 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+[scheduling]
+    [[special tasks]]
+        include at start-up = "include" # should be only task run
+    [[dependencies]]
+        graph = "include & exclude"
+[runtime]
+    [[include]]
+        command scripting = true
+    [[exclude]]
+        command scripting = false
+

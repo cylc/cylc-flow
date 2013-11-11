@@ -1,0 +1,43 @@
+2013/11/11 13:47:01 INFO - Thread-2 start (Event Handlers)
+2013/11/11 13:47:01 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/11 13:47:01 INFO - port:7766
+2013/11/11 13:47:01 INFO - Suite starting at 2013-11-11 13:47:01.886904
+2013/11/11 13:47:01 INFO - Log event clock: real time
+2013/11/11 13:47:01 INFO - Run mode: live
+2013/11/11 13:47:01 INFO - Start tag: 2013111113
+2013/11/11 13:47:01 INFO - Stop tag: 2013111113
+2013/11/11 13:47:01 INFO - Thread-4 start (Job Submission)
+2013/11/11 13:47:01 INFO - Thread-5 start (Request Handling)
+2013/11/11 13:47:01 INFO - Cold Start 2013111113
+2013/11/11 13:47:01 DEBUG - [clock.2013111113] -task proxy added to the pool
+2013/11/11 13:47:01 DEBUG - BEGIN TASK PROCESSING
+2013/11/11 13:47:01 INFO - [clock.2013111113] -(setting:queued)
+2013/11/11 13:47:01 INFO - [clock.2013111113] -(setting:submitting)
+2013/11/11 13:47:01 INFO - [clock.2013111113] -triggered off []
+2013/11/11 13:47:01 DEBUG - END TASK PROCESSING (took 0.015504 sec)
+2013/11/11 13:47:02 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/11 13:47:02 INFO - [clock.2013111113] -(current:submitting)> clock.2013111113 submitting now
+2013/11/11 13:47:03 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.314021
+  All 1 items succeeded
+2013/11/11 13:47:03 INFO - [clock.2013111113] -(current:submitting)> clock.2013111113 submission succeeded
+2013/11/11 13:47:03 INFO - [clock.2013111113] -(setting:submitted)
+2013/11/11 13:47:03 INFO - [clock.2013111113] -(current:submitted)> clock.2013111113 submit_method_id=2189
+2013/11/11 13:47:03 INFO - [clock.2013111113] -(current:submitted)> clock.2013111113 started at 2013-11-11T13:47:03
+2013/11/11 13:47:03 INFO - [clock.2013111113] -(setting:running)
+2013/11/11 13:47:04 DEBUG - BEGIN TASK PROCESSING
+2013/11/11 13:47:04 DEBUG - [clock.2013111113] -forced spawning
+2013/11/11 13:47:04 INFO - [clock.2013111213] -HOLDING (beyond suite stop cycle) 2013111113
+2013/11/11 13:47:04 INFO - [clock.2013111213] -(setting:held)
+2013/11/11 13:47:04 DEBUG - [clock.2013111213] -task proxy added to the pool
+2013/11/11 13:47:04 DEBUG - END TASK PROCESSING (took 0.017522 sec)
+2013/11/11 13:47:04 INFO - [clock.2013111113] -(current:running)> clock.2013111113 succeeded at 2013-11-11T13:47:04
+2013/11/11 13:47:04 INFO - [clock.2013111113] -(setting:succeeded)
+2013/11/11 13:47:04 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2013111113
+2013/11/11 13:47:05 INFO - Thread-4 exit (Job Submission)
+2013/11/11 13:47:05 INFO - Thread-2 exit (Event Handlers)
+2013/11/11 13:47:05 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/11 13:47:05 DEBUG - BEGIN TASK PROCESSING
+2013/11/11 13:47:05 DEBUG - [clock.2013111113] -task proxy removed
+2013/11/11 13:47:05 DEBUG - END TASK PROCESSING (took 0.012724 sec)

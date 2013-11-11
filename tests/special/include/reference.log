@@ -1,0 +1,37 @@
+2013/11/11 11:34:46 INFO - Thread-2 start (Event Handlers)
+2013/11/11 11:34:46 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/11 11:34:46 INFO - port:7766
+2013/11/11 11:34:46 INFO - Suite starting at 2013-11-11 11:34:46.602238
+2013/11/11 11:34:46 INFO - Log event clock: real time
+2013/11/11 11:34:46 INFO - Run mode: live
+2013/11/11 11:34:46 INFO - Start tag: None
+2013/11/11 11:34:46 INFO - Stop tag: None
+2013/11/11 11:34:46 INFO - Thread-4 start (Job Submission)
+2013/11/11 11:34:46 INFO - Thread-5 start (Request Handling)
+2013/11/11 11:34:46 DEBUG - [include.1] -task proxy added to the pool
+2013/11/11 11:34:46 DEBUG - BEGIN TASK PROCESSING
+2013/11/11 11:34:46 INFO - [include.1] -(setting:queued)
+2013/11/11 11:34:46 INFO - [include.1] -(setting:submitting)
+2013/11/11 11:34:46 INFO - [include.1] -triggered off []
+2013/11/11 11:34:46 DEBUG - END TASK PROCESSING (took 0.016813 sec)
+2013/11/11 11:34:47 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/11 11:34:47 INFO - [include.1] -(current:submitting)> include.1 submitting now
+2013/11/11 11:34:47 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.210803
+  All 1 items succeeded
+2013/11/11 11:34:48 INFO - [include.1] -(current:submitting)> include.1 submission succeeded
+2013/11/11 11:34:48 INFO - [include.1] -(setting:submitted)
+2013/11/11 11:34:48 INFO - [include.1] -(current:submitted)> include.1 submit_method_id=30223
+2013/11/11 11:34:48 INFO - [include.1] -(current:submitted)> include.1 started at 2013-11-11T11:34:48
+2013/11/11 11:34:48 INFO - [include.1] -(setting:running)
+2013/11/11 11:34:49 DEBUG - BEGIN TASK PROCESSING
+2013/11/11 11:34:49 DEBUG - END TASK PROCESSING (took 0.013567 sec)
+2013/11/11 11:34:49 INFO - [include.1] -(current:running)> include.1 succeeded at 2013-11-11T11:34:48
+2013/11/11 11:34:49 INFO - [include.1] -(setting:succeeded)
+2013/11/11 11:34:49 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/11 11:34:49 INFO - Thread-4 exit (Job Submission)
+2013/11/11 11:34:50 INFO - Thread-2 exit (Event Handlers)
+2013/11/11 11:34:50 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/11 11:34:50 DEBUG - BEGIN TASK PROCESSING
+2013/11/11 11:34:50 DEBUG - END TASK PROCESSING (took 0.015233 sec)
