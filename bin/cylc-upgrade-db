@@ -19,7 +19,7 @@
 import sys, os
 from optparse import OptionParser
 import pickle
-from cylc.registration import localdb
+from cylc.registration import localdb, RegistrationError
 
 oldpath = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
 newpath = os.path.join( os.environ['HOME'], '.cylc', 'REGDB' )
@@ -27,6 +27,9 @@ newpath = os.path.join( os.environ['HOME'], '.cylc', 'REGDB' )
 parser = OptionParser( usage = """cylc upgrade-db
 
 Upgrade a pre-cylc-5.4 suite name database to the new cylc-5.4+ format.
+This will create a new-format DB if necessary, or if one already exists 
+it will transfer old registrations to the new DB so long as the suite
+names do not conflict. It is safe to run this utility multiple times.
 
 Prior to cylc-5.4 the suite name registration DB was a Python pickle
 file stored at $HOME/.cylc/DB.  Since cylc-5.4 it is a directory
@@ -49,14 +52,14 @@ parser.add_option( "--to", help="Path to new cylc-5.4+ db; "
 if not os.path.isfile( oldpath ):
     sys.exit( "ERROR, old DB not found: " + oldpath )
 
-if os.path.isdir( newpath ):
-    sys.exit( "ERROR, new DB already exists: " + newpath )
-
 # load old DB
 olditems = pickle.load( open( oldpath, 'r' ))
 
 # new db
 db = localdb( file=newpath )
 for suite, (dir,title) in olditems.items():
-    db.register( suite, dir )
-
+    try:
+        db.register( suite, dir )
+    except RegistrationError, x:
+        print >> sys.stderr, x
+        
