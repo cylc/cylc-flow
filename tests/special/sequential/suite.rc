@@ -1,7 +1,7 @@
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.5 # minutes
+       live mode suite timeout = 2 # minutes
 [scheduling]
     initial cycle time = 2010010100
     final cycle time   = 2010010118
@@ -16,15 +16,14 @@
         command scripting = sleep 10
     [[monitor]]
         command scripting = """
-        RUNDIR=$(cylc get-global-conf --print-run-dir)/$CYLC_SUITE_NAME
         while true; do
             sleep 1
-            RUNNING=$(sqlite3 $RUNDIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'running'")||0
+            RUNNING=$(sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'running'") || RUNNING=0
             if ((RUNNING>1)); then
                 false
             fi
             sleep 1
-            FINISHED=$(sqlite3 $RUNDIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'succeeded'")||0
+            FINISHED=$(sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'succeeded'") || FINISHED=0
             if ((FINISHED==4)); then
                 break
             fi
