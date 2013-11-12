@@ -5,10 +5,12 @@ set -x
 
 function usage {
 cat <<eof
-USAGE update-gh-pages.sh [-p] COMMIT-MESSAGE
+USAGE update-gh-pages.sh [-p] "COMMIT MESSAGE" [VERSION]
 
 Check out gh-pages, update its files from doc/ in master branch, and
-then optionally [-p] push to the cylc repository on github.
+then optionally [-p] push to the cylc repository on github. VERSION 
+can be used to optionally override the version string returned by
+git-describe (e.g. for small index.html updates).
 
 eof
 }
@@ -29,9 +31,14 @@ if [[ $# == 0 ]]; then
     exit 1
 fi
 
-COMMITMSG=$@
+COMMITMSG=$1
+shift
 
-LATESTTAG=$( git describe --abbrev=0 --tags )
+if [[ $# == 1 ]]; then
+    LATESTTAG=$1
+else
+    LATESTTAG=$( git describe --abbrev=0 --tags )
+fi
 
 [[ -z $COMMITMSG ]] && exit 1
 
