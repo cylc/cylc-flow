@@ -40,7 +40,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.start_time = start_time
         self._summary_update_time = None
  
-    def update( self, tasks, clock, oldest, newest,
+    def update( self, tasks, clock, oldest, newest, newest_nonrunahead,
             paused, will_pause_at, stopping, will_stop_at, runahead ):
 
         task_name_list = []
@@ -91,6 +91,7 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'start time' ] = self.start_time
         global_summary[ 'oldest cycle time' ] = oldest
         global_summary[ 'newest cycle time' ] = newest
+        global_summary[ 'newest non-runahead cycle time' ] = newest_nonrunahead
         global_summary[ 'last_updated' ] = clock.get_datetime()
         global_summary[ 'run_mode' ] = self.run_mode
         global_summary[ 'clock_rate' ] = clock.get_rate()

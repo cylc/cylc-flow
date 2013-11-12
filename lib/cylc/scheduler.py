@@ -1156,7 +1156,8 @@ class scheduler(object):
     def update_state_summary( self ):
         #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), self.clock,
-                self.get_oldest_c_time(), self.get_newest_c_time(), self.paused(),
+                self.get_oldest_c_time(), self.get_newest_c_time(),
+                self.get_newest_c_time(True), self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
                 self.will_stop_at(), self.runahead_limit )
 
@@ -1446,12 +1447,16 @@ class scheduler(object):
                 oldest = itask.c_time
         return oldest
 
-    def get_newest_c_time( self ):
+    def get_newest_c_time( self, nonrunahead=False ):
         # return the cycle time of the newest task
         newest = ct('1000010101').get()
         for itask in self.pool.get_tasks():
             if not itask.is_cycling():
                 continue
+            if nonrunahead:
+                if itask.state.is_currently( 'runahead' ) or \
+                    ( self.stop_tag and ( int(itask.c_time) > int( self.stop_tag ))):
+                        continue
             # avoid daemon tasks
             #if itask.is_daemon():
             #    continue
