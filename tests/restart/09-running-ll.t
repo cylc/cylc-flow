@@ -19,7 +19,7 @@
 #C:     This test requires a [directive-tests]loadleveler-host entry in 
 #C:     site/user config in order to run, otherwise it will be bypassed
 #-------------------------------------------------------------------------------
-TEST_BASE_PATH=$(cd $(dirname $0) && pwd)/running.t
+TEST_BASE_PATH=$(cd $(dirname $0) && pwd)/04-running.t
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 export TEST_DIR
