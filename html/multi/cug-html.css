@@ -6,8 +6,6 @@
 .cmr-17{font-size:170%;}
 .cmr-12{font-size:120%;}
 .cmr-8{font-size:80%;}
-.cmr-6{font-size:60%;}
-.cmmi-8{font-size:80%;font-style: italic;}
 .cmbx-12x-x-120{font-size:144%; font-weight: bold;}
 .cmbx-12x-x-120{ font-weight: bold;}
 .cmti-10{ font-style: italic;}
@@ -20,7 +18,6 @@
 .pcrr8c-{ font-family: monospace;}
 .pcrb7t-{ font-family: monospace; font-weight: bold;}
 .pcrro7t-{font-family: monospace;    font-style: oblique;}
-.pcrr7t-x-x-70{font-size:70%;font-family: monospace;}
 .pcrro8c-{ font-family: monospace;    font-style: oblique;}
 .pcrr7t-x-x-80{font-size:80%;font-family: monospace;}
 .pcrr8c-x-x-80{font-size:80%; font-family: monospace;}
@@ -148,5 +145,20 @@ table.gather, table.gather-star {width:100%;}
 div.verbatiminput {font-family: monospace; white-space: nowrap; }
 .figure img.graphics {margin-left:10%;}
  .lstlisting { color : crimson; } .lstinputlisting { color : crimson; } .lstinline { color : crimson; } body { width : 700px; border:1px solid grey; padding:50px; margin: 0 auto; margin-top:20px; margin-bottom:80px; background:white } html { background: LightSteelBlue } 
+div#colorbox1{background-color:#FFFF00;}
+div#colorbox2{background-color:#FFFF00;}
+div#colorbox3{background-color:#FFFF00;}
+div#colorbox4{background-color:#FFFF00;}
+div#colorbox5{background-color:#FFFF00;}
+div#colorbox6{background-color:#FFFF00;}
+div#colorbox7{background-color:#FFFF00;}
+div#colorbox8{background-color:#FFFF00;}
+div#colorbox9{background-color:#FFFF00;}
+div#colorbox10{background-color:#FFFF00;}
+div#colorbox11{background-color:#FFFF00;}
+div#colorbox12{background-color:#FFFF00;}
+div#colorbox13{background-color:#FFFF00;}
+div#colorbox14{background-color:#FFFF00;}
+div#colorbox15{background-color:#FFFF00;}
 /* end css.sty */
 

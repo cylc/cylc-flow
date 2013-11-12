@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.0">5.4.0</a></li>
 		<li><a href="#5.3.0">5.3.0</a></li>
 		<li><a href="#5.2.0">5.2.0</a></li>
 		<li><a href="#5.1.1">5.1.1</a></li>
@@ -28,9 +29,102 @@
 </ul>
 </div>
 
-<p><b>This document summarizes changes between cylc versions.</b>
-Minor changes and bug fixes, and routine updates to the user guide may
-be omitted. The definitive guide to changes is the repository commit log.<p>
+<p>This pages mainly lists major enhancements and bug fixes. Selected minor
+bug fixes and changes may also be listed - for all changes see the
+cylc git repository change log.</p>
+
+<a name="5.4.0"/>
+		<h2>5.4.0</h2>
+
+		<ul>
+				<li>dependence on tasks before the initial cycle time is now
+				ignored, so cold-start tasks are no longer strictly required
+				in suites with inter-cycle dependence</li>
+
+				<li>graph notation support for triggering off tasks in other suites</li>
+
+				<li>a comprehensive new User Guide <em>Tutorial</em> section replaces
+				the old <em>Quick Start Guide</em> </li>
+
+				<li>a multi-suite summary gui, <code>cylc gsummary</code></li>
+
+				<li>a new <code>submit-retry</code> task state (the
+				<code>retry</code> state is now exclusively for execution retry)</li>
+
+				<li>processed suite definitions are now written out to the suite directory</li>
+
+				<li>a simpler and more robust suite name registration database 
+				(to upgrade run <code>cylc upgrade-db</code>)</li>
+
+				<li>many performance enhancements for large suites</li>
+
+				<li>gcylc</li>
+				<ul>
+						<li> single updater thread for multiple suite views</li>
+						<li> updates only if the suite state has changed (lower network traffic)</li>
+						<li> optional transposed dot view</li>
+						<li> clickable suite error notification in the task bar</li>
+						<li> in the graph view, runahead tasks and tasks held beyond
+						the suite final cycle time - and potentially many base graph
+						nodes to join the graph - are now cropped by default.</li>
+				</ul>
+
+				<li>extract specific site/user config items with <code>cylc
+				get-global-config</code></li>
+
+				<li>replaced ConfigObj with a faster custom config file parser and
+				validator, "parsec"</li>
+
+				<li>repeated sections and items are now allowed in suite definitions</li>
+
+				<li>task poll and kill for Sun Grid Engine (other job submission
+				methods got this at 5.3.0)</li>
+
+				<li><code>cylc cat-log</code> now prints task as well as suite logs</li>
+
+				<li>a greatly expanded automated test battery using a new Perl
+				<code>prove</code>-based framework</li>
+
+				<li>support added for the Jinja2 <code>do</code> extension
+				(allows manipulation of data structures without having to
+				<code>set</code> a variable)</li>
+
+				<li><code>cylc graph</code> now has a "save image" GUI button (previously a
+				command line option had to be used to generated image files)</li>
+
+				<li>improved <code>cylc trigger</code> semantics: manual
+				triggering now results in immediate job submission if the target
+				task does not belong to a limited queue or if it is already
+				queued, otherwise it will queue the task immediately.</li>
+
+				<li>stop queued job submissions immediately if a shutdown is
+				requested</li>
+
+				<li>deprecated the <code>--owner</code> command option to
+				<code>--user</code> and documented more clearly that use of 
+				this and <code>--host</code> results in command re-invocation on
+				the remote account</li>
+
+				<li>if an owner is not specified for a task <code>$USER</code>
+				is no longer assumed - this allows remote username translation
+				to be done via <code>$HOME/.ssh/config</code> 
+
+				<li>many many bug fixes, including:</li>
+				<ul>
+						<li> the order of cycling graph sections of different kinds (e.g.
+						Daily and Monthly in the same suite) no longer matters </li>
+
+						<li>Monthly cycling now works properly even if the initial
+						cycle time is off-sequence</li>
+
+						<li>respect the <code>[visualization]collapsed families</code>
+						suite config item for the initial graph view</li>
+
+				</ul>
+
+
+		</ul>
+	
 
 <a name="5.3.0"/>
 		<h2>5.3.0</h2>

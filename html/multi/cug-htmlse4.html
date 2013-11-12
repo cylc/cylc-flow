@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-06-14 10:49:00"> 
+<meta name="date" content="2013-11-13 11:16:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 559--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 542--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse5.html" >next</a>] [<a 
 href="cug-htmlse3.html" >prev</a>] [<a 
 href="cug-htmlse3.html#tailcug-htmlse3.html" >prev-tail</a>] [<a 
@@ -23,35 +23,28 @@ href="cug-html.html#cug-htmlse4.html" >up</a>] </p></div>
    &#x00A0;<span class="subsectionToc" >4.1 <a 
 href="#x5-150004.1">Install The External Dependencies</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.2 <a 
-href="#x5-160004.2">Install The Cylc Release</a></span>
+href="#x5-160004.2">Install Cylc</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.3 <a 
-href="#x5-170004.3">Site And User Configuration Files</a></span>
+href="#x5-180004.3">Automated Tests</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.4 <a 
-href="#x5-180004.4">Import The Example Suites</a></span>
+href="#x5-190004.4">Local User Installation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.5 <a 
-href="#x5-190004.5">Automated Database Test</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >4.6 <a 
-href="#x5-200004.6">Automated Scheduler Tests</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >4.7 <a 
-href="#x5-210004.7">Complete Non System-Level Installation</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >4.8 <a 
-href="#x5-260004.8">What Next?</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >4.9 <a 
-href="#x5-270004.9">Upgrading To New Cylc Versions</a></span>
+href="#x5-210004.5">Upgrading To New Cylc Versions</a></span>
    </div>
-<!--l. 562--><p class="noindent" >
+<!--l. 545--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.1   </span> <a 
  id="x5-150004.1"></a>Install The External Dependencies</h4>
-<!--l. 564--><p class="noindent" >First install Pyro, graphviz, Pygraphviz, Jinja2, <span class="TEX">T<span 
+<!--l. 547--><p class="noindent" >First install Pyro, graphviz, Pygraphviz, Jinja2, <span class="TEX">T<span 
 class="E">E</span>X</span>, and ImageMagick using the package manager on your system
 if possible; otherwise download the packages manually and follow their native installation documentation. On a
 modern Linux system, this is very easy. For example, to install cylc-5.1.0 on the Fedora 18 Linux
 distribution:
-   <!--l. 570--><div class="lstlisting">
+   <!--l. 554--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15001r1"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -59,18 +52,19 @@ class="pcrr7t-">install</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">graphviz</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(2.28)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(2.28)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15002r2"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -80,18 +74,19 @@ class="pcrr7t-">graphviz</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">devel</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">for</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">pgraphviz</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">build</span><span 
-class="pcrro7t-">)</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pgraphviz</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">build</span><span 
+class="pcrr7t-">)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15003r3"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -101,44 +96,45 @@ class="pcrr7t-">python</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">devel</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">ditto</span><span 
-class="pcrro7t-">)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">ditto</span><span 
+class="pcrr7t-">)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15005r5"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">TeX</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">packages</span><span 
-class="pcrro7t-">,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">ImageMagick</span><span 
-class="pcrro7t-">,</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">for</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">generating</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">the</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">Cylc</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">User</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">Guide</span><span 
-class="pcrro7t-">:</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">TeX</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">packages</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ImageMagick</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">for</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">generating</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">User</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Guide</span><span 
+class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15006r6"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -147,7 +143,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">texlive</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15007r7"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -158,7 +155,8 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">tex4ht</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15008r8"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -169,7 +167,8 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">tocloft</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15009r9"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -180,7 +179,8 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">framed</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15010r10"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -191,7 +191,8 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">preprint</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15011r11"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">yum</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -202,39 +203,42 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
  id="x5-15012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15013r13"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">Python</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">packages</span><span 
-class="pcrro7t-">:</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">Python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">packages</span><span 
+class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15014r14"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">easy_install</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">pyro</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(3.16)</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(3.16)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15015r15"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">easy_install</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Jinja2</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(2.6)</span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(2.6)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15016r16"></a></span><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">easy_install</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -243,46 +247,47 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
  id="x5-15017r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15018r18"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">(</span><span 
-class="pcrro7t-">sqlite</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">3.7.13</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">already</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">installed</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">on</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">the</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">system</span><span 
-class="pcrro7t-">)</span>
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">sqlite</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">3.7.13</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">already</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">installed</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">on</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">the</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">system</span><span 
+class="pcrr7t-">)</span>
 
 
    </div>
-<!--l. 591--><p class="indent" >   If you do not have root access on your intended cylc host machine and cannot get a sysadmin to do this at
+<!--l. 575--><p class="indent" >   If you do not have root access on your intended cylc host machine and cannot get a sysadmin to do this at
 system level, see Section&#x00A0;<a 
-href="#x5-210004.7">4.7<!--tex4ht:ref: LocalInstall --></a> for some tips on installing everything to a local user account.
-<!--l. 596--><p class="indent" >   Now check that everything other than the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
-class="E">E</span>X</span></span>packages is installed properly: <!--l. 598--><div class="lstlisting">
+href="#x5-190004.4">4.4<!--tex4ht:ref: LocalInstall --></a> for tips on installing everything to a local user account.
+<!--l. 580--><p class="indent" >   Now check that everything other than the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+class="E">E</span>X</span></span>packages is installed properly:  <!--l. 583--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15019r1"></a></span><span 
+class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">check</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">sof</span><span 
+class="pcrr7t-">software</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-15020r2"></a></span><span 
 class="pcrr7t-">Checking</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">for</span><span 
+class="pcrr7t-">for</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -303,7 +308,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
  id="x5-15021r3"></a></span><span 
 class="pcrr7t-">Checking</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">for</span><span 
+class="pcrr7t-">for</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">non</span><span 
 class="pcrr7t-">-</span><span 
@@ -335,7 +340,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
  id="x5-15024r6"></a></span><span 
 class="pcrr7t-">Checking</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">for</span><span 
+class="pcrr7t-">for</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -385,972 +390,88 @@ class="pcrr7t-">ok</span>
 
 
    </div>
-<!--l. 610--><p class="indent" >   If this command reports any errors for the Python packages then either the packages concerned are
-not installed or they are not in the system python search path or your <span class="lstinline"><span 
+<!--l. 595--><p class="indent" >   If this command reports any errors then the packages concerned are not installed, not in the system Python
+search path, or (for a local install) not present in your <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
-class="pcrr7t-">PYTHONPATH</span></span> environment
-variable,
-<!--l. 615--><p class="noindent" >
+class="pcrr7t-">PYTHONPATH</span></span> variable.
+<!--l. 599--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.2   </span> <a 
- id="x5-160004.2"></a>Install The Cylc Release</h4>
-<!--l. 617--><p class="noindent" >Cylc typically installs into a normal user account; just unpack the release tarball in the desired location
-(referred to below as <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span></span>) and see the <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">INSTALL</span></span> file for instructions (see also
-Section&#x00A0;<a 
-href="cug-htmlse21.html#x22-403000G">G<!--tex4ht:ref: INSTALL --></a>.
+ id="x5-160004.2"></a>Install Cylc</h4>
+<!--l. 602--><p class="noindent" >Cylc installs into a normal user account, as an unpacked release tarball or a git repository clone. See the <span class="lstinline"><span 
+class="pcrr7t-">INSTALL</span></span>
+file in the source tree for instructions (also listed in Section&#x00A0;<a 
+href="cug-htmlse22.html#x23-466000G">G<!--tex4ht:ref: INSTALL --></a>).
+<!--l. 606--><p class="noindent" >
+   <h5 class="subsubsectionHead"><span class="titlemark">4.2.1   </span> <a 
+ id="x5-170004.2.1"></a>Create A Site Config File</h5>
+<!--l. 608--><p class="noindent" >Site and user config files define some important parameters that affect all suites, some of which may need to be
+customized for your site. Section&#x00A0;<a 
+href="cug-htmlse6.html#x7-230006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a> describes how to generate an initial site file and where to install it. All legal site
+and user config items are defined Appendix&#x00A0;<a 
+href="cug-htmlse17.html#x18-330000B">B<!--tex4ht:ref: SiteRCReference --></a>.
                                                                                          
 
                                                                                          
-<!--l. 623--><p class="noindent" >
+<!--l. 614--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">4.3   </span> <a 
- id="x5-170004.3"></a>Site And User Configuration Files</h4>
-<!--l. 626--><p class="noindent" >Cylc uses site and user configuration files to set some important global parameters such as the range of network
-ports, and the editor to use on suite definitions,
-   <!--l. 630--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-17001r1"></a></span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">conf</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">rc</span><span 
+ id="x5-180004.3"></a>Automated Tests</h4>
+<!--l. 617--><p class="noindent" >Cylc has a battery of self-diagnosing tests, invoked by the command <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">site</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">config</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">file</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">for</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">global</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">settings</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-17002r2"></a></span><span 
+class="pcrr7t-">test</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">battery</span></span>. These are primarily
+intended to check that new developments don&#8217;t break existing functionality, but you can also run them after
+installation to check that everything works properly. See <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">test</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">battery</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">help</span></span> before running the
+tests.
+<!--l. 624--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">4.4   </span> <a 
+ id="x5-190004.4"></a>Local User Installation</h4>
+<!--l. 627--><p class="noindent" >It is possible to install cylc and all of its software prerequisites under your own user account. Cylc itself is already
+designed to be installed into a normal user account, just follow the instructions above in Section&#x00A0;<a 
+href="#x5-160004.2">4.2<!--tex4ht:ref: InstallCylc --></a>. For the other
+packages, depending on the installation method used for each, it is just a matter of learning how to change the
+default install path prefix from, for example, <span class="lstinline"><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">usr</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">local</span></span> to <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/.</span><span 
-class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">user</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">rc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">user</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">config</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">file</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">for</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">global</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">settings</span>
-
-
-   </div>
-<!--l. 635--><p class="indent" >   These files can be auto-generated with all settings intially commented out by running this command:
-<!--l. 637--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-17003r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">get</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrb7t-">global</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">config</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">write</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">/--</span><span 
-class="pcrr7t-">write</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">user</span>
-
-
-   </div>
-<!--l. 641--><p class="indent" >   The content of these config files, in terms of legal items and default values, is defined by the <span 
-class="cmti-10">ConfigObj configspec</span>
-file, <!--l. 643--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-17004r1"></a></span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
+class="pcrr7t-">installed</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">conf</span><span 
+class="pcrr7t-">usr</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cfgspec</span>
-
-
-   </div>
-<!--l. 647--><p class="indent" >   The site config file should be adapted to set sensible defaults for all users when cylc is installed. Users can then
-override most settings in their own user config file, if necessary. Some settings can not be overridden by users (this is
-determined by <span class="lstinline"><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">SITE</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">ONLY</span></span> comments in the configspec file, which are passed through to the config
-files).
-<!--l. 654--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">4.4   </span> <a 
- id="x5-180004.4"></a>Import The Example Suites</h4>
-<!--l. 657--><p class="noindent" >Run the following command immediately after installation to copy the cylc example suites to a given destination
-directory, and registering each one for use:
-   <!--l. 661--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18001r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">admin</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">import</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">TOPDIR</span>
-
-
-   </div>
-<!--l. 664--><p class="indent" >   Where <span class="lstinline"><span 
-class="pcrr7t-">TOPDIR</span></span> is the top level directory into which the example suite definitions will be copied. To view the
-content of the suite database run <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">db</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">print</span></span> or open the gcylc suite chooser dialog.
-   <!--l. 669--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18002r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">db</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">print</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">tree</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">x</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">Auto</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18003r2"></a></span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-4-5-1-1344571037</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18004r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">AutoCleanup</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18005r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">FamilyFailHook</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">family</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failure</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">hook</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">script</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18006r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">FamilyFailTask</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">family</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failure</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cleanup</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">task</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18007r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18008r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">async</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">asynchronous</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">automated</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failure</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">recovery</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18009r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">cycling</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycling</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">automated</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failure</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">recovery</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18010r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18011r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">A</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18012r11"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">b</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">B</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18013r12"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">c</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">C</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18014r13"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">z</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Z</span>
-
-
-   </div>
-<!--l. 684--><p class="indent" >   Note that the dots in the cylc release version number are replaced with hyphens because &#8216;.&#8217; is the suite name
-delimiter. Type <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">db</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">print</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">help</span></span> to see what the command options mean. Note also that
-the Unix &#8220;seconds since epoch&#8221; string is appended to the top level of the suite name hierarchy in
-order ensure uniqueness if the example suites are imported multiple times at the same cylc version:
-<span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-4-5-1-1344571037</span></span>. You can re-register the example suites to get rid of this and make the names easier to
-type:
-   <!--l. 693--><div class="lstlisting">
-
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18015r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">rereg</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">-4-5-1-1344571037</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18016r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18017r3"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">db</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">print</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">tree</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">x</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">Auto</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18018r4"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18019r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18020r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">CleanupTask</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">No</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">title</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">provided</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18021r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">EventHook</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">family</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failure</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">task</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">event</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">hook</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18022r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">suicide</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">automated</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failure</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">recovery</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18023r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18024r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">A</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18025r11"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">b</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">B</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18026r12"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|-</span><span 
-class="pcrr7t-">c</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">C</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18027r13"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#8216;-</span><span 
-class="pcrr7t-">z</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Start</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Z</span>
-
-
-   </div>
-<!--l. 709--><p class="indent" >   Here&#8217;s the same suite database listing in flat form: <!--l. 710--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18028r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">db</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">print</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">y</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">Auto</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">Quick</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18029r2"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">c</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">c</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18030r3"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">z</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">z</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18031r4"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18032r5"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">b</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">QuickStart</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">b</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18033r6"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">CleanupTask</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">CleanupTask</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18034r7"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">EventHook</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">EventHook</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-18035r8"></a></span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">suicide</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">|</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">tmp</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">examples</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">AutoRecover</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">suicide</span>
-
-
-   </div>
-<!--l. 721--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">4.5   </span> <a 
- id="x5-190004.5"></a>Automated Database Test</h4>
-<!--l. 724--><p class="noindent" >The command <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">admin</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">db</span></span> gives suite name database functionality a work out - it copies one of the
-cylc example suites, registers it under a new name and then manipulates it by recopying the suite in various
-ways, and so on, before finally deleting the test suites. This should complete without error in a few
-seconds.
-<!--l. 730--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">4.6   </span> <a 
- id="x5-200004.6"></a>Automated Scheduler Tests</h4>
-<!--l. 733--><p class="noindent" >Cylc has a battery of self-diagnosing test suites for pre-release testing that you can also run after installation to
-check that everything works properly.
-<!--l. 737--><p class="indent" >   The command <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">admin</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">test</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">battery</span></span> copies, registers, and runs, the official cylc test suites, and reports
-the results. Some tests may take several minutes to complete. Pre-test requirements:
+class="pcrr7t-">local</span></span> and then
+ensuring that the resulting local package paths are set properly in your <span class="lstinline"><span 
+class="pcrr7t-">PYTHONPATH</span></span> environment
+variable.
+<!--l. 637--><p class="noindent" >
+   <h5 class="subsubsectionHead"><span class="titlemark">4.4.1   </span> <a 
+ id="x5-200004.4.1"></a>Some Guidelines</h5>
      <ul class="itemize1">
-     <li class="itemize">Some test suites require passwordless self-ssh to be configured, i.e.&#x00A0;the following command should run
-     successfully: <!--l. 744--><div class="lstlisting">
+     <li class="itemize">For <span class="lstinline"><span 
+class="pcrr7t-">python</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">setup</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">py</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">install</span></span> installation: <!--l. 643--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x5-20001r1"></a></span><span 
-class="pcrr7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchmode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">localhost</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ls</span>
-
-
-     </div>
-     </li>
-     <li class="itemize">Some tests require a remote task host with passwordless ssh configured, i.e. the following command should run
-     successfully: <!--l. 749--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-20002r1"></a></span><span 
-class="pcrr7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">oBatchmode</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">yes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ssh</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">HOSTNAME</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ls</span>
-
-
-     </div>
-     <!--l. 752--><p class="noindent" >You must specify the hostname before running these tests: <!--l. 753--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-20003r1"></a></span><span 
-class="pcrr7t-">export</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">CYLC_TEST_TASK_HOST</span><span 
-class="pcrr7t-">=&#x003C;</span><span 
-class="pcrr7t-">HOSTNAME</span><span 
-class="pcrr7t-">&#x003E;</span>
-
-
-     </div>
-     <!--l. 756--><p class="noindent" >If you don&#8217;t have access to a remote task host just use <span class="lstinline"><span 
-class="pcrr7t-">localhost</span></span> as the remote hostname.</li></ul>
-<!--l. 760--><p class="indent" >   None of the tests should fail on an official cylc release, unless because of timeouts if the suite host is slow or
-overloaded.
-                                                                                         
-
-                                                                                         
-<!--l. 763--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">4.7   </span> <a 
- id="x5-210004.7"></a>Complete Non System-Level Installation</h4>
-<!--l. 766--><p class="noindent" >If you do not have root access to your host machine and cannot easily get Pyro, Graphviz, Pygraphviz, and Jinja2
-installed at system level, here&#8217;s how to install everything under a normal user account.
-<!--l. 770--><p class="indent" >   First, cylc is already designed to be installed into a user account - just unpack the release tarball into
-<span class="lstinline"><span 
+class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span></span>.
-<!--l. 773--><p class="indent" >   Next, learn how to use <span class="lstinline"><span 
-class="pcrr7t-">easy_install</span></span> for local python package installs <span 
-class="cmti-10">or </span>download the source
-distributions from the URLs given at the beginning of Section&#x00A0;<a 
-href="cug-htmlse3.html#x4-90003">3<!--tex4ht:ref: Requirements --></a> and follow the package-specific advice
-below.
-<!--l. 778--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">4.7.1   </span> <a 
- id="x5-220004.7.1"></a>Pyro</h5>
-<!--l. 780--><p class="noindent" >Install Pyro under <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 781--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22001r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cd</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22002r2"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">tar</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">xzf</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Pyro</span><span 
-class="pcrr7t-">-3.14.</span><span 
-class="pcrr7t-">tar</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">gz</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22003r3"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cd</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Pyro</span><span 
-class="pcrr7t-">-3.14</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22004r4"></a></span><span 
-class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1362,152 +483,38 @@ class="pcrr7t-">install</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">prefix</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
+class="pcrr7t-">=/</span><span 
+class="pcrr7t-">my</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
+class="pcrr7t-">local</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span>
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">path</span>
 
 
-   </div>
-<!--l. 787--><p class="indent" >   Take note of the resulting Python <span class="lstinline"><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">packages</span></span> directory under <span class="lstinline"><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span></span>, e.g.:
-<!--l. 789--><div class="lstlisting">
+     </div>
+     </li>
+     <li class="itemize">For building graphviz from source: <!--l. 647--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22005r1"></a></span><span 
+ id="x5-20002r1"></a></span><span 
+class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib64</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">python2</span><span 
-class="pcrr7t-">.6/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">packages</span><span 
-class="pcrr7t-">/</span>
-
-
-   </div>
-<!--l. 792--><p class="indent" >   The exact path will depend on your local Python environment. Add the following to your login scripts:
-<!--l. 794--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22006r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">profile</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22007r2"></a></span><span 
-class="pcrr7t-">PYTHONPATH</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib64</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">python2</span><span 
-class="pcrr7t-">.6/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">packages</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">PYTHONPATH</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-22008r3"></a></span><span 
-class="pcrr7t-">PATH</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">bin</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">PATH</span>
-
-
-   </div>
-<!--l. 800--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">4.7.2   </span> <a 
- id="x5-230004.7.2"></a>Graphviz</h5>
-<!--l. 802--><p class="noindent" >Install Graphviz under <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 804--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-23001r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cd</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-23002r2"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">tar</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">xzf</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">graphviz</span><span 
-class="pcrr7t-">-2.28.0.</span><span 
-class="pcrr7t-">tar</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">gz</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-23003r3"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cd</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">graphviz</span><span 
-class="pcrr7t-">-2.28.0</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-23004r4"></a></span><span 
-class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">./</span><span 
 class="pcrr7t-">configure</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">prefix</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
+class="pcrr7t-">=/</span><span 
+class="pcrr7t-">my</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
+class="pcrr7t-">local</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
+class="pcrr7t-">install</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">path</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">with</span><span 
@@ -1516,24 +523,24 @@ class="pcrr7t-">qt</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">no</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-23005r5"></a></span><span 
-class="pcrr7t-">%</span><span 
+ id="x5-20003r2"></a></span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">make</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-23006r6"></a></span><span 
-class="pcrr7t-">%</span><span 
+ id="x5-20004r3"></a></span><span 
+class="pcrr7t-">shell</span><span 
+class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">make</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">install</span>
 
 
-   </div>
-<!--l. 812--><p class="indent" >   This installs graphviz files into the bin, include, and lib sub-directories of your local installation directory. The
-graphviz lib and include locations are required when installing Pygraphviz (next).
-<!--l. 816--><p class="indent" >   The graphviz build reportedly may fail on systems that do not have QT installed, hence the
-<span class="lstinline"><span 
+     </div>
+     <!--l. 652--><p class="noindent" >The graphviz build reportedly may fail on systems that do not have QT installed, hence the
+     <span class="lstinline"><span 
 class="pcrr7t-">./</span><span 
 class="pcrr7t-">configure</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1542,320 +549,95 @@ class="pcrr7t-">with</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">qt</span><span 
 class="pcrr7t-">=</span><span 
-class="pcrr7t-">no</span></span> option above.
-<!--l. 819--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">4.7.3   </span> <a 
- id="x5-240004.7.3"></a>Pygraphviz</h5>
-<!--l. 820--><p class="noindent" >Install Pygraphviz under <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span></span> as follows: <!--l. 822--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24001r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cd</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24002r2"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">tar</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">xzf</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pygraphviz</span><span 
-class="pcrr7t-">-1.1.</span><span 
-class="pcrr7t-">tar</span><span 
+class="pcrr7t-">no</span></span> option above. The graphviz lib and include locations are required when
+     installing Pygraphviz.
+     </li>
+     <li class="itemize">The pygraphviz <span class="lstinline"><span 
+class="pcrr7t-">setup</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">gz</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24003r3"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cd</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pygraphviz</span><span 
-class="pcrr7t-">-1.1</span>
-
-
-
-
-
-   </div>
-<!--l. 827--><p class="indent" >   Now edit setup.py lines 31 and 32 to specify the graphviz lib and include directories: <!--l. 829--><div class="lstlisting">
+class="pcrr7t-">py</span></span> file may need to be edited to point at your local graphviz library and include
+     directories: <!--l. 658--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24004r1"></a></span><span 
+ id="x5-20005r1"></a></span><span 
+class="pcrr7t-">#</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">setup</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">py</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">lines</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">31</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">and</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">32</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x5-20006r2"></a></span><span 
 class="pcrr7t-">library_path</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">os</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">environ</span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">+</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
+class="pcrr7t-">='/</span><span 
+class="pcrr7t-">path</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
+class="pcrr7t-">to</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
+class="pcrr7t-">local</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">graphviz</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">lib</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24005r2"></a></span><span 
+ id="x5-20007r3"></a></span><span 
 class="pcrr7t-">include_path</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">os</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">environ</span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">+</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
+class="pcrr7t-">='/</span><span 
+class="pcrr7t-">path</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
+class="pcrr7t-">to</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">include</span><span 
+class="pcrr7t-">local</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">graphviz</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">include</span><span 
 class="pcrr7t-">'</span>
 
 
-   </div>
-<!--l. 833--><p class="indent" >   Or use absolute paths instead of the <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span></span> environment variable. Check that these are the correct library
-and include paths by inspecting the contents of the specified directories, and adjust them if necessary. Finally, install
-pygraphviz: <!--l. 837--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24006r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">export</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">path</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">to</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24007r2"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+     </div>
+     </li>
+     <li class="itemize">Note that when using <span class="lstinline"><span 
 class="pcrr7t-">python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">setup</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">py</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">install</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">prefix</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span>
+class="pcrr7t-">py</span></span> or <span class="lstinline"><span 
+class="pcrr7t-">easy_install</span></span> the local install location may
+     need to exist and it may be need to be present in <span class="lstinline"><span 
+class="pcrr7t-">PYTHONPATH</span></span> <span 
+class="cmti-10">before </span>you initiate the install
+     process.</li></ul>
+<!--l. 669--><p class="noindent" >Finally, check that everything (other than <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+class="E">E</span>X</span></span>for document processing) is installed:
+   <!--l. 673--><div class="lstlisting">
 
 
-   </div>
-<!--l. 841--><p class="indent" >   This may or may not, depending on your local Python setup, install the Pygraphviz modules into the same place
-as the Pyro modules, e.g.: <!--l. 843--><div class="lstlisting">
+
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24008r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ls</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib64</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">python2</span><span 
-class="pcrr7t-">.6/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">packages</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-24009r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pygraphviz</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pygraphviz</span><span 
-class="pcrr7t-">-1.1-</span><span 
-class="pcrr7t-">py2</span><span 
-class="pcrr7t-">.6.</span><span 
-class="pcrr7t-">egg</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">info</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Pyro</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Pyro</span><span 
-class="pcrr7t-">-3.14-</span><span 
-class="pcrr7t-">py2</span><span 
-class="pcrr7t-">.6.</span><span 
-class="pcrr7t-">egg</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">info</span>
-
-
-   </div>
-<!--l. 847--><p class="indent" >   If not, add the correct Pyraphviz installation path to your PYTHONPATH.
-<!--l. 849--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">4.7.4   </span> <a 
- id="x5-250004.7.4"></a>Jinja2</h5>
-<!--l. 851--><p class="noindent" >Download Jinja2 from the project web site and install it with: <!--l. 852--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25001r1"></a></span><span 
-class="pcrr7t-">python</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">setup</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">py</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">install</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">prefix</span><span 
-class="pcrr7t-">=/</span><span 
-class="pcrr7t-">path</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">to</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">install</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">location</span>
-
-
-   </div>
-<!--l. 855--><p class="indent" >   or use the <span class="lstinline"><span 
-class="pcrr7t-">easy_install</span></span> command to do it all in one step. Either way the final installed package location
-must be present in the <span class="lstinline"><span 
-class="pcrr7t-">PYTHONPATH</span></span> variable, and you may have to arrange for this first. You may also need to
-create the installed package directory if it doesn&#8217;t exist already (the install will abort and print the name of the
-missing directory in the error message). Here&#8217;s how to easy_install Jinja2 into your private site packages
-directory:
-   <!--l. 864--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25002r1"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">LOCALPREFIX</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25003r2"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">LOCALPACKAGES</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">external</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">installed</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib64</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">python2</span><span 
-class="pcrr7t-">.6/</span><span 
-class="pcrr7t-">site</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">packages</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25004r3"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">export</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">PYTHONPATH</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">LOCALPACKAGES</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">PYTHONPATH</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25005r4"></a></span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">easy_install</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">prefix</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">LOCALPREFIX</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">Jinja2</span>
-
-
-   </div>
-<!--l. 870--><p class="indent" >   Adapt the site-packages path according to your actual path, as above.
-<!--l. 872--><p class="indent" >   Finally, check that everything other than <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
-class="E">E</span>X</span></span>is installed properly: <!--l. 873--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25006r1"></a></span><span 
+ id="x5-20008r1"></a></span><span 
+class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">check</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">sof</span><span 
+class="pcrr7t-">software</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25007r2"></a></span><span 
+ id="x5-20009r2"></a></span><span 
 class="pcrr7t-">Checking</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">for</span><span 
+class="pcrr7t-">for</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1873,10 +655,10 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25008r3"></a></span><span 
+ id="x5-20010r3"></a></span><span 
 class="pcrr7t-">Checking</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">for</span><span 
+class="pcrr7t-">for</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">non</span><span 
 class="pcrr7t-">-</span><span 
@@ -1885,7 +667,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">packages</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25009r4"></a></span><span 
+ id="x5-20011r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1895,7 +677,7 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25010r5"></a></span><span 
+ id="x5-20012r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1905,17 +687,17 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25011r6"></a></span><span 
+ id="x5-20013r6"></a></span><span 
 class="pcrr7t-">Checking</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">for</span><span 
+class="pcrr7t-">for</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Python</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">packages</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25012r7"></a></span><span 
+ id="x5-20014r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1926,7 +708,7 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25013r8"></a></span><span 
+ id="x5-20015r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1936,7 +718,7 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25014r9"></a></span><span 
+ id="x5-20016r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1946,7 +728,7 @@ class="pcrr7t-">...</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ok</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x5-25015r10"></a></span><span 
+ id="x5-20017r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1958,39 +740,26 @@ class="pcrr7t-">ok</span>
 
 
    </div>
-<!--l. 885--><p class="indent" >   If this command reports an error for any Python packages then those packages are not installed, or they are not
-in the system python search path and not in your <span class="lstinline"><span 
+<!--l. 685--><p class="indent" >   If this command reports any errors then the packages concerned are not installed, not in the system Python
+search path, or (for a local install) not present in your <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
-class="pcrr7t-">PYTHONPATH</span></span> environment variable.
+class="pcrr7t-">PYTHONPATH</span></span> variable.
+<!--l. 689--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">4.5   </span> <a 
+ id="x5-210004.5"></a>Upgrading To New Cylc Versions</h4>
+<!--l. 691--><p class="noindent" >Upgrading is just a matter of unpacking the new cylc release. Successive cylc releases can be installed in parallel as
+suggested in the <span class="lstinline"><span 
+class="pcrr7t-">INSTALL</span></span> file (Section&#x00A0;<a 
+href="cug-htmlse22.html#x23-466000G">G<!--tex4ht:ref: INSTALL --></a>).
                                                                                          
 
                                                                                          
-<!--l. 889--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">4.8   </span> <a 
- id="x5-260004.8"></a>What Next?</h4>
-<!--l. 891--><p class="noindent" >You should now have access to all cylc functionality. Import the example suites if you have not done so
-already (Section&#x00A0;<a 
-href="#x5-180004.4">4.4<!--tex4ht:ref: ImportTheExampleSuites --></a>) then test your cylc installation by running the automated suite database test
-(Section&#x00A0;<a 
-href="#x5-190004.5">4.5<!--tex4ht:ref: RTADT --></a>) and the automated scheduler test (Section&#x00A0;<a 
-href="#x5-200004.6">4.6<!--tex4ht:ref: RTAST --></a>), then go on to the <span 
-class="cmti-10">Quick Start Guide</span>
-(Section&#x00A0;<a 
-href="cug-htmlse6.html#x7-290006">6<!--tex4ht:ref: QuickStartGuide --></a>).
-<!--l. 899--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">4.9   </span> <a 
- id="x5-270004.9"></a>Upgrading To New Cylc Versions</h4>
-<!--l. 901--><p class="noindent" >Upgrading is just a matter of unpacking the new cylc release and optionally re-importing the example suites for the
-new version.
-                                                                                         
-
-                                                                                         
-   <!--l. 905--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 695--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse5.html" >next</a>] [<a 
 href="cug-htmlse3.html" >prev</a>] [<a 
 href="cug-htmlse3.html#tailcug-htmlse3.html" >prev-tail</a>] [<a 
 href="cug-htmlse4.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse4.html" >up</a>] </p></div>
-<!--l. 905--><p class="indent" >   <a 
+<!--l. 695--><p class="indent" >   <a 
  id="tailcug-htmlse4.html"></a>   
 </body></html> 

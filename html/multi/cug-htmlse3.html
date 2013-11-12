@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-06-14 10:49:00"> 
+<meta name="date" content="2013-11-13 11:16:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 384--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 382--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
@@ -27,13 +27,13 @@ href="#x4-130003.2">Other Software Used Internally By Cylc</a></span>
    </div>
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 5.3.0 .
-     <br class="newline" /><span class="obeylines-h"><a 
+class="cmbx-10">Cylc</span>, the version associated with this document is: 5.4.0 .
+     <br class="newline" />Cylc can be downloaded from from GitHub: <span class="obeylines-h"><a 
 href="http://cylc.github.com/cylc" class="url" ><span 
 class="pcrr7t-">http://cylc.github.com/cylc</span></a></span>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">OS: Linux, Unix, including OS X.</span>
+class="cmbx-10">OS: A Linux or Unix variant (including, reportedly, Apple OS X).</span>
      </li>
      <li class="itemize"><span 
 class="cmbx-10">The Python Language, version 2.5 or later, but not 3.x yet</span>.
@@ -42,13 +42,13 @@ href="http://python.org" class="url" ><span
 class="pcrr7t-">http://python.org</span></a></span>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">Pyro (Python Remote Objects), version 3.10</span>+<span 
-class="cmbx-10">, latest tested 3.16</span>; not Pyro 4.x as yet. Pyro
-     is used by cylc for network communication between server processes (cylc suites) and client programs
-     (running tasks, gcylc, commands).
+class="cmbx-10">Pyro-3 (Python Remote Objects), version 3.10</span>+<span 
+class="cmbx-10">, latest tested 3.16</span>; not Pyro4 as yet. Pyro
+     is used for network communication between server processes (cylc suites) and client programs (running
+     tasks, the gcylc GUI, user commands).
      <br class="newline" /><span class="obeylines-h"><a 
-href="http://irmen.home.xs4all.nl/pyro3" class="url" ><span 
-class="pcrr7t-">http://irmen.home.xs4all.nl/pyro3</span></a></span>
+href="http://pypi.python.org/pypi/Pyro/" class="url" ><span 
+class="pcrr7t-">http://pypi.python.org/pypi/Pyro/</span></a></span>
      </li>
      <li class="itemize"><span 
 class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</span>). This is likely included in your
@@ -57,16 +57,15 @@ class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</
      <br class="newline" /><span class="obeylines-h"><a 
 href="http://sqlite.org" class="url" ><span 
 class="pcrr7t-">http://sqlite.org</span></a></span></li></ul>
-<!--l. 406--><p class="indent" >   The following packages are technically optional as you can construct and control cylc suites without dependency
-graphing, the cylc GUIs, and template processing <span 
-class="cmti-10">but this is not recommended, and without Jinja2 you will not be</span>
+<!--l. 403--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
+graphing, the gcylc GUI, or template processing <span 
+class="cmti-10">but this is not recommended, and without Jinja2 you will not be able</span>
 <span 
-class="cmti-10">able to run many of the example suites</span>:
+class="cmti-10">to run many of the example suites</span>:
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">PyGTK</span>, a Python wrapper for the GTK+ GUI toolkit, required for the cylc GUI (but you can prepare
-     and control cylc suites entirely from the command line if you like). PyGTK is included in most Linux
-     Distributions.
+class="cmbx-10">PyGTK</span>, a Python wrapper for the GTK+ GUI toolkit, required for the gcylc GUI. PyGTK is included
+     in most Linux Distributions.
      <br class="newline" /><span class="obeylines-h"><a 
 href="http://www.pygtk.org" class="url" ><span 
 class="pcrr7t-">http://www.pygtk.org</span></a></span>
@@ -74,8 +73,7 @@ class="pcrr7t-">http://www.pygtk.org</span></a></span>
      <li class="itemize"><span 
 class="cmbx-10">Graphviz </span>(latest tested 2.28.0) and <span 
 class="cmbx-10">Pygraphviz </span>(latest tested 1.1), a graph layout engine and a
-     Python interface to it. These are required for suite dependency graphing and the gcylc graph view (but
-     you can also run cylc without them).
+     Python interface to it.
      <br class="newline" /><span class="obeylines-h"><a 
 href="http://www.graphviz.org" class="url" ><span 
 class="pcrr7t-">http://www.graphviz.org</span></a></span>
@@ -84,27 +82,27 @@ href="http://networkx.lanl.gov/pygraphviz" class="url" ><span
 class="pcrr7t-">http://networkx.lanl.gov/pygraphviz</span></a></span>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">Jinja2</span>, a template processor for Python (latest tested: 2.6). Jinja2 adds variables, conditional and
-                                                                                         
-
-                                                                                         
-     mathematical expressions, loop control structures, etc., to cylc suite definition files.
+class="cmbx-10">Jinja2</span>, a template processor for Python (latest tested: 2.6). Jinja2 allows use of general programming
+     constructs in suite definitions.
      <br class="newline" /><span class="obeylines-h"><a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
 class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></span></li></ul>
-<!--l. 431--><p class="indent" >   If installing via a Linux package manager, you may also need a couple of <span 
-class="cmti-10">devel </span>packages for the pygraphviz
-build:
+                                                                                         
+
+                                                                                         
+<!--l. 424--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
+class="cmti-10">devel </span>packages for the
+pygraphviz build:
      <ul class="itemize1">
      <li class="itemize">python-devel
      </li>
      <li class="itemize">graphviz-devel</li></ul>
-<!--l. 439--><p class="indent" >   Tagged versions of cylc-5.0 or later can be downloaded and installed from GitHub. The user guide must be
-generated after download from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
-class="E">E</span>X</span></span>source documents (by running <span class="lstinline"><span 
-class="pcrr7t-">make</span></span>). The following <span class="TEX">T<span 
-class="E">E</span>X</span>packages are
-required:
+<!--l. 432--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+class="E">E</span>X</span></span>source by running <span class="lstinline"><span 
+class="pcrr7t-">make</span></span> in the top level cylc directory after
+download. The following <span class="TEX">T<span 
+class="E">E</span>X</span>packages are required (but note that the exact packages required may be somewhat
+OS or distribution-dependent):
      <ul class="itemize1">
      <li class="itemize">texlive
      </li>
@@ -113,12 +111,13 @@ required:
      <li class="itemize">texlive-framed
      </li>
      <li class="itemize">texlive-preprint (for fullpage.sty, formerly in tetex)</li></ul>
-<!--l. 450--><p class="noindent" >And for HTML versions of the User Guide:
+<!--l. 443--><p class="noindent" >And for HTML versions of the User Guide:
      <ul class="itemize1">
      <li class="itemize">texlive-tex4ht
      </li>
      <li class="itemize">ImageMagick (for image scaling)</li></ul>
-<!--l. 457--><p class="indent" >   Finally, cylc makes heavy use of &#8220;ordered dictionary&#8221; data structures, and a significant speedup in
+<!--l. 450--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
+class="cmti-10">ordered dictionary </span>data structures. Significant speedup in
 parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
 class="pcrr7t-">ordereddict</span></span> module by Anthon van der
 Neut:
@@ -128,35 +127,33 @@ class="cmbx-10">ordereddict </span>(latest tested 0.4.5)
      <br class="newline" /><span class="obeylines-h"><a 
 href="http://www.xs4all.nl/~anthon/Python/ordereddict" class="url" ><span 
 class="pcrr7t-">http://www.xs4all.nl/~anthon/Python/ordereddict</span></a></span></li></ul>
-<!--l. 465--><p class="noindent" >This module is currently included with cylc under <span class="lstinline"><span 
+<!--l. 458--><p class="noindent" ><span 
+class="cmti-10">This module is currently included with cylc </span>under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">ext</span></span>, and is built by the top level cylc Makefile. If you
 install the resulting library appropriately cylc will automatically use it in place of a slower Python implementation
 of the ordered dictionary structure.
-<!--l. 471--><p class="noindent" >
+<!--l. 464--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">3.1   </span> <a 
  id="x4-100003.1"></a>Known Version Compatibility Issues</h4>
-<!--l. 473--><p class="noindent" >Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
-<!--l. 475--><p class="indent" >   For distributed suites the Pyro versions installed on all suite or task hosts must be mutually compatible. Using
+<!--l. 466--><p class="noindent" >Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
+<!--l. 468--><p class="indent" >   For distributed suites the Pyro versions installed on all suite or task hosts must be mutually compatible. Using
 identical Pyro versions guarantees compatibility but may not be strictly necessary because cylc uses Pyro rather
 minimally.
-<!--l. 480--><p class="indent" >   Recent versions of Pyro require Python 2.5 or greater, due to use of the <span class="lstinline"><span 
-class="pcrr7t-">with</span></span> statement introduced in
-2.5.
                                                                                          
 
                                                                                          
-<!--l. 483--><p class="noindent" >
+<!--l. 473--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">3.1.1   </span> <a 
  id="x4-110003.1.1"></a>Pyro 3.9 and Earlier</h5>
-<!--l. 485--><p class="noindent" >Beware of Linux distributions that come packaged with old Pyro versions. Pyro 3.9 and earlier is not compatible
+<!--l. 475--><p class="noindent" >Beware of Linux distributions that come packaged with old Pyro versions. Pyro 3.9 and earlier is not compatible
 with the new-style Python classes used in cylc. It has been reported that Ubuntu 10.04 (Lucid Lynx), released in
 September 2009, suffers from this problem. Surprisingly, so does Ubuntu 11.10 (Oneiric Ocelot), released in October
-2011 - and therefore, presumably, earlier Ubuntu releases. Attempting to run a suite with Pyro 3.9 or earlier
+2011 - and therefore, presumably, all earlier Ubuntu releases. Attempting to run a suite with Pyro 3.9 or earlier
 installed results in the following Python traceback:
-   <!--l. 495--><div class="lstlisting">
+   <!--l. 485--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11001r1"></a></span><span 
@@ -180,7 +177,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">home</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
+class="pcrr7t-">hilary</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
@@ -217,7 +214,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">home</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
+class="pcrr7t-">hilary</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
@@ -254,7 +251,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">home</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
+class="pcrr7t-">hilary</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
@@ -292,7 +289,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">home</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
+class="pcrr7t-">hilary</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
@@ -354,7 +351,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">home</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
+class="pcrr7t-">hilary</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
@@ -412,7 +409,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">home</span><span 
 class="pcrr7t-">/</span><span 
-class="pcrr7t-">oliverh</span><span 
+class="pcrr7t-">hilary</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
@@ -497,10 +494,10 @@ class="pcrr7t-">1</span>
 
 
    </div>
-<!--l. 518--><p class="noindent" >
+<!--l. 508--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">3.1.2   </span> <a 
  id="x4-120003.1.2"></a>Apple Mac OSX</h5>
-<!--l. 520--><p class="noindent" >It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
+<!--l. 510--><p class="noindent" >It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
 constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
 to solve the problem:
      <ul class="itemize1">
@@ -526,7 +523,7 @@ class="pcrr7t-">&#x003E;-</span><span
 class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 528--><div class="lstlisting">
+class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 518--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-12001r1"></a></span><span 
@@ -602,7 +599,7 @@ class="pcrr7t-">&#x003E;</span>
 
      </div>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 537--><div class="lstlisting">
+     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 527--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-12007r1"></a></span><span 
@@ -664,27 +661,23 @@ class="pcrr7t-">plist</span>
 
      </div>
      </li></ul>
-<!--l. 546--><p class="noindent" >
+<!--l. 536--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">3.2   </span> <a 
  id="x4-130003.2"></a>Other Software Used Internally By Cylc</h4>
-<!--l. 548--><p class="noindent" >Cylc has absorbed the following in modified form (no need to install these separately):
-     <ul class="itemize1">
-     <li class="itemize">xdot, a graph viewer (<span class="obeylines-h"><a 
+<!--l. 538--><p class="noindent" >Cylc has incorporated a custom-modified version the <span 
+class="cmti-10">xdot </span>graph viewer (<span class="obeylines-h"><a 
 href="http://code.google.com/p/jrfonseca/wiki/XDot" class="url" ><span 
-class="pcrr7t-">http://code.google.com/p/jrfonseca/wiki/XDot</span></a></span>, LGPL license)
-     </li>
-     <li class="itemize">ConfigObj and Validate (<span class="obeylines-h"><a 
-href="http://www.voidspace.org.uk/python" class="url" ><span 
-class="pcrr7t-">http://www.voidspace.org.uk/python</span></a></span>, BSD license)</li></ul>
+class="pcrr7t-">http://code.google.com/p/jrfonseca/wiki/XDot</span></a></span>,
+LGPL license).
                                                                                          
 
                                                                                          
-   <!--l. 559--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 542--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 559--><p class="indent" >   <a 
+<!--l. 542--><p class="indent" >   <a 
  id="tailcug-htmlse3.html"></a>   
 </body></html> 

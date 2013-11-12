@@ -1,55 +1,162 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Suite Storage, Discovery, Revision Control, and Deployment</title> 
+<head><title>Other Topics In Brief</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-06-14 10:49:00"> 
+<meta name="date" content="2013-11-13 11:16:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5324--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5769--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse14.html" >next</a>] [<a 
 href="cug-htmlse12.html" >prev</a>] [<a 
 href="cug-htmlse12.html#tailcug-htmlse12.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse13.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse13.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">13   </span> <a 
- id="x14-17400013"></a>Suite Storage, Discovery, Revision Control, and Deployment</h3>
+ id="x14-18700013"></a>Other Topics In Brief</h3>
    <div class="sectionTOCS">
-   &#x00A0;<span class="subsectionToc" >13.1 <a 
-href="#x14-17500013.1">Rose</a></span>
    </div>
-<!--l. 5326--><p class="indent" >   Small groups of cylc users can of course share suites by manual copying, and generic revision control tools can be
-used on cylc suites as for any collection of files. Beyond this cylc does not have a built-in solution for suite storage
-and discovery, revision control, and deployment, on a network. That is not cylc&#8217;s core purpose, and large sites may
-have preferred revision control systems and suite meta-data requirements that are difficult to anticipate.
-We can, however, recommend the use of <span 
-class="cmti-10">Rose </span>to do all of this very easily and elegantly with cylc
-suites.
-<!--l. 5335--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">13.1   </span> <a 
- id="x14-17500013.1"></a>Rose</h4>
-<!--l. 5337--><p class="noindent" ><span 
-class="cmbx-10">Rose </span>is <span 
-class="cmti-10">a framework for managing and running suites of scientific applications</span>, developed at the UK Met Office for
-use with cylc. It is available under the open source GPL license.
+<!--l. 5771--><p class="indent" >   The following topics have yet to be documented in detail.
      <ul class="itemize1">
-     <li class="itemize">Rose documentation: http://metomi.github.io/rose/doc/rose.html
+     <li class="itemize">The difference between cold-, warm-, raw-, and re-starting, a suite: see <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>.
      </li>
-     <li class="itemize">Rose source repository: https://github.com/metomi/rose</li></ul>
+     <li class="itemize">Intervening in suites, e.g.&#x00A0;stopping, removing, inserting tasks: see <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">control</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>.
+     </li>
+     <li class="itemize">Interrogating     suites     and     tasks:     see     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">info</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>,     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">show</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>,     and
+     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">discovery</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span>.
+     </li>
+     <li class="itemize">Understanding  suite  evolution,  particularly  in  delayed/catchup  operation:  the  Tutorial  helps  here
+     (Section&#x00A0;<a 
+href="cug-htmlse7.html#x8-240007">7<!--tex4ht:ref: Tutorial --></a>), along with running the example suites.
+     </li>
+     <li class="itemize">Automatic state dump backups, named pre-intervention state dumps: these are used to resetart a suite
+     from a previous state of operation. They are mentioned in the Tutorial (Section&#x00A0;<a 
+href="cug-htmlse7.html#x8-240007">7<!--tex4ht:ref: Tutorial --></a>). Watch the suite
+     log after intervening in a suite, to get the filename.
+     </li>
+     <li class="itemize">Recursive purge: this is a powerful intervention but you need to understand how it works before using
+     it. See <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">purge</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">help</span></span> for details.
+     </li>
+     <li class="itemize">Handling   spin-up   processes   via   temporary   tasks   and   adding   prerequisites   on-the-fly:   see
+     <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">depend</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">help</span></span>, and note that when you insert a task into a running suite (a) the initial cycle
+     time can be in the past; and (b) you can give a final cycle time after which the task will be eliminated
+     from the suite.
+     </li>
+     <li class="itemize">Sub-suites: to run another suite inside a task, just invoke the subsuite, with appropriate start and end
+     cycles (probably a single cycle), in the host task&#8217;s command scripting:
+     <!--l. 5814--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-187001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-187002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-187003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">command</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">scripting</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x14-187004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">run</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">SUITE</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">until</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
+class="pcrr7t-">"</span>
+
+
+     </div>
+     </li></ul>
                                                                                          
 
                                                                                          
-   <!--l. 5347--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5824--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse14.html" >next</a>] [<a 
 href="cug-htmlse12.html" >prev</a>] [<a 
 href="cug-htmlse12.html#tailcug-htmlse12.html" >prev-tail</a>] [<a 
 href="cug-htmlse13.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse13.html" >up</a>] </p></div>
-<!--l. 5347--><p class="indent" >   <a 
- id="tailcug-htmlse13.html"></a>   
+<!--l. 5824--><p class="indent" >   <a 
+ id="tailcug-htmlse13.html"></a>  
 </body></html> 

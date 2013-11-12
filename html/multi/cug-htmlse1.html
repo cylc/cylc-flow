@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-06-14 10:49:00"> 
+<meta name="date" content="2013-11-13 11:16:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 3--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 4--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse2.html" >next</a>] [<a 
 href="cug-html.html" >prev</a>] [<a 
 href="cug-html.html#tailcug-html" >prev-tail</a>] [<a 
@@ -22,6 +22,9 @@ href="cug-html.html#cug-htmlse1.html" >up</a>] </p></div>
    <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >1.1 <a 
 href="#x2-20001.1">Scheduling Forecast Suites</a></span>
+                                                                                         
+
+                                                                                         
 <br />   &#x00A0;<span class="subsectionToc" >1.2 <a 
 href="#x2-30001.2">EcoConnect</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >1.3 <a 
@@ -29,10 +32,10 @@ href="#x2-40001.3">Dependence Between Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >1.4 <a 
 href="#x2-70001.4">The Cylc Scheduling Algorithm</a></span>
    </div>
-<!--l. 6--><p class="noindent" >
+<!--l. 7--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">1.1   </span> <a 
  id="x2-20001.1"></a>Scheduling Forecast Suites</h4>
-<!--l. 9--><p class="noindent" >Environmental forecasting suites generate forecast products from a potentially large group of interdependent
+<!--l. 10--><p class="noindent" >Environmental forecasting suites generate forecast products from a potentially large group of interdependent
 scientific models and associated data processing tasks. They are constrained by availability of external driving data:
 typically one or more tasks will wait on real time observations and/or model data from an external system, and
 these will drive other downstream tasks, and so on. The dependency diagram for a single forecast cycle
@@ -46,17 +49,14 @@ class="cmti-10">cycle time</span>, which is the nominal analysis time or start
 time of the forecast models in the group). In real time operation processing will consist of a series of
 distinct forecast cycles that are each initiated, after a gap, by arrival of the new cycle&#8217;s external driving
 data.
-<!--l. 23--><p class="indent" >   From a job scheduling perspective task execution order in such a system must be carefully controlled in order to
+<!--l. 24--><p class="indent" >   From a job scheduling perspective task execution order in such a system must be carefully controlled in order to
 avoid dependency violations. Ideally, each task should be queued for execution at the instant its last prerequisite is
 satisfied; this is the best that can be done even if queued tasks are not able to execute immediately because of
 resource contention.
-                                                                                         
-
-                                                                                         
-<!--l. 30--><p class="noindent" >
+<!--l. 31--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">1.2   </span> <a 
  id="x2-30001.2"></a>EcoConnect</h4>
-<!--l. 33--><p class="noindent" >Cylc was developed for the EcoConnect Forecasting System at NIWA (National Institute of Water
+<!--l. 34--><p class="noindent" >Cylc was developed for the EcoConnect Forecasting System at NIWA (National Institute of Water
 and Atmospheric Research, New Zealand). EcoConnect takes real time atmospheric and stream flow
 observations, and operational global weather forecasts from the Met Office (UK), and uses these to
 drive global sea state and regional data assimilating weather models, which in turn drive regional sea
@@ -71,24 +71,27 @@ accumulations to catchment river models that run on an hourly cycle assimilating
 observations and using the most recently available regional weather forecast. EcoConnect runs on
 heterogeneous distributed hardware, including a massively parallel supercomputer and several Linux
 servers.
-<!--l. 53--><p class="noindent" >
+<!--l. 54--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">1.3   </span> <a 
  id="x2-40001.3"></a>Dependence Between Tasks</h4>
-<!--l. 55--><p class="noindent" >
+<!--l. 56--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">1.3.1   </span> <a 
  id="x2-50001.3.1"></a>Intra-cycle Dependence</h5>
-<!--l. 58--><p class="noindent" >Most inter-task dependence exist within a single forecast cycle. Figure&#x00A0;<a 
-href="#x2-50011">1<!--tex4ht:ref: fig-dep-one --></a> shows the dependency diagram for a single
-forecast cycle of a simple example suite of three forecast models (<span 
+<!--l. 59--><p class="noindent" >Most dependence between tasks applies within a single forecast cycle. Figure&#x00A0;<a 
+href="#x2-50011">1<!--tex4ht:ref: fig-dep-one --></a> shows the dependency diagram for a
+single forecast cycle of a simple example suite of three forecast models (<span 
 class="cmti-10">a, b, </span>and <span 
 class="cmti-10">c</span>) and three post processing
 or product generation tasks (<span 
 class="cmti-10">d, e </span>and <span 
 class="cmti-10">f</span>). A scheduler capable of handling this must manage, within
+                                                                                         
+
+                                                                                         
 a single forecast cycle, multiple parallel streams of execution that branch when one task generates
 output for several downstream tasks, and merge when one task takes input from several upstream
 tasks.
-<!--l. 68--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 69--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -101,9 +104,9 @@ tasks.
                                                                                          
 <div class="center" 
 >
-<!--l. 69--><p class="noindent" >
+<!--l. 70--><p class="noindent" >
 
-<!--l. 70--><p class="noindent" ><img 
+<!--l. 71--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-one-cycle.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -126,8 +129,8 @@ class="cmr-7">on.</span></td></tr></table><!--tex4ht:label?: x2-50011 -->
                                                                                          
 
                                                                                          
-<!--l. 79--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 81--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 80--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 82--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -140,9 +143,9 @@ class="cmr-7">on.</span></td></tr></table><!--tex4ht:label?: x2-50011 -->
                                                                                          
 <div class="center" 
 >
-<!--l. 82--><p class="noindent" >
+<!--l. 83--><p class="noindent" >
 
-<!--l. 83--><p class="noindent" ><img 
+<!--l. 84--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-one.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -156,15 +159,15 @@ class="cmr-7">blue lines show when the external driving data becomes available.<
                                                                                          
 
                                                                                          
-<!--l. 92--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 94--><p class="indent" >   Figure&#x00A0;<a 
+<!--l. 93--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 95--><p class="indent" >   Figure&#x00A0;<a 
 href="#x2-50022">2<!--tex4ht:ref: fig-time-one --></a> shows the optimal job schedule for two consecutive cycles of the example suite in real time operation,
 given execution times represented by the horizontal extent of the task bars. There is a time gap between cycles as
 the suite waits on new external driving data. Each task in the example suite happens to trigger off upstream tasks
 <span 
 class="cmti-10">finishing</span>, rather than off any intermediate output or event; this is merely a simplification that makes for clearer
 diagrams.
-<!--l. 103--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 104--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -177,9 +180,9 @@ diagrams.
                                                                                          
 <div class="center" 
 >
-<!--l. 104--><p class="noindent" >
+<!--l. 105--><p class="noindent" >
 
-<!--l. 105--><p class="noindent" ><img 
+<!--l. 106--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-two-cycles-linked.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -189,8 +192,8 @@ class="cmr-7">If the external driving data is available in advance, can we start
                                                                                          
 
                                                                                          
-<!--l. 111--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 113--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 112--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 114--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -203,9 +206,9 @@ class="cmr-7">If the external driving data is available in advance, can we start
                                                                                          
 <div class="center" 
 >
-<!--l. 114--><p class="noindent" >
+<!--l. 115--><p class="noindent" >
 
-<!--l. 115--><p class="noindent" ><img 
+<!--l. 116--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-one-c.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -217,8 +220,8 @@ class="cmr-7">because of dependency violations (or will not be able to run becau
                                                                                          
 
                                                                                          
-<!--l. 123--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 125--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 124--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 126--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -231,9 +234,9 @@ class="cmr-7">because of dependency violations (or will not be able to run becau
                                                                                          
 <div class="center" 
 >
-<!--l. 126--><p class="noindent" >
+<!--l. 127--><p class="noindent" >
 
-<!--l. 127--><p class="noindent" ><img 
+<!--l. 128--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-one-a.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -245,50 +248,52 @@ class="cmr-7">when inter-cycle dependence is ignored.</span></td></tr></table><!
                                                                                          
 
                                                                                          
-<!--l. 133--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 135--><p class="indent" >   Now the question arises, what happens if the external driving data for upcoming cycles is available in advance,
-as it would be after a significant delay in operations, or when running a historical case study? While the forecast
-model <span 
+<!--l. 134--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 136--><p class="indent" >   Now the question arises, what happens if the external driving data for upcoming cycles is available
+in advance, as it would be after a significant delay in operations, or when running a historical case
+study? While the forecast model <span 
 class="cmti-10">a </span>appears to depend only on the external data <span 
-class="cmti-10">x </span>at this stage of the discussion, in fact it would typically also
-depend on its own previous instance for the model <span 
-class="cmti-10">background state </span>used in initializing the new forecast. Thus, as
-alluded to in Figure&#x00A0;<a 
+class="cmti-10">x </span>at this stage of the
+discussion, in fact it would typically also depend on its own previous instance for the model <span 
+class="cmti-10">background</span>
+<span 
+class="cmti-10">state </span>used in initializing the new forecast. Thus, as alluded to in Figure&#x00A0;<a 
 href="#x2-50033">3<!--tex4ht:ref: fig-dep-two-linked --></a>, task <span 
-class="cmti-10">a </span>could in principle start as soon as its predecessor has finished. Figure&#x00A0;<a 
-href="#x2-50044">4<!--tex4ht:ref: fig-overlap --></a> shows,
-however, that starting a whole new cycle at this point is dangerous - it results in dependency violations in half of the
-tasks in the example suite. In fact the situation is even worse than this - imagine that task <span 
+class="cmti-10">a </span>could in principle
+start as soon as its predecessor has finished. Figure&#x00A0;<a 
+href="#x2-50044">4<!--tex4ht:ref: fig-overlap --></a> shows, however, that starting a whole new cycle
+at this point is dangerous - it results in dependency violations in half of the tasks in the example
+suite. In fact the situation could be even worse than this - imagine that task <span 
 class="cmti-10">b </span>in the first cycle is
-delayed for any reason <span 
-class="cmti-10">after </span>the second cycle has been launched? Clearly we must consider handling
+delayed for some reason <span 
+class="cmti-10">after </span>the second cycle has been launched. Clearly we must consider handling
 inter-cycle dependence explicitly or else agree not to start the next cycle early, as is illustrated in
 Figure&#x00A0;<a 
 href="#x2-50055">5<!--tex4ht:ref: fig-job-no-overlap --></a>.
    <h5 class="subsubsectionHead"><span class="titlemark">1.3.2   </span> <a 
  id="x2-60001.3.2"></a>Inter-cycle Dependence</h5>
-<!--l. 156--><p class="noindent" >Forecast models typically depend on their own most recent previous forecast for background state or restart files of
-some kind, and different types of tasks in different forecast cycles can also be linked (in an atmospheric forecast
-analysis suite, for instance, the weather model may also generate background states for use by the observation
-processing and data-assimilation systems in the next cycle). In real time operation this inter-cycle dependence can
-be ignored because it is automatically satisfied when each cycle finishes before the next one begins. If, on the other
-hand, it is explicitly accounted for, it complicates the dependency graph by destroying the clean boundary
-between forecast cycles. Figure&#x00A0;<a 
-href="#x2-60016">6<!--tex4ht:ref: fig-dep-multi --></a> illustrates the problem for our simple example suite assuming the
-minimal inter-cycle dependence: the forecast models (<span 
+<!--l. 157--><p class="noindent" >Forecast models typically depend on their own most recent previous forecast for background state or restart files of
+some kind (this is called <span 
+class="cmti-10">warm cycling</span>) but there can also be inter-cycle dependence between different tasks. In an
+atmospheric forecast analysis suite, for instance, the weather model may generate background states for observation
+processing and data-assimilation tasks in the next cycle as well as for then next forecast model run. In real time
+operation inter-cycle dependence can be ignored because it is automatically satisfied when one cycle finishes before
+the next begins. If it is not ignored it drastically complicates the dependency graph by blurring the clean
+boundary between cycles. Figure&#x00A0;<a 
+href="#x2-60016">6<!--tex4ht:ref: fig-dep-multi --></a> illustrates the problem for our simple example suite assuming
+minimal inter-cycle dependence: the warm cycled models (<span 
 class="cmmi-10">a</span>, <span 
 class="cmmi-10">b</span>, and <span 
 class="cmmi-10">c</span>) each depend on their own previous
 instances.
-<!--l. 171--><p class="indent" >   For this reason, and perhaps because we tend to see forecasting suites as inherently sequential (with respect
-to whole forecast cycles) other metaschedulers ignore inter-cycle dependence and therefore <span 
-class="cmti-10">require </span>a
-series of distinct cycles at all times. While this does not affect normal real time operation it can be a
-serious impediment when advance availability of external driving data makes it possible, in principle, to
-run some tasks from upcoming cycles before the current cycle is finished - as suggested at the end
-of the previous section. This occurs after delays (late arrival of external data, system maintenance,
-etc.) and, to an even greater extent, in historical case studies, and parallel test suites that are delayed
-with respect to the main operation. It is a serious problem, in particular, for suites that have little
+<!--l. 174--><p class="indent" >   For this reason, and because we tend to see forecasting suites in terms of by their real time characteristics,
+other metaschedulers have ignored inter-cycle dependence and are thus restricted to running entire
+cycles in sequence at all times. This does not affect normal real time operation but it can be a serious
+impediment when advance availability of external driving data makes it possible, in principle, to run
+some tasks from upcoming cycles before the current cycle is finished - as was suggested at the end of
+the previous section. This can occur, for instance, after operational delays (late arrival of external
+data, system maintenance, etc.) and to an even greater extent in historical case studies and parallel
+test suites started behind a real time operation. It can be a serious problem for suites that have little
 downtime between forecast cycles and therefore take many cycles to catch up after a delay. Without taking
 account of inter-cycle dependence, the best that can be done, in general, is to reduce the gap between
 cycles to zero as shown in Figure&#x00A0;<a 
@@ -298,7 +303,7 @@ is still dangerous: it amounts to running different parts of a dependent system 
 dependent and as such it cannot be guaranteed that some unforeseen delay in one cycle, after the
 next cycle has begun, (e.g.&#x00A0;due to resource contention or task failures) won&#8217;t result in dependency
 violations.
-<!--l. 196--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 200--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -311,9 +316,9 @@ violations.
                                                                                          
 <div class="center" 
 >
-<!--l. 197--><p class="noindent" >
+<!--l. 201--><p class="noindent" >
 
-<!--l. 198--><p class="noindent" ><img 
+<!--l. 202--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-multi-cycle.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -333,8 +338,8 @@ class="cmr-7">cycles.</span></td></tr></table><!--tex4ht:label?: x2-60016 -->
                                                                                          
 
                                                                                          
-<!--l. 206--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 208--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 210--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 212--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -347,9 +352,9 @@ class="cmr-7">cycles.</span></td></tr></table><!--tex4ht:label?: x2-60016 -->
                                                                                          
 <div class="center" 
 >
-<!--l. 209--><p class="noindent" >
+<!--l. 213--><p class="noindent" >
 
-<!--l. 210--><p class="noindent" ><img 
+<!--l. 214--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-two-cycles-optimal.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -361,15 +366,15 @@ class="cmr-7">inter-cycle dependence is handled explicitly.</span></td></tr></ta
                                                                                          
 
                                                                                          
-<!--l. 217--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 219--><p class="indent" >   Figure&#x00A0;<a 
+<!--l. 221--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 223--><p class="indent" >   Figure&#x00A0;<a 
 href="#x2-60027">7<!--tex4ht:ref: fig-optimal-two --></a> shows, in contrast to Figure&#x00A0;<a 
 href="#x2-50044">4<!--tex4ht:ref: fig-overlap --></a>, the optimal two cycle job schedule obtained by respecting all inter-cycle
 dependence. This assumes no delays due to resource contention or otherwise - i.e.&#x00A0;every task runs as soon as it is
 ready to run. The scheduler running this suite must be able to adapt dynamically to external conditions that impact
 on multi-cycle scheduling in the presence of inter-cycle dependence or else, again, risk bringing the system down
 with dependency violations.
-<!--l. 229--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 233--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -382,9 +387,9 @@ with dependency violations.
                                                                                          
 <div class="center" 
 >
-<!--l. 230--><p class="noindent" >
+<!--l. 234--><p class="noindent" >
 
-<!--l. 231--><p class="noindent" ><img 
+<!--l. 235--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-three.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -398,8 +403,8 @@ class="cmr-7">delayed, and normal &#8220;caught up&#8221; cycles are shaded gray
                                                                                          
 
                                                                                          
-<!--l. 241--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 243--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 245--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 247--><p class="indent" >   <hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -412,9 +417,9 @@ class="cmr-7">delayed, and normal &#8220;caught up&#8221; cycles are shaded gray
                                                                                          
 <div class="center" 
 >
-<!--l. 244--><p class="noindent" >
+<!--l. 248--><p class="noindent" >
 
-<!--l. 245--><p class="noindent" ><img 
+<!--l. 249--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-two.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -431,8 +436,8 @@ class="cmr-7">, and underneath is the best that can be done, in general, when in
                                                                                          
 
                                                                                          
-<!--l. 256--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 258--><p class="indent" >   To further illustrate the potential benefits of proper inter-cycle dependency handling, Figure&#x00A0;<a 
+<!--l. 260--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 262--><p class="indent" >   To further illustrate the potential benefits of proper inter-cycle dependency handling, Figure&#x00A0;<a 
 href="#x2-60038">8<!--tex4ht:ref: fig-time-three --></a> shows an
 operational delay of almost one whole cycle in a suite with little downtime between cycles. Above the time axis is
 the optimal schedule that is possible in principle when inter-cycle dependence is taken into account, and below it is
@@ -440,18 +445,18 @@ the only safe schedule possible <span
 class="cmti-10">in general </span>when it is ignored. In the former case, even the cycle immediately after the
 delay is hardly affected, and subsequent cycles are all on time, whilst in the latter case it takes five full cycles to
 catch up to normal real time operation.
-<!--l. 272--><p class="indent" >   Similarly, Figure&#x00A0;<a 
+<!--l. 276--><p class="indent" >   Similarly, Figure&#x00A0;<a 
 href="#x2-60049">9<!--tex4ht:ref: fig-time-two --></a> shows example suite job schedules for an historical case study, or when catching up after a
 very long delay; i.e.&#x00A0;when the external driving data are available many cycles in advance. Task <span 
 class="cmti-10">a</span>, which as the most
 upstream forecast model is likely to be a resource intensive atmosphere or ocean model, has no upstream
-dependence on co-temporal tasks and can therefore run continuously, regardless of how much downstream processing
-is yet to be completed in its own, or any previous, forecast cycle (actually, task <span 
-class="cmti-10">a </span>does depend on
-co-temporal task <span 
-class="cmti-10">x </span>which waits on the external driving data, but that returns immediately when the
-external data is available in advance, so the result stands). The other forecast models can also cycle
-continuously or with short gap between, and some post processing tasks, which have no previous-instance
+dependence on co-temporal tasks and can therefore run continuously, regardless of how much downstream
+processing is yet to be completed in its own, or any previous, forecast cycle (actually, task <span 
+class="cmti-10">a </span>does
+depend on co-temporal task <span 
+class="cmti-10">x </span>which waits on the external driving data, but that returns immediately
+when the data is available in advance, so the result stands). The other forecast models can also cycle
+continuously or with a short gap between, and some post processing tasks, which have no previous-instance
 dependence, can run continuously or even overlap (e.g.&#x00A0;<span 
 class="cmti-10">e </span>in this case). Thus, even for this very simple
 example suite, tasks from three or four different cycles can in principle run simultaneously at any
@@ -461,7 +466,7 @@ model restart outputs are generally completed early in the forecast) for an even
 schedule.
    <h4 class="subsectionHead"><span class="titlemark">1.4   </span> <a 
  id="x2-70001.4"></a>The Cylc Scheduling Algorithm</h4>
-<!--l. 302--><p class="noindent" ><hr class="figure"><div class="figure" 
+<!--l. 306--><p class="noindent" ><hr class="figure"><div class="figure" 
 ><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
@@ -474,9 +479,9 @@ schedule.
                                                                                          
 <div class="center" 
 >
-<!--l. 303--><p class="noindent" >
+<!--l. 307--><p class="noindent" >
 
-<!--l. 304--><p class="noindent" ><img 
+<!--l. 308--><p class="noindent" ><img 
 src="../../graphics/png/scaled/task-pool.png" alt="PIC"  
 ></div>
 <br /> <table class="caption" 
@@ -494,51 +499,33 @@ class="cmr-7">by the outputs of other tasks in the pool.</span></td></tr></table
                                                                                          
 
                                                                                          
-<!--l. 313--><p class="noindent" ></td></tr></table></div><hr class="endfigure">
-<!--l. 315--><p class="indent" >   Cylc manages a pool of proxy objects that represent real tasks in the forecasting suite. A task proxy can run the
-real task that it represents when its prerequisites are satisfied, and can receive reports of completed outputs from
-the real task as it runs. There is no global cycling mechanism to advance the suite in time; instead each individual
-task proxy has a private cycle time and spawns its own successor. Task proxies are self-contained
-- they just know their own prerequisites and outputs and are not aware of the wider suite context.
-Inter-cycle dependencies are not treated as special, and the task pool can be populated with tasks from
-many different cycle times. The cylc task pool is illustrated in Figure&#x00A0;<a 
-href="#x2-700110">10<!--tex4ht:ref: fig-task-pool --></a>. Now, <span 
-class="cmti-10">whenever any task</span>
+<!--l. 317--><p class="noindent" ></td></tr></table></div><hr class="endfigure">
+<!--l. 319--><p class="indent" >   Cylc manages a pool of proxy objects that represent the real tasks in a suite. Task proxies know how to run the
+real tasks that they represent, and they receive progress messages from the tasks as they run (usually
+reports of completed outputs). There is no global cycling mechanism to advance the suite; instead
+individual task proxies have their own private cycle time and spawn their own successors when the
+time is right. Task proxies are self-contained - they know their own prerequisites and outputs but are
+not aware of the wider suite. Inter-cycle dependence is not treated as special, and the task pool can
+be populated with tasks with many different cycle times. The task pool is illustrated in Figure&#x00A0;<a 
+href="#x2-700110">10<!--tex4ht:ref: fig-task-pool --></a>.
 <span 
-class="cmti-10">changes state due to completion of an output, every task checks to see if its own prerequisites are now</span>
+class="cmti-10">Whenever any task changes state due to completion of an output, every task checks to see if its own</span>
 <span 
-class="cmti-10">satisfied.</span><span class="footnote-mark"><a 
-href="#fn2x0" id="fn2x0-bk"><sup class="textsuperscript">2</sup></a></span><a 
- id="x2-7002f2"></a>
-Moreover, this matching of prerequisites and outputs involves the entire task pool, regardless of individual cycle
-times, so that inter- and intra-cycle dependence is handled with ease.
-<!--l. 336--><p class="indent" >   Thus without using global cycling mechanisms, and treating all inter-task dependence equally, cylc in effect gets
-a pool of tasks to self-organize by negotiating their own dependencies so that optimal scheduling, as described in the
-previous section, emerges naturally at run time.
+class="cmti-10">prerequisites have been satisfied. </span>In effect, cylc gets a pool of tasks to self-organize by negotiating their own
+dependencies so that optimal scheduling, as described in the previous section, emerges naturally at run
+time.
                                                                                          
 
                                                                                          
-   <div class="footnotes"><!--l. 43--><p class="indent" >    <span class="footnote-mark"><a 
+   <div class="footnotes"><!--l. 44--><p class="indent" >    <span class="footnote-mark"><a 
 href="#fn1x0-bk" id="fn1x0"><sup class="textsuperscript">1</sup></a></span><span 
-class="cmr-8">Future plans for EcoConnect include additional deterministic regional weather forecasts and a statistical ensemble.</span>
-<!--l. 331--><p class="indent" >     <span class="footnote-mark"><a 
-href="#fn2x0-bk" id="fn2x0"><sup class="textsuperscript">2</sup></a></span><span 
-class="cmr-8">In fact this dependency negotiation goes through a broker object (rather than every task literally checking every other task)</span>
-<span 
-class="cmr-8">which scales as </span><span 
-class="cmmi-8">n </span><span 
-class="cmr-8">(rather than </span><span 
-class="cmmi-8">n</span><sup><span 
-class="cmr-6">2</span></sup><span 
-class="cmr-8">) where </span><span 
-class="cmmi-8">n </span><span 
-class="cmr-8">is the number of task proxies in the pool.</span>                                                      </div>
-<!--l. 343--><div class="crosslinks"><p class="noindent">[<a 
+class="cmr-8">Future plans for EcoConnect include additional deterministic regional weather forecasts and a statistical ensemble.</span>    </div>
+<!--l. 341--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse2.html" >next</a>] [<a 
 href="cug-html.html" >prev</a>] [<a 
 href="cug-html.html#tailcug-html" >prev-tail</a>] [<a 
 href="cug-htmlse1.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse1.html" >up</a>] </p></div>
-<!--l. 343--><p class="indent" >   <a 
+<!--l. 341--><p class="indent" >   <a 
  id="tailcug-htmlse1.html"></a>   
 </body></html> 
