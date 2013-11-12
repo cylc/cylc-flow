@@ -196,7 +196,7 @@ class Updater(threading.Thread):
             new_err_content, new_err_size = self.log.get_err_content(
                 prev_size=self.err_log_size,
                 max_lines=self._err_num_log_lines)
-        except AttributeError:
+        except (AttributeError, Pyro.errors.NamingError):
             # TODO: post-backwards compatibility concerns, remove this handling.
             new_err_content = ""
             new_err_size = self.err_log_size
