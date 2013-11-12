@@ -14,24 +14,13 @@
     [[dependencies]]
         [[[0,6,12,18]]]
             graph = """
-                tidy[T-6] => PRE_RESTART_TASKS
-                failed_task:fail => force_restart
-                succeed_task:succeed => force_restart
-                submit_fail_task:submit-fail => force_restart
-                send_a_broadcast_task => force_restart
-                retrying_task:start => force_restart
-                running_task:start => force_restart
+                tidy[T-6] => send_a_broadcast_task => force_restart
                 force_restart => output_states
-                output_states => POST_RESTART_TASKS
-                POST_RESTART_TASKS:finish-all & running_task => tidy
-                send_a_broadcast_task => broadcast_task
-                tidy => !FAIL_TASKS
-                runahead_task
+                send_a_broadcast_task & output_states => broadcast_task => tidy
             """
 [runtime]
     [[root]]
         command scripting = "sleep 1"
-    [[FAIL_TASKS]]
     [[RESTART_TASKS]]
         {%- if USE_LOADLEVELER %}
         [[[job submission]]]
@@ -44,60 +33,15 @@
         [[[remote]]]
             host = {{ HOST }}
         {%- endif %}
-    [[PRE_RESTART_TASKS]]
-        inherit = RESTART_TASKS
     [[send_a_broadcast_task]]
-        inherit = PRE_RESTART_TASKS
+        inherit = RESTART_TASKS
         command scripting = """
             cylc broadcast -n broadcast_task -t $CYLC_TASK_CYCLE_TIME -s "[environment]MY_TIME=$CYLC_TASK_CYCLE_TIME" $CYLC_SUITE_REG_NAME
             cylc broadcast -d $CYLC_SUITE_REG_NAME
         """
         description = "Broadcast setup task"
-    [[failed_task]]
-        inherit = PRE_RESTART_TASKS, FAIL_TASKS
-        command scripting = "exit 1"
-        description = "Failed state task for restart"
-    [[succeed_task]]
-        inherit = PRE_RESTART_TASKS
-        description = "Succeeded state task for restart"
-    [[submit_fail_task]]
-        inherit = PRE_RESTART_TASKS, FAIL_TASKS
-        description = "Submit-fail state task for restart"
-        [[[job submission]]] 
-            method = at
-            # 'yesterday' is an invalid at time!
-            command template = at yesterday -f %s %s %s
-    [[retrying_task]]
-        inherit = PRE_RESTART_TASKS
-        command scripting = """
-            if [[ $CYLC_TASK_TRY_NUMBER -le 3 ]]; then
-                sleep 1
-                exit 1
-            fi
-        """
-        description = "Retrying state task for restart"
-        retry delays = 0.5, 0.01, 0.01
-    [[running_task]]
-        inherit = PRE_RESTART_TASKS
-        command scripting = """
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
-                # Needs to still be running on suite restart
-                cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=60 --status=succeeded $CYLC_SUITE_REG_NAME
-                sleep 10
-            else
-                # Needs to run only until shutdown (no --now)
-                sleep 15
-            fi
-        """
-        description = "Running state task for restart (with shutdown --now)"
-    [[POST_RESTART_TASKS]]
-        inherit = RESTART_TASKS
-    [[waiting_task]]
-        inherit = POST_RESTART_TASKS
-        description = "Waiting state task for restart (runs after restart)"
     [[broadcast_task]]
-        inherit = POST_RESTART_TASKS
+        inherit = RESTART_TASKS
         command scripting = """
             if [[ $MY_TIME -ne $CYLC_TASK_CYCLE_TIME ]]; then
                 echo $MY_TIME should be the same as $CYLC_TASK_CYCLE_TIME
@@ -110,8 +54,6 @@
     [[force_restart]]
         pre-command scripting = """
             # We need to make sure that the results stay consistent.
-            cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=60 --status=retrying $CYLC_SUITE_REG_NAME
             sleep 2
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status
@@ -150,10 +92,5 @@
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
                 touch {{ TEST_DIR }}/suite-stopping
             fi
-            # Remove the following block once retrying initial tasks are fixed.
-            if grep -q 'retrying_task.*status=waiting' <<< $(cylc cat-state $CYLC_SUITE_REG_NAME); then
-                cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME 'retrying_task' $CYLC_TASK_CYCLE_TIME
-            fi
-            sleep 5
         """
         description = "Tidy up the cycle so that the next can start"

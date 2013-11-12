@@ -1,0 +1,92 @@
+#!jinja2
+{%- set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
+{%- set SITE_DIRECTIVES = environ['CYLC_LL_TEST_SITE_DIRECTIVES'] %}
+{%- set TEST_DIR = environ['TEST_DIR'] %}
+{%- set USE_LOADLEVELER = false %}
+[cylc]
+    [[event hooks]]
+        timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
+        timeout = 3
+[scheduling]
+    initial cycle time = 2013092300
+    final cycle time   = 2013092306
+    runahead limit = 2
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = """
+                tidy[T-6] => running_task:start => force_restart
+                force_restart => output_states
+                output_states & running_task => tidy
+            """
+[runtime]
+    [[root]]
+        command scripting = "sleep 1"
+    [[RESTART_TASKS]]
+        {%- if USE_LOADLEVELER %}
+        [[[job submission]]]
+            method = loadleveler
+        [[[directives]]]
+            class            = serial
+            job_type         = serial
+            wall_clock_limit = '120,60'
+            {{ SITE_DIRECTIVES }}
+        [[[remote]]]
+            host = {{ HOST }}
+        {%- endif %}
+    [[running_task]]
+        inherit = RESTART_TASKS
+        command scripting = """
+            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
+                # Needs to still be running on suite restart
+                cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
+                --max-polls=60 --status=succeeded $CYLC_SUITE_REG_NAME
+                sleep 10
+            else
+                # Needs to run only until shutdown (no --now)
+                sleep 15
+            fi
+        """
+        description = "Running state task for restart (with shutdown --now)"
+    [[force_restart]]
+        pre-command scripting = """
+            # We need to make sure that the results stay consistent.
+            sleep 2
+            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
+                "select name, cycle, submit_num, try_num, status
+                 from task_states
+                 order by name, cycle;" > {{ TEST_DIR }}/states-db-pre-restart-$CYLC_TASK_CYCLE_TIME
+            cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-pre-restart-$CYLC_TASK_CYCLE_TIME
+            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
+                cd $CYLC_SUITE_RUN_DIR && \
+                    cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
+                    cylc restart $CYLC_SUITE_REG_NAME &&
+                    touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
+            else
+                cd $CYLC_SUITE_RUN_DIR && \
+                    cylc shutdown --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
+                    cylc restart $CYLC_SUITE_REG_NAME &&
+                    touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
+            fi
+        """
+        description = "Force a shutdown and restart of the suite"
+    [[output_states]]
+        command scripting = """
+            while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do
+                sleep 0.1
+            done
+            cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
+                --max-polls=10 --status=running $CYLC_SUITE_REG_NAME
+            sleep 5  # Wait a few typical loops so that the states make it into the database.
+            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
+                "select name, cycle, submit_num, try_num, status
+                 from task_states
+                 order by name, cycle;" > {{ TEST_DIR }}/states-db-post-restart-$CYLC_TASK_CYCLE_TIME
+        """
+        description = "Wait for the restart to complete"
+    [[tidy]]
+        command scripting = """
+            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
+                touch {{ TEST_DIR }}/suite-stopping
+            fi
+        """
+        description = "Tidy up the cycle so that the next can start"
