@@ -264,7 +264,11 @@ class GraphUpdater(threading.Thread):
         # (adding new ones, and nodes, if necessary)
         self.oldest_ctime = self.global_summary['oldest cycle time']
         if self.croprunahead:
-            self.newest_ctime = self.global_summary['newest non-runahead cycle time']
+            try:
+                self.newest_ctime = self.global_summary['newest non-runahead cycle time']
+            except KeyError:
+                # pre-5.4.0 suite daemon backward compatibility (crop runahead nodes)
+                self.newest_ctime = self.global_summary['newest cycle time']
         else:
             self.newest_ctime = self.global_summary['newest cycle time']
 
@@ -289,12 +293,20 @@ class GraphUpdater(threading.Thread):
         # TODO - mv ct().get() out of this call (for error checking):
         # TODO - remote connection exception handling?
         try:
-            gr_edges, suite_polling_tasks = self.updater.sinfo.get(
+            res = self.updater.sinfo.get(
                     'graph raw', ct(oldest).get(), ct(newest).get(),
                     rawx, self.group, self.ungroup, self.ungroup_recursive, 
                     self.group_all, self.ungroup_all) 
         except Exception:  # PyroError
             return False
+
+        # pre-5.4.0 suite daemon backward compatibitity (suite polling graph notation)
+        if isinstance( res, list ):
+            # prior to suite-polling tasks cylc-5.4.0 
+            gr_edges = res
+            suite_polling_tasks = []
+        else:
+            gr_edges, suite_polling_tasks = res
 
         # find nodes not present in the main graph
         extra_ids = []
