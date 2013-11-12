@@ -2517,7 +2517,7 @@ tasks will typically depend only on others with the same cycle time.
 Cycle time offsets can only appear on the left of a pair, because a 
 pairs define triggers for the right task at cycle time T.  However,
 \lstinline@A => B[T-6]@, which is illegal, can be reformulated as a  
-{\em future trigger} \lstinline@A[T+12] => B@ (see
+{\em future trigger} \lstinline@A[T+6] => B@ (see
 Section~\ref{IntercycleTriggers}).
 
 Triggers can be chained together. This graph:
