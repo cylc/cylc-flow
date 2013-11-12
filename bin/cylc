@@ -309,10 +309,8 @@ catsum['admin'       ]   = "Cylc installation, testing, and example suites."
 catsum['license'     ]   = "Software licensing information (GPL v3.0)."
 catsum['database'    ]   = """Suite name registration, copying, deletion, etc.
 
-Prior to cylc-5.4 the suite name registration DB was a Python pickle
-file stored at $HOME/.cylc/DB.  Since cylc-5.4 it is a directory
-$HOME/.cylc/REGDB/ containing one file per registered suite. The 
-filenames are the suite names, and the file contains key=value pairs:
+Suite name registrations are held in a simple database $HOME/.cylc/REGDB
+shell$ cat $HOME/.cylc/REGDB/my.suite
   shell$ cat $HOME/.cylc/REGDB/my.suite
   title=my suite title
   path=/path/to/my/suite"""
