@@ -27,7 +27,7 @@ LF='
 
 # move to the repository
 cd $( dirname $0 )/..
-VN=$(git describe --abbrev=4 HEAD 2>/dev/null)
+VN=$(git describe --abbrev=4 --tags HEAD 2>/dev/null)
 case "$VN" in
     *$LF*) (exit 1) ;;
     [0-9]*)
