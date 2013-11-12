@@ -1,8 +1,13 @@
 #!jinja2
+{%- if USE_LOADLEVELER is defined and USE_LOADLEVELER %}
 {%- set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
 {%- set SITE_DIRECTIVES = environ['CYLC_LL_TEST_SITE_DIRECTIVES'] %}
-{%- set TEST_DIR = environ['TEST_DIR'] %}
+{%- else %}
 {%- set USE_LOADLEVELER = false %}
+{%- set HOST = "" %}
+{%- set SITE_DIRECTIVES = "" %}
+{%- endif %}
+{%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
     [[event hooks]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
@@ -36,15 +41,7 @@
     [[running_task]]
         inherit = RESTART_TASKS
         command scripting = """
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
-                # Needs to still be running on suite restart
-                cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=60 --status=succeeded $CYLC_SUITE_REG_NAME
-                sleep 10
-            else
-                # Needs to run only until shutdown (no --now)
-                sleep 15
-            fi
+            sleep 20
         """
         description = "Running state task for restart (with shutdown --now)"
     [[force_restart]]
@@ -59,16 +56,20 @@
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
                 cd $CYLC_SUITE_RUN_DIR && \
                     cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart $CYLC_SUITE_REG_NAME &&
+                    cylc restart {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
                     touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
             else
                 cd $CYLC_SUITE_RUN_DIR && \
                     cylc shutdown --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart $CYLC_SUITE_REG_NAME &&
+                    cylc restart {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
                     touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
             fi
         """
         description = "Force a shutdown and restart of the suite"
+        [[[environment]]]
+            CYLC_LL_TEST_TASK_HOST={{ HOST }}
+            CYLC_LL_TEST_SITE_DIRECTIVES={{ SITE_DIRECTIVES }}
+            TEST_DIR={{ TEST_DIR }}
     [[output_states]]
         command scripting = """
             while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do

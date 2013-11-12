@@ -16,14 +16,19 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 #C: Test reloading a simple suite
-. $(dirname $0)/test_header
+if [[ -z ${TEST_DIR:-} ]]; then
+    . $(dirname $0)/test_header
+fi
 #-------------------------------------------------------------------------------
 set_test_number 13
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE succeeded
+TEST_SUITE_RUN_OPTIONS=
 if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' ]]; then
     ssh $CYLC_LL_TEST_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
     scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_LL_TEST_TASK_HOST:.cylc/$SUITE_NAME/passphrase
+    export CYLC_LL_TEST_SITE_DIRECTIVES CYLC_LL_TEST_TASK_HOST
+    TEST_SUITE_RUN_OPTIONS="--set=USE_LOADLEVELER=true"
 fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
@@ -32,7 +37,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
 # Sleep until penultimate task (the suite stops and starts, so port files alone
 # won't help)
 TEST_NAME=$TEST_NAME_BASE-monitor
