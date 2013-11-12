@@ -1,0 +1,18 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.5 # minutes
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time   = 2010010118
+    [[special tasks]]
+        one-off = "once"
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "once & foo"
+[runtime]
+    [[foo]]
+        command scripting = true
+    [[once]]
+        command scripting = true
+
