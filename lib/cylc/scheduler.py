@@ -1506,18 +1506,20 @@ class scheduler(object):
         if self.runahead_limit:
             ouct = self.get_runahead_base() 
             for itask in self.pool.get_tasks():
-                if not itask.is_cycling():
-                    # TODO - this test is not needed?
-                    continue
                 if itask.state.is_currently('runahead'):
+                    if int(itask.c_time) > int(self.stop_tag): 
+                        # beyond the final cycle time 
+                        itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
+                        itask.reset_state_held()
+                        continue
                     foo = ct( itask.c_time )
                     foo.decrement( hours=self.runahead_limit )
                     if int( foo.get() ) < int( ouct ):
                         if self.hold_suite_now:
-                            itask.log( 'DEBUG', "Releasing runahead (to held)" )
+                            itask.log( 'DEBUG', "holding (suite stopping now)" )
                             itask.reset_state_held()
                         else:
-                            itask.log( 'DEBUG', "Releasing runahead (to waiting)" )
+                            itask.log( 'DEBUG', "releasing (runahead limit moved on)" )
                             itask.reset_state_waiting()
 
     def check_hold_waiting_tasks( self, new_task, is_newly_added=False ):

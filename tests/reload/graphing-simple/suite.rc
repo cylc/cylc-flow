@@ -4,7 +4,7 @@ description = """change graphing order via a reload."""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.5 # minutes
+       live mode suite timeout = 1.0 # minutes
 
 [scheduling]
     [[dependencies]]
