@@ -1,0 +1,17 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        retry delays = 3*0.1
+        command scripting = """
+        if (($CYLC_TASK_TRY_NUMBER<4)); then
+            false
+        else
+            true
+        fi
+        """

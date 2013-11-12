@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys, os
+from optparse import OptionParser
+import pickle
+from cylc.registration import localdb, RegistrationError
+
+oldpath = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
+newpath = os.path.join( os.environ['HOME'], '.cylc', 'REGDB' )
+
+parser = OptionParser( usage = """cylc upgrade-db
+
+Upgrade a pre-cylc-5.4 suite name database to the new cylc-5.4+ format.
+This will create a new-format DB if necessary, or if one already exists 
+it will transfer old registrations to the new DB so long as the suite
+names do not conflict. It is safe to run this utility multiple times.
+
+Prior to cylc-5.4 the suite name registration DB was a Python pickle
+file stored at $HOME/.cylc/DB.  Since cylc-5.4 it is a directory
+$HOME/.cylc/REGDB/ containing one file per registered suite. The 
+filenames are the suite names, and the file contains key=value pairs:
+  shell$ cat $HOME/.cylc/REGDB/my.suite
+  title=my suite title
+  path=/path/to/my/suite/""")
+
+parser.add_option( "--from", help="Path to pre-cylc-5.4 db; "
+        "default:" + oldpath, 
+        metavar="PATH", action="store", default=oldpath )
+
+parser.add_option( "--to", help="Path to new cylc-5.4+ db; "
+        "default:" + newpath, 
+        metavar="PATH", action="store", default=newpath )
+
+( options, args ) = parser.parse_args()
+
+if not os.path.isfile( oldpath ):
+    sys.exit( "ERROR, old DB not found: " + oldpath )
+
+# load old DB
+olditems = pickle.load( open( oldpath, 'r' ))
+
+# new db
+db = localdb( file=newpath )
+for suite, (dir,title) in olditems.items():
+    try:
+        db.register( suite, dir )
+    except RegistrationError, x:
+        print >> sys.stderr, x
+        

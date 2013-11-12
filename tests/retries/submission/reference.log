@@ -1,0 +1,85 @@
+2013/11/07 15:57:47 INFO - Thread-2 start (Event Handlers)
+2013/11/07 15:57:47 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/07 15:57:47 INFO - port:7766
+2013/11/07 15:57:47 INFO - Suite starting at 2013-11-07 15:57:47.683133
+2013/11/07 15:57:47 INFO - Log event clock: real time
+2013/11/07 15:57:47 INFO - Run mode: live
+2013/11/07 15:57:47 INFO - Start tag: None
+2013/11/07 15:57:47 INFO - Stop tag: None
+2013/11/07 15:57:47 INFO - Thread-4 start (Job Submission)
+2013/11/07 15:57:47 INFO - Thread-5 start (Request Handling)
+2013/11/07 15:57:47 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/07 15:57:47 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 15:57:47 INFO - [foo.1] -(setting:queued)
+2013/11/07 15:57:47 INFO - [foo.1] -(setting:submitting)
+2013/11/07 15:57:47 INFO - [foo.1] -triggered off []
+2013/11/07 15:57:47 DEBUG - END TASK PROCESSING (took 0.014156 sec)
+2013/11/07 15:57:48 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 15:57:48 INFO - [foo.1] -Task host: notahost
+2013/11/07 15:57:48 INFO - [foo.1] -Copying suite contact file to notahost
+2013/11/07 15:57:48 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 15:57:48 CRITICAL - ERROR: ['ssh', '-oBatchMode=yes', 'notahost', 'mkdir', '-p', '$HOME/cylc-run/test']
+2013/11/07 15:57:48 WARNING - foo.1 job submission failed
+2013/11/07 15:57:48 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.024985
+  All 1 items FAILED
+2013/11/07 15:57:49 CRITICAL - [foo.1] -(current:submitting)> foo.1 submission failed
+2013/11/07 15:57:49 INFO - [foo.1] -job submission failed, retrying in 0.1 minutes
+2013/11/07 15:57:49 INFO - [foo.1] -(setting:submit-retrying)
+2013/11/07 15:57:55 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 15:57:55 INFO - [foo.1] -(setting:queued)
+2013/11/07 15:57:55 INFO - [foo.1] -(setting:submitting)
+2013/11/07 15:57:55 INFO - [foo.1] -triggered off []
+2013/11/07 15:57:55 DEBUG - END TASK PROCESSING (took 0.015515 sec)
+2013/11/07 15:57:56 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 15:57:56 INFO - [foo.1] -Task host: notahost
+2013/11/07 15:57:56 INFO - [foo.1] -Copying suite contact file to notahost
+2013/11/07 15:57:56 CRITICAL - ERROR: ['ssh', '-oBatchMode=yes', 'notahost', 'mkdir', '-p', '$HOME/cylc-run/test']
+2013/11/07 15:57:56 WARNING - foo.1 job submission failed
+2013/11/07 15:57:56 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 15:57:56 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.018478
+  All 1 items FAILED
+2013/11/07 15:57:56 CRITICAL - [foo.1] -(current:submitting)> foo.1 submission failed
+2013/11/07 15:57:56 INFO - [foo.1] -job submission failed, retrying in 0.1 minutes
+2013/11/07 15:57:56 INFO - [foo.1] -(setting:submit-retrying)
+2013/11/07 15:58:02 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 15:58:02 INFO - [foo.1] -(setting:queued)
+2013/11/07 15:58:02 INFO - [foo.1] -(setting:submitting)
+2013/11/07 15:58:02 INFO - [foo.1] -triggered off []
+2013/11/07 15:58:02 DEBUG - END TASK PROCESSING (took 0.01447 sec)
+2013/11/07 15:58:03 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 15:58:03 INFO - [foo.1] -Task host: notahost
+2013/11/07 15:58:03 INFO - [foo.1] -Copying suite contact file to notahost
+2013/11/07 15:58:03 CRITICAL - ERROR: ['ssh', '-oBatchMode=yes', 'notahost', 'mkdir', '-p', '$HOME/cylc-run/test']
+2013/11/07 15:58:03 WARNING - foo.1 job submission failed
+2013/11/07 15:58:03 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.016158
+  All 1 items FAILED
+2013/11/07 15:58:03 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 15:58:03 CRITICAL - [foo.1] -(current:submitting)> foo.1 submission failed
+2013/11/07 15:58:03 INFO - [foo.1] -job submission failed, retrying in 0.1 minutes
+2013/11/07 15:58:03 INFO - [foo.1] -(setting:submit-retrying)
+2013/11/07 15:58:09 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 15:58:09 INFO - [foo.1] -(setting:queued)
+2013/11/07 15:58:09 INFO - [foo.1] -(setting:submitting)
+2013/11/07 15:58:09 INFO - [foo.1] -triggered off []
+2013/11/07 15:58:09 DEBUG - END TASK PROCESSING (took 0.014932 sec)
+2013/11/07 15:58:10 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 15:58:10 INFO - [foo.1] -Task host: notahost
+2013/11/07 15:58:10 INFO - [foo.1] -Copying suite contact file to notahost
+2013/11/07 15:58:10 CRITICAL - ERROR: ['ssh', '-oBatchMode=yes', 'notahost', 'mkdir', '-p', '$HOME/cylc-run/test']
+2013/11/07 15:58:10 WARNING - foo.1 job submission failed
+2013/11/07 15:58:10 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.017808
+  All 1 items FAILED
+2013/11/07 15:58:10 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 15:58:10 CRITICAL - [foo.1] -(current:submitting)> foo.1 submission failed
+2013/11/07 15:58:10 INFO - [foo.1] -(setting:submit-failed)
+2013/11/07 15:58:11 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 15:58:11 DEBUG - [foo.1] -task proxy removed (suicide)
+2013/11/07 15:58:11 DEBUG - END TASK PROCESSING (took 0.013027 sec)
+2013/11/07 15:58:11 INFO - Stopping: 
+2013/11/07 15:58:12 INFO - Thread-2 exit (Event Handlers)
+2013/11/07 15:58:12 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/07 15:58:12 INFO - Thread-4 exit (Job Submission)

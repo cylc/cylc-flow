@@ -1,0 +1,38 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 2.0 # minutes
+[scheduling]
+    [[ queues ]]
+        [[[ q_fam ]]]
+            limit = {{q_size}} # allow testing with various queue sizes
+            members = monitor, FAM
+    [[dependencies]]
+        graph =  "monitor:start => FAM"
+[runtime]
+    [[FAM]]
+        command scripting = sleep 10
+    [[a,b,c,d,e,f,g,h,i,j,k,l]]
+        inherit = FAM
+    [[monitor]]
+        command scripting = """
+        sleep 5
+        while true; do
+            TASKS=$(cylc suite-state $CYLC_SUITE_NAME -S running | wc -l)
+            if ((TASKS > {{q_size}})); then
+                break
+            fi
+            sleep 1
+            SUCCEEDED=$(cylc suite-state $CYLC_SUITE_NAME -S succeeded | wc -l)
+            if ((SUCCEEDED==12)); then
+                break
+            fi
+            sleep 1
+        done
+        if ((TASKS > 3)); then
+            false
+        else
+            true
+        fi
+"""

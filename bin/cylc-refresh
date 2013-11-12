@@ -56,38 +56,35 @@ else:
 invalid = []    # no suite.rc file
 readerror = []  # can't read title (suite.rc parse error)
 try:
-    with db.lock():
-        db.load_from_file()
-        # check validity
-        invalid = db.get_invalid()
-        # refresh titles
-        changed = []
-        items = db.get_list( pattern ) 
-        if len(items) == 0:
-            if pattern:
-                print 'No suites found to match', pattern
+    # check validity
+    invalid = db.get_invalid()
+    # refresh titles
+    changed = []
+    items = db.get_list( pattern ) 
+    if len(items) == 0:
+        if pattern:
+            print 'No suites found to match', pattern
+        else:
+            print 'No suites found'
+    for suite, dir, title in items:
+        if suite in invalid:
+            continue
+        try:
+            db.refresh_suite_title( suite )
+        except (RegistrationError, SuiteConfigError), x:
+            print >> sys.stderr, x
+            readerror.append(suite)
+    if len(invalid) > 0:
+        print 'ERROR,', len(invalid), 'invalid registrations (no suite.rc file):'
+        for i in invalid:
+            if options.unregister:
+                db.unregister(i)
             else:
-                print 'No suites found'
-        for suite, dir, title in items:
-            if suite in invalid:
-                continue
-            try:
-                db.refresh_suite_title( suite )
-            except (RegistrationError, SuiteConfigError), x:
-                print >> sys.stderr, x
-                readerror.append(suite)
-        if len(invalid) > 0:
-            print 'ERROR,', len(invalid), 'invalid registrations (no suite.rc file):'
-            for i in invalid:
-                if options.unregister:
-                    db.unregister(i)
-                else:
-                    print ' -', i
-        if len(readerror) > 0:
-            print 'ERROR,', len(readerror), 'title parse failures (bad suite.rc file):'
-            for i in readerror:
                 print ' -', i
-        db.dump_to_file()
+    if len(readerror) > 0:
+        print 'ERROR,', len(readerror), 'title parse failures (bad suite.rc file):'
+        for i in readerror:
+            print ' -', i
 
 except Exception, x:
     if options.debug:
