@@ -4,7 +4,7 @@ description = """change final cycle."""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.5 # minutes
+       live mode suite timeout = 1.0 # minutes
 
 [scheduling]
     initial cycle time = 2010010100
