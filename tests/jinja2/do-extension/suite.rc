@@ -1,0 +1,22 @@
+#!Jinja2
+
+title = "Jinja2 'do' extension test"
+
+{% set N_TASKS = N_TASKS | default(3) %}
+
+{% set TASKS = [] %}
+
+{% for I in range(0,N_TASKS|int) %}
+    {% do TASKS.append( 'mem_' ~ I ) %}
+{% endfor %}
+
+[scheduling]
+    [[dependencies]]
+        graph =  "FAMILY"
+[runtime]
+    [[FAMILY]]
+{% for T in TASKS %}
+    [[ {{ T }} ]]
+        inherit = FAMILY
+{% endfor %}
+
