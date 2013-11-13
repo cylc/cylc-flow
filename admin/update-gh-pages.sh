@@ -59,11 +59,18 @@ git checkout gh-pages
 # replace the online content
 cp -r $TMPD/changes.{css,html} .
 cp -r $TMPD/gh-pages/* .
+rm -rf html/single/*
+rm -rf html/multi/*
 cp $TMPD/html/single/*.{css,html} html/single/
 cp $TMPD/html/multi/*.{css,html} html/multi/
 cp $TMPD/graphics/png/scaled/* graphics/png/scaled/
 # substitute latest version number in the homepage
 perl -pi -e "s@(Current Version:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> ($( date +%F )) \2@" index.html
+
+# in case new files were added:
+git add graphics/png/scaled/
+git add html/single/
+git add html/multi/
 
 # any changes to update?
 git update-index -q --refresh
