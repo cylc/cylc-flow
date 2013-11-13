@@ -2246,63 +2246,63 @@ cylc.  Currently the Jinja2 template processor is supported
 plug-in interface to allow use of other template engines too.
 
 \subsubsection{Syntax}
+\label{Syntax}
 
-The following list shows legal raw suite.rc syntax. Suites using the
-Jinja2 template processor (Section~\ref{Jinja2}) can of course use
-Jinja2 syntax as well (it must generate raw syntax on processing).
-
+The following defines legal suite.rc syntax:
 \begin{myitemize}
-    \item {\bf Entries} are of the form \lstinline@item = value@, and
-        item names may contain spaces.
-    \item {\bf Comments} \# follow a hash character.
-    \item {\bf List Values} are comma, separated.
-    \item {\bf Strings} must be quoted ``if, they, contain, commas''
-    \item {\bf Multiline Strings} must be ``````triple-quoted''''''.
-    \item {\bf Boolean Values} are written as True or False (capitalized).
-    \item {\bf White Space} is ignored; indentation can be used for clarity.
-    \item {\bf Continuation Lines} follow a trailing backslash.\textbackslash
-    \item {\bf [Section Headings]} are enclosed in square brackets.
-    \item {\bf [[Subsection Nesting]]} is indicated by the number of
-        square brackets.\footnote{Sections are closed by the next
-        section heading, so items within a section must be
-        defined before any subsequent subsection headings.}
-    \item {\bf Duplicate Items} are illegal, except in
-        \lstinline=environment= and \lstinline=directives=
-        sections.\footnote{The exceptions were designed to allow 
-        tasks to override environment variables defined in include-files
-        that could be included in multiple tasks, to assist in factoring
-        out common task configuration. However, namespace inheritance
-        now provides a better way to do this in most cases.}
-    \item {\bf Include-files} can be used: \lstinline=%include inc/foo.rc=.
+    \item {\bf Items} are of the form \lstinline@key = value@.
+    \item {\bf [Section]} headings are enclosed in square brackets.
+    \item {\bf Sub-section [[nesting]]} is defined by repeated square brackets.
+    \item Sections are {\bf closed} by the next section heading.
+    \item {\bf Comments} (line and trailing) follow a hash character: \# 
+    \item {\bf List values} are comma-separated.
+    \item {\bf Single-line string values} can be single-, double-, or un-quoted. 
+    \item {\bf Multi-line string values} are triple-quoted (using
+        single or double quote characters).
+    \item {\bf Boolean values} are capitalized: True, False.
+    \item {\bf Leading and trailing whitespace} is ignored.
+    \item {\bf Indentation} is optional but should be used for clarity.
+    \item {\bf Continuation lines} follow a trailing backslash: \textbackslash
+    \item {\bf Duplicate sections} add their items to those previously
+        defined under the same section. 
+    \item {\bf Duplicate items} override, {\em except for dependency
+        \lstinline=graph= strings, which are additive}.
+    \item {\bf Include-files} \lstinline=%include inc/foo.rc= can be  
+        used as a verbatim inlining mechanism.
 \end{myitemize}
-        
+Suites that embed Jinja2 code (Section~\ref{Jinja2}) must
+process to raw suite.rc syntax.
 
-The following pseudo-listing illustrates suite.rc syntax:
-\lstset{language=suiterc}
-\begin{lstlisting}
-# a full line comment
-an item = value # a trailing comment
-a boolean item = True # or False
-one string item = the quick brown fox # string quotes optional ...
-two string item = "the quick, brown fox" # ... unless internal commas
-a multiline string item = """the quick brown fox
-jumped over the lazy dog""" # triple quoted
-a list item = foo, bar, baz   # comma separated
-a list item with continuation = a, b, c, \
-                                d, e, f
-[section]
-    item = value
-%include inc/vars/foo.inc  # include file
-    [[subsection]]
-        item = value
-        [[[subsubsection]]]
-            item = value
-[another section]
-    [[another subsection]]
-        # ...
-    # ...
-# ...
-\end{lstlisting}
+%The following pseudo-listing illustrates suite.rc syntax:
+%\lstset{language=suiterc}
+%\begin{lstlisting}
+%# a line comment
+%an unquoted string item = a string value # a trailing comment
+%a quoted string item = 'a string value'
+%another quoted string item = "a string value"
+%a multiline string item = """the quick brown fox
+%jumped over the lazy dog"""
+%another multiline string item = '''the quick brown fox
+%yet another string item = "once upon \
+%a time"
+%jumped over the lazy dog'''
+%a boolean item = True # or False
+%a list item = foo, bar, baz 
+%another list item = a, b, c, \
+%                    d, e, f
+%[section]
+%    item = value
+%%include inc/vars/foo.inc  # include file
+%    [[subsection]]
+%        item = value
+%        [[[subsubsection]]]
+%            item = value
+%[another section]
+%    [[another subsection]]
+%        # ...
+%    # ...
+%# ...
+%\end{lstlisting}
 
 \subsubsection{Include-Files}
 
