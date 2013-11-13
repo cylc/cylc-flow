@@ -33,7 +33,7 @@
         [[[directives]]]
             class            = serial
             job_type         = serial
-            wall_clock_limit = '120,60'
+            wall_clock_limit = '60,30'
             {{ SITE_DIRECTIVES }}
         [[[remote]]]
             host = {{ HOST }}
