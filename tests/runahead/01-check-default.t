@@ -29,8 +29,13 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-fail
-RUNAHEAD=$(sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select max(cycle) from task_states")
+DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
+RUNAHEAD=$(sqlite3 $DB "select max(cycle) from task_states")
 # manual comparison for the test
-shift 1; if (($RUNAHEAD==2010010106)); then ok $TEST_NAME; else fail $TEST_NAME; fi 
+if (($RUNAHEAD==2010010106)); then
+    ok $TEST_NAME
+else
+    fail $TEST_NAME
+fi 
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
