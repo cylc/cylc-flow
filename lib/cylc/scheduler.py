@@ -1507,7 +1507,7 @@ class scheduler(object):
             ouct = self.get_runahead_base() 
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently('runahead'):
-                    if int(itask.c_time) > int(self.stop_tag): 
+                    if self.stop_tag and int(itask.c_time) > int(self.stop_tag):
                         # beyond the final cycle time 
                         itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
                         itask.reset_state_held()
