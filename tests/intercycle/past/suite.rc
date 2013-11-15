@@ -1,0 +1,23 @@
+
+title = "reference test suite: zig-zag intercycle dependencies"
+
+description = """
+Task A should only run at 0, 12 hours; Task B at 6, 18"""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 1.0
+
+[scheduling]
+    initial cycle time = 2012010100
+    final cycle time = 2012010118
+    [[dependencies]]
+        [[[0,12]]]
+            graph = "A"
+        [[[6,18]]]
+            graph = "A[T-6] => B"
+
+[runtime]
+    [[root]]
+        command scripting = "/bin/true" # fast
+
