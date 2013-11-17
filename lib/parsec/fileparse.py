@@ -169,12 +169,13 @@ def addict( cfig, key, val, parents, verbose ):
         # drop down the parent list
         cfig = cfig[p]
     if key in cfig:
-        # already defined - ok for graph strings
-        if key == 'graph' and set(parents[:-1]) == set(['scheduling','dependencies']):
+        # already defined - ok for graph strings (note this assumes no
+        # other items called 'graph', which I think is reasonable)
+        if key == 'graph':
             try:
                 cfig[key] += '\n' + val
             except IndexError:
-                # no graph string
+                # not graph string
                 pass
             else:
                 if verbose:
