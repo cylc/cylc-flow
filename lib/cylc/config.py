@@ -1006,7 +1006,7 @@ class config( object ):
             if re.search( r"\b" + fam + r"\b[^:].*=>", line ) or re.search( r"\b" + fam + "\s*=>$", line ):
                 # plain family names are not allowed on the left of a trigger
                 print >> sys.stderr, line
-                raise SuiteConfigError, 'ERROR, upstream family triggers must be qualified with \':type\': ' + fam
+                raise SuiteConfigError, 'ERROR, family triggers must be qualified, e.g. ' + fam + ':succeed-all'
 
             # finally replace plain family names on the right of a trigger
             line = self.replace_family_triggers( line, fam, members )
