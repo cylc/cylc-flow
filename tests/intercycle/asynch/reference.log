@@ -1,0 +1,138 @@
+2013/11/15 12:33:30 INFO - Thread-2 start (Event Handlers)
+2013/11/15 12:33:30 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/15 12:33:30 INFO - port:7767
+2013/11/15 12:33:30 INFO - Suite starting at 2013-11-15 12:33:30.434898
+2013/11/15 12:33:30 INFO - Log event clock: real time
+2013/11/15 12:33:30 INFO - Run mode: live
+2013/11/15 12:33:30 INFO - Start tag: 2012010100
+2013/11/15 12:33:30 INFO - Stop tag: 2012010118
+2013/11/15 12:33:30 INFO - Thread-4 start (Job Submission)
+2013/11/15 12:33:30 INFO - Thread-5 start (Request Handling)
+2013/11/15 12:33:30 INFO - Cold Start 2012010100
+2013/11/15 12:33:30 DEBUG - [a.1] -task proxy added to the pool
+2013/11/15 12:33:30 DEBUG - [b.2012010100] -task proxy added to the pool
+2013/11/15 12:33:30 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:30 INFO - [a.1] -(setting:queued)
+2013/11/15 12:33:30 INFO - [a.1] -(setting:submitting)
+2013/11/15 12:33:30 INFO - [a.1] -triggered off []
+2013/11/15 12:33:30 DEBUG - END TASK PROCESSING (took 0.014872 sec)
+2013/11/15 12:33:31 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:33:31 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/11/15 12:33:31 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.313495
+  All 1 items succeeded
+2013/11/15 12:33:32 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/11/15 12:33:32 INFO - [a.1] -(setting:submitted)
+2013/11/15 12:33:32 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=8081
+2013/11/15 12:33:32 INFO - [a.1] -(current:submitted)> a.1 started at 2013-11-15T12:33:32
+2013/11/15 12:33:32 INFO - [a.1] -(setting:running)
+2013/11/15 12:33:33 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:33 DEBUG - END TASK PROCESSING (took 0.012717 sec)
+2013/11/15 12:33:33 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-11-15T12:33:32
+2013/11/15 12:33:33 INFO - [a.1] -(setting:succeeded)
+2013/11/15 12:33:34 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:34 INFO - [b.2012010100] -(setting:queued)
+2013/11/15 12:33:34 INFO - [b.2012010100] -(setting:submitting)
+2013/11/15 12:33:34 INFO - [b.2012010100] -triggered off ['a.1']
+2013/11/15 12:33:34 DEBUG - END TASK PROCESSING (took 0.014701 sec)
+2013/11/15 12:33:34 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:33:35 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.312647
+  All 1 items succeeded
+2013/11/15 12:33:35 INFO - [b.2012010100] -(current:submitting)> b.2012010100 submitting now
+2013/11/15 12:33:35 INFO - [b.2012010100] -(current:submitting)> b.2012010100 submission succeeded
+2013/11/15 12:33:35 INFO - [b.2012010100] -(setting:submitted)
+2013/11/15 12:33:35 INFO - [b.2012010100] -(current:submitted)> b.2012010100 submit_method_id=8188
+2013/11/15 12:33:36 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:36 DEBUG - END TASK PROCESSING (took 0.01265 sec)
+2013/11/15 12:33:36 INFO - [b.2012010100] -(current:submitted)> b.2012010100 started at 2013-11-15T12:33:35
+2013/11/15 12:33:36 INFO - [b.2012010100] -(setting:running)
+2013/11/15 12:33:36 INFO - [b.2012010100] -(current:running)> b.2012010100 succeeded at 2013-11-15T12:33:35
+2013/11/15 12:33:36 INFO - [b.2012010100] -(setting:succeeded)
+2013/11/15 12:33:37 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:37 DEBUG - [b.2012010100] -forced spawning
+2013/11/15 12:33:37 DEBUG - [b.2012010106] -task proxy added to the pool
+2013/11/15 12:33:37 DEBUG - [b.2012010100] -task proxy removed
+2013/11/15 12:33:37 DEBUG - END TASK PROCESSING (took 0.015756 sec)
+2013/11/15 12:33:38 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:38 INFO - [b.2012010106] -(setting:queued)
+2013/11/15 12:33:38 INFO - [b.2012010106] -(setting:submitting)
+2013/11/15 12:33:38 INFO - [b.2012010106] -triggered off []
+2013/11/15 12:33:38 DEBUG - END TASK PROCESSING (took 0.014217 sec)
+2013/11/15 12:33:39 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:33:39 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.312835
+  All 1 items succeeded
+2013/11/15 12:33:39 INFO - [b.2012010106] -(current:submitting)> b.2012010106 submitting now
+2013/11/15 12:33:39 INFO - [b.2012010106] -(current:submitting)> b.2012010106 submission succeeded
+2013/11/15 12:33:39 INFO - [b.2012010106] -(setting:submitted)
+2013/11/15 12:33:39 INFO - [b.2012010106] -(current:submitted)> b.2012010106 submit_method_id=8295
+2013/11/15 12:33:40 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:40 DEBUG - END TASK PROCESSING (took 0.012566 sec)
+2013/11/15 12:33:40 INFO - [b.2012010106] -(current:submitted)> b.2012010106 started at 2013-11-15T12:33:39
+2013/11/15 12:33:40 INFO - [b.2012010106] -(setting:running)
+2013/11/15 12:33:40 INFO - [b.2012010106] -(current:running)> b.2012010106 succeeded at 2013-11-15T12:33:40
+2013/11/15 12:33:40 INFO - [b.2012010106] -(setting:succeeded)
+2013/11/15 12:33:41 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:41 DEBUG - [b.2012010106] -forced spawning
+2013/11/15 12:33:41 DEBUG - [b.2012010112] -task proxy added to the pool
+2013/11/15 12:33:41 DEBUG - [b.2012010106] -task proxy removed
+2013/11/15 12:33:41 DEBUG - END TASK PROCESSING (took 0.015642 sec)
+2013/11/15 12:33:42 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:42 INFO - [b.2012010112] -(setting:queued)
+2013/11/15 12:33:42 INFO - [b.2012010112] -(setting:submitting)
+2013/11/15 12:33:42 INFO - [b.2012010112] -triggered off []
+2013/11/15 12:33:42 DEBUG - END TASK PROCESSING (took 0.014486 sec)
+2013/11/15 12:33:43 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:33:43 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.212685
+  All 1 items succeeded
+2013/11/15 12:33:43 INFO - [b.2012010112] -(current:submitting)> b.2012010112 submitting now
+2013/11/15 12:33:43 INFO - [b.2012010112] -(current:submitting)> b.2012010112 submission succeeded
+2013/11/15 12:33:43 INFO - [b.2012010112] -(setting:submitted)
+2013/11/15 12:33:43 INFO - [b.2012010112] -(current:submitted)> b.2012010112 submit_method_id=8402
+2013/11/15 12:33:44 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:44 DEBUG - END TASK PROCESSING (took 0.01221 sec)
+2013/11/15 12:33:44 INFO - [b.2012010112] -(current:submitted)> b.2012010112 started at 2013-11-15T12:33:44
+2013/11/15 12:33:44 INFO - [b.2012010112] -(setting:running)
+2013/11/15 12:33:44 INFO - [b.2012010112] -(current:running)> b.2012010112 succeeded at 2013-11-15T12:33:44
+2013/11/15 12:33:44 INFO - [b.2012010112] -(setting:succeeded)
+2013/11/15 12:33:45 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:45 DEBUG - [b.2012010112] -forced spawning
+2013/11/15 12:33:45 DEBUG - [b.2012010118] -task proxy added to the pool
+2013/11/15 12:33:45 DEBUG - [b.2012010112] -task proxy removed
+2013/11/15 12:33:45 DEBUG - END TASK PROCESSING (took 0.015386 sec)
+2013/11/15 12:33:46 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:46 INFO - [b.2012010118] -(setting:queued)
+2013/11/15 12:33:46 INFO - [b.2012010118] -(setting:submitting)
+2013/11/15 12:33:46 INFO - [b.2012010118] -triggered off []
+2013/11/15 12:33:46 DEBUG - END TASK PROCESSING (took 0.014103 sec)
+2013/11/15 12:33:47 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:33:47 INFO - [b.2012010118] -(current:submitting)> b.2012010118 submitting now
+2013/11/15 12:33:47 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.312455
+  All 1 items succeeded
+2013/11/15 12:33:48 INFO - [b.2012010118] -(current:submitting)> b.2012010118 submission succeeded
+2013/11/15 12:33:48 INFO - [b.2012010118] -(setting:submitted)
+2013/11/15 12:33:48 INFO - [b.2012010118] -(current:submitted)> b.2012010118 submit_method_id=8509
+2013/11/15 12:33:48 INFO - [b.2012010118] -(current:submitted)> b.2012010118 started at 2013-11-15T12:33:48
+2013/11/15 12:33:48 INFO - [b.2012010118] -(setting:running)
+2013/11/15 12:33:49 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:49 DEBUG - END TASK PROCESSING (took 0.015056 sec)
+2013/11/15 12:33:49 INFO - [b.2012010118] -(current:running)> b.2012010118 succeeded at 2013-11-15T12:33:48
+2013/11/15 12:33:49 INFO - [b.2012010118] -(setting:succeeded)
+2013/11/15 12:33:50 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:50 DEBUG - [b.2012010118] -forced spawning
+2013/11/15 12:33:50 INFO - [b.2012010200] -HOLDING (beyond suite stop cycle) 2012010118
+2013/11/15 12:33:50 INFO - [b.2012010200] -(setting:held)
+2013/11/15 12:33:50 DEBUG - [b.2012010200] -task proxy added to the pool
+2013/11/15 12:33:50 DEBUG - [b.2012010118] -task proxy removed
+2013/11/15 12:33:50 DEBUG - END TASK PROCESSING (took 0.016979 sec)
+2013/11/15 12:33:50 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2012010118
+  + all non-cycling tasks have succeeded
+2013/11/15 12:33:50 INFO - Thread-4 exit (Job Submission)
+2013/11/15 12:33:51 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/15 12:33:51 INFO - Thread-2 exit (Event Handlers)
+2013/11/15 12:33:51 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:33:51 DEBUG - END TASK PROCESSING (took 0.012007 sec)
