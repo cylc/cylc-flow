@@ -2273,37 +2273,6 @@ The following defines legal suite.rc syntax:
 Suites that embed Jinja2 code (Section~\ref{Jinja2}) must
 process to raw suite.rc syntax.
 
-%The following pseudo-listing illustrates suite.rc syntax:
-%\lstset{language=suiterc}
-%\begin{lstlisting}
-%# a line comment
-%an unquoted string item = a string value # a trailing comment
-%a quoted string item = 'a string value'
-%another quoted string item = "a string value"
-%a multiline string item = """the quick brown fox
-%jumped over the lazy dog"""
-%another multiline string item = '''the quick brown fox
-%yet another string item = "once upon \
-%a time"
-%jumped over the lazy dog'''
-%a boolean item = True # or False
-%a list item = foo, bar, baz 
-%another list item = a, b, c, \
-%                    d, e, f
-%[section]
-%    item = value
-%%include inc/vars/foo.inc  # include file
-%    [[subsection]]
-%        item = value
-%        [[[subsubsection]]]
-%            item = value
-%[another section]
-%    [[another subsection]]
-%        # ...
-%    # ...
-%# ...
-%\end{lstlisting}
-
 \subsubsection{Include-Files}
 
 Cylc has native support for suite.rc include-files, which may help to
