@@ -222,7 +222,7 @@ class Updater(threading.Thread):
             # TODO: post-backwards compatibility concerns, remove this handling.
             # Force an update for daemons using the old API.
             update_summaries = True
-        except Pyro.errors.ProtocolError:
+        except (Pyro.errors.ProtocolError, Pyro.errors.NamingError):
             gobject.idle_add( self.connection_lost )
             return False
 
@@ -230,7 +230,7 @@ class Updater(threading.Thread):
             try:
                 [glbl, states, fam_states] = self.god.get_state_summary()
                 self.task_list = self.god.get_task_name_list()
-            except Pyro.errors.ProtocolError:
+            except (Pyro.errors.ProtocolError, Pyro.errors.NamingError):
                 gobject.idle_add( self.connection_lost )
                 return False
 
