@@ -12,7 +12,8 @@ description = """change the size of a queue via a reload."""
             limit = 5 # marker
             members = reloader, FAM
     [[dependencies]]
-        graph = reloader:start => FAM
+        graph = """reloader:start => FAM
+                   reloader => monitor"""
 [runtime]
     [[FAM]]
         command scripting = sleep 10
@@ -20,9 +21,30 @@ description = """change the size of a queue via a reload."""
         inherit = FAM
     [[reloader]]
         command scripting = """
-sleep 5
 # change the limit on number of members of q_fam:
 perl -pi -e 's/(limit = )5( # marker)/\1 3 \2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
+sleep 5
+"""
+    [[monitor]]
+        command scripting = """
+        sleep 5
+        while true; do
+            TASKS=$(cylc suite-state $CYLC_SUITE_NAME -S running | wc -l)
+            if ((TASKS > 4)); then
+                break
+            fi
+            sleep 1
+            SUCCEEDED=$(cylc suite-state $CYLC_SUITE_NAME -S succeeded | wc -l)
+            if ((SUCCEEDED==13)); then
+                break
+            fi
+            sleep 1
+        done
+        if ((TASKS > 3)); then
+            false
+        else
+            true
+        fi
 """

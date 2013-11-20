@@ -176,10 +176,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -237,10 +237,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -298,10 +298,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -359,10 +359,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -419,10 +419,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -480,10 +480,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -541,10 +541,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -601,10 +601,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -662,10 +662,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -723,10 +723,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -784,10 +784,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -845,10 +845,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None
@@ -906,10 +906,10 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable task event hooks = True
    [[suite state polling]]
       interval = None
-      run-dir = None
-      max-polls = None
       host = None
-      owner = None
+      max-polls = None
+      run-dir = None
+      user = None
       verbose mode = None
    [[remote]]
       owner = None

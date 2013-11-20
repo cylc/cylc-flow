@@ -1,0 +1,57 @@
+2013/11/15 12:14:44 INFO - Thread-2 start (Event Handlers)
+2013/11/15 12:14:44 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/15 12:14:44 INFO - port:7767
+2013/11/15 12:14:44 INFO - Suite starting at 2013-11-15 12:14:44.178003
+2013/11/15 12:14:44 INFO - Log event clock: real time
+2013/11/15 12:14:44 INFO - Run mode: live
+2013/11/15 12:14:44 INFO - Start tag: None
+2013/11/15 12:14:44 INFO - Stop tag: None
+2013/11/15 12:14:44 INFO - Thread-4 start (Job Submission)
+2013/11/15 12:14:44 INFO - Thread-5 start (Request Handling)
+2013/11/15 12:14:44 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/15 12:14:44 DEBUG - [bar.1] -task proxy added to the pool
+2013/11/15 12:14:44 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:14:44 INFO - [foo.1] -(setting:queued)
+2013/11/15 12:14:44 INFO - [foo.1] -(setting:submitting)
+2013/11/15 12:14:44 INFO - [foo.1] -triggered off []
+2013/11/15 12:14:44 DEBUG - END TASK PROCESSING (took 0.014628 sec)
+2013/11/15 12:14:45 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:14:45 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/15 12:14:45 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.314196
+  All 1 items succeeded
+2013/11/15 12:14:46 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/15 12:14:46 INFO - [foo.1] -(setting:submitted)
+2013/11/15 12:14:46 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=4666
+2013/11/15 12:14:46 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-15T12:14:45
+2013/11/15 12:14:46 INFO - [foo.1] -(setting:running)
+2013/11/15 12:14:47 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:14:47 INFO - [bar.1] -(setting:queued)
+2013/11/15 12:14:47 INFO - [bar.1] -(setting:submitting)
+2013/11/15 12:14:47 INFO - [bar.1] -triggered off ['foo.1']
+2013/11/15 12:14:47 DEBUG - END TASK PROCESSING (took 0.014827 sec)
+2013/11/15 12:14:47 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-11-15T12:14:46
+2013/11/15 12:14:47 INFO - [foo.1] -(setting:succeeded)
+2013/11/15 12:14:47 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:14:47 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.211606
+  All 1 items succeeded
+2013/11/15 12:14:48 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:14:48 DEBUG - END TASK PROCESSING (took 0.012791 sec)
+2013/11/15 12:14:48 INFO - [bar.1] -(current:submitting)> bar.1 submitting now
+2013/11/15 12:14:48 INFO - [bar.1] -(current:submitting)> bar.1 submission succeeded
+2013/11/15 12:14:48 INFO - [bar.1] -(setting:submitted)
+2013/11/15 12:14:48 INFO - [bar.1] -(current:submitted)> bar.1 submit_method_id=4773
+2013/11/15 12:14:48 INFO - [bar.1] -(current:submitted)> bar.1 started at 2013-11-15T12:14:48
+2013/11/15 12:14:48 INFO - [bar.1] -(setting:running)
+2013/11/15 12:14:49 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:14:49 DEBUG - END TASK PROCESSING (took 0.012237 sec)
+2013/11/15 12:14:49 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2013-11-15T12:14:48
+2013/11/15 12:14:49 INFO - [bar.1] -(setting:succeeded)
+2013/11/15 12:14:49 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/15 12:14:49 INFO - Thread-4 exit (Job Submission)
+2013/11/15 12:14:50 INFO - Thread-2 exit (Event Handlers)
+2013/11/15 12:14:50 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/15 12:14:50 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:14:50 DEBUG - END TASK PROCESSING (took 0.012049 sec)

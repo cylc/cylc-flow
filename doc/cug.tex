@@ -1711,6 +1711,7 @@ work.
 \end{myitemize}
 
 \subsubsection{Inter-Cycle Triggers}
+\label{TutIntercycleTriggers}
 
 \hilight{ suite: \lstinline=tut.cycling.two= }
 \vspace{3mm}
@@ -2011,23 +2012,25 @@ as the suite runs.
 \section{Suite Name Registration And Passphrases}
 \label{SuiteRegistration}
 
-Cylc commands target particular suites via names registered in a {\em
-suite database}, so that you don't need to remember and continually
-refer to the actual location of the suite definition on disk. A suite
-name is a hierarchical name akin to a directory path but
-delimited by the `.' character; this allows suites to be organised in
-nested tree-like structures:
+Cylc commands target suites via names registered in a {\em suite name
+database} located at \lstinline=$HOME/.cylc/REGDB/=.  Suite names are
+hierarchical like directory paths, allowing nested tree-like grouping,
+but use the `.' character as a delimiter. This :
 \begin{lstlisting}
 shell$ cylc db print -t nwp
 nwp          
  |-oper      
- | |-region1  Local Model Region1       /oper/nwp/suite_defs/LocalModel/nested/Region1
- | `-region2  Local Model Region2       /oper/nwp/suite_defs/LocalModel/nested/Region2
+ | |-region1  Local Model Region1       /oper/nwp/suites/LocalModel/nested/Region1
+ | `-region2  Local Model Region2       /oper/nwp/suites/LocalModel/nested/Region2
  `-test      
-   `-region1  Local Model TEST Region1  /home/hilary/nwp_suites/Regional/TESTING/Region1
+   `-region1  Local Model TEST Region1  /home/hilary/suites/Regional/TESTS/Region1
 \end{lstlisting}
 
-Note that name groups are entirely virtual, they do not need to be
+Suite titles held in the name database are parsed from the suite
+definition at the time of initial suite registration. If you change the
+title later use \lstinline=cylc db refresh= to update the database.
+
+Name groups are entirely virtual, they do not need to be
 explicitly created before use, and they automatically disappear if all
 tasks are removed from them.  From the listing above, for example, to
 move the suite \lstinline=nwp.oper.region2= into the
@@ -2068,20 +2071,7 @@ exist yet unless you specify the entire target suite name.
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
-\subsection{Suite Name Databases}
-
-Each user has a database that associates registered suite names
-with their respective suite definition directory locations. Hierarchical
-suite names stored in the database can be displayed in a tree structure.
-
-Note that the suite title held in the name database is parsed
-from the suite definition at the time of initial registration; if you
-change the title (by editing the suite.rc file) use 
-\lstinline=cylc db refresh= to update the database.
-
-The user suite database file is \lstinline=$HOME/.cylc/DB=.
-
-\subsubsection{Database Operations}
+\subsection{Database Operations}
 
 On the command line, the  `database' (or `db') command category contains
 commands to implement the aforementioned operations.
@@ -2090,6 +2080,11 @@ commands to implement the aforementioned operations.
 \begin{lstlisting}
 shell$ cylc db help
 CATEGORY: db|database - Suite name registration, copying, deletion, etc.
+
+Suite name registrations are held in a simple database $HOME/.cylc/REGDB
+shell$ cat $HOME/.cylc/REGDB/my.suite
+   title=my suite title
+   path=/path/to/my/suite
 
 HELP: cylc [db|database] COMMAND help,--help
   You can abbreviate db|database and COMMAND.
@@ -2338,10 +2333,7 @@ the file.  See \lstinline=cylc prep edit --help= for more information.
 
 \paragraph{Include-Files via Jinja2}
 
-Jinja2 (Section~\ref{Jinja2}) provides template inclusion functionality
-although this is more akin to Python module import than simple text
-inclusion, and the implications of this for suite design have not yet
-been explored.
+Jinja2 (Section~\ref{Jinja2}) also has template inclusion functionality.
 
 \subsubsection{Syntax Highlighting For Suite Definitions}
 \label{SyntaxHighlighting}
@@ -2381,7 +2373,7 @@ configuration items grouped under several top level section headings:
             \item a nested family hierarchy with common properties
                 inherited by related tasks
         \end{myitemize}
-    \item {\bf [visualization] } - configures suite graphing.
+    \item {\bf [visualization] } - suite graph styling
 \end{myitemize}
 
 
@@ -2519,16 +2511,16 @@ left side of a pair:
 \end{lstlisting}
 \lstset{language=transcript}
 This means B[T] triggers off A[T-12] for cycle times T with hours
-matching $0$ or $12$. Note that {\em T must be left implicit unless
-there is a cycle time offset} (this helps to keep graphs clean and
-concise because the majority of tasks in a typical suite will only
-depend on others with the same cycle time) and that {\em cycle time
-offsets can only appear on the left} (because each pair defines a
-trigger for the right task at cycle time T).
+matching $0$ or $12$. T must be implicit unless there is a cycle time
+offset - this keeps graphs clean and concise because the majority of
+tasks will typically depend only on others with the same cycle time. 
+Cycle time offsets can only appear on the left of a pair, because a 
+pairs define triggers for the right task at cycle time T.  However,
+\lstinline@A => B[T-6]@, which is illegal, can be reformulated as a  
+{\em future trigger} \lstinline@A[T+6] => B@ (see
+Section~\ref{IntercycleTriggers}).
 
-Now, having explained that dependency graphs are interpreted pairwise,
-you can optionally chain pairs together to ``follow a path'' through the
-graph. So this,
+Triggers can be chained together. This graph:
 \lstset{language=suiterc}
 \begin{lstlisting}
     graph = """A => B  # B triggers off A
@@ -2538,22 +2530,6 @@ is equivalent to this:
 \begin{lstlisting}
     graph = "A => B => C"
 \end{lstlisting}
-
-Cycle time offsets, if they appear in a chain of triggers, must be
-leftmost (because, as explained previously they can't appear on the
-right of any pair). So this is legal:
-\begin{lstlisting}
-    graph = "A[T-6] => B => C"  # OK
-\end{lstlisting}
-but this isn't:
-\begin{lstlisting}
-    graph = "A => B[T-6] => C"  # ERROR!
-\end{lstlisting}
-The trigger \lstinline@A => B[T-6]@ does not make sense in any case -
-if this kind of relationship seems necessary it probably means that B
-should be ``reassigned'' to the next cycle (keep in mind that cycle
-time is really just a label used to define the relatonships between
-tasks).
 
 {\em Each trigger in the graph must be unique} but {\em the same task
 can appear in multiple pairs or chains}. Separately defined triggers
@@ -2996,51 +2972,7 @@ another task that inherits the same runtime but sets a different job
 submission method and/or host could be triggered to, in effect, run the
 same job on a different platform.
 
-\paragraph{Intercycle Triggers}
-\label{IntercycleTriggers}
 
-Typically most tasks in a suite will trigger off others in the same
-cycle time, but some may depend on others with other cycle times. This
-notably applies to warm-cycled forecast models, which depend
-on their own previous instances (see below); but other kinds of
-intercycle dependence are possible too.\footnote{In NWP forecast
-analysis suites parts of the observation processing and data
-assimilation subsystem will typically also depend on model background
-fields generated by the previous forecast.} Here's how to express this
-kind of relationship in cylc:
-\begin{lstlisting}
-[dependencies]
-    [[0,6,12,18]]
-        # B triggers off A in the previous cycle
-        graph = "A[T-6] => B"
-\end{lstlisting}
-Intercycle and trigger type (and internal output) notation can be combined:
-\begin{lstlisting}
-    # B triggers if A in the previous cycle fails:
-    graph = "A[T-6]:fail => B"
-\end{lstlisting}
-
-Tasks can also trigger off others in {\em the future} (with respect to
-cycle time!):
-\begin{lstlisting}
-[dependencies]
-    [[0,6,12,18]]
-        # B triggers off A in the next cycle
-        graph = "A[T+6] => B"
-\end{lstlisting}
-
-\subparagraph{Bootstrapping Intercycle Triggers}
-
-Tasks with intercycle triggers require an associated {\em cold-start}
-task to bootstrap them into operation when the suite is cold-started,
-because they depend on a previous cycle that does not exist at start
-time. Otherwise the first such task will require manual triggering (and
-that will only suffice if the real task does not have real
-previous-cycle dependence in the first cycle).
-Section~\ref{HandlingIntercycleDependenceAtStartUp}, {\em Handling
-Intercycle Dependence At Start-Up}, explains how to use cold-start tasks
-in cylc.
- 
 \paragraph{Conditional Triggers}
 
 AND operators (\lstinline=&=) can appear on both sides of an arrow. They
@@ -3240,66 +3172,131 @@ failed):
 \end{lstlisting}
 
 
-\subsubsection{Handling Intercycle Dependence At Start-Up}
-\label{HandlingIntercycleDependenceAtStartUp}
+\paragraph{Intercycle Triggers}
+\label{IntercycleTriggers}
 
-In suites with intercycle dependence some kind of bootsrapping
-process is required to get the suite going initially. In the example 
-shown in {\em Intercycle Triggers} (Section~\ref{IntercycleTriggers}),
-for instance, in the very first cycle there is no previous instance of 
-task A to satisfy B's prerequisites. 
- 
-\paragraph{Cold-Start Tasks}
+Typically most tasks in a suite will trigger off others in the same
+cycle time, but some may depend on others with other cycle times. This
+notably applies to warm-cycled forecast models, which depend
+on their own previous instances (see below); but other kinds of
+intercycle dependence are possible too.\footnote{In NWP forecast
+analysis suites parts of the observation processing and data
+assimilation subsystem will typically also depend on model background
+fields generated by the previous forecast.} Here's how to express this
+kind of relationship in cylc:
+\begin{lstlisting}
+[dependencies]
+    [[0,6,12,18]]
+        # B triggers off A in the previous cycle
+        graph = "A[T-6] => B"
+\end{lstlisting}
+Intercycle and trigger type (and internal output) notation can be combined:
+\begin{lstlisting}
+    # B triggers if A in the previous cycle fails:
+    graph = "A[T-6]:fail => B"
+\end{lstlisting}
 
-A {\em cold-start} task is a special one-off task used to satisfy the
-initial previous-cycle dependence of another cotemporal task. In effect, 
-the cold-start task masquerades as the previous-cycle trigger of its
-associated cycling task. 
+At suite start-up inter-cycle triggers refer to a previous cycle 
+that does not exist. This does not cause the dependent task to wait 
+indefinitely, however, because cylc ignores triggers that reach back
+beyond the initial cycle time. That said, the presence of an inter-cycle
+trigger does normally imply that something special has to happen at
+start-up. If a model depends on its own previous instance for restart
+files, for instance, then an initial set of restart files has to be 
+generated somehow or the first model task will presumably fail with
+missing input files. There are several ways to handle this in cylc 
+using different kinds of one-off (non-cycling) tasks that run at suite
+start-up.  They are illustrated in Tutorial
+Section~\ref{TutIntercycleTriggers}; to summarize here briefly:
 
-A cold-start task may invoke real processing to generate the files that
-would normally be produced by the associated cycling task; or it
-could be a dummy task that represents some external spinup process that
-presumably generates in the same files but which has to be completed
-before the suite is started. In the latter case the cold-start task can 
-just report itself successfully completed after checking that the 
-required files are present.
+\begin{myitemize}
+    \item initial {\em asynchronous tasks}:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = "prep"
+        [[[0,12]]]
+            graph = "prep & foo[T-12] => foo => bar"
+\end{lstlisting}
 
-This kind of relationship can easily be expressed with a conditional
-trigger:
+    \item initial {\em start-up tasks}
+\lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[special tasks]]
-        cold-start = ColdFoo
+        start-up = prep
     [[dependencies]]
-        [[[0,6,12,18]]]
-            graph = "ColdFoo | Bar[T-6] => Foo"
+        [[[0,12]]]
+            graph = "prep & foo[T-12] => foo => bar"
 \end{lstlisting}
-i.e.\ Foo[T] can trigger off {\em either} Bar[T-6] {\em or} ColdFoo[T].
-At start-up ColdFoo will do the job, and thereafter Bar[T-6] will do it.
 
-{\em Cold-start tasks can also be inserted into the suite at run time 
-to cold-start just their associated cycling tasks, if a problem of 
-some kind prevents continued normal cycling}.
+    \item initial {\em cold-start tasks}
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[special tasks]]
+        cold-start = cfoo
+    [[dependencies]]
+        [[[0,12]]]
+            graph = "cfoo | foo[T-6] => foo => bar"
+\end{lstlisting}
 
-\paragraph{Warm-Starting A Suite}
+\end{myitemize}
 
-Cold-start tasks have to be declared as such in the suite.rc ``special
-tasks'' section so that cylc knows they are one-off (non-spawning) tasks,
-but also because they play a critical role in suite warm-starts. 
-A suite that has previously been running and then shut down 
-can be warm-started at a particular cycle time, an alternative to {\em
-restarting} from a previous state (although restarting is preferred
-because a warm start is likely to involve re-running some tasks).
-A warm-start assumes the existence of a previous cycle (i.e.\ that any
-files from the previous cycle required by the new cycle are in place
-already) so cold-start tasks do not need to run {\em but} cylc itself
-does not know the details of the previous cycle (it does in a restart,
-but not in a warm-start) so it still has to solve the bootstrapping
-problem to get the suite started. It does this by starting the suite
-with designated cold start tasks in the {\em succeeded} state - in other
-words finished cold start tasks stand in for the previous finished cycle,
-rather than pretending to be a running previous cycle as they do in a
-cold-start.
+The first two cases are the same, except that {\em start-up} tasks are 
+assigned a cycle time (even thought they don't cycle) whereas {\em
+asynchronous} tasks are not. In the first cycle the previous-cycle trigger is 
+ignored and the first cycling tasks trigger off the initial tasks; subsequently 
+dependence on the initial tasks is ignored and the inter-cycle trigger
+takes effect. Cold-start tasks, on the other hand, can be used for real
+model cold-start processes, whereby a warm-cycled model at any given cycle 
+time can in principle have its inputs satisfied by a previous instance of 
+itself, {\em or} by a cold-start task with (nominally) the same cycle time.
+In effect, the cold-start task masquerades as the previous-cycle trigger
+of its associated cycling task. At suite start-up cold-start tasks will
+trigger the first cycling tasks, and thereafter the inter-cycle trigger
+will take effect. Unlike for asynchronous and start-up initial tasks,
+however, the cold-start ``OR'' construct means that cold-start triggers
+don't have to be ignored by cylc after the first cycle, so it is
+possible to insert cold-start task into a suite mid-run to do mid-stream
+cold-starts after problems that preclude continued normal warm cycling.
+
+One-off initial tasks can invoke real processing to generate the files
+that are subsequently produced by a tasks in the previous cycle; or they
+could be dummy tasks that represent some external process that does the 
+same before the suite is started - in which case the initial task can 
+just report itself successfully completed after checking that the 
+required files are present.
+
+\paragraph{Warm-Starting Suites}
+
+For suites with inter-cycle dependence a {\em warm-start} is essentially
+an implicit restart. Rather than loading tasks from a previous recorded
+suite state, it loads all cycling tasks at a given cycle time assuming
+that the previous cycle was completed in an earlier suite run. Any initial
+tasks - asynchronous, start-up, or cold-start - therefore do not need to
+run again. Dependence on tasks from before the start cycle is still
+ignored, but cold-start tasks have to be loaded in the {\em succeeded}
+state because dependence on them (in the cold-start OR construct) is
+retained throughout the suite run as is explained above in
+Section~\ref{IntercycleTriggers}.
+
+\paragraph{Future Triggers}
+
+Cylc also supports inter-cycle triggering off tasks in the future (with respect to
+cycle time!):
+\begin{lstlisting}
+[dependencies]
+    [[0,6,12,18]]
+        # B triggers off A in the next cycle
+        graph = "A[T+6] => B"
+\end{lstlisting}
+In contrast to normal inter-cycle triggers, future triggers present a problem at the 
+suite stop time rather than at start-up - in the final cycle \lstinline=B= wants to 
+to trigger off \lstinline=A= at a future cycle time that does not exist.  To avoid   
+this problem cylc prevents tasks from spawning successors that depend on tasks in 
+a non-existent future cycle.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
@@ -5150,7 +5147,7 @@ offset plus one minimum cycling interval.
 
 A manually set runahead limit should not stall the suite even if set to
 less than the minimum cycling interval, unless it does not extend out
-past any future triggers.
+past any future triggers (see Section~\ref{IntercycleTriggers}.
 
 Succeeded and failed tasks are ignored when applying the runahead limit
 (but tasks that can't run because they depend on a failed task are not
@@ -5696,6 +5693,80 @@ you wish:
         abort on timeout = True
 \end{lstlisting}
 
+
+\subsection{Triggering Off Tasks In Other Suites}
+\label{SuiteStatePolling}
+
+The \lstinline=cylc suite-state= command, which interrogates suite run
+databases, has a polling mode that waits on a given task achieving a
+given state.  See \lstinline=cylc suite-state --help= for command
+options and defaults.
+
+The suite graph notation also allows you to define local tasks that, in
+effect, represent tasks in other suites by automatically polling for 
+them using the \lstinline=cylc suite-state= command. Here's how to
+trigger a task \lstinline=bar= off a task \lstinline=foo= in another
+suite called \lstinline=other.suite=:
+\begin{lstlisting}
+[scheduling]
+    [[ dependencies]]
+        [[[0,12]]]
+            graph = "FOO<other.suite::foo> => bar"
+\end{lstlisting}
+Local task \lstinline=FOO= will poll for the success of \lstinline=foo=
+in suite \lstinline=other.suite= at the same cycle time. Other task
+states can be polled like this,
+\begin{lstlisting}
+   graph = "FOO<other.suite::foo:fail> => bar"
+\end{lstlisting}
+
+Default polling parameters (the maximum number of polls and the interval
+between them) are printed by \lstinline=cylc suite-state --help=. 
+These can be configured if necessary under the local polling task
+runtime section:
+\begin{lstlisting}
+[scheduling]
+    [[ dependencies]]
+        [[[0,12]]]
+            graph = "FOO<other.suite::foo> => bar"
+[runtime]
+    [[FOO]]
+        [[[suite state polling]]]
+            max-polls = 100
+            interval = 10 # seconds
+\end{lstlisting}
+
+The remote suite does not have to be running when polling commences (or
+at all if the remote condition has already been achieved) because the
+command interrogates the suite run database, not the suite server
+process.
+
+For suites owned by others or those with run databases in non-standard
+locations use the \lstinline=--run-dir= option or, in-suite,
+\begin{lstlisting}
+[runtime]
+    [[FOO]]
+        [[[suite state polling]]]
+            run-dir = /path/to/top/level/cylc/run-directory
+\end{lstlisting}
+
+To trigger off remote tasks with different cycle times just arrange for
+the local polling task to be on the same cycling sequence as the remote
+task that it represents. For instance, if local task \lstinline=cat= 
+cycles 6-hourly at \lstinline=0,6,12,18= but needs to trigger off a
+remote task \lstinline=dog= with cycle times of \lstinline=3,9,15,21=
+hours,
+\begin{lstlisting}
+[scheduling]
+    [[ dependencies]]
+        [[[0,6,12,18]]]
+            graph = "DOG<other.suite::dog>[T-3] => cat"
+\end{lstlisting}
+This results in \lstinline=DOG= having cycle times of 
+\lstinline=3,9,15,21= - the sames as \lstinline=dog= in
+\lstinline=other.suite=.
+
+
 \section{Other Topics In Brief}
 
 The following topics have yet to be documented in detail.
@@ -5747,12 +5818,6 @@ The following topics have yet to be documented in detail.
         command scripting = \
         "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
 \end{lstlisting}
-
-    \item Dependence between suites: cylc will eventually support this
-        directly, via special graph syntax. For the moment dependence on
-        other suites can be implemented easily, within task scripting,
-        using the command \lstinline=cylc suite-state=, which has a
-        polling mode and reads the other suite's run database.
 
 \end{myitemize}
 \lstset{language=transcript}

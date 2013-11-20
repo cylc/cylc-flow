@@ -5,10 +5,12 @@ set -x
 
 function usage {
 cat <<eof
-USAGE update-gh-pages.sh [-p] COMMIT-MESSAGE
+USAGE update-gh-pages.sh [-p] "COMMIT MESSAGE" [VERSION]
 
 Check out gh-pages, update its files from doc/ in master branch, and
-then optionally [-p] push to the cylc repository on github.
+then optionally [-p] push to the cylc repository on github. VERSION 
+can be used to optionally override the version string returned by
+git-describe (e.g. for small index.html updates).
 
 eof
 }
@@ -29,9 +31,14 @@ if [[ $# == 0 ]]; then
     exit 1
 fi
 
-COMMITMSG=$@
+COMMITMSG=$1
+shift
 
-LATESTTAG=$( git describe --abbrev=0 --tags )
+if [[ $# == 1 ]]; then
+    LATESTTAG=$1
+else
+    LATESTTAG=$( git describe --abbrev=0 --tags )
+fi
 
 [[ -z $COMMITMSG ]] && exit 1
 
@@ -52,11 +59,18 @@ git checkout gh-pages
 # replace the online content
 cp -r $TMPD/changes.{css,html} .
 cp -r $TMPD/gh-pages/* .
+rm -rf html/single/*
+rm -rf html/multi/*
 cp $TMPD/html/single/*.{css,html} html/single/
 cp $TMPD/html/multi/*.{css,html} html/multi/
 cp $TMPD/graphics/png/scaled/* graphics/png/scaled/
 # substitute latest version number in the homepage
 perl -pi -e "s@(Current Version:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> ($( date +%F )) \2@" index.html
+
+# in case new files were added:
+git add graphics/png/scaled/
+git add html/single/
+git add html/multi/
 
 # any changes to update?
 git update-index -q --refresh

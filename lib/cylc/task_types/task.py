@@ -585,8 +585,8 @@ class task( object ):
                      " --task=" + self.suite_polling_cfg['task'] + \
                      " --cycle=" + self.c_time + \
                      " --status=" + self.suite_polling_cfg['status']
-            if rtconfig['suite state polling']['owner']:
-                comstr += " --owner=" + rtconfig['suite state polling']['owner']
+            if rtconfig['suite state polling']['user']:
+                comstr += " --user=" + rtconfig['suite state polling']['user']
             if rtconfig['suite state polling']['host']:
                 comstr += " --host=" + rtconfig['suite state polling']['host']
             if rtconfig['suite state polling']['interval']:

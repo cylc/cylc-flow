@@ -1,0 +1,55 @@
+2013/11/15 12:25:18 INFO - Thread-2 start (Event Handlers)
+2013/11/15 12:25:18 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/15 12:25:18 INFO - port:7767
+2013/11/15 12:25:18 INFO - Suite starting at 2013-11-15 12:25:18.256627
+2013/11/15 12:25:18 INFO - Log event clock: real time
+2013/11/15 12:25:18 INFO - Run mode: live
+2013/11/15 12:25:18 INFO - Start tag: None
+2013/11/15 12:25:18 INFO - Stop tag: None
+2013/11/15 12:25:18 INFO - Thread-4 start (Job Submission)
+2013/11/15 12:25:18 INFO - Thread-5 start (Request Handling)
+2013/11/15 12:25:18 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/15 12:25:18 DEBUG - [bar.1] -task proxy added to the pool
+2013/11/15 12:25:18 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:25:18 INFO - [foo.1] -(setting:queued)
+2013/11/15 12:25:18 INFO - [foo.1] -(setting:submitting)
+2013/11/15 12:25:18 INFO - [foo.1] -triggered off []
+2013/11/15 12:25:18 DEBUG - END TASK PROCESSING (took 0.033485 sec)
+2013/11/15 12:25:19 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:25:19 INFO - [foo.1] -Task host: idontexist
+2013/11/15 12:25:19 INFO - [foo.1] -Copying suite contact file to idontexist
+2013/11/15 12:25:19 CRITICAL - ERROR: ['ssh', '-oBatchMode=yes', 'idontexist', 'mkdir', '-p', '$HOME/cylc-run/test']
+2013/11/15 12:25:19 WARNING - foo.1 job submission failed
+2013/11/15 12:25:19 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.029154
+  All 1 items FAILED
+2013/11/15 12:25:19 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/15 12:25:19 CRITICAL - [foo.1] -(current:submitting)> foo.1 submission failed
+2013/11/15 12:25:19 INFO - [foo.1] -(setting:submit-failed)
+2013/11/15 12:25:20 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:25:20 INFO - [bar.1] -(setting:queued)
+2013/11/15 12:25:20 INFO - [bar.1] -(setting:submitting)
+2013/11/15 12:25:20 INFO - [bar.1] -triggered off ['foo.1']
+2013/11/15 12:25:20 DEBUG - END TASK PROCESSING (took 0.019911 sec)
+2013/11/15 12:25:21 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/15 12:25:21 INFO - [bar.1] -(current:submitting)> bar.1 submitting now
+2013/11/15 12:25:21 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.313373
+  All 1 items succeeded
+2013/11/15 12:25:22 INFO - [bar.1] -(current:submitting)> bar.1 submission succeeded
+2013/11/15 12:25:22 INFO - [bar.1] -(setting:submitted)
+2013/11/15 12:25:22 INFO - [bar.1] -(current:submitted)> bar.1 submit_method_id=5851
+2013/11/15 12:25:22 INFO - [bar.1] -(current:submitted)> bar.1 started at 2013-11-15T12:25:22
+2013/11/15 12:25:22 INFO - [bar.1] -(setting:running)
+2013/11/15 12:25:23 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:25:23 DEBUG - END TASK PROCESSING (took 0.013146 sec)
+2013/11/15 12:25:23 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2013-11-15T12:25:22
+2013/11/15 12:25:23 INFO - [bar.1] -(setting:succeeded)
+2013/11/15 12:25:24 DEBUG - BEGIN TASK PROCESSING
+2013/11/15 12:25:24 DEBUG - [foo.1] -task proxy removed (suicide)
+2013/11/15 12:25:24 DEBUG - END TASK PROCESSING (took 0.014288 sec)
+2013/11/15 12:25:24 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/15 12:25:24 INFO - Thread-4 exit (Job Submission)
+2013/11/15 12:25:25 INFO - Thread-2 exit (Event Handlers)
+2013/11/15 12:25:25 INFO - Thread-3 exit (Poll & Kill Commands)
