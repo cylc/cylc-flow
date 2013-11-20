@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test loadleveler directives
+#C: Test restarting a simple suite using loadleveler with a retrying task
 #C:     This test requires a [directive-tests]loadleveler-host entry in 
 #C:     site/user config in order to run, otherwise it will be bypassed
 #-------------------------------------------------------------------------------

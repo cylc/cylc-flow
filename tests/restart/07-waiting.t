@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test reloading a simple suite
+#C: Test restarting a simple suite with a waiting task
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
