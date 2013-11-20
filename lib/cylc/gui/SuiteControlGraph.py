@@ -151,7 +151,7 @@ Dependency graph suite control interface.
         ungroup_item = gtk.ImageMenuItem( 'UnGroup' )
         img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
         ungroup_item.set_image(img)
-        ungroup_item.set_sensitive( name in self.t.closed_families )
+        ungroup_item.set_sensitive( not self.t.have_closed_fams or name in self.t.closed_families )
         ungroup_item.connect( 'activate', self.grouping, name, False )
 
         ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )

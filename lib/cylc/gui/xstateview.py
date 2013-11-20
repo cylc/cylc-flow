@@ -107,11 +107,12 @@ class GraphUpdater(threading.Thread):
 
         self.graph_warned = {}
 
-        # lists of nodes to newly group or ungroup (not the list of all   
-        # currently grouped and ungrouped nodes (currently held server
-        # side)
+        # lists of nodes to newly group or ungroup (not of all currently
+        # grouped and ungrouped nodes - still held server side)
         self.group = []
         self.ungroup = []
+        self.have_closed_fams = False
+        self.closed_families = []
 
         self.ungroup_recursive = False
         if "graph" in self.cfg.ungrouped_views:
@@ -304,17 +305,24 @@ class GraphUpdater(threading.Thread):
         except Exception:  # PyroError
             return False
 
-        # pre-5.4.0 suite daemon backward compatibitity (suite polling graph notation)
+        # backward compatibility for old suite daemons still running
+        self.have_closed_fams = False
         if isinstance( res, list ):
-            # prior to suite-polling tasks cylc-5.4.0 
+            # prior to suite-polling tasks in 5.4.0 
             gr_edges = res
             suite_polling_tasks = []
             self.closed_families = []
         else:
             if len( res ) == 2:
+                # prior to graph view grouping fix in 5.4.2
                 gr_edges, suite_polling_tasks = res
                 self.closed_families = []
             elif len( res ) == 3:
+                # 5.4.2 and later
+                # Note that retrieving all families would do as you
+                # can't click on an open family (but the closed family
+                # list is generally a lot shorter).
+                self.have_closed_fams = True
                 gr_edges, suite_polling_tasks, self.closed_families = res
 
         # find nodes not present in the main graph
