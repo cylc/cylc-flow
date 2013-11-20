@@ -84,6 +84,8 @@
             done
             cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
                 --max-polls=10 --status=running $CYLC_SUITE_REG_NAME
+            cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
+                --max-polls=10 --status=retrying $CYLC_SUITE_REG_NAME
             sleep 5  # Wait a few typical loops so that the states make it into the database.
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status
