@@ -146,13 +146,12 @@ Dependency graph suite control interface.
         group_item = gtk.ImageMenuItem( 'Group' )
         img = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_MENU )
         group_item.set_image(img)
-        group_item.set_sensitive( name not in self.t.group )
         group_item.connect( 'activate', self.grouping, name, True )
 
         ungroup_item = gtk.ImageMenuItem( 'UnGroup' )
         img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
         ungroup_item.set_image(img)
-        ungroup_item.set_sensitive( name not in self.t.ungroup )
+        ungroup_item.set_sensitive( name in self.t.closed_families )
         ungroup_item.connect( 'activate', self.grouping, name, False )
 
         ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )
@@ -210,9 +209,11 @@ Dependency graph suite control interface.
         self.t.group_all = False
         self.t.ungroup_all = False
         if group:
-            self.t.group.append(name)
+            self.t.group = [name]
+            self.t.ungroup = []
         else:
-            self.t.ungroup.append(name)
+            self.t.ungroup = [name]
+            self.t.group = []
         self.t.action_required = True
         self.t.best_fit = True
 

@@ -107,8 +107,12 @@ class GraphUpdater(threading.Thread):
 
         self.graph_warned = {}
 
+        # lists of nodes to newly group or ungroup (not the list of all   
+        # currently grouped and ungrouped nodes (currently held server
+        # side)
         self.group = []
         self.ungroup = []
+
         self.ungroup_recursive = False
         if "graph" in self.cfg.ungrouped_views:
             self.ungroup_all = True
@@ -305,8 +309,13 @@ class GraphUpdater(threading.Thread):
             # prior to suite-polling tasks cylc-5.4.0 
             gr_edges = res
             suite_polling_tasks = []
+            self.closed_families = []
         else:
-            gr_edges, suite_polling_tasks = res
+            if len( res ) == 2:
+                gr_edges, suite_polling_tasks = res
+                self.closed_families = []
+            elif len( res ) == 3:
+                gr_edges, suite_polling_tasks, self.closed_families = res
 
         # find nodes not present in the main graph
         extra_ids = []
