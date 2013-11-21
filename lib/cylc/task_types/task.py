@@ -204,6 +204,7 @@ class task( object ):
 
         self.message_queue = msgqueue()
         self.db_queue = []
+        self.db_items = False
 
         self.suite_name = os.environ['CYLC_SUITE_NAME']
         self.validate = validate
@@ -259,10 +260,12 @@ class task( object ):
     def record_db_event(self, event="", message=""):
         call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, self.user_at_host)
         self.db_queue.append(call)
+        self.db_items = True
     
     def record_db_update(self, table, name, cycle, **kwargs):
         call = cylc.rundb.UpdateObject(table, name, cycle, **kwargs)
-        self.db_queue.append(call)        
+        self.db_queue.append(call)
+        self.db_items = True
 
     def record_db_state(self, name, cycle, time_created=datetime.datetime.now(), time_updated=None,
                      submit_num=None, is_manual_submit=None, try_num=None,
@@ -274,9 +277,11 @@ class task( object ):
                      host=host, submit_method=submit_method, submit_method_id=submit_method_id,
                      status=status)
         self.db_queue.append(call)
+        self.db_items = True
 
     def get_db_ops(self):
         ops = []
+        self.db_items = False
         for item in self.db_queue:
             if item.to_run:
                 ops.append(item)

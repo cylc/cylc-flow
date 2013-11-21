@@ -1023,26 +1023,29 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            # process queued task messages
-            for itask in self.pool.get_tasks():
-                itask.process_incoming_messages()
-
-            # process queued database operations
+            db_ops_to_process = False
             state_recorders = []
             state_updaters = []
             event_recorders = []
             other = []
+            
+            # process queued task messages
             for itask in self.pool.get_tasks():
-                opers = itask.get_db_ops()
-                for oper in opers:
-                    if isinstance(oper, cylc.rundb.UpdateObject):
-                        state_updaters += [oper]
-                    elif isinstance(oper, cylc.rundb.RecordStateObject):
-                        state_recorders += [oper]
-                    elif isinstance(oper, cylc.rundb.RecordEventObject):
-                        event_recorders += [oper]
-                    else:
-                        other += [oper]
+                itask.process_incoming_messages()
+                # if incoming messages have resulted in new database operations grab them
+                if itask.db_items:
+                    db_ops_to_process = True
+                    opers = itask.get_db_ops()
+                    for oper in opers:
+                        if isinstance(oper, cylc.rundb.UpdateObject):
+                            state_updaters += [oper]
+                        elif isinstance(oper, cylc.rundb.RecordStateObject):
+                            state_recorders += [oper]
+                        elif isinstance(oper, cylc.rundb.RecordEventObject):
+                            event_recorders += [oper]
+                        else:
+                            other += [oper]
+
             #precedence is record states > update_states > record_events > anything_else
             db_ops = state_recorders + state_updaters + event_recorders + other 
             # compact the set of operations
