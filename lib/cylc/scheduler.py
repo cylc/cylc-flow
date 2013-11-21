@@ -1023,7 +1023,6 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            db_ops_to_process = False
             state_recorders = []
             state_updaters = []
             event_recorders = []
@@ -1034,7 +1033,6 @@ class scheduler(object):
                 itask.process_incoming_messages()
                 # if incoming messages have resulted in new database operations grab them
                 if itask.db_items:
-                    db_ops_to_process = True
                     opers = itask.get_db_ops()
                     for oper in opers:
                         if isinstance(oper, cylc.rundb.UpdateObject):
