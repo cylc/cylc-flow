@@ -1,0 +1,24 @@
+title = "override this"
+title = "the quick brown fox"
+[scheduling]
+    [[dependencies]]
+        graph = "foo => bar"
+        graph = "bar => baz"
+        [[[0]]]
+            graph = "cfoo => cbar"
+            graph = "cbar => cbaz"
+        [[[0]]]
+            graph = "dfoo => dbar"
+            graph = "dbar => dbaz"
+[runtime]
+    [[FOO]]
+        title = "override this"
+        title = "override this too"
+        description = "jumped over the lazy dog"
+    [[FOO]]
+        title = "the quick brown fox"
+        [[[environment]]]
+            VAR1 = "override this"
+            VAR1 = "override this too"
+            VAR1 = "the quick brown fox"
+          

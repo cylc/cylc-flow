@@ -176,8 +176,8 @@ function grep_ok() {
 
 function init_suite() {
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
-    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_${SNAME}_${1}
-    mkdir $TEST_DIR/$SUITE_NAME/ 
+    SUITE_NAME=$(date -u +%Y%m%d%H%M%S)_cylc_test_${SNAME}_${1}
+    mkdir $TEST_DIR/$SUITE_NAME/
     cat >$TEST_DIR/$SUITE_NAME/suite.rc
     cylc unregister $SUITE_NAME 2>/dev/null
     cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
@@ -192,7 +192,7 @@ function init_suite() {
 function install_suite() {
     ORIG_SUITE_NAME=$2
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
-    SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_${SNAME}_${1}
+    SUITE_NAME=$(date -u +%Y%m%d%H%M%S)_cylc_test_${SNAME}_${1}
     mkdir $TEST_DIR/$SUITE_NAME/
     cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME
     cylc unregister $SUITE_NAME 2>/dev/null
@@ -210,7 +210,7 @@ function purge_suite() {
         SUITE_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
         while lsof | grep -q $SUITE_DIR; do
             sleep 1
-        done    
+        done
         rm -rf $SUITE_DIR
     fi
     cd $TEST_DIR

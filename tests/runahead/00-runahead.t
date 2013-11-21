@@ -18,7 +18,7 @@
 #C: Test runahead limit is being enforced
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE runahead
 #-------------------------------------------------------------------------------
@@ -37,5 +37,9 @@ if (($TASKS==3)); then
 else 
     fail $TEST_NAME
 fi 
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-check-timeout
+LOG=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/log
+run_ok $TEST_NAME grep 'Abort on suite timeout is set' $LOG
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
