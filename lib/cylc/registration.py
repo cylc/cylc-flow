@@ -173,40 +173,24 @@ class localdb(object):
         return invalid
 
     def get_suite_title( self, suite, path=None ):
-        "Determine the suite title without a full file parse"
+        """Determine the (first line of) the suite title without a full
+        file parse. Assumes the title is not in an include-file."""
+
         if not path:
             data = self.get_suite_data( suite )
             path = data['path']
         suiterc = os.path.join( path, 'suite.rc' )
 
-        title = ""
-        found_start = False
-        done = False
-        for xline in open( suiterc, 'rb' ):
-            if re.search( '^ *\[', xline ):
-                # abort the search: title comes before first [section]
+        title = "No title provided"
+        for line in open( suiterc, 'rb' ):
+            if re.search( '^\s*\[', line ):
+                # abort: title comes before first [section]
                 break
-            line = xline.strip()
-            if not found_start:
-                m = re.match( '^title\s*=\s*([\'\"]+)(.*)', line )
-                if m:
-                    found_start = True
-                    # strip quotes
-                    start_quotes, line = m.groups()
-            if found_start:
-                if line.endswith( start_quotes ):
-                    # strip quotes
-                    line = re.sub( start_quotes, '', line )
-                    done = True
-                if title:
-                    # adding on a second line on
-                    title += " "
-                title += line
-                if done:
-                    break
+            m = re.match( '^\s*title\s*=\s*(.*)\s*$', line )
+            if m:
+                line = m.groups()[0]
+                title = line.strip('"\'')
 
-        if not title:
-            title = "No title provided"
         return title
 
     def refresh_suite_title( self, suite ):
@@ -214,13 +198,16 @@ class localdb(object):
         dir, title = data['path'], data['title']
         new_title = self.get_suite_title( suite )
         if title == new_title:
-            #if self.verbose:
-            print 'unchanged:', suite#, '->', title
+            if self.verbose:
+                print 'unchanged:', suite
             changed = False
         else:
-            print 'RETITLED:', suite #, '->', new_title
+            print 'RETITLED:', suite
+            print '   old title:', title
+            print '   new title:', new_title
             changed = True
-            self.items[suite] = dir, new_title
+            self.unregister( suite )
+            self.register( suite, dir )
         return changed
 
     def get_rcfiles ( self, suite ):
