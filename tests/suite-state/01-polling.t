@@ -26,8 +26,8 @@ install_suite $TEST_NAME_BASE polling
 #-------------------------------------------------------------------------------
 # copy the upstream suite to the test directory and register it
 cp -r $TEST_SOURCE_DIR/upstream $TEST_DIR/
-# use full range of characters in the suite-to-be-polled name:
-UPSTREAM=${SUITE_NAME}-up_stre.am
+# this version uses a simple Rose-style suite name [\w-]
+UPSTREAM=${SUITE_NAME}-upstream
 cylc unreg $UPSTREAM
 cylc reg $UPSTREAM $TEST_DIR/upstream
 #-------------------------------------------------------------------------------

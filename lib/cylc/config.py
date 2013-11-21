@@ -963,7 +963,7 @@ class config( object ):
         # "foo<SUITE::TASK:fail> => bar"  becomes "foo => bar"
         # (and record that foo must automatically poll for TASK in SUITE)
         repl = Replacement( '\\1' )
-        line = re.sub( '(\w+)(<([\w-]+)::(\w+)(:\w+)?>)', repl, line )
+        line = re.sub( '(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)', repl, line )
         for item in repl.match_groups:
             l_task, r_all, r_suite, r_task, r_status = item
             if r_status:
