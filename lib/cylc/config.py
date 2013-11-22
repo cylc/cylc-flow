@@ -126,8 +126,12 @@ class config( object ):
                 'descendants' : {},
                 # lists of all descendant namespaces from the first-parent hierarchy
                 # (first parents are collapsible in suite visualization)
-                'first-parent descendants' : {}
+                'first-parent descendants' : {},
                 }
+        # tasks
+        self.leaves = []
+        # one up from root
+        self.feet = []
 
         # parse, upgrade, validate the suite, but don't expand [runtime]
         self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
@@ -169,7 +173,7 @@ class config( object ):
         self.compute_inheritance()
 
         #debugging:
-        #self.print_inheritance()
+        self.print_inheritance()
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if self.verbose:
@@ -350,6 +354,16 @@ class config( object ):
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
+
+        self.leaves = self.get_task_name_list()
+        for ns, ancestors in self.runtime['first-parent ancestors'].items():
+            try:
+                foot = ancestors[-2] # one back from 'root'
+            except IndexError:
+                pass
+            else:
+                if foot not in self.feet:
+                    self.feet.append(foot)
 
     def check_env( self ):
         # TODO - belongs in parsec

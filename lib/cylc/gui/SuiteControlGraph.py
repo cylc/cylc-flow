@@ -146,12 +146,13 @@ Dependency graph suite control interface.
         group_item = gtk.ImageMenuItem( 'Group' )
         img = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_MENU )
         group_item.set_image(img)
+        group_item.set_sensitive( not self.t.have_leaves_and_feet or name not in self.t.feet )
         group_item.connect( 'activate', self.grouping, name, True )
 
         ungroup_item = gtk.ImageMenuItem( 'UnGroup' )
         img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
         ungroup_item.set_image(img)
-        ungroup_item.set_sensitive( not self.t.have_closed_fams or name in self.t.closed_families )
+        ungroup_item.set_sensitive( not self.t.have_leaves_and_feet or name not in self.t.leaves )
         ungroup_item.connect( 'activate', self.grouping, name, False )
 
         ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )
