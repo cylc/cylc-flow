@@ -158,7 +158,7 @@ Dependency graph suite control interface.
         ungroup_rec_item = gtk.ImageMenuItem( 'Recursive UnGroup' )
         img = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_MENU )
         ungroup_rec_item.set_image(img)
-        ungroup_rec_item.set_sensitive( not self.t.ungroup_recursive )
+        ungroup_rec_item.set_sensitive( not self.t.have_leaves_and_feet or name not in self.t.leaves )
         ungroup_rec_item.connect( 'activate', self.grouping, name, False, True )
 
         title_item = gtk.MenuItem( 'Task: ' + task_id.replace("_", "__") )
