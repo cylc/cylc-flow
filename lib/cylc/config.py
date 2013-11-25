@@ -173,7 +173,7 @@ class config( object ):
         self.compute_inheritance()
 
         #debugging:
-        self.print_inheritance()
+        #self.print_inheritance()
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if self.verbose:
