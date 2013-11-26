@@ -15,10 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test cylc suite registration
+# Test cylc suite registration
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 8
+set_test_number 9
 #-------------------------------------------------------------------------------
 SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_regtest
 mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
@@ -38,6 +38,15 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-print-db
 cylc print 1> dboutput
 run_ok $TEST_NAME grep $SUITE_NAME dboutput
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-db-refresh
+perl -pi -e 's/title = .*/title = "jumped over the lazy dog"/' \
+    $TEST_DIR/$SUITE_NAME/suite.rc
+cylc db refresh
+cylc print -x $SUITE_NAME | sed 's/.*| *//' 1> dboutput
+cmp_ok dboutput <<'__END'
+jumped over the lazy dog
+__END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-unreg
 run_ok $TEST_NAME cylc unregister $SUITE_NAME

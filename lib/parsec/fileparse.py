@@ -169,17 +169,16 @@ def addict( cfig, key, val, parents, verbose ):
         # drop down the parent list
         cfig = cfig[p]
     if key in cfig:
-        # already defined - ok for graph strings
-        if key == 'graph' and set(parents[:-1]) == set(['scheduling','dependencies']):
-            try:
-                cfig[key] += '\n' + val
-            except IndexError:
-                # no graph string
-                pass
-            else:
-                if verbose:
-                    print 'Merging graph strings under [' + ']['.join(parents) + ']'
+        # this item already exists
+        if key == 'graph' and \
+                ( len( parents ) == 2 and parents == ['scheduling','dependencies'] or \
+                len( parents ) == 3 and parents[-3:-1] == ['scheduling','dependencies'] ):
+            # append the new graph string to the existing one
+            if verbose:
+                print 'Merging graph strings under [' + ']['.join(parents) + ']'
+            cfig[key] += '\n' + val
         else:
+            # otherwise override the existing item
             if verbose:
                 print >> sys.stderr, 'WARNING: overriding [' + ']['.join(parents) + ']' + key
                 print >> sys.stderr, ' old value: ' + cfig[key]

@@ -126,8 +126,12 @@ class config( object ):
                 'descendants' : {},
                 # lists of all descendant namespaces from the first-parent hierarchy
                 # (first parents are collapsible in suite visualization)
-                'first-parent descendants' : {}
+                'first-parent descendants' : {},
                 }
+        # tasks
+        self.leaves = []
+        # one up from root
+        self.feet = []
 
         # parse, upgrade, validate the suite, but don't expand [runtime]
         self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
@@ -350,6 +354,16 @@ class config( object ):
         # names, so it overrides the styling for lesser groups and
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
+
+        self.leaves = self.get_task_name_list()
+        for ns, ancestors in self.runtime['first-parent ancestors'].items():
+            try:
+                foot = ancestors[-2] # one back from 'root'
+            except IndexError:
+                pass
+            else:
+                if foot not in self.feet:
+                    self.feet.append(foot)
 
     def check_env( self ):
         # TODO - belongs in parsec
@@ -963,7 +977,7 @@ class config( object ):
         # "foo<SUITE::TASK:fail> => bar"  becomes "foo => bar"
         # (and record that foo must automatically poll for TASK in SUITE)
         repl = Replacement( '\\1' )
-        line = re.sub( '(\w+)(<([\w-]+)::(\w+)(:\w+)?>)', repl, line )
+        line = re.sub( '(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)', repl, line )
         for item in repl.match_groups:
             l_task, r_all, r_suite, r_task, r_status = item
             if r_status:
@@ -1006,7 +1020,7 @@ class config( object ):
             if re.search( r"\b" + fam + r"\b[^:].*=>", line ) or re.search( r"\b" + fam + "\s*=>$", line ):
                 # plain family names are not allowed on the left of a trigger
                 print >> sys.stderr, line
-                raise SuiteConfigError, 'ERROR, upstream family triggers must be qualified with \':type\': ' + fam
+                raise SuiteConfigError, 'ERROR, family triggers must be qualified, e.g. ' + fam + ':succeed-all'
 
             # finally replace plain family names on the right of a trigger
             line = self.replace_family_triggers( line, fam, members )

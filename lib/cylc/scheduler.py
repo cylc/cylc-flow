@@ -446,9 +446,10 @@ class scheduler(object):
 
     def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):
-        # TODO - CAN WE OMIT THE MIDDLE MAN HERE?
         return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
-                ungroup_nodes, ungroup_recursive, group_all, ungroup_all), self.config.suite_polling_tasks
+                ungroup_nodes, ungroup_recursive, group_all, ungroup_all), \
+                        self.config.suite_polling_tasks, \
+                        self.config.leaves, self.config.feet
 
     def info_get_task_requisites( self, in_ids ):
         in_ids_real = {}
@@ -1023,26 +1024,27 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            # process queued task messages
-            for itask in self.pool.get_tasks():
-                itask.process_incoming_messages()
-
-            # process queued database operations
             state_recorders = []
             state_updaters = []
             event_recorders = []
             other = []
+            
+            # process queued task messages
             for itask in self.pool.get_tasks():
-                opers = itask.get_db_ops()
-                for oper in opers:
-                    if isinstance(oper, cylc.rundb.UpdateObject):
-                        state_updaters += [oper]
-                    elif isinstance(oper, cylc.rundb.RecordStateObject):
-                        state_recorders += [oper]
-                    elif isinstance(oper, cylc.rundb.RecordEventObject):
-                        event_recorders += [oper]
-                    else:
-                        other += [oper]
+                itask.process_incoming_messages()
+                # if incoming messages have resulted in new database operations grab them
+                if itask.db_items:
+                    opers = itask.get_db_ops()
+                    for oper in opers:
+                        if isinstance(oper, cylc.rundb.UpdateObject):
+                            state_updaters += [oper]
+                        elif isinstance(oper, cylc.rundb.RecordStateObject):
+                            state_recorders += [oper]
+                        elif isinstance(oper, cylc.rundb.RecordEventObject):
+                            event_recorders += [oper]
+                        else:
+                            other += [oper]
+
             #precedence is record states > update_states > record_events > anything_else
             db_ops = state_recorders + state_updaters + event_recorders + other 
             # compact the set of operations
@@ -1507,7 +1509,7 @@ class scheduler(object):
             ouct = self.get_runahead_base() 
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently('runahead'):
-                    if int(itask.c_time) > int(self.stop_tag): 
+                    if self.stop_tag and int(itask.c_time) > int(self.stop_tag):
                         # beyond the final cycle time 
                         itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
                         itask.reset_state_held()

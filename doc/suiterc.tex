@@ -3,15 +3,10 @@
 
 \lstset{language=bash}
 
-This appendix defines all cylc suite.rc config items.
-
-{\em Note that Jinja2 expressions can also be embedded in suite
-definitions to programmatically generate the final result parsed by
-cylc.} Use of Jinja2 is documented in Section~\ref{Jinja2}.
-
-See also {\em Suite Definition - Suite.rc Overview}
-(Section~\ref{SuiteRCFile}) for a descriptive overview of suite.rc
-files.
+This appendix defines all legal suite definition config items.
+Embedded Jinja2 code (see Section~\ref{Jinja2}) must process to a valid 
+raw suite.rc file. See also Section~\ref{SuiteRCFile} for a descriptive
+overview of suite.rc files, including syntax (Section~\ref{Syntax}).
 
 \subsection{Top Level Items}
 
@@ -1454,6 +1449,74 @@ Replace \_\_OUTPUT\_\_ with any number of labelled output messages.
  \end{lstlisting}
 \end{myitemize}
 \lstset{language=transcript}
+
+\paragraph[{[[[}suite state polling{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]]}
+
+Configure automatic suite polling tasks as described in Section~\ref{SuiteStatePolling}. The 
+items in this section reflect the options and defaults of the
+\lstinline=cylc suite-state= command, except that the target suite name and the 
+\lstinline=--task=, \lstinline=--cycle=, and \lstinline=--status= options are 
+taken from the graph notation.
+
+\subparagraph[run-dir]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ run-dir}
+
+For your own suites the run database location is determined by your
+site/user config. For other suites, e.g. those owned by others, or
+mirrored suite databases, use this item to specify the location 
+of the top level cylc run directory (the database should be a 
+suite-name sub-directory of this location). 
+
+\begin{myitemize}
+    \item {\em type:} string (a directory path on the target suite host)
+    \item {\em default:} as configured by site/user config (for your own suites)
+\end{myitemize}
+
+\subparagraph[interval]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ interval}
+
+Polling interval.
+\begin{myitemize}
+    \item {\em type:} integer (seconds)
+    \item {\em default:} 60 seconds
+\end{myitemize}
+
+\subparagraph[max-polls]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ max-polls}
+
+The maximum number of polls before timing out and entering the `failed' state.
+
+\begin{myitemize}
+    \item {\em type:} integer (seconds)
+    \item {\em default:} 10
+\end{myitemize}
+
+\subparagraph[user]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ user}
+
+Username of an account on the suite host to which you have access. The
+polling \lstinline=cylc suite-state= command will be invoked 
+on the remote account.
+
+\begin{myitemize}
+    \item {\em type:} string (username)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ host}
+
+The hostname of the target suite. The polling \lstinline=cylc suite-state= command
+will be invoked on the remote account.
+
+\begin{myitemize}
+    \item {\em type:} string (hostname)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[verbose]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ verbose}
+
+Run the polling \lstinline=cylc suite-state= command in verbose output mode.
+
+\begin{myitemize}
+    \item {\em type:} boolean (seconds)
+    \item {\em default:} False
+\end{myitemize}
 
 \subsection{[visualization]}
 

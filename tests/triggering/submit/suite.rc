@@ -1,0 +1,11 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo:submit => bar"
+[runtime]
+    [[foo,bar]]
+        command scripting = "true"

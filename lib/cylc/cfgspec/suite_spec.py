@@ -177,7 +177,7 @@ SPEC = {
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
                 },
             'suite state polling' : {
-                'owner'                       : vdr( vtype='string' ),
+                'user'                        : vdr( vtype='string' ),
                 'host'                        : vdr( vtype='string' ),
                 'interval'                    : vdr( vtype='integer' ),
                 'max-polls'                   : vdr( vtype='integer' ),
