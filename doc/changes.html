@@ -16,6 +16,8 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.2">5.4.2</a></li>
+		<li><a href="#5.4.1">5.4.1</a></li>
 		<li><a href="#5.4.0">5.4.0</a></li>
 		<li><a href="#5.3.0">5.3.0</a></li>
 		<li><a href="#5.2.0">5.2.0</a></li>
@@ -32,6 +34,44 @@
 <p>This pages mainly lists major enhancements and bug fixes. Selected minor
 bug fixes and changes may also be listed - for all changes see the
 cylc git repository change log.</p>
+
+<a name="5.4.2"/>
+		<h2>5.4.2</h2>
+
+		<ul>
+				<li>Fixes a bug that could cause an error in gcylc if it tried
+				to interrogate a very large suite before it had finished
+				initializing.</li>
+
+				<li>Allow the suite name delimiter '.' (dot) character in 
+				the names of the new automatic suite-polling tasks.</li>
+
+				<li>Fixed a recently introduced bug that caused the <code>cylc
+						db refresh</code> command to crash if a suite's name had
+						been changed.</li>
+
+				<li>Fixed gcylc graph view right-click family Group/Ungroup 
+				behaviour.</li>
+
+				<li>Documented automatic suite-polling tasks (triggering off 
+				tasks in other suites) in the user guide.</li>
+
+				<li>Updated suite definition syntax documentation in the 
+				user guide.</li>
+
+				<li>Further expansion of the automated test battery.</li>
+
+		</ul>
+	
+
+<a name="5.4.1"/>
+		<h2>5.4.1</h2>
+
+			<ul>
+				<li>Fixes a bug introduced just before the 5.4.0 release: cylc 
+				would abort if a task in a suite with no final cycle time hit 
+				the runahead limit.
+		   </ul>	
 
 <a name="5.4.0"/>
 		<h2>5.4.0</h2>
