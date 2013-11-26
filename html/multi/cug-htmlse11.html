@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-11-15 10:45:00"> 
+<meta name="date" content="2013-11-26 22:18:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 4376--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 4345--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
@@ -33,15 +33,15 @@ href="#x12-15200011.5">Overriding The Job Submission Command</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.6 <a 
 href="#x12-15300011.6">Defining New Job Submission Methods</a></span>
    </div>
-<!--l. 4379--><p class="indent" >   <span 
+<!--l. 4348--><p class="indent" >   <span 
 class="cmti-10">Task Implementation </span>(Section&#x00A0;<a 
 href="cug-htmlse10.html#x11-13000010">10<!--tex4ht:ref: TaskImplementation --></a>) describes what requirements a command, script, or program, must fulfill in
 order to function as a cylc task. This section explains how tasks are submitted by cylc when they are ready to run,
 and how to define new task job submission methods.
-<!--l. 4385--><p class="noindent" >
+<!--l. 4354--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">11.1   </span> <a 
  id="x12-13900011.1"></a>Job Poll And Kill Support</h4>
-<!--l. 4387--><p class="noindent" >For most job submission methods cylc now supports polling for real task status, and job kill, from the gcylc GUI
+<!--l. 4356--><p class="noindent" >For most job submission methods cylc now supports polling for real task status, and job kill, from the gcylc GUI
 and command line (<span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -54,25 +54,24 @@ href="cug-htmlse12.html#x13-16500012.7">12.7<!--tex4ht:ref: RestartingSuites -->
 polling can be used as regular health check for submitted tasks, and to track tasks on hosts that do not allow return
 routing for task messaging (Section&#x00A0;<a 
 href="cug-htmlse12.html#x13-15600012">12<!--tex4ht:ref: RunningSuites --></a>).
-<!--l. 4397--><p class="noindent" >
+<!--l. 4366--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.1.1   </span> <a 
  id="x12-14000011.1.1"></a>Exceptions</h5>
-<!--l. 4399--><p class="noindent" >Task poll and kill support has not yet been added to the <span 
+<!--l. 4368--><p class="noindent" >Task poll and kill support has not yet been added to the <span 
 class="cmti-10">SGE </span>and <span 
 class="cmti-10">slurm </span>job submission methods. It will be added
 in an upcoming release.
-<!--l. 4403--><p class="noindent" >
+<!--l. 4372--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">11.2   </span> <a 
  id="x12-14100011.2"></a>Task Job Scripts</h4>
-<!--l. 4406--><p class="noindent" >When a task is ready to run cylc generates a temporary <span 
+<!--l. 4375--><p class="noindent" >When a task is ready to run cylc generates a temporary <span 
 class="cmti-10">task job script </span>to configure the task&#8217;s execution environment
 and call its command scripting. The job script is the embodiment of all suite.rc runtime settings for the task. It is
 submitted to run by the <span 
 class="cmti-10">job submission method </span>configured for the task. Different tasks can have different job
 submission methods. Like other runtime properties, you can set a suite default job submission method and override
-it for specific tasks or families:  <!--l. 4415--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+it for specific tasks or families:  <!--l. 4384-->
+   <div class="lstlisting" id="listing-154"><span class="label"><a 
  id="x12-141001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -175,13 +174,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">at</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
-<!--l. 4425--><p class="indent" >   As shown in the Tutorial Section&#x00A0;<a 
+<!--l. 4394--><p class="indent" >   As shown in the Tutorial Section&#x00A0;<a 
 href="cug-htmlse7.html#x8-370007.11">7.11<!--tex4ht:ref: RunningSuitesCLI --></a>, job scripts are saved to the suite run directory; the commands used to
 submit them are printed to stdout by cylc; and they can be printed with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -192,31 +190,30 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">jobscript</span></span> command. Take a look at one to see exactly how cylc wraps and
 runs your tasks.
-<!--l. 4432--><p class="noindent" >
+<!--l. 4401--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">11.3   </span> <a 
  id="x12-14200011.3"></a>Supported Job Submission Methods</h4>
-<!--l. 4435--><p class="noindent" >Cylc supports a number of commonly used job submission methods, and Section&#x00A0;<a 
+<!--l. 4404--><p class="noindent" >Cylc supports a number of commonly used job submission methods, and Section&#x00A0;<a 
 href="#x12-15300011.6">11.6<!--tex4ht:ref: DefiningNewJobSubmissionMethods --></a> shows how to add support for
 other user-defined job submission methods.
-<!--l. 4439--><p class="noindent" >
+<!--l. 4408--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.1   </span> <a 
  id="x12-14300011.3.1"></a>background</h5>
-<!--l. 4441--><p class="noindent" >Runs tasks directly in a background shell.
-<!--l. 4443--><p class="noindent" >
+<!--l. 4410--><p class="noindent" >Runs tasks directly in a background shell.
+<!--l. 4412--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.2   </span> <a 
  id="x12-14400011.3.2"></a>at</h5>
-<!--l. 4445--><p class="noindent" >Submits tasks to the rudimentary Unix <span class="lstinline"><span 
+<!--l. 4414--><p class="noindent" >Submits tasks to the rudimentary Unix <span class="lstinline"><span 
 class="pcrr7t-">at</span></span> scheduler. The <span class="lstinline"><span 
 class="pcrr7t-">atd</span></span> daemon must be running.
-<!--l. 4448--><p class="noindent" >
+<!--l. 4417--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.3   </span> <a 
  id="x12-14500011.3.3"></a>loadleveler</h5>
-<!--l. 4450--><p class="noindent" >Submits tasks to loadleveler by the <span class="lstinline"><span 
+<!--l. 4419--><p class="noindent" >Submits tasks to loadleveler by the <span class="lstinline"><span 
 class="pcrr7t-">llsubmit</span></span> command. Loadleveler directives can be provided in the suite.rc
 file:
-   <!--l. 4454--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4423-->
+   <div class="lstlisting" id="listing-155"><span class="label"><a 
  id="x12-145001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -281,12 +278,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span>
-
-
+   
    </div>
-<!--l. 4461--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4463--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4430--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4432-->
+   <div class="lstlisting" id="listing-156"><span class="label"><a 
  id="x12-145006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -327,17 +322,15 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">queue</span>
-
-
+   
    </div>
-<!--l. 4471--><p class="noindent" >
+<!--l. 4440--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.4   </span> <a 
  id="x12-14600011.3.4"></a>pbs</h5>
-<!--l. 4473--><p class="noindent" >Submits tasks to PBS (or Torque) by the <span class="lstinline"><span 
+<!--l. 4442--><p class="noindent" >Submits tasks to PBS (or Torque) by the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command. PBS directives can be provided in the suite.rc file:
-<!--l. 4476--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4445-->
+   <div class="lstlisting" id="listing-157"><span class="label"><a 
  id="x12-146001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -408,12 +401,10 @@ class="pcrr7t-">nodes</span><span
 class="pcrr7t-">=1,</span><span 
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=00:01:00'</span>
-
-
+   
    </div>
-<!--l. 4483--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4485--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4452--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4454-->
+   <div class="lstlisting" id="listing-158"><span class="label"><a 
  id="x12-146006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -446,20 +437,18 @@ class="pcrro7t-">nodes</span><span
 class="pcrro7t-">=1,</span><span 
 class="pcrro7t-">walltime</span><span 
 class="pcrro7t-">=00:01:00</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
-<!--l. 4492--><p class="noindent" >
+<!--l. 4461--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.5   </span> <a 
  id="x12-14700011.3.5"></a>sge</h5>
-<!--l. 4494--><p class="noindent" >Submits tasks to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
+<!--l. 4463--><p class="noindent" >Submits tasks to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
 class="pcrr7t-">qsub</span></span> command. SGE directives can be provided in the suite.rc
-file:  <!--l. 4497--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+file:  <!--l. 4466-->
+   <div class="lstlisting" id="listing-159"><span class="label"><a 
  id="x12-147001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -554,12 +543,10 @@ class="pcrr7t-">M</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">h_rt</span><span 
 class="pcrr7t-">=24:00:00'</span>
-
-
+   
    </div>
-<!--l. 4505--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4507--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4474--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4476-->
+   <div class="lstlisting" id="listing-160"><span class="label"><a 
  id="x12-147007r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -601,18 +588,16 @@ class="pcrro7t-">M</span><span
 class="pcrro7t-">,</span><span 
 class="pcrro7t-">h_rt</span><span 
 class="pcrro7t-">=24:00:00</span>
-
-
+   
    </div>
-<!--l. 4515--><p class="noindent" >
+<!--l. 4484--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.6   </span> <a 
  id="x12-14800011.3.6"></a>slurm</h5>
-<!--l. 4517--><p class="noindent" >Submits tasks to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
+<!--l. 4486--><p class="noindent" >Submits tasks to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
 class="pcrr7t-">sbatch</span></span> command. SLURM directives can
 be provided in the suite.rc file (note that since not all SLURM commands have a short form, cylc requires the long
-form directives):  <!--l. 4522--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+form directives):  <!--l. 4491-->
+   <div class="lstlisting" id="listing-161"><span class="label"><a 
  id="x12-148001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -699,12 +684,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QXZ5W2</span>
-
-
+   
    </div>
-<!--l. 4530--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4532--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4499--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4501-->
+   <div class="lstlisting" id="listing-162"><span class="label"><a 
  id="x12-148007r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -736,37 +719,35 @@ class="pcrro7t-">--</span><span
 class="pcrro7t-">account</span><span 
 class="pcrro7t-">=</span><span 
 class="pcrro7t-">QXZ5W2</span>
-
-
+   
    </div>
-<!--l. 4539--><p class="noindent" >
+<!--l. 4508--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.7   </span> <a 
  id="x12-14900011.3.7"></a>Default Directives Provided</h5>
-<!--l. 4541--><p class="noindent" >For job submission methods that use job file directives (PBS, Loadlevler, etc.) default directives are provided to set
+<!--l. 4510--><p class="noindent" >For job submission methods that use job file directives (PBS, Loadlevler, etc.) default directives are provided to set
 the job name and stdout and stderr file paths.
-<!--l. 4545--><p class="noindent" >
+<!--l. 4514--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.3.8   </span> <a 
  id="x12-15000011.3.8"></a>Cylc Quirks (PBS,SGE,...) </h5>
-<!--l. 4547--><p class="noindent" >As shown in the example above, multiple entries for the same PBS or SGE directive option must be
+<!--l. 4516--><p class="noindent" >As shown in the example above, multiple entries for the same PBS or SGE directive option must be
 comma-separated on the same line, in the suite.rc file. Otherwise, repeating the option on another
 line will override the previous entry, not add to it. Also, the right-hand side must be quoted to hide
 the comma from the suite.rc parser (commas indicate list values, whereas directives are treated as
 singular).
-<!--l. 4554--><p class="indent" >   As also shown in the example above, to get a naked option flag such as <span class="lstinline"><span 
+<!--l. 4523--><p class="indent" >   As also shown in the example above, to get a naked option flag such as <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">cwd</span></span> in SGE you must give a quoted
 blank space as the directive value in the suite.rc file.
                                                                                          
 
                                                                                          
-<!--l. 4558--><p class="noindent" >
+<!--l. 4527--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">11.4   </span> <a 
  id="x12-15100011.4"></a>Task stdout And stderr Logs</h4>
-<!--l. 4561--><p class="noindent" >When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
+<!--l. 4530--><p class="noindent" >When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
 filename containing the task name, cycle time (or integer tag), and a submit number that increments if the same
-task is re-triggered multiple times:  <!--l. 4566--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+task is re-triggered multiple times:  <!--l. 4535-->
+   <div class="lstlisting" id="listing-163"><span class="label"><a 
  id="x12-151001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -851,30 +832,28 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">hello</span><span 
 class="pcrr7t-">.1.</span><span 
 class="pcrr7t-">err</span>
-
-
+   
    </div>
-<!--l. 4575--><p class="indent" >   How the stdout and stderr streams are directed into these files depends on the job submission method.
+<!--l. 4544--><p class="indent" >   How the stdout and stderr streams are directed into these files depends on the job submission method.
 The <span class="lstinline"><span 
 class="pcrr7t-">background</span></span> method just uses appropriate output redirection on the command line, as shown
 above. The <span class="lstinline"><span 
 class="pcrr7t-">loadleveler</span></span> method writes appropriate directives to the job script that is submitted to
 loadleveler.
-<!--l. 4581--><p class="indent" >   Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
+<!--l. 4550--><p class="indent" >   Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
 output management (e.g.&#x00A0;tasks that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred to here will be complete task job
 logs.
-<!--l. 4587--><p class="noindent" >
+<!--l. 4556--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">11.5   </span> <a 
  id="x12-15200011.5"></a>Overriding The Job Submission Command</h4>
-<!--l. 4591--><p class="noindent" >To change the form of the actual command used to submit a job you do not need to define a new job submission
+<!--l. 4560--><p class="noindent" >To change the form of the actual command used to submit a job you do not need to define a new job submission
 method; just override the <span class="lstinline"><span 
 class="pcrr7t-">command</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">template</span></span> in the relevant job submission sections of your suite.rc file:
-<!--l. 4595--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4564-->
+   <div class="lstlisting" id="listing-164"><span class="label"><a 
  id="x12-152001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -991,21 +970,19 @@ class="pcrr7t-">s</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">s</span>
-
-
+   
    </div>
-<!--l. 4603--><p class="indent" >   As explained in the suite.rc reference (Appendix&#x00A0;<a 
+<!--l. 4572--><p class="indent" >   As explained in the suite.rc reference (Appendix&#x00A0;<a 
 href="cug-htmlse16.html#x17-205000A">A<!--tex4ht:ref: SuiteRCReference --></a>), the template&#8217;s first %s will be substituted by the job file
 path and, where applicable a second and third %s will be substituted by the paths to the job stdout and stderr
 files.
-<!--l. 4608--><p class="noindent" >
+<!--l. 4577--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">11.6   </span> <a 
  id="x12-15300011.6"></a>Defining New Job Submission Methods</h4>
-<!--l. 4611--><p class="noindent" >Defining a new job submission method requires a little Python programming. You can derive (in the sense of object
+<!--l. 4580--><p class="noindent" >Defining a new job submission method requires a little Python programming. You can derive (in the sense of object
 oriented programming inheritance) new methods from one of the existing ones, or directly from cylc&#8217;s job submission
-base class,  <!--l. 4616--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+base class,  <!--l. 4585-->
+   <div class="lstlisting" id="listing-165"><span class="label"><a 
  id="x12-153001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -1019,14 +996,13 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">job_submit</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span>
-
-
+   
    </div>
-<!--l. 4619--><p class="indent" >   using the existing job submission methods as examples.
-<!--l. 4622--><p class="noindent" >
+<!--l. 4588--><p class="indent" >   using the existing job submission methods as examples.
+<!--l. 4591--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.6.1   </span> <a 
  id="x12-15400011.6.1"></a>An Example</h5>
-<!--l. 4624--><p class="noindent" >The following user-defined job submission class, called <span 
+<!--l. 4593--><p class="noindent" >The following user-defined job submission class, called <span 
 class="cmti-10">qsub</span>, overrides the built-in <span 
 class="cmti-10">pbs </span>class to change the directive
 prefix from <span class="lstinline"><span 
@@ -1034,12 +1010,11 @@ class="pcrro7t-">#</span><span
 class="pcrro7t-">PBS</span></span> to <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">QSUB</span></span>:
-   <!--l. 4628--><div class="lstlisting">
+   <!--l. 4597-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+   <div class="lstlisting" id="listing-166"><span class="label"><a 
  id="x12-154001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
@@ -1129,67 +1104,63 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-154009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">"""</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-154010r10"></a></span></span><span 
-class="pcrr7t-">This</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">is</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">user</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">defined</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">submission</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">method</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">that</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">overrides</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">the</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'#</span><span 
-class="pcrr7t-">PBS</span><span 
-class="pcrr7t-">'</span><span 
+ id="x12-154010r10"></a></span><span 
+class="pcrro7t-">This</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">is</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">a</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">user</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">defined</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">job</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">submission</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">method</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">that</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">overrides</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">the</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">'#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-154011r11"></a></span></span><span 
-class="pcrr7t-">directive</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">prefix</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">of</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">the</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">built</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pbs</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">method</span><span 
-class="pcrr7t-">.</span><span 
+ id="x12-154011r11"></a></span><span 
+class="pcrro7t-">directive</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">prefix</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">of</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">the</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">built</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">in</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">pbs</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">method</span><span 
+class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-154012r12"></a></span></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
+ id="x12-154012r12"></a></span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">"""</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-154013r13"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1265,16 +1236,14 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 4647--><p class="indent" >   To check that this works correctly save the new source file to <span class="lstinline"><span 
+<!--l. 4616--><p class="indent" >   To check that this works correctly save the new source file to <span class="lstinline"><span 
 class="pcrr7t-">qsub</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span></span> in one of the allowed locations (see just
-below), use it in a suite definition:  <!--l. 4651--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+below), use it in a suite definition:  <!--l. 4620-->
+   <div class="lstlisting" id="listing-167"><span class="label"><a 
  id="x12-154017r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1453,12 +1422,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">'</span>
-
-
+   
    </div>
-<!--l. 4666--><p class="indent" >   and generate a job script to see the resulting directives:  <!--l. 4668--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4635--><p class="indent" >   and generate a job script to see the resulting directives:  <!--l. 4637-->
+   <div class="lstlisting" id="listing-168"><span class="label"><a 
  id="x12-154030r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -1585,13 +1552,12 @@ class="pcrro7t-">QSUB</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">-</span><span 
 class="pcrro7t-">cwd</span>
-
-
+   
    </div>
-<!--l. 4679--><p class="noindent" >
+<!--l. 4648--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">11.6.2   </span> <a 
  id="x12-15500011.6.2"></a>Where To Put New Job Submission Modules</h5>
-<!--l. 4681--><p class="noindent" >You new job submission class code should be saved to a file with the same name as the class (plus &#8220;.py&#8221; extension).
+<!--l. 4650--><p class="noindent" >You new job submission class code should be saved to a file with the same name as the class (plus &#8220;.py&#8221; extension).
 It can reside in any of the following locations, depending on how generally useful the new method is and whether or
 not you have write-access to the cylc source tree:
      <ul class="itemize1">
@@ -1607,18 +1573,18 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">job_submission</span></span> directory of the cylc source tree.</li></ul>
-<!--l. 4694--><p class="noindent" >Note that the form of the import statement at the top of the new user-defined Python module differs depending on
+<!--l. 4663--><p class="noindent" >Note that the form of the import statement at the top of the new user-defined Python module differs depending on
 whether or not the file is installed in the cylc source tree (see the comment at the top of the example file
 above).
                                                                                          
 
                                                                                          
-   <!--l. 4703--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 4672--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="cug-htmlse11.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 4703--><p class="indent" >   <a 
+<!--l. 4672--><p class="indent" >   <a 
  id="tailcug-htmlse11.html"></a>    
 </body></html> 
