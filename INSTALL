@@ -20,6 +20,7 @@ INSTALLING FROM A SOURCE TARBALL:
 
   % tar xzf cylc-x.y.z.tar.gz
   % cd cylc-x.y.z
+  % export PATH=$PWD/bin:$PATH
   % make
 
 The 'make' process does the following:
