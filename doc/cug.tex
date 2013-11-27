@@ -6094,12 +6094,13 @@ operation as required.
     \subsection{Factor Out Common Configuration}
 
         Properties shared by multiple tasks (job submission settings,
-        environment variables, command scripting, etc.).  should ideally
+        environment variables, command scripting, etc.) should ideally
         be defined only once (it may be tempting to define all
         environment variables once under \lstinline=[root]=, but
-        this is analagous to overuse of global variables in programming,
-        and makes it difficult to determine which variables matter to
-        which tasks). Cylc has several ways of addressing this problem:
+        this is somewhat analagous to overuse of global variables in
+        programming, and makes it difficult to determine which variables
+        matter to which tasks). Cylc has several ways of addressing this
+        problem:
     
         \begin{myitemize}
             \item {\em Multiple inheritance} under \lstinline@[runtime]@
@@ -6117,7 +6118,7 @@ operation as required.
 
         Jinja2 can also be used to avoid defining intermediate
         environment variables for the sole purpose of deriving other
-        environment variables at task run time. E.g. instead of this:
+        environment variables at task run time. Instead of this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -6129,7 +6130,7 @@ operation as required.
             FOO_OUTPUT_DIR=$OUTPUT_DIR/foo
             BAR_OUTPUT_DIR=$OUTPUT_DIR/bar
 \end{lstlisting}
-  do this:
+        you can do this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 {% set OUTPUT_DIR = "/my/top/outputdir" %}
@@ -6205,7 +6206,7 @@ echo $SENTENCE"""
     by the {\em first parents} in the runtime namespace hierarchy. Tasks
     should generally be grouped into families that reflect their purpose
     within the structure of the suite rather than by technical detail
-    such as common job submission method or host. This often coincides
+    such as common job submission method or task host. This often coincides
     nicely with common configuration inheritance requirements, but if it
     doesn't you can use an empty namespace as a first parent for
     visualization:
@@ -6258,7 +6259,7 @@ local nesting level inside large blocks.
 \end{lstlisting}
     This does not reflect nesting level clearly, and long items 
     push everything off to the right. The following form may be
-    acceptable though:
+    acceptable though as it preserves the proper indentation:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [SECTION]
@@ -6338,7 +6339,8 @@ echo Goodbye World!"""
         \item Avoid {\em unnecessary comments} - if these are not kept up
             to date with code changes the result is misleading, which is 
             worse than having no comments at all.
-            If context and clear item names will do, leave it at that.  
+            If context and clear item or variable names will do, leave
+            it at that.  
 
         \item Avoid full page width ``section divider'' comment lines - 
             these cause problems for editors set to shorter line widths.
@@ -6359,7 +6361,7 @@ echo Goodbye World!"""
 
         \end{myitemize}
 
-   \subsection{A Style Example}
+   \subsection{An Example In The Recommended Style}
 
 \lstset{language=suiterc}
 \begin{lstlisting}
