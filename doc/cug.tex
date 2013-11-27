@@ -6099,21 +6099,20 @@ operation as required.
         environment variables once under \lstinline=[root]=, but
         this is analagous to overuse of global variables in programming,
         and makes it difficult to determine which variables matter to
-        which tasks). Cylc supports several ways of addressing this problem:
+        which tasks). Cylc has several ways of addressing this problem:
     
         \begin{myitemize}
             \item {\em Multiple inheritance} under \lstinline@[runtime]@
                 - shared items can be put into namespaces inherited by
-                related tasks. This can be done over multi-level
-                multiple-parent hierarchy.
+                related tasks.
 
             \item {\em Jinja2 variables} can be defined once and
                 referenced throughout the suite definition. This is not
-                as efficient as multiple inheritance when a significant
-                number of items are shared by a significant number of
-                tasks, but it is more efficient for single variables
-                shared by just a few tasks that don't have anything else
-                in common (e.g.\ the location of a shared file).  
+                as efficient as multiple inheritance when many items are
+                shared by many tasks, but it is more efficient when 
+                single items are shared by just a few tasks that
+                don't have anything else in common (e.g.\ an environment
+                variable for the location of a shared file).  
         \end{myitemize}
 
         Jinja2 can also be used to avoid defining intermediate
@@ -6189,11 +6188,11 @@ echo $SENTENCE"""
     [[BAR]]
         # (... other config...)
         command scripting = "echo $SENTENCE"
-    [[bar_b]]
+    [[bar_a]]
         inherit = BAR
         [[[environment]]]
             SENTENCE = "the quick brown fox"
-    [[bar_c]]
+    [[bar_b]]
         inherit = BAR
         [[[environment]]]
             SENTENCE = "the lazy dog"
@@ -6203,11 +6202,10 @@ echo $SENTENCE"""
 
     Effective visualization can make complex suites easier to
     understand. Collapsible task families for visualization are defined
-    by the first-parent runtime namespace hierarchy (i.e.\ the immediate
-    family a task belongs to is its first parent). Tasks should
-    generally be grouped into families that reflect their purpose within
-    the structure of the suite rather than by technical detail such as
-    common job submission method or host. This goal often coincides
+    by the {\em first parents} in the runtime namespace hierarchy. Tasks
+    should generally be grouped into families that reflect their purpose
+    within the structure of the suite rather than by technical detail
+    such as common job submission method or host. This often coincides
     nicely with common configuration inheritance requirements, but if it
     doesn't you can use an empty namespace as a first parent for
     visualization:
@@ -6218,7 +6216,7 @@ echo $SENTENCE"""
     [[obs1, obs2, obs3]]
         inherit = OBSPROC
 \end{lstlisting}
-    and you can demote parents from primary to secondary if necessary:
+    and you can demote parents from primary to secondary:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -6228,9 +6226,10 @@ echo $SENTENCE"""
 
 \section{Style Guide}
 
-Good style is arguably a matter of taste.  That said, for collaborative
-development of complex systems it is important to settle on a clear and
-consistent style. You may find the following suggestions useful.
+Good style is arguably just a matter of taste.  That said, for
+collaborative development of complex systems it is important to settle
+on a clear and consistent style. You may find the following suggestions
+useful.
 
 \subsection{Line Indentation}
 
@@ -6272,8 +6271,8 @@ local nesting level inside large blocks.
         mixture of space and tab indentations can render to a mess.
 
     \item {\em Line comments} should be indented to the same level as the
-        section or item they refer to - anything less prevents quick block
-        re-indentation in text editors.
+        section or item they refer to - anything less hampers quick block
+        re-indentation operations in text editors.
    
     \item The internal lines of {\em multiline string values} should not
         be indented as if they were suite.rc syntax in their own right -
@@ -6287,8 +6286,8 @@ local nesting level inside large blocks.
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
-    [[foo]]
-        command scripting =""" # GOOD
+    [[foo]] # GOOD:
+        command scripting ="""
 echo Hello World!
 echo Goodbye World!"""
 \end{lstlisting}
@@ -6296,14 +6295,15 @@ echo Goodbye World!"""
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
-    [[foo]]
-        command scripting =""" # BAD
+    [[foo]] # BAD:
+        command scripting ="""
             echo Hello World!
             echo Goodbye World!"""
 \end{lstlisting}
 
-    \lstinline@graph@ strings, however, have no meaning outside of the
-    suite definition and can be free-form for maximum clarity.
+    Dependency \lstinline@graph@ strings, however, have no meaning
+    outside of the suite definition, so they can be entirely free-form
+    for maximum clarity.
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -6314,7 +6314,7 @@ echo Goodbye World!"""
                 """ 
 \end{lstlisting}
 
-   \item {\em Embedded Jinja2 Code} is not part of the suite.rc syntax - 
+   \item Embedded {\em Jinja2} code is not part of the suite.rc syntax - 
        it should be indented from the left margin on its own terms.
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -6335,28 +6335,27 @@ echo Goodbye World!"""
         \item Avoid {\em numbered comments} - future changes can create a
             renumbering nightmare.
 
-        \item Avoid {\em unnecessary comments}. These just have to be   
-            kept up to date with all code changes, or else the result
-            - misleading comments - may be worse than having no comments
-            at all.
+        \item Avoid {\em unnecessary comments} - if these are not kept up
+            to date with code changes the result is misleading, which is 
+            worse than having no comments at all.
             If context and clear item names will do, leave it at that.  
 
         \item Avoid full page width ``section divider'' comment lines - 
             these cause problems for editors set to shorter line widths.
     \end{myitemize}
 
-    \subsection{Other Considerations} 
+    \subsection{Other} 
     
         \begin{myitemize}
             \item {\em Naming conventions} - consider, for example,
                 using uppercase family names and lower case task names,
-                so that you can tell which a namespace represents at a glance.
+                so that you can tell which a namespace is at a glance.
 
-            \item Don't write command scripting for each task to print
-                its input variables to stdout. There is a maintenance
-                cost to this verbosity, and for little benefit because
-                it is as easy to view task job scripts - which contain
-                the variable definitions -as job output logs.
+            \item Don't bother writing command scripting that prints
+                all task input variables to stdout - there is a
+                maintenance cost to this, and for little benefit because
+                it is as easy to view task job scripts (which contain
+                the variable definitions) as job output logs.
 
         \end{myitemize}
 
