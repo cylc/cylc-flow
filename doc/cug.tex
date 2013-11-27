@@ -6090,6 +6090,310 @@ clock, it will automatically wait again. In this way a cylc suite
 naturally and seamlessly transitions between delayed and real time
 operation as required.
 
+
+    \subsection{Factor Out Common Configuration}
+
+        Properties shared by multiple tasks (job submission settings,
+        environment variables, command scripting, etc.).  should ideally
+        be defined only once (it may be tempting to define all
+        environment variables once under \lstinline=[root]=, but
+        this is analagous to overuse of global variables in programming,
+        and makes it difficult to determine which variables matter to
+        which tasks). Cylc supports several ways of addressing this problem:
+    
+        \begin{myitemize}
+            \item {\em Multiple inheritance} under \lstinline@[runtime]@
+                - shared items can be put into namespaces inherited by
+                related tasks. This can be done over multi-level
+                multiple-parent hierarchy.
+
+            \item {\em Jinja2 variables} can be defined once and
+                referenced throughout the suite definition. This is not
+                as efficient as multiple inheritance when a significant
+                number of items are shared by a significant number of
+                tasks, but it is more efficient for single variables
+                shared by just a few tasks that don't have anything else
+                in common (e.g.\ the location of a shared file).  
+        \end{myitemize}
+
+        Jinja2 can also be used to avoid defining intermediate
+        environment variables for the sole purpose of deriving other
+        environment variables at task run time. E.g. instead of this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[root]]
+        [[[environment]]]
+            OUTPUT_DIR=/my/top/outputdir
+    [[foo]]
+        [[[environment]]]
+            FOO_OUTPUT_DIR=$OUTPUT_DIR/foo
+            BAR_OUTPUT_DIR=$OUTPUT_DIR/bar
+\end{lstlisting}
+  do this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+{% set OUTPUT_DIR = "/my/top/outputdir" %}
+[runtime]
+    [[foo]]
+        [[[environment]]]
+            FOO_OUTPUT_DIR={{ OUTPUT_DIR }}/foo
+            BAR_OUTPUT_DIR={{ OUTPUT_DIR }}/bar
+\end{lstlisting}
+
+        If Jinja2 variables are occasionally needed in external scripts,
+        translate them directly in environment sections:
+\lstset{language=suiterc}
+\begin{lstlisting}
+    [[[environment]]]
+        OUTPUT_DIR = {{ OUTPUT_DIR }}
+\end{lstlisting}
+
+
+      \subsection{Use The Graph For Scheduling}
+
+          If you find yourself writing runtime scripting to get a task
+          to change its behaviour significantly from one cycle to the
+          next, consider that the graph is usually the proper place
+          to express this sort of thing. Use different task names, but
+          have them inherit common properties from a family namespace to
+          avoid duplication.  Instead of this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "foo => bar => baz"
+[runtime]
+    [[bar]]
+        command scripting = """
+if [[ $( cylc cycletime --print-hour ) == 06 || \
+      $( cylc cycletime --print-hour ) == 18 ]]; then
+    SENTENCE="the quick brown fox"
+else
+    SENTENCE="the lazy dog"
+fi
+echo $SENTENCE"""
+        # (...other config...)
+\end{lstlisting}
+        do this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[0,12]]]
+            graph = "foo => bar_a => baz"
+        [[[6,18]]]
+            graph = "foo => bar_b => baz"
+[runtime]
+    [[BAR]]
+        # (... other config...)
+        command scripting = "echo $SENTENCE"
+    [[bar_b]]
+        inherit = BAR
+        [[[environment]]]
+            SENTENCE = "the quick brown fox"
+    [[bar_c]]
+        inherit = BAR
+        [[[environment]]]
+            SENTENCE = "the lazy dog"
+\end{lstlisting}
+
+        \subsection{Use Suite Visualization}
+
+    Effective visualization can make complex suites easier to
+    understand. Collapsible task families for visualization are defined
+    by the first-parent runtime namespace hierarchy (i.e.\ the immediate
+    family a task belongs to is its first parent). Tasks should
+    generally be grouped into families that reflect their purpose within
+    the structure of the suite rather than by technical detail such as
+    common job submission method or host. This goal often coincides
+    nicely with common configuration inheritance requirements, but if it
+    doesn't you can use an empty namespace as a first parent for
+    visualization:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[OBSPROC]]
+    [[obs1, obs2, obs3]]
+        inherit = OBSPROC
+\end{lstlisting}
+    and you can demote parents from primary to secondary if necessary:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        inherit = None, HOSTX
+\end{lstlisting}
+
+\section{Style Guide}
+
+Good style is arguably a matter of taste.  That said, for collaborative
+development of complex systems it is important to settle on a clear and
+consistent style. You may find the following suggestions useful.
+
+\subsection{Line Indentation}
+
+The suite.rc file format consists of \lstinline@key = value@ items 
+under nested section headings. Clear indentation is the best way to show
+local nesting level inside large blocks.
+
+\begin{myitemize}
+    \item Indent suite.rc syntax four spaces per nesting level.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[SECTION]
+    title = the quick brown fox
+    [[SUBSECTION]]
+        a short item = value1          # OK
+        a very very long item = value2 # OK
+\end{lstlisting}
+    Don't align \lstinline@item = value@ pairs on the \lstinline@=@
+    character like this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[SECTION]
+             a short item = value1 # BAD
+    a very very long item = value2 # BAD
+\end{lstlisting}
+    This does not reflect nesting level clearly, and long items 
+    push everything off to the right. The following form may be
+    acceptable though:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[SECTION]
+    a short item          = value1 # OK
+    a very very long item = value2 # OK
+\end{lstlisting}
+
+    \item Set your text editor to convert {\em TAB characters} to spaces -
+        tabs may be displayed differently in different editors, so a
+        mixture of space and tab indentations can render to a mess.
+
+    \item {\em Line comments} should be indented to the same level as the
+        section or item they refer to - anything less prevents quick block
+        re-indentation in text editors.
+   
+    \item The internal lines of {\em multiline string values} should not
+        be indented as if they were suite.rc syntax in their own right -
+        the indentation whitespace just ends up inside the string. In
+        particular, \lstinline=command scripting=
+        strings are inserted verbatim into task job scripts.  These,
+        like task job logs, are made easily accessible for debugging
+        purposes, and filling them with bizzarely indented code does not
+        help. An example:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        command scripting =""" # GOOD
+echo Hello World!
+echo Goodbye World!"""
+\end{lstlisting}
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        command scripting =""" # BAD
+            echo Hello World!
+            echo Goodbye World!"""
+\end{lstlisting}
+
+    \lstinline@graph@ strings, however, have no meaning outside of the
+    suite definition and can be free-form for maximum clarity.
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = """
+   foo => bar => baz => qux
+     qux:fail => recover
+                """ 
+\end{lstlisting}
+
+   \item {\em Embedded Jinja2 Code} is not part of the suite.rc syntax - 
+       it should be indented from the left margin on its own terms.
+\lstset{language=suiterc}
+\begin{lstlisting}
+    [[OPS]]
+{% for T in OPS_TASKS %}
+    [[ops_{{T}}]]
+        inherit = OPS
+        # ...
+{% endfor %}
+\end{lstlisting}
+   \end{myitemize}
+
+    \subsection{Comments}
+
+    \begin{myitemize}
+        \item {\em Indent line comments} to section level.
+
+        \item Avoid {\em numbered comments} - future changes can create a
+            renumbering nightmare.
+
+        \item Avoid {\em unnecessary comments}. These just have to be   
+            kept up to date with all code changes, or else the result
+            - misleading comments - may be worse than having no comments
+            at all.
+            If context and clear item names will do, leave it at that.  
+
+        \item Avoid full page width ``section divider'' comment lines - 
+            these cause problems for editors set to shorter line widths.
+    \end{myitemize}
+
+    \subsection{Other Considerations} 
+    
+        \begin{myitemize}
+            \item {\em Naming conventions} - consider, for example,
+                using uppercase family names and lower case task names,
+                so that you can tell which a namespace represents at a glance.
+
+            \item Don't write command scripting for each task to print
+                its input variables to stdout. There is a maintenance
+                cost to this verbosity, and for little benefit because
+                it is as easy to view task job scripts - which contain
+                the variable definitions -as job output logs.
+
+        \end{myitemize}
+
+   \subsection{A Style Example}
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+title = "my suite"
+[scheduling]
+    # comment
+    initial cycle time = 2010080800
+    [[special tasks]]
+        # comment
+        cold-start = c_foo, c_bar
+    [[dependencies]]
+        graph = """
+   foo => bar => baz => qux
+     qux:fail => recover
+                """ 
+[runtime]
+    [[root]]
+        title = "root namespace"
+        command scripting ="""
+echo Hello World!
+echo Goodbye World!"""
+        [[[environment]]]
+            A_SHORT_VAR = value1
+            # comment
+            A_QUITE_QUITE_LONG_VAR = value2
+    [[OPS]]
+{% for T in OPS_TASKS %}
+    [[ops_{{T}}]]
+        inherit = OPS
+        # ...
+{% endfor %}
+\end{lstlisting}
+
 \pagebreak
 
 \appendix
@@ -6102,7 +6406,7 @@ operation as required.
 
 \pagebreak
 
-
+        
 \section{Command Reference}
 \label{CommandReference}
 
