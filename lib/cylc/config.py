@@ -113,6 +113,9 @@ class config( object ):
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
+        self.runahead_limit = None
+        self.default_runahead_limit = None
+
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
                 # lists of parent namespaces
@@ -280,25 +283,22 @@ class config( object ):
         if self.validation:
             self.check_tasks()
 
-        # Default visualization start and stop cycles (defined here
-        # rather than in the spec file so we can set a sensible stop
-        # time if only the start time is specified by the user).
-        vizfinal = False
-        vizstart = False
-        if self.cfg['visualization']['initial cycle time']:
-            vizstart = True
-        if self.cfg['visualization']['final cycle time']:
-            vizfinal = True
+        # initial and final cycles for visualization
+        self.cfg['visualization']['initial cycle time'] = \
+                self.cfg['visualization']['initial cycle time'] or \
+                self.cfg['scheduling']['initial cycle time'] or '2999010100'
 
-        if vizstart and vizfinal:
-            pass
-        elif vizstart:
-            self.cfg['visualization']['final cycle time'] = self.cfg['visualization']['initial cycle time']
-        elif vizfinal:
-            self.cfg['visualization']['initial cycle time'] = self.cfg['visualization']['final cycle time']
-        else:
-            self.cfg['visualization']['initial cycle time'] = 2999010100
-            self.cfg['visualization']['final cycle time'] = 2999010123
+        def get_vizstop():
+            if not self.default_runahead_limit:
+                # no cycling tasks
+                return None
+            st = ct( self.cfg['visualization']['initial cycle time'] )
+            st.increment( hours=self.default_runahead_limit )
+            return st.get()
+
+        self.cfg['visualization']['final cycle time'] = \
+                self.cfg['visualization']['final cycle time'] or \
+                get_vizstop() or self.cfg['visualization']['initial cycle time']
 
         ngs = self.cfg['visualization']['node groups']
 
@@ -510,35 +510,35 @@ class config( object ):
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
 
-            rl = self.cfg['scheduling']['runahead limit']
-            if rl:
-                if self.verbose:
-                    print "Configured runahead limit: ", rl, "hours"
-            else:
-                mcis = []
-                offs = []
-                for cyc in self.cyclers:
-                    m = cyc.get_min_cycling_interval()
-                    if m:
-                        mcis.append(m)
-                    o = cyc.get_offset()
-                    if o:
-                        offs.append(o)
-                if len(mcis) > 0:
-                    # set runahead limit twice the minimum cycling interval
-                    rl = 2 * min(mcis)
-                    if len(offs) > 0:
-                        mo = min(offs)
-                        if mo < 0:
-                            # we have future triggers...
-                            if abs(mo) >= rl:
-                                #... that extend past the default rl
-                                # set to offset plus one minimum interval
-                                rl = abs(mo) + min(mcis)
-                if rl:
-                    if self.verbose:
-                        print "Computed runahead limit:", rl, "hours"
-        self.runahead_limit = rl
+            # configured runahead limit
+            crl = self.cfg['scheduling']['runahead limit']
+
+            # computed default runahead limit
+            drl = None
+            mcis = []
+            offs = []
+            for cyc in self.cyclers:
+                m = cyc.get_min_cycling_interval()
+                if m:
+                    mcis.append(m)
+                o = cyc.get_offset()
+                if o:
+                    offs.append(o)
+            if len(mcis) > 0:
+                # set runahead limit twice the minimum cycling interval
+                drl = 2 * min(mcis)
+                if len(offs) > 0:
+                    mo = min(offs)
+                    if mo < 0:
+                        # we have future triggers...
+                        if abs(mo) >= drl:
+                            #... that extend past the default rl
+                            # set to offset plus one minimum interval
+                            drl = abs(mo) + min(mcis)
+        self.default_runahead_limit = drl
+        self.runahead_limit = crl or drl
+        if self.verbose:
+            print "Runahead limit:", rl, "hours"
 
     def get_runahead_limit( self ):
         # may be None (no cycling tasks)
