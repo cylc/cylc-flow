@@ -1070,7 +1070,7 @@ The Cylc Suite Engine.
             reasons.append( task_id + ' has no associated log files' )
 
         if states[ task_id ][ 'state' ] == 'waiting' or \
-                states[ task_id ][ 'state' ] == 'submitting' or \
+                states[ task_id ][ 'state' ] == 'ready' or \
                 states[ task_id ][ 'state' ] == 'submit-failed' or \
                 states[ task_id ][ 'state' ] == 'queued':
             view = False

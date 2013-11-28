@@ -1749,9 +1749,9 @@ class scheduler(object):
                 tasks.append( itask )
 
         for itask in tasks:
-            if itask.state.is_currently( 'submitting' ):
-                # Currently can't reset a 'submitting' task in the job submission thread!
-                self.log.warning( "A 'submitting' task cannot be reset: " + itask.id )
+            if itask.state.is_currently( 'ready' ):
+                # Currently can't reset a 'ready' task in the job submission thread!
+                self.log.warning( "A 'ready' task cannot be reset: " + itask.id )
             itask.log( "NORMAL", "resetting to " + state + " state" )
             self.log.info( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
             if state == 'ready':
