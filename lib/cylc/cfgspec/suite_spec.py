@@ -196,8 +196,8 @@ SPEC = {
             },
         },
     'visualization' : {
-        'initial cycle time'                  : vdr( vtype='integer' ),
-        'final cycle time'                    : vdr( vtype='integer' ),
+        'initial cycle time'                  : vdr( vtype='cycletime' ),
+        'final cycle time'                    : vdr( vtype='cycletime' ),
         'collapsed families'                  : vdr( vtype='string_list', default=[] ),
         'use node color for edges'            : vdr( vtype='boolean', default=True ),
         'use node color for labels'           : vdr( vtype='boolean', default=False ),

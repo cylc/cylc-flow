@@ -1526,21 +1526,18 @@ http://www.graphviz.org/Documentation.php.
 
 \subsubsection[initial cycle time]{[visualization] $\rightarrow$ initial cycle time}
 
-The first cycle time to use when plotting the suite dependency graph.
+The cycle time from which to start the suite graph.
 \begin{myitemize}
-    \item {\em type:} integer
-    \item {\em default:} 2999010100
+    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em default:} the suite initial cycle time or 2999010100
 \end{myitemize}
 
 \subsubsection[final cycle time]{[visualization] $\rightarrow$ final cycle time}
 
-The last cycle time to use when plotting the suite dependency graph.
-Typically this should be just far enough ahead of the initial cycle to
-show the full suite.
-
+The cycle time at which to end the suite graph.
 \begin{myitemize}
-    \item {\em type:} integer
-    \item {\em default:} 2999010123
+    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em default:} the visualization initial cycle time plus the default runahead limit
 \end{myitemize}
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
