@@ -38,7 +38,10 @@ def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
             if isinstance( val, list ):
                 v = ', '.join([str(f) for f in val])
             else:
-                v = str(val)
+                if val is not None:
+                    v = str(val)
+                else:
+                    v = ''
             print prefix + '   '*indent + str(key) + ' = ' + v
     for key,val in delayed:
         if val != None:
