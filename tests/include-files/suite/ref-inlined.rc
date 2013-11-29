@@ -1,0 +1,18 @@
+
+title = "A test with nested include-files"
+
+[scheduling]
+    [[special tasks]]
+        start-up = foo
+    [[dependencies]]
+        [[[0]]]
+            graph = "foo => bar"
+
+[runtime]
+    [[root]]
+        command scripting = "echo Hello World"
+
+
+[visualization]
+    default node attributes = "style=filled"
+

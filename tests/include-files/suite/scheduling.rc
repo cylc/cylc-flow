@@ -1,0 +1,7 @@
+[scheduling]
+    [[special tasks]]
+        start-up = foo
+    [[dependencies]]
+        [[[0]]]
+            graph = "foo => bar"
+

@@ -87,6 +87,11 @@ parser.add_option( "--stdout",
         help="Print the suite definition to stdout.",
         action="store_true", default=False, dest="stdout" )
 
+parser.add_option( "--mark-for-edit", 
+        help="(With '-i') View file inclusion markers as "
+        "for 'cylc edit --inline'.",
+        action="store_true", default=False, dest="asedit" )
+
 ( options, args ) = parser.parse_args()
 
 suite, suiterc, junk = parser.get_suite()
@@ -113,7 +118,7 @@ viewcfg = {
 try:
     lines = read_and_proc( suiterc, options.verbose,
             options.templatevars, options.templatevars_file,
-            viewcfg=viewcfg )
+            viewcfg=viewcfg, asedit=options.asedit )
 except Exception, x:
     if options.debug:
         raise

@@ -1,0 +1,8 @@
+
+title = "A test with nested include-files"
+
+%include body.rc
+
+[visualization]
+    default node attributes = "style=filled"
+

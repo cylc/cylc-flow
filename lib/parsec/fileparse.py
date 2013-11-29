@@ -223,7 +223,7 @@ def multiline( flines, value, index, maxline ):
     return newvalue + value, index
 
 
-def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=None, viewcfg=None ):
+def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=None, viewcfg=None, asedit=False ):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
@@ -257,7 +257,7 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
     # inline any cylc include-files
     if do_inline:
         try:
-            flines = inline( flines, fdir, False, viewcfg=viewcfg )
+            flines = inline( flines, fdir, False, viewcfg=viewcfg, for_edit=asedit )
         except IncludeFileError, x:
             raise ParseError( str(x) )
 
