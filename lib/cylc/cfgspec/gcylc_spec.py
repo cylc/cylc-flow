@@ -20,6 +20,7 @@ import os
 from parsec.loadcfg import load_combined
 from parsec.validate import validator as vdr
 from parsec.util import printcfg
+from parsec.upgrade import upgrader, converter
 
 """
 Define items and validators for gcylc config files,
@@ -54,12 +55,17 @@ SPEC = {
         },
     }
 
+def upg( cfg, descr, verbose ):
+    u = upgrader(cfg, SPEC, descr, verbose )
+    u.deprecate( '5.4.3', ['themes','__MANY__', 'submitting'], ['themes','__MANY__', 'ready'] )
+    u.upgrade()
+
 def get_cfg( verbose=False ):
     global cfg
     if not cfg:
         cfg = load_combined( SITE_FILE, "site config",
                              USER_FILE, "user config",
-                             SPEC, None, True, verbose )
+                             SPEC, upg, True, verbose )
     return cfg
 
 def print_cfg():
