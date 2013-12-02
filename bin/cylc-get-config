@@ -180,5 +180,8 @@ else:
             else:
                 printcfg( d, level=len(args[1:]), prefix=prefix)
         else:
-            print prefix + str(d)
+            if d is not None:
+                print prefix + str(d)
+            else:
+                print prefix
 
