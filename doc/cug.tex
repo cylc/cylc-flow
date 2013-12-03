@@ -6283,18 +6283,18 @@ local nesting level inside large blocks.
         particular, \lstinline=command scripting=
         strings are inserted verbatim into task job scripts.  These,
         like task job logs, are made easily accessible for debugging
-        purposes, and filling them with bizzarely indented code does not
-        help. An example:
+        purposes, and filling them with bizarrely indented code does not
+        help. For example, this:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
-    [[foo]] # GOOD:
+    [[foo]]
         command scripting ="""
 echo Hello World!
 echo Goodbye World!"""
 \end{lstlisting}
-
+is preferred over this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -6305,20 +6305,22 @@ echo Goodbye World!"""
 \end{lstlisting}
 
     Dependency \lstinline@graph@ strings, however, have no meaning
-    outside of the suite definition, so they can be entirely free-form
-    for maximum clarity.
+    outside of the suite definition - so they can be free-form with 
+    white space and comments used to display the structure of the
+    suite as clearly as possible:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
         graph = """
    foo => bar => baz => qux
+     # failure recovery:
      qux:fail => recover
                 """ 
 \end{lstlisting}
 
    \item Embedded {\em Jinja2} code is not part of the suite.rc syntax - 
-       it should be indented from the left margin on its own terms.
+       it can be indented from the left margin on its own terms.
 \lstset{language=suiterc}
 \begin{lstlisting}
     [[OPS]]
