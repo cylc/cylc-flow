@@ -1714,10 +1714,6 @@ shown here in the state they were in at the time of triggering.''' )
         stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
         vbox.pack_start (stopat_rb, True)
 
-
-        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
-        vbox.pack_start (stopat_rb, True)
-
         st_box = gtk.HBox()
         label = gtk.Label( "STOP (CYCLE or INT')" )
         st_box.pack_start( label, True )
