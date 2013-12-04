@@ -2250,7 +2250,7 @@ plug-in interface to allow use of other template engines too.
 
 The following defines legal suite.rc syntax:
 \begin{myitemize}
-    \item {\bf Items} are of the form \lstinline@key = value@.
+    \item {\bf Items} are of the form \lstinline@item = value@.
     \item {\bf [Section]} headings are enclosed in square brackets.
     \item {\bf Sub-section [[nesting]]} is defined by repeated square brackets.
     \item Sections are {\bf closed} by the next section heading.
@@ -6236,7 +6236,7 @@ useful.
 
 \subsection{Line Indentation}
 
-The suite.rc file format consists of \lstinline@key = value@ items 
+The suite.rc file format consists of \lstinline@item = value@ pairs  
 under nested section headings. Clear indentation is the best way to show
 local nesting level inside large blocks.
 
@@ -6248,25 +6248,25 @@ local nesting level inside large blocks.
 [SECTION]
     title = the quick brown fox
     [[SUBSECTION]]
-        a short item = value1          # OK
-        a very very long item = value2 # OK
+        a short item = value1
+        a very very long item = value2
 \end{lstlisting}
     Don't align \lstinline@item = value@ pairs on the \lstinline@=@
     character like this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [SECTION]
-             a short item = value1 # BAD
-    a very very long item = value2 # BAD
+             a short item = value1
+    a very very long item = value2
 \end{lstlisting}
-    This does not reflect nesting level clearly, and long items 
-    push everything off to the right. The following form may be
-    acceptable though as it preserves the proper indentation:
+    It does not reflect nesting level clearly, and long items push
+    everything off to the right. The following may be acceptable
+    though as it preserves the proper indentation:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [SECTION]
-    a short item          = value1 # OK
-    a very very long item = value2 # OK
+    a short item          = value1
+    a very very long item = value2
 \end{lstlisting}
 
     \item Set your text editor to convert {\em TAB characters} to spaces -
@@ -6274,40 +6274,61 @@ local nesting level inside large blocks.
         mixture of space and tab indentations can render to a mess.
 
     \item {\em Line comments} should be indented to the same level as the
-        section or item they refer to - anything less hampers quick block
-        re-indentation operations in text editors.
+        section or item they refer to. Consistent local indentation makes
+        block re-indentation operations easier in text editors.
    
-    \item The internal lines of {\em multiline string values} should not
-        be indented as if they were suite.rc syntax in their own right -
-        the indentation whitespace just ends up inside the string. In
-        particular, \lstinline=command scripting=
-        strings are inserted verbatim into task job scripts.  These,
-        like task job logs, are made easily accessible for debugging
-        purposes, and filling them with bizarrely indented code does not
-        help. For example, this:
-
+    \item  {\em Command scripting strings} are interpreted by the
+        associated task job script, not by cylc, so strictly speaking
+        their internal lines should not be indented as if part of the
+        suite.rc syntax. This, for example,
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        command scripting = \
+"""echo Hello World!
+echo Goodbye World!"""
+\end{lstlisting}
+is preferred over this (or similar):
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
     [[foo]]
         command scripting ="""
-echo Hello World!
-echo Goodbye World!"""
-\end{lstlisting}
-is preferred over this:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[foo]] # BAD:
-        command scripting ="""
             echo Hello World!
             echo Goodbye World!"""
 \end{lstlisting}
+        If taken as written this whitespace translates to spurious indentation
+        in the task job script. As it happens this is just an aesthetic
+        problem in bash scripts, but for Python job scripts (a possible 
+        future enhancement) it would be a technical error too. Note, however,
+        that cylc now automatically strips indentation, as determined by
+        the first non-blank line, which defuses this argument somewhat.
 
-    Dependency \lstinline@graph@ strings, however, have no meaning
-    outside of the suite definition - so they can be free-form with 
-    white space and comments used to display the structure of the
-    suite as clearly as possible:
+    \item The positioning of string-delimiting triple quotes is of no
+        practical consequence either, but the following forms are
+        suggested for the same reason - to avoid including spurious
+        whitespace in the string:
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        # best:
+        command scripting = \
+"""echo Hello World!
+echo Goodbye World!"""
+        # or (short first line):
+        command scripting ="""echo Hello World!
+echo Goodbye World!"""
+        # or (includes a single newline character):
+        command scripting ="""
+echo Hello World!
+echo Goodbye World!"""
+\end{lstlisting}
+
+
+    \item Multiline dependency \lstinline@graph@ strings have no meaning
+        outside of the suite definition, so they can be free-form in
+        order to most clearly present the structure of the suite:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -6319,8 +6340,8 @@ is preferred over this:
                 """ 
 \end{lstlisting}
 
-   \item Embedded {\em Jinja2} code is not part of the suite.rc syntax - 
-       it can be indented from the left margin on its own terms.
+   \item Embedded {\em Jinja2} code is not part of the suite.rc syntax, so
+       it should be indented from the left margin on its own terms.
 \lstset{language=suiterc}
 \begin{lstlisting}
     [[OPS]]
@@ -6335,7 +6356,8 @@ is preferred over this:
     \subsection{Comments}
 
     \begin{myitemize}
-        \item {\em Indent line comments} to section level.
+        \item {\em Indent line comments} to section or item level, as
+            described above.
 
         \item Avoid {\em numbered comments} - future changes can create a
             renumbering nightmare.
@@ -6346,58 +6368,51 @@ is preferred over this:
             If context and clear item or variable names will do, leave
             it at that.  
 
-        \item Avoid full page width ``section divider'' comment lines - 
-            these cause problems for editors set to shorter line widths.
+        \item Avoid {\em full page width ``section divider'' comments} - 
+            these assume a particular line width, which can be a problem
+            for text editors auto-line-breaking on a lesser width.
+
     \end{myitemize}
 
     \subsection{Other} 
     
         \begin{myitemize}
-            \item {\em Naming conventions} - consider, for example,
-                using uppercase family names and lower case task names,
-                so that you can tell which a namespace is at a glance.
+         \item Avoid {\em very long lines} if possible - these affect
+             readability and may be a problem for auto-line-breaking 
+             text editors.  Line continuation markers can be used
+             anywhere in a suite definition to break up long lines:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = "prep => one => two => three \
+            => four => five six => seven => eight"
+[runtime]
+    [[MY_TASKS]]
+    [[one, two, three, four, five, \
+        six, seven, eight ]]
+        inherit = MY_TASKS
+\end{lstlisting}
+The graph, of course, can also be split up without line breaks:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = """prep => one => two => three => four
+                   four => five six => seven => eight"""
+\end{lstlisting}
+
+            \item Use a {\em naming convention} for runtime namespaces:
+                uppercase names for families and lower case for tasks,
+                so that you can tell which is which at a glance.
 
             \item Don't bother writing command scripting that prints
                 all task input variables to stdout - there is a
                 maintenance cost to this, and for little benefit because
-                it is as easy to view task job scripts (which contain
-                the variable definitions) as job output logs.
+                a task's job script (containing the variable definitions)
+                can be view just as easily as its output logs.
 
         \end{myitemize}
-
-   \subsection{An Example In The Recommended Style}
-
-\lstset{language=suiterc}
-\begin{lstlisting}
-title = "my suite"
-[scheduling]
-    # comment
-    initial cycle time = 2010080800
-    [[special tasks]]
-        # comment
-        cold-start = c_foo, c_bar
-    [[dependencies]]
-        graph = """
-   foo => bar => baz => qux
-     qux:fail => recover
-                """ 
-[runtime]
-    [[root]]
-        title = "root namespace"
-        command scripting ="""
-echo Hello World!
-echo Goodbye World!"""
-        [[[environment]]]
-            A_SHORT_VAR = value1
-            # comment
-            A_QUITE_QUITE_LONG_VAR = value2
-    [[OPS]]
-{% for T in OPS_TASKS %}
-    [[ops_{{T}}]]
-        inherit = OPS
-        # ...
-{% endfor %}
-\end{lstlisting}
 
 \pagebreak
 
