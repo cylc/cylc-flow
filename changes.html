@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.3">5.4.3</a></li>
 		<li><a href="#5.4.2">5.4.2</a></li>
 		<li><a href="#5.4.1">5.4.1</a></li>
 		<li><a href="#5.4.0">5.4.0</a></li>
@@ -35,6 +36,35 @@
 bug fixes and changes may also be listed - for all changes see the
 cylc git repository change log.</p>
 
+<a name="5.4.3"/>
+		<h2>5.4.3</h2>
+
+		<ul>
+				<li>The <code>cylc get-config</code> and <code>cylc
+						get-global-config</code> commands now print blank values 
+				instead of the Pythonic <code>None</code> for unset items. This
+				means newly generated user config files are usable immediately
+				without modification.</li>
+
+				<li>Sensible suite-dependent defaults are now computed for the 
+				<code>[visualization]</code> initial and final cycle times:
+				from the suite's initial cycle time out to its default runahead
+				limit</li>
+
+				<li>For inlined editing of suites with include-files, the 
+				file inclusion markers are now comments so that the suite
+				definition can still be used (validated etc.) during the 
+				edit session.</li>
+
+				<li>Fixed a recent bug that breaks polling of tasks with  
+				an explicit 'owner' configured (as opposed to defaulting 
+				to the suite owner's username, or using <code>.ssh/config</code>
+				to translate usernames for remote tasks). This bug would 
+				break suite restart if any such tasks were present in the
+				submitted or running states.</li>
+		</ul>
+
+	
 <a name="5.4.2"/>
 		<h2>5.4.2</h2>
 

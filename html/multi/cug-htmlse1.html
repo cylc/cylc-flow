@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-11-26 22:18:00"> 
+<meta name="date" content="2013-12-04 13:38:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -92,6 +92,7 @@ a single forecast cycle, multiple parallel streams of execution that branch when
 output for several downstream tasks, and merge when one task takes input from several upstream
 tasks.
 <!--l. 69--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -108,8 +109,8 @@ tasks.
 <!--l. 71--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-one-cycle.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;1: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;1: </td><td  
 class="content"><span 
 class="cmr-7">The dependency graph for a single forecast cycle of a simple example suite. Tasks </span><span 
 class="cmti-7">a, b, </span><span 
@@ -124,12 +125,13 @@ class="cmr-7">are post processing or product generation tasks, and </span><span
 class="cmti-7">x </span><span 
 class="cmr-7">represents external data that the upstream forecast model depends</span>
 <span 
-class="cmr-7">on.</span></span></div><!--tex4ht:label?: x2-50011 -->
+class="cmr-7">on.</span></td></tr></table><!--tex4ht:label?: x2-50011 -->
                                                                                          
 
                                                                                          
-<!--l. 80--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 80--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 82--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -146,18 +148,18 @@ class="cmr-7">on.</span></span></div><!--tex4ht:label?: x2-50011 -->
 <!--l. 84--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-one.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;2: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;2: </td><td  
 class="content"><span 
 class="cmr-7">The optimal job schedule for two consecutive cycles of our example suite during real time operation, assuming that all</span>
 <span 
 class="cmr-7">tasks trigger off upstream tasks finishing completely. The horizontal extent of a task bar represents its execution time, and the vertical</span>
 <span 
-class="cmr-7">blue lines show when the external driving data becomes available.</span></span></div><!--tex4ht:label?: x2-50022 -->
+class="cmr-7">blue lines show when the external driving data becomes available.</span></td></tr></table><!--tex4ht:label?: x2-50022 -->
                                                                                          
 
                                                                                          
-<!--l. 93--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 93--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 95--><p class="indent" >   Figure&#x00A0;<a 
 href="#x2-50022">2<!--tex4ht:ref: fig-time-one --></a> shows the optimal job schedule for two consecutive cycles of the example suite in real time operation,
 given execution times represented by the horizontal extent of the task bars. There is a time gap between cycles as
@@ -166,6 +168,7 @@ the suite waits on new external driving data. Each task in the example suite hap
 class="cmti-10">finishing</span>, rather than off any intermediate output or event; this is merely a simplification that makes for clearer
 diagrams.
 <!--l. 104--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -182,15 +185,16 @@ diagrams.
 <!--l. 106--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-two-cycles-linked.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;3: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;3: </td><td  
 class="content"><span 
-class="cmr-7">If the external driving data is available in advance, can we start running the next cycle early?</span></span></div><!--tex4ht:label?: x2-50033 -->
+class="cmr-7">If the external driving data is available in advance, can we start running the next cycle early?</span></td></tr></table><!--tex4ht:label?: x2-50033 -->
                                                                                          
 
                                                                                          
-<!--l. 112--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 112--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 114--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -207,17 +211,18 @@ class="cmr-7">If the external driving data is available in advance, can we start
 <!--l. 116--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-one-c.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;4: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;4: </td><td  
 class="content"><span 
 class="cmr-7">A naive attempt to overlap two consecutive cycles using the single-cycle dependency graph. The red shaded tasks will fail</span>
 <span 
-class="cmr-7">because of dependency violations (or will not be able to run because of upstream dependency violations).</span></span></div><!--tex4ht:label?: x2-50044 -->
+class="cmr-7">because of dependency violations (or will not be able to run because of upstream dependency violations).</span></td></tr></table><!--tex4ht:label?: x2-50044 -->
                                                                                          
 
                                                                                          
-<!--l. 124--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 124--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 126--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -234,16 +239,16 @@ class="cmr-7">because of dependency violations (or will not be able to run becau
 <!--l. 128--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-one-a.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;5: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;5: </td><td  
 class="content"><span 
 class="cmr-7">The best that can be done </span><span 
 class="cmti-7">in general </span><span 
-class="cmr-7">when inter-cycle dependence is ignored.</span></span></div><!--tex4ht:label?: x2-50055 -->
+class="cmr-7">when inter-cycle dependence is ignored.</span></td></tr></table><!--tex4ht:label?: x2-50055 -->
                                                                                          
 
                                                                                          
-<!--l. 134--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 134--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 136--><p class="indent" >   Now the question arises, what happens if the external driving data for upcoming cycles is available
 in advance, as it would be after a significant delay in operations, or when running a historical case
 study? While the forecast model <span 
@@ -299,6 +304,7 @@ dependent and as such it cannot be guaranteed that some unforeseen delay in one 
 next cycle has begun, (e.g.&#x00A0;due to resource contention or task failures) won&#8217;t result in dependency
 violations.
 <!--l. 200--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -315,8 +321,8 @@ violations.
 <!--l. 202--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-multi-cycle.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;6: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;6: </td><td  
 class="content"><span 
 class="cmr-7">The complete dependency graph for the example suite, assuming the least possible inter-cycle dependence: the forecast</span>
 <span 
@@ -328,12 +334,13 @@ class="cmr-7">, and </span><span
 class="cmmi-7">c</span><span 
 class="cmr-7">) depend on their own previous instances. The dashed arrows show connections to previous and subsequent forecast</span>
 <span 
-class="cmr-7">cycles.</span></span></div><!--tex4ht:label?: x2-60016 -->
+class="cmr-7">cycles.</span></td></tr></table><!--tex4ht:label?: x2-60016 -->
                                                                                          
 
                                                                                          
-<!--l. 210--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 210--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 212--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -350,16 +357,16 @@ class="cmr-7">cycles.</span></span></div><!--tex4ht:label?: x2-60016 -->
 <!--l. 214--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-two-cycles-optimal.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;7: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;7: </td><td  
 class="content"><span 
 class="cmr-7">The optimal two cycle job schedule when the next cycle&#8217;s driving data is available in advance, possible in principle when</span>
 <span 
-class="cmr-7">inter-cycle dependence is handled explicitly.</span></span></div><!--tex4ht:label?: x2-60027 -->
+class="cmr-7">inter-cycle dependence is handled explicitly.</span></td></tr></table><!--tex4ht:label?: x2-60027 -->
                                                                                          
 
                                                                                          
-<!--l. 221--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 221--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 223--><p class="indent" >   Figure&#x00A0;<a 
 href="#x2-60027">7<!--tex4ht:ref: fig-optimal-two --></a> shows, in contrast to Figure&#x00A0;<a 
 href="#x2-50044">4<!--tex4ht:ref: fig-overlap --></a>, the optimal two cycle job schedule obtained by respecting all inter-cycle
@@ -368,6 +375,7 @@ ready to run. The scheduler running this suite must be able to adapt dynamically
 on multi-cycle scheduling in the presence of inter-cycle dependence or else, again, risk bringing the system down
 with dependency violations.
 <!--l. 233--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -384,19 +392,20 @@ with dependency violations.
 <!--l. 235--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-three.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;8: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;8: </td><td  
 class="content"><span 
 class="cmr-7">Job schedules for the example suite after a delay of almost one whole forecast cycle, when inter-cycle dependence is taken</span>
 <span 
 class="cmr-7">into account (above the time axis), and when it is not (below the time axis). The colored lines indicate the time that each cycle is</span>
 <span 
-class="cmr-7">delayed, and normal &#8220;caught up&#8221; cycles are shaded gray.</span></span></div><!--tex4ht:label?: x2-60038 -->
+class="cmr-7">delayed, and normal &#8220;caught up&#8221; cycles are shaded gray.</span></td></tr></table><!--tex4ht:label?: x2-60038 -->
                                                                                          
 
                                                                                          
-<!--l. 245--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 245--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 247--><p class="indent" >   <hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -413,8 +422,8 @@ class="cmr-7">delayed, and normal &#8220;caught up&#8221; cycles are shaded gray
 <!--l. 249--><p class="noindent" ><img 
 src="../../graphics/png/scaled/timeline-two.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;9: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;9: </td><td  
 class="content"><span 
 class="cmr-7">Job schedules for the example suite in case study mode, or after a long delay, when the external driving data are available</span>
 <span 
@@ -423,11 +432,11 @@ class="cmr-7">many cycles in advance. Above the time axis is the optimal schedul
 class="cmr-7">as in Figure </span><a 
 href="#x2-50033"><span 
 class="cmr-7">3</span><!--tex4ht:ref: fig-dep-two-linked --></a><span 
-class="cmr-7">, and underneath is the best that can be done, in general, when inter-cycle dependence is ignored.</span></span></div><!--tex4ht:label?: x2-60049 -->
+class="cmr-7">, and underneath is the best that can be done, in general, when inter-cycle dependence is ignored.</span></td></tr></table><!--tex4ht:label?: x2-60049 -->
                                                                                          
 
                                                                                          
-<!--l. 260--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 260--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
 <!--l. 262--><p class="indent" >   To further illustrate the potential benefits of proper inter-cycle dependency handling, Figure&#x00A0;<a 
 href="#x2-60038">8<!--tex4ht:ref: fig-time-three --></a> shows an
 operational delay of almost one whole cycle in a suite with little downtime between cycles. Above the time axis is
@@ -458,6 +467,7 @@ schedule.
    <h4 class="subsectionHead"><span class="titlemark">1.4   </span> <a 
  id="x2-70001.4"></a>The Cylc Scheduling Algorithm</h4>
 <!--l. 306--><p class="noindent" ><hr class="figure"><div class="figure" 
+><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -474,8 +484,8 @@ schedule.
 <!--l. 308--><p class="noindent" ><img 
 src="../../graphics/png/scaled/task-pool.png" alt="PIC"  
 ></div>
-<br /> <div class="caption" 
-><span class="id">Figure&#x00A0;10: </span><span  
+<br /> <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;10: </td><td  
 class="content"><span 
 class="cmr-7">How cylc sees a suite, in contrast to the multi-cycle dependency graph of Figure</span><span 
 class="cmr-7">&#x00A0;</span><a 
@@ -485,11 +495,11 @@ class="cmr-7">. Task colors represent different cycle</span>
 <span 
 class="cmr-7">times, and the small squares and circles represent different prerequisites and outputs. A task can run when its prerequisites are satisfied</span>
 <span 
-class="cmr-7">by the outputs of other tasks in the pool.</span></span></div><!--tex4ht:label?: x2-700110 -->
+class="cmr-7">by the outputs of other tasks in the pool.</span></td></tr></table><!--tex4ht:label?: x2-700110 -->
                                                                                          
 
                                                                                          
-<!--l. 317--><p class="noindent" ></div><hr class="endfigure">
+<!--l. 317--><p class="noindent" ></td></tr></table></div><hr class="endfigure">
 <!--l. 319--><p class="indent" >   Cylc manages a pool of proxy objects that represent the real tasks in a suite. Task proxies know how to run the
 real tasks that they represent, and they receive progress messages from the tasks as they run (usually
 reports of completed outputs). There is no global cycling mechanism to advance the suite; instead
