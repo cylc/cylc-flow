@@ -317,7 +317,7 @@ class event_batcher( job_batcher ):
     def submit_item( self, item, jobinfo ):
         event, handler, taskid, msg = item
         jobinfo['descr'] = taskid + ' ' + event + ' handler'
-        command = cv_scripting_sl + "; " + " ".join( [handler, "'" + event + "'", self.suite, taskid, "'" + msg + "'"] )
+        command = " ".join( [handler, "'" + event + "'", self.suite, taskid, "'" + msg + "'"] )
         try:
             jobinfo['p'] = subprocess.Popen( command, shell=True )
         except OSError, e:
