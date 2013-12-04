@@ -154,7 +154,7 @@ class jobfile(object):
         n_ws = 0
         scr_out = ""
         pre = ""
-        for line in scr_in.split('\n'):
+        for line in scr_in.splitlines():
             if re.match( '^[\s]*$', line):
                 # remove initial blank lines
                 continue
