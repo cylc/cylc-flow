@@ -151,7 +151,7 @@ class jobfile(object):
         self.FILE.write( cv_scripting_ml )
 
     def trim( self, scr_in ):
-        n_ws = 0
+        n_ws = None
         scr_out = ""
         pre = ""
         for line in scr_in.splitlines():
@@ -159,7 +159,8 @@ class jobfile(object):
                 # remove initial blank lines
                 continue
             # find indentation of first non-blank line
-            n_ws = n_ws or len(line) - len(line.lstrip())
+            if n_ws is None:
+                n_ws = len(line) - len(line.lstrip())
             # strip indentation (if it exists) from each line
             scr_out += pre + re.sub( '^\s{' + str(n_ws) + '}', '', line )
             pre = "\n"
