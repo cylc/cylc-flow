@@ -150,6 +150,21 @@ class jobfile(object):
         # error trapping so that profile errors do not abort the job
         self.FILE.write( cv_scripting_ml )
 
+    def trim( self, scr_in ):
+        n_ws = 0
+        scr_out = ""
+        pre = ""
+        for line in scr_in.split('\n'):
+            if re.match( '^[\s]*$', line):
+                # remove initial blank lines
+                continue
+            # find indentation of first non-blank line
+            n_ws = n_ws or len(line) - len(line.lstrip())
+            # strip indentation (if it exists) from each line
+            scr_out += pre + re.sub( '^\s{' + str(n_ws) + '}', '', line )
+            pre = "\n"
+        return scr_out
+
     def write_initial_scripting( self, BUFFER=None ):
         iscr = self.jobconfig['initial scripting']
         if not iscr:
@@ -157,7 +172,7 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
         BUFFER.write( "\n\n# INITIAL SCRIPTING:\n" )
-        BUFFER.write( iscr )
+        BUFFER.write( self.trim(iscr) )
 
     def write_enviro_scripting( self, BUFFER=None ):
         escr = self.jobconfig['environment scripting']
@@ -166,7 +181,7 @@ class jobfile(object):
         if not BUFFER:
             BUFFER = self.FILE
         BUFFER.write( "\n\n# ENVIRONMENT SCRIPTING:\n" )
-        BUFFER.write( escr )
+        BUFFER.write( self.trim(escr) )
 
     def write_environment_1( self, BUFFER=None ):
         if not BUFFER:
@@ -374,18 +389,21 @@ echo ""''')
         if not pcs:
             return
         self.FILE.write( "\n\n# PRE-COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + pcs )
+        self.FILE.write( "\n" + self.trim(pcs) )
 
     def write_command_scripting( self ):
+        cs = self.jobconfig['command scripting']
+        if not cs:
+            return
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + self.jobconfig['command scripting'] )
+        self.FILE.write( "\n" + self.trim(cs) )
 
     def write_post_scripting( self ):
         pcs = self.jobconfig['post-command scripting']
         if not pcs:
             return
         self.FILE.write( "\n\n# POST COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + pcs )
+        self.FILE.write( "\n" + self.trim(pcs) )
 
     def write_work_directory_remove( self ):
         if self.jobconfig['use manual completion']:
