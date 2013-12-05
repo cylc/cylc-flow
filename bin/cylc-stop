@@ -64,28 +64,31 @@ class stop_poller( poller ):
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
 1/ cylc stop REG 
-   Clean shutdown - cease submitting tasks then shut down after all
-submitted or running tasks have finished and all queued event handlers
-and job poll and kill commands have executed.
+   Clean shutdown - cease submitting tasks and shut down after current
+submitted and running tasks have finished, and event handlers and job
+poll and kill commands have executed.
 
 2/ cylc stop --quick REG 
    Quick shutdown - cease submitting tasks and shut down without waiting
-for submitted or running tasks to finish, but do wait for remaining
-event handlers and job poll and kill commands to be executed.
-
+for current submitted and running tasks to finish, but do wait for event
+handlers and job poll and kill commands to be executed.
+   
 3/ cylc stop --now REG 
-   Immediate shutdown - cease submitting tasks and shut down without
-waiting for submitted or running tasks to finish, or for remaining
-queued event handlers and job poll and kill commands to execute.
+   Immediate shut down - do not wait on current submitted and running
+tasks, or on queued event handlers and job poll and kill commands.
 
 4/ cylc stop --kill REG
-   Initiate a clean shutdown (1/ above) after killing any current
-submitted or running tasks.
+   Do a clean shutdown after killing current submitted and running tasks.
 
 5/ cylc stop REG STOP
-   Initiate a clean shutdown (1/ above) as soon as all tasks have passed
-cycle time or wall clock time STOP, or after task ID STOP has finished.
-Wall clock time format is YYYY/MM/DD-HH:mm.
+   Do a clean shutdown after (a) all tasks have succeeded out to cycle
+time STOP, or (b) all tasks have succeeded out to wall clock time STOP
+(YYYY/MM/DD-HH:mm), or (c) task ID STOP has succeeded.
+
+Note that cylc does not shut down automatically at a designated future
+cycle time (either by the "final cycle time" in the suite definition, or 
+by usage case 5/ above) if any failed tasks are present in the suite.
+This is to ensure that failed tasks do not go unnoticed.
 
 The command exits immediately unless --max-polls is greater than zero
 in which case it polls to wait for suite shutdown.""",

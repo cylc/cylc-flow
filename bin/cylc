@@ -307,13 +307,7 @@ catsum = OrderedDict()
 catsum['all'    ]        = "The complete command set."
 catsum['admin'       ]   = "Cylc installation, testing, and example suites."
 catsum['license'     ]   = "Software licensing information (GPL v3.0)."
-catsum['database'    ]   = """Suite name registration, copying, deletion, etc.
-
-Suite name registrations are held in a simple database $HOME/.cylc/REGDB
-shell$ cat $HOME/.cylc/REGDB/my.suite
-  shell$ cat $HOME/.cylc/REGDB/my.suite
-  title=my suite title
-  path=/path/to/my/suite"""
+catsum['database'    ]   = "Suite name registration, copying, deletion, etc."
 catsum['information' ]   = "Interrogate suite definitions and running suites."
 catsum['preparation' ]   = "Suite editing, validation, visualization, etc."
 catsum['discovery'   ]   = "Detect running suites."
@@ -448,6 +442,8 @@ def category_help(category):
     coms = eval( category + '_commands')
     alts = '|'.join(categories[category])
     print 'CATEGORY: ' + alts + ' - ' + catsum[ category ]
+    if category == 'database':
+        print "Suite registrations are held in a simple database $HOME/.cylc/REGDB."
     print
     print 'HELP: cylc [' + alts + '] COMMAND help,--help'
     print '  You can abbreviate ' + alts + ' and COMMAND.'
