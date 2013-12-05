@@ -19,6 +19,7 @@
 import sys
 from cylc.remote import remrun
 from cylc.TaskID import TaskID
+import subprocess
 if remrun().execute():
     sys.exit(0)
 
@@ -69,13 +70,64 @@ if len(args) == 2:
     # task log requested
     taskid = args[1]
     logname = taskid + '.' + options.tryext
-    sjld = gcfg.get_derived_host_item( suite, 'suite job log directory' )
+
+    # get task host and owner
+    taskname, ctime = taskid.split(TaskID.DELIM)
+    try:
+        p = subprocess.Popen( "cylc get-config " + \
+                "-i '[runtime][" + taskname + "][remote]host' " + \
+                "-i '[runtime][" + taskname + "][remote]owner' -o " + suite, \
+                shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    except OSError, x:
+        if options.debug:
+                raise
+        sys.exit( x )
+    out, err = p.communicate()
+    if out:
+        host, owner = out.split()
+    if err:
+        sys.exit(err)
+
+    if host == 'None':
+        host = None
+    if owner == 'None':
+        owner = None
+
+    # get job log directory path
+    sjld = gcfg.get_derived_host_item( suite, 'suite job log directory', host=host, owner=owner )
     if options.print_stdout:
         fpath = os.path.join( sjld, logname + '.out' )
     elif options.print_stderr:
         fpath = os.path.join( sjld, logname + '.err' )
     else:
         fpath = os.path.join( sjld, logname )
+
+    if host or owner:
+        if host and owner:
+            url = owner + '@' + host 
+        elif host:
+            url = host
+        elif owner:
+            url = owner + '@localhost'
+
+        if options.print_location:
+            print url + ':' + fpath
+            sys.exit(0)
+
+        cmd = 'ssh -o BatchMode=yes ' + url + ' cat ' + fpath
+        try:
+            p = subprocess.Popen( cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        except OSError, x:
+            if options.debug:
+                raise
+            sys.exit( x )
+        out, err, = p.communicate()
+        if out:
+            print out
+        if err:
+            print err
+            sys.exit(1)
+        sys.exit(0)
 
 else:
     # suite log requested
