@@ -1997,8 +1997,7 @@ class scheduler(object):
         amounts.append((now, amount))
         self._profile_update_times.setdefault(category, None)
         last_update = self._profile_update_times[category]
-        if (last_update is not None and
-            now < last_update + 60):
+        if last_update is not None and now < last_update + 60:
             return
         self._profile_update_times[category] = now
         averages = {1: [], 5: [], 15: []}
@@ -2012,7 +2011,7 @@ class scheduler(object):
                     averages[minute_num].append(amount)
         output_text = "PROFILE: %s:" % category
         for minute_num, minute_amounts in sorted(averages.items()):
-            averages[minute_num] = sum(minute_amounts)/len(minute_amounts)
+            averages[minute_num] = sum(minute_amounts) / len(minute_amounts)
             output_text += (" %d: " + amount_format) % (
                 minute_num, averages[minute_num])
         self.log.info( output_text )
