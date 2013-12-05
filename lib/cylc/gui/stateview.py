@@ -169,7 +169,7 @@ class TreeUpdater(threading.Thread):
                 tetc = "*"
                 if (tstt and (tsut is None or tsut == "*") and
                     self.updater.dt_date is not None and
-                    meant is not None and meant != "*"):
+                    (isinstance(meant, float) or isinstance(meant, int))):
                     try:
                         tstt_date = datetime.datetime.strptime(
                             tstt, "%Y-%m-%dT%H:%M:%S.%f")
@@ -188,10 +188,17 @@ class TreeUpdater(threading.Thread):
                     # TODO: get rid of the following condition (here for backwards compatibility)
                     if "T" in tstt:
                         tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") ) 
-                if meant is not None and meant != "*":
-                    meant_hours, remainder = divmod(int(meant), 3600)
-                    meant_minutes, meant_seconds = divmod(remainder, 60)
-                    meant = "%d:%02d:%02d" % (meant_hours, meant_minutes, meant_seconds)
+                if isinstance(meant, float) or isinstance(meant, int):
+                    # TODO: get rid of the following condition (here for backwards compatibility)
+                    try:
+                        meant = int(meant)
+                    except (TypeError, ValueError):
+                        pass
+                    else:
+                        meant_hours, remainder = divmod(int(meant), 3600)
+                        meant_minutes, meant_seconds = divmod(remainder, 60)
+                        meant = "%d:%02d:%02d" % (meant_hours, meant_minutes,
+                                                  meant_seconds)
                 priority = summary[ id ].get( 'latest_message_priority' )
                 if message is not None:
                     message = markup( get_col_priority( priority ), message )
