@@ -24,6 +24,9 @@ from cylc.strftime import strftime
 CYCLE TIME: YYYY[MM[DD[HH[mm[ss]]]]]
 """
 
+MEMOIZE_LIMIT = 10000
+
+
 class CycleTimeError( Exception ):
     """
     Attributes:
@@ -138,7 +141,7 @@ class ct( object ):
         return int( delta.days * 24 + delta.seconds / 3600 + delta.microseconds / ( 3600 * 1000000 ))
 
 
-def remember_results(function):
+def memoize(function):
     """This stores results for a given set of inputs to a function.
     
     The inputs and results of the function must be immutable.
@@ -150,19 +153,19 @@ def remember_results(function):
     """
     inputs_results = {}
     def _wrapper(*args):
-        inputs_key = hash(args)
-        if inputs_key not in inputs_results:
+        try:
+            return inputs_results[args]
+        except KeyError:
             results = function(*args)
-            if len(inputs_results) > 10000:
+            if len(inputs_results) > MEMOIZE_LIMIT:
                 # Full up, no more room.
                 return results
-            inputs_results[inputs_key] = results
+            inputs_results[args] = results
             return results
-        return inputs_results[inputs_key]
     return _wrapper
 
 
-@remember_results
+@memoize
 def ctime_cmp(ctime_str_1, ctime_str_2):
     """Compare (cmp) two cycle time strings numerically."""
     ctime_1 = ct(ctime_str_1).get()
@@ -170,21 +173,21 @@ def ctime_cmp(ctime_str_1, ctime_str_2):
     return cmp(int(ctime_1), int(ctime_2))
 
 
-@remember_results
+@memoize
 def ctime_ge(ctime_str_1, ctime_str_2):
     return ctime_cmp(ctime_str_1, ctime_str_2) in [0, 1]
 
 
-@remember_results
+@memoize
 def ctime_gt(ctime_str_1, ctime_str_2):
     return ctime_cmp(ctime_str_1, ctime_str_2) == 1
 
 
-@remember_results
+@memoize
 def ctime_le(ctime_str_1, ctime_str_2):
     return ctime_cmp(ctime_str_1, ctime_str_2) in [-1, 0]
 
 
-@remember_results
+@memoize
 def ctime_lt(ctime_str_1, ctime_str_2):
     return ctime_cmp(ctime_str_1, ctime_str_2) == -1
