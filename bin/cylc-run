@@ -69,6 +69,10 @@ initial and final cycle time variables persists across suite restarts."""
                 help="Do not daemonize the suite",
                 action="store_true", default=False, dest="no_detach" )
 
+        self.parser.add_option( "--profile",
+                help="Output profiling (performance) information",
+                action="store_true", default=False, dest="profile_mode" )
+
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
                 action="store_true", default=False, dest="warm" )
 

@@ -24,7 +24,7 @@ from suite_host import get_suite_host
 from owner import user
 from shutil import copy as shcopy
 from copy import deepcopy
-from cycle_time import ct, CycleTimeError
+from cycle_time import ct, CycleTimeError, ctime_ge, ctime_gt, ctime_lt, ctime_le
 import datetime, time
 import port_scan
 import accelerated_clock 
@@ -136,6 +136,9 @@ class scheduler(object):
         self.pyro = None
         self.state_dumper = None
         self.runtime_graph_on = None
+        
+        self._profile_amounts = {}
+        self._profile_update_times = {}
 
         self.held_future_tasks = []
 
@@ -992,6 +995,8 @@ class scheduler(object):
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
+            t0 = time.time()
+
             if self.reconfiguring:
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
@@ -1080,8 +1085,9 @@ class scheduler(object):
             # Hold waiting tasks if beyond stop cycle etc:
             # (a) newly spawned beyond existing stop cycle
             # (b) new stop cycle set by command
+            runahead_base = self.get_runahead_base()
             for itask in self.pool.get_tasks():
-                self.check_hold_waiting_tasks( itask )
+                self.check_hold_waiting_tasks( itask, runahead_base=runahead_base )
 
             #print '<Pyro'
             if flags.iflag or self.do_update_state_summary:
@@ -1111,7 +1117,7 @@ class scheduler(object):
                 for itask in self.pool.get_tasks():
                     itask.check_timers()
 
-            self.release_runahead()
+            self.release_runahead( runahead_base=runahead_base )
 
             if not self.do_shutdown:
                 # check if the suite should shut down automatically now
@@ -1145,11 +1151,18 @@ class scheduler(object):
                     not self.eventq_worker.is_alive() and \
                     not self.pollkq_worker.is_alive():
                 break
+            
+            if self.options.profile_mode:
+                t1 = time.time()
+                self._update_profile_info("scheduler loop dt (s)", t1 - t0,
+                                          amount_format="%.3f")
+                self._update_cpu_usage()
+                self._update_profile_info("jobqueue.qsize", float(self.pool.jobqueue.qsize()),
+                                          amount_format="%.1f")
 
             time.sleep(1)
 
         # END MAIN LOOP
-
 
         if self.gen_reference_log:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
@@ -1360,10 +1373,10 @@ class scheduler(object):
             self.hold_time = None
         for itask in self.pool.get_tasks():
             if itask.state.is_currently('held'):
-                if self.stop_tag and int( itask.c_time ) > int( self.stop_tag ):
+                if self.stop_tag and ctime_gt(itask.c_time, self.stop_tag):
                     # this task has passed the suite stop time
                     itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
-                elif itask.stop_c_time and int( itask.c_time ) > int( itask.stop_c_time ):
+                elif itask.stop_c_time and ctime_gt(itask.c_time, itask.stop_c_time):
                     # this task has passed its own stop time
                     itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
                 else:
@@ -1407,28 +1420,29 @@ class scheduler(object):
         # limit: take the oldest task not succeeded or failed (note this
         # excludes finished tasks and it includes runahead-limited tasks
         # - consequently "too low" a limit cannot actually stall a suite.
-        oldest = '99991228235959'
+        oldest_c_time = '99991228235959'
         for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
+            if not itask.is_cycling:
                 continue
-            if itask.state.is_currently('failed', 'succeeded'):
-                continue
-            #if itask.is_daemon():
+            #if itask.is_daemon:
             #    # avoid daemon tasks
             #    continue
-            if int( itask.c_time ) < int( oldest ):
-                oldest = itask.c_time
-        return oldest
+            if ctime_lt(itask.c_time, oldest_c_time):
+                if itask.state.is_currently('failed', 'succeeded'):
+                    continue
+                oldest_c_time = itask.c_time
+                
+        return oldest_c_time
 
     def get_oldest_async_tag( self ):
         # return the tag of the oldest non-daemon task
         oldest = 99999999999999
         for itask in self.pool.get_tasks():
-            if itask.is_cycling():
+            if itask.is_cycling:
                 continue
             #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
             #    continue
-            if itask.is_daemon():
+            if itask.is_daemon:
                 continue
             if int( itask.tag ) < oldest:
                 oldest = int(itask.tag)
@@ -1436,35 +1450,35 @@ class scheduler(object):
 
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
-        oldest = '99991228230000'
+        oldest_c_time = '99991228230000'
         for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
+            if not itask.is_cycling:
                 continue
             #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
             #    continue
-            #if itask.is_daemon():
+            #if itask.is_daemon:
             #    # avoid daemon tasks
             #    continue
-            if int( itask.c_time ) < int( oldest ):
-                oldest = itask.c_time
-        return oldest
+            if ctime_lt( itask.c_time, oldest_c_time):
+                oldest_c_time = itask.c_time
+        return oldest_c_time
 
     def get_newest_c_time( self, nonrunahead=False ):
         # return the cycle time of the newest task
-        newest = ct('1000010101').get()
+        newest_c_time = ct('1000010101').get()
         for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
+            if not itask.is_cycling:
                 continue
             if nonrunahead:
                 if itask.state.is_currently( 'runahead' ) or \
-                    ( self.stop_tag and ( int(itask.c_time) > int( self.stop_tag ))):
+                    ( self.stop_tag and ctime_gt( itask.c_time, self.stop_tag )):
                         continue
             # avoid daemon tasks
-            #if itask.is_daemon():
+            #if itask.is_daemon:
             #    continue
-            if int( itask.c_time ) > int( newest ):
-                newest = itask.c_time
-        return newest
+            if ctime_gt(itask.c_time, newest_c_time):
+                newest_c_time = itask.c_time
+        return newest_c_time
 
     def no_active_tasks( self ):
         for itask in self.pool.get_tasks():
@@ -1504,19 +1518,21 @@ class scheduler(object):
             if not itask.not_fully_satisfied():
                 itask.check_requisites()
 
-    def release_runahead( self ):
+    def release_runahead( self, runahead_base=None ):
         if self.runahead_limit:
-            ouct = self.get_runahead_base() 
+            if runahead_base is None:
+                runahead_base = self.get_runahead_base()
+            runahead_base_int = int(runahead_base)
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently('runahead'):
-                    if self.stop_tag and int(itask.c_time) > int(self.stop_tag):
+                    if self.stop_tag and ctime_gt(itask.c_time, self.stop_tag):
                         # beyond the final cycle time 
                         itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
                         itask.reset_state_held()
                         continue
                     foo = ct( itask.c_time )
                     foo.decrement( hours=self.runahead_limit )
-                    if int( foo.get() ) < int( ouct ):
+                    if int( foo.get() ) < runahead_base_int:
                         if self.hold_suite_now:
                             itask.log( 'DEBUG', "holding (suite stopping now)" )
                             itask.reset_state_held()
@@ -1524,44 +1540,49 @@ class scheduler(object):
                             itask.log( 'DEBUG', "releasing (runahead limit moved on)" )
                             itask.reset_state_waiting()
 
-    def check_hold_waiting_tasks( self, new_task, is_newly_added=False ):
+    def check_hold_waiting_tasks( self, new_task, is_newly_added=False,
+                                  runahead_base=None ):
         if not new_task.state.is_currently('waiting'):
             return
 
         if is_newly_added and self.hold_suite_now:
-            new_task.log( 'NORMAL', "HOLDING (general suite hold) " )
+            new_task.log( 'DEBUG', "HOLDING (general suite hold) " )
             new_task.reset_state_held()
             return
 
         # further checks only apply to cycling tasks
-        if not new_task.is_cycling():
+        if not new_task.is_cycling:
             return
 
         # tasks with configured stop cycles
 
         if new_task.stop_c_time:
-            if int( new_task.c_time ) > int( new_task.stop_c_time ):
-                new_task.log( 'NORMAL', "HOLDING (beyond task stop cycle) " + new_task.stop_c_time )
+            if ctime_gt( new_task.c_time, new_task.stop_c_time ):
+                new_task.log( 'DEBUG', "HOLDING (beyond task stop cycle) " + new_task.stop_c_time )
                 new_task.reset_state_held()
                 return
 
         # check cycle stop or hold conditions
-        if self.stop_tag and int( new_task.c_time ) > int( self.stop_tag ):
-            new_task.log( 'NORMAL', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+        if self.stop_tag and ctime_gt( new_task.c_time, self.stop_tag ):
+            new_task.log( 'DEBUG', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
             new_task.reset_state_held()
             return
-        if self.hold_time and int( new_task.c_time ) > int( self.hold_time ):
-            new_task.log( 'NORMAL', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+        if self.hold_time and ctime_gt( new_task.c_time , self.hold_time ):
+            new_task.log( 'DEBUG', "HOLDING (beyond suite hold cycle) " + self.hold_time )
             new_task.reset_state_held()
             return
 
         # tasks beyond the runahead limit
         if is_newly_added and self.runahead_limit:
-            ouct = self.get_runahead_base()
+            if runahead_base is None:
+                ouct = self.get_runahead_base()
+            else:
+                ouct = runahead_base
             foo = ct( new_task.c_time )
             foo.decrement( hours=self.runahead_limit )
-            if int( foo.get() ) >= int( ouct ):
-                new_task.log( "NORMAL", "HOLDING (beyond runahead limit)" )
+            foo_str = foo.get()
+            if ctime_ge( foo_str, ouct ):
+                new_task.log( "DEBUG", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()
                 return
 
@@ -1576,9 +1597,10 @@ class scheduler(object):
         # check for future triggers extending beyond the final cycle
         if not self.stop_tag:
             return False
-        for pct in itask.prerequisites.get_target_tags():
+        for pct in set(itask.prerequisites.get_target_tags()):
             try:
-                if int( ct(pct).get() ) > int(self.stop_tag):
+                if ctime_gt( pct, self.stop_tag ):
+                    # pct > self.stop_tag
                     return True
             except:
                 # pct invalid cycle time => is an asynch trigger
@@ -1644,21 +1666,21 @@ class scheduler(object):
         # first find the cycle time of the earliest unsatisfied task
         cutoff = None
         for itask in self.pool.get_tasks():
-            if not itask.is_cycling():
+            if not itask.is_cycling:
                 continue
             if itask.state.is_currently('waiting', 'runahead', 'held' ):
-                if not cutoff or int(itask.c_time) < int(cutoff):
+                if not cutoff or ctime_lt(itask.c_time, cutoff):
                     cutoff = itask.c_time
             elif not itask.has_spawned():
                 nxt = itask.next_tag()
-                if not cutoff or int(nxt) < int(cutoff):
+                if not cutoff or ctime_lt(nxt, cutoff):
                     cutoff = nxt
 
         # now check each succeeded task against the cutoff
         spent = []
         for itask in self.pool.get_tasks():
             if not itask.state.is_currently('succeeded') or \
-                    not itask.is_cycling() or \
+                    not itask.is_cycling or \
                     not itask.state.has_spawned():
                 continue
             if cutoff and cutoff > itask.cleanup_cutoff:
@@ -1670,9 +1692,9 @@ class scheduler(object):
     def remove_spent_async_tasks( self ):
         cutoff = 0
         for itask in self.pool.get_tasks():
-            if itask.is_cycling():
+            if itask.is_cycling:
                 continue
-            if itask.is_daemon():
+            if itask.is_daemon:
                 # avoid daemon tasks
                 continue
             if not itask.done():
@@ -1680,7 +1702,7 @@ class scheduler(object):
                     cutoff = itask.tag
         spent = []
         for itask in self.pool.get_tasks():
-            if itask.is_cycling():
+            if itask.is_cycling:
                 continue
             if itask.done() and itask.tag < cutoff:
                 spent.append( itask )
@@ -1842,7 +1864,7 @@ class scheduler(object):
             self.negotiate()
             something_triggered = False
             for itask in self.pool.get_tasks():
-                if int( itask.tag ) > int( stop ):
+                if ctime_gt( itask.tag, stop ):
                     continue
                 if itask.ready_to_run():
                     something_triggered = True
@@ -1929,11 +1951,11 @@ class scheduler(object):
             i_asy = False
             i_fut = False
             for itask in self.pool.get_tasks():
-                if itask.is_cycling():
+                if itask.is_cycling:
                     i_cyc = True
                     # don't stop if a cycling task has not passed the stop cycle
                     if self.stop_tag:
-                        if int( itask.c_time ) <= int( self.stop_tag ):
+                        if ctime_le( itask.c_time, self.stop_tag ):
                             if itask.state.is_currently('succeeded') and itask.has_spawned():
                                 # ignore spawned succeeded tasks - their successors matter
                                 pass
@@ -1967,3 +1989,39 @@ class scheduler(object):
 
         return stop
 
+    def _update_profile_info(self, category, amount, amount_format="%s"):
+        # Update the 1, 5, 15 minute dt averages for a given category.
+        now = time.time()
+        self._profile_amounts.setdefault(category, [])
+        amounts = self._profile_amounts[category]
+        amounts.append((now, amount))
+        self._profile_update_times.setdefault(category, None)
+        last_update = self._profile_update_times[category]
+        if (last_update is not None and
+            now < last_update + 60):
+            return
+        self._profile_update_times[category] = now
+        averages = {1: [], 5: [], 15: []}
+        for then, amount in list(amounts):
+            age = (now - then) / 60.0
+            if age > 15:
+                amounts.remove((then, amount))
+                continue
+            for minute_num in averages.keys():
+                if age <= minute_num:
+                    averages[minute_num].append(amount)
+        output_text = "PROFILE: %s:" % category
+        for minute_num, minute_amounts in sorted(averages.items()):
+            averages[minute_num] = sum(minute_amounts)/len(minute_amounts)
+            output_text += (" %d: " + amount_format) % (
+                minute_num, averages[minute_num])
+        self.log.info( output_text )
+
+    def _update_cpu_usage(self):
+        p = subprocess.Popen(["ps", "-o%cpu= ", str(os.getpid())], stdout=subprocess.PIPE)
+        try:
+            cpu_frac = float(p.communicate()[0])
+        except (TypeError, OSError, IOError, ValueError) as e:
+            self.log.warning( "Cannot get CPU % statistics: %s" % e )
+            return
+        self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")

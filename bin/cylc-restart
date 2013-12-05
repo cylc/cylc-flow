@@ -59,6 +59,10 @@ where they got to while the suite was down."""
                 help="Do not daemonize the suite",
                 action="store_true", default=False, dest="no_detach" )
  
+        self.parser.add_option( "--profile",
+                help="Output profiling (performance) information",
+                action="store_true", default=False, dest="profile_mode" )
+ 
         self.parser.add_option( "--ignore-final-cycle", 
             help="Ignore the final cycle time in the state dump. If one is"
             "specified in the suite definition it will be used, however.",

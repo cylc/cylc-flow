@@ -42,7 +42,7 @@ class rGraph( object ):
     def update( self, task, oldest_ctime=None, oldest_async_tag=None ):
         if self.finalized:
             return
-        if task.is_cycling():
+        if task.is_cycling:
             self.update_cycling( task, oldest_ctime )
         else:
             self.update_async( task, oldest_async_tag )
