@@ -1,5 +1,10 @@
+[cylc]
+    [[event hooks]]
+        timeout = 0.5
+        timeout handler = cylc shutdown $CYLC_SUITE_REG_NAME --now
 [scheduling]
     initial cycle time = 2010010100
+    final cycle time = 2010010500
     [[dependencies]]
         [[[0]]]
             graph = "bar[T-6] => foo"
