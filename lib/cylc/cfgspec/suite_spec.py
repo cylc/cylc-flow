@@ -137,6 +137,7 @@ SPEC = {
             'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
             'submission polling intervals'    : vdr( vtype='m_float_list', default=[] ),
             'execution polling intervals'     : vdr( vtype='m_float_list', default=[] ),
+            'environment filter'              : vdr( vtype='string_list' ),
             'simulation mode' :  {
                 'run time range'              : vdr( vtype='integer_list', default=[1,16]),
                 'simulate failure'            : vdr( vtype='boolean', default=False ),

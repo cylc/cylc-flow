@@ -32,6 +32,7 @@ from trigger import triggerx
 from parsec.util import pdeepcopy, poverride, replicate, un_many
 from TaskID import TaskID
 from C3MRO import C3
+from OrderedDict import OrderedDict
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -169,14 +170,17 @@ class config( object ):
             # delete the original multi-task section
             del self.cfg['runtime'][item]
 
-        self.check_env()
+        # check var names before inheritance to avoid repetition
+        self.check_env_names()
 
-        # Do sparse [runtime] inheritance
+        # do sparse inheritance
         self.compute_family_tree()
         self.compute_inheritance()
 
-        #debugging:
-        #self.print_inheritance()
+        #self.print_inheritance() # (debugging)
+
+        # filter task environment variables after inheritance
+        self.filter_env()
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if self.verbose:
@@ -365,11 +369,8 @@ class config( object ):
                 if foot not in self.feet:
                     self.feet.append(foot)
 
-    def check_env( self ):
-        # TODO - belongs in parsec
-
-        # check environment variables now to avoid checking inherited
-        # variables multiple times.
+    def check_env_names( self ):
+        # check for illegal environment variable names
          bad = {}
          for label in self.cfg['runtime']:
              res = []
@@ -384,6 +385,20 @@ class config( object ):
                  for var in vars:
                      print >> sys.stderr, "  ", var
              raise SuiteConfigError("Illegal env variable name(s) detected" )
+
+    def filter_env( self ):
+        # filter namespace environment variables
+        for name,ns in self.cfg['runtime'].items():
+            if 'environment filter' not in ns or 'environment' not in ns:
+                continue
+            efilter = ns['environment filter']
+            if efilter:
+                oenv = ns['environment']
+                env = OrderedDict()
+                for key,val in oenv.items():
+                    if key in efilter:
+                        env[key] = val
+                ns['environment'] = env
 
     def compute_family_tree( self ):
         first_parents = {}
@@ -1603,7 +1618,7 @@ class config( object ):
         rtcfg = pdeepcopy( self.runtime_defaults ) # copy [runtime] default dict
         poverride( rtcfg, taskcfg )    # override with suite [runtime] settings
         un_many(rtcfg)
-    
+
         ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle time']
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
