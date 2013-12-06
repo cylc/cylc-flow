@@ -1091,7 +1091,7 @@ which tasks use which variables.
 
 Note that environment filtering is done after inheritance is completely
 worked out, not at each level on the way, so filter lists in higher-level
-namespaces only have an effect if they are not overridden by descendants..
+namespaces only have an effect if they are not overridden in descendants.
 
 \begin{myitemize}
 \item {\em type:} string list
@@ -1148,7 +1148,7 @@ which the the simulation mode task run length will be randomly chosen.
 \end{myitemize}
 
 \paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
-, which it can be difficult to make changes because
+
 This section configures the means by which cylc submits task job scripts to run.
 
 \subparagraph[method]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method}
