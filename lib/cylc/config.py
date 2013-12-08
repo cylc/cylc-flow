@@ -387,18 +387,35 @@ class config( object ):
              raise SuiteConfigError("Illegal env variable name(s) detected" )
 
     def filter_env( self ):
-        # filter namespace environment variables
+        # filter environment variables after sparse inheritance
         for name,ns in self.cfg['runtime'].items():
-            if 'environment filter' not in ns or 'environment' not in ns:
+            try:
+                oenv = ns['environment'] 
+            except KeyError:
+                # no environment to filter
                 continue
-            efilter = ns['environment filter']
-            if efilter:
-                oenv = ns['environment']
-                env = OrderedDict()
-                for key,val in oenv.items():
-                    if key in efilter:
-                        env[key] = val
-                ns['environment'] = env
+
+            try:
+                fincl = ns['environment filter']['include']
+            except KeyError:
+                # empty include-filter means include all
+                fincl = []
+
+            try:
+                fexcl = ns['environment filter']['exclude']
+            except KeyError:
+                # empty exclude-filter means exclude none
+                fexcl = []
+
+            if not fincl and not fexcl:
+                # no filtering to do
+                continue
+ 
+            nenv = OrderedDict()
+            for key,val in oenv.items():
+                if ( not fincl or key in fincl ) and key not in fexcl:
+                    nenv[key] = val
+            ns['environment'] = nenv
 
     def compute_family_tree( self ):
         first_parents = {}
