@@ -213,9 +213,18 @@ class job_batcher( threading.Thread ):
         res = p.poll()
         if res is not None:
             jobinfo['out'], jobinfo['err'] = p.communicate()
-            for handle, key in [(sys.stderr, "err"), (sys.stdout, "out")]:
-                if jobinfo[key]:
-                    for line in jobinfo[key].splitlines():
+            out, err = jobinfo['out'], jobinfo['err']
+            # See if we need to filter our output to stdout/stderr.
+            if (isinstance(self, task_batcher) and
+                    jobinfo.get('data') is not None and
+                    jobinfo['data'][1] is not None and
+                    hasattr(jobinfo['data'][1], 'filter_output')):
+                # Launcher has a filter method.
+                launcher = jobinfo['data'][1]
+                out, err = launcher.filter_output(out, err)
+            for handle, text in [(sys.stderr, err), (sys.stdout, out)]:
+                if text:
+                    for line in text.splitlines():
                         print >>handle, "[%s] %s" % (jobinfo["descr"], line)
         return res
 

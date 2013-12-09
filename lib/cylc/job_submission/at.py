@@ -52,6 +52,13 @@ class at( job_submit ):
         self.command = command_template % ( self.jobfile_path,
                                             self.stdout_file,
                                             self.stderr_file )
+
+    def filter_output( self, out, err):
+        """Filter the stdout/stderr output - suppress ID stderr message."""
+        err = [l + "\n" for l in err.splitlines() if not self.REC_ID.match(l)]
+        err = "".join(err)
+        return out, err
+
     def get_id( self, out, err ):
         """
         Extract the job submit ID from job submission command
