@@ -116,6 +116,7 @@ TEST_NAME=$TEST_NAME_BASE-submitted
 T_ST_FILE=$PWD/$TEST_NAME.1.status
 # Give it a real PID
 T_JOB_ID=$(get_real_job_id)
+sleep 1
 run_ok $TEST_NAME cylc get-job-status $T_ST_FILE loadleveler $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME submitted
@@ -125,6 +126,7 @@ llcancel $T_JOB_ID 2>/dev/null
 TEST_NAME=$TEST_NAME_BASE-started
 # Give it a real PID
 T_JOB_ID=$(get_real_job_id)
+sleep 1
 # Status file
 T_ST_FILE=$PWD/$TEST_NAME.1.status
 T_INIT_TIME=$(date +%FT%H:%M:%S)
