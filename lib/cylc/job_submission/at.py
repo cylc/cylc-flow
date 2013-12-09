@@ -18,6 +18,7 @@
 
 from job_submit import job_submit
 import re
+from subprocess import Popen, PIPE
 
 class at( job_submit ):
     """
@@ -40,7 +41,7 @@ class at( job_submit ):
     #   * stdout is "job-num date hour queue username", e.g.:
     #      1762 Wed May 15 00:20:00 2013 = hilary
     #   * queue is '=' if running
-    #   
+    #
 
     def construct_jobfile_submission_command( self ):
         """
@@ -62,34 +63,13 @@ class at( job_submit ):
             if match:
                 return match.group("id")
 
-    def get_job_poll_command( self, jid ):
-        """
-        Given the job submit ID, return a command string that uses
-        'cylc get-task-status' to determine current job status:
-           cylc get-job-status <QUEUED> <RUNNING>
-        where:
-            QUEUED  = true if job is waiting or running, else false
-            RUNNING = true if job is running, else false
-
-        WARNING: 'cylc get-task-status' prints a task status message -
-        the final result - to stdout, so any stdout from scripting prior
-        to the call must be dumped to /dev/null.
-        """
-        status_file = self.jobfile_path + ".status"
-        cmd = ( "RUNNING=false; QUEUED=false; "
-                + "atq | grep " + jid + " >/dev/null; "
-                + "[[ $? == 0 ]] && QUEUED=true;"
-                + "atq | grep " + jid + " | grep = >/dev/null; "
-                + "[[ $? == 0 ]] && RUNNING=true; "
-                + "cylc get-task-status " + status_file + " $QUEUED $RUNNING"  )
-        return cmd
-
     def get_job_kill_command( self, jid ):
-        """
-        Given the job submit ID, return a command to kill the job.
+        """Return a command to kill the job.
+
         The atrm command removes waiting jobs from the queue but it
         does not kill jobs that are already running, so we have to
         determine the job process ID by searching in 'ps' output.
+
         """
         cmd = ( "RUNNING=false; QUEUED=false; "
                 + "atq | grep " + jid + " >/dev/null; "
@@ -101,3 +81,18 @@ class at( job_submit ):
                 + "ps aux | grep " + self.jobfile_path + " | grep -v grep | awk \"{print \$2}\" | xargs kill -9" )
         return cmd
 
+    def poll( self, jid ):
+        """Return 0 if jid is in the queueing system, 1 otherwise."""
+        proc = Popen(["atq"], stdout=PIPE)
+        if proc.wait():
+            return 1
+        out, err = proc.communicate()
+        # "atq" returns something like this:
+        #     5347	2013-11-22 10:24 a daisy
+        #     499	2013-12-22 16:26 a daisy
+        # "jid" is in queue if it matches column 1 of a row.
+        for line in out.splitlines():
+            items = line.strip().split(None, 1)
+            if items and items[0] == jid:
+                return 0
+        return 1

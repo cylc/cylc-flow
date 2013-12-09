@@ -18,6 +18,7 @@
 
 from job_submit import job_submit
 from cylc.command_env import pr_scripting_sl
+from subprocess import Popen, PIPE
 
 class background( job_submit ):
     """
@@ -35,10 +36,10 @@ class background( job_submit ):
             + pr_scripting_sl + "; "
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
-            + " && chmod +x %(jobfile_path)s" 
+            + " && chmod +x %(jobfile_path)s"
             + " && ( (%(command)s) & echo $!; wait )"
             + "'" )
- 
+
     COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
 
     def construct_jobfile_submission_command( self ):
@@ -82,9 +83,9 @@ class background( job_submit ):
         return cmd
 
     def get_job_kill_command( self, pid ):
-        """
-        Given the job process ID, return a command to kill the job.
-        """
-        cmd = "kill -9 " + pid
-        return cmd
+        """Return a command to kill the job."""
+        return "kill -9 " + pid
 
+    def poll( self, jid ):
+        """Return 0 if jid is in the queueing system, 1 otherwise."""
+        return Popen(["ps", jid], stdout=PIPE).wait()
