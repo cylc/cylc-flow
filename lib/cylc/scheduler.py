@@ -1280,7 +1280,11 @@ class scheduler(object):
                 if itask.message_queue:
                     self.pyro.disconnect( itask.message_queue )
             if self.state_dumper:
-                self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
+                try:
+                    self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
+                # catch log rolling error when cylc-run contents have been deleted
+                except IOError:
+                    pass
 
         for q in [ self.eventq_worker, self.pollkq_worker, self.request_handler ]:
             if q:
