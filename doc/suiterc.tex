@@ -1398,12 +1398,11 @@ This section contains environment variable inclusion and exclusion
 lists that can be used to filter the inherited environment. {\em This is
 not intended as an alternative to a well-designed inheritance hierarchy
 that provides each task with just the variables it needs.} Filters can,
-however, improve poorly designed suites with tasks that inherit a lot of
-environment they don't need, by making it clear which tasks use which
-variables. They can optionally be used routinely as explicit ``task
-environment interfaces'' too, at some cost to brevity, because they
-guarantee that variables filtered out of the inherited task environment
-are not used.
+however, improve suites with tasks that inherit a lot of environment
+they don't need, by making it clear which tasks use which variables.
+They can optionally be used routinely as explicit ``task environment
+interfaces'' too, at some cost to brevity, because they guarantee that
+variables filtered out of the inherited task environment are not used.
 
 Note that environment filtering is done after inheritance is completely
 worked out, not at each level on the way, so filter lists in higher-level
