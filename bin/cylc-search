@@ -93,7 +93,7 @@ prev_file = None
 
 for line in lines:
 
-    m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line )
+    m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line )
     if m:
         inc_file = m.groups()[0]
         in_include_file = True
@@ -104,7 +104,7 @@ for line in lines:
         line_count += 1
     else:
         inc_line_count += 1
-        m = re.match('^\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line )
+        m = re.match('^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line )
         if m:
             in_include_file = False
             inc_file = None

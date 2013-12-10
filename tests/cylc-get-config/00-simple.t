@@ -92,9 +92,9 @@ TEST_NAME=$TEST_NAME_BASE-section1
 run_ok $TEST_NAME cylc get-config --item=[scheduling] $SUITE_NAME
 cmp_ok $TEST_NAME.stdout - <<__OUT__
 cycling = HoursOfTheDay
-initial cycle time = None
-runahead limit = None
-final cycle time = None
+initial cycle time = 
+runahead limit = 
+final cycle time = 
 [queues]
    [[default]]
       limit = 0
@@ -135,33 +135,36 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = 
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -175,19 +178,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [ops_s1]
@@ -195,34 +198,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = OPS, SERIAL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -236,19 +242,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [ops_s2]
@@ -256,34 +262,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = OPS, SERIAL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -297,19 +306,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [ops_p1]
@@ -317,34 +326,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = OPS, PARALLEL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -358,19 +370,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [root]
@@ -378,33 +390,36 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = 
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -418,19 +433,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [ops_p2]
@@ -438,34 +453,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = OPS, PARALLEL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -479,19 +497,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [PARALLEL]
@@ -499,34 +517,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = 
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -540,19 +561,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [VAR]
@@ -560,33 +581,36 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = 
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -600,19 +624,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [var_p1]
@@ -620,34 +644,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = VAR, PARALLEL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -661,19 +688,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [var_p2]
@@ -681,34 +708,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = VAR, PARALLEL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -722,19 +752,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [var_s1]
@@ -742,34 +772,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = VAR, SERIAL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -783,19 +816,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [SERIAL]
@@ -803,34 +836,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = 
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -844,19 +880,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 [var_s2]
@@ -864,34 +900,37 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    enable resurrection = False
    manual completion = False
    retry delays = 
-   environment scripting = None
+   environment scripting = 
    execution polling intervals = 
    title = No title provided
    extra log files = 
    work sub-directory = $CYLC_TASK_ID
    submission polling intervals = 
    description = No description provided
-   initial scripting = None
-   pre-command scripting = None
-   post-command scripting = None
+   initial scripting = 
+   pre-command scripting = 
+   post-command scripting = 
    inherit = VAR, SERIAL
    [[event hooks]]
-      submission timeout handler = None
-      submitted handler = None
-      started handler = None
-      execution timeout handler = None
-      submission failed handler = None
-      submission retry handler = None
-      warning handler = None
-      succeeded handler = None
-      retry handler = None
+      submission timeout handler = 
+      submitted handler = 
+      started handler = 
+      execution timeout handler = 
+      submission failed handler = 
+      submission retry handler = 
+      warning handler = 
+      succeeded handler = 
+      retry handler = 
       reset timer = False
-      execution timeout = None
-      failed handler = None
-      submission timeout = None
+      execution timeout = 
+      failed handler = 
+      submission timeout = 
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -905,19 +944,19 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       disable retries = True
       disable task event hooks = True
    [[suite state polling]]
-      interval = None
-      host = None
-      max-polls = None
-      run-dir = None
-      user = None
-      verbose mode = None
+      interval = 
+      host = 
+      max-polls = 
+      run-dir = 
+      user = 
+      verbose mode = 
    [[remote]]
-      owner = None
-      suite definition directory = None
-      host = None
+      owner = 
+      suite definition directory = 
+      host = 
    [[job submission]]
       shell = /bin/bash
-      command template = None
+      command template = 
       method = background
       retry delays = 
 __OUT__

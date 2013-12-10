@@ -98,7 +98,10 @@ try:
                 else:
                     printcfg( value, level=len(args[1:]) )
             else:
-                print value
+                if value is not None:
+                    print value
+                else:
+                    print ""
     else:
         print "Combined site/user config is valid for cylc-" + cylc_version
 

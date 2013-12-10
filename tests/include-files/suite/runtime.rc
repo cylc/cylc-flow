@@ -1,0 +1,4 @@
+[runtime]
+    [[root]]
+        command scripting = "echo Hello World"
+

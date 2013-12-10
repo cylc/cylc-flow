@@ -1062,8 +1062,6 @@ read and write from their current working directories.
 \item {\em default:} \lstinline=$TASK_ID=
 \end{myitemize}
 
-
-
 \paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
 
 If a message is received from a failed task cylc will normally treat
@@ -1080,6 +1078,7 @@ Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
 \item {\em type:} boolean
 \item {\em default:} False
 \end{myitemize}
+
 
 \paragraph[{[[[}dummy mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]]}
 
@@ -1393,6 +1392,44 @@ parser is concerned these are just normal configuration items).
    \end{myitemize}
 \end{myitemize}
 
+\paragraph[{[[[}environment filter{]]]}]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]]}
+
+This section contains environment variable inclusion and exclusion
+lists that can be used to filter the inherited environment. {\em This is
+not intended as an alternative to a well-designed inheritance hierarchy
+that provides each task with just the variables it needs.} Filters can,
+however, improve suites with tasks that inherit a lot of environment
+they don't need, by making it clear which tasks use which variables.
+They can optionally be used routinely as explicit ``task environment
+interfaces'' too, at some cost to brevity, because they guarantee that
+variables filtered out of the inherited task environment are not used.
+
+Note that environment filtering is done after inheritance is completely
+worked out, not at each level on the way, so filter lists in higher-level
+namespaces only have an effect if they are not overridden by descendants.
+
+\subparagraph[include]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]] $\rightarrow$ include}
+
+If given, only variables named in this list will be included from the
+inherited environment, others will be filtered out. Variables may also
+be explicitly excluded by an \lstinline=exclude= list.
+
+\begin{myitemize}
+\item {\em type:} string list
+\item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[exclude]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]] $\rightarrow$ include}
+
+Variables named in this list will be filtered out of the inherited
+environment.  Variables may also be implicitly excluded by
+omission from an \lstinline=include= list.
+
+\begin{myitemize}
+\item {\em type:} string list
+\item {\em default:} (none)
+\end{myitemize}
+
 \paragraph[{[[[}directives{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]]}
 
 Batch queue scheduler directives.  Whether or not these are used depends
@@ -1526,21 +1563,18 @@ http://www.graphviz.org/Documentation.php.
 
 \subsubsection[initial cycle time]{[visualization] $\rightarrow$ initial cycle time}
 
-The first cycle time to use when plotting the suite dependency graph.
+The cycle time from which to start the suite graph.
 \begin{myitemize}
-    \item {\em type:} integer
-    \item {\em default:} 2999010100
+    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em default:} the suite initial cycle time or 2999010100
 \end{myitemize}
 
 \subsubsection[final cycle time]{[visualization] $\rightarrow$ final cycle time}
 
-The last cycle time to use when plotting the suite dependency graph.
-Typically this should be just far enough ahead of the initial cycle to
-show the full suite.
-
+The cycle time at which to end the suite graph.
 \begin{myitemize}
-    \item {\em type:} integer
-    \item {\em default:} 2999010123
+    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em default:} the visualization initial cycle time plus the default runahead limit
 \end{myitemize}
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}

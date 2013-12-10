@@ -1290,7 +1290,7 @@ class task( object ):
         if not launcher:
             if self.user_at_host:
                 if "@" in self.user_at_host:
-                    self.task_owner, self.task_host = user_at_host.split('@', 1)
+                    self.task_owner, self.task_host = self.user_at_host.split('@', 1)
                 else:
                     self.task_host = self.user_at_host
             launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )

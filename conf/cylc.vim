@@ -39,7 +39,6 @@ syn match cylcInlineMarker '\_^!\{1,}'
 syn match cylcItem ' *\zs\(\w\| \|\-\)*\>\ze *='
 
 syn match cylcInclude '%include *\(\w\|\-\|\/\|\.\)*'
-syn match cylcInline '.*\(START INLINED\|END INLINED\).*'
 
 syntax keyword ToDo TODO ToDo contained
 syn match cylcComment excludenl '#.*' contains=ToDo
@@ -63,7 +62,6 @@ hi def link cylcComment Comment
 hi def link cylcInlineMarker Statement
 hi def link cylcString String
 hi def link cylcItem Special
-hi def link cylcInline Statement
 hi def link cylcInclude Statement
 
 hi Normal ctermfg=DarkGrey guifg=#444444

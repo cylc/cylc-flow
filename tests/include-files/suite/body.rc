@@ -1,0 +1,2 @@
+%include scheduling.rc
+%include runtime.rc

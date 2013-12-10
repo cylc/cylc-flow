@@ -107,8 +107,14 @@ class GraphUpdater(threading.Thread):
 
         self.graph_warned = {}
 
+        # lists of nodes to newly group or ungroup (not of all currently
+        # grouped and ungrouped nodes - still held server side)
         self.group = []
         self.ungroup = []
+        self.have_leaves_and_feet = False
+        self.leaves = []
+        self.feet = []
+
         self.ungroup_recursive = False
         if "graph" in self.cfg.ungrouped_views:
             self.ungroup_all = True
@@ -300,13 +306,24 @@ class GraphUpdater(threading.Thread):
         except Exception:  # PyroError
             return False
 
-        # pre-5.4.0 suite daemon backward compatibitity (suite polling graph notation)
+        # backward compatibility for old suite daemons still running
+        self.have_leaves_and_feet = False
         if isinstance( res, list ):
-            # prior to suite-polling tasks cylc-5.4.0 
+            # prior to suite-polling tasks in 5.4.0 
             gr_edges = res
             suite_polling_tasks = []
+            self.leaves = []
+            self.feet = []
         else:
-            gr_edges, suite_polling_tasks = res
+            if len( res ) == 2:
+                # prior to graph view grouping fix in 5.4.2
+                gr_edges, suite_polling_tasks = res
+                self.leaves = []
+                self.feet = []
+            elif len( res ) == 4:
+                # 5.4.2 and later
+                self.have_leaves_and_feet = True
+                gr_edges, suite_polling_tasks, self.leaves, self.feet = res
 
         # find nodes not present in the main graph
         extra_ids = []

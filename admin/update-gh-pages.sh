@@ -53,8 +53,9 @@ cp -r gh-pages/ graphics/ html/ changes.{css,html} $TMPD/
 # return to top level
 cd ..
 
-# checkout gh-pages branch
+# checkout and update gh-pages
 git checkout gh-pages
+git pull cylc gh-pages
 
 # replace the online content
 cp -r $TMPD/changes.{css,html} .

@@ -32,6 +32,7 @@ from trigger import triggerx
 from parsec.util import pdeepcopy, poverride, replicate, un_many
 from TaskID import TaskID
 from C3MRO import C3
+from OrderedDict import OrderedDict
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -113,6 +114,9 @@ class config( object ):
         self.cycling_tasks = []
         self.tasks_by_cycler = {}
 
+        self.runahead_limit = None
+        self.default_runahead_limit = None
+
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
                 # lists of parent namespaces
@@ -126,8 +130,12 @@ class config( object ):
                 'descendants' : {},
                 # lists of all descendant namespaces from the first-parent hierarchy
                 # (first parents are collapsible in suite visualization)
-                'first-parent descendants' : {}
+                'first-parent descendants' : {},
                 }
+        # tasks
+        self.leaves = []
+        # one up from root
+        self.feet = []
 
         # parse, upgrade, validate the suite, but don't expand [runtime]
         self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
@@ -162,14 +170,17 @@ class config( object ):
             # delete the original multi-task section
             del self.cfg['runtime'][item]
 
-        self.check_env()
+        # check var names before inheritance to avoid repetition
+        self.check_env_names()
 
-        # Do sparse [runtime] inheritance
+        # do sparse inheritance
         self.compute_family_tree()
         self.compute_inheritance()
 
-        #debugging:
-        #self.print_inheritance()
+        #self.print_inheritance() # (debugging)
+
+        # filter task environment variables after inheritance
+        self.filter_env()
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if self.verbose:
@@ -276,25 +287,22 @@ class config( object ):
         if self.validation:
             self.check_tasks()
 
-        # Default visualization start and stop cycles (defined here
-        # rather than in the spec file so we can set a sensible stop
-        # time if only the start time is specified by the user).
-        vizfinal = False
-        vizstart = False
-        if self.cfg['visualization']['initial cycle time']:
-            vizstart = True
-        if self.cfg['visualization']['final cycle time']:
-            vizfinal = True
+        # initial and final cycles for visualization
+        self.cfg['visualization']['initial cycle time'] = \
+                self.cfg['visualization']['initial cycle time'] or \
+                self.cfg['scheduling']['initial cycle time'] or '2999010100'
 
-        if vizstart and vizfinal:
-            pass
-        elif vizstart:
-            self.cfg['visualization']['final cycle time'] = self.cfg['visualization']['initial cycle time']
-        elif vizfinal:
-            self.cfg['visualization']['initial cycle time'] = self.cfg['visualization']['final cycle time']
-        else:
-            self.cfg['visualization']['initial cycle time'] = 2999010100
-            self.cfg['visualization']['final cycle time'] = 2999010123
+        def get_vizstop():
+            if not self.default_runahead_limit:
+                # no cycling tasks
+                return None
+            st = ct( self.cfg['visualization']['initial cycle time'] )
+            st.increment( hours=self.default_runahead_limit )
+            return st.get()
+
+        self.cfg['visualization']['final cycle time'] = \
+                self.cfg['visualization']['final cycle time'] or \
+                get_vizstop() or self.cfg['visualization']['initial cycle time']
 
         ngs = self.cfg['visualization']['node groups']
 
@@ -351,11 +359,18 @@ class config( object ):
         # nodes, whereas the reverse is needed - fixing this would
         # require reordering task_attr in lib/cylc/graphing.py).
 
-    def check_env( self ):
-        # TODO - belongs in parsec
+        self.leaves = self.get_task_name_list()
+        for ns, ancestors in self.runtime['first-parent ancestors'].items():
+            try:
+                foot = ancestors[-2] # one back from 'root'
+            except IndexError:
+                pass
+            else:
+                if foot not in self.feet:
+                    self.feet.append(foot)
 
-        # check environment variables now to avoid checking inherited
-        # variables multiple times.
+    def check_env_names( self ):
+        # check for illegal environment variable names
          bad = {}
          for label in self.cfg['runtime']:
              res = []
@@ -370,6 +385,37 @@ class config( object ):
                  for var in vars:
                      print >> sys.stderr, "  ", var
              raise SuiteConfigError("Illegal env variable name(s) detected" )
+
+    def filter_env( self ):
+        # filter environment variables after sparse inheritance
+        for name, ns in self.cfg['runtime'].items():
+            try:
+                oenv = ns['environment'] 
+            except KeyError:
+                # no environment to filter
+                continue
+
+            try:
+                fincl = ns['environment filter']['include']
+            except KeyError:
+                # empty include-filter means include all
+                fincl = []
+
+            try:
+                fexcl = ns['environment filter']['exclude']
+            except KeyError:
+                # empty exclude-filter means exclude none
+                fexcl = []
+
+            if not fincl and not fexcl:
+                # no filtering to do
+                continue
+ 
+            nenv = OrderedDict()
+            for key, val in oenv.items():
+                if ( not fincl or key in fincl ) and key not in fexcl:
+                    nenv[key] = val
+            ns['environment'] = nenv
 
     def compute_family_tree( self ):
         first_parents = {}
@@ -496,35 +542,35 @@ class config( object ):
         if len(self.cyclers) != 0:
             # runahead limit is only relevant for cycling sections
 
-            rl = self.cfg['scheduling']['runahead limit']
-            if rl:
-                if self.verbose:
-                    print "Configured runahead limit: ", rl, "hours"
-            else:
-                mcis = []
-                offs = []
-                for cyc in self.cyclers:
-                    m = cyc.get_min_cycling_interval()
-                    if m:
-                        mcis.append(m)
-                    o = cyc.get_offset()
-                    if o:
-                        offs.append(o)
-                if len(mcis) > 0:
-                    # set runahead limit twice the minimum cycling interval
-                    rl = 2 * min(mcis)
-                    if len(offs) > 0:
-                        mo = min(offs)
-                        if mo < 0:
-                            # we have future triggers...
-                            if abs(mo) >= rl:
-                                #... that extend past the default rl
-                                # set to offset plus one minimum interval
-                                rl = abs(mo) + min(mcis)
-                if rl:
-                    if self.verbose:
-                        print "Computed runahead limit:", rl, "hours"
-        self.runahead_limit = rl
+            # configured runahead limit
+            crl = self.cfg['scheduling']['runahead limit']
+
+            # computed default runahead limit
+            drl = None
+            mcis = []
+            offs = []
+            for cyc in self.cyclers:
+                m = cyc.get_min_cycling_interval()
+                if m:
+                    mcis.append(m)
+                o = cyc.get_offset()
+                if o:
+                    offs.append(o)
+            if len(mcis) > 0:
+                # set runahead limit twice the minimum cycling interval
+                drl = 2 * min(mcis)
+                if len(offs) > 0:
+                    mo = min(offs)
+                    if mo < 0:
+                        # we have future triggers...
+                        if abs(mo) >= drl:
+                            #... that extend past the default rl
+                            # set to offset plus one minimum interval
+                            drl = abs(mo) + min(mcis)
+        self.default_runahead_limit = drl
+        self.runahead_limit = crl or drl
+        if self.verbose:
+            print "Runahead limit:", rl, "hours"
 
     def get_runahead_limit( self ):
         # may be None (no cycling tasks)
@@ -1391,15 +1437,13 @@ class config( object ):
 
         for e in self.edges:
             # Get initial cycle time for this cycler
-            ctime = e.cyclr.initial_adjust_up( start_ctime )
+            i_ctime = e.cyclr.initial_adjust_up( start_ctime )
+            ctime = i_ctime
 
             while int(ctime) <= int(stop):
                 # Loop over cycles generated by this cycler
-                
-                if ctime != actual_first_ctime:
-                    not_initial_cycle = True
-                else:
-                    not_initial_cycle = False
+               
+                not_initial_cycle = ( ctime != i_ctime )
 
                 r_id = e.get_right(ctime, not_initial_cycle, raw, startup_exclude_list, [])
                 l_id = e.get_left( ctime, not_initial_cycle, raw, startup_exclude_list, [])
@@ -1412,7 +1456,6 @@ class config( object ):
 
                 if l_id != None and not e.sasl:
                     # check that l_id is not earlier than start time
-                    # TODO - does this invalidate r_id too?
                     tmp, lctime = l_id.split()
                     #sct = ct(start_ctime)
                     sct = ct(actual_first_ctime)
@@ -1589,7 +1632,7 @@ class config( object ):
         rtcfg = pdeepcopy( self.runtime_defaults ) # copy [runtime] default dict
         poverride( rtcfg, taskcfg )    # override with suite [runtime] settings
         un_many(rtcfg)
-    
+
         ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle time']
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).

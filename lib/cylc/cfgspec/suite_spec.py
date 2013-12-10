@@ -137,6 +137,10 @@ SPEC = {
             'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
             'submission polling intervals'    : vdr( vtype='m_float_list', default=[] ),
             'execution polling intervals'     : vdr( vtype='m_float_list', default=[] ),
+            'environment filter' : {
+                'include'                     : vdr( vtype='string_list' ),
+                'exclude'                     : vdr( vtype='string_list' ),
+            },
             'simulation mode' :  {
                 'run time range'              : vdr( vtype='integer_list', default=[1,16]),
                 'simulate failure'            : vdr( vtype='boolean', default=False ),
@@ -196,8 +200,8 @@ SPEC = {
             },
         },
     'visualization' : {
-        'initial cycle time'                  : vdr( vtype='integer' ),
-        'final cycle time'                    : vdr( vtype='integer' ),
+        'initial cycle time'                  : vdr( vtype='cycletime' ),
+        'final cycle time'                    : vdr( vtype='cycletime' ),
         'collapsed families'                  : vdr( vtype='string_list', default=[] ),
         'use node color for edges'            : vdr( vtype='boolean', default=True ),
         'use node color for labels'           : vdr( vtype='boolean', default=False ),
