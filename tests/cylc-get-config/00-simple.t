@@ -162,6 +162,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       submission timeout = 
    [[environment]]
    [[directives]]
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -223,6 +226,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -284,6 +290,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -345,6 +354,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -405,6 +417,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       submission timeout = 
    [[environment]]
    [[directives]]
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -466,6 +481,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -527,6 +545,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -587,6 +608,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
       submission timeout = 
    [[environment]]
    [[directives]]
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -648,6 +672,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -709,6 +736,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = parallel
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -770,6 +800,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -831,6 +864,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
@@ -892,6 +928,9 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    [[environment]]
    [[directives]]
       job_type = serial
+   [[environment filter]]
+      exclude = 
+      include = 
    [[dummy mode]]
       disable pre-command scripting = True
       disable post-command scripting = True
