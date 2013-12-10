@@ -388,7 +388,7 @@ class config( object ):
 
     def filter_env( self ):
         # filter environment variables after sparse inheritance
-        for name,ns in self.cfg['runtime'].items():
+        for name, ns in self.cfg['runtime'].items():
             try:
                 oenv = ns['environment'] 
             except KeyError:
@@ -412,7 +412,7 @@ class config( object ):
                 continue
  
             nenv = OrderedDict()
-            for key,val in oenv.items():
+            for key, val in oenv.items():
                 if ( not fincl or key in fincl ) and key not in fexcl:
                     nenv[key] = val
             ns['environment'] = nenv
