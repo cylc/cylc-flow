@@ -72,10 +72,11 @@ class loadleveler( job_submit ):
 
     def filter_output( self, out, err):
         """Filter the stdout/stderr output - suppress process message."""
-        err = [l + "\n" for l in err.splitlines() if
-               not self.REC_PROCESSED_FILTER.match(l)]
-        err = "".join(err)
-        return out, err
+        new_err = ""
+        for line in err.splitlines():
+            if not self.REC_PROCESSED_FILTER.match(line):
+                new_err += line + "\n"
+        return out, new_err
 
     def get_id( self, out, err ):
         """
