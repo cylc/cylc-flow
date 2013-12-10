@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-12-04 13:38:00"> 
+<meta name="date" content="2013-12-11 10:03:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,28 +18,28 @@ href="cug-htmlse16.html#tailcug-htmlse16.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse17.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse17.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">B   </span> <a 
- id="x18-337000B"></a>Site And User Config File Reference</h3>
+ id="x18-340000B"></a>Site And User Config File Reference</h3>
    <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >B.1 <a 
-href="#x18-338000B.1">Top Level Items</a></span>
+href="#x18-341000B.1">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.2 <a 
-href="#x18-346000B.2">[task messaging]</a></span>
+href="#x18-349000B.2">[task messaging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.3 <a 
-href="#x18-350000B.3">[suite logging]</a></span>
+href="#x18-353000B.3">[suite logging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.4 <a 
-href="#x18-354000B.4">[documentation]</a></span>
+href="#x18-357000B.4">[documentation]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.5 <a 
-href="#x18-363000B.5">[document viewers]</a></span>
+href="#x18-366000B.5">[document viewers]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.6 <a 
-href="#x18-366000B.6">[editors]</a></span>
+href="#x18-369000B.6">[editors]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.7 <a 
-href="#x18-369000B.7">[Pyro]</a></span>
+href="#x18-372000B.7">[Pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
-href="#x18-373000B.8">[hosts]</a></span>
+href="#x18-376000B.8">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="#x18-380000B.9">[suite host self-identification] </a></span>
+href="#x18-383000B.9">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="#x18-384000B.10">[suite host scanning]</a></span>
+href="#x18-387000B.10">[suite host scanning]</a></span>
    </div>
 <!--l. 7--><p class="indent" >   This section defines all legal items and values for cylc site and user config files. See <span 
 class="cmti-10">Site And User Config Files</span>
@@ -60,10 +60,10 @@ class="cmti-10">result parsed by cylc. </span>Use of Jinja2 in suite definitions
 href="cug-htmlse9.html#x10-1220009.6">9.6<!--tex4ht:ref: Jinja2 --></a>.
 <!--l. 18--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.1   </span> <a 
- id="x18-338000B.1"></a>Top Level Items</h4>
+ id="x18-341000B.1"></a>Top Level Items</h4>
 <!--l. 20--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.1   </span> <a 
- id="x18-339000B.1.1"></a>temporary directory</h5>
+ id="x18-342000B.1.1"></a>temporary directory</h5>
 <!--l. 22--><p class="noindent" >A temporary directory is needed by a few cylc commands, and is cleaned automatically on exit. Leave unset for the
 default (usually <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -95,7 +95,7 @@ class="pcrr7t-">cylc</span></span></li></ul>
                                                                                          
 <!--l. 32--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.2   </span> <a 
- id="x18-340000B.1.2"></a>state dump rolling archive length</h5>
+ id="x18-343000B.1.2"></a>state dump rolling archive length</h5>
 <!--l. 34--><p class="noindent" >A rolling archive of suite state dumps is maintained under the suite run directory, and is used for restarts; this item
 determines the number of previous states retained. The most recent saved state file is called <span class="lstinline"><span 
 class="pcrr7t-">state</span></span>. Sucessively
@@ -124,7 +124,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">20</span></span></li></ul>
 <!--l. 46--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.3   </span> <a 
- id="x18-341000B.1.3"></a>disable interactive command prompts</h5>
+ id="x18-344000B.1.3"></a>disable interactive command prompts</h5>
 <!--l. 48--><p class="noindent" >Commands that intervene in running suites can be made to ask for confirmation before acting. Some
 find this annoying and ineffective as a safety measure, however, so command prompts are disabled by
 default.
@@ -136,7 +136,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>True</li></ul>
 <!--l. 57--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.4   </span> <a 
- id="x18-342000B.1.4"></a>enable run directory housekeeping</h5>
+ id="x18-345000B.1.4"></a>enable run directory housekeeping</h5>
 <!--l. 59--><p class="noindent" >The suite run directory tree is created anew with every suite start (not restart) but output from the most
 recent previous runs can be retained in a rolling archive. Set length to 0 to keep no backups. <span 
 class="cmbx-10">This is</span>
@@ -154,7 +154,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 73--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.5   </span> <a 
- id="x18-343000B.1.5"></a>run directory rolling archive length</h5>
+ id="x18-346000B.1.5"></a>run directory rolling archive length</h5>
 <!--l. 75--><p class="noindent" >The number of old run directory trees to retain if run directory housekeeping is enabled.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -167,7 +167,7 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>2</li></ul>
 <!--l. 82--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.6   </span> <a 
- id="x18-344000B.1.6"></a>execution polling intervals</h5>
+ id="x18-347000B.1.6"></a>execution polling intervals</h5>
 <!--l. 84--><p class="noindent" >Cylc can poll running jobs to catch problems that prevent task messages from being sent back to the suite, such as
 hard job kills, network outages, or unplanned task host shutdown. Routine polling is done only for the polling <span 
 class="cmti-10">task</span>
@@ -200,7 +200,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">5&#x22C6;1.0</span></span></li></ul>
 <!--l. 101--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.1.7   </span> <a 
- id="x18-345000B.1.7"></a>submission polling intervals</h5>
+ id="x18-348000B.1.7"></a>submission polling intervals</h5>
 <!--l. 103--><p class="noindent" >Cylc can also poll submitted jobs to catch problems that prevent the submitted job from executing at all, such as
 deletion from an external batch scheduler queue. Routine polling is done only for the polling <span 
 class="cmti-10">task communication</span>
@@ -219,11 +219,11 @@ class="cmti-10">default: </span>1.0 (single value)
 class="cmti-10">example: </span>(see the execution polling example above)</li></ul>
 <!--l. 117--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.2   </span> <a 
- id="x18-346000B.2"></a>[task messaging]</h4>
+ id="x18-349000B.2"></a>[task messaging]</h4>
 <!--l. 119--><p class="noindent" >This section contains configuration items that affect task-to-suite communications.
 <!--l. 122--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.2.1   </span> <a 
- id="x18-347000B.2.1"></a>[task messaging] <span 
+ id="x18-350000B.2.1"></a>[task messaging] <span 
 class="cmsy-10">&#x2192; </span>retry interval in seconds</h5>
 <!--l. 124--><p class="noindent" >If a send fails, the messaging code will retry after a configured delay interval.
                                                                                          
@@ -240,7 +240,7 @@ class="cmti-10">minimum: </span>1.0
 class="cmti-10">default: </span>5.0</li></ul>
 <!--l. 133--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.2.2   </span> <a 
- id="x18-348000B.2.2"></a>[task messaging] <span 
+ id="x18-351000B.2.2"></a>[task messaging] <span 
 class="cmsy-10">&#x2192; </span>maximum number of tries</h5>
 <!--l. 135--><p class="noindent" >If successive sends fail, the messaging code will give up after a configured number of tries.
      <ul class="itemize1">
@@ -254,7 +254,7 @@ class="cmti-10">minimum: </span>1
 class="cmti-10">default: </span>7</li></ul>
 <!--l. 144--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.2.3   </span> <a 
- id="x18-349000B.2.3"></a>[task messaging] <span 
+ id="x18-352000B.2.3"></a>[task messaging] <span 
 class="cmsy-10">&#x2192; </span>connection timeout in seconds</h5>
 <!--l. 146--><p class="noindent" >This is the same as the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
@@ -273,12 +273,12 @@ class="cmti-10">minimum: </span>1.0
 class="cmti-10">default: </span>30.0</li></ul>
 <!--l. 156--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.3   </span> <a 
- id="x18-350000B.3"></a>[suite logging]</h4>
+ id="x18-353000B.3"></a>[suite logging]</h4>
 <!--l. 158--><p class="noindent" >The suite event log, held under the suite run directory, is maintained as a rolling archive. Logs are rolled over
 (backed up and started anew) when they reach a configurable limit size.
 <!--l. 162--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.3.1   </span> <a 
- id="x18-351000B.3.1"></a>[suite logging] <span 
+ id="x18-354000B.3.1"></a>[suite logging] <span 
 class="cmsy-10">&#x2192; </span>roll over at start-up</h5>
 <!--l. 164--><p class="noindent" >If true, a new suite log will be started for a new suite run.
      <ul class="itemize1">
@@ -292,7 +292,7 @@ class="cmti-10">default: </span>True</li></ul>
                                                                                          
 <!--l. 171--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.3.2   </span> <a 
- id="x18-352000B.3.2"></a>[suite logging] <span 
+ id="x18-355000B.3.2"></a>[suite logging] <span 
 class="cmsy-10">&#x2192; </span>rolling archive length</h5>
 <!--l. 173--><p class="noindent" >How many rolled logs to retain in the archive.
      <ul class="itemize1">
@@ -306,7 +306,7 @@ class="cmti-10">minimum: </span>1
 class="cmti-10">default: </span>5</li></ul>
 <!--l. 181--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.3.3   </span> <a 
- id="x18-353000B.3.3"></a>[suite logging] <span 
+ id="x18-356000B.3.3"></a>[suite logging] <span 
 class="cmsy-10">&#x2192; </span>maximum size in bytes</h5>
 <!--l. 183--><p class="noindent" >Suite event logs are rolled over when they reach this file size.
      <ul class="itemize1">
@@ -317,19 +317,19 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>1000000</li></ul>
 <!--l. 190--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.4   </span> <a 
- id="x18-354000B.4"></a>[documentation]</h4>
+ id="x18-357000B.4"></a>[documentation]</h4>
 <!--l. 192--><p class="noindent" >Documentation locations for the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">doc</span></span> command and gcylc Help menus.
 <!--l. 195--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.4.1   </span> <a 
- id="x18-355000B.4.1"></a>[documentation] <span 
+ id="x18-358000B.4.1"></a>[documentation] <span 
 class="cmsy-10">&#x2192; </span>[files]</h5>
 <!--l. 197--><p class="noindent" >File locations of documentation held locally on the cylc host server.
 <!--l. 199--><p class="noindent" >
 <!--l. 199--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-356000B.4.1.1"></a><span 
+ id="x18-359000B.4.1.1"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -352,7 +352,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">html</span></span></li></ul>
 <!--l. 207--><p class="noindent" >
 <!--l. 207--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-357000B.4.1.2"></a><span 
+ id="x18-360000B.4.1.2"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -380,7 +380,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">pdf</span></span></li></ul>
 <!--l. 215--><p class="noindent" >
 <!--l. 215--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-358000B.4.1.3"></a><span 
+ id="x18-361000B.4.1.3"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -409,7 +409,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">html</span></span></li></ul>
 <!--l. 223--><p class="noindent" >
 <!--l. 223--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-359000B.4.1.4"></a><span 
+ id="x18-362000B.4.1.4"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -438,12 +438,12 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">html</span></span></li></ul>
 <!--l. 231--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.4.2   </span> <a 
- id="x18-360000B.4.2"></a>[documentation] <span 
+ id="x18-363000B.4.2"></a>[documentation] <span 
 class="cmsy-10">&#x2192; </span>[urls]</h5>
 <!--l. 233--><p class="noindent" >Online documentation URLs.
 <!--l. 235--><p class="noindent" >
 <!--l. 235--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-361000B.4.2.1"></a><span 
+ id="x18-364000B.4.2.1"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[urls] </span><span 
@@ -458,7 +458,7 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>http://cylc.github.com/cylc/</li></ul>
 <!--l. 245--><p class="noindent" >
 <!--l. 245--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-362000B.4.2.2"></a><span 
+ id="x18-365000B.4.2.2"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[urls] </span><span 
@@ -476,11 +476,11 @@ class="cmti-10">default: </span>(none)</li></ul>
                                                                                          
 <!--l. 254--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.5   </span> <a 
- id="x18-363000B.5"></a>[document viewers]</h4>
+ id="x18-366000B.5"></a>[document viewers]</h4>
 <!--l. 256--><p class="noindent" >PDF and HTML viewers can be launched by cylc to view the documentation.
 <!--l. 258--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.5.1   </span> <a 
- id="x18-364000B.5.1"></a>[document viewers] <span 
+ id="x18-367000B.5.1"></a>[document viewers] <span 
 class="cmsy-10">&#x2192; </span>pdf</h5>
 <!--l. 260--><p class="noindent" >Your preferred PDF viewer program.
      <ul class="itemize1">
@@ -491,7 +491,7 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>evince</li></ul>
 <!--l. 267--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.5.2   </span> <a 
- id="x18-365000B.5.2"></a>[document viewers] <span 
+ id="x18-368000B.5.2"></a>[document viewers] <span 
 class="cmsy-10">&#x2192; </span>html</h5>
 <!--l. 269--><p class="noindent" >Your preferred web browser.
      <ul class="itemize1">
@@ -502,11 +502,11 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>firefox</li></ul>
 <!--l. 276--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.6   </span> <a 
- id="x18-366000B.6"></a>[editors]</h4>
+ id="x18-369000B.6"></a>[editors]</h4>
 <!--l. 278--><p class="noindent" >Choose your favourite text editor for editing suite definitions.
 <!--l. 280--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.6.1   </span> <a 
- id="x18-367000B.6.1"></a>[editors] <span 
+ id="x18-370000B.6.1"></a>[editors] <span 
 class="cmsy-10">&#x2192; </span>terminal</h5>
 <!--l. 282--><p class="noindent" >The editor to be invoked by the cylc command line interface.
      <ul class="itemize1">
@@ -552,7 +552,7 @@ class="pcrr7t-">f</span></span> (vim GUI)</li></ul>
                                                                                          
 <!--l. 295--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.6.2   </span> <a 
- id="x18-368000B.6.2"></a>[editors] <span 
+ id="x18-371000B.6.2"></a>[editors] <span 
 class="cmsy-10">&#x2192; </span>gui</h5>
 <!--l. 297--><p class="noindent" >The editor to be invoked by the cylc GUI.
      <ul class="itemize1">
@@ -590,13 +590,13 @@ class="pcrr7t-">vim</span></span></li></ul>
      </li></ul>
 <!--l. 310--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.7   </span> <a 
- id="x18-369000B.7"></a>[Pyro]</h4>
+ id="x18-372000B.7"></a>[Pyro]</h4>
 <!--l. 312--><p class="noindent" >Pyro is the RPC layer used for network communication between cylc clients (suite-connecting commands and guis)
 servers (running suites). Each suite listens on a dedicated network port, binding on the first available starting at the
 configured base port.
 <!--l. 317--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.7.1   </span> <a 
- id="x18-370000B.7.1"></a>[Pyro] <span 
+ id="x18-373000B.7.1"></a>[Pyro] <span 
 class="cmsy-10">&#x2192; </span>base port </h5>
 <!--l. 319--><p class="noindent" >The first port that cylc is allowed to use.
      <ul class="itemize1">
@@ -607,7 +607,7 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>7766</li></ul>
 <!--l. 326--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.7.2   </span> <a 
- id="x18-371000B.7.2"></a>[Pyro] <span 
+ id="x18-374000B.7.2"></a>[Pyro] <span 
 class="cmsy-10">&#x2192; </span>maximum number of ports</h5>
 <!--l. 328--><p class="noindent" >This determines the maximum number of suites that can run at once on the suite host.
      <ul class="itemize1">
@@ -621,7 +621,7 @@ class="cmti-10">default: </span>100</li></ul>
                                                                                          
 <!--l. 336--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.7.3   </span> <a 
- id="x18-372000B.7.3"></a>[Pyro] <span 
+ id="x18-375000B.7.3"></a>[Pyro] <span 
 class="cmsy-10">&#x2192; </span>ports directory</h5>
 <!--l. 338--><p class="noindent" >Each suite stores its port number, by suite name, under this directory.
      <ul class="itemize1">
@@ -639,7 +639,7 @@ class="pcrr7t-">ports</span><span
 class="pcrr7t-">/</span></span></li></ul>
 <!--l. 345--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.8   </span> <a 
- id="x18-373000B.8"></a>[hosts]</h4>
+ id="x18-376000B.8"></a>[hosts]</h4>
 <!--l. 347--><p class="noindent" >The [hosts] section configures some important host-specific settings for the suite host (&#8216;localhost&#8217;) and remote task
 hosts. Note that <span 
 class="cmti-10">remote task behaviour is determined by the site/user config on the suite host, not on the task host</span>.
@@ -650,7 +650,7 @@ class="pcrr7t-">HOME</span></span> in items that configure directory
 locations.
 <!--l. 355--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.8.1   </span> <a 
- id="x18-374000B.8.1"></a>[hosts] <span 
+ id="x18-377000B.8.1"></a>[hosts] <span 
 class="cmsy-10">&#x2192; </span>HOST</h5>
 <!--l. 357--><p class="noindent" >The default task host is the suite host, <span 
 class="cmbx-10">localhost</span>, with default values as listed below. Use an explicit
@@ -712,7 +712,7 @@ class="pcrr7t-">nz</span></span> - regular expression</li></ul>
                                                                                          
 <!--l. 390--><p class="noindent" >
 <!--l. 390--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-375000B.8.1.1"></a><span 
+ id="x18-378000B.8.1.1"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -734,7 +734,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">run</span></span></li></ul>
 <!--l. 400--><p class="noindent" >
 <!--l. 400--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-376000B.8.1.2"></a><span 
+ id="x18-379000B.8.1.2"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -755,7 +755,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">run</span></span></li></ul>
 <!--l. 410--><p class="noindent" >
 <!--l. 410--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-377000B.8.1.3"></a><span 
+ id="x18-380000B.8.1.3"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -783,7 +783,7 @@ class="cmbx-10">poll </span>- the suite polls for the status of tasks (no task m
 class="cmti-10">localhost default: </span>pyro</li></ul>
 <!--l. 426--><p class="noindent" >
 <!--l. 426--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-378000B.8.1.4"></a><span 
+ id="x18-381000B.8.1.4"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -814,7 +814,7 @@ class="pcrr7t-">%</span><span
 class="pcrr7t-">s</span></span> )</li></ul>
 <!--l. 438--><p class="noindent" >
 <!--l. 438--><p class="noindent" ><span class="paragraphHead"><a 
- id="x18-379000B.8.1.5"></a><span 
+ id="x18-382000B.8.1.5"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -824,7 +824,7 @@ class="cmbx-10">use login shell </span></span>
 using a login shell, <!--l. 442--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-379001r1"></a></span><span 
+ id="x18-382001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -854,7 +854,7 @@ reasons some institutions do not allow unattended commands to start login shells
 to get, <!--l. 449--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-379002r1"></a></span><span 
+ id="x18-382002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -893,14 +893,14 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">localhost default: </span>true</li></ul>
 <!--l. 466--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.9   </span> <a 
- id="x18-380000B.9"></a>[suite host self-identification] </h4>
+ id="x18-383000B.9"></a>[suite host self-identification] </h4>
 <!--l. 468--><p class="noindent" >The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_HOST</span></span>)
 so that task messages can target the right suite on the right host.
 <!--l. 476--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.9.1   </span> <a 
- id="x18-381000B.9.1"></a>[suite host self-identification] <span 
+ id="x18-384000B.9.1"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>method </h5>
 <!--l. 478--><p class="noindent" >This item determines how cylc finds the identity of the suite host. For the default <span 
 class="cmti-10">name </span>method cylc asks the suite
@@ -944,7 +944,7 @@ class="cmti-10">host</span>, below)</li></ul>
 class="cmti-10">default: </span>name</li></ul>
 <!--l. 500--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.9.2   </span> <a 
- id="x18-382000B.9.2"></a>[suite host self-identification] <span 
+ id="x18-385000B.9.2"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>target </h5>
 <!--l. 502--><p class="noindent" >This item is required for the <span 
 class="cmti-10">address </span>self-identification method. If your suite host sees the internet, a common
@@ -963,7 +963,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">com</span></span></li></ul>
 <!--l. 512--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.9.3   </span> <a 
- id="x18-383000B.9.3"></a>[suite host self-identification] <span 
+ id="x18-386000B.9.3"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>host </h5>
 <!--l. 514--><p class="noindent" >Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
 class="cmti-10">hardwired</span>
@@ -976,14 +976,14 @@ class="cmti-10">type: </span>string (host name or IP address)
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 521--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">B.10   </span> <a 
- id="x18-384000B.10"></a>[suite host scanning]</h4>
+ id="x18-387000B.10"></a>[suite host scanning]</h4>
 <!--l. 523--><p class="noindent" >Utilities such as <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gsummary</span></span> need to scan hosts for running suites.
 <!--l. 526--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">B.10.1   </span> <a 
- id="x18-385000B.10.1"></a>[suite host scanning] <span 
+ id="x18-388000B.10.1"></a>[suite host scanning] <span 
 class="cmsy-10">&#x2192; </span>hosts </h5>
 <!--l. 528--><p class="noindent" >A list of hosts to scan for running suites.
      <ul class="itemize1">
