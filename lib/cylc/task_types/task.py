@@ -389,9 +389,9 @@ class task( object ):
         self.set_status( 'runahead' )
         self.turn_off_timeouts()
 
-    def set_state_submitting( self ):
+    def set_state_ready( self ):
         # called by scheduler main thread
-        self.set_status( 'submitting' )
+        self.set_status( 'ready' )
 
     def set_state_queued( self ):
         # called by scheduler main thread
@@ -986,11 +986,11 @@ class task( object ):
                 self.log( 'NORMAL', "Queueing submitted event handler" )
                 self.__class__.event_queue.put( ('submitted', handler, self.id, 'job submitted') )
 
-            if self.state.is_currently( 'submitting' ):
+            if self.state.is_currently( 'ready' ):
                 # The 'started' message can arrive before 'submitted' if
                 # the task starts executing very quickly. So only set
                 # to 'submitted' and set the job submission timer if
-                # currently still in the 'submitting'state.
+                # currently still in the 'ready' state.
                 self.set_status( 'submitted' )
                 self.submission_timer_start = self.submitted_time
                 self.submission_poll_timer.set_timer()
@@ -1002,7 +1002,7 @@ class task( object ):
             self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
                                   
         elif ( content == 'submission failed' or content == 'kill command succeeded' ) and \
-                self.state.is_currently('submitting','submitted'):
+                self.state.is_currently('ready','submitted'):
 
             # (a fake task message from the job submission thread)
             self.submit_method_id = None
@@ -1037,7 +1037,7 @@ class task( object ):
                     self.log( 'NORMAL', "Queueing submission retry event handler" )
                     self.__class__.event_queue.put( ('submission retry', handler, self.id, msg))
  
-        elif content == 'started' and self.state.is_currently( 'submitting','submitted','submit-failed' ):
+        elif content == 'started' and self.state.is_currently( 'ready','submitted','submit-failed' ):
             # Received a 'task started' message
 
             flags.pflag = True
@@ -1059,7 +1059,7 @@ class task( object ):
 
             self.execution_poll_timer.set_timer()
 
-        elif content == 'succeeded' and self.state.is_currently('submitting','submitted','submit-failed','running','failed'):
+        elif content == 'succeeded' and self.state.is_currently('ready','submitted','submit-failed','running','failed'):
             # Received a 'task succeeded' message
             # (submit* states in case of very fast submission and execution)
             self.execution_timer_start = None
@@ -1081,7 +1081,7 @@ class task( object ):
                 self.outputs.set_all_completed()
 
         elif ( content == 'failed' or content == 'kill command succeeded' ) and \
-                self.state.is_currently('submitting','submitted','submit-failed','running','succeeded'):
+                self.state.is_currently('ready','submitted','submit-failed','running','succeeded'):
             # (submit* states in case of very fast submission and
             # execution; and the fact that polling tasks 1-2 secs)
 

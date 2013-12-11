@@ -283,6 +283,9 @@ where they got to while the suite was down."""
                 print >> sys.stderr, " ", line
                 sys.exit( "ERROR: corrupted state dump" )
             tasknames[name] = True
+            if state == 'submitting':
+                # backward compabitility for state dumps generated prior to #787
+                state = 'ready'
             taskstates[id] = (name, tag, state )
 
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
@@ -300,7 +303,7 @@ where they got to while the suite was down."""
         # 
         # 'queued'     - prerequisites satisfied, outputs not completed
         #                 (only tasks ready to run can get queued)
-        # 'submitting' - ditto
+        # 'ready'      - ditto
         # 'submitted'  - ditto (but see *)
         # 'submit-retrying' - ditto
         # 'running'    - ditto (but see *)
@@ -386,7 +389,7 @@ where they got to while the suite was down."""
                     itask.submission_poll_timer.set_host( host, set_timer=True )
                     itask.execution_poll_timer.set_host( host, set_timer=True )
                     
-            elif itask.state.is_currently( 'queued', 'submitting','submit-retrying', 'submit-failed', 'retrying', 'failed'):
+            elif itask.state.is_currently( 'queued', 'ready','submit-retrying', 'submit-failed', 'retrying', 'failed'):
                 itask.prerequisites.set_all_satisfied()
                 if not itask.state.is_currently( 'failed', 'submit-failed' ):
                     # reset to waiting as these had not been submitted yet.

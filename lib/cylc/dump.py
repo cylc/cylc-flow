@@ -84,7 +84,11 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
                                           "label": tag})
         # reconstruct state from a dumped state string
         items = dict([p.split("=") for p in info.split(', ')])
-        task_summary[task_id].update({"state": items.get("status")})
+        state = items.get("status")
+        if state == 'submitting':
+            # backward compabitility for state dumps generated prior to #787
+            state = 'ready'
+        task_summary[task_id].update({"state": state })
         task_summary[task_id].update({"spawned": items.get("spawned")})
     global_summary["run_mode"] = "dead"
     for key in ["paused", "stopping", "will_pause_at", "will_stop_at"]:
