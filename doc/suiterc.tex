@@ -1062,8 +1062,6 @@ read and write from their current working directories.
 \item {\em default:} \lstinline=$TASK_ID=
 \end{myitemize}
 
-
-
 \paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
 
 If a message is received from a failed task cylc will normally treat
@@ -1080,6 +1078,7 @@ Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
 \item {\em type:} boolean
 \item {\em default:} False
 \end{myitemize}
+
 
 \paragraph[{[[[}dummy mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]]}
 
@@ -1391,6 +1390,44 @@ parser is concerned these are just normal configuration items).
        \item \lstinline@PREV_CYCLE = `cylc cycletime -s 6`@
        \item \lstinline@ZAZ = "${FOO#bar}" # <-- QUOTED to escape the suite.rc comment character@ 
    \end{myitemize}
+\end{myitemize}
+
+\paragraph[{[[[}environment filter{]]]}]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]]}
+
+This section contains environment variable inclusion and exclusion
+lists that can be used to filter the inherited environment. {\em This is
+not intended as an alternative to a well-designed inheritance hierarchy
+that provides each task with just the variables it needs.} Filters can,
+however, improve suites with tasks that inherit a lot of environment
+they don't need, by making it clear which tasks use which variables.
+They can optionally be used routinely as explicit ``task environment
+interfaces'' too, at some cost to brevity, because they guarantee that
+variables filtered out of the inherited task environment are not used.
+
+Note that environment filtering is done after inheritance is completely
+worked out, not at each level on the way, so filter lists in higher-level
+namespaces only have an effect if they are not overridden by descendants.
+
+\subparagraph[include]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]] $\rightarrow$ include}
+
+If given, only variables named in this list will be included from the
+inherited environment, others will be filtered out. Variables may also
+be explicitly excluded by an \lstinline=exclude= list.
+
+\begin{myitemize}
+\item {\em type:} string list
+\item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[exclude]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]] $\rightarrow$ include}
+
+Variables named in this list will be filtered out of the inherited
+environment.  Variables may also be implicitly excluded by
+omission from an \lstinline=include= list.
+
+\begin{myitemize}
+\item {\em type:} string list
+\item {\em default:} (none)
 \end{myitemize}
 
 \paragraph[{[[[}directives{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]]}
