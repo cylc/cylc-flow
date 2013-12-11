@@ -50,7 +50,7 @@ level directory:
 To allow users to run differing versions of cylc you will need to install the
 "cylc-wrapper" script located in the admin directory available centrally so
 that it is available in the PATH of a normal user. N.B. You will need to change
-the "/opt" to your cylc home root e.g. ~central_account.
+"/opt" in the script to your cylc home root e.g. ~central_account.
 
 INSTALLING FROM A GIT REPOSITORY CLONE:
 

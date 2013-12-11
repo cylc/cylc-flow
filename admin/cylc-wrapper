@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# When installing this script you will need to change the /opt entry below to 
-# your cylc home root directory
+# When installing this script you will need to change the /opt entry below to
+# your cylc home root directory.
 if [[ -z ${CYLC_HOME:-} ]]; then
     CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/opt}
     CYLC_HOME=$CYLC_HOME_ROOT/cylc
