@@ -35,7 +35,7 @@ class task_state(object):
               'runahead', 
               'held',
               'queued',
-              'submitting',
+              'ready',
               'submitted',
               'submit-failed',
               'submit-retrying',
@@ -52,7 +52,7 @@ class task_state(object):
     labels = {
             'waiting'    : '_waiting',
             'queued'     : '_queued',
-            'submitting' : 'su_bmitting',
+            'ready'      : 'rea_dy',
             'submitted'  : 'sub_mitted',
             'submit-failed' : 'submit-f_ailed',
             'submit-retrying' : 'submit-retryin_g',
@@ -67,7 +67,7 @@ class task_state(object):
     ctrl = {
             'waiting'    : "\033[1;36m",
             'queued'     : "\033[1;38;44m",
-            'submitting' : "\033[1;32m",
+            'ready'      : "\033[1;32m",
             'submitted'  : "\033[1;33m",
             'submit-failed' : "\033[1;34m",
             'submit-retrying'   : "\033[1;31m",

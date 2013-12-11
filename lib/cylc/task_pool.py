@@ -170,7 +170,7 @@ class pool(object):
             n_limit = self.qconfig[queue]['limit']
             if n_limit:
                 for itask in self.queues[queue]:
-                    if itask.state.is_currently('submitting','submitted','running'):
+                    if itask.state.is_currently('ready','submitted','running'):
                         n_active += 1
                 n_release = n_limit - n_active
 
@@ -190,7 +190,7 @@ class pool(object):
         if n_ready > 0:
             self.log.debug( '%d task(s) ready' % n_ready )
             for itask in readytogo:
-                itask.set_state_submitting()
+                itask.set_state_ready()
                 self.jobqueue.put( itask )
 
         return readytogo

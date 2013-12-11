@@ -4956,8 +4956,8 @@ As a suite runs its task proxies transition through the following states:
     Section~\ref{InternalQueues}). Note this is not the same as the
     `submitted' state below.
 
-    \item {\bf submitting} - task ready to run (prerequisites satisfied)
-    and handed off the cylc background thread that handles job submission.
+    \item {\bf ready} - task ready to run (prerequisites satisfied)
+    and handed to the background thread that handles job submission.
 
     \item {\bf submitted} - task successfully submitted but has not
     started running yet (e.g.\ waiting in a PBS batch queue).
