@@ -1,0 +1,9 @@
+#!/bin/bash
+if [[ -z ${CYLC_HOME:-} ]]; then
+    CYLC_HOME_ROOT=${CYLC_HOME_ROOT:-/opt}
+    CYLC_HOME=$CYLC_HOME_ROOT/cylc
+    if [[ -n ${CYLC_VERSION:-} && -d $CYLC_HOME_ROOT/cylc-$CYLC_VERSION ]]; then
+        CYLC_HOME=$CYLC_HOME_ROOT/cylc-$CYLC_VERSION
+    fi
+fi
+exec $CYLC_HOME/bin/$(basename $0) "$@"

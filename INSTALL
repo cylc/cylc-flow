@@ -47,6 +47,10 @@ level directory:
     TOP/cylc-5.2.3.
     # etc.
 
+To allow users to run differing versions of cylc you will need to install the
+"cylc-wrapper" script located in the admin directory available centrally so
+that is is available in the PATH of a normal user.
+
 INSTALLING FROM A GIT REPOSITORY CLONE:
 
   1) To get a clone that can track the official repository:

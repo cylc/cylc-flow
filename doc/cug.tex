@@ -4878,42 +4878,13 @@ the secondary locations under \lstinline=$HOME/.cylc/=.
 \label{HowTasksGetAccessToCylc}
 
 Running tasks need access to cylc via \lstinline=$PATH=, principally for
-the task messaging commands.  To allow this, the first thing a task job
-script does is set \lstinline=CYLC_VERSION= to the cylc version number,
-then it sources \lstinline=/etc/profile= and \lstinline=$HOME/.profile=
-to configure \lstinline=$PATH=. If you need to run several suites at
-once under different incompatible versions of cylc, use
-\lstinline=$HOME/.profile= to set \lstinline=$PATH= according to the
-value of \lstinline=$CYLC_VERSION=. For example,
-\lstset{language=bash}
-\begin{lstlisting}
-# $HOME/.profile
-
-if [[ $- == *i* ]]; then
-    # interactive shell: use the latest cylc
-    export PATH=/path/to/cylc-latest/bin:$PATH
-elif [[ "$CYLC_VERSION" = 5.3.3-dev ]]; then
-    # non-interactive shell, called by a suite running a new
-    # development version of cylc that I'm testing:
-    export PATH=/path/to/cylc-5.3.3-test/bin:$PATH
-else
-    # non-interactive shell, called by a suite running our 
-    # current production release of cylc.
-    export PATH=/path/to/cylc/bin:$PATH
-fi
-\end{lstlisting}
-{\em Note that \lstinline=$CYLC_VERSION= has only been used in this way
-since cylc-5.3.}
-
-It is also possible to configure \lstinline=$PATH= manually in the 
-{\em initial scripting} section at the top of task job scripts,
-but the use of \lstinline=.profile= is recommended because it works 
-for all suites and it also allows selection of different cylc versions
-forfor other commands invoked by cylc, namely task poll and kill
-commands and event handlers (for these, cylc explicitly sets the version
-variable and sources profile scripts at the start of the subprocess
-command string).
-
+the task messaging commands. To allow this, the first thing a task job
+script does is set \lstinline=$CYLC_VERSION= to the cylc version number of the 
+running suite. If you need to run several suites at once under different 
+incompatible versions of cylc set \lstinline=$CYLC_VERSION= in your environment
+to the desired version. In the case of developers wishing to run their own copy
+of cylc rather than a centrally installed one set \lstinline=$CYLC_HOME= in 
+your environment to point to your cylc copy.
 
 \subsection{Restarting Suites}
 \label{RestartingSuites}
