@@ -108,12 +108,12 @@ where they got to while the suite was down."""
                 # check if the named file is in the suite state dump dir
                 path = os.path.join( state_dump_dir, self.restart_from )
                 if not os.path.exists( path ):
-                    sys.exit( "state dump file not found: " + self.restart_from )
+                    raise Exception( "state dump file not found: " + self.restart_from )
                 self.initial_state_dump = os.path.abspath( path )
         else:
             # No state dump file specified, restart from the default file.
             if not os.path.exists( state_dump_file ):
-                sys.exit( "state dump file not found: " + state_dump_file )
+                raise Exception( "state dump file not found: " + state_dump_file )
             self.initial_state_dump = state_dump_file
 
         self.log.info( 'Restart ' + self.initial_state_dump )
@@ -134,18 +134,18 @@ where they got to while the suite was down."""
             FILE = open( self.initial_state_dump, 'r' )
         except IOError,x:
             print >> sys.stderr, x
-            sys.exit( "ERROR, cannot open suite state dump: " + self.initial_state_dump )
+            raise Exception( "ERROR, cannot open suite state dump: " + self.initial_state_dump )
         lines = FILE.readlines()
         FILE.close()
 
         nlines = len(lines)
         if nlines == 0:
-            sys.exit( "ERROR, empty suite state dump: " + self.initial_state_dump )
+            raise Exception( "ERROR, empty suite state dump: " + self.initial_state_dump )
         elif nlines < 3:
             print >> sys.stderr, "ERROR, The suite state dump contains only", nlines, "lines:"
             for l in lines:
                 print ' ', l.rstrip()
-            sys.exit( "ERROR, incomplete suite state dump: " + self.initial_state_dump )
+            raise Exception( "ERROR, incomplete suite state dump: " + self.initial_state_dump )
 
         index = 0
         # RESET THE TIME TO THE LATEST DUMPED TIME
@@ -158,16 +158,16 @@ where they got to while the suite was down."""
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'simulation time':
             if self.run_mode == 'live':
-                sys.exit("ERROR: cannot RESTART in live mode from a non live mode state dump")
+                raise Exception("ERROR: cannot RESTART in live mode from a non live mode state dump")
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
         elif time_type == 'suite time':
             if self.run_mode != 'live':
-                sys.exit("ERROR: cannot RESTART in " + self.run_mode + " mode from a live mode state dump")
+                raise Exception("ERROR: cannot RESTART in " + self.run_mode + " mode from a live mode state dump")
         else:
             print >> sys.stderr, "ERROR, Illegal state dump line 1 (time):"
             print >> sys.stderr, ' ', line1
-            sys.exit("ERROR: corrupted state dump")
+            raise Exception("ERROR: corrupted state dump")
 
         index += 1
         line2 = lines[index]
@@ -177,7 +177,7 @@ where they got to while the suite was down."""
         except ValueError, x: 
             print >> sys.stderr, 'ERROR, Illegal state dump line 2 (initial cycle):'
             print >> sys.stderr, ' ', line2
-            sys.exit("ERROR: corrupted state dump")
+            raise Exception("ERROR: corrupted state dump")
         if oldstartcycle == '(none)':
             # then we take whatever the suite.rc file gives us
             pass
@@ -186,7 +186,7 @@ where they got to while the suite was down."""
             try:
                 ct( oldstartcycle )
             except:
-                sys.exit("ERROR, Illegal start cycle in state dump line 2: " + oldstartcycle)
+                raise Exception("ERROR, Illegal start cycle in state dump line 2: " + oldstartcycle)
             if self.options.ignore_startcycle:
                 # ignore it and take whatever the suite.rc file gives us
                 if self.start_tag:
@@ -213,7 +213,7 @@ where they got to while the suite was down."""
         except ValueError, x: 
             print >> sys.stderr, 'ERROR, Illegal state dump line 3 (final cycle):'
             print >> sys.stderr, ' ', line3
-            sys.exit("ERROR: corrupted state dump")
+            raise Exception("ERROR: corrupted state dump")
 
         if oldstopcycle == '(none)':
             # then we take whatever the command line or suite.rc file gives us
@@ -223,7 +223,7 @@ where they got to while the suite was down."""
             try:
                 ct( oldstopcycle )
             except:
-                sys.exit("ERROR, Illegal stop cycle in state dump line 3: " + oldstopcycle)
+                raise Exception("ERROR, Illegal stop cycle in state dump line 3: " + oldstopcycle)
             if self.options.ignore_stopcycle:
                 # ignore it and take whatever the command line or suite.rc file gives us
                 if self.stop_tag:
@@ -252,7 +252,7 @@ where they got to while the suite was down."""
         index += 1
         line = lines[index].rstrip() 
         if line != 'Begin task states':
-            sys.exit("ERROR, illegal state dump line (expected 'Begin task states'): " + line )
+            raise Exception("ERROR, illegal state dump line (expected 'Begin task states'): " + line )
 
         index += 1
 
@@ -281,7 +281,7 @@ where they got to while the suite was down."""
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
-                sys.exit( "ERROR: corrupted state dump" )
+                raise Exception( "ERROR: corrupted state dump" )
             tasknames[name] = True
             if state == 'submitting':
                 # backward compabitility for state dumps generated prior to #787
