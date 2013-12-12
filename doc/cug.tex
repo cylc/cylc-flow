@@ -1034,7 +1034,6 @@ shell$ cylc run --no-detach tut.oneoff.basic
 * you are welcome to redistribute it under certain conditions. Details: *
 *           `cylc license conditions'; `cylc license warranty'          *
 *************************************************************************
-WARNING: No initial cycle time provided - no cycling tasks will be loaded.
 
 1 task ready
   * hello.1 submitting now
@@ -1377,8 +1376,6 @@ shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/goodbye.1.1.out
 # (or cylc log -o tut.oneoff.goodbye goodbye.1
 JOB SCRIPT STARTING
 cylc (scheduler - 2013/09/23 18:15:09): goodbye.1 started at 2013-09-23T18:15:09
-Sending message (connection timeout is 30) ...
-   Try 1 of 7 ... succeeded
 cylc Suite and Task Identity:
   Suite Name  : tut.oneoff.goodbye
   Suite Host  : server0
@@ -1392,8 +1389,6 @@ cylc Suite and Task Identity:
 Goodbye World!
 
 cylc (scheduler - 2013/09/23 18:15:20): hello.1 succeeded at 2013-09-23T18:15:20
-Sending message (connection timeout is 30) ...
-   Try 1 of 7 ... succeeded
 JOB SCRIPT EXITING (TASK SUCCEEDED)
 \end{lstlisting}
 
