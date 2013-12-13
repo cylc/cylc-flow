@@ -206,7 +206,6 @@ control_commands['depend' ] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity' ] = ['set-verbosity' ]
 control_commands['broadcast'] = [ 'broadcast', 'bcast' ]
-control_commands['get-task-status'] = [ 'get-task-status' ]
 control_commands['get-job-status'] = [ 'get-job-status' ]
 
 utility_commands = OrderedDict()
@@ -417,7 +416,6 @@ comsum[ 'message'    ] = 'Report progress and completion of outputs'
 comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
 comsum[ 'failed'     ] = 'Release task lock and report failure'
 comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
-comsum[ 'get-task-status' ] = 'Retrieve job status for a task (deprecated)'
 comsum[ 'get-job-status' ] = 'Retrieve job status for a task'
 
 # utility
