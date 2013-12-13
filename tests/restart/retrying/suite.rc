@@ -34,7 +34,7 @@
         [[[directives]]]
             class            = serial
             job_type         = serial
-            wall_clock_limit = '60,30'
+            wall_clock_limit = '10,5'
             {{ SITE_DIRECTIVES }}
         [[[remote]]]
             host = {{ HOST }}
@@ -42,18 +42,18 @@
     [[retrying_task]]
         inherit = RESTART_TASKS
         command scripting = """
-            if [[ $CYLC_TASK_TRY_NUMBER -le 3 ]]; then
+            if [[ $CYLC_TASK_TRY_NUMBER -le 2 ]]; then
                 sleep 1
                 exit 1
             fi
         """
         description = "Retrying state task for restart"
-        retry delays = 0.5, 0.01, 0.01
+        retry delays = 0.5, 0.01
     [[force_restart]]
         pre-command scripting = """
             # We need to make sure that the results stay consistent.
             cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=60 --status=retrying $CYLC_SUITE_REG_NAME
+                --max-polls=120 --status=retrying $CYLC_SUITE_REG_NAME
             sleep 2
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status
@@ -85,7 +85,7 @@
             cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
                 --max-polls=10 --status=running $CYLC_SUITE_REG_NAME
             cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=10 --status=retrying $CYLC_SUITE_REG_NAME
+                --max-polls=120 --status=retrying $CYLC_SUITE_REG_NAME
             sleep 5  # Wait a few typical loops so that the states make it into the database.
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status
