@@ -44,12 +44,12 @@ from cylc.global_config import get_global_cfg
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
-Submit a single task to run exactly as it would be submitted by its 
-parent suite, in terms of both execution environment and job submission
-method. This can be used as an easy way to run single tasks for any
-reason, but it is particularly useful during suite development.
+Submit a single task to run just as it would be submitted by its suite.
+Task messaging commands will print to stdout but will not attempt to
+communicate with the suite (which does not even need to be running).
+Note that job log file paths are the same as for in-suite tasks.
 
-If the parent suite is running at the same time and it has acquired an
+If the suite is running at the same time and it has acquired an
 exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the

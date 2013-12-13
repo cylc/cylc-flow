@@ -66,7 +66,7 @@ class TreeUpdater(threading.Thread):
         self.ancestors = {}
         self.descendants = []
 
-        self.autoexpand_states = [ 'queued', 'submitting', 'submitted', 'running', 'failed' ]
+        self.autoexpand_states = [ 'queued', 'ready', 'submitted', 'running', 'failed' ]
         self._last_autoexpand_me = []
         self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
         self.should_group_families = ("text" not in self.cfg.ungrouped_views)
