@@ -35,7 +35,6 @@
             class            = serial
             job_type         = serial
             wall_clock_limit = '10,5'
-            resources = ConsumableMemory(1 mb)
             {{ SITE_DIRECTIVES }}
         [[[remote]]]
             host = {{ HOST }}
