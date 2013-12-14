@@ -205,24 +205,33 @@ class message(object):
 
 
     def send_pyro( self, msg ):
-        print "Sending message (connection timeout is", str(self.try_timeout) + ") ..."
         sent = False
         itry = 0
         while True:
             itry += 1
-            print '  ', "Try", itry, "of", str(self.max_tries), "...",  
             try:
                 # Get a proxy for the remote object and send the message.
                 self.load_suite_contact_file() # might have change between tries
                 self.get_proxy().put( self.priority, msg )
             except Exception, x:
-                print "failed:", str(x)
+                print "Send message: try %s of %s failed: %s" % (
+                    itry,
+                    self.max_tries,
+                    x
+                )
                 if itry >= self.max_tries:
                     break
-                print "   retry in", str(self.retry_seconds), "seconds ..."
+                print "   retry in %s seconds, timeout is %s" % (
+                    self.retry_seconds,
+                    self.try_timeout
+                )
                 sleep( self.retry_seconds )
             else:
-                print "succeeded"
+                if itry > 0:
+                    print "Send message: try %s of %s succeeded" % (
+                        itry,
+                        self.max_tries
+                    )
                 sent = True
                 break
         if not sent:

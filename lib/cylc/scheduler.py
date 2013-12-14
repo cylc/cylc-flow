@@ -772,7 +772,8 @@ class scheduler(object):
         if self.stop_tag:
             self.stop_tag = ct(self.stop_tag).get()
 
-        if not self.start_tag and not self.is_restart:
+        if (not self.start_tag and not self.is_restart and
+            self.config.cycling_tasks):
             print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
 
         if self.run_mode != self.config.run_mode:
