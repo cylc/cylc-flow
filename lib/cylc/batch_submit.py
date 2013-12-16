@@ -289,7 +289,6 @@ class task_batcher( job_batcher ):
             launcher = jobinfo['data'][1]
             if hasattr(launcher, 'filter_output'):
                 # Launcher has a filter method.
-                launcher = jobinfo['data'][1]
                 out, err = launcher.filter_output(out, err)
         return out, err
 
