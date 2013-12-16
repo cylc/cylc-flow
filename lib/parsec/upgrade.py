@@ -120,7 +120,7 @@ class upgrader( object ):
             if k == "__MANY__":
                 pre = okeys[:i]
                 post = okeys[i+1:]
-                tmp = self.spec
+                tmp = self.cfg
                 for j in pre:
                     tmp = tmp[j]
                 many = tmp.keys()
@@ -154,7 +154,12 @@ class upgrader( object ):
             warnings[vn] = []
 
             for u in upgs:
-                for upg in self.expand(u):
+                try:
+                    exp = self.expand(u)
+                except:
+                    continue
+
+                for upg in exp:
                     try:
                         old = self.get_item( upg['old'] )
                     except:
@@ -177,7 +182,6 @@ class upgrader( object ):
             for vn,msgs in warnings.items():
                 for m in msgs:
                     print >> sys.stderr, " * (" + vn + ")", m
-
 
 if __name__ == "__main__":
     from util import printcfg

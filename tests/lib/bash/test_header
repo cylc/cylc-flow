@@ -67,9 +67,9 @@ function FINALLY() {
         rm -rf $TEST_DIR
     fi
     if (($FAILURES > 0)); then
-        echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" > /dev/tty
+        echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
         if $SUITE_RUN_FAILS; then
-            echo -e "    suite logs can be found under: $SUITE_LOG_DIR" > /dev/tty
+            echo -e "    suite logs can be found under: $SUITE_LOG_DIR" >&2
         fi
     fi
 }

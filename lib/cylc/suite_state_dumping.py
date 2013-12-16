@@ -77,6 +77,7 @@ class dumper( object ):
             # task instance variables
             itask.dump_state( FILE )
 
+        os.fsync(FILE.fileno())
         FILE.close()
         # return the filename (minus path)
         return os.path.basename( filename )

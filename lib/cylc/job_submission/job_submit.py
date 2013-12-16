@@ -47,6 +47,7 @@ class job_submit(object):
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
+            + " && rm -f %(jobfile_path)s.status"
             + " && (%(command)s)"
             + "'" )
 
@@ -240,6 +241,11 @@ class job_submit(object):
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
             print 'SUBMIT:', command
             return None
+
+        # Ensure old job's *.status files do not get left behind
+        st_file_path = self.jobfile_path + ".status"
+        if os.path.exists(st_file_path):
+            os.unlink(st_file_path)
 
         if not self.local:
             # direct the local jobfile across the ssh tunnel via stdin

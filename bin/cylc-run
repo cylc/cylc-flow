@@ -69,6 +69,10 @@ initial and final cycle time variables persists across suite restarts."""
                 help="Do not daemonize the suite",
                 action="store_true", default=False, dest="no_detach" )
 
+        self.parser.add_option( "--profile",
+                help="Output profiling (performance) information",
+                action="store_true", default=False, dest="profile_mode" )
+
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
                 action="store_true", default=False, dest="warm" )
 
@@ -141,7 +145,7 @@ initial and final cycle time variables persists across suite restarts."""
         coldstart_tasks = self.config.get_coldstart_task_list()
         startup_tasks = self.config.get_startup_task_list()
         if len( coldstart_tasks ) == 0:
-            self.log.warning( "This suite has not defined any cold start tasks" )
+            self.log.info( "This suite has not defined any cold start tasks" )
         for name in task_list:
             # (startup=True is only for cold start)
             if name in self.asynchronous_task_list:

@@ -18,13 +18,14 @@
 
 import re
 from job_submit import job_submit
+from subprocess import Popen, PIPE
 
 class sge( job_submit ):
 
     "SGE qsub job submission"
 
     COMMAND_TEMPLATE = "qsub %s"
-    REC_ID = re.compile(r"\D+(?P<id>\d+)\D+")  
+    REC_ID = re.compile(r"\D+(?P<id>\d+)\D+")
 
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "#$"
@@ -33,7 +34,7 @@ class sge( job_submit ):
 
         defaults = {}
         defaults[ '-N' ] = self.task_id
-        # Replace literal '$HOME' in stdout and stderr file paths with '' 
+        # Replace literal '$HOME' in stdout and stderr file paths with ''
         # because environment variables are not interpreted in directives.
         # (For remote tasks the local home directory path is replaced
         # with '$HOME' in config.py).
@@ -64,40 +65,22 @@ class sge( job_submit ):
             if match:
                 return match.group("id")
 
-    def get_job_poll_command( self, jid ):
-        """
-        Given the job submit ID, return a command string that uses
-        'cylc get-task-status' (on the task host) to determine current
-        job status:
-           cylc get-job-status <QUEUED> <RUNNING>
-        where:
-            QUEUED  = true if job is waiting or running, else false
-            RUNNING = true if job is running, else false
-
-        WARNING: 'cylc get-task-status' prints a task status message -
-        the final result - to stdout, so any stdout from scripting prior
-        to the call must be dumped to /dev/null.
-
-        SGE possible job state I think we need:
-          * 'qw' (queueing) = waiting in the SGE queue
-          * 'r' (running) = running
-        """
-        cmd = ( "RUNNING=false; QUEUED=false; "
-                + "qstat | grep " + jid
-                + " | awk \"{ print \$5 }\" | egrep \"^r$\" > /dev/null; "
-                + "[[ $? == 0 ]] && RUNNING=true && QUEUED=true; "
-                + "if ! $QUEUED; then "
-                + "  qstat | grep " + jid
-                + "   | awk \"{ print \$5 }\" | egrep \"^qw$\" > /dev/null; "
-                + "  [[ $? == 0 ]] && QUEUED=true; "
-                + "fi; "
-            + " cylc get-task-status " + self.jobfile_path + ".status $QUEUED $RUNNING" )
-        return cmd
-
     def get_job_kill_command( self, jid ):
-        """
-        Given the job submit ID, return a command to kill the job.
-        """
-        cmd = "qdel " + jid
-        return cmd
+        """Return a command to kill the job."""
+        return "qdel " + jid
 
+    def poll( self, jid ):
+        """Return 0 if jid is in the queueing system, 1 otherwise."""
+        proc = Popen(["qstat", "-j", jid], stdout=PIPE)
+        if proc.wait():
+            return 1
+        out, err = proc.communicate()
+        # "qstat ID" returns something like:
+        #     job-ID  prior ...
+        #     ------------- ...
+        #      304 0.60500  ...
+        for line in out.splitlines():
+            items = line.strip().split(None, 1)
+            if items and (items[0] == jid or items[0].startswith(jid + ".")):
+                return 0
+        return 1
