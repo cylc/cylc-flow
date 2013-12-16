@@ -27,6 +27,8 @@ class loadleveler( job_submit ):
 
     COMMAND_TEMPLATE = "llsubmit %s"
     REC_ID = re.compile(r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
+    REC_PROCESSED_FILTER = re.compile(
+        r"^llsubmit: Processed command file through Submit Filter:")
 
     def set_directives( self ):
         self.jobconfig['directive prefix'] = "# @"
@@ -68,6 +70,15 @@ class loadleveler( job_submit ):
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template % ( self.jobfile_path )
+
+    def filter_output( self, out, err):
+        """Filter the stdout/stderr output - suppress process message."""
+        new_err = ""
+        if err:
+            for line in err.splitlines():
+                if not self.REC_PROCESSED_FILTER.match(line):
+                    new_err += line + "\n"
+        return out, new_err
 
     def get_id( self, out, err ):
         """
