@@ -245,6 +245,12 @@ class CylcRuntimeDAO(object):
         count = self.c.select(s_fmt, args).next()[0]
         return count > 0
 
+    def get_task_host(self, name, cycle):
+        """Return the host name for task "name" at a given cycle."""
+        s_fmt = r"SELECT host FROM task_states WHERE name==? AND cycle==?"
+        for row in self.c.select(s_fmt, [name, cycle]):
+            return row[0]
+
     def get_task_location(self, name, cycle):
         s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==? 
                    AND event=="submission succeeded" AND misc!=""

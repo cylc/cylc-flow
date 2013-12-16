@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -19,43 +19,44 @@
 import sys
 from cylc.remote import remrun
 from cylc.TaskID import TaskID
-import subprocess
+from subprocess import Popen, PIPE
 if remrun().execute():
     sys.exit(0)
 
 import re, os
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
+from cylc.rundb import CylcRuntimeDAO
 from cylc.suite_logging import suite_log
 from cylc.suite_output import suite_output
 from cylc.global_config import get_global_cfg
 
-parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS 
+parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS
 Print various log files for suites and tasks that are currently running,
 or have previously finished.""",
-    argdoc=[ ("REG", "Suite name"), 
+    argdoc=[ ("REG", "Suite name"),
     ("[TASK-ID]", """Print the stdout or stderr log
 of the identified task""" )])
 
-parser.add_option( "-l", "--location", 
+parser.add_option( "-l", "--location",
         help="Just print the location of the requested log file.",
         action="store_true", default=False, dest="print_location" )
 
-parser.add_option( "-r", "--rotation", 
+parser.add_option( "-r", "--rotation",
         help="Rotation number (to view older, rotated suite logs)",
         metavar="INT", action="store", default="0", dest="rotation" )
 
-parser.add_option( "-o", "--stdout", 
+parser.add_option( "-o", "--stdout",
         help="Print suite or task stdout logs "
         "(for suites, the default is to print the event log; "
         " for tasks, the default is to print the job script).",
         action="store_true", default=False, dest="print_stdout" )
 
-parser.add_option( "-e", "--stderr", 
+parser.add_option( "-e", "--stderr",
         help="Print suite or task stderr logs (see --stdout for defaults).",
         action="store_true", default=False, dest="print_stderr" )
 
-parser.add_option( "-t", "--try-number", 
+parser.add_option( "-t", "--try-number",
         help="Task try number (default 1).",
         metavar='INT', action="store", default="1", dest="tryext" )
 
@@ -71,30 +72,19 @@ if len(args) == 2:
     taskid = args[1]
     logname = taskid + '.' + options.tryext
 
-    # get task host and owner
+    # 
+    suite_run_dir = gcfg.get_derived_host_item(suite, 'suite run directory')
+    suite_run_dao = CylcRuntimeDAO(suite_run_dir)
     taskname, ctime = taskid.split(TaskID.DELIM)
-    try:
-        p = subprocess.Popen( "cylc get-config " + \
-                "-i '[runtime][" + taskname + "][remote]host' " + \
-                "-i '[runtime][" + taskname + "][remote]owner' -o " + suite, \
-                shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-    except OSError, x:
-        if options.debug:
-                raise
-        sys.exit( x )
-    out, err = p.communicate()
-    if out:
-        host, owner = out.split()
-    if err:
-        sys.exit(err)
-
-    if host == 'None':
-        host = None
-    if owner == 'None':
-        owner = None
+    host = suite_run_dao.get_task_host(taskname, ctime)
+    suite_run_dao.close()
+    owner = None
+    if host and '@' in host:
+        owner, host = host.split('@', 1)
 
     # get job log directory path
-    sjld = gcfg.get_derived_host_item( suite, 'suite job log directory', host=host, owner=owner )
+    sjld = gcfg.get_derived_host_item( suite, 'suite job log directory',
+                                       host=host, owner=owner )
     if options.print_stdout:
         fpath = os.path.join( sjld, logname + '.out' )
     elif options.print_stderr:
@@ -104,7 +94,7 @@ if len(args) == 2:
 
     if host or owner:
         if host and owner:
-            url = owner + '@' + host 
+            url = owner + '@' + host
         elif host:
             url = host
         elif owner:
@@ -114,9 +104,9 @@ if len(args) == 2:
             print url + ':' + fpath
             sys.exit(0)
 
-        cmd = 'ssh -o BatchMode=yes ' + url + ' cat ' + fpath
+        cmd = ['ssh', '-oBatchMode=yes', url, 'cat ' + fpath]
         try:
-            p = subprocess.Popen( cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+            p = Popen( cmd, stdout=PIPE, stderr=PIPE )
         except OSError, x:
             if options.debug:
                 raise
