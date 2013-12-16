@@ -27,6 +27,8 @@ class cycling_daemon( oneoff, cycling ):
     # registered patterns come in. The corresponding real task may keep
     # running indefinitely, e.g. to watch for incoming external data.
 
+    is_daemon = True
+
     def __init__( self, state, validate=False ):
 
         m = re.match( '(\d{10}) \| (.*)', state )
@@ -56,6 +58,3 @@ class cycling_daemon( oneoff, cycling ):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reload
         FILE.write( self.id + ' : ' + self.last_reported + ' | ' + self.state.dump() + '\n' )
-
-    def is_daemon( self ):
-        return True

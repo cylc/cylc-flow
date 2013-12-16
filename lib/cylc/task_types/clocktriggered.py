@@ -28,8 +28,7 @@ from task import task
 class clocktriggered(object):
     clock = None
 
-    def is_clock_triggered( self ):
-        return True
+    is_clock_triggered = True
 
     def get_real_time_delay( self ):
         return self.real_time_delay

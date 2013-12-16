@@ -39,6 +39,7 @@ class conditional_prerequisites(object):
         self.messages = {}   # messages[ label ] = message 
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
+        self.target_tags = []   # list of target cycle times (tags)
         self.auto_label = 0
         self.excess_labels = []
         self.ict = ict
@@ -65,6 +66,9 @@ class conditional_prerequisites(object):
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label]  = False
+        m = re.match( self.__class__.TAG_RE, message )
+        if m:
+            self.target_tags.append( m.groups()[0] )
 
     def get_not_satisfied_list( self ):
         not_satisfied = []
@@ -159,10 +163,5 @@ class conditional_prerequisites(object):
     def get_target_tags( self ):
         """Return a list of cycle times target by each prerequisite,
         including each component of conditionals."""
-        tags = []
-        for label, msg in self.messages.items():
-            m = re.match( self.__class__.TAG_RE, msg )
-            if m:
-                tags.append( m.groups()[0] )
-        return tags 
+        return self.target_tags
 

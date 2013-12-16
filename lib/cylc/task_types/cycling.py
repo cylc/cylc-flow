@@ -53,6 +53,7 @@ class cycling( task ):
     # (prior to that we can't be sure that an older unsucceeded 
     # task won't give rise to a new task that does depend on the task
     # we're interested in). 
+    is_cycling = True
 
     # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
 
@@ -87,6 +88,3 @@ class cycling( task ):
         # add more information to the summary if necessary.
         summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
         return summary
-
-    def is_cycling( self ):
-        return True

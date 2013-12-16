@@ -39,7 +39,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.run_mode = run_mode
         self.start_time = start_time
         self._summary_update_time = None
- 
+
     def update( self, tasks, clock, oldest, newest, newest_nonrunahead,
             paused, will_pause_at, stopping, will_stop_at, runahead ):
 
@@ -65,9 +65,10 @@ class state_summary( Pyro.core.ObjBase ):
             # based on the first-parent single-inheritance tree
 
             c_fam_task_states = {}
+            c_task_states = task_states.get(ctime, {})
 
             for key, parent_list in self.config.get_first_parent_ancestors().items():
-                state = task_states.get(ctime, {}).get(key)
+                state = c_task_states.get(key)
                 if state is None:
                     continue
                 all_states.append( state )

@@ -27,6 +27,8 @@ class async_daemon( oneoff, task ):
     may keep running indefinitely, e.g. to watch for incoming
     asynchronous data."""
 
+    is_daemon = True
+
     def process_incoming_message( self, (priority,message) ):
         # intercept incoming messages and check for a pattern match 
 
@@ -35,7 +37,4 @@ class async_daemon( oneoff, task ):
         if re.match( self.asyncid_pattern, msg ):
             self.outputs.add( msg )
         task.process_incoming_message( self, (priority,message) )
-
-    def is_daemon( self ):
-        return True
 

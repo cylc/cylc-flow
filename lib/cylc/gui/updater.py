@@ -118,6 +118,7 @@ class Updater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
+        self.dt_date = None
         self.status = None
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
@@ -259,6 +260,7 @@ class Updater(threading.Thread):
 
             dt = glbl[ 'last_updated' ]
             self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
+            self.dt_date = dt
 
             self.global_summary = glbl
             self.state_summary = states
