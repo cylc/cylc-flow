@@ -166,6 +166,8 @@ for i in get_these:
 
 
 if options.oneline:
+    # This prints 'None' rather than empty string for unset values so
+    # that the number of items remains apparent.
     try:
         line = ' '.join( str(d).replace( ' ', '*' ) for d in data )
     except AttributeError, x:
