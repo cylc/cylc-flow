@@ -1,0 +1,12 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+[scheduling]
+    [[dependencies]]
+        graph = a:start => b
+[runtime]
+    [[a]]
+        command scripting = sleep 20
+    [[b]]
+        command scripting = cylc poll $CYLC_SUITE_REG_NAME a 1

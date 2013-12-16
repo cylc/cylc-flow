@@ -1,0 +1,40 @@
+2013/12/09 16:14:26 INFO - Thread-2 start (Event Handlers)
+2013/12/09 16:14:26 INFO - Thread-3 start (Poll & Kill Commands)
+2013/12/09 16:14:26 INFO - port:7766
+2013/12/09 16:14:26 INFO - Suite starting at 2013-12-09 16:14:26.247948
+2013/12/09 16:14:26 INFO - Log event clock: real time
+2013/12/09 16:14:26 INFO - Run mode: live
+2013/12/09 16:14:26 INFO - Start tag: None
+2013/12/09 16:14:26 INFO - Stop tag: None
+2013/12/09 16:14:26 INFO - Thread-4 start (Job Submission)
+2013/12/09 16:14:26 INFO - Thread-5 start (Request Handling)
+2013/12/09 16:14:26 INFO - [a.1] -(setting:queued)
+2013/12/09 16:14:26 INFO - [a.1] -(setting:submitting)
+2013/12/09 16:14:26 INFO - [a.1] -triggered off []
+2013/12/09 16:14:27 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/12/09 16:14:28 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/12/09 16:14:28 INFO - [a.1] -(setting:submitted)
+2013/12/09 16:14:28 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=24985
+2013/12/09 16:14:28 INFO - [a.1] -(current:submitted)> a.1 started at 2013-12-09T16:14:28
+2013/12/09 16:14:28 INFO - [a.1] -(setting:running)
+2013/12/09 16:14:29 INFO - [b.1] -(setting:queued)
+2013/12/09 16:14:29 INFO - [b.1] -(setting:submitting)
+2013/12/09 16:14:29 INFO - [b.1] -triggered off ['a.1']
+2013/12/09 16:14:30 INFO - [b.1] -(current:submitting)> b.1 submitting now
+2013/12/09 16:14:30 INFO - [b.1] -(current:submitting)> b.1 submission succeeded
+2013/12/09 16:14:30 INFO - [b.1] -(setting:submitted)
+2013/12/09 16:14:30 INFO - [b.1] -(current:submitted)> b.1 submit_method_id=25081
+2013/12/09 16:14:31 INFO - [b.1] -(current:submitted)> b.1 started at 2013-12-09T16:14:30
+2013/12/09 16:14:31 INFO - [b.1] -(setting:running)
+2013/12/09 16:14:31 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-12-09T16:14:31
+2013/12/09 16:14:31 INFO - [b.1] -(setting:succeeded)
+2013/12/09 16:14:31 INFO - [a.1] -polling now
+2013/12/09 16:14:31 INFO - Command succeeded: poll tasks(a,1,False)
+2013/12/09 16:14:33 INFO - [a.1] -(current:running)> polled a.1 started at 2013-12-09T16:14:27
+2013/12/09 16:14:49 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-12-09T16:14:48
+2013/12/09 16:14:49 INFO - [a.1] -(setting:succeeded)
+2013/12/09 16:14:49 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/12/09 16:14:49 INFO - Thread-4 exit (Job Submission)
+2013/12/09 16:14:50 INFO - Thread-2 exit (Event Handlers)
+2013/12/09 16:14:50 INFO - Thread-3 exit (Poll & Kill Commands)

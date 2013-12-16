@@ -1295,12 +1295,15 @@ class task( object ):
                     self.task_host = self.user_at_host
             launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
-        if not hasattr( launcher, 'get_job_poll_command' ):
+        if not hasattr( launcher, 'poll' ):
             # (for job submission methods that do not handle polling yet)
             self.log( 'WARNING', "'" + self.job_sub_method + "' job submission does not support polling" )
             return
 
-        cmd = launcher.get_job_poll_command( self.submit_method_id )
+        cmd = ("cylc get-job-status %(status_file)s %(job_sys)s %(job_id)s" % {
+                    "status_file": launcher.jobfile_path + ".status",
+                    "job_sys": launcher.__class__.__name__,
+                    "job_id": self.submit_method_id})
         if self.user_at_host not in [user + '@localhost', 'localhost']:
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
