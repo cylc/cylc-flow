@@ -1,0 +1,11 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       required run mode=live
+       live mode suite timeout=1 # minute
+[scheduling]
+    [[dependencies]]
+        graph=echo_1
+[runtime]
+    [[echo_1]]
+        command scripting=echo $CYLC_TASK_ID

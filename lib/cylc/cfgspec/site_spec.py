@@ -98,6 +98,9 @@ SPEC = {
         },
 
     'test battery' : {
+       'cat-log' : {
+           'host'                         : vdr( vtype='string' ),
+           },
        'directives' : {
             'loadleveler host'            : vdr( vtype='string' ),
             'loadleveler directives' : { 
