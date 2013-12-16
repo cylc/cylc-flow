@@ -58,8 +58,12 @@ __LLSUBMIT__
 #@queue
 sleep 60
 __LLSUBMIT__
-    llsubmit $TEST_NAME_BASE.ll 2>/dev/null \
-        | awk -F'"' '/llsubmit: The job/ {print $2}'
+    local ID=$(llsubmit $TEST_NAME_BASE.ll 2>/dev/null \
+        | awk -F'"' '/llsubmit: The job/ {print $2}')
+    while ! (llq -f%id $ID | grep -q -e $ID); do
+        sleep 2
+    done
+    echo $ID
 }
 
 function ssh_mkdtemp() {
@@ -115,7 +119,8 @@ TEST_NAME=$TEST_NAME_BASE-submitted
 # A non-existent status file
 T_ST_FILE=$PWD/$TEST_NAME.1.status
 # Give it a real PID
-T_JOB_ID=$(get_real_job_id)
+REAL_JOB_ID=${REAL_JOB_ID:-$(get_real_job_id)}
+T_JOB_ID=$REAL_JOB_ID
 sleep 1
 run_ok $TEST_NAME cylc get-job-status $T_ST_FILE loadleveler $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
@@ -125,6 +130,7 @@ llcancel $T_JOB_ID 2>/dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-started
 # Give it a real PID
+REAL_JOB_ID=${REAL_JOB_ID:-$(get_real_job_id)}
 T_JOB_ID=$(get_real_job_id)
 sleep 1
 # Status file
