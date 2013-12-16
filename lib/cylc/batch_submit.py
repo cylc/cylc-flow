@@ -213,20 +213,15 @@ class job_batcher( threading.Thread ):
         res = p.poll()
         if res is not None:
             jobinfo['out'], jobinfo['err'] = p.communicate()
-            out, err = jobinfo['out'], jobinfo['err']
-            # See if we need to filter our output to stdout/stderr.
-            if (isinstance(self, task_batcher) and
-                    jobinfo.get('data') is not None and
-                    jobinfo['data'][1] is not None and
-                    hasattr(jobinfo['data'][1], 'filter_output')):
-                # Launcher has a filter method.
-                launcher = jobinfo['data'][1]
-                out, err = launcher.filter_output(out, err)
+            out, err = self.follow_up_item_process_output( jobinfo )
             for handle, text in [(sys.stderr, err), (sys.stdout, out)]:
                 if text:
                     for line in text.splitlines():
                         print >>handle, "[%s] %s" % (jobinfo["descr"], line)
         return res
+
+    def follow_up_item_process_output( self, jobinfo ):
+        return jobinfo['out'], jobinfo['err']
 
     def item_succeeded_hook( self, jobinfo ):
         #self.log.info( jobinfo['descr'] + ' succeeded' )
@@ -286,6 +281,17 @@ class task_batcher( job_batcher ):
         else: 
             res = job_batcher.follow_up_item( self, jobinfo )
         return res
+
+    def follow_up_item_process_output( self, jobinfo ):
+        """See if we need to filter our output to stdout/stderr."""
+        out, err = jobinfo['out'], jobinfo['err']
+        if jobinfo.get('data') is not None:
+            launcher = jobinfo['data'][1]
+            if hasattr(launcher, 'filter_output'):
+                # Launcher has a filter method.
+                launcher = jobinfo['data'][1]
+                out, err = launcher.filter_output(out, err)
+        return out, err
 
     def item_succeeded_hook( self, jobinfo ):
         if self.run_mode == 'simulation':
