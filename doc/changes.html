@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.5">5.4.5</a></li>
 		<li><a href="#5.4.4">5.4.4</a></li>
 		<li><a href="#5.4.3">5.4.3</a></li>
 		<li><a href="#5.4.2">5.4.2</a></li>
@@ -37,6 +38,61 @@
 bug fixes and changes may also be listed - for all changes see the
 cylc git repository change log.</p>
 
+<a name="5.4.5"/>
+		<h2>5.4.5</h2>
+
+		<ul>
+				<li>Simplified polling for tasks submitted to <em>loadleveler</em>,
+				<em>pbs</em>, <em>sge</em>, <em>background</em>, or <em>at</em>: </li>
+				<ul>
+						<li> <em>submitted</em> - job in the queueing system, but has no
+						task status file. </li>
+						<li> <em>submission failed</em> - job not in the queueing system, and has no
+						task status file. </li>
+						<li> <em>running</em> - job in the queueing system, and has a 
+						task status file. </li>
+						<li> <em>succeeded</em> or <em>failed</em> - job not in the queueing system but has a 
+						task status file. </li>
+				</ul>
+				
+				<p/>
+				Additionally, an old task status file, if present, will be deleted at submission time.
+
+				<li>More cylc daemon performance enhancements for large suites.</li>
+
+				<li>The <code>cylc cat-log</code> command can now print remote task logs.</li>
+
+				<li>Changed the <em>submitting</em> task state name to
+				<em>ready</em> - meaning the task is ready to run and has been
+				passed to the job submission thread in the cylc daemon.</li>
+
+				<li>New User Guide sections under <em>Suite Design Principles:</em></li>
+				<ul>
+						<li> <em>Factor Out Common Configuration</em></li>
+						<li> <em>Use the Graph for Scheduling</em></li>
+						<li> <em>Use Suite Visualization</em> </li>
+				</ul>
+
+				<li>New User Guide section - <em>Style Guide</em> </li>
+
+				<li>Added a command wrapper script, and documentation, to
+				facilate use of multiple versions of cylc at once - so you can
+				run new suites at new versions of cylc without having to upgrade
+				existing long-running suites.</li>
+
+				<li>Handle a known problem with the ext4 filesystem that could wipe
+				out cylc state dump files in the event of a power failure. </li>
+
+				<li>Graceful shutdown on loading a corrupted restart state dump file.</li>
+
+				<li>Use the normal suite run directory for tasks executed by the 
+				<code>cylc submit</code> command </li>
+
+
+				<li>Moved some common log messages to debug level.</li>
+
+		</ul>
+	
 <a name="5.4.4"/>
 		<h2>5.4.4</h2>
 
