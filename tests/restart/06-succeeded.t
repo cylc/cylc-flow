@@ -24,11 +24,13 @@ set_test_number 13
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE succeeded
 TEST_SUITE_RUN_OPTIONS=
+SUITE_TIMEOUT=240
 if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' ]]; then
     ssh $CYLC_LL_TEST_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
     scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_LL_TEST_TASK_HOST:.cylc/$SUITE_NAME/passphrase
     export CYLC_LL_TEST_SITE_DIRECTIVES CYLC_LL_TEST_TASK_HOST
     TEST_SUITE_RUN_OPTIONS="--set=USE_LOADLEVELER=true"
+    SUITE_TIMEOUT=900
 fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
@@ -42,10 +44,10 @@ suite_run_ok $TEST_NAME cylc run --debug $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
 # won't help)
 TEST_NAME=$TEST_NAME_BASE-monitor
 START_TIME=$(date +%s)
-export START_TIME SUITE_NAME
+export START_TIME SUITE_NAME SUITE_TIMEOUT
 run_ok $TEST_NAME bash <<'__SCRIPT__'
 while [[ -e $HOME/.cylc/ports/$SUITE_NAME || ! -e $TEST_DIR/suite-stopping ]]; do
-    if [[ $(date +%s) > $(( START_TIME + 240 )) ]]; then
+    if [[ $(date +%s) > $(( START_TIME + SUITE_TIMEOUT )) ]]; then
         echo "[ERROR] Suite Timeout - shutting down..." >&2
         cylc shutdown --now --kill $SUITE_NAME &
         exit 1

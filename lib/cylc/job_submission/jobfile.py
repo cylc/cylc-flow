@@ -377,8 +377,11 @@ echo ""''')
         self.FILE.write( "\n" + pcs )
 
     def write_command_scripting( self ):
+        cs = self.jobconfig['command scripting']
+        if not cs:
+            return
         self.FILE.write( "\n\n# TASK COMMAND SCRIPTING:" )
-        self.FILE.write( "\n" + self.jobconfig['command scripting'] )
+        self.FILE.write( "\n" + cs )
 
     def write_post_scripting( self ):
         pcs = self.jobconfig['post-command scripting']
