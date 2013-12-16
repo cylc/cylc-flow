@@ -96,8 +96,8 @@ def expand( sparse, spec ):
     return dense
 
 def _coerce_str( value, keys, args ):
-    """Coerce value to a cleaned (stripped) string."""
-    return str(value).strip()
+    """Coerce value to a string."""
+    return str(value)
 
 def _coerce_int( value, keys, args ):
     """Coerce value to an integer."""

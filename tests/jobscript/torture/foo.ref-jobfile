@@ -37,6 +37,7 @@ for S in $SIGNALS; do
 done
 
 # INITIAL SCRIPTING:
+
 echo "HELLO FROM INITIAL SCRIPTING"
 # define a variable
 export VAR_IS=is
@@ -125,6 +126,7 @@ echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo ""
 
 # PRE-COMMAND SCRIPTING:
+
 echo "HELLO FROM PRE-COMMAND SCRIPTING"
 # initial scripting must be done:
 echo VAR_IS is $VAR_IS
@@ -138,6 +140,7 @@ echo E_FIV is $E_FIV
 export VAR_PreCS=precs
 
 # TASK COMMAND SCRIPTING:
+
 echo "HELLO FROM COMMAND SCRIPTING"
 # initial scripting must be done:
 echo VAR_IS is $VAR_IS
@@ -153,6 +156,7 @@ echo E_FIV is $E_FIV
 export VAR_CS=var_cs
 
 # POST COMMAND SCRIPTING:
+
 echo "HELLO FROM POST-COMMAND SCRIPTING"
 # initial scripting must be done:
 echo VAR_IS is $VAR_IS
