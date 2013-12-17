@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-12-17 11:00:00"> 
+<meta name="date" content="2013-12-17 18:55:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6203--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6205--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse17.html" >next</a>] [<a 
 href="cug-htmlse15.html" >prev</a>] [<a 
 href="cug-htmlse15.html#tailcug-htmlse15.html" >prev-tail</a>] [<a 
@@ -27,13 +27,13 @@ href="#x17-21000016.2">Comments</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.3 <a 
 href="#x17-21100016.3">Other</a></span>
    </div>
-<!--l. 6205--><p class="indent" >   Good style is arguably just a matter of taste. That said, for collaborative development of complex
+<!--l. 6207--><p class="indent" >   Good style is arguably just a matter of taste. That said, for collaborative development of complex
 systems it is important to settle on a clear and consistent style. You may find the following suggestions
 useful.
-<!--l. 6210--><p class="noindent" >
+<!--l. 6212--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">16.1   </span> <a 
  id="x17-20900016.1"></a>Line Indentation</h4>
-<!--l. 6212--><p class="noindent" >The suite.rc file format consists of <span class="lstinline"><span 
+<!--l. 6214--><p class="noindent" >The suite.rc file format consists of <span class="lstinline"><span 
 class="pcrr7t-">item</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -42,7 +42,7 @@ class="pcrr7t-">value</span></span> pairs under nested section headings. Clear i
 best way to show local nesting level inside large blocks.
      <ul class="itemize1">
      <li class="itemize">Indent suite.rc syntax four spaces per nesting level.
-     <!--l. 6220--><div class="lstlisting">
+     <!--l. 6222--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209001r1"></a></span><span 
@@ -120,13 +120,13 @@ class="pcrr7t-">value2</span>
 
 
      </div>
-     <!--l. 6227--><p class="noindent" >Don&#8217;t align <span class="lstinline"><span 
+     <!--l. 6229--><p class="noindent" >Don&#8217;t align <span class="lstinline"><span 
 class="pcrr7t-">item</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">value</span></span> pairs on the <span class="lstinline"><span 
-class="pcrr7t-">=</span></span> character:  <!--l. 6229--><div class="lstlisting">
+class="pcrr7t-">=</span></span> character:  <!--l. 6231--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209006r1"></a></span><span 
@@ -179,8 +179,8 @@ class="pcrr7t-">value2</span>
 
 
      </div>
-     <!--l. 6234--><p class="noindent" >This does not show nesting level clearly, and long items push everything off to the right. The following may be
-     acceptable though as it preserves proper indentation:  <!--l. 6238--><div class="lstlisting">
+     <!--l. 6236--><p class="noindent" >This does not show nesting level clearly, and long items push everything off to the right. The following may be
+     acceptable though as it preserves proper indentation:  <!--l. 6240--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209009r1"></a></span><span 
@@ -248,7 +248,7 @@ class="cmti-10">Line comments </span>should be indented to the same level as the
      <li class="itemize"><span 
 class="cmti-10">Command scripting strings </span>are interpreted by the associated task job script, not by cylc, so strictly speaking
      their internal lines should not be indented as if part of the suite.rc syntax. This, for example,
-     <!--l. 6257--><div class="lstlisting">
+     <!--l. 6259--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209012r1"></a></span><span 
@@ -306,7 +306,7 @@ class="pcrr7t-">"</span>
 
 
      </div>
-     <!--l. 6264--><p class="noindent" >is preferred over this (or similar):  <!--l. 6266--><div class="lstlisting">
+     <!--l. 6266--><p class="noindent" >is preferred over this (or similar):  <!--l. 6268--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209017r1"></a></span><span 
@@ -415,13 +415,13 @@ class="pcrr7t-">"</span>
 
 
      </div>
-     <!--l. 6274--><p class="noindent" >The extra whitespace here translates directly to spurious indentation in the task job script. As it happens this
+     <!--l. 6276--><p class="noindent" >The extra whitespace here translates directly to spurious indentation in the task job script. As it happens this
      is just an aesthetic problem in bash scripts, but for Python job scripts (which cylc may support in the future)
      it would be a technical error.
      </li>
      <li class="itemize">The positioning of string-delimiting triple quotes is of no practical consequence either, but the following
      forms are suggested for the same reason - to avoid including spurious whitespace in the string:
-     <!--l. 6283--><div class="lstlisting">
+     <!--l. 6285--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209023r1"></a></span><span 
@@ -614,7 +614,7 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize">Multiline dependency <span class="lstinline"><span 
 class="pcrr7t-">graph</span></span> strings have no meaning outside of the suite definition, so they can be free-form
-     in order to most clearly present the structure of the suite:  <!--l. 6303--><div class="lstlisting">
+     in order to most clearly present the structure of the suite:  <!--l. 6305--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209036r1"></a></span><span 
@@ -719,7 +719,7 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize">Embedded <span 
 class="cmti-10">Jinja2 </span>code is not part of the suite.rc syntax, so it should be indented from the left margin on its
-     own terms.  <!--l. 6316--><div class="lstlisting">
+     own terms.  <!--l. 6318--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-209043r1"></a></span><span 
@@ -794,7 +794,7 @@ class="pcrr7t-">%}</span>
 
      </div>
      </li></ul>
-<!--l. 6326--><p class="noindent" >
+<!--l. 6328--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">16.2   </span> <a 
  id="x17-21000016.2"></a>Comments</h4>
      <ul class="itemize1">
@@ -816,14 +816,14 @@ class="cmti-10">unnecessary comments </span>-  if  these  are  not  kept  up  to
 class="cmti-10">full page width &#8220;section divider&#8221; comments </span>- these assume a particular line width, which can be
      a problem for text editors that auto line break on a smaller line width.
      </li></ul>
-<!--l. 6347--><p class="noindent" >
+<!--l. 6349--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">16.3   </span> <a 
  id="x17-21100016.3"></a>Other</h4>
      <ul class="itemize1">
      <li class="itemize">Avoid <span 
 class="cmti-10">very long lines </span>if possible - these affect readability and may be a problem for auto-line-breaking text
      editors. Line continuation markers can be used anywhere in a suite definition to break up long lines:
-     <!--l. 6355--><div class="lstlisting">
+     <!--l. 6357--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-211001r1"></a></span><span 
@@ -975,7 +975,7 @@ class="pcrr7t-">MY_TASKS</span>
 
 
      </div>
-     <!--l. 6366--><p class="noindent" >The graph, of course, can also be split up without line breaks:  <!--l. 6368--><div class="lstlisting">
+     <!--l. 6368--><p class="noindent" >The graph, of course, can also be split up without line breaks:  <!--l. 6370--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x17-211010r1"></a></span><span 
