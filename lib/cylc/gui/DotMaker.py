@@ -64,7 +64,7 @@ class DotMaker(object):
                 "**********" ]
             
 
-        if not state:
+        if not state or state not in self.theme:
             # empty icon (assuming a white page background)
             cols = ['white', 'white' ]
         else:
