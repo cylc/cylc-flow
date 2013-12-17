@@ -1,29 +1,58 @@
 
-Cylc can run from an unpacked release tree (at a particular version) or
-a git repository clone (which can be updated to the latest version at
-will).
+_______________________________________________________________________
+INSTALLING CYLC FROM A SOURCE TARBALL
 
-Consider installing into version-labelled sub-directories to enable
-parallel installation of new cylc versions as they are released, e.g.:
+Cylc is typically installed into a designated "cylc admin" user account
+(/home/admin/ below, for illustrative purposes).
 
-/home/cylcadmin/cylc/
-                 cylc-5.2.0/
-                 cylc-5.3.0/
-                 cylc-5.3.1/
-                 cylc.git/              # repository
-                 latest -> cylc-5.3.1   # symlink
+    % tar xzf cylc-x.y.z.tar.gz
+    % cd cylc-x.y.z
+    % export PATH=$PWD/bin:$PATH
+    % make      # (see below to understand what 'make' does here)
 
-Once installed just put the cylc bin directory in your $PATH variable: 
-  % export PATH=/home/cylcadmin/latest/bin:$PATH
+_______________________________________________________________________
+ARRANGING ACCESS TO CYLC ONCE INSTALLED
 
-INSTALLING FROM A SOURCE TARBALL:
+To use cylc you just need the cylc bin directory in your $PATH (on task
+host accounts as well as on the suite host). Instead of arranging access
+to a specific cylc bin directory, however, you should consider
+installing successive versions in parallel like this:
 
-  % tar xzf cylc-x.y.z.tar.gz
-  % cd cylc-x.y.z
-  % export PATH=$PWD/bin:$PATH
-  % make
+    /home/admin/cylc/cylc-5.2.0/
+    /home/admin/cylc/cylc-5.4.0/
+        # etc.
+    /home/admin/cylc/cylc-5.4.5/
+    /home/admin/cylc/cylc -> cylc-5.4.5   # symlink to default version
 
-The 'make' process does the following:
+Now install admin/cylc-wrapper to a convenient location as "cylc", e.g.:
+
+    % cp admin/cylc-wrapper /home/admin/bin/cylc
+        # OR:
+    % cp admin/cylc-wrapper /usr/local/bin/cylc
+    
+Modify the wrapper for your environment as per instructions in the file
+and ensure that it is in $PATH for users. The wrapper selects from the
+installed versions via an environment variable $CYLC_VERSION that users
+can set if they don't want the default version. Running suites also use
+this to ensure that their tasks access the right version of cylc.
+
+_______________________________________________________________________
+CYLC DEVELOPMENT - CLONING THE GIT REPOSITORY
+
+  1) To clone the cylc repository:
+
+     % git clone git://github.com/cylc/cylc.git
+     % cd cylc
+     % make  # build ordereddict and User Guide (as above)
+     % git pull origin master # update official changes
+     % make  # remake documentation after changes
+
+  2) To participate in cylc development: fork cylc on github, clone your
+  own fork locally, commit changes in feature branches, push them to
+  your fork and issue a pull request to the cylc development team.
+
+_______________________________________________________________________
+WHAT HAPPENS WHEN YOU TYPE 'make'
 
   1) a VERSION file is created containing the cylc version string, e.g.
   5.1.0. This is taken from the name of the parent directory - DO NOT
@@ -35,35 +64,9 @@ The 'make' process does the following:
      versions (single- and multi-page) are generated
    * a doc/index.html is created with links to the generated docs.
 
-  3) The "orrdereddict" Python module will be built from its C language
-  source files, in ext/ordereddict-0.4.5. This is not essential - a
-  Python implementation will be used by cylc if necessary. Currently, 
-  if the build is successful you must install the module yourself into 
-  your $PYTHONPATH.
-
-You may want to maintain successive versions of cylc under the same top
-level directory:
-    TOP/cylc-5.1.0/
-    TOP/cylc-5.2.3.
-    # etc.
-
-To allow users to run differing versions of cylc you will need to install the
-"cylc-wrapper" script located in the admin directory available centrally so
-that it is available in the PATH of a normal user. N.B. You will need to change
-"/opt" in the script to your cylc home root e.g. ~central_account.
-
-INSTALLING FROM A GIT REPOSITORY CLONE:
-
-  1) To get a clone that can track the official repository:
-
-     % git clone git://github.com/cylc/cylc.git
-     % cd cylc
-     % make  # build ordereddict and User Guide (as above)
-  To pull in the latest changes:
-     % git pull origin master
-     % make # remake documentation in case of changes
-
-  2) To participate in cylc development: fork cylc on github, clone your
-  own fork locally, commit changes in a feature branch and then push it  
-  to your fork and issue a pull request to the cylc maintainer.
+  3) A Python module "orrdereddict" will be built from source in
+  ext/ordereddict-0.4.5. To make it available to cylc you must install
+  the built module into your $PYTHONPATH. This is not essential as a
+  Python implementation of the Ordered Dictionary structure will be used
+  by cylc if necessary. 
 

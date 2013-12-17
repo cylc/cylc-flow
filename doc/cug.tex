@@ -4875,13 +4875,15 @@ the secondary locations under \lstinline=$HOME/.cylc/=.
 \label{HowTasksGetAccessToCylc}
 
 Running tasks need access to cylc via \lstinline=$PATH=, principally for
-the task messaging commands. To allow this, the first thing a task job
+the task messaging commands.  To allow this, the first thing a task job
 script does is set \lstinline=$CYLC_VERSION= to the cylc version number of the 
 running suite. If you need to run several suites at once under different 
-incompatible versions of cylc set \lstinline=$CYLC_VERSION= in your environment
-to the desired version. In the case of developers wishing to run their own copy
-of cylc rather than a centrally installed one set \lstinline=$CYLC_HOME= in 
-your environment to point to your cylc copy.
+incompatible versions of cylc, check that your site is using the cylc 
+version wrapper (see \lstinline=INSTALL= and \lstinline=admin/cylc-wrapper= in 
+a cylc installation) then set \lstinline=$CYLC_VERSION= to the desired
+version. In the case of developers wishing to run their own copy
+of cylc rather than a centrally installed one, set \lstinline=$CYLC_HOME= 
+to point to your cylc copy.
 
 \subsection{Restarting Suites}
 \label{RestartingSuites}
