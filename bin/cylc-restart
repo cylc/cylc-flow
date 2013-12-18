@@ -289,9 +289,10 @@ where they got to while the suite was down."""
                 print >> sys.stderr, " ", line
                 raise Exception( "ERROR: corrupted state dump" )
             tasknames[name] = True
-            if ': status=submitting' in state:
+            if 'status=submitting,' in state:
                 # backward compabitility for state dumps generated prior to #787
-                state = state.replace(': status=submitting', ': status=ready', 1)
+                state = state.replace('status=submitting,',
+                                      'status=ready,', 1)
             try:
                 task_state(state)
             except Exception as e:
