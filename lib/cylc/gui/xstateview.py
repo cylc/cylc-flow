@@ -257,10 +257,17 @@ class GraphUpdater(threading.Thread):
         else:
             state = self.fam_state_summary[id]['state']
 
-        node.attr['style'    ] = 'bold,' + self.theme[state]['style']
-        node.attr['fillcolor'] = self.theme[state]['color']
-        node.attr['color'    ] = self.theme[state]['color' ]
-        node.attr['fontcolor'] = self.theme[state]['fontcolor']
+        try:
+            node.attr['style'    ] = 'bold,' + self.theme[state]['style']
+            node.attr['fillcolor'] = self.theme[state]['color']
+            node.attr['color'    ] = self.theme[state]['color' ]
+            node.attr['fontcolor'] = self.theme[state]['fontcolor']
+        except KeyError:
+            # unknown state
+            node.attr['style'    ] = 'filled'
+            node.attr['fillcolor'] = 'white'
+            node.attr['color'    ] = 'white'
+            node.attr['fontcolor'] = 'red'
 
         if shape:
             node.attr['shape'] = shape
