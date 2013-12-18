@@ -75,9 +75,13 @@ class conditional_simplifier( object ):
     def get_cleaned( self ):
         """Return the simplified logical expression"""
         cleaned = self.nested_expr
+        print "get cleaned expression", cleaned
+        print "   to be removed:", self.clean_list
         for item in self.clean_list:
             cleaned = self.clean_expr( cleaned, item )
+            print "removed", item, "expression now:", cleaned
         cleaned = self.flatten_nested_expr( cleaned )
+        print "flattened expression:", cleaned
         return cleaned        
 
     def nest_by_oper( self, nest_me, oper ):
@@ -103,6 +107,12 @@ class conditional_simplifier( object ):
     def clean_expr( self, nested_list, criteria ):
         """Return a list with entries specified by 'critria' removed"""
         cleaned = copy.deepcopy( nested_list )
+        # Make sure that we don't have extraneous nesting.
+        while (isinstance(cleaned, list) and len(cleaned) == 1 and
+               isinstance(cleaned[0], list)):
+            cleaned = cleaned[0]
+        
+        # Recurse through the nested list and remove criteria.
         found = None
         if isinstance(cleaned, str) or len(cleaned)==1:
             if cleaned == criteria:
