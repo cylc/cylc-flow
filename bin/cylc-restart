@@ -23,9 +23,11 @@ if remrun().execute():
 
 import os, re
 import datetime
+from cylc.config import TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
+from cylc.task_state import task_state
 from cylc.run import main
 from cylc.command_prep import prep_file
 from cylc.TaskID import TaskID
@@ -287,9 +289,14 @@ where they got to while the suite was down."""
                 print >> sys.stderr, " ", line
                 raise Exception( "ERROR: corrupted state dump" )
             tasknames[name] = True
-            if state == 'submitting':
+            if ': status=submitting' in state:
                 # backward compabitility for state dumps generated prior to #787
-                state = 'ready'
+                state = state.replace(': status=submitting', ': status=ready', 1)
+            try:
+                task_state(state)
+            except Exception as e:
+                print >> sys.stderr, "ERROR: ", type(e).__name__, e
+                raise Exception( "ERROR: corrupted state dump" )
             taskstates[id] = (name, tag, state )
 
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
@@ -334,11 +341,17 @@ where they got to while the suite was down."""
             try:
                 # startup is True only for a cold start
                 itask = self.config.get_task_proxy( name, tag, state, stopctime=None, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag) )
-            except Exception, x:
+            except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
                 print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
                 continue
+            except Exception, x:
+                print >> sys.stderr, str(x)
+                print >> sys.stderr, "ERROR: could not load task", name, "from the suite state dump file"
+                # TODO: Is it safe to have "raise x" here?
+                continue
+                
 
             # see comments above on resurrecting tasks
 
