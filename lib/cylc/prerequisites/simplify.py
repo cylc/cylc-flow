@@ -75,13 +75,9 @@ class conditional_simplifier( object ):
     def get_cleaned( self ):
         """Return the simplified logical expression"""
         cleaned = self.nested_expr
-        print "get cleaned expression", cleaned
-        print "   to be removed:", self.clean_list
         for item in self.clean_list:
             cleaned = self.clean_expr( cleaned, item )
-            print "removed", item, "expression now:", cleaned
         cleaned = self.flatten_nested_expr( cleaned )
-        print "flattened expression:", cleaned
         return cleaned        
 
     def nest_by_oper( self, nest_me, oper ):
