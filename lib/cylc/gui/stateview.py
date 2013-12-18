@@ -202,7 +202,11 @@ class TreeUpdater(threading.Thread):
                 priority = summary[ id ].get( 'latest_message_priority' )
                 if message is not None:
                     message = markup( get_col_priority( priority ), message )
-                icon = self.dots[state]
+                try:
+                    icon = self.dots[state]
+                except KeyError:
+                    icon = self.dots['empty']
+
                 dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc, icon ]
 
         # print existing tree:
@@ -772,7 +776,12 @@ class DotUpdater(threading.Thread):
                 for name in self.task_list:
                     if name in tasks_at_ctime:
                         state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
-                        state_list.append( self.dots[state] )
+                        try:
+                            state_list.append( self.dots[state] )
+                        except KeyError:
+                            # unknown task state: use empty and save for next encounter
+                            self.dots[state] = self.dots['empty']
+                            state_list.append( self.dots['empty'] )
                     else:
                         state_list.append( self.dots['empty'] )
                 try:
