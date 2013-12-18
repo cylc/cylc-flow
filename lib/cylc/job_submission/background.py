@@ -18,6 +18,8 @@
 
 from job_submit import job_submit
 from cylc.command_env import pr_scripting_sl
+import os
+from signal import SIGKILL
 from subprocess import Popen, PIPE
 
 class background( job_submit ):
@@ -30,17 +32,21 @@ class background( job_submit ):
       % ssh user@host 'job-script & echo $!; wait'
     (We have to override the general command templates to achieve this)."""
 
-    LOCAL_COMMAND_TEMPLATE = ( "(%(command)s & echo $!; wait )" )
+    LOCAL_COMMAND_TEMPLATE = ( "( %(command)s & echo $!; wait )" )
 
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + pr_scripting_sl + "; "
             + " mkdir -p $(dirname %(jobfile_path)s)"
             + " && cat >%(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
-            + " && ( (%(command)s) & echo $!; wait )"
+            + " && ( %(command)s & echo $!; wait )"
             + "'" )
 
-    COMMAND_TEMPLATE = "%s </dev/null 1>%s 2>%s"
+    # N.B. The perl command ensures that the job script is executed in its own
+    # process group, which allows the job script and its child processes to be
+    # killed correctly.
+    COMMAND_TEMPLATE = ("perl -e \"setpgrp(0,0);exec(@ARGV)\" %s " +
+                        "</dev/null 1>%s 2>%s")
 
     def construct_jobfile_submission_command( self ):
         """
@@ -61,9 +67,9 @@ class background( job_submit ):
         """
         return out.strip()
 
-    def get_job_kill_command( self, pid ):
-        """Return a command to kill the job."""
-        return "kill -9 " + pid
+    def kill( self, jid, st_file=None ):
+        """Kill the job."""
+        os.killpg(int(jid), SIGKILL)
 
     def poll( self, jid ):
         """Return 0 if jid is in the queueing system, 1 otherwise."""

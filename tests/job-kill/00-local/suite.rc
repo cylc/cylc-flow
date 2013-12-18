@@ -1,0 +1,31 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       required run mode=live
+       expected task failures = t1.1, t2.1
+       live mode suite timeout=2 # minutes
+[scheduling]
+    [[dependencies]]
+        graph="""
+t1:start=>stop
+t2:start=>stop
+"""
+[runtime]
+    [[T]]
+        command scripting=sleep 120 & echo $! >file; wait
+{% if "CYLC_TEST_HOST" in environ and environ["CYLC_TEST_HOST"] %}
+        [[[remote]]]
+            host={{environ["CYLC_TEST_HOST"]}}
+{% endif %}
+    [[t1]]
+        inherit=T
+        [[[job submission]]]
+            method=at
+    [[t2]]
+        inherit=T
+    [[stop]]
+        command scripting="""
+cylc kill $CYLC_SUITE_REG_NAME t1 1 || true
+cylc kill $CYLC_SUITE_REG_NAME t2 1 || true
+cylc stop $CYLC_SUITE_REG_NAME
+"""
