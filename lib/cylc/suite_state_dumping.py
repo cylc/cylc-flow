@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -16,69 +16,91 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
+import errno
 import os
 from global_config import get_global_cfg
-from rolling_archive import rolling_archive
 
 class dumper( object ):
+
+    BASE_NAME = 'state'
 
     def __init__( self, suite, run_mode='live', clock=None, ict=None, stop_tag=None ):
         self.run_mode = run_mode
         self.clock = clock
-        self.ict = ict
-        self.stop_tag = stop_tag
+        self.set_cts(ict, stop_tag)
         gcfg = get_global_cfg()
-        self.dir = gcfg.get_derived_host_item( suite, 'suite state directory' )
-        self.path = os.path.join( self.dir, 'state' )
-        arclen = gcfg.cfg[ 'state dump rolling archive length' ]
-        self.archive = rolling_archive( self.path, arclen )
+        self.dir_name = gcfg.get_derived_host_item( suite,
+                                                    'suite state directory' )
+        self.file_name = os.path.join( self.dir_name, self.BASE_NAME )
+        self.arch_len = gcfg.cfg[ 'state dump rolling archive length' ]
+        if not self.arch_len or int(self.arch_len) <= 1:
+            self.arch_len = 1
+        self.arch_files = []
 
     def set_cts( self, ict, fct ):
         self.ict = ict
         self.stop_tag = fct
 
-    def get_path( self ):
-        return self.path
-
-    def get_dir( self ):
-        return self.dir
-
-    def dump( self, tasks, wireless, new_file = False ):
-        if new_file:
-            filename = self.path + '.' + self.clock.dump_to_str()
-            FILE = open( filename, 'w' )
-        else:
-            filename = self.path
-            FILE = self.archive.roll()
-
-        # suite time
-        if self.run_mode != 'live':
-            FILE.write( 'simulation time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
-        else:
-            FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
-
+        self.cts_str = ""
         if self.ict:
-            FILE.write( 'initial cycle : ' + self.ict + '\n' )
+            self.cts_str += 'initial cycle : ' + self.ict + '\n'
         else:
-            FILE.write( 'initial cycle : (none)\n' )
+            self.cts_str += 'initial cycle : (none)\n'
 
         if self.stop_tag:
-            FILE.write( 'final cycle : ' + self.stop_tag + '\n' )
+            self.cts_str += 'final cycle : ' + self.stop_tag + '\n'
         else:
-            FILE.write( 'final cycle : (none)\n' )
+            self.cts_str += 'final cycle : (none)\n'
 
-        wireless.dump(FILE)
+    def dump( self, tasks, wireless, new_file=False ):
+        """Dump suite states to disk. Return state file basename on success."""
 
-        FILE.write( 'Begin task states\n' )
+        tag = datetime.utcnow().strftime("%Y%m%dT%H%M%S.%fZ")
+        base_name = self.BASE_NAME + "." + tag
+        handle = open(os.path.join(self.dir_name, base_name), "wb")
+
+        # suite time
+        if self.run_mode == 'live':
+            handle.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
+        else:
+            handle.write( 'simulation time : ' + self.clock.dump_to_str() +
+                          ',' + str( self.clock.get_rate()) + '\n' )
+
+        handle.write(self.cts_str)
+
+        wireless.dump(handle)
+
+        handle.write( 'Begin task states\n' )
 
         for itask in sorted(tasks, key=lambda t: t.id):
-            # TODO - CHECK THIS STILL WORKS 
-            itask.dump_class_vars( FILE )
+            # TODO - CHECK THIS STILL WORKS
+            itask.dump_class_vars( handle )
             # task instance variables
-            itask.dump_state( FILE )
+            itask.dump_state( handle )
 
-        os.fsync(FILE.fileno())
-        FILE.close()
-        # return the filename (minus path)
-        return os.path.basename( filename )
+        os.fsync(handle.fileno())
+        handle.close()
 
+        if new_file:
+            # Move dated state dump to state.clock
+            base_name = self.file_name +  "." + self.clock.dump_to_str()
+            os.rename(handle.name, os.path.join(self.dir_name, base_name))
+            return base_name
+        else:
+            # Point "state" symbolic link to new dated state dump
+            try:
+                os.unlink(self.file_name)
+            except OSError as x:
+                if x.errno != errno.ENOENT:
+                    raise
+            os.symlink(base_name, self.file_name)
+            self.arch_files.append(handle.name)
+            # Remove state dump older than archive length
+            while len(self.arch_files) > self.arch_len:
+                try:
+                    os.unlink(self.arch_files.pop(0))
+                except OSError as x:
+                    if x.errno != errno.ENOENT:
+                        raise
+            return self.BASE_NAME
