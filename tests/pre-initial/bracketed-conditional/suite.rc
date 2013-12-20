@@ -1,0 +1,11 @@
+[scheduling]
+    initial cycle time = 2013122512
+    final cycle time = 2013122512
+    [[dependencies]]
+        [[[ 12 ]]]
+            graph = """
+                (a[T-12]:fail | b[T-12]:fail | c[T-12]:fail) => d
+            """
+[runtime]
+    [[root]]
+        command scripting = sleep 1

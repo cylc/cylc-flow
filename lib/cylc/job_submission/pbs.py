@@ -19,7 +19,7 @@
 import re
 from job_submit import job_submit
 from cylc.TaskID import TaskID
-from subprocess import Popen, PIPE
+from subprocess import check_call, Popen, PIPE
 
 class pbs( job_submit ):
 
@@ -68,9 +68,9 @@ class pbs( job_submit ):
         """
         return out.strip()
 
-    def get_job_kill_command( self, jid ):
-        """Return a command to kill the job."""
-        return "qdel " + jid
+    def kill( self, jid, st_file=None ):
+        """Kill the job."""
+        check_call(["qdel", jid])
 
     def poll( self, jid ):
         """Return 0 if jid is in the queueing system, 1 otherwise."""
