@@ -1292,14 +1292,22 @@ class task( object ):
 
         launcher = self.launcher
         if not launcher:
+            if self.user_at_host:
+                if "@" in self.user_at_host:
+                    self.task_owner, self.task_host = self.user_at_host.split('@', 1)
+                else:
+                    self.task_host = self.user_at_host
             launcher = self.presubmit( self.task_owner, self.task_host, self.submit_num )
 
-        if not hasattr( launcher, 'get_job_kill_command' ):
+        if not hasattr( launcher, 'kill' ):
             # (for job submission methods that do not handle polling yet)
             self.log( 'WARNING', "'" + self.job_sub_method + "' job submission does not support killing" )
             return
 
-        cmd = launcher.get_job_kill_command( self.submit_method_id )
+        cmd = ("cylc job-kill %(status_file)s %(job_sys)s %(job_id)s" % {
+                    "status_file": launcher.jobfile_path + ".status",
+                    "job_sys": launcher.__class__.__name__,
+                    "job_id": self.submit_method_id})
         if self.user_at_host != user + '@localhost':
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"

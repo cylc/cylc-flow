@@ -1,0 +1,87 @@
+2013/12/18 09:33:35 INFO - Thread-2 start (Event Handlers)
+2013/12/18 09:33:35 INFO - Thread-3 start (Poll & Kill Commands)
+2013/12/18 09:33:35 INFO - port:7766
+2013/12/18 09:33:35 INFO - Suite starting at 2013-12-18 09:33:35.039662
+2013/12/18 09:33:35 INFO - Log event clock: real time
+2013/12/18 09:33:35 INFO - Run mode: live
+2013/12/18 09:33:35 INFO - Start tag: None
+2013/12/18 09:33:35 INFO - Stop tag: None
+2013/12/18 09:33:35 INFO - Thread-4 start (Job Submission)
+2013/12/18 09:33:35 INFO - Thread-5 start (Request Handling)
+2013/12/18 09:33:35 DEBUG - [t2.1] -task proxy added to the pool
+2013/12/18 09:33:35 DEBUG - [stop.1] -task proxy added to the pool
+2013/12/18 09:33:35 DEBUG - [t1.1] -task proxy added to the pool
+2013/12/18 09:33:35 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:35 DEBUG - [t2.1] -(setting:queued)
+2013/12/18 09:33:35 DEBUG - [t1.1] -(setting:queued)
+2013/12/18 09:33:35 DEBUG - 2 task(s) ready
+2013/12/18 09:33:35 DEBUG - [t2.1] -(setting:ready)
+2013/12/18 09:33:35 DEBUG - [t1.1] -(setting:ready)
+2013/12/18 09:33:35 INFO - [t2.1] -triggered off []
+2013/12/18 09:33:35 INFO - [t1.1] -triggered off []
+2013/12/18 09:33:35 DEBUG - END TASK PROCESSING (took 0.016332 sec)
+2013/12/18 09:33:36 DEBUG - Job Submission batch 1/1 (2 members):
+2013/12/18 09:33:36 INFO - [t2.1] -(current:ready)> t2.1 submitting now
+2013/12/18 09:33:37 INFO - [t2.1] -(current:ready)> t2.1 submission succeeded
+2013/12/18 09:33:37 DEBUG - [t2.1] -(setting:submitted)
+2013/12/18 09:33:37 INFO - [t2.1] -(current:submitted)> t2.1 submit_method_id=8171
+2013/12/18 09:33:37 INFO - [t2.1] -(current:submitted)> t2.1 started at 2013-12-18T09:33:36
+2013/12/18 09:33:37 DEBUG - [t2.1] -(setting:running)
+2013/12/18 09:33:37 INFO - [t1.1] -(current:ready)> t1.1 submitting now
+2013/12/18 09:33:37 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:01.524340
+  All 2 items succeeded
+2013/12/18 09:33:38 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:38 DEBUG - END TASK PROCESSING (took 0.012189 sec)
+2013/12/18 09:33:38 INFO - [t1.1] -(current:ready)> t1.1 started at 2013-12-18T09:33:37
+2013/12/18 09:33:38 DEBUG - [t1.1] -(setting:running)
+2013/12/18 09:33:38 INFO - [t1.1] -(current:running)> t1.1 submission succeeded
+2013/12/18 09:33:38 INFO - [t1.1] -(current:running)> t1.1 submit_method_id=5560
+2013/12/18 09:33:39 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:39 DEBUG - [stop.1] -(setting:queued)
+2013/12/18 09:33:39 DEBUG - 1 task(s) ready
+2013/12/18 09:33:39 DEBUG - [stop.1] -(setting:ready)
+2013/12/18 09:33:39 INFO - [stop.1] -triggered off ['t1.1', 't2.1']
+2013/12/18 09:33:39 DEBUG - END TASK PROCESSING (took 0.015441 sec)
+2013/12/18 09:33:39 DEBUG - Job Submission batch 1/1 (1 members):
+2013/12/18 09:33:39 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.312945
+  All 1 items succeeded
+2013/12/18 09:33:40 INFO - [stop.1] -(current:ready)> stop.1 submitting now
+2013/12/18 09:33:40 INFO - [stop.1] -(current:ready)> stop.1 submission succeeded
+2013/12/18 09:33:40 DEBUG - [stop.1] -(setting:submitted)
+2013/12/18 09:33:40 INFO - [stop.1] -(current:submitted)> stop.1 submit_method_id=8368
+2013/12/18 09:33:41 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:41 DEBUG - END TASK PROCESSING (took 0.016191 sec)
+2013/12/18 09:33:41 INFO - [stop.1] -(current:submitted)> stop.1 started at 2013-12-18T09:33:40
+2013/12/18 09:33:41 DEBUG - [stop.1] -(setting:running)
+2013/12/18 09:33:41 CRITICAL - [t1.1] -Killing job
+2013/12/18 09:33:41 INFO - Command succeeded: kill tasks(t1,1,False)
+2013/12/18 09:33:42 DEBUG - Poll & Kill Commands batch 1/1 (1 members):
+2013/12/18 09:33:42 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:42 DEBUG - END TASK PROCESSING (took 0.013974 sec)
+2013/12/18 09:33:42 INFO - [stop.1] -(current:running)> stop.1 succeeded at 2013-12-18T09:33:41
+2013/12/18 09:33:42 DEBUG - [stop.1] -(setting:succeeded)
+2013/12/18 09:33:42 CRITICAL - [t2.1] -Killing job
+2013/12/18 09:33:42 INFO - Command succeeded: kill tasks(t2,1,False)
+2013/12/18 09:33:42 INFO - Command succeeded: stop cleanly(False)
+2013/12/18 09:33:42 INFO - Thread-4 exit (Job Submission)
+2013/12/18 09:33:43 DEBUG - Poll & Kill Commands: batch completed
+  Time taken: 0:00:01.003572
+  All 1 items succeeded
+2013/12/18 09:33:43 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:43 DEBUG - END TASK PROCESSING (took 0.011983 sec)
+2013/12/18 09:33:43 INFO - [t1.1] -(current:running)> kill command succeeded
+2013/12/18 09:33:43 DEBUG - [t1.1] -(setting:failed)
+2013/12/18 09:33:44 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:44 DEBUG - END TASK PROCESSING (took 0.011662 sec)
+2013/12/18 09:33:45 DEBUG - Poll & Kill Commands batch 1/1 (1 members):
+2013/12/18 09:33:46 DEBUG - Poll & Kill Commands: batch completed
+  Time taken: 0:00:01.004309
+  All 1 items succeeded
+2013/12/18 09:33:46 INFO - [t2.1] -(current:running)> kill command succeeded
+2013/12/18 09:33:46 DEBUG - [t2.1] -(setting:failed)
+2013/12/18 09:33:47 INFO - Thread-2 exit (Event Handlers)
+2013/12/18 09:33:47 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/12/18 09:33:47 DEBUG - BEGIN TASK PROCESSING
+2013/12/18 09:33:47 DEBUG - END TASK PROCESSING (took 0.01202 sec)

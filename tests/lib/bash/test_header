@@ -97,7 +97,7 @@ function run_ok() {
     shift 1
     if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         fail $TEST_NAME
-        mkdir -p $TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+        mkdir -p $TEST_LOG_DIR
         cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
         cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
         return
@@ -110,7 +110,7 @@ function run_fail() {
     shift 1
     if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         fail $TEST_NAME
-        mkdir -p $TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+        mkdir -p $TEST_LOG_DIR
         cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
         cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
         return
@@ -238,7 +238,7 @@ TEST_NAME_BASE=$(basename $0 .t)
 TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
 TEST_DIR=$(mktemp -d)
 cd $TEST_DIR
-TEST_LOG_DIR=$TMPDIR/cylc-tests/$(basename $TEST_SOURCE_DIR)
+TEST_LOG_DIR=${TMPDIR:-/tmp}/cylc-tests/$(basename $TEST_SOURCE_DIR)
 SUITE_RUN_FAILS=false
 
 set +e
