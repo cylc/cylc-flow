@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.6">5.4.6</a></li>
 		<li><a href="#5.4.5">5.4.5</a></li>
 		<li><a href="#5.4.4">5.4.4</a></li>
 		<li><a href="#5.4.3">5.4.3</a></li>
@@ -38,6 +39,28 @@
 bug fixes and changes may also be listed - for all changes see the
 cylc git repository change log.</p>
 
+<a name="5.4.6"/>
+		<h2>5.4.6</h2>
+
+		<ul>
+				<li>Improved suite state-dumping with atomic updates - avoids
+				state file corruption even in the event of a power failure.</li>
+
+				<li>Run <code>background</code> and <code>at</code> jobs in 
+				their own process groups so that task job kill can get even
+				their sub-processes.</li>
+
+				<li>Dependency graphs: fixed an abort caused by use of
+				unnecessary brackets around pre-initial-cycle triggers.</li>
+
+				<li>Catch <code>inherit = None</code> in the runtime inheritance
+				hierarchy (this is illegal without one or more secondary
+				parents).</li>
+
+				<li>Handle unknown task states in the GUI (provides backward
+				compatibity for pre-5.4.5 suite daemons).</li>
+		</ul>
+	
 <a name="5.4.5"/>
 		<h2>5.4.5</h2>
 
