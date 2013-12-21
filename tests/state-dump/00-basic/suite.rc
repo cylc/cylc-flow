@@ -1,0 +1,14 @@
+#!jinja2
+title=cycles
+description=Test suite state dump
+[cylc]
+    UTC mode=True
+[scheduling]
+    initial cycle time=2013010100
+    final cycle time=2013011000
+    [[dependencies]]
+        [[[0]]]
+            graph=t1[T-24]=>t1
+[runtime]
+    [[t1]]
+        command scripting=sleep 1 && test $CYLC_TASK_CYCLE_TIME != 2013010500 || cylc stop $CYLC_SUITE_REG_NAME

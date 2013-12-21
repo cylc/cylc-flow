@@ -27,7 +27,7 @@ from copy import deepcopy
 from cycle_time import ct, CycleTimeError, ctime_ge, ctime_gt, ctime_lt, ctime_le
 import datetime, time
 import port_scan
-import accelerated_clock 
+import accelerated_clock
 import logging
 import re, os, sys, shutil
 from state_summary import state_summary
@@ -71,7 +71,7 @@ class result:
 class SchedulerError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
         TODO - element - config element causing the problem
     """
     def __init__( self, msg ):
@@ -136,13 +136,13 @@ class scheduler(object):
         self.pyro = None
         self.state_dumper = None
         self.runtime_graph_on = None
-        
+
         self._profile_amounts = {}
         self._profile_update_times = {}
 
         self.held_future_tasks = []
 
-        # provide a variable to allow persistance of reference test settings 
+        # provide a variable to allow persistance of reference test settings
         # across reloads
         self.reference_test_mode = False
         self.gen_reference_log = False
@@ -157,7 +157,7 @@ class scheduler(object):
         self.stop_tag = None
         self.cli_start_tag = None
 
-        self.parser.add_option( "--until", 
+        self.parser.add_option( "--until",
                 help="Shut down after all tasks have PASSED this cycle time.",
                 metavar="CYCLE", action="store", dest="stop_tag" )
 
@@ -173,11 +173,11 @@ class scheduler(object):
                 help="Run mode: live, simulation, or dummy; default is live.",
                 metavar="STRING", action="store", default='live', dest="run_mode" )
 
-        self.parser.add_option( "--reference-log", 
+        self.parser.add_option( "--reference-log",
                 help="Generate a reference log for use in reference tests.",
                 action="store_true", default=False, dest="genref" )
 
-        self.parser.add_option( "--reference-test", 
+        self.parser.add_option( "--reference-test",
                 help="Do a test run against a previously generated reference log.",
                 action="store_true", default=False, dest="reftest" )
 
@@ -201,7 +201,7 @@ class scheduler(object):
                 'graph raw'         : self.info_get_graph_raw,
                 'task requisites'   : self.info_get_task_requisites,
                 }
- 
+
         # control commands to expose indirectly via a command queue
         self.control_commands = {
                 'stop cleanly'          : self.command_stop_cleanly,
@@ -230,7 +230,7 @@ class scheduler(object):
                 }
 
         # run dependency negotation etc. after these commands
-        self.proc_cmds = [ 
+        self.proc_cmds = [
             'release suite',
             'release task',
             'kill cycle',
@@ -255,7 +255,7 @@ class scheduler(object):
         if reqmode:
             if reqmode != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite requires the ' + reqmode + ' run mode'
-        
+
         # TODO - self.config.fdir can be used instead of self.suite_dir
         self.reflogfile = os.path.join(self.config.fdir,'reference.log')
 
@@ -304,7 +304,7 @@ class scheduler(object):
         for key, value in self.suite_contact_env.items():
             f.write("%s=%s\n" % (key, value))
         f.close()
-        # 2) restart only: copy to other accounts with still-running tasks 
+        # 2) restart only: copy to other accounts with still-running tasks
         r_suite_run_dir = os.path.expandvars(
                 self.gcfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
@@ -415,7 +415,7 @@ class scheduler(object):
 
     def info_get_task_list( self, logit=True ):
         return self.config.get_task_name_list()
- 
+
     def info_get_task_info( self, task_names ):
         info = {}
         for name in task_names:
@@ -441,7 +441,7 @@ class scheduler(object):
 
     def info_do_live_graph_movie( self ):
         return ( self.config.cfg['visualization']['enable live graph movie'],
-                 self.config.cfg['visualization']['runtime graph']['directory'] ) 
+                 self.config.cfg['visualization']['runtime graph']['directory'] )
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
@@ -474,7 +474,7 @@ class scheduler(object):
                 extra_info = {}
                 # extra info for clocktriggered tasks
                 try:
-                    extra_info[ 'Delayed start time reached' ] = itask.start_time_reached() 
+                    extra_info[ 'Delayed start time reached' ] = itask.start_time_reached()
                     extra_info[ 'Triggers at' ] = 'T+' + str(itask.real_time_delay) + ' hours'
                 except AttributeError:
                     # not a clocktriggered task
@@ -491,7 +491,7 @@ class scheduler(object):
             self.log.warning( 'task state info request: tasks not found' )
         else:
             return dump
-    
+
      # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
@@ -570,7 +570,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ i + TaskID.DELIM + tag for i in matches ]
- 
+
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
                 if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
@@ -674,7 +674,7 @@ class scheduler(object):
                 self.orphans.append(name)
         # adjust the new suite config to handle the orphans
         self.config.adopt_orphans( self.orphans )
- 
+
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         self.pool.qconfig = self.config.cfg['scheduling']['queues']
@@ -739,13 +739,13 @@ class scheduler(object):
 
         if self.options.reftest:
             self.reference_test_mode = self.options.reftest
-        
+
         if self.options.genref:
             self.gen_reference_log = self.options.genref
 
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
-        self.pyro = pyro_server( self.suite, self.suite_dir, 
+        self.pyro = pyro_server( self.suite, self.suite_dir,
                 self.gcfg.cfg['pyro']['base port'],
                 self.gcfg.cfg['pyro']['maximum number of ports'] )
         self.port = self.pyro.get_port()
@@ -823,14 +823,12 @@ class scheduler(object):
         if self.run_mode == 'live':
             disable = True
         if not reconfigure:
-            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, disable ) 
+            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, disable )
             task.task.clock = self.clock
             clocktriggered.clocktriggered.clock = self.clock
             self.pyro.connect( self.clock, 'clock' )
 
         self.state_dumper = dumper( self.suite, self.run_mode, self.clock, self.start_tag, self.stop_tag )
-        self.state_dump_dir = self.state_dumper.get_dir()
-        self.state_dump_filename = self.state_dumper.get_path()
 
         if not reconfigure:
             slog = suite_log( self.suite )
@@ -844,8 +842,8 @@ class scheduler(object):
 
             self.event_queue = Queue()
             task.task.event_queue = self.event_queue
-            self.eventq_worker = event_batcher( 
-                    'Event Handlers', self.event_queue, 
+            self.eventq_worker = event_batcher(
+                    'Event Handlers', self.event_queue,
                     self.config.cfg['cylc']['event handler submission']['batch size'],
                     self.config.cfg['cylc']['event handler submission']['delay between batches'],
                     self.suite, self.verbose )
@@ -853,8 +851,8 @@ class scheduler(object):
 
             self.poll_and_kill_queue = Queue()
             task.task.poll_and_kill_queue = self.poll_and_kill_queue
-            self.pollkq_worker = poll_and_kill_batcher( 
-                    'Poll & Kill Commands', self.poll_and_kill_queue, 
+            self.pollkq_worker = poll_and_kill_batcher(
+                    'Poll & Kill Commands', self.poll_and_kill_queue,
                     self.config.cfg['cylc']['poll and kill command submission']['batch size'],
                     self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
                     self.suite, self.verbose )
@@ -901,7 +899,7 @@ class scheduler(object):
                 }
 
         # Set local values of variables that are potenitally task-specific
-        # due to different directory paths on different task hosts. These 
+        # due to different directory paths on different task hosts. These
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
         self.suite_task_env = {
@@ -926,8 +924,8 @@ class scheduler(object):
         # And pass contact env to the task module
         task.task.suite_contact_env = self.suite_contact_env
 
-        # Suite bin directory for event handlers executed by the scheduler. 
-        os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
+        # Suite bin directory for event handlers executed by the scheduler.
+        os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH']
 
         # User defined local variables that may be required by event handlers
         cenv = self.config.cfg['cylc']['environment']
@@ -943,7 +941,7 @@ class scheduler(object):
             if req and req != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
             handler = self.config.event_handlers['shutdown']
-            if handler: 
+            if handler:
                 print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
             self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
             self.config.cfg['cylc']['log resolved dependencies'] = True
@@ -1034,7 +1032,7 @@ class scheduler(object):
             state_updaters = []
             event_recorders = []
             other = []
-            
+
             # process queued task messages
             for itask in self.pool.get_tasks():
                 itask.process_incoming_messages()
@@ -1052,7 +1050,7 @@ class scheduler(object):
                             other += [oper]
 
             #precedence is record states > update_states > record_events > anything_else
-            db_ops = state_recorders + state_updaters + event_recorders + other 
+            db_ops = state_recorders + state_updaters + event_recorders + other
             # compact the set of operations
             if len(db_ops) > 1:
                 db_opers = [db_ops[0]]
@@ -1069,10 +1067,10 @@ class scheduler(object):
                         db_opers += [db_ops[i]]
             else:
                 db_opers = db_ops
-            
+
             for d in db_opers:
                 self.db.run_db_op(d)
-            
+
             # record any broadcast settings to be dumped out
             if self.wireless:
                 if self.wireless.new_settings:
@@ -1129,7 +1127,7 @@ class scheduler(object):
                 # Tell the non job-submission command threads to stop
                 # now or when their queues are empty, according to the
                 # type of shutdown. The job submission thread has been
-                # stopped already by the stop commands. Note that the 
+                # stopped already by the stop commands. Note that the
                 # threads_stopped flag is reset by the stop commands so
                 # that 'stop --now' can override other stops in progress.
                 if not self.threads_stopped and self.do_shutdown == 'now':
@@ -1152,7 +1150,7 @@ class scheduler(object):
                     not self.eventq_worker.is_alive() and \
                     not self.pollkq_worker.is_alive():
                 break
-            
+
             if self.options.profile_mode:
                 t1 = time.time()
                 self._update_profile_info("scheduler loop dt (s)", t1 - t0,
@@ -1194,7 +1192,7 @@ class scheduler(object):
         timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
         handler = self.config.event_handlers['timeout']
         if now > timeout:
-            message = 'suite timed out after ' + str( self.config.suite_timeout) + ' minutes' 
+            message = 'suite timed out after ' + str( self.config.suite_timeout) + ' minutes'
             self.log.warning( message )
             if handler:
                 # a handler is defined
@@ -1240,16 +1238,16 @@ class scheduler(object):
                     # alotted run time
                     if itask.sim_time_check():
                         process = True
- 
+
         ##if not process:
-        ##    # If we neglect to set flags.pflag on some event that 
+        ##    # If we neglect to set flags.pflag on some event that
         ##    # makes re-negotiation of dependencies necessary then if
         ##    # that event ever happens in isolation the suite could stall
         ##    # unless manually nudged ("cylc nudge SUITE").  If this
         ##    # happens turn on debug logging to see what happens
         ##    # immediately before the stall, then set flags.pflag = True in
         ##    # the corresponding code section. Alternatively,
-        ##    # for an undiagnosed stall you can uncomment this section to 
+        ##    # for an undiagnosed stall you can uncomment this section to
         ##    # stimulate task processing every few seconds even during
         ##    # lulls in activity.  THIS SHOULD NOT BE NECESSARY, HOWEVER.
         ##    if not self.nudge_timer_on:
@@ -1272,7 +1270,7 @@ class scheduler(object):
         self.log.info( msg )
         if not self.no_active_tasks():
             self.log.warning( "some active tasks will be orphaned" )
-       
+
         if self.pool:
             self.pool.worker.quit = True # (should be done already)
             self.pool.worker.join()
@@ -1387,7 +1385,7 @@ class scheduler(object):
                 else:
                     # release this task
                     itask.reset_state_waiting()
- 
+
         # TODO - write a separate method for cancelling a stop time:
         #if self.stop_tag:
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
@@ -1407,7 +1405,7 @@ class scheduler(object):
         self.stop_tag = None
         self.stop_clock_time = None
         self.stop_task = None
- 
+
     def paused( self ):
         return self.hold_suite_now
 
@@ -1436,7 +1434,7 @@ class scheduler(object):
                 if itask.state.is_currently('failed', 'succeeded'):
                     continue
                 oldest_c_time = itask.c_time
-                
+
         return oldest_c_time
 
     def get_oldest_async_tag( self ):
@@ -1445,7 +1443,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.is_cycling:
                 continue
-            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
+            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED
             #    continue
             if itask.is_daemon:
                 continue
@@ -1459,7 +1457,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling:
                 continue
-            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED 
+            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED
             #    continue
             #if itask.is_daemon:
             #    # avoid daemon tasks
@@ -1531,7 +1529,7 @@ class scheduler(object):
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently('runahead'):
                     if self.stop_tag and ctime_gt(itask.c_time, self.stop_tag):
-                        # beyond the final cycle time 
+                        # beyond the final cycle time
                         itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
                         itask.reset_state_held()
                         continue
@@ -1719,7 +1717,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ i + TaskID.DELIM + tag for i in matches ]
- 
+
         self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
@@ -1733,7 +1731,7 @@ class scheduler(object):
         matches = []
         tasks = self.config.get_task_name_list()
 
-        if is_family: 
+        if is_family:
             families = self.config.runtime['first-parent descendants']
             try:
                 # exact
@@ -1802,7 +1800,7 @@ class scheduler(object):
         else:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
 
-        pp = plain_prerequisites( task_id ) 
+        pp = plain_prerequisites( task_id )
         pp.add( message )
 
         itask.prerequisites.add_requisites(pp)
@@ -1837,7 +1835,7 @@ class scheduler(object):
 
         self.log.info( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
-        # Purge is an infrequently used power tool, so print 
+        # Purge is an infrequently used power tool, so print
         # comprehensive information on what it does to stdout.
         print
         print "PURGE ALGORITHM RESULTS:"
@@ -1924,7 +1922,7 @@ class scheduler(object):
             if len( included_by_rc ) > 0:
                 if name not in included_by_rc:
                     continue
-            outlist.append( name ) 
+            outlist.append( name )
         return outlist
 
     def check_clean_stop_conditions( self ):
@@ -1949,9 +1947,9 @@ class scheduler(object):
 
         else:
             # all cycling tasks are held past the suite stop cycle and
-            # all async tasks have succeeded. 
+            # all async tasks have succeeded.
             stop = True
-        
+
             i_cyc = False
             i_asy = False
             i_fut = False
