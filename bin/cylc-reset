@@ -41,9 +41,6 @@ Additionally you can choose:
  
 Tasks set to 'ready' will trigger immediately (see also "cylc trigger").
 
-If a failed "sequential" task cannot re-run, forcing it to spawn may
-be required as sequential tasks only spawn on succeeding (or consider
-resetting it to "succeeded" or "cylc insert"ing the next instance).
 """ + multitask_usage, pyro=True, multitask=True,
         argdoc=[ ('REG', 'Suite name'),
             ('MATCH', 'Task or family name matching regular expression'),

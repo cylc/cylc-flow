@@ -1,5 +1,8 @@
 title = "Cylc Admin Test Suite"
 
+# THIS WAS USED AS AN ALL-PURPOSE TEST IN THE EARLY DAYS OF CYLC
+# BEFORE THE AUTOMATED TEST BATTERY.
+
 #        B[T-6]-> B -> E   
 #                / \   
 #  X & A[T-6]-> A   -> D 
@@ -12,19 +15,9 @@ illustrates the Cylc User Guide introductory section. It is copied
 on the fly then used by 'cylc admin test-suite' and should not be
 modified unless you know what you're doing."""
 
-# suite does not currently use Jinja2 - that's an optional extra.
-
-[cylc]
-    [[lockserver]]
-        # LOCKSERVER OFF (the default, but just to be sure).
-        # (we're only testing scheduling functionality here).
-        enable = False
-
 [scheduling]
-    runahead limit = 24
     [[special tasks]]
     start-up         = prep
-    sequential       = A, B, C
     cold-start       = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 
@@ -35,7 +28,7 @@ modified unless you know what you're doing."""
                     A => C => F
                     B & C => D
     
-                    ColdA | A[T-6] | A[T-12] | A[T-18] => A
+                    ColdA | A[T-6] => A
                     ColdB | B[T-6] => B
                     ColdC | C[T-6] => C
 
@@ -94,3 +87,4 @@ modified unless you know what you're doing."""
         D      = "style=bold", "color=green4"
         E      = "style=bold", "color=blue"
         F      = "style=bold", "color=red"
+

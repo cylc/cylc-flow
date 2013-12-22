@@ -714,8 +714,7 @@ class scheduler(object):
                 else:
                     self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
                     new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
-                    # set reloaded task's spawn status (else task state init doesn't get
-                    # this right for reloaded sequential tasks TODO - fix this properly)
+                    # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     else:

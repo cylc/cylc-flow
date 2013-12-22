@@ -100,14 +100,12 @@ final cycle time =
       limit = 0
       members = ops_s1, ops_s2, ops_p1, ops_p2, var_p1, var_p2, var_s1, var_s2
 [special tasks]
-   sequential = 
-   explicit restart outputs = 
    include at start-up = 
    start-up = 
    one-off = 
+   cold-start = 
    clock-triggered = 
    exclude at start-up = 
-   cold-start = 
 [dependencies]
    graph = OPS:finish-all => VAR
 __OUT__

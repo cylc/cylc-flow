@@ -575,9 +575,7 @@ successor as soon as they enter the submitted state.\footnote{Spawning
 any earlier than this brings no advantage in terms of functional
 parallelism and would cause uncontrolled proliferation of waiting
 tasks.}  Family names used here are interpreted purely as shorthand for
-the list of all member tasks. A sequential family, therefore, is a
-family of sequential tasks, not a family that behaves ``sequentially''
-as a whole.
+the list of all member tasks.
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
@@ -634,29 +632,6 @@ expressions to avoid holding up the suite.
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}
-
-By default, a task spawns a successor as soon as it is submitted to run
-so that successive instances of the same task can run in parallel if the
-opportunity arises (i.e.\ if their prerequisites happen to be satisfied
-before their predecessor has finished). {\em Sequential tasks}, however,
-will not spawn a successor until they have finished successfully. This
-should be used for (a) {\em tasks that cannot run in parallel with their
-own previous instances} because they would somehow interfere with each
-other (use cycle time in all I/O paths to avoid this); and (b) {\em warm
-cycled forecast models that write out restart files for multiple cycles
-ahead} (exception: see ``explicit restart outputs''
-below).\footnote{This is because you don't want Model[T] waiting around
-to trigger off Model[T-12] if Model[T-6] has not finished yet. If Model
-is forced to be sequential this can't happen because Model[T] won't
-exist in the suite until Model[T-6] has finished. But if Model[T-6]
-fails, it can be spawned-and-removed from the suite so that Model[T] can
-{\em then} trigger off Model[T-12], which is the correct behaviour.} 
-
-\begin{myitemize}
-    \item {\em type:} list of task names
-    \item {\em default:} (none)
-\end{myitemize}
 
 \paragraph[one-off]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ one-off}
 
@@ -670,25 +645,6 @@ Dependence on one-off tasks is not restricted to the first cycle.
 \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[explicit restart outputs]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ explicit restart outputs}
-
-% TODO - THESE TASKS COULD BE IDENTIFIED FROM THE GRAPH?
-
-This is only required in the event that you need a warm cycled forecast
-model to start at the instant its restart files are ready (if other
-prerequisites are satisfied) {\em even if its previous instance has
-not finished yet}.  If so, the model task has to depend on special
-output messages emitted by the previous instance as soon as its restart
-files are ready, instead of just on the previous instance finishing.
-{\em Tasks in this category must define special restart
-output messages containing the word ``restart''}, in
-[runtime] $\rightarrow$ [[TASK]] $\rightarrow$ [[[outputs]]] - see
-Section~\ref{RIOC}.
-
-\begin{myitemize}
-    \item {\em type:} list of task names
-    \item {\em default:} (none)
-\end{myitemize}
 
 \paragraph[exclude at start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ exclude at start-up}
 \label{EASU}

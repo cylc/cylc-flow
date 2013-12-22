@@ -20,9 +20,6 @@ title = "Cylc Admin Test Suite"
 
     [[special tasks]]
     start-up         = prep
-    # A, B, C must be sequential as we aren't handling restart
-    # dependencies explicitly (To Do: we should in this test suite)
-    sequential       = A, B, C
     cold-start       = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 

@@ -9,13 +9,12 @@ the AutoRecover examples for recovery tasks that only run if needed."""
 [scheduling]
     initial cycle time = 2011010106
     final cycle time = 2011010200
-    [[special tasks]]
-        sequential = A  # (just to slow the suite down)
     [[dependencies]]
         [[[0,6,12,18]]]
             graph =  """A => fam
-                    fam:finish-all & fam:succeed-any => B
-                    fam:finish-all & fam:succeed-any => fam_cleanup"""
+        A[T-6] => A # (just to slow the suite down)
+    fam:finish-all & fam:succeed-any => B
+   fam:finish-all & fam:succeed-any => fam_cleanup"""
 [runtime]
     [[fam]]
 
@@ -27,9 +26,8 @@ the AutoRecover examples for recovery tasks that only run if needed."""
         inherit = fam
         command scripting = """
 # Fail at 6,18, succeed at 0,12:
-HH=${CYLC_TASK_CYCLE_TIME#????????} 
-# (TO DO: HH extraction will fail if we go to YYYYMMDDHHmmss)
-if (( HH == 6 || HH == 18 )); then
+HH=$( cylc cycletime --print-hour )
+if (( HH == 06 || HH == 18 )); then
     COMMAND=/bin/false
 else
     COMMAND=/bin/true

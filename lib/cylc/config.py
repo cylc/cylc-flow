@@ -919,11 +919,6 @@ class config( object ):
                 if self.verbose:
                     print "  + " + itask.id + " ok"
 
-        # TODO - check that any multiple appearance of same task  in
-        # 'special tasks' is valid. E.g. a task can be both
-        # 'sequential' and 'clock-triggered' at the time, but not both
-        # 'model' and 'sequential' at the same time.
-
     def get_coldstart_task_list( self ):
         # TODO - automatically determine this by parsing the dependency graph?
         # For now user must define this:
@@ -1153,7 +1148,7 @@ class config( object ):
                 bad = []
                 for name in lnames + rights:
                     if name in spec['start-up'] or name in spec['cold-start'] or \
-                            name in spec['sequential'] or name in spec['one-off']:
+                            name in spec['one-off']:
                                 bad.append(name)
                 if len(bad) > 0:
                     print >> sys.stderr, orig_line
@@ -1651,17 +1646,6 @@ class config( object ):
         if name in self.cfg['scheduling']['special tasks']['one-off'] or \
                 name in self.cfg['scheduling']['special tasks']['start-up']:
             taskd.modifiers.append( 'oneoff' )
-
-        # SET SEQUENTIAL TASK INDICATOR
-        if name in self.cfg['scheduling']['special tasks']['sequential']:
-            taskd.modifiers.append( 'sequential' )
-
-        # SET MODEL TASK INDICATOR
-        # (TO DO - can we identify these tasks from the graph?)
-        elif name in self.cfg['scheduling']['special tasks']['explicit restart outputs']:
-            taskd.type = 'tied'
-        else:
-            taskd.type = 'free'
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:

@@ -105,9 +105,7 @@ SPEC = {
             'clock-triggered'                 : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
-            'sequential'                      : vdr(vtype='string_list', default=[]),
             'one-off'                         : vdr(vtype='string_list', default=[]),
-            'explicit restart outputs'        : vdr(vtype='string_list', default=[]),
             'exclude at start-up'             : vdr(vtype='string_list', default=[]),
             'include at start-up'             : vdr(vtype='string_list', default=[]),
             },
@@ -237,6 +235,8 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file,
 
         u = upgrader( cfg, SPEC, 'suite definition', verbose )
         u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
+        u.obsolete( '5.5.7', ['scheduling','special tasks','sequential'] )
+        u.obsolete( '5.5.7', ['scheduling','special tasks','explicit restart outputs'] )
         u.upgrade()
 
         validate( cfg, SPEC )

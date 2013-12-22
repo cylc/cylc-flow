@@ -16,9 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
-# automatically from the dependency graph?
-
 # NOTE on conditional and non-conditional triggers: all plain triggers
 # (for a single task) are held in a single prerequisite object; but one
 # such object is held for each conditional trigger. This has
@@ -84,7 +81,7 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name
-        self.type = 'free'
+        self.type = 'cycling'
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -144,9 +141,7 @@ class taskdef(object):
         # instantiating objects of this particular task class.
         base_types = []
         for foo in self.modifiers + [self.type]:
-            # __import__() keyword args were introduced in Python 2.5
-            #mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
-            mod = __import__( 'cylc.task_types.' + foo, globals(), locals(), [foo] )
+            mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
             base_types.append( getattr( mod, foo ) )
 
         tclass = type( self.name, tuple( base_types), dict())
