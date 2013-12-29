@@ -39,7 +39,10 @@ class rolling_archive(object):
 
         for i in reversed( range( 1, self.archive_length )):
             if os.path.exists( self.__filename( i )):
-                os.rename( self.__filename(i), self.__filename(i+1) )
+                try:
+                    os.rename( self.__filename(i), self.__filename(i+1) )
+                except OSError:
+                    raise
 
         if os.path.exists( self.base_filename):
             os.rename( self.base_filename, self.__filename(1) )
