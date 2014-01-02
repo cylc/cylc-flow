@@ -43,8 +43,9 @@ class conditional_prerequisites(object):
         self.auto_label = 0
         self.excess_labels = []
         self.ict = ict
+        self.pre_initial_messages = []
 
-    def add( self, message, label = None ):
+    def add( self, message, label = None, pre_initial = False ):
         # Add a new prerequisite message in an UNSATISFIED state.
         if label:
             # TODO - autolabelling NOT USED? (and is broken because the
@@ -69,6 +70,9 @@ class conditional_prerequisites(object):
         m = re.match( self.__class__.TAG_RE, message )
         if m:
             self.target_tags.append( m.groups()[0] )
+        if pre_initial:
+            self.pre_initial_messages.append(label)
+            print "Message:", message
 
     def get_not_satisfied_list( self ):
         not_satisfied = []
@@ -94,9 +98,18 @@ class conditional_prerequisites(object):
                     except IndexError:
                         pass
 
+        if self.pre_initial_messages:
+            for k in self.pre_initial_messages:
+                drop_these.append(k)
+        print "Drop: ", drop_these
+
+        print expr
+
         if drop_these:
             simpler = conditional_simplifier(expr, drop_these)
             expr = simpler.get_cleaned()
+
+        print expr
 
         # make into a python expression
         self.raw_conditional_expression = expr

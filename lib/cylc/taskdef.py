@@ -198,7 +198,13 @@ class taskdef(object):
                     # in which case cyc.valid( at(sself.tag)) will fail.
                     if trig.async_repeating:
                         lp.add( trig.get( tag, cyc ))
-                    else:
+                    elif trig.evaluation_offset is not None:
+                        if self.ict is not None and (int(tag) - int(trig.evaluation_offset)) >= int(self.ict):
+                            if trig.suicide:
+                                sp.add( trig.get( tag, cyc ))
+                            else:
+                                pp.add( trig.get( tag, cyc))
+                    elif trig.evaluation_offset is None:
                         if trig.suicide:
                             sp.add( trig.get( tag, cyc ))
                         else:
@@ -222,7 +228,11 @@ class taskdef(object):
                     cp = conditional_prerequisites( sself.id, self.ict )
                     for label in ctrig:
                         trig = ctrig[label]
-                        cp.add( trig.get( tag, cyc ), label )
+                        if self.ict is not None and trig.evaluation_offset is not None:
+                            cp.add( trig.get( tag, cyc ), label, 
+                                    (int(tag) - int(trig.evaluation_offset)) < int(self.ict))
+                        else:
+                            cp.add( trig.get( tag, cyc ), label )
                     cp.set_condition( exp )
                     if ctrig[foo].suicide:
                         sself.suicide_prerequisites.add_requisites( cp )
