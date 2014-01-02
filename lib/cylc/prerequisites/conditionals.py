@@ -72,7 +72,6 @@ class conditional_prerequisites(object):
             self.target_tags.append( m.groups()[0] )
         if pre_initial:
             self.pre_initial_messages.append(label)
-            print "Message:", message
 
     def get_not_satisfied_list( self ):
         not_satisfied = []
@@ -101,15 +100,10 @@ class conditional_prerequisites(object):
         if self.pre_initial_messages:
             for k in self.pre_initial_messages:
                 drop_these.append(k)
-        print "Drop: ", drop_these
-
-        print expr
 
         if drop_these:
             simpler = conditional_simplifier(expr, drop_these)
             expr = simpler.get_cleaned()
-
-        print expr
 
         # make into a python expression
         self.raw_conditional_expression = expr
