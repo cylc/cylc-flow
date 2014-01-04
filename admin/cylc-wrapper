@@ -6,7 +6,9 @@
 #_____________________________
 # INSTALLATION: 
 #
-#  1. Install this script as "cylc" in $PATH for normal users. 
+#  1. Install this script as "cylc" in $PATH for normal users, AND
+#  create a symlink gcylc -> cylc to allow continued use of "gcylc" for
+#  "cylc gui" under this framework.
 #
 #  2. Install cylc versions as described in the INSTALL file, e.g.:
 #     /home/admin/cylc/cylc-5.4.4/
