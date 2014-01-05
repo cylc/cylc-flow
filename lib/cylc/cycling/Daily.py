@@ -88,6 +88,12 @@ class Daily( cycler ):
             
         return foo.get()
 
+    def prev( self, T ):
+        """Subtract step days to T."""
+        foo = ct(T)
+        foo.decrement( days=self.step )
+        return foo.get()
+
     def next( self, T ):
         """Add step days to T."""
         foo = ct(T)

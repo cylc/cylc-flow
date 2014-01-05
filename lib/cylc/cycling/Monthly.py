@@ -129,8 +129,12 @@ class Monthly( cycler ):
 
         return add_months( ct( T ), rem ).get()[0:6] + self.DDHHmmss
 
+    def prev( self, T ):
+        """Subtract step months to get to the anniversary before T."""
+        return  sub_months( ct( T ), self.step).get()
+
     def next( self, T ):
-        """Add step months to get to the next anniversary after T."""
+        """Add step months to get to the anniversary after T."""
         return  add_months( ct( T ), self.step).get()
 
     def valid( self, current_date ):

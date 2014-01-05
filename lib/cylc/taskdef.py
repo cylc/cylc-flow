@@ -63,6 +63,7 @@ class taskdef(object):
         # some defaults
         self.intercycle = False
         self.intercycle_offset = 0
+        self.sequential = False
         self.cycling = False
         self.asyncid_pattern = None
         self.modifiers = []
@@ -181,6 +182,17 @@ class taskdef(object):
             pp = plain_prerequisites( sself.id, self.ict )
             sp = plain_prerequisites( sself.id, self.ict )
             lp = loose_prerequisites( sself.id, self.ict )
+
+            if self.sequential:
+                # For tasks declared 'sequential' we automatically add a
+                # previous-instance inter-cycle trigger, and adjust the
+                # cleanup cutoff (determined by inter-cycle triggers)
+                # accordingly.
+                pp.add( sself.name + '.' + sself.cycon.prev( sself.c_time ) + ' succeeded' )
+                next_inst_ct = sself.cycon.next( sself.c_time )
+                if int(sself.cleanup_cutoff) < int(next_inst_ct):
+                    sself.cleanup_cutoff = next_inst_ct
+
             for cyc in self.triggers:
                 for trig in self.triggers[ cyc ]:
                     if trig.startup and not startup:

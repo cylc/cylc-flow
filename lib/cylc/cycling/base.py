@@ -63,6 +63,11 @@ class cycler( object ):
         initial cycle time; subsequently next() ensures we stay valid."""
         raise CyclerOverrideError( "initial_adjust_up" )
 
+    def prev( self, T ):
+        """Return the cycle time prior to T. It may be assumed that T is
+        already on sequence."""
+        raise CyclerOverrideError( "next" )
+
     def next( self, T ):
         """Return the cycle time next in the sequence after T. It may 
         be assumed that T is already on sequence."""

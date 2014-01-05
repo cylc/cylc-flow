@@ -89,8 +89,24 @@ class HoursOfTheDay( cycler ):
                 incr = vh - rh
                 break
         if incr == None:
+            # rh is > last valid hour
             incr = 24 - rh + self.valid_hours[0]
         adjusted.increment( hours=incr )
+        return adjusted.get()
+
+    def adjust_dn( self, T ):
+        """Adjust T down to the next valid cycle time if not already valid."""
+        adjusted = ct( T )
+        rh = int(adjusted.hour)
+        decr = None
+        for vh in reversed(self.valid_hours):
+            if rh >= vh:
+                decr = rh - vh
+                break
+        if decr == None:
+            # vh is < first valid hour
+            decr = 24 + rh - self.valid_hours[-1]
+        adjusted.decrement( hours=decr )
         return adjusted.get()
 
     def next( self, T ):
@@ -101,6 +117,15 @@ class HoursOfTheDay( cycler ):
         bar = self.initial_adjust_up(foo.get())
         return bar
 
+    def prev( self, T ):
+        """Jump to the previous valid hour in the list."""
+        foo = ct(T)
+        # cheat: decrement one hour and then call adjust_dn()
+        foo.decrement(hours=1)
+        bar = self.adjust_dn(foo.get())
+        return bar
+
+
     def valid( self, CT ):
         """Return True if CT.hour is in my list of valid hours."""
         if int(CT.hour) in self.valid_hours:
@@ -110,21 +135,25 @@ class HoursOfTheDay( cycler ):
 
 if __name__ == "__main__":
     # UNIT TEST
+    import sys
 
     inputs = [ \
             ('0','12'), \
             ('0','6','12','18'), \
             ('3', '6','9','12', '15', '18'), \
+            ('3', '10','19'), \
             ('0', 'x')] 
+
+    ctin = sys.argv[1]
 
     for i in inputs:
         print i
         try:
             foo = HoursOfTheDay( *i )
-            print ' + next(2010080800):', foo.next('2010080800' )
-            print ' + initial_adjust_up(2010080823):', foo.initial_adjust_up( '2010080823' )
-            print ' + valid(2012080900):', foo.valid( ct('2012080900') )
-            print ' + valid(201108019):', foo.valid( ct('2011080819') )
+            print ' + prev, next:', foo.prev( ctin ), foo.next( ctin )
+            #print ' + initial_adjust_up(2010080823):', foo.initial_adjust_up( '2010080823' )
+            #print ' + valid(2012080900):', foo.valid( ct('2012080900') )
+            #print ' + valid(201108019):', foo.valid( ct('2011080819') )
         except Exception, x:
             print ' !', x
 

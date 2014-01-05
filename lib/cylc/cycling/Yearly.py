@@ -107,8 +107,12 @@ class Yearly( cycler ):
 
         return T
 
+    def prev( self, T ):
+        """Subtract step years to get to the anniversary before T."""
+        return  sub_years( ct( T ), self.step).get()
+
     def next( self, T ):
-        """Add step years to get to the next anniversary after T."""
+        """Add step years to get to the anniversary after T."""
         return  add_years( ct( T ), self.step).get()
 
     def valid( self, current_date ):
