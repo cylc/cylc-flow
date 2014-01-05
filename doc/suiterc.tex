@@ -569,13 +569,8 @@ A list of member tasks, or task family names, to assign to this queue
 \subsubsection[{[[}special tasks{]]}]{[scheduling] $\rightarrow$ [[special tasks]]}
 
 This section is used to identify any tasks with several kinds of special
-behaviour. By default (i.e.\ non ``special'' behaviour) tasks submit (or
-queue) as soon as their prerequisites are satisfied, and they spawn a
-successor as soon as they enter the submitted state.\footnote{Spawning
-any earlier than this brings no advantage in terms of functional
-parallelism and would cause uncontrolled proliferation of waiting
-tasks.}  Family names used here are interpreted purely as shorthand for
-the list of all member tasks.
+behaviour. Family names can be used in special task lists as shorthand
+for listing all member tasks.
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
@@ -590,9 +585,23 @@ clock-triggered tasks will not constrain the suite at all until they
 catch up to the wall clock.
 
 \begin{myitemize}
-    \item {\em type:} list of tasknames with offsets (hours, positive or negative)
+    \item {\em type:} list of task or family names with offsets (hours, positive or negative)
     \item {\em default:} (none)
     \item {\em example:} \lstinline@clock-triggered = foo(1.5), bar(2.25)@
+\end{myitemize}
+
+\paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}
+
+Sequential tasks are automatically given dependence on their own
+predecessor. This is equivalent to use of explicit inter-cycle triggers
+in the graph, except that the automatic version does not show in suite
+graph visualization. For more on sequential tasks see
+Sections~\ref{SequentialTasks} and~\ref{LimitPID}.
+
+\begin{myitemize}
+    \item {\em type:} list of task or family names
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@sequential = foo, bar@
 \end{myitemize}
 
 \paragraph[start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ start-up}
@@ -606,7 +615,7 @@ cycling tasks, because the meaning of the conditional expression becomes
 undefined in subsequent cycles. 
 
 \begin{myitemize}
-    \item {\em type:} list of task names
+    \item {\em type:} list of task or family names
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -628,10 +637,9 @@ subsequent cycles so they must typically be used in OR'd conditional
 expressions to avoid holding up the suite.
 
 \begin{myitemize}
-    \item {\em type:} list of task names
+    \item {\em type:} list of task or family names
     \item {\em default:} (none)
 \end{myitemize}
-
 
 \paragraph[one-off]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ one-off}
 
@@ -641,10 +649,9 @@ automatically one-off tasks and do not need to be listed here.
 Dependence on one-off tasks is not restricted to the first cycle.
 
 \begin{myitemize}
-\item {\em type:} list of task names
+\item {\em type:} list of task or family names
 \item {\em default:} (none)
 \end{myitemize}
-
 
 \paragraph[exclude at start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ exclude at start-up}
 \label{EASU}
@@ -658,7 +665,7 @@ removed from the suite dependency graph, in which case some manual
 triggering, or insertion of excluded tasks, may be required.
 
 \begin{myitemize}
-    \item {\em type:} list of task names
+    \item {\em type:} list of task or family names
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -675,7 +682,7 @@ graph, in which case some manual triggering, or insertion of excluded
 tasks, may be required.
 
 \begin{myitemize}
-    \item {\em type:} list of task names
+    \item {\em type:} list of task or family names
     \item {\em default:} (none)
 \end{myitemize}
 
