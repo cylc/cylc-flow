@@ -103,6 +103,7 @@ final cycle time =
    include at start-up = 
    start-up = 
    one-off = 
+   sequential = 
    cold-start = 
    clock-triggered = 
    exclude at start-up = 

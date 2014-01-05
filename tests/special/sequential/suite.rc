@@ -1,0 +1,31 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 2 # minutes
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time   = 2010010118
+    [[special tasks]]
+        sequential = "foo"
+    [[dependencies]]
+        graph = "monitor"
+        [[[0,6,12,18]]]
+            graph = "monitor:start => foo"
+[runtime]
+    [[foo]]
+        command scripting = sleep 10
+    [[monitor]]
+        command scripting = """
+        while true; do
+            sleep 1
+            RUNNING=$(sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'running'") || RUNNING=0
+            if ((RUNNING>1)); then
+                false
+            fi
+            sleep 1
+            FINISHED=$(sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'succeeded'") || FINISHED=0
+            if ((FINISHED==4)); then
+                break
+            fi
+        done
+"""
