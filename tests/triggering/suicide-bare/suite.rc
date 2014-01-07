@@ -1,0 +1,5 @@
+# should fail validation
+[scheduling]
+    [[dependencies]]
+        graph = "foo => !bar"
+
