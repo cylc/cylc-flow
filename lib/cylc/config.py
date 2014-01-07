@@ -1652,8 +1652,7 @@ class config( object ):
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
 
-        if name in self.cfg['scheduling']['special tasks']['sequential']:
-            taskd.sequential = True
+        taskd.sequential = name in self.cfg['scheduling']['special tasks']['sequential']
 
         foo = copy(self.runtime['linearized ancestors'][ name ])
         foo.reverse()

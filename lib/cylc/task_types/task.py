@@ -1175,10 +1175,7 @@ class task( object ):
         if self.has_spawned():
             # (note that oneoff tasks pretend to have spawned already)
             return False
-        if self.state.is_currently('submitted', 'running', 'succeeded', 'failed'):
-            return True
-        else:
-            return False
+        return self.state.is_currently('submitted', 'running', 'succeeded', 'failed')
 
     def done( self ):
         # return True if task has succeeded and spawned
