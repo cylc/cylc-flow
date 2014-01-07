@@ -1,0 +1,29 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+       expected task failures = bar.2010080900
+
+[scheduling]
+    initial cycle time = 2010080800
+    final cycle time = 2010080900
+    [[dependencies]]
+        [[[0]]]
+            graph = """foo[T-24]:restart1 | bar => foo
+                       foo => !bar"""
+[runtime]
+    [[foo]]
+        command scripting = """
+sleep 1
+cylc message "restart files ready for $(cylc cycletime --offset-hours=24 )"
+sleep 1"""
+        [[[outputs]]]
+            restart1 = "restart files ready for [T+24]"
+    [[bar]]
+        command scripting = """
+                            if (($(cylc cycletime)==2010080800)); then
+                                true
+                            else
+                                false
+                            fi
+                            """

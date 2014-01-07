@@ -1,0 +1,78 @@
+2014/01/02 15:46:52 INFO - Thread-2 start (Event Handlers)
+2014/01/02 15:46:52 INFO - Thread-3 start (Poll & Kill Commands)
+2014/01/02 15:46:52 INFO - port:7766
+2014/01/02 15:46:52 INFO - Suite starting at 2014-01-02 15:46:52.643982
+2014/01/02 15:46:52 INFO - Log event clock: real time
+2014/01/02 15:46:52 INFO - Run mode: live
+2014/01/02 15:46:52 INFO - Start tag: 2010080800
+2014/01/02 15:46:52 INFO - Stop tag: 2010080900
+2014/01/02 15:46:52 INFO - Thread-4 start (Job Submission)
+2014/01/02 15:46:52 INFO - Thread-5 start (Request Handling)
+2014/01/02 15:46:52 INFO - Cold Start 2010080800
+2014/01/02 15:46:52 DEBUG - [foo.2010080800] -task proxy added to the pool
+2014/01/02 15:46:52 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:46:52 DEBUG - [foo.2010080800] -(setting:queued)
+2014/01/02 15:46:52 DEBUG - 1 task(s) ready
+2014/01/02 15:46:52 DEBUG - [foo.2010080800] -(setting:ready)
+2014/01/02 15:46:52 INFO - [foo.2010080800] -triggered off []
+2014/01/02 15:46:52 DEBUG - END TASK PROCESSING (took 0.005415 sec)
+2014/01/02 15:46:53 DEBUG - Job Submission batch 1/1 (1 members):
+2014/01/02 15:46:53 INFO - [foo.2010080800] -(current:ready)> foo.2010080800 submitting now
+2014/01/02 15:46:53 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.212683
+  All 1 items succeeded
+2014/01/02 15:46:54 INFO - [foo.2010080800] -(current:ready)> foo.2010080800 submission succeeded
+2014/01/02 15:46:54 DEBUG - [foo.2010080800] -(setting:submitted)
+2014/01/02 15:46:54 INFO - [foo.2010080800] -(current:submitted)> foo.2010080800 submit_method_id=19791
+2014/01/02 15:46:54 INFO - [foo.2010080800] -(current:submitted)> foo.2010080800 started at 2014-01-02T15:46:54
+2014/01/02 15:46:54 DEBUG - [foo.2010080800] -(setting:running)
+2014/01/02 15:46:55 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:46:55 DEBUG - [foo.2010080800] -forced spawning
+2014/01/02 15:46:55 DEBUG - [foo.2010080900] -task proxy added to the pool
+2014/01/02 15:46:55 DEBUG - END TASK PROCESSING (took 0.006086 sec)
+2014/01/02 15:46:56 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:46:56 DEBUG - END TASK PROCESSING (took 0.002516 sec)
+2014/01/02 15:46:56 INFO - [foo.2010080800] -(current:running)> restart files ready for 2010080900 at 2014-01-02T15:46:55
+2014/01/02 15:46:56 DEBUG - [foo.2010080800] -(current:running) unhandled: restart files ready for 2010080900
+2014/01/02 15:46:57 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:46:57 DEBUG - [foo.2010080900] -(setting:queued)
+2014/01/02 15:46:57 DEBUG - 1 task(s) ready
+2014/01/02 15:46:57 DEBUG - [foo.2010080900] -(setting:ready)
+2014/01/02 15:46:57 INFO - [foo.2010080900] -triggered off ['foo.2010080800']
+2014/01/02 15:46:57 DEBUG - END TASK PROCESSING (took 0.004776 sec)
+2014/01/02 15:46:57 INFO - [foo.2010080800] -(current:running)> foo.2010080800 succeeded at 2014-01-02T15:46:57
+2014/01/02 15:46:57 DEBUG - [foo.2010080800] -(setting:succeeded)
+2014/01/02 15:46:57 DEBUG - Job Submission batch 1/1 (1 members):
+2014/01/02 15:46:58 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.311013
+  All 1 items succeeded
+2014/01/02 15:46:58 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:46:58 DEBUG - [foo.2010080800] -task proxy removed
+2014/01/02 15:46:58 DEBUG - END TASK PROCESSING (took 0.004115 sec)
+2014/01/02 15:46:58 INFO - [foo.2010080900] -(current:ready)> foo.2010080900 submitting now
+2014/01/02 15:46:58 INFO - [foo.2010080900] -(current:ready)> foo.2010080900 submission succeeded
+2014/01/02 15:46:58 DEBUG - [foo.2010080900] -(setting:submitted)
+2014/01/02 15:46:58 INFO - [foo.2010080900] -(current:submitted)> foo.2010080900 submit_method_id=19996
+2014/01/02 15:46:58 INFO - [foo.2010080900] -(current:submitted)> foo.2010080900 started at 2014-01-02T15:46:58
+2014/01/02 15:46:58 DEBUG - [foo.2010080900] -(setting:running)
+2014/01/02 15:46:59 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:46:59 DEBUG - [foo.2010080900] -forced spawning
+2014/01/02 15:46:59 DEBUG - [foo.2010081000] -HOLDING (beyond suite stop cycle) 2010080900
+2014/01/02 15:46:59 DEBUG - [foo.2010081000] -(setting:held)
+2014/01/02 15:46:59 DEBUG - [foo.2010081000] -task proxy added to the pool
+2014/01/02 15:46:59 DEBUG - END TASK PROCESSING (took 0.006899 sec)
+2014/01/02 15:47:00 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:47:00 DEBUG - END TASK PROCESSING (took 0.002245 sec)
+2014/01/02 15:47:00 INFO - [foo.2010080900] -(current:running)> restart files ready for 2010081000 at 2014-01-02T15:47:00
+2014/01/02 15:47:00 DEBUG - [foo.2010080900] -(current:running) unhandled: restart files ready for 2010081000
+2014/01/02 15:47:01 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:47:01 DEBUG - END TASK PROCESSING (took 0.002431 sec)
+2014/01/02 15:47:01 INFO - [foo.2010080900] -(current:running)> foo.2010080900 succeeded at 2014-01-02T15:47:01
+2014/01/02 15:47:01 DEBUG - [foo.2010080900] -(setting:succeeded)
+2014/01/02 15:47:01 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2010080900
+2014/01/02 15:47:02 INFO - Thread-4 exit (Job Submission)
+2014/01/02 15:47:02 INFO - Thread-2 exit (Event Handlers)
+2014/01/02 15:47:02 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/01/02 15:47:02 DEBUG - BEGIN TASK PROCESSING
+2014/01/02 15:47:02 DEBUG - END TASK PROCESSING (took 0.002185 sec)
