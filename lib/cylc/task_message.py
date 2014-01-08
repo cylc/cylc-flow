@@ -205,6 +205,7 @@ class message(object):
 
 
     def send_pyro( self, msg ):
+        from Pyro.errors import NamingError
         sent = False
         itry = 0
         while True:
@@ -213,7 +214,17 @@ class message(object):
                 # Get a proxy for the remote object and send the message.
                 self.load_suite_contact_file() # might have change between tries
                 self.get_proxy().put( self.priority, msg )
+            except NamingError, x:
+                print >> sys.stderr, x
+                print "Send message: try %s of %s failed: %s" % (
+                    itry,
+                    self.max_tries,
+                    x
+                )
+                print "Task proxy removed from suite daemon? Aborting."
+                break
             except Exception, x:
+                print >> sys.stderr, x
                 print "Send message: try %s of %s failed: %s" % (
                     itry,
                     self.max_tries,

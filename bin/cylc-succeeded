@@ -33,7 +33,7 @@ which case it must be called explicitly by final task scripting.
 
 Suite and task identity are determined from the task execution
 environment supplied by the suite (or by the single task 'submit'
-command, in which case case the message is just printed to stdout).
+command, in which case the message is just printed to stdout).
 
 See also:
     cylc [task] message
