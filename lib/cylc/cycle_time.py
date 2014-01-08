@@ -168,8 +168,14 @@ def memoize(function):
 @memoize
 def ctime_cmp(ctime_str_1, ctime_str_2):
     """Compare (cmp) two cycle time strings numerically."""
-    ctime_1 = ct(ctime_str_1).get()
-    ctime_2 = ct(ctime_str_2).get()
+    try:
+        ctime_1 = ct(ctime_str_1).get()
+    except InvalidCycleTimeError:
+        ctime_1 = ctime_str_1
+    try:
+        ctime_2 = ct(ctime_str_2).get()
+    except InvalidCycleTimeError:
+        ctime_2 = ctime_str_2
     return cmp(int(ctime_1), int(ctime_2))
 
 
