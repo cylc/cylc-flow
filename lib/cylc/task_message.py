@@ -203,7 +203,6 @@ class message(object):
         self.print_msg( msg )
         self.send_pyro( msg )
 
-
     def send_pyro( self, msg ):
         from Pyro.errors import NamingError
         sent = False
@@ -238,7 +237,7 @@ class message(object):
                 )
                 sleep( self.retry_seconds )
             else:
-                if itry > 0:
+                if itry > 1:
                     print "Send message: try %s of %s succeeded" % (
                         itry,
                         self.max_tries
