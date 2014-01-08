@@ -3,7 +3,7 @@ title = "Hello, Goodbye, Suicide"
     [[dependencies]]
         graph = """hello => goodbye
            goodbye:fail => really_goodbye
-           goodbye => !ready_goodbye
+           goodbye => !really_goodbye
            really_goodbye => !goodbye"""
 [runtime]
     [[hello]]
