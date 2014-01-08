@@ -1,54 +1,34 @@
-2013/10/06 23:33:50 INFO - Thread-2 start (Event Handler Submission)
-2013/10/06 23:33:50 INFO - Thread-3 start (Poll and Kill Command Submission)
-2013/10/06 23:33:50 INFO - port:7766
-2013/10/06 23:33:50 INFO - Suite starting at 2013-10-06 23:33:50.156551
-2013/10/06 23:33:50 INFO - Log event clock: real time
-2013/10/06 23:33:50 INFO - Run mode: live
-2013/10/06 23:33:50 INFO - Start tag: None
-2013/10/06 23:33:50 INFO - Stop tag: None
-2013/10/06 23:33:50 INFO - Thread-4 start (Job Submission)
-2013/10/06 23:33:50 INFO - Thread-5 start (Request Handling)
-2013/10/06 23:33:50 INFO - [ready_goodbye.1] -(setting:submitting)
-2013/10/06 23:33:50 INFO - [hello.1] -(setting:submitting)
-2013/10/06 23:33:50 INFO - [ready_goodbye.1] -triggered off []
-2013/10/06 23:33:50 INFO - [hello.1] -triggered off []
-2013/10/06 23:33:51 INFO - [ready_goodbye.1] -(current:submitting)> ready_goodbye.1 submitting now
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:submitting)> ready_goodbye.1 submission succeeded
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(setting:submitted)
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:submitted)> ready_goodbye.1 submit_method_id=3164
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:submitted)> ready_goodbye.1 started at 2013-10-06T23:33:51
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(setting:running)
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(current:running)> ready_goodbye.1 succeeded at 2013-10-06T23:33:51
-2013/10/06 23:33:52 INFO - [ready_goodbye.1] -(setting:succeeded)
-2013/10/06 23:33:52 INFO - [hello.1] -(current:submitting)> hello.1 submitting now
-2013/10/06 23:33:52 INFO - [hello.1] -(current:submitting)> hello.1 started at 2013-10-06T23:33:51
-2013/10/06 23:33:52 INFO - [hello.1] -(setting:running)
-2013/10/06 23:33:52 INFO - [hello.1] -(current:running)> hello.1 succeeded at 2013-10-06T23:33:51
-2013/10/06 23:33:52 INFO - [hello.1] -(setting:succeeded)
-2013/10/06 23:33:52 WARNING - [hello.1] -Assuming non-reported outputs were completed:
-hello.1 submitted
-2013/10/06 23:33:52 INFO - [goodbye.1] -(setting:submitting)
-2013/10/06 23:33:52 INFO - [goodbye.1] -triggered off ['hello.1']
-2013/10/06 23:33:53 INFO - [hello.1] -(current:succeeded)> hello.1 submission succeeded
-2013/10/06 23:33:53 INFO - [hello.1] -(current:succeeded)> hello.1 submit_method_id=3189
-2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitting)> goodbye.1 submitting now
-2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitting)> goodbye.1 submission succeeded
-2013/10/06 23:33:55 INFO - [goodbye.1] -(setting:submitted)
-2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitted)> goodbye.1 submit_method_id=3251
-2013/10/06 23:33:55 INFO - [goodbye.1] -(current:submitted)> goodbye.1 started at 2013-10-06T23:33:54
-2013/10/06 23:33:55 INFO - [goodbye.1] -(setting:running)
-2013/10/06 23:33:55 CRITICAL - [goodbye.1] -(current:running)> Task job script received signal ERR at 2013-10-06T23:33:54
-2013/10/06 23:33:55 CRITICAL - [goodbye.1] -(current:running)> goodbye.1 failed at 2013-10-06T23:33:54
-2013/10/06 23:33:55 INFO - [goodbye.1] -(setting:failed)
-2013/10/06 23:33:55 INFO - [really_goodbye.1] -(setting:submitting)
-2013/10/06 23:33:55 INFO - [really_goodbye.1] -triggered off ['goodbye.1']
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitting)> really_goodbye.1 submitting now
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitting)> really_goodbye.1 submission succeeded
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(setting:submitted)
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitted)> really_goodbye.1 submit_method_id=3295
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:submitted)> really_goodbye.1 started at 2013-10-06T23:33:56
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(setting:running)
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(current:running)> really_goodbye.1 succeeded at 2013-10-06T23:33:56
-2013/10/06 23:33:57 INFO - [really_goodbye.1] -(setting:succeeded)
-2013/10/06 23:33:58 INFO - All non-cycling tasks have succeeded
-2013/10/06 23:33:58 INFO - Suite shutting down at 2013-10-06 23:33:58.194901
+2014/01/08 10:04:17 INFO - Thread-2 start (Event Handlers)
+2014/01/08 10:04:17 INFO - Thread-3 start (Poll & Kill Commands)
+2014/01/08 10:04:17 INFO - port:7766
+2014/01/08 10:04:17 INFO - Suite starting at 2014-01-08 10:04:17.657578
+2014/01/08 10:04:17 INFO - Log event clock: real time
+2014/01/08 10:04:17 INFO - Run mode: live
+2014/01/08 10:04:17 INFO - Start tag: None
+2014/01/08 10:04:17 INFO - Stop tag: None
+2014/01/08 10:04:17 INFO - Thread-4 start (Job Submission)
+2014/01/08 10:04:17 INFO - Thread-5 start (Request Handling)
+2014/01/08 10:04:17 INFO - [hello.1] -triggered off []
+2014/01/08 10:04:18 INFO - [hello.1] -(current:ready)> hello.1 submitting now
+2014/01/08 10:04:19 INFO - [hello.1] -(current:ready)> hello.1 submission succeeded
+2014/01/08 10:04:19 INFO - [hello.1] -(current:submitted)> hello.1 submit_method_id=23632
+2014/01/08 10:04:19 INFO - [hello.1] -(current:submitted)> hello.1 started at 2014-01-08T10:04:19
+2014/01/08 10:04:29 INFO - [hello.1] -(current:running)> hello.1 succeeded at 2014-01-08T10:04:29
+2014/01/08 10:04:30 INFO - [goodbye.1] -triggered off ['hello.1']
+2014/01/08 10:04:31 INFO - [goodbye.1] -(current:ready)> goodbye.1 submitting now
+2014/01/08 10:04:31 INFO - [goodbye.1] -(current:ready)> goodbye.1 submission succeeded
+2014/01/08 10:04:31 INFO - [goodbye.1] -(current:submitted)> goodbye.1 submit_method_id=23674
+2014/01/08 10:04:31 INFO - [goodbye.1] -(current:submitted)> goodbye.1 started at 2014-01-08T10:04:31
+2014/01/08 10:04:42 CRITICAL - [goodbye.1] -(current:running)> Task job script received signal ERR at 2014-01-08T10:04:42
+2014/01/08 10:04:42 CRITICAL - [goodbye.1] -(current:running)> goodbye.1 failed at 2014-01-08T10:04:42
+2014/01/08 10:04:44 INFO - [really_goodbye.1] -triggered off ['goodbye.1']
+2014/01/08 10:04:45 INFO - [really_goodbye.1] -(current:ready)> really_goodbye.1 submitting now
+2014/01/08 10:04:45 INFO - [really_goodbye.1] -(current:ready)> really_goodbye.1 submission succeeded
+2014/01/08 10:04:45 INFO - [really_goodbye.1] -(current:submitted)> really_goodbye.1 submit_method_id=23722
+2014/01/08 10:04:45 INFO - [really_goodbye.1] -(current:submitted)> really_goodbye.1 started at 2014-01-08T10:04:44
+2014/01/08 10:04:52 INFO - [really_goodbye.1] -(current:running)> really_goodbye.1 succeeded at 2014-01-08T10:04:51
+2014/01/08 10:04:53 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/01/08 10:04:53 INFO - Thread-4 exit (Job Submission)
+2014/01/08 10:04:53 INFO - Thread-2 exit (Event Handlers)
+2014/01/08 10:04:53 INFO - Thread-3 exit (Poll & Kill Commands)

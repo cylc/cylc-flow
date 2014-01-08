@@ -1650,6 +1650,10 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
+                    if itask.state.is_currently('ready', 'submitted', 'running'):
+                        itask.log( 'WARNING', 'suiciding while active' )
+                    else:
+                        itask.log( 'NORMAL', 'suiciding' )
                     self.force_spawn( itask )
                     self.pool.remove( itask, 'suicide' )
 
