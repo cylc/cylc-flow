@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2013-12-21 13:52:00"> 
+<meta name="date" content="2014-01-10 09:26:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -186,9 +186,8 @@ explicit path to your home directory; and similarly for temporary directories, e
 copy the suite and run it immediately, after merely ensuring that any external input files are in the right
 place.
 <!--l. 5945--><p class="indent" >   For the ultimate in portability, construct suites in which all task I/O paths are dynamically configured to be user
-and suite (registration) specific, e.g. <!--l. 5948--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+and suite (registration) specific, e.g. <!--l. 5948-->
+   <div class="lstlisting" id="listing-195"><span class="label"><a 
  id="x16-199001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -197,8 +196,7 @@ class="pcrr7t-">output</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_REG_PATH</span>
-
-
+   
    </div>
 <!--l. 5951--><p class="indent" >   (these variables are automatically exported to the task execution environment by cylc - see <span 
 class="cmti-10">Task Execution</span>
@@ -227,9 +225,8 @@ href="#fn7x0" id="fn7x0-bk"><sup class="textsuperscript">7</sup></a></span><a
 For example, every task should create its own output directories if they do not already exist, instead of assuming
 their existence due to the action of some other task; then you will be able to run single tasks without having to
 manually create output directories first.
-   <!--l. 5979--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 5979-->
+   <div class="lstlisting" id="listing-196"><span class="label"><a 
  id="x16-200002r1"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -436,8 +433,7 @@ class="pcrr7t-">OUTFILE2</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">...</span>
-
-
+   
    </div>
 <!--l. 5993--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">15.10   </span> <a 
@@ -524,9 +520,8 @@ to determine which variables matter to which tasks. Environment filters (Section
 href="cug-htmlse17.html#x18-314000A.4.1.22">A.4.1.22<!--tex4ht:ref: EnvironmentFilter --></a>) can be used to make this
 safer, however.
 <!--l. 6094--><p class="indent" >   Finally, Jinja2 can also be used to avoid defining intermediate environment variables for the sole purpose of
-deriving other environment variables at task run time. Instead of this:  <!--l. 6098--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+deriving other environment variables at task run time. Instead of this:  <!--l. 6098-->
+   <div class="lstlisting" id="listing-197"><span class="label"><a 
  id="x16-205001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -636,12 +631,10 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">OUTPUT_DIR</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">bar</span>
-
-
+   
    </div>
-<!--l. 6108--><p class="indent" >   do this:  <!--l. 6110--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6108--><p class="indent" >   do this:  <!--l. 6110-->
+   <div class="lstlisting" id="listing-198"><span class="label"><a 
  id="x16-205009r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -730,16 +723,14 @@ class="pcrr7t-">OUTPUT_DIR</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">}}/</span><span 
 class="pcrr7t-">bar</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
 <!--l. 6119--><p class="indent" >   If the values of these Jinja2 variables are needed in external scripts, just translate them directly in environment
-sections:  <!--l. 6122--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+sections:  <!--l. 6122-->
+   <div class="lstlisting" id="listing-199"><span class="label"><a 
  id="x16-205015r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -767,8 +758,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">OUTPUT_DIR</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">}}</span>
-
-
+   
    </div>
 <!--l. 6128--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">15.15   </span> <a 
@@ -776,9 +766,8 @@ class="pcrr7t-">}}</span>
 <!--l. 6130--><p class="noindent" >If you find yourself writing runtime scripting to get a task to change its behaviour significantly from one cycle to the
 next, consider that the graph is usually the proper place to express this sort of thing. Use different task names, but
 have them inherit common properties from a family namespace to avoid duplication. Instead of this:
-<!--l. 6137--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6137-->
+   <div class="lstlisting" id="listing-200"><span class="label"><a 
  id="x16-206001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -868,7 +857,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206008r8"></a></span></span><span 
+ id="x16-206008r8"></a></span><span 
 class="pcrr7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
@@ -895,7 +884,7 @@ class="pcrr7t-">||</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206009r9"></a></span></span><span 
+ id="x16-206009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -924,7 +913,7 @@ class="pcrr7t-">]];</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206010r10"></a></span></span><span 
+ id="x16-206010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -941,10 +930,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">fox</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206011r11"></a></span></span><span 
+ id="x16-206011r11"></a></span><span 
 class="pcrr7t-">else</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206012r12"></a></span></span><span 
+ id="x16-206012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -959,10 +948,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">dog</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206013r13"></a></span></span><span 
+ id="x16-206013r13"></a></span><span 
 class="pcrr7t-">fi</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206014r14"></a></span></span><span 
+ id="x16-206014r14"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
@@ -987,12 +976,10 @@ class="pcrro7t-">other</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">config</span><span 
 class="pcrro7t-">...)</span>
-
-
+   
    </div>
-<!--l. 6154--><p class="indent" >   do this:  <!--l. 6156--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6154--><p class="indent" >   do this:  <!--l. 6156-->
+   <div class="lstlisting" id="listing-201"><span class="label"><a 
  id="x16-206016r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -1270,8 +1257,7 @@ class="pcrr7t-">lazy</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">dog</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 6177--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">15.16   </span> <a 
@@ -1282,9 +1268,8 @@ class="cmti-10">first parents </span>in the runtime namespace hierarchy. Tasks s
 families that reflect their purpose within the structure of the suite rather than technical detail such as common job
 submission method or task host. This often coincides nicely with common configuration inheritance
 requirements, but if it doesn&#8217;t you can use an empty namespace as a first parent for visualization:
-<!--l. 6189--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6189-->
+   <div class="lstlisting" id="listing-202"><span class="label"><a 
  id="x16-207001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1328,12 +1313,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">OBSPROC</span>
-
-
+   
    </div>
-<!--l. 6195--><p class="indent" >   and you can demote parents from primary to secondary:  <!--l. 6197--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6195--><p class="indent" >   and you can demote parents from primary to secondary:  <!--l. 6197-->
+   <div class="lstlisting" id="listing-203"><span class="label"><a 
  id="x16-207005r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1399,8 +1382,7 @@ class="pcrr7t-">None</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">HOSTX</span>
-
-
+   
    </div>
                                                                                          
 
