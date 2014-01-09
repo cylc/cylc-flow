@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.7">5.4.7</a></li>
 		<li><a href="#5.4.6">5.4.6</a></li>
 		<li><a href="#5.4.5">5.4.5</a></li>
 		<li><a href="#5.4.4">5.4.4</a></li>
@@ -38,6 +39,29 @@
 <p>This pages mainly lists major enhancements and bug fixes. Selected minor
 bug fixes and changes may also be listed - for all changes see the
 cylc git repository change log.</p>
+
+<a name="5.4.7"/>
+		<h2>5.4.7</h2>
+
+		<ul>
+				<li>Fixed a bug introduced in 5.4.5 that prevents releasing a
+				held suite with asynchronous (non-cycling) tasks that have not
+				run yet (e.g. with use of <code>cylc run --hold</code>)</li>
+
+				<li>Task messaging does not bother retrying if the corresponding
+				task proxy has been removed from the suite.</li>
+
+				<li>Suicide triggering is now logged like other triggering
+				events.</li>
+
+				<li>A warning is logged if an active task suicides.</li>
+
+				<li>Fixed an error in the suicide trigger tutorial suite.</li>
+
+				<li>Pre-initial-cycle triggers are now ignored for
+				message-output triggers.</li>
+		</ul>
+	
 
 <a name="5.4.6"/>
 		<h2>5.4.6</h2>
