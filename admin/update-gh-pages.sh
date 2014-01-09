@@ -7,7 +7,7 @@ function usage {
 cat <<eof
 USAGE update-gh-pages.sh [-p] "COMMIT MESSAGE" [VERSION]
 
-Check out gh-pages, update its files from doc/ in master branch, and
+Check out gh-pages, update its files FROM DOC/ IN MASTER BRANCH, and
 then optionally [-p] push to the cylc repository on github. VERSION 
 can be used to optionally override the version string returned by
 git-describe (e.g. for small index.html updates).
@@ -66,7 +66,7 @@ cp $TMPD/html/single/*.{css,html} html/single/
 cp $TMPD/html/multi/*.{css,html} html/multi/
 cp $TMPD/graphics/png/scaled/* graphics/png/scaled/
 # substitute latest version number in the homepage
-perl -pi -e "s@(Current Version:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> ($( date +%F )) \2@" index.html
+perl -pi -e "s@(Latest Release:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> ($( date +%F )) \2@" index.html
 
 # in case new files were added:
 git add graphics/png/scaled/
