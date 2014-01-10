@@ -1,0 +1,31 @@
+
+title = "hold/release test suite"
+
+description = """One task that holds then releases the suite, with
+short sleeps to make the effect on the downstream task obvious in the
+GUI (waiting to held to waiting)"""
+
+# ref: bug-fix GitHub Pull Request #843 (5412d01)
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.5
+
+[scheduling]
+    initial cycle time = 2014010100
+    final cycle time   = 2014010100
+    [[dependencies]]
+        graph = "holdrelease => foo"
+        [[[0,6]]]
+            graph = "holdrelease => bar"
+[runtime]
+    [[holdrelease]]
+        command scripting = """
+sleep 5
+cylc hold $CYLC_SUITE_NAME
+sleep 5
+cylc release $CYLC_SUITE_NAME
+sleep 5"""
+    [[foo,bar]]
+        command scripting = true
+

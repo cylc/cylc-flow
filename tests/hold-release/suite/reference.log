@@ -1,0 +1,41 @@
+2014/01/10 08:41:32 INFO - Thread-2 start (Event Handlers)
+2014/01/10 08:41:32 INFO - port:7766
+2014/01/10 08:41:32 INFO - Suite starting at 2014-01-10 08:41:32.557075
+2014/01/10 08:41:32 INFO - Log event clock: real time
+2014/01/10 08:41:32 INFO - Run mode: live
+2014/01/10 08:41:32 INFO - Start tag: 2014010100
+2014/01/10 08:41:32 INFO - Stop tag: 2014010100
+2014/01/10 08:41:32 INFO - Thread-3 start (Poll & Kill Commands)
+2014/01/10 08:41:32 INFO - Thread-5 start (Request Handling)
+2014/01/10 08:41:32 INFO - Thread-4 start (Job Submission)
+2014/01/10 08:41:32 INFO - Cold Start 2014010100
+2014/01/10 08:41:32 INFO - [holdrelease.1] -triggered off []
+2014/01/10 08:41:33 INFO - [holdrelease.1] -(current:ready)> holdrelease.1 submitting now
+2014/01/10 08:41:34 INFO - [holdrelease.1] -(current:ready)> holdrelease.1 submission succeeded
+2014/01/10 08:41:34 INFO - [holdrelease.1] -(current:submitted)> holdrelease.1 submit_method_id=56971
+2014/01/10 08:41:34 INFO - [holdrelease.1] -(current:submitted)> holdrelease.1 started at 2014-01-10T08:41:33
+2014/01/10 08:41:39 INFO - Holding all waiting or queued tasks now
+2014/01/10 08:41:39 INFO - Command succeeded: hold suite now()
+2014/01/10 08:41:44 INFO - RELEASE: new tasks will be queued when ready
+2014/01/10 08:41:44 INFO - Command succeeded: release suite()
+2014/01/10 08:41:49 INFO - [holdrelease.1] -(current:running)> holdrelease.1 succeeded at 2014-01-10T08:41:49
+2014/01/10 08:41:50 INFO - [foo.1] -triggered off ['holdrelease.1']
+2014/01/10 08:41:50 INFO - [bar.2014010100] -triggered off ['holdrelease.1']
+2014/01/10 08:41:51 INFO - [foo.1] -(current:ready)> foo.1 submitting now
+2014/01/10 08:41:51 INFO - [foo.1] -(current:ready)> foo.1 submission succeeded
+2014/01/10 08:41:51 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=57051
+2014/01/10 08:41:51 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-01-10T08:41:51
+2014/01/10 08:41:51 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-01-10T08:41:51
+2014/01/10 08:41:51 INFO - [bar.2014010100] -(current:ready)> bar.2014010100 submitting now
+2014/01/10 08:41:51 INFO - [bar.2014010100] -(current:ready)> bar.2014010100 started at 2014-01-10T08:41:51
+2014/01/10 08:41:52 INFO - [bar.2014010100] -(current:running)> bar.2014010100 succeeded at 2014-01-10T08:41:51
+2014/01/10 08:41:52 WARNING - [bar.2014010100] -Assuming non-reported outputs were completed:
+bar.2014010100 submitted
+2014/01/10 08:41:52 INFO - [bar.2014010100] -(current:succeeded)> bar.2014010100 submission succeeded
+2014/01/10 08:41:52 INFO - [bar.2014010100] -(current:succeeded)> bar.2014010100 submit_method_id=57075
+2014/01/10 08:41:52 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2014010100
+  + all non-cycling tasks have succeeded
+2014/01/10 08:41:53 INFO - Thread-4 exit (Job Submission)
+2014/01/10 08:41:53 INFO - Thread-2 exit (Event Handlers)
+2014/01/10 08:41:53 INFO - Thread-3 exit (Poll & Kill Commands)
