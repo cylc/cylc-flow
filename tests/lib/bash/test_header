@@ -46,6 +46,10 @@
 #         is set, show differences using xxdiff.
 #     grep_ok PATTERN FILE
 #         Run "grep -q PATTERN FILE".
+#     exists_ok FILE
+#         Test that FILE exists
+#     exists_fail FILE
+#         Test that FILE does not exist
 #     init_suite SUITE_NAME
 #         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
 #     purge_suite SUITE_NAME
@@ -147,7 +151,6 @@ function suite_run_fail() {
     ok $TEST_NAME
 }
 
-
 function cmp_ok() {
     local FILE_TEST=$1
     local FILE_CONTROL=${2:--}
@@ -168,6 +171,26 @@ function grep_ok() {
     local FILE=$2
     local TEST_NAME=$(basename $FILE)-grep-ok
     if grep -q -e "$BRE" $FILE; then
+        ok $TEST_NAME
+        return
+    fi
+    fail $TEST_NAME
+}
+
+function exists_ok() {
+    local FILE=$1
+    local TEST_NAME=$(basename $FILE)-file-exists-ok
+    if [[ -a $FILE ]]; then
+        ok $TEST_NAME
+        return
+    fi
+    fail $TEST_NAME
+}
+
+function exists_fail() {
+    local FILE=$1
+    local TEST_NAME=$(basename $FILE)-file-exists-fail
+    if [[ ! -a $FILE ]]; then
         ok $TEST_NAME
         return
     fi
