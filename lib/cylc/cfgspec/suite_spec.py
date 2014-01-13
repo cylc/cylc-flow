@@ -236,9 +236,8 @@ def get_expand_nonrt( fpath, template_vars, template_vars_file,
 
         u = upgrader( cfg, SPEC, 'suite definition', verbose )
         u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
-        #u.obsolete( '5.5.7', ['scheduling','special tasks','sequential'] )
         # TODO - should abort if obsoleted items are encountered
-        u.obsolete( '5.5.7', ['scheduling','special tasks','explicit restart outputs'] )
+        u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
         u.upgrade()
 
         validate( cfg, SPEC )
