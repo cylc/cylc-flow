@@ -36,7 +36,8 @@ run_ok $TEST_NAME cylc get-global-config --print-run-dir
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-output
 VAL1=$(cylc get-global-config --item '[hosts][localhost]use login shell')
-VAL2=$(cylc get-global-config --print | grep "use login shell" |  sed -e 's/^[ \t]*//')
+VAL2=$(cylc get-global-config --print | sed -n '/\[\[localhost\]\]/,$p' | \
+    sed -n "0,/use login shell/s/^[ \t]*\(use login shell =.*\)/\1/p")
 echo use login shell = $VAL1 > testout
 echo $VAL2 > refout
 cmp_ok testout refout
