@@ -51,9 +51,12 @@ perl -pi -e 's@cylc.txt@../../cylc.txt@g' commands.tex
 perl -pi -e 's@\.\./README@../../../README@g' cug.tex
 perl -pi -e 's@\.\./INSTALL@../../../INSTALL@g' cug.tex
 
+# NOTE the 5th argument '-halt-on-error' is passed to the latex
+# compiler, but htlatex does not return error status if latex aborts.
+# This is ok for cylc test purposes as we run pdflatex before htlatex.
 if [[ $TYPE == multi ]]; then
-    htlatex cug-html.tex "cug-html.cfg,html,fn-in,2,next"
+    htlatex cug-html.tex "cug-html.cfg,html,fn-in,2,next" "" "" "-halt-on-error"
 else
-    htlatex cug-html.tex "cug-html.cfg,html,1,fn-in" ""
+    htlatex cug-html.tex "cug-html.cfg,html,1,fn-in" "" "" "-halt-on-error"
 fi
 

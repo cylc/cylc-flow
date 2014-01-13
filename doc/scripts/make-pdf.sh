@@ -46,7 +46,7 @@ perl -pi -e 's@\.\./README@../../README@g' cug.tex
 perl -pi -e 's@\.\./INSTALL@../../INSTALL@g' cug.tex
 
 # run pdflatex three times to resolve all cross-references
-pdflatex cug-pdf.tex
-pdflatex cug-pdf.tex
-pdflatex cug-pdf.tex
+pdflatex -halt-on-error cug-pdf.tex
+pdflatex -halt-on-error cug-pdf.tex
+pdflatex -halt-on-error cug-pdf.tex
 

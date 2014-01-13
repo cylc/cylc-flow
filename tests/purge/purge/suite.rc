@@ -20,9 +20,6 @@ title = "Cylc Admin Test Suite"
 
     [[special tasks]]
     start-up         = prep
-    # A, B, C must be sequential as we aren't handling restart
-    # dependencies explicitly (To Do: we should in this test suite)
-    sequential       = A, B, C
     cold-start       = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 
@@ -38,11 +35,9 @@ title = "Cylc Admin Test Suite"
       Warm[T-6]:succeed-all & Post[T-6]:succeed-all & X:fail => recover
       Warm:succeed-all & Post:succeed-all => !recover
     
-      # A must be cold started after a gap  
       ColdA | A[T-6] => A
-      # but B and C can jump a 24 hour gap
-      ColdB | B[T-6] | B[T-24] => B
-      ColdC | C[T-6] | C[T-24] => C
+      ColdB | B[T-6] => B
+      ColdC | C[T-6] => C
                     """
 [runtime]
     [[root]]
@@ -111,6 +106,11 @@ cylc insert -f $CYLC_SUITE_REG_NAME ColdA ${AT}
 # purge tasks that cannot run:
 TO=$( cylc cycletime --offset-hours=12 )
 cylc purge -f $CYLC_SUITE_REG_NAME X.$CYLC_TASK_CYCLE_TIME ${TO}
+# when the new A task is finished, trigger B and C manually
+# (they write out restart files to T+24)
+cylc suite-state $CYLC_SUITE_REG_NAME -t A -c $AT -S succeeded --interval=1 --max-polls=30
+cylc trigger $CYLC_SUITE_REG_NAME B $AT
+cylc trigger $CYLC_SUITE_REG_NAME C $AT
 echo DONE"""
 
 [visualization]

@@ -866,6 +866,9 @@ class config( object ):
             for name in self.cfg['scheduling']['special tasks'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
+                elif type == 'sequential':
+                    if name not in self.cycling_tasks:
+                        raise SuiteConfigError, 'ERROR: sequential tasks must be cycling tasks: ' + name
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
@@ -918,11 +921,6 @@ class config( object ):
                 tag = itask.next_tag()
                 if self.verbose:
                     print "  + " + itask.id + " ok"
-
-        # TODO - check that any multiple appearance of same task  in
-        # 'special tasks' is valid. E.g. a task can be both
-        # 'sequential' and 'clock-triggered' at the time, but not both
-        # 'model' and 'sequential' at the same time.
 
     def get_coldstart_task_list( self ):
         # TODO - automatically determine this by parsing the dependency graph?
@@ -1153,7 +1151,7 @@ class config( object ):
                 bad = []
                 for name in lnames + rights:
                     if name in spec['start-up'] or name in spec['cold-start'] or \
-                            name in spec['sequential'] or name in spec['one-off']:
+                            name in spec['one-off']:
                                 bad.append(name)
                 if len(bad) > 0:
                     print >> sys.stderr, orig_line
@@ -1652,21 +1650,12 @@ class config( object ):
                 name in self.cfg['scheduling']['special tasks']['start-up']:
             taskd.modifiers.append( 'oneoff' )
 
-        # SET SEQUENTIAL TASK INDICATOR
-        if name in self.cfg['scheduling']['special tasks']['sequential']:
-            taskd.modifiers.append( 'sequential' )
-
-        # SET MODEL TASK INDICATOR
-        # (TO DO - can we identify these tasks from the graph?)
-        elif name in self.cfg['scheduling']['special tasks']['explicit restart outputs']:
-            taskd.type = 'tied'
-        else:
-            taskd.type = 'free'
-
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:
             taskd.modifiers.append( 'clocktriggered' )
             taskd.clocktriggered_offset = self.clock_offsets[name]
+
+        taskd.sequential = name in self.cfg['scheduling']['special tasks']['sequential']
 
         foo = copy(self.runtime['linearized ancestors'][ name ])
         foo.reverse()

@@ -34,6 +34,9 @@ class async( cycler ):
     def get_min_cycling_interval( self ):
         return None
 
+    def prev( self, tag ):
+        return str( int(tag) - 1 )
+
     def next( self, tag ):
         return str( int(tag) + 1 )
 

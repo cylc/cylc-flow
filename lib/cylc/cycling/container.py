@@ -41,6 +41,13 @@ class cycon( object ):
         adjusted.sort()
         return adjusted[0]
 
+    def prev( self, T ):
+        adjusted = []
+        for cyc in self.cyclers:
+            adjusted.append( cyc.prev(T) )
+        adjusted.sort()
+        return adjusted[-1]
+
     def offset( self, T, n ):
         return self.cyclers[0].__class__.offset(T, n)
 

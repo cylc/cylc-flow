@@ -7,13 +7,12 @@
 [scheduling]
     initial cycle time = 2012010100
     final cycle time = 2012010118
-    [[special tasks]]
-        sequential = b
+        [[special tasks]]
+            sequential = b
     [[dependencies]]
         graph = "a"
         [[[0,6,12,18]]]
             graph = "a => b"
-
 [runtime]
     [[a,b]]
         command scripting = "/bin/true" # fast

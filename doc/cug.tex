@@ -1693,9 +1693,7 @@ will trigger off the corresponding instance of \lstinline=foo= at the
 same cycle time.  The runahead limit prevents uncontrolled spawning of
 cycling tasks in suites that are not constrained by clock triggers in
 real time operation.  The default limit is twice the shortest cycling
-interval in the suite. Cycling tasks can be declared {\em sequential} to
-prevent successive instances running in parallel, if necessary
-(Section~\ref{ModelRestartDependencies}).
+interval in the suite.
 
 Experiment with \lstinline=tut.cycling.one= to see how cycling tasks
 work.
@@ -2326,7 +2324,7 @@ configuration items grouped under several top level section headings:
     \item {\bf [cylc] } - {\em non task-specific suite configuration}
     \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
-            \item tasks with special behavior, e.g. clock-triggered tasks
+            \item tasks with special behaviour, e.g. clock-triggered tasks
             \item the dependency graph, which defines the relationships
                 between tasks
         \end{myitemize}
@@ -3205,7 +3203,7 @@ Section~\ref{TutIntercycleTriggers}; to summarize here briefly:
         cold-start = cfoo
     [[dependencies]]
         [[[0,12]]]
-            graph = "cfoo | foo[T-6] => foo => bar"
+            graph = "cfoo | foo[T-12] => foo => bar"
 \end{lstlisting}
 
 \end{myitemize}
@@ -3235,11 +3233,68 @@ same before the suite is started - in which case the initial task can
 just report itself successfully completed after checking that the 
 required files are present.
 
-\paragraph{Warm-Starting Suites}
+\paragraph{Sequential Tasks}
+\label{SequentialTasks}
 
-For suites with inter-cycle dependence a {\em warm-start} is essentially
+If a cycling task does not generate files required by its own successor,
+then successive instances can run in parallel if the opportunity arises.
+However, if such a task would interfere with its own siblings for
+internal reasons (e.g.\ use of a hardwired non cycle time dependent
+temporary file or similar) then it can be forced to run sequentially.  
+This can be done with explicit inter-cycle triggers in the graph:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[0,12]]]
+            graph = "foo[T-12] => foo => bar"
+\end{lstlisting}
+or by declaring the task to be {\em sequential}:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[special tasks]]
+        sequential = foo
+    [[dependencies]]
+        [[[0,12]]]
+            graph = "foo => bar"
+\end{lstlisting}
+
+The {\em sequential} declaration also results in each instance of
+\lstinline=foo= triggering off its own predecessor, exactly as in 
+the explicit version. The only difference is that implicit triggers will
+not appear in graph visualizations. The implicit version can also be
+considerably simpler when the task appears in multiple graph sections or
+in a non-uniform cycling sequence: this suite,
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[special tasks]]
+        sequential = foo
+    [[dependencies]]
+        [[[0,3,11]]]
+            graph = "foo => bar"
+\end{lstlisting}
+is equivalent to this one:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[0,3,11]]]
+            graph = "foo => bar"
+        [[[0]]]
+            graph = "foo[T-13] => foo"
+        [[[3]]]
+            graph = "foo[T-3] => foo"
+        [[[11]]]
+            graph = "foo[T-8] => foo"
+\end{lstlisting}
+
+\paragraph{Warm Start}
+
+For suites with inter-cycle dependence a {\em warm start} is essentially
 an implicit restart. Rather than loading tasks from a previous recorded
-suite state, it loads all cycling tasks at a given cycle time assuming
+suite state, cylc loads all cycling tasks at a given cycle time assuming
 that the previous cycle was completed in an earlier suite run. Any initial
 tasks - asynchronous, start-up, or cold-start - therefore do not need to
 run again. Dependence on tasks from before the start cycle is still
@@ -3267,81 +3322,66 @@ a non-existent future cycle.
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
 
-Warm cycled forecast models generate {\em restart files}, e.g.\ model
-background fields, that are required to initialize the next forecast
-(this is essentially the definition of ``warm cycling''). In fact
-restart files will often be written for a whole series of subsequent
-cycles in case the next cycle (or the next and the next-next, and so on)
-cycle has to be omitted: 
+Warm-cycled forecast models generate {\em restart files}, e.g.\ model
+background fields, to initialize the next forecast. This kind of
+dependence requires an inter-cycle trigger:
+\lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[special tasks]]
-        sequential = A
+        cold-start = ColdA
     [[dependencies]]
         [[[0,6,12,18]]]
-            # Model A cold-start and restart dependencies:
-            graph = "ColdA | A[T-6] | A[T-12] | A[T-18] | A[T-24] => A"
+            graph = "ColdA | A[T-6] => A"
 \end{lstlisting}
-In other words, task A can trigger off a cotemporal cold-start task,
-{\em or} off its own previous instance, {\em or} off the instance before
-that, and so on.
-Restart dependencies are unusual because although A {\em could}
-trigger off A[T-12] we don't actually want it to do so unless A[T-6]
-fails and can't be fixed. {\em This is why Task A, above, is declared to be
-`sequential'}.\footnote{A warm cycling model that only writes out
-one set of restart files, for the very next cycle, does not need to be
-declared sequential because this early triggering problem cannot arise.}
-Sequential tasks do not spawn a successor until they have
-succeeded (by default, tasks spawn as soon as they start running in
-order to get maximum functional parallelism in a suite) which
-means that A[T+6] will not be waiting around to trigger off an older
-predecessor while A[T] is still running. If A[T] fails though, the
-operator can force it, on removal, to spawn A[T+6], whose restart
-dependencies will then automatically be satisfied by the older instance,
-A[T-6]. 
-
-Forcing a model to run sequentially means, of course, that its restart
-dependencies cannot be violated anyway, so we might just ignore them.
-This is certainly an option, but it should be noted that there are some 
-benefits to having your suite reflect all of the real dependencies
-between the tasks that it is managing, particularly for complex
-multi-model operational suites in which the suite operator might not be
-an expert on the models. Consider such a suite in which a failure in a
-driving model (e.g.\ weather) precludes running one or more 
-cycles of the downstream models (sea state, storm surge, river flow,
-\dots). If the real restart dependencies of each model are known to the
-suite, the operator can just do a recursive purge to remove the subtree
-of all tasks that can never run due to the failure, and then cold-start
-the failed driving model after a gap (skipping as few cycles as possible
-until the new cold-start input data are available). After
-that the downstream models will kick off automatically so long as the 
-gap is spanned by their respective restart files, because their
-restart dependencies will automatically be satisfied by the older
-pre-gap instances in the suite. Managing this kind of scenario manually
-in a complex suite can be quite difficult.
-
-Finally, if a warm cycled model is declared to have explicit restart
-outputs, and is not declared to be sequential, and you define appropriate 
-labeled restart outputs which {\em must contain the word `restart'},
-then the task will spawn as soon its last restart output is
-completed so that successives instances of the task will be able to
-overlap (i.e.\ run in parallel) if the opportunity arises. Whether or
-not this is worth the effort depends on your needs.
+Or if you don't need an explicit cold-start task, this will do:
+\lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    [[special tasks]]
-        explicit restart outputs = A
     [[dependencies]]
         [[[0,6,12,18]]]
-            graph = "ColdA | A[T-18]:res18 | A[T-12]:res12| A[T-6]:res6 => A"
+            graph = "A[T-6] => A"
+\end{lstlisting}
+If the model can emit an explicit output message as soon as its
+restart files are completed (see {\em Internal Message Outputs} - 
+Section~\ref{RIOC}) there's no need to wait for it to finish:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = "A[T-6]:res1 => A"
 [runtime]
     [[A]]
+        command scripting = """
+sleep 10
+cylc message "restart files ready for $( cylc cycletime --offset-hours=6 )"
+sleep 20"""
         [[[outputs]]]
-            r6  = restart files completed for [T+6]
-            r12 = restart files completed for [T+12]
-            r18 = restart files completed for [T+18]
+            res1 = "restart files ready for [T+6]"
 \end{lstlisting}
 
+If your model is configured to write out additional restart files 
+to allow one or more cycles to be skipped in an emergency {\em do not
+represent these potential dependencies in the suite graph} as they 
+should not be used under normal circumstances. For example, the
+following graph would result in task \lstinline=A= erroneously
+triggering off \lstinline=A[T-24]= as a matter of course, instead of
+off \lstinline=A[T-6]=, because \lstinline=A[T-24]= will always
+be finished first:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            # DO NOT DO THIS (SEE ACCOMPANYING TEXT):
+            graph = "A[T-24] | A[T-18] | A[T-12] | A[T-6] => A"
+\end{lstlisting}
+
+If you need to skip one or more cycles in a suite like this, manually
+remove the tasks that cannot run (or use \lstinline=cylc purge= to
+remove their downstream dependents too) and manually trigger the first
+post-gap task.
 
 \subsection{Runtime - Task Configuration}
 \label{NIORP}
@@ -4101,7 +4141,6 @@ Finally, with Jinja2 (Section~\ref{Jinja2}) you can radically alter
 suite structure by including or excluding tasks from the [scheduling]
 and [runtime] sections according to the value of a single logical flag
 defined at the top of the suite.  
-
 \subsection{Naked Dummy Tasks And Strict Validation}
 
 A {\em naked dummy task} appears in the suite graph but has no
@@ -4134,6 +4173,7 @@ modification, with the following few exceptions:
 \begin{myitemize}
     \item tasks that do not return error status on error
     \item tasks with internal outputs that others need to trigger off
+        before the task is finished
     \item tasks that spawn internal processes and then detach and exit early
 \end{myitemize}
 
@@ -4157,27 +4197,30 @@ set -e  # abort on error
 mkdir /illegal/dir  # this will abort the script with error status
 \end{lstlisting}
 
-\subsection{Reporting Internal Outputs}
+\subsection{Reporting Internal (Message) Outputs}
 \label{RIOC}
 
 If a task has {\em internal outputs} that others need to trigger off
-then it must report completion of those outputs at the appropriate time.
-Output messages must be unique within the suite or else downstream tasks
-will trigger off whichever task happens to send the message first; they
-must exactly match the corresponding outputs registered for the task
-in the suite definition; and for cycling tasks they must contain the
-cycle time in order to distinguish between the same outputs of the same
-task at other cycle times.
+before the task is finished, then it must report completion of those
+outputs to the suite daemon. These messages must exactly match
+corresponding {\em outputs} registered for the task in the suite
+definition, and for cycling tasks they should contain the cycle time in
+order to distinguish between the outputs of different instances of the
+same task.
 
 The ``outputs'' example is a self-contained suite that illustrates this:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/outputs/suite.rc}
-Note the use of \lstinline=[T]= as a placeholder for cycle time in
-messages registered under \lstinline=[[[outputs]]]= these strings are
-held inside cylc for comparison with incoming task messages; they are
-never interpreted by the shell and may not contain shell environment
-variables. The actual messaging calls made by running tasks, on the
-other hand, can make use of variables in the task runtime environment.
+Compare the registered message string, which uses \lstinline=[T]= as 
+a placeholder for the cycle time, with the actual message emitted 
+by the task, which uses \lstinline=$CYLC_TASK_CYCLE_TIME=. The
+registered message string is held in the suite daemon to be matched 
+with incoming task messages - it cannot contain shell variables because 
+is never interpreted by the shell.
+
+See {\em Model Restart Dependencies}
+(Section~\ref{ModelRestartDependencies}) for an example that uses
+cycle time offsets in message outputs.
 
 \subsection{Other Task Messages}
 
@@ -5069,12 +5112,12 @@ products.
     runahead limit = 48 # hours
 \end{lstlisting}
 
-A cycling task spawns its successor when it enters the submitted state
-or, for sequential tasks, when it finishes. If a newly spawned task's
-cycle time is ahead of the oldest non-finished (succeeded or failed)
-task by more than the runahead limit it is put into the special
-{\em runahead} held state until other tasks catch up sufficiently; i.e.\
-the runahead limit constrains the number of cycles that can run at once.
+A cycling task spawns its successor when it enters the submitted state.
+If a newly spawned task's cycle time is ahead of the oldest non-finished
+(succeeded or failed) task by more than the runahead limit it is put
+into the special {\em runahead} held state until other tasks catch up
+sufficiently; i.e.\ the runahead limit constrains the number of cycles
+that can run at once.
 
 The default runahead limit is normally set to twice the minimum cycling
 interval in the suite. For a suite with 1- and 24-hourly cylcing tasks
@@ -5838,56 +5881,30 @@ utilities can easily do this for you). Then, given availability of
 external inputs, you can easily rerun the task for any cycle still
 in the restart archive.
 
-\subsection{Limit Previous-Instance Dependence} 
+\subsection{Avoid Unnecessary Previous-Instance Dependence} 
 \label{LimitPID}
 
-Cylc does not require that successive instances of the same task run 
-sequentially. In order to task advantage of this and achieve maximum
-functional parallelism whenever the opportunity arises (usually when 
-catching up from a delay) you should ensure that tasks that in
-principle do not depend on their own previous instances (the vast
-majority of tasks in most suites, in fact) do not do so in practice. In
-other words, they should be able to run as soon as their prerequisites
-are satisfied regardless of whether or not their predecessors have
-finished yet.  This generally just means ensuring that all file I/O
-contains the generating task's cycle time in the file or directory name
-so that there is no interference between successive instances. If this
-is difficult to achieve in particular cases, however, you can declare
-the offending tasks to be {\em sequential}.
+If a cycling task does not generate files required by its own successor,
+then for maximum scheduling efficiency successive instances of it should
+be able to run in parallel if the opportunity arises.
 
-% MAYBE SHOULD INCLUDE THE FOLLOWING HERE:
-%Warm-cycled forecast models {\em do} depend on their own previous
-%instances (through their ``model background'' restart prerequisites).
-%These can be made to run sequentially (i.e.\ with maximal previous
-%instance dependence) but you can have cylc suite launch the next model,
-%assuming other prerequisites are satisfied, as soon as the previous one
-%has completed its restart prerequisites (minimal previous instance
-%dependence, maximal throughput).
+If such a task would interfere with its own siblings for internal reasons, 
+however, perhaps by use of a hardwired non cycle time dependent
+temporary file or similar, then it can be forced to run sequentially -
+see Section~\ref{SequentialTasks}.
 
 \subsection{Put Task Cycle Time In All Output File Paths}
 \label{PutCycleTimeinIO}
 
-Having all filenames, or perhaps the names of their containing
-directories, stamped with the cycle time of the generating task greatly
-aids in managing suite disk usage, both for archiving and cleanup. It
-also enables the aforementioned task rerunnability recommendation by avoiding
-overwrite of important files from one cycle to the next. Cylc has 
-powerful utilities for cycle time offset filename templating and
-housekeeping.
+Putting task cycle time in output file or directory names makes  
+archiving and cleanup easier, and it facilitates task re-runnability and
+avoidance of previous-instance dependence (above) by ensuring that
+important files do not get overwritten by the next cycle.
 
-\subsubsection{Use Cylc Cycle Time Filename Templating}
-
-The command line utility program \lstinline=cylc [util] cycletime=
-computes offsets (in hours, days, months, and years) from a given or
-current (in the environment) cycle time, and optionally inserts the
-resulting computed cycle time, or components of it, into a given 
-template string containing ``YYYY'' as a placeholder for the year
-value, ``MM'' for month, and so on. This can be used in the suite.rc
-environment or command scripting sections, or in task implementation
-scripting, to generate filenames containing the current cycle time (or
-some offset from it) for use by tasks.
-
-See \lstinline=cylc [util] cycletime --help= for examples.
+The \lstinline=cylc cycletime= command computes offsets (in hours, days,
+months, and years) from a given or current cycle time, and optionally
+inserts the resulting computed cycle time, or components of it, into a
+given filename template string.
 
 \subsection{How To Manage Input/Output File Dependencies}
 \label{HandlingDependencies}
@@ -6025,7 +6042,7 @@ your suite to ensure that the final products never arrive out of
 sequence.  One way of doing this would be to have a final ``product
 upload'' task that depends on completion of all the real product
 generation tasks at the same cycle time, and then declare it to be
-sequential.
+sequential (see Section~\ref{SequentialTasks}.
 
 \subsection{Clock-triggered Tasks Wait On External Data}
 

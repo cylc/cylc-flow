@@ -18,9 +18,8 @@
 
 import sys, re
 from task import task
-from nopid import nopid
 
-class async_repeating( nopid, task ):
+class async_repeating( task ):
     """ A repeating asynchronous (no cycle time) task for use in
     processing satellite data or similar. Its prerequisites contain
     a pattern to match the "satellite pass ID" (which is essentially

@@ -16,9 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TO DO : ONEOFF FOLLOWON TASKS: still needed but can now be identified
-# automatically from the dependency graph?
-
 # NOTE on conditional and non-conditional triggers: all plain triggers
 # (for a single task) are held in a single prerequisite object; but one
 # such object is held for each conditional trigger. This has
@@ -66,6 +63,7 @@ class taskdef(object):
         # some defaults
         self.intercycle = False
         self.intercycle_offset = 0
+        self.sequential = False
         self.cycling = False
         self.asyncid_pattern = None
         self.modifiers = []
@@ -84,7 +82,7 @@ class taskdef(object):
         self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name
-        self.type = 'free'
+        self.type = 'cycling'
 
     def add_trigger( self, trigger, cycler ):
         if cycler not in self.triggers:
@@ -144,9 +142,7 @@ class taskdef(object):
         # instantiating objects of this particular task class.
         base_types = []
         for foo in self.modifiers + [self.type]:
-            # __import__() keyword args were introduced in Python 2.5
-            #mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
-            mod = __import__( 'cylc.task_types.' + foo, globals(), locals(), [foo] )
+            mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
             base_types.append( getattr( mod, foo ) )
 
         tclass = type( self.name, tuple( base_types), dict())
@@ -186,6 +182,17 @@ class taskdef(object):
             pp = plain_prerequisites( sself.id, self.ict )
             sp = plain_prerequisites( sself.id, self.ict )
             lp = loose_prerequisites( sself.id, self.ict )
+
+            if self.sequential:
+                # For tasks declared 'sequential' we automatically add a
+                # previous-instance inter-cycle trigger, and adjust the
+                # cleanup cutoff (determined by inter-cycle triggers)
+                # accordingly.
+                pp.add( sself.name + '.' + sself.cycon.prev( sself.c_time ) + ' succeeded' )
+                next_inst_ct = sself.cycon.next( sself.c_time )
+                if int(sself.cleanup_cutoff) < int(next_inst_ct):
+                    sself.cleanup_cutoff = next_inst_ct
+
             for cyc in self.triggers:
                 for trig in self.triggers[ cyc ]:
                     if trig.startup and not startup:

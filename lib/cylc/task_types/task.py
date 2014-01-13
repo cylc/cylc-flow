@@ -552,17 +552,13 @@ class task( object ):
         self.job_sub_method = module_name
 
         class_name  = module_name
-        # NOTE: not using__import__() keyword arguments:
-        #mod = __import__( module_name, fromlist=[class_name] )
-        # as these were only introduced in Python 2.5.
-        # TODO - UPGRADE TO THE 2.5 FORM
         try:
             # try to import built-in job submission classes first
-            mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
+            mod = __import__( 'cylc.job_submission.' + module_name, fromlist=[class_name] )
         except ImportError:
             try:
                 # else try for user-defined job submission classes, in sys.path
-                mod = __import__( module_name, globals(), locals(), [class_name] )
+                mod = __import__( module_name, fromlist=[class_name] )
             except ImportError, x:
                 self.log( 'CRITICAL', 'cannot import job submission module ' + class_name )
                 raise
@@ -732,17 +728,13 @@ class task( object ):
         self.job_sub_method = module_name
 
         class_name  = module_name
-        # NOTE: not using__import__() keyword arguments:
-        #mod = __import__( module_name, fromlist=[class_name] )
-        # as these were only introduced in Python 2.5.
-        # TODO - UPGRADE TO THE 2.5 FORM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         try:
             # try to import built-in job submission classes first
-            mod = __import__( 'cylc.job_submission.' + module_name, globals(), locals(), [class_name] )
+            mod = __import__( 'cylc.job_submission.' + module_name, fromlist=[class_name] )
         except ImportError:
             try:
                 # else try for user-defined job submission classes, in sys.path
-                mod = __import__( module_name, globals(), locals(), [class_name] )
+                mod = __import__( module_name, fromlist=[class_name] )
             except ImportError, x:
                 self.log( 'CRITICAL', 'cannot import job submission module ' + class_name )
                 raise
@@ -941,9 +933,7 @@ class task( object ):
             message = message[7:]
 
         # remove the remote event time (or "unknown-time") from the end:
-        message = re.sub( ' at .*$', '', message )
-        # NOTE: if we need to extract the time the proper regex is:
-        # ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+        message = re.sub( ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$', '', message )
 
         # Remove the prepended task ID.
         content = message.replace( self.id + ' ', '' )
@@ -1177,9 +1167,15 @@ class task( object ):
         return self.state.has_spawned()
 
     def ready_to_spawn( self ):
-        # return True or False
-        self.log( 'CRITICAL', 'ready_to_spawn(): OVERRIDE ME')
-        sys.exit(1)
+        """Spawn on submission - prevents uncontrolled spawning but
+        allows successive instances to run in parallel.
+            A task can only fail after first being submitted, therefore
+        a failed task should spawn if it hasn't already. Resetting a
+        waiting task to failed will result in it spawning."""
+        if self.has_spawned():
+            # (note that oneoff tasks pretend to have spawned already)
+            return False
+        return self.state.is_currently('submitted', 'running', 'succeeded', 'failed', 'retrying')
 
     def done( self ):
         # return True if task has succeeded and spawned

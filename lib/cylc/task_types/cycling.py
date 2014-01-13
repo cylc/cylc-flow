@@ -72,11 +72,6 @@ class cycling( task ):
         self.stop_c_time = stop_c_time
         task.__init__( self, state, validate )
 
-    def ready_to_spawn( self ):
-        # return True or False
-        self.log( 'CRITICAL', 'ready_to_spawn(): OVERRIDE ME')
-        sys.exit(1)
-
     def next_tag( self, ctime=None ):
         if not ctime:
             ctime = self.tag
@@ -88,3 +83,4 @@ class cycling( task ):
         # add more information to the summary if necessary.
         summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
         return summary
+
