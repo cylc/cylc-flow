@@ -160,11 +160,10 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
     for summary in [task_state_summary, fam_state_summary]:
         if id_ in summary:
             title = summary[id_].get('title')
-            if title is not None and title != SPEC['title'].args['default']:
+            if title:
                 meta_text += title.strip() + "\n"
             description = summary[id_].get('description')
-            if (description is not None and
-                description != SPEC['description'].args['default']):
+            if description:
                 meta_text += description.strip()
     if meta_text:
         meta_text = "\n" + meta_text.rstrip()
