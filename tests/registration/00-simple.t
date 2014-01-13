@@ -18,7 +18,7 @@
 # Test cylc suite registration
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 13
 #-------------------------------------------------------------------------------
 SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_regtest
 mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
@@ -27,6 +27,7 @@ cylc unregister $SUITE_NAME 2>&1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-register
 run_ok $TEST_NAME cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME
+exists_ok $TEST_DIR/$SUITE_NAME/passphrase
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-get-dir
 run_ok $TEST_NAME cylc get-directory $SUITE_NAME
@@ -34,6 +35,7 @@ run_ok $TEST_NAME cylc get-directory $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-val
 cd .. # necessary so the suite is being validated via the database not filepath
 run_ok $TEST_NAME cylc validate $SUITE_NAME
+exists_ok $TEST_DIR/$SUITE_NAME/suite.rc.processed
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-print-db
 cylc print 1> dboutput
@@ -50,6 +52,8 @@ __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-unreg
 run_ok $TEST_NAME cylc unregister $SUITE_NAME
+exists_fail $TEST_DIR/$SUITE_NAME/passphrase
+exists_fail $TEST_DIR/$SUITE_NAME/suite.rc.processed
 run_fail $TEST_NAME-check cylc get-directory $SUITE_NAME
 cylc print 1> dboutput-unregd
 run_fail $TEST_NAME-unreg-dbcheck grep $SUITE_NAME dboutput-unregd

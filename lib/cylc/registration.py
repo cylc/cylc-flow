@@ -134,6 +134,11 @@ class localdb(object):
                 dir = data['path'] 
                 print 'UNREGISTER', key + ':', dir
                 os.unlink( os.path.join( self.dbpath, key ) )
+                for f in ['passphrase', 'suite.rc.processed']:
+                    try:
+                        os.unlink( os.path.join( dir, f ) )
+                    except OSError:
+                        pass
                 if dir not in suitedirs:
                     # (could be multiple registrations of the same suite).
                     suitedirs.append(dir)
