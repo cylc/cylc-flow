@@ -286,8 +286,9 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
     # concatenate continuation lines
     if do_contin:
         flines = _concatenate( flines )
-
-    return flines
+   
+    # return rstripped lines
+    return [ l.rstrip() for l in flines ]
 
 def parse( fpath, verbose=False, write_processed_file=False, 
         template_vars=[], template_vars_file=None ):

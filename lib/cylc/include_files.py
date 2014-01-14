@@ -35,10 +35,12 @@ modtimes = {}
 backups = {}
 newfiles = []
 
+include_re = re.compile( '\s*%include\s+(?:[\'\"]?)(.*?)(?:[\'"]?)\s*$' )
+
 def inline( lines, dir,
         for_grep=False, for_edit=False,
         viewcfg={}, level=None ):
-    """Recursive inlining of suite.rc include-files"""
+    """Recursive inlining of parsec include-files"""
 
     single = False
     mark = False
@@ -57,7 +59,7 @@ def inline( lines, dir,
         level = ''
         if for_edit:
             outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
-# !WARNING! This is an inlined suite.rc file; include-files are split
+# !WARNING! This is an inlined parsec config file; include-files are split
 # !WARNING! out again on exiting the edit session.  If you are editing
 # !WARNING! this file manually then a previous inlined session may have
 # !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this 
@@ -74,15 +76,10 @@ def inline( lines, dir,
     else:
         msg = ''
 
-    for oline in lines:
-        line = oline.rstrip()
-        m = re.match( '\s*%include\s+(.*)\s*$', line )
+    for line in lines:
+        m = include_re.match( line )
         if m:
-            # include statement found
-            match = m.groups()[0]
-            # strip off possible quotes: %include "foo.inc"
-            match = match.replace('"','')
-            match = match.replace("'",'')
+            match = m.groups()[0] 
             inc = os.path.join( dir, match )
             if inc not in done:
                 if single or for_edit:
@@ -95,7 +92,7 @@ def inline( lines, dir,
                     if for_grep or single or label or for_edit:
                         outf.append('#++++ START INLINED INCLUDE FILE ' + match + msg )
                     h = open(inc, 'rb')
-                    inc = [ line.rstrip() for line in h ]
+                    inc = [ line.rstrip('\n') for line in h ]
                     h.close()
                     # recursive inclusion
                     outf.extend( inline( inc, dir, for_grep,for_edit,viewcfg,level ))
@@ -140,7 +137,7 @@ def split_file( dir, lines, file, recovery=False, level=None ):
     global newfiles
 
     if level == None:
-        # suite.rc itself
+        # config file itself
         level = ''
     else:
         level += ' > '
@@ -186,7 +183,7 @@ def split_file( dir, lines, file, recovery=False, level=None ):
         print >> sys.stderr, "ERROR: end-of-file reached while matching include-file", inc_filename + "."
         print >> sys.stderr, """This probably means you have corrupted the inlined file by
 modifying one of the include-file boundary markers. Fix the backed-
-up inlined suite.rc file, copy it to 'suite.rc' and invoke another
+up inlined file, copy it to the original filename and invoke another
 inlined edit session split the file up again."""
         print >> sys.stderr 
 
