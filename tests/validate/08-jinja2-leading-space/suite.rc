@@ -1,0 +1,13 @@
+#!jinja2
+{% set HELLO=False %}
+[scheduling]
+    [[special tasks]]
+        start-up = \
+            foo {% if HELLO %}, \
+            bar
+            {% endif %}
+    [[dependencies]]
+        graph=a=>b
+        
+[runtime]
+    [[foo,bar,a,b]]
