@@ -37,9 +37,11 @@ else:
 # checked later in config.py.
 _HEADING = re.compile(r'''^
     (\s*)                     # 1: indentation
-    ((?:\[\s*)+)              # 2: section marker open
+    ((?:\[)+)                 # 2: section marker open
+    \s*
     (.+?)                     # 3: section name
-    ((?:\s*\])+)              # 4: section marker close
+    \s*
+    ((?:\])+)                 # 4: section marker close
     \s*(\#.*)?                # 5: optional comment
     $''',
     re.VERBOSE)
@@ -333,8 +335,6 @@ def parse( fpath, verbose=False, write_processed_file=False,
         if m:
             # matched a section heading
             indent, s_open, sect_name, s_close, comment = m.groups()
-            s_open = s_open.strip()
-            s_close = s_close.strip()
             nb = len(s_open)
 
             if nb != len(s_close):
