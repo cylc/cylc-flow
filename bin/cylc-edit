@@ -27,7 +27,7 @@ from shutil import copy
 import subprocess
 from cylc.global_config import get_global_cfg
 from cylc.CylcOptionParsers import cop
-from cylc.include_files import inline, \
+from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 
 parser = cop( """cylc [prep] edit [OPTIONS] ARGS

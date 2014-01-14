@@ -19,7 +19,7 @@
 import os, sys, re
 
 from OrderedDict import OrderedDict
-from cylc.include_files import inline, IncludeFileError
+from include import inline, IncludeFileError
 
 """
 Module to parse a cylc parsec config file into a nested ordered dict.
