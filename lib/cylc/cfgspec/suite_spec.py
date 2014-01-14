@@ -28,8 +28,8 @@ Define all legal items and values for cylc suite definition files.
 cfg = None
 
 SPEC = {
-    'title'                                   : vdr( vtype='string', default="No title provided" ),
-    'description'                             : vdr( vtype='string', default="No description provided" ),
+    'title'                                   : vdr( vtype='string', default="" ),
+    'description'                             : vdr( vtype='string', default="" ),
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
         'required run mode'                   : vdr( vtype='string', options=['live','dummy','simulation'] ),
@@ -122,8 +122,8 @@ SPEC = {
     'runtime' : {
         '__MANY__' : {
             'inherit'                         : vdr( vtype='string_list', default=[] ),
-            'title'                           : vdr( vtype='string', default="No title provided" ),
-            'description'                     : vdr( vtype='string', default="No description provided" ),
+            'title'                           : vdr( vtype='string', default="" ),
+            'description'                     : vdr( vtype='string', default="" ),
             'initial scripting'               : vdr( vtype='string' ),
             'environment scripting'           : vdr( vtype='string' ),
             'pre-command scripting'           : vdr( vtype='string' ),

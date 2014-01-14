@@ -188,20 +188,33 @@ class GraphUpdater(threading.Thread):
         # this when checking for changes. So: just extract the critical
         # info here:
         states = {}
-        for id in states_full:
-            if id not in states:
-                states[id] = {}
-            states[id]['name' ] = states_full[id]['name' ]
-            states[id]['label'] = states_full[id]['label']
-            states[id]['state'] = states_full[id]['state']
+        for id_ in states_full:
+            if id_ not in states:
+                states[id_] = {}
+            states[id_]['name' ] = states_full[id_]['name' ]
+            # TODO: remove the following backwards compatibility condition.
+            if 'description' in states_full[id_]:
+                states[id_]['description'] = states_full[id_]['description']
+            # TODO: remove the following backwards compatibility condition.
+            if 'title' in states_full[id_]:
+                states[id_]['title'] = states_full[id_]['title']
+            states[id_]['label'] = states_full[id_]['label']
+            states[id_]['state'] = states_full[id_]['state']
 
         f_states = {}
-        for id in fam_states_full:
-            if id not in states:
-                f_states[id] = {}
-            f_states[id]['name' ] = fam_states_full[id]['name' ]
-            f_states[id]['label'] = fam_states_full[id]['label']
-            f_states[id]['state'] = fam_states_full[id]['state'] 
+        for id_ in fam_states_full:
+            if id_ not in states:
+                f_states[id_] = {}
+            f_states[id_]['name' ] = fam_states_full[id_]['name' ]
+            # TODO: remove the following backwards compatibility condition.
+            if 'description' in fam_states_full[id_]:
+                f_states[id_]['description'] = (
+                    fam_states_full[id_]['description'])
+            # TODO: remove the following backwards compatibility condition.
+            if 'title' in fam_states_full[id_]:
+                f_states[id_]['title'] = fam_states_full[id_]['title']
+            f_states[id_]['label'] = fam_states_full[id_]['label']
+            f_states[id_]['state'] = fam_states_full[id_]['state'] 
 
         # only update states if a change occurred, or action required
         if self.action_required:

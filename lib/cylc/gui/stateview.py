@@ -74,6 +74,15 @@ class TreeUpdater(threading.Thread):
         self.ttreeview = ttreeview
         # Hierarchy of models: view <- sorted <- filtered <- base model
         self.ttreestore = ttreeview.get_model().get_model().get_model()
+        self._prev_tooltip_task_id = None
+        if hasattr(self.ttreeview, "set_has_tooltip"):
+            self.ttreeview.set_has_tooltip(True)
+            try:
+                self.ttreeview.connect('query-tooltip',
+                                       self.on_query_tooltip)
+            except TypeError:
+                # Lower PyGTK version.
+                pass
 
         dotm = DotMaker( theme )
         self.dots = {}
@@ -129,6 +138,37 @@ class TreeUpdater(threading.Thread):
         column, key = data
         value = model.get_value( iter, column )
         return value == key
+
+    def on_query_tooltip(self, widget, x, y, kbd_ctx, tooltip):
+        """Handle a tooltip creation request."""
+        tip_context = self.ttreeview.get_tooltip_context(x, y, kbd_ctx)
+        if tip_context is None:
+            self._prev_tooltip_task_id = None
+            return False
+        x, y = self.ttreeview.convert_widget_to_bin_window_coords(x, y)
+        path, column, cell_x, cell_y = self.ttreeview.get_path_at_pos(x, y)
+        if not path:
+            return False
+        model = self.ttreeview.get_model()
+        ctime = model.get_value(model.get_iter(path), 0)
+        name = model.get_value(model.get_iter(path), 1)
+        if ctime == name:
+            # We are hovering over a cycle time row.
+            task_id = ctime
+        else:
+            # We are hovering over a task or family row.
+            task_id = name + TaskID.DELIM + ctime
+        if task_id != self._prev_tooltip_task_id:
+            # Clear tooltip when crossing row boundaries.
+            self._prev_tooltip_task_id = task_id
+            tooltip.set_text(None)
+            return False
+        text = get_id_summary( task_id, self.state_summary,
+                               self.fam_state_summary, self.descendants )
+        if text == task_id:
+            return False
+        tooltip.set_text(text)
+        return True
 
     def update_gui( self ):
         """Update the treeview with new task and family information.
@@ -208,24 +248,6 @@ class TreeUpdater(threading.Thread):
                     icon = self.dots['empty']
 
                 dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc, icon ]
-
-        # print existing tree:
-        #print
-        #iter = self.ttreestore.get_iter_first()
-        #while iter:
-        #    row = []
-        #    for col in range( self.ttreestore.get_n_columns() ):
-        #        row.append( self.ttreestore.get_value( iter, col ))
-        #    print "------------------", row
-        #    iterch = self.ttreestore.iter_children( iter )
-        #    while iterch:
-        #        ch_row = []
-        #        for col in range( self.ttreestore.get_n_columns() ):
-        #            ch_row.append( self.ttreestore.get_value( iterch, col ))
-        #        print "  -----------", ch_row
-        #        iterch = self.ttreestore.iter_next( iterch )
-        #    iter = self.ttreestore.iter_next( iter )
-        #print
 
         tree_data = {}
         self.ttreestore.clear()

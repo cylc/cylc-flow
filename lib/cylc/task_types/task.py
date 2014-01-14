@@ -1193,6 +1193,8 @@ class task( object ):
         # add more information to the summary if necessary.
 
         self.summary.setdefault( 'name', self.name )
+        self.summary.setdefault( 'description', self.description )
+        self.summary.setdefault( 'title', self.title )
         self.summary.setdefault( 'label', self.tag )
         self.summary[ 'state' ] = self.state.get_status()
         self.summary[ 'spawned' ] = self.state.has_spawned()

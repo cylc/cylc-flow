@@ -20,6 +20,7 @@ import Pyro.core
 import logging
 from TaskID import TaskID
 from cylc.strftime import strftime
+from cylc.cfgspec.suite_spec import SPEC
 import time
 
 
@@ -83,7 +84,15 @@ class state_summary( Pyro.core.ObjBase ):
                 state = extract_group_state(child_states)
                 if state is None:
                     continue
+                try:
+                    famcfg = self.config.cfg['runtime'][fam]
+                except KeyError:
+                    famcfg = {}
+                description = famcfg.get('description')
+                title = famcfg.get('title')
                 family_summary[f_id] = {'name': fam,
+                                        'description': description,
+                                        'title': title,
                                         'label': ctime,
                                         'state': state}
         
@@ -143,10 +152,21 @@ def extract_group_state( child_states, is_stopped=False ):
 def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
     """Return some state information about a task or family id."""
     prefix_text = ""
+    meta_text = ""
     sub_text = ""
     sub_states = {}
     stack = [( id_, 0 )]
     done_ids = []
+    for summary in [task_state_summary, fam_state_summary]:
+        if id_ in summary:
+            title = summary[id_].get('title')
+            if title:
+                meta_text += title.strip() + "\n"
+            description = summary[id_].get('description')
+            if description:
+                meta_text += description.strip()
+    if meta_text:
+        meta_text = "\n" + meta_text.rstrip()
     while stack:
         this_id, depth = stack.pop( 0 )
         if this_id in done_ids:  # family dive down will give duplicates
@@ -174,7 +194,9 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
         sub_text = ""
         for state, number in state_items:
             sub_text += "\n    {0} tasks {1}".format( number, state )
-    text = prefix_text + sub_text
+    if sub_text and meta_text:
+        sub_text = "\n" + sub_text
+    text = prefix_text + meta_text + sub_text
     if not text:
         return id_
     return text
