@@ -263,10 +263,12 @@ Dependency graph suite control interface.
         items.append( self.menu_ungroup_item )
         self.menu_ungroup_item.connect( 'activate', self.group_all, False )
 
-        menu_landscape_item = gtk.CheckMenuItem( '_Landscape Mode' )
-        items.append( menu_landscape_item )
-        menu_landscape_item.set_active( self.t.orientation == "LR" )
-        menu_landscape_item.connect( 'activate', self.toggle_landscape_mode )
+        menu_left_to_right_item = gtk.CheckMenuItem(
+            '_Left-to-right Graphing' )
+        items.append( menu_left_to_right_item )
+        menu_left_to_right_item.set_active( self.t.orientation == "LR" )
+        menu_left_to_right_item.connect( 'activate',
+                                         self.toggle_left_to_right_mode )
 
         igsui_item = gtk.CheckMenuItem( '_Ignore Suicide Triggers' )
         items.append( igsui_item )
@@ -368,8 +370,8 @@ Dependency graph suite control interface.
         self.t.croprunahead = not self.t.croprunahead
         self.t.action_required = True
 
-    def toggle_landscape_mode( self, w ):
-        """Change the orientation of the graph - 'portrait' or 'landscape'."""
+    def toggle_left_to_right_mode( self, w ):
+        """Change the graph to left-to-right or top-to-bottom."""
         if self.t.orientation == "TB":  # Top -> bottom ordering
             self.t.orientation = "LR"  # Left -> right ordering
         elif self.t.orientation == "LR":
