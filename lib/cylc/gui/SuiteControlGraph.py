@@ -65,14 +65,10 @@ Dependency graph suite control interface.
     def toggle_graph_disconnect( self, w, update_button ):
         if w.get_active():
             self.t.graph_disconnect = True
-            w.set_image( gtk.image_new_from_stock( gtk.STOCK_DISCONNECT,
-                                                   gtk.ICON_SIZE_SMALL_TOOLBAR ) )
             self._set_tooltip( w, "Click to reconnect" )
             update_button.set_sensitive(True)
         else:
             self.t.graph_disconnect = False
-            w.set_image( gtk.image_new_from_stock( gtk.STOCK_CONNECT,
-                                                   gtk.ICON_SIZE_SMALL_TOOLBAR ) )
             self._set_tooltip( w, "Click to disconnect" )
             update_button.set_sensitive(False)
         return True
@@ -294,6 +290,7 @@ Dependency graph suite control interface.
         self.group_toolbutton = gtk.ToolButton()
         g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.set_label( "Group" )
         self.group_toolbutton.connect( 'clicked', self.group_all, True )
         self._set_tooltip( self.group_toolbutton, "Graph View - Click to group all task families" )
         items.append( self.group_toolbutton )
@@ -301,6 +298,7 @@ Dependency graph suite control interface.
         self.ungroup_toolbutton = gtk.ToolButton()
         g_image = gtk.image_new_from_stock( 'ungroup', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.ungroup_toolbutton.set_icon_widget( g_image )
+        self.ungroup_toolbutton.set_label( "Ungroup" )
         self.ungroup_toolbutton.connect( 'clicked', self.group_all, False )
         self._set_tooltip( self.ungroup_toolbutton, "Graph View - Click to ungroup all task families" )
         items.append( self.ungroup_toolbutton )
@@ -329,14 +327,13 @@ Dependency graph suite control interface.
         self._set_tooltip( zoom100_button, "Graph View - Normal Size" )
         items.append( zoom100_button )
        
-        connect_button = gtk.ToggleButton()
-        image = gtk.image_new_from_stock( gtk.STOCK_CONNECT, gtk.ICON_SIZE_SMALL_TOOLBAR )
-        connect_button.set_image( image )
-        connect_button.set_relief( gtk.RELIEF_NONE )
+        connect_button = gtk.ToggleToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_DISCONNECT,
+                                          gtk.ICON_SIZE_SMALL_TOOLBAR )
+        connect_button.set_icon_widget( image )
+        connect_button.set_label( "Disconnect" )
         self._set_tooltip( connect_button, "Graph View - Click to disconnect" )
-        connect_item = gtk.ToolItem()
-        connect_item.add( connect_button )
-        items.append( connect_item )
+        items.append( connect_button )
 
         update_button = gtk.ToolButton( gtk.STOCK_REFRESH )
         update_button.connect( 'clicked', self.graph_update )

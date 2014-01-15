@@ -128,7 +128,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
             ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
         ))
         actiongroup.add_toggle_actions((
-            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+            ('Landscape', gtk.STOCK_JUMP_TO, 'Landscape',
+             None, 'Landscape (left-to-right)', self.on_landscape),
         ))
 
         # Add the actiongroup to the uimanager
@@ -335,22 +336,32 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         # Create actions
         actiongroup.add_actions((
-            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In', self.widget.on_zoom_in),
-            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
-            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
-            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
-            ('Group', 'group', None, None, 'Group All Families', self.group_all),
-            ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
-            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None,
+             None, 'Zoom In', self.widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None,
+             None, 'Zoom Out', self.widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None,
+             None, 'Zoom Fit', self.widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None,
+             None, 'Zoom 100', self.widget.on_zoom_100),
+            ('Group', 'group', 'Group',
+             None, 'Group All Families', self.group_all),
+            ('UnGroup', 'ungroup', 'Ungroup',
+             None, 'Ungroup All Families', self.ungroup_all),
+            ('Save', gtk.STOCK_SAVE_AS,
+             'Save', None, 'Save', self.save_action ),
         ))
         actiongroup.add_toggle_actions((
-            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+            ('Landscape', gtk.STOCK_JUMP_TO, 'Landscape',
+             None, 'Landscape (left-to-right)', self.on_landscape),
         ))
         actiongroup.add_toggle_actions((
-            ('IgnoreSuicide', gtk.STOCK_CANCEL, None, None, 'Ignore Suicide Triggers', self.on_igsui),
+            ('IgnoreSuicide', gtk.STOCK_CANCEL, 'Ignore Suicide Triggers',
+             None, 'Ignore Suicide Triggers', self.on_igsui),
         ))
         actiongroup.add_toggle_actions((
-            ('IgnoreColdStart', gtk.STOCK_YES, None, None, 'Ignore Cold Start Tasks', self.on_igcol),
+            ('IgnoreColdStart', gtk.STOCK_YES, 'Ignore Cold Start Tasks',
+             None, 'Ignore Cold Start Tasks', self.on_igcol),
         ))
 
         # Add the actiongroup to the uimanager

@@ -2817,15 +2817,15 @@ This is what my suite does:..."""
         image1 = gtk.image_new_from_stock( gtk.STOCK_GOTO_FIRST, gtk.ICON_SIZE_MENU )
         image2 = gtk.image_new_from_stock( gtk.STOCK_GOTO_LAST, gtk.ICON_SIZE_MENU )
         im_box = gtk.HBox()
-        im_box.pack_start( image1, expand=False, fill=False )
-        im_box.pack_start( image2, expand=False, fill=False )
+        im_box.pack_start( image1, expand=True, fill=True )
+        im_box.pack_start( image2, expand=True, fill=True, padding=5 )
         self.layout_toolbutton.set_icon_widget( im_box )
+        self.layout_toolbutton.set_label( "Layout" )
+        self.layout_toolbutton.set_homogeneous( False )
         self.layout_toolbutton.connect( "toggled", self._cb_change_view_align )
         self.layout_toolbutton.set_active( self.view_layout_horizontal )
         self._set_tooltip( self.layout_toolbutton,
                            "Toggle side-by-side layout of views." )
-        toggle_layout_toolitem = gtk.ToolItem()
-        toggle_layout_toolitem.add( self.layout_toolbutton )
         # Insert the view choosers
         view0_label_item = gtk.ToolItem()
         view0_label_item.add( gtk.Label("View 1: ") )
@@ -2838,11 +2838,12 @@ This is what my suite does:..."""
         self.tool_bars[0].insert( self.view_toolitems[0], 0 )
         self.tool_bars[0].insert( view0_label_item, 0 )
         self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
-        self.tool_bars[0].insert( toggle_layout_toolitem, 0 )
+        self.tool_bars[0].insert( self.layout_toolbutton, 0 )
         self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
         stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
+        self.stop_toolbutton.set_label("Stop")
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip( self.stop_toolbutton, 
@@ -2854,6 +2855,7 @@ For more Stop options use the Control menu.""" )
         run_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_PLAY,
                                              gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.run_pause_toolbutton = gtk.ToolButton( icon_widget=run_icon )
+        self.run_pause_toolbutton.set_label("Run")
         self.run_pause_toolbutton.click_func = self.startsuite_popup
         tooltip = gtk.Tooltips()
         tooltip.enable()
@@ -2886,14 +2888,17 @@ For more Stop options use the Control menu.""" )
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"
             click_func = self.pause_suite
+            label = "Hold"
         elif run_ok:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Run Suite ..."
             click_func = self.startsuite_popup
+            label = "Run"
         elif unpause_ok:
             icon = gtk.STOCK_MEDIA_PLAY
             tip_text = "Release Suite (unpause)"
             click_func = self.resume_suite
+            label = "Release"
         else:
             # how do we end up here?
             self.run_pause_toolbutton.set_sensitive( False )
@@ -2902,6 +2907,7 @@ For more Stop options use the Control menu.""" )
                                                 gtk.ICON_SIZE_SMALL_TOOLBAR )
         icon_widget.show()
         self.run_pause_toolbutton.set_icon_widget( icon_widget )
+        self.run_pause_toolbutton.set_label(label)
         tip_tuple = gtk.tooltips_data_get( self.run_pause_toolbutton )
         if tip_tuple is None:
             tips = gtk.Tooltips()
