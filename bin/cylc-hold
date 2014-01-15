@@ -28,7 +28,7 @@ from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 
-parser = cop( """cylc [control] hold [OPTIONS] [MATCH TAG]
+parser = cop( """cylc [control] hold [OPTIONS] ARGS
 
 Hold one or more waiting tasks, or a whole suite. Held tasks do not
 submit even if they are ready to run. 
