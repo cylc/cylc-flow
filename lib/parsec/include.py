@@ -35,7 +35,7 @@ modtimes = {}
 backups = {}
 newfiles = []
 
-include_re = re.compile( '\s*%include\s+(?:[\'\"]?)(.*?)(?:[\'"]?)\s*$' )
+include_re = re.compile( '\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$' )
 
 def inline( lines, dir,
         for_grep=False, for_edit=False,
@@ -79,7 +79,9 @@ def inline( lines, dir,
     for line in lines:
         m = include_re.match( line )
         if m:
-            match = m.groups()[0] 
+            q1, match, q2 = m.groups()
+            if q1 and ( q1 != q2 ):
+                raise IncludeFileError( "ERROR, mismatched quotes: " + line )
             inc = os.path.join( dir, match )
             if inc not in done:
                 if single or for_edit:
