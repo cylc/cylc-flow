@@ -15,7 +15,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test validation of syntax, task name + space + jinja2
+# Test validation with a lot of whitespace added - trailing, around
+# section headings, around list item delimiters, in include-files, and
+# added by jinja2.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 1
