@@ -160,7 +160,7 @@ class config( object ):
                 # list of task names
                 # remove trailing commas and spaces
                 tmp = item.rstrip(', ')
-                task_names = re.split(', *', tmp )
+                task_names = re.split(' *, *', tmp )
             else:
                 # a single task name 
                 continue
