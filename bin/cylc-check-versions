@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys, os, re
+from subprocess import Popen, PIPE
+from cylc.CylcOptionParsers import cop
+from cylc.version import cylc_version
+from cylc.config import config, SuiteConfigError
+from cylc.run_get_stdout import run_get_stdout
+from cylc.host_select import get_task_host
+
+parser = cop( usage = """cylc [discovery] check-versions [OPTIONS] ARGS
+
+Check the version of cylc invoked on each of SUITE's task host accounts
+when CYLC_VERSION is set to """ + cylc_version + """ (i.e. *this* version).
+Different versions are reported but are not considered an error unless
+the -e|--error option is specified, because different cylc versions are
+not necessarily (nor usually) incompatible.
+
+It is recommended that cylc versions be installed in parallel and access
+configured via the cylc version wrapper as described in the cylc INSTALL
+file and User Guide. Users then get the latest installed version by
+default, or (like tasks) a particular version if $CYLC_VERSION is defined.
+
+Remote cylc versions are interrogated like this:
+  ssh user@host \\
+     "bash --login -c 'CYLC_VERSION=""" + cylc_version + """ cylc -v'"
+A login shell is used because task job scripts currently source login 
+scripts explicitly at start-up to configure access to cylc.""",
+prep=True, jset=True )
+
+parser.add_option( "-e", "--error", help="Exit with error status "
+        "if " + cylc_version + " is not available on all remote accounts.",
+        action="store_true", default=False, dest="error" )
+
+( options, args ) = parser.parse_args(remove_opts=['--host','--user'])
+
+# suite name or file path
+suite, suiterc, junk = parser.get_suite()
+    
+# extract task host accounts from the suite
+try:
+    config = config( suite, suiterc, 
+            template_vars=options.templatevars,
+            template_vars_file=options.templatevars_file)
+except Exception,x:
+    if options.debug:
+        raise
+    raise SystemExit(x)
+else:
+    result = config.get_namespace_list( 'all tasks' )
+    namespaces = result.keys()
+    accounts = set()
+    for name in namespaces:
+        host = get_task_host( config.get_config( ['runtime', name, 'remote', 'host'] )) or 'localhost'
+        owner = config.get_config( ['runtime', name, 'remote', 'owner'] )
+        if owner:
+            account = owner + '@' + host
+        else:
+            account = host
+        accounts.add(account)
+    accounts = list(accounts)
+
+if options.verbose:
+    print len(accounts), "task host accounts used by " + suite + ":"
+    for ac in accounts:
+        print " ", ac
+
+# remote command to interrogate cylc version
+rcom = "bash --login -c 'CYLC_VERSION=" + cylc_version + " cylc -v'"
+
+# interrogate each account
+warn = {}
+contacted = 0
+for ac in accounts:
+    lcom = 'ssh ' + ac + ' "' + rcom + '"'
+    if options.verbose:
+        print lcom
+
+    res = run_get_stdout( lcom )
+    if res[0]:
+        contacted += 1
+        out = res[1][0]
+        if options.verbose:
+            print ' ', out
+        if out != cylc_version:
+            warn[ac] = out
+    else:
+        print >> sys.stderr, 'ERROR ' + ac + ':'
+        print >> sys.stderr, ' ', '\n'.join(res[1])
+
+# report results
+if not warn:
+    if contacted:
+        print "All", contacted, "accounts have cylc-" + cylc_version
+else:
+    print "WARNING: failed to invoke cylc-" + cylc_version + " on " + str(len(warn.keys())) + " accounts:"
+    m = max( [ len(ac) for ac in warn.keys() ] )
+    for ac,warning in warn.items():
+        print ' ', ac.ljust(m), warning
+    if options.error:
+        sys.exit(1)
+

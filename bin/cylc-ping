@@ -29,7 +29,7 @@ from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
 from cylc.global_config import get_global_cfg
 
-parser = cop( """cylc [discover] ping [OPTIONS] ARGS
+parser = cop( """cylc [discovery] ping [OPTIONS] ARGS
     
 If suite REG (or task TASK in it) is running, exit (silently, unless
 -v,--verbose is specified); else print an error message and exit with
