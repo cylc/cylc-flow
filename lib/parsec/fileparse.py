@@ -19,7 +19,7 @@
 import os, sys, re
 
 from OrderedDict import OrderedDict
-from cylc.include_files import inline, IncludeFileError
+from include import inline, IncludeFileError
 
 """
 Module to parse a cylc parsec config file into a nested ordered dict.
@@ -37,9 +37,11 @@ else:
 # checked later in config.py.
 _HEADING = re.compile(r'''^
     (\s*)                     # 1: indentation
-    ((?:\[\s*)+)              # 2: section marker open
+    ((?:\[)+)                 # 2: section marker open
+    \s*
     (.+?)                     # 3: section name
-    ((?:\s*\])+)              # 4: section marker close
+    \s*
+    ((?:\])+)                 # 4: section marker close
     \s*(\#.*)?                # 5: optional comment
     $''',
     re.VERBOSE)
@@ -286,8 +288,9 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
     # concatenate continuation lines
     if do_contin:
         flines = _concatenate( flines )
-
-    return flines
+   
+    # return rstripped lines
+    return [ l.rstrip() for l in flines ]
 
 def parse( fpath, verbose=False, write_processed_file=False, 
         template_vars=[], template_vars_file=None ):
@@ -332,8 +335,6 @@ def parse( fpath, verbose=False, write_processed_file=False,
         if m:
             # matched a section heading
             indent, s_open, sect_name, s_close, comment = m.groups()
-            s_open = s_open.strip()
-            s_close = s_close.strip()
             nb = len(s_open)
 
             if nb != len(s_close):

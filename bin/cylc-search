@@ -24,7 +24,7 @@ if remrun().execute():
 import os, re
 from collections import deque
 from cylc.CylcOptionParsers import cop
-from cylc.include_files import inline
+from parsec.include import inline
 
 def section_level( heading ):
     # e.g. foo => 0

@@ -38,4 +38,4 @@ then
 else
     set_test_number 0
 fi
-unset $CYLC_LL_TEST_TASK_HOST
+unset CYLC_LL_TEST_TASK_HOST

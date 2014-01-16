@@ -135,7 +135,7 @@ def _coerce_str_list( value, keys, args ):
     for item in re.split( '\s*,\s*', value ):
         if item == '': # caused by a trailing comma
             continue
-        lvalues.append( _coerce_str(item,keys,args))
+        lvalues.append(_coerce_str(item, keys, args))
     return lvalues
 
 def _coerce_int_list( value, keys, args ):

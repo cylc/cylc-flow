@@ -52,5 +52,5 @@ if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != None ]]; then
 else
     skip 2 '[directive tests]loadleveler host not defined'
 fi
-unset $CYLC_LL_TEST_TASK_HOST
+unset CYLC_LL_TEST_TASK_HOST
 

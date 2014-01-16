@@ -4,7 +4,7 @@
        live mode suite timeout = 0.5 # minutes
 [scheduling]
     [[dependencies]]
-        graph = """a => b \ 
+        graph = """a => b \
                      => c"""
 [runtime]
     [[a,b,c]]
