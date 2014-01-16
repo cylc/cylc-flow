@@ -255,6 +255,7 @@ preparation_commands['jobscript' ] = ['jobscript']
 discovery_commands = OrderedDict()
 discovery_commands['ping'] = [ 'ping' ]
 discovery_commands['scan'] = [ 'scan' ]
+discovery_commands['check-versions'] = [ 'check-versions' ]
 
 task_commands = OrderedDict()
 task_commands['submit'   ] = [ 'submit', 'single' ]
@@ -410,6 +411,7 @@ comsum[ 'set-verbosity'  ] = 'Change a running suite\'s logging verbosity'
 # discovery
 comsum[ 'ping'       ] = 'Check that a suite is running'
 comsum[ 'scan'       ] = 'Scan a host for running suites and lockservers'
+comsum[ 'check-versions' ] = 'Compare cylc versions on task host accounts'
 # task
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
 comsum[ 'started'    ] = 'Acquire a task lock and report started'

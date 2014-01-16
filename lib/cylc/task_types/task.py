@@ -30,8 +30,8 @@ import logging
 import cylc.flags as flags
 from cylc.task_receiver import msgqueue
 import cylc.rundb
-from cylc.run_get_stdout import run_get_stdout
 from cylc.command_env import cv_scripting_sl
+from cylc.host_select import get_task_host
 from parsec.util import pdeepcopy, poverride
 
 def displaytd( td ):
@@ -612,37 +612,8 @@ class task( object ):
         # because dynamic host selection may be used.
 
         # host may be None (= run task on suite host)
-        self.task_host = rtconfig['remote']['host']
-        
+        self.task_host = get_task_host( rtconfig['remote']['host'] )
         if self.task_host:
-            # 1) check for dynamic host selection command
-            #   host = $( host-select-command )
-            #   host =  ` host-select-command `
-            m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', self.task_host )
-            if m:
-                # extract the command and execute it
-                hs_command = m.groups()[1]
-                res = run_get_stdout( hs_command ) # (T/F,[lines])
-                if res[0]:
-                    # host selection command succeeded
-                    self.task_host = res[1][0]
-                else:
-                    # host selection command failed
-                    raise Exception("Host selection by " + self.task_host + " failed\n  " + '\n'.join(res[1]) )
-
-            # 2) check for dynamic host selection variable:
-            #   host = ${ENV_VAR}
-            #   host = $ENV_VAR
-
-            n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', self.task_host )
-            # any string quotes are stripped by file parsing 
-            if n:
-                var = n.groups()[0]
-                try:
-                    self.task_host = os.environ[var]
-                except KeyError, x:
-                    raise Exception( "Host selection by " + self.task_host + " failed:\n  Variable not defined: " + str(x) )
-
             self.log( "NORMAL", "Task host: " + self.task_host )
         else:
             self.task_host = "localhost"

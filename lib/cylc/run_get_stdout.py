@@ -37,6 +37,7 @@ def run_get_stdout( command ):
         return (False, [msg, command])
     else:
         # output is a string with newlines
+        # TODO - don't join out and err like this:
         res = (out + err ).strip()
         return ( True, res.split('\n') )
 

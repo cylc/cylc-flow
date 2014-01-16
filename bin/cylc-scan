@@ -27,7 +27,7 @@ from cylc.port_scan import scan
 from cylc.CylcOptionParsers import cop
 from cylc.global_config import get_global_cfg
 
-parser = cop( """cylc [discover] scan [OPTIONS]
+parser = cop( """cylc [discovery] scan [OPTIONS]
     
 Detect (by port scanning) running cylc suites and lockservers, and 
 print the results. By default only your own running suites will be
