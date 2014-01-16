@@ -222,6 +222,7 @@ LED suite control interface.
         self.group_toolbutton.set_active( self.t.should_group_families )
         g_image = gtk.image_new_from_stock( 'group', gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.group_toolbutton.set_icon_widget( g_image )
+        self.group_toolbutton.set_label( "Group" )
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
         self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
         items.append( self.group_toolbutton )

@@ -65,8 +65,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
             <toolitem action="ZoomOut"/>
             <toolitem action="ZoomFit"/>
             <toolitem action="Zoom100"/>
-            <separator name="LandscapeSep"/>
-            <toolitem action="Landscape"/>
+            <separator name="LeftToRightSep"/>
+            <toolitem action="LeftToRight"/>
             <separator expand="true"/>
             <toolitem action="Save"/>
         </toolbar>
@@ -128,7 +128,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
             ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
         ))
         actiongroup.add_toggle_actions((
-            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+            ('LeftToRight', gtk.STOCK_JUMP_TO, 'Left-to-Right',
+             None, 'Left-to-right Graphing', self.on_left_to_right),
         ))
 
         # Add the actiongroup to the uimanager
@@ -137,8 +138,9 @@ class MyDotWindow2( CylcDotViewerCommon ):
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
 
-        landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
-        landscape_toolitem.set_active(self.orientation == "LR")
+        left_to_right_toolitem = uimanager.get_widget(
+            '/ToolBar/LeftToRight')
+        left_to_right_toolitem.set_active(self.orientation == "LR")
 
         # Create a Toolbar
 
@@ -195,7 +197,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
         self.set_dotcode( graph.string() )
         self.graph = graph
 
-    def on_landscape( self, toolitem ):
+    def on_left_to_right( self, toolitem ):
         if toolitem.get_active():
             self.set_orientation( "LR" )  # Left to right ordering of nodes
         else:
@@ -273,8 +275,8 @@ class MyDotWindow( CylcDotViewerCommon ):
             <toolitem action="Zoom100"/>
             <toolitem action="Group"/>
             <toolitem action="UnGroup"/>
-            <separator name="LandscapeSep"/>
-            <toolitem action="Landscape"/>
+            <separator name="LeftToRightSep"/>
+            <toolitem action="LeftToRight"/>
             <toolitem action="IgnoreSuicide"/>
             <toolitem action="IgnoreColdStart"/>
             <separator expand="true"/>
@@ -335,22 +337,32 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         # Create actions
         actiongroup.add_actions((
-            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In', self.widget.on_zoom_in),
-            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
-            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
-            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
-            ('Group', 'group', None, None, 'Group All Families', self.group_all),
-            ('UnGroup', 'ungroup', None, None, 'Ungroup All Families', self.ungroup_all),
-            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None,
+             None, 'Zoom In', self.widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None,
+             None, 'Zoom Out', self.widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None,
+             None, 'Zoom Fit', self.widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None,
+             None, 'Zoom 100', self.widget.on_zoom_100),
+            ('Group', 'group', 'Group',
+             None, 'Group All Families', self.group_all),
+            ('UnGroup', 'ungroup', 'Ungroup',
+             None, 'Ungroup All Families', self.ungroup_all),
+            ('Save', gtk.STOCK_SAVE_AS,
+             'Save', None, 'Save', self.save_action ),
         ))
         actiongroup.add_toggle_actions((
-            ('Landscape', gtk.STOCK_JUMP_TO, None, None, 'Landscape', self.on_landscape),
+            ('LeftToRight', gtk.STOCK_JUMP_TO, 'Left-to-Right',
+             None, 'Left-to-right Graphing', self.on_left_to_right),
         ))
         actiongroup.add_toggle_actions((
-            ('IgnoreSuicide', gtk.STOCK_CANCEL, None, None, 'Ignore Suicide Triggers', self.on_igsui),
+            ('IgnoreSuicide', gtk.STOCK_CANCEL, 'Ignore Suicide Triggers',
+             None, 'Ignore Suicide Triggers', self.on_igsui),
         ))
         actiongroup.add_toggle_actions((
-            ('IgnoreColdStart', gtk.STOCK_YES, None, None, 'Ignore Cold Start Tasks', self.on_igcol),
+            ('IgnoreColdStart', gtk.STOCK_YES, 'Ignore Cold Start Tasks',
+             None, 'Ignore Cold Start Tasks', self.on_igcol),
         ))
 
         # Add the actiongroup to the uimanager
@@ -359,8 +371,8 @@ class MyDotWindow( CylcDotViewerCommon ):
         # Add a UI descrption
         uimanager.add_ui_from_string(self.ui)
 
-        landscape_toolitem = uimanager.get_widget('/ToolBar/Landscape')
-        landscape_toolitem.set_active(self.orientation == "LR")
+        left_to_right_toolitem = uimanager.get_widget('/ToolBar/LeftToRight')
+        left_to_right_toolitem.set_active(self.orientation == "LR")
 
         # Create a Toolbar
 
@@ -437,7 +449,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.set_dotcode( graph.string() )
         self.graph = graph
 
-    def on_landscape( self, toolitem ):
+    def on_left_to_right( self, toolitem ):
         if toolitem.get_active():
             self.set_orientation( "LR" )  # Left to right ordering of nodes
         else:

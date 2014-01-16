@@ -100,7 +100,7 @@ GRAPH VIEWER CONTROLS:
     * Zoom buttons, mouse-wheel, or ctrl-left-drag to zoom in and out.
     * Shift-left-drag to zoom in on a box.
     * Also: "Best Fit" and "Normal Size".
-    * Landscape mode on/off.
+    * Left-to-right graphing mode on/off.
   Family (namespace) grouping controls:
     Toolbar:
     * "group" - group all families up to root.
