@@ -22,6 +22,7 @@ import sys
 from daemonize import daemonize
 from version import cylc_version
 from global_config import get_global_cfg
+import flags
 
 def print_blurb():
     lines = []
@@ -61,14 +62,14 @@ def main(name, start):
             gcfg.create_cylc_run_tree( server.suite )
         server.configure_pyro()
     except Exception, x:
-        if server.options.debug:
+        if flags.debug:
             raise
         else:
             print >> sys.stderr, x
             sys.exit(1)
  
     # Daemonize the suite
-    if not server.options.no_detach and not server.options.debug:
+    if not server.options.no_detach and not flags.debug:
         daemonize( server.suite, server.port )
 
     try:
@@ -89,7 +90,7 @@ def main(name, start):
             # In case of exceptions in the shutdown method itself
             print str(y)
             pass
-        if server.options.debug:
+        if flags.debug:
             raise
         else:
             print >> sys.stderr, "THE ERROR WAS:"

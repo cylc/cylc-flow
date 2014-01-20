@@ -23,6 +23,7 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
+import cylc.flags
 
 n_oone = 0
 n_otwo = 0
@@ -130,7 +131,7 @@ try:
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file )
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 

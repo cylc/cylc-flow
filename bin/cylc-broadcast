@@ -33,6 +33,7 @@ from cylc.print_tree import print_tree
 from cylc.TaskID import TaskID
 from parsec.validate import validate
 from cylc.cfgspec.suite_spec import SPEC
+import cylc.flags
 
 def get_padding( settings, level=0, padding=0 ):
     level += 1
@@ -158,7 +159,7 @@ suite = args[0]
 suite, pphrase = prep_pyro( suite, options ).execute()
 
 debug = False
-if options.debug:
+if cylc.flags.debug:
     debug = True
 else:
     try:
@@ -186,7 +187,7 @@ if options.show or options.showtask:
     try:
         settings = proxy.get( options.showtask )
     except Exception,x:
-        if options.debug:
+        if debug:
             raise
         sys.exit(x)
     padding = get_padding(settings) * ' '
@@ -200,7 +201,7 @@ if options.clear:
     try:
         settings = proxy.clear( options.namespaces, options.tags )
     except Exception,x:
-        if options.debug:
+        if debug:
             raise
         sys.exit(x)
     else:
@@ -210,7 +211,7 @@ if options.expire:
     try:
         settings = proxy.expire( options.expire )
     except Exception,x:
-        if options.debug:
+        if debug:
             raise
         sys.exit(x)
     else:
@@ -249,14 +250,14 @@ for setting in settings:
         # validate items and coerce values 
         validate( setting, SPEC['runtime']['__MANY__'] )
     except Exception,x:
-        if options.debug:
+        if debug:
             raise
         sys.exit(x)
 
 try:
     success, msg = proxy.put( namespaces, tags, settings )
 except Exception, x:
-    if options.debug:
+    if debug:
         raise
     sys.exit(x)
 else:

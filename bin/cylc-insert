@@ -28,6 +28,7 @@ from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
+import cylc.flags
 
 parser = cop( """cylc [control] insert [OPTIONS] ARGS
 
@@ -72,7 +73,7 @@ try:
     prompt( 'Insert ' + name + ' at ' + tag + ' in ' + suite, options.force )
     result = proxy.put( 'insert task', name, tag, options.is_family, stoptag )
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 

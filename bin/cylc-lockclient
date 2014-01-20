@@ -204,7 +204,4 @@ See also:
             #raise SystemExit( "unknown cylc lockserver option" )
 
     except SuiteNotFoundError, x:
-        #if options.debug:
-        #    raise
-        #else:
         raise SystemExit( 'Lockserver not found; try \'lockserver status\'.' )

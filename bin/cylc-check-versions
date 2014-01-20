@@ -60,7 +60,7 @@ try:
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file)
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 else:

@@ -245,6 +245,7 @@ Arguments:"""
                     self.error( "Need either a filename or suite name(s)" )
 
         cylc.flags.verbose = options.verbose
+        cylc.flags.debug = options.debug
 
         return ( options, args )
 

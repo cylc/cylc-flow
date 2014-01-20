@@ -27,6 +27,7 @@ from cylc.prompt import prompt
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
+import cylc.flags
 
 parser = cop( """cylc [control] remove [OPTIONS] ARGS
 
@@ -69,7 +70,7 @@ try:
         result = proxy.put( 'remove task', name, tag, options.is_family, spawn )
 
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 

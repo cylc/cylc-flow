@@ -29,6 +29,7 @@ from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
+import cylc.flags
 
 parser = cop( """cylc [control] depend [OPTIONS] ARGS
 
@@ -64,7 +65,7 @@ else:
 try:
     tid = TaskID( task_id )
 except TaskIDError, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 else:
@@ -77,7 +78,7 @@ try:
     prompt( 'Add new prerequisite to ' + task_id + ' in ' + suite, options.force )
     result = proxy.put( 'add prerequisite', task_id, msg )
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 

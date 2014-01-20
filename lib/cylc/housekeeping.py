@@ -47,7 +47,7 @@ class config_line:
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
     def __init__( self, source, match, oper, ctime, offset, dest=None, 
-            debug=False, mode=None, cheap=False ):
+            mode=None, cheap=False ):
         self.source = source
         self.match = match
         self.ctime = ctime
@@ -59,7 +59,6 @@ class config_line:
         self.offset = offset
         self.opern = oper 
         self.destn = dest
-        self.debug = debug
         self.cheap = cheap
         self.mode = mode
 
@@ -113,7 +112,7 @@ class config_line:
             src_entries += 1
             entrypath = os.path.join( self.source, entry )
             item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset, 
-                    self.destn, self.mode, self.debug, self.cheap )
+                    self.destn, self.mode, self.cheap )
             if not item.matches():
                 not_matched += 1
                 continue
@@ -130,7 +129,7 @@ class config_file:
         Process a cylc housekeeping config file, line by line.
     """
     def __init__( self, file, ctime, only=None, excpt=None, 
-            debug=False, mode=None, cheap=False):
+            mode=None, cheap=False):
         self.lines = []
         if not os.path.isfile( file ):
             raise HousekeepingError, "file not found: " + file 
@@ -196,7 +195,7 @@ class config_file:
 
             self.lines.append( config_line( source, match, operation, 
                 ctime, offset, destination, 
-                debug=debug, mode=mode, cheap=cheap ))
+                mode=mode, cheap=cheap ))
 
     def action( self, batchsize ):
         for item in self.lines:
@@ -206,7 +205,7 @@ class hkitem:
     """
         Handle processing of a single source directory entry
     """
-    def __init__( self, path, pattern, operation, ctime, offset, destn, mode=None, debug=False, cheap=False ):
+    def __init__( self, path, pattern, operation, ctime, offset, destn, mode=None, cheap=False ):
         # Assumes the validity of pattern has already been checked
         self.operation = operation
         self.path = path
@@ -215,22 +214,21 @@ class hkitem:
         self.offset = offset
         self.destn = destn
         self.matched_ctime = None
-        self.debug = debug
         self.cheap = cheap
         self.mode = mode
 
     def matches( self ):
-        if self.debug:
+        if flags.debug:
             print "\nSource item:", self.path
 
         # does path match pattern
         m = re.search( self.pattern, self.path )
         if not m:
-            if self.debug:
+            if flags.debug:
                 print " + does not match"
             return False
 
-        if self.debug:
+        if flags.debug:
             print " + MATCH"
 
         # extract cycle time from path
@@ -260,11 +258,11 @@ class hkitem:
         try:
             ct(self.matched_ctime)
         except:
-            if self.debug:
+            if flags.debug:
                 print " + extracted cycle time is NOT VALID: " + self.matched_ctime
             return False
         else:
-            if self.debug:
+            if flags.debug:
                 print " + extracted cycle time: " + self.matched_ctime
 
         # assume ctime is >= self.matched_ctime
@@ -273,14 +271,14 @@ class hkitem:
         # gap hours
         gap = foo.subtract_hrs( bar )
 
-        if self.debug:
+        if flags.debug:
             print " + computed offset hours", gap,
         if int(gap) < int(self.offset):
-            if self.debug:
+            if flags.debug:
                 print "- ignoring (does not make the cutoff)"
             return False
         
-        if self.debug:
+        if flags.debug:
             print "- ACTIONABLE (does make the cutoff)"
         return True
 
@@ -297,7 +295,7 @@ class hkitem:
             dest = re.sub( 'MM', self.matched_ctime[4:6], dest )
             dest = re.sub( 'DD', self.matched_ctime[6:8], dest )
             dest = re.sub( 'HH', self.matched_ctime[8:10], dest )
-            if self.debug and dest != self.destn:
+            if flags.debug and dest != self.destn:
                 print " + expanded destination directory:\n  ", dest
             self.destn = dest
 

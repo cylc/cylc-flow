@@ -280,7 +280,7 @@ class scheduler(object):
         self.wireless = broadcast( self.config.get_linearized_ancestors() )
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
-        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.options.debug )
+        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode )
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
 
@@ -610,6 +610,8 @@ class scheduler(object):
             return result( False, "Illegal logging level: " + level)
 
         self.log.setLevel( new_level )
+
+        flags.debug = ( level == 'debug' )
         return result(True, 'OK')
 
     def command_remove_cycle( self, tag, spawn ):
@@ -729,7 +731,7 @@ class scheduler(object):
         self.run_mode = self.options.run_mode
 
         # LOGGING LEVEL
-        if self.options.debug:
+        if flags.debug:
             self.logging_level = logging.DEBUG
         else:
             self.logging_level = logging.INFO
@@ -869,8 +871,8 @@ class scheduler(object):
         self.suite_env = {
                 'CYLC_UTC'               : str(self.utc),
                 'CYLC_MODE'              : 'scheduler',
-                'CYLC_DEBUG'             : str( self.options.debug ),
-                'CYLC_VERBOSE'           : str(flags.verbose),
+                'CYLC_DEBUG'             : str( flags.debug ),
+                'CYLC_VERBOSE'           : str( flags.verbose ),
                 'CYLC_USE_LOCKSERVER'    : str( self.use_lockserver ),
                 'CYLC_LOCKSERVER_PORT'   : str( self.lockserver_port ), # "None" if not using lockserver
                 'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
@@ -998,7 +1000,7 @@ class scheduler(object):
                 self.reload_taskdefs()
 
             if self.process_tasks():
-                if self.options.debug:
+                if flags.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     # loop timing: use real clock even in sim mode
                     main_loop_start_time = datetime.datetime.now()
@@ -1020,7 +1022,7 @@ class scheduler(object):
                 # expire old broadcast variables
                 self.wireless.expire( self.get_oldest_c_time() )
 
-                if self.options.debug:
+                if flags.debug:
                     delta = datetime.datetime.now() - main_loop_start_time
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )

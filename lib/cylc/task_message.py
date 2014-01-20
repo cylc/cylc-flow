@@ -64,7 +64,7 @@ class message(object):
         except:
             pass
  
-        flags.verbose = flags.verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
+        cylc.flags.verbose = cylc.flags.verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
 
         # 'scheduler' or 'submit', (or 'raw' if job script run manually)
         self.mode = self.env_map.get( 'CYLC_MODE', 'raw' )
@@ -165,7 +165,7 @@ class message(object):
             # to identify the target user and host names:
             sys.argv.append( '--user=' + self.owner )
             sys.argv.append( '--host=' + self.host )
-            if flags.verbose:
+            if cylc.flags.verbose:
                 sys.argv.append( '-v' )
 
             if self.ssh_login_shell:
@@ -279,7 +279,7 @@ class message(object):
                     raise SystemExit( "Failed to release task lock" )
         except Exception, z:
             print >> sys.stderr, z
-            if debug:
+            if cylc.flags.debug:
                 raise
             raise SystemExit( "Failed to connect to the lockserver?" )
 

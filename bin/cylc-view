@@ -27,6 +27,7 @@ import subprocess
 from cylc.global_config import get_global_cfg
 from cylc.CylcOptionParsers import cop
 from parsec.fileparse import read_and_proc
+import cylc.flags
 
 try:
     from cylc.Jinja2Support import Jinja2Process
@@ -120,7 +121,7 @@ try:
             options.templatevars, options.templatevars_file,
             viewcfg=viewcfg, asedit=options.asedit )
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit( x )
 

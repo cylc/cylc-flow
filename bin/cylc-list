@@ -23,6 +23,7 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.config import config
+import cylc.flags
 
 parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
 
@@ -140,7 +141,7 @@ try:
                 print ns
 
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 

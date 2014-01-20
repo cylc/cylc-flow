@@ -103,7 +103,7 @@ try:
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file )
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 
@@ -150,7 +150,7 @@ fct = config.cfg['scheduling']['final cycle time'  ]
 suite_env = {
         'CYLC_UTC'               : str(utc),
         'CYLC_MODE'              : 'submit',
-        'CYLC_DEBUG'             : str( options.debug ),
+        'CYLC_DEBUG'             : str( cylc.flags.debug ),
         'CYLC_VERBOSE'           : str( cylc.flags.verbose),
         'CYLC_USE_LOCKSERVER'    : str( use_lockserver ),
         'CYLC_LOCKSERVER_PORT'   : str( lockserver_port ), # "None" if not using lockserver
@@ -241,5 +241,5 @@ except TaskNotDefinedError, x:
 if not options.dry_run:
     print "Logging directory: " + suite_log_dir
     print
-task_proxy.submit( dry_run=options.dry_run, debug=options.debug )
+task_proxy.submit( dry_run=options.dry_run )
 
