@@ -142,8 +142,8 @@ if int(options.max_polls) > 0:
             })
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
 except PortFileError, x:
     print >> sys.stderr, x
     print "The suite is apparently not running"

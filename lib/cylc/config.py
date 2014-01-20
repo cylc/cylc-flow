@@ -33,6 +33,7 @@ from parsec.util import pdeepcopy, poverride, replicate, un_many
 from TaskID import TaskID
 from C3MRO import C3
 from OrderedDict import OrderedDict
+import flags
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -84,7 +85,7 @@ class TaskNotDefinedError( SuiteConfigError ):
 class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
-            verbose=False, validation=False, strict=False, collapsed=[],
+            validation=False, strict=False, collapsed=[],
             cli_start_tag=None, is_restart=False, is_reload=False,
             write_processed_file=True ):
 
@@ -93,7 +94,6 @@ class config( object ):
         self.fdir  = os.path.dirname(fpath)
         self.owner = owner
         self.run_mode = run_mode
-        self.verbose = verbose
         self.strict = strict
         self.naked_dummy_tasks = []
         self.edges = []
@@ -140,8 +140,7 @@ class config( object ):
         # parse, upgrade, validate the suite, but don't expand [runtime]
         self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
                 template_vars_file=template_vars_file, do_expand=False,
-                verbose=verbose, is_reload=is_reload,
-                write_processed_file=write_processed_file )
+                is_reload=is_reload, write_processed_file=write_processed_file )
         self.runtime_defaults = get_defaults_rt()
 
         # allow test suites with no [runtime]:
@@ -151,7 +150,7 @@ class config( object ):
         if 'root' not in self.cfg['runtime']:
             self.cfg['runtime']['root'] = {}
 
-        if self.verbose:
+        if flags.verbose:
             print "Expanding [runtime] name lists"
         # If a runtime section heading is a list of names then the
         # subsequent config applies to each member. 
@@ -183,7 +182,7 @@ class config( object ):
         self.filter_env()
 
         # [special tasks]: parse clock-offsets, and replace families with members
-        if self.verbose:
+        if flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
             result = copy( self.cfg['scheduling']['special tasks'][type] )
@@ -228,7 +227,7 @@ class config( object ):
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove( cfam )
-                if fromrc and self.verbose:
+                if fromrc and flags.verbose:
                     print >> sys.stderr, 'WARNING, [visualization][collapsed families]: family ' + cfam + ' not defined'
 
         # check for run mode override at suite level
@@ -277,7 +276,7 @@ class config( object ):
         # Warn or abort (if --strict) if naked dummy tasks (no runtime
         # section) are found in graph or queue config. 
         if len( self.naked_dummy_tasks ) > 0:
-            if self.strict or self.verbose:
+            if self.strict or flags.verbose:
                 print >> sys.stderr, 'WARNING: naked dummy tasks detected (no entry under [runtime]):'
                 for ndt in self.naked_dummy_tasks:
                     print >> sys.stderr, '  +', ndt
@@ -324,7 +323,7 @@ class config( object ):
             if fam not in ngs:
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
 
-        if self.verbose:
+        if flags.verbose:
             print "Checking [visualization] node attributes"
             # 1. node groups should contain valid namespace names 
             nspaces = self.cfg['runtime'].keys()
@@ -443,7 +442,7 @@ class config( object ):
                 first_parents[name] = [ pts[0] ]
             self.runtime['parents'][name] = pts
 
-        if self.verbose and demoted:
+        if flags.verbose and demoted:
             print "First parent(s) demoted to secondary:"
             for n,p in demoted.items():
                 print " +", p, "as parent of '" + n + "'"
@@ -473,7 +472,7 @@ class config( object ):
         #    print name, self.runtime['linearized ancestors'][name]
 
     def compute_inheritance( self, use_simple_method=True ):
-        if self.verbose:
+        if flags.verbose:
             print "Parsing the runtime namespace hierarchy"
 
         results = {}
@@ -571,7 +570,7 @@ class config( object ):
                             drl = abs(mo) + min(mcis)
         self.default_runahead_limit = drl
         self.runahead_limit = crl or drl
-        if self.verbose:
+        if flags.verbose:
             print "Runahead limit:", rl, "hours"
 
     def get_runahead_limit( self ):
@@ -625,7 +624,7 @@ class config( object ):
         """ Replace family names with members, in internal queues,
          and remove assigned members from the default queue. """
 
-        if self.verbose:
+        if flags.verbose:
             print "Configuring internal queues"
 
         # NOTE: this method modifies the parsed config dict itself.
@@ -650,7 +649,7 @@ class config( object ):
                             except ValueError:
                                 # no need to check for naked dummy tasks here as
                                 # families are defined by runtime entries.
-                                if self.verbose and fmem not in self.runtime['descendants']:
+                                if flags.verbose and fmem not in self.runtime['descendants']:
                                     # family members that are themselves families should be ignored as we only need tasks in the queues.
                                     print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + fmem + ' of family ' + qmember + ' (task not used in the graph)'
                             else:
@@ -661,14 +660,14 @@ class config( object ):
                         try:
                             queues['default']['members'].remove( qmember )
                         except ValueError:
-                            if self.verbose:
+                            if flags.verbose:
                                 print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + qmember + ' (task not used in the graph)'
                             if qmember not in self.cfg['runtime']:
                                 self.naked_dummy_tasks.append( qmember )
                         else:
                             qmembers.append(qmember)
             queues[queue]['members'] = qmembers
-        if self.verbose:
+        if flags.verbose:
             if len( queues.keys() ) > 1:
                 for queue in queues:
                     print "  +", queue, queues[queue]['members']
@@ -853,7 +852,7 @@ class config( object ):
         # Tasks (a) may be defined but not used (e.g. commented out of the graph)
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
 
-        if self.verbose:
+        if flags.verbose:
             print "Checking for defined tasks not used in the graph"
             for name in self.cfg['runtime']:
                 if name not in self.taskdefs:
@@ -881,7 +880,7 @@ class config( object ):
             return
 
         # Instantiate tasks and force evaluation of conditional trigger expressions.
-        if self.verbose:
+        if flags.verbose:
             print "Instantiating tasks to check trigger expressions"
         for cyclr in self.tasks_by_cycler:
             # for each graph section
@@ -919,7 +918,7 @@ class config( object ):
                     print >> sys.stderr, x
                     raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
                 tag = itask.next_tag()
-                if self.verbose:
+                if flags.verbose:
                     print "  + " + itask.id + " ok"
 
     def get_coldstart_task_list( self ):
@@ -1066,7 +1065,7 @@ class config( object ):
         # Replace "foo:finish" with "( foo:succeed | foo:fail )"
         line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
 
-        if self.verbose and line != orig_line:
+        if flags.verbose and line != orig_line:
             print 'Graph line substitutions occurred:'
             print '  IN:', orig_line
             print '  OUT:', line
@@ -1540,7 +1539,7 @@ class config( object ):
         return nl, nr
 
     def load_graph( self ):
-        if self.verbose:
+        if flags.verbose:
             print "Parsing the dependency graph"
 
         self.graph_found = False

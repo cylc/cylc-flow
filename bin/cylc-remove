@@ -59,8 +59,8 @@ spawn = not options.no_spawn
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
     if remove_tag:
         prompt( 'remove ALL tasks at ' + tag + ' in ' + suite, options.force )
         result = proxy.put( 'remove cycle', tag, spawn )

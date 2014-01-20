@@ -41,7 +41,7 @@ parser.add_option( "-u","--unregister",
 
 ( options, args ) = parser.parse_args()
 
-db = localdb(file=options.db, verbose=options.verbose)
+db = localdb(file=options.db )
 
 if len(args) == 0:
     pattern = '.*'

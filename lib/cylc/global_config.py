@@ -8,6 +8,7 @@ from tempfile import mkdtemp
 from envvar import expandvars
 from mkdir_p import mkdir_p
 from cfgspec.site_spec import get_cfg, print_cfg
+import flags
 
 gcfg = None
 
@@ -25,14 +26,13 @@ class globalcfg( object ):
     For all derived items - paths hardwired under the configurable top
     levels - use the get_derived_host_item(suite,host) method.
     """
-    def __init__( self, strict=False, verbose=False ):
+    def __init__( self, strict=False ):
         """Parse, validate, and combine site and user files.""" 
 
-        self.verbose = verbose
         self.strict = strict # not used yet
 
         try:
-            self.cfg = get_cfg( self.verbose )
+            self.cfg = get_cfg()
         except Exception, x:
             print >> sys.stderr, x
             raise GlobalConfigError("ABORTING")
@@ -166,14 +166,14 @@ class globalcfg( object ):
             print >> sys.stderr, str(x)
             raise GlobalConfigError( 'Failed to create directory "' + name + '"' )
 
-    def create_cylc_run_tree( self, suite, verbose=False ):
+    def create_cylc_run_tree( self, suite ):
         """Create all top-level cylc-run output directories on the suite host."""
 
-        if verbose:
+        if flags.verbose:
             print 'Creating the suite output tree:'
 
         item = 'suite run directory'
-        if verbose:
+        if flags.verbose:
             print ' +', item
         idir = self.get_derived_host_item( suite, item )
         if self.cfg['enable run directory housekeeping']:
@@ -185,7 +185,7 @@ class globalcfg( object ):
                 'suite state directory',
                 'suite work directory',
                 'suite share directory']:
-            if verbose:
+            if flags.verbose:
                 print ' +', item
             idir = self.get_derived_host_item( suite, item )
             self.create_directory( idir, item )
@@ -199,10 +199,10 @@ class globalcfg( object ):
         value = self.cfg['pyro']['ports directory']
         self.create_directory( value, item )
         
-def get_global_cfg( strict=False, verbose=False ):
+def get_global_cfg( strict=False ):
     global gcfg
     if gcfg is None:
-        gcfg = globalcfg( strict=strict, verbose=verbose )
+        gcfg = globalcfg( strict=strict )
     return gcfg
 
 def print_global_cfg():

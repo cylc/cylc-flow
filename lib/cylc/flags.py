@@ -28,3 +28,6 @@ pflag = False
 # structure accessed by gcylc and commands.
 iflag = False
 
+# verbose mode
+verbose = False
+

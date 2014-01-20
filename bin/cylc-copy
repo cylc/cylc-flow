@@ -91,10 +91,10 @@ arg_to = args[1]
 arg_dir = args[2]
 
 if options.dbfrom:
-    dbfrom = localdb( file=options.dbfrom, verbose=options.verbose )
+    dbfrom = localdb( file=options.dbfrom )
 else:
-    dbfrom = localdb( file=options.db, verbose=options.verbose )
-db = localdb( file=options.db, verbose=options.verbose )
+    dbfrom = localdb( file=options.db )
+db = localdb( file=options.db )
 
 try:
     flist = dbfrom.get_list( '^' + arg_from + r'\b' )

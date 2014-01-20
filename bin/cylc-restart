@@ -97,7 +97,6 @@ where they got to while the suite was down."""
                 sys.exit("ERROR: restart dump filename is a valid cycle time!")
 
         scheduler.parse_commandline( self )
-        self.verbose = self.options.verbose
 
     def load_tasks( self ):
 

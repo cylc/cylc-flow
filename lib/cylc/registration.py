@@ -18,6 +18,7 @@
 
 import os, sys, re
 from regpath import RegPath
+import flags
 
 """Simple suite name registration database."""
 
@@ -30,11 +31,10 @@ class RegistrationError( Exception ):
         return repr(self.msg)
 
 class localdb(object):
-    def __init__( self, file=None, verbose=False):
+    def __init__( self, file=None ):
         dbpath = file # (back compat)
         global regdb_path
         self.dbpath = dbpath or regdb_path
-        self.verbose = verbose
         # create initial database directory if necessary
         if not os.path.exists( self.dbpath ):
             try:
@@ -203,7 +203,7 @@ class localdb(object):
         dir, title = data['path'], data['title']
         new_title = self.get_suite_title( suite )
         if title == new_title:
-            if self.verbose:
+            if flags.verbose:
                 print 'unchanged:', suite
             changed = False
         else:

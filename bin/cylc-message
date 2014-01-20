@@ -19,6 +19,7 @@
 import os, sys
 from optparse import OptionParser
 from cylc.task_message import message
+import cylc.flags
 
 usage = """cylc [task] message [OPTIONS] MESSAGE
 
@@ -59,17 +60,18 @@ parser.add_option( "-v", "--verbose",
         action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
+cylc.flags.verbose = options.verbose
 
 if options.next_restart_completed:
-    message(verbose=options.verbose).shortcut_next_restart()
+    message().shortcut_next_restart()
     sys.exit(0)
 
 elif options.all_restarts_completed:
-    message(verbose=options.verbose).shortcut_all_restarts()
+    message().shortcut_all_restarts()
     sys.exit(0)
 
 elif options.all_outputs_completed:
-    message(verbose=options.verbose).shortcut_all_outputs()
+    message().shortcut_all_outputs()
     sys.exit(0)
 
 elif len( args ) == 0:
@@ -85,7 +87,7 @@ except KeyError:
 
 msg = ' '.join( args )
 try:
-    message( msg=msg, priority=options.priority, verbose=options.verbose ).send()
+    message( msg=msg, priority=options.priority ).send()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
     if debug:

@@ -92,8 +92,8 @@ else:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
     prompt( 'Purge from ' + task_id + ' to ' + stop + ' in ' + suite, options.force )
     result = proxy.put( 'purge tree', target, stop )
 except Exception, x:

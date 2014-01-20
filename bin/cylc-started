@@ -19,6 +19,7 @@
 import os, sys
 from optparse import OptionParser
 from cylc.task_message import message
+import cylc.flags
 
 usage = """cylc [task] started [OPTIONS]
 
@@ -46,6 +47,7 @@ parser.add_option( "-v", "--verbose",
         action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
+cylc.flags.verbose = options.verbose
 
 if len( args ) != 0:
     parser.error( "Wrong number of arguments" )
@@ -60,7 +62,7 @@ except KeyError:
 
 # send start message
 try:
-    message(verbose=options.verbose).send_started()
+    message().send_started()
 except Exception, x:
     if debug:
         raise

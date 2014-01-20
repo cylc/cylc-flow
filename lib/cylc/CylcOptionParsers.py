@@ -21,6 +21,7 @@ from optparse import OptionParser
 from suite_host import get_hostname
 from owner import user
 from cylc.command_prep import prep_file
+import cylc.flags
 
 """Common options for all cylc commands."""
 
@@ -242,6 +243,8 @@ Arguments:"""
                 else:
                     # No filename, so we're expecting an argument
                     self.error( "Need either a filename or suite name(s)" )
+
+        cylc.flags.verbose = options.verbose
 
         return ( options, args )
 

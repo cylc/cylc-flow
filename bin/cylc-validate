@@ -25,6 +25,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.version import cylc_version
 from cylc.config import config
 from cylc.global_config import get_global_cfg
+import cylc.flags
 
 parser = cop( """cylc [prep] validate [OPTIONS] ARGS
 
@@ -52,22 +53,21 @@ parser.add_option( "--no-write",
 
 suite, suiterc, junk = parser.get_suite()
 
-if options.verbose:
-    print "Parsing Suite Definition"
+if cylc.flags.verbose:
+    print "Parsing suite " + suite + ":", suiterc
 
 try:
     config( suite, suiterc, 
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             validation=True, strict=options.strict,
-            verbose=options.verbose,
             write_processed_file=not options.nowrite )
 except Exception,x:
     if options.debug:
         raise
     raise SystemExit(x)
 
-print "Suite " + suite + " is valid for cylc-" + cylc_version
+print "Valid for cylc-" + cylc_version
 
 gcfg = get_global_cfg()
 

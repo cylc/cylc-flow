@@ -19,6 +19,7 @@
 import os, sys
 from optparse import OptionParser
 from cylc.mkdir_p import mkdir_p
+import cylc.flags
 
 parser = OptionParser( usage = """cylc [util] checkvars [OPTIONS] VARNAMES
 
@@ -66,6 +67,7 @@ parser.add_option( "-w", "--warn-only",
         action="store_true", default=False, dest="warnonly" )
 
 (options, args) = parser.parse_args()
+cylc.flags.verbose = options.verbose
 
 if len( args ) == 0:
     parser.error( "VARNAMES argument is required" )
@@ -87,12 +89,12 @@ for varname in varnames:
     if varname in os.environ:
         value = os.environ[ varname ]
 
-        if options.verbose:
+        if cylc.flags.verbose:
             print '$' + varname, "evaluates to", value
 
         if options.createdirs:
             if os.path.isdir( value ):
-                if options.verbose:
+                if cylc.flags.verbose:
                     print '(directory exists)'
             else:
                 try:
@@ -108,7 +110,7 @@ for varname in varnames:
         if options.createparentdirs:
             parent = os.path.dirname( value )
             if os.path.isdir( parent ):
-                if options.verbose:
+                if cylc.flags.verbose:
                     print '(parent directory exists)'
             else:
                 try:
@@ -123,20 +125,20 @@ for varname in varnames:
 
         if options.checkdirs:
             if os.path.isdir( value ):
-                if options.verbose:
+                if cylc.flags.verbose:
                     print '(directory exists)'
             else:
                 failed = True
-                if options.verbose:
+                if cylc.flags.verbose:
                     print >> sys.stderr, ALERT, 'directory not found:', value
 
         if options.checkfiles:
             if os.path.isfile( value ):
-                if options.verbose:
+                if cylc.flags.verbose:
                     print '(file exists)'
             else:
                 failed = True
-                if options.verbose:
+                if cylc.flags.verbose:
                     print >> sys.stderr, ALERT, 'file not found:', value
 
         if options.checkint:
@@ -147,14 +149,14 @@ for varname in varnames:
                 int( value )
             except:
                 failed = True
-                if options.verbose:
+                if cylc.flags.verbose:
                     print >> sys.stderr, ALERT, 'value is not an integer:', value
             else:
-                if options.verbose:
+                if cylc.flags.verbose:
                     print '(is an integer)'
     else:
         failed = True
-        if options.verbose:
+        if cylc.flags.verbose:
             print >> sys.stderr, ALERT, 'variable not defined: $' + varname
 
 if failed:

@@ -116,7 +116,7 @@ viewcfg = {
         'inline' : options.inline or options.process,
         }
 try:
-    lines = read_and_proc( suiterc, options.verbose,
+    lines = read_and_proc( suiterc, 
             options.templatevars, options.templatevars_file,
             viewcfg=viewcfg, asedit=options.asedit )
 except Exception, x:

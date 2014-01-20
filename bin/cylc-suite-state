@@ -28,11 +28,12 @@ from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
 from cylc.global_config import get_global_cfg
 from cylc.command_polling import poller
+import cylc.flags
 
 class suite_poller( poller ):
     """A polling object that checks suite state."""
 
-    def connect( self, verbose=False ):
+    def connect( self ):
         """Connect to the suite db, polling if necessary in case the
         suite has not been started up yet."""
 
@@ -40,7 +41,7 @@ class suite_poller( poller ):
         # connect, or max number of polls exhausted) False
         connected = False
         
-        if verbose:
+        if cylc.flags.verbose:
             sys.stdout.write("connecting to suite db for " + 
                   self.args['run_dir'] + "/" + self.args['suite'])
         
@@ -57,12 +58,12 @@ class suite_poller( poller ):
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
             except DBNotFoundError:
-                if verbose:
+                if cylc.flags.verbose:
                     sys.stdout.write('.')
                 if self.n_polls >= max_polls:
                     break
                 sleep(self.interval)
-        if verbose:
+        if cylc.flags.verbose:
             sys.stdout.write('\n')
         return connected
 
@@ -142,7 +143,7 @@ spoller = suite_poller( "requested state",
             'status'  : options.status
             })
 
-if not spoller.connect(verbose=options.verbose):
+if not spoller.connect():
     sys.exit( "ERROR: cannot connect to the suite DB" )
 
 if options.status:

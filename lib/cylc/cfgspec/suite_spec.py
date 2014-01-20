@@ -225,16 +225,16 @@ SPEC = {
     }
 
 def get_expand_nonrt( fpath, template_vars, template_vars_file,
-        do_expand=False, verbose=False, is_reload=False,
+        do_expand=False, is_reload=False,
         write_processed_file=True):
     global cfg
     if is_reload or not cfg:
-        cfg = parse( fpath, verbose,
+        cfg = parse( fpath,
                 write_processed_file=write_processed_file,
                 template_vars=template_vars,
                 template_vars_file=template_vars_file )
 
-        u = upgrader( cfg, SPEC, 'suite definition', verbose )
+        u = upgrader( cfg, SPEC, 'suite definition' )
         u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
         # TODO - should abort if obsoleted items are encountered
         u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )

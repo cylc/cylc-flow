@@ -58,7 +58,7 @@ def main(name, start):
     try:
         if server.__class__.__name__ != 'restart':
             gcfg = get_global_cfg()
-            gcfg.create_cylc_run_tree( server.suite, server.options.verbose )
+            gcfg.create_cylc_run_tree( server.suite )
         server.configure_pyro()
     except Exception, x:
         if server.options.debug:

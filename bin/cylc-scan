@@ -57,13 +57,12 @@ parser.add_option( "--print-ports",
 
 ( options, args ) = parser.parse_args()
 
-gcfg = get_global_cfg(verbose=options.verbose)
+gcfg = get_global_cfg()
 if options.print_ports:
     base = gcfg.cfg['pyro']['base port']
     range = gcfg.cfg['pyro']['maximum number of ports']
     print base, '<= port <=', base + range
     sys.exit(0)
 
-suites = scan( options.host, options.db, options.pyro_timeout,
-               verbose=options.verbose )
+suites = scan( options.host, options.db, options.pyro_timeout )
 

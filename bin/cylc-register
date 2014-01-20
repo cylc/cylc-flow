@@ -76,7 +76,7 @@ if not os.path.isdir( rdir ):
 
 suite = args[0]
 
-db = localdb( file=options.db, verbose=options.verbose )
+db = localdb( file=options.db )
 try:
     db.register( suite, rdir )
 except Exception, x:
@@ -85,5 +85,5 @@ except Exception, x:
     raise SystemExit(x)
 
 # create a new passphrase for the suite if necessary
-passphrase( suite, user, get_hostname(), verbose=options.verbose ).generate(rdir)
+passphrase( suite, user, get_hostname() ).generate(rdir)
 

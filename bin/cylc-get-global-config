@@ -19,6 +19,7 @@
 import sys
 from optparse import OptionParser
 from cylc.version import cylc_version
+import cylc.flags
 
 parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS] 
 
@@ -64,6 +65,8 @@ parser.add_option( "-p", "--python",
         action="store_true", default=False, dest="pnative" )
 
 (options, args) = parser.parse_args()
+cylc.flags.verbose = options.verbose
+
 if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
@@ -71,7 +74,7 @@ try:
     # import gcfg here to avoid aborting before command help is printed
     from cylc.global_config import get_global_cfg, print_global_cfg
     from parsec.util import printcfg
-    gcfg = get_global_cfg(strict=options.strict, verbose=options.verbose)
+    gcfg = get_global_cfg( strict=options.strict )
     if options.stdout:
         print_global_cfg()
     elif options.run_dir:

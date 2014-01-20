@@ -19,20 +19,15 @@
 import os, sys, gtk
 from copy import deepcopy, copy
 from cylc.task_state import task_state
-from cylc.cfgspec.gcylc_spec import get_cfg
+from cylc.cfgspec.gcylc_spec import cfg
 
 class config( object ):
     """gcylc user configuration - default view panels, task themes etc."""
 
     def __init__( self, prntcfg=False ):
 
-        # parse the gcylc config files
-        cfg = get_cfg() 
-
-        #if not ucfg and not dcfg:
-        #    raise SystemExit( 'ERROR: no gcylc site or user config file found' )
-
         self.default_theme = "default"
+        cfg.printcfg()
 
         # select the start-up theme
         self.use_theme = cfg['use theme']

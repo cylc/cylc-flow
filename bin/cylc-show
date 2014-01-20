@@ -64,8 +64,8 @@ else:
  
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'suite-info' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'suite-info' )
     title, username = proxy.get( 'suite info' )
 except Exception, x:
     if options.debug:

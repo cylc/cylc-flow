@@ -48,7 +48,7 @@ parser.add_option( "-f", "--force",
 
 arg = args[0]
 
-db = localdb( file=options.db, verbose=options.verbose )
+db = localdb( file=options.db )
 
 try:
     dirs = db.unregister( arg )

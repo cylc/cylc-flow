@@ -33,7 +33,7 @@ Here's an easy way to move to a suite directory:
 ( options, args ) = parser.parse_args()
 
 reg = args[0]
-db = localdb( file=options.db, verbose=options.verbose )
+db = localdb( file=options.db )
 try:
     print db.get_suitedir(reg)
 except Exception, x:

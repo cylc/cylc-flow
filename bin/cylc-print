@@ -85,7 +85,7 @@ elif len(args) == 1:
 else:
     parser.error( "Wrong number of arguments.")
 
-db = localdb(file=options.db, verbose=options.verbose)
+db = localdb(file=options.db )
 try:
     allsuites = db.get_list(regfilter)
     if options.fail and len(allsuites) == 0:

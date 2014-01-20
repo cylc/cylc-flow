@@ -67,8 +67,8 @@ else:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
     prompt( 'Insert ' + name + ' at ' + tag + ' in ' + suite, options.force )
     result = proxy.put( 'insert task', name, tag, options.is_family, stoptag )
 except Exception, x:

@@ -57,8 +57,8 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 # cylc ping SUITE
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose).get_proxy( 'suite-info' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'suite-info' )
     proxy.get( 'ping suite' )
 except Exception, x:
     if options.debug:

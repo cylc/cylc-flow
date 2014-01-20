@@ -23,6 +23,7 @@ from cylc.version import cylc_version
 from cylc.config import config, SuiteConfigError
 from cylc.run_get_stdout import run_get_stdout
 from cylc.host_select import get_task_host
+import cylc.flags
 
 parser = cop( usage = """cylc [discovery] check-versions [OPTIONS] ARGS
 
@@ -76,7 +77,7 @@ else:
         accounts.add(account)
     accounts = list(accounts)
 
-if options.verbose:
+if cylc.flags.verbose:
     print len(accounts), "task host accounts used by " + suite + ":"
     for ac in accounts:
         print " ", ac
@@ -89,14 +90,14 @@ warn = {}
 contacted = 0
 for ac in accounts:
     lcom = 'ssh ' + ac + ' "' + rcom + '"'
-    if options.verbose:
+    if cylc.flags.verbose:
         print lcom
 
     res = run_get_stdout( lcom )
     if res[0]:
         contacted += 1
         out = res[1][0]
-        if options.verbose:
+        if cylc.flags.verbose:
             print ' ', out
         if out != cylc_version:
             warn[ac] = out

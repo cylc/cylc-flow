@@ -34,7 +34,7 @@ class QuitThread( Exception ):
 class job_batcher( threading.Thread ):
     "Batch-submit queued subprocesses in parallel, with a delay between batches."
 
-    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ):
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay ):
         threading.Thread.__init__(self)
         self.thread_id = str(self.getName()) 
 
@@ -43,7 +43,6 @@ class job_batcher( threading.Thread ):
         self.batches = []
         self.batch_size = int( batch_size )
         self.batch_delay = int( batch_delay )
-        self.verbose = verbose
 
         self.log = logging.getLogger( 'main' )
         # The quit flag allows the thread to exit
@@ -238,8 +237,8 @@ class task_batcher( job_batcher ):
     # sending fake task messages to be processed in the main thread - we
     # need to avoid making direct task state changes here.
 
-    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, wireless, run_mode, verbose ):
-        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, wireless, run_mode ):
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay ) 
         self.run_mode = run_mode
         self.wireless = wireless
         self.empty_before_exit = False
@@ -324,8 +323,8 @@ class event_batcher( job_batcher ):
     handler, task-id, message). We do not capture the output of event
     handlers as doing so could block the thread."""
 
-    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, suite, verbose ):
-        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, suite ):
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay ) 
         self.suite = suite
 
     def submit_item( self, item, jobinfo ):
@@ -345,8 +344,8 @@ class event_batcher( job_batcher ):
 class poll_and_kill_batcher( job_batcher ):
     """Batched submission of task poll and kill commands."""
 
-    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, run_mode, verbose ):
-        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay, verbose ) 
+    def __init__( self, queue_name, jobqueue, batch_size, batch_delay, run_mode ):
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay ) 
         self.run_mode = run_mode
 
     def process_batch( self, batch, i, n ):

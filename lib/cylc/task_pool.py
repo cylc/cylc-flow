@@ -22,11 +22,10 @@ from task_types import task
 import flags
 
 class pool(object):
-    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose, debug=False ):
+    def __init__( self, suite, config, wireless, pyro, log, run_mode, debug=False ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
-        self.verbose = verbose
         self.debug = debug
         self.qconfig = config.cfg['scheduling']['queues'] 
         self.config = config
@@ -38,7 +37,7 @@ class pool(object):
         self.worker = task_batcher( 'Job Submission', self.jobqueue, 
                 config.cfg['cylc']['job submission']['batch size'],
                 config.cfg['cylc']['job submission']['delay between batches'],
-                self.wireless, self.run_mode, self.verbose )
+                self.wireless, self.run_mode )
 
         self.worker.start()
 

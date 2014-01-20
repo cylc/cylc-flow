@@ -23,6 +23,7 @@ from pipes import quote
 
 from suite_host import is_remote_host
 from owner import is_remote_user
+import flags
 
 class remrun( object ):
     """If owner or host differ from username and localhost, strip the
@@ -36,10 +37,7 @@ class remrun( object ):
         self.host = None
         self.ssh_login_shell = True
 
-        if '-v' in sys.argv or '--verbose' in sys.argv:
-            self.verbose = True
-        else:
-            self.verbose = False
+        flags.verbose == ( '-v' in sys.argv or '--verbose' in sys.argv )
 
         argv = sys.argv[1:]
         self.args = []
@@ -105,7 +103,7 @@ class remrun( object ):
         # ssh command and options (X forwarding)
         command = ["ssh", "-oBatchMode=yes", "-Y", user_at_host] + command
 
-        if self.verbose:
+        if flags.verbose:
             # Wordwrap the command, quoting arguments so they can be run
             # properly from the command line
             print '\n'.join(TextWrapper(subsequent_indent='\t').wrap(' '.join(map(quote,command))))

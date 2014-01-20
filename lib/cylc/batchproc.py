@@ -18,6 +18,7 @@
 
 import sys, re
 import subprocess
+import flags
 
 # Instead of p.wait() below, We could use p.poll() which returns None
 # until process p finishes, after which it returns p's exit status; this
@@ -33,8 +34,7 @@ class batchproc:
         Users should do a final call to process() to handle any final
         items in an incomplete batch."""
 
-    def __init__( self, size=1, shell=False, verbose=False ):
-        self.verbose = verbose
+    def __init__( self, size=1, shell=False ):
         self.batchno = 0
         self.items = []
         self.size = int(size)
@@ -55,7 +55,7 @@ class batchproc:
         if len( self.items ) == 0:
             return 0
         self.batchno += 1
-        if self.verbose:
+        if flags.verbose:
             print "  Batch No.", self.batchno
         proc = []
         count = 0
@@ -74,10 +74,10 @@ class batchproc:
                 error_reported = True
                 print '  ERROR reported in Batch', self.batchno, 'member', count
             if stdout != '':
-                if self.verbose or error_reported:
+                if flags.verbose or error_reported:
                     print '    Batch', self.batchno, 'member', count, 'stdout:'
                 for line in re.split( r'\n', stdout ):
-                    if self.verbose or error_reported:
+                    if flags.verbose or error_reported:
                         print '   ', line
                     if re.search( 'SUCCEEDED', line ):
                         n_succeeded += 1

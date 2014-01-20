@@ -19,11 +19,12 @@
 import os, sys, re
 import glob
 from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError, StrictUndefined
+import cylc.flags
 
 """cylc support for the Jinja2 template processor. Importing code should
 catch ImportError in case Jinja2 is not installed."""
 
-def load_template_vars( pairs, pairs_file, verbose=False ):
+def load_template_vars( pairs, pairs_file ):
     res = {}
     if pairs_file:
         if os.path.isfile( pairs_file ):
@@ -48,14 +49,14 @@ def load_template_vars( pairs, pairs_file, verbose=False ):
         var = var.strip()
         val = val.strip()
         res[var] = val
-    if verbose:
+    if cylc.flags.verbose:
         print 'Setting Jinja2 template variables:'
         for var, val in res.items():
             print '    + ', var, '=', val
 
     return res
 
-def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
+def Jinja2Process( flines, dir, inputs=[], inputs_file=None ):
     env = Environment( loader=FileSystemLoader(dir), undefined=StrictUndefined, extensions=['jinja2.ext.do'] )
 
     # Load any custom Jinja2 filters in the suite definition directory
@@ -93,7 +94,7 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None, verbose=False ):
     ##     # TODO - THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
     #     raise TemplateError( x )
     try:
-        template_vars = load_template_vars( inputs, inputs_file, verbose )
+        template_vars = load_template_vars( inputs, inputs_file )
     except Exception, x:
         raise TemplateError( x )
     

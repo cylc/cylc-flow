@@ -76,8 +76,8 @@ if options.tasks_only:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose).get_proxy('state_summary' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy('state_summary' )
     # get state summary, task names, cycle times
     [glbl, states, fam_states] = proxy.get_state_summary()
 except Exception, x:

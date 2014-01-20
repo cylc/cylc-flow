@@ -81,7 +81,7 @@ class SchedulerError( Exception ):
 
 
 class request_handler( threading.Thread ):
-    def __init__( self, pyro, verbose ):
+    def __init__( self, pyro ):
         threading.Thread.__init__(self)
         self.pyro = pyro
         self.quit = False
@@ -280,8 +280,8 @@ class scheduler(object):
         self.wireless = broadcast( self.config.get_linearized_ancestors() )
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
-        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.verbose, self.options.debug )
-        self.request_handler = request_handler( self.pyro, self.verbose )
+        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode, self.options.debug )
+        self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
 
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
@@ -594,8 +594,7 @@ class scheduler(object):
             self.runahead_limit = None
 
     def command_set_verbosity( self, level ):
-        # change the verbosity of all the logs:
-        #   debug, info, warning, error, critical
+        # change logging verbosity:
         if level == 'debug':
             new_level = logging.DEBUG
         elif level == 'info':
@@ -678,7 +677,6 @@ class scheduler(object):
         self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
         self.pool.qconfig = self.config.cfg['scheduling']['queues']
-        self.pool.verbose = self.verbose
         self.pool.assign( reload=True )
         self.suite_state.config = self.config
         self.configure_suite_environment()
@@ -750,7 +748,7 @@ class scheduler(object):
         self.port = self.pyro.get_port()
 
         try:
-            self.port_file = port_file( self.suite, self.port, self.verbose )
+            self.port_file = port_file( self.suite, self.port )
         except PortFileExistsError,x:
             print >> sys.stderr, x
             raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
@@ -763,7 +761,7 @@ class scheduler(object):
         self.config = config( self.suite, self.suiterc,
                 self.options.templatevars,
                 self.options.templatevars_file, run_mode=self.run_mode,
-                verbose=self.verbose, cli_start_tag=self.cli_start_tag,
+                cli_start_tag=self.cli_start_tag,
                 is_restart=self.is_restart, is_reload=reconfigure)
 
         # Initial and final cycle times - command line takes precedence
@@ -845,7 +843,7 @@ class scheduler(object):
                     'Event Handlers', self.event_queue,
                     self.config.cfg['cylc']['event handler submission']['batch size'],
                     self.config.cfg['cylc']['event handler submission']['delay between batches'],
-                    self.suite, self.verbose )
+                    self.suite )
             self.eventq_worker.start()
 
             self.poll_and_kill_queue = Queue()
@@ -854,7 +852,7 @@ class scheduler(object):
                     'Poll & Kill Commands', self.poll_and_kill_queue,
                     self.config.cfg['cylc']['poll and kill command submission']['batch size'],
                     self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
-                    self.suite, self.verbose )
+                    self.suite )
             self.pollkq_worker.start()
 
             self.info_interface = info_interface( self.info_commands )
@@ -872,7 +870,7 @@ class scheduler(object):
                 'CYLC_UTC'               : str(self.utc),
                 'CYLC_MODE'              : 'scheduler',
                 'CYLC_DEBUG'             : str( self.options.debug ),
-                'CYLC_VERBOSE'           : str(self.verbose),
+                'CYLC_VERBOSE'           : str(flags.verbose),
                 'CYLC_USE_LOCKSERVER'    : str( self.use_lockserver ),
                 'CYLC_LOCKSERVER_PORT'   : str( self.lockserver_port ), # "None" if not using lockserver
                 'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],

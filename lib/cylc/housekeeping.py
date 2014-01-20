@@ -20,6 +20,7 @@ import re, sys, os
 import datetime
 from cycle_time import ct, CycleTimeError
 from batchproc import batchproc
+import flags
 
 class HousekeepingError( Exception ):
     """
@@ -46,7 +47,7 @@ class config_line:
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
     def __init__( self, source, match, oper, ctime, offset, dest=None, 
-            verbose=False, debug=False, mode=None, cheap=False ):
+            debug=False, mode=None, cheap=False ):
         self.source = source
         self.match = match
         self.ctime = ctime
@@ -58,7 +59,6 @@ class config_line:
         self.offset = offset
         self.opern = oper 
         self.destn = dest
-        self.verbose = verbose
         self.debug = debug
         self.cheap = cheap
         self.mode = mode
@@ -108,7 +108,7 @@ class config_line:
         foo = ct( self.ctime )
         foo.decrement( hours=self.offset )
         print "CUTOFF:", self.ctime, '-', self.offset, '=', foo.get()
-        batch = batchproc( batchsize, verbose=self.verbose )
+        batch = batchproc( batchsize )
         for entry in os.listdir( self.source ):
             src_entries += 1
             entrypath = os.path.join( self.source, entry )
@@ -130,7 +130,7 @@ class config_file:
         Process a cylc housekeeping config file, line by line.
     """
     def __init__( self, file, ctime, only=None, excpt=None, 
-            verbose=False, debug=False, mode=None, cheap=False):
+            debug=False, mode=None, cheap=False):
         self.lines = []
         if not os.path.isfile( file ):
             raise HousekeepingError, "file not found: " + file 
@@ -160,7 +160,7 @@ class config_file:
                 varname=m.group(1)
                 varvalue=m.group(2)
                 os.environ[varname] = os.path.expandvars( varvalue )
-                if verbose:
+                if flags.verbose:
                     print 'Defining variable: ', varname, '=', varvalue
                 continue
 
@@ -196,7 +196,7 @@ class config_file:
 
             self.lines.append( config_line( source, match, operation, 
                 ctime, offset, destination, 
-                verbose=verbose, debug=debug, mode=mode, cheap=cheap ))
+                debug=debug, mode=mode, cheap=cheap ))
 
     def action( self, batchsize ):
         for item in self.lines:

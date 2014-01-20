@@ -22,10 +22,11 @@ from fileparse import parse, FileNotFoundError
 from validate import validate, expand
 from util import replicate
 from upgrade import UpgradeError
+import cylc.flags
 
 """Some high-level functions for handling parsec config files."""
 
-def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, verbose=True, strict=False ):
+def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, strict=False ):
     """
     Parse, upgrade, validate, combine, and expand a single parsec config file.
     If FILE fails to parse or validate just fall back on spec defaults.
@@ -41,7 +42,7 @@ def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, verbose=True
     except Exception, x:
         if strict:
             raise
-        if verbose:
+        if cylc.flags.verbose:
             print >> sys.stderr, x
             print >> sys.stderr, "WARNING: " + descr + " parsing failed (continuing)"
     else:
@@ -50,9 +51,9 @@ def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, verbose=True
             if strict:
                 raise
             try:
-                upgrader( cfg, descr, verbose )
+                upgrader( cfg, descr )
             except UpgradeError, x:
-                if verbose:
+                if cylc.flags.verbose:
                     print >> sys.stderr, x
                     print >> sys.stderr, "WARNING: " + descr + " upgrade error, validation may fail"
         # validate
@@ -61,7 +62,7 @@ def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, verbose=True
         except Exception, x:
             if strict:
                 raise
-            if verbose:
+            if cylc.flags.verbose:
                 print >> sys.stderr, x
                 print >> sys.stderr, "WARNING " + descr + " validation failed (continuing)"
     if do_expand:
@@ -71,12 +72,12 @@ def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, verbose=True
 def load_combined( FILE1, descr1,
                       FILE2, descr2,
                       SPEC, upgrader=None,
-                      do_expand=False, verbose=True):
+                      do_expand=False ):
     """
     Parse, upgrade, validate, combine/override, and expand two parsec config files.
     """
-    cfg1 = load_single( FILE1, SPEC, descr1, upgrader, False, verbose )
-    cfg2 = load_single( FILE2, SPEC, descr2, upgrader, False, verbose )
+    cfg1 = load_single( FILE1, SPEC, descr1, upgrader, False )
+    cfg2 = load_single( FILE2, SPEC, descr2, upgrader, False )
 
     if cfg2:
         replicate( cfg1, cfg2 )

@@ -50,8 +50,8 @@ if verbosity not in vchoices:
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
     prompt( "Set logging level to " + verbosity + " in " + suite, options.force )
     result = proxy.put( 'set verbosity', verbosity )
 except Exception, x:

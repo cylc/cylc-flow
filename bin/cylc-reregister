@@ -37,7 +37,7 @@ Example:
 arg_from = args[0]
 arg_to = args[1]
 
-db = localdb( file=options.db, verbose=options.verbose )
+db = localdb( file=options.db )
 
 try:
     db.reregister( arg_from, arg_to )

@@ -20,6 +20,7 @@ import os, sys, re
 
 from OrderedDict import OrderedDict
 from include import inline, IncludeFileError
+import cylc.flags
 
 """
 Module to parse a cylc parsec config file into a nested ordered dict.
@@ -153,19 +154,19 @@ def _single_unquote(value):
         value = value[1:-1]
     return value
 
-def addsect( cfig, sname, parents, verbose ):
+def addsect( cfig, sname, parents ):
     """Add a new section to a nested dict."""
     for p in parents:
         # drop down the parent list
         cfig = cfig[p]
     if sname in cfig:
         # this doesn't warrant a warning unless contained items are repeated
-        if verbose:
+        if cylc.flags.verbose:
             print 'Section [' + ']['.join(parents + [sname]) + '] already encountered'
     else:
         cfig[sname] = OrderedDict()
 
-def addict( cfig, key, val, parents, verbose ):
+def addict( cfig, key, val, parents ):
     """Add a new [parents...]key=value pair to a nested dict."""
     for p in parents:
         # drop down the parent list
@@ -176,12 +177,12 @@ def addict( cfig, key, val, parents, verbose ):
                 ( len( parents ) == 2 and parents == ['scheduling','dependencies'] or \
                 len( parents ) == 3 and parents[-3:-1] == ['scheduling','dependencies'] ):
             # append the new graph string to the existing one
-            if verbose:
+            if cylc.flags.verbose:
                 print 'Merging graph strings under [' + ']['.join(parents) + ']'
             cfig[key] += '\n' + val
         else:
             # otherwise override the existing item
-            if verbose:
+            if cylc.flags.verbose:
                 print >> sys.stderr, 'WARNING: overriding [' + ']['.join(parents) + ']' + key
                 print >> sys.stderr, ' old value: ' + cfig[key]
                 print >> sys.stderr, ' new value: ' + val
@@ -225,7 +226,7 @@ def multiline( flines, value, index, maxline ):
     return newvalue + value, index
 
 
-def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=None, viewcfg=None, asedit=False ):
+def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=None, asedit=False ):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
@@ -235,7 +236,7 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
     if not os.path.isfile( fpath ):
         raise FileNotFoundError, 'File not found: ' + fpath
 
-    if verbose:
+    if cylc.flags.verbose:
         print "Reading file", fpath
 
     # read the file into a list, stripping newlines
@@ -268,11 +269,11 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
         if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
             if jinja2_disabled:
                 raise ParseError( 'Jinja2 is not installed' )
-            if verbose:
+            if cylc.flags.verbose:
                 print "Processing with Jinja2"
             try:
                 flines = Jinja2Process( flines, fdir,
-                        template_vars, template_vars_file, verbose )
+                        template_vars, template_vars_file )
             except TemplateSyntaxError, x:
                 lineno = x.lineno + 1  # (flines array starts from 0)
                 print >> sys.stderr, 'Jinja2 Template Syntax Error, line', lineno
@@ -292,19 +293,18 @@ def read_and_proc( fpath, verbose=False, template_vars=[], template_vars_file=No
     # return rstripped lines
     return [ l.rstrip() for l in flines ]
 
-def parse( fpath, verbose=False, write_processed_file=False, 
+def parse( fpath, write_processed_file=False, 
         template_vars=[], template_vars_file=None ):
     """
     Parse a nested config file and return a corresponding nested dict.
     """
     # read and process the file (jinja2, include-files, line continuation)
-    flines = read_and_proc( fpath, verbose, 
-            template_vars, template_vars_file )
+    flines = read_and_proc( fpath, template_vars, template_vars_file )
     # write the processed for suite.rc if it lives in a writable directory
     if write_processed_file and \
             os.access(os.path.dirname(fpath), os.W_OK):
         fpath_processed = fpath + '.processed'
-        if verbose:
+        if cylc.flags.verbose:
             print "Writing file " + fpath_processed
         f = open( fpath_processed, 'w' )
         f.write('\n'.join(flines))
@@ -354,7 +354,7 @@ def parse( fpath, verbose=False, write_processed_file=False,
                 print >> sys.stderr, line
                 raise ParseError( 'Section nesting error, line ' + str(index+1))
             nesting_level = nb
-            addsect( config, sect_name, parents[:-1], verbose )
+            addsect( config, sect_name, parents[:-1] )
 
         else:
             m = re.match( _KEY_VALUE, line )
@@ -403,7 +403,7 @@ def parse( fpath, verbose=False, write_processed_file=False,
                             else:
                                 print >> sys.stderr, line
                                 raise ParseError( 'Invalid line at ' + str(index+1) )
-                addict( config, key, val, parents, verbose )
+                addict( config, key, val, parents )
             else:
                 # no match
                 print >> sys.stderr, line
