@@ -1613,7 +1613,9 @@ class config( object ):
             except:
                 pass
             else:
-                raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
+                if cs:
+                    # (allow explicit blanking of inherited scripting)
+                    raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
