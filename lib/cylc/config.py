@@ -1019,7 +1019,9 @@ class config( object ):
             self.suite_polling_tasks[ l_task ] = ( r_suite, r_task, r_status, r_all )
 
         # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
-        for fam in self.runtime['descendants']:
+        # Sort so that longer family names get expanded first.
+        # This expands e.g. FOO-BAR before FOO in FOO-BAR:succeed-all => baz.
+        for fam in reversed(sorted(self.runtime['descendants'])):
             members = copy(self.runtime['descendants'][fam])
             for member in copy(members):
                 # (another copy here: don't remove items from the iterating list) 
