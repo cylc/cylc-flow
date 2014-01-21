@@ -3068,6 +3068,32 @@ write it that way:
 foo | bar => !baz
 \end{lstlisting}
 
+A word of warning on the meaning of ``bare suicide triggers''. Consider
+the following suite:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = "foo => !bar"
+\end{lstlisting}
+Task \lstinline=bar= has a suicide trigger but no normal prerequisites
+(a suicide trigger is not a task triggering prerequisite, it is a task
+removal prerequisite) so this is entirely equivalent to:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = """
+            foo & bar
+           foo => !bar
+                """
+\end{lstlisting}
+In other words both tasks will trigger immediately, at the same time,
+and then \lstinline=bar= will be removed if \lstinline=foo= succeeds.
+
+If an active task proxy (currently in the submitted or running states)
+is removed from the suite by a suicide trigger, a warning will be logged.
+      
 \paragraph{Family Triggers}
 \label{FamilyTriggers}
 
