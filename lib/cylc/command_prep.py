@@ -21,6 +21,7 @@ from cylc.passphrase import passphrase
 from cylc.registration import localdb
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
+import cylc.flags
 
 """This module used to handle pseudo-backward-compatibility command
 re-invocation. That's been dropped, so the module doesn't do much now;
@@ -33,12 +34,12 @@ class prep( object ):
         self.suiterc = None
         self.suitedir = None
         if not is_remote_host( options.host ) and not is_remote_user( options.owner ):
-            self.db = localdb(file=options.db, verbose=options.verbose)
+            self.db = localdb(file=options.db )
             try:
                 self.suiterc = self.db.get_suiterc( suite )
                 self.suitedir = os.path.dirname( self.suiterc )
             except Exception, x:
-                if options.debug:
+                if cylc.flags.debug:
                     raise
                 raise SystemExit(x)
 
@@ -52,10 +53,10 @@ class prep_pyro( prep ):
         prep.__init__( self, suite, options )
         # get the suite passphrase
         try:
-            self.pphrase = passphrase( self.suite, self.options.owner, self.options.host,
-                    verbose=options.verbose ).get( None, self.suitedir )
+            self.pphrase = passphrase( self.suite,
+                    self.options.owner, self.options.host ).get( None, self.suitedir )
         except Exception, x:
-            if self.options.debug:
+            if cylc.flags.debug:
                 raise
             raise SystemExit(x)
 

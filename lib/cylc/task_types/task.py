@@ -512,7 +512,7 @@ class task( object ):
                     copy( self.gcfg.cfg['execution polling intervals']),
                     'execution', self.log )
  
-    def submit( self, dry_run=False, debug=False, overrides={} ):
+    def submit( self, dry_run=False, overrides={} ):
         """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
         returns the job process number if successful. Exceptions raised
         will be caught by the job submission code and will result in a
@@ -678,7 +678,7 @@ class task( object ):
             #raise Exception( 'Failed to create job launcher\n  ' + str(x) )
 
         try:
-            p = self.launcher.submit( dry_run, debug )
+            p = self.launcher.submit( dry_run )
         except Exception, x:
             raise  # TODO - check best way of alerting the user here
             #raise Exception( 'Job submission failed\n  ' + str(x) )

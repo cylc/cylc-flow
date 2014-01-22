@@ -28,6 +28,7 @@ from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
 from cylc.global_config import get_global_cfg
+import cylc.flags
 
 parser = cop( """cylc [discovery] ping [OPTIONS] ARGS
     
@@ -57,11 +58,11 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 # cylc ping SUITE
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose).get_proxy( 'suite-info' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'suite-info' )
     proxy.get( 'ping suite' )
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 
@@ -80,7 +81,7 @@ else:
 try:
     result = proxy.get( 'ping task', task_id )
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 

@@ -24,6 +24,7 @@ from registration import localdb
 import datetime
 import Pyro.errors, Pyro.core
 from global_config import get_global_cfg
+import flags
 
 class SuiteIdentificationError( Exception ):
     """
@@ -124,10 +125,10 @@ def portid( host, port ):
 def cylcid_uri( host, port ):
     return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
 
-def get_port( suite, owner=user, host=get_hostname(), pphrase=None, pyro_timeout=None, verbose=False ):
+def get_port( suite, owner=user, host=get_hostname(), pphrase=None, pyro_timeout=None ):
     # Scan ports until a particular suite is found.
 
-    gcfg = get_global_cfg(verbose=verbose)
+    gcfg = get_global_cfg()
     pyro_base_port = gcfg.cfg['pyro']['base port']
     pyro_port_range = gcfg.cfg['pyro']['maximum number of ports']
 
@@ -161,11 +162,11 @@ def get_port( suite, owner=user, host=get_hostname(), pphrase=None, pyro_timeout
             #print >> sys.stderr, "Non-cylc pyro server found at " + portid( host, port )
             pass
         else:
-            if verbose:
+            if flags.verbose:
                 after = datetime.datetime.now()
                 print "Pyro connection on port " +str(port) + " took: " + str( after - before )
             if name == suite and xowner == owner:
-                if verbose:
+                if flags.verbose:
                     print suite, owner, host, port
                 # RESULT
                 return port
@@ -175,7 +176,7 @@ def get_port( suite, owner=user, host=get_hostname(), pphrase=None, pyro_timeout
                 pass
     raise SuiteNotFoundError, "Suite not running: " + suite + ' ' + owner + ' ' + host
 
-def check_port( suite, pphrase, port, owner=user, host=get_hostname(), pyro_timeout=None, verbose=False ):
+def check_port( suite, pphrase, port, owner=user, host=get_hostname(), pyro_timeout=None ):
     # is a particular suite running at host:port?
 
     uri = cylcid_uri( host, port )
@@ -199,12 +200,12 @@ def check_port( suite, pphrase, port, owner=user, host=get_hostname(), pyro_time
     except Pyro.errors.NamingError:
         raise OtherServerFoundError, "ERROR: non-cylc pyro server found at " + portid( host, port )
     else:
-        if verbose:
+        if flags.verbose:
             after = datetime.datetime.now()
             print "Pyro connection on port " +str(port) + " took: " + str( after - before )
         if name == suite and xowner == owner:
             # RESULT
-            if verbose:
+            if flags.verbose:
                 print suite, owner, host, port
             return True
         else:
@@ -213,11 +214,11 @@ def check_port( suite, pphrase, port, owner=user, host=get_hostname(), pyro_time
             print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
             raise OtherSuiteFoundError, "ERROR: Found another suite"
 
-def scan( host=get_hostname(), db=None, pyro_timeout=None, verbose=False, silent=False ):
+def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 
-    gcfg = get_global_cfg(verbose=verbose)
+    gcfg = get_global_cfg()
     pyro_base_port = gcfg.cfg['pyro']['base port']
     pyro_port_range = gcfg.cfg['pyro']['maximum number of ports']
 
@@ -249,16 +250,16 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, verbose=False, silent
             pass
         except Pyro.errors.ConnectionDeniedError:
             # secure suite
-            if verbose:
+            if flags.verbose:
                 print >> sys.stderr, "Connection Denied at " + portid( host, port )
         except Pyro.errors.ProtocolError:
             # no suite
-            #if verbose:
+            #if flags.verbose:
             #    print >> sys.stderr, "No Suite Found at " + portid( host, port )
             pass
         except Pyro.errors.NamingError:
             # other Pyro server
-            if verbose:
+            if flags.verbose:
                 print >> sys.stderr, "Non-cylc Pyro server found at " + portid( host, port )
         except:
             raise
@@ -266,7 +267,7 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, verbose=False, silent
             if not silent:
                 # used by cylc db viewer scanning for running suites
                 print name, owner, host, port
-            if verbose:
+            if flags.verbose:
                 after = datetime.datetime.now()
                 print "Pyro connection on port " +str(port) + " took: " + str( after - before )
             # found a cylc suite or lock server

@@ -23,6 +23,7 @@ import string
 from mkdir_p import mkdir_p
 from suite_host import get_hostname, is_remote_host
 from owner import user, is_remote_user
+import flags 
 
 class SecurityError( Exception ):
     """
@@ -47,11 +48,10 @@ class InvalidPassphraseError( SecurityError ):
     pass
 
 class passphrase(object):
-    def __init__( self, suite, owner=user, host=get_hostname(), verbose=False ):
+    def __init__( self, suite, owner=user, host=get_hostname() ):
         self.suite = suite
         self.owner = owner
         self.host = host
-        self.verbose = verbose
         self.location = None
 
         ### ?? this doesn't matter, we now set permissions explicitly:
@@ -181,7 +181,7 @@ that do not actually need the suite definition directory to be installed.
         return self.location
 
     def set_location( self, pfile ):
-        if self.verbose:
+        if flags.verbose:
             print 'Passphrase detected at', pfile, 'on', user + '@' + get_hostname()
         self.location = pfile
 
@@ -202,7 +202,7 @@ that do not actually need the suite definition directory to be installed.
         f.close()
         # set passphrase file permissions to owner-only
         os.chmod( pfile, 0600 )
-        if self.verbose:
+        if flags.verbose:
             print 'Generated suite passphrase file on', user + '@' + get_hostname() + ':', pfile
 
     def get( self, pfile=None, suitedir=None ):

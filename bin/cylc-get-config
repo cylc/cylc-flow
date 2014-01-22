@@ -25,6 +25,7 @@ import re
 from parsec.util import printcfg
 from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
+import cylc.flags
 
 parser = cop( usage = """cylc [info] get-config [OPTIONS] ARGS
 
@@ -107,7 +108,7 @@ try:
             template_vars_file=options.templatevars_file,
             owner=owner )
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 

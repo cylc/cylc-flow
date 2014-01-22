@@ -27,9 +27,10 @@ from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.strftime import strftime
 from cylc import cylc_mode
+import cylc.flags
 
 class message(object):
-    def __init__( self, msg=None, priority='NORMAL', verbose=False ):
+    def __init__( self, msg=None, priority='NORMAL' ):
 
         self.msg = msg
 
@@ -63,7 +64,7 @@ class message(object):
         except:
             pass
  
-        self.verbose = verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
+        cylc.flags.verbose = cylc.flags.verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
 
         # 'scheduler' or 'submit', (or 'raw' if job script run manually)
         self.mode = self.env_map.get( 'CYLC_MODE', 'raw' )
@@ -115,13 +116,12 @@ class message(object):
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
         # it is needed, we will end up in this method). 
 
-        self.pphrase = passphrase( self.suite, self.owner, self.host,
-                verbose=self.verbose ).get( None, None )
+        self.pphrase = passphrase( self.suite, self.owner, self.host ).get( None, None )
 
         import cylc_pyro_client
         return cylc_pyro_client.client( self.suite, self.pphrase,
-                self.owner, self.host, self.try_timeout, self.port,
-                self.verbose ).get_proxy( self.task_id )
+                self.owner, self.host, self.try_timeout,
+                self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
         if self.utc:
@@ -165,7 +165,7 @@ class message(object):
             # to identify the target user and host names:
             sys.argv.append( '--user=' + self.owner )
             sys.argv.append( '--host=' + self.host )
-            if self.verbose:
+            if cylc.flags.verbose:
                 sys.argv.append( '-v' )
 
             if self.ssh_login_shell:
@@ -279,7 +279,7 @@ class message(object):
                     raise SystemExit( "Failed to release task lock" )
         except Exception, z:
             print >> sys.stderr, z
-            if debug:
+            if cylc.flags.debug:
                 raise
             raise SystemExit( "Failed to connect to the lockserver?" )
 

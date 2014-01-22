@@ -19,6 +19,7 @@
 import sys, os
 import subprocess
 from housekeeping import NonIdenticalTargetError
+import flags
 
 class diff:
     """
@@ -26,15 +27,14 @@ class diff:
         raise a NonIdenticalTarget Error if they differ.
         If initialized with 'cheap=True' just compare file sizes.
     """
-    def __init__( self, source, target, verbose=False, cheap=False ):
+    def __init__( self, source, target, cheap=False ):
         # Calling code should confirm source and target exist.
         self.source = source
         self.target = target
-        self.verbose = verbose
         self.cheap = cheap
         self.indent = '   '
 
-        if verbose:
+        if flags.verbose:
             print self.indent + "Diff:"
             print self.indent + " + source: " + source
             print self.indent + " + target: " + target
@@ -43,13 +43,13 @@ class diff:
         if os.path.isfile( self.source ):
             if self.size_differs():
                 # size differs => files differ
-                if self.verbose:
+                if flags.verbose:
                     print self.indent + "Source and target differ in size"
                 raise NonIdenticalTargetError, 'WARNING: source and target differ in size'
  
             else:
                 # size same, file may differ
-                if self.verbose:
+                if flags.verbose:
                     print self.indent + "Source and target are identical in size"
                 if self.cheap:
                     # assume files identical if size same
@@ -74,11 +74,11 @@ class diff:
         # and raises OSError if the command cannot be invoked.
         retcode = subprocess.call( command_list, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT )
         if retcode != 0:
-            if self.verbose:
+            if flags.verbose:
                 print self.indent + "Source and target differ"
             raise NonIdenticalTargetError, 'WARNING: source and target differ'
         else:
-            if self.verbose:
+            if flags.verbose:
                 print self.indent + "Source and target are identical"
 
     def size_differs( self ):

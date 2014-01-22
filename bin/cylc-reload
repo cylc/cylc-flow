@@ -28,6 +28,7 @@ from cylc.config import config
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 from cylc.prompt import prompt
+import cylc.flags
 
 parser = cop( """cylc [control] reload [OPTIONS] ARGS 
 
@@ -60,11 +61,11 @@ prompt( 'Reload ' + suite, options.force )
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
     result = proxy.put( 'reload suite' )
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 

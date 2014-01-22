@@ -108,7 +108,7 @@ if len(args) == 2:
         try:
             p = Popen( cmd, stdout=PIPE, stderr=PIPE )
         except OSError, x:
-            if options.debug:
+            if cylc.flags.debug:
                 raise
             sys.exit( x )
         out, err, = p.communicate()
@@ -138,7 +138,7 @@ if options.print_location:
 try:
     LOG = open( fpath )
 except IOError, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit( str(x) )
 
@@ -153,7 +153,7 @@ except:
         for line in LOG.readline():
             print line.rstrip()
     except Exception, x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 

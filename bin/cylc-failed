@@ -23,6 +23,7 @@ Documentation
 import os, sys
 from optparse import OptionParser
 from cylc.task_message import message
+import cylc.flags
 
 usage = """cylc [task] failed [OPTIONS] [REASON]
 
@@ -53,6 +54,7 @@ parser.add_option( "-v", "--verbose",
         action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
+cylc.flags.verbose = options.verbose
 
 if len( args ) == 0:
     reason = None
@@ -68,7 +70,7 @@ except KeyError:
     pass
 
 try:
-    message( msg=reason, verbose=options.verbose ).send_failed()
+    message( msg=reason ).send_failed()
 except Exception, x:
     print >> sys.stderr, 'ERROR: task messaging failure.'
     if debug:

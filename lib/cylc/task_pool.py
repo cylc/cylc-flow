@@ -22,12 +22,10 @@ from task_types import task
 import flags
 
 class pool(object):
-    def __init__( self, suite, config, wireless, pyro, log, run_mode, verbose, debug=False ):
+    def __init__( self, suite, config, wireless, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
-        self.verbose = verbose
-        self.debug = debug
         self.qconfig = config.cfg['scheduling']['queues'] 
         self.config = config
         self.assign()
@@ -38,7 +36,7 @@ class pool(object):
         self.worker = task_batcher( 'Job Submission', self.jobqueue, 
                 config.cfg['cylc']['job submission']['batch size'],
                 config.cfg['cylc']['job submission']['delay between batches'],
-                self.wireless, self.run_mode, self.verbose )
+                self.wireless, self.run_mode )
 
         self.worker.start()
 
@@ -77,7 +75,7 @@ class pool(object):
         try:
             self.pyro.connect( itask.message_queue, itask.id )
         except Exception, x:
-            if self.debug:
+            if flags.debug:
                 raise
             print >> sys.stderr, x
             self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )

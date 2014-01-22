@@ -20,6 +20,7 @@ import os, sys
 from suite_host import is_remote_host
 from owner import user, is_remote_user
 from global_config import get_global_cfg
+import flags
 
 """Processes connecting to a running suite must know which port the
 suite server is listening on: at start-up cylc writes the port to
@@ -48,8 +49,7 @@ class PortFileExistsError( PortFileError ):
     pass
 
 class port_file( object ):
-    def __init__(self, suite, port, verbose=False):
-        self.verbose = verbose
+    def __init__(self, suite, port ):
         self.suite = suite 
 
         # the ports directory is assumed to exist
@@ -69,7 +69,7 @@ class port_file( object ):
     def write( self ):
         if os.path.exists( self.local_path ):
             raise PortFileExistsError( "ERROR, port file exists: " + self.local_path )
-        if self.verbose:
+        if flags.verbose:
             print "Writing port file:", self.local_path
         try:
             f = open( self.local_path, 'w' )
@@ -79,7 +79,7 @@ class port_file( object ):
         f.close()
 
     def unlink( self ):
-        if self.verbose:
+        if flags.verbose:
             print "Removing port file:", self.local_path
         try:
             os.unlink( self.local_path )
@@ -88,8 +88,7 @@ class port_file( object ):
             raise PortFileError( "ERROR, cannot remove port file: " + self.local_path )
 
 class port_retriever( object ):
-    def __init__(self, suite, host, owner, verbose=False):
-        self.verbose = verbose
+    def __init__(self, suite, host, owner ):
         self.suite = suite
         self.host = host
         self.owner = owner
@@ -124,7 +123,7 @@ class port_retriever( object ):
         return str_port
 
     def get( self ):
-        if self.verbose:
+        if flags.verbose:
             print "Retrieving suite port number..."
 
         if is_remote_host( self.host ) or is_remote_user( self.owner ):
@@ -141,7 +140,7 @@ class port_retriever( object ):
             print >> sys.stderr, "ERROR: bad port file", self.locn
             raise PortFileError( "ERROR, illegal port file content: " + str_port )
 
-        if self.verbose:
+        if flags.verbose:
             print '...', port
 
         return port

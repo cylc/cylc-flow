@@ -25,6 +25,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb, RegistrationError
 from cylc.config import config, SuiteConfigError
 from cylc.regpath import RegPath
+import cylc.flags
 
 parser = cop( usage = """cylc [db] refresh [OPTIONS] ARGS
 
@@ -41,7 +42,7 @@ parser.add_option( "-u","--unregister",
 
 ( options, args ) = parser.parse_args()
 
-db = localdb(file=options.db, verbose=options.verbose)
+db = localdb(file=options.db )
 
 if len(args) == 0:
     pattern = '.*'
@@ -87,7 +88,7 @@ try:
             print ' -', i
 
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 

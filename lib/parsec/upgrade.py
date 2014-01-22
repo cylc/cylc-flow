@@ -23,6 +23,7 @@ if __name__ == '__main__':
     sys.path.append( here + '/..' )
 
 from OrderedDict import OrderedDict
+import cylc.flags
 
 """Support automatic deprecation and obsoletion of parsec config items."""
 
@@ -45,12 +46,11 @@ class converter( object ):
 class upgrader( object ):
     """Handles upgrading of deprecated config values."""
 
-    def __init__( self, cfg, spec, descr, verbose=True ):
+    def __init__( self, cfg, spec, descr ):
         """Store the config dict to be upgraded if necessary."""
         self.cfg = cfg
         self.spec = spec
         self.descr = descr
-        self.verbose = verbose
         # upgrades must be ordered in case several act on the same item
         self.upgrades = OrderedDict()
 
@@ -177,7 +177,7 @@ class upgrader( object ):
                         self.del_item( upg['old'] )
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
                             self.put_item( upg['new'], upg['cvt'].convert(old) )
-        if do_warn and self.verbose:
+        if do_warn and cylc.flags.verbose:
             print >> sys.stderr, "WARNING: deprecated items were automatically upgraded in '" + self.descr + "':"
             for vn,msgs in warnings.items():
                 for m in msgs:

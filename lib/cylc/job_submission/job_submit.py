@@ -37,6 +37,7 @@ from cylc.TaskID import TaskID
 from cylc.global_config import get_global_cfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
+import cylc.flags
 
 class job_submit(object):
 
@@ -179,14 +180,14 @@ class job_submit(object):
         # run by the derived class job submission method.
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
-    def submit( self, dry_run=False, debug=False ):
+    def submit( self, dry_run=False ):
         """ submit the task and return the process ID of the job
         submission sub-process, or None if a failure occurs."""
 
         try:
             os.chdir( pwd.getpwnam(user).pw_dir )
         except OSError, e:
-            if debug:
+            if cylc.flags.debug:
                 raise
             print >> sys.stderr, "ERROR:", e
             print >> sys.stderr, "ERROR: Failed to change to suite owner's home directory"
@@ -215,7 +216,7 @@ class job_submit(object):
         try:
             self.construct_jobfile_submission_command()
         except TypeError, x:
-            if debug:
+            if cylc.flags.debug:
                 raise
             print >> sys.stderr, "ERROR:", x
             print >> sys.stderr, "ERROR: Failed to construct job submission command"
@@ -262,7 +263,7 @@ class job_submit(object):
             p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE,
                        close_fds=True )
         except OSError, e:
-            if debug:
+            if cylc.flags.debug:
                 raise
             print >> sys.stderr, "ERROR:", e
             print >> sys.stderr, "ERROR: Job submission failed"

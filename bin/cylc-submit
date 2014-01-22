@@ -41,6 +41,7 @@ from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
 from cylc.global_config import get_global_cfg
+import cylc.flags
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -100,10 +101,9 @@ else:
 try:
     config = config( suite, suiterc,
             template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file,
-            verbose=options.verbose )
+            template_vars_file=options.templatevars_file )
 except Exception,x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 
@@ -134,8 +134,8 @@ dclock = accelerated_clock.clock( 0, 0, utc, 'live' )
 # create log (after CYLC_MODE is exported)
 os.environ['CYLC_MODE'] = 'submit'
 
-gcfg = get_global_cfg( verbose=options.verbose )
-gcfg.create_cylc_run_tree( suite, options.verbose )
+gcfg = get_global_cfg()
+gcfg.create_cylc_run_tree( suite )
 slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
 slog.pimp( clock=dclock )
@@ -150,8 +150,8 @@ fct = config.cfg['scheduling']['final cycle time'  ]
 suite_env = {
         'CYLC_UTC'               : str(utc),
         'CYLC_MODE'              : 'submit',
-        'CYLC_DEBUG'             : str( options.debug ),
-        'CYLC_VERBOSE'           : str( options.verbose),
+        'CYLC_DEBUG'             : str( cylc.flags.debug ),
+        'CYLC_VERBOSE'           : str( cylc.flags.verbose),
         'CYLC_USE_LOCKSERVER'    : str( use_lockserver ),
         'CYLC_LOCKSERVER_PORT'   : str( lockserver_port ), # "None" if not using lockserver
         'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
@@ -241,5 +241,5 @@ except TaskNotDefinedError, x:
 if not options.dry_run:
     print "Logging directory: " + suite_log_dir
     print
-task_proxy.submit( dry_run=options.dry_run, debug=options.debug )
+task_proxy.submit( dry_run=options.dry_run )
 

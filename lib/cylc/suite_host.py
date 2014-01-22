@@ -76,19 +76,19 @@ def get_hostname():
         hostname = socket.getfqdn()
     return hostname
 
-def get_host_ip_address( verbose=False ):
+def get_host_ip_address():
     global host_ip_address
     if host_ip_address is None:
-        gcfg = get_global_cfg( verbose=verbose )
+        gcfg = get_global_cfg()
         target = gcfg.cfg['suite host self-identification']['target']
         # external IP address of the suite host:
         host_ip_address = get_local_ip_address( target )
     return host_ip_address
 
-def get_suite_host( verbose=False ):
+def get_suite_host():
     global suite_host
     if suite_host is None:
-        gcfg = get_global_cfg( verbose=verbose )
+        gcfg = get_global_cfg()
         hardwired = gcfg.cfg['suite host self-identification']['host']
         method = gcfg.cfg['suite host self-identification']['method']
         # the following is for suite host self-identfication in task job scripts:

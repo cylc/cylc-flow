@@ -99,7 +99,6 @@ initial and final cycle time variables persists across suite restarts."""
                 self.cli_start_tag = datetime.datetime.now().strftime("%Y%m%d%H") 
 
         scheduler.parse_commandline( self )
-        self.verbose = self.options.verbose
 
         if self.options.warm:
             self.load_tasks = self.load_tasks_warm

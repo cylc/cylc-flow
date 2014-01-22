@@ -23,6 +23,7 @@ import os, sys
 import datetime
 from optparse import OptionParser
 from cylc.housekeeping import config_file, config_line
+import cylc.flags
 
 usage = """1/ cylc [util] housekeeping [OPTIONS] SOURCE MATCH OPER OFFSET [TARGET]
 Usage: 2/ cylc [util] housekeeping [options] FILE
@@ -135,6 +136,8 @@ parser.add_option( "--batchsize", "-b",
         metavar='INT', action="store", dest="batchsize", default=1 )
 
 ( options, args ) = parser.parse_args()
+cylc.flags.verbose = options.verbose
+cylc.flags.debug = options.debug
 
 if len(args) != 1  and len( args ) != 4 and len(args) != 5:
     parser.error( "Wrong number of arguments" ) 
@@ -161,7 +164,6 @@ if len(args) == 0 or len(args) > 5:
 if len(args) == 1:
     file = args[0]
     config_file( file, ctime,
-            verbose=options.verbose, debug=options.debug,
             only=options.only, excpt=options.excpt, mode=options.mode,
             cheap=options.cheap ).action( batchsize )
 else:
@@ -174,7 +176,6 @@ else:
         destn = args[4]
 
     config_line( source, match, opern, ctime, offset, destn, 
-            verbose=options.verbose, debug=options.debug, 
             mode=options.mode, cheap=options.cheap ).action( batchsize )
     
 print '\nFINISH: ', datetime.datetime.now()

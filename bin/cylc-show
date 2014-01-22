@@ -27,6 +27,7 @@ from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
 from cylc.command_prep import prep_pyro
+import cylc.flags
 
 parser = cop( """cylc [info] show [OPTIONS] ARGS
 
@@ -64,11 +65,11 @@ else:
  
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'suite-info' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'suite-info' )
     title, username = proxy.get( 'suite info' )
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     sys.exit(x)
 
@@ -80,7 +81,7 @@ if prnt_suite:
         for task in proxy.get( 'task list' ):
             print ' + ', task
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 
@@ -88,7 +89,7 @@ if prnt_name or prnt_id:
     try:
         info = proxy.get( 'task info', [ name ] )
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
     idx = name
@@ -103,7 +104,7 @@ if prnt_id:
     try:
         result = proxy.get( 'task requisites', [ task_id ] )
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 

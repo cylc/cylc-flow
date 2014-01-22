@@ -55,17 +55,17 @@ SPEC = {
         },
     }
 
-def upg( cfg, descr, verbose ):
-    u = upgrader(cfg, SPEC, descr, verbose )
+def upg( cfg, descr ):
+    u = upgrader(cfg, SPEC, descr )
     u.deprecate( '5.4.3', ['themes','__MANY__', 'submitting'], ['themes','__MANY__', 'ready'] )
     u.upgrade()
 
-def get_cfg( verbose=False ):
+def get_cfg():
     global cfg
     if not cfg:
         cfg = load_combined( SITE_FILE, "site config",
                              USER_FILE, "user config",
-                             SPEC, upg, True, verbose )
+                             SPEC, upg, True )
     return cfg
 
 def print_cfg():

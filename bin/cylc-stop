@@ -31,6 +31,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 from cylc.command_polling import poller
 from cylc.port_file import PortFileError
+import cylc.flags
 
 class stop_poller( poller ):
     """A polling object that checks if a suite has stopped yet."""
@@ -142,15 +143,15 @@ if int(options.max_polls) > 0:
             })
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout, options.port,
-            options.verbose ).get_proxy( 'command-interface' )
+            options.host, options.pyro_timeout,
+            options.port ).get_proxy( 'command-interface' )
 except PortFileError, x:
     print >> sys.stderr, x
     print "The suite is apparently not running"
     # (this is OK for the stop command)
     sys.exit(0)
 except Exception, x:
-    if options.debug:
+    if cylc.flags.debug:
         raise
     raise SystemExit(x)
 
@@ -202,7 +203,7 @@ if shutdown_at:
     try:
         result = proxy.put( method, shutdown_arg )
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 
@@ -211,7 +212,7 @@ elif options.now:
     try:
         result = proxy.put( 'stop now' )
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 
@@ -220,7 +221,7 @@ elif options.quick:
     try:
         result = proxy.put( 'stop quickly' )
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 
@@ -230,7 +231,7 @@ else:
     try:
         result = proxy.put( 'stop cleanly', options.kill )
     except Exception,x:
-        if options.debug:
+        if cylc.flags.debug:
             raise
         sys.exit(x)
 
