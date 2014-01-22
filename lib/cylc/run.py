@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2013 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ from global_config import get_global_cfg
 def print_blurb():
     lines = []
     lines.append( " The Cylc Suite Engine [" + cylc_version + "] " )
-    lines.append( " Copyright (C) 2008-2013 Hilary Oliver, NIWA " )
+    lines.append( " Copyright (C) 2008-2014 Hilary Oliver, NIWA " )
 
     lic = """
  This program comes with ABSOLUTELY NO WARRANTY.  It is free software; 
