@@ -59,6 +59,7 @@ class GraphUpdater(threading.Thread):
         super(GraphUpdater, self).__init__()
 
         self.quit = False
+        self.cleared = True
         self.ignore_suicide = False
         self.focus_start_ctime = None
         self.focus_stop_ctime = None
@@ -96,7 +97,6 @@ class GraphUpdater(threading.Thread):
         self.god = None
         self.mode = "waiting..."
         self.dt = "waiting..."
-        self.status = None
 
         self.prev_graph_id = ()
         
@@ -125,17 +125,12 @@ class GraphUpdater(threading.Thread):
 
         self.graph_frame_count = 0
 
-    def connection_lost( self ):
-        self.status = "stopped"
+    def clear_graph( self ):
         self.prev_graph_id = ()
-        self.normal_fit = True
-        # Get an *empty* graph object
-        # (comment out to show the last suite state before shutdown)
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
-        # TODO - if connection is lost we should just set the state
-        # summary arrays to empty and update to clear only once.
+        self.normal_fit = True
         self.update_xdot()
-        # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
+        # gtk idle functions must return false or will be called multiple times
         return False
 
     def get_summary( self, task_id ):
@@ -143,17 +138,19 @@ class GraphUpdater(threading.Thread):
                                self.fam_state_summary, self.descendants )
 
     def update(self):
-        #print "Attempting Update"
+        if not self.updater.connected:
+            if not self.cleared:
+                gobject.idle_add(self.clear_graph)
+                self.cleared = True
+            return False
+        self.cleared = False
+
         if ( self.last_update_time is not None and
              self.last_update_time >= self.updater.last_update_time ):
             if self.action_required:
                 return True
             return False
         
-        if self.updater.status == "stopped":
-            gobject.idle_add(self.connection_lost)
-            return False
-
         self.updater.set_update(False)
         self.task_list = deepcopy(self.updater.task_list)
         self.live_graph_movie = self.updater.live_graph_movie
@@ -249,9 +246,7 @@ class GraphUpdater(threading.Thread):
             ####print "Disconnecting task state info thread"
 
     def update_xdot(self, no_zoom=False):
-        #print 'Updating xdot'
-        self.xdot.set_dotcode( self.graphw.to_string(),
-                               no_zoom=True )
+        self.xdot.set_dotcode( self.graphw.to_string(), no_zoom=True )
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
             self.first_update = False
