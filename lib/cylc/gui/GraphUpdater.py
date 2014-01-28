@@ -59,7 +59,7 @@ class GraphUpdater(threading.Thread):
         super(GraphUpdater, self).__init__()
 
         self.quit = False
-        self.cleared = True
+        self.cleared = False
         self.ignore_suicide = False
         self.focus_start_ctime = None
         self.focus_stop_ctime = None
