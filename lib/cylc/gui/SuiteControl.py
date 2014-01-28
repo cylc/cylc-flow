@@ -31,8 +31,8 @@ from combo_logviewer import combo_logviewer
 from warning_dialog import warning_dialog, info_dialog
 
 try:
-    from cylc.gui.SuiteControlGraph import ControlGraph
-    from cylc.gui.graph import graph_suite_popup
+    from SuiteControlGraph import ControlGraph
+    from graph import graph_suite_popup
 except ImportError, x:
     # pygraphviz not installed
     warning_dialog( "WARNING: graph view disabled\n" + str(x) ).warn() 
@@ -40,12 +40,12 @@ except ImportError, x:
 else:
     graphing_disabled = False
 
-from cylc.gui.legend import ThemeLegendWindow
-from cylc.gui.SuiteControlLED import ControlLED
-from cylc.gui.SuiteControlTree import ControlTree
-from cylc.gui.stateview import DotMaker
-from cylc.gui.updater import Updater
-from cylc.gui.util import (get_icon, get_image_dir, get_logo, EntryTempText,
+from legend import ThemeLegendWindow
+from SuiteControlLED import ControlLED
+from SuiteControlTree import ControlTree
+from DotMaker import DotMaker
+from updater import Updater
+from util import (get_icon, get_image_dir, get_logo, EntryTempText,
                            EntryDialog, setup_icons, set_exception_hook_dialog)
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
@@ -65,7 +65,7 @@ from cylc.passphrase import passphrase
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
 from cylc.global_config import get_global_cfg
-from cylc.gui.gcylc_config import config
+from gcylc_config import config
 
 def run_get_stdout( command, filter=False ):
     try:

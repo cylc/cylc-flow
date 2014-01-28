@@ -120,6 +120,7 @@ class Updater(threading.Thread):
         self.dt = "waiting..."
         self.dt_date = None
         self.status = None
+        self.connected = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
         self._flag_new_update()
@@ -161,6 +162,7 @@ class Updater(threading.Thread):
             self.err_log_lines = []
             self.err_log_size = 0
             self.status = "connected"
+            self.connected = True
             self.poll_schd.stop()
             self._flag_new_update()
             return True
@@ -170,6 +172,7 @@ class Updater(threading.Thread):
         self.state_summary = {}
         self.fam_state_summary = {}
         self.status = "stopped"
+        self.connected = False
         self._flag_new_update()
         self.poll_schd.start()
         self.info_bar.set_state( [] )

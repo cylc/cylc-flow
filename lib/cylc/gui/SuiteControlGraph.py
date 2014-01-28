@@ -19,7 +19,7 @@
 import gtk
 import os, re
 import gobject
-from xstateview import GraphUpdater
+from GraphUpdater import GraphUpdater
 from warning_dialog import warning_dialog, info_dialog
 from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets

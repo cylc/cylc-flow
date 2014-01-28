@@ -19,7 +19,7 @@
 import gtk
 import os, re
 import gobject
-from stateview import TreeUpdater
+from TreeUpdater import TreeUpdater
 from gcapture import gcapture_tmpfile
 from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
