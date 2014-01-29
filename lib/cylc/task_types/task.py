@@ -613,10 +613,8 @@ class task( object ):
 
         # host may be None (= run task on suite host)
         self.task_host = get_task_host( rtconfig['remote']['host'] )
-        if self.task_host:
+        if self.task_host != "localhost":
             self.log( "NORMAL", "Task host: " + self.task_host )
-        else:
-            self.task_host = "localhost"
 
         self.task_owner = rtconfig['remote']['owner']
 

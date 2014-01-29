@@ -83,7 +83,7 @@ if ! ${IS_AT_T_HOST:-false}; then
     fi
     if [[ $T_HOST != 'localhost' ]]; then
         T_HOST_CYLC_DIR=$(ssh_mkdtemp $T_HOST)
-        rsync -a $CYLC_DIR/* $T_HOST:$T_HOST_CYLC_DIR/
+        rsync -a --exclude=*.pyc $CYLC_DIR/* $T_HOST:$T_HOST_CYLC_DIR/
         $SSH $T_HOST bash -l <<__BASH__
 echo "test" >$T_HOST_CYLC_DIR/VERSION
 IS_AT_T_HOST=true \
