@@ -36,9 +36,9 @@ class job_batcher( threading.Thread ):
 
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay ):
         threading.Thread.__init__(self)
-        self.thread_id = str(self.getName()) 
+        self.thread_id = str(self.getName())
 
-        self.queue_name = queue_name 
+        self.queue_name = queue_name
         self.jobqueue = jobqueue
         self.batches = []
         self.batch_size = int( batch_size )
@@ -82,7 +82,7 @@ class job_batcher( threading.Thread ):
         count = 0
         while count <= seconds:
             self.do_quit()
-            time.sleep(1) 
+            time.sleep(1)
             count += 1
 
     def run( self ):
@@ -105,9 +105,9 @@ class job_batcher( threading.Thread ):
                         break
                 if len(batch) > 0:
                     self.batches.append( batch )
-    
+
                 # submit each batch in sequence
-                n = len(self.batches) 
+                n = len(self.batches)
                 i = 0
                 while True:
                     self.do_quit()
@@ -120,7 +120,7 @@ class job_batcher( threading.Thread ):
                     else:
                         # some batches left
                         self.do_batch_delay( self.batch_delay )
-    
+
                 # main loop sleep for the thread:
                 time.sleep( 1 )
         except QuitThread:
@@ -238,7 +238,7 @@ class task_batcher( job_batcher ):
     # need to avoid making direct task state changes here.
 
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, wireless, run_mode ):
-        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay ) 
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay )
         self.run_mode = run_mode
         self.wireless = wireless
         self.empty_before_exit = False
@@ -277,7 +277,7 @@ class task_batcher( job_batcher ):
             #  p.stderr.readline() blocks until the process
             #  finishes because nothing is written to stderr.
             res = 0
-        else: 
+        else:
             res = job_batcher.follow_up_item( self, jobinfo )
         return res
 
@@ -316,7 +316,7 @@ class task_batcher( job_batcher ):
         if err:
             itask.message_queue.put( 'WARNING', err )
         itask.message_queue.put( 'CRITICAL', itask.id + ' submission failed' )
- 
+
 
 class event_batcher( job_batcher ):
     """Batched execution of task event handlers; item is (event-label,
@@ -324,7 +324,7 @@ class event_batcher( job_batcher ):
     handlers as doing so could block the thread."""
 
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, suite ):
-        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay ) 
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay )
         self.suite = suite
 
     def submit_item( self, item, jobinfo ):
@@ -345,7 +345,7 @@ class poll_and_kill_batcher( job_batcher ):
     """Batched submission of task poll and kill commands."""
 
     def __init__( self, queue_name, jobqueue, batch_size, batch_delay, run_mode ):
-        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay ) 
+        job_batcher.__init__( self, queue_name, jobqueue, batch_size, batch_delay )
         self.run_mode = run_mode
 
     def process_batch( self, batch, i, n ):

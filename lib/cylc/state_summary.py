@@ -57,7 +57,7 @@ class state_summary( Pyro.core.ObjBase ):
             task_states[ctime][name] = task_summary[task.id]['state']
             task_name_list.append(name)
 
-        task_name_list = list(set(task_name_list))   
+        task_name_list = list(set(task_name_list))
 
         fam_states = {}
         all_states = []
@@ -78,7 +78,7 @@ class state_summary( Pyro.core.ObjBase ):
                         continue
                     c_fam_task_states.setdefault(parent, [])
                     c_fam_task_states[parent].append(state)
-            
+
             for fam, child_states in c_fam_task_states.items():
                 f_id = fam + TaskID.DELIM + ctime
                 state = extract_group_state(child_states)
@@ -95,7 +95,7 @@ class state_summary( Pyro.core.ObjBase ):
                                         'title': title,
                                         'label': ctime,
                                         'state': state}
-        
+
         all_states.sort()
 
         global_summary[ 'start time' ] = self.start_time
@@ -124,7 +124,7 @@ class state_summary( Pyro.core.ObjBase ):
         """Return the list of active task ids."""
         self.task_name_list.sort()
         return self.task_name_list
-            
+
     def get_state_summary( self ):
         """Return the global, task, and family summary data structures."""
         return [ self.global_summary, self.task_summary, self.family_summary ]

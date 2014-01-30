@@ -24,7 +24,7 @@ from parsec.util import printcfg
 
 """
 Define items and validators for cylc site and user config files.
-""" 
+"""
 
 SITE_FILE = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' )
 USER_FILE = os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )
@@ -37,7 +37,7 @@ SPEC = {
     'disable interactive command prompts' : vdr( vtype='boolean', default=True ),
     'enable run directory housekeeping'   : vdr( vtype='boolean', default=False ),
     'run directory rolling archive length': vdr( vtype='integer', vmin=0, default=2 ),
-    'submission polling intervals'        : vdr( vtype='m_float_list', allow_zeroes=False, default=[1.0]), 
+    'submission polling intervals'        : vdr( vtype='m_float_list', allow_zeroes=False, default=[1.0]),
     'execution polling intervals'         : vdr( vtype='m_float_list', allow_zeroes=False, default=[1.0]),
 
     'task messaging' : {
@@ -101,19 +101,19 @@ SPEC = {
        'remote host'                      : vdr( vtype='string' ),
        'directives' : {
             'loadleveler host'            : vdr( vtype='string' ),
-            'loadleveler directives' : { 
+            'loadleveler directives' : {
                  '__MANY__'               : vdr( vtype='string' ),
                   },
             'pbs host'                    : vdr( vtype='string' ),
-            'pbs directives' : { 
+            'pbs directives' : {
                  '__MANY__'               : vdr( vtype='string' ),
                  },
             'sge host'                    : vdr( vtype='string' ),
-            'sge directives' : { 
+            'sge directives' : {
                  '__MANY__'               : vdr( vtype='string' ),
                  },
             'slurm host'                  : vdr( vtype='string' ),
-            'slurm directives' : { 
+            'slurm directives' : {
                  '__MANY__'               : vdr( vtype='string' ),
                  },
             },

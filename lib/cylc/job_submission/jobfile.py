@@ -25,7 +25,7 @@ from cylc.global_config import get_global_cfg
 from cylc.command_env import cv_scripting_ml
 import signal
 from subprocess import Popen, PIPE
-from time import time, sleep 
+from time import time, sleep
 
 class jobfile(object):
 
@@ -53,7 +53,7 @@ class jobfile(object):
         # task runtime environment setup).
         ################################################################
 
-        # Write each job script section in turn. 
+        # Write each job script section in turn.
 
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
@@ -184,7 +184,7 @@ class jobfile(object):
         # override and write task-host-specific suite variables
         gcfg = get_global_cfg()
         suite_work_dir = gcfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
-        st_env = deepcopy( self.__class__.suite_task_env ) 
+        st_env = deepcopy( self.__class__.suite_task_env )
         st_env[ 'CYLC_SUITE_RUN_DIR'    ] = gcfg.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )
         st_env[ 'CYLC_SUITE_WORK_DIR'   ] = suite_work_dir
         st_env[ 'CYLC_SUITE_SHARE_DIR'  ] = gcfg.get_derived_host_item( self.suite, 'suite share directory', self.host, self.owner )
@@ -217,7 +217,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_COMMS_METHOD=" + comms )
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
-        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED 
+        BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED
 
     def write_suite_bin_access( self, BUFFER=None ):
         if not BUFFER:

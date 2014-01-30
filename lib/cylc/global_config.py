@@ -22,12 +22,12 @@ class globalcfg( object ):
     """
     Handle global (all suites) site and user configuration for cylc.
     User file values override site file values.
-   
+
     For all derived items - paths hardwired under the configurable top
     levels - use the get_derived_host_item(suite,host) method.
     """
     def __init__( self, strict=False ):
-        """Parse, validate, and combine site and user files.""" 
+        """Parse, validate, and combine site and user files."""
 
         self.strict = strict # not used yet
 
@@ -131,7 +131,7 @@ class globalcfg( object ):
 
         elif item == 'suite work directory':
             value = os.path.join( swdir, 'work' )
- 
+
         elif item == 'suite share directory':
             value = os.path.join( swdir, 'share' )
 
@@ -198,7 +198,7 @@ class globalcfg( object ):
         item = '[pyro]ports directory'
         value = self.cfg['pyro']['ports directory']
         self.create_directory( value, item )
-        
+
 def get_global_cfg( strict=False ):
     global gcfg
     if gcfg is None:

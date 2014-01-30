@@ -35,11 +35,11 @@ class prerequisites(object):
         return satisfied
 
     def eval_all( self ):
-        # used to test validity of conditional prerequisite expression. 
+        # used to test validity of conditional prerequisite expression.
         # (all_satisfied() is not sufficient as it breaks out early).
         for reqs in self.container:
             reqs.all_satisfied()
- 
+
     def all_satisfied( self ):
         result = True
         for reqs in self.container:
@@ -47,7 +47,7 @@ class prerequisites(object):
                 result = False
                 break
         return result
-            
+
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prerequisites?
         # DELEGATE TO CONTAINED CLASSES (TODO - CHECK EFFICIENCY)
@@ -65,7 +65,7 @@ class prerequisites(object):
         for reqs in self.container:
             for label in reqs.satisfied_by.keys():
                 satisfied_by[ label ] = reqs.satisfied_by[label]
-        return satisfied_by   
+        return satisfied_by
 
     def count( self ):
         # how many messages are stored
@@ -98,4 +98,4 @@ class prerequisites(object):
         for reqs in self.container:
             tags += reqs.get_target_tags()
         return tags
- 
+

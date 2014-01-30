@@ -73,14 +73,14 @@ class localdb(object):
             print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
             print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
             title = "SUITE PARSE ERROR"
-        
+
         title = title.split('\n')[0] # use the first of multiple lines
         print 'REGISTER', name + ':', dir
         with open( os.path.join( self.dbpath, name ), 'w' ) as file:
             file.write( 'path=' + dir + '\n' )
             file.write( 'title=' + title + '\n' )
 
-    def get_suite_data( self, suite ): 
+    def get_suite_data( self, suite ):
         suite = RegPath(suite).get()
         fpath = os.path.join( self.dbpath, suite )
         if not os.path.isfile( fpath ):
@@ -131,7 +131,7 @@ class localdb(object):
         for key in self.list_all_suites():
             if re.search( exp + '$', key ):
                 data = self.get_suite_data(key)
-                dir = data['path'] 
+                dir = data['path']
                 print 'UNREGISTER', key + ':', dir
                 os.unlink( os.path.join( self.dbpath, key ) )
                 for f in ['passphrase', 'suite.rc.processed']:
@@ -173,7 +173,7 @@ class localdb(object):
             data = self.get_suite_data(reg)
             dir = data['path']
             rcfile = os.path.join( dir, 'suite.rc' )
-            if not os.path.isfile( rcfile ): 
+            if not os.path.isfile( rcfile ):
                 invalid.append( reg )
         return invalid
 

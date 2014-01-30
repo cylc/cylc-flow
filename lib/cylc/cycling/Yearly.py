@@ -26,14 +26,14 @@ from cylc.cycling.base import cycler, CyclerError
 # to keep the original design of the code as little as possible changed.
 
 def sub_years(current_date, N):
-    """Subtract N years from current_date; 
+    """Subtract N years from current_date;
     works for positive or negative N."""
     start_date = current_date.get_datetime()
     year = start_date.year - N
     return ct (start_date.replace(year) )
 
 def add_years(current_date, N):
-    """Add N years to current_date; 
+    """Add N years to current_date;
     works for positive or negative N."""
     return sub_years( current_date, -N )
 
@@ -49,7 +49,7 @@ class Yearly( cycler ):
     def offset( cls, T, n ):
         """Decrement T by n years to the same MMDDHHmmss."""
         return sub_years( ct( T ), int(n) ).get()
- 
+
     def __init__( self, T=None, step=1 ):
         """Store anniversary date, step, and anchor."""
 
@@ -65,7 +65,7 @@ class Yearly( cycler ):
             self.anchorDate= T
             # aniversary date
             self.MMDDHHmmss = T[4:]
- 
+
         # step in integer number of years
         try:
             # check validity
@@ -84,7 +84,7 @@ class Yearly( cycler ):
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
         try:
-            # is T a legal cycle time 
+            # is T a legal cycle time
             ct(T)
         except CycleTimeError, x:
             raise CyclerError, str(x)
@@ -124,7 +124,7 @@ class Yearly( cycler ):
             # wrong anniversary date
             result = False
         else:
-            # right anniversary date, check the year is valid 
+            # right anniversary date, check the year is valid
             diff = int(self.anchorDate[0:4]) - int(T[0:4])
             rem = diff % self.step
             if rem != 0:
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             ('2010080806', 2), \
             ('2010080806', 3), \
             ('2010080806x', 2), \
-            ('2010080806', 'x')] 
+            ('2010080806', 'x')]
 
     for i in inputs:
         print i

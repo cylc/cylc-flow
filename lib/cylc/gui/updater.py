@@ -191,7 +191,7 @@ class Updater(threading.Thread):
 
     def update(self):
         #print "Attempting Update"
-        
+
         if self.god is None:
             gobject.idle_add( self.connection_lost )
             return False
@@ -213,7 +213,7 @@ class Updater(threading.Thread):
             self.err_log_lines += new_err_content.splitlines()
             self.err_log_lines = self.err_log_lines[-self._err_num_log_lines:]
             self.err_log_size = new_err_size
-        
+
         update_summaries = False
         try:
             summary_update_time = self.god.get_summary_update_time()

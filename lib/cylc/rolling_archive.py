@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Implements a simple rolling archive based on a given base filename.
-# Used for cylc state dump files. 
+# Used for cylc state dump files.
 
 import os
 
@@ -46,7 +46,7 @@ class rolling_archive(object):
 
         if os.path.exists( self.base_filename):
             os.rename( self.base_filename, self.__filename(1) )
-        
+
         self.file_handle = open( self.base_filename, 'w' )
         return self.file_handle
 

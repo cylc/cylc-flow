@@ -53,7 +53,7 @@ class CylcDotViewerCommon( xdot.DotWindow ):
             return False
         self.inherit = self.suiterc.get_parent_lists()
         return True
- 
+
 class MyDotWindow2( CylcDotViewerCommon ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
     # used by "cylc graph" to plot runtime namespace graphs
@@ -150,7 +150,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
 
         #eb = gtk.EventBox()
         #eb.add( gtk.Label( "right-click on nodes to control family grouping" ) )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
         #vbox.pack_start( eb, False )
 
         self.set_focus(self.widget)
@@ -163,7 +163,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
                 try:
                     self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
                 except OSError:
-                    # this happens occasionally when the file is being edited ... 
+                    # this happens occasionally when the file is being edited ...
                     print >> sys.stderr, "Failed to get rc file mod time, trying again in 1 second"
                     time.sleep(1)
                 else:
@@ -193,7 +193,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
                     n.attr['style'] = 'filled'
                     n.attr['fillcolor'] = 'powderblue'
                     n.attr['color'] = 'royalblue'
- 
+
         self.set_dotcode( graph.string() )
         self.graph = graph
 
@@ -210,7 +210,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
                                                  gtk.RESPONSE_CANCEL,
                                                  gtk.STOCK_SAVE,
                                                  gtk.RESPONSE_OK))
-        
+
         chooser.set_default_response(gtk.RESPONSE_OK)
         if self.outfile:
             chooser.set_filename(self.outfile)
@@ -244,7 +244,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
                 try:
                     rct= os.stat(rc).st_mtime
                 except OSError:
-                    # this happens occasionally when the file is being edited ... 
+                    # this happens occasionally when the file is being edited ...
                     print "Failed to get rc file mod time, trying again in 1 second"
                     time.sleep(1)
                 else:
@@ -280,7 +280,7 @@ class MyDotWindow( CylcDotViewerCommon ):
             <toolitem action="IgnoreSuicide"/>
             <toolitem action="IgnoreColdStart"/>
             <separator expand="true"/>
-            <toolitem action="Save"/> 
+            <toolitem action="Save"/>
         </toolbar>
     </ui>
     '''
@@ -382,7 +382,7 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         eb = gtk.EventBox()
         eb.add( gtk.Label( "right-click on nodes to control family grouping" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
         vbox.pack_start( eb, False )
 
         self.set_focus(self.widget)
@@ -395,7 +395,7 @@ class MyDotWindow( CylcDotViewerCommon ):
                 try:
                     self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
                 except OSError:
-                    # this happens occasionally when the file is being edited ... 
+                    # this happens occasionally when the file is being edited ...
                     print >> sys.stderr, "Failed to get rc file mod time, trying again in 1 second"
                     time.sleep(1)
                 else:
@@ -415,7 +415,7 @@ class MyDotWindow( CylcDotViewerCommon ):
     def ungroup_all( self, w ):
         self.get_graph( ungroup_all=True )
 
-    def get_graph( self, group_nodes=[], ungroup_nodes=[], 
+    def get_graph( self, group_nodes=[], ungroup_nodes=[],
             ungroup_recursive=False, ungroup_all=False, group_all=False ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.triggering_families
@@ -428,11 +428,11 @@ class MyDotWindow( CylcDotViewerCommon ):
             one = str( self.suiterc.cfg['visualization']['initial cycle time'])
             two = str(self.suiterc.cfg['visualization']['final cycle time'])
 
-        # TODO: move ct().get() out of this call (for error checking): 
+        # TODO: move ct().get() out of this call (for error checking):
         graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(),
                 raw=self.raw, group_nodes=group_nodes,
-                ungroup_nodes=ungroup_nodes, 
-                ungroup_recursive=ungroup_recursive, 
+                ungroup_nodes=ungroup_nodes,
+                ungroup_recursive=ungroup_recursive,
                 group_all=group_all, ungroup_all=ungroup_all,
                 ignore_suicide=self.ignore_suicide )
 
@@ -458,7 +458,7 @@ class MyDotWindow( CylcDotViewerCommon ):
     def on_igsui( self, toolitem ):
         self.ignore_suicide = toolitem.get_active()
         self.get_graph()
-        
+
     def on_igcol( self, toolitem ):
         self.raw = toolitem.get_active()
         self.get_graph()
@@ -470,7 +470,7 @@ class MyDotWindow( CylcDotViewerCommon ):
                                                  gtk.RESPONSE_CANCEL,
                                                  gtk.STOCK_SAVE,
                                                  gtk.RESPONSE_OK))
-        
+
         chooser.set_default_response(gtk.RESPONSE_OK)
         if self.outfile:
             chooser.set_filename(self.outfile)
@@ -504,7 +504,7 @@ class MyDotWindow( CylcDotViewerCommon ):
                 try:
                     rct= os.stat(rc).st_mtime
                 except OSError:
-                    # this happens occasionally when the file is being edited ... 
+                    # this happens occasionally when the file is being edited ...
                     print "Failed to get rc file mod time, trying again in 1 second"
                     time.sleep(1)
                 else:

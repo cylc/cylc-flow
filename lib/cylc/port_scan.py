@@ -67,7 +67,7 @@ class port_interrogator(object):
     def interrogate( self ):
         # get a proxy to the cylcid object
         # this raises ProtocolError if connection fails
-        uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/cylcid' 
+        uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/cylcid'
         self.proxy = Pyro.core.getProxyForURI(uri)
         self.proxy._setTimeout(self.pyro_timeout)
 
@@ -123,7 +123,7 @@ def portid( host, port ):
 ##    return res
 
 def cylcid_uri( host, port ):
-    return 'PYROLOC://' + host + ':' + str(port) + '/cylcid' 
+    return 'PYROLOC://' + host + ':' + str(port) + '/cylcid'
 
 def get_port( suite, owner=user, host=get_hostname(), pphrase=None, pyro_timeout=None ):
     # Scan ports until a particular suite is found.
@@ -224,7 +224,7 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
 
     # In non-verbose mode print nothing (scan is used by cylc db viewer).
 
-    # load my suite passphrases 
+    # load my suite passphrases
     reg = localdb(db)
     reg_suites = reg.get_list()
     my_passphrases = {}

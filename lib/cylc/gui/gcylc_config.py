@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -44,7 +44,7 @@ class config( object ):
             hierarchy = []
             name = label
             while True:
-                hierarchy.append(name) 
+                hierarchy.append(name)
                 if name == "default":
                     break
                 if cfg['themes'][name]['inherit']:
@@ -87,7 +87,7 @@ class config( object ):
                 tcfg = deepcopy(defs)
                 self.inherit( tcfg, self.parse_state(theme, item, val))
                 cfg_themes[theme][state] = tcfg
-        
+
         # final themes result:
         cfg['themes'] = cfg_themes
 

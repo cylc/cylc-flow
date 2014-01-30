@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -30,8 +30,8 @@ class suite_output( object ):
         gcfg = get_global_cfg()
 
         sodir = gcfg.get_derived_host_item( suite, 'suite log directory' )
-        self.opath = os.path.join( sodir, 'out' ) 
-        self.epath = os.path.join( sodir, 'err' ) 
+        self.opath = os.path.join( sodir, 'out' )
+        self.epath = os.path.join( sodir, 'err' )
 
         # use same archive length as logging (TODO: document this)
         self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']

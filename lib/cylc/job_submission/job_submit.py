@@ -19,8 +19,8 @@
 """
 Job submission base class.
 
-Writes a temporary "job file" that encapsulates the task runtime settings 
-(execution environment, command scripting, etc.) then submits it by the 
+Writes a temporary "job file" that encapsulates the task runtime settings
+(execution environment, command scripting, etc.) then submits it by the
 chosen method on the chosen host (using passwordless ssh if not local).
 
 Derived classes define the particular job submission method.
@@ -157,7 +157,7 @@ class job_submit(object):
         # (directives will be ignored if the prefix below is not overridden)
 
         # Defaults set in task.py:
-        # self.jobconfig = { 
+        # self.jobconfig = {
         #  PREFIX: e.g. '#QSUB' (qsub), or '# @' (loadleveler)
         #      'directive prefix' : None,
         #  FINAL directive, WITH PREFIX, e.g. '# @ queue' for loadleveler

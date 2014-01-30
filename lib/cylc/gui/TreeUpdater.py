@@ -182,12 +182,12 @@ class TreeUpdater(threading.Thread):
                     dest[ ctime ] = {}
                 state = summary[ id ].get( 'state' )
                 message = summary[ id ].get( 'latest_message', )
-                
+
                 tsub = summary[ id ].get( 'submitted_time' )
                 if isinstance(tsub, basestring) and tsub != "*":
                     if "T" in tsub:
                         # TODO: get rid of this condition (here for backwards compatibility)
-                        tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") ) 
+                        tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") )
                 tstt = summary[ id ].get( 'started_time' )
                 tsut = summary[ id ].get( 'succeeded_time' )
                 meant = summary[ id ].get( 'mean total elapsed time' )
@@ -212,7 +212,7 @@ class TreeUpdater(threading.Thread):
                 if isinstance(tstt, basestring) and tstt != "*":
                     # TODO: get rid of the following condition (here for backwards compatibility)
                     if "T" in tstt:
-                        tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") ) 
+                        tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") )
                 if isinstance(meant, float) or isinstance(meant, int):
                     # TODO: get rid of the following condition (here for backwards compatibility)
                     try:

@@ -61,7 +61,7 @@ class broadcast( Pyro.core.ObjBase ):
         # prune until no further changes
         while _prune( target ):
             continue
- 
+
     def addict( self, target, source ):
         for key, val in source.items():
             if isinstance( val, dict ):
@@ -125,13 +125,13 @@ class broadcast( Pyro.core.ObjBase ):
     def expire( self, cutoff ):
         """Clear all settings targetting cycle times earlier than cutoff."""
         if not cutoff:
-            self.log.info( 'Expiring all broadcast settings now' ) 
+            self.log.info( 'Expiring all broadcast settings now' )
             self.settings = {}
         for ctime in self.settings.keys():
             if ctime == 'all-cycles':
                 continue
             elif ctime < cutoff:
-                self.log.info( 'Expiring ' + ctime + ' broadcast settings now' ) 
+                self.log.info( 'Expiring ' + ctime + ' broadcast settings now' )
                 del self.settings[ ctime ]
 
     def clear( self, namespaces, tags ):
@@ -142,7 +142,7 @@ class broadcast( Pyro.core.ObjBase ):
             # clear all settings
             self.settings = {}
         elif tags:
-            # clear all settings specific to given tags 
+            # clear all settings specific to given tags
             for tag in tags:
                 try:
                     del self.settings[tag]
@@ -173,7 +173,7 @@ class broadcast( Pyro.core.ObjBase ):
                 d.to_run = False
         self.new_settings = False
         return ops
-    
+
     def get_dump( self ):
         # return the broadcast variables as written to the suite state dump file
         return pickle.dumps( self.settings ) + '\n'

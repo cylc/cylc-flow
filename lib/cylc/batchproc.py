@@ -30,7 +30,7 @@ class batchproc:
         [command, arg1, arg2, ...] via an execute() method. Items are
         added until a batch fills up, then the whole batch is processed
         in parallel and we wait on the whole batch to complete before
-        beginning the next batch.  
+        beginning the next batch.
         Users should do a final call to process() to handle any final
         items in an incomplete batch."""
 

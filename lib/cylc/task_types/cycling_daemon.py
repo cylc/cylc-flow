@@ -44,7 +44,7 @@ class cycling_daemon( oneoff, cycling ):
 
 
     def process_incoming_message( self, (priority,message) ):
-        # intercept incoming messages and check for a pattern match 
+        # intercept incoming messages and check for a pattern match
         for pattern in self.output_patterns:
             m = re.match( pattern, message )
             if m:

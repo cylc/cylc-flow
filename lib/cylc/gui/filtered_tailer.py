@@ -27,7 +27,7 @@ class filtered_tailer( tailer ):
     def __init__( self, logview, log, filters, tag=None,
             warning_re=None, critical_re=None ):
         self.filters = filters
-        tailer.__init__( self, logview, log, tag=tag, 
+        tailer.__init__( self, logview, log, tag=tag,
                 warning_re=warning_re, critical_re=critical_re )
 
     def run( self ):
@@ -47,7 +47,7 @@ class filtered_tailer( tailer ):
                     for filter in self.filters:
                         if filter:
                             if not re.search( filter, line ):
-                                match = False 
+                                match = False
                                 break
                     if match:
                         gobject.idle_add( self.update_gui, line )

@@ -36,7 +36,7 @@ class conditional_prerequisites(object):
     def __init__( self, owner_id, ict=None ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
-        self.messages = {}   # messages[ label ] = message 
+        self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.target_tags = []   # list of target cycle times (tags)
@@ -91,7 +91,7 @@ class conditional_prerequisites(object):
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
                     try:
-                        if (int(task.group().split(".")[1]) < int(self.ict) and 
+                        if (int(task.group().split(".")[1]) < int(self.ict) and
                             int(task.group().split(".")[1]) != 1):
                             drop_these.append(k)
                     except IndexError:
@@ -110,7 +110,7 @@ class conditional_prerequisites(object):
         for label in self.messages:
             # match label start and end on on word boundary
             expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
-            
+
         for label in self.excess_labels:
             # treat duplicate triggers as always satisfied
             expr = re.sub( r'\b' + label + r'\b', 'True', expr )
@@ -137,7 +137,7 @@ class conditional_prerequisites(object):
                     print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
                 raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
             return res
-            
+
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prequisites?
         for label in self.satisfied:

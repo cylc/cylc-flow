@@ -29,7 +29,7 @@ class plain_prerequisites(object):
 
     def __init__( self, owner_id, ict=None ):
         self.labels = {}   # labels[ message ] = label
-        self.messages = {}   # messages[ label ] = message 
+        self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.target_tags = []   # list of target cycle times (tags)
@@ -43,9 +43,9 @@ class plain_prerequisites(object):
             task = re.search( r'(.*).(.*) ', message)
             if task.group:
                 try:
-                    if (int(task.group().split(".")[1]) < int(self.ict) and 
+                    if (int(task.group().split(".")[1]) < int(self.ict) and
                         int(task.group().split(".")[1]) != 1):
-                        return 
+                        return
                 except IndexError:
                     pass
         if label:
@@ -81,8 +81,8 @@ class plain_prerequisites(object):
             self.target_tags.remove( m.groups()[0] )
 
     def all_satisfied( self ):
-        return not ( False in self.satisfied.values() ) 
-            
+        return not ( False in self.satisfied.values() )
+
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prerequisites?
         for label, message in self.messages.items():

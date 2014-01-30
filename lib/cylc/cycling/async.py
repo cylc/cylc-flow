@@ -24,7 +24,7 @@ class async( cycler ):
     @classmethod
     def offset( cls, tag, n ):
         return str(int(tag)-int(n))
- 
+
     def __init__( self, *args ):
         pass
 

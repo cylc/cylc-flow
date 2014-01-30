@@ -52,7 +52,7 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
         start_entry.set_text( str(defstartc) )
     ic_hbox = gtk.HBox()
     ic_hbox.pack_start( label )
-    ic_hbox.pack_start(start_entry, True) 
+    ic_hbox.pack_start(start_entry, True)
     vbox.pack_start(ic_hbox)
 
     label = gtk.Label("[STOP]:" )
@@ -62,7 +62,7 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
         stop_entry.set_text( str(defstopc) )
     fc_hbox = gtk.HBox()
     fc_hbox.pack_start( label )
-    fc_hbox.pack_start(stop_entry, True) 
+    fc_hbox.pack_start(stop_entry, True)
     vbox.pack_start (fc_hbox, True)
 
     cancel_button = gtk.Button( "_Close" )
@@ -70,7 +70,7 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     ok_button = gtk.Button( "_Graph" )
     ok_button.connect(
               "clicked",
-              lambda w: graph_suite( reg, 
+              lambda w: graph_suite( reg,
                                      start_entry.get_text(),
                                      stop_entry.get_text(),
                                      graph_opts,  gcapture_windows,

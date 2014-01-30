@@ -22,7 +22,7 @@
 # task changes state in such a way that others could be affected. The
 # flag should only be turned off again after use in scheduler.py, to
 # ensure that dependency negotation occurs when required.
-pflag = False 
+pflag = False
 
 # Set iflag = True to simulate an update of the suite state summary
 # structure accessed by gcylc and commands.

@@ -49,7 +49,7 @@ class lockserver(object):
         # check that a lockserver is running
         self.get_proxy()
         return self.port
-        
+
     def get( self ):
         return self.get_proxy()
 

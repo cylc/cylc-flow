@@ -28,11 +28,11 @@ class Daily( cycler ):
 
     @classmethod
     def offset( cls, T, n ):
-        # decrement n days 
+        # decrement n days
         foo = ct(T)
         foo.decrement(days=int(n))
         return foo.get()
- 
+
     def __init__( self, T=None, step=1 ):
         """Store HH, step, and anchor."""
 
@@ -47,7 +47,7 @@ class Daily( cycler ):
             # anchor day
             self.anchorYYYYMMDD = T[0:8]
             self.HH = T[8:]
- 
+
         # step in integer number of days
         try:
             # check validity
@@ -85,7 +85,7 @@ class Daily( cycler ):
         diff = ct(self.anchorYYYYMMDD).subtract( foo )
         rem = diff.days % self.step
         foo.increment( days=rem )
-            
+
         return foo.get()
 
     def prev( self, T ):
@@ -114,7 +114,7 @@ class Daily( cycler ):
             if rem != 0:
                 res = False
         return res
- 
+
     def adjust_state( self, offset ):
         foo = ct( self.anchorYYYYMMDD )
         foo.decrement( days=int(offset) )

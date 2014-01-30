@@ -40,7 +40,7 @@ class ThemeLegendWindow(gtk.Window):
         self.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
         vbox = gtk.VBox()
- 
+
         self._theme = theme_map
         self._key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
         treeview = gtk.TreeView( self._key_liststore )

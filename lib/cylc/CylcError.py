@@ -22,7 +22,7 @@ cylc-wide exception handling ..."""
 class CylcError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg

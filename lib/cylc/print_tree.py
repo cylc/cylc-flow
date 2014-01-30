@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -58,7 +58,7 @@ def print_tree( tree, padding, use_unicode=False, prefix='', labels=None, eq=Fal
         pp = re.sub( trm + ' ', '  ', pp )
         pp = re.sub( tee_re + ' ', vbar + ' ', pp )
 
-        result = pp + item 
+        result = pp + item
         line = result + ' ' + padding[ len(result): ]
         if isinstance( tree[item], dict ):
             print line

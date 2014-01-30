@@ -62,7 +62,7 @@ class EntryDialog(gtk.MessageDialog):
     def __init__(self, *args, **kwargs):
         '''
         Creates a new EntryDialog. Takes all the arguments of the usual
-        MessageDialog constructor plus one optional named argument 
+        MessageDialog constructor plus one optional named argument
         "default_value" to specify the initial contents of the entry.
         '''
         if 'default_value' in kwargs:
@@ -71,10 +71,10 @@ class EntryDialog(gtk.MessageDialog):
         else:
             default_value = ''
         super(EntryDialog, self).__init__(*args, **kwargs)
-        entry = gtk.Entry()        
+        entry = gtk.Entry()
         entry.set_text(str(default_value))
-        entry.connect("activate", 
-                lambda ent, dlg, resp: dlg.response(resp), 
+        entry.connect("activate",
+                lambda ent, dlg, resp: dlg.response(resp),
                 self, gtk.RESPONSE_OK)
         self.vbox.pack_end(entry, True, True, 0)
         self.vbox.show_all()
@@ -141,7 +141,7 @@ def set_exception_hook_dialog(program_name=None):
     sys.excepthook = lambda *a: _launch_exception_hook_dialog(
                                                   *a, old_hook=old_hook,
                                                   program_name=program_name)
-    
+
 
 def setup_icons():
     """Set up some extra stock icons for better PyGTK compatibility."""

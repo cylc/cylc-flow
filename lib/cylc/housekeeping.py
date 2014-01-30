@@ -25,7 +25,7 @@ import flags
 class HousekeepingError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -46,7 +46,7 @@ class config_line:
         before the next is processed.
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
-    def __init__( self, source, match, oper, ctime, offset, dest=None, 
+    def __init__( self, source, match, oper, ctime, offset, dest=None,
             mode=None, cheap=False ):
         self.source = source
         self.match = match
@@ -57,7 +57,7 @@ class config_line:
         except CycleTimeError,x:
             raise HousekeepingError, str(x)
         self.offset = offset
-        self.opern = oper 
+        self.opern = oper
         self.destn = dest
         self.cheap = cheap
         self.mode = mode
@@ -87,7 +87,7 @@ class config_line:
         # check the validity of the source directory
         if not os.path.isdir( self.source ):
             raise HousekeepingError, 'Source directory not found: ' + self.source
- 
+
         # check the validity of the requested housekeeping operation
         if self.opern not in self.__class__.legal_ops:
             raise HousekeepingError, "Illegal operation: " + self.opern
@@ -111,7 +111,7 @@ class config_line:
         for entry in os.listdir( self.source ):
             src_entries += 1
             entrypath = os.path.join( self.source, entry )
-            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset, 
+            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset,
                     self.destn, self.mode, self.cheap )
             if not item.matches():
                 not_matched += 1
@@ -120,7 +120,7 @@ class config_line:
             item.interpolate_destination()
             actioned += batch.add_or_process( item )
         actioned += batch.process()
- 
+
         print 'MATCHED :', str(matched) + '/' + str(src_entries)
         print 'ACTIONED:', str(actioned) + '/' + str(matched)
 
@@ -128,11 +128,11 @@ class config_file:
     """
         Process a cylc housekeeping config file, line by line.
     """
-    def __init__( self, file, ctime, only=None, excpt=None, 
+    def __init__( self, file, ctime, only=None, excpt=None,
             mode=None, cheap=False):
         self.lines = []
         if not os.path.isfile( file ):
-            raise HousekeepingError, "file not found: " + file 
+            raise HousekeepingError, "file not found: " + file
 
         print "Parsing housekeeping config file", os.path.abspath( file )
         sys.stdout.flush()
@@ -193,8 +193,8 @@ class config_file:
                 print "\n   *** SKIPPING " + line
                 continue
 
-            self.lines.append( config_line( source, match, operation, 
-                ctime, offset, destination, 
+            self.lines.append( config_line( source, match, operation,
+                ctime, offset, destination,
                 mode=mode, cheap=cheap ))
 
     def action( self, batchsize ):
@@ -277,7 +277,7 @@ class hkitem:
             if flags.debug:
                 print "- ignoring (does not make the cutoff)"
             return False
-        
+
         if flags.debug:
             print "- ACTIONABLE (does make the cutoff)"
         return True
@@ -301,7 +301,7 @@ class hkitem:
 
     def execute( self ):
         # construct the command to execute
-        command = os.path.join( os.environ['CYLC_DIR'], 'bin', '__hk_' + self.operation ) 
+        command = os.path.join( os.environ['CYLC_DIR'], 'bin', '__hk_' + self.operation )
         # ... as a list, for the subprocess module
         comlist = [ command ]
 

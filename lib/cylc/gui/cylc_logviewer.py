@@ -27,7 +27,7 @@ from util import get_icon
 from logviewer import logviewer
 
 class cylc_logviewer( logviewer ):
- 
+
     def __init__( self, name, dir, task_list ):
         self.task_list = task_list
         self.main_log = name
@@ -35,7 +35,7 @@ class cylc_logviewer( logviewer ):
         self.task_filter = None
         self.custom_filter = None
 
-        logviewer.__init__( self, name, dir, name, 
+        logviewer.__init__( self, name, dir, name,
                 warning_re = 'WARNING', critical_re = 'CRITICAL' )
 
     def create_gui_panel( self ):
@@ -46,10 +46,10 @@ class cylc_logviewer( logviewer ):
         self.window.set_title( "log viewer" )
         self.window.set_size_request(800, 400)
         self.window.set_icon( get_icon() )
- 
+
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'Task' ) 
-        combobox.append_text( 'all' ) 
+        combobox.append_text( 'Task' )
+        combobox.append_text( 'all' )
         for task in self.task_list:
             combobox.append_text( task )
 
@@ -81,7 +81,7 @@ class cylc_logviewer( logviewer ):
 
         self.window.add( self.vbox )
         self.window.connect("delete_event", self.shutdown, self.window )
- 
+
         self.window.show_all()
 
     def shutdown( self, w, e, wind ):
@@ -131,7 +131,7 @@ class cylc_logviewer( logviewer ):
             self.level -= 1
         if self.level < 0:
             warning_dialog( """
-At newest rotation; reloading in case 
+At newest rotation; reloading in case
 the suite has been restarted.""", self.window ).warn()
             self.level = 0
             # but update view in case user started suite after gui
@@ -154,13 +154,13 @@ the suite has been restarted.""", self.window ).warn()
         s,e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete( s, e )
-        self.log_label.set_text( self.path() ) 
+        self.log_label.set_text( self.path() )
         if self.task_filter or self.custom_filter:
             filters = [self.task_filter, self.custom_filter ]
-            self.t = filtered_tailer( self.logview, self.path(), filters, 
+            self.t = filtered_tailer( self.logview, self.path(), filters,
                     warning_re = 'WARNING', critical_re = 'CRITICAL' )
         else:
-            self.t = tailer( self.logview, self.path(), 
+            self.t = tailer( self.logview, self.path(),
                     warning_re = 'WARNING', critical_re = 'CRITICAL' )
         ###print "Starting log viewer thread"
         self.t.start()

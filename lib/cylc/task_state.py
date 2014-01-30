@@ -32,7 +32,7 @@ class TaskStateError( Exception ):
 class task_state(object):
 
     legal = [ 'waiting',
-              'runahead', 
+              'runahead',
               'held',
               'queued',
               'ready',
@@ -151,7 +151,7 @@ class task_state(object):
 
         if self.__class__.is_legal(input):
             state[ 'status' ] = input
-            # ASSUME THAT ONLY succeeded TASKS, AT STARTUP, HAVE spawned 
+            # ASSUME THAT ONLY succeeded TASKS, AT STARTUP, HAVE spawned
             # (in fact this will only be used to start tasks in 'waiting')
             if input == 'succeeded':
                 state[ 'spawned' ] = 'true'
@@ -166,7 +166,7 @@ class task_state(object):
                 if item not in [ 'status', 'spawned' ]:
                     raise TaskStateError, 'ERROR, illegal task status key: ' + item
                 if item == 'status' :
-                    if not self.__class__.is_legal( value ): 
+                    if not self.__class__.is_legal( value ):
                         raise TaskStateError, 'ERROR, illegal task state: ' + value
                 elif item == 'spawned' :
                     if value not in [ 'true', 'false' ]:

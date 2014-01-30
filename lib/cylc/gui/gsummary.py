@@ -200,7 +200,7 @@ def get_summary_menu(suite_host_tuples,
     sep_item = gtk.SeparatorMenuItem()
     sep_item.show()
     menu.append(sep_item)
-    
+
     # Construct a trigger update item.
     update_now_item = gtk.ImageMenuItem("Update Now")
     img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
@@ -354,7 +354,7 @@ class SummaryApp(object):
         self.vbox = gtk.VBox()
         self.vbox.show()
         self.usercfg = config().cfg
-        self.theme_name = self.usercfg['use theme'] 
+        self.theme_name = self.usercfg['use theme']
         self.theme = self.usercfg['themes'][self.theme_name]
         self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(*([str, str, bool, str, int] +
@@ -370,7 +370,7 @@ class SummaryApp(object):
                   cell_text_host, self._set_cell_text_host)
         host_name_column.set_sort_column_id(0)
         host_name_column.set_visible(False)
-        
+
         # Construct the suite name column.
         suite_name_column = gtk.TreeViewColumn("Suite")
         cell_text_name = gtk.CellRendererText()
@@ -405,7 +405,7 @@ class SummaryApp(object):
             status_column.pack_start(cell_pixbuf_state, expand=False)
             status_column.set_cell_data_func(
                    cell_pixbuf_state, self._set_cell_pixbuf_state, i)
-        
+
         self.suite_treeview.append_column(host_name_column)
         self.suite_treeview.append_column(suite_name_column)
         self.suite_treeview.append_column(suite_title_column)
@@ -451,13 +451,13 @@ class SummaryApp(object):
         y = int(event.y)
         time = event.time
         pth = treeview.get_path_at_pos(x, y)
-        
+
         suite_host_tuples = []
 
         if pth is not None:
             # Add a gcylc launcher item.
             path, col, cellx, celly = pth
-            
+
             iter_ = treemodel.get_iter(path)
             host, suite = treemodel.get(iter_, 0, 1)
             suite_host_tuples.append((suite, host))
@@ -520,7 +520,7 @@ class SummaryApp(object):
         host = model.get_value(iter_, 0)
         suite = model.get_value(iter_, 1)
         update_time = model.get_value(iter_, 4)
-        
+
         location_id = (host, suite, update_time, column.get_title())
         if location_id != self._prev_tooltip_location_id:
             self._prev_tooltip_location_id = location_id
@@ -656,7 +656,7 @@ class BaseSummaryUpdater(threading.Thread):
             for (host, suite) in list(self.prev_suites):
                 if host not in self.hosts:
                     self.prev_suites.remove((host, suite))
-                    
+
             # Get new information.
             statuses, stop_summaries = get_new_statuses_and_stop_summaries(
                             self.hosts, self.owner,
@@ -742,7 +742,7 @@ class BaseSummaryTimeoutUpdater(object):
             return True
         if self._should_force_update:
             self._should_force_update = False
-        
+
         # Sanitise hosts.
         for host in self.stop_summaries.keys():
             if host not in self.hosts:
@@ -750,7 +750,7 @@ class BaseSummaryTimeoutUpdater(object):
         for (host, suite) in list(self.prev_suites):
             if host not in self.hosts:
                 self.prev_suites.remove((host, suite))
-                
+
         # Get new information.
         statuses, stop_summaries = get_new_statuses_and_stop_summaries(
                        self.hosts, self.owner,
@@ -763,7 +763,7 @@ class BaseSummaryTimeoutUpdater(object):
         self.prev_suites = prev_suites
         self.statuses = statuses
         self.stop_summaries = stop_summaries
-        
+
         self.last_update_time = time.time()
         if self.statuses:
             self._last_running_time = None
@@ -781,7 +781,7 @@ class BaseSummaryTimeoutUpdater(object):
 class SummaryAppUpdater(BaseSummaryUpdater):
 
     """Update the summary app."""
-    
+
     def __init__(self, hosts, suite_treemodel, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
