@@ -12,7 +12,7 @@ brown fox
         [[[level 3]]] # comment
             single-line triple-single-quoted = '''the quick # internal''' # comment
             single-line triple-double-quoted = """the quick # internal""" # comment
-# TODO -            empty value = 
+# TODO -            empty value =
     [[level 2_2]] # comment
         # multiline value with internal continuation too:
         multiline value = """the quick \
@@ -21,7 +21,7 @@ fox jumped over # internal
 the lazy dog""" # comment
         line one = "the quick brown fox"
         line two = "jumped over the lazy dog"
-        
+
 [level 1_1] # comment
     unquoted list = the, quick, brown # comment
     single-quoted list = 'the', 'quick', 'brown' # comment

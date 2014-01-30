@@ -27,7 +27,7 @@ Validate a nested dict parsed from a config file against a spec file:
     * check all items are legal
     * check all values are legal (type; min, max, allowed options)
     * coerce value type from string (to int, float, list, etc.)
-Also provides default values from the spec as a nested dict.    
+Also provides default values from the spec as a nested dict.
 """
 
 class ValidationError( Exception ):
@@ -158,7 +158,7 @@ def _coerce_float_list( value, keys, args ):
 
 def _coerce_m_float_list( value, keys, args ):
     """Coerce a list with optional multipliers to float values:
-       ['1.0', '2*3.0', '4.0'] => [1.0, 3.0, 3.0, 4.0]""" 
+       ['1.0', '2*3.0', '4.0'] => [1.0, 3.0, 3.0, 4.0]"""
     str_values = re.split( '\s*,\s*', value )
     if '' in str_values: # from trailing comma
         str_values.remove('')

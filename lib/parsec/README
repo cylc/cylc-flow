@@ -21,7 +21,7 @@ Parses any nested-INI format file into a corresponding nested dict
 structure, after "%include"-inlining, Jinja2 processing, and line
 continuation joining. Also: trailing comments are stripped; single-,
 double-, or un-quoted values; and triple-quoted multiline string values.
-string-internal comments are retained. 
+string-internal comments are retained.
 
 ______________
   VALIDATION
@@ -55,7 +55,7 @@ on-the-fly for compatibility with the current file spec.
 ______________
   HIGH LEVEL "INTERFACE"(?)
   lib/parsec/loadcfg.py
-  
+
 Defines functions that combine parsing and validation for (presumably)
 common use cases. Includes combine two config files with precedence
 order.
@@ -90,8 +90,8 @@ TODO
    directives?) sections from the outset. Currently all sections are
    added as OrderedDicts by the fileparser.
 
- * move [runtime] inheritance out of cylc/config.py into parsec, and 
-   then move application of [runtime] defaults to immediately after 
+ * move [runtime] inheritance out of cylc/config.py into parsec, and
+   then move application of [runtime] defaults to immediately after
    inheritance processing, and don't use config.py for the get-config
    command (which can print sparse [runtime] dicts).
 
@@ -100,12 +100,12 @@ NOTE ON USE OF ORDERED DICTS
 
 Files are parsed into ordered dicts, in case order is important. In cylc
 it is important in at least two places: variables defined in [runtime]
-[environment] sections may depend on other varialbes previously defined 
+[environment] sections may depend on other varialbes previously defined
 in the same section; and in site/user config files, parsed host sections
 need to remain ordered in case of an ordered hierarchy (specific to
 general) of hostname match patterns.
 
-This generally only matters for items parsed from config files, not for 
+This generally only matters for items parsed from config files, not for
 the default values defined in file spec modules - so there is no need to
 use ordered dicts in file specs unless the order of defaults matters.
 

@@ -59,11 +59,11 @@ class upgrader( object ):
             self.upgrades[vn] = []
         if cvtr is None:
             cvtr = converter( lambda x: x, "value unchanged" ) # identity
-        self.upgrades[vn].append( 
+        self.upgrades[vn].append(
                 {
                     'old' : oldkeys,
                     'new' : newkeys,
-                    'cvt' : cvtr 
+                    'cvt' : cvtr
                     }
                 )
 
@@ -71,11 +71,11 @@ class upgrader( object ):
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         cvtr = converter( lambda x: x, "DELETED (OBSOLETE)" ) # identity
-        self.upgrades[vn].append( 
+        self.upgrades[vn].append(
                 {
                     'old' : oldkeys,
                     'new' : newkeys,
-                    'cvt' : cvtr 
+                    'cvt' : cvtr
                     }
                 )
 
@@ -89,7 +89,7 @@ class upgrader( object ):
         item = self.cfg
         for key in keys[:-1]:
             if key not in item:
-                item[key] = {} 
+                item[key] = {}
             item = item[key]
         item[keys[-1]] = val
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
                 'abc' : 5,
                 'cde' : 'foo',
                 },
-            'hostnames' : 
+            'hostnames' :
             {
                 'host 1' :
                 {

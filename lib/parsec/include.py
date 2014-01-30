@@ -23,7 +23,7 @@ from shutil import copy
 class IncludeFileError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -62,7 +62,7 @@ def inline( lines, dir,
 # !WARNING! This is an inlined parsec config file; include-files are split
 # !WARNING! out again on exiting the edit session.  If you are editing
 # !WARNING! this file manually then a previous inlined session may have
-# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this 
+# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this
 # !WARNING! will split the file up again on exiting).""")
 
     else:
@@ -181,11 +181,11 @@ def split_file( dir, lines, file, recovery=False, level=None ):
     if match_on:
         for line in inclines:
             fnew.write( line )
-        print >> sys.stderr 
+        print >> sys.stderr
         print >> sys.stderr, "ERROR: end-of-file reached while matching include-file", inc_filename + "."
         print >> sys.stderr, """This probably means you have corrupted the inlined file by
 modifying one of the include-file boundary markers. Fix the backed-
 up inlined file, copy it to the original filename and invoke another
 inlined edit session split the file up again."""
-        print >> sys.stderr 
+        print >> sys.stderr
 
