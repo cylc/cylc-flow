@@ -72,7 +72,7 @@ if len(args) == 2:
     taskid = args[1]
     logname = taskid + '.' + options.tryext
 
-    # 
+    #
     suite_run_dir = gcfg.get_derived_host_item(suite, 'suite run directory')
     suite_run_dao = CylcRuntimeDAO(suite_run_dir)
     taskname, ctime = taskid.split(TaskID.DELIM)

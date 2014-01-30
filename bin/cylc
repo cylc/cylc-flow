@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -38,7 +38,7 @@ from OrderedDict import OrderedDict
 class CommandError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -84,14 +84,14 @@ def match_dict( abbrev, categories, title ):
 def match_command( abbrev ):
     # allow any unique abbreviation to commands when no category is specified
     matches = []
-    for dct in [ 
+    for dct in [
         admin_commands,
         license_commands,
-        database_commands, 
-        preparation_commands, 
-        information_commands, 
-        discovery_commands, 
-        control_commands, 
+        database_commands,
+        preparation_commands,
+        information_commands,
+        discovery_commands,
+        control_commands,
         utility_commands,
         hook_commands,
         task_commands ]:
@@ -114,7 +114,7 @@ def match_command( abbrev ):
 def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
     # pretty print commands or topics from a dict:
     # (com[item] = description)
-    
+
     if indent:
         spacer = ' '
     else:
@@ -148,12 +148,12 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
                 digit = ' ' + str(count)
             else:
                 digit = str(count)
-            print digit + '/', 
+            print digit + '/',
         print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
 
 # BEGIN MAIN
 
-# categories[ category ] = [ aliases ] 
+# categories[ category ] = [ aliases ]
 categories = OrderedDict()
 categories['all'         ] = ['all' ]
 categories['database'    ] = ['db', 'database' ]
@@ -166,7 +166,7 @@ categories['task'        ] = ['task' ]
 categories['hook'        ] = ['hook' ]
 categories['admin'       ] = ['admin' ]
 categories['license'     ] = ['license', 'GPL' ]
- 
+
 information_commands = OrderedDict()
 
 information_commands['gsummary' ] = ['gsummary'       ]
@@ -209,18 +209,18 @@ control_commands['broadcast'] = [ 'broadcast', 'bcast' ]
 
 utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
-utility_commands['checkvars'    ] = ['checkvars'] 
-utility_commands['random'       ] = ['random', 'rnd'] 
-utility_commands['housekeeping' ] = ['housekeeping'] 
-utility_commands['scp-transfer' ] = ['scp-transfer'] 
+utility_commands['checkvars'    ] = ['checkvars']
+utility_commands['random'       ] = ['random', 'rnd']
+utility_commands['housekeeping' ] = ['housekeeping']
+utility_commands['scp-transfer' ] = ['scp-transfer']
 utility_commands['lockserver'] = ['lockserver' ]
 utility_commands['lockclient'] = ['lockclient', 'lc' ]
 utility_commands['suite-state'] = ['suite-state']
 
 hook_commands = OrderedDict()
-hook_commands['email-suite' ] = ['email-suite'] 
-hook_commands['email-task'  ] = ['email-task' ] 
-hook_commands['check-triggering'  ] = ['check-triggering' ] 
+hook_commands['email-suite' ] = ['email-suite']
+hook_commands['email-task'  ] = ['email-task' ]
+hook_commands['check-triggering'  ] = ['check-triggering' ]
 
 admin_commands = OrderedDict()
 admin_commands['test-db'         ] = [ 'test-db']
@@ -250,7 +250,7 @@ preparation_commands['list'    ] = ['list', 'ls' ]
 preparation_commands['search'  ] = [ 'search', 'grep' ]
 preparation_commands['graph'   ] = [ 'graph'    ]
 preparation_commands['diff'    ] = [ 'diff', 'compare' ]
-preparation_commands['jobscript' ] = ['jobscript'] 
+preparation_commands['jobscript' ] = ['jobscript']
 
 discovery_commands = OrderedDict()
 discovery_commands['ping'] = [ 'ping' ]
@@ -267,12 +267,12 @@ task_commands['get-job-status'] = [ 'get-job-status' ]
 task_commands['job-kill'] = [ 'job-kill' ]
 
 all_commands = OrderedDict()
-for dct in [ 
-        database_commands, 
-        preparation_commands, 
-        information_commands, 
-        discovery_commands, 
-        control_commands, 
+for dct in [
+        database_commands,
+        preparation_commands,
+        information_commands,
+        discovery_commands,
+        control_commands,
         utility_commands,
         task_commands,
         admin_commands,
@@ -282,15 +282,15 @@ for dct in [
         all_commands[com] = dct[com]
 
 general_usage = """
-Cylc ("silk") is a suite engine and metascheduler that specializes in 
+Cylc ("silk") is a suite engine and metascheduler that specializes in
 cycling weather and climate forecasting suites and related processing
 (but it can also be used for one-off workflows of non-cycling tasks).
 For detailed documentation see the Cylc User Guide (cylc doc --help).
 
-Version """+cylc_version+""" 
+Version """+cylc_version+"""
 
 The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
-    
+
 USAGE:
   % cylc -v,--version                   # print cylc version
   % cylc help,--help,-h,?               # print this help page
@@ -332,7 +332,7 @@ CYLC SUITE NAMES AND YOUR REGISTRATION DATABASE
 nwp.test.LAM2, etc. in a "name registration database" ($HOME/.cylc/REGDB)
 that simply associates names with the suite definition locations.  The
 '--db=' command option can be used to view and copy suites from other
-users, with access governed by normal filesystem permissions. 
+users, with access governed by normal filesystem permissions.
 
 TASK IDENTIFICATION IN CYLC SUITES
   Tasks are identified by NAME.TAG where for cycling tasks TAG is a
@@ -441,7 +441,7 @@ def typo( str ):
     if str == 'gcycl':
         corrected = 'gcylc'
     return corrected
- 
+
 def category_help(category):
     coms = eval( category + '_commands')
     alts = '|'.join(categories[category])
@@ -457,7 +457,7 @@ def category_help(category):
     pretty_print( comsum, coms, sort=True )
 
 def set_environment_vars(args):
-    """ 
+    """
     Set --env=key=val arguments as environment variables & remove
     from argument list
     """
@@ -528,7 +528,7 @@ if len(args) == 1:
     else:
         category_help( category )
         sys.exit(0)
- 
+
 command_args = []
 
 if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
@@ -583,7 +583,7 @@ elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
         print 'COMMANDS available in CATEGORY "' + category + '":'
         print coms.keys()
         sys.exit(1)
-    
+
     # cylc COMMAND --help
     command_args = [ '--help' ]
 
@@ -619,7 +619,7 @@ else:
             print 'COMMANDS available in CATEGORY "' + category + '":'
             print coms.keys()
             sys.exit(1)
- 
+
         else:
             # cylc COMMAND [ARGS]
             if len(args) > 1:
@@ -648,7 +648,7 @@ cmd = 'cylc-' + command
 ####BACKGROUNDED MESSAGING CALLS: this results in a currently
 ####undiagnosed error in Pyro core when the 'message' command is
 ####invoked - but not for the 'started' command (try it and see the task
-####stderr log). 
+####stderr log).
 ##if command in [ 'started', 'message' ]:
 ##    # Run non job-ending task message commands in the background.
 ##    p = subprocess.Popen( [ cmd ] + args )

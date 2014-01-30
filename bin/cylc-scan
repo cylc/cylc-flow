@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
+if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
     if remrun().execute():
@@ -28,20 +28,20 @@ from cylc.CylcOptionParsers import cop
 from cylc.global_config import get_global_cfg
 
 parser = cop( """cylc [discovery] scan [OPTIONS]
-    
-Detect (by port scanning) running cylc suites and lockservers, and 
+
+Detect (by port scanning) running cylc suites and lockservers, and
 print the results. By default only your own running suites will be
 printed.  With --verbose you will also get "Connection Denied" from
 running suites owned by others on the same host.
 
 Simple space-delimited output format for easy parsing:
     SUITE OWNER HOST PORT
-Here's one way to parse 'cylc scan' output by shell script: 
+Here's one way to parse 'cylc scan' output by shell script:
 ________________________________________________________________
 #!/bin/bash
 # parse suite, owner, host, port from 'cylc scan' output lines
 OFIS=$IFS
-IFS=$'\n'; for LINE in $( cylc scan ); do 
+IFS=$'\n'; for LINE in $( cylc scan ); do
     # split on space and assign tokens to positional parameters:
     IFS=$' '; set $LINE
     echo "$1 - $2 - $3 - $4"

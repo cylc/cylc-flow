@@ -23,7 +23,7 @@ from optparse import OptionParser
 parser = OptionParser( usage = """cylc [util] random A B
 
 Generate a random integer in the range [A,B). This is just a command
-interface to Python's random.randrange() function. 
+interface to Python's random.randrange() function.
 
 Arguments:
    A     start of the range interval (inclusive)

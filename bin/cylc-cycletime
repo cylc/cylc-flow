@@ -34,7 +34,7 @@ Examples:
 
 2) print offset from $CYLC_TASK_CYCLE_TIME (as in suite tasks):
   % export CYLC_TASK_CYCLE_TIME=2010082318
-  % cylc cycletime --offset-hours=-6 
+  % cylc cycletime --offset-hours=-6
   2010082312
 
 3) cycle time filename templating, explicit template:
@@ -52,23 +52,23 @@ Arguments:
    [CYCLE]    YYYY[MM[DD[HH[mm[ss]]]]], default $CYLC_TASK_CYCLE_TIME""" )
 
 parser.add_option( "--offset-hours", metavar="HOURS",
-        help="Add N hours to CYCLE (may be negative)", 
+        help="Add N hours to CYCLE (may be negative)",
         action="store", dest="offsethours" )
 
 parser.add_option( "--offset-days", metavar="DAYS",
-        help="Add N days to CYCLE (N may be negative)", 
+        help="Add N days to CYCLE (N may be negative)",
         action="store", dest="offsetdays" )
 
 parser.add_option( "--offset-months", metavar="MONTHS",
-        help="Add N months to CYCLE (N may be negative)", 
+        help="Add N months to CYCLE (N may be negative)",
         action="store", dest="offsetmonths" )
 
 parser.add_option( "--offset-years", metavar="YEARS",
-        help="Add N years to CYCLE (N may be negative)", 
+        help="Add N years to CYCLE (N may be negative)",
         action="store", dest="offsetyears" )
 
 parser.add_option( "--template", metavar="TEMPLATE",
-        help="Filename template string or variable", 
+        help="Filename template string or variable",
         action="store", dest="template" )
 
 parser.add_option( "--print-year", help="Print only YYYY of result",
@@ -121,7 +121,7 @@ if options.template:
 
 n_chosen = 0
 
-#hours = int( cycle.hour ) 
+#hours = int( cycle.hour )
 
 offset_hours  = False
 offset_days   = False

@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -40,11 +40,11 @@ class suite_poller( poller ):
         # Returns True if connected, otherwise (one-off failed to
         # connect, or max number of polls exhausted) False
         connected = False
-        
+
         if cylc.flags.verbose:
-            sys.stdout.write("connecting to suite db for " + 
+            sys.stdout.write("connecting to suite db for " +
                   self.args['run_dir'] + "/" + self.args['suite'])
-        
+
         # Attempt db connection even if no polls for condition are
         # requested, as failure to connect is useful information.
         max_polls = self.max_polls or 1
@@ -97,32 +97,32 @@ Example usage:
 returns 0 if TASK.CYCLE reaches STATUS before the maximum number of
 polls, otherwise returns 1.""")
 
-parser.add_option( "-t", "--task", 
+parser.add_option( "-t", "--task",
         help="Specify a task to check the state of.",
         action="store", dest="task", default=None )
 
-parser.add_option( "-c", "--cycle", 
+parser.add_option( "-c", "--cycle",
         help="Specify the cycle to check task states for.",
         action="store", dest="cycle", default=None )
 
-parser.add_option( "-d", "--run-dir", 
+parser.add_option( "-d", "--run-dir",
         help="The top level cylc run directory if non-standard. The "
         "database should be DIR/REG/cylc-suite.db. Use to interrogate "
         "suites owned by others, etc.; see note above.",
         metavar="DIR", action="store", dest="run_dir", default=None )
 
-conds = ("Valid triggering conditions to check for include: '" + 
-         ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) + 
+conds = ("Valid triggering conditions to check for include: '" +
+         ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) +
          "' and '" + sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[-1] + "'. ")
-states = ("Valid states to check for include: '" + 
-         ("', '").join(sorted(task_state.legal)[:-1]) + "' and '" + 
+states = ("Valid states to check for include: '" +
+         ("', '").join(sorted(task_state.legal)[:-1]) + "' and '" +
          sorted(task_state.legal)[-1] + "'.")
 
-parser.add_option( "-S", "--status", 
+parser.add_option( "-S", "--status",
         help="Specify a particular status or triggering condition to check for. " + conds + states,
         action="store", dest="status", default=None )
-        
-suite_poller.add_to_cmd_options(parser) 
+
+suite_poller.add_to_cmd_options(parser)
 ( options, args ) = parser.parse_args( remove_opts=["--db", "--debug"] )
 
 suite = args[0]

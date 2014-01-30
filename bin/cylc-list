@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,7 @@ from cylc.CylcOptionParsers import cop
 from cylc.config import config
 import cylc.flags
 
-parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS 
+parser = cop( """cylc [info|prep] list|ls [OPTIONS] ARGS
 
 Print runtime namespace names (tasks and families), the first-parent
 inheritance graph, or actual tasks for a given cycle range.
@@ -62,14 +62,14 @@ parser.add_option( "-w","--with-titles",
         help="Print namespaces titles too.",
         action="store_true", default=False, dest="titles" )
 
-parser.add_option( "-c", "--cycles", 
+parser.add_option( "-c", "--cycles",
         help="Print the task IDs of the tasks that would actually "
         "be created in the START [through STOP] cycles (or '1's "
         "for non-cycling tasks).",
         metavar="START[,STOP]", action="store", default=None,
         dest="crange" )
 
-parser.add_option( "--cold", 
+parser.add_option( "--cold",
         help="With -c/--range, print tasks as if for a cold-start "
         "from the START cycle (default False).",
         action="store_false", default=True, dest="crange_raw" )
@@ -106,7 +106,7 @@ if options.tree and any( [options.all_tasks, options.all_namespaces, options.mro
     print >> sys.stderr, "WARNING: -t chosen, ignoring non-tree options."
 
 try:
-    config = config( suite, suiterc, 
+    config = config( suite, suiterc,
         template_vars=options.templatevars,
         template_vars_file=options.templatevars_file)
     if options.tree:

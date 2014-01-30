@@ -28,7 +28,7 @@ and then optionally check their values according to the chosen
 commandline option. Note that THE VARIABLES MUST BE EXPORTED AS THIS
 SCRIPT NECESSARILY EXECUTES IN A SUBSHELL.
 
-All of the input variables are checked in turn and the results printed. 
+All of the input variables are checked in turn and the results printed.
 If any problems are found then, depending on use of '-w,--warn-only',
 this script either aborts with exit status 1 (error) or emits a stern
 warning and exits with status 0 (success).
@@ -36,34 +36,34 @@ warning and exits with status 0 (success).
 Arguments:
    VARNAMES     Space-separated list of environment variable names.""")
 
-parser.add_option( "-d", "--dirs-exist", 
-        help="Check that the variables refer to directories that exist.", 
+parser.add_option( "-d", "--dirs-exist",
+        help="Check that the variables refer to directories that exist.",
         action="store_true", default=False, dest="checkdirs" )
 
-parser.add_option( "-c", "--create-dirs", 
+parser.add_option( "-c", "--create-dirs",
         help="Attempt to create the directories referred to by the "
         "variables, if they do not already exist.",
         action="store_true", default=False, dest="createdirs" )
 
-parser.add_option( "-p", "--create-parent-dirs", 
+parser.add_option( "-p", "--create-parent-dirs",
         help="Attempt to create the parent directories of files "
         "referred to by the variables, if they do not already exist.",
         action="store_true", default=False, dest="createparentdirs" )
 
-parser.add_option( "-f", "--files-exist", 
-        help="Check that the variables refer to files that exist.", 
+parser.add_option( "-f", "--files-exist",
+        help="Check that the variables refer to files that exist.",
         action="store_true", default=False, dest="checkfiles" )
 
 parser.add_option( "-i", "--int",
-        help="Check that the variables refer to integer values.", 
+        help="Check that the variables refer to integer values.",
         action="store_true", default=False, dest="checkint" )
 
-parser.add_option( "-s", "--silent", 
-        help="Do not print the result of each check.", 
+parser.add_option( "-s", "--silent",
+        help="Do not print the result of each check.",
         action="store_false", default=True, dest="verbose" )
 
-parser.add_option( "-w", "--warn-only", 
-        help="Print a warning instead of aborting with error status.", 
+parser.add_option( "-w", "--warn-only",
+        help="Print a warning instead of aborting with error status.",
         action="store_true", default=False, dest="warnonly" )
 
 (options, args) = parser.parse_args()

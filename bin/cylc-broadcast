@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
+if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
     if remrun().execute( force_required=True ):
@@ -45,7 +45,7 @@ def get_padding( settings, level=0, padding=0 ):
             padding = get_padding( val, level, padding )
     return padding
 
-def get_rdict( left, right=None ): 
+def get_rdict( left, right=None ):
     # left is [section]item, or just item
     rdict = {}
     m = re.match( '^\[(.*)\](.*)$', left )
@@ -60,7 +60,7 @@ def get_rdict( left, right=None ):
         # item = right
         rdict = { left : right }
     return rdict
- 
+
 usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 
 Override [runtime] config in targeted namespaces in a running suite.
@@ -96,7 +96,7 @@ To cancel the same broadcast:
 
 Use -d/--display to see active broadcasts. Multiple set or cancel
 options can be used on the same command line. Broadcast cannot change
-[runtime] inheritance. 
+[runtime] inheritance.
 
 See also 'cylc reload' - reload a modified suite definition at run time."""
 
@@ -108,20 +108,20 @@ parser.add_option( "-t", "--tag", metavar="TAG",
         "and nothing with --clear.",
         action="append", dest="tags", default=[] )
 
-parser.add_option( "-n", "--namespace", metavar="NAME", 
+parser.add_option( "-n", "--namespace", metavar="NAME",
         help="Target namespace. Defaults to 'root' with "
         "--set and --cancel, and nothing with --clear.",
         action="append", dest="namespaces", default=[] )
 
-parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE", 
+parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE",
         help="A [runtime] config item and value to broadcast.",
         action="append", dest="set", default=[] )
 
-parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM", 
+parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM",
         help="An item-specific broadcast to cancel.",
         action="append", dest="cancel", default=[] )
 
-parser.add_option( "-C", "--clear", 
+parser.add_option( "-C", "--clear",
         help="Cancel all broadcasts, or with -t/--tag, "
         "-n/--namespace, cancel all broadcasts to targeted "
         "namespaces and/or cycle times. Use '-C -t all-cycles' "
@@ -134,7 +134,7 @@ parser.add_option( "-e", "--expire", metavar="CYCLE",
         "times earlier than, but not inclusive of, CYCLE.",
         action="store", default=None, dest="expire" )
 
-parser.add_option( "-d", "--display", 
+parser.add_option( "-d", "--display",
         help="Display active broadcasts.",
         action="store_true", default=False, dest="show" )
 
@@ -247,7 +247,7 @@ for u in options.cancel:
 
 for setting in settings:
     try:
-        # validate items and coerce values 
+        # validate items and coerce values
         validate( setting, SPEC['runtime']['__MANY__'] )
     except Exception,x:
         if debug:

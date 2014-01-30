@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -56,7 +56,7 @@ def check_task_spec( task_spec ):
         (name, tag) = task_id.split( TaskID.DELIM )
     except ValueError:
         raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
- 
+
     try:
         cycle = ct(tag).get()
     except CycleTimeError,x:
@@ -83,7 +83,7 @@ See also:
     parser = OptionParser( usage )
 
     parser.set_defaults( acquire=None, release=None, suite_acquire=None,
-            suite_acquire_nonex=None, suite_release=None, 
+            suite_acquire_nonex=None, suite_release=None,
             list_all=False, get_filenames=False )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
@@ -110,7 +110,7 @@ See also:
     parser.add_option( "-c", "--clear", help="Release all locks.",
             action="store_true", dest="clear_all" )
 
-    parser.add_option( "-f", "--filenames", 
+    parser.add_option( "-f", "--filenames",
             help="Print lockserver PID, log, and state filenames.",
             action="store_true", dest="get_filenames" )
 
@@ -128,14 +128,14 @@ See also:
     count = 0
     for opt in [ options.acquire, options.release,
             options.suite_acquire, options.suite_acquire_nonex,
-            options.suite_release, options.list_all, 
+            options.suite_release, options.list_all,
             options.clear_all, options.get_filenames ]:
         if opt:
             count += 1
 
     if count != 1:
         parser.error( "choose one option only!" )
-    
+
     owner = os.environ[ 'USER' ]
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
     hostname = get_hostname()

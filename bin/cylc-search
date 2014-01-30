@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -59,7 +59,7 @@ it does not search the data structure that results from parsing the
 suite definition - so it will not report implicit default settings.
 
 For case insenstive matching use '(?i)PATTERN'.""", prep=True,
-    argdoc = [('SUITE', 'Suite name or path'), 
+    argdoc = [('SUITE', 'Suite name or path'),
         ('PATTERN', 'Python-style regular expression'),
         ('[PATTERN2...]', 'Additional search patterns')])
 
@@ -99,7 +99,7 @@ for line in lines:
         in_include_file = True
         inc_line_count = 0
         continue
- 
+
     if not in_include_file:
         line_count += 1
     else:
@@ -113,7 +113,7 @@ for line in lines:
     m = re.match( '\s*(\[+\s*(.+)\s*\]+)', line )
     if m:
         # new section heading detected
-        heading = m.groups()[0] 
+        heading = m.groups()[0]
         level = section_level( heading )
         name = m.groups()[1]
         # unwind to the current section level
@@ -127,7 +127,7 @@ for line in lines:
 
         # Print the file name
         if in_include_file:
-            curr_file = os.path.join( suitedir, inc_file ) 
+            curr_file = os.path.join( suitedir, inc_file )
             line_no = inc_line_count
         else:
             curr_file = suiterc

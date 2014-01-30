@@ -12,7 +12,7 @@ stored in the suite definition directory. Currently it just compares
 runtime triggering information, disregarding event order and timing, and
 fails the suite if there is any difference. This should be sufficient to
 verify correct scheduling of any suite that is not affected by different
-run-to-run conditional triggering.  
+run-to-run conditional triggering.
 
 1) run your suite with "cylc run --generate-reference-log" to generate
 the reference log with resolved triggering information. Check manually
@@ -25,7 +25,7 @@ any task fails".
 Reference tests can use any run mode:
  * simulation mode - tests that scheduling is equivalent to the reference
  * dummy mode - also tests that task hosting, job submission, job script
-   evaluation, and cylc messaging are not broken. 
+   evaluation, and cylc messaging are not broken.
  * live mode - tests everything (but takes longer with real tasks!)
 
  If any task fails, or if cylc itself fails, or if triggering is not

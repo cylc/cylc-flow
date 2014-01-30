@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -33,18 +33,18 @@ Validate a suite definition against the official specification
 files held in $CYLC_DIR/conf/suiterc/.
 
 If the suite definition uses include-files reported line numbers
-will correspond to the inlined version seen by the parser; use 
+will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline SUITE' for comparison.""",
 jset=True, prep=True )
 
-parser.add_option( "--strict", 
+parser.add_option( "--strict",
         help="Fail any use of unsafe or experimental features. "
         "Currently this just means naked dummy tasks (tasks with no "
         "corresponding runtime section) as these may result from "
         "unintentional typographic errors in task names.",
         action="store_true", default=False, dest="strict" )
 
-parser.add_option( "--no-write", 
+parser.add_option( "--no-write",
         help="Don't attempt to write out the 'suite.rc.processed' "
         "file to the suite definition directory.",
         action="store_true", default=False, dest="nowrite" )
@@ -57,7 +57,7 @@ if cylc.flags.verbose:
     print "Parsing suite " + suite + ":", suiterc
 
 try:
-    config( suite, suiterc, 
+    config( suite, suiterc,
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             validation=True, strict=options.strict,

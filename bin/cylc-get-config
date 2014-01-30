@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -34,8 +34,8 @@ runtime inheritance processing and including default values for items
 that are not explicitly set in the suite.rc file.
 
 Config items containing spaces must be quoted on the command line. If
-a single item is requested only its value will be printed; otherwise the 
-full nested structure below the requested config section is printed. 
+a single item is requested only its value will be printed; otherwise the
+full nested structure below the requested config section is printed.
 
 Example, from a suite registered as foo.bar:
 |# SUITE.RC
@@ -48,18 +48,18 @@ Example, from a suite registered as foo.bar:
 $ cylc get-config --item=[runtime][modelX][environment]FOO foo.bar
 foo
 
-$ cylc get-config --item=[runtime][modelX][environment] foo.bar 
+$ cylc get-config --item=[runtime][modelX][environment] foo.bar
 FOO = foo
 BAR = bar
 
-$ cylc get-config --item=[runtime][modelX] foo.bar 
+$ cylc get-config --item=[runtime][modelX] foo.bar
 ...
 [[[environment]]]
     FOO = foo
     BAR = bar
 ...""", jset=True, prep=True )
 
-parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+parser.add_option( "-i", "--item", metavar="[SEC...]ITEM",
         help="The config item to print. Can be used multiple "
         "times on the same command line.",
         action="append", dest="item", default=[] )
@@ -84,7 +84,7 @@ parser.add_option( "--sparse",
         "file, not underlying default settings.",
         action="store_true", default=False, dest="sparse" )
 
-parser.add_option( "-o", "--one-line", 
+parser.add_option( "-o", "--one-line",
         help="Combine the result from multiple --item requests onto "
         "one line, with internal spaces replaced by the '*' character. "
         "For single-value items only.",
@@ -103,7 +103,7 @@ owner = options.db_owner
 suite, suiterc, junk = parser.get_suite()
 
 try:
-    config = config( suite, suiterc, 
+    config = config( suite, suiterc,
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             owner=owner )

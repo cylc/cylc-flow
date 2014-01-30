@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -45,7 +45,7 @@ parser = cop( usage = """cylc [db] print [OPTIONS] [REGEX]
 
 Print suite database registrations.
 
-Note on result filtering: 
+Note on result filtering:
   (a) The filter patterns are Regular Expressions, not shell globs, so
 the general wildcard is '.*' (match zero or more of anything), NOT '*'.
   (b) For printing purposes there is an implicit wildcard at the end of
@@ -100,15 +100,15 @@ try:
                     maxlen_suite = len(suite)
                 if len(title) > maxlen_title:
                     maxlen_title = len(title)
-            spacer_suite = maxlen_suite * ' ' 
-            spacer_title = maxlen_title * ' ' 
+            spacer_suite = maxlen_suite * ' '
+            spacer_title = maxlen_title * ' '
         for suite, dir, title in allsuites:
             dir = re.sub( '^' + os.environ['HOME'], '~', dir )
             if options.align:
                 suite = suite + spacer_suite[ len(suite): ]
                 title = title + spacer_title[ len(title): ]
             if not options.x and not options.y:
-                line = suite + ' | ' + title + ' | ' + dir 
+                line = suite + ' | ' + title + ' | ' + dir
             elif not options.y:
                 line = suite + ' | ' + title
             elif not options.x:
@@ -123,8 +123,8 @@ try:
             for suite, dir, title in allsuites:
                 if len(title) > maxlen_title:
                     maxlen_title = len(title)
-            spacer_title = maxlen_title * ' ' 
- 
+            spacer_title = maxlen_title * ' '
+
         for suite, dir, title in allsuites:
             dir = re.sub( '^' + os.environ['HOME'], '~', dir )
             if options.align:
@@ -136,7 +136,7 @@ try:
                     sub[key] = {}
                 sub = sub[key]
             if not options.x and not options.y:
-                line = title + ' | ' + dir 
+                line = title + ' | ' + dir
             elif not options.y:
                 line = ' ' + title
             elif not options.x:
