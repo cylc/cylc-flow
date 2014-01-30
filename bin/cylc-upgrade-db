@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -27,24 +27,24 @@ newpath = os.path.join( os.environ['HOME'], '.cylc', 'REGDB' )
 parser = OptionParser( usage = """cylc upgrade-db
 
 Upgrade a pre-cylc-5.4 suite name database to the new cylc-5.4+ format.
-This will create a new-format DB if necessary, or if one already exists 
+This will create a new-format DB if necessary, or if one already exists
 it will transfer old registrations to the new DB so long as the suite
 names do not conflict. It is safe to run this utility multiple times.
 
 Prior to cylc-5.4 the suite name registration DB was a Python pickle
 file stored at $HOME/.cylc/DB.  Since cylc-5.4 it is a directory
-$HOME/.cylc/REGDB/ containing one file per registered suite. The 
+$HOME/.cylc/REGDB/ containing one file per registered suite. The
 filenames are the suite names, and the file contains key=value pairs:
   shell$ cat $HOME/.cylc/REGDB/my.suite
   title=my suite title
   path=/path/to/my/suite/""")
 
 parser.add_option( "--from", help="Path to pre-cylc-5.4 db; "
-        "default:" + oldpath, 
+        "default:" + oldpath,
         metavar="PATH", action="store", default=oldpath )
 
 parser.add_option( "--to", help="Path to new cylc-5.4+ db; "
-        "default:" + newpath, 
+        "default:" + newpath,
         metavar="PATH", action="store", default=newpath )
 
 ( options, args ) = parser.parse_args()
@@ -62,4 +62,4 @@ for suite, (dir,title) in olditems.items():
         db.register( suite, dir )
     except RegistrationError, x:
         print >> sys.stderr, x
-        
+

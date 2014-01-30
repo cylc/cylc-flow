@@ -37,7 +37,7 @@ cfg = None
 SPEC = {
         'unquoted' : vdr( vtype="string" ),
         'continuation' : vdr( vtype="string" ),
-        'level 1' : 
+        'level 1' :
         {
             'single-quoted' : vdr( vtype="string" ),
             'level 2' :

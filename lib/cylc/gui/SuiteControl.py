@@ -35,7 +35,7 @@ try:
     from graph import graph_suite_popup
 except ImportError, x:
     # pygraphviz not installed
-    warning_dialog( "WARNING: graph view disabled\n" + str(x) ).warn() 
+    warning_dialog( "WARNING: graph view disabled\n" + str(x) ).warn()
     graphing_disabled = True
 else:
     graphing_disabled = False
@@ -148,7 +148,7 @@ class InfoBar(gtk.VBox):
 Class to create an information bar.
     """
 
-    def __init__( self, host, theme, 
+    def __init__( self, host, theme,
                   status_changed_hook=lambda s: False,
                   log_launch_hook=lambda: False ):
         super(InfoBar, self).__init__()
@@ -160,7 +160,7 @@ Class to create an information bar.
         self._suite_states = []
         self._is_suite_stopped = False
         self.state_widget = gtk.HBox()
-        self._set_tooltip( self.state_widget, "states" )  
+        self._set_tooltip( self.state_widget, "states" )
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
@@ -197,7 +197,7 @@ Class to create an information bar.
         self._set_tooltip( self.time_widget, "last update time" )
 
         self.pack_start( gtk.HSeparator(), False, False )
-        
+
         hbox = gtk.HBox()
         self.pack_start( hbox, False, True )
 
@@ -205,7 +205,7 @@ Class to create an information bar.
         eb.add( self.status_widget )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
         hbox.pack_start( eb, False )
-        
+
         eb = gtk.EventBox()
         hbox.pack_start( eb, True )
 
@@ -224,7 +224,7 @@ Class to create an information bar.
 
         eb = gtk.EventBox()
         eb.add( self.time_widget )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fff' ) )
         hbox.pack_start( eb, False )
 
         eb = gtk.EventBox()
@@ -324,7 +324,7 @@ Class to create an information bar.
         summary = "stopped with '%s'"
         glob, task, fam = summary_maps
         states = [t["state"] for t in task.values() if "state" in t]
-        
+
         self.set_state( states, is_suite_stopped=True )
         suite_state = "?"
         if states:
@@ -369,17 +369,17 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     VIEWS = { "text": ControlTree,
               "dot": ControlLED }
-              
+
     VIEW_DESC = { "text": "Detailed list view",
                   "dot": "Dot summary view",
                   "graph" : "Dependency graph view" }
-                 
+
     VIEW_ICON_PATHS = { "text": "/icons/tab-tree.png",
-                        "dot": "/icons/tab-dot.png", 
+                        "dot": "/icons/tab-dot.png",
                         "graph": "/icons/tab-graph.png" }
 
     if not graphing_disabled:
-        VIEWS["graph"] = ControlGraph 
+        VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append( "graph" )
 
     def __init__( self, suite, db, owner, host, port, pyro_timeout,
@@ -392,11 +392,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         set_exception_hook_dialog("gcylc")
 
-        self.cfg = InitData( suite, owner, host, port, db, 
+        self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
                 self.usercfg["ungrouped views"] )
 
-        self.theme_name = self.usercfg['use theme'] 
+        self.theme_name = self.usercfg['use theme']
         self.theme = self.usercfg['themes'][ self.theme_name ]
 
         self.current_views = []
@@ -425,7 +425,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
 
-        self.initial_views = self.usercfg['initial views'] 
+        self.initial_views = self.usercfg['initial views']
         if graphing_disabled:
             try:
                 self.initial_views.remove("graph")
@@ -452,7 +452,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.window.add( bigbox )
         self.window.set_title( "gcylc" )
- 
+
         self.window.show_all()
 
         self.setup_views()
@@ -499,7 +499,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             elif i == 1:
                 self._set_menu_view1( view )
                 self._set_tool_bar_view1( view )
- 
+
     def change_view_layout( self, horizontal=False ):
         """Switch between horizontal or vertical positioning of views."""
         self.view_layout_horizontal = horizontal
@@ -660,12 +660,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def create_view( self, viewname, view_num=0, pane_position=-1 ):
         """Create a view instance.
-        
+
         Toolbars and menus must be updated, as well as pane positioning.
-        
+
         """
         container = self.view_containers[view_num]
-        self.current_views[view_num] = self.VIEWS[viewname]( 
+        self.current_views[view_num] = self.VIEWS[viewname](
                                                    self.cfg,
                                                    self.updater,
                                                    self.theme,
@@ -692,10 +692,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if pane_position == -1:
                 pane_position =  extent / 2
             pane.set_position( pane_position )
-            zero_parent.pack_start(pane, expand=True, fill=True)  
+            zero_parent.pack_start(pane, expand=True, fill=True)
         view_widgets = view.get_control_widgets()
         if view_widgets.size_request() == (0, 0):
-            view_widgets.set_size_request(1, 1)      
+            view_widgets.set_size_request(1, 1)
         container.pack_start( view_widgets,
                               expand=True, fill=True )
         # Handle menu
@@ -815,7 +815,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #else:
             #    info_dialog( result[1], self.window ).inform()
 
-    def stopsuite( self, bt, window, kill_cb, 
+    def stopsuite( self, bt, window, kill_cb,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
             stoptag_entry, stopclock_entry, stoptask_entry ):
         stop = False
@@ -919,7 +919,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         command = "cylc get-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
                 " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
-                self.cfg.suite 
+                self.cfg.suite
         res = run_get_stdout( command, filter=True ) # (T/F,['ct ct'])
 
         if res[0]:
@@ -938,10 +938,10 @@ been defined for this suite""").inform()
             else:
                 startentry.set_text( out1 )
                 stopentry.set_text( out2 )
-        else: 
+        else:
             pass # error dialogs done by run_get_stdout()
 
-    def startsuite( self, bt, window, 
+    def startsuite( self, bt, window,
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, statedump_entry,
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
@@ -988,7 +988,7 @@ been defined for this suite""").inform()
                 warning_dialog( str(x), self.window ).warn()
                 return
             options += ' --until=' + ste
- 
+
         hetxt = holdtime_entry.get_text()
         if hold_cb.get_active():
             options += ' --hold'
@@ -1003,7 +1003,7 @@ been defined for this suite""").inform()
 
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + ctime
 
-        print command 
+        print command
 
         if method == 'restart':
             if statedump_entry.get_text():
@@ -1021,7 +1021,7 @@ been defined for this suite""").inform()
                     self.window ).warn()
             success = False
 
-        self.reset_connection_polling( None ) 
+        self.reset_connection_polling( None )
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -1032,7 +1032,7 @@ been defined for this suite""").inform()
         about.set_version( cylc_version )
         about.set_copyright( "Copyright (C) 2008-2014 Hilary Oliver, NIWA" )
 
-        about.set_comments( 
+        about.set_comments(
 """
 The Cylc Suite Engine.
 """ )
@@ -1125,7 +1125,7 @@ The Cylc Suite Engine.
             view_item.set_image(img)
             view_item.set_submenu( view_menu )
             items.append( view_item )
- 
+
             # NOTE: we have to respond to 'button-press-event' rather than
             # 'activate' in order for sub-menus to work in the graph-view.
 
@@ -1183,7 +1183,7 @@ The Cylc Suite Engine.
         reset_item.set_image(reset_img)
         reset_item.set_submenu( reset_menu )
         items.append( reset_item )
-        
+
         reset_ready_item = gtk.ImageMenuItem('"ready"' )
         reset_img = gtk.image_new_from_stock(  gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU )
         reset_ready_item.set_image(reset_img)
@@ -1229,7 +1229,7 @@ The Cylc Suite Engine.
         unstoptask_item.connect( 'activate', self.hold_task, task_id, False, task_is_family )
 
         items.append( gtk.SeparatorMenuItem() )
-    
+
         remove_item = gtk.ImageMenuItem( 'Remove after spawning' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
 
@@ -1252,7 +1252,7 @@ The Cylc Suite Engine.
             purge_item.connect( 'activate', self.popup_purge, task_id )
 
             items.append( gtk.SeparatorMenuItem() )
-    
+
             addprereq_item = gtk.ImageMenuItem( 'Add A Prerequisite' )
             img = gtk.image_new_from_stock(  gtk.STOCK_ADD, gtk.ICON_SIZE_MENU )
             addprereq_item.set_image(img)
@@ -1263,7 +1263,7 @@ The Cylc Suite Engine.
 
     def change_runahead_popup( self, b ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Change Suite Runahead Limit" )
@@ -1278,7 +1278,7 @@ The Cylc Suite Engine.
 
         label = gtk.Label( 'SUITE: ' + self.cfg.suite )
         vbox.pack_start( label, True )
- 
+
         entry = gtk.Entry()
         #entry.connect( "activate", self.change_runahead_entry, window, task_id )
 
@@ -1331,7 +1331,7 @@ The Cylc Suite Engine.
 
     def add_prerequisite_popup( self, b, task_id ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Add A Prequisite" )
@@ -1349,7 +1349,7 @@ The Cylc Suite Engine.
 
         label = gtk.Label( 'TASK: ' + task_id )
         vbox.pack_start( label, True )
-         
+
         label = gtk.Label( 'DEP (NAME'+TaskID.DELIM+'TAG or message)' )
 
         entry = gtk.Entry()
@@ -1425,7 +1425,7 @@ The Cylc Suite Engine.
         if result:
             # (else no tasks were found at all -suite shutting down)
             if task_id not in result:
-                warning_dialog( 
+                warning_dialog(
                     "Task proxy " + task_id + " not found in " + self.cfg.suite + \
                  ".\nTasks are removed once they are no longer needed.",
                  self.window ).warn()
@@ -1433,7 +1433,7 @@ The Cylc Suite Engine.
 
         window = gtk.Window()
         window.set_title( task_id + " State" )
-        #window.modify_bg( gtk.STATE_NORMAL, 
+        #window.modify_bg( gtk.STATE_NORMAL,
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 400)
         window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
@@ -1458,7 +1458,7 @@ The Cylc Suite Engine.
         blue = tb.create_tag( None, foreground = "blue" )
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
-        
+
         self.update_tb( tb, 'TASK ', [bold] )
         self.update_tb( tb, task_id, [bold, blue])
         self.update_tb( tb, ' in SUITE ', [bold] )
@@ -1470,7 +1470,7 @@ The Cylc Suite Engine.
         #self.update_tb( tb, ' blue => satisfied,', [blue] )
         self.update_tb( tb, ' (' )
         self.update_tb( tb, 'red', [red] )
-        self.update_tb( tb, '=> NOT satisfied)\n') 
+        self.update_tb( tb, '=> NOT satisfied)\n')
 
         if len( pre ) == 0:
             self.update_tb( tb, ' - (None)\n' )
@@ -1485,7 +1485,7 @@ The Cylc Suite Engine.
         self.update_tb( tb, '\nOutputs', [bold] )
         self.update_tb( tb, ' (' )
         self.update_tb( tb, 'red', [red] )
-        self.update_tb( tb, '=> NOT completed)\n') 
+        self.update_tb( tb, '=> NOT completed)\n')
 
         if len( out ) == 0:
             self.update_tb( tb, ' - (None)\n')
@@ -1503,7 +1503,7 @@ The Cylc Suite Engine.
                 self.update_tb( tb, ' - ' + item + ': ' + str( extra_info[ item ] ) + '\n' )
 
         self.update_tb( tb, '\nNOTE: ', [bold] )
-        self.update_tb( tb, ''' for tasks that have triggered already, prerequisites are 
+        self.update_tb( tb, ''' for tasks that have triggered already, prerequisites are
 shown here in the state they were in at the time of triggering.''' )
 
         #window.connect("delete_event", lv.quit_w_e)
@@ -1637,7 +1637,7 @@ shown here in the state they were in at the time of triggering.''' )
             return
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
- 
+
     def remove_task_nospawn( self, b, task_id, is_family=False ):
         cmd = "remove"
         msg = "remove " + task_id + " (without spawning)?"
@@ -1681,7 +1681,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Stop Suite")
@@ -1704,7 +1704,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox.pack_start (kill_cb, True)
         kill_cb.set_active(False)
         kill_cb.set_sensitive(True)
- 
+
         stopnow_rb = gtk.RadioButton( stop_rb, "NOW (see Help)" )
         vbox.pack_start (stopnow_rb, True)
 
@@ -1739,7 +1739,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         stoptt_rb = gtk.RadioButton( stop_rb, "After a given task finishes" )
         vbox.pack_start (stoptt_rb, True)
-  
+
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
@@ -1819,7 +1819,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def startsuite_popup( self, b ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Start Suite '" + self.cfg.suite + "'")
@@ -1896,7 +1896,7 @@ shown here in the state they were in at the time of triggering.''' )
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box )
         rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box )
-        
+
         hbox = gtk.HBox()
 
         hold_cb = gtk.CheckButton( "Hold on start-up" )
@@ -1935,7 +1935,7 @@ shown here in the state they were in at the time of triggering.''' )
         start_button = gtk.Button( "_Start" )
         start_button.connect("clicked", self.startsuite, window,
                 coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
-                ctime_entry, stoptime_entry, 
+                ctime_entry, stoptime_entry,
                 statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
                 mode_dum_rb, hold_cb, holdtime_entry )
 
@@ -1957,7 +1957,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def popup_purge( self, b, task_id ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Purge " + task_id )
@@ -2000,7 +2000,7 @@ shown here in the state they were in at the time of triggering.''' )
 
     def ctime_entry_popup( self, b, callback, title ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( title )
@@ -2024,13 +2024,13 @@ shown here in the state they were in at the time of triggering.''' )
         go_button = gtk.Button( "Go" )
         go_button.connect("clicked", callback, window, entry_ctime )
         vbox.pack_start(go_button)
- 
+
         window.add( vbox )
         window.show_all()
 
     def insert_task_popup( self, *b, **kwargs ):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( "Insert Task" )
@@ -2045,7 +2045,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         label = gtk.Label( 'SUITE: ' + self.cfg.suite )
         vbox.pack_start( label, True )
- 
+
         fam_cb = gtk.CheckButton( "Insert a family?" )
         vbox.pack_start( fam_cb, True )
 
@@ -2079,7 +2079,7 @@ shown here in the state they were in at the time of triggering.''' )
         entry_stoptag.set_max_length(14)
         hbox.pack_start (entry_stoptag, True)
         vbox.pack_start(hbox)
- 
+
         help_button = gtk.Button( "_Help" )
         help_button.connect("clicked", self.command_help, "control", "insert" )
 
@@ -2156,7 +2156,7 @@ or remove task definitions without restarting the suite."""
         # should do this properly by storing them separately in the task
         # proxy, or at least separating them in the suite state summary.
         window = gtk.Window( gtk.WINDOW_TOPLEVEL )
-        window.modify_bg( gtk.STATE_NORMAL, 
+        window.modify_bg( gtk.STATE_NORMAL,
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         logs = []
@@ -2192,10 +2192,10 @@ or remove task definitions without restarting the suite."""
 
         #state_button = gtk.Button( "Interrogate" )
         #state_button.connect("clicked", self.popup_requisites, task_id )
- 
+
         quit_button = gtk.Button( "_Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
-        
+
         lv.hbox.pack_start( quit_button, False )
         #lv.hbox.pack_start( state_button )
 
@@ -2247,7 +2247,7 @@ or remove task definitions without restarting the suite."""
         poll_item = gtk.ImageMenuItem( "Reset Connection _Polling" )
         img = gtk.image_new_from_stock(  gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU )
         poll_item.set_image(img)
-        self._set_tooltip( poll_item, """If gcylc is not connected to a running suite 
+        self._set_tooltip( poll_item, """If gcylc is not connected to a running suite
 it tries to reconnect after increasingly long delays, to reduce network traffic.""" )
         self.view_menu.append( poll_item )
         poll_item.connect( 'activate', self.reset_connection_polling )
@@ -2310,20 +2310,20 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         graph_view0_item._viewname = "graph"
         graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
         graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
- 
+
         if graphing_disabled:
             graph_view0_item.set_sensitive(False)
 
         self.view_menu_views0 = [ text_view0_item, dot_view0_item, graph_view0_item ]
-       
+
         self.views_option_menuitems = [ gtk.MenuItem(  "1 - _Options" ) ]
         self.views_option_menus = [gtk.Menu()]
         self.views_option_menuitems[0].set_submenu( self.views_option_menus[0] )
         self._set_tooltip( self.views_option_menuitems[0], "Options for primary panel" )
         self.view_menu.append( self.views_option_menuitems[0] )
-        
+
         self.view_menu.append( gtk.SeparatorMenuItem() )
-        
+
         no_view1_item = gtk.RadioMenuItem( label="2 - Off" )
         no_view1_item.set_active( True )
         self.view_menu.append( no_view1_item )
@@ -2467,7 +2467,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         tools_menu.append( list_item )
         list_menu = gtk.Menu()
         list_item.set_submenu( list_menu )
- 
+
         flat_item = gtk.MenuItem( '_Tasks' )
         list_menu.append( flat_item )
         flat_item.connect( 'activate', self.run_suite_list )
@@ -2486,11 +2486,11 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         rw_item = gtk.MenuItem( '_Raw' )
         subviewmenu.append( rw_item )
         rw_item.connect( 'activate', self.run_suite_view, 'raw' )
- 
+
         viewi_item = gtk.MenuItem( '_Inlined' )
         subviewmenu.append( viewi_item )
         viewi_item.connect( 'activate', self.run_suite_view, 'inlined' )
- 
+
         viewp_item = gtk.MenuItem( '_Processed' )
         subviewmenu.append( viewp_item )
         viewp_item.connect( 'activate', self.run_suite_view, 'processed' )
@@ -2558,7 +2558,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         cug_pdf_item.set_image(img)
         doc_menu.append( cug_pdf_item )
         cug_pdf_item.connect( 'activate', self.browse, '-p' )
-  
+
         doc_menu.append( gtk.SeparatorMenuItem() )
 
         if self.cfg.gcfg.cfg['documentation']['urls']['local index']:
@@ -2567,13 +2567,13 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
             cug_www_item.set_image(img)
             doc_menu.append( cug_www_item )
             cug_www_item.connect( 'activate', self.browse, '-x' )
- 
+
         cug_www_item = gtk.ImageMenuItem( '(http://) _Internet Home Page' )
         img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
         cug_www_item.set_image(img)
         doc_menu.append( cug_www_item )
         cug_www_item.connect( 'activate', self.browse, '-w' )
- 
+
         chelp_menu = gtk.ImageMenuItem( '_Command Help' )
         img = gtk.image_new_from_stock(  gtk.STOCK_EXECUTE, gtk.ICON_SIZE_MENU )
         chelp_menu.set_image(img)
@@ -2600,7 +2600,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
     def describe_suite( self, w ):
         command = "echo '> TITLE:'; cylc get-config -i title " + self.cfg.suite + """; echo
-echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + self.cfg.suite 
+echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + self.cfg.suite
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2622,7 +2622,7 @@ echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + 
         pattern_entry = gtk.Entry()
         hbox = gtk.HBox()
         hbox.pack_start( label )
-        hbox.pack_start(pattern_entry, True) 
+        hbox.pack_start(pattern_entry, True)
         vbox.pack_start( hbox )
 
         yesbin_cb = gtk.CheckButton( "Also search suite bin directory" )
@@ -2652,7 +2652,7 @@ echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + 
         options = ''
         if not yesbin_cb.get_active():
             options += ' -x '
-        command = "cylc search --notify-completion " + options + ' ' + reg + ' ' + pattern 
+        command = "cylc search --notify-completion " + options + ' ' + reg + ' ' + pattern
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, width=600, height=500 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2755,7 +2755,7 @@ This is what my suite does:..."""
 
         cout = subprocess.Popen( ["cylc", "categories"], stdout=subprocess.PIPE ).communicate()[0]
         categories = cout.rstrip().split()
-        for category in categories: 
+        for category in categories:
             foo_item = gtk.MenuItem( category )
             cat_menu.append( foo_item )
             com_menu = gtk.Menu()
@@ -2846,7 +2846,7 @@ This is what my suite does:..."""
         self.stop_toolbutton.set_label("Stop")
         tooltip = gtk.Tooltips()
         tooltip.enable()
-        tooltip.set_tip( self.stop_toolbutton, 
+        tooltip.set_tip( self.stop_toolbutton,
 """Stop Suite after all running tasks finish.
 For more Stop options use the Control menu.""" )
         self.stop_toolbutton.connect( "clicked", self.stopsuite_default )
@@ -2882,7 +2882,7 @@ For more Stop options use the Control menu.""" )
         self.pause_menuitem.set_sensitive( pause_ok )
         self.unpause_menuitem.set_sensitive( unpause_ok )
         self.stop_menuitem.set_sensitive( stop_ok )
-        self.stop_toolbutton.set_sensitive( stop_ok and 
+        self.stop_toolbutton.set_sensitive( stop_ok and
                                             "stopping" not in new_status )
         if pause_ok:
             icon = gtk.STOCK_MEDIA_PAUSE

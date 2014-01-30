@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -54,7 +54,7 @@ If the suite is running at the same time and it has acquired an
 exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
-same registration, and only if the task is not locked (i.e. only if 
+same registration, and only if the task is not locked (i.e. only if
 the same task, NAME.TAG, is not currently running in the suite)."""
 
 def commandline_parser():
@@ -125,11 +125,11 @@ if config.cfg['cylc']['lockserver']['enable']:
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
 # No TASK EVENT HOOKS are set for the submit command because there is
-# no scheduler instance watching for task failure etc. 
+# no scheduler instance watching for task failure etc.
 
 # Running in UTC time? (else just use the system clock)
 utc = config.cfg['cylc']['UTC mode']
-dclock = accelerated_clock.clock( 0, 0, utc, 'live' ) 
+dclock = accelerated_clock.clock( 0, 0, utc, 'live' )
 
 # create log (after CYLC_MODE is exported)
 os.environ['CYLC_MODE'] = 'submit'
@@ -177,7 +177,7 @@ suite_contact_env = {
         }
 
 # Set local values of variables that are potenitally task-specific
-# due to different directory paths on different task hosts. These 
+# due to different directory paths on different task hosts. These
 # are overridden by tasks prior to job submission, but in
 # principle they could be needed locally by event handlers:
 suite_task_env = {
@@ -211,8 +211,8 @@ for key, value in suite_contact_env.items():
     f.write("%s=%s\n" % (key, value))
 f.close()
 
-# Suite bin directory for event handlers executed by the scheduler. 
-os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH'] 
+# Suite bin directory for event handlers executed by the scheduler.
+os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH']
 
 # User defined local variables that may be required by event handlers
 cenv = config.cfg['cylc']['environment']

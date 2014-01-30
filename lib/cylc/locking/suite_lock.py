@@ -34,8 +34,8 @@ class suite_lock(object):
         # suite config files should specify whether or not a suite is
         # 'exclusive' - i.e. is it possible to run multiple copies (with
         # different registered group names) of the entire suite at
-        # once? 
-        
+        # once?
+
         # GET A NEW CONNECTION WITH EACH REQUEST
         # TODO - OR GET A SINGLE CONNECTION IN INIT
 

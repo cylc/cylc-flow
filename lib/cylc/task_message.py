@@ -42,7 +42,7 @@ class message(object):
         # load the environment
         self.env_map = dict(os.environ)
 
-        # set some instance variables 
+        # set some instance variables
         for attr, key, default in (
                 ('suite', 'CYLC_SUITE_NAME', '(CYLC_SUITE_NAME)'),
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
@@ -63,7 +63,7 @@ class message(object):
             self.max_tries = int( self.max_tries )
         except:
             pass
- 
+
         cylc.flags.verbose = cylc.flags.verbose or self.env_map.get('CYLC_VERBOSE') == 'True'
 
         # 'scheduler' or 'submit', (or 'raw' if job script run manually)
@@ -96,7 +96,7 @@ class message(object):
             for line in open(self.env_file_path):
                 key, value = line.strip().split('=', 1)
                 self.env_map[key] = value
-        # set some instance variables 
+        # set some instance variables
         for attr, key, default in (
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),
                 ('owner', 'CYLC_SUITE_OWNER', None),
@@ -104,7 +104,7 @@ class message(object):
                 ('port', 'CYLC_SUITE_PORT', '(CYLC_SUITE_PORT)')):
             value = self.env_map.get(key, default)
             setattr(self, attr, value)
-           
+
     def now( self ):
         if self.utc:
             return datetime.utcnow()
@@ -114,7 +114,7 @@ class message(object):
     def get_proxy( self ):
         # get passphrase here, not in __init__, because it is not needed
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
-        # it is needed, we will end up in this method). 
+        # it is needed, we will end up in this method).
 
         self.pphrase = passphrase( self.suite, self.owner, self.host ).get( None, None )
 
@@ -159,7 +159,7 @@ class message(object):
             # The suite definition specified that this task should
             # communicate back to the suite by means of using
             # passwordless ssh to re-invoke the messaging command on the
-            # suite host. 
+            # suite host.
 
             # The remote_run() function expects command line options
             # to identify the target user and host names:
@@ -179,8 +179,8 @@ class message(object):
             # re-invoked command on the remote side will not end up in
             # this code block.
             env = {}
-            for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE', 
-                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST', 
+            for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE',
+                    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST',
                     'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
@@ -197,7 +197,7 @@ class message(object):
                 # Return here if remote re-invocation occurred,
                 # otherwise drop through to local Pyro messaging.
                 # Note: do not sys.exit(0) here as the commands do, it
-                # will cause messaging failures on the remote host. 
+                # will cause messaging failures on the remote host.
                 return
 
         self.print_msg( msg )
@@ -264,7 +264,7 @@ class message(object):
             self.send()
         self.task_lock( False )
         self.send( self.task_id + ' failed' )
- 
+
     def task_lock( self, acquire=True ):
         # acquire or release a task lock if using the lockserver
         if cylc_mode.mode().is_raw() or self.ssh_messaging:

@@ -30,8 +30,8 @@ def print_blurb():
     lines.append( " Copyright (C) 2008-2014 Hilary Oliver, NIWA " )
 
     lic = """
- This program comes with ABSOLUTELY NO WARRANTY.  It is free software; 
- you are welcome to redistribute it under certain conditions. Details: 
+ This program comes with ABSOLUTELY NO WARRANTY.  It is free software;
+ you are welcome to redistribute it under certain conditions. Details:
   `cylc license conditions'; `cylc license warranty' """
     lines += lic.split('\n')
 
@@ -67,7 +67,7 @@ def main(name, start):
         else:
             print >> sys.stderr, x
             sys.exit(1)
- 
+
     # Daemonize the suite
     if not server.options.no_detach and not flags.debug:
         daemonize( server.suite, server.port )

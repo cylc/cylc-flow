@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Cylc suite graphing module. Modules relying on this should test for 
+"""Cylc suite graphing module. Modules relying on this should test for
 ImportError due to pygraphviz/graphviz not being installed."""
 
 import re
@@ -115,7 +115,7 @@ class CGraphPlain( pygraphviz.AGraph ):
 
 class CGraph( CGraphPlain ):
     """Directed Acyclic Graph class for cylc dependency graphs.
-    This class automatically adds node and edge attributes 
+    This class automatically adds node and edge attributes
     according to the suite.rc file visualization config."""
 
     def __init__( self, title, suite_polling_tasks={}, vizconfig={} ):
@@ -226,7 +226,7 @@ class edge( object):
             tag = '1'
         else:
             m = re.match( OFFSET_RE, left )
-            if m: 
+            if m:
                 left, offset = m.groups()
                 # the cycler expects foo[T-offset] so change sign:
                 offset = str( -int( offset ))

@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -59,7 +59,7 @@ class poller( object ):
         Return True if condition met, or False if polling exhausted."""
 
         if self.max_polls == 0:
-            # exit 1 as we can't know if the condition is satisfied 
+            # exit 1 as we can't know if the condition is satisfied
             sys.exit( "WARNING: nothing to do (--max-polls=0)" )
         elif self.max_polls == 1:
             sys.stdout.write( "checking " )
@@ -67,11 +67,11 @@ class poller( object ):
             sys.stdout.write( "polling " )
         sys.stdout.write( "for '" + self.condition + "'" )
 
-        done = False 
+        done = False
         while ( not done and self.n_polls < self.max_polls ):
             self.n_polls += 1
             if self.check():
-                done = True 
+                done = True
             else:
                 if self.max_polls > 1:
                     sys.stdout.write('.')

@@ -21,7 +21,7 @@ from Queue import Queue
 
 class comqueue( Pyro.core.ObjBase ):
     """Pyro-connected class to queue suite control requests."""
-    
+
     def __init__( self, legal_commands=[] ):
         Pyro.core.ObjBase.__init__(self)
         self.legal = legal_commands

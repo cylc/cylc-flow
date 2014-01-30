@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -24,7 +24,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 """
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
+if '--use-ssh' in sys.argv[1:]:
     # requires local terminal
     sys.exit( "No '--use-ssh': this command requires a local terminal." )
 
@@ -43,13 +43,13 @@ import cylc.flags
 
 compress = True
 
-parser = cop( """cylc [info] monitor [OPTIONS] ARGS 
+parser = cop( """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
 '--align' is not used.""", pyro=True, noforce=True )
 
-parser.add_option( "-a", "--align", 
+parser.add_option( "-a", "--align",
         help="Align columns by task name. This option "
         "is only useful for small suites.",
         action="store_true", default=False, dest="align_columns" )
@@ -62,7 +62,7 @@ states = task_state.legal
 
 key = ''
 for state in states:
-    ctrl = task_state.ctrl[state] 
+    ctrl = task_state.ctrl[state]
     ctrl_end = task_state.ctrl_end
     key += ctrl + state + ctrl_end + ' '
 key = key.rstrip()
@@ -75,7 +75,7 @@ alerted3 = False
 try:
     while True:
         # connect to remote state summary object
-        try: 
+        try:
             proxy = cylc_pyro_client.client( suite, pphrase,
                     options.owner, options.host, options.pyro_timeout,
                     options.port ).get_proxy( 'state_summary' )
@@ -85,7 +85,7 @@ try:
             raise SystemExit(x)
         except Exception, x:
             if not alerted:
-                print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+                print "\n\033[1;37;41mfailed to connect" + ctrl_end
                 print >> sys.stderr, x
                 alerted = True
             #raise
@@ -116,7 +116,7 @@ try:
 
             except ConnectionClosedError:
                 if not alerted2:
-                    print "\n\033[1;37;41mconnection closed" + ctrl_end 
+                    print "\n\033[1;37;41mconnection closed" + ctrl_end
                     alerted2 = True
                 sleep(1)
                 # if connection lost, try to reconnect
@@ -124,7 +124,7 @@ try:
 
             except ProtocolError:
                 if not alerted:
-                    print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+                    print "\n\033[1;37;41mfailed to connect" + ctrl_end
                     alerted = True
                 #raise
                 # wh'th'fu'?
@@ -227,7 +227,7 @@ try:
 
             if run_mode != 'live':
                 foo = 'SIMULATION:'
-                bar = str(rate) + ' real seconds = 1 hour' 
+                bar = str(rate) + ' real seconds = 1 hour'
                 baz = header
                 baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
                 baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
@@ -243,10 +243,10 @@ try:
                 foo = '_________________________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
                 foo = '____________________________________________________________________________________R_U_N_N_I_N_G'
-         
+
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )
- 
+
             # construct a line of text to display for each cycle time
             for rt in c_time_list:
                 line = ''
@@ -274,7 +274,7 @@ try:
                 # add info for each task to the line
                 for name in name_list:
                     disp = task_info[rt][name]
-                    if not options.align_columns and re.match( '^\s+$', disp ): 
+                    if not options.align_columns and re.match( '^\s+$', disp ):
                         # don't add white space unless align_columns has
                         # been requested by the user
                         pass
@@ -283,7 +283,7 @@ try:
 
                 #blit.append( line )
                 blitlines[indx] = line
-                        
+
             # clear screen and blit the new information up
             os.system( "clear" )
             print '\n'.join( blit )
@@ -292,7 +292,7 @@ try:
             for ix in indxs:
                 print blitlines[ix]
             # sleep here determines minimum display time before trying to
-            # update the information and redisplay it (?). 
+            # update the information and redisplay it (?).
             sleep(1)
 
         # sleep here determines how long to wait before trying to reconnect (?)

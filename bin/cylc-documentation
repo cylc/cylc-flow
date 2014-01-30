@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -54,26 +54,26 @@ if intranet:
 http = False
 if options.pdf:
     viewer = gcfg.cfg['document viewers']['pdf']
-    target = gcfg.cfg['documentation']['files']['pdf user guide'] 
+    target = gcfg.cfg['documentation']['files']['pdf user guide']
 elif options.www:
     http = True
     viewer = gcfg.cfg['document viewers']['html']
-    target = gcfg.cfg['documentation']['urls']['internet homepage'] 
+    target = gcfg.cfg['documentation']['urls']['internet homepage']
 elif intranet and options.xxx:
     http = True
     viewer = gcfg.cfg['document viewers']['html']
-    target = gcfg.cfg['documentation']['urls']['local index'] 
+    target = gcfg.cfg['documentation']['urls']['local index']
 else:
     # default
     viewer = gcfg.cfg['document viewers']['html']
-    target = gcfg.cfg['documentation']['files']['html index'] 
+    target = gcfg.cfg['documentation']['files']['html index']
 
 if not http and not os.path.isfile( target ):
     print >> sys.stderr, "ERROR, file not found: " + target
-    print >> sys.stderr, """(if you are running from a cylc repository the document 
+    print >> sys.stderr, """(if you are running from a cylc repository the document
 not have been generated; see your local cylc administrator)"""
     sys.exit(1)
-        
+
 # viewer may have spaces (e.g. 'firefox --no-remote'):
 command_list = re.split( ' ', viewer )
 command_list.append( target )

@@ -158,7 +158,7 @@ class taskdef(object):
         tclass.name = self.name        # TODO - NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
         tclass.upward_instance_count = 0
-       
+
         tclass.rtconfig = self.rtconfig
         tclass.run_mode = self.run_mode
 
@@ -236,7 +236,7 @@ class taskdef(object):
                     for label in ctrig:
                         trig = ctrig[label]
                         if self.ict is not None and trig.evaluation_offset is not None:
-                            cp.add( trig.get( tag, cyc ), label, 
+                            cp.add( trig.get( tag, cyc ), label,
                                     (int(tag) - int(trig.evaluation_offset)) < int(self.ict))
                         else:
                             cp.add( trig.get( tag, cyc ), label )
@@ -282,7 +282,7 @@ class taskdef(object):
             sself.logfiles = logfiles()
             for lfile in self.rtconfig[ 'extra log files' ]:
                 sself.logfiles.add_path( lfile )
- 
+
             # outputs
             sself.outputs = outputs( sself.id )
             for outp in self.outputs:

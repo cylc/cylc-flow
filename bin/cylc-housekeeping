@@ -29,8 +29,8 @@ usage = """1/ cylc [util] housekeeping [OPTIONS] SOURCE MATCH OPER OFFSET [TARGE
 Usage: 2/ cylc [util] housekeeping [options] FILE
 
 Parallel archiving and cleanup of files or directories with names
-that contain a cycle time. Matched items are grouped into batches in 
-which members are processed in parallel, by spawned sub-processes. 
+that contain a cycle time. Matched items are grouped into batches in
+which members are processed in parallel, by spawned sub-processes.
 Once all batch members have completed, the next batch is processed.
 
 OPERATE ('delete', 'move', or 'copy') on items (files or directories)
@@ -38,7 +38,7 @@ matching a Python-style regular expression MATCH in directory SOURCE
 whose names contain a cycle time (as YYYYMMDDHH, or YYYYMMDD and HH
 separately) more than OFFSET (integer hours) earlier than a base cycle
 time (which can be $CYLC_TASK_CYCLE_TIME if called by a cylc task, or
-otherwise specified on the command line). 
+otherwise specified on the command line).
 
 FILE is a housekeeping config file containing one or more of lines of:
 
@@ -59,12 +59,12 @@ be of the (?:...) type to avoid creating a new match group.
 
 SOURCE and TARGET must be on the local filesystem and may contain
 environment varables such as $HOME or ${FOO} (e.g. as defined in the
-suite.rc file for suite housekeeping tasks). Variables defined in 
-the housekeeping file itself can also be used, as above. 
+suite.rc file for suite housekeeping tasks). Variables defined in
+the housekeeping file itself can also be used, as above.
 
-TARGET may contain the strings YYYYMMDDHH, YYYY, MM, DD, HH; these 
+TARGET may contain the strings YYYYMMDDHH, YYYY, MM, DD, HH; these
 will be replaced with the extracted cycle time for each matched item,
-e.g. $ARCHIVE/oper/YYYYMM/DD. 
+e.g. $ARCHIVE/oper/YYYYMM/DD.
 
 If TARGET is specified for the 'delete' operation, matched items in
 SOURCE will not be deleted unless an identical item is found in
@@ -73,7 +73,7 @@ successfully archived before deleting the originals.
 
 The 'move' and 'copy' operations are aborted if the TARGET/item already
 exists, but a warning is emitted if the source and target items are not
-identical. 
+identical.
 
 To implement a simple ROLLING ARCHIVE of cycle-time labelled files or
 directories: just use 'delete' with OFFSET set to the archive length.
@@ -81,7 +81,7 @@ directories: just use 'delete' with OFFSET set to the archive length.
 SAFE ARCHIVING: The 'move' operation is safe - it uses Python's
 shutils.move() which renames files on the local disk partition and
 otherwise copies before deleting the original. But for extra safety
-consider two-step archiving and cleanup: 
+consider two-step archiving and cleanup:
 1/ copy files to archive, then
 2/ delete the originals only if identicals are found in the archive."""
 
@@ -100,7 +100,7 @@ parser.add_option( "--cycletime",
 #        help="copy or move even if the target already exists",
 #        action="store_true", dest="force", default=False )
 
-parser.add_option( "--mode", 
+parser.add_option( "--mode",
         help="Octal umask for creating new destination directories. "
         "E.g. 0775 for drwxrwxr-x",
         metavar='MODE',
@@ -140,7 +140,7 @@ cylc.flags.verbose = options.verbose
 cylc.flags.debug = options.debug
 
 if len(args) != 1  and len( args ) != 4 and len(args) != 5:
-    parser.error( "Wrong number of arguments" ) 
+    parser.error( "Wrong number of arguments" )
 
 if options.ctime:
     ctime = options.ctime
@@ -175,7 +175,7 @@ else:
     if len(args) == 5:
         destn = args[4]
 
-    config_line( source, match, opern, ctime, offset, destn, 
+    config_line( source, match, opern, ctime, offset, destn,
             mode=options.mode, cheap=options.cheap ).action( batchsize )
-    
+
 print '\nFINISH: ', datetime.datetime.now()

@@ -27,7 +27,7 @@ class textload(object):
     def __init__( self, name, file ):
         self.name = name
         self.file = file
-        
+
         self.find_current = None
         self.find_current_iter = None
         self.search_warning_done = False
@@ -37,7 +37,7 @@ class textload(object):
         # Use a monospace font. This is safe - by testing - setting an
         # illegal font description has no effect.
         self.logview.modify_font( pango.FontDescription("monospace") )
- 
+
         searchbox = gtk.HBox()
         entry = gtk.Entry()
         entry.connect( "activate", self.enter_clicked, self.logview )
@@ -85,7 +85,7 @@ class textload(object):
 
     def quit( self ):
         pass
- 
+
     def enter_clicked( self, e, tv ):
         self.on_find_clicked( tv, e )
 
@@ -104,7 +104,7 @@ class textload(object):
             s = tb.get_start_iter()
             tv.scroll_to_iter( s, 0 )
         try:
-            f, l = s.forward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
+            f, l = s.forward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY)
         except:
             warning_dialog( '"' + needle + '"' + " not found" ).warn()
         else:

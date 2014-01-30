@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -184,35 +184,35 @@ class lockserver( Pyro.core.ObjBase ):
         id = self.get_lock_id( suite, task_id )
         if id not in self.locked:
             self.locked[ id ] = True
-            self.log.info( "acquired task lock " + id ) 
+            self.log.info( "acquired task lock " + id )
             self.dump_state()
             return True
         else:
-            self.log.warning( "refused task lock " + id ) 
+            self.log.warning( "refused task lock " + id )
             return False
 
     def release( self, task_id, suite ):
         id = self.get_lock_id( suite, task_id )
         if id in self.locked:
             del self.locked[ id ]
-            self.log.info( "released task lock " + id ) 
+            self.log.info( "released task lock " + id )
             self.dump_state()
             return True
         else:
-            self.log.warning( "failed to release task lock " + id ) 
+            self.log.warning( "failed to release task lock " + id )
             return False
 
     def get_filenames( self ):
-         self.log.info( "Returning server filenames") 
+         self.log.info( "Returning server filenames")
          return ( self.pid_file, self.log_file, self.state_file )
 
     def dump( self ):
-         self.log.info( "Returning lock information") 
+         self.log.info( "Returning lock information")
          return ( self.locked.keys(), self.exclusive, self.inclusive )
 
     def clear( self ):
         # release all locks one at a time so each release gets logged
-        self.log.info( "Releasing ALL locks" ) 
+        self.log.info( "Releasing ALL locks" )
 
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
@@ -252,19 +252,19 @@ class lockserver( Pyro.core.ObjBase ):
         # INCLUSIVE: multiple named suites can use suite_dir at once
         #   - submit can attempt to get a task lock always
 
-        suite_descr = self.get_suite_string( suite, suite_dir ) 
+        suite_descr = self.get_suite_string( suite, suite_dir )
 
         result = True
         reason = "granted"
- 
+
         if cylc_mode != 'submit':
             if ( request_exclusive and suite_dir in self.inclusive ) or \
                     ( not request_exclusive and suite_dir in self.exclusive ):
                 result = False
                 reason = "inconsistent exclusivity for " + suite_dir
-                self.log.warning( reason ) 
+                self.log.warning( reason )
                 return ( False, reason )
- 
+
         if request_exclusive:
             if suite_dir in self.exclusive:
                 name = self.exclusive[ suite_dir ][0]
@@ -280,13 +280,13 @@ class lockserver( Pyro.core.ObjBase ):
                 else:
                     # no exclusive access to any suite already in use
                     result = False
-                    reason = suite_descr + " in exclusive use" 
+                    reason = suite_descr + " in exclusive use"
             else:
                 # suite dir not already in self.exclusive
                 if cylc_mode == 'submit':
                     # grant access but don't set a lock
-                    pass 
-                else: 
+                    pass
+                else:
                     # grant exclusive access
                     self.exclusive[ suite_dir ] = [ suite ]
         else:
@@ -312,9 +312,9 @@ class lockserver( Pyro.core.ObjBase ):
                 else:
                     # granted
                     self.inclusive[ suite_dir ] = [ suite ]
- 
+
         if result:
-            self.dump_state() 
+            self.dump_state()
             if cylc_mode == 'submit':
                 self.log.info( "granted suite access " + suite + " --> " + suite_dir )
             else:
@@ -334,7 +334,7 @@ class lockserver( Pyro.core.ObjBase ):
         for id in self.locked.keys():
             if self.get_suite( id ) == suite:
                 del self.locked[ id ]
-                self.log.info( "released task lock " + id ) 
+                self.log.info( "released task lock " + id )
 
         result = True
         if suite_dir in self.exclusive:
@@ -359,7 +359,7 @@ class lockserver( Pyro.core.ObjBase ):
             self.log.warning( "erroneous suite release request: lock not found" )
             result = False
         if result:
-            self.dump_state() 
+            self.dump_state()
             self.log.info( "released suite lock " + suite + " --> " + suite_dir )
         else:
             self.log.warning( "failed to release suite lock " + suite + " --> " + suite_dir )
@@ -371,7 +371,7 @@ if __name__ == "__main__":
     cylcdir = os.environ[ 'CYLC_DIR' ]
     configfile =  os.path.join( cylcdir, 'conf/lockserver.conf' )
 
-    usage = """Usage: cylc [util] lockserver [-f CONFIG] ACTION 
+    usage = """Usage: cylc [util] lockserver [-f CONFIG] ACTION
 
 The cylc lockserver daemon brokers suite and task locks for a single
 user. These locks are analogous to traditional lock files, but they work
@@ -387,18 +387,18 @@ for manual lock management, is 'cylc lockclient'.
 Use of the lockserver is optional (see suite.rc documentation).
 
 The lockserver reads a config file that specifies the location of the
-daemon's process ID, state, and log files. The default config file 
+daemon's process ID, state, and log files. The default config file
 is '$CYLC_DIR/conf/lockserver.conf'. You can specify an alternative
 config file on the command line, but then all subsequent interaction
 with the daemon via the lockclient command must also specify the same
 file (this is really only for testing purposes). The default process ID,
-state, and log files paths are relative to $HOME so this should be 
+state, and log files paths are relative to $HOME so this should be
 sufficient for all users.
 
 The state file records currently held locks and, if it exists at
 startup, is used to initialize the lockserver (i.e. suite and task locks
 are not lost if the lockserver is killed and restarted). All locking
-activitiy is recorded in the log file. 
+activitiy is recorded in the log file.
 
 Arguments:
   ACTION   -  'start', 'stop', 'status', 'restart', or 'debug'
@@ -409,7 +409,7 @@ Arguments:
 
     parser.set_defaults( config = configfile )
 
-    parser.add_option( "-c", "--config-file", 
+    parser.add_option( "-c", "--config-file",
             help="Config file (default $CYLC_DIR/lockserver.conf",
             metavar="CONFIGFILE", action="store", dest="config" )
 
@@ -428,11 +428,11 @@ Arguments:
             config.read( config_file )
     else:
         raise SystemExit( "File not found: " + config_file )
- 
+
     # extract config items
     pid_file   = config.get( 'main', 'pid file' )
     log_file   = config.get( 'main', 'log file' )
-    state_file = config.get( 'main', 'state file' ) 
+    state_file = config.get( 'main', 'state file' )
     #type = options.type
 
     # interpolate environment variables (e.g. $HOSTNAME in the default
@@ -452,7 +452,7 @@ Arguments:
 
     for f in pid_file, log_file, state_file:
         # make parent directory if necessary
-        pdir = os.path.dirname( f ) 
+        pdir = os.path.dirname( f )
         #print pdir
         if not os.path.isdir(pdir):
             #print 'creating it'
@@ -468,5 +468,5 @@ Arguments:
     print "Persistent State:", state_file
     #print "Lockserver Type: ", type
 
-    server_daemon = ServerDaemon( pid_file, log_file, state_file ) 
+    server_daemon = ServerDaemon( pid_file, log_file, state_file )
     server_daemon.process_command_line( [ sys.argv[0] ] + args )

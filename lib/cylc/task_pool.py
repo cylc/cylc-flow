@@ -26,14 +26,14 @@ class pool(object):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
-        self.qconfig = config.cfg['scheduling']['queues'] 
+        self.qconfig = config.cfg['scheduling']['queues']
         self.config = config
         self.assign()
         self.wireless = wireless
 
         self.jobqueue = Queue.Queue()
 
-        self.worker = task_batcher( 'Job Submission', self.jobqueue, 
+        self.worker = task_batcher( 'Job Submission', self.jobqueue,
                 config.cfg['cylc']['job submission']['batch size'],
                 config.cfg['cylc']['job submission']['delay between batches'],
                 self.wireless, self.run_mode )
@@ -106,7 +106,7 @@ class pool(object):
         # remove task from its queue
         queue = self.myq[task.name]
         self.queues[queue].remove( task )
-        msg = "task proxy removed" 
+        msg = "task proxy removed"
         if reason:
             msg += " (" + reason + ")"
         task.log( 'DEBUG', msg )
@@ -132,9 +132,9 @@ class pool(object):
         """
         1) queue tasks that are ready to run (prerequisites satisfied,
         clock-trigger time up) or if their manual trigger flag is set.
-        
+
         2) then submit queued tasks if their queue limit has not been
-        reached or their manual trigger flag is set.  
+        reached or their manual trigger flag is set.
 
         The "queued" task state says the task will submit as soon as its
         internal queue allows (or immediately if manually triggered first).

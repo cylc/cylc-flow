@@ -248,7 +248,7 @@ are displayed in red.
             s = tb.get_end_iter()
             tv.scroll_to_iter( s, 0 )
         try:
-            f, l = s.backward_search(needle, gtk.TEXT_SEARCH_VISIBLE_ONLY) 
+            f, l = s.backward_search(needle, gtk.TEXT_SEARCH_VISIBLE_ONLY)
         except:
             warning_dialog( '"' + needle + '"' + " not found", self.window ).warn()
         else:

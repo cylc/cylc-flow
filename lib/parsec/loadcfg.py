@@ -68,7 +68,7 @@ def load_single( FILE, SPEC, descr, upgrader=None, do_expand=False, strict=False
     if do_expand:
         cfg = expand( cfg, SPEC )
     return cfg
- 
+
 def load_combined( FILE1, descr1,
                       FILE2, descr2,
                       SPEC, upgrader=None,

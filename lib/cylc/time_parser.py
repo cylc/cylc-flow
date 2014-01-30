@@ -211,7 +211,7 @@ class CylcTimeParser(object):
             else:
                 year_string = "%04d" % year
             date_string = year_string + "%02d%02d" % (month, day_of_month)
-        
+
         hour, minute, second = timepoint.get_hour_minute_second()
         # We ignore seconds.
         time_string = "%02d%02d" % (hour, minute)
@@ -293,7 +293,7 @@ class CylcTimeParser(object):
         raise CylcTimeSyntaxError(
                   ("'%s': not a valid cylc-shorthand or full " % expr) +
                   "ISO 8601 date representation")
-            
+
 
 class TestRecurrenceSuite(unittest.TestCase):
 

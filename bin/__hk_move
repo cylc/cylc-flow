@@ -76,16 +76,16 @@ class hk_move:
         move( self.src, self.tdir )
         print "SUCCEEDED"
         return
-                
+
 if __name__ == "__main__":
     # THE CYLC HOUSEKEEPING UTILITY PROGRAM USES THIS COMMAND
     parser = OptionParser( """__hk_move [options] SRC DIR
-    
+
 Arguments:
   SRC    - source item (directory or file) to move
   DIR    - destination directory""")
 
-    parser.add_option( "-c", "--cheap-diff", 
+    parser.add_option( "-c", "--cheap-diff",
             help="assume that files with the same size are identical",
             action="store_true", default=False, dest="cheapdiff" )
 
@@ -98,6 +98,6 @@ Arguments:
     if len(args) != 2:
         parser.error( "Wrong number of arguments" )
 
-    hk_move( args[0], args[1], 
+    hk_move( args[0], args[1],
             mode=options.mode,
             cheap=options.cheapdiff ).execute()

@@ -23,7 +23,7 @@ from parsec.fileparse import parse
 
 """
 Define all legal items and values for cylc suite definition files.
-""" 
+"""
 
 cfg = None
 
@@ -72,7 +72,7 @@ SPEC = {
         'dummy mode' : {
             'disable suite event hooks'       : vdr( vtype='boolean', default=True ),
             },
-        'accelerated clock' : { 
+        'accelerated clock' : {
             'disable'                         : vdr( vtype='boolean', default=False ),
             'rate'                            : vdr( vtype='integer', default=10 ),
             'offset'                          : vdr( vtype='integer', default=24 ),

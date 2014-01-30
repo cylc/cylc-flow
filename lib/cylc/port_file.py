@@ -38,7 +38,7 @@ the user will have to give the port number on the command line."""
 class PortFileError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -50,12 +50,12 @@ class PortFileExistsError( PortFileError ):
 
 class port_file( object ):
     def __init__(self, suite, port ):
-        self.suite = suite 
+        self.suite = suite
 
         # the ports directory is assumed to exist
         gcfg = get_global_cfg()
         pdir = gcfg.cfg['pyro']['ports directory']
- 
+
         self.local_path = os.path.join( pdir, suite )
 
         try:
@@ -75,7 +75,7 @@ class port_file( object ):
             f = open( self.local_path, 'w' )
         except OSError,x:
             raise PortFileError( "ERROR, failed to open port file: " + self.port )
-        f.write( self.port ) 
+        f.write( self.port )
         f.close()
 
     def unlink( self ):
@@ -108,7 +108,7 @@ class port_retriever( object ):
 
     def get_remote( self ):
         import subprocess
-        target = self.owner + '@' + self.host 
+        target = self.owner + '@' + self.host
         remote_path = self.local_path.replace( os.environ['HOME'], '$HOME' )
         self.locn = target + ':' + remote_path
         ssh = subprocess.Popen( ['ssh', '-oBatchMode=yes', target, 'cat', remote_path],

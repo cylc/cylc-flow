@@ -109,10 +109,10 @@ class SummaryPanelApplet(object):
 class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
     """Update the summary panel applet - subclass of gsummary equivalent."""
-    
+
     IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
-    
+
     def __init__(self, hosts, dot_hbox, gcylc_image, is_compact, owner=None,
                  poll_interval=None):
         self.quit = True
@@ -122,7 +122,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
         self.usercfg = config().cfg
-        self.theme_name = self.usercfg['use theme'] 
+        self.theme_name = self.usercfg['use theme']
         self.theme = self.usercfg['themes'][self.theme_name]
         self.dots = DotMaker(self.theme)
         self.statuses = {}
@@ -230,7 +230,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                     suite_info_tuples = []
                     for suite, host, task_states in suite_host_states_tuples:
                         suite_info_tuples.append((suite, host, status,
-                                                  task_states, is_stopped))                   
+                                                  task_states, is_stopped))
                     self._add_image_box(suite_info_tuples)
         if self.is_compact:
             if not compact_suite_statuses:
@@ -249,7 +249,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         status_list = []
         suite_host_tuples = []
         for info_tuple in suite_host_info_tuples:
-            suite, host, status, task_states, is_stopped = info_tuple 
+            suite, host, status, task_states, is_stopped = info_tuple
             suite_host_tuples.append((suite, host))
             if not is_stopped:
                 running_status_list.append(status)
@@ -266,7 +266,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         image_eb._connect_args = suite_host_tuples
         image_eb.connect("button-press-event",
                          self._on_button_press_event)
-        
+
         text_format = "%s - %s - %s"
         long_text_format = text_format + "\n    Tasks: %s\n"
         text = ""
@@ -298,7 +298,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
             image_eb.set_has_tooltip(True)
             image_eb.connect("query-tooltip", self._on_img_tooltip_query,
                              tip_vbox)
-        else: 
+        else:
             self._set_tooltip(image_eb, text)
         self.dot_hbox.pack_start(image_eb, expand=False, fill=False,
                                  padding=1)

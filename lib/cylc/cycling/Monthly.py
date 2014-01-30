@@ -69,7 +69,7 @@ class Monthly( cycler ):
     def offset( cls, T, n ):
         """Decrement T by n months to the same DDHHmmss."""
         return sub_months( ct( T ), int(n) ).get()
- 
+
     def __init__( self, T=None, step=1 ):
         """Store date, step, and anchor."""
 
@@ -82,10 +82,10 @@ class Monthly( cycler ):
             raise CyclerError, str(x)
         else:
             # anchor date
-            self.anchorDate = T  
+            self.anchorDate = T
             # day of month and time
             self.DDHHmmss = T[6:]
- 
+
         # step in integer number of months
         try:
             # check validity
@@ -104,7 +104,7 @@ class Monthly( cycler ):
     def initial_adjust_up( self, T ):
         """Adjust T up to the next valid cycle time if not already valid."""
         try:
-            # is T a legal cycle time 
+            # is T a legal cycle time
             ct( T )
         except CycleTimeError, x:
             raise CyclerError, str(x)
@@ -146,7 +146,7 @@ class Monthly( cycler ):
             # wrong anniversary date
             result = False
         else:
-            # right anniversary date, check if the month is valid 
+            # right anniversary date, check if the month is valid
             ta = 12 * int(self.anchorDate[0:4]) + int(self.anchorDate[4:6]) - 1
             tc = 12 * int(T[0:4]) + int(T[4:6]) - 1
             diff = abs( ta - tc )
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             ('1978080806', 5), \
             ('1978080806', 7), \
             ('1978080806x', 2), \
-            ('1978080806', 'x')] 
+            ('1978080806', 'x')]
 
 
 

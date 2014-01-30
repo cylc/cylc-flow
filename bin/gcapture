@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -34,16 +34,16 @@ stderr to display in a dialog. Examples:
 Arguments:
    COMMAND    - the command line to run""")
 
-parser.add_option( "--width", 
-    help="dialog window width in pixels (default 400)", 
+parser.add_option( "--width",
+    help="dialog window width in pixels (default 400)",
     metavar='INT', action="store", default=400, dest="width" )
 
-parser.add_option( "--height", 
-    help="dialog window height in pixels (default 200)", 
+parser.add_option( "--height",
+    help="dialog window height in pixels (default 200)",
     metavar='INT', action="store", default=200, dest="height" )
 
-parser.add_option( "--file", 
-    help="(optional) capture stdout and stderr in FILE" 
+parser.add_option( "--file",
+    help="(optional) capture stdout and stderr in FILE"
     "(full path, e.g. /path/to/foo/output.txt).",
     metavar='FILE', action="store", default=None, dest="filep" )
 

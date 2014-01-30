@@ -71,7 +71,7 @@ class PollTimer( object ):
         except IndexError:
             # no more intervals, keep the last one
             pass
-        
+
         if self.current_interval:
             self.log( 'NORMAL', 'setting ' + self.name + ' poll timer for ' + str(self.current_interval) + ' seconds' )
             self.timer_start = datetime.datetime.now()
@@ -174,7 +174,7 @@ class task( object ):
         class_vars = {}
         self.state = task_state.task_state( state )
         self.manual_trigger = False
-        
+
         self.stop_tag = None
 
         # Count instances of each top level object derived from task.
@@ -219,10 +219,10 @@ class task( object ):
 
         # In case task owner and host are needed by record_db_event()
         # for pre-submission events, set their initial values as if
-        # local (we can't know the correct host prior to this because 
+        # local (we can't know the correct host prior to this because
         # dynamic host selection could be used).
         self.task_host = 'localhost'
-        self.task_owner = None 
+        self.task_owner = None
         self.user_at_host = self.task_host
 
         self.submit_method_id = None
@@ -262,14 +262,14 @@ class task( object ):
         # base. Was once used for constraining the number of instances
         # of each task type. Python's __del__() function cannot be used
         # for this as it is only called when a deleted object is about
-        # to be garbage collected (not guaranteed to be right away). 
+        # to be garbage collected (not guaranteed to be right away).
         self.__class__.instance_count -= 1
 
     def record_db_event(self, event="", message=""):
         call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, self.user_at_host)
         self.db_queue.append(call)
         self.db_items = True
-    
+
     def record_db_update(self, table, name, cycle, **kwargs):
         call = cylc.rundb.UpdateObject(table, name, cycle, **kwargs)
         self.db_queue.append(call)
@@ -279,7 +279,7 @@ class task( object ):
                      submit_num=None, is_manual_submit=None, try_num=None,
                      host=None, submit_method=None, submit_method_id=None,
                      status=None):
-        call = cylc.rundb.RecordStateObject(name, cycle, 
+        call = cylc.rundb.RecordStateObject(name, cycle,
                      time_created=time_created, time_updated=time_updated,
                      submit_num=submit_num, is_manual_submit=is_manual_submit, try_num=try_num,
                      host=host, submit_method=submit_method, submit_method_id=submit_method_id,
@@ -332,7 +332,7 @@ class task( object ):
         dep.sort()
         return dep
 
-      
+
     def unfail( self ):
         # if a task is manually reset remove any previous failed message
         # or on later success it will be seen as an incomplete output.
@@ -413,7 +413,7 @@ class task( object ):
         self.sub_retry_delay_timer_start = None
 
     def set_from_rtconfig( self, cfg={} ):
-        """Some [runtime] config requiring consistency checking on reload, 
+        """Some [runtime] config requiring consistency checking on reload,
         and self variables requiring updating for the same."""
         # this is first called from class init (see taskdef.py)
 
@@ -456,12 +456,12 @@ class task( object ):
         except:
             ok = False
         if not ok:
-            raise Exception, "ERROR, " + self.name + ": simulation mode run time range must be 'int, int'" 
+            raise Exception, "ERROR, " + self.name + ": simulation mode run time range must be 'int, int'"
         try:
             self.sim_mode_run_length = randrange( res[0], res[1] )
         except Exception, x:
             print >> sys.stderr, x
-            raise Exception, "ERROR: simulation mode task run time range must be [MIN,MAX)" 
+            raise Exception, "ERROR: simulation mode task run time range must be [MIN,MAX)"
 
         if self.__class__.run_mode == 'live' or \
                 ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable task event hooks'] ) or \
@@ -503,15 +503,15 @@ class task( object ):
             self.reset_timer = False
 
         self.submission_poll_timer = PollTimer( \
-                    copy( rtconfig['submission polling intervals']), 
+                    copy( rtconfig['submission polling intervals']),
                     copy( self.gcfg.cfg['submission polling intervals']),
                     'submission', self.log )
 
         self.execution_poll_timer = PollTimer( \
-                    copy( rtconfig['execution polling intervals']), 
+                    copy( rtconfig['execution polling intervals']),
                     copy( self.gcfg.cfg['execution polling intervals']),
                     'execution', self.log )
- 
+
     def submit( self, dry_run=False, overrides={} ):
         """NOTE THIS METHOD EXECUTES IN THE JOB SUBMISSION THREAD. It
         returns the job process number if successful. Exceptions raised
@@ -535,7 +535,7 @@ class task( object ):
 
         rtconfig = pdeepcopy( self.__class__.rtconfig )
         poverride( rtconfig, overrides )
-        
+
         self.set_from_rtconfig( rtconfig )
 
         if len(self.env_vars) > 0:
@@ -576,8 +576,8 @@ class task( object ):
             if rtconfig['dummy mode']['disable post-command scripting']:
                 postcommand = None
         else:
-            precommand = rtconfig['pre-command scripting'] 
-            postcommand = rtconfig['post-command scripting'] 
+            precommand = rtconfig['pre-command scripting']
+            postcommand = rtconfig['post-command scripting']
 
         if self.suite_polling_cfg:
             # generate automatic suite state polling command scripting
@@ -643,7 +643,7 @@ class task( object ):
                 if subprocess.call(cmd): # return non-zero
                     raise Exception("ERROR: " + str(cmd))
             self.__class__.suite_contact_env_hosts.append( self.task_host )
-        
+
         self.record_db_update("task_states", self.name, self.c_time, submit_method=module_name, host=self.user_at_host)
 
         jobconfig = {
@@ -771,7 +771,7 @@ class task( object ):
             self.log( 'WARNING', msg )
 
             self.poll()
-        
+
             handler = self.event_handlers['submission timeout']
             if handler:
                 self.log( 'DEBUG', "Queueing submission timeout event handler" )
@@ -799,7 +799,7 @@ class task( object ):
             self.log( 'WARNING', msg )
 
             self.poll()
- 
+
             # if no handler is specified, return
             handler = self.event_handlers['execution timeout']
             if handler:
@@ -851,7 +851,7 @@ class task( object ):
             return False
 
     def process_incoming_messages( self ):
-        queue = self.message_queue.get_queue() 
+        queue = self.message_queue.get_queue()
         while queue.qsize() > 0:
             self.process_incoming_message( queue.get() )
             queue.task_done()
@@ -939,12 +939,12 @@ class task( object ):
             # The job submission command returned success status.
             # (A fake task message from the job submission thread).
             # (note it is possible for 'task started' to arrive first).
-            
+
             # flag another round through the task processing loop to
             # allow submitted tasks to spawn even if nothing else is
             # happening
             flags.pflag = True
- 
+
             # TODO - should we use the real event time from the message here?
             self.submitted_time = task.clock.get_datetime()
             self.summary[ 'submitted_time' ] = self.submitted_time.isoformat()
@@ -971,7 +971,7 @@ class task( object ):
             # Capture and record the submit method job ID.
             self.submit_method_id = content[len('submit_method_id='):]
             self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
-                                  
+
         elif ( content == 'submission failed' or content == 'kill command succeeded' ) and \
                 self.state.is_currently('ready','submitted'):
 
@@ -1007,7 +1007,7 @@ class task( object ):
                 if handler:
                     self.log( 'DEBUG', "Queueing submission retry event handler" )
                     self.__class__.event_queue.put( ('submission retry', handler, self.id, msg))
- 
+
         elif content == 'started' and self.state.is_currently( 'ready','submitted','submit-failed' ):
             # Received a 'task started' message
 
@@ -1079,7 +1079,7 @@ class task( object ):
                     self.__class__.event_queue.put( ('failed', handler, self.id, 'job failed') )
             else:
                 # There is a retry lined up
-                msg = "job failed, retrying in " + str(self.retry_delay) + " minutes" 
+                msg = "job failed, retrying in " + str(self.retry_delay) + " minutes"
                 self.log( "NORMAL", msg )
                 self.retry_delay_timer_start = task.clock.get_datetime()
                 self.try_number += 1
@@ -1108,8 +1108,8 @@ class task( object ):
         if status != self.state.get_status():
             self.log( 'DEBUG', '(setting:' + status + ')' )
             self.state.set_status( status )
-            self.record_db_update("task_states", self.name, self.c_time, 
-                                  submit_num=self.submit_num, try_num=self.try_number, 
+            self.record_db_update("task_states", self.name, self.c_time,
+                                  submit_num=self.submit_num, try_num=self.try_number,
                                   status=status)
 
     def update( self, reqs ):

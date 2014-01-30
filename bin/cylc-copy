@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -41,9 +41,9 @@ foo.bar.qux | "Test Suite Two"  | /home/bob/two
 foo.bar.baz | "Test Suite One"  | /home/bob/one
 
 % cylc db print -t '^foo'  # printed in tree from
-foo      
+foo
  |-bag    "Test Suite Zero" | /home/bob/zero
- `-bar   
+ `-bar
    |-baz  "Test Suite One"  | /home/bob/one
    `-qux  "Test Suite Two"  | /home/bob/two
 
@@ -78,10 +78,10 @@ EXAMPLES (using the three suites above):
   orange.qux | "Test Suite Two" | /home/bob/orange/qux
   orange.baz | "Test Suite One" | /home/bob/orange/baz""",
   argdoc=[("REG", "Source suite name"),
-          ("REG2", "Target suite name"), 
+          ("REG2", "Target suite name"),
           ("TOPDIR", "Top level target directory.")] )
 
-parser.add_option( "--db-from", 
+parser.add_option( "--db-from",
         help="Copy suites from another DB (defaults to --db).",
         metavar='PATH', action="store", default=None, dest="dbfrom" )
 
@@ -104,7 +104,7 @@ try:
 
     for item in flist:
         freg, fdir, ftitle = item
-        treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg ) 
+        treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg )
 
         tdir = RegPath(treg).get_fpath()
         tdir = os.path.join( arg_dir, tdir )
@@ -122,7 +122,7 @@ try:
             print >> sys.stderr, x
             continue
 
-        print 'COPY', fdir, '\n  TO', tdir 
+        print 'COPY', fdir, '\n  TO', tdir
         try:
             shutil.copytree( fdir, tdir )
         except OSError, x:

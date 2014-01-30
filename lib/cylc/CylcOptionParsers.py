@@ -26,7 +26,7 @@ import cylc.flags
 """Common options for all cylc commands."""
 
 multitask_usage = """
-For matching multiple tasks or families at once note that MATCH is 
+For matching multiple tasks or families at once note that MATCH is
 interpreted as a full regular expression, not a simple shell glob."""
 
 class db_optparse( object ):
@@ -44,7 +44,7 @@ class db_optparse( object ):
             dbopt = os.path.join( '~' + self.owner, '.cylc', 'DB' )
         if dbopt.startswith( '~' ):
             dbopt = os.path.expanduser( dbopt )
-        else: 
+        else:
             dbopt = os.path.abspath( dbopt )
         self.location = dbopt
 
@@ -83,12 +83,12 @@ Arguments:"""
         self.prep = prep
         self.suite_info = []
         self.twosuites = twosuites
- 
+
         maxlen = 0
         for arg in argdoc:
             if len(arg[0]) > maxlen:
                 maxlen = len(arg[0])
- 
+
         for arg in argdoc:
             if arg[0].startswith('['):
                 self.n_optional_args += 1
@@ -103,7 +103,7 @@ Arguments:"""
             usage += "\n   " + arg[0] + pad + arg[1]
 
         usage = re.sub( 'ARGS', args, usage )
-        
+
         OptionParser.__init__( self, usage )
 
     def add_std_options( self ):
@@ -177,7 +177,7 @@ Arguments:"""
                     action="store", default=None, dest="templatevars_file" )
 
         if self.multitask:
-            self.add_option( "-m", "--family", 
+            self.add_option( "-m", "--family",
                     help="Match members of named families rather than tasks.",
                     action="store_true", default=False, dest="is_family" )
 
@@ -231,7 +231,7 @@ Arguments:"""
                 options.templatevars_file = os.path.abspath( os.path.expanduser( options.templatevars_file ))
 
         if self.prep:
-            # allow file path or suite name 
+            # allow file path or suite name
             try:
                 self.suite_info.append( self._getdef( args[0], options ))
                 if self.twosuites:

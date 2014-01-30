@@ -20,7 +20,7 @@ import datetime
 import re
 from cylc.strftime import strftime
 
-""" 
+"""
 CYCLE TIME: YYYY[MM[DD[HH[mm[ss]]]]]
 """
 
@@ -30,7 +30,7 @@ MEMOIZE_LIMIT = 10000
 class CycleTimeError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg
@@ -56,7 +56,7 @@ class ct( object ):
     def __init__( self, ctin ):
         if isinstance( ctin, datetime.datetime ):
             self.parse( self._init_by_datetime( ctin ) )
-        else: 
+        else:
             self.parse( ctin )
 
     def _init_by_datetime( self, dtvalue ):
@@ -82,7 +82,7 @@ class ct( object ):
         self.HHmmss  = self.strvalue[ 8:14 ]
         self.DDHHmmss  = self.strvalue[ 6:14 ]
         self.MMDDHHmmss  = self.strvalue[ 4:14 ]
-        
+
         # convert to datetime as a validity check
         try:
             self.dtvalue = datetime.datetime( int(self.year), int(self.month),
@@ -106,24 +106,24 @@ class ct( object ):
     def get_datetime( self ):
         return self.dtvalue
 
-    def _str_from_datetime( self, dt ): 
+    def _str_from_datetime( self, dt ):
         return strftime( dt, "%Y%m%d%H%M%S" )
 
     def increment( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
-            microseconds=0, milliseconds=0 ): 
+            microseconds=0, milliseconds=0 ):
         # Can't increment by years or months easily - they vary in length.
         newdt = self.dtvalue + \
                 datetime.timedelta( int(days), int(seconds),
-                        int(microseconds), int(milliseconds), 
+                        int(microseconds), int(milliseconds),
                         int(minutes), int(hours), int(weeks) )
         self.parse( self._str_from_datetime( newdt ))
 
     def decrement( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
-            microseconds=0, milliseconds=0 ): 
+            microseconds=0, milliseconds=0 ):
         # Can't decrement by years or months easily - they vary in length.
         newdt = self.dtvalue - \
                 datetime.timedelta( int(days), int(seconds),
-                        int(microseconds), int(milliseconds), 
+                        int(microseconds), int(milliseconds),
                         int(minutes), int(hours), int(weeks) )
         self.parse( self._str_from_datetime( newdt ))
 
@@ -143,7 +143,7 @@ class ct( object ):
 
 def memoize(function):
     """This stores results for a given set of inputs to a function.
-    
+
     The inputs and results of the function must be immutable.
     Keyword arguments are not allowed.
 

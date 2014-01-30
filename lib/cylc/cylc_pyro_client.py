@@ -53,7 +53,7 @@ class client( object ):
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
 
-        uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname 
+        uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname
         # callers need to check for Pyro.NamingError if target object not found:
         proxy = Pyro.core.getProxyForURI(uri)
 

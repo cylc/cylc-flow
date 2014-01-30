@@ -123,7 +123,7 @@ class DotUpdater(threading.Thread):
             self.task_list = []
 
         self.updater.set_update(True)
-        
+
         self.ctimes = []
         state_summary = {}
         state_summary.update(self.state_summary)
@@ -218,7 +218,7 @@ class DotUpdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-    
+
         # this is how to set background color of the entire treeview to black:
         #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
 
@@ -236,7 +236,7 @@ class DotUpdater(threading.Thread):
         for i in range(new_led_liststore.get_n_columns()):
             new_types.append(new_led_liststore.get_column_type(i))
         treeview_has_content = bool(len(self.led_treeview.get_columns()))
-        
+
         if treeview_has_content and old_types == new_types:
             self.set_led_headings()
             self.led_liststore.clear()
@@ -253,9 +253,9 @@ class DotUpdater(threading.Thread):
 
             tvcs_for_removal = self.led_treeview.get_columns()[
                  num_new_columns:]
-            
+
             for tvc in tvcs_for_removal:
-                self.led_treeview.remove_column(tvc) 
+                self.led_treeview.remove_column(tvc)
 
             self.led_treeview.set_model(self.led_liststore)
             num_columns = len(self.led_treeview.get_columns())
@@ -295,7 +295,7 @@ class DotUpdater(threading.Thread):
                 # cr.set_property( 'cell-background', 'black' )
                 tvc.pack_start( cr, False )
                 tvc.set_attributes( cr, pixbuf=i )
-        
+
         self.led_treeview.append_column( tvc )
 
         if self.should_transpose_view:

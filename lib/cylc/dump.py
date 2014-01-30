@@ -30,7 +30,7 @@ def get_stop_state(suite, owner=None, host=None):
         command += " --host=" +host
     if owner:
         command += " --user=" + owner
-    command += " " + suite 
+    command += " " + suite
     try:
         p = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         stdout, stderr = p.communicate()

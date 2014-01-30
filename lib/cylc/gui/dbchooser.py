@@ -133,7 +133,7 @@ class db_updater(threading.Thread):
                 return None
             iter = ts.get_iter(opath)
             while iter:
-                val, = ts.get( iter, 0 ) 
+                val, = ts.get( iter, 0 )
                 if val == item:
                     return iter
                 iter = ts.iter_next( iter )
@@ -222,7 +222,7 @@ class db_updater(threading.Thread):
             if debug:
                 print '* thread', self.me, 'quitting'
             self.__class__.count -= 1
-    
+
     def running_choices_changed( self ):
         if not PyroInstalled:
             return
@@ -335,7 +335,7 @@ class dbchooser(object):
         tvc.set_resizable(True)
         # not sure how this sorting works
         #tvc.set_sort_column_id(1)
-        self.regd_treeview.append_column( tvc ) 
+        self.regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         #cr.set_property( 'cell-background', '#def' )
@@ -376,19 +376,19 @@ class dbchooser(object):
 
         collapse_button = gtk.ToolButton()
         image = gtk.image_new_from_stock( gtk.STOCK_REMOVE, gtk.ICON_SIZE_SMALL_TOOLBAR )
-        collapse_button.set_icon_widget( image )        
+        collapse_button.set_icon_widget( image )
         collapse_button.connect( 'clicked', lambda x: self.regd_treeview.collapse_all() )
 
         hbox = gtk.HBox()
 
         eb = gtk.EventBox()
         eb.add( self.selected_label )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbc' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbc' ) )
         hbox.pack_start( eb, True )
         hbox.pack_start( expand_button, False )
         hbox.pack_start( collapse_button, False )
         hbox.pack_start (filter_toolitem, False)
- 
+
         vbox.pack_start( hbox, False )
 
         self.window.show_all()
@@ -480,7 +480,7 @@ class dbchooser(object):
             treeview.grab_focus()
             path, col, cellx, celly = pth
             treeview.set_cursor( path, col, 0 )
- 
+
         selection = treeview.get_selection()
 
         model, iter = selection.get_selected()
@@ -490,7 +490,7 @@ class dbchooser(object):
             group_clicked = True
         else:
             group_clicked = False
- 
+
         def get_reg( item, iter ):
             reg = item
             if iter:
@@ -542,7 +542,7 @@ class dbchooser(object):
             reregister_item = gtk.MenuItem( '_Reregister' )
             menu.append( reregister_item )
             reregister_item.connect( 'activate', self.reregister_popup, reg )
-    
+
             del_item = gtk.MenuItem( '_Unregister' )
             menu.append( del_item )
             del_item.connect( 'activate', self.unregister_popup, reg )

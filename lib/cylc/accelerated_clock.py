@@ -23,7 +23,7 @@ from time import sleep
 
 class clock( Pyro.core.ObjBase ):
     """
-    REAL TIME or ACCELERATED clock. 
+    REAL TIME or ACCELERATED clock.
 
     In simulation or dummy mode, equate a given simulation YYYYMMDDHH
     with the real time at initialisation, and thereafter advance
@@ -31,19 +31,19 @@ class clock( Pyro.core.ObjBase ):
     """
 
     def __init__( self, rate, offset, utc, disable ):
-        
+
         Pyro.core.ObjBase.__init__(self)
-        
+
         self.disable = disable
         self.utc = utc
 
         # time acceleration (N real seconds = 1 simulation hour)
         self.acceleration = rate
-        
+
         # start time offset (relative to start cycle time)
         self.offset_hours = offset
 
-        self.base_realtime = self.now() 
+        self.base_realtime = self.now()
         self.base_simulationtime = self.base_realtime
 
         #if not self.disable:
@@ -59,11 +59,11 @@ class clock( Pyro.core.ObjBase ):
 
     def set( self, ctime ):
         #print 'Setting accelerated clock time'
-        self.base_simulationtime = datetime.datetime( 
-                int(ctime[0:4]), int(ctime[4:6]), 
+        self.base_simulationtime = datetime.datetime(
+                int(ctime[0:4]), int(ctime[4:6]),
                 int(ctime[6:8]), int(ctime[8:10]))
-                
-        self.base_simulationtime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0) 
+
+        self.base_simulationtime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0)
 
     def get_rate( self ):
         return self.acceleration
@@ -77,7 +77,7 @@ class clock( Pyro.core.ObjBase ):
         if self.disable:
             print "(ignoring clock reset in real time)"
             return
-        
+
         print 'Setting accelerated clock time'
 
         YMDHms = dstr.split( ':' )
@@ -100,13 +100,13 @@ class clock( Pyro.core.ObjBase ):
             s = '0' + s
 
         base_ctime = Y + M + D + H + m + s
-        #base_ctime = Y + M + D + H 
+        #base_ctime = Y + M + D + H
 
-        self.base_simulationtime = datetime.datetime( 
-                int(base_ctime[0:4]), int(base_ctime[4:6]), 
+        self.base_simulationtime = datetime.datetime(
+                int(base_ctime[0:4]), int(base_ctime[4:6]),
                 int(base_ctime[6:8]), int(base_ctime[8:10]),
                 int(base_ctime[10:12]), int(base_ctime[12:14]))
-                
+
         print "CLOCK RESET ......."
         print " - accel:  " + str( self.acceleration ) + "s = 1 simulation hour"
         print " - start:  " + str( self.base_simulationtime )
@@ -118,7 +118,7 @@ class clock( Pyro.core.ObjBase ):
         else:
             # compute simulation time based on how much real time has passed
             delta_real = self.now() - self.base_realtime
-        
+
             # time deltas are expressed as days, seconds, microseconds
             days = delta_real.days
             seconds = delta_real.seconds

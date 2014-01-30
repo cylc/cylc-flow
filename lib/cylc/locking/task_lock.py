@@ -31,7 +31,7 @@ class task_lock(object):
     # Similarly, the lock release message is only echoed to stdout
     # because it is necessarily emitted after the task succeeded message.
     # (a cylc message after that time will cause cylc to complain that
-    # it has received a message from a task that has succeeded). 
+    # it has received a message from a task that has succeeded).
 
     def __init__( self, task_id=None, suite=None, owner=user, host='localhost', port=None ):
         self.use_lock_server = False
@@ -70,9 +70,9 @@ class task_lock(object):
         # print statements here will go to task stdout and stderr
 
         if not self.use_lock_server:
-            #print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
+            #print >> sys.stderr, "WARNING: you are not using the cylc lockserver."
             return True
- 
+
         # Owner required here because cylc suites can run tasks as other
         # users - but the lockserver is owned by the suite owner:
 
@@ -89,7 +89,7 @@ class task_lock(object):
 
     def release( self ):
         if not self.use_lock_server:
-            #print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
+            #print >> sys.stderr, "WARNING: you are not using the cylc lockserver."
             return True
 
         # Owner required here because cylc suites can run tasks as other

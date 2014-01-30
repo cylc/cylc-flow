@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -36,7 +36,7 @@ except ImportError:
 else:
     jinja2_disabled = False
 
-parser = cop( """cylc [prep] view [OPTIONS] ARGS 
+parser = cop( """cylc [prep] view [OPTIONS] ARGS
 
 View a read-only temporary copy of suite NAME's suite.rc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
@@ -51,7 +51,7 @@ the '-g,--gui' flag is used to spawn a remote GUI edit session.
 
 See also 'cylc [prep] edit'.""", jset=True, prep=True )
 
-parser.add_option( "--inline", "-i", 
+parser.add_option( "--inline", "-i",
         help="Inline include-files.",
         action="store_true", default=False, dest="inline" )
 
@@ -60,11 +60,11 @@ parser.add_option( "--jinja2", "-j",
         "(implies '-i' as well).",
         action="store_true", default=False, dest="process" )
 
-parser.add_option( "--mark", "-m", 
+parser.add_option( "--mark", "-m",
         help="(With '-i') Mark inclusions in the left margin.",
         action="store_true", default=False, dest="mark" )
 
-parser.add_option( "--label", "-l", 
+parser.add_option( "--label", "-l",
         help="(With '-i') Label file inclusions with the file name. "
         "Line numbers will not correspond to those reported by the parser.",
         action="store_true", default=False, dest="label" )
@@ -75,20 +75,20 @@ parser.add_option( "--single",
         "those reported by the parser.",
         action="store_true", default=False, dest="single" )
 
-parser.add_option( "--cat", "-c", 
+parser.add_option( "--cat", "-c",
         help="Concatenate continuation lines (line numbers will "
         "not correspond to those reported by the parser).",
         action="store_true", default=False, dest="cat" )
 
-parser.add_option( "--gui", "-g", 
+parser.add_option( "--gui", "-g",
         help="Force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor" )
 
-parser.add_option( "--stdout", 
+parser.add_option( "--stdout",
         help="Print the suite definition to stdout.",
         action="store_true", default=False, dest="stdout" )
 
-parser.add_option( "--mark-for-edit", 
+parser.add_option( "--mark-for-edit",
         help="(With '-i') View file inclusion markers as "
         "for 'cylc edit --inline'.",
         action="store_true", default=False, dest="asedit" )
@@ -117,7 +117,7 @@ viewcfg = {
         'inline' : options.inline or options.process,
         }
 try:
-    lines = read_and_proc( suiterc, 
+    lines = read_and_proc( suiterc,
             options.templatevars, options.templatevars_file,
             viewcfg=viewcfg, asedit=options.asedit )
 except Exception, x:
@@ -126,11 +126,11 @@ except Exception, x:
     sys.exit( x )
 
 # Add a warning to file
-tmp = " WARNING: This is a READ-ONLY COPY of " + suiterc 
+tmp = " WARNING: This is a READ-ONLY COPY of " + suiterc
 bot = re.sub( '.', '-', tmp )
 warning = [
-'#' + tmp, 
-'#' + bot ] 
+'#' + tmp,
+'#' + bot ]
 newlines = warning + lines
 
 if options.stdout:
@@ -167,7 +167,7 @@ except OSError:
     # the command was not invoked
     print >> sys.stderr, 'ERROR: unable to execute:', command
     sys.exit(1)
- 
+
 # !!!VIEWING FINISHED!!!
 
 # Did the user edit the file

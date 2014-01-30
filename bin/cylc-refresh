@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -29,11 +29,11 @@ import cylc.flags
 
 parser = cop( usage = """cylc [db] refresh [OPTIONS] ARGS
 
-Check a suite database for invalid registrations (no suite definition 
+Check a suite database for invalid registrations (no suite definition
 directory or suite.rc file) and refresh suite titles in case they have
-changed since the suite was registered. Explicit wildcards must be 
+changed since the suite was registered. Explicit wildcards must be
 used in the match pattern (e.g. 'f' will not match 'foo.bar' unless
-you use 'f.*').""", 
+you use 'f.*').""",
 argdoc=[('[REGEX]', 'Suite name match pattern')])
 
 parser.add_option( "-u","--unregister",
@@ -61,7 +61,7 @@ try:
     invalid = db.get_invalid()
     # refresh titles
     changed = []
-    items = db.get_list( pattern ) 
+    items = db.get_list( pattern )
     if len(items) == 0:
         if pattern:
             print 'No suites found to match', pattern

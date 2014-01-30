@@ -99,10 +99,10 @@ class GraphUpdater(threading.Thread):
         self.dt = "waiting..."
 
         self.prev_graph_id = ()
-        
+
         # empty graphw object:
         self.graphw = graphing.CGraphPlain( self.cfg.suite )
- 
+
         # TODO - handle failure to get a remote proxy in reconnect()
 
         self.graph_warned = {}
@@ -150,7 +150,7 @@ class GraphUpdater(threading.Thread):
             if self.action_required:
                 return True
             return False
-        
+
         self.updater.set_update(False)
         self.task_list = deepcopy(self.updater.task_list)
         self.live_graph_movie = self.updater.live_graph_movie
@@ -176,10 +176,10 @@ class GraphUpdater(threading.Thread):
 
         self.last_update_time = self.updater.last_update_time
 
-        # The graph layout is not stable even when (py)graphviz is  
+        # The graph layout is not stable even when (py)graphviz is
         # presented with the same graph (may be a node ordering issue
-        # due to use of dicts?). For this reason we only plot node name 
-        # and color (state) and only replot when node content or states 
+        # due to use of dicts?). For this reason we only plot node name
+        # and color (state) and only replot when node content or states
         # change.  The full state summary contains task timing
         # information that changes continually, so we have to disregard
         # this when checking for changes. So: just extract the critical
@@ -211,7 +211,7 @@ class GraphUpdater(threading.Thread):
             if 'title' in fam_states_full[id_]:
                 f_states[id_]['title'] = fam_states_full[id_]['title']
             f_states[id_]['label'] = fam_states_full[id_]['label']
-            f_states[id_]['state'] = fam_states_full[id_]['state'] 
+            f_states[id_]['state'] = fam_states_full[id_]['state']
 
         # only update states if a change occurred, or action required
         if self.action_required:
@@ -228,7 +228,7 @@ class GraphUpdater(threading.Thread):
             return True
         else:
             return False
- 
+
     def run(self):
         glbl = None
         while not self.quit:
@@ -316,15 +316,15 @@ class GraphUpdater(threading.Thread):
         try:
             res = self.updater.sinfo.get(
                     'graph raw', ct(oldest).get(), ct(newest).get(),
-                    rawx, self.group, self.ungroup, self.ungroup_recursive, 
-                    self.group_all, self.ungroup_all) 
+                    rawx, self.group, self.ungroup, self.ungroup_recursive,
+                    self.group_all, self.ungroup_all)
         except Exception:  # PyroError
             return False
 
         # backward compatibility for old suite daemons still running
         self.have_leaves_and_feet = False
         if isinstance( res, list ):
-            # prior to suite-polling tasks in 5.4.0 
+            # prior to suite-polling tasks in 5.4.0
             gr_edges = res
             suite_polling_tasks = []
             self.leaves = []
@@ -444,7 +444,7 @@ class GraphUpdater(threading.Thread):
                 state = self.state_summary[id]['state']
                 if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
                     if state not in extra_node_ids:
-                        extra_node_ids[state] = [id] 
+                        extra_node_ids[state] = [id]
                     else:
                         extra_node_ids[state].append(id)
                     continue
@@ -467,7 +467,7 @@ class GraphUpdater(threading.Thread):
 
         # process extra nodes (important nodes outside of focus range,
         # and family members that aren't plotted in the main graph).
-        
+
         if needs_redraw:
             for state in extra_node_ids:
                 for id in extra_node_ids[state]:

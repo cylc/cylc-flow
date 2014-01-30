@@ -46,7 +46,7 @@ class rGraph( object ):
             self.update_cycling( task, oldest_ctime )
         else:
             self.update_async( task, oldest_async_tag )
- 
+
     def update_cycling( self, task, oldest ):
         # stop if all tasks are more than cutoff hours beyond suite start time
         if self.start_tag:
@@ -68,7 +68,7 @@ class rGraph( object ):
             return
         for id in task.get_resolved_dependencies():
             l = id
-            r = task.id 
+            r = task.id
             self.graph.add_edge( l,r,False )
             self.write()
 
@@ -78,13 +78,13 @@ class rGraph( object ):
         if ot > 1:
             self.finalize()
             return
-        # ignore tasks beyond the first tag 
+        # ignore tasks beyond the first tag
         tt = int( task.tag )
         if tt > 1:
             return
         for id in task.get_resolved_dependencies():
             l = id
-            r = task.id 
+            r = task.id
             self.graph.add_edge( l,r,False )
             self.write()
 

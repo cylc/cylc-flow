@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
+if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
     if remrun().execute( force_required=True ):
@@ -50,31 +50,31 @@ class stop_poller( poller ):
             return False
         else:
             return True
- 
+
     def check( self ):
         # return True if suite has stopped (success) else False
         try:
            self.proxy.get( 'ping suite' )
         except:
             # failed to ping - suite stopped
-            return True 
+            return True
         else:
             # pinged - suite must be alive
             return False
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
-1/ cylc stop REG 
+1/ cylc stop REG
    Clean shutdown - cease submitting tasks and shut down after current
 submitted and running tasks have finished, and event handlers and job
 poll and kill commands have executed.
 
-2/ cylc stop --quick REG 
+2/ cylc stop --quick REG
    Quick shutdown - cease submitting tasks and shut down without waiting
 for current submitted and running tasks to finish, but do wait for event
 handlers and job poll and kill commands to be executed.
-   
-3/ cylc stop --now REG 
+
+3/ cylc stop --now REG
    Immediate shut down - do not wait on current submitted and running
 tasks, or on queued event handlers and job poll and kill commands.
 
@@ -87,27 +87,27 @@ time STOP, or (b) all tasks have succeeded out to wall clock time STOP
 (YYYY/MM/DD-HH:mm), or (c) task ID STOP has succeeded.
 
 Note that cylc does not shut down automatically at a designated future
-cycle time (either by the "final cycle time" in the suite definition, or 
+cycle time (either by the "final cycle time" in the suite definition, or
 by usage case 5/ above) if any failed tasks are present in the suite.
 This is to ensure that failed tasks do not go unnoticed.
 
 The command exits immediately unless --max-polls is greater than zero
 in which case it polls to wait for suite shutdown.""",
-    pyro=True, argdoc=[ ("REG", "Suite name"), 
+    pyro=True, argdoc=[ ("REG", "Suite name"),
     ("[STOP]", """a/ task TAG (cycle time or integer), or
                         b/ YYYY/MM/DD-HH:mm (clock time), or
                         c/ TASK (task ID).""")] )
 
-parser.add_option( "-k", "--kill", 
+parser.add_option( "-k", "--kill",
         help="Shut down cleanly after killing any tasks currently "
         "in the submitted or running states.",
         action="store_true", default=False, dest="kill" )
 
-parser.add_option( "-n", "--now", 
+parser.add_option( "-n", "--now",
         help="Shut down immediately.",
         action="store_true", default=False, dest="now" )
 
-parser.add_option( "-Q", "--quick", 
+parser.add_option( "-Q", "--quick",
         help="Shut down after immediately after running any "
         "remaining event handlers and job poll/kill commands."
         "(see above).",
@@ -122,17 +122,17 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 shutdown_at = False
 if len( args ) == 2:
     shutdown_at = True
-    shutdown_arg = args[1] 
+    shutdown_arg = args[1]
     if options.kill:
         print >> sys.stderr, "WARNING: ignoring --kill ( not compatible with [STOP])"
         options.kill = False
- 
+
 if options.kill and ( options.now or options.quick ):
     parser.error( "ERROR: --kill is not compatible with --now or --quick" )
 
 if int(options.max_polls) > 0:
     # (test to avoid the "nothing to do" warning for # --max-polls=0)
-    spoller = stop_poller( "suite stopped", options.interval, options.max_polls, 
+    spoller = stop_poller( "suite stopped", options.interval, options.max_polls,
         args={
             'suite'   : suite,
             'pphrase' : pphrase,
@@ -169,7 +169,7 @@ if shutdown_at:
             yyyy, mm, dd = date.split('/')
             HH,MM = time.split(':')
         except:
-            # not a task ID or a date time; 
+            # not a task ID or a date time;
             try:
                 # is it a cycle time?
                 ct(shutdown_arg)

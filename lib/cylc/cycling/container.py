@@ -29,7 +29,7 @@ class cycon( object ):
     def initial_adjust_up( self, T ):
         adjusted = []
         for cyc in self.cyclers:
-            adj = cyc.initial_adjust_up(T) 
+            adj = cyc.initial_adjust_up(T)
             adjusted.append(adj)
         adjusted.sort()
         return adjusted[0]

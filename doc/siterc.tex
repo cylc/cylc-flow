@@ -4,8 +4,8 @@
 
 \lstset{language=bash}
 
-This section defines all legal items and values for cylc site and 
-user config files. See {\em Site And User Config Files} 
+This section defines all legal items and values for cylc site and
+user config files. See {\em Site And User Config Files}
 (Section~\ref{SiteAndUserConfiguration}) for file locations, intended
 usage, and how to generate the files using the
 \lstinline=cylc get-global-config= command.
@@ -57,7 +57,7 @@ safety measure, however, so command prompts are disabled by default.
 \subsubsection{enable run directory housekeeping}
 
 The suite run directory tree is created anew with every suite start
-(not restart) but output from the most recent previous runs can be 
+(not restart) but output from the most recent previous runs can be
 retained in a rolling archive. Set length to 0 to keep no backups.
 {\bf This is incompatible with current Rose suite housekeeping} (see
 Section~\ref{SuiteStorageEtc} for more on Rose) so it is disabled by
@@ -83,8 +83,8 @@ housekeeping is enabled.
 
 Cylc can poll running jobs to catch problems that prevent task messages
 from being sent back to the suite, such as hard job kills, network
-outages, or unplanned task host shutdown. Routine polling is done only 
-for the polling {\em task communication method} (below) unless 
+outages, or unplanned task host shutdown. Routine polling is done only
+for the polling {\em task communication method} (below) unless
 suite-specific polling is configured in the suite definition.
 A list of interval values can be specified, with the last value used
 repeatedly until the task is finished - this allows more frequent
@@ -101,12 +101,12 @@ Multipliers can be used as shorthand as in the example below.
 \subsubsection{submission polling intervals}
 
 Cylc can also poll submitted jobs to catch problems that prevent the
-submitted job from executing at all, such as deletion from an external 
+submitted job from executing at all, such as deletion from an external
 batch scheduler queue. Routine polling is done only for the polling {\em
 task communication method} (below) unless suite-specific polling
 is configured in the suite definition. A list of interval
 values can be specified as for execution polling (above) but a single
-value is probably sufficient for job submission polling. 
+value is probably sufficient for job submission polling.
 
 \begin{myitemize}
 \item {\em type:} list of float minutes with optional multipliers
@@ -133,7 +133,7 @@ delay interval.
 \subsubsection[maximum number of tries]{[task messaging] $\rightarrow$ maximum number of tries}
 
 If successive sends fail, the messaging code will give up after a
-configured number of tries. 
+configured number of tries.
 
 \begin{myitemize}
 \item {\em type:} integer
@@ -180,17 +180,17 @@ How many rolled logs to retain in the archive.
 
 \subsubsection[maximum size in bytes]{[suite logging] $\rightarrow$ maximum size in bytes}
 
-Suite event logs are rolled over when they reach this file size. 
+Suite event logs are rolled over when they reach this file size.
 
 \begin{myitemize}
 \item {\em type:} integer
-\item {\em default:} 1000000 
+\item {\em default:} 1000000
 \end{myitemize}
 
 \subsection{[documentation]}
 
 Documentation locations for the \lstinline=cylc doc= command and gcylc
-Help menus. 
+Help menus.
 
 \subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [files]}
 
@@ -347,14 +347,14 @@ Each suite stores its port number, by suite name, under this directory.
 The [hosts] section configures some important host-specific settings for
 the suite host (`localhost') and remote task hosts. Note that {\em
 remote task behaviour is determined by the site/user config on the
-suite host, not on the task host}. Suites can specify task hosts that 
+suite host, not on the task host}. Suites can specify task hosts that
 are not listed here, in which case local settings will be assumed,
 with the local home directory path, if present, replaced by
 \lstinline=$HOME= in items that configure directory locations.
 
 \subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ HOST}
 
-The default task host is the suite host, {\bf localhost}, with default 
+The default task host is the suite host, {\bf localhost}, with default
 values as listed below. Use an explicit \lstinline=[hosts][[localhost]]=
 section if you need to override the defaults. Localhost settings are
 then also used as defaults for other hosts, with the local home
@@ -363,18 +363,18 @@ omitted from an explicit host section, and to hosts that are not listed
 at all in the site and user config files.  Explicit host sections are only
 needed if the automatically modified local defaults are not sufficient.
 
-Host section headings can also be {\em regular expressions} to match 
+Host section headings can also be {\em regular expressions} to match
 multiple hostnames.  Note that the general regular expression wildcard
-is `\lstinline=.*=' (zero or more of any character), not 
+is `\lstinline=.*=' (zero or more of any character), not
 `\lstinline=*='.
 Hostname matching regular expressions are used as-is in the Python
-\lstinline=re.match()= function. As such they match from the beginning 
+\lstinline=re.match()= function. As such they match from the beginning
 of the hostname string (as specified in the suite definition) and they
 do not have to match through to the end of the string (use the
-string-end matching character `\lstinline=$=' in the expression to 
+string-end matching character `\lstinline=$=' in the expression to
 force this).
 
-A hierachy of host match expressions from specific to general can be 
+A hierachy of host match expressions from specific to general can be
 used because config items are processed in the order specified in the
 file.
 
@@ -442,7 +442,7 @@ default cylc runs remote ssh commands using a login shell,
 \begin{lstlisting}
   ssh user@host 'bash --login cylc ...'
 \end{lstlisting}
-which will source \lstinline=/etc/profile= and 
+which will source \lstinline=/etc/profile= and
 \lstinline=~/.profile= to set up the user environment.  However, for
 security reasons some institutions do not allow unattended commands to
 start login shells, so you can turn off this behaviour to get,
@@ -488,7 +488,7 @@ and manually specify the host name or IP address of the suite host.
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em options:} 
+\item {\em options:}
 \begin{myitemize}
     \item name - self-identified host name
     \item address - automatically determined IP address (requires {\em target}, below)
@@ -511,7 +511,7 @@ intranet.
 
 \subsubsection[host]{[suite host self-identification] $\rightarrow$ host }
 
-Use this item to explicitly set the name or IP address of the suite host  
+Use this item to explicitly set the name or IP address of the suite host
 if you have to use the {\em hardwired} self-identification method.
 \begin{myitemize}
 \item {\em type:} string (host name or IP address)

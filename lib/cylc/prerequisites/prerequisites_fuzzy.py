@@ -51,7 +51,7 @@ class fuzzy_prerequisites( prerequisites ):
                 bounds = two + ':' + two
                 message = re.sub( '\d{10}', bounds, message )
             else:
-                log = logging.getLogger( "main." + self.task_name )            
+                log = logging.getLogger( "main." + self.task_name )
                 log.critical( '[' + self.c_time + '] No fuzzy bounds or ref time detected:' )
                 log.critical( '[' + self.c_time + '] -> ' + message )
                 sys.exit(1)
@@ -66,7 +66,7 @@ class fuzzy_prerequisites( prerequisites ):
         self.satisfied[ sharp ] = True
 
     def satisfy_me( self, outputs ):
-        log = logging.getLogger( "main." + self.task_name )            
+        log = logging.getLogger( "main." + self.task_name )
         # can any completed outputs satisfy any of my unsatisfied prequisites?
         for prereq in self.get_not_satisfied_list():
             # for each of my unsatisfied prerequisites
@@ -82,7 +82,7 @@ class fuzzy_prerequisites( prerequisites ):
                 if not m:
                     # this output can't possibly satisfy a fuzzy so move on
                     continue
-                
+
                     [ other_start, other_ctime, other_end ] = m.groups()
 
                     if other_start == my_start and other_end == my_end and other_ctime >= my_min and other_ctime <= my_max:
@@ -91,7 +91,7 @@ class fuzzy_prerequisites( prerequisites ):
                     else:
                         continue
 
-            if found_at_least_one: 
+            if found_at_least_one:
                 # choose the most recent possible satisfier
                 possible_ctimes = possible_satisfiers.keys()
                 possible_ctimes.sort( key = int, reverse = True )

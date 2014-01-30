@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -51,7 +51,7 @@ EVENT=$1      # e.g. "shutdown"
 SUITE=$2      # suite name
 MESSAGE=$3
 
-MAIL_SUBJECT="!!cylc alert!! suite $SUITE $EVENT" 
+MAIL_SUBJECT="!!cylc alert!! suite $SUITE $EVENT"
 MAIL_ADDRESS=${MAIL_ADDRESS:-$USER@$HOSTNAME}
 MAIL_BODY="SUITE: $SUITE
 MESSAGE: $MESSAGE"

@@ -25,7 +25,7 @@ class outputs( object ):
     def __init__( self, owner_id ):
 
         self.owner_id = owner_id
-        # Store completed and not-completed outputs in separate 
+        # Store completed and not-completed outputs in separate
         # dicts to allow quick passing of completed to the broker.
 
         # Using rhs of dict as a cheap way to get owner ID to receiving
@@ -94,7 +94,7 @@ class outputs( object ):
             self.not_completed[message] = self.owner_id
         else:
             self.completed[message] = self.owner_id
- 
+
     def remove( self, message, fail_silently=False ):
         if message in self.completed:
             del self.completed[ message ]

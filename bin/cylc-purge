@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
+if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
     if remrun().execute( force_required=True ):
@@ -46,7 +46,7 @@ WARNING: THIS COMMAND IS DANGEROUS but in case of disaster you can
 restart the suite from the automatic pre-purge state dump (the filename
 will be logged by cylc before the purge is actioned.)
 
-UNDERSTANDING HOW PURGE WORKS: cylc identifies tasks that depend on 
+UNDERSTANDING HOW PURGE WORKS: cylc identifies tasks that depend on
 the top task, and then on its downstream dependents, and then on
 theirs, etc., by simulating what would happen if the top task were to
 trigger: it artificially sets the top task to the "succeeded" state
@@ -65,7 +65,7 @@ purge gap or runahead-held tasks may prevent the purge completing fully.
 [development note: post cylc-3.0 we could potentially use the suite
 graph to determine downstream tasks to remove, without doing this
 internal triggering simulation.]""",
-    pyro=True, argdoc=[("REG", "Suite name"), 
+    pyro=True, argdoc=[("REG", "Suite name"),
                 ("TASK", "Task (NAME.CYCLE) to start purge"),
                 ("STOP", "Cycle (inclusive!) to stop purge")])
 

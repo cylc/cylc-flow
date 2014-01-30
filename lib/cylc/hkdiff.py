@@ -46,7 +46,7 @@ class diff:
                 if flags.verbose:
                     print self.indent + "Source and target differ in size"
                 raise NonIdenticalTargetError, 'WARNING: source and target differ in size'
- 
+
             else:
                 # size same, file may differ
                 if flags.verbose:
@@ -110,5 +110,5 @@ if __name__ == "__main__":
         else:
             print usage
             sys.exit(1)
-    
+
     diff( src, chk, verbose, cheap ).execute()

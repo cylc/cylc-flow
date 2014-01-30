@@ -23,7 +23,7 @@ import string
 from mkdir_p import mkdir_p
 from suite_host import get_hostname, is_remote_host
 from owner import user, is_remote_user
-import flags 
+import flags
 
 class SecurityError( Exception ):
     """
@@ -81,8 +81,8 @@ implies a common filesystem or a different remote suite that happens to
 be registered under the same name. User accounts used for remote control
 must therefore install the passphrase in the secondary standard
 locations (below) or use the command line option to explicitly reveal
-the location. Remote tasks with 'ssh messaging = True' look first in the 
-suite definition directory of the suite host, which they know through 
+the location. Remote tasks with 'ssh messaging = True' look first in the
+suite definition directory of the suite host, which they know through
 the variable CYLC_SUITE_DEF_PATH_ON_SUITE_HOST in the task execution
 environment.
 

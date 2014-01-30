@@ -74,7 +74,7 @@ class RecordStateObject(object):
         self.s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         if time_updated is not None:
             time_updated = time_updated.strftime("%Y-%m-%dT%H:%M:%S")
-        self.args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"), 
+        self.args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"),
                      time_updated, submit_num, is_manual_submit, try_num, host,
                      submit_method, submit_method_id, status]
         self.to_run = True
@@ -97,7 +97,7 @@ class ThreadedCursor(Thread):
         self.reqs=Queue()
         self.start()
     def run(self):
-        cnx = sqlite3.Connection(self.db) 
+        cnx = sqlite3.Connection(self.db)
         cursor = cnx.cursor()
         counter = 0
         while True:
@@ -232,7 +232,7 @@ class CylcRuntimeDAO(object):
         count = self.c.select(s_fmt, args).next()[0]
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
-    
+
     def get_task_current_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
         args = [name, cycle, "submitting now"]
@@ -252,7 +252,7 @@ class CylcRuntimeDAO(object):
             return row[0]
 
     def get_task_location(self, name, cycle):
-        s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==? 
+        s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==?
                    AND event=="submission succeeded" AND misc!=""
                    ORDER BY submit_num DESC LIMIT 1"""
         args = [name, cycle]
@@ -260,15 +260,15 @@ class CylcRuntimeDAO(object):
         return res
 
     def get_task_sumbit_method_id_and_try(self, name, cycle):
-        s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==? 
+        s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==?
                    ORDER BY submit_num DESC LIMIT 1"""
         args = [name, cycle]
         res = self.c.select(s_fmt, args).next()
-        return res        
+        return res
 
     def run_db_op(self, db_oper):
         if isinstance(db_oper, BulkDBOperObject):
             self.c.execute(db_oper.s_fmt, db_oper.args, bulk=True)
         else:
             self.c.execute(db_oper.s_fmt, db_oper.args)
-    
+

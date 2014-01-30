@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if '--use-ssh' in sys.argv[1:]: 
+if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
     if remrun().execute( force_required=True ):
@@ -32,14 +32,14 @@ import cylc.flags
 parser = cop( """cylc [control] reset [OPTIONS] ARGS
 
 Reset one or more tasks in a running suite to one of the following states:
-  * 'waiting' .... prerequisites not satisfied 
+  * 'waiting' .... prerequisites not satisfied
   * 'ready' ...... prerequisites satisfied
   * 'succeeded' .. outputs completed
-  * 'failed' ..... failed 
+  * 'failed' ..... failed
 
 Additionally you can choose:
   * 'spawn' ...... force tasks to spawn if they haven't done so already
- 
+
 Tasks set to 'ready' will trigger immediately (see also "cylc trigger").
 
 """ + multitask_usage, pyro=True, multitask=True,
@@ -49,7 +49,7 @@ Tasks set to 'ready' will trigger immediately (see also "cylc trigger").
 
 allowed_states = ['waiting', 'ready', 'succeeded', 'failed', 'spawn']
 
-parser.add_option( "-s", "--state", metavar="STATE", 
+parser.add_option( "-s", "--state", metavar="STATE",
         help="Reset task state to STATE, "
         "must be one of " + ' '.join( allowed_states ),
         action="store", default=None, dest="state" )

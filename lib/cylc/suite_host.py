@@ -111,13 +111,13 @@ def is_remote_host(name):
     if not name or name == "localhost":
         return False
     try:
-        ipa = socket.gethostbyname(name) 
+        ipa = socket.gethostbyname(name)
     except Exception, e:
         print >> sys.stderr, str(e)
         raise Exception( 'ERROR, host not found: ' + name )
     host_ip_address = get_host_ip_address()
     # local IP address of the suite host (may be 127.0.0.1, for e.g.)
-    local_ip_address = socket.gethostbyname(get_hostname()) 
+    local_ip_address = socket.gethostbyname(get_hostname())
     return name and ipa != host_ip_address and ipa != local_ip_address
 
 if __name__ == "__main__":

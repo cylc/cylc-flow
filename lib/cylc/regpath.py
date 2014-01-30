@@ -38,7 +38,7 @@ class RegPath(object):
         # Suite registration paths may contain [a-zA-Z0-9_.-]. They may
         # not contain colons, which would interfere with PATH variables.
         if re.search( '[^\w.-]', rpath ):
-            raise IllegalRegPathError( rpath ) 
+            raise IllegalRegPathError( rpath )
         # If the path ends in delimiter it must be a group, otherwise it
         # may refer to a suite or a group. NOTE: this information is not
         # currently used.

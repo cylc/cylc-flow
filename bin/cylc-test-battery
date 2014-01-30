@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -20,7 +20,7 @@ usage() {
   cat <<eof
 USAGE: cylc test-battery [OPTIONS] [SUBSET]
 
-Run a battery of tests held under \$CYLC_DIR/tests/. If SUBSET is specified 
+Run a battery of tests held under \$CYLC_DIR/tests/. If SUBSET is specified
 then only run the tests in \$CYLC_DIR/tests/SUBSET.
 
 Some of the tests use suites which submit test jobs to a task host and
@@ -30,15 +30,15 @@ user account taken from the environment:
 These default to localhost and \$USER. Passwordless ssh must be
 configured to the task host account (even if it is local).
 
-For passed test suites, log files and suite run directories are automatically 
-cleaned up on the suite host, but not on remote task hosts. Test suites that 
+For passed test suites, log files and suite run directories are automatically
+cleaned up on the suite host, but not on remote task hosts. Test suites that
 fail are kept in the cylc-run directory to allow manual interrogation.
 
 For more information see "Reference Tests" in the User Guide.
 
 Options:
   -h, --help   Print this help message and exit.
-  
+
 Supports all the options of "prove".
 eof
 }

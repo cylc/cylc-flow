@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -34,7 +34,7 @@ if os.path.isdir( gitd ) or os.path.isfile( gitd ):
         cylc_version = res[1][0]
     else:
         raise SystemExit( "Failed to get version number!")
- 
+
 else:
     # We're running in a raw cylc source tree, so read the version
     # file created by 'make' after unpacking the tarball.

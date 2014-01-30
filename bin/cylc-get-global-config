@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +21,7 @@ from optparse import OptionParser
 from cylc.version import cylc_version
 import cylc.flags
 
-parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS] 
+parser = OptionParser( usage = """cylc [admin] get-global-config [OPTIONS]
 
 Print settings from the cylc site and user config files.
 
@@ -55,7 +55,7 @@ parser.add_option( "--print-run-dir",
         help="Display the site configured run directory",
         action="store_true", default=False, dest="run_dir" )
 
-parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+parser.add_option( "-i", "--item", metavar="[SEC...]ITEM",
         help="The config item to print. Can be used multiple "
         "times on the same command line.",
         action="append", dest="item", default=[] )

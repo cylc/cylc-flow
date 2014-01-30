@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -32,8 +32,8 @@ n_diff = 0
 def diffdict( one, two, oone, otwo, diff ):
     global n_oone, n_otwo, n_diff
     # Recursively difference two dictionaries in which any element
-    # may be another dictionary, keeping items that appear only 
-    # in one or the other, and items that appear in both but differ. 
+    # may be another dictionary, keeping items that appear only
+    # in one or the other, and items that appear in both but differ.
     for key in one:
         if key not in two:
             oone[key] = one[key]
@@ -76,7 +76,7 @@ def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
         if isinstance( dct[key], dict ):
             lvl = level + 1
             if nested:
-                pre = prfx + '\n' + '   '*lvl 
+                pre = prfx + '\n' + '   '*lvl
             else:
                 pre = prfx
             prdict( dct[key], arrow, pre + '['*lvl + str(key) + ']'*lvl, lvl, diff, nested )
@@ -107,7 +107,7 @@ Note that seemingly identical suites normally differ due to inherited
 default configuration values (e.g. the default job submission log
 directory.
 
-Files in the suite bin directory and other sub-directories of the 
+Files in the suite bin directory and other sub-directories of the
 suite definition directory are not currently differenced.""",
     jset=True, prep=True, twosuites=True,
     argdoc=[('SUITE1', 'Suite name or path'), ('SUITE2', 'Suite name or path')] )

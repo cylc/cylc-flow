@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -109,23 +109,23 @@ GRAPH VIEWER CONTROLS:
     * "group" - close this node's parent family.
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
-    jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'), 
+    jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'),
         ('[START]', 'Initial cycle time to plot (default=2999010100)'),
         ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
 
-#parser.add_option( "-l", "--live", 
+#parser.add_option( "-l", "--live",
 #    help="Update image in real time if the source file changes. Otherwise "
 #    "the user can hit the viewer Refresh button.  This option is OFF by "
 #    "default because the graph will recenter when refreshed, which is "
 #    "unhelpful if you are studying a panned, zoomed image.",
 #    action="store_true", default=False, dest="updatelive" )
 
-parser.add_option( "-n", "--namespaces", 
+parser.add_option( "-n", "--namespaces",
     help="Plot the suite namespace inheritance hierarchy "
     "(task run time properties).",
     action="store_true", default=False, dest="namespaces" )
 
-parser.add_option( "-f", "--file", 
+parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
 
@@ -197,10 +197,10 @@ else:
             # timedelta: days, seconds, microseconds; ignoring microseconds
             #stop = stop_delta.days * 24 + stop_delta.seconds / 3600
         else:
-            stop_ctime = start_ctime 
+            stop_ctime = start_ctime
 
     window = MyDotWindow( suite, suiterc, options.templatevars,
-                          options.templatevars_file, watchers, 
+                          options.templatevars_file, watchers,
                           start_ctime, stop_ctime )
 
 window.widget.connect( 'clicked', on_url_clicked, window )

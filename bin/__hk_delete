@@ -29,7 +29,7 @@ class hk_delete:
          + Do not delete if the target item does not exist.
          + Do not delete, and Warn, if the target exists but differs from the source.
     """
- 
+
     def __init__( self, src, tdir=None, cheap=False ):
         self.cheap = cheap
         self.src = src
@@ -50,7 +50,7 @@ class hk_delete:
             if not os.path.exists( target ):
                 print "NOT DELETING: target does not exist"
                 return
-            else: 
+            else:
                 try:
                     diff( self.src, target, cheap=self.cheap ).execute()
                 except NonIdenticalTargetError, x:
@@ -68,16 +68,16 @@ class hk_delete:
             os.unlink( self.src )
         print "SUCCEEDED"
         return
-                
+
 if __name__ == "__main__":
     # THE CYLC HOUSEKEEPING UTILITY PROGRAM USES THIS COMMAND
     parser = OptionParser( """__hk_delete [options] SRC [DIR]
-    
+
 Arguments:
   SRC    - source item (directory or file) to delete
   DIR    - destination directory""")
 
-    parser.add_option( "-c", "--cheap-diff", 
+    parser.add_option( "-c", "--cheap-diff",
             help="assume that files with the same size are identical",
             action="store_true", default=False, dest="cheapdiff" )
 

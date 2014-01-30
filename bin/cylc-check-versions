@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -41,7 +41,7 @@ default, or (like tasks) a particular version if $CYLC_VERSION is defined.
 Remote cylc versions are interrogated like this:
   ssh user@host \\
      "bash --login -c 'CYLC_VERSION=""" + cylc_version + """ cylc -v'"
-A login shell is used because task job scripts currently source login 
+A login shell is used because task job scripts currently source login
 scripts explicitly at start-up to configure access to cylc.""",
 prep=True, jset=True )
 
@@ -53,10 +53,10 @@ parser.add_option( "-e", "--error", help="Exit with error status "
 
 # suite name or file path
 suite, suiterc, junk = parser.get_suite()
-    
+
 # extract task host accounts from the suite
 try:
-    config = config( suite, suiterc, 
+    config = config( suite, suiterc,
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file)
 except Exception,x:

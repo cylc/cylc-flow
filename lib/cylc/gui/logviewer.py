@@ -29,7 +29,7 @@ class logviewer(object):
         self.name = name
         self.dir = dir
         self.file = file
-        
+
         self.find_current = None
         self.find_current_iter = None
         self.search_warning_done = False
@@ -56,14 +56,14 @@ class logviewer(object):
         if self.dir:
             return self.dir + '/' + self.file
         else:
-            return self.file 
+            return self.file
 
     def connect( self ):
         self.t = tailer( self.logview, self.path(),
                 warning_re=self.warning_re, critical_re=self.critical_re)
         ####print "Starting log viewer thread for " + self.name
         self.t.start()
-   
+
     def quit_w_e( self, w, e ):
         self.t.quit = True
 
@@ -106,7 +106,7 @@ class logviewer(object):
             s = tb.get_end_iter()
             tv.scroll_to_iter( s, 0 )
         try:
-            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
+            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY)
         except:
             warning_dialog( '"' + needle + '"' + " not found" ).warn()
         else:
@@ -135,7 +135,7 @@ class logviewer(object):
         # Use a monospace font. This is safe - by testing - setting an
         # illegal font description has no effect.
         self.logview.modify_font( pango.FontDescription("monospace") )
- 
+
         searchbox = gtk.HBox()
         entry = gtk.Entry()
         entry.connect( "activate", self.enter_clicked, self.logview )

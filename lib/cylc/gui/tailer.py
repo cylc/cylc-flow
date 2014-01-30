@@ -36,7 +36,7 @@ class tailer(threading.Thread):
         self.critical_re = critical_re
         self.warning_tag = self.logbuffer.create_tag( None, foreground = "#a83fd3" )
         self.critical_tag = self.logbuffer.create_tag( None, foreground = "red" )
- 
+
     def clear( self ):
         s,e = self.logbuffer.get_bounds()
         self.logbuffer.delete( s,e )
@@ -50,9 +50,9 @@ class tailer(threading.Thread):
             # feed using 'ssh owner@host tail -f file' in a subprocess
             # because p.stdout.readline() blocks waiting for more output.
             #   Use shell=True in case the task owner is defined by
-            # environment variable (e.g. owner=nwp_$SYS, where 
+            # environment variable (e.g. owner=nwp_$SYS, where
             # SYS=${HOME##*_} for usernames like nwp_oper, nwp_test)
-            #   But quote the remote command so that '$HOME' in it is 
+            #   But quote the remote command so that '$HOME' in it is
             # interpreted on the remote machine.
             loc, file = self.logfile.split(':')
             command = ["ssh -oBatchMode=yes " + loc + " 'cat " + file + "'"]
@@ -104,14 +104,14 @@ class tailer(threading.Thread):
                     self.proc.poll()
                 # The following doesn't work, not sure why, perhaps because
                 # the top level subprocess finishes before the next one
-                # (shows terminated too soon). 
+                # (shows terminated too soon).
                 #    if self.proc.poll() != None:
                 #        (poll() returns None if process hasn't finished yet.)
                 #        #print 'process terminated'
                 #        gobject.idle_add( self.update_gui, '(PROCESS COMPLETED)\n' )
                 #        break
             #print "Disconnecting from tailer thread"
- 
+
     def update_gui( self, line ):
         if self.critical_re and re.search( self.critical_re, line ):
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.critical_tag )

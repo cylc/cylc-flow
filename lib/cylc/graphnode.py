@@ -23,7 +23,7 @@ NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-]\s*\d+)\s*\]){0,1}(:[\w-]+){0,1}$
 class GraphNodeError( Exception ):
     """
     Attributes:
-        message - what the problem is. 
+        message - what the problem is.
     """
     def __init__( self, msg ):
         self.msg = msg

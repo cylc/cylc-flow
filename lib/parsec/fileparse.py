@@ -59,7 +59,7 @@ _KEY_VALUE = re.compile(r'''^
 # single-quoted value and trailing string (checked for comment below)
 
 # BROKEN: CANNOT HAVE BACKREFERENCE IN CHARACTER CLASS []
-BROKEN_SQ_VALUE = re.compile( 
+BROKEN_SQ_VALUE = re.compile(
 r"""
     ('|")            # 1: opening quote
     (                # 2: string contents
@@ -73,7 +73,7 @@ r"""
     (?:\s*\#.*)?$    # optional trailing comment
     """, re.VERBOSE )
 
-_SQ_VALUE = re.compile( 
+_SQ_VALUE = re.compile(
 r"""
     (?:'            # opening quote
     (                # 1: string contents
@@ -87,7 +87,7 @@ r"""
     (?:\s*(?:\#.*)?)?$    # optional trailing comment
     """, re.VERBOSE )
 
-_DQ_VALUE = re.compile( 
+_DQ_VALUE = re.compile(
 r"""
     (?:"            # opening quote
     (                # 1: string contents
@@ -128,7 +128,7 @@ class ParseError( Exception ):
 
 class FileNotFoundError( ParseError ):
     pass
- 
+
 def _concatenate( lines ):
     """concatenate continuation lines"""
     index = 0
@@ -289,11 +289,11 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
     # concatenate continuation lines
     if do_contin:
         flines = _concatenate( flines )
-   
+
     # return rstripped lines
     return [ l.rstrip() for l in flines ]
 
-def parse( fpath, write_processed_file=False, 
+def parse( fpath, write_processed_file=False,
         template_vars=[], template_vars_file=None ):
     """
     Parse a nested config file and return a corresponding nested dict.

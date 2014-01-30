@@ -55,13 +55,13 @@ class CylcSuiteDBChecker(object):
         else:
             for row in res:
                 sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
-            
+
     def state_lookup(self, state): #allows for multiple states to be searched via a status alias
         if self.STATE_ALIASES.has_key(state):
             return self.STATE_ALIASES[state]
         else:
             return state
-            
+
     def suite_state_query(self, task=None, cycle=None, status=None, mask=None):
         """run a query on the suite database"""
         vals = []
@@ -77,7 +77,7 @@ class CylcSuiteDBChecker(object):
             additionals.append("cycle==?")
             vals.append(cycle)
         if status is not None:
-            st = self.state_lookup(status)  
+            st = self.state_lookup(status)
             if type(st) is list:
                 add = []
                 for s in st:
@@ -91,7 +91,7 @@ class CylcSuiteDBChecker(object):
             q = q_base + " where " + (" AND ").join(additionals)
         else:
             q = q_base
-        
+
         try:
             self.c.execute(q,vals)
             next = self.c.fetchmany()
@@ -101,7 +101,7 @@ class CylcSuiteDBChecker(object):
         except:
             sys.stderr.write("unable to query suite database\n")
             sys.exit(1)
-            
+
         return res
 
     def task_state_getter(self, task, cycle):

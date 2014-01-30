@@ -29,7 +29,7 @@ class controlled_option_group(object):
         if reverse:
             self.checkbutton.set_active(True)
             self.greyout()
-        
+
     def greyout( self, data=None ):
         if self.checkbutton.get_active():
             for name in self.entries:
@@ -63,14 +63,14 @@ class controlled_option_group(object):
         self.entries[ name ] = ( entry, label, option )
 
     def pack( self, vbox ):
-        vbox.pack_start( self.checkbutton ) 
-        for name in self.entries: 
+        vbox.pack_start( self.checkbutton )
+        for name in self.entries:
             ( entry, label, option ) = self.entries[name]
             box = gtk.HBox()
             box.pack_start( label, True )
             box.pack_start( entry, True )
             vbox.pack_start( box )
-        for name in self.arg_entries: 
+        for name in self.arg_entries:
             ( entry, label ) = self.entries[name]
             box = gtk.HBox()
             box.pack_start( label, True )
@@ -100,7 +100,7 @@ class option_group(object):
     def __init__( self ):
         self.entries = {}        # name -> ( entry, label, option )
         self.arg_entries = {}    # name -> ( entry, label )
-        
+
     def add_arg_entry( self, name, max_chars=None, default=None ):
         label = gtk.Label( name )
         entry = gtk.Entry()
@@ -120,13 +120,13 @@ class option_group(object):
         self.entries[ name ] = ( entry, label, option )
 
     def pack( self, vbox ):
-        for name in self.entries: 
+        for name in self.entries:
             ( entry, label, option ) = self.entries[name]
             box = gtk.HBox()
             box.pack_start( label, True )
             box.pack_start( entry, True )
             vbox.pack_start( box )
-        for name in self.arg_entries: 
+        for name in self.arg_entries:
             ( entry, label ) = self.arg_entries[name]
             box = gtk.HBox()
             box.pack_start( label, True )

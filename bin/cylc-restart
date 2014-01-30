@@ -348,7 +348,7 @@ where they got to while the suite was down."""
                 print >> sys.stderr, "ERROR: could not load task", name, "from the suite state dump file"
                 # TODO: Is it safe to have "raise x" here?
                 continue
-                
+
 
             # see comments above on resurrecting tasks
 

@@ -22,7 +22,7 @@ from task import task
 from cylc.cycle_time import ct
 from copy import deepcopy
 
-# Cycling tasks: cycle time also required for a cold start. Init with: 
+# Cycling tasks: cycle time also required for a cold start. Init with:
 #  (1) cycle time
 #  (2) state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')
 
@@ -45,14 +45,14 @@ from copy import deepcopy
 # state values found in the state dump file.
 
 class cycling( task ):
-    
+
     intercycle = False
     # This is a statement that the task has only cotemporal dependants
     # and as such can be deleted as soon as there are no unsucceeded
     # tasks with cycle times equal to or older than its own cycle time
-    # (prior to that we can't be sure that an older unsucceeded 
+    # (prior to that we can't be sure that an older unsucceeded
     # task won't give rise to a new task that does depend on the task
-    # we're interested in). 
+    # we're interested in).
     is_cycling = True
 
     # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
@@ -63,7 +63,7 @@ class cycling( task ):
         # Derived class init MUST define:
         #  * self.id after calling self.nearest_c_time()
         #  * prerequisites and outputs
-        #  * self.env_vars 
+        #  * self.env_vars
 
         # Top level derived classes must define:
         #   <class>.instance_count = 0
@@ -79,7 +79,7 @@ class cycling( task ):
 
     def get_state_summary( self ):
         summary = task.get_state_summary( self )
-        # derived classes can call this method and then 
+        # derived classes can call this method and then
         # add more information to the summary if necessary.
         summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
         return summary

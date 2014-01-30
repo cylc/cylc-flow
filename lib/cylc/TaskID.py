@@ -76,7 +76,7 @@ class CycleTime( object ):
         self.seconds = self.strvalue[12:14]
         self.HHmmss  = self.strvalue[8:14 ]
         self.MMDDHHmmss  = self.strvalue[4:14 ]
- 
+
         # convert to datetime as a validity check
         try:
             self.dtvalue = datetime.datetime( int(self.year), int(self.month),
@@ -100,24 +100,24 @@ class CycleTime( object ):
     def get_datetime( self ):
         return self.dtvalue
 
-    def _str_from_datetime( self, dt ): 
+    def _str_from_datetime( self, dt ):
         return strftime( dt, "%Y%m%d%H%M%S" )
 
     def increment( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
-            microseconds=0, milliseconds=0 ): 
+            microseconds=0, milliseconds=0 ):
         # Can't increment by years or months easily - they vary in length.
         newdt = self.dtvalue + \
                 datetime.timedelta( int(days), int(seconds),
-                        int(microseconds), int(milliseconds), 
+                        int(microseconds), int(milliseconds),
                         int(minutes), int(hours), int(weeks) )
         self.parse( self._str_from_datetime( newdt ))
 
     def decrement( self, weeks=0, days=0, hours=0, minutes=0, seconds=0,
-            microseconds=0, milliseconds=0 ): 
+            microseconds=0, milliseconds=0 ):
         # Can't decrement by years or months easily - they vary in length.
         newdt = self.dtvalue - \
                 datetime.timedelta( int(days), int(seconds),
-                        int(microseconds), int(milliseconds), 
+                        int(microseconds), int(milliseconds),
                         int(minutes), int(hours), int(weeks) )
         self.parse( self._str_from_datetime( newdt ))
 
@@ -157,7 +157,7 @@ class TaskID(object):
             name, tag = id.split( self.DELIM )
         except ValueError:
             raise InvalidTaskIDError, id
- 
+
         self.name = TaskName(name)
 
         try:
@@ -200,7 +200,7 @@ if __name__ == "__main__":
 
     # GOOD
     try:
-        foo = TaskID( "foo.1") 
+        foo = TaskID( "foo.1")
     except TaskIDError, x:
         print x
     else:
