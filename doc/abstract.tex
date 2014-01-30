@@ -1,6 +1,6 @@
 \begin{abstract}
 
-    {\em Cylc} (``silk'') is a 
+    {\em Cylc} (``silk'') is a
     metascheduler\footnote{A metascheduler determines when dependent
     jobs are {\em ready to run} and then submits them to run by other
     means, usually a batch queue scheduler. The
@@ -17,7 +17,7 @@
     artificially by forecast cycle\footnote{A {\em forecast cycle}
     comprises all tasks with a common {\em cycle time}, i.e.\ the
     analysis time or nominal start time of a forecast model, or that of
-    the associated forecast model(s) for other tasks.} (each task 
+    the associated forecast model(s) for other tasks.} (each task
     has a private cycle time and is self-spawning - there is no
     suite-wide cycle time) and handles dependencies within and between
     cycles equally so that tasks from multiple cycles can run at
@@ -26,7 +26,7 @@
     suites are typically driven by real time observational data or
     timely model fields from an external forecasting system.} for upcoming
     cycles are available in advance: cylc suites can catch up from
-    delays very quickly, parallel test suites can be started 
+    delays very quickly, parallel test suites can be started
     behind the main operation to catch up quickly, and one can
     likewise achieve greater throughput in historical case studies; the
     usual sequence of distinct forecast cycles emerges naturally if a
@@ -38,7 +38,7 @@
     external environment: tasks not directly affected will carry on
     cycling as normal while the problem is addressed, and then the
     affected tasks will catch up as quickly as possible. Cylc has
-    comprehensive command line and graphical interfaces, including a 
+    comprehensive command line and graphical interfaces, including a
     dependency graph based suite control GUI. Other notable features
     include suite databases; a fast simulation mode; a structured,
     validated suite definition file format; dependency graph plotting;
