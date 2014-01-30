@@ -68,10 +68,9 @@ def get_task_host( cfg_item ):
             raise Exception( "Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
 
     try:
-        is_remote = is_remote_host(host)
+        if is_remote_host(host):
+            return host
+        else:
+            return "localhost"
     except:
-        is_remote = False
-    if is_remote:
         return host
-    else:
-        return "localhost"
