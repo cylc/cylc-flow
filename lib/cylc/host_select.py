@@ -2,7 +2,7 @@
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
-#C: 
+#C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
 #C: the Free Software Foundation, either version 3 of the License, or
@@ -18,25 +18,31 @@
 
 import os, re
 from cylc.run_get_stdout import run_get_stdout
+from cylc.suite_host import is_remote_host
 
 def get_task_host( cfg_item ):
-    """
-    Evaluate a host-selection command or environment variable, if
-    present, or else return the original explicit hostname.
+    """Evaluate a task host string.
+
+    E.g.:
 
     [runtime]
         [[NAME]]
             [[[remote]]]
                 host = cfg_item
 
-    cfg_item may be an explicit host name, a command in back-tick or
-    $(command) format, or an environment variable holding a hostname.
+    cfg_item -- An explicit host name, a command in back-tick or $(command)
+                format, or an environment variable holding a hostname.
+
+    Return "localhost" if cfg_item is not defined or if the evaluated host name
+    is equivalent to "localhost". Otherwise, return the evaluated host name on
+    success.
+
     """
 
     host = cfg_item
 
     if not host:
-        return host
+        return "localhost"
 
     # 1) host selection command: $(command) or `command`
     m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
@@ -52,7 +58,7 @@ def get_task_host( cfg_item ):
             raise Exception("Host selection by " + host + " failed\n  " + '\n'.join(res[1]) )
 
     # 2) environment variable: ${VAR} or $VAR
-    # (any quotes are stripped by file parsing) 
+    # (any quotes are stripped by file parsing)
     n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', host )
     if n:
         var = n.groups()[0]
@@ -61,5 +67,11 @@ def get_task_host( cfg_item ):
         except KeyError, x:
             raise Exception( "Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
 
-    return host
-
+    try:
+        is_remote = is_remote_host(host)
+    except:
+        is_remote = False
+    if is_remote:
+        return host
+    else:
+        return "localhost"

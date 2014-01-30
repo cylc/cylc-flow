@@ -68,7 +68,7 @@ else:
     namespaces = result.keys()
     accounts = set()
     for name in namespaces:
-        host = get_task_host( config.get_config( ['runtime', name, 'remote', 'host'] )) or 'localhost'
+        host = get_task_host( config.get_config( ['runtime', name, 'remote', 'host'] ))
         owner = config.get_config( ['runtime', name, 'remote', 'owner'] )
         if owner:
             account = owner + '@' + host
