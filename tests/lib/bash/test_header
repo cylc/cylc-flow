@@ -54,8 +54,10 @@
 #         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
 #     purge_suite SUITE_NAME
 #         Tidy up test directories for SUITE_NAME.
-#     skip_tests N SKIP_REASON
-#         echo "ok $((++T)) # skip SKIP_REASON" N times, where the number to skip.
+#     skip N SKIP_REASON
+#         echo "ok $((++T)) # skip SKIP_REASON" N times.
+#     skip_all SKIP_REASON
+#         echo "1..0 # SKIP SKIP_REASON" and exit.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -252,6 +254,11 @@ function skip() {
     while ((COUNT++ < N_TO_SKIP)); do
         echo "ok $((++TEST_NUMBER)) # skip $@"
     done
+}
+
+function skip_all() {
+    echo "1..0 # SKIP $@"
+    exit
 }
 
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}

@@ -18,13 +18,12 @@
 #C: Test cat-log, localhost
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-N_TESTS=4
-set_test_number $N_TESTS
 export CYLC_TEST_HOST=$(cylc get-global-config -i '[test battery]remote host')
 if [[ -z $CYLC_TEST_HOST ]]; then
-    skip $N_TESTS '[test battery]remote host: not defined'
-    exit
+    skip_all '[test battery]remote host: not defined'
 fi
+N_TESTS=4
+set_test_number $N_TESTS
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 set -eu
 ssh -oBatchMode=yes -oConnectTimeout=5 $CYLC_TEST_HOST \
