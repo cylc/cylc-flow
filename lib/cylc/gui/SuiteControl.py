@@ -2099,16 +2099,19 @@ shown here in the state they were in at the time of triggering.''' )
     def insert_task( self, w, window, entry_match, entry_tag, entry_stoptag, fam_cb ):
         match = entry_match.get_text()
         tag = entry_tag.get_text()
+        is_family = fam_cb.get_active()
+        stoptag = entry_stoptag.get_text()
+
         if match == '' or tag == '':
             warning_dialog( "Enter task or family name MATCH expression", self.window ).warn()
             return
+
         window.destroy()
 
-        is_family = fam_cb.get_active()
-        stoptag = entry_stoptag.get_text()
         stop = None
         if stoptag != '':
             stop = stoptag
+
         try:
             result = self.get_pyro( 'command-interface' ).put( 'insert task', match, tag, is_family, stop )
         except Exception, x:
