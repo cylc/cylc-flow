@@ -16,10 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import Queue
 from batch_submit import task_batcher
 from task_types import task
 import flags
+from Pyro.errors import NamingError, ProtocolError
+from cycle_time import ctime_gt
 
 class pool(object):
     def __init__( self, suite, config, wireless, pyro, log, run_mode ):
@@ -64,7 +67,15 @@ class pool(object):
             self.queues = self.new_queues
 
     def add( self, itask ):
-        """Add the given new task if one with the same ID does not already exist"""
+        """
+        Add the given new task if one with the same ID does not already
+        exist, and if the task has not passed its own stop cycle (if it
+        has a stop cycle).
+        """
+        if itask.stop_c_time and ctime_gt( itask.c_time, itask.stop_c_time ):
+            self.log.warning( itask.id + ' not adding to pool: task beyond its own stop cycle' )
+            return False
+
         if self.id_exists( itask.id ):
             # This can happen by manual insertion of task that is
             # already in the pool, or if an inserted cycling task
