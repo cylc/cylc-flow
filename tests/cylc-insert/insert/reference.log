@@ -1,0 +1,76 @@
+2014/02/01 23:49:29 INFO - Thread-2 start (Event Handlers)
+2014/02/01 23:49:29 INFO - port:7766
+2014/02/01 23:49:29 INFO - Suite starting at 2014-02-01 23:49:29.940737
+2014/02/01 23:49:29 INFO - Log event clock: real time
+2014/02/01 23:49:29 INFO - Run mode: live
+2014/02/01 23:49:29 INFO - Start tag: 2014010100
+2014/02/01 23:49:29 INFO - Stop tag: 2014010300
+2014/02/01 23:49:29 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/01 23:49:29 INFO - Thread-5 start (Request Handling)
+2014/02/01 23:49:29 INFO - Thread-4 start (Job Submission)
+2014/02/01 23:49:29 INFO - Cold Start 2014010100
+2014/02/01 23:49:29 INFO - [prep.1] -triggered off []
+2014/02/01 23:49:30 INFO - [prep.1] -(current:ready)> prep.1 submitting now
+2014/02/01 23:49:31 INFO - [prep.1] -(current:ready)> prep.1 submission succeeded
+2014/02/01 23:49:31 INFO - [prep.1] -(current:submitted)> prep.1 submit_method_id=43973
+2014/02/01 23:49:31 INFO - [prep.1] -(current:submitted)> prep.1 started at 2014-02-01T23:49:31
+2014/02/01 23:49:31 INFO - [prep.1] -(current:running)> prep.1 succeeded at 2014-02-01T23:49:31
+2014/02/01 23:49:31 INFO - pre-insertion state dump: /home/oliverh/cylc-run/insert/state/state.2014:2:1:23:49:31
+2014/02/01 23:49:32 INFO - Command succeeded: insert task(bar,2014010100,False,None)
+2014/02/01 23:49:32 INFO - pre-insertion state dump: /home/oliverh/cylc-run/insert/state/state.2014:2:1:23:49:32
+2014/02/01 23:49:32 INFO - Command succeeded: insert task(baz,2014010100,False,2014010200)
+2014/02/01 23:49:33 INFO - [foo.2014010100] -triggered off ['prep.1']
+2014/02/01 23:49:33 INFO - [bar.2014010100] -triggered off []
+2014/02/01 23:49:33 INFO - [baz.2014010100] -triggered off []
+2014/02/01 23:49:34 INFO - [foo.2014010100] -(current:ready)> foo.2014010100 submitting now
+2014/02/01 23:49:34 INFO - [foo.2014010100] -(current:ready)> foo.2014010100 submission succeeded
+2014/02/01 23:49:34 INFO - [foo.2014010100] -(current:submitted)> foo.2014010100 submit_method_id=44041
+2014/02/01 23:49:34 INFO - [foo.2014010100] -(current:submitted)> foo.2014010100 started at 2014-02-01T23:49:33
+2014/02/01 23:49:34 INFO - [bar.2014010100] -(current:ready)> bar.2014010100 submitting now
+2014/02/01 23:49:34 INFO - [bar.2014010100] -(current:ready)> bar.2014010100 started at 2014-02-01T23:49:33
+2014/02/01 23:49:34 INFO - [baz.2014010100] -(current:ready)> baz.2014010100 submitting now
+2014/02/01 23:49:34 INFO - [baz.2014010100] -(current:ready)> baz.2014010100 submission succeeded
+2014/02/01 23:49:34 INFO - [baz.2014010100] -(current:submitted)> baz.2014010100 submit_method_id=44093
+2014/02/01 23:49:34 INFO - [baz.2014010100] -(current:submitted)> baz.2014010100 started at 2014-02-01T23:49:33
+2014/02/01 23:49:35 INFO - [foo.2014010100] -(current:running)> foo.2014010100 succeeded at 2014-02-01T23:49:34
+2014/02/01 23:49:35 INFO - [bar.2014010100] -(current:running)> bar.2014010100 submission succeeded
+2014/02/01 23:49:35 INFO - [bar.2014010100] -(current:running)> bar.2014010100 submit_method_id=44062
+2014/02/01 23:49:35 INFO - [bar.2014010100] -(current:running)> bar.2014010100 succeeded at 2014-02-01T23:49:34
+2014/02/01 23:49:35 INFO - [baz.2014010100] -(current:running)> baz.2014010100 succeeded at 2014-02-01T23:49:34
+2014/02/01 23:49:36 INFO - [foo.2014010200] -triggered off []
+2014/02/01 23:49:36 INFO - [bar.2014010200] -triggered off []
+2014/02/01 23:49:36 INFO - [baz.2014010200] -triggered off []
+2014/02/01 23:49:37 INFO - [foo.2014010200] -(current:ready)> foo.2014010200 submitting now
+2014/02/01 23:49:37 INFO - [foo.2014010200] -(current:ready)> foo.2014010200 started at 2014-02-01T23:49:36
+2014/02/01 23:49:37 INFO - [foo.2014010200] -(current:running)> foo.2014010200 submission succeeded
+2014/02/01 23:49:37 INFO - [foo.2014010200] -(current:running)> foo.2014010200 submit_method_id=44181
+2014/02/01 23:49:37 INFO - [bar.2014010200] -(current:ready)> bar.2014010200 submitting now
+2014/02/01 23:49:37 INFO - [baz.2014010200] -(current:ready)> baz.2014010200 submitting now
+2014/02/01 23:49:37 INFO - [baz.2014010200] -(current:ready)> baz.2014010200 submission succeeded
+2014/02/01 23:49:37 INFO - [baz.2014010200] -(current:submitted)> baz.2014010200 submit_method_id=44240
+2014/02/01 23:49:38 WARNING - baz.2014010300 not adding to pool: task beyond its own stop cycle
+2014/02/01 23:49:38 INFO - [bar.2014010200] -(current:ready)> bar.2014010200 started at 2014-02-01T23:49:37
+2014/02/01 23:49:38 INFO - [bar.2014010200] -(current:running)> bar.2014010200 submission succeeded
+2014/02/01 23:49:38 INFO - [bar.2014010200] -(current:running)> bar.2014010200 submit_method_id=44207
+2014/02/01 23:49:38 INFO - [baz.2014010200] -(current:submitted)> baz.2014010200 started at 2014-02-01T23:49:37
+2014/02/01 23:49:39 INFO - [foo.2014010300] -triggered off []
+2014/02/01 23:49:39 INFO - [foo.2014010200] -(current:running)> foo.2014010200 succeeded at 2014-02-01T23:49:38
+2014/02/01 23:49:39 INFO - [bar.2014010200] -(current:running)> bar.2014010200 succeeded at 2014-02-01T23:49:38
+2014/02/01 23:49:39 INFO - [baz.2014010200] -(current:running)> baz.2014010200 succeeded at 2014-02-01T23:49:38
+2014/02/01 23:49:40 INFO - [bar.2014010300] -triggered off []
+2014/02/01 23:49:40 INFO - [foo.2014010300] -(current:ready)> foo.2014010300 submitting now
+2014/02/01 23:49:41 INFO - [foo.2014010300] -(current:ready)> foo.2014010300 submission succeeded
+2014/02/01 23:49:41 INFO - [foo.2014010300] -(current:submitted)> foo.2014010300 submit_method_id=44320
+2014/02/01 23:49:41 INFO - [foo.2014010300] -(current:submitted)> foo.2014010300 started at 2014-02-01T23:49:40
+2014/02/01 23:49:42 INFO - [foo.2014010300] -(current:running)> foo.2014010300 succeeded at 2014-02-01T23:49:41
+2014/02/01 23:49:43 INFO - [bar.2014010300] -(current:ready)> bar.2014010300 submitting now
+2014/02/01 23:49:43 INFO - [bar.2014010300] -(current:ready)> bar.2014010300 submission succeeded
+2014/02/01 23:49:43 INFO - [bar.2014010300] -(current:submitted)> bar.2014010300 submit_method_id=44367
+2014/02/01 23:49:43 INFO - [bar.2014010300] -(current:submitted)> bar.2014010300 started at 2014-02-01T23:49:42
+2014/02/01 23:49:44 INFO - [bar.2014010300] -(current:running)> bar.2014010300 succeeded at 2014-02-01T23:49:43
+2014/02/01 23:49:44 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2014010300
+  + all non-cycling tasks have succeeded
+2014/02/01 23:49:44 INFO - Thread-4 exit (Job Submission)
+2014/02/01 23:49:44 INFO - Thread-2 exit (Event Handlers)
+2014/02/01 23:49:44 INFO - Thread-3 exit (Poll & Kill Commands)

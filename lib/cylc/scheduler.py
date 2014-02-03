@@ -39,7 +39,6 @@ from config import config, SuiteConfigError, TaskNotDefinedError
 from global_config import get_global_cfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
-from Pyro.errors import NamingError, ProtocolError
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 from RunEventHandler import RunHandler
@@ -1555,14 +1554,6 @@ class scheduler(object):
         # further checks only apply to cycling tasks
         if not new_task.is_cycling:
             return
-
-        # tasks with configured stop cycles
-
-        if new_task.stop_c_time:
-            if ctime_gt( new_task.c_time, new_task.stop_c_time ):
-                new_task.log( 'DEBUG', "HOLDING (beyond task stop cycle) " + new_task.stop_c_time )
-                new_task.reset_state_held()
-                return
 
         # check cycle stop or hold conditions
         if self.stop_tag and ctime_gt( new_task.c_time, self.stop_tag ):

@@ -1,0 +1,31 @@
+
+title = "test insertion with and without a stop cycle on inserted tasks"
+
+description = """A cycling suite that runs for 3 cycles. Two of its
+three tasks are excluded at start-up but are inserted manually by the 
+initital prep task. One is inserted with no stop cycle, to run for the
+duration of the suite; and the other is set to stop after two cycles."""
+
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = 1.0 # minutes
+
+[scheduling]
+    initial cycle time = 2014010100
+    final cycle time   = 2014010300 # 3 cycles
+    [[special tasks]]
+        exclude at start-up = bar, baz
+    [[dependencies]]
+        graph = prep
+        [[[0]]]
+            graph = "prep => foo & bar & baz"
+
+[runtime]
+    [[root]]
+        command scripting = "sleep 1" # quick
+    [[prep]]
+        command scripting = """
+cylc insert $CYLC_SUITE_NAME bar 2014010100
+cylc insert $CYLC_SUITE_NAME baz 2014010100 2014010200"""
+
