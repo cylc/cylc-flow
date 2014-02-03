@@ -78,8 +78,7 @@ __PYTHON__
 if ! ${IS_AT_T_HOST:-false}; then
     T_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
     if [[ -z $T_HOST ]]; then
-        skip 2 '"[test battery][directives]loadleveler host" not defined'
-        exit
+        skip_all '"[test battery][directives]loadleveler host" not defined'
     fi
     if [[ $T_HOST != 'localhost' ]]; then
         T_HOST_CYLC_DIR=$(ssh_mkdtemp $T_HOST)

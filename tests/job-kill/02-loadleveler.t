@@ -18,14 +18,13 @@
 #C: Test killing of jobs submitted to loadleveler.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-N_TESTS=2
-set_test_number $N_TESTS
 export CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery][directives]loadleveler host')
 if [[ -z $CYLC_TEST_HOST ]]; then
-    skip $N_TESTS '[test battery][directives]loadleveler host: not defined'
-    exit
+    skip_all '[test battery][directives]loadleveler host: not defined'
 fi
+N_TESTS=2
+set_test_number $N_TESTS
 export CYLC_TEST_DIRECTIVES=$( \
     cylc get-global-config \
     -i '[test battery][directives][loadleveler directives]')
