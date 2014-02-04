@@ -394,7 +394,7 @@ where they got to while the suite was down."""
                 else:
                     # update the task proxy with submit ID etc.
                     itask.submit_method_id = submit_method_id
-                    itask.submit_num = try_num
+                    itask.try_number = try_num
                     itask.user_at_host = user_at_host
                     # poll the task
                     itask.poll()
