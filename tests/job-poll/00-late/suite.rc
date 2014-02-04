@@ -1,0 +1,28 @@
+title = "a suite to test that late poll results are ignored"
+description = "if not, the test will fail due to an unexpected task failure."
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+[scheduling]
+    [[dependencies]]
+        graph="foo & bar"
+
+[runtime]
+    [[foo]]
+        manual completion = True
+        command scripting="""
+sleep 2
+# report task succeeded (but don't exit):
+cylc succeeded
+sleep 2
+# fake a "polled-as-failed" result:
+# (real poll messages have "at <time>" or "at unknown-time" appended,
+# but they don't go via the task messaging interface which also appends
+# "at <time>" to the message ... so here let the task_message.py do it)
+cylc message "polled $CYLC_TASK_ID failed"
+"""
+    [[bar]]
+        # to keep the suite up for 10s
+        command scripting = "sleep 10"
+

@@ -898,6 +898,14 @@ class task( object ):
 
         msg_was_polled = False
         if message.startswith( 'polled ' ):
+            if not self.state.is_currently( 'submitted', 'running' ):
+                # Polling can take a few seconds or more, so it is
+                # possible for a poll result to come in after a task
+                # finishes normally (success or failure) - in which case
+                # we should ignore the poll result.
+                self.log( "WARNING", "Ignoring late poll result: task is not active" ) 
+                return
+            # remove polling prefix and treat as a normal task message
             msg_was_polled = True
             message = message[7:]
 

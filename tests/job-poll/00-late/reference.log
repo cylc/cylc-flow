@@ -1,0 +1,29 @@
+2014/02/04 23:43:03 INFO - Thread-2 start (Event Handlers)
+2014/02/04 23:43:03 INFO - port:7766
+2014/02/04 23:43:03 INFO - Suite starting at 2014-02-04 23:43:03.464715
+2014/02/04 23:43:03 INFO - Log event clock: real time
+2014/02/04 23:43:03 INFO - Run mode: live
+2014/02/04 23:43:03 INFO - Start tag: None
+2014/02/04 23:43:03 INFO - Stop tag: None
+2014/02/04 23:43:03 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/04 23:43:03 INFO - Thread-5 start (Request Handling)
+2014/02/04 23:43:03 INFO - Thread-4 start (Job Submission)
+2014/02/04 23:43:03 INFO - [foo.1] -triggered off []
+2014/02/04 23:43:03 INFO - [bar.1] -triggered off []
+2014/02/04 23:43:04 INFO - [foo.1] -(current:ready)> foo.1 submitting now
+2014/02/04 23:43:05 INFO - [foo.1] -(current:ready)> foo.1 submission succeeded
+2014/02/04 23:43:05 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=65532
+2014/02/04 23:43:05 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-02-04T23:43:04
+2014/02/04 23:43:05 INFO - [bar.1] -(current:ready)> bar.1 submitting now
+2014/02/04 23:43:05 INFO - [bar.1] -(current:ready)> bar.1 started at 2014-02-04T23:43:04
+2014/02/04 23:43:06 INFO - [bar.1] -(current:running)> bar.1 submission succeeded
+2014/02/04 23:43:06 INFO - [bar.1] -(current:running)> bar.1 submit_method_id=335
+2014/02/04 23:43:07 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-02-04T23:43:06
+2014/02/04 23:43:09 INFO - [foo.1] -(current:succeeded)> polled foo.1 failed at 2014-02-04T23:43:09
+2014/02/04 23:43:09 WARNING - [foo.1] -Ignoring late poll result: task is not active
+2014/02/04 23:43:15 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2014-02-04T23:43:15
+2014/02/04 23:43:15 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/02/04 23:43:15 INFO - Thread-4 exit (Job Submission)
+2014/02/04 23:43:16 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/02/04 23:43:16 INFO - Thread-2 exit (Event Handlers)
