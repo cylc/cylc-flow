@@ -85,6 +85,9 @@ where they got to while the suite was down."""
 
         self.suite_dir = os.path.dirname( self.suiterc )
 
+        # For user-defined job submission methods:
+        sys.path.append( os.path.join( self.suite_dir, 'python' ))
+
         self.restart_from = None
         if len( self.args ) == 2:
             self.restart_from = self.args[1]

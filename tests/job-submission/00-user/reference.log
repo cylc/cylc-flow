@@ -1,0 +1,21 @@
+2014/02/04 16:27:40 INFO - Thread-2 start (Event Handlers)
+2014/02/04 16:27:40 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/04 16:27:40 INFO - port:7766
+2014/02/04 16:27:40 INFO - Suite starting at 2014-02-04 16:27:40.360630
+2014/02/04 16:27:40 INFO - Log event clock: real time
+2014/02/04 16:27:40 INFO - Run mode: live
+2014/02/04 16:27:40 INFO - Start tag: None
+2014/02/04 16:27:40 INFO - Stop tag: None
+2014/02/04 16:27:40 INFO - Thread-4 start (Job Submission)
+2014/02/04 16:27:40 INFO - Thread-5 start (Request Handling)
+2014/02/04 16:27:40 INFO - [foo.1] -triggered off []
+2014/02/04 16:27:41 INFO - [foo.1] -(current:ready)> foo.1 submitting now
+2014/02/04 16:27:43 INFO - [foo.1] -(current:ready)> foo.1 started at 2014-02-04T16:27:43
+2014/02/04 16:27:45 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-02-04T16:27:44
+2014/02/04 16:27:45 WARNING - [foo.1] -Assuming non-reported outputs were completed:
+foo.1 submitted
+2014/02/04 16:27:45 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/02/04 16:27:45 INFO - Thread-4 exit (Job Submission)
+2014/02/04 16:27:46 INFO - Thread-2 exit (Event Handlers)
+2014/02/04 16:27:46 INFO - Thread-3 exit (Poll & Kill Commands)

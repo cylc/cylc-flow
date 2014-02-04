@@ -93,6 +93,9 @@ initial and final cycle time variables persists across suite restarts."""
 
         self.suite_dir = os.path.dirname( self.suiterc )
 
+        # For user-defined job submission methods:
+        sys.path.append( os.path.join( self.suite_dir, 'python' ))
+
         if len( self.args ) == 2:
             self.cli_start_tag = self.args[1]
             if self.cli_start_tag == "now":
