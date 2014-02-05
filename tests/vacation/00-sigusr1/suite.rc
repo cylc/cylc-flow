@@ -1,0 +1,17 @@
+#!jinja2
+[scheduling]
+    [[dependencies]]
+        graph=t1=>t2
+
+[runtime]
+    [[t1]]
+        command scripting="""
+TIMEOUT=$(($(date +%s) + 120))
+while [[ ! -e file ]] && (($TIMEOUT > $(date +%s))); do
+    sleep 1
+done
+"""
+        [[[job submission]]]
+            method=background_vacation
+    [[t2]]
+        command scripting=true

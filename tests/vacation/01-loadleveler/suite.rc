@@ -1,0 +1,33 @@
+#!jinja2
+[cylc]
+   [[reference test]]
+       required run mode=live
+       live mode suite timeout=5 # minutes
+
+[scheduling]
+    [[dependencies]]
+        graph="""
+t1
+t2
+"""
+
+[runtime]
+    [[root]]
+        command scripting=true
+        [[[job submission]]]
+            method=loadleveler
+        [[[directives]]]
+            class=serial
+            job_type=serial
+            notification=never
+            resources=ConsumableCpus(1) ConsumableMemory(64mb)
+            wall_clock_limit=180,120
+{% if "CYLC_TEST_DIRECTIVES" in environ and environ["CYLC_TEST_DIRECTIVES"] %}
+            {{environ["CYLC_TEST_DIRECTIVES"]}}
+{% endif %}
+        [[[remote]]]
+            host={{environ["CYLC_TEST_HOST"]}}
+    [[t1]]
+    [[t2]]
+        [[[directives]]]
+            restart=yes

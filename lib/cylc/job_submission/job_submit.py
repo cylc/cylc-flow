@@ -145,9 +145,11 @@ class job_submit(object):
         self.jobconfig[ 'directive prefix'    ] = None
         self.jobconfig[ 'directive final'     ] = "# FINAL DIRECTIVE"
         self.jobconfig[ 'directive connector' ] = " "
+        self.jobconfig[ 'job vacation signal' ] = None
 
         # overrideable methods
         self.set_directives()
+        self.set_job_vacation_signal()
         self.set_scripting()
         self.set_environment()
 
@@ -172,6 +174,10 @@ class job_submit(object):
 
     def set_environment( self ):
         # Derived classes can use this to modify task execution environment
+        return
+
+    def set_job_vacation_signal( self ):
+        """Derived class can set self.jobconfig['job vacation signal']."""
         return
 
     def construct_jobfile_submission_command( self ):

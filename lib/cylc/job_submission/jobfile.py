@@ -66,6 +66,7 @@ class jobfile(object):
 
         self.write_prelude()
         self.write_err_trap()
+        self.write_vacation_trap()
 
         self.write_initial_scripting()
 
@@ -226,24 +227,25 @@ class jobfile(object):
         BUFFER.write( "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH" )
 
     def write_err_trap( self ):
-        """Note that all job-file scripting must be bash- and
-        ksh-compatible, hence use of 'typeset' below instead of the more
-        sensible but bash-specific 'local'."""
+        """Write error trap.
 
+        Note that all job-file scripting must be bash- and ksh-compatible,
+        hence use of "typeset" below instead of the more sensible but
+        bash-specific "local".
+
+        """
         self.FILE.write( r"""
 
-# SET ERROR TRAPPING:
+# TRAP ERROR SIGNALS:
 set -u # Fail when using an undefined variable
-# Define the trap handler
-SIGNALS="EXIT ERR TERM XCPU"
-function HANDLE_TRAP {
+FAIL_SIGNALS='EXIT ERR TERM XCPU'
+TRAP_FAIL_SIGNAL() {
     typeset SIGNAL=$1
-    echo "Received signal $SIGNAL"
+    echo "Received signal $SIGNAL" >&2
     typeset S=
-    for S in $SIGNALS; do
+    for S in ${VACATION_SIGNALS:-} $FAIL_SIGNALS; do
         trap "" $S
     done
-    # SEND TASK FAILED MESSAGE
     if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
         {
             echo "CYLC_JOB_EXIT=$SIGNAL"
@@ -253,10 +255,43 @@ function HANDLE_TRAP {
     cylc task failed "Task job script received signal $@"
     exit 1
 }
-# Trap signals that could cause this script to exit:
-for S in $SIGNALS; do
-    trap "HANDLE_TRAP $S" $S
-done""")
+for S in $FAIL_SIGNALS; do
+    trap "TRAP_FAIL_SIGNAL $S" $S
+done
+unset S""")
+
+
+    def write_vacation_trap( self ):
+        """Write job vacation trap.
+
+        Note that all job-file scripting must be bash- and ksh-compatible,
+        hence use of "typeset" below instead of the more sensible but
+        bash-specific "local".
+
+        """
+        if self.jobconfig['job vacation signal']:
+            self.FILE.write( r"""
+
+# TRAP VACATION SIGNALS:
+VACATION_SIGNALS='""" + self.jobconfig['job vacation signal'] + r"""'
+TRAP_VACATION_SIGNAL() {
+    typeset SIGNAL=$1
+    echo "Received signal $SIGNAL" >&2
+    typeset S=
+    for S in $VACATION_SIGNALS $FAIL_SIGNALS; do
+        trap "" $S
+    done
+    if [[ -n ${CYLC_TASK_LOG_ROOT:-} && -f $CYLC_TASK_LOG_ROOT.status ]]; then
+        rm -f $CYLC_TASK_LOG_ROOT.status
+    fi
+    cylc task message -p WARNING "Task job script vacated by signal $@"
+    exit 1
+}
+S=
+for S in $VACATION_SIGNALS; do
+    trap "TRAP_VACATION_SIGNAL $S" $S
+done
+unset S""")
 
     def write_task_started( self ):
         self.FILE.write( r"""

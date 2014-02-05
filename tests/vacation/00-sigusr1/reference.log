@@ -1,0 +1,30 @@
+2014/01/24 12:25:52 INFO - Thread-2 start (Event Handlers)
+2014/01/24 12:25:52 INFO - Thread-3 start (Poll & Kill Commands)
+2014/01/24 12:25:52 INFO - port:7766
+2014/01/24 12:25:52 INFO - Suite starting at 2014-01-24 12:25:52.354258
+2014/01/24 12:25:52 INFO - Log event clock: real time
+2014/01/24 12:25:52 INFO - Run mode: live
+2014/01/24 12:25:52 INFO - Start tag: None
+2014/01/24 12:25:52 INFO - Stop tag: None
+2014/01/24 12:25:52 INFO - Thread-4 start (Job Submission)
+2014/01/24 12:25:52 INFO - Thread-5 start (Request Handling)
+2014/01/24 12:25:52 INFO - [t1.1] -triggered off []
+2014/01/24 12:25:53 INFO - [t1.1] -(current:ready)> t1.1 submitting now
+2014/01/24 12:25:54 INFO - [t1.1] -(current:ready)> t1.1 submission succeeded
+2014/01/24 12:25:54 INFO - [t1.1] -(current:submitted)> t1.1 submit_method_id=7752
+2014/01/24 12:25:54 INFO - [t1.1] -(current:submitted)> t1.1 started at 2014-01-24T12:25:54
+2014/01/24 12:26:18 WARNING - [t1.1] -(current:running)> Task job script vacated by signal USR1 at 2014-01-24T12:26:17
+2014/01/24 12:26:37 INFO - [t1.1] -(current:submitted)> t1.1 started at 2014-01-24T12:26:37
+2014/01/24 12:26:37 WARNING - [t1.1] -Vacated job restarted: t1.1 started
+2014/01/24 12:26:47 INFO - [t1.1] -(current:running)> t1.1 succeeded at 2014-01-24T12:26:46
+2014/01/24 12:26:48 INFO - [t2.1] -triggered off ['t1.1']
+2014/01/24 12:26:49 INFO - [t2.1] -(current:ready)> t2.1 submitting now
+2014/01/24 12:26:49 INFO - [t2.1] -(current:ready)> t2.1 submission succeeded
+2014/01/24 12:26:49 INFO - [t2.1] -(current:submitted)> t2.1 submit_method_id=8032
+2014/01/24 12:26:49 INFO - [t2.1] -(current:submitted)> t2.1 started at 2014-01-24T12:26:49
+2014/01/24 12:26:50 INFO - [t2.1] -(current:running)> t2.1 succeeded at 2014-01-24T12:26:49
+2014/01/24 12:26:50 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/01/24 12:26:50 INFO - Thread-4 exit (Job Submission)
+2014/01/24 12:26:51 INFO - Thread-2 exit (Event Handlers)
+2014/01/24 12:26:51 INFO - Thread-3 exit (Poll & Kill Commands)
