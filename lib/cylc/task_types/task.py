@@ -228,6 +228,7 @@ class task( object ):
         self.submit_method_id = None
         self.job_sub_method = None
         self.launcher = None
+        self.job_vacated = False
 
         self.submission_poll_timer = None
         self.execution_poll_timer = None
@@ -921,6 +922,9 @@ class task( object ):
                 flags.pflag = True
                 self.outputs.set_completed( message )
                 self.record_db_event(event="output completed", message=content)
+            elif content == 'started' and self.job_vacated:
+                self.job_vacated = False
+                self.log( "WARNING", "Vacated job restarted: " + message )
             elif not msg_was_polled:
                 # This output has already been reported complete.
                 # Not an error condition - maybe the network was down for a bit.
@@ -1104,6 +1108,18 @@ class task( object ):
         elif content.startswith("Task job script received signal"):
             # capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=content)
+ 
+        elif content.startswith("Task job script vacated by signal"):
+            flags.pflag = True
+            self.set_status('submitted')
+            self.record_db_event(event="vacated", message=content)
+            self.execution_timer_start = None
+            self.started_time_real = None
+            self.summary['started_time'] = '*'
+            self.sub_try_number = 0
+            self.sub_retry_delays = copy(self.sub_retry_delays_orig)
+            self.execution_poll_timer.timer_start = None
+            self.job_vacated = True
 
         else:
             # Unhandled messages. These include:

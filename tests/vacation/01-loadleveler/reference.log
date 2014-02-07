@@ -1,0 +1,55 @@
+2014/02/05 12:14:06 INFO - Thread-2 start (Event Handlers)
+2014/02/05 12:14:06 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/05 12:14:06 INFO - port:7766
+2014/02/05 12:14:06 INFO - Suite starting at 2014-02-05 12:14:06.923067
+2014/02/05 12:14:06 INFO - Log event clock: real time
+2014/02/05 12:14:06 INFO - Run mode: live
+2014/02/05 12:14:06 INFO - Start tag: None
+2014/02/05 12:14:06 INFO - Stop tag: None
+2014/02/05 12:14:06 INFO - Thread-4 start (Job Submission)
+2014/02/05 12:14:06 INFO - Thread-5 start (Request Handling)
+2014/02/05 12:14:06 DEBUG - [t2.1] -task proxy added to the pool
+2014/02/05 12:14:06 DEBUG - [t1.1] -task proxy added to the pool
+2014/02/05 12:14:06 DEBUG - BEGIN TASK PROCESSING
+2014/02/05 12:14:06 DEBUG - [t2.1] -(setting:queued)
+2014/02/05 12:14:06 DEBUG - [t1.1] -(setting:queued)
+2014/02/05 12:14:06 DEBUG - 2 task(s) ready
+2014/02/05 12:14:06 DEBUG - [t2.1] -(setting:ready)
+2014/02/05 12:14:06 DEBUG - [t1.1] -(setting:ready)
+2014/02/05 12:14:06 INFO - [t2.1] -triggered off []
+2014/02/05 12:14:06 INFO - [t1.1] -triggered off []
+2014/02/05 12:14:06 DEBUG - END TASK PROCESSING (took 0.006963 sec)
+2014/02/05 12:14:07 DEBUG - Job Submission batch 1/1 (2 members):
+2014/02/05 12:14:07 INFO - [t2.1] -(current:ready)> t2.1 submitting now
+2014/02/05 12:14:07 INFO - [t2.1] -Task host: hpc2e
+2014/02/05 12:14:07 INFO - [t2.1] -Copying suite contact file to hpc2e
+2014/02/05 12:14:09 INFO - [t1.1] -Task host: hpc2e
+2014/02/05 12:14:09 INFO - [t1.1] -(current:ready)> t1.1 submitting now
+2014/02/05 12:14:10 INFO - [t2.1] -(current:ready)> t2.1 submission succeeded
+2014/02/05 12:14:10 DEBUG - [t2.1] -(setting:submitted)
+2014/02/05 12:14:10 INFO - [t2.1] -(current:submitted)> t2.1 submit_method_id=e004.4359478
+2014/02/05 12:14:11 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:03.615413
+  All 2 items succeeded
+2014/02/05 12:14:11 DEBUG - BEGIN TASK PROCESSING
+2014/02/05 12:14:11 DEBUG - END TASK PROCESSING (took 0.002104 sec)
+2014/02/05 12:14:11 INFO - [t1.1] -(current:ready)> t1.1 submission succeeded
+2014/02/05 12:14:11 DEBUG - [t1.1] -(setting:submitted)
+2014/02/05 12:14:11 INFO - [t1.1] -(current:submitted)> t1.1 submit_method_id=e001.4141304
+2014/02/05 12:14:12 DEBUG - BEGIN TASK PROCESSING
+2014/02/05 12:14:12 DEBUG - END TASK PROCESSING (took 0.001927 sec)
+2014/02/05 12:14:26 INFO - [t2.1] -(current:submitted)> t2.1 started at 2014-02-05T12:14:25
+2014/02/05 12:14:26 DEBUG - [t2.1] -(setting:running)
+2014/02/05 12:14:26 INFO - [t2.1] -(current:running)> t2.1 succeeded at 2014-02-05T12:14:26
+2014/02/05 12:14:26 DEBUG - [t2.1] -(setting:succeeded)
+2014/02/05 12:14:26 INFO - [t1.1] -(current:submitted)> t1.1 started at 2014-02-05T12:14:25
+2014/02/05 12:14:26 DEBUG - [t1.1] -(setting:running)
+2014/02/05 12:14:26 INFO - [t1.1] -(current:running)> t1.1 succeeded at 2014-02-05T12:14:26
+2014/02/05 12:14:26 DEBUG - [t1.1] -(setting:succeeded)
+2014/02/05 12:14:26 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/02/05 12:14:27 INFO - Thread-4 exit (Job Submission)
+2014/02/05 12:14:27 INFO - Thread-2 exit (Event Handlers)
+2014/02/05 12:14:27 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/02/05 12:14:27 DEBUG - BEGIN TASK PROCESSING
+2014/02/05 12:14:27 DEBUG - END TASK PROCESSING (took 0.002094 sec)

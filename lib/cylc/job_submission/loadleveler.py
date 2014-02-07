@@ -62,6 +62,15 @@ class loadleveler( job_submit ):
             defaults[ d ] = val
         self.jobconfig['directives'] = defaults
 
+    def set_job_vacation_signal( self ):
+        """Set self.jobconfig['job vacation signal'] = 'USR1'
+
+        (If restart=yes is defined in self.jobconfig['directives'])
+
+        """
+        if self.jobconfig['directives'].get('restart') == 'yes':
+            self.jobconfig['job vacation signal'] = 'USR1'
+
     def construct_jobfile_submission_command( self ):
         """
         Construct a command to submit this job to run.
