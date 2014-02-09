@@ -24,19 +24,12 @@ if remrun().execute():
 import os, re
 import tempfile
 import subprocess
-from cylc.global_config import get_global_cfg
+from cylc.cfgspec.site import sitecfg
 from cylc.CylcOptionParsers import cop
 from parsec.fileparse import read_and_proc
 import cylc.flags
 
-try:
-    from cylc.Jinja2Support import Jinja2Process
-except ImportError:
-    jinja2_disabled = True
-else:
-    jinja2_disabled = False
-
-parser = cop( """cylc [prep] view [OPTIONS] ARGS
+parser = cop( """cylc [prep] view [OPTIONS] ARGS 
 
 View a read-only temporary copy of suite NAME's suite.rc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
@@ -56,8 +49,13 @@ parser.add_option( "--inline", "-i",
         action="store_true", default=False, dest="inline" )
 
 parser.add_option( "--jinja2", "-j",
-        help="View the suite after Jinja2 template processing "
+        help="View after Jinja2 template processing "
         "(implies '-i' as well).",
+        action="store_true", default=False, dest="jinja2" )
+
+parser.add_option( "-p", "--process", 
+        help="View after all processing (Jinja2, inlining, "
+        "line-continuation joining.",
         action="store_true", default=False, dest="process" )
 
 parser.add_option( "--mark", "-m",
@@ -97,12 +95,11 @@ parser.add_option( "--mark-for-edit",
 
 suite, suiterc, junk = parser.get_suite()
 
-gcfg = get_global_cfg()
-cylc_tmpdir = gcfg.get_tmpdir()
+cylc_tmpdir = sitecfg.get_tmpdir()
 if options.geditor:
-    editor = gcfg.cfg['editors']['gui']
+    editor = sitecfg.get( ['editors','gui'] )
 else:
-    editor = gcfg.cfg['editors']['terminal']
+    editor = sitecfg['editors','terminal'] )
 
 global suitedir
 suitedir = os.path.dirname(suiterc)
@@ -112,8 +109,8 @@ viewcfg = {
         'mark' : options.mark,
         'single' : options.single,
         'label' : options.label,
-        'jinja2' : options.process,
-        'contin' : options.cat,
+        'jinja2' : options.jinja2 or options.process,
+        'contin' : options.cat or options.process,
         'inline' : options.inline or options.process,
         }
 try:
@@ -125,14 +122,6 @@ except Exception, x:
         raise
     sys.exit( x )
 
-# Add a warning to file
-tmp = " WARNING: This is a READ-ONLY COPY of " + suiterc
-bot = re.sub( '.', '-', tmp )
-warning = [
-'#' + tmp,
-'#' + bot ]
-newlines = warning + lines
-
 if options.stdout:
     for line in lines:
         print line
@@ -141,7 +130,7 @@ if options.stdout:
 # write to a temporary file
 viewfile = tempfile.mktemp( suffix = ".suite.rc", prefix = suite + '.', dir = cylc_tmpdir )
 h = open( viewfile, 'wb' )
-for line in newlines:
+for line in lines:
     h.write( line + '\n' )
 h.close()
 

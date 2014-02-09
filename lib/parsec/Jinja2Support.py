@@ -49,7 +49,7 @@ def load_template_vars( pairs, pairs_file ):
         var = var.strip()
         val = val.strip()
         res[var] = val
-    if cylc.flags.verbose:
+    if cylc.flags.verbose and res:
         print 'Setting Jinja2 template variables:'
         for var, val in res.items():
             print '    + ', var, '=', val

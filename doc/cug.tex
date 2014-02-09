@@ -737,13 +737,13 @@ can be overridden by users,
 $HOME/.cylc/user.rc
 \end{lstlisting}
 
-The \lstinline=cylc get-global-config= command retrieves current
+The \lstinline=cylc get-site-config= command retrieves current
 global settings consisting of cylc defaults overridden by site settings,
 if any, overridden by user settings, if any. To generate an
 initial site or user config file:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc get-global-config --print > $HOME/.cylc/user.rc
+shell$ cylc get-site-config --print > $HOME/.cylc/user.rc
 \end{lstlisting}
 Settings that do not need to be changed should be deleted or commented
 out of user config files so that they don't override future changes to
@@ -3512,17 +3512,17 @@ multiple inheritance:
 \lstinputlisting{../examples/inherit/multi/one/suite.rc}
 \lstset{language=transcript}
 
-\lstinline=cylc get-config= provides an easy way to check the result of
+\lstinline=cylc get-suite-config= provides an easy way to check the result of
 inheritance in a suite. You can extract specific items, e.g.:
 \begin{lstlisting}
-shell$ cylc get-config --item '[runtime][var_p2]command scripting' inherit.multi.one
+shell$ cylc get-suite-config --item '[runtime][var_p2]command scripting' inherit.multi.one
 echo ``RUN: run-var.sh''
 \end{lstlisting}
 or use the \lstinline=--sparse= option to print entire namespaces
 without obscuring the result with the dense runtime structure obtained
 from the root namespace:
 \begin{lstlisting}
-shell$ cylc get-config --sparse --item '[runtime]ops_s1' inherit.multi.one
+shell$ cylc get-suite-config --sparse --item '[runtime]ops_s1' inherit.multi.one
 command scripting = echo ``RUN: run-ops.sh''
 inherit = ['OPS', 'SERIAL']
 [directives]
@@ -4030,7 +4030,7 @@ example, from \lstinline=$CYLC_DIR/examples/jinja2/dict=:
 Here's the result:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc get-config -i [runtime][airs]directives SUITE
+shell$ cylc get-suite-config -i [runtime][airs]directives SUITE 
 -I = ncpus=9
 \end{lstlisting}
 

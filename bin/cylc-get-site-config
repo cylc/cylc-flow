@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+from optparse import OptionParser
+from cylc.version import cylc_version
+import cylc.flags
+from parsec.util import itemstr
+
+parser = OptionParser( usage = """cylc [admin] get-site-config [OPTIONS] 
+
+Print cylc site/user configuration settings.
+
+By default all settings are printed. For specific sections or items
+use -i/--item and wrap parent sections in square brackets:
+   cylc get-site-config --item '[editors]terminal'
+Multiple items can be specified at once.""" )
+
+parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+        help="Item or section to print (multiple use allowed).",
+        action="append", dest="item", default=[] )
+
+parser.add_option( "--sparse",
+        help="Disregard automatically supplied system defaults.",
+        action="store_true", default=False, dest="sparse" )
+
+parser.add_option( "-p", "--python",
+        help="Print native Python format.",
+        action="store_true", default=False, dest="pnative" )
+
+parser.add_option( "--print-run-dir",
+        help="Print the configured cylc run directory.",
+        action="store_true", default=False, dest="run_dir" )
+
+parser.add_option( "-v", "--verbose", help="Print extra information.",
+        action="store_true", default=False, dest="verbose" )
+
+parser.add_option( "--debug",
+        help="Show exception tracebacks.",
+        action="store_true", default=False, dest="debug" )
+
+(options, args) = parser.parse_args()
+cylc.flags.verbose = options.verbose
+cylc.flags.debug = options.debug
+
+if len(args) != 0:
+    parser.error( "ERROR: wrong number of arguments" )
+
+try:
+    # import sitecfg here to avoid aborting before command help is printed
+    from cylc.cfgspec.site import sitecfg
+    if options.run_dir:
+        print sitecfg.get_host_item('run directory')
+    else:
+        sitecfg.idump( options.item, sparse=options.sparse, pnative=options.pnative )
+
+except Exception, x:
+    if cylc.flags.debug:
+        raise
+    sys.exit( str(x) )
+

@@ -18,7 +18,7 @@
 
 import sys, re
 from OrderedDict import OrderedDict
-from util import m_override, un_many
+from util import m_override, un_many, itemstr
 from copy import copy
 from cylc.cycle_time import ct
 
@@ -30,6 +30,21 @@ Validate a nested dict parsed from a config file against a spec file:
 Also provides default values from the spec as a nested dict.
 """
 
+# quoted value regex reference:
+#   http://stackoverflow.com/questions/5452655/
+#       python-regex-to-match-text-in-single-quotes-ignoring-escaped-quotes-and-tabs-n
+
+# quoted list values not at end of line
+_SQ_L_VALUE = re.compile( r"'([^'\\]*(?:\\.[^'\\]*)*)'" )
+_DQ_L_VALUE = re.compile( r'"([^"\\]*(?:\\.[^"\\]*)*)"' )
+# quoted values with ignored trailing comments
+_SQ_VALUE = re.compile( r"'([^'\\]*(?:\\.[^'\\]*)*)'(?:\s*(?:\#.*)?)?$" )
+_DQ_VALUE = re.compile( r'"([^"\\]*(?:\\.[^"\\]*)*)"(?:\s*(?:\#.*)?)?$' )
+
+_UQLP = re.compile(r"""(['"]?)(.*?)\1(,|$)""")
+_SQV = re.compile( "((?:^[^']*(?:'[^']*')*[^']*)*)(#.*)$" )
+_DQV = re.compile( '((?:^[^"]*(?:"[^"]*")*[^"]*)*)(#.*)$' )
+
 class ValidationError( Exception ):
     def __init__( self, msg ):
         self.msg = msg
@@ -38,13 +53,12 @@ class ValidationError( Exception ):
 
 class IllegalValueError( ValidationError ):
     def __init__( self, vtype, keys, value ):
-        msg = 'Illegal value for ' + vtype + \
-                ': [' + ']['.join(keys) + '] = ' + str(value)
+        msg = 'Illegal ' + vtype + ' value: ' + itemstr( keys, value=value )
         ValidationError.__init__( self, msg )
 
 class IllegalItemError( ValidationError ):
     def __init__( self, keys, key ):
-        msg = 'Illegal item: [' + ']['.join(keys) + ']' + key
+        msg = 'Illegal item: ' + itemstr( keys, key )
         ValidationError.__init__( self, msg )
 
 def validate( cfig, spec, keys=[] ):
@@ -65,11 +79,33 @@ def validate( cfig, spec, keys=[] ):
                     raise IllegalItemError( keys, key )
         else:
             speckey = key
-        if isinstance( val, dict ):
+        specval = spec[speckey]
+        if isinstance( val, dict ) and isinstance( specval, dict):
             validate( val, spec[speckey], keys+[key] )
-        elif val:
+        elif val and not isinstance( specval, dict):
             # (if val is null we're only checking item validity)
             cfig[key] = spec[speckey].check( val, keys+[key] )
+        else:
+            #raise IllegalItemError( keys, key )
+            # THIS IS OK: blank value
+            # TODO - ANY OTHER POSSIBILITIES?
+            #print 'VAL:', val, '::', keys + [key]
+            pass
+
+def check_compulsory( cfig, spec, keys=[] ):
+    """Check compulsory items are defined in cfig."""
+    for key,val in spec.items():
+        if isinstance( val, dict ):
+            check_compulsory( cfig, spec[key], keys+[key] )
+        else:
+            if val.args['compulsory']:
+                cfg = cfig
+                try:
+                    for k in keys + [key]:
+                        cfg = cfg[k]
+                except KeyError:
+                    # TODO - raise an exception
+                    print >> sys.stderr, "COMPULSORY ITEM MISSING", keys + [key]
 
 def _populate_spec_defaults( defs, spec ):
     """Populate a nested dict with default values from a spec."""
@@ -95,12 +131,104 @@ def expand( sparse, spec ):
     un_many( dense )
     return dense
 
+_MULTI_LINE_SINGLE = re.compile(r"\A'''(.*?)'''\s*(?:#.*)?\Z", re.MULTILINE|re.DOTALL)
+_MULTI_LINE_DOUBLE = re.compile(r'\A"""(.*?)"""\s*(?:#.*)?\Z', re.MULTILINE|re.DOTALL)
+
+def _strip_and_unquote( keys, value ):
+    if value[:3] == "'''":
+        m = re.match( _MULTI_LINE_SINGLE, value )
+        if m:
+            value = m.groups()[0]
+        else:
+            raise IllegalValueError( "string", keys, value )
+
+    elif value[:3] == '"""':
+        m = re.match( _MULTI_LINE_DOUBLE, value )
+        if m:
+            value = m.groups()[0]
+        else:
+            raise IllegalValueError( "string", keys, value )
+
+    elif value[0] == '"':
+        m = re.match( _DQ_VALUE, value )
+        if m:
+            value = m.groups()[0]
+        else:
+            raise IllegalValueError( "string", keys, value )
+
+    elif value[0] == "'":
+        m = re.match( _SQ_VALUE, value )
+        if m:
+            value = m.groups()[0]
+        else:
+            raise IllegalValueError( "string", keys, value )
+    else:
+        # unquoted
+        value = re.sub( '\s*#.*$', '', value )
+
+    # Note strip() removes leading and trailing whitespace, including
+    # initial newlines on a multiline string:
+    return value.strip()
+
+def _unquoted_list_parse( keys, value ):
+    # http://stackoverflow.com/questions/4982531/how-do-i-split-a-comma-delimited-string-in-python-except-for-the-commas-that-are
+    pos = 0
+    while True:
+        m = _UQLP.search(value, pos)
+        result = m.group(2).strip()
+        separator = m.group(3)
+        yield result
+        if not separator:
+            break
+        pos = m.end(0)
+
+def _strip_and_unquote_list( keys, value ):
+    if value[0] == '"':
+        # double-quoted values
+        m = _DQV.match( value )
+        if m:
+            value = m.groups()[0]
+        values = re.findall( _DQ_L_VALUE, value )
+    elif value[0] == "'":
+        # single-quoted values
+        m = _SQV.match( value )
+        if m:
+            value = m.groups()[0]
+
+        values = re.findall( _SQ_L_VALUE, value )
+    else:
+        # unquoted values
+        # (may contain internal quoted strings with list delimiters inside 'em!)
+        m = _DQV.match( value )
+        if m:
+            value = m.groups()[0]
+        else:
+            n = _SQV.match( value )
+            if n:
+                value = n.groups()[0]
+
+        values = list(_unquoted_list_parse( keys, value ))
+        # allow trailing commas
+        if values[-1] == '':
+            values = values[0:-1]
+
+    return values
+
 def _coerce_str( value, keys, args ):
     """Coerce value to a string."""
-    return str(value)
+    if isinstance( value, list ):
+        # handle graph string merging
+        vraw = []
+        for v in value:
+            vraw.append( _strip_and_unquote( keys, v ))
+        value = '\n'.join(vraw)
+    else:
+        value = _strip_and_unquote( keys, value )
+    return value
 
 def _coerce_int( value, keys, args ):
     """Coerce value to an integer."""
+    value = _strip_and_unquote( keys, value )
     try:
         return int( value )
     except ValueError:
@@ -108,6 +236,7 @@ def _coerce_int( value, keys, args ):
 
 def _coerce_float( value, keys, args ):
     """Coerce value to a float."""
+    value = _strip_and_unquote( keys, value )
     try:
         return float( value )
     except ValueError:
@@ -115,6 +244,7 @@ def _coerce_float( value, keys, args ):
 
 def _coerce_boolean( value, keys, args ):
     """Coerce value to a boolean."""
+    value = _strip_and_unquote( keys, value )
     if value in ['True','true']:
         return True
     elif value in ['False','false']:
@@ -124,66 +254,49 @@ def _coerce_boolean( value, keys, args ):
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle time."""
+    value = _strip_and_unquote( keys, value )
     try:
         return ct( value ).get()
     except:
         raise IllegalValueError( 'cycle time', keys, value )
 
 def _coerce_str_list( value, keys, args ):
-    """Coerce value to a list of strings (comma-separated)."""
-    lvalues = []
-    for item in re.split( '\s*,\s*', value ):
-        if item == '': # caused by a trailing comma
-            continue
-        lvalues.append(_coerce_str(item, keys, args))
-    return lvalues
+    """Coerce value to a list of strings."""
+    return _strip_and_unquote_list( keys, value )
 
-def _coerce_int_list( value, keys, args ):
-    """Coerce value to a list of integers (comma-separated)."""
+def _expand_list( values, keys, type, allow_zeroes ):
     lvalues = []
-    for item in re.split( '\s*,\s*', value ):
-        if item == '': # caused by a trailing comma
-            continue
-        lvalues.append( _coerce_int(item,keys,args))
-    return lvalues
-
-def _coerce_float_list( value, keys, args ):
-    """Coerce value to a list of floats (comma-separated)"""
-    lvalues = []
-    for item in re.split( '\s*,\s*', value ):
-        if item == '': # caused by a trailing comma
-            continue
-        lvalues.append( _coerce_float(item,keys, args))
-    return lvalues
-
-def _coerce_m_float_list( value, keys, args ):
-    """Coerce a list with optional multipliers to float values:
-       ['1.0', '2*3.0', '4.0'] => [1.0, 3.0, 3.0, 4.0]"""
-    str_values = re.split( '\s*,\s*', value )
-    if '' in str_values: # from trailing comma
-        str_values.remove('')
-
-    # expand the multiplier list
-    lvalues = []
-    for item in str_values:
+    for item in values:
         try:
             mult, val = item.split('*')
         except ValueError:
             # too few values to unpack: no multiplier
             try:
-                lvalues.append(float(item))
+                lvalues.append(type(item))
             except ValueError:
-                raise IllegalValueError( "float list", keys, value )
+                raise IllegalValueError( "list", keys, item )
         else:
             # mult * val
             try:
-                lvalues += int(mult) * [float(val)]
+                lvalues += int(mult) * [type(val)]
             except ValueError:
-                raise IllegalValueError( "float list", keys, value )
+                raise IllegalValueError( "list", keys, item )
 
-    if not args['allow zeroes']:
-        if 0.0 in lvalues:
-            raise IllegalValueError( "float list with no zeroes", keys, value )
+    if not allow_zeroes:
+        if type(0.0) in lvalues:
+            raise IllegalValueError( "no-zero list", keys, values )
+
+    return lvalues
+
+def _coerce_int_list( value, keys, args ):
+    "Coerce list values with optional multipliers to integer."
+    values = _strip_and_unquote_list( keys, value )
+    return _expand_list( values, keys, int, args['allow zeroes'] )
+
+def _coerce_float_list( value, keys, args ):
+    "Coerce list values with optional multipliers to float."
+    values = _strip_and_unquote_list( keys, value )
+    return _expand_list( values, keys, float, args['allow zeroes'] )
 
     return lvalues
 
@@ -196,15 +309,13 @@ coercers = {
     'string_list'  : _coerce_str_list,
     'integer_list' : _coerce_int_list,
     'float_list'   : _coerce_float_list,
-    'm_float_list' : _coerce_m_float_list,
     }
 
 class validator(object):
-    """
-    Validators for single values.
-    """
+
     def __init__( self, vtype='string', default=None,
-            options=[], vmin=None, vmax=None, allow_zeroes=True):
+            options=[], vmin=None, vmax=None,
+            allow_zeroes=True, compulsory=False ):
         self.coercer = coercers[vtype]
         self.args = {
                 'options'      : options,
@@ -212,6 +323,7 @@ class validator(object):
                 'vmax'         : vmax,
                 'default'      : default,
                 'allow zeroes' : allow_zeroes,
+                'compulsory'   : compulsory,
                 }
 
     def check( self, value, keys ):

@@ -1,0 +1,21 @@
+
+Parsec TODO list:
+
+DOCUMENT STANDARD USAGE:
+    a) define a file spec with validators
+    b) derive a parsec config object to add any additional
+    file-format-specific functionality (i.e. to transform the parsed
+        data, or to parse the basic item values, or new methods to return
+        derived information).
+    c) do lazy load on import to parse the file(s)
+
+EXPAND THE TEST BATTERY:
+    - .e.g. test that things that shouldn't validate don't.
+
+EXTENSION:
+    - move section heading lists from cylc suite config into parsec?
+    - move inheritance from cylc suite config into parsec?
+    - test repeated section and item add-or-override)
+    - test site/user style add-or-override
+    - abort if compulsory items not found (currently prints a warning)
+

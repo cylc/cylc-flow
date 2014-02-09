@@ -3,8 +3,8 @@ PARSEC CONFIG FILE PARSER
 
 A framework for constructing nested-INI-style config file formats with
 automatic parsing, validation, default values, on-the-fly item
-deprecation and upgrading, and file combination (e.g. user.rc overrides
-site.rc overrides system default values).
+obsoletion, deprecation and upgrade, and site/user-style file override
+(e.g. user.rc overrides site.rc overrides spec default values).
 _____________________________
   USED IN CYLC FOR:
    * suite definition files
@@ -74,11 +74,6 @@ TESTING
   * lib/cylc/parsec/upgrade.py
   Contains a unit test to test on-the-fly upgrade of deprecated items.
 
-  * lib/cylc/cfgspec/
-  Contains file specs for CYLC suite definition, site config, and gcylc
-  config file formats. Can be tested with examples files and respectively,
-  "cylc validate", "cylc get-global-config", and "gcylc --print-config".
-
 ________________________________________________________________________
 TODO
  * Some suite-definition-specific special behaviour (namely combining
@@ -89,11 +84,6 @@ TODO
  * Figure out how to use OrderedDicts *only* for environment (and
    directives?) sections from the outset. Currently all sections are
    added as OrderedDicts by the fileparser.
-
- * move [runtime] inheritance out of cylc/config.py into parsec, and
-   then move application of [runtime] defaults to immediately after
-   inheritance processing, and don't use config.py for the get-config
-   command (which can print sparse [runtime] dicts).
 
 ________________________________________________________________________
 NOTE ON USE OF ORDERED DICTS

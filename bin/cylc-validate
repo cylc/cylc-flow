@@ -24,7 +24,6 @@ if remrun().execute():
 from cylc.CylcOptionParsers import cop
 from cylc.version import cylc_version
 from cylc.config import config
-from cylc.global_config import get_global_cfg
 import cylc.flags
 
 parser = cop( """cylc [prep] validate [OPTIONS] ARGS
@@ -44,9 +43,8 @@ parser.add_option( "--strict",
         "unintentional typographic errors in task names.",
         action="store_true", default=False, dest="strict" )
 
-parser.add_option( "--no-write",
-        help="Don't attempt to write out the 'suite.rc.processed' "
-        "file to the suite definition directory.",
+parser.add_option( "--no-write", 
+        help="Don't write out the processed suite definition.",
         action="store_true", default=False, dest="nowrite" )
 
 (options, args) = parser.parse_args()
@@ -61,13 +59,11 @@ try:
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             validation=True, strict=options.strict,
-            write_processed_file=not options.nowrite )
+            write_proc=not options.nowrite )
 except Exception,x:
     if cylc.flags.debug:
         raise
     raise SystemExit(x)
 
 print "Valid for cylc-" + cylc_version
-
-gcfg = get_global_cfg()
 

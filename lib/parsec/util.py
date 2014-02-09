@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
+from copy import copy
 from OrderedDict import OrderedDict
 
 """
@@ -25,24 +26,37 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
+def listjoin( lst ):
+    return ', '.join(['"'+str(f).replace(',','\,')+'"' for f in lst])
+
+def printcfg( cfg, level=0, indent=0, prefix='', omitNone=False ):
     """
     Recursively print a nested dict in nested INI format.
     """
+    if isinstance(cfg,list):
+        # print with comma-separators, and internal commas escaped
+        print prefix + listjoin( cfg )
+        return
+    elif not isinstance(cfg,dict):
+        print prefix + cfg
+        return
+
     delayed=[]
-    for key,val in dct.items():
+    for key,val in cfg.items():
         if isinstance( val, dict ):
             # print top level items before recursing
             delayed.append((key,val))
         elif val != None or not omitNone:
             if isinstance( val, list ):
-                v = ', '.join([str(f) for f in val])
+                # print with comma-separators, and internal commas escaped
+                v = listjoin( val )
             else:
                 if val is not None:
                     v = str(val)
                 else:
                     v = ''
             print prefix + '   '*indent + str(key) + ' = ' + v
+
     for key,val in delayed:
         if val != None:
             print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
@@ -117,4 +131,38 @@ def un_many( cfig ):
         elif isinstance( val, dict ):
             un_many( cfig[key] )
 
+
+def itemstr( parents=[], item=None, value=None ):
+    """
+    Pretty-print an item from list of sections, item name, and value
+    E.g.: ([sec1, sec2], item, value) to '[sec1][sec2]item = value'.
+    """
+    keys = copy(parents)
+    if keys and value and not item:
+        # last parent is the item
+        item = keys[-1]
+        keys.remove(item)
+    if parents:
+        s = '[' + ']['.join(parents) + ']'
+    else:
+        s = ''
+    if item:
+        s += str(item)
+        if value:
+            s += " = " + str(value)
+    if not s:
+        s = str(value)
+
+    return s
+
+
+if __name__ == "__main__":
+    print itemstr( ['sec1','sec2'], 'item', 'value' )
+    print itemstr( ['sec1','sec2'], 'item' )
+    print itemstr( ['sec1','sec2'] )
+    print itemstr( ['sec1'] )
+    print itemstr( item='item', value='value' )
+    print itemstr( item='item' )
+    print itemstr( value='value' )
+    print itemstr( parents=['sec1','sec2'], value='value' ) # error or useful?
 

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
 #C:
@@ -15,21 +14,15 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test parsing of integer list items
+. $(dirname $0)/test_header
 
-"""Ordered Dictionary data structure used extensively in cylc."""
+#-------------------------------------------------------------------------------
+set_test_number 1
 
-try:
-    # first try the fast ordereddict C implementation.
-    # DOWNLOAD: http://anthon.home.xs4all.nl/Python/ordereddict/
-    # According to the ordereddict home page, this is much faster than
-    # collections.OrderedDict.
-    from _ordereddict import ordereddict as OrderedDict
-except ImportError:
-    try:
-        # then try Python 2.7+ native module
-        from collections import OrderedDict
-    except ImportError:
-        # then try the pre-2.7 backport from ActiveState
-        # (packaged with cylc)
-        from OrderedDictCompat import OrderedDict
-    
+install_test $TEST_NAME_BASE integer_list
+#-------------------------------------------------------------------------------
+TEST_NAME=${TEST_NAME_BASE}
+run_ok $TEST_NAME synonyms.py integer_list
+

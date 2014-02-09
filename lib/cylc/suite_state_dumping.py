@@ -19,7 +19,7 @@
 from datetime import datetime
 import errno
 import os
-from global_config import get_global_cfg
+from cfgspec.site import sitecfg
 
 class dumper( object ):
 
@@ -29,11 +29,10 @@ class dumper( object ):
         self.run_mode = run_mode
         self.clock = clock
         self.set_cts(ict, stop_tag)
-        gcfg = get_global_cfg()
-        self.dir_name = gcfg.get_derived_host_item( suite,
+        self.dir_name = sitecfg.get_derived_host_item( suite,
                                                     'suite state directory' )
         self.file_name = os.path.join( self.dir_name, self.BASE_NAME )
-        self.arch_len = gcfg.cfg[ 'state dump rolling archive length' ]
+        self.arch_len = sitecfg.get( [ 'state dump rolling archive length' ] )
         if not self.arch_len or int(self.arch_len) <= 1:
             self.arch_len = 1
         self.arch_files = []

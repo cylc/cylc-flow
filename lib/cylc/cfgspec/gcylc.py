@@ -18,16 +18,65 @@
 
 import os, sys, gtk
 from copy import deepcopy, copy
-from cylc.task_state import task_state
-from cylc.cfgspec.gcylc_spec import get_cfg
 
-class config( object ):
+from parsec.config import config, ItemNotFoundError, itemstr
+from parsec.validate import validator as vdr
+from parsec.upgrade import upgrader
+from parsec.util import printcfg
+
+from cylc.task_state import task_state
+
+"gcylc config file format."
+
+SITE_FILE = os.path.join( os.environ['CYLC_DIR'], 'conf', 'gcylcrc', 'themes.rc' )
+USER_FILE = os.path.join( os.environ['HOME'], '.cylc', 'gcylc.rc' )
+
+SPEC = {
+    'initial views' : vdr( vtype='string_list', default=["text"] ),
+    'ungrouped views' : vdr( vtype='string_list', default=[] ),
+    'use theme'     : vdr( vtype='string', default="default" ),
+    'themes' : {
+        '__MANY__' : {
+            'inherit'       : vdr( vtype='string', default="default" ),
+            'defaults'      : vdr( vtype='string_list' ),
+            'waiting'       : vdr( vtype='string_list' ),
+            'runahead'      : vdr( vtype='string_list' ),
+            'held'          : vdr( vtype='string_list' ),
+            'queued'        : vdr( vtype='string_list' ),
+            'ready'         : vdr( vtype='string_list' ),
+            'submitted'     : vdr( vtype='string_list' ),
+            'submit-failed' : vdr( vtype='string_list' ),
+            'running'       : vdr( vtype='string_list' ),
+            'succeeded'     : vdr( vtype='string_list' ),
+            'failed'        : vdr( vtype='string_list' ),
+            'retrying'      : vdr( vtype='string_list' ),
+            'submit-retrying' : vdr( vtype='string_list' ),
+            },
+        },
+    }
+
+def upg( cfg, descr ):
+    u = upgrader(cfg, descr )
+    u.deprecate( '5.4.3', ['themes','__MANY__', 'submitting'], ['themes','__MANY__', 'ready'] )
+    u.upgrade()
+
+class gconfig( config ):
     """gcylc user configuration - default view panels, task themes etc."""
 
-    def __init__( self, prntcfg=False ):
+    def transform( self ):
+        """
+        1) theme inheritance
+        2) turn state attribute lists into dicts for easier access:
+          running : color=#ff00ff, style=filled, fontcolor=black
+          becomes:
+             running : { color:#ff00ff, style:filled, fontcolor:black }
+        """
+        # Note this is only done for the dense config structure.
 
+        self.expand()
         self.default_theme = "default"
-        cfg = get_cfg()
+
+        cfg = self.get()
 
         # select the start-up theme
         self.use_theme = cfg['use theme']
@@ -82,7 +131,7 @@ class config( object ):
                     continue
                 state = item
                 if state not in task_state.legal:
-                    print >> sys.stderr, "WARNING, ingoring illegal task state '" + state + "' in theme", theme
+                    print >> sys.stderr, "WARNING, ignoring illegal task state '" + state + "' in theme", theme
                 # reverse inherit (override)
                 tcfg = deepcopy(defs)
                 self.inherit( tcfg, self.parse_state(theme, item, val))
@@ -91,7 +140,9 @@ class config( object ):
         # final themes result:
         cfg['themes'] = cfg_themes
 
+    def check( self ):
         # check intial view config
+        cfg = self.get( sparse=True )
         views = copy(cfg['initial views'])
         for view in views:
             if view not in ['dot', 'text', 'graph' ]:
@@ -102,9 +153,6 @@ class config( object ):
             # at least one view required
             print >> sys.stderr, "WARNING: no initial views defined, defaulting to 'text'"
             cfg['initial views'] = ['text']
-
-        # store final result
-        self.cfg = cfg
 
     def parse_state( self, theme, name, cfglist=[] ):
         allowed_keys = ['style', 'color', 'fontcolor']
@@ -130,4 +178,42 @@ class config( object ):
                 self.inherit( target[item], source[item] )
             else:
                 target[item] = source[item]
+
+    def dump( self, keys=[], sparse=False, pnative=False ):
+        # override parse.config.dump() to restore the list-nature of
+        # theme state items
+        cfg = deepcopy( self.get( [], sparse ))
+        try:
+            for theme in cfg['themes'].keys():
+                for state in cfg['themes'][theme].keys():
+                    clist = []
+                    for attr, val in cfg['themes'][theme][state].items():
+                        clist.append( attr + '=' + val )
+                    cfg['themes'][theme][state] = clist
+        except:
+            pass
+
+        parents = []
+        for key in keys:
+            try:
+                cfg = cfg[key]
+            except KeyError, x:
+                raise ItemNotFoundError( itemstr(parents,key) )
+            else:
+                parents.append(key)
+
+        if pnative:
+            print cfg
+        else:
+            printcfg( cfg )
+
+# load on import if not already loaded
+gcfg = None
+if not gcfg:
+    gcfg = gconfig( SPEC, upg )
+    gcfg.loadcfg( SITE_FILE, "site config" )
+    gcfg.loadcfg( USER_FILE, "user config" )
+    # add spec defaults and do theme inheritance
+    gcfg.transform()
+    gcfg.check()
 

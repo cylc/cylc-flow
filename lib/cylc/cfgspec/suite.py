@@ -20,12 +20,9 @@ from parsec.validate import validator as vdr
 from parsec.validate import validate, expand, get_defaults
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
+from parsec.config import config
 
-"""
-Define all legal items and values for cylc suite definition files.
-"""
-
-cfg = None
+"Define all legal items and values for cylc suite definition files."
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
@@ -56,9 +53,9 @@ SPEC = {
             '__MANY__'                        : vdr( vtype='string' ),
             },
         'event hooks' : {
-            'startup handler'                 : vdr( vtype='string' ),
-            'timeout handler'                 : vdr( vtype='string' ),
-            'shutdown handler'                : vdr( vtype='string' ),
+            'startup handler'                 : vdr( vtype='string_list', default=[] ),
+            'timeout handler'                 : vdr( vtype='string_list', default=[] ),
+            'shutdown handler'                : vdr( vtype='string_list', default=[] ),
             'timeout'                         : vdr( vtype='float'  ),
             'reset timer'                     : vdr( vtype='boolean', default=True ),
             'abort if startup handler fails'  : vdr( vtype='boolean', default=False ),
@@ -129,13 +126,13 @@ SPEC = {
             'pre-command scripting'           : vdr( vtype='string' ),
             'command scripting'               : vdr( vtype='string', default='echo Default command scripting; sleep $(cylc rnd 1 16)'),
             'post-command scripting'          : vdr( vtype='string' ),
-            'retry delays'                    : vdr( vtype='m_float_list', default=[] ),
+            'retry delays'                    : vdr( vtype='float_list', default=[] ),
             'manual completion'               : vdr( vtype='boolean', default=False ),
             'extra log files'                 : vdr( vtype='string_list', default=[] ),
             'enable resurrection'             : vdr( vtype='boolean', default=False ),
             'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
-            'submission polling intervals'    : vdr( vtype='m_float_list', default=[] ),
-            'execution polling intervals'     : vdr( vtype='m_float_list', default=[] ),
+            'submission polling intervals'    : vdr( vtype='float_list', default=[] ),
+            'execution polling intervals'     : vdr( vtype='float_list', default=[] ),
             'environment filter' : {
                 'include'                     : vdr( vtype='string_list' ),
                 'exclude'                     : vdr( vtype='string_list' ),
@@ -157,7 +154,7 @@ SPEC = {
                 'method'                      : vdr( vtype='string', default='background' ),
                 'command template'            : vdr( vtype='string' ),
                 'shell'                       : vdr( vtype='string',  default='/bin/bash' ),
-                'retry delays'                : vdr( vtype='m_float_list', default=[] ),
+                'retry delays'                : vdr( vtype='float_list', default=[] ),
                 },
             'remote' : {
                 'host'                        : vdr( vtype='string' ),
@@ -165,17 +162,17 @@ SPEC = {
                 'suite definition directory'  : vdr( vtype='string' ),
                 },
             'event hooks' : {
-                'submitted handler'           : vdr( vtype='string' ),
-                'started handler'             : vdr( vtype='string' ),
-                'succeeded handler'           : vdr( vtype='string' ),
-                'failed handler'              : vdr( vtype='string' ),
-                'submission failed handler'   : vdr( vtype='string' ),
-                'warning handler'             : vdr( vtype='string' ),
-                'retry handler'               : vdr( vtype='string' ),
-                'submission retry handler'    : vdr( vtype='string' ),
-                'submission timeout handler'  : vdr( vtype='string' ),
+                'submitted handler'           : vdr( vtype='string_list', default=[] ),
+                'started handler'             : vdr( vtype='string_list', default=[] ),
+                'succeeded handler'           : vdr( vtype='string_list', default=[] ),
+                'failed handler'              : vdr( vtype='string_list', default=[] ),
+                'submission failed handler'   : vdr( vtype='string_list', default=[] ),
+                'warning handler'             : vdr( vtype='string_list', default=[] ),
+                'retry handler'               : vdr( vtype='string_list', default=[] ),
+                'submission retry handler'    : vdr( vtype='string_list', default=[] ),
+                'submission timeout handler'  : vdr( vtype='string_list', default=[] ),
                 'submission timeout'          : vdr( vtype='float' ),
-                'execution timeout handler'   : vdr( vtype='string' ),
+                'execution timeout handler'   : vdr( vtype='string_list', default=[] ),
                 'execution timeout'           : vdr( vtype='float'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
                 },
@@ -224,40 +221,25 @@ SPEC = {
         },
     }
 
-def get_expand_nonrt( fpath, template_vars, template_vars_file,
-        do_expand=False, is_reload=False,
-        write_processed_file=True):
-    global cfg
-    if is_reload or not cfg:
-        cfg = parse( fpath,
-                write_processed_file=write_processed_file,
-                template_vars=template_vars,
-                template_vars_file=template_vars_file )
+def upg( cfg, descr ):
+    u = upgrader( cfg, descr )
+    u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
+    # TODO - should abort if obsoleted items are encountered
+    u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
+    u.upgrade()
 
-        u = upgrader( cfg, SPEC, 'suite definition' )
-        u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
-        # TODO - should abort if obsoleted items are encountered
-        u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
-        u.upgrade()
+class sconfig( config ):
+    pass
 
-        validate( cfg, SPEC )
+suitecfg = None
+cfpath = None
 
-        # load defaults for everything except [runtime]
-        # (keep runtime sparse for efficient inheritance)
-        for key,val in SPEC.items():
-            if isinstance(val,dict):
-                if key != 'runtime':
-                    # all main sections except for runtime
-                    if key not in cfg:
-                        cfg[key] = {} # TODO - ordered dict?
-                    cfg[key] = expand( cfg[key], SPEC[key] )
-            else:
-                # top level (no section) items
-                if key not in cfg:
-                    cfg[key] = val.args['default']
-
-    return cfg
-
-def get_defaults_rt():
-    return get_defaults( SPEC['runtime']['__MANY__'] )
+def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=False ):
+    global suitecfg, cfpath
+    if not suitecfg or fpath != cfpath or force:
+        cfpath = fpath
+        # TODO - write_proc should be in loadcfg
+        suitecfg = sconfig( SPEC, upg, tvars=tvars, tvars_file=tvars_file, write_proc=write_proc )
+        suitecfg.loadcfg( fpath, "suite definition", strict=True )
+        return suitecfg
 

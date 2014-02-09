@@ -25,7 +25,7 @@ import os, re
 import datetime
 from shutil import copy
 import subprocess
-from cylc.global_config import get_global_cfg
+from cylc.cfgspec.site import sitecfg
 from cylc.CylcOptionParsers import cop
 from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
@@ -86,11 +86,10 @@ parser.add_option( "--gui", "-g",
 
 suite, suiterc, junk = parser.get_suite()
 
-gcfg = get_global_cfg()
 if options.geditor:
-    editor = gcfg.cfg['editors']['gui']
+    editor = sitecfg.get( ['editors','gui'] )
 else:
-    editor = gcfg.cfg['editors']['terminal']
+    editor = sitecfg.get( ['editors','terminal'] )
 
 suitedir = os.path.dirname(suiterc)
 
