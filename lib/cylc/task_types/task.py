@@ -768,12 +768,6 @@ class task( object ):
             self.log( 'WARNING', msg )
             self.poll()
             self.queue_event_handlers( 'execution timeout', msg )
-            # if no handler is specified, return
-            handler = self.event_handlers['execution timeout']
-            if handler:
-                self.log( 'DEBUG', "Queueing execution timeout event handler" )
-                self.__class__.event_queue.put( ('execution timeout', handler, self.id, msg) )
-
             self.execution_timer_start = None
 
     def sim_time_check( self ):
