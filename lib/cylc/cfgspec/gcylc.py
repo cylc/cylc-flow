@@ -179,7 +179,7 @@ class gconfig( config ):
             else:
                 target[item] = source[item]
 
-    def dump( self, keys=[], sparse=False, pnative=False ):
+    def dump( self, keys=[], sparse=False, pnative=False, prefix='' ):
         # override parse.config.dump() to restore the list-nature of
         # theme state items
         cfg = deepcopy( self.get( [], sparse ))
@@ -205,7 +205,7 @@ class gconfig( config ):
         if pnative:
             print cfg
         else:
-            printcfg( cfg )
+            printcfg( cfg, prefix=prefix, level=len(keys) )
 
 # load on import if not already loaded
 gcfg = None
