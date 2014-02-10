@@ -18,10 +18,6 @@
 
 from validate import validator as vdr
 
-"""
-Legal items and validators for the parsec test config file.
-"""
-
 SPEC = {
         'boolean' : {
             '__MANY__' : { '__MANY__' : vdr( vtype="boolean" ) },
@@ -43,10 +39,6 @@ SPEC = {
             },
         'integer_list' : {
             '__MANY__' : { '__MANY__' : vdr( vtype="integer_list", allow_zeroes=False   ) },
-            },
- 
-        'lists' : {
-            #'compulsory' : vdr( vtype="string_list", default=["jumped","over","the"], compulsory=True )
             },
         }
 
