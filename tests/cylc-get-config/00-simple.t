@@ -18,7 +18,7 @@
 #C: Test cylc get-config
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 15
+set_test_number 14
 #-------------------------------------------------------------------------------
 init_suite $TEST_NAME_BASE <<'__SUITERC__'
 
@@ -85,7 +85,6 @@ __SUITERC__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-all
 run_ok $TEST_NAME cylc get-config $SUITE_NAME
-cmp_ok $TEST_NAME.stdout - </dev/null
 cmp_ok $TEST_NAME.stderr - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-section1
@@ -98,7 +97,7 @@ final cycle time =
 [queues]
    [[default]]
       limit = 0
-      members = ops_s1, ops_s2, ops_p1, ops_p2, var_p1, var_p2, var_s1, var_s2
+      members = "ops_s1", "ops_s2", "ops_p1", "ops_p2", "var_p1", "var_p2", "var_s1", "var_s2"
 [special tasks]
    include at start-up = 
    start-up = 
