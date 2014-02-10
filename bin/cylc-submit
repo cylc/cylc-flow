@@ -24,7 +24,7 @@ if remrun().execute():
 import os
 import subprocess
 from time import sleep
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 from cylc.execute import execute
 from cylc.job_submission import jobfile
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
