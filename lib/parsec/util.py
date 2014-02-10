@@ -27,14 +27,29 @@ The copy and override functions below assume values are either dicts
 """
 
 def listjoin( lst ):
-    return ', '.join(['"'+str(f).replace(',','\,')+'"' for f in lst])
+    if not lst:
+        # empty list
+        return ''
+    else:
+        # return string from joined list, but quote all elements if any
+        # of them contain comment or list-delimiter characters
+        # (currently quoting must be consistent across all elements)
+        nlst = []
+        quote_me = False
+        for l in lst:
+            if isinstance( l, str ) and ( '#' in l or ',' in l ):
+                quote_me = True
+                break
+        if quote_me:
+            return ', '.join( [ '"' + str(l) + '"' for l in lst ] )
+        else:
+            return ', '.join( [ str(l) for l in lst ] )
 
 def printcfg( cfg, level=0, indent=0, prefix='', omitNone=False ):
     """
     Recursively print a nested dict in nested INI format.
     """
     if isinstance(cfg,list):
-        # print with comma-separators, and internal commas escaped
         print prefix + listjoin( cfg )
         return
     elif not isinstance(cfg,dict):
@@ -48,7 +63,6 @@ def printcfg( cfg, level=0, indent=0, prefix='', omitNone=False ):
             delayed.append((key,val))
         elif val != None or not omitNone:
             if isinstance( val, list ):
-                # print with comma-separators, and internal commas escaped
                 v = listjoin( val )
             else:
                 if val is not None:
