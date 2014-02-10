@@ -977,6 +977,8 @@ class scheduler(object):
                             sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
                 else:
                     if name == 'shutdown' and self.reference_test_mode:
+                        # TODO - this isn't true, it just means the
+                        # shutdown handler run successfully:
                         print '\nSUITE REFERENCE TEST PASSED'
 
     def run( self ):
