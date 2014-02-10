@@ -38,7 +38,7 @@ def printcfg( cfg, level=0, indent=0, prefix='', omitNone=False ):
         print prefix + listjoin( cfg )
         return
     elif not isinstance(cfg,dict):
-        print prefix + cfg
+        print prefix + str(cfg)
         return
 
     delayed=[]
