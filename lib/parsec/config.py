@@ -176,5 +176,5 @@ class config( object ):
         if pnative:
             print cfg
         else:
-            printcfg( cfg, prefix=prefix )
+            printcfg( cfg, prefix=prefix, level=len(keys) )
 
