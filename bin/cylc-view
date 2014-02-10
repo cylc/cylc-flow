@@ -99,7 +99,7 @@ cylc_tmpdir = sitecfg.get_tmpdir()
 if options.geditor:
     editor = sitecfg.get( ['editors','gui'] )
 else:
-    editor = sitecfg['editors','terminal'] )
+    editor = sitecfg.get( ['editors','terminal'] )
 
 global suitedir
 suitedir = os.path.dirname(suiterc)

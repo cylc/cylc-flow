@@ -89,7 +89,7 @@ def get_suite_host():
     global suite_host
     if suite_host is None:
         hardwired = sitecfg.get( ['suite host self-identification','host'] )
-        method = sitegcfg.get( ['suite host self-identification','method'] )
+        method = sitecfg.get( ['suite host self-identification','method'] )
         # the following is for suite host self-identfication in task job scripts:
         if method == 'name':
             suite_host = hostname
