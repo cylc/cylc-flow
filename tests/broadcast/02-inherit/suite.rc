@@ -1,0 +1,42 @@
+#!jinja2
+title=broadcast
+description=Test Broadcast Inheritance
+[cylc]
+    [[reference test]]
+        required run mode=live
+        live mode suite timeout=1.0
+[scheduling]
+    initial cycle time = 2014010100
+    final cycle time   = 2014010100
+    [[special tasks]]
+        start-up = broadcast_all
+    [[dependencies]]
+        [[[0]]]
+            graph=broadcast_all=>broadcast_tag=>t1
+[runtime]
+    [[broadcast_all]]
+        command scripting="""
+cylc broadcast -s "[environment]ALL_0=true" -n F1 $CYLC_SUITE_REG_NAME
+cylc broadcast -s "[environment]ALL_1=true" -n t1 $CYLC_SUITE_REG_NAME
+"""
+    [[broadcast_tag]]
+        command scripting="""
+cylc broadcast -s "[environment]TAG_0=true" -n F1 -t $CYLC_TASK_CYCLE_TIME \
+    $CYLC_SUITE_REG_NAME
+cylc broadcast -s "[environment]TAG_1=true" -n t1 -t $CYLC_TASK_CYCLE_TIME \
+    $CYLC_SUITE_REG_NAME
+"""
+    [[F1]]
+        command scripting="""
+$ALL_0
+$ALL_1
+$TAG_0
+$TAG_1
+"""
+        [[[environment]]]
+            ALL_0=false
+            ALL_1=false
+            TAG_0=false
+            TAG_1=false
+    [[t1]]
+        inherit=F1
