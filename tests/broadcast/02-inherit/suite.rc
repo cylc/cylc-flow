@@ -28,7 +28,6 @@ cylc broadcast -s "[environment]TAG_1=true" -n t1 -t $CYLC_TASK_CYCLE_TIME \
 """
     [[F1]]
         command scripting="""
-cylc shutdown $CYLC_SUITE_REG_NAME # Shutdown regardless of failure
 $ALL_0
 $ALL_1
 $TAG_0
