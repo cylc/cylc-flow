@@ -46,8 +46,8 @@ class config( object ):
     def __init__( self, spec, upgrader=None, write_proc=False,
             tvars=[], tvars_file=None ):
 
-        self.sparse = None
-        self.dense = None
+        self.sparse = OrderedDict()
+        self.dense = OrderedDict()
         self.upgrader = upgrader
         self.tvars = tvars
         self.tvars_file = tvars_file
