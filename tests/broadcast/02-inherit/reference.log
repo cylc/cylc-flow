@@ -1,0 +1,92 @@
+2014/02/10 16:32:16 INFO - Thread-2 start (Event Handlers)
+2014/02/10 16:32:16 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/10 16:32:16 INFO - port:7766
+2014/02/10 16:32:16 INFO - Suite starting at 2014-02-10 16:32:16.972032
+2014/02/10 16:32:16 INFO - Log event clock: real time
+2014/02/10 16:32:16 INFO - Run mode: live
+2014/02/10 16:32:16 INFO - Start tag: 2014010100
+2014/02/10 16:32:16 INFO - Stop tag: 2014010100
+2014/02/10 16:32:16 INFO - Thread-5 start (Request Handling)
+2014/02/10 16:32:16 INFO - Thread-4 start (Job Submission)
+2014/02/10 16:32:16 INFO - Cold Start 2014010100
+2014/02/10 16:32:16 DEBUG - [broadcast_all.2014010100] -task proxy added to the pool
+2014/02/10 16:32:16 DEBUG - [broadcast_tag.2014010100] -task proxy added to the pool
+2014/02/10 16:32:16 DEBUG - [t1.2014010100] -task proxy added to the pool
+2014/02/10 16:32:16 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:16 DEBUG - [broadcast_all.2014010100] -(setting:queued)
+2014/02/10 16:32:16 DEBUG - 1 task(s) ready
+2014/02/10 16:32:16 DEBUG - [broadcast_all.2014010100] -(setting:ready)
+2014/02/10 16:32:16 INFO - [broadcast_all.2014010100] -triggered off []
+2014/02/10 16:32:16 DEBUG - END TASK PROCESSING (took 0.004975 sec)
+2014/02/10 16:32:17 DEBUG - Job Submission batch 1/1 (1 members):
+2014/02/10 16:32:17 INFO - [broadcast_all.2014010100] -(current:ready)> broadcast_all.2014010100 submitting now
+2014/02/10 16:32:18 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.314479
+  All 1 items succeeded
+2014/02/10 16:32:18 INFO - [broadcast_all.2014010100] -(current:ready)> broadcast_all.2014010100 submission succeeded
+2014/02/10 16:32:19 DEBUG - [broadcast_all.2014010100] -(setting:submitted)
+2014/02/10 16:32:19 INFO - [broadcast_all.2014010100] -(current:submitted)> broadcast_all.2014010100 submit_method_id=21449
+2014/02/10 16:32:19 INFO - [broadcast_all.2014010100] -(current:submitted)> broadcast_all.2014010100 started at 2014-02-10T16:32:18
+2014/02/10 16:32:19 DEBUG - [broadcast_all.2014010100] -(setting:running)
+2014/02/10 16:32:20 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:20 DEBUG - END TASK PROCESSING (took 0.002276 sec)
+2014/02/10 16:32:20 INFO - [broadcast_all.2014010100] -(current:running)> broadcast_all.2014010100 succeeded at 2014-02-10T16:32:19
+2014/02/10 16:32:20 DEBUG - [broadcast_all.2014010100] -(setting:succeeded)
+2014/02/10 16:32:21 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:21 DEBUG - [broadcast_tag.2014010100] -(setting:queued)
+2014/02/10 16:32:21 DEBUG - 1 task(s) ready
+2014/02/10 16:32:21 DEBUG - [broadcast_tag.2014010100] -(setting:ready)
+2014/02/10 16:32:21 INFO - [broadcast_tag.2014010100] -triggered off ['broadcast_all.2014010100']
+2014/02/10 16:32:21 DEBUG - END TASK PROCESSING (took 0.006495 sec)
+2014/02/10 16:32:21 DEBUG - Job Submission batch 1/1 (1 members):
+2014/02/10 16:32:21 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.213150
+  All 1 items succeeded
+2014/02/10 16:32:22 INFO - [broadcast_tag.2014010100] -(current:ready)> broadcast_tag.2014010100 submitting now
+2014/02/10 16:32:22 INFO - [broadcast_tag.2014010100] -(current:ready)> broadcast_tag.2014010100 submission succeeded
+2014/02/10 16:32:22 DEBUG - [broadcast_tag.2014010100] -(setting:submitted)
+2014/02/10 16:32:22 INFO - [broadcast_tag.2014010100] -(current:submitted)> broadcast_tag.2014010100 submit_method_id=21579
+2014/02/10 16:32:22 INFO - [broadcast_tag.2014010100] -(current:submitted)> broadcast_tag.2014010100 started at 2014-02-10T16:32:21
+2014/02/10 16:32:22 DEBUG - [broadcast_tag.2014010100] -(setting:running)
+2014/02/10 16:32:23 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:23 DEBUG - [broadcast_tag.2014010100] -forced spawning
+2014/02/10 16:32:23 DEBUG - [broadcast_tag.2014010200] -HOLDING (beyond suite stop cycle) 2014010100
+2014/02/10 16:32:23 DEBUG - [broadcast_tag.2014010200] -(setting:held)
+2014/02/10 16:32:23 DEBUG - [broadcast_tag.2014010200] -task proxy added to the pool
+2014/02/10 16:32:23 DEBUG - END TASK PROCESSING (took 0.00705 sec)
+2014/02/10 16:32:23 INFO - [broadcast_tag.2014010100] -(current:running)> broadcast_tag.2014010100 succeeded at 2014-02-10T16:32:22
+2014/02/10 16:32:23 DEBUG - [broadcast_tag.2014010100] -(setting:succeeded)
+2014/02/10 16:32:24 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:24 DEBUG - [t1.2014010100] -(setting:queued)
+2014/02/10 16:32:24 DEBUG - 1 task(s) ready
+2014/02/10 16:32:24 DEBUG - [t1.2014010100] -(setting:ready)
+2014/02/10 16:32:24 INFO - [t1.2014010100] -triggered off ['broadcast_tag.2014010100']
+2014/02/10 16:32:24 DEBUG - [broadcast_all.2014010100] -task proxy removed
+2014/02/10 16:32:24 DEBUG - [broadcast_tag.2014010100] -task proxy removed
+2014/02/10 16:32:24 DEBUG - END TASK PROCESSING (took 0.006245 sec)
+2014/02/10 16:32:24 DEBUG - Job Submission batch 1/1 (1 members):
+2014/02/10 16:32:24 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.313704
+  All 1 items succeeded
+2014/02/10 16:32:25 INFO - [t1.2014010100] -(current:ready)> t1.2014010100 submitting now
+2014/02/10 16:32:25 INFO - [t1.2014010100] -(current:ready)> t1.2014010100 submission succeeded
+2014/02/10 16:32:25 DEBUG - [t1.2014010100] -(setting:submitted)
+2014/02/10 16:32:25 INFO - [t1.2014010100] -(current:submitted)> t1.2014010100 submit_method_id=21709
+2014/02/10 16:32:26 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:26 DEBUG - [t1.2014010100] -forced spawning
+2014/02/10 16:32:26 DEBUG - [t1.2014010200] -HOLDING (beyond suite stop cycle) 2014010100
+2014/02/10 16:32:26 DEBUG - [t1.2014010200] -(setting:held)
+2014/02/10 16:32:26 DEBUG - [t1.2014010200] -task proxy added to the pool
+2014/02/10 16:32:26 DEBUG - END TASK PROCESSING (took 0.007536 sec)
+2014/02/10 16:32:26 INFO - [t1.2014010100] -(current:submitted)> t1.2014010100 started at 2014-02-10T16:32:25
+2014/02/10 16:32:26 DEBUG - [t1.2014010100] -(setting:running)
+2014/02/10 16:32:26 INFO - [t1.2014010100] -(current:running)> t1.2014010100 succeeded at 2014-02-10T16:32:25
+2014/02/10 16:32:26 DEBUG - [t1.2014010100] -(setting:succeeded)
+2014/02/10 16:32:26 INFO - Command succeeded: stop cleanly(False)
+2014/02/10 16:32:26 INFO - Thread-4 exit (Job Submission)
+2014/02/10 16:32:26 INFO - Thread-2 exit (Event Handlers)
+2014/02/10 16:32:26 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/02/10 16:32:27 DEBUG - BEGIN TASK PROCESSING
+2014/02/10 16:32:27 DEBUG - [t1.2014010100] -task proxy removed
+2014/02/10 16:32:27 INFO - Expiring 2014010100 broadcast settings now
+2014/02/10 16:32:27 DEBUG - END TASK PROCESSING (took 0.003552 sec)
