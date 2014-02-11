@@ -82,6 +82,9 @@ def replicate( target, source ):
     target already, so source overrides common elements in target and
     otherwise adds elements to it.
     """
+    if not source:
+        target = OrderedDict()
+        return
     for key,val in source.items():
         if isinstance( val, dict ):
             if key not in target:
@@ -100,6 +103,9 @@ def pdeepcopy( source):
 
 def poverride( target, sparse ):
     """Override items in a target pdict, target sub-dicts must already exist."""
+    if not sparse:
+        target = OrderedDict()
+        return
     for key,val in sparse.items():
         if isinstance( val, dict ):
             poverride( target[key], val )
@@ -111,7 +117,9 @@ def poverride( target, sparse ):
 def m_override( target, sparse ):
     """Override items in a target pdict. Target keys must already exist
     unless there is a "__MANY__" placeholder in the right position."""
-
+    if not sparse:
+        target = OrderedDict()
+        return
     for key,val in sparse.items():
         if isinstance( val, dict ):
             if key not in target:
@@ -139,6 +147,8 @@ def m_override( target, sparse ):
 
 def un_many( cfig ):
     """Remove any '__MANY__' items from a nested dict, in-place."""
+    if not cfig:
+        return
     for key,val in cfig.items():
         if key == '__MANY__':
             del cfig[key]
