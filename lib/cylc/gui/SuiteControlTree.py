@@ -172,6 +172,7 @@ Text Treeview suite control interface.
         self.tmodelfilter.set_visible_func(self.visible_cb)
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
         self.ttreeview = gtk.TreeView()
+        self.ttreeview.set_rules_hint(True)
         self.ttreeview.set_model(self.tmodelsort)
 
         ts = self.ttreeview.get_selection()
@@ -179,13 +180,11 @@ Text Treeview suite control interface.
 
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
         headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
-        bkgcols  = [ None, None,  '#def',  '#fff',    '#def',    '#fff',   '#def',    '#fff']
 
         for n in range(1, len(headings)):
             # Skip first column (cycle time)
             cr = gtk.CellRendererText()
             tvc = gtk.TreeViewColumn( headings[n] )
-            cr.set_property( 'cell-background', bkgcols[n] )
             if n == 2:
                 crp = gtk.CellRendererPixbuf()
                 tvc.pack_start( crp, False )

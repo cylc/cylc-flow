@@ -415,7 +415,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 
         self.window.set_icon(get_icon())
-        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_default_size(800, 500)
         self.window.connect("delete_event", self.delete_event)
 
