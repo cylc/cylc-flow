@@ -21,7 +21,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 
-install_test $TEST_NAME_BASE boolean
+install_test $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-False
 run_ok $TEST_NAME synonyms.py boolean

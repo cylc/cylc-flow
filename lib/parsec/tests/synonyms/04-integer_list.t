@@ -15,14 +15,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test parsing of float list items
+# Test parsing of integer list items
 . $(dirname $0)/test_header
 
 #-------------------------------------------------------------------------------
 set_test_number 1
 
-install_test $TEST_NAME_BASE float_list
+install_test $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}
-run_ok $TEST_NAME synonyms.py float_list
+TEST_NAME=$TEST_NAME_BASE
+run_ok $TEST_NAME synonyms.py integer_list
 
