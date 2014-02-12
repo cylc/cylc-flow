@@ -1,0 +1,29 @@
+2014/02/12 16:27:26 INFO - Thread-2 start (Event Handlers)
+2014/02/12 16:27:26 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/12 16:27:26 INFO - port:7766
+2014/02/12 16:27:26 INFO - Suite starting at 2014-02-12 16:27:26.896461
+2014/02/12 16:27:26 INFO - Log event clock: real time
+2014/02/12 16:27:26 INFO - Run mode: live
+2014/02/12 16:27:26 INFO - Start tag: None
+2014/02/12 16:27:26 INFO - Stop tag: None
+2014/02/12 16:27:26 INFO - Thread-4 start (Job Submission)
+2014/02/12 16:27:26 INFO - Thread-5 start (Request Handling)
+2014/02/12 16:27:26 INFO - [t1.1] -triggered off []
+2014/02/12 16:27:27 INFO - [t1.1] -(current:ready)> t1.1 submitting now
+2014/02/12 16:27:28 INFO - [t1.1] -(current:ready)> t1.1 submission succeeded
+2014/02/12 16:27:28 INFO - [t1.1] -(current:submitted)> t1.1 submit_method_id=23418
+2014/02/12 16:27:28 INFO - [t1.1] -(current:submitted)> t1.1 started at 2014-02-12T16:27:28
+2014/02/12 16:27:29 INFO - [t1.1] -(current:running)> t1.1 succeeded at 2014-02-12T16:27:29
+2014/02/12 16:27:29 INFO - pre-trigger state dump: state.20140212T162729.922491Z
+2014/02/12 16:27:29 INFO - Command succeeded: trigger task(t2,1,False)
+2014/02/12 16:27:30 INFO - [t2.1] -triggered off [None]
+2014/02/12 16:27:31 INFO - [t2.1] -(current:ready)> t2.1 submitting now
+2014/02/12 16:27:31 INFO - [t2.1] -(current:ready)> t2.1 submission succeeded
+2014/02/12 16:27:31 INFO - [t2.1] -(current:submitted)> t2.1 submit_method_id=23535
+2014/02/12 16:27:32 INFO - [t2.1] -(current:submitted)> t2.1 started at 2014-02-12T16:27:32
+2014/02/12 16:27:32 INFO - [t2.1] -(current:running)> t2.1 succeeded at 2014-02-12T16:27:32
+2014/02/12 16:27:32 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/02/12 16:27:33 INFO - Thread-4 exit (Job Submission)
+2014/02/12 16:27:33 INFO - Thread-2 exit (Event Handlers)
+2014/02/12 16:27:33 INFO - Thread-3 exit (Poll & Kill Commands)
