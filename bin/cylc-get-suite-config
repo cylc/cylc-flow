@@ -76,7 +76,7 @@ parser.add_option( "-a", "--all-tasks",
 
 parser.add_option( "-n", "--null-value",
         help="The string to print for unset values (default nothing).",
-        action="store", default='', dest="none_str" )
+        metavar="STRING", action="store", default='', dest="none_str" )
 
 parser.add_option( "-m", "--mark-up",
         help="Prefix each line with '!cylc!'.",
