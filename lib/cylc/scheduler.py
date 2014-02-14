@@ -1066,15 +1066,20 @@ class scheduler(object):
             else:
                 db_opers = db_ops
 
-            for d in db_opers:
-                self.db.run_db_op(d)
-
             # record any broadcast settings to be dumped out
             if self.wireless:
                 if self.wireless.new_settings:
                     db_ops = self.wireless.get_db_ops()
                     for d in db_ops:
-                        self.db.run_db_op(d)
+                        db_opers += [d]
+
+            for d in db_opers:
+                if self.db.c.is_alive():
+                    self.db.run_db_op(d)
+                elif self.db.c.exception:
+                    raise self.db.c.exception
+                else:
+                    raise SchedulerError( 'An unexpected error occurred while writing to the database' )
 
             # process queued commands
             self.process_command_queue()

@@ -93,21 +93,33 @@ class BulkDBOperObject(object):
 class ThreadedCursor(Thread):
     def __init__(self, db):
         super(ThreadedCursor, self).__init__()
+        self.max_commit_attempts = 5
         self.db=db
         self.reqs=Queue()
         self.start()
+        self.exception = None
     def run(self):
-        cnx = sqlite3.Connection(self.db)
+        cnx = sqlite3.connect(self.db)
         cursor = cnx.cursor()
-        counter = 0
+        counter = 1
         while True:
             if (counter % 10) == 0 or self.reqs.qsize() == 0:
                 counter = 0
-                cnx.commit()
+                attempt = 0
+                while attempt < self.max_commit_attempts:
+                    try:
+                        cnx.commit()
+                        break
+                    except Exception as e:
+                        attempt += 1
+                        if attempt >= self.max_commit_attempts:
+                            self.exception = e
+                            raise e
+                        sleep(1)
             attempt = 0
             req, arg, res, bulk = self.reqs.get()
             if req=='--close--': break
-            while attempt < 5:
+            while attempt < self.max_commit_attempts:
                 try:
                     if bulk:
                         cursor.executemany(req, arg)
@@ -119,8 +131,11 @@ class ThreadedCursor(Thread):
                         res.put('--no more--')
                     cnx.commit()
                     break
-                except:
+                except Exception as e:
                     attempt += 1
+                    if attempt >= self.max_commit_attempts:
+                        self.exception = e
+                        raise e
                     sleep(1)
             counter += 1
         cnx.commit()
