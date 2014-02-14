@@ -41,6 +41,7 @@ def listjoin( lst, none_str='' ):
                 quote_me = True
                 break
         if quote_me:
+            # TODO - this assumes no internal double-quotes
             return ', '.join( [ '"' + str(l) + '"' for l in lst ] )
         else:
             return ', '.join( [ str(l) for l in lst ] )

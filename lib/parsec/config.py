@@ -168,6 +168,7 @@ class config( object ):
                 if not item:
                     item = none_str
                 items.append(str(item))
+            # TODO - quote items if they contain spaces or comment delimiters?
             print prefix + ' '.join( items )
         else:
             for keys in mkeys:
