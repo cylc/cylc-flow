@@ -141,7 +141,7 @@ class config( object ):
 
         return cfg
 
-    def idump( self, items=[], sparse=False, pnative=False, prefix='', oneline=False ):
+    def idump( self, items=[], sparse=False, pnative=False, prefix='', oneline=False, none_str='' ):
         """
         items is a list of --item style inputs:
            '[runtime][foo]command scripting'.
@@ -156,25 +156,27 @@ class config( object ):
             mkeys.append(j)
         if null:
             mkeys = [[]]
-        self.mdump( mkeys, sparse, pnative, prefix, oneline )
+        self.mdump( mkeys, sparse, pnative, prefix, oneline, none_str )
 
-    def mdump( self, mkeys=[], sparse=False, pnative=False, prefix='', oneline=False ):
+    def mdump( self, mkeys=[], sparse=False, pnative=False, prefix='', oneline=False, none_str='' ):
         if oneline:
             items = []
             for keys in mkeys:
                 item = self.get( keys, sparse )
-                if not isinstance( item, str ):
+                if isinstance( item, list ) or isinstance( item, dict ):
                     raise NotSingleItemError( itemstr(keys) )
-                items.append(item)
+                if not item:
+                    item = none_str
+                items.append(str(item))
             print prefix + ' '.join( items )
         else:
             for keys in mkeys:
-                self.dump( keys, sparse, pnative, prefix )
+                self.dump( keys, sparse, pnative, prefix, none_str )
 
-    def dump( self, keys=[], sparse=False, pnative=False, prefix='' ):
+    def dump( self, keys=[], sparse=False, pnative=False, prefix='', none_str='' ):
         cfg = self.get( keys, sparse )
         if pnative:
             print cfg
         else:
-            printcfg( cfg, prefix=prefix, level=len(keys) )
+            printcfg( cfg, prefix=prefix, level=len(keys), none_str=none_str )
 

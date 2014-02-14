@@ -36,7 +36,7 @@ parser.add_option( "-i", "--item", metavar="[SEC...]ITEM",
         action="append", dest="item", default=[] )
 
 parser.add_option( "--sparse",
-        help="Disregard automatically supplied system defaults.",
+        help="Only print items explicitly set in the config files.",
         action="store_true", default=False, dest="sparse" )
 
 parser.add_option( "-p", "--python",

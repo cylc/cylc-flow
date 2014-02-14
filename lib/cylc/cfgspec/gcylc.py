@@ -179,7 +179,7 @@ class gconfig( config ):
             else:
                 target[item] = source[item]
 
-    def dump( self, keys=[], sparse=False, pnative=False, prefix='' ):
+    def dump( self, keys=[], sparse=False, pnative=False, prefix='', none_str='' ):
         # override parse.config.dump() to restore the list-nature of
         # theme state items
         cfg = deepcopy( self.get( [], sparse ))

@@ -26,10 +26,10 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-def listjoin( lst ):
+def listjoin( lst, none_str='' ):
     if not lst:
         # empty list
-        return ''
+        return none_str
     else:
         # return string from joined list, but quote all elements if any
         # of them contain comment or list-delimiter characters
@@ -45,36 +45,45 @@ def listjoin( lst ):
         else:
             return ', '.join( [ str(l) for l in lst ] )
 
-def printcfg( cfg, level=0, indent=0, prefix='', omitNone=False ):
+def printcfg( cfg, level=0, indent=0, prefix='', none_str='' ):
     """
-    Recursively print a nested dict in nested INI format.
+    Recursively pretty-print a parsec config item or section (nested
+    dict), as returned by parse.config.get().
     """
+
     if isinstance(cfg,list):
-        print prefix + listjoin( cfg )
-        return
+        # cfg is a single list value
+        print prefix + '   '*indent + listjoin( cfg, none_str )
     elif not isinstance(cfg,dict):
-        print prefix + str(cfg)
-        return
-
-    delayed=[]
-    for key,val in cfg.items():
-        if isinstance( val, dict ):
-            # print top level items before recursing
-            delayed.append((key,val))
-        elif val != None or not omitNone:
-            if isinstance( val, list ):
-                v = listjoin( val )
+        # cfg is a single value
+        if not cfg:
+            cfg = none_str
+        print prefix + '   '*indent +  str(cfg)
+    else:
+        # cfg is a possibly-nested section
+        delayed=[]
+        for key,val in cfg.items():
+            if isinstance( val, dict ):
+                # nested (val is a section)
+                # delay output to print top level items before recursing
+                delayed.append((key,val))
             else:
-                if val is not None:
-                    v = str(val)
+                # val is a single value
+                if isinstance( val, list ):
+                    v = listjoin( val, none_str )
+                elif val is None:
+                    v = none_str
                 else:
-                    v = ''
-            print prefix + '   '*indent + str(key) + ' = ' + v
+                    v = str(val)
+                # print "key = val"
+                print prefix + '   '*indent + str(key) + ' = ' + v
 
-    for key,val in delayed:
-        if val != None:
+        for key,val in delayed:
+            # print heading
+            #if val != None:
             print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
-        printcfg( val, level=level+1, indent=indent+1, prefix=prefix, omitNone=omitNone)
+            # recurse into section
+            printcfg( val, level=level+1, indent=indent+1, prefix=prefix, none_str=none_str )
 
 def replicate( target, source ):
     """
@@ -181,12 +190,25 @@ def itemstr( parents=[], item=None, value=None ):
 
 
 if __name__ == "__main__":
-    print itemstr( ['sec1','sec2'], 'item', 'value' )
-    print itemstr( ['sec1','sec2'], 'item' )
-    print itemstr( ['sec1','sec2'] )
-    print itemstr( ['sec1'] )
-    print itemstr( item='item', value='value' )
-    print itemstr( item='item' )
-    print itemstr( value='value' )
-    print itemstr( parents=['sec1','sec2'], value='value' ) # error or useful?
+    print 'Item strings:'
+    print '  ', itemstr( ['sec1','sec2'], 'item', 'value' )
+    print '  ', itemstr( ['sec1','sec2'], 'item' )
+    print '  ', itemstr( ['sec1','sec2'] )
+    print '  ', itemstr( ['sec1'] )
+    print '  ', itemstr( item='item', value='value' )
+    print '  ', itemstr( item='item' )
+    print '  ', itemstr( value='value' )
+    print '  ', itemstr( parents=['sec1','sec2'], value='value' ) # error or useful?
+
+    print 'Configs:'
+    printcfg( 'foo', prefix=' > ' )
+    printcfg( ['foo','bar'], prefix=' > ' )
+    printcfg( {}, prefix=' > ' )
+    printcfg( { 'foo' : 1 }, prefix=' > ' )
+    printcfg( { 'foo' : None }, prefix=' > ' )
+    printcfg( { 'foo' : None }, none_str='(none)', prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : 1 } }, prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : None } }, prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : None } }, none_str='(none)', prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : 1, 'baz' : 2, 'qux' : { 'boo' : None} } }, none_str='(none)', prefix=' > ' )
 

@@ -22,7 +22,6 @@ if remrun().execute():
     sys.exit(0)
 
 import re
-from parsec.util import printcfg
 from cylc.config import config, SuiteConfigError
 from cylc.CylcOptionParsers import cop
 import cylc.flags
@@ -32,17 +31,17 @@ parser = cop( usage = """cylc [info] get-suite-config [OPTIONS] ARGS
 Print parsed suite configuration items, after runtime inheritance.
 
 By default all settings are printed. For specific sections or items
-use -i/--item and wrap parent sections in square brackets:
+use -i/--item and wrap sections in square brackets, e.g.:
    cylc get-suite-config --item '[scheduling]initial cycle time'
-Multiple items can be specified at once.
+Multiple items can be retrieved at once.
 
 Example:
-|# SUITE.RC
-|[runtime]
-|    [[modelX]]
-|        [[[environment]]]
-|            FOO = foo
-|            BAR = bar
+  |# SUITE.RC
+  |[runtime]
+  |    [[modelX]]
+  |        [[[environment]]]
+  |            FOO = foo
+  |            BAR = bar
 
 $ cylc get-suite-config --item=[runtime][modelX][environment]FOO SUITE
 foo
@@ -63,7 +62,7 @@ parser.add_option( "-i", "--item", metavar="[SEC...]ITEM",
         action="append", dest="item", default=[] )
 
 parser.add_option( "-r", "--sparse",
-        help="Disregard automatically supplied system defaults.",
+        help="Only print items explicitly set in the config files.",
         action="store_true", default=False, dest="sparse" )
 
 parser.add_option( "-p", "--python",
@@ -74,6 +73,10 @@ parser.add_option( "-a", "--all-tasks",
         help="For [runtime] items (e.g. --item='command scripting') report "
         "values for all tasks prefixed by task name.",
         action="store_true", default=False, dest="alltasks" )
+
+parser.add_option( "-n", "--null-value",
+        help="The string to print for unset values (default nothing).",
+        action="store", default='', dest="none_str" )
 
 parser.add_option( "-m", "--mark-up",
         help="Prefix each line with '!cylc!'.",
@@ -112,9 +115,9 @@ try:
         for task in config.get_task_name_list():
             items = [ '[runtime]['+task+']'+i for i in options.item ]
             print prefix+task,
-            config.pcfg.idump( items, options.sparse, options.pnative, prefix )
+            config.pcfg.idump( items, options.sparse, options.pnative, prefix, options.oneline, none_str=options.none_str )
     else:
-        config.pcfg.idump( options.item, options.sparse, options.pnative, prefix, options.oneline )
+        config.pcfg.idump( options.item, options.sparse, options.pnative, prefix, options.oneline, none_str=options.none_str )
 
 except Exception,x:
     if cylc.flags.debug:
