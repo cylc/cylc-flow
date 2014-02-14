@@ -35,6 +35,10 @@ use -i/--item and wrap sections in square brackets, e.g.:
    cylc get-suite-config --item '[scheduling]initial cycle time'
 Multiple items can be retrieved at once.
 
+By default, unset values are printed as an empty string, or (for
+historical reasons) as "None" with -o/--one-line. These defaults
+can be changed with the -n/--null-value option.
+
 Example:
   |# SUITE.RC
   |[runtime]

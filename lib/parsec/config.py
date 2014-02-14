@@ -166,7 +166,7 @@ class config( object ):
                 if isinstance( item, list ) or isinstance( item, dict ):
                     raise NotSingleItemError( itemstr(keys) )
                 if not item:
-                    item = none_str
+                    item = none_str or "None"
                 items.append(str(item))
             # TODO - quote items if they contain spaces or comment delimiters?
             print prefix + ' '.join( items )
