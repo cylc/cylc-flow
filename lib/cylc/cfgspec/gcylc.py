@@ -141,12 +141,14 @@ class gconfig( config ):
         cfg['themes'] = cfg_themes
 
     def check( self ):
-        # check intial view config
+        # check initial view config
         cfg = self.get( sparse=True )
+        if 'initial views' not in cfg:
+            return
         views = copy(cfg['initial views'])
         for view in views:
             if view not in ['dot', 'text', 'graph' ]:
-                print >> sys.stderr, "WARNING: ignoring illegal view name'" + view + '"'
+                print >> sys.stderr, "WARNING: ignoring illegal view name '" + view + "'"
                 cfg['initial views'].remove( view )
         views = cfg['initial views']
         if len( views ) == 0:
@@ -213,7 +215,8 @@ if not gcfg:
     gcfg = gconfig( SPEC, upg )
     gcfg.loadcfg( SITE_FILE, "site config" )
     gcfg.loadcfg( USER_FILE, "user config" )
+    # check and correct initial view config etc.
+    gcfg.check()
     # add spec defaults and do theme inheritance
     gcfg.transform()
-    gcfg.check()
 
