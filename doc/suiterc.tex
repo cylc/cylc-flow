@@ -210,7 +210,7 @@ Additional information can be passed to event handlers via
 
 \paragraph[EVENT handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
 
-Specify a handler script to call when one of the following EVENTs occurs:
+A list of one or more event handlers to call when one of the following EVENTs occurs:
 \begin{myitemize}
     \item {\bf startup}  - the suite has started running
     \item {\bf shutdown} - the suite is shutting down
@@ -227,7 +227,7 @@ Item details:
 \paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
 If a timeout is set and the timeout event is handled, the timeout event
-handler will be called if the suite times out before it finishes.
+handler(s) will be called if the suite times out before it finishes.
 The timer is set initially at suite start up.
 
 \begin{myitemize}
@@ -445,7 +445,7 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} list of strings (task IDs: \lstinline=name.tag=)
+    \item {\em type:} string list (task IDs: \lstinline=name.tag=)
     \item {\em default:} (none)
     \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
@@ -562,7 +562,7 @@ The maximum number of active tasks allowed at any one time, for this queue.
 A list of member tasks, or task family names, to assign to this queue
 (assigned tasks will automatically be removed from the default queue).
 \begin{myitemize}
-\item {\em type:} list of strings
+\item {\em type:} string list
 \item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
 \end{myitemize}
 
@@ -827,7 +827,7 @@ A list of the immediate parent(s) this namespace inherits from. If no
 parents are listed \lstinline=root= is assumed.
 
 \begin{myitemize}
-\item {\em type:} comma-separated list of strings (other namespace names)
+\item {\em type:} string list (parent namespace names)
 \item {\em default:} \lstinline=root=
 \end{myitemize}
 
@@ -905,7 +905,7 @@ the main command scripting). See also {\em post-command scripting},
 below.
 
 \begin{myitemize}
-\item {\em type:} string, or a list of strings
+\item {\em type:} string
 \item {\em default:} (none)
 \item {\em example:}
  \begin{lstlisting}
@@ -924,7 +924,7 @@ the main command scripting). See also {\em pre-command scripting},
 above.
 
 \begin{myitemize}
-\item {\em type:} string, or a list of strings
+\item {\em type:} string
 \item {\em default:} (none)
 \end{myitemize}
 
@@ -1261,7 +1261,7 @@ runtime environments - event handlers are not called by tasks).
 
 \subparagraph[EVENT handler]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ EVENT handler}
 
-Specify a handler script to call when one of the following EVENTs occurs:
+A list of one or more event handlers to call when one of the following EVENTs occurs:
 \begin{myitemize}
     \item {\bf submitted}      - the job submit command was successful
     \item {\bf submission failed}  - the job submit command failed, or the
@@ -1281,7 +1281,7 @@ Specify a handler script to call when one of the following EVENTs occurs:
 
 Item details:
 \begin{myitemize}
-    \item {\em type:} string (event handler script name)
+    \item {\em type:} string list (event handler scripts)
     \item {\em default:} None
     \item {\em example:} \lstinline@failed handler = my-failed-handler.sh@
 \end{myitemize}
@@ -1289,7 +1289,7 @@ Item details:
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
 
 If a task has not started the specified number of minutes after it was
-submitted, the {\em submission timeout} event handler will be called.
+submitted, the {\em submission timeout} event handler(s) will be called.
 \begin{myitemize}
     \item {\em type:} float (minutes)
     \item {\em default:} (none)
@@ -1298,7 +1298,7 @@ submitted, the {\em submission timeout} event handler will be called.
 \subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
 
 If a task has not finished the specified number of minutes after it
-started running, the {\em execution timeout} event handler will be
+started running, the {\em execution timeout} event handler(s) will be
 called.
 \begin{myitemize}
     \item {\em type:} float (minutes)
