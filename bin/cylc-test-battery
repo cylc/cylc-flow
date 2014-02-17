@@ -20,9 +20,13 @@ N=4
 
 usage() {
   cat <<eof
-USAGE: cylc test-battery [OPTIONS] [SUBSET]
+USAGE: cylc test-battery [OPTIONS] [FILES or DIRECTORIES] -- [prove OPTIONS]
 
-Run a battery of tests held under \$CYLC_DIR/tests/[SUBSET].
+Run automated cylc and parsec tests under [FILES or DIRECTORIES].
+Test locations default to the following directory trees:
+  $CYLC_DIR/tests/
+and
+  $CYLC_DIR/lib/parsec/tests/
 
 Some tests (e.g. those specific to particular batch schedulers) can be
 configured in your site/user config file. A few others still submit jobs
@@ -43,8 +47,10 @@ For more information see "Reference Tests" in the User Guide.
 
 Options:
   -h, --help   Print this help message and exit.
-Other options are passed through to "prove", e.g.:
-  -j N         Run N tests at once, in parallel (default $N).
+
+Options after '--' are passed through to "prove".
+E.g. to run N tests at once, in parallel (default $N):
+  cylc test-battery -- -j N      
 eof
 }
 
@@ -54,16 +60,25 @@ if [[ $@ == *\-\-help ]]; then
     exit 0
 fi
 
-cd $CYLC_DIR/tests
+TESTS=""
+for arg in $@; do
+    shift
+    [[ $arg == '--' ]] && break
+    TESTS="$TESTS $arg"
+done
+
+if [[ -z $TESTS ]]; then
+    TESTS="$CYLC_DIR/tests $CYLC_DIR/lib/parsec/tests"
+fi
 
 if (($# == 0)); then
-    ARGS=""
+    ARGS=$TESTS
 else
-    ARGS="$@"
+    ARGS="$@ $TESTS"
 fi
 
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-    exec prove -j $N -r -s $ARGS
+   exec prove -j $N -r -s $ARGS
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
     exec prove -r -s $ARGS
