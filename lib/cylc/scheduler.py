@@ -1264,9 +1264,10 @@ class scheduler(object):
         if reason:
             msg += ' (' + reason + ')'
         print msg
-        self.log.info( msg )
-        if not self.no_active_tasks():
-            self.log.warning( "some active tasks will be orphaned" )
+        if getattr(self, "log", None) is not None:
+            self.log.info( msg )
+            if not self.no_active_tasks():
+                self.log.warning( "some active tasks will be orphaned" )
 
         if self.pool:
             self.pool.worker.quit = True # (should be done already)
@@ -1295,7 +1296,7 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        if self.use_lockserver:
+        if getattr(self, "use_lockserver", None):
             if self.lock_acquired:
                 lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 try:
@@ -1315,10 +1316,13 @@ class scheduler(object):
             self.runtime_graph.finalize()
 
         # disconnect from suite-db, stop db queue
-        self.db.close()
+        if getattr(self, "db", None) is not None:
+            self.db.close()
 
         # shutdown handler
-        handler = self.config.event_handlers['shutdown']
+        handler = None
+        if getattr(self, "config", None) is not None:
+            handler = self.config.event_handlers['shutdown']
         if handler:
             if self.config.abort_if_shutdown_handler_fails:
                 foreground = True
