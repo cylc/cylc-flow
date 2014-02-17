@@ -78,7 +78,7 @@ else
 fi
 
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-   exec prove -j $N -r -s $ARGS
+    exec prove -j $N -r -s $ARGS
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
     exec prove -r -s $ARGS
