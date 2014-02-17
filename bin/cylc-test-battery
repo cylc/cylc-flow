@@ -33,7 +33,10 @@ configured in your site/user config file. A few others still submit jobs
 to a user@host account taken from the environment:
   \$CYLC_TEST_TASK_HOST # default localhost
   \$CYLC_TEST_TASK_OWNER # defaut \$USER
-Passwordless ssh must be configured to task host accounts.
+
+Requirements:
+  * Passwordless ssh must be configured to task host accounts.
+  * Some test suites submit jobs to 'at' so atd must be running.
 
 Suite run directories are cleaned up on the suite host (but not on
 remote task hosts) for passing tests - otherwise they are left alone.
