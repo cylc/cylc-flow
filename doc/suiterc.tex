@@ -307,27 +307,29 @@ from running multiple distinct {\bf copies} of a suite simultaneously}.
 
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
-Variables defined here are exported into the environment in which cylc
-itself runs. They are then available to {\em local processes spawned
-directly by cylc}. Any variables read by task event handlers must be
-defined here, for instance, because event handlers are executed
-directly by cylc, not by running tasks. And similarly the {command
-lines} issued by cylc to invoke event handlers or to submit task
-job scripts could, in principle, make use of environment variables
-defined here.
-\paragraph{Warnings}
+Environment variables defined in this section are passed to suite and
+task event handlers.
 
 \begin{myitemize}
-    \item Cylc local variables are not available to
-        executing tasks unless you happen to choose a local direct job
-        submission method.  {\em Always use task runtime environments to
-        pass variables into the task execution environment
-        (\ref{AppendixTaskExecutionEnvironment}).}
-    \item Unlike task execution environment variables, which are written
-        to job scripts and interpreted by the shell at run time,
-        cylc local environment variables are written directly
-        to the environment by Python as literal strings {\em  so
-        shell variable expansion expressions cannot be used here.}
+    \item These variables are not passed to tasks - use task runtime
+        variables for that. Similarly, task runtime variables are not
+        available to event handlers - which are executed by cylc, not by
+        tasks, in response to task events.
+        
+    \item Cylc-defined environment variables such as
+        \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
+        handlers by default, but you can make them available by
+        extracting them to the cylc environment like this:
+\begin{lstlisting}
+[cylc]
+    [[environment]]
+        CYLC_SUITE_RUN_DIR = $CYLC_SUITE_RUN_DIR
+\end{lstlisting}
+
+    \item These variables - unlike task execution environment variables
+        which are written to job scripts and interpreted by the shell at
+        task run time - are not interpreted by the shell prior to use
+        so shell variable expansion expressions cannot be used here.
 \end{myitemize}
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
@@ -339,8 +341,8 @@ definition is preserved) and are not evaluated or manipulated by
 cylc, so any variable assignment expression that is legal in the
 shell in which cylc is running can be used (but see the warning
 above on variable expansions, which will not be evaluated).
-White space around the `$=$' is allowed (as far as cylc's suite.rc
-parser is concerned these are normal configuration items).
+White space around the `$=$' is allowed (as far as cylc's file 
+parser is concerned these are just suite configuration items).
 
 \begin{myitemize}
     \item {\em type:} string

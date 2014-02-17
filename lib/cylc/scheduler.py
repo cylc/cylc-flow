@@ -55,9 +55,9 @@ from task_pool import pool
 import flags
 import cylc.rundb
 from Queue import Queue, Empty
-from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
-
+from mp_pool import mp_pool
+from exceptions import SchedulerStop, SchedulerError
 
 class result:
     """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -65,19 +65,6 @@ class result:
         self.success = success
         self.reason = reason
         self.value = value
-
-
-class SchedulerError( Exception ):
-    """
-    Attributes:
-        message - what the problem is.
-        TODO - element - config element causing the problem
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
-
 
 class request_handler( threading.Thread ):
     def __init__( self, pyro ):
@@ -129,8 +116,7 @@ class scheduler(object):
         self.suite_state = None
         self.command_queue = None
         self.pool = None
-        self.eventq_worker = None
-        self.pollkq_worker = None
+        self.workers = None
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
@@ -146,8 +132,7 @@ class scheduler(object):
         self.reference_test_mode = False
         self.gen_reference_log = False
 
-        self.do_shutdown = None
-        self.threads_stopped = False
+        self.shutdown_now = False
 
         self.stop_task = None
         self.stop_clock_time = None
@@ -496,23 +481,28 @@ class scheduler(object):
      # CONTROL_COMMANDS__________________________________________________
 
     def command_stop_cleanly( self, kill_first=False ):
-        self.pool.worker.request_stop( empty_before_exit=False )
+        self.shutdown_now = True
+        self.pool.workers.shutdown( flush=False )
+        self.ep_pool.shutdown( flush=True )
+        self.pk_pool.shutdown( flush=True )
         if kill_first:
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently( 'submitted', 'running' ):
                     itask.kill()
-        self.do_shutdown = 'clean'
-        self.threads_stopped = False
 
     def command_stop_quickly( self ):
-        self.pool.worker.request_stop( empty_before_exit=False )
-        self.do_shutdown = 'quick'
-        self.threads_stopped = False
+        self.shutdown_now = True
+        self.pool.workers.shutdown( flush=False )
+        # wait on event handlers and poll-and-kill commands:
+        self.workers.shutdown( flush=True )
+        raise SchedulerStop( "Stopping by request" )
 
     def command_stop_now( self ):
-        self.pool.worker.request_stop( empty_before_exit=False )
-        self.do_shutdown = 'now'
-        self.threads_stopped = False
+        self.shutdown_now = True
+        self.pool.workers.shutdown( flush=False )
+        # don't wait on event handlers or poll-and-kill-commands:
+        self.workers.shutdown( flush=False )
+        raise SchedulerStop( "Stopping by request" )
 
     def command_set_stop_after_tag( self, tag ):
         self.set_stop_ctime( tag )
@@ -837,23 +827,8 @@ class scheduler(object):
             self.command_queue = comqueue( self.control_commands.keys() )
             self.pyro.connect( self.command_queue, 'command-interface' )
 
-            self.event_queue = Queue()
-            task.task.event_queue = self.event_queue
-            self.eventq_worker = event_batcher(
-                    'Event Handlers', self.event_queue,
-                    self.config.cfg['cylc']['event handler submission']['batch size'],
-                    self.config.cfg['cylc']['event handler submission']['delay between batches'],
-                    self.suite )
-            self.eventq_worker.start()
-
-            self.poll_and_kill_queue = Queue()
-            task.task.poll_and_kill_queue = self.poll_and_kill_queue
-            self.pollkq_worker = poll_and_kill_batcher(
-                    'Poll & Kill Commands', self.poll_and_kill_queue,
-                    self.config.cfg['cylc']['poll and kill command submission']['batch size'],
-                    self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
-                    self.suite )
-            self.pollkq_worker.start()
+            self.workers = mp_pool()
+            task.task.workers = self.workers
 
             self.info_interface = info_interface( self.info_commands )
             self.pyro.connect( self.info_interface, 'suite-info' )
@@ -908,26 +883,28 @@ class scheduler(object):
                 }
         # (note global config automatically expands environment variables in local paths)
 
-        # Add to the scheduler environment for possible use by event handlers
-        for var,val in self.suite_env.items():
-            os.environ[var] = val
-        for var,val in self.suite_task_env.items():
-            os.environ[var] = val
-
-        # Pass these to the jobfile generation module.
-        # TODO - find a better, less back-door, way of doing this!
+        # Pass these to the job script generation code.
         jobfile.jobfile.suite_env = self.suite_env
         jobfile.jobfile.suite_task_env = self.suite_task_env
         # And pass contact env to the task module
         task.task.suite_contact_env = self.suite_contact_env
 
-        # Suite bin directory for event handlers executed by the scheduler.
-        os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH']
-
-        # User defined local variables that may be required by event handlers
+        # make suite vars available to [cylc][environment]:
+        for var, val in self.suite_env.items():
+            os.environ[var] = val
+        for var, val in self.suite_task_env.items():
+            os.environ[var] = val
         cenv = self.config.cfg['cylc']['environment']
-        for var in cenv:
-            os.environ[var] = os.path.expandvars(cenv[var])
+        for var, val in cenv.items():
+            cenv[var] = os.path.expandvars(val)
+        # path to suite bin directory for suite and task event handlers
+        cenv['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH']
+
+        # make [cylc][environment] available to task event handlers in worker processes
+        task.task.event_handler_env = cenv
+        # make [cylc][environment] available to suite event handlers in this process
+        for var, val in cenv.items():
+            os.environ[var] = val
 
     def configure_reftest( self, recon=False ):
         if self.gen_reference_log:
@@ -996,6 +973,9 @@ class scheduler(object):
             if self.reconfiguring:
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
+
+            self.workers.check_results()
+            self.pool.workers.check_results()
 
             if self.process_tasks():
                 if flags.debug:
@@ -1120,37 +1100,13 @@ class scheduler(object):
 
             self.release_runahead( runahead_base=runahead_base )
 
-            if not self.do_shutdown:
+            if not self.shutdown_now:
                 # check if the suite should shut down automatically now
                 if self.check_clean_stop_conditions():
                     self.command_stop_cleanly()
 
-            if self.do_shutdown:
-                # Tell the non job-submission command threads to stop
-                # now or when their queues are empty, according to the
-                # type of shutdown. The job submission thread has been
-                # stopped already by the stop commands. Note that the
-                # threads_stopped flag is reset by the stop commands so
-                # that 'stop --now' can override other stops in progress.
-                if not self.threads_stopped and self.do_shutdown == 'now':
-                    self.threads_stopped = True
-                    self.eventq_worker.request_stop( empty_before_exit=False )
-                    self.pollkq_worker.request_stop( empty_before_exit=False )
-                elif not self.threads_stopped and \
-                        ( self.do_shutdown == 'quick' or \
-                        self.do_shutdown == 'clean' and self.no_active_tasks() ):
-                    self.threads_stopped = True
-                    # In a clean shutdown we don't stop the threads
-                    # while there are still active tasks, because they
-                    # could exit early if their queues temporarily empty
-                    # while the final tasks are running.
-                    self.eventq_worker.request_stop( empty_before_exit=True )
-                    self.pollkq_worker.request_stop( empty_before_exit=True )
-
-            if self.do_shutdown and \
-                    not self.pool.worker.is_alive() and \
-                    not self.eventq_worker.is_alive() and \
-                    not self.pollkq_worker.is_alive():
+            if self.shutdown_now:
+                # TODO - test that 'stop --now' can override other stops in progress.
                 break
 
             if self.options.profile_mode:
@@ -1174,7 +1130,7 @@ class scheduler(object):
         self.suite_state.update( self.pool.get_tasks(), self.clock,
                 self.get_oldest_c_time(), self.get_newest_c_time(),
                 self.get_newest_c_time(True), self.paused(),
-                self.will_pause_at(), self.do_shutdown is not None,
+                self.will_pause_at(), self.shutdown,
                 self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
@@ -1275,8 +1231,6 @@ class scheduler(object):
                 self.log.warning( "some active tasks will be orphaned" )
 
         if self.pool:
-            self.pool.worker.quit = True # (should be done already)
-            self.pool.worker.join()
             # disconnect task message queues
             for itask in self.pool.get_tasks():
                 if itask.message_queue:
@@ -1288,13 +1242,11 @@ class scheduler(object):
                 except IOError:
                     pass
 
-        for q in [ self.eventq_worker, self.pollkq_worker, self.request_handler ]:
-            if q:
-                q.quit = True # (should be done already)
-                q.join()
+        if self.request_handler:
+            self.request_handler.quit = True
+            self.request_handler.join()
 
-        for i in [ self.command_queue, self.clock, self.wireless,
-                self.suite_id, self.suite_state ]:
+        for i in [ self.command_queue, self.clock, self.wireless, self.suite_id, self.suite_state ]:
             if i:
                 self.pyro.disconnect( i )
 
@@ -1986,8 +1938,14 @@ class scheduler(object):
                     msg += "\n  + all cycling tasks have spawned past the final cycle " + self.stop_tag
                 if i_asy:
                     msg += "\n  + all non-cycling tasks have succeeded"
-                print msg
-                self.log.info( msg )
+
+            self.log.info( "Stopping: " + msg )
+
+            # cease submitting tasks
+            self.pool.workers.shutdown( flush=False )
+            # wait on event handlers and poll-and-kill commands:
+            self.workers.shutdown( flush=True )
+            raise SchedulerStop( "Normal shutdown" )
 
         return stop
 

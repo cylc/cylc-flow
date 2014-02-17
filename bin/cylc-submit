@@ -186,26 +186,9 @@ suite_task_env = {
         }
 # (note gcfg automatically expands environment variables in local paths)
 
-# Add to the scheduler environment for possible use by event handlers
-for var,val in suite_env.items():
-    os.environ[var] = val
-for var,val in suite_task_env.items():
-    os.environ[var] = val
-
-# Pass these to the jobfile generation module.
-# TODO - find a better, less back-door, way of doing this!
 jobfile.jobfile.suite_env = suite_env
 jobfile.jobfile.suite_task_env = suite_task_env
 
-# Suite bin directory for event handlers executed by the scheduler.
-os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH']
-
-# User defined local variables that may be required by event handlers
-cenv = config.cfg['cylc']['environment']
-for var in cenv:
-    os.environ[var] = os.path.expandvars(cenv[var])
-
-# instantiate the task--------------------------------------------------
 if task_name in config.get_asynchronous_task_name_list():
     tag = '1'  # asynchronous tasks always start with tag = 1
 else:
@@ -223,9 +206,11 @@ except TaskNotDefinedError, x:
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
-# SUBMIT THE TASK TO RUN-----------------------------------------------
-if not options.dry_run:
-    print "Logging directory: " + suite_log_dir
-    print
-task_proxy.submit( dry_run=options.dry_run )
+if options.dry_run:
+    task_proxy.get_command( dry_run=True )
+    sys.exit(0)
+
+from cylc.mp_pool import mp_pool
+cylc.flags.MP_NPROC = 1
+mp_pool().put( task_proxy.get_command() )
 

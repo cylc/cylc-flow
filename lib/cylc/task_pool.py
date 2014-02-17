@@ -17,9 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import Queue
-from batch_submit import task_batcher
 from task_types import task
+from mp_pool import mp_pool
 import flags
 from Pyro.errors import NamingError, ProtocolError
 from cycle_time import ctime_gt
@@ -33,15 +32,7 @@ class pool(object):
         self.config = config
         self.assign()
         self.wireless = wireless
-
-        self.jobqueue = Queue.Queue()
-
-        self.worker = task_batcher( 'Job Submission', self.jobqueue,
-                config.cfg['cylc']['job submission']['batch size'],
-                config.cfg['cylc']['job submission']['delay between batches'],
-                self.wireless, self.run_mode )
-
-        self.worker.start()
+        self.workers = mp_pool() 
 
     def assign( self, reload=False ):
         # self.myq[taskname] = 'foo'
@@ -195,12 +186,33 @@ class pool(object):
                         itask.reset_manual_trigger()
                 # else leaved queued
 
-        n_ready = len(readytogo)
-        if n_ready > 0:
-            self.log.debug( '%d task(s) ready' % n_ready )
-            for itask in readytogo:
-                itask.set_state_ready()
-                self.jobqueue.put( itask )
+        self.log.debug( '%d task(s) ready' % len(readytogo) )
+
+        for itask in readytogo:
+            if self.run_mode == 'simulation':
+                itask.job_submission_succeeded( '','' )
+                continue
+            if self.workers.finished:
+                continue
+            try:
+                command = itask.get_command( overrides=self.wireless.get(itask.id))
+            except Exception, e:
+                # TODO - is this the right response?
+                itask.job_submission_failed( err=str(e) )
+            else:
+                if self.workers.put( command, itask.job_submission_result,\
+                        itask.job_sub_method_name=='background', True ):
+                    # TODO - set_state_ready() should increment sub number etc.
+                    itask.set_state_ready()
 
         return readytogo
+
+# close_fds=True job submission: required to prevent the process from hanging on to
+# the file descriptor that was used to write the job script, the root
+# cause of the random "text file busy" error.
+ 
+# Background jobs echo PID to stdout but do not detach. Read one line to
+# get PID then don't wait on the process.
+#  p.stderr.readline() blocks until the process
+#  finishes because nothing is written to stderr.
 
