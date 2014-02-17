@@ -16,30 +16,35 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+N=4
+
 usage() {
   cat <<eof
 USAGE: cylc test-battery [OPTIONS] [SUBSET]
 
-Run a battery of tests held under \$CYLC_DIR/tests/. If SUBSET is specified
-then only run the tests in \$CYLC_DIR/tests/SUBSET.
+Run a battery of tests held under \$CYLC_DIR/tests/[SUBSET].
 
-Some of the tests use suites which submit test jobs to a task host and
-user account taken from the environment:
-  \$CYLC_TEST_TASK_HOST
-  \$CYLC_TEST_TASK_OWNER
-These default to localhost and \$USER. Passwordless ssh must be
-configured to the task host account (even if it is local).
+Some tests (e.g. those specific to particular batch schedulers) can be
+configured in your site/user config file. A few others still submit jobs
+to a user@host account taken from the environment:
+  \$CYLC_TEST_TASK_HOST # default localhost
+  \$CYLC_TEST_TASK_OWNER # defaut \$USER
+Passwordless ssh must be configured to task host accounts.
 
-For passed test suites, log files and suite run directories are automatically
-cleaned up on the suite host, but not on remote task hosts. Test suites that
-fail are kept in the cylc-run directory to allow manual interrogation.
+Suite run directories are cleaned up on the suite host (but not on
+remote task hosts) for passing tests - otherwise they are left alone.
+
+By default $N tests are run at once, in parallel. On slow or loaded
+machines this may result in some test failures due to timeouts intended
+to catch problems that can prevent a suite from shutting down normally.
+Use the "-j N" option to change the amount of concurrency.
 
 For more information see "Reference Tests" in the User Guide.
 
 Options:
   -h, --help   Print this help message and exit.
-
-Supports all the options of "prove".
+Other options are passed through to "prove", e.g.:
+  -j N         Run N tests at once, in parallel (default $N).
 eof
 }
 
@@ -48,9 +53,6 @@ if [[ $@ == *\-\-help ]]; then
     usage
     exit 0
 fi
-
-export CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
-export CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
 
 cd $CYLC_DIR/tests
 
