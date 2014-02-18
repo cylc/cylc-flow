@@ -275,9 +275,11 @@ class scheduler(object):
 
         # RECEIVER FOR BROADCAST VARIABLES
         self.wireless = broadcast( self.config.get_linearized_ancestors() )
+        self.state_dumper.wireless = self.wireless
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
         self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode )
+        self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
 
@@ -612,7 +614,6 @@ class scheduler(object):
         return result(True, 'OK')
 
     def command_remove_cycle( self, tag, spawn ):
-        self.log.info( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.tag == tag:
                 if spawn:
@@ -620,7 +621,6 @@ class scheduler(object):
                 self.pool.remove( itask, 'by request' )
 
     def command_remove_task( self, name, tag, is_family, spawn ):
-        self.log.info( 'pre-kill state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
@@ -632,7 +632,6 @@ class scheduler(object):
                 self.pool.remove( itask, 'by request' )
 
     def command_insert_task( self, name, tag, is_family, stop_tag ):
-        self.log.info( 'pre-insertion state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
@@ -1027,7 +1026,7 @@ class scheduler(object):
                 if not self.config.cfg['development']['disable task elimination']:
                     self.remove_spent_tasks()
 
-                self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
+                self.state_dumper.dump()
 
                 self.do_update_state_summary = True
 
@@ -1263,12 +1262,17 @@ class scheduler(object):
 
     def shutdown( self, reason='' ):
         msg = "Suite shutting down at " + str(datetime.datetime.now())
+
+        # The getattr() calls below are used in case the suite is not
+        # fully configured before the shutdown is called.
+
         if reason:
             msg += ' (' + reason + ')'
         print msg
-        self.log.info( msg )
-        if not self.no_active_tasks():
-            self.log.warning( "some active tasks will be orphaned" )
+        if getattr(self, "log", None) is not None:
+            self.log.info( msg )
+            if not self.no_active_tasks():
+                self.log.warning( "some active tasks will be orphaned" )
 
         if self.pool:
             self.pool.worker.quit = True # (should be done already)
@@ -1279,7 +1283,7 @@ class scheduler(object):
                     self.pyro.disconnect( itask.message_queue )
             if self.state_dumper:
                 try:
-                    self.state_dumper.dump( self.pool.get_tasks(), self.wireless )
+                    self.state_dumper.dump()
                 # catch log rolling error when cylc-run contents have been deleted
                 except IOError:
                     pass
@@ -1297,7 +1301,7 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        if self.use_lockserver:
+        if getattr(self, "use_lockserver", None):
             if self.lock_acquired:
                 lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
                 try:
@@ -1317,10 +1321,13 @@ class scheduler(object):
             self.runtime_graph.finalize()
 
         # disconnect from suite-db, stop db queue
-        self.db.close()
+        if getattr(self, "db", None) is not None:
+            self.db.close()
 
-        abort = self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails']
-        self.run_event_handlers( 'shutdown', abort, reason )
+        if getattr(self, "config", None) is not None:
+            # run shutdown handlers
+            abort = self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails']
+            self.run_event_handlers( 'shutdown', abort, reason )
 
         print "DONE" # main thread exit
 
@@ -1698,7 +1705,6 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ i + TaskID.DELIM + tag for i in matches ]
 
-        self.log.info( 'pre-trigger state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
                 # set manual trigger flag
@@ -1758,7 +1764,6 @@ class scheduler(object):
                 # Currently can't reset a 'ready' task in the job submission thread!
                 self.log.warning( "A 'ready' task cannot be reset: " + itask.id )
             itask.log( "NORMAL", "resetting to " + state + " state" )
-            self.log.info( 'pre-reset state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
             if state == 'ready':
                 itask.reset_state_ready()
             elif state == 'waiting':
@@ -1813,7 +1818,6 @@ class scheduler(object):
         # so we should explicitly record the tasks that get satisfied
         # during the purge.
 
-        self.log.info( 'pre-purge state dump: ' + self.state_dumper.dump( self.pool.get_tasks(), self.wireless, new_file=True ))
 
         # Purge is an infrequently used power tool, so print
         # comprehensive information on what it does to stdout.

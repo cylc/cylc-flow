@@ -87,8 +87,7 @@ def main(name, start):
             server.shutdown( 'ERROR: ' + str(x) )
         except Exception, y:
             # In case of exceptions in the shutdown method itself
-            print str(y)
-            pass
+            traceback.print_exc(y)
         if flags.debug:
             raise
         else:

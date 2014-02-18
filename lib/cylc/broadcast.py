@@ -101,26 +101,17 @@ class broadcast( Pyro.core.ObjBase ):
             return self.settings
         name, tag = task_id.split( TaskID.DELIM )
 
-        apply = {}
+        ret = {}
+        # The order is:
+        #    all:root -> all:FAM -> ... -> all:task
+        # -> tag:root -> tag:FAM -> ... -> tag:task
         for cycle in [ 'all-cycles', tag ]:
-            # 'all-cycles' first so it can be overridden by specific cycle
             if cycle not in self.settings:
                 continue
-            nslist = []
-            for ns in self.linearized_ancestors[name]:
+            for ns in reversed(self.linearized_ancestors[name]):
                 if ns in self.settings[cycle]:
-                    nslist.append( ns )
-            # nslist contains namespaces from current broadcast settings
-            # that are in the task's family tree, in linearized ancestor
-            # order, e.g. ['ops_atovs', 'OPS', 'root' ] means a
-            # broadcast setting is in place for root, OPS, and
-            # ops_atovs. Use the highest level one (i.e. a task specific
-            # setting takes precedence over root or mid-level
-            # namespaces).
-            if nslist:
-                self.addict( apply, self.settings[cycle][nslist[0]] )
-
-        return apply
+                    self.addict( ret, self.settings[cycle][ns] )
+        return ret
 
     def expire( self, cutoff ):
         """Clear all settings targetting cycle times earlier than cutoff."""

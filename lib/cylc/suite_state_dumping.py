@@ -36,6 +36,8 @@ class dumper( object ):
         if not self.arch_len or int(self.arch_len) <= 1:
             self.arch_len = 1
         self.arch_files = []
+        self.pool = None
+        self.wireless = None
 
     def set_cts( self, ict, fct ):
         self.ict = ict
@@ -52,7 +54,7 @@ class dumper( object ):
         else:
             self.cts_str += 'final cycle : (none)\n'
 
-    def dump( self, tasks, wireless, new_file=False ):
+    def dump( self, tasks=None, wireless=None ):
         """Dump suite states to disk. Return state file basename on success."""
 
         tag = datetime.utcnow().strftime("%Y%m%dT%H%M%S.%fZ")
@@ -68,38 +70,38 @@ class dumper( object ):
 
         handle.write(self.cts_str)
 
-        wireless.dump(handle)
+        if wireless is None:
+            wireless = self.wireless
+        if wireless is not None:
+            wireless.dump(handle)
 
         handle.write( 'Begin task states\n' )
 
-        for itask in sorted(tasks, key=lambda t: t.id):
-            # TODO - CHECK THIS STILL WORKS
-            itask.dump_class_vars( handle )
-            # task instance variables
-            itask.dump_state( handle )
+        if tasks is None and self.pool is not None:
+            tasks = self.pool.get_tasks()
+        if tasks is not None:
+            for itask in sorted(tasks, key=lambda t: t.id):
+                # TODO - CHECK THIS STILL WORKS
+                itask.dump_class_vars( handle )
+                # task instance variables
+                itask.dump_state( handle )
 
         os.fsync(handle.fileno())
         handle.close()
 
-        if new_file:
-            # Move dated state dump to state.clock
-            base_name = self.file_name +  "." + self.clock.dump_to_str()
-            os.rename(handle.name, os.path.join(self.dir_name, base_name))
-            return base_name
-        else:
-            # Point "state" symbolic link to new dated state dump
+        # Point "state" symbolic link to new dated state dump
+        try:
+            os.unlink(self.file_name)
+        except OSError as x:
+            if x.errno != errno.ENOENT:
+                raise
+        os.symlink(base_name, self.file_name)
+        self.arch_files.append(handle.name)
+        # Remove state dump older than archive length
+        while len(self.arch_files) > self.arch_len:
             try:
-                os.unlink(self.file_name)
+                os.unlink(self.arch_files.pop(0))
             except OSError as x:
                 if x.errno != errno.ENOENT:
                     raise
-            os.symlink(base_name, self.file_name)
-            self.arch_files.append(handle.name)
-            # Remove state dump older than archive length
-            while len(self.arch_files) > self.arch_len:
-                try:
-                    os.unlink(self.arch_files.pop(0))
-                except OSError as x:
-                    if x.errno != errno.ENOENT:
-                        raise
-            return self.BASE_NAME
+        return base_name

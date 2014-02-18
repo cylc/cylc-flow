@@ -1,0 +1,8 @@
+[scheduling]
+    initial cycle time = 201001010 # missing a zero
+    final cycle time = 2010010500
+    [[dependencies]]
+        [[[0]]]
+            graph = t1
+[runtime]
+    [[t1]]
