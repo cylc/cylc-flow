@@ -132,7 +132,7 @@ class scheduler(object):
         self.reference_test_mode = False
         self.gen_reference_log = False
 
-        self.shutdown_now = False
+        self.shutting_down = False
 
         self.stop_task = None
         self.stop_clock_time = None
@@ -188,7 +188,7 @@ class scheduler(object):
 
         # control commands to expose indirectly via a command queue
         self.control_commands = {
-                'stop cleanly'          : self.command_stop_cleanly,
+                'stop cleanly'          : self.command_set_stop_cleanly,
                 'stop quickly'          : self.command_stop_quickly,
                 'stop now'              : self.command_stop_now,
                 'stop after tag'        : self.command_set_stop_after_tag,
@@ -353,6 +353,9 @@ class scheduler(object):
             cmdstr = name + '(' + ','.join( [ str(a) for a in args ]) + ')'
             try:
                 self.control_commands[ name ]( *args )
+            except SchedulerStop:
+                self.log.info( 'Command succeeded: ' + cmdstr )
+                raise
             except Exception, x:
                 # don't let a bad command bring the suite down
                 self.log.warning( str(x) )
@@ -478,27 +481,35 @@ class scheduler(object):
         else:
             return dump
 
-     # CONTROL_COMMANDS__________________________________________________
+    def kill_active_tasks( self ):
+        for itask in self.pool.get_tasks():
+            if itask.state.is_currently( 'submitted', 'running' ):
+                itask.kill()
 
-    def command_stop_cleanly( self, kill_first=False ):
-        self.shutdown_now = True
+    def command_set_stop_cleanly( self, kill_active=False, reason=None ):
+        """Cease submitting tasks then shut down after active tasks and
+        their event handlers and poll and kill commands have finished."""
+        if reason:
+            self.log.info( "Stopping: " + reason )
         self.pool.workers.shutdown( flush=False )
-        self.ep_pool.shutdown( flush=True )
-        self.pk_pool.shutdown( flush=True )
-        if kill_first:
-            for itask in self.pool.get_tasks():
-                if itask.state.is_currently( 'submitted', 'running' ):
-                    itask.kill()
+        if kill_active:
+            self.kill_active_tasks()
+        self.shutting_down = True
+        # now just wait for a normal shutdown
 
     def command_stop_quickly( self ):
-        self.shutdown_now = True
+        """Cease submitting tasks then shut down without waiting for
+        active tasks to finish, but do wait for current event handlers
+        and job poll and kill commands to finish."""
         self.pool.workers.shutdown( flush=False )
         # wait on event handlers and poll-and-kill commands:
         self.workers.shutdown( flush=True )
         raise SchedulerStop( "Stopping by request" )
 
     def command_stop_now( self ):
-        self.shutdown_now = True
+        """Cease submitting tasks and shutdown without waiting for
+        active tasks or current event handlers and poll and kill
+        commands to finish."""
         self.pool.workers.shutdown( flush=False )
         # don't wait on event handlers or poll-and-kill-commands:
         self.workers.shutdown( flush=False )
@@ -641,8 +652,6 @@ class scheduler(object):
 
     def command_reload_suite( self ):
         self.reconfigure()
-
-    #___________________________________________________________________
 
     def set_suite_timer( self, reset=False ):
         now = datetime.datetime.now()
@@ -1079,13 +1088,11 @@ class scheduler(object):
             if self.config.suite_timeout:
                 self.check_suite_timer()
 
-            # hard abort? (TODO - will a normal shutdown suffice here?)
-            # 1) "abort if any task fails" is set, and one or more tasks failed
             if self.config.cfg['cylc']['abort if any task fails']:
                 if self.any_task_failed():
                     raise SchedulerError( 'One or more tasks failed and "abort if any task fails" is set' )
 
-            # 4) the run is a reference test, and any disallowed failures occured
+            # the run is a reference test, and unexpected failures occured
             if self.reference_test_mode:
                 if len( self.ref_test_allowed_failures ) > 0:
                     for itask in self.get_failed_tasks():
@@ -1100,14 +1107,9 @@ class scheduler(object):
 
             self.release_runahead( runahead_base=runahead_base )
 
-            if not self.shutdown_now:
-                # check if the suite should shut down automatically now
-                if self.check_clean_stop_conditions():
-                    self.command_stop_cleanly()
-
-            if self.shutdown_now:
-                # TODO - test that 'stop --now' can override other stops in progress.
-                break
+            self.check_stop_clock()
+            self.check_stop_task()
+            self.check_shutdown_now()
 
             if self.options.profile_mode:
                 t1 = time.time()
@@ -1121,16 +1123,12 @@ class scheduler(object):
 
         # END MAIN LOOP
 
-        if self.gen_reference_log:
-            print '\nCOPYING REFERENCE LOG to suite definition directory'
-            shcopy( self.logfile, self.reflogfile)
-
     def update_state_summary( self ):
         #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), self.clock,
                 self.get_oldest_c_time(), self.get_newest_c_time(),
                 self.get_newest_c_time(True), self.paused(),
-                self.will_pause_at(), self.shutdown,
+                self.will_pause_at(), self.shutting_down,
                 self.will_stop_at(), self.runahead_limit )
 
     def process_resolved( self, tasks ):
@@ -1167,7 +1165,9 @@ class scheduler(object):
                     raise SchedulerError, x
 
             if self.config.abort_on_timeout:
-                raise SchedulerError, 'Abort on suite timeout is set'
+                # some tests rely on this log message:
+                self.log.critical( 'Abort on suite timeout is set' )
+                raise SchedulerError, "Abort on suite timeout is set"
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
@@ -1229,6 +1229,10 @@ class scheduler(object):
             self.log.info( msg )
             if not self.no_active_tasks():
                 self.log.warning( "some active tasks will be orphaned" )
+
+        if self.gen_reference_log:
+            print '\nCOPYING REFERENCE LOG to suite definition directory'
+            shcopy( self.logfile, self.reflogfile)
 
         if self.pool:
             # disconnect task message queues
@@ -1876,34 +1880,39 @@ class scheduler(object):
             outlist.append( name )
         return outlist
 
-    def check_clean_stop_conditions( self ):
-        stop = False
+    def check_stop_clock( self ):
+        if self.stop_clock_time and self.clock.get_datetime() > self.stop_clock_time:
+            self.stop_clock_time = None
+            msg = "Clock stop time reached: " + self.stop_clock_time.isoformat()
+            self.command_set_stop_cleanly( msg )
 
-        if self.stop_clock_time:
-            if self.clock.get_datetime() > self.stop_clock_time:
-                self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
-                self.stop_clock_time = None
-                stop = True
-
-        elif self.stop_task:
+    def check_stop_task( self ):
+        if self.stop_task:
             name, tag = self.stop_task.split(TaskID.DELIM)
             for itask in self.pool.get_tasks():
                 iname, itag = itask.id.split(TaskID.DELIM)
                 if itask.name == name and int(itag) == int(tag):
                     # found the stop task
                     if itask.state.is_currently('succeeded'):
-                        self.log.info( "Stop task " + self.stop_task + " finished" )
-                        stop = True
+                        msg = "Stop task " + self.stop_task + " finished"
+                        self.command_set_stop_cleanly( msg )
                     break
 
-        else:
-            # all cycling tasks are held past the suite stop cycle and
-            # all async tasks have succeeded.
-            stop = True
+    def check_shutdown_now( self ):
+        """shutdown if  all cycling tasks have passed the suite stop
+        cycle and all async tasks have succeeded."""
 
-            i_cyc = False
-            i_asy = False
-            i_fut = False
+        stop = True
+
+        i_cyc = False
+        i_asy = False
+        i_fut = False
+        i_cln = False
+
+        if self.shutting_down and self.no_active_tasks():
+            i_cln = True
+
+        else:
             for itask in self.pool.get_tasks():
                 if itask.is_cycling:
                     i_cyc = True
@@ -1930,8 +1939,11 @@ class scheduler(object):
                     if not itask.state.is_currently('succeeded'):
                         stop = False
                         break
-            if stop:
-                msg = "Stopping: "
+        if stop:
+            msg = ""
+            if i_cln:
+                msg = "\n + clean shutdown - all active tasks have finished."
+            else:
                 if i_fut:
                     msg += "\n  + all future-triggered tasks have run as far as possible toward " + self.stop_tag
                 if i_cyc:
@@ -1947,7 +1959,6 @@ class scheduler(object):
             self.workers.shutdown( flush=True )
             raise SchedulerStop( "Normal shutdown" )
 
-        return stop
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         # Update the 1, 5, 15 minute dt averages for a given category.

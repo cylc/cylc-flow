@@ -37,7 +37,7 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "sel
 cmp_ok $TEST_SOURCE_DIR/simple/db-states states
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-db-events
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select name, cycle, event, message, misc from task_events order by name, message" > events
+sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select name, cycle, event, message, misc from task_events" > events
 cmp_ok $TEST_SOURCE_DIR/simple/db-events events
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
