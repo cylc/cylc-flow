@@ -34,7 +34,7 @@ from time import sleep, time
 from cylc import cylc_pyro_client, dump
 
 # TODO - make this experimental feature permanent after testing:
-USE_NS_DEFN_ORDERING=True
+USE_NS_DEFN_ORDERING=False
 
 class PollSchd(object):
     """Keep information on whether the updater should poll or not."""
