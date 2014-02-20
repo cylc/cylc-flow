@@ -7,11 +7,11 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-01-10 09:45:00"> 
+<meta name="date" content="2014-02-20 16:35:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6411--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6460--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse21.html" >next</a>] [<a 
 href="cug-htmlse19.html" >prev</a>] [<a 
 href="cug-htmlse19.html#tailcug-htmlse19.html" >prev-tail</a>] [<a 
@@ -21,16 +21,17 @@ href="cug-html.html#cug-htmlse20.html" >up</a>] </p></div>
  id="x21-481000D"></a>The Cylc Lockserver</h3>
    <div class="sectionTOCS">
    </div>
-<!--l. 6414--><p class="indent" >   Each cylc user can optionally run his/her own lockserver to prevent accidental invocation of multiple instances of
+<!--l. 6463--><p class="indent" >   Each cylc user can optionally run his/her own lockserver to prevent accidental invocation of multiple instances of
 the same suite or task at the same time. The suite and task locks brokered by the lockserver are analogous to
 traditional lock files, but they work across a network, even for distributed suites containing tasks that start
 executing on one host and finish on another.
-<!--l. 6421--><p class="indent" >   Accidental invocation of multiple instances of the same suite or task at the same time can have serious
+<!--l. 6470--><p class="indent" >   Accidental invocation of multiple instances of the same suite or task at the same time can have serious
 consequences, so use of the lockserver should be considered for important operational suites, but it may be
 considered an unnecessary complication for general less critical usage, so it is currently disabled by
 default.
-<!--l. 6427--><p class="indent" >   To enable the lockserver:  <!--l. 6429-->
-   <div class="lstlisting" id="listing-224"><span class="label"><a 
+<!--l. 6476--><p class="indent" >   To enable the lockserver:  <!--l. 6478--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x21-481001r1"></a></span><span 
 class="pcrr7t-">use</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -39,11 +40,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">True</span>
-   
+
+
    </div>
-<!--l. 6433--><p class="indent" >   The suite will now abort at start-up if it cannot connect to the lockserver. To start your lockserver daemon,
-<!--l. 6436-->
-   <div class="lstlisting" id="listing-225"><span class="label"><a 
+<!--l. 6482--><p class="indent" >   The suite will now abort at start-up if it cannot connect to the lockserver. To start your lockserver daemon,
+<!--l. 6485--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x21-481002r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -53,10 +56,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">lockserver</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">start</span>
-   
+
+
    </div>
-<!--l. 6440--><p class="indent" >   To check that it is running, <!--l. 6441-->
-   <div class="lstlisting" id="listing-226"><span class="label"><a 
+<!--l. 6489--><p class="indent" >   To check that it is running, <!--l. 6490--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x21-481003r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -66,10 +71,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">lockserver</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">status</span>
-   
+
+
    </div>
-<!--l. 6445--><p class="indent" >   For detailed usage information, <!--l. 6446-->
-   <div class="lstlisting" id="listing-227"><span class="label"><a 
+<!--l. 6494--><p class="indent" >   For detailed usage information, <!--l. 6495--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x21-481004r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -80,10 +87,12 @@ class="pcrr7t-">lockserver</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span>
-   
+
+
    </div>
-<!--l. 6450--><p class="indent" >   There is a command line client interface, <!--l. 6451-->
-   <div class="lstlisting" id="listing-228"><span class="label"><a 
+<!--l. 6499--><p class="indent" >   There is a command line client interface, <!--l. 6500--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x21-481005r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -94,12 +103,14 @@ class="pcrr7t-">lockclient</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span>
-   
+
+
    </div>
-<!--l. 6454--><p class="indent" >   for interrogating the lockserver and managing locks manually (e.g.&#x00A0;releasing locks if a suite was killed before it
+<!--l. 6503--><p class="indent" >   for interrogating the lockserver and managing locks manually (e.g.&#x00A0;releasing locks if a suite was killed before it
 could clean up after itself).
-<!--l. 6458--><p class="indent" >   To watch suite locks being acquired and released as a suite runs, <!--l. 6459-->
-   <div class="lstlisting" id="listing-229"><span class="label"><a 
+<!--l. 6507--><p class="indent" >   To watch suite locks being acquired and released as a suite runs, <!--l. 6508--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x21-481006r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -112,17 +123,18 @@ class="pcrr7t-">lockclient</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">print</span>
-   
+
+
    </div>
                                                                                          
 
                                                                                          
-   <!--l. 6463--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6512--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse21.html" >next</a>] [<a 
 href="cug-htmlse19.html" >prev</a>] [<a 
 href="cug-htmlse19.html#tailcug-htmlse19.html" >prev-tail</a>] [<a 
 href="cug-htmlse20.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse20.html" >up</a>] </p></div>
-<!--l. 6463--><p class="indent" >   <a 
+<!--l. 6512--><p class="indent" >   <a 
  id="tailcug-htmlse20.html"></a>  
 </body></html> 
