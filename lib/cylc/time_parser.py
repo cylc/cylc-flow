@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
 #C:
@@ -35,7 +35,8 @@ import re
 import unittest
 
 import cylc.CylcError
-import isodatetime
+import isodatetime.data
+import isodatetime.parsers
 
 
 class CylcTimeSyntaxError(cylc.CylcError.CylcError):
@@ -51,7 +52,7 @@ class CylcTimeParser(object):
     context_start_point describes the beginning date/time used for
     extrapolating incomplete date/time syntax (usually initial
     cycle time). It is either a date/time string in full ISO 8601
-    syntax or an isodatetime.TimePoint object.
+    syntax or an isodatetime.data.TimePoint object.
     context_end_point is the same as context_start_point, but describes
     a final time - e.g. the final cycle time.
 
@@ -80,12 +81,18 @@ class CylcTimeParser(object):
                                re.compile("W-\dT")]}
 
     def __init__(self, context_start_point,
-                 context_end_point):
-        self.timepoint_parser = isodatetime.TimePointParser(
-                                    allow_only_basic=True,
-                                    allow_truncated=True,
-                                    num_expanded_year_digits=2,
-                                    format_function=self.custom_format_timepoint)
+                 context_end_point, num_expanded_year_digits=0,
+                 timezone_format="Z"):
+        if num_expanded_year_digits == 0:
+            dump_format = "CCYYMMDDThhmm" + timezone_format
+        else:
+            dump_format = u"±XCCYYMMDDThhmm" + timezone_format
+        self.num_expanded_year_digits = num_expanded_year_digits
+        self.timepoint_parser = isodatetime.parsers.TimePointParser(
+            allow_only_basic=True,
+            allow_truncated=True,
+            num_expanded_year_digits=num_expanded_year_digits,
+            dump_format=dump_format)
         if isinstance(context_start_point, basestring):
             context_start_point = self.timepoint_parser.parse(
                                                  context_start_point)
@@ -98,8 +105,8 @@ class CylcTimeParser(object):
         for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:
             self._recur_format_recs.append((re.compile(regex), format_num))
         self._offset_rec = re.compile(self.OFFSET_REGEX)
-        self.timeinterval_parser = isodatetime.TimeIntervalParser()
-        self.recurrence_parser = isodatetime.TimeRecurrenceParser(
+        self.timeinterval_parser = isodatetime.parsers.TimeIntervalParser()
+        self.recurrence_parser = isodatetime.parsers.TimeRecurrenceParser(
                         timepoint_parser=self.timepoint_parser)
 
     def parse_interval(self, expr):
@@ -111,11 +118,11 @@ class CylcTimeParser(object):
 
         expression should be a string such as 20010205T00Z, or a
         truncated/abbreviated format string such as T06 or -P2Y.
-        context_point should be an isodatetime.TimePoint object that
-        supplies the missing information for truncated expressions. For
-        example, context_point should be the task cycle time for
-        inter-cycle dependency expressions. If context_point is None,
-        self.context_start_point is used.
+        context_point should be an isodatetime.data.TimePoint object
+        that supplies the missing information for truncated
+        expressions. For example, context_point should be the task
+        cycle time for inter-cycle dependency expressions. If
+        context_point is None, self.context_start_point is used.
 
         """
         if context_point is None:
@@ -181,7 +188,7 @@ class CylcTimeParser(object):
                     end_point += context_end_point
                 if end_offset is not None:
                     end_point += end_offset
-            return isodatetime.TimeRecurrence(
+            return isodatetime.data.TimeRecurrence(
                          repetitions=repetitions,
                          start_point=start_point,
                          interval=interval,
@@ -189,44 +196,6 @@ class CylcTimeParser(object):
                          min_point=context_start_point,
                          max_point=context_end_point)
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
-
-    def custom_format_timepoint(self, timepoint):
-        """Return a custom-format string representation of timepoint."""
-        if timepoint.truncated:
-            return timepoint.__str__(override_custom=True)
-        date_info = timepoint.get_calendar_date()
-        if date_info is None:
-            date_string = "-"
-        else:
-            year, month, day_of_month = date_info
-            if timepoint.expanded_year_digits:
-                year_string = "%06d" % abs(year)
-                if year < 0:
-                    year_string = "-" + year_string
-                else:
-                    year_string = "+" + year_string
-            elif year < 0:
-                raise ValueError(("Year %s " % year) + "cannot be represented " +
-                                 "unless expanded format is used")
-            else:
-                year_string = "%04d" % year
-            date_string = year_string + "%02d%02d" % (month, day_of_month)
-
-        hour, minute, second = timepoint.get_hour_minute_second()
-        # We ignore seconds.
-        time_string = "%02d%02d" % (hour, minute)
-        time_zone = timepoint.get_time_zone()
-        if time_zone.hours == 0 and time_zone.minutes == 0:
-            time_zone_string = "Z"
-        else:
-            sign_string = "+"
-            if time_zone.hours < 0:
-                sign_string = "-"
-            if time_zone.hours == 0 and time_zone.minutes < 0:
-                sign_string = "-"
-            time_zone_string = sign_string + "%02d%02d"
-            time_zone_string %= (abs(time_zone.hours), abs(time_zone.minutes))
-        return date_string + "T" + time_string + time_zone_string
 
     def _get_interval_from_expression(self, expr, context=None):
         if expr is None:
@@ -252,7 +221,7 @@ class CylcTimeParser(object):
                 kwargs = {"minutes": 1}
             if not kwargs:
                 return None
-            return isodatetime.TimeInterval(**kwargs)
+            return isodatetime.data.TimeInterval(**kwargs)
         return self.timeinterval_parser.parse(expr)
 
     def _get_point_from_expression(self, expr, context, is_required=False):
@@ -277,7 +246,7 @@ class CylcTimeParser(object):
             expr_to_parse = expr + "00"
         try:
             expr_point = self.timepoint_parser.parse(expr_to_parse)
-        except isodatetime.TimeSyntaxError:
+        except isodatetime.parsers.ISO8601SyntaxError:
             pass
         else:
             return expr_point, expr_offset
@@ -287,7 +256,7 @@ class CylcTimeParser(object):
                     try:
                         expr_point = self.timepoint_parser.parse(
                                           truncation_string + expr_to_parse)
-                    except isodatetime.TimeSyntaxError:
+                    except isodatetime.parsers.ISO8601SyntaxError:
                         continue
                     return expr_point, expr_offset
         raise CylcTimeSyntaxError(
@@ -301,20 +270,28 @@ class TestRecurrenceSuite(unittest.TestCase):
 
     def setUp(self):
         self._start_point = "19991226T0930Z"
+        # Note: the following timezone will be Z-ified *after* truncation
+        # or offsets are applied. 
         self._end_point = "20010506T1200+0200"
-        self._parser = CylcTimeParser(self._start_point,
-                                      self._end_point)
+        self._parsers = {0: CylcTimeParser(self._start_point,
+                                           self._end_point),
+                         2: CylcTimeParser(self._start_point,
+                                           self._end_point,
+                                           num_expanded_year_digits=2)}
 
     def test_first_recurrence_format(self):
         """Test the first ISO 8601 recurrence format."""
         tests = [("R5/T06/04T1230-0300",
+                  0,
                   "R5/19991227T0600Z/20010604T1530Z",
                   ["19991227T0600Z", "20000506T1422Z",
                    "20000914T2245Z", "20010124T0707Z"]),
                  ("R2/-0450000101T04Z/+0020630405T2200-05",
+                  2,
                   "R2/-0450000101T0400Z/+0020630406T0300Z",
                   []),
                  ("R10/T12+P10D/-P1Y",
+                  0,
                   "R10/20000105T1200Z/20000506T1000Z",
                   ["20000105T1200Z", "20000119T0106Z",
                    "20000201T1413Z", "20000215T0320Z",
@@ -322,12 +299,14 @@ class TestRecurrenceSuite(unittest.TestCase):
                    "20000326T1840Z", "20000409T0746Z",
                    "20000422T2053Z", "20000506T1000Z"])]
         for test in tests:
-            if len(test) == 2:
-                expression, ctrl_data = test
+            if len(test) == 3:
+                expression, num_expanded_year_digits, ctrl_data = test
                 ctrl_results = None
             else:
-                expression, ctrl_data, ctrl_results = test
-            recurrence = self._parser.parse_recurrence(expression)
+                expression, num_expanded_year_digits, ctrl_data = test[:3]
+                ctrl_results = test[3]
+            parser = self._parsers[num_expanded_year_digits]
+            recurrence = parser.parse_recurrence(expression)
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -379,7 +358,7 @@ class TestRecurrenceSuite(unittest.TestCase):
                 ctrl_results = None
             else:
                 expression, ctrl_data, ctrl_results = test
-            recurrence = self._parser.parse_recurrence(expression)
+            recurrence = self._parsers[0].parse_recurrence(expression)
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -393,27 +372,27 @@ class TestRecurrenceSuite(unittest.TestCase):
     def test_fourth_recurrence_format(self):
         """Test the fourth ISO 8601 recurrence format."""
         tests = [("PT6H/20000101T0500Z", "R/PT6H/20000101T0500Z"),
-                 ("P12D/+P2W", "R/P12D/20010520T1200+0200"),
-                 ("P1W/-P1M1D", "R/P1W/20010405T1200+0200"),
-                 ("P6D/T12", "R/P6D/20010506T1200+0200"),
-                 ("P6DT12H/01T", "R/P6DT12H/20010601T0000+0200"),
-                 ("R/P1D/20010506T1200+0200", "R/P1D/20010506T1200+0200"),
-                 ("R/PT5M/+PT2M", "R/PT5M/20010506T1202+0200"),
-                 ("R/P20Y/-P20Y", "R/P20Y/19810506T1200+0200"),
-                 ("R/P3YT2H/T18-02", "R/P3YT2H/20010506T2200+0200"),
-                 ("R/PT3H/31T", "R/PT3H/20010531T0000+0200"),
-                 ("R5/P1Y/", "R5/P1Y/20010506T1200+0200"),
-                 ("R3/P2Y/02T", "R3/P2Y/20010602T0000+0200"),
-                 ("R/P2Y", "R/P2Y/20010506T1200+0200"),
-                 ("R48/PT2H", "R48/PT2H/20010506T1200+0200"),
-                 ("R/P21Y/", "R/P21Y/20010506T1200+0200")]
+                 ("P12D/+P2W", "R/P12D/20010520T1000Z"),
+                 ("P1W/-P1M1D", "R/P1W/20010405T1000Z"),
+                 ("P6D/T12", "R/P6D/20010506T1000Z"),
+                 ("P6DT12H/01T", "R/P6DT12H/20010531T2200Z"),
+                 ("R/P1D/20010506T1200+0200", "R/P1D/20010506T1000Z"),
+                 ("R/PT5M/+PT2M", "R/PT5M/20010506T1002Z"),
+                 ("R/P20Y/-P20Y", "R/P20Y/19810506T1000Z"),
+                 ("R/P3YT2H/T18-02", "R/P3YT2H/20010506T2000Z"),
+                 ("R/PT3H/31T", "R/PT3H/20010530T2200Z"),
+                 ("R5/P1Y/", "R5/P1Y/20010506T1000Z"),
+                 ("R3/P2Y/02T", "R3/P2Y/20010601T2200Z"),
+                 ("R/P2Y", "R/P2Y/20010506T1000Z"),
+                 ("R48/PT2H", "R48/PT2H/20010506T1000Z"),
+                 ("R/P21Y/", "R/P21Y/20010506T1000Z")]
         for test in tests:
             if len(test) == 2:
                 expression, ctrl_data = test
                 ctrl_results = None
             else:
                 expression, ctrl_data, ctrl_results = test
-            recurrence = self._parser.parse_recurrence(expression)
+            recurrence = self._parsers[0].parse_recurrence(expression)
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -426,19 +405,20 @@ class TestRecurrenceSuite(unittest.TestCase):
 
     def test_inter_cycle_timepoints(self):
         """Test the inter-cycle timepoint parsing."""
-        task_cycle_time = self._parser.parse_timepoint(
+        task_cycle_time = self._parsers[0].parse_timepoint(
                                 "20000101T00Z")
-        tests = [("T06", "20000101T0600Z"),
-                 ("-PT6H", "19991231T1800Z"),
-                 ("+P5Y2M", "20050301T0000Z"),
-                 ("0229T", "20000229T0000Z"),
-                 ("+P54D", "20000224T0000Z"),
-                 ("T12+P5W", "20000205T1200Z"),
-                 ("-P1Y", "19990101T0000Z"),
-                 ("-9999990101T00Z", "-9999990101T0000Z"),
-                 ("20050601T2359+0200", "20050601T2359+0200")]
-        for expression, ctrl_data in tests:
-            test_data = str(self._parser.parse_timepoint(
+        tests = [("T06", "20000101T0600Z", 0),
+                 ("-PT6H", "19991231T1800Z", 0),
+                 ("+P5Y2M", "20050301T0000Z", 0),
+                 ("0229T", "20000229T0000Z", 0),
+                 ("+P54D", "20000224T0000Z", 0),
+                 ("T12+P5W", "20000205T1200Z", 0),
+                 ("-P1Y", "19990101T0000Z", 0),
+                 ("-9999990101T00Z", "-9999990101T0000Z", 2),
+                 ("20050601T2359+0200", "20050601T2159Z", 0)]
+        for expression, ctrl_data, num_expanded_year_digits in tests:
+            parser = self._parsers[num_expanded_year_digits]
+            test_data = str(parser.parse_timepoint(
                                   expression,
                                   context_point=task_cycle_time))
             self.assertEqual(test_data, ctrl_data)
@@ -449,7 +429,7 @@ class TestRecurrenceSuite(unittest.TestCase):
                  "P5W", "PT12M2S", "PT65S",
                  "PT2M", "P1YT567,4M"]
         for expression in tests:
-            test_data = str(self._parser.parse_interval(expression))
+            test_data = str(self._parsers[0].parse_interval(expression))
             self.assertEqual(test_data, expression)
 
 
