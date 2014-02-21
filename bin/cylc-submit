@@ -47,8 +47,10 @@ usage = """cylc [task] submit|single [OPTIONS] ARGS
 
 Submit a single task to run just as it would be submitted by its suite.
 Task messaging commands will print to stdout but will not attempt to
-communicate with the suite (which does not even need to be running).
-Note that job log file paths are the same as for in-suite tasks.
+communicate with the suite (which does not need to be running).
+
+WARNING: do not 'cylc submit' a task that is running in its suite at the
+same time - both instances will attempt to write to the same job logs.
 
 If the suite is running at the same time and it has acquired an
 exclusive suite lock (which means you cannot running multiple instances
