@@ -181,6 +181,7 @@ class message(object):
             env = {}
             for var in ['CYLC_MODE', 'CYLC_TASK_ID', 'CYLC_VERBOSE',
                     'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST',
+                    'CYLC_SUITE_RUN_DIR',
                     'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
