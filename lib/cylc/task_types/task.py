@@ -34,6 +34,8 @@ from cylc.command_env import cv_scripting_sl
 from cylc.host_select import get_task_host
 from parsec.util import pdeepcopy, poverride
 
+cylc_mode = 'scheduler'
+
 def displaytd( td ):
     # Display a python timedelta sensibly.
     # Default for str(td) of -5 sec is '-1 day, 23:59:55' !
@@ -627,7 +629,7 @@ class task( object ):
         self.execution_poll_timer.set_host( self.task_host )
 
         if self.task_host not in self.__class__.suite_contact_env_hosts and \
-                self.task_host != 'localhost':
+                self.task_host != 'localhost' and cylc_mode == 'scheduler':
             # If the suite contact file has not been copied to user@host
             # host yet, do so. This will happen for the first task on
             # this remote account inside the job-submission thread just

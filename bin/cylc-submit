@@ -140,6 +140,7 @@ slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
 slog.pimp( clock=dclock )
 
+task.cylc_mode = 'submit'
 task.task.clock = dclock
 clocktriggered.clocktriggered.clock = dclock
 
@@ -167,14 +168,8 @@ suite_env = {
         'CYLC_SUITE_LOG_DIR'     : suite_log_dir # needed by the test battery
         }
 
-# Contact details for remote tasks, written to file on task
-# hosts because the details can change on restarting a suite.
-suite_contact_env = {
-        'CYLC_SUITE_NAME'        : suite_env['CYLC_SUITE_NAME' ],
-        'CYLC_SUITE_HOST'        : suite_env['CYLC_SUITE_HOST' ],
-        'CYLC_SUITE_OWNER'       : suite_env['CYLC_SUITE_OWNER'],
-        'CYLC_SUITE_PORT'        : suite_env['CYLC_SUITE_PORT' ],
-        }
+# Note: a suite contact env file is not written by this command (it
+# would overwrite the real one if the suite is running).
 
 # Set local values of variables that are potenitally task-specific
 # due to different directory paths on different task hosts. These
@@ -199,17 +194,6 @@ for var,val in suite_task_env.items():
 # TODO - find a better, less back-door, way of doing this!
 jobfile.jobfile.suite_env = suite_env
 jobfile.jobfile.suite_task_env = suite_task_env
-# And pass contact env to the task module
-task.task.suite_contact_env = suite_contact_env
-
-# Write suite contact environment variables.
-# 1) local file (os.path.expandvars is called automatically for local)
-suite_run_dir = gcfg.get_derived_host_item( suite, 'suite run directory')
-env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
-f = open(env_file_path, 'wb')
-for key, value in suite_contact_env.items():
-    f.write("%s=%s\n" % (key, value))
-f.close()
 
 # Suite bin directory for event handlers executed by the scheduler.
 os.environ['PATH'] = suite_dir + '/bin:' + os.environ['PATH']
