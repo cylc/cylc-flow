@@ -33,9 +33,6 @@ from time import sleep, time
 
 from cylc import cylc_pyro_client, dump
 
-# TODO - make this experimental feature permanent after testing:
-USE_NS_DEFN_ORDERING=False
-
 class PollSchd(object):
     """Keep information on whether the updater should poll or not."""
 
@@ -265,10 +262,12 @@ class Updater(threading.Thread):
 
             self.mode = glbl['run_mode']
 
-            nsdo = glbl['namespace definition order']
-            if USE_NS_DEFN_ORDERING and self.ns_defn_order != nsdo:
-                self.ns_defn_order = nsdo
-                self.dict_ns_defn_order = dict( zip( nsdo, range(0,len(nsdo))))
+            if 'namespace definition order' in glbl: 
+                # (protect for compat with old suite daemons)
+                nsdo = glbl['namespace definition order']
+                if self.ns_defn_order != nsdo:
+                    self.ns_defn_order = nsdo
+                    self.dict_ns_defn_order = dict( zip( nsdo, range(0,len(nsdo))))
 
             dt = glbl[ 'last_updated' ]
             self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )

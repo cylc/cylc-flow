@@ -19,7 +19,6 @@
 from cylc.task_state import task_state
 from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
-from cylc.gui.updater import USE_NS_DEFN_ORDERING
 from cylc.state_summary import get_id_summary
 from copy import deepcopy
 import gobject
@@ -147,7 +146,7 @@ class DotUpdater(threading.Thread):
                             self.task_list.append( name )
                             break
 
-        if USE_NS_DEFN_ORDERING and self.updater.ns_defn_order:
+        if self.updater.ns_defn_order:
             self.task_list = [ i for i in self.updater.ns_defn_order if i in self.task_list ]
         else:
             self.task_list.sort()

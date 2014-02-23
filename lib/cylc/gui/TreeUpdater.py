@@ -19,7 +19,6 @@
 from cylc.task_state import task_state
 from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
-from cylc.gui.updater import USE_NS_DEFN_ORDERING
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
 from copy import deepcopy
@@ -261,7 +260,7 @@ class TreeUpdater(threading.Thread):
                 task_path = families + [name]
                 task_named_paths.append(task_path)
 
-            if USE_NS_DEFN_ORDERING and self.updater.ns_defn_order and model and model.get_sort_column_id() == (None,None):
+            if self.updater.ns_defn_order and model and model.get_sort_column_id() == (None,None):
                 task_named_paths.sort( key=lambda x: map( self.updater.dict_ns_defn_order.get, x ) )
             else:
                 task_named_paths.sort()
