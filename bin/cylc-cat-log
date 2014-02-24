@@ -30,6 +30,7 @@ from cylc.rundb import CylcRuntimeDAO
 from cylc.suite_logging import suite_log
 from cylc.suite_output import suite_output
 from cylc.cfgspec.site import sitecfg
+import cylc.flags
 
 parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS
 Print various log files for suites and tasks that are currently running,
