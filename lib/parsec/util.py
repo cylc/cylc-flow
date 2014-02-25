@@ -36,15 +36,15 @@ def listjoin( lst, none_str='' ):
         # (currently quoting must be consistent across all elements)
         nlst = []
         quote_me = False
-        for l in lst:
-            if isinstance( l, str ) and ( '#' in l or ',' in l ):
+        for item in lst:
+            if isinstance( item, str ) and ( '#' in item or ',' in item ):
                 quote_me = True
                 break
         if quote_me:
             # TODO - this assumes no internal double-quotes
-            return ', '.join( [ '"' + str(l) + '"' for l in lst ] )
+            return ', '.join( [ '"' + str(item) + '"' for item in lst ] )
         else:
-            return ', '.join( [ str(l) for l in lst ] )
+            return ', '.join( [ str(item) for item in lst ] )
 
 def printcfg( cfg, level=0, indent=0, prefix='', none_str='' ):
     """

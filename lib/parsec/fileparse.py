@@ -272,7 +272,7 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
         flines = _concatenate( flines )
 
     # return rstripped lines
-    return [ l.rstrip() for l in flines ]
+    return [ fl.rstrip() for fl in flines ]
 
 def parse( fpath, write_proc=False,
         template_vars=[], template_vars_file=None ):
