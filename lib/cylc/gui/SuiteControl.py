@@ -2177,8 +2177,10 @@ or remove task definitions without restarting the suite."""
 
         # for re-tries this sorts in time order due to filename:
         # (TODO - does this still work, post secs-since-epoch file extensions?)
-        err.sort( reverse=True )
-        out.sort( reverse=True )
+        key_func = lambda x: [int(w) if w.isdigit() else w for w in
+                              re.split("(\d+)", x)]
+        err.sort(key=key_func, reverse=True)
+        out.sort(key=key_func, reverse=True)
         window.set_size_request(800, 400)
         if choice == 'job script':
             window.set_title( task_id + ": Job Script" )
