@@ -186,12 +186,12 @@ class gconfig( config ):
         # theme state items
         cfg = deepcopy( self.get( [], sparse ))
         try:
-            for theme in cfg['themes'].keys():
-                for state in cfg['themes'][theme].keys():
+            for theme in cfg['themes'].values():
+                for state in theme.keys():
                     clist = []
-                    for attr, val in cfg['themes'][theme][state].items():
+                    for attr, val in theme[state].items():
                         clist.append( attr + '=' + val )
-                    cfg['themes'][theme][state] = clist
+                    theme[state] = clist
         except:
             pass
 
