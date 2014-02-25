@@ -251,7 +251,7 @@ class gconfig( config ):
                     shutil.rmtree( dpath )
                 else:
                     # roll others over
-                    os.rename( dpath, d+'.'+str(n+1) )
+                    os.rename( dpath, d + '.' + str(n+1) )
         self.create_directory( d, name )
 
     def create_directory( self, d, name ):
