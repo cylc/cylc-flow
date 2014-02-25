@@ -52,7 +52,7 @@ def printcfg( cfg, level=0, indent=0, prefix='', none_str='' ):
     dict), as returned by parse.config.get().
     """
 
-    if isinstance(cfg,list):
+    if isinstance(cfg, list):
         # cfg is a single list value
         print prefix + '   '*indent + listjoin( cfg, none_str )
     elif not isinstance(cfg,dict):
