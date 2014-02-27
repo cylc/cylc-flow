@@ -1,0 +1,26 @@
+# All legals ways of defining string values should parse to the same result.
+[string]
+    [[the quick brown fox]]
+        item 1 =  the quick brown fox # comment
+        item 2 = 'the quick brown fox' # comment
+        item 3 = "the quick brown fox" # comment
+        item 4 = '''the quick brown fox''' # comment
+        item 5 = """the quick brown fox""" # comment
+        item 6 = '''
+    the quick brown fox
+''' # comment
+        item 7 = """
+    the quick brown fox
+""" # comment
+    [[the quick #brown fox]]
+        item 1 = 'the quick #brown fox' # comment
+        item 2 = "the quick #brown fox" # comment
+        item 3 = '''the quick #brown fox''' # comment
+        item 4 = """the quick #brown fox""" # comment
+        item 5 = '''
+    the quick #brown fox
+''' # comment
+        item 6 = """
+    the quick #brown fox
+""" # comment
+

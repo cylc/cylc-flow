@@ -19,7 +19,7 @@
 import os, sys
 from suite_host import is_remote_host
 from owner import user, is_remote_user
-from global_config import get_global_cfg
+from cfgspec.site import sitecfg
 import flags
 
 """Processes connecting to a running suite must know which port the
@@ -53,9 +53,9 @@ class port_file( object ):
         self.suite = suite
 
         # the ports directory is assumed to exist
-        gcfg = get_global_cfg()
-        pdir = gcfg.cfg['pyro']['ports directory']
 
+        pdir = sitecfg.get( ['pyro','ports directory'] )
+ 
         self.local_path = os.path.join( pdir, suite )
 
         try:
@@ -94,8 +94,7 @@ class port_retriever( object ):
         self.owner = owner
         self.locn = None
 
-        gcfg = get_global_cfg()
-        self.local_path = os.path.join( gcfg.cfg['pyro']['ports directory'], suite )
+        self.local_path = os.path.join( sitecfg.get( ['pyro','ports directory'] ), suite )
 
     def get_local( self ):
         self.locn = self.local_path

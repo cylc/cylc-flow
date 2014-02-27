@@ -1,0 +1,13 @@
+# All legals ways of defining integer lists should parse to the same result.
+[integer_list]
+    [[1_2_3_3_3_3_4_5_5_6]]
+        item 1 =  1,2,3,3,3,3,4,5,5,6 # comment
+        item 2 =  1,  2,3,3,  3  ,  3, 4,  5  ,5,6 # comment
+        item 3 =  1,2,4*3,4,2*5,6 # comment
+        item 4 =  "1","2","3","3","3",  "3", "4","5",  "5", "6" # comment
+        item 5 =  "1","2","4*3","4","2*5","6" # comment
+        item 6 =  '1','2','3','3','3',  '3', '4','5',  '5', '6' # comment
+        item 7 =  '1','2','4*3','4','2*5','6' # comment
+        item 8 =  1,  2,3,\
+    3,  3  ,  3, 4,  5  ,5,6 # comment
+

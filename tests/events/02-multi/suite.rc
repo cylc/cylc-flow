@@ -1,0 +1,23 @@
+
+title = "Test list of task event handlers"
+# suite will time out unless both event handlers are executed.
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 0.5
+        expected task failures = bar.1
+
+[scheduling]
+    [[special tasks]]
+        exclude at start-up = excluded
+    [[dependencies]]
+        graph = """fixer
+        excluded => bar"""
+[runtime]
+    [[bar]]
+        command scripting = false
+    [[fixer]]
+        command scripting = true
+        [[[event hooks]]]
+            started handler = trigger-bar.sh, remove-bar.sh
+

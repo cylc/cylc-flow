@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys
+from copy import copy
 from OrderedDict import OrderedDict
 
 """
@@ -25,28 +26,65 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-def printcfg( dct, level=0, indent=0, prefix='', omitNone=False ):
+def listjoin( lst, none_str='' ):
+    if not lst:
+        # empty list
+        return none_str
+    else:
+        # return string from joined list, but quote all elements if any
+        # of them contain comment or list-delimiter characters
+        # (currently quoting must be consistent across all elements)
+        nlst = []
+        quote_me = False
+        for item in lst:
+            if isinstance( item, str ) and ( '#' in item or ',' in item ):
+                quote_me = True
+                break
+        if quote_me:
+            # TODO - this assumes no internal double-quotes
+            return ', '.join( [ '"' + str(item) + '"' for item in lst ] )
+        else:
+            return ', '.join( [ str(item) for item in lst ] )
+
+def printcfg( cfg, level=0, indent=0, prefix='', none_str='' ):
     """
-    Recursively print a nested dict in nested INI format.
+    Recursively pretty-print a parsec config item or section (nested
+    dict), as returned by parse.config.get().
     """
-    delayed=[]
-    for key,val in dct.items():
-        if isinstance( val, dict ):
-            # print top level items before recursing
-            delayed.append((key,val))
-        elif val != None or not omitNone:
-            if isinstance( val, list ):
-                v = ', '.join([str(f) for f in val])
+
+    if isinstance(cfg, list):
+        # cfg is a single list value
+        print prefix + '   ' * indent + listjoin( cfg, none_str )
+    elif not isinstance(cfg,dict):
+        # cfg is a single value
+        if not cfg:
+            cfg = none_str
+        print prefix + '   ' * indent +  str(cfg)
+    else:
+        # cfg is a possibly-nested section
+        delayed=[]
+        for key,val in cfg.items():
+            if isinstance( val, dict ):
+                # nested (val is a section)
+                # delay output to print top level items before recursing
+                delayed.append((key,val))
             else:
-                if val is not None:
-                    v = str(val)
+                # val is a single value
+                if isinstance( val, list ):
+                    v = listjoin( val, none_str )
+                elif val is None:
+                    v = none_str
                 else:
-                    v = ''
-            print prefix + '   '*indent + str(key) + ' = ' + v
-    for key,val in delayed:
-        if val != None:
+                    v = str(val)
+                # print "key = val"
+                print prefix + '   '*indent + str(key) + ' = ' + v
+
+        for key,val in delayed:
+            # print heading
+            #if val != None:
             print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
-        printcfg( val, level=level+1, indent=indent+1, prefix=prefix, omitNone=omitNone)
+            # recurse into section
+            printcfg( val, level=level+1, indent=indent+1, prefix=prefix, none_str=none_str )
 
 def replicate( target, source ):
     """
@@ -54,6 +92,9 @@ def replicate( target, source ):
     target already, so source overrides common elements in target and
     otherwise adds elements to it.
     """
+    if not source:
+        target = OrderedDict()
+        return
     for key,val in source.items():
         if isinstance( val, dict ):
             if key not in target:
@@ -72,6 +113,9 @@ def pdeepcopy( source):
 
 def poverride( target, sparse ):
     """Override items in a target pdict, target sub-dicts must already exist."""
+    if not sparse:
+        target = OrderedDict()
+        return
     for key,val in sparse.items():
         if isinstance( val, dict ):
             poverride( target[key], val )
@@ -83,7 +127,9 @@ def poverride( target, sparse ):
 def m_override( target, sparse ):
     """Override items in a target pdict. Target keys must already exist
     unless there is a "__MANY__" placeholder in the right position."""
-
+    if not sparse:
+        target = OrderedDict()
+        return
     for key,val in sparse.items():
         if isinstance( val, dict ):
             if key not in target:
@@ -111,10 +157,59 @@ def m_override( target, sparse ):
 
 def un_many( cfig ):
     """Remove any '__MANY__' items from a nested dict, in-place."""
+    if not cfig:
+        return
     for key,val in cfig.items():
         if key == '__MANY__':
             del cfig[key]
         elif isinstance( val, dict ):
             un_many( cfig[key] )
 
+
+def itemstr( parents=[], item=None, value=None ):
+    """
+    Pretty-print an item from list of sections, item name, and value
+    E.g.: ([sec1, sec2], item, value) to '[sec1][sec2]item = value'.
+    """
+    keys = copy(parents)
+    if keys and value and not item:
+        # last parent is the item
+        item = keys[-1]
+        keys.remove(item)
+    if parents:
+        s = '[' + ']['.join(parents) + ']'
+    else:
+        s = ''
+    if item:
+        s += str(item)
+        if value:
+            s += " = " + str(value)
+    if not s:
+        s = str(value)
+
+    return s
+
+
+if __name__ == "__main__":
+    print 'Item strings:'
+    print '  ', itemstr( ['sec1','sec2'], 'item', 'value' )
+    print '  ', itemstr( ['sec1','sec2'], 'item' )
+    print '  ', itemstr( ['sec1','sec2'] )
+    print '  ', itemstr( ['sec1'] )
+    print '  ', itemstr( item='item', value='value' )
+    print '  ', itemstr( item='item' )
+    print '  ', itemstr( value='value' )
+    print '  ', itemstr( parents=['sec1','sec2'], value='value' ) # error or useful?
+
+    print 'Configs:'
+    printcfg( 'foo', prefix=' > ' )
+    printcfg( ['foo','bar'], prefix=' > ' )
+    printcfg( {}, prefix=' > ' )
+    printcfg( { 'foo' : 1 }, prefix=' > ' )
+    printcfg( { 'foo' : None }, prefix=' > ' )
+    printcfg( { 'foo' : None }, none_str='(none)', prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : 1 } }, prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : None } }, prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : None } }, none_str='(none)', prefix=' > ' )
+    printcfg( { 'foo' : { 'bar' : 1, 'baz' : 2, 'qux' : { 'boo' : None} } }, none_str='(none)', prefix=' > ' )
 

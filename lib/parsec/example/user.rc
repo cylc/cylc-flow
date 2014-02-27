@@ -1,0 +1,71 @@
+#!Jinja2
+
+# line comment
+
+title = "parsec torture test"
+
+[single values]
+    #an illegal items = the quick brown fox # an illegal item commented out
+    [[strings]]
+        one =  the quick brown fox  # no quotes
+        two = 'the quick brown fox' # single quotes
+        thr = "the quick brown fox" # double quotes
+        six = '''the quick brown fox''' # triple single quotes
+        sev = """the quick brown fox""" # triple double quotes
+        an item = the quick brown fox # item name containing space
+        override me = "not overridden"
+        override me = "not overridden"
+        override me = "OVERRIDDEN"
+    [[strings with internal comments]]
+        # (e.g. color codes: "'color=#ff00ff'"
+        fou = 'the quick brown fox # jumped over' # single quotes, internal comment
+        fiv = "the quick brown fox # jumped over" # double quotes, internal comment
+        eig = '''the quick BROWN fox # jumped over''' # triple single quotes, internal comment
+        nin = """the quick BROWN fox # jumped over""" # triple double quotes, internal comment
+    [[multiline strings]]
+        one = '''the quick
+brown fox'''
+        two = """the quick
+brown fox"""
+    [[multiline strings with internal comments]]
+        one = '''the quick # or slow
+brown fox # or lazy dog'''
+        two = """the quick # or slow
+brown fox # or lazy dog"""
+
+    [[integers]]
+        one = 1   # unquoted
+        two = "1" # double quotes
+        thr = '1' # single quotes
+
+    [[booleans]]
+        one =  False  # unquoted
+        two = 'False' # single quotes
+        thr = "False" # double quotes
+        fou =  false  # lowercase unquoted
+        fiv = 'false' # lowercase single quotes
+        six = "false" # lowercase double quotes
+
+    [[floats]]
+        one =  9.9  # unquoted
+        two = '9.9' # single quotes
+        thr = "9.9" # double quotes
+
+[list values]
+    [[string lists]]
+        one =  the quick,   brown fox    # unquoted values
+        two =  the quick,   brown fox,   # with trailing comma
+        thr = 'the quick', 'brown fox'   # single quotes,
+        fou = "the, quick", "brown , fox",  # double quotes, internal commas
+        fiv = 'the #quick', 'brown #fox' # single quotes, internal comments
+        fiv = "the #quick", "brown #fox" # double quotes, internal comments
+        compulsory = "one", "two"
+    [[integer lists]]
+        foo = 1,2,3,3,3,4,4
+        bar = 1,2,3*3,2*4, # multipliers and trailing comma
+
+[list values] # repeated section
+    [[float lists]]
+        foo = 1.0,2.0,2.0, 2.0,   3.0, 4.0,4.0
+        bar = 1.0,3*2.0, 3.0, 2*4.0  # multipliers and traling comma
+

@@ -18,30 +18,37 @@
 
 import re, os, sys
 import datetime
-from shutil import copy
+from shutil import copy as shcopy
+from copy import copy
 
-class IncludeFileError( Exception ):
-    """
-    Attributes:
-        message - what the problem is.
-    """
-    def __init__( self, msg ):
-        self.msg = msg
+class IncludeFileNotFoundError( Exception ):
+
+    def __init__( self, flist ):
+        rflist = copy(flist)
+        rflist.reverse()
+        self.msg = "File not found: " + rflist[0]
+        for rf in rflist[1:]:
+            self.msg += "\n   via " + rf
     def __str__( self ):
-        return repr(self.msg)
+        return self.msg
 
 done = []
 modtimes = {}
 backups = {}
 newfiles = []
+flist = []
 
 include_re = re.compile( '\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$' )
 
-def inline( lines, dir,
-        for_grep=False, for_edit=False,
-        viewcfg={}, level=None ):
+def inline( lines, dir, file, for_grep=False, for_edit=False, viewcfg={}, level=None ):
     """Recursive inlining of parsec include-files"""
 
+    global flist
+    if level is None:
+        # avoid being affected by multiple *different* calls to this function
+        flist = [file]
+    else:
+        flist.append(file)
     single = False
     mark = False
     label = False
@@ -97,11 +104,12 @@ def inline( lines, dir,
                     inc = [ line.rstrip('\n') for line in h ]
                     h.close()
                     # recursive inclusion
-                    outf.extend( inline( inc, dir, for_grep,for_edit,viewcfg,level ))
+                    outf.extend( inline( inc, dir, inc, for_grep,for_edit,viewcfg,level ))
                     if for_grep or single or label or for_edit:
                         outf.append('#++++ END INLINED INCLUDE FILE ' + match + msg )
                 else:
-                    raise IncludeFileError( "ERROR, include-file not found: " + inc )
+                    flist.append(inc)
+                    raise IncludeFileNotFoundError( flist )
             else:
                 if not for_edit:
                     outf.append( level + line )
@@ -130,7 +138,7 @@ def backup(src, tag='' ):
         raise SystemExit( "File not found: " + src )
     bkp = src + tag + '.EDIT.' + datetime.datetime.now().isoformat()
     global backups
-    copy( src, bkp )
+    shcopy( src, bkp )
     backups[ src ] = bkp
 
 

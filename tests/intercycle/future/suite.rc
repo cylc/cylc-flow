@@ -2,7 +2,7 @@
 [cylc]
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 0.5
+        live mode suite timeout = 1.0
 
 [scheduling]
     initial cycle time = 2012010100

@@ -32,7 +32,7 @@ from cylc.cycle_time import ct, CycleTimeError
 from cylc.print_tree import print_tree
 from cylc.TaskID import TaskID
 from parsec.validate import validate
-from cylc.cfgspec.suite_spec import SPEC
+from cylc.cfgspec.suite import SPEC
 import cylc.flags
 
 def get_padding( settings, level=0, padding=0 ):

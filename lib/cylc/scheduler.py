@@ -36,7 +36,7 @@ from locking.lockserver import lockserver
 from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
-from global_config import get_global_cfg
+from cfgspec.site import sitecfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from broker import broker
 from regpath import RegPath
@@ -167,8 +167,6 @@ class scheduler(object):
 
         self.parse_commandline()
 
-        self.gcfg = get_global_cfg()
-
     def configure( self ):
         # read-only commands to expose directly to the network
         self.info_commands = {
@@ -284,7 +282,7 @@ class scheduler(object):
 
         # Write suite contact environment variables.
         # 1) local file (os.path.expandvars is called automatically for local)
-        suite_run_dir = self.gcfg.get_derived_host_item(self.suite, 'suite run directory')
+        suite_run_dir = sitecfg.get_derived_host_item(self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
         for key, value in self.suite_contact_env.items():
@@ -292,7 +290,7 @@ class scheduler(object):
         f.close()
         # 2) restart only: copy to other accounts with still-running tasks
         r_suite_run_dir = os.path.expandvars(
-                self.gcfg.get_derived_host_item(self.suite, 'suite run directory'))
+                sitecfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
             self.log.info( 'Restart: copying suite contact file to ' + user_at_host )
             if '@' in user_at_host:
@@ -300,7 +298,7 @@ class scheduler(object):
             else:
                 user, host = None, user_at_host
             # this handles defaulting to localhost:
-            r_suite_run_dir = self.gcfg.get_derived_host_item(
+            r_suite_run_dir = sitecfg.get_derived_host_item(
                     self.suite, 'suite run directory', host, user)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                     user_at_host, r_suite_run_dir)
@@ -314,7 +312,7 @@ class scheduler(object):
             task.task.suite_contact_env_hosts.append( user_at_host )
 
         self.already_timed_out = False
-        if self.config.suite_timeout:
+        if self.config.cfg['cylc']['event hooks']['timeout']:
             self.set_suite_timer()
 
         self.runtime_graph_on = False
@@ -656,7 +654,7 @@ class scheduler(object):
     def set_suite_timer( self, reset=False ):
         now = datetime.datetime.now()
         self.suite_timer_start = now
-        print str(self.config.suite_timeout) + " minute suite timer starts NOW:", str(now)
+        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", str(now)
 
     def reconfigure( self ):
         # reload the suite definition while the suite runs
@@ -742,8 +740,8 @@ class scheduler(object):
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir,
-                self.gcfg.cfg['pyro']['base port'],
-                self.gcfg.cfg['pyro']['maximum number of ports'] )
+                sitecfg.get( ['pyro','base port'] ),
+                sitecfg.get( ['pyro','maximum number of ports'] ) )
         self.port = self.pyro.get_port()
 
         try:
@@ -779,7 +777,7 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
-            run_dir = self.gcfg.get_derived_host_item( self.suite, 'suite run directory' )
+            run_dir = sitecfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
@@ -884,9 +882,9 @@ class scheduler(object):
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
         self.suite_task_env = {
-                'CYLC_SUITE_RUN_DIR'    : self.gcfg.get_derived_host_item( self.suite, 'suite run directory' ),
-                'CYLC_SUITE_WORK_DIR'   : self.gcfg.get_derived_host_item( self.suite, 'suite work directory' ),
-                'CYLC_SUITE_SHARE_DIR'  : self.gcfg.get_derived_host_item( self.suite, 'suite share directory' ),
+                'CYLC_SUITE_RUN_DIR'    : sitecfg.get_derived_host_item( self.suite, 'suite run directory' ),
+                'CYLC_SUITE_WORK_DIR'   : sitecfg.get_derived_host_item( self.suite, 'suite work directory' ),
+                'CYLC_SUITE_SHARE_DIR'  : sitecfg.get_derived_host_item( self.suite, 'suite share directory' ),
                 'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
                 'CYLC_SUITE_DEF_PATH'   : self.suite_dir
                 }
@@ -923,12 +921,12 @@ class scheduler(object):
             req = self.config.cfg['cylc']['reference test']['required run mode']
             if req and req != self.run_mode:
                 raise SchedulerError, 'ERROR: this suite allows only ' + req + ' mode reference tests'
-            handler = self.config.event_handlers['shutdown']
-            if handler:
-                print >> sys.stderr, 'WARNING: replacing shutdown event handler for reference test run'
-            self.config.event_handlers['shutdown'] = self.config.cfg['cylc']['reference test']['suite shutdown event handler']
+            handlers = self.config.cfg['cylc']['event hooks']['shutdown handler']
+            if handlers:
+                print >> sys.stderr, 'WARNING: replacing shutdown event handlers for reference test run'
+            self.config.cfg['cylc']['event hooks']['shutdown handler'] = [ self.config.cfg['cylc']['reference test']['suite shutdown event handler'] ]
             self.config.cfg['cylc']['log resolved dependencies'] = True
-            self.config.abort_if_shutdown_handler_fails = True
+            self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec( self.reflogfile )
                 self.start_tag = spec.get_start_tag()
@@ -936,12 +934,37 @@ class scheduler(object):
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
-            self.config.abort_on_timeout = True
+            self.config.cfg['cylc']['event hooks']['abort on timeout'] = True
             timeout = self.config.cfg['cylc']['reference test'][ self.run_mode + ' mode suite timeout' ]
             if not timeout:
                 raise SchedulerError, 'ERROR: suite timeout not defined for ' + self.run_mode + ' mode reference test'
-            self.config.suite_timeout = timeout
-            self.config.reset_timer = False
+            self.config.cfg['cylc']['event hooks']['timeout'] = timeout
+            self.config.cfg['cylc']['event hooks']['reset timer'] = False
+
+    def run_event_handlers( self, name, fg, msg ):
+        if self.run_mode != 'live' or \
+                ( self.run_mode == 'simulation' and \
+                        self.config.cfg['cylc']['simulation mode']['disable suite event hooks'] ) or \
+                ( self.run_mode == 'dummy' and \
+                        self.config.cfg['cylc']['dummy mode']['disable suite event hooks'] ):
+            return
+ 
+        handlers = self.config.cfg['cylc']['event hooks'][name + ' handler']
+        if handlers:
+            for handler in handlers:
+                try:
+                    RunHandler( name, handler, self.suite, msg=msg, fg=fg )
+                except Exception, x:
+                    # Note: test suites depends on this message:
+                    print >> sys.stderr, '\nERROR: ' + name + ' EVENT HANDLER FAILED'
+                    raise SchedulerError, x
+                    if name == 'shutdown' and self.reference_test_mode:
+                            sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
+                else:
+                    if name == 'shutdown' and self.reference_test_mode:
+                        # TODO - this isn't true, it just means the
+                        # shutdown handler run successfully:
+                        print '\nSUITE REFERENCE TEST PASSED'
 
     def run( self ):
 
@@ -960,18 +983,8 @@ class scheduler(object):
             self.log.info( "Held on start-up (no tasks will be submitted)")
             self.hold_suite()
 
-        handler = self.config.event_handlers['startup']
-        if handler:
-            if self.config.abort_if_startup_handler_fails:
-                foreground = True
-            else:
-                foreground = False
-            try:
-                RunHandler( 'startup', handler, self.suite, msg='suite starting', fg=foreground )
-            except Exception, x:
-                # Note: test suites depends on this message:
-                print >> sys.stderr, '\nERROR: startup EVENT HANDLER FAILED'
-                raise SchedulerError, x
+        abort = self.config.cfg['cylc']['event hooks']['abort if startup handler fails']
+        self.run_event_handlers( 'startup', abort, 'suite starting' )
 
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
@@ -1085,7 +1098,7 @@ class scheduler(object):
                 self.do_update_state_summary = False
                 self.update_state_summary()
 
-            if self.config.suite_timeout:
+            if self.config.cfg['cylc']['event hooks']['timeout']:
                 self.check_suite_timer()
 
             if self.config.cfg['cylc']['abort if any task fails']:
@@ -1145,29 +1158,15 @@ class scheduler(object):
         if self.already_timed_out:
             return
         now = datetime.datetime.now()
-        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.suite_timeout )
-        handler = self.config.event_handlers['timeout']
+        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.cfg['cylc']['event hooks']['timeout'] )
         if now > timeout:
-            message = 'suite timed out after ' + str( self.config.suite_timeout) + ' minutes'
+            self.already_timed_out = True
+            message = 'suite timed out after ' + str( self.config.cfg['cylc']['event hooks']['timeout']) + ' minutes'
             self.log.warning( message )
-            if handler:
-                # a handler is defined
-                self.already_timed_out = True
-                if self.config.abort_if_timeout_handler_fails:
-                    foreground = True
-                else:
-                    foreground = False
-                try:
-                    RunHandler( 'timeout', handler, self.suite, msg=message, fg=foreground )
-                except Exception, x:
-                    # Note: tests suites depend on the following message:
-                    print >> sys.stderr, '\nERROR: timeout EVENT HANDLER FAILED'
-                    raise SchedulerError, x
-
-            if self.config.abort_on_timeout:
-                # some tests rely on this log message:
-                self.log.critical( 'Abort on suite timeout is set' )
-                raise SchedulerError, "Abort on suite timeout is set"
+            abort = self.config.cfg['cylc']['event hooks']['abort if timeout handler fails']
+            self.run_event_handlers( 'timeout', abort, message )
+            if self.config.cfg['cylc']['event hooks']['abort on timeout']:
+                raise SchedulerError, 'Abort on suite timeout is set'
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
@@ -1183,7 +1182,7 @@ class scheduler(object):
             flags.pflag = False # reset
             # a task changing state indicates new suite activity
             # so reset the suite timer.
-            if self.config.suite_timeout and self.config.reset_timer:
+            if self.config.cfg['cylc']['event hooks']['timeout'] and self.config.cfg['cylc']['event hooks']['reset timer']:
                 self.set_suite_timer()
 
         elif self.waiting_tasks_ready():
@@ -1222,6 +1221,10 @@ class scheduler(object):
 
     def shutdown( self, reason='' ):
         msg = "Suite shutting down at " + str(datetime.datetime.now())
+
+        # The getattr() calls below are used in case the suite is not
+        # fully configured before the shutdown is called.
+
         if reason:
             msg += ' (' + reason + ')'
         print msg
@@ -1280,25 +1283,10 @@ class scheduler(object):
         if getattr(self, "db", None) is not None:
             self.db.close()
 
-        # shutdown handler
-        handler = None
         if getattr(self, "config", None) is not None:
-            handler = self.config.event_handlers['shutdown']
-        if handler:
-            if self.config.abort_if_shutdown_handler_fails:
-                foreground = True
-            else:
-                foreground = False
-            try:
-                RunHandler( 'shutdown', handler, self.suite, msg=reason, fg=foreground )
-            except Exception, x:
-                if self.reference_test_mode:
-                    sys.exit( '\nERROR: SUITE REFERENCE TEST FAILED' )
-                else:
-                    # Note: tests suites depend on the following message:
-                    sys.exit( '\nERROR: shutdown EVENT HANDLER FAILED' )
-            else:
-                print '\nSUITE REFERENCE TEST PASSED'
+            # run shutdown handlers
+            abort = self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails']
+            self.run_event_handlers( 'shutdown', abort, reason )
 
         print "DONE" # main thread exit
 

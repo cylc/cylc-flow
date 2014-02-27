@@ -33,9 +33,8 @@ import warnings
 #import pygtk
 #pygtk.require('2.0')
 
-from cylc.global_config import get_global_cfg
-
-from cylc.gui.gcylc_config import config
+from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.gcylc import gcfg
 from cylc.gui.gsummary import (get_host_suites, get_status_tasks,
                                get_summary_menu, launch_gcylc,
                                launch_gsummary, BaseSummaryTimeoutUpdater)
@@ -56,9 +55,8 @@ class SummaryPanelApplet(object):
         warnings.filterwarnings('ignore', 'use the new', Warning)
         setup_icons()
         if not hosts:
-            gcfg = get_global_cfg()
             try:
-                hosts = gcfg.cfg["suite host scanning"]["hosts"]
+                hosts = sitecfg.get( ["suite host scanning","hosts"] )
             except KeyError:
                 hosts = ["localhost"]
         self.is_compact = is_compact
@@ -121,9 +119,8 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self.is_compact = is_compact
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
-        self.usercfg = config().cfg
-        self.theme_name = self.usercfg['use theme']
-        self.theme = self.usercfg['themes'][self.theme_name]
+        self.theme_name = gcfg.get( ['use theme'] )
+        self.theme = gcfg.get( ['themes', self.theme_name] )
         self.dots = DotMaker(self.theme)
         self.statuses = {}
         self.stop_summaries = {}
@@ -165,7 +162,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
         extra_items.append(gsummary_item)
 
-        menu = get_summary_menu(suite_host_tuples, self.usercfg,
+        menu = get_summary_menu(suite_host_tuples, 
                                 self.theme_name, self._set_theme,
                                 has_stopped_suites,
                                 self.clear_stopped_suites,
@@ -341,7 +338,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
-        self.theme = self.usercfg['themes'][self.theme_name]
+        self.theme = gcfg.get( ['themes', self.theme_name] )
         self.dots = DotMaker(self.theme)
 
     def _set_tooltip(self, widget, text):

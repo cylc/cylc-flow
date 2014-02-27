@@ -46,10 +46,9 @@ class converter( object ):
 class upgrader( object ):
     """Handles upgrading of deprecated config values."""
 
-    def __init__( self, cfg, spec, descr ):
+    def __init__( self, cfg, descr ):
         """Store the config dict to be upgraded if necessary."""
         self.cfg = cfg
-        self.spec = spec
         self.descr = descr
         # upgrades must be ordered in case several act on the same item
         self.upgrades = OrderedDict()

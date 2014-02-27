@@ -30,8 +30,8 @@ import gobject
 #import pygtk
 #pygtk.require('2.0')
 
-from cylc.global_config import get_global_cfg
-from cylc.gui.gcylc_config import config
+from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.gcylc import gcfg
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.SuiteControl import run_get_stdout
 from cylc.gui.DotMaker import DotMaker
@@ -92,7 +92,7 @@ def get_status_tasks(host, suite, owner=None):
 
 
 def get_summary_menu(suite_host_tuples,
-                     usercfg, theme_name, set_theme_func,
+                     theme_name, set_theme_func,
                      has_stopped_suites, clear_stopped_suites_func,
                      scanned_hosts, change_hosts_func,
                      update_now_func, start_func,
@@ -101,7 +101,6 @@ def get_summary_menu(suite_host_tuples,
     """Return a right click menu for summary GUIs.
 
     suite_host_tuples should be a list of (suite, host) tuples (if any).
-    usercfg should be the gcylc config object.
     theme_name should be the name of the current theme.
     set_theme_func should be a function accepting a new theme name.
     has_stopped_suites should be a boolean denoting currently
@@ -174,7 +173,7 @@ def get_summary_menu(suite_host_tuples,
     theme_items[theme] = gtk.RadioMenuItem(label=theme)
     thememenu.append(theme_items[theme])
     theme_items[theme].theme_name = theme
-    for theme in usercfg['themes']:
+    for theme in gcfg.get( ['themes'] ):
         if theme == "default":
             continue
         theme_items[theme] = gtk.RadioMenuItem(group=theme_items['default'], label=theme)
@@ -183,7 +182,7 @@ def get_summary_menu(suite_host_tuples,
 
     # set_active then connect, to avoid causing an unnecessary toggle now.
     theme_items[theme_name].set_active(True)
-    for theme in usercfg['themes']:
+    for theme in gcfg.get( ['themes'] ):
         theme_items[theme].show()
         theme_items[theme].connect('toggled',
                                    lambda i: (i.get_active() and
@@ -195,7 +194,7 @@ def get_summary_menu(suite_host_tuples,
     theme_legend_item.set_sensitive(not is_stopped)
     theme_legend_item.connect("button-press-event",
                               lambda b, e: launch_theme_legend(
-                                        usercfg['themes'][theme_name]))
+                                        gcfg.get( ['themes',theme_name])))
     menu.append(theme_legend_item)
     sep_item = gtk.SeparatorMenuItem()
     sep_item.show()
@@ -339,9 +338,8 @@ class SummaryApp(object):
         set_exception_hook_dialog("cylc gsummary")
         setup_icons()
         if not hosts:
-            gcfg = get_global_cfg()
             try:
-                hosts = gcfg.cfg["suite host scanning"]["hosts"]
+                hosts = sitecfg.get( ["suite host scanning","hosts"] )
             except KeyError:
                 hosts = ["localhost"]
         self.hosts = hosts
@@ -353,9 +351,10 @@ class SummaryApp(object):
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
-        self.usercfg = config().cfg
-        self.theme_name = self.usercfg['use theme']
-        self.theme = self.usercfg['themes'][self.theme_name]
+
+        self.theme_name = gcfg.get( ['use theme'] )
+        self.theme = gcfg.get( ['themes', self.theme_name] )
+
         self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(*([str, str, bool, str, int] +
             [str] * 20))
@@ -486,7 +485,6 @@ class SummaryApp(object):
             view_menu.append(column_item)
 
         menu = get_summary_menu(suite_host_tuples,
-                                self.usercfg,
                                 self.theme_name,
                                 self._set_theme,
                                 has_stopped_suites,
@@ -594,7 +592,7 @@ class SummaryApp(object):
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
-        self.theme = self.usercfg['themes'][self.theme_name]
+        self.theme = gcfg.get( ['themes',self.theme_name] )
         self.dots = DotMaker(self.theme)
 
     def _set_tooltip(self, widget, text):
