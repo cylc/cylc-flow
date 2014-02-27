@@ -33,7 +33,7 @@ except OSError,x:
     raise SystemExit( 'ERROR: your current working directory does not exist!')
 
 from cylc.version import cylc_version
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 
 class CommandError( Exception ):
     """
@@ -158,7 +158,7 @@ categories = OrderedDict()
 categories['all'         ] = ['all' ]
 categories['database'    ] = ['db', 'database' ]
 categories['preparation' ] = ['preparation' ]
-categories['information' ] = ['information'    ]
+categories['information' ] = ['information' ]
 categories['discovery'   ] = ['discovery' ]
 categories['control'     ] = ['control' ]
 categories['utility'     ] = ['utility' ]
@@ -180,8 +180,9 @@ information_commands['cat-log'  ] = ['cat-log', 'log' ]
 
 information_commands['documentation'   ] = ['documentation', 'browse']
 information_commands['monitor'  ] = ['monitor'  ]
-information_commands['get-config'] = ['get-config' ]
-information_commands['get-global-config'  ] = [ 'get-global-config']
+information_commands['get-suite-config' ] = ['get-suite-config', 'get-config' ]
+information_commands['get-site-config'  ] = ['get-site-config', 'get-global-config' ]
+information_commands['get-gui-config'   ] = ['get-gui-config' ]
 
 control_commands = OrderedDict()
 control_commands['gui'      ] = [ 'gui' ]
@@ -383,8 +384,9 @@ comsum[ 'show'       ] = 'Print task state (prerequisites and outputs etc.)'
 comsum[ 'cat-log'    ] = 'Print various suite and task log files'
 comsum[ 'documentation' ] = 'Display cylc documentation (User Guide etc.)'
 comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
-comsum[ 'get-config' ] = 'Parse a suite and report configuration values'
-comsum[ 'get-global-config' ] = 'print or generate site and user config'
+comsum[ 'get-suite-config' ] = 'Print suite configuration items'
+comsum[ 'get-site-config' ] = 'Print site/user configuration items'
+comsum[ 'get-gui-config' ] = 'Print gcylc configuration items'
 comsum[ 'gsummary'   ] = 'Summary GUI for monitoring multiple suites'
 comsum[ 'gpanel'     ] = 'Internal interface for GNOME 2 panel applet'
 # control
@@ -638,10 +640,6 @@ for item in command_args:
     else:
         args_new.append( item )
 args = args_new
-
-# deprecated commands
-if command in [ 'task-started', 'task-succeeded', 'task-failed', 'task-message' ]:
-    command = re.sub( '^task-', '', command )
 
 cmd = 'cylc-' + command
 

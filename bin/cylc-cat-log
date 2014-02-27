@@ -29,7 +29,7 @@ from cylc.command_prep import prep_file
 from cylc.rundb import CylcRuntimeDAO
 from cylc.suite_logging import suite_log
 from cylc.suite_output import suite_output
-from cylc.global_config import get_global_cfg
+from cylc.cfgspec.site import sitecfg
 import cylc.flags
 
 parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS
@@ -66,15 +66,12 @@ parser.add_option( "-t", "--try-number",
 suite, suiterc = prep_file( args[0], options ).execute()
 owner = options.db_owner
 
-gcfg = get_global_cfg()
-
 if len(args) == 2:
     # task log requested
     taskid = args[1]
     logname = taskid + '.' + options.tryext
 
-    #
-    suite_run_dir = gcfg.get_derived_host_item(suite, 'suite run directory')
+    suite_run_dir = sitecfg.get_derived_host_item(suite, 'suite run directory')
     suite_run_dao = CylcRuntimeDAO(suite_run_dir)
     taskname, ctime = taskid.split(TaskID.DELIM)
     host = suite_run_dao.get_task_host(taskname, ctime)
@@ -84,7 +81,7 @@ if len(args) == 2:
         owner, host = host.split('@', 1)
 
     # get job log directory path
-    sjld = gcfg.get_derived_host_item( suite, 'suite job log directory',
+    sjld = sitecfg.get_derived_host_item( suite, 'suite job log directory',
                                        host=host, owner=owner )
     if options.print_stdout:
         fpath = os.path.join( sjld, logname + '.out' )
@@ -122,7 +119,7 @@ if len(args) == 2:
 
 else:
     # suite log requested
-    sld = gcfg.get_derived_host_item( suite, 'suite log directory' )
+    sld = sitecfg.get_derived_host_item( suite, 'suite log directory' )
     if options.print_stdout:
         fpath = os.path.join( sld, 'out' )
     elif options.print_stderr:

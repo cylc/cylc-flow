@@ -1,0 +1,32 @@
+2014/02/11 10:12:34 INFO - Thread-2 start (Event Handlers)
+2014/02/11 10:12:34 INFO - Thread-3 start (Poll & Kill Commands)
+2014/02/11 10:12:34 INFO - port:7766
+2014/02/11 10:12:34 INFO - Suite starting at 2014-02-11 10:12:34.359236
+2014/02/11 10:12:34 INFO - Log event clock: real time
+2014/02/11 10:12:34 INFO - Run mode: live
+2014/02/11 10:12:34 INFO - Start tag: None
+2014/02/11 10:12:34 INFO - Stop tag: None
+2014/02/11 10:12:34 INFO - Thread-4 start (Job Submission)
+2014/02/11 10:12:34 INFO - Thread-5 start (Request Handling)
+2014/02/11 10:12:34 INFO - [fixer.1] -triggered off []
+2014/02/11 10:12:35 INFO - [fixer.1] -(current:ready)> fixer.1 submitting now
+2014/02/11 10:12:36 INFO - [fixer.1] -(current:ready)> fixer.1 submission succeeded
+2014/02/11 10:12:36 INFO - [fixer.1] -(current:submitted)> fixer.1 submit_method_id=29636
+2014/02/11 10:12:36 INFO - [fixer.1] -(current:submitted)> fixer.1 started at 2014-02-11T10:12:36
+2014/02/11 10:12:38 INFO - pre-trigger state dump: /home/oliverh/cylc-run/multi/state/state.2014:2:11:10:12:38
+2014/02/11 10:12:38 INFO - Command succeeded: trigger task(bar,1,False)
+2014/02/11 10:12:39 INFO - [bar.1] -triggered off [None]
+2014/02/11 10:12:40 INFO - [bar.1] -(current:ready)> bar.1 submitting now
+2014/02/11 10:12:40 INFO - [bar.1] -(current:ready)> bar.1 submission succeeded
+2014/02/11 10:12:40 INFO - [bar.1] -(current:submitted)> bar.1 submit_method_id=29685
+2014/02/11 10:12:40 INFO - [bar.1] -(current:submitted)> bar.1 started at 2014-02-11T10:12:40
+2014/02/11 10:12:41 INFO - [fixer.1] -(current:running)> fixer.1 succeeded at 2014-02-11T10:12:41
+2014/02/11 10:12:46 CRITICAL - [bar.1] -(current:running)> Task job script received signal ERR at 2014-02-11T10:12:45
+2014/02/11 10:12:46 CRITICAL - [bar.1] -(current:running)> bar.1 failed at 2014-02-11T10:12:45
+2014/02/11 10:12:48 INFO - pre-kill state dump: /home/oliverh/cylc-run/multi/state/state.2014:2:11:10:12:48
+2014/02/11 10:12:48 INFO - Command succeeded: remove task(bar,1,False,True)
+2014/02/11 10:12:48 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/02/11 10:12:48 INFO - Thread-4 exit (Job Submission)
+2014/02/11 10:12:49 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/02/11 10:12:49 INFO - Thread-2 exit (Event Handlers)

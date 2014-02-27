@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys, socket
-from global_config import get_global_cfg
 
 hostname = None
 suite_host = None
@@ -77,20 +76,20 @@ def get_hostname():
     return hostname
 
 def get_host_ip_address():
+    from cfgspec.site import sitecfg
     global host_ip_address
     if host_ip_address is None:
-        gcfg = get_global_cfg()
-        target = gcfg.cfg['suite host self-identification']['target']
+        target = sitecfg.get( ['suite host self-identification','target'] )
         # external IP address of the suite host:
         host_ip_address = get_local_ip_address( target )
     return host_ip_address
 
 def get_suite_host():
+    from cfgspec.site import sitecfg
     global suite_host
     if suite_host is None:
-        gcfg = get_global_cfg()
-        hardwired = gcfg.cfg['suite host self-identification']['host']
-        method = gcfg.cfg['suite host self-identification']['method']
+        hardwired = sitecfg.get( ['suite host self-identification','host'] )
+        method = sitecfg.get( ['suite host self-identification','method'] )
         # the following is for suite host self-identfication in task job scripts:
         if method == 'name':
             suite_host = hostname

@@ -33,7 +33,7 @@ from cycle_time import ct
 from cycling import container
 from TaskID import TaskID
 from task_output_logs import logfiles
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 
 class Error( Exception ):
     """base class for exceptions in this module."""

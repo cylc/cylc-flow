@@ -64,8 +64,8 @@ from cylc.passphrase import passphrase
 
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
-from cylc.global_config import get_global_cfg
-from gcylc_config import config
+from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.gcylc import gcfg
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -124,9 +124,8 @@ Class to hold initialisation data.
         self.template_vars_file = template_vars_file
         self.ungrouped_views = ungrouped_views
 
-        self.gcfg = get_global_cfg()
-        self.cylc_tmpdir = self.gcfg.get_tmpdir()
-        self.no_prompt = self.gcfg.cfg['disable interactive command prompts']
+        self.cylc_tmpdir = sitecfg.get_tmpdir()
+        self.no_prompt = sitecfg.get( ['disable interactive command prompts'] )
 
         self.imagedir = get_image_dir()
 
@@ -385,19 +384,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def __init__( self, suite, db, owner, host, port, pyro_timeout,
             template_vars, template_vars_file ):
 
-        # load gcylc.rc
-        self.usercfg = config().cfg
-
         gobject.threads_init()
 
         set_exception_hook_dialog("gcylc")
 
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
-                self.usercfg["ungrouped views"] )
+                gcfg.get( ["ungrouped views"] ) )
 
-        self.theme_name = self.usercfg['use theme']
-        self.theme = self.usercfg['themes'][ self.theme_name ]
+        self.theme_name = gcfg.get( ['use theme'] )
+        self.theme = gcfg.get( ['themes', self.theme_name ] )
 
         self.current_views = []
 
@@ -424,7 +420,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
 
-        self.initial_views = self.usercfg['initial views']
+        self.initial_views = gcfg.get( ['initial views'] )
         if graphing_disabled:
             try:
                 self.initial_views.remove("graph")
@@ -525,7 +521,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         """Change self.theme and then replace each view with itself"""
         if not item.get_active():
             return False
-        self.theme = self.usercfg['themes'][item.theme_name]
+        self.theme = gcfg.get( ['themes',item.theme_name] )
         self.restart_views()
 
     def restart_views( self ):
@@ -915,7 +911,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def loadctimes( self, bt, startentry, stopentry ):
         item1 = " -i '[scheduling]initial cycle time'"
         item2 = " -i '[scheduling]final cycle time'"
-        command = "cylc get-config --mark-up --host=" + self.cfg.host + \
+        command = "cylc get-suite-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
                 " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
                 self.cfg.suite
@@ -2279,7 +2275,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         thememenu.append( theme_items[theme] )
         self._set_tooltip( theme_items[theme], theme + " task state theme" )
         theme_items[theme].theme_name = theme
-        for theme in self.usercfg['themes']:
+        for theme in gcfg.get( ['themes'] ):
             if theme == "default":
                 continue
             theme_items[theme] = gtk.RadioMenuItem( group=theme_items['default'], label=theme )
@@ -2289,7 +2285,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         # set_active then connect, to avoid causing an unnecessary toggle now.
         theme_items[ self.theme_name ].set_active(True)
-        for theme in self.usercfg['themes']:
+        for theme in gcfg.get( ['themes'] ):
             theme_items[theme].connect( 'toggled', self.set_theme )
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
@@ -2565,7 +2561,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         doc_menu.append( gtk.SeparatorMenuItem() )
 
-        if self.cfg.gcfg.cfg['documentation']['urls']['local index']:
+        if sitecfg.get( ['documentation','urls','local index'] ):
             cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
             img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
             cug_www_item.set_image(img)
@@ -2603,8 +2599,8 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         self.menu_bar.append( help_menu_root )
 
     def describe_suite( self, w ):
-        command = "echo '> TITLE:'; cylc get-config -i title " + self.cfg.suite + """; echo
-echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + self.cfg.suite
+        command = "echo '> TITLE:'; cylc get-suite-config -i title " + self.cfg.suite + """; echo
+echo '> DESCRIPTION:'; cylc get-suite-config --notify-completion -i description """ + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
         foo.run()

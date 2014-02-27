@@ -1,0 +1,25 @@
+# All legals ways of defining string lists should parse to the same result.
+# triple-quoted string values are currently illegal.
+[string_list]
+    [[the_quick_brown_fox]]
+        item 1 = the, quick, brown, fox  # comment
+        item 2 = the, quick  , brown, fox,   # comment
+        item 3 = 'the', 'quick'  , 'brown', 'fox',   # comment
+        item 4 = "the", "quick"  , "brown", "fox",   # comment
+        item 5 = "the", "quick"  , "brown",\
+    "fox",   # comment
+
+    [[the#c1_quick # c2_brown#c3_fox#c4]]
+        # internal comments should be preserved
+        item 1 = 'the#c1', 'quick # c2'  , 'brown#c3', 'fox#c4',   # comment
+        item 2 = "the#c1", "quick # c2"  , "brown#c3", "fox#c4",   # comment
+        item 3 = "the#c1", "quick # c2"  , "brown#c3",\
+    "fox#c4",   # comment
+
+    [[theCOMMAc1_quick COMMA c2_brownCOMMAc3_foxCOMMAc4]]
+        # internal commas should be preserved
+        item 1 = 'the,c1', 'quick , c2'  , 'brown,c3', 'fox,c4',   # comment
+        item 2 = "the,c1", "quick , c2"  , "brown,c3", "fox,c4",   # comment
+        item 3 = "the,c1", "quick , c2"  , "brown,c3",\
+    "fox,c4",   # comment
+

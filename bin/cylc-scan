@@ -25,7 +25,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 from cylc.port_scan import scan
 from cylc.CylcOptionParsers import cop
-from cylc.global_config import get_global_cfg
+from cylc.cfgspec.site import sitecfg
 
 parser = cop( """cylc [discovery] scan [OPTIONS]
 
@@ -57,10 +57,9 @@ parser.add_option( "--print-ports",
 
 ( options, args ) = parser.parse_args()
 
-gcfg = get_global_cfg()
 if options.print_ports:
-    base = gcfg.cfg['pyro']['base port']
-    range = gcfg.cfg['pyro']['maximum number of ports']
+    base = sitecfg.get( ['pyro','base port'] )
+    range = sitecfg.get( ['pyro','maximum number of ports'] )
     print base, '<= port <=', base + range
     sys.exit(0)
 

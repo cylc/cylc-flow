@@ -24,7 +24,7 @@ if remrun().execute():
 import os
 import subprocess
 from time import sleep
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 from cylc.execute import execute
 from cylc.job_submission import jobfile
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
@@ -40,7 +40,7 @@ from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
-from cylc.global_config import get_global_cfg
+from cylc.cfgspec.site import sitecfg
 import cylc.flags
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
@@ -136,8 +136,7 @@ dclock = accelerated_clock.clock( 0, 0, utc, 'live' )
 # create log (after CYLC_MODE is exported)
 os.environ['CYLC_MODE'] = 'submit'
 
-gcfg = get_global_cfg()
-gcfg.create_cylc_run_tree( suite )
+sitecfg.create_cylc_run_tree( suite )
 slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
 slog.pimp( clock=dclock )
@@ -178,13 +177,13 @@ suite_env = {
 # are overridden by tasks prior to job submission, but in
 # principle they could be needed locally by event handlers:
 suite_task_env = {
-        'CYLC_SUITE_RUN_DIR'    : gcfg.get_derived_host_item( suite, 'suite run directory' ),
-        'CYLC_SUITE_WORK_DIR'   : gcfg.get_derived_host_item( suite, 'suite work directory' ),
-        'CYLC_SUITE_SHARE_DIR'  : gcfg.get_derived_host_item( suite, 'suite share directory' ),
+        'CYLC_SUITE_RUN_DIR'    : sitecfg.get_derived_host_item( suite, 'suite run directory' ),
+        'CYLC_SUITE_WORK_DIR'   : sitecfg.get_derived_host_item( suite, 'suite work directory' ),
+        'CYLC_SUITE_SHARE_DIR'  : sitecfg.get_derived_host_item( suite, 'suite share directory' ),
         'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
         'CYLC_SUITE_DEF_PATH'   : suite_dir
         }
-# (note gcfg automatically expands environment variables in local paths)
+# (note sitecfg automatically expands environment variables in local paths)
 
 # Add to the scheduler environment for possible use by event handlers
 for var,val in suite_env.items():
