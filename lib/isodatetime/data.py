@@ -169,7 +169,8 @@ class TimeRecurrence(object):
             return next_timepoint
         if (self.format_number == 1 and next_timepoint > self.end_point):
             diff = next_timepoint - self.end_point
-            if 2 * diff < self.interval and self.get_is_valid(self.end_point):
+            if (2 * diff < self.interval and
+                    self._get_is_in_bounds(self.end_point)):
                 return self.end_point
         return None
 
