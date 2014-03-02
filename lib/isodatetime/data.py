@@ -149,30 +149,49 @@ class TimeRecurrence(object):
                 [i[:2] for i in inputs]
             )
 
-    def __iter__(self):
-        if self.start_point is None:
-            point = self.end_point
-            in_reverse = True
-        else:
-            point = self.start_point
-            in_reverse = False
-
-        if self.repetitions == 1 or not self.interval:
-            if self.get_is_valid(point):
-                yield point
-            point = None
-
-        while point is not None:
-            if self.get_is_valid(point):
-                yield point
-            else:
-                break
-            if in_reverse:
-                point = self.get_prev(point)
-            else:
-                point = self.get_next(point)
-
     def get_is_valid(self, timepoint):
+        """Return whether the timepoint is valid for this recurrence."""
+        if not self._get_is_in_bounds(timepoint):
+            return False
+        for iter_timepoint in self.__iter__():
+            if iter_timepoint == timepoint:
+                return True
+            if self.start_point is None and iter_timepoint < timepoint:
+                return False
+            if self.end_point is None and iter_timepoint > timepoint:
+                return False
+        return False
+
+    def get_next(self, timepoint):
+        """Return the next timepoint after this timepoint, or None."""
+        next_timepoint = timepoint + self.interval
+        if self._get_is_in_bounds(next_timepoint):
+            return next_timepoint
+        if (self.format_number == 1 and next_timepoint > self.end_point):
+            diff = next_timepoint - self.end_point
+            if (2 * diff < self.interval and
+                    self._get_is_in_bounds(self.end_point)):
+                return self.end_point
+        return None
+
+    def get_prev(self, timepoint):
+        """Return the previous timepoint before this timepoint, or None."""
+        prev_timepoint = timepoint - self.interval
+        if self._get_is_in_bounds(prev_timepoint):
+            return prev_timepoint
+        return None
+
+    def __getitem__(self, index):
+        if index < 0 or not isinstance(index, int):
+            raise IndexError(
+                "Unsupported index for TimeRecurrence")
+        for i, point in enumerate(self.__iter__()):
+            if index == i:
+                return point
+        raise IndexError(
+            "Invalid index for TimeRecurrence")
+
+    def _get_is_in_bounds(self, timepoint):
         """Return whether the timepoint is within this recurrence series."""
         if timepoint is None:
             return False
@@ -186,23 +205,28 @@ class TimeRecurrence(object):
             return False
         return True
 
-    def get_next(self, timepoint):
-        """Return the next timepoint after this timepoint, or None."""
-        next_timepoint = timepoint + self.interval
-        if self.get_is_valid(next_timepoint):
-            return next_timepoint
-        if (self.format_number == 1 and next_timepoint > self.end_point):
-            diff = next_timepoint - self.end_point
-            if 2 * diff < self.interval and self.get_is_valid(self.end_point):
-                return self.end_point
-        return None
+    def __iter__(self):
+        if self.start_point is None:
+            point = self.end_point
+            in_reverse = True
+        else:
+            point = self.start_point
+            in_reverse = False
 
-    def get_prev(self, timepoint):
-        """Return the previous timepoint before this timepoint, or None."""
-        prev_timepoint = timepoint - self.interval
-        if self.get_is_valid(prev_timepoint):
-            return prev_timepoint
-        return None
+        if self.repetitions == 1 or not self.interval:
+            if self._get_is_in_bounds(point):
+                yield point
+            point = None
+
+        while point is not None:
+            if self._get_is_in_bounds(point):
+                yield point
+            else:
+                break
+            if in_reverse:
+                point = self.get_prev(point)
+            else:
+                point = self.get_next(point)
 
     def __str__(self):
         if self.repetitions is None:
@@ -286,12 +310,8 @@ class TimeInterval(object):
         new_seconds = (new.hours * SECONDS_IN_HOUR +
                        new.minutes * SECONDS_IN_MINUTE +
                        new.seconds)
-        if new_seconds >= SECONDS_IN_DAY:
-            new_days += 1
-            new_seconds -= SECONDS_IN_DAY
-        if new_seconds < 0:
-            new_days -= 1
-            new_seconds += SECONDS_IN_DAY
+        diff_days, new_seconds = divmod(new_seconds, SECONDS_IN_DAY)
+        new_days += diff_days
         return new_days, new_seconds
 
     def get_is_in_weeks(self):
@@ -301,10 +321,10 @@ class TimeInterval(object):
     def to_days(self):
         """Convert to day representation rather than weeks."""
         if self.get_is_in_weeks():
-            for attribute in [self.years, self.months, self.hours,
-                              self.minutes, self.seconds]:
-                if attribute is None:
-                    attribute = 0
+            for attribute in ["years", "months", "hours",
+                              "minutes", "seconds"]:
+                if getattr(self, attribute) is None:
+                    setattr(self, attribute, 0)
             self.days = self.weeks * DAYS_IN_WEEK
             self.weeks = None
 
@@ -1127,7 +1147,16 @@ class TimePoint(object):
             diff_hour = my_time[0] - other_time[0]
             diff_minute = my_time[1] - other_time[1]
             diff_second = my_time[2] - other_time[2]
-            return TimeInterval(years=diff_year, days=diff_day,
+            if diff_second < 0:
+                diff_minute -= 1
+                diff_second += SECONDS_IN_MINUTE
+            if diff_minute < 0:
+                diff_hour -= 1
+                diff_minute += MINUTES_IN_HOUR
+            if diff_hour < 0:
+                diff_day -= 1
+                diff_hour += HOURS_IN_DAY
+            return TimeInterval(days=diff_day,
                                 hours=diff_hour, minutes=diff_minute,
                                 seconds=diff_second)
         if not isinstance(other, TimeInterval):
