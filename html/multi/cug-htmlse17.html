@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-02-23 22:05:00"> 
+<meta name="date" content="2014-03-04 09:58:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -76,8 +76,7 @@ class="cmti-10">default: </span>&#8220;No description provided&#8221;</li></ul>
                                                                                          
 
                                                                                          
-<!--l. 37--><p class="noindent" ><span 
-class="cmbx-12">]</span>
+<!--l. 37--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.2   </span> <a 
  id="x18-216000A.2"></a>[cylc]</h4>
 <!--l. 39--><p class="noindent" >This section is for configuration that is not specifically task-related.
@@ -290,8 +289,9 @@ class="pcrr7t-">email</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">suite</span></span> is a simple suite event
 handler.
-<!--l. 197--><p class="indent" >   Suite event handlers are called by cylc with the following arguments: <!--l. 198-->
-   <div class="lstlisting" id="listing-222"><span class="label"><a 
+<!--l. 197--><p class="indent" >   Suite event handlers are called by cylc with the following arguments: <!--l. 198--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-230001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">suite</span><span 
@@ -306,7 +306,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">SUITE</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">MESSAGE</span>
-   
+
+
    </div>
 <!--l. 201--><p class="indent" >   where,
      <ul class="itemize1">
@@ -325,7 +326,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">[[event hooks]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">EVENT handler</span></span>
-   Specify a handler script to call when one of the following EVENTs occurs:
+   A list of one or more event handlers to call when one of the following EVENTs occurs:
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmbx-10">startup </span>- the suite has started running
@@ -367,7 +368,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">[[event hooks]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">timeout</span></span>
-   If a timeout is set and the timeout event is handled, the timeout event handler will be called if the suite times
+   If a timeout is set and the timeout event is handled, the timeout event handler(s) will be called if the suite times
 out before it finishes. The timer is set initially at suite start up.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -708,7 +709,7 @@ class="cmti-10">allow task failures </span>is set (above) or the failed
 task is found in a list IDs of tasks that are expected to fail.
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>list of strings (task IDs: <span class="lstinline"><span 
+class="cmti-10">type: </span>string list (task IDs: <span class="lstinline"><span 
 class="pcrr7t-">name</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">tag</span></span>)
@@ -777,8 +778,7 @@ class="cmti-10">type: </span>float (minutes)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>None</li></ul>
-<!--l. 490--><p class="noindent" ><span 
-class="cmbx-12">]</span>
+<!--l. 490--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.3   </span> <a 
  id="x18-254000A.3"></a>[scheduling]</h4>
 <!--l. 492--><p class="noindent" >This section allows cylc to determine when tasks are ready to run.
@@ -903,7 +903,7 @@ class="cmbx-10">members</span></span>
 removed from the default queue).
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>list of strings
+class="cmti-10">type: </span>string list
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>none for user-defined queues; all tasks for the &#8220;default&#8221; queue</li></ul>
@@ -1219,8 +1219,9 @@ class="cmti-10">Trigger Types</span>).
 class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
-class="cmti-10">examples: </span><!--l. 754-->
-     <div class="lstlisting" id="listing-223"><span class="label"><a 
+class="cmti-10">examples: </span><!--l. 754--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-273001r1"></a></span><span 
 class="pcrr7t-">graph</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1230,7 +1231,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273002r2"></a></span><span 
+ id="x18-273002r2"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1266,7 +1267,7 @@ class="pcrr7t-">off</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273003r3"></a></span><span 
+ id="x18-273003r3"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1306,7 +1307,7 @@ class="pcrr7t-">of</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273004r4"></a></span><span 
+ id="x18-273004r4"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1337,7 +1338,7 @@ class="pcrr7t-">for</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273005r5"></a></span><span 
+ id="x18-273005r5"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1376,7 +1377,7 @@ class="pcrr7t-">starts</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">executing</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273006r6"></a></span><span 
+ id="x18-273006r6"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1414,7 +1415,7 @@ class="pcrr7t-">X</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273007r7"></a></span><span 
+ id="x18-273007r7"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1448,7 +1449,7 @@ class="pcrr7t-">-6]</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273008r8"></a></span><span 
+ id="x18-273008r8"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1489,7 +1490,7 @@ class="pcrr7t-">X</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">succeeds</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273009r9"></a></span><span 
+ id="x18-273009r9"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1531,7 +1532,7 @@ class="pcrr7t-">or</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273010r10"></a></span><span 
+ id="x18-273010r10"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1571,7 +1572,7 @@ class="pcrr7t-">or</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273011r11"></a></span><span 
+ id="x18-273011r11"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1606,7 +1607,7 @@ class="pcrr7t-">conditional</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">triggers</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273012r12"></a></span><span 
+ id="x18-273012r12"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1642,7 +1643,7 @@ class="pcrr7t-">successfully</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">submitted</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273013r13"></a></span><span 
+ id="x18-273013r13"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1675,7 +1676,7 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fails</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273014r14"></a></span><span 
+ id="x18-273014r14"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1683,14 +1684,15 @@ class="pcrr7t-">#</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">comment</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-273015r15"></a></span><span 
+ id="x18-273015r15"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-     
+
+
      </div>
      </li>
      <li class="itemize"><span 
@@ -1723,8 +1725,7 @@ class="cmti-10">type: </span>list of task names
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 786--><p class="noindent" ><span 
-class="cmbx-12">]</span>
+<!--l. 786--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.4   </span> <a 
  id="x18-275000A.4"></a>[runtime]</h4>
 <!--l. 788--><p class="noindent" >This section is used to specify how, where, and what to execute when tasks are ready to run. Common configuration
@@ -1786,7 +1787,7 @@ class="pcrr7t-">root</span></span> is
 assumed.
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>comma-separated list of strings (other namespace names)
+class="cmti-10">type: </span>string list (parent namespace names)
                                                                                          
 
                                                                                          
@@ -1992,14 +1993,15 @@ command scripting). See also <span
 class="cmti-10">post-command scripting</span>, below.
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>string, or a list of strings
+class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
-class="cmti-10">example: </span><!--l. 911-->
-     <div class="lstlisting" id="listing-224"><span class="label"><a 
+class="cmti-10">example: </span><!--l. 911--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-283001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2017,7 +2019,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-283002r2"></a></span><span 
+ id="x18-283002r2"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2031,7 +2033,7 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/.</span><span 
 class="pcrr7t-">profile</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x18-283003r3"></a></span><span 
+ id="x18-283003r3"></a></span></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2053,7 +2055,8 @@ class="pcrr7t-">}!</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-     
+
+
      </div>
      </li></ul>
 <!--l. 918--><p class="noindent" >
@@ -2075,7 +2078,7 @@ command scripting). See also <span
 class="cmti-10">pre-command scripting</span>, above.
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>string, or a list of strings
+class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
@@ -2784,8 +2787,9 @@ class="pcrr7t-">email</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">task</span></span> is a simple task event
 handler.
-<!--l. 1246--><p class="indent" >   Task event handlers are called by cylc with the following arguments: <!--l. 1247-->
-   <div class="lstlisting" id="listing-225"><span class="label"><a 
+<!--l. 1246--><p class="indent" >   Task event handlers are called by cylc with the following arguments: <!--l. 1247--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-306001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">task</span><span 
@@ -2802,7 +2806,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">TASK</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">MESSAGE</span>
-   
+
+
    </div>
 <!--l. 1250--><p class="indent" >   where,
      <ul class="itemize1">
@@ -2830,7 +2835,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">[[[event hooks]]] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">EVENT handler</span></span>
-   Specify a handler script to call when one of the following EVENTs occurs:
+   A list of one or more event handlers to call when one of the following EVENTs occurs:
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmbx-10">submitted </span>- the job submit command was successful
@@ -2868,7 +2873,7 @@ class="cmbx-10">warning </span>- the task reported a warning priority message</l
                                                                                          
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmti-10">type: </span>string (event handler script name)
+class="cmti-10">type: </span>string list (event handler scripts)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>None
@@ -2904,7 +2909,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">submission timeout</span></span>
    If a task has not started the specified number of minutes after it was submitted, the <span 
 class="cmti-10">submission timeout </span>event
-handler will be called.
+handler(s) will be called.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>float (minutes)
@@ -2927,7 +2932,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">execution timeout</span></span>
    If a task has not finished the specified number of minutes after it started running, the <span 
 class="cmti-10">execution timeout </span>event
-handler will be called.
+handler(s) will be called.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>float (minutes)
@@ -3312,8 +3317,9 @@ class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span></span> here.
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"> <span 
-class="cmti-10">examples: </span><!--l. 1439-->
-     <div class="lstlisting" id="listing-226"><span class="label"><a 
+class="cmti-10">examples: </span><!--l. 1439--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-319001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
@@ -3357,11 +3363,13 @@ class="pcrr7t-">&#x003C;</span><span
 class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
 class="pcrr7t-">+6&#x003E;</span><span 
 class="pcrr7t-">"</span>
-     
+
+
      </div>
      <!--l. 1443--><p class="noindent" >where the item name must match the output label associated with this task in the suite dependency graph,
-     e.g.:  <!--l. 1446-->
-     <div class="lstlisting" id="listing-227"><span class="label"><a 
+     e.g.:  <!--l. 1446--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-319003r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -3396,7 +3404,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">TaskB</span>
-     
+
+
      </div>
      </li></ul>
 <!--l. 1454--><p class="noindent" >
@@ -3577,8 +3586,7 @@ class="cmti-10">default: </span>False</li></ul>
                                                                                          
 
                                                                                          
-<!--l. 1522--><p class="noindent" ><span 
-class="cmbx-12">]</span>
+<!--l. 1522--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">A.5   </span> <a 
  id="x18-327000A.5"></a>[visualization]</h4>
 <!--l. 1524--><p class="noindent" >Configuration of suite graphing and, where applicable, the gcylc graph view. Graphviz documentation of node
@@ -3754,8 +3762,9 @@ class="cmti-10">type: </span>comma separated list of task or family names
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
-class="cmti-10">example: </span><!--l. 1628-->
-     <div class="lstlisting" id="listing-228"><span class="label"><a 
+class="cmti-10">example: </span><!--l. 1628--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-337001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3781,7 +3790,8 @@ class="pcrr7t-">baz</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">waz</span>
-     
+
+
      </div>
      </li></ul>
 <!--l. 1634--><p class="noindent" >
@@ -3823,8 +3833,9 @@ class="cmti-10">legal values: </span>see graphviz or pygraphviz documentation
 class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
-class="cmti-10">example: </span>(with reference to the node groups defined above) <!--l. 1656-->
-     <div class="lstlisting" id="listing-229"><span class="label"><a 
+class="cmti-10">example: </span>(with reference to the node groups defined above) <!--l. 1656--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x18-339001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3872,10 +3883,11 @@ class="pcrr7t-">style</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">filled</span><span 
 class="pcrr7t-">'</span>
-     
-                                                                                         
 
-                                                                                         
+
+
+
+
      </div>
      </li></ul>
 <!--l. 1663--><p class="noindent" >
@@ -3969,8 +3981,10 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">get</span><span 
 class="pcrr7t-">-</span><span 
-class="pcrr7t-">config</span></span> command parses a suite definition and retrieves configuration values for individual
-items, sections, or entire suites.
+class="pcrr7t-">suite</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">config</span></span> command parses a suite definition and retrieves configuration values for
+individual items, sections, or entire suites.
                                                                                          
 
                                                                                          
