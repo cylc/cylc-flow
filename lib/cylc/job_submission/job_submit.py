@@ -261,18 +261,13 @@ class job_submit(object):
                 str(self.jobconfig.get('absolute submit number')) + '(' + \
                 str(self.jobconfig.get('submission try number')) + ',' + \
                 str( self.jobconfig.get('try number')) + '):', command
-        try:
-            # "close_fds=True" required here to prevent the process from
-            # hanging on to the file descriptor that was used to write the job
-            # script, the root cause of the random "text file busy" error.
-            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE,
-                       close_fds=True )
-        except OSError, e:
-            if cylc.flags.debug:
-                raise
-            print >> sys.stderr, "ERROR:", e
-            print >> sys.stderr, "ERROR: Job submission failed"
-            print >> sys.stderr, "Use --debug to abort cylc with an exception traceback."
-            p = None
-        return p
+
+        # Exceptions raised here are caught in batch_submit and will
+        # result in the task being put in the 'submit-failed' state.
+
+        # "close_fds=True" is required here to prevent the process from
+        # hanging on to the file descriptor that was used to write the
+        # job script, the root cause of the random "text file busy" error.
+        
+        return Popen( command, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True )
 
