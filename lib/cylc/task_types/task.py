@@ -35,6 +35,7 @@ from cylc.host_select import get_task_host
 from parsec.util import pdeepcopy, poverride
 
 cylc_mode = 'scheduler'
+poll_suffix_re = re.compile( ' at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}|unknown-time)$' ) 
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -873,8 +874,8 @@ class task( object ):
             msg_was_polled = True
             message = message[7:]
 
-        # remove the remote event time (or "unknown-time") from the end:
-        message = re.sub( ' at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$', '', message )
+        # remove the remote event time (or "unknown-time" from polling) from the end:
+        message = poll_suffix_re.sub( '', message )
 
         # Remove the prepended task ID.
         content = message.replace( self.id + ' ', '' )
