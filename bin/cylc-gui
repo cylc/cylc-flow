@@ -41,23 +41,16 @@ you must currently use --host and/or --user on the gcylc command line.
 
 Available task state color themes are shown under the View menu. To
 customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
-$HOME/.cylc/gcylc.rc and follow the instructions in the file.""",
-pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
+$HOME/.cylc/gcylc.rc and follow the instructions in the file.
 
-parser.add_option( "--print-config",
-        help="Print combined (system + user) gcylc config, and exit.",
-        action="store_true", default=False, dest="prntcfg" )
+To see current configuration settings use "cylc get-gui-config".""",
+pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
 
 ( options, args ) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
 # just to get command help (e.g. when running make on a post-commit hook
 # on a remote repository).
-
-if options.prntcfg:
-    from cylc.cfgspec.gcylc_spec import print_cfg
-    print_cfg()
-    sys.exit(0)
 
 import gtk
 import warnings

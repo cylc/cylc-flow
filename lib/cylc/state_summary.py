@@ -20,7 +20,6 @@ import Pyro.core
 import logging
 from TaskID import TaskID
 from cylc.strftime import strftime
-from cylc.cfgspec.suite_spec import SPEC
 import time
 
 

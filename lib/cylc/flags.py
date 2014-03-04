@@ -31,3 +31,6 @@ iflag = False
 # verbose mode
 verbose = False
 
+# debug mode
+debug = False
+

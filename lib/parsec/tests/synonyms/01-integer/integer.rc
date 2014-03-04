@@ -1,0 +1,15 @@
+# All legals ways of defining integer values should parse to the same result.
+[integer]
+    [[99]]
+        item 1 =  99 # comment
+        item 2 = '99' # comment
+        item 3 = "99" # comment
+        item 4 = '''99''' # comment
+        item 5 = """99""" # comment
+        item 6 = '''
+    99
+''' # comment
+        item 7 = """
+    99
+""" # comment
+

@@ -34,7 +34,7 @@ from subprocess import Popen, PIPE
 from cylc.owner import user, is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.TaskID import TaskID
-from cylc.global_config import get_global_cfg
+from cylc.cfgspec.site import sitecfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
 import cylc.flags
@@ -66,9 +66,8 @@ class job_submit(object):
         # (used by both local and remote tasks)
         tag = task_id + TaskID.DELIM + submit_num
 
-        gcfg = get_global_cfg()
         self.local_jobfile_path = os.path.join( \
-                gcfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )
+                sitecfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )
 
         # The directory is created in config.py
         self.logfiles.add_path( self.local_jobfile_path )
@@ -76,7 +75,7 @@ class job_submit(object):
         task_host = jobconfig.get('task host')
         task_owner  = jobconfig.get('task owner')
 
-        self.remote_shell_template = gcfg.get_host_item( 'remote shell template', task_host, task_owner )
+        self.remote_shell_template = sitecfg.get_host_item( 'remote shell template', task_host, task_owner )
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
@@ -92,7 +91,7 @@ class job_submit(object):
                 self.task_host = socket.gethostname()
 
             self.remote_jobfile_path = os.path.join( \
-                    gcfg.get_derived_host_item( self.suite, 'suite job log directory', self.task_host, self.task_owner ), tag )
+                    sitecfg.get_derived_host_item( self.suite, 'suite job log directory', self.task_host, self.task_owner ), tag )
 
             # Remote log files
             self.stdout_file = self.remote_jobfile_path + ".out"
@@ -262,18 +261,13 @@ class job_submit(object):
                 str(self.jobconfig.get('absolute submit number')) + '(' + \
                 str(self.jobconfig.get('submission try number')) + ',' + \
                 str( self.jobconfig.get('try number')) + '):', command
-        try:
-            # "close_fds=True" required here to prevent the process from
-            # hanging on to the file descriptor that was used to write the job
-            # script, the root cause of the random "text file busy" error.
-            p = Popen( command, shell=True, stdout=PIPE, stderr=PIPE,
-                       close_fds=True )
-        except OSError, e:
-            if cylc.flags.debug:
-                raise
-            print >> sys.stderr, "ERROR:", e
-            print >> sys.stderr, "ERROR: Job submission failed"
-            print >> sys.stderr, "Use --debug to abort cylc with an exception traceback."
-            p = None
-        return p
+
+        # Exceptions raised here are caught in batch_submit and will
+        # result in the task being put in the 'submit-failed' state.
+
+        # "close_fds=True" is required here to prevent the process from
+        # hanging on to the file descriptor that was used to write the
+        # job script, the root cause of the random "text file busy" error.
+        
+        return Popen( command, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True )
 

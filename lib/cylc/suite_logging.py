@@ -18,7 +18,7 @@
 
 import os, sys, re
 import logging, logging.handlers
-from global_config import get_global_cfg
+from cfgspec.site import sitecfg
 
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
@@ -37,13 +37,14 @@ class LogFilter(logging.Filter):
 
 class suite_log( object ):
     def __init__( self, suite ):
-        gcfg = get_global_cfg()
-        self.ldir = gcfg.get_derived_host_item( suite, 'suite log directory' )
-        self.path = os.path.join( self.ldir, 'log' )
+
+        self.ldir = sitecfg.get_derived_host_item( suite, 'suite log directory' )
+        self.path = os.path.join( self.ldir, 'log' ) 
+
         self.err_path = os.path.join( self.ldir, 'err' )
-        self.roll_at_startup = gcfg.cfg['suite logging']['roll over at start-up']
-        self.n_keep = gcfg.cfg['suite logging']['rolling archive length']
-        self.max_bytes = gcfg.cfg['suite logging']['maximum size in bytes']
+        self.roll_at_startup = sitecfg.get( ['suite logging','roll over at start-up'] )
+        self.n_keep = sitecfg.get( ['suite logging','rolling archive length'] )
+        self.max_bytes = sitecfg.get( ['suite logging','maximum size in bytes'] )
 
     def get_err_path( self ):
         return self.err_path

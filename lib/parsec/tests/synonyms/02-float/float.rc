@@ -1,0 +1,15 @@
+# All legals ways of defining float values should parse to the same result.
+[float]
+    [[9.9]]
+        item 1 =  9.9 # comment
+        item 2 = '9.9' # comment
+        item 3 = "9.9" # comment
+        item 4 = '''9.9''' # comment
+        item 5 = """9.9""" # comment
+        item 6 = '''
+    9.9
+''' # comment
+        item 7 = """
+    9.9
+""" # comment
+

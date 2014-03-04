@@ -1,0 +1,50 @@
+# All legal ways of defining boolean values should parse to the same result.
+[boolean]
+    [[False]]
+        item 1 =  False  # comment
+        item 2 = 'False' # comment
+        item 3 = "False" # comment
+        item 4 =  false # comment
+        item 5 = 'false' # comment
+        item 6 = "false" # comment
+        item 7 = '''False''' # comment
+        item 8 = '''false''' # comment
+        item 9 = '''
+            False
+        ''' # comment
+        item 10 = '''
+            false
+        ''' # comment
+        item 11 = """False""" # comment
+        item 12 = """false""" # comment
+        item 13 = """
+            False
+        """ # comment
+        item 14 = """
+            false
+        """ # comment
+
+     [[True]]
+        item 1 =  True # comment
+        item 2 = 'True' # comment
+        item 3 = "True" # comment
+        item 4 =  true # comment
+        item 5 = 'true' # comment
+        item 6 = "true" # comment
+        item 7 = '''True''' # comment
+        item 8 = '''true''' # comment
+        item 9 = '''
+            True
+        ''' # comment
+        item 10 = '''
+            true
+        ''' # comment
+        item 11 = """True""" # comment
+        item 12 = """true""" # comment
+        item 13 = """
+            True
+        """ # comment
+        item 14 = """
+            true
+        """ # comment
+

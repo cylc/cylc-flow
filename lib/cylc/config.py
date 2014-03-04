@@ -18,21 +18,20 @@
 
 import re, os, sys
 import taskdef
-from cylc.cfgspec.suite_spec import get_expand_nonrt, get_defaults_rt
+from cylc.cfgspec.suite import get_suitecfg
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from cycle_time import ct, CycleTimeError
-from mkdir_p import mkdir_p
 from output import outputx
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
-from parsec.util import pdeepcopy, poverride, replicate, un_many
+from parsec.util import replicate, pdeepcopy
 from TaskID import TaskID
 from C3MRO import C3
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 import flags
 
 """
@@ -87,7 +86,7 @@ class config( object ):
             template_vars_file=None, owner=None, run_mode='live',
             validation=False, strict=False, collapsed=[],
             cli_start_tag=None, is_restart=False, is_reload=False,
-            write_processed_file=True ):
+            write_proc=True ):
 
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
@@ -137,11 +136,11 @@ class config( object ):
         # one up from root
         self.feet = []
 
-        # parse, upgrade, validate the suite, but don't expand [runtime]
-        self.cfg = get_expand_nonrt( fpath, template_vars=template_vars,
-                template_vars_file=template_vars_file, do_expand=False,
-                is_reload=is_reload, write_processed_file=write_processed_file )
-        self.runtime_defaults = get_defaults_rt()
+        # parse, upgrade, validate the suite, but don't expand with default items
+        self.pcfg = get_suitecfg( fpath, force=is_reload,
+                tvars=template_vars, tvars_file=template_vars_file,
+                write_proc=write_proc )
+        self.cfg = self.pcfg.get(sparse=True)
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -186,6 +185,9 @@ class config( object ):
 
         # filter task environment variables after inheritance
         self.filter_env()
+
+        # now expand with defaults
+        self.cfg = self.pcfg.get( sparse=False )
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -239,34 +241,6 @@ class config( object ):
         # check for run mode override at suite level
         if self.cfg['cylc']['force run mode']:
             self.run_mode = self.cfg['cylc']['force run mode']
-
-        # suite event hooks
-        if self.run_mode == 'live' or \
-                ( self.run_mode == 'simulation' and not self.cfg['cylc']['simulation mode']['disable suite event hooks'] ) or \
-                ( self.run_mode == 'dummy' and not self.cfg['cylc']['dummy mode']['disable suite event hooks'] ):
-            self.event_handlers = {
-                    'startup'  : self.cfg['cylc']['event hooks']['startup handler'],
-                    'timeout'  : self.cfg['cylc']['event hooks']['timeout handler'],
-                    'shutdown' : self.cfg['cylc']['event hooks']['shutdown handler']
-                    }
-            self.suite_timeout = self.cfg['cylc']['event hooks']['timeout']
-            self.reset_timer = self.cfg['cylc']['event hooks']['reset timer']
-            self.abort_on_timeout = self.cfg['cylc']['event hooks']['abort on timeout']
-            self.abort_if_startup_handler_fails = self.cfg['cylc']['event hooks']['abort if startup handler fails']
-            self.abort_if_timeout_handler_fails = self.cfg['cylc']['event hooks']['abort if timeout handler fails']
-            self.abort_if_shutdown_handler_fails = self.cfg['cylc']['event hooks']['abort if shutdown handler fails']
-        else:
-            self.event_handlers = {
-                    'startup'  : None,
-                    'timeout'  : None,
-                    'shutdown' : None
-                    }
-            self.suite_timeout = None
-            self.reset_timer = False
-            self.abort_on_timeout = None
-            self.abort_if_startup_handler_fails = False
-            self.abort_if_timeout_handler_fails = False
-            self.abort_if_shutdown_handler_fails = False
 
         self.process_directories()
 
@@ -583,37 +557,8 @@ class config( object ):
         # may be None (no cycling tasks)
         return self.runahead_limit
 
-    def get_config_all_tasks( self, args, sparse=False ):
-        res = {}
-        for t in self.get_task_name_list():
-            res[t] = self.get_config( [ 'runtime', t ] + args, sparse )
-        return res
-
     def get_config( self, args, sparse=False ):
-        if args[0] == 'runtime' and not sparse:
-            # load and override runtime defaults
-            if len(args) > 1:
-                # a single namespace
-                target = pdeepcopy( self.runtime_defaults )
-                poverride( target, self.cfg['runtime'][args[1]] )
-                un_many(target)
-                keys = args[2:]
-            else:
-                # all namespaces requested
-                target = {}
-                keys = []
-                for ns in self.cfg['runtime'].keys():
-                    target[ns] = pdeepcopy( self.runtime_defaults )
-                    poverride( target[ns], self.cfg['runtime'][ns] )
-                    un_many(target[ns])
-        else:
-            target = self.cfg
-            keys = args
-        res = target
-        for key in keys:
-            res = res[key]
-        return res
-
+        return self.pcfg.get( args, sparse )
 
     def adopt_orphans( self, orphans ):
         # Called by the scheduler after reloading the suite definition
@@ -926,6 +871,19 @@ class config( object ):
                 tag = itask.next_tag()
                 if flags.verbose:
                     print "  + " + itask.id + " ok"
+
+        # Check custom command scripting is not defined for automatic suite polling tasks
+        for l_task in self.suite_polling_tasks:
+            try:
+                cs = self.pcfg.getcfg( sparse=True )['runtime'][l_task]['command scripting']
+            except:
+                pass
+            else:
+                if cs:
+                    print cs
+                    # (allow explicit blanking of inherited scripting)
+                    raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
+
 
     def get_coldstart_task_list( self ):
         # TODO - automatically determine this by parsing the dependency graph?
@@ -1614,34 +1572,15 @@ class config( object ):
             # generate pygraphviz graph nodes and edges, and task definitions
             self.process_graph_line( line, section, ttype, cyclr )
 
-        # Check command scripting not defined for automatic suite polling tasks
-        for l_task in self.suite_polling_tasks:
-            try:
-                cs = self.cfg['runtime'][l_task]['command scripting']
-            except:
-                pass
-            else:
-                if cs:
-                    # (allow explicit blanking of inherited scripting)
-                    raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
 
-        # get the task runtime
+        # get the dense task runtime
         try:
-            taskcfg = self.cfg['runtime'][name]
+            rtcfg = self.cfg['runtime'][name]
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
-
-        # Get full dense task [runtime] by applying runtime defaults now.
-        # TODO - this should be done right after sparse inheritance, but
-        # we need to retain sparse config for self.get_config(). Once
-        # inheritance is moved into parsec get-config command should
-        # do its own parsing independent of config.py.
-        rtcfg = pdeepcopy( self.runtime_defaults ) # copy [runtime] default dict
-        poverride( rtcfg, taskcfg )    # override with suite [runtime] settings
-        un_many(rtcfg)
 
         ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle time']
         # We may want to put in some handling for cases of changing the

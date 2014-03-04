@@ -64,8 +64,8 @@ from cylc.passphrase import passphrase
 
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
-from cylc.global_config import get_global_cfg
-from gcylc_config import config
+from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.gcylc import gcfg
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -124,9 +124,8 @@ Class to hold initialisation data.
         self.template_vars_file = template_vars_file
         self.ungrouped_views = ungrouped_views
 
-        self.gcfg = get_global_cfg()
-        self.cylc_tmpdir = self.gcfg.get_tmpdir()
-        self.no_prompt = self.gcfg.cfg['disable interactive command prompts']
+        self.cylc_tmpdir = sitecfg.get_tmpdir()
+        self.no_prompt = sitecfg.get( ['disable interactive command prompts'] )
 
         self.imagedir = get_image_dir()
 
@@ -385,19 +384,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def __init__( self, suite, db, owner, host, port, pyro_timeout,
             template_vars, template_vars_file ):
 
-        # load gcylc.rc
-        self.usercfg = config().cfg
-
         gobject.threads_init()
 
         set_exception_hook_dialog("gcylc")
 
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
-                self.usercfg["ungrouped views"] )
+                gcfg.get( ["ungrouped views"] ) )
 
-        self.theme_name = self.usercfg['use theme']
-        self.theme = self.usercfg['themes'][ self.theme_name ]
+        self.theme_name = gcfg.get( ['use theme'] )
+        self.theme = gcfg.get( ['themes', self.theme_name ] )
 
         self.current_views = []
 
@@ -424,7 +420,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
 
-        self.initial_views = self.usercfg['initial views']
+        self.initial_views = gcfg.get( ['initial views'] )
         if graphing_disabled:
             try:
                 self.initial_views.remove("graph")
@@ -525,7 +521,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         """Change self.theme and then replace each view with itself"""
         if not item.get_active():
             return False
-        self.theme = self.usercfg['themes'][item.theme_name]
+        self.theme = gcfg.get( ['themes',item.theme_name] )
         self.restart_views()
 
     def restart_views( self ):
@@ -915,7 +911,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def loadctimes( self, bt, startentry, stopentry ):
         item1 = " -i '[scheduling]initial cycle time'"
         item2 = " -i '[scheduling]final cycle time'"
-        command = "cylc get-config --mark-up --host=" + self.cfg.host + \
+        command = "cylc get-suite-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
                 " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
                 self.cfg.suite
@@ -2177,8 +2173,10 @@ or remove task definitions without restarting the suite."""
 
         # for re-tries this sorts in time order due to filename:
         # (TODO - does this still work, post secs-since-epoch file extensions?)
-        err.sort( reverse=True )
-        out.sort( reverse=True )
+        key_func = lambda x: [int(w) if w.isdigit() else w for w in
+                              re.split("(\d+)", x)]
+        err.sort(key=key_func, reverse=True)
+        out.sort(key=key_func, reverse=True)
         window.set_size_request(800, 400)
         if choice == 'job script':
             window.set_title( task_id + ": Job Script" )
@@ -2277,7 +2275,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         thememenu.append( theme_items[theme] )
         self._set_tooltip( theme_items[theme], theme + " task state theme" )
         theme_items[theme].theme_name = theme
-        for theme in self.usercfg['themes']:
+        for theme in gcfg.get( ['themes'] ):
             if theme == "default":
                 continue
             theme_items[theme] = gtk.RadioMenuItem( group=theme_items['default'], label=theme )
@@ -2287,7 +2285,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         # set_active then connect, to avoid causing an unnecessary toggle now.
         theme_items[ self.theme_name ].set_active(True)
-        for theme in self.usercfg['themes']:
+        for theme in gcfg.get( ['themes'] ):
             theme_items[theme].connect( 'toggled', self.set_theme )
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
@@ -2563,7 +2561,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         doc_menu.append( gtk.SeparatorMenuItem() )
 
-        if self.cfg.gcfg.cfg['documentation']['urls']['local index']:
+        if sitecfg.get( ['documentation','urls','local index'] ):
             cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
             img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
             cug_www_item.set_image(img)
@@ -2601,8 +2599,8 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         self.menu_bar.append( help_menu_root )
 
     def describe_suite( self, w ):
-        command = "echo '> TITLE:'; cylc get-config -i title " + self.cfg.suite + """; echo
-echo '> DESCRIPTION:'; cylc get-config --notify-completion -i description """ + self.cfg.suite
+        command = "echo '> TITLE:'; cylc get-suite-config -i title " + self.cfg.suite + """; echo
+echo '> DESCRIPTION:'; cylc get-suite-config --notify-completion -i description """ + self.cfg.suite 
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 800, 400 )
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2816,31 +2814,29 @@ This is what my suite does:..."""
         self.view_toolitems[1].add( self.tool_bar_view1 )
         # Horizontal layout toggler
         self.layout_toolbutton = gtk.ToggleToolButton()
-        image1 = gtk.image_new_from_stock( gtk.STOCK_GOTO_FIRST, gtk.ICON_SIZE_MENU )
-        image2 = gtk.image_new_from_stock( gtk.STOCK_GOTO_LAST, gtk.ICON_SIZE_MENU )
-        im_box = gtk.HBox()
-        im_box.pack_start( image1, expand=True, fill=True )
-        im_box.pack_start( image2, expand=True, fill=True, padding=5 )
-        self.layout_toolbutton.set_icon_widget( im_box )
+        image = gtk.image_new_from_stock(
+            gtk.STOCK_GOTO_LAST, gtk.ICON_SIZE_MENU )
+        self.layout_toolbutton.set_icon_widget( image )
         self.layout_toolbutton.set_label( "Layout" )
         self.layout_toolbutton.set_homogeneous( False )
         self.layout_toolbutton.connect( "toggled", self._cb_change_view_align )
         self.layout_toolbutton.set_active( self.view_layout_horizontal )
         self._set_tooltip( self.layout_toolbutton,
-                           "Toggle side-by-side layout of views." )
+                           "Toggle views side-by-side." )
         # Insert the view choosers
         view0_label_item = gtk.ToolItem()
         view0_label_item.add( gtk.Label("View 1: ") )
-        self._set_tooltip( view0_label_item, "Configure primary view" )
+        self._set_tooltip( view0_label_item, "Primary view (top or left)" )
         view1_label_item = gtk.ToolItem()
         view1_label_item.add( gtk.Label("View 2: ") )
-        self._set_tooltip( view1_label_item, "Configure secondary view" )
+        self._set_tooltip( view1_label_item,
+            "Secondary view (bottom or right)" )
         self.tool_bars[1].insert( self.view_toolitems[1], 0 )
         self.tool_bars[1].insert( view1_label_item, 0 )
+        self.tool_bars[1].insert( gtk.SeparatorToolItem(), 0 )
+        self.tool_bars[1].insert( self.layout_toolbutton, 0 )
         self.tool_bars[0].insert( self.view_toolitems[0], 0 )
         self.tool_bars[0].insert( view0_label_item, 0 )
-        self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
-        self.tool_bars[0].insert( self.layout_toolbutton, 0 )
         self.tool_bars[0].insert( gtk.SeparatorToolItem(), 0 )
         stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )

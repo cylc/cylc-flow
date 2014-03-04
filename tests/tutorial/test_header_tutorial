@@ -2,6 +2,7 @@
 
 function alter_suite() {
     # runs after install_suite in the installed suite dir
+    CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
 
     # 1) ensure all all tasks sleep 0 (for speed)
     cat >> suite.rc <<EOF
@@ -18,7 +19,7 @@ EOF
     fi
 
     # 3) replace any example 'host = ' item with $CYLC_TEST_TASK_HOST
-    perl -pi -e "s/host = .*$/host = \$CYLC_TEST_TASK_HOST/" suite.rc
+    perl -pi -e "s/host = .*$/host = $CYLC_TEST_TASK_HOST/" suite.rc
 
     # 4) warn of expected task failures (else reference test aborts)
     # *** WARNING: ASSUMING FAILED TASKS ARE CLEANED UP BY THE SUITE.
@@ -41,5 +42,6 @@ EOF
     # initial and final cycles from reference log, not the suite def).
     perl -pi -e "s/(initial cycle time\s*=)\s*.*/\1 2013080800/g" suite.rc
     perl -pi -e "s/(final cycle time\s*=)\s*.*/\1 2013080812/g" suite.rc
+
 }
 

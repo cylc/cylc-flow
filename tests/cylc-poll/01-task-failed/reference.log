@@ -1,0 +1,30 @@
+2014/03/03 16:07:55 INFO - Thread-2 start (Event Handlers)
+2014/03/03 16:07:55 INFO - Thread-3 start (Poll & Kill Commands)
+2014/03/03 16:07:55 INFO - port:7767
+2014/03/03 16:07:55 INFO - Suite starting at 2014-03-03 16:07:55.619544
+2014/03/03 16:07:55 INFO - Log event clock: real time
+2014/03/03 16:07:55 INFO - Run mode: live
+2014/03/03 16:07:55 INFO - Start tag: None
+2014/03/03 16:07:55 INFO - Stop tag: None
+2014/03/03 16:07:55 INFO - Thread-4 start (Job Submission)
+2014/03/03 16:07:55 INFO - Thread-5 start (Request Handling)
+2014/03/03 16:07:55 INFO - [A.1] -triggered off []
+2014/03/03 16:07:56 INFO - [A.1] -(current:ready)> A.1 submitting now
+2014/03/03 16:07:57 INFO - [A.1] -(current:ready)> A.1 submission succeeded
+2014/03/03 16:07:57 INFO - [A.1] -(current:submitted)> A.1 submit_method_id=7913
+2014/03/03 16:07:57 INFO - [A.1] -(current:submitted)> A.1 started at 2014-03-03T16:07:57
+2014/03/03 16:07:58 INFO - [B.1] -triggered off ['A.1']
+2014/03/03 16:07:59 INFO - [B.1] -(current:ready)> B.1 submitting now
+2014/03/03 16:07:59 INFO - [B.1] -(current:ready)> B.1 submission succeeded
+2014/03/03 16:07:59 INFO - [B.1] -(current:submitted)> B.1 submit_method_id=7961
+2014/03/03 16:07:59 INFO - [B.1] -(current:submitted)> B.1 started at 2014-03-03T16:07:59
+2014/03/03 16:08:00 INFO - [B.1] -(current:running)> B.1 succeeded at 2014-03-03T16:08:00
+2014/03/03 16:08:00 INFO - [A.1] -polling now
+2014/03/03 16:08:00 INFO - Command succeeded: poll tasks(A,1,False)
+2014/03/03 16:08:02 INFO - [A.1] -(current:running)> polled A.1 failed at unknown-time
+2014/03/03 16:08:03 INFO - [A.1] -suiciding
+2014/03/03 16:08:03 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/03/03 16:08:04 INFO - Thread-4 exit (Job Submission)
+2014/03/03 16:08:04 INFO - Thread-2 exit (Event Handlers)
+2014/03/03 16:08:04 INFO - Thread-3 exit (Poll & Kill Commands)

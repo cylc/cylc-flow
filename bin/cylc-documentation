@@ -19,8 +19,7 @@
 import sys, os, re
 import subprocess
 from optparse import OptionParser
-from cylc.global_config import get_global_cfg
-from OrderedDict import OrderedDict
+from cylc.cfgspec.site import sitecfg
 
 parser = OptionParser( """cylc [info] documentation|browse [OPTIONS]
 
@@ -30,11 +29,10 @@ Guide directly, or browse the cylc internet homepage, or - if your site
 has a web server with access to the cylc documentation - an intranet
 documentation URL. The browser and PDF reader to use, and the intranet
 URL, is determined by cylc site/user configuration - for details see
-  $ cylc get-global-config --help""" )
+  $ cylc site-config --help""" )
 
-gcfg = get_global_cfg()
-intranet = gcfg.cfg['documentation']['urls']['local index']
-internet = gcfg.cfg['documentation']['urls']['internet homepage']
+intranet = sitecfg.get( ['documentation','urls','local index'] )
+internet = sitecfg.get( ['documentation','urls','internet homepage'] )
 
 parser.add_option( "-p", "--pdf",
         help="Open the PDF User Guide directly",
@@ -53,20 +51,20 @@ if intranet:
 
 http = False
 if options.pdf:
-    viewer = gcfg.cfg['document viewers']['pdf']
-    target = gcfg.cfg['documentation']['files']['pdf user guide']
+    viewer = sitecfg.get( ['document viewers','pdf'] )
+    target = sitecfg.get( ['documentation','files','pdf user guide'] )
 elif options.www:
     http = True
-    viewer = gcfg.cfg['document viewers']['html']
-    target = gcfg.cfg['documentation']['urls']['internet homepage']
+    viewer = sitecfg.get( ['document viewers','html'] )
+    target = sitecfg.get( ['documentation','urls','internet homepage'] )
 elif intranet and options.xxx:
     http = True
-    viewer = gcfg.cfg['document viewers']['html']
-    target = gcfg.cfg['documentation']['urls']['local index']
+    viewer = sitecfg.get( ['document viewers','html'] )
+    target = sitecfg.get( ['documentation','urls','local index'] )
 else:
     # default
-    viewer = gcfg.cfg['document viewers']['html']
-    target = gcfg.cfg['documentation']['files']['html index']
+    viewer = sitecfg.get( ['document viewers','html'] )
+    target = sitecfg.get( ['documentation','files','html index'] )
 
 if not http and not os.path.isfile( target ):
     print >> sys.stderr, "ERROR, file not found: " + target

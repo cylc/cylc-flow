@@ -16,6 +16,9 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.10">5.4.10</a></li>
+		<li><a href="#5.4.9">5.4.9</a></li>
+		<li><a href="#5.4.8">5.4.8</a></li>
 		<li><a href="#5.4.7">5.4.7</a></li>
 		<li><a href="#5.4.6">5.4.6</a></li>
 		<li><a href="#5.4.5">5.4.5</a></li>
@@ -38,6 +41,75 @@
 
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="5.4.10"/>
+		<h2>5.4.10</h2>
+
+		<ul>
+
+		<li>Allow multiple event handlers per event hook.</li>
+
+		<li>Fixed a task polling bug affecting 5.4.8 - 5.4.9: poll results
+		for a hard killed task were logged correctly but did not
+		automatically set the task proxy to the 'failed' state.</li>
+
+		<li>Fixed a <code>cylc submit</code> bug affecting 5.4.5 - 5.4.9: 
+		If used <em>with the suite running at the same time</em> (not
+		recommended) the submit command would wipe out the port number in
+		the <code>cylc-suite-env</code> file, resulting in tasks losing
+		contact with their suite daemon.
+		</li>
+
+		<li>Better handling of OSError on job submission commands.</li>
+
+		<li>gcylc - correct log file sorting above 10 retries.</li>
+
+		</ul>
+
+<a name="5.4.9"/>
+		<h2>5.4.9</h2>
+
+		<ul>
+				<li>Fixed a bug affecting <b>5.4.5</b> through <b>5.4.8</b>: use
+				of <code>cylc submit</code> would cause task messaging failures if
+				the suite involved was running at the time.</li>
+		</ul>
+
+<a name="5.4.8"/>
+		<h2>5.4.8</h2>
+
+		<ul>
+				<li>Support job vacation in loadleveler (tasks killed by SIGUSR1 and 
+				then restarted later)</li>
+				<li>Reimplemented the <code>sequential</code> special task type
+				using automatically-generated inter-cycle triggers rather than
+				delayed spawning - they now behave "sequentially" under
+				all circumstances.</li>
+				<li>Delete the port file if suite start-up aborts early on</li>
+				<li>A new command, "cylc check-versions SUITE" checks that
+				the version of cylc invoked on each of SUITE's task hosts is the
+				same as *this* version, or else reports the remote versions.</li>
+				<li>Added task and family titles and descriptions to task
+				mouse-hover popups in the GUI.</li>
+				<li>Abort immediately if the suite database fails</li>
+				<li>Dropped redundant pre-action state dumps</li>
+				<li>Allow overlapping inheritance in a broadcast command</li>
+				<li>Fixed a bug that could (rarely) cause a wrong poll result on
+				running tasks at restart.</li>
+				<li>Restored support for user-defined job submission methods</li>
+				<li>Stopped ignoring stop cycle in tasks inserted via the GUI </li>
+				<li>Discard, rather than hold, inserted tasks that have passed
+				their private stop cycle (if they have one)</li>
+				<li>Ignore poll results if tasks have moved on since the
+				poll was initiated.</li>
+				<li>Better detect if a task host is the suite host</li>
+				<li>Fixed a bug that could cause proliferation of GUI error dialogs</li>
+				<li>Fix validation of hyphenated family-triggers where the
+				pre-hyphen part of the name matches another name.</li>
+				<li>Allow auto suite-polling tasks to explicitly unset inherited
+				command scripting. </li>
+		</ul>
+
 
 <a name="5.4.7"/>
 		<h2>5.4.7</h2>

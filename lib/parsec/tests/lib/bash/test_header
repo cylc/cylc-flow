@@ -1,0 +1,194 @@
+#!/bin/bash
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# NAME
+#     test_header
+#
+# SYNOPSIS
+#     . $CYLC_DIR/t/lib/bash/test_header
+#
+# DESCRIPTION
+#     Interface for constructing tests under a TAP harness (the "prove"
+#     command).
+#
+# FUNCTIONS
+#     set_test_number N
+#         echo a total number of tests for TAP to read.
+#     ok TEST_NAME
+#         echo a TAP OK message for TEST_NAME.
+#     fail TEST_NAME
+#         echo a TAP fail message for TEST_NAME.
+#     run_ok TEST_NAME COMMAND ...
+#         Run COMMAND with any following options/arguments and store stdout
+#         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
+#         This is expected to have a return code of 0, which ok's the test.
+#     run_fail TEST_NAME COMMAND ...
+#         Run COMMAND with any following options/arguments and store stdout
+#         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
+#         This is expected to have a non-zero return code, which ok's the test.
+#     cmp_ok FILE_TEST [FILE_CONTROL]
+#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL
+#         (stdin if FILE_CONTROL is "-" or missing). If $TEST_DEBUG_CMP
+#         is set, show differences using xxdiff.
+#     grep_ok PATTERN FILE
+#         Run "grep -q PATTERN FILE".
+#     exists_ok FILE
+#         Test that FILE exists
+#     exists_fail FILE
+#         Test that FILE does not exist
+#     skip_tests N SKIP_REASON
+#         echo "ok $((++T)) # skip SKIP_REASON" N times, where the number to skip.
+#-------------------------------------------------------------------------------
+set -eu
+
+FAILURES=0
+SIGNALS="EXIT INT"
+TEST_DIR=
+function FINALLY() {
+    for S in $SIGNALS; do
+        trap '' $S
+    done
+    if [[ -n $TEST_DIR ]]; then
+        cd ~
+        rm -rf $TEST_DIR
+    fi
+    if (($FAILURES > 0)); then
+        echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
+    fi
+}
+for S in $SIGNALS; do
+    trap "FINALLY $S" $S
+done
+
+TEST_NUMBER=0
+
+function set_test_number() {
+    echo "1..$1"
+}
+
+function ok() {
+    echo "ok $((++TEST_NUMBER)) - $@"
+}
+
+function fail() {
+    ((++FAILURES))
+    echo "not ok $((++TEST_NUMBER)) - $@"
+}
+
+function run_ok() {
+    local TEST_NAME=$1
+    shift 1
+    if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        fail $TEST_NAME
+        mkdir -p $TEST_LOG_DIR
+        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+        return
+    fi
+    ok $TEST_NAME
+}
+
+function run_fail() {
+    local TEST_NAME=$1
+    shift 1
+    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        fail $TEST_NAME
+        mkdir -p $TEST_LOG_DIR
+        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+        return
+    fi
+    ok $TEST_NAME
+}
+
+function cmp_ok() {
+    local FILE_TEST=$1
+    local FILE_CONTROL=${2:--}
+    local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
+    local CMP_COMMAND="cmp"
+    if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
+        CMP_COMMAND="xxdiff -D"
+    fi
+    if $CMP_COMMAND $FILE_TEST $FILE_CONTROL; then
+        ok $TEST_NAME
+        return
+    fi
+    fail $TEST_NAME
+}
+
+function grep_ok() {
+    local BRE=$1
+    local FILE=$2
+    local TEST_NAME=$(basename $FILE)-grep-ok
+    if grep -q -e "$BRE" $FILE; then
+        ok $TEST_NAME
+        return
+    fi
+    fail $TEST_NAME
+}
+
+function exists_ok() {
+    local FILE=$1
+    local TEST_NAME=$(basename $FILE)-file-exists-ok
+    if [[ -a $FILE ]]; then
+        ok $TEST_NAME
+        return
+    fi
+    fail $TEST_NAME
+}
+
+function exists_fail() {
+    local FILE=$1
+    local TEST_NAME=$(basename $FILE)-file-exists-fail
+    if [[ ! -a $FILE ]]; then
+        ok $TEST_NAME
+        return
+    fi
+    fail $TEST_NAME
+}
+
+function skip() {
+    local N_TO_SKIP=$1
+    shift 1
+    local COUNT=0
+    while ((COUNT++ < N_TO_SKIP)); do
+        echo "ok $((++TEST_NUMBER)) # skip $@"
+    done
+}
+
+function install_test() {
+    ORIG_TEST_NAME=${2:-$TEST_NAME_BASE}
+    SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
+    NEW_TEST_NAME=$(date -u +%Y%m%d%H%M%S)_parse_test_${SNAME}_${1}
+    NTDIR=$TEST_DIR/$NEW_TEST_NAME/
+    mkdir $NTDIR
+    if [[ -d $TEST_SOURCE_DIR/$ORIG_TEST_NAME ]]; then
+        cp -r $TEST_SOURCE_DIR/$ORIG_TEST_NAME $NTDIR
+    else
+        mkdir $NTDIR/$ORIG_TEST_NAME
+    fi
+    cd $NTDIR/$ORIG_TEST_NAME
+}
+
+TEST_NAME_BASE=$(basename $0 .t)
+TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
+PATH=$TEST_SOURCE_DIR/bin:$PATH
+TEST_DIR=$(mktemp -d)
+cd $TEST_DIR
+TEST_LOG_DIR=${TMPDIR:-/tmp}/parsec-tests/$(basename $TEST_SOURCE_DIR)
+
+set +e
