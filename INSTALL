@@ -27,7 +27,7 @@ installing successive versions in parallel like this:
 Now install admin/cylc-wrapper to a convenient location as "cylc", e.g.:
 
     % cp admin/cylc-wrapper /home/admin/bin/cylc
-        # OR:
+        # OR
     % cp admin/cylc-wrapper /usr/local/bin/cylc
     
 Modify the wrapper for your environment as per instructions in the file
