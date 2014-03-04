@@ -31,6 +31,9 @@ iflag = False
 # verbose mode
 verbose = False
 
+# debug mode
+debug = False
+
 # TODO - run mode should be a flag
 
 # multiprocessing or thread pool for spawned shell commands?

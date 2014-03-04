@@ -1,0 +1,26 @@
+
+title = "Test suite for task state change on poll result."
+description = """Task A fails silently - it will be stuck in 'running'
+unless polled. Task B then polls A to find it has failed, allowing A to
+suicide via a :fail trigger, and the suite to shut down successfully."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+       expected task failures = A.1
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+    A:start => B
+    A:fail => !A"""
+
+[runtime]
+    [[A]]
+        command scripting = """
+trap '' EXIT # die silently
+exit 0"""
+    [[B]]
+        command scripting = cylc poll $CYLC_SUITE_NAME A 1
+

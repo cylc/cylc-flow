@@ -265,4 +265,4 @@ class job_submit(object):
                 str( self.jobconfig.get('try number')) + '):', command
 
         return command
-
+       

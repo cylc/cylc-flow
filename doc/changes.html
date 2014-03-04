@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.10">5.4.10</a></li>
 		<li><a href="#5.4.9">5.4.9</a></li>
 		<li><a href="#5.4.8">5.4.8</a></li>
 		<li><a href="#5.4.7">5.4.7</a></li>
@@ -40,6 +41,30 @@
 
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="5.4.10"/>
+		<h2>5.4.10</h2>
+
+		<ul>
+
+		<li>Allow multiple event handlers per event hook.</li>
+
+		<li>Fixed a task polling bug affecting 5.4.8 - 5.4.9: poll results
+		for a hard killed task were logged correctly but did not
+		automatically set the task proxy to the 'failed' state.</li>
+
+		<li>Fixed a <code>cylc submit</code> bug affecting 5.4.5 - 5.4.9: 
+		If used <em>with the suite running at the same time</em> (not
+		recommended) the submit command would wipe out the port number in
+		the <code>cylc-suite-env</code> file, resulting in tasks losing
+		contact with their suite daemon.
+		</li>
+
+		<li>Better handling of OSError on job submission commands.</li>
+
+		<li>gcylc - correct log file sorting above 10 retries.</li>
+
+		</ul>
 
 <a name="5.4.9"/>
 		<h2>5.4.9</h2>

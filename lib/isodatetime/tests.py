@@ -392,8 +392,8 @@ def get_timepointparser_tests(allow_only_basic=False,
                     yield tz_expr, tz_info
 
 
-def get_timerecurrence_tests():
-    """Return test expressions for data.TimeRecurrence."""
+def get_timerecurrence_expansion_tests():
+    """Return test expansion expressions for data.TimeRecurrence."""
     return [
         ("R3/1001-W01-1T00:00:00Z/1002-W52-6T00:00:00-05:30",
          ["1001-W01-1T00:00:00Z", "1001-W53-3T14:45:00Z",
@@ -415,6 +415,30 @@ def get_timerecurrence_tests():
         ("R/-100024-02-10T17:00:00-12:30/PT5.5H",
          ["-100024-02-10T17:00:00-12:30", "-100024-02-10T22,5-12:30",
           "-100024-02-11T04:00:00-12:30"])
+    ]
+
+
+def get_timerecurrence_membership_tests():
+    """Return test membership expressions for data.TimeRecurrence."""
+    return [
+        ("R3/1001-W01-1T00:00:00Z/1002-W52-6T00:00:00-05:30",
+         [("1001-W01-1T00:00:00Z", True),
+          ("1000-12-29T00:00:00Z", True),
+          ("0901-07-08T12:45:00Z", False),
+          ("1001-W01-2T00:00:00Z", False),
+          ("1001-W53-3T14:45:00Z", True),
+          ("1002-W52-6T05:30:00Z", True),
+          ("1002-W52-6T03:30:00-02:00", True),
+          ("1002-W52-6T07:30:00+02:00", True),
+          ("10030101T00Z", False)]),
+        ("R3/P700D/1957-W01-1T06,5Z",
+         [("1953-W10-1T06,5Z", True),
+          ("1953-03-02T06,5Z", True),
+          ("1952-03-02T06,5Z", False),
+          ("1955-W05-1T06,5Z", True),
+          ("1957-W01-1T06,5Z", True),
+          ("1956-366T06,5Z", True),
+          ("1956-356T04,5Z", False)]),
     ]
 
 
@@ -482,10 +506,17 @@ class TestSuite(unittest.TestCase):
             self.assertEqual(test_result, ctrl_result, expression)
 
     def test_timepoint(self):
-        """Test the manipulation of dates and times (takes a while)."""
+        """Test the time point data model (takes a while)."""
         import datetime
         import random
         my_date = datetime.datetime(1801, 1, 1)
+        test_interval_attributes = [
+            ("weeks", 110),
+            ("days", 770),
+            ("hours", 770*24),
+            ("minutes", 770 * 24 * 60),
+            ("seconds", 770 * 24 * 60 * 60)
+        ]
         while my_date <= datetime.datetime(2401, 2, 1):
             ctrl_data = my_date.isocalendar()
             test_date = data.TimePoint(
@@ -502,11 +533,7 @@ class TestSuite(unittest.TestCase):
             test_data = day_of_year
             test_data += data.get_days_since_1_ad(year - 1)
             self.assertEqual(test_data, ctrl_data)
-            for attribute, attr_max in [("weeks", 110),
-                                        ("days", 770),
-                                        ("hours", 770*24),
-                                        ("minutes", 770 * 24 * 60),
-                                        ("seconds", 770 * 24 * 60 * 60)]:
+            for attribute, attr_max in test_interval_attributes:
                 delta_attr = random.randrange(0, attr_max)
                 kwargs = {attribute: delta_attr}
                 ctrl_data = my_date + datetime.timedelta(**kwargs)
@@ -521,6 +548,21 @@ class TestSuite(unittest.TestCase):
                     test_date - data.TimeInterval(
                         **kwargs)).get_calendar_date()
                 self.assertEqual(test_data, ctrl_data)
+            kwargs = {}
+            for attribute, attr_max in test_interval_attributes:
+                delta_attr = random.randrange(0, attr_max)
+                kwargs[attribute] = delta_attr
+            test_date_minus = (
+                test_date - data.TimeInterval(**kwargs))
+            test_data = test_date - test_date_minus
+            ctrl_data = data.TimeInterval(**kwargs)
+            self.assertEqual(test_data, ctrl_data)
+            test_data = (test_date_minus + (test_date - test_date_minus))
+            ctrl_data = test_date
+            self.assertEqual(test_data, ctrl_data)
+            test_data = (test_date_minus + data.TimeInterval(**kwargs))
+            ctrl_data = test_date
+            self.assertEqual(test_data, ctrl_data)
             ctrl_data = (my_date + datetime.timedelta(minutes=450) +
                          datetime.timedelta(hours=5) -
                          datetime.timedelta(seconds=500, weeks=5))
@@ -569,7 +611,7 @@ class TestSuite(unittest.TestCase):
     def test_timerecurrence(self):
         """Test the recurring date/time series data model."""
         parser = parsers.TimeRecurrenceParser()
-        for expression, ctrl_results in get_timerecurrence_tests():
+        for expression, ctrl_results in get_timerecurrence_expansion_tests():
             try:
                 test_recurrence = parser.parse(expression)
             except parsers.TimeSyntaxError:
@@ -583,6 +625,20 @@ class TestSuite(unittest.TestCase):
                     break
                 test_results.append(str(time_point))
             self.assertEqual(test_results, ctrl_results, expression)
+        for expression, results in get_timerecurrence_membership_tests():
+            try:
+                test_recurrence = parser.parse(expression)
+            except parsers.TimeSyntaxError:
+                raise ValueError(
+                    "TimeRecurrenceParser test failed to parse '%s'" %
+                    expression
+                )
+            for timepoint_expression, ctrl_is_member in results:
+                timepoint = parsers.parse_timepoint_expression(
+                    timepoint_expression)
+                test_is_member = test_recurrence.get_is_valid(timepoint)
+                self.assertEqual(test_is_member, ctrl_is_member,
+                                 timepoint_expression + " in " + expression)
 
     def test_timerecurrence_parser(self):
         """Test the recurring date/time series parsing."""
