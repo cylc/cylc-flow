@@ -1067,6 +1067,7 @@ class task( object ):
 
     def set_status( self, status ):
         if status != self.state.get_status():
+            flags.iflag = True
             self.log( 'DEBUG', '(setting:' + status + ')' )
             self.state.set_status( status )
             self.record_db_update("task_states", self.name, self.c_time,
