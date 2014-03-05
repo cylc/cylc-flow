@@ -351,47 +351,6 @@ parser is concerned these are normal configuration items).
         \end{myitemize}
 \end{myitemize}
 
-\subsubsection[{[[}accelerated clock{]]}]{[cylc] $\rightarrow$ [[accelerated clock]] }
-\label{ClockConfig}
-
-Accelerated clock settings, used to speed up the wait between cycles in
-the simulation and dummy run modes.
-
-\paragraph[disable]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ disable}
-
-Disabling the accelerated clock makes the suite (and its log time stamps
-etc.) run on real time. Note that if the suite has clock-triggered tasks
-that catch up to the wall clock, the interval between cycles will also be
-in real time - e.g.\ six hours for a six hourly cycle.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
-
-\paragraph[rate]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ rate}
-
-The rate at which the accelerated clock runs in real seconds per
-simulated hour.
-
-\begin{myitemize}
-    \item {\em type:} integer ($\geq 0$, real seconds per simulated hour)
-    \item {\em default:} $10$
-\end{myitemize}
-
-\paragraph[offset]{[cylc] $\rightarrow$ [[accelerated clock]] $\rightarrow$ offset}
-
-The clock offset determines the initial time on the accelerated clock,
-at suite startup, relative to the initial cycle time. An offset of
-$0$ simulates real time operation; greater offsets simulate catch up
-from a delay and subsequent transition to real time operation.
-
-\begin{myitemize}
-    \item {\em type:} integer ($\geq 0$, hours behind initial cycle time)
-    \item {\em default:} $24$
-\end{myitemize}
-
 
 \subsubsection[{[[}reference test{]]}]{[cylc] $\rightarrow$ [[reference test]] }
 \label{ReferenceTestConfig}

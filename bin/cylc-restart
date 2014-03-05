@@ -124,15 +124,12 @@ where they got to while the suite was down."""
         os.symlink(src_name, lnk_name)
 
         # The state dump file format is:
-        # suite time : <time>
-        #   OR
-        # simulation time : <time>,rate
-        #   THEN
+        # run mode : <mode> 
+        # time : <time>
         # class <classname>: item1=value1, item2=value2, ...
         # <task_id> : <state>
         # <task_id> : <state>
         #   ...
-        # The time format is defined by the clock.reset()
         # task <state> format is defined by task_state.dump()
 
         try:
@@ -153,26 +150,16 @@ where they got to while the suite was down."""
             raise Exception( "ERROR, incomplete suite state dump: " + file_name )
 
         index = 0
-        # RESET THE TIME TO THE LATEST DUMPED TIME
-        # The state dump file first line is:
-        # suite time : <time>
-        #   OR
-        # simulation time : <time>,rate
-        line1 = lines[index]
-        line1 = line1.rstrip()
-        [ time_type, time_string ] = line1.split(' : ')
-        if time_type == 'simulation time':
-            if self.run_mode == 'live':
-                raise Exception("ERROR: cannot RESTART in live mode from a non live mode state dump")
-            [ time, rate ] = time_string.split( ',' )
-            self.clock.reset( time, rate )
-        elif time_type == 'suite time':
-            if self.run_mode != 'live':
-                raise Exception("ERROR: cannot RESTART in " + self.run_mode + " mode from a live mode state dump")
-        else:
-            print >> sys.stderr, "ERROR, Illegal state dump line 1 (time):"
-            print >> sys.stderr, ' ', line1
-            raise Exception("ERROR: corrupted state dump")
+        # run mode : <mode>
+        line0 = lines[index].rstrip()
+        old_run_mode = line0.split(' : ')[1]
+
+        if self.run_mode == 'live' and old_run_mode != 'live':
+            raise Exception("ERROR: cannot RESTART in " + self.run_mode + " from a " + old_run_mode + " state dump")
+  
+        index += 1
+        # time : <time>
+        # (not used)
 
         index += 1
         line2 = lines[index]
@@ -351,7 +338,6 @@ where they got to while the suite was down."""
                 print >> sys.stderr, "ERROR: could not load task", name, "from the suite state dump file"
                 # TODO: Is it safe to have "raise x" here?
                 continue
-
 
             # see comments above on resurrecting tasks
 
