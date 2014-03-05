@@ -56,8 +56,15 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     for line in list(lines):
         if line.startswith('Remote command'):
             lines.remove(line)
-    lines.pop(0)
-    time_string = lines.pop(0).rstrip().split(' : ')[1]
+    line0 = lines.pop(0)
+    if line0.startswith( 'suite time' ) or \
+            line0.startswith( 'simulation time' ):
+        # backward compatibility with pre-5.4.11 state dumps
+        time_string = line0.rstrip().split(' : ')[1]
+    else:
+        # (line0 is run mode)
+        line1 = lines.pop(0)
+        time_string = lines1.rstrip().split(' : ')[1]
 
     dt = datetime.datetime( *(time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")[0:6]))
 
