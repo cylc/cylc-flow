@@ -56,12 +56,9 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     for line in list(lines):
         if line.startswith('Remote command'):
             lines.remove(line)
-    [ time_type, time_string ] = lines.pop(0).rstrip().split(' : ')
-    time_string = time_string.rsplit(",")[0]
+    lines.pop(0)
+    time_string = lines.pop(0).rstrip().split(' : ')[1]
 
-    # datetime.strptime() introduced in Python 2.5
-    ##dt = datetime.datetime.strptime(time_string, "%Y:%m:%d:%H:%M:%S")
-    # but is equivalent to this:
     dt = datetime.datetime( *(time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")[0:6]))
 
     global_summary["last_updated"] = dt

@@ -56,13 +56,12 @@ class dumper( object ):
     def dump( self, tasks=None, wireless=None ):
         """Dump suite states to disk. Return state file basename on success."""
 
-        tag = now().strftime("%Y%m%dT%H%M%S.%fZ")
-        base_name = self.BASE_NAME + "." + tag
+        base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
         handle = open(os.path.join(self.dir_name, base_name), "wb")
 
         
         handle.write( 'run mode : ' + self.run_mode + '\n' )
-        handle.write( 'time: ' + str(now()) + '\n' )
+        handle.write( 'time : ' + now().strftime( "%Y:%m:%d:%H:%M:%S") + '\n' )
 
         handle.write(self.cts_str)
 
