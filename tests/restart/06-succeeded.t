@@ -59,7 +59,7 @@ cmp_ok "$TEST_NAME.stderr" </dev/null
 state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
 cp $state_dir/state $TEST_DIR/
 for state_file in $(ls $TEST_DIR/state*); do
-    sed -i "/^time: /d" $state_file
+    sed -i "/^time : /d" $state_file
 done
 cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<'__STATE__'
 run mode : live
