@@ -224,12 +224,7 @@ class DotUpdater(threading.Thread):
 
             self.led_treeview.set_model(self.led_liststore)
             num_columns = len(self.led_treeview.get_columns())
-            extra_columns = range(num_columns, num_new_columns)
-            if self.is_transposed:
-                extra_model_columns = extra_columns
-            else:
-                extra_model_columns = [9 + n for n in extra_columns]
-            for model_col_num in extra_model_columns:
+            for model_col_num in range(num_columns, num_new_columns):
                 # Add newly-needed columns.
                 cr = gtk.CellRendererPixbuf()
                 #cr.set_property( 'cell_background', 'black' )
