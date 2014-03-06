@@ -64,7 +64,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     else:
         # (line0 is run mode)
         line1 = lines.pop(0)
-        time_string = lines1.rstrip().split(' : ')[1]
+        time_string = line1.rstrip().split(' : ')[1]
 
     dt = datetime.datetime( *(time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")[0:6]))
 
