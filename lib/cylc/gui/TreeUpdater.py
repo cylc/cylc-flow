@@ -43,6 +43,8 @@ class TreeUpdater(threading.Thread):
         self.cleared = True
         self.autoexpand = True
 
+        self.count = 0
+
         self.cfg = cfg
         self.updater = updater
         self.theme = theme
@@ -260,10 +262,11 @@ class TreeUpdater(threading.Thread):
                 task_path = families + [name]
                 task_named_paths.append(task_path)
 
-            if self.updater.ns_defn_order and model and model.get_sort_column_id() == (None,None):
+            # Sorting here every time the treeview is updated makes
+            # definition sort order the default "unsorted" order
+            # (any column-click sorting is done on top of this).
+            if self.updater.ns_defn_order:
                 task_named_paths.sort( key=lambda x: map( self.updater.dict_ns_defn_order.get, x ) )
-            else:
-                task_named_paths.sort()
 
             for named_path in task_named_paths:
                 name = named_path[-1]
