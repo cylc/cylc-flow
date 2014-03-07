@@ -59,9 +59,10 @@ cmp_ok "$TEST_NAME.stderr" </dev/null
 state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
 cp $state_dir/state $TEST_DIR/
 for state_file in $(ls $TEST_DIR/state*); do
-    sed -i "/^suite time : /d" $state_file
+    sed -i "/^time : /d" $state_file
 done
 cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<'__STATE__'
+run mode : live
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -89,6 +90,7 @@ tidy|2013092300|0|1|waiting
 waiting_task|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
+run mode : live
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
@@ -126,6 +128,7 @@ waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state <<'__STATE__'
+run mode : live
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1

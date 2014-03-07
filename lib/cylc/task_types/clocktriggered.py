@@ -20,6 +20,7 @@ import sys
 import datetime
 from cylc.cycle_time import ct
 from task import task
+from cylc.wallclock import now
 
 # TODO - the task base class now has clock-triggering functionality too, to
 # handle retry delays, so this class could probably disappear now to leave
@@ -38,8 +39,7 @@ class clocktriggered(object):
         # check current time against expected start time
         rt = ct( self.c_time ).get_datetime()
         delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 )
-        current_time = clocktriggered.clock.get_datetime()
-        if current_time >= delayed_start:
+        if now() >= delayed_start:
            reached = True
         return reached
 

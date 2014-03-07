@@ -135,7 +135,6 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
-            rate = glbl[ 'clock_rate' ]
             run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
@@ -225,13 +224,10 @@ try:
             # when task processing is invoked).
             blit.append( 'suite state summary last updated at:                                          ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            if run_mode != 'live':
-                foo = 'SIMULATION:'
-                bar = str(rate) + ' real seconds = 1 hour'
-                baz = header
-                baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
-                baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
-                blit.append( baz )
+            foo = 'mode: ' + run_mode
+            baz = header
+            baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
+            blit.append( baz )
 
             if stopping:
                 foo = '__________________________________________________________________________________S_T_O_P_P_I_N_G'

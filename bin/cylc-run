@@ -113,8 +113,6 @@ initial and final cycle time variables persists across suite restarts."""
     def load_tasks_cold( self ):
         if self.start_tag:
             self.log.info( 'Cold Start ' + self.start_tag )
-            # set clock before using log (affects simulation mode only)
-            self.clock.set( self.start_tag )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
@@ -140,8 +138,6 @@ initial and final cycle time variables persists across suite restarts."""
     def load_tasks_warm( self ):
         if self.start_tag:
             self.log.info( 'Warm Start ' + self.start_tag )
-            # set clock before using log (affects simulation mode only)
-            self.clock.set( self.start_tag )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
@@ -181,8 +177,6 @@ initial and final cycle time variables persists across suite restarts."""
     def load_tasks_raw( self ):
         if self.start_tag:
             self.log.info( 'Raw Start ' + self.start_tag )
-            # set clock before using log (affects simulation mode only)
-            self.clock.set( self.start_tag )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 

@@ -28,6 +28,7 @@ from cylc.cfgspec.site import sitecfg
 from cylc.owner import user
 import logging
 import cylc.flags as flags
+from cylc.wallclock import now
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.command_env import cv_scripting_sl
@@ -76,7 +77,7 @@ class PollTimer( object ):
 
         if self.current_interval:
             self.log( 'NORMAL', 'setting ' + self.name + ' poll timer for ' + str(self.current_interval) + ' seconds' )
-            self.timer_start = datetime.datetime.now()
+            self.timer_start = now()
         else:
             self.timer_start = None
 
@@ -84,7 +85,7 @@ class PollTimer( object ):
         if not self.timer_start:
             return False
         timeout = self.timer_start + datetime.timedelta( seconds=self.current_interval )
-        if datetime.datetime.now() > timeout:
+        if now() > timeout:
             return True
 
 
@@ -103,7 +104,6 @@ class task( object ):
     # if execution retries are configured; and is passed to task
     # environments to allow changed behaviour after previous failures.
 
-    clock = None
     intercycle = False
     is_cycling = False
     is_daemon = False
@@ -290,7 +290,7 @@ class task( object ):
         self.db_queue.append(call)
         self.db_items = True
 
-    def record_db_state(self, name, cycle, time_created=datetime.datetime.now(), time_updated=None,
+    def record_db_state(self, name, cycle, time_created=now(), time_updated=None,
                      submit_num=None, is_manual_submit=None, try_num=None,
                      host=None, submit_method=None, submit_method_id=None,
                      status=None):
@@ -314,12 +314,12 @@ class task( object ):
     def retry_delay_done( self ):
         done = False
         if self.retry_delay_timer_start:
-            diff = task.clock.get_datetime() - self.retry_delay_timer_start
+            diff = now() - self.retry_delay_timer_start
             foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
             if diff >= foo:
                 done = True
         elif self.sub_retry_delay_timer_start:
-            diff = task.clock.get_datetime() - self.sub_retry_delay_timer_start
+            diff = now() - self.sub_retry_delay_timer_start
             foo = datetime.timedelta( 0,0,0,0,self.sub_retry_delay,0,0 )
             if diff >= foo:
                 done = True
@@ -499,9 +499,8 @@ class task( object ):
         the main thread in response to receiving the message."""
 
         if self.__class__.run_mode == 'simulation':
-            self.started_time = task.clock.get_datetime()
+            self.started_time = now()
             self.summary[ 'started_time' ] = self.started_time.isoformat()
-            self.started_time_real = datetime.datetime.now()
             self.outputs.set_completed( self.id + " started" )
             self.set_status( 'running' )
             return (None,None)
@@ -742,7 +741,7 @@ class task( object ):
             return
 
         # if timed out, log warning, poll, queue event handler, and turn off the timer
-        current_time = task.clock.get_datetime()
+        current_time = now()
         cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
             msg = 'job submitted ' + str(timeout) + ' minutes ago, but has not started'
@@ -760,7 +759,7 @@ class task( object ):
             return
 
         # if timed out: log warning, poll, queue event handler, and turn off the timer
-        current_time = task.clock.get_datetime()
+        current_time = now()
         cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
         if current_time > cutoff:
             if self.event_hooks['reset timer']:
@@ -774,9 +773,9 @@ class task( object ):
             self.execution_timer_start = None
 
     def sim_time_check( self ):
-        timeout = self.started_time_real + \
+        timeout = self.started_time + \
                 datetime.timedelta( seconds=self.sim_mode_run_length )
-        if datetime.datetime.now() > timeout:
+        if now() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
                 self.message_queue.put( 'NORMAL', self.id + ' submitted' )
                 self.message_queue.put( 'CRITICAL', self.id + ' failed' )
@@ -901,7 +900,7 @@ class task( object ):
 
         if self.event_hooks['reset timer']:
             # Reset execution timer on incoming messages
-            self.execution_timer_start = task.clock.get_datetime()
+            self.execution_timer_start = now()
 
         if content == 'submitting now':
             # (A fake task message from the job submission thread).
@@ -919,7 +918,7 @@ class task( object ):
             flags.pflag = True
 
             # TODO - should we use the real event time from the message here?
-            self.submitted_time = task.clock.get_datetime()
+            self.submitted_time = now()
             self.summary[ 'submitted_time' ] = self.submitted_time.isoformat()
 
             outp = self.id + " submitted" # hack: see github #476
@@ -963,7 +962,7 @@ class task( object ):
                 # There is a retry lined up
                 msg = "job submission failed, retrying in " + str(self.sub_retry_delay) +  " minutes"
                 self.log( "NORMAL", msg )
-                self.sub_retry_delay_timer_start = task.clock.get_datetime()
+                self.sub_retry_delay_timer_start = now()
                 self.sub_try_number += 1
                 self.set_status( 'submit-retrying' )
                 self.record_db_event(event="submission failed", message="submit-retrying in " + str(self.sub_retry_delay) )
@@ -977,9 +976,8 @@ class task( object ):
             flags.pflag = True
             self.set_status( 'running' )
             self.record_db_event(event="started" )
-            self.started_time = task.clock.get_datetime()
+            self.started_time = now()
             self.summary[ 'started_time' ] = self.started_time.isoformat()
-            self.started_time_real = datetime.datetime.now()
 
             # TODO - should we use the real event time extracted from the message here:
             self.execution_timer_start = self.started_time
@@ -995,7 +993,7 @@ class task( object ):
             # (submit* states in case of very fast submission and execution)
             self.execution_timer_start = None
             flags.pflag = True
-            self.succeeded_time = task.clock.get_datetime()
+            self.succeeded_time = now()
             self.summary[ 'succeeded_time' ] = self.succeeded_time.isoformat()
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
             self.set_status( 'succeeded' )
@@ -1034,7 +1032,7 @@ class task( object ):
                 # There is a retry lined up
                 msg = "job failed, retrying in " + str(self.retry_delay) + " minutes"
                 self.log( "NORMAL", msg )
-                self.retry_delay_timer_start = task.clock.get_datetime()
+                self.retry_delay_timer_start = now()
                 self.try_number += 1
                 self.set_status( 'retrying' )
                 self.record_db_event(event="failed", message="retrying in " + str( self.retry_delay) )
@@ -1051,7 +1049,6 @@ class task( object ):
             self.set_status('submitted')
             self.record_db_event(event="vacated", message=content)
             self.execution_timer_start = None
-            self.started_time_real = None
             self.summary['started_time'] = '*'
             self.sub_try_number = 0
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
