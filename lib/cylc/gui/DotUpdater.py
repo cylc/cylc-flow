@@ -55,6 +55,7 @@ class DotUpdater(threading.Thread):
         self.ancestors_pruned = {}
         self.descendants = []
         self.filter = ""
+        self.ctimes = []
 
         self.led_headings = []
         self.led_treeview = treeview
