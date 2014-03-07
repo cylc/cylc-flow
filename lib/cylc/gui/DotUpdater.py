@@ -79,13 +79,6 @@ class DotUpdater(threading.Thread):
             self.dots[ state ] = dotm.get_icon( state )
         self.dots['empty'] = dotm.get_icon()
 
-        self.led_digits_one = []
-        self.led_digits_two = []
-        self.led_digits_blank = gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-blank.xpm" )
-        for i in range(10):
-            self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
-            self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
-
     def _set_tooltip(self, widget, tip_text):
         tip = gtk.Tooltips()
         tip.enable()
@@ -160,30 +153,6 @@ class DotUpdater(threading.Thread):
                 self.task_list = []
         return True
 
-    def digitize( self, ctin ):
-        # Digitize cycle time for the LED panel display.
-        # For asynchronous tasks blank-pad the task tag.
-
-        # TODO - if we ever have cycling modules for which minutes and
-        # seconds are important, take the whole of ctin here:
-        ncol = 10 # columns in the digital cycletime row
-        ct = ctin[:ncol]
-        led_ctime = []
-        if len(ct) < ncol: # currently can't happen due to ctin[:ncol]
-            zct = string.rjust( ct, ncol, ' ' ) # pad the string
-        else:
-            zct = ct
-        for i in range( ncol ):
-            digit = zct[i:i+1]
-            if digit == ' ':
-                led_ctime.append( self.led_digits_blank )
-            elif i in [0,1,2,3,6,7]:
-                led_ctime.append( self.led_digits_one[ int(digit) ] )
-            else:
-                led_ctime.append( self.led_digits_two[ int(digit) ] )
-
-        return led_ctime
-
     def set_led_headings( self ):
         if self.should_transpose_view:
             new_headings = [ 'Name' ] + self.ctimes
@@ -219,15 +188,11 @@ class DotUpdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-
-        # this is how to set background color of the entire treeview to black:
-        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) )
-
         if self.should_transpose_view:
             types = [str] + [gtk.gdk.Pixbuf] * len( self.ctimes )
             num_new_columns = len(types)
         else:
-            types = [gtk.gdk.Pixbuf] * (10 + len( self.task_list)) + [str]
+            types = [str] + [gtk.gdk.Pixbuf] * len( self.task_list) + [str]
             num_new_columns = 1 + len(self.task_list)
         new_led_liststore = gtk.ListStore( *types )
         old_types = []
@@ -260,12 +225,7 @@ class DotUpdater(threading.Thread):
 
             self.led_treeview.set_model(self.led_liststore)
             num_columns = len(self.led_treeview.get_columns())
-            extra_columns = range(num_columns, num_new_columns)
-            if self.is_transposed:
-                extra_model_columns = extra_columns
-            else:
-                extra_model_columns = [9 + n for n in extra_columns]
-            for model_col_num in extra_model_columns:
+            for model_col_num in range(num_columns, num_new_columns):
                 # Add newly-needed columns.
                 cr = gtk.CellRendererPixbuf()
                 #cr.set_property( 'cell_background', 'black' )
@@ -286,23 +246,20 @@ class DotUpdater(threading.Thread):
 
         if self.should_transpose_view:
             tvc = gtk.TreeViewColumn( 'Name' )
-            cr = gtk.CellRendererText()
-            tvc.pack_start( cr, False )
-            tvc.set_attributes( cr, text=0 )
         else:
-            tvc = gtk.TreeViewColumn( 'Task Tag' )
-            for i in range(10):
-                cr = gtk.CellRendererPixbuf()
-                # cr.set_property( 'cell-background', 'black' )
-                tvc.pack_start( cr, False )
-                tvc.set_attributes( cr, pixbuf=i )
+            tvc = gtk.TreeViewColumn( 'Cycle' )
+
+        cr = gtk.CellRendererText()
+        tvc.pack_start( cr, False )
+        tvc.set_attributes( cr, text=0 )
 
         self.led_treeview.append_column( tvc )
 
         if self.should_transpose_view:
             data_range = range(1, len( self.ctimes ) + 1)
         else:
-            data_range = range(10, len( self.task_list ) + 10)
+            data_range = range(1, len( self.task_list ) + 1)
+
         for n in data_range:
             cr = gtk.CellRendererPixbuf()
             #cr.set_property( 'cell_background', 'black' )
@@ -312,6 +269,7 @@ class DotUpdater(threading.Thread):
             tvc.pack_end( cr, True )
             tvc.set_attributes( cr, pixbuf=n )
             self.led_treeview.append_column( tvc )
+
         self.set_led_headings()
         self.is_transposed = self.should_transpose_view
 
@@ -418,8 +376,7 @@ class DotUpdater(threading.Thread):
                     else:
                         state_list.append( self.dots['empty'] )
                 try:
-                    self.led_liststore.append( self.digitize( ctime ) +
-                                               state_list + [ctime])
+                    self.led_liststore.append( [ctime] + state_list + [ctime])
                 except ValueError:
                     # A very laggy store can change the columns and raise this.
                     return False
