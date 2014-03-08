@@ -657,7 +657,6 @@ class scheduler(object):
         print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", str(ts)
 
     def reconfigure( self ):
-        # reload the suite definition while the suite runs
         print "RELOADING the suite definition"
         old_task_list = self.config.get_task_name_list()
         self.configure_suite( reconfigure=True )
@@ -683,6 +682,9 @@ class scheduler(object):
 
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
+
+        # update state dumper state
+        self.state_dumper.set_cts( self.start_tag, self.stop_tag )
 
     def reload_taskdefs( self ):
         found = False
@@ -777,14 +779,14 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
+            self.state_dumper = dumper( self.suite, self.run_mode, self.start_tag, self.stop_tag )
+
             run_dir = sitecfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
 
-        if not reconfigure:
-            # PAUSE TIME?
             self.hold_suite_now = False
             self.hold_time = None
             if self.options.hold_time:
@@ -809,8 +811,6 @@ class scheduler(object):
         flags.utc = self.config.cfg['cylc']['UTC mode']
         if flags.utc:
             os.environ['TZ'] = 'UTC'
-
-        self.state_dumper = dumper( self.suite, self.run_mode, self.start_tag, self.stop_tag )
 
         if not reconfigure:
             slog = suite_log( self.suite )
