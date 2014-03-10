@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-03-04 09:58:00"> 
+<meta name="date" content="2014-03-10 23:44:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -115,9 +115,8 @@ href="#x10-1100009.4.7">9.4.7<!--tex4ht:ref: TaskExecutionEnvironment --></a>).
          cylc commands.
          </li></ul>
      </li></ul>
-<!--l. 2210--><p class="noindent" >A typical example:  <!--l. 2212--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2210--><p class="noindent" >A typical example:  <!--l. 2212-->
+   <div class="lstlisting" id="listing-73"><span class="label"><a 
  id="x10-66001r1"></a></span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">path</span><span 
@@ -420,17 +419,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">...</span>
-
-
+   
    </div>
 <!--l. 2230--><p class="noindent" >
    <h4 class="subsectionHead"><span class="titlemark">9.2   </span> <a 
  id="x10-670009.2"></a>Suite.rc File Overview</h4>
 <!--l. 2233--><p class="noindent" >Suite.rc files are an extended-INI format with section nesting.
 <!--l. 2235--><p class="indent" >   Embedded template processor expressions may also be used in the file, to programatically generate the final suite
-definition seen by cylc. Currently the Jinja2 template processor is supported (<span class="obeylines-h"><a 
+definition seen by cylc. Currently the Jinja2 template processor is supported (<a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
-class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></span>);
+class="pcrr7t-">http://jinja.pocoo.org/docs</span></a>);
 see <span 
 class="cmti-10">Jinja2 </span>(Section&#x00A0;<a 
 href="#x10-1230009.6">9.6<!--tex4ht:ref: Jinja2 --></a>) for examples. In the future cylc may provide a plug-in interface to allow use of other
@@ -513,9 +511,8 @@ href="#x10-1230009.6">9.6<!--tex4ht:ref: Jinja2 --></a>) must process to raw sui
 boundaries are completely arbitrary - you can think of include-files as chunks of the suite.rc file simply
 cut-and-pasted into another file. Include-files may be included multiple times in the same file, and
 even nested. Include-file paths can be specified portably relative to the suite definition directory, e.g.:
-<!--l. 2280--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2280-->
+   <div class="lstlisting" id="listing-74"><span class="label"><a 
  id="x10-69001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -544,16 +541,14 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">rc</span>
-
-
+   
    </div>
 <!--l. 2285--><p class="noindent" >
 <!--l. 2285--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-700009.2.2.1"></a><span 
 class="cmbx-10">Editing Temporarily Inlined Suites</span></span>
-   Cylc&#8217;s native file inclusion mechanism supports optional inlined editing: <!--l. 2289--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   Cylc&#8217;s native file inclusion mechanism supports optional inlined editing: <!--l. 2289-->
+   <div class="lstlisting" id="listing-75"><span class="label"><a 
  id="x10-70001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -566,8 +561,7 @@ class="pcrr7t-">--</span><span
 class="pcrr7t-">inline</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">SUITE</span>
-
-
+   
    </div>
 <!--l. 2292--><p class="indent" >   The suite will be split back into its constituent include-files when you exit the edit session. While editing, the
 inlined file becomes the official suite definition so that changes take effect whenever you save the file. See
@@ -599,9 +593,8 @@ href="cug-htmlse2.html#x3-800111">11<!--tex4ht:ref: fig-cylc-vim --></a>. We als
 class="cmti-10">emacs </span>font-lock mode, and syntax files for the <span 
 class="cmti-10">gedit </span>and <span 
 class="cmti-10">kate </span>editors:
-<!--l. 2309--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2309-->
+   <div class="lstlisting" id="listing-76"><span class="label"><a 
  id="x10-72001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -680,8 +673,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">kate</span>
-
-
+   
    </div>
 <!--l. 2315--><p class="indent" >   Refer to comments at the top of each file to see how to use them.
 <!--l. 2317--><p class="noindent" >
@@ -729,9 +721,8 @@ href="cug-htmlse17.html#x18-212000A">A<!--tex4ht:ref: SuiteRCReference --></a>).
 
                                                                                          
 <!--l. 2354--><p class="indent" >   The validator reports the line numbers of detected errors. Here&#8217;s an example showing a section heading with a
-missing right bracket: <!--l. 2356--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+missing right bracket: <!--l. 2356-->
+   <div class="lstlisting" id="listing-77"><span class="label"><a 
  id="x10-74001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -767,8 +758,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">line</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">19'</span>
-
-
+   
    </div>
 <!--l. 2362--><p class="indent" >   If the suite.rc file uses include-files <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -793,9 +783,8 @@ information that allows cylc to determine when tasks are ready to run. The most 
 this is the suite dependency graph. Cylc graph notation makes clear textual graph representations
 that are very concise because sections of the graph that repeat at different hours of the day, say, only
 have to be defined once. Here&#8217;s an example with dependencies that vary depending on cycle time:
-<!--l. 2384--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2384-->
+   <div class="lstlisting" id="listing-78"><span class="label"><a 
  id="x10-75001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -858,7 +847,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-75005r5"></a></span></span><span 
+ id="x10-75005r5"></a></span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
@@ -885,7 +874,7 @@ class="pcrr7t-">off</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-75006r6"></a></span></span><span 
+ id="x10-75006r6"></a></span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">T</span><span 
@@ -906,7 +895,7 @@ class="pcrr7t-">restart</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">trigger</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-75007r7"></a></span></span><span 
+ id="x10-75007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -968,14 +957,12 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">X</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2396--><p class="indent" >   Figure&#x00A0;<a 
 href="#x10-7502320">20<!--tex4ht:ref: fig-dep-eg-1 --></a> shows the complete suite.rc listing alongside the suite graph. This is a complete, valid, runnable suite
 (it will use default task runtime properties such as command scripting).
 <!--l. 2401--><p class="indent" >   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -985,9 +972,8 @@ href="#x10-7502320">20<!--tex4ht:ref: fig-dep-eg-1 --></a> shows the complete su
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2404--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2404-->
+<div class="lstlisting" id="listing-79"><span class="label"><a 
  id="x10-75010r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1057,7 +1043,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-75015r6"></a></span></span><span 
+ id="x10-75015r6"></a></span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
@@ -1084,7 +1070,7 @@ class="pcrr7t-">off</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-75016r7"></a></span></span><span 
+ id="x10-75016r7"></a></span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">T</span><span 
@@ -1105,7 +1091,7 @@ class="pcrr7t-">restart</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">trigger</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-75017r8"></a></span></span><span 
+ id="x10-75017r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1206,24 +1192,23 @@ class="pcrr7t-">color</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">red</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2423--><p class="noindent" >
 
 <!--l. 2424--><p class="noindent" ><img 
 src="../../graphics/png/scaled/dep-eg-1.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;20: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;20: </span><span  
 class="content"><span 
-class="cmr-7">Example Suite</span></td></tr></table><!--tex4ht:label?: x10-7502320 -->
+class="cmr-7">Example Suite</span></span></div><!--tex4ht:label?: x10-7502320 -->
                                                                                          
 
                                                                                          
-<!--l. 2429--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 2429--><p class="indent" >   </div><hr class="endfigure">
    <h5 class="subsubsectionHead"><span class="titlemark">9.3.1   </span> <a 
  id="x10-760009.3.1"></a>Graph String Syntax</h5>
 <!--l. 2433--><p class="noindent" >Multiline graph strings may contain:
@@ -1253,9 +1238,8 @@ this section we use only the default trigger type, which is to trigger off the u
 Section&#x00A0;<a 
 href="#x10-870009.3.4">9.3.4<!--tex4ht:ref: TriggerTypes --></a> for other available triggers.
 <!--l. 2452--><p class="indent" >   In the case of cycling tasks, the triggers defined by a graph string are valid for cycle times matching the list of
-hours specified for the graph section. For example this graph,  <!--l. 2456--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+hours specified for the graph section. For example this graph,  <!--l. 2456-->
+   <div class="lstlisting" id="listing-80"><span class="label"><a 
  id="x10-77001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -1307,13 +1291,11 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2463--><p class="indent" >   implies that B triggers off A for cycle times in which the hour matches 0 or 12.
-<!--l. 2466--><p class="indent" >   To define intercycle dependencies, attach an offset indicator to the left side of a pair:  <!--l. 2469--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2466--><p class="indent" >   To define intercycle dependencies, attach an offset indicator to the left side of a pair:  <!--l. 2469-->
+   <div class="lstlisting" id="listing-81"><span class="label"><a 
  id="x10-77005r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -1368,8 +1350,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2476--><p class="indent" >   This means B[T] triggers off A[T-12] for cycle times T with hours matching 0 or 12. T must be implicit unless
 there is a cycle time offset - this keeps graphs clean and concise because the majority of tasks will typically depend
@@ -1394,9 +1375,8 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span></span> (see Section&#x00A0;<a 
 href="#x10-970009.3.4.10">9.3.4.10<!--tex4ht:ref: IntercycleTriggers --></a>).
-<!--l. 2486--><p class="indent" >   Triggers can be chained together. This graph:  <!--l. 2488--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2486--><p class="indent" >   Triggers can be chained together. This graph:  <!--l. 2488-->
+   <div class="lstlisting" id="listing-82"><span class="label"><a 
  id="x10-77009r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1426,7 +1406,7 @@ class="pcrr7t-">off</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77010r2"></a></span></span><span 
+ id="x10-77010r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1461,12 +1441,10 @@ class="pcrr7t-">B</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 2492--><p class="indent" >   is equivalent to this: <!--l. 2493--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2492--><p class="indent" >   is equivalent to this: <!--l. 2493-->
+   <div class="lstlisting" id="listing-83"><span class="label"><a 
  id="x10-77011r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1487,18 +1465,16 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2497--><p class="indent" >   <span 
 class="cmti-10">Each trigger in the graph must be unique </span>but <span 
 class="cmti-10">the same task can appear in multiple pairs or chains</span>. Separately
-defined triggers for the same task have an AND relationship. So this: <!--l. 2500--><div class="lstlisting">
+defined triggers for the same task have an AND relationship. So this: <!--l. 2500-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+   <div class="lstlisting" id="listing-84"><span class="label"><a 
  id="x10-77012r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1528,7 +1504,7 @@ class="pcrr7t-">off</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77013r2"></a></span></span><span 
+ id="x10-77013r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1565,12 +1541,10 @@ class="pcrr7t-">B</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 2504--><p class="indent" >   is equivalent to this: <!--l. 2505--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2504--><p class="indent" >   is equivalent to this: <!--l. 2505-->
+   <div class="lstlisting" id="listing-85"><span class="label"><a 
  id="x10-77014r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1606,15 +1580,13 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">AND</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">B</span>
-
-
+   
    </div>
 <!--l. 2509--><p class="indent" >   In summary, the branching tree structure of a dependency graph can be partitioned into lines (in the suite.rc
 graph string) of pairs or chains, in any way you like, with liberal use of internal white space and comments to make
 the graph structure as clear as possible.
-   <!--l. 2514--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 2514-->
+   <div class="lstlisting" id="listing-86"><span class="label"><a 
  id="x10-77015r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1707,7 +1679,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77019r5"></a></span></span><span 
+ id="x10-77019r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1764,7 +1736,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">D</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77022r8"></a></span></span><span 
+ id="x10-77022r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1817,7 +1789,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77025r11"></a></span></span><span 
+ id="x10-77025r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1839,7 +1811,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77026r12"></a></span></span><span 
+ id="x10-77026r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1911,9 +1883,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">follows</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77029r15"></a></span></span><span 
+ id="x10-77029r15"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77030r16"></a></span></span><span 
+ id="x10-77030r16"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1941,7 +1913,7 @@ class="pcrr7t-">comment</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">...</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-77031r17"></a></span></span><span 
+ id="x10-77031r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1965,16 +1937,14 @@ class="pcrr7t-">D</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2534--><p class="noindent" >
 <!--l. 2534--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-780009.3.2.1"></a><span 
 class="cmbx-10">Handling Long Graph Lines</span></span>
-   Long chains of dependencies can be split into pairs: <!--l. 2537--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   Long chains of dependencies can be split into pairs: <!--l. 2537-->
+   <div class="lstlisting" id="listing-87"><span class="label"><a 
  id="x10-78001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2026,7 +1996,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-78004r4"></a></span></span><span 
+ id="x10-78004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2090,7 +2060,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">WRONG</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-78007r7"></a></span></span><span 
+ id="x10-78007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2120,13 +2090,11 @@ class="pcrro7t-">#</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">WRONG</span><span 
 class="pcrro7t-">!</span>
-
-
+   
    </div>
 <!--l. 2546--><p class="indent" >   If you have very long task names, or long conditional trigger expressions (below) then you can use the suite.rc
-line continuation marker: <!--l. 2549--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+line continuation marker: <!--l. 2549-->
+   <div class="lstlisting" id="listing-88"><span class="label"><a 
  id="x10-78008r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2145,7 +2113,7 @@ class="pcrr7t-">B</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-78009r2"></a></span></span><span 
+ id="x10-78009r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2159,8 +2127,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">OK</span>
-
-
+   
    </div>
 <!--l. 2553--><p class="indent" >   Note that a line continuation marker must be the final character on the line; it cannot be followed by trailing
 spaces or a comment.
@@ -2180,7 +2147,6 @@ href="#x10-8000521">21<!--tex4ht:ref: fig-test1 --></a> shows a small suite of o
 successors (once they&#8217;re all finished the suite just exits). The integer 1 attached to each graph node is just an
 arbitrary label, akin to the task cycle time in cycling tasks; it increments when a repeating asynchronous task
 (below) spawns. <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -2190,9 +2156,8 @@ arbitrary label, akin to the task cycle time in cycling tasks; it increments whe
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2579--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2579-->
+<div class="lstlisting" id="listing-89"><span class="label"><a 
  id="x10-80001r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2250,31 +2215,29 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2589--><p class="noindent" >
 
 <!--l. 2590--><p class="noindent" ><img 
 src="../../graphics/png/scaled/test1.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;21: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;21: </span><span  
 class="content"><span 
-class="cmr-7">One-off Asynchronous Tasks.</span></td></tr></table><!--tex4ht:label?: x10-8000521 -->
+class="cmr-7">One-off Asynchronous Tasks.</span></span></div><!--tex4ht:label?: x10-8000521 -->
                                                                                          
 
                                                                                          
-<!--l. 2595--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 2595--><p class="indent" >   </div><hr class="endfigure">
 <!--l. 2597--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-810009.3.3.2"></a><span 
 class="cmbx-10">Cycling Tasks</span></span>
    For cycling tasks the graph VALIDITY section heading defines a sequence of cycles times for which the
 subsequent graph section is valid. Figure&#x00A0;<a 
 href="#x10-8100722">22<!--tex4ht:ref: fig-test2 --></a> shows a small suite of cycling tasks. <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -2284,9 +2247,8 @@ href="#x10-8100722">22<!--tex4ht:ref: fig-test2 --></a> shows a small suite of c
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2605--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2605-->
+<div class="lstlisting" id="listing-90"><span class="label"><a 
  id="x10-81001r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2372,31 +2334,29 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2617--><p class="noindent" >
 
 <!--l. 2618--><p class="noindent" ><img 
 src="../../graphics/png/scaled/test2.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;22: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;22: </span><span  
 class="content"><span 
-class="cmr-7">Cycling Tasks.</span></td></tr></table><!--tex4ht:label?: x10-8100722 -->
+class="cmr-7">Cycling Tasks.</span></span></div><!--tex4ht:label?: x10-8100722 -->
                                                                                          
 
                                                                                          
-<!--l. 2623--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 2623--><p class="indent" >   </div><hr class="endfigure">
 <!--l. 2625--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x10-820009.3.3.2.1"></a><span 
 class="cmbx-10">Stepped Daily, Monthly, And Yearly Cycling</span></span>
    In addition to the original hours-of-the-day section headings, cylc now has an extensible cycling mechanism and
-(so far) stepped daily, monthly, and yearly cycling modules:  <!--l. 2632--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+(so far) stepped daily, monthly, and yearly cycling modules:  <!--l. 2632-->
+   <div class="lstlisting" id="listing-91"><span class="label"><a 
  id="x10-82001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -2530,8 +2490,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">orange</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2642--><p class="indent" >   The section heading arguments here are an <span 
 class="cmti-10">anchor </span>datetime and an integer <span 
@@ -2542,9 +2501,8 @@ class="pcrr7t-">(2010,3)</span></span> defines a
 3-yearly sequence that always lands on the year 2010, not 2011 or 2012, regardless of the initial cycle time - which
 can be before or after 2010.
 <!--l. 2649--><p class="indent" >   Note that hours-of-the-day graph section headings can also be written to explicitly reference the associated
-cycling module:  <!--l. 2652--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+cycling module:  <!--l. 2652-->
+   <div class="lstlisting" id="listing-92"><span class="label"><a 
  id="x10-82009r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -2605,8 +2563,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">blue</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2659--><p class="noindent" >
 <!--l. 2659--><p class="indent" >   <span class="subparagraphHead"> <a 
@@ -2617,9 +2574,8 @@ class="cmti-10">add </span>to
 generate the complete graph. Different graph sections can overlap (i.e.&#x00A0;the same hours may appear in multiple
 section headings) and the same tasks may appear in multiple sections, but individual dependencies should be unique
 across the entire graph. For example, the following graph defines a duplicate prerequisite for task C:
-<!--l. 2669--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2669-->
+   <div class="lstlisting" id="listing-93"><span class="label"><a 
  id="x10-83001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -2753,13 +2709,11 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">6,</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">18</span>
-
-
+   
    </div>
 <!--l. 2678--><p class="indent" >   This does not affect scheduling, but for the sake of clarity and brevity the graph should be written like this:
-<!--l. 2680--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2680-->
+   <div class="lstlisting" id="listing-94"><span class="label"><a 
  id="x10-83008r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -2888,8 +2842,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">X</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2690--><p class="noindent" >
 <!--l. 2690--><p class="noindent" ><span class="paragraphHead"><a 
@@ -2919,7 +2872,6 @@ class="cmti-10">one-off asynchronous tasks only run in</span>
 <span 
 class="cmti-10">a cold-start</span>.
 <!--l. 2713--><p class="indent" >   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -2929,9 +2881,8 @@ class="cmti-10">a cold-start</span>.
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2716--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2716-->
+<div class="lstlisting" id="listing-95"><span class="label"><a 
  id="x10-85001r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3033,7 +2984,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-85008r8"></a></span></span><span 
+ id="x10-85008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3056,7 +3007,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-85009r9"></a></span></span><span 
+ id="x10-85009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3070,7 +3021,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-85010r10"></a></span></span><span 
+ id="x10-85010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3094,26 +3045,24 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2732--><p class="noindent" >
 
 <!--l. 2733--><p class="noindent" ><img 
 src="../../graphics/png/scaled/test4.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;23: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;23: </span><span  
 class="content"><span 
-class="cmr-7">One-off asynchronous and cycling tasks in the same suite.</span></td></tr></table><!--tex4ht:label?: x10-8501123 -->
+class="cmr-7">One-off asynchronous and cycling tasks in the same suite.</span></span></div><!--tex4ht:label?: x10-8501123 -->
                                                                                          
 
                                                                                          
-<!--l. 2739--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 2739--><p class="indent" >   </div><hr class="endfigure">
 <!--l. 2741--><p class="indent" >   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -3123,9 +3072,8 @@ class="cmr-7">One-off asynchronous and cycling tasks in the same suite.</span></
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2744--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2744-->
+<div class="lstlisting" id="listing-96"><span class="label"><a 
  id="x10-85012r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3239,7 +3187,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-85020r9"></a></span></span><span 
+ id="x10-85020r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3266,7 +3214,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-85021r10"></a></span></span><span 
+ id="x10-85021r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3280,7 +3228,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-85022r11"></a></span></span><span 
+ id="x10-85022r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3304,24 +3252,23 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2761--><p class="noindent" >
 
 <!--l. 2762--><p class="noindent" ><img 
 src="../../graphics/png/scaled/test5.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;24: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;24: </span><span  
 class="content"><span 
-class="cmr-7">One-off synchronous and cycling tasks in the same suite.</span></td></tr></table><!--tex4ht:label?: x10-8502324 -->
+class="cmr-7">One-off synchronous and cycling tasks in the same suite.</span></span></div><!--tex4ht:label?: x10-8502324 -->
                                                                                          
 
                                                                                          
-<!--l. 2768--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 2768--><p class="indent" >   </div><hr class="endfigure">
 <!--l. 2770--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-860009.3.3.4"></a><span 
 class="cmbx-10">Repeating Asynchronous Tasks</span></span>
@@ -3350,7 +3297,6 @@ class="cmti-10">Note that other trigger types (success, failure,</span>
 <span 
 class="cmti-10">start, suicide, and conditional) cannot currently be used in a repeating asynchronous graph section.</span>
 <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -3360,9 +3306,8 @@ class="cmti-10">start, suicide, and conditional) cannot currently be used in a r
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2804--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2804-->
+<div class="lstlisting" id="listing-97"><span class="label"><a 
  id="x10-86001r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3627,24 +3572,23 @@ class="pcrr7t-">&#x003C;</span><span
 class="pcrr7t-">ASYNCID</span><span 
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2825--><p class="noindent" >
 
 <!--l. 2826--><p class="noindent" ><img 
 src="../../graphics/png/scaled/test6.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;25: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;25: </span><span  
 class="content"><span 
-class="cmr-7">Repeating Asynchronous Tasks.</span></td></tr></table><!--tex4ht:label?: x10-8601625 -->
+class="cmr-7">Repeating Asynchronous Tasks.</span></span></div><!--tex4ht:label?: x10-8601625 -->
                                                                                          
 
                                                                                          
-<!--l. 2831--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 2831--><p class="indent" >   </div><hr class="endfigure">
    <h5 class="subsubsectionHead"><span class="titlemark">9.3.4   </span> <a 
  id="x10-870009.3.4"></a>Trigger Types</h5>
 <!--l. 2838--><p class="noindent" >Trigger type, indicated by <span 
@@ -3654,9 +3598,8 @@ the downstream task (or family) triggering.
 <!--l. 2842--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-880009.3.4.1"></a><span 
 class="cmbx-10">Success Triggers</span></span>
-   The default, with no trigger type specified, is to trigger off the upstream task succeeding: <!--l. 2846--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   The default, with no trigger type specified, is to trigger off the upstream task succeeding: <!--l. 2846-->
+   <div class="lstlisting" id="listing-98"><span class="label"><a 
  id="x10-88001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -3687,12 +3630,10 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 2850--><p class="indent" >   For consistency and completeness, however, the success trigger can be explicit: <!--l. 2851--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2850--><p class="indent" >   For consistency and completeness, however, the success trigger can be explicit: <!--l. 2851-->
+   <div class="lstlisting" id="listing-99"><span class="label"><a 
  id="x10-88003r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -3748,16 +3689,14 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2858--><p class="noindent" >
 <!--l. 2858--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-890009.3.4.2"></a><span 
 class="cmbx-10">Failure Triggers</span></span>
-   To trigger off the upstream task reporting failure: <!--l. 2861--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   To trigger off the upstream task reporting failure: <!--l. 2861-->
+   <div class="lstlisting" id="listing-100"><span class="label"><a 
  id="x10-89001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -3790,8 +3729,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2865--><p class="indent" >   Section&#x00A0;<a 
 href="#x10-950009.3.4.8">9.3.4.8<!--tex4ht:ref: SuicideTriggers --></a> (<span 
@@ -3800,9 +3738,8 @@ class="cmti-10">Suicide Triggers</span>) shows one way of handling task B here i
 <!--l. 2868--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-900009.3.4.3"></a><span 
 class="cmbx-10">Start Triggers</span></span>
-   To trigger off the upstream task starting to execute: <!--l. 2871--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   To trigger off the upstream task starting to execute: <!--l. 2871-->
+   <div class="lstlisting" id="listing-101"><span class="label"><a 
  id="x10-90001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -3837,8 +3774,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2875--><p class="indent" >   This can be used to trigger tasks that monitor other tasks once they (the target tasks) start executing. Consider
 a long-running forecast model, for instance, that generates a sequence of output files as it runs. A postprocessing
@@ -3880,9 +3816,8 @@ model.
 <!--l. 2891--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-910009.3.4.4"></a><span 
 class="cmbx-10">Finish Triggers</span></span>
-   To trigger off the upstream task succeeding or failing, i.e.&#x00A0;finishing one way or the other: <!--l. 2895--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   To trigger off the upstream task succeeding or failing, i.e.&#x00A0;finishing one way or the other: <!--l. 2895-->
+   <div class="lstlisting" id="listing-102"><span class="label"><a 
  id="x10-91001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -3949,17 +3884,15 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2902--><p class="noindent" >
 <!--l. 2902--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-920009.3.4.5"></a><span 
 class="cmbx-10">Internal (Message) Triggers</span></span>
    These allow triggering off off events that occur while a task runs. A special event message must be registered in
-the suite definition, and deliberately sent by the task at the appropriate time. <!--l. 2908--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+the suite definition, and deliberately sent by the task at the appropriate time. <!--l. 2908-->
+   <div class="lstlisting" id="listing-103"><span class="label"><a 
  id="x10-92001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -4107,8 +4040,7 @@ class="pcrr7t-">[</span><span
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2919--><p class="indent" >   Task A must emit this message when the actual output has been completed - see <span 
 class="cmti-10">Reporting Internal Outputs</span>
@@ -4119,9 +4051,8 @@ href="cug-htmlse10.html#x11-13400010.3">10.3<!--tex4ht:ref: RIOC --></a>).
 <!--l. 2922--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-930009.3.4.6"></a><span 
 class="cmbx-10">Job Submission Triggers</span></span>
-   It is also possible to trigger off a task submitting, or failing to submit: <!--l. 2925--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   It is also possible to trigger off a task submitting, or failing to submit: <!--l. 2925-->
+   <div class="lstlisting" id="listing-104"><span class="label"><a 
  id="x10-93001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -4197,8 +4128,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">D</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2932--><p class="indent" >   A possible use case for submit-fail triggers: if a task goes into the submit-failed state, possibly
 after several job submission retries, another task that inherits the same runtime but sets a different
@@ -4210,9 +4140,8 @@ platform.
 class="cmbx-10">Conditional Triggers</span></span>
    AND operators (<span class="lstinline"><span 
 class="pcrr7t-">&amp;</span></span>) can appear on both sides of an arrow. They provide a concise alternative to defining multiple
-triggers separately: <!--l. 2943--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+triggers separately: <!--l. 2943-->
+   <div class="lstlisting" id="listing-105"><span class="label"><a 
  id="x10-94001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -4270,7 +4199,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94005r5"></a></span></span><span 
+ id="x10-94005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4352,7 +4281,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94010r10"></a></span></span><span 
+ id="x10-94010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4442,7 +4371,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94015r15"></a></span></span><span 
+ id="x10-94015r15"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4464,7 +4393,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94016r16"></a></span></span><span 
+ id="x10-94016r16"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4486,7 +4415,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">D</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94017r17"></a></span></span><span 
+ id="x10-94017r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4510,17 +4439,15 @@ class="pcrr7t-">D</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2963--><p class="indent" >   OR operators (<span class="lstinline"><span 
 class="pcrr7t-">|</span></span>) which result in true conditional triggers, can only appear on the
 left,<span class="footnote-mark"><a 
 href="#fn2x0" id="fn2x0-bk"><sup class="textsuperscript">2</sup></a></span><a 
  id="x10-94018f2"></a>
-<!--l. 2967--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 2967-->
+   <div class="lstlisting" id="listing-106"><span class="label"><a 
  id="x10-94019r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -4561,14 +4488,12 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">C</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 2972--><p class="indent" >   Forecasting suites typically have simple conditional triggering requirements, but any valid conditional
 expression can be used, as shown in Figure&#x00A0;<a 
 href="#x10-9402926">26<!--tex4ht:ref: fig-conditional --></a> (conditional triggers are plotted with open arrow heads).
 <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -4578,9 +4503,8 @@ href="#x10-9402926">26<!--tex4ht:ref: fig-conditional --></a> (conditional trigg
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 2979--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 2979-->
+<div class="lstlisting" id="listing-107"><span class="label"><a 
  id="x10-94021r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4598,7 +4522,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94022r2"></a></span></span><span 
+ id="x10-94022r2"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">D</span><span 
@@ -4621,7 +4545,7 @@ class="pcrr7t-">)</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">succeed</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94023r3"></a></span></span><span 
+ id="x10-94023r3"></a></span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
@@ -4636,7 +4560,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">D</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94024r4"></a></span></span><span 
+ id="x10-94024r4"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">just</span><span 
@@ -4653,14 +4577,14 @@ class="pcrr7t-">graph</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">sections</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94025r5"></a></span></span><span 
+ id="x10-94025r5"></a></span><span 
 class="pcrr7t-">D</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">W</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94026r6"></a></span></span><span 
+ id="x10-94026r6"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Z</span><span 
@@ -4683,7 +4607,7 @@ class="pcrr7t-">Y</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">succeed</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94027r7"></a></span></span><span 
+ id="x10-94027r7"></a></span><span 
 class="pcrr7t-">(</span><span 
 class="pcrr7t-">W</span><span 
 class="pcrr7t-">|</span><span 
@@ -4698,7 +4622,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Z</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-94028r8"></a></span></span><span 
+ id="x10-94028r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4718,24 +4642,23 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 2993--><p class="noindent" >
 
 <!--l. 2994--><p class="noindent" ><img 
 src="../../graphics/png/scaled/conditional-triggers.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;26: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;26: </span><span  
 class="content"><span 
-class="cmr-7">Conditional triggers are plotted with open arrow heads.</span></td></tr></table><!--tex4ht:label?: x10-9402926 -->
+class="cmr-7">Conditional triggers are plotted with open arrow heads.</span></span></div><!--tex4ht:label?: x10-9402926 -->
                                                                                          
 
                                                                                          
-<!--l. 3000--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 3000--><p class="indent" >   </div><hr class="endfigure">
 <!--l. 3002--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-950009.3.4.8"></a><span 
 class="cmbx-10">Suicide Triggers</span></span>
@@ -4747,7 +4670,6 @@ class="cmti-10">AutoRecover.async </span>example suite to see
 how this works). The dashed graph edges ending in solid dots indicate suicide triggers, and the open arrowheads
 indicate conditional triggers as usual.
 <!--l. 3015--><p class="indent" >   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -4757,9 +4679,8 @@ indicate conditional triggers as usual.
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><!--l. 3018--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<div class="minipage"><!--l. 3018-->
+<div class="lstlisting" id="listing-108"><span class="label"><a 
  id="x10-95001r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4780,7 +4701,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95003r3"></a></span></span><span 
+ id="x10-95003r3"></a></span><span 
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">task</span><span 
@@ -4791,7 +4712,7 @@ class="pcrr7t-">triggers</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">diagnosis</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95004r4"></a></span></span><span 
+ id="x10-95004r4"></a></span><span 
 class="pcrr7t-">and</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">recovery</span><span 
@@ -4805,7 +4726,7 @@ class="pcrr7t-">take</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">themselves</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95005r5"></a></span></span><span 
+ id="x10-95005r5"></a></span><span 
 class="pcrr7t-">out</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">of</span><span 
@@ -4823,7 +4744,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95006r6"></a></span></span><span 
+ id="x10-95006r6"></a></span><span 
 class="pcrr7t-">post</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">processing</span><span 
@@ -4836,13 +4757,13 @@ class="pcrr7t-">model</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">OR</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95007r7"></a></span></span><span 
+ id="x10-95007r7"></a></span><span 
 class="pcrr7t-">recovery</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">tasks</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95008r8"></a></span></span><span 
+ id="x10-95008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4892,14 +4813,14 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95012r12"></a></span></span><span 
+ id="x10-95012r12"></a></span><span 
 class="pcrr7t-">pre</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95013r13"></a></span></span><span 
+ id="x10-95013r13"></a></span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">fail</span><span 
@@ -4912,7 +4833,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">recover</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95014r14"></a></span></span><span 
+ id="x10-95014r14"></a></span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
@@ -4925,7 +4846,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">recover</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95015r15"></a></span></span><span 
+ id="x10-95015r15"></a></span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
@@ -4936,7 +4857,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">post</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95016r16"></a></span></span><span 
+ id="x10-95016r16"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5012,27 +4933,25 @@ class="pcrro7t-">/</span><span
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">false</span>
-
 </div>
-</td></tr></table>                       <table class="minipage"><tr><td><div class="center" 
+</div>                       <div class="minipage"><div class="center" 
 >
 <!--l. 3044--><p class="noindent" >
 
 <!--l. 3045--><p class="noindent" ><img 
 src="../../graphics/png/scaled/suicide.png" alt="PIC"  
 ></div>
-</td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;27: </td><td  
+</div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;27: </span><span  
 class="content"><span 
-class="cmr-7">Automated failure recovery via suicide triggers.</span></td></tr></table><!--tex4ht:label?: x10-9502127 -->
+class="cmr-7">Automated failure recovery via suicide triggers.</span></span></div><!--tex4ht:label?: x10-9502127 -->
                                                                                          
 
                                                                                          
-<!--l. 3051--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
-<!--l. 3053--><p class="indent" >   Note that multiple suicide triggers combine in the same way as other triggers, so this: <!--l. 3054--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3051--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 3053--><p class="indent" >   Note that multiple suicide triggers combine in the same way as other triggers, so this: <!--l. 3054-->
+   <div class="lstlisting" id="listing-109"><span class="label"><a 
  id="x10-95022r1"></a></span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5048,12 +4967,10 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">baz</span>
-
-
+   
    </div>
-<!--l. 3058--><p class="indent" >   is equivalent to this: <!--l. 3059--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3058--><p class="indent" >   is equivalent to this: <!--l. 3059-->
+   <div class="lstlisting" id="listing-110"><span class="label"><a 
  id="x10-95024r1"></a></span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5065,16 +4982,14 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">baz</span>
-
-
+   
    </div>
 <!--l. 3062--><p class="indent" >   i.e.&#x00A0;both <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> and <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> must succeed for <span class="lstinline"><span 
 class="pcrr7t-">baz</span></span> to be taken out of the suite. If you really want a task to be taken
-out if any one of several events occurs then be careful to write it that way: <!--l. 3066--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+out if any one of several events occurs then be careful to write it that way: <!--l. 3066-->
+   <div class="lstlisting" id="listing-111"><span class="label"><a 
  id="x10-95025r1"></a></span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5086,12 +5001,10 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">baz</span>
-
-
+   
    </div>
-<!--l. 3070--><p class="indent" >   A word of warning on the meaning of &#8220;bare suicide triggers&#8221;. Consider the following suite:  <!--l. 3073--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3070--><p class="indent" >   A word of warning on the meaning of &#8220;bare suicide triggers&#8221;. Consider the following suite:  <!--l. 3073-->
+   <div class="lstlisting" id="listing-112"><span class="label"><a 
  id="x10-95026r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5127,14 +5040,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3078--><p class="indent" >   Task <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> has a suicide trigger but no normal prerequisites (a suicide trigger is not a task triggering prerequisite,
-it is a task removal prerequisite) so this is entirely equivalent to:  <!--l. 3082--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+it is a task removal prerequisite) so this is entirely equivalent to:  <!--l. 3082-->
+   <div class="lstlisting" id="listing-113"><span class="label"><a 
  id="x10-95029r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5166,7 +5077,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95032r4"></a></span></span><span 
+ id="x10-95032r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5185,7 +5096,7 @@ class="pcrr7t-">&amp;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95033r5"></a></span></span><span 
+ id="x10-95033r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5204,7 +5115,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-95034r6"></a></span></span><span 
+ id="x10-95034r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5224,8 +5135,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3090--><p class="indent" >   In other words both tasks will trigger immediately, at the same time, and then <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> will be removed if <span class="lstinline"><span 
@@ -5243,9 +5153,8 @@ for processing different observation types at the same time) and for triggering 
 families as a whole. Higher level families, i.e. families of families, can also be used, and are reduced
 to the lowest level member tasks. Note that tasks can also trigger off individual family members if
 necessary.
-<!--l. 3108--><p class="indent" >   To trigger an entire task family at once: <!--l. 3109--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3108--><p class="indent" >   To trigger an entire task family at once: <!--l. 3109-->
+   <div class="lstlisting" id="listing-114"><span class="label"><a 
  id="x10-96001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5358,12 +5267,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fam</span>
-
-
+   
    </div>
-<!--l. 3118--><p class="indent" >   This is equivalent to: <!--l. 3119--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3118--><p class="indent" >   This is equivalent to: <!--l. 3119-->
+   <div class="lstlisting" id="listing-115"><span class="label"><a 
  id="x10-96008r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5442,19 +5349,17 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fam</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
 <!--l. 3129--><p class="indent" >   To trigger other tasks off families we have to specify whether to triggering off <span 
 class="cmti-10">all members </span>starting, succeeding,
 failing, or finishing, or off <span 
 class="cmti-10">any </span>members (doing the same). Legal family triggers are thus:
-   <!--l. 3134--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 3134-->
+   <div class="lstlisting" id="listing-116"><span class="label"><a 
  id="x10-96015r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5486,7 +5391,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96018r4"></a></span></span><span 
+ id="x10-96018r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5502,7 +5407,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">triggers</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96019r5"></a></span></span><span 
+ id="x10-96019r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5517,7 +5422,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96020r6"></a></span></span><span 
+ id="x10-96020r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5532,7 +5437,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96021r7"></a></span></span><span 
+ id="x10-96021r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5547,7 +5452,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96022r8"></a></span></span><span 
+ id="x10-96022r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5562,7 +5467,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96023r9"></a></span></span><span 
+ id="x10-96023r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5578,7 +5483,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">triggers</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96024r10"></a></span></span><span 
+ id="x10-96024r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5593,7 +5498,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96025r11"></a></span></span><span 
+ id="x10-96025r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5608,7 +5513,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96026r12"></a></span></span><span 
+ id="x10-96026r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5623,7 +5528,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96027r13"></a></span></span><span 
+ id="x10-96027r13"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5638,7 +5543,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96028r14"></a></span></span><span 
+ id="x10-96028r14"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5658,14 +5563,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3151--><p class="indent" >   Here&#8217;s how to trigger downstream processing after if one or more family members succeed, but only after all
 members have finished (succeeded or failed):
-   <!--l. 3155--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 3155-->
+   <div class="lstlisting" id="listing-117"><span class="label"><a 
  id="x10-96029r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5697,7 +5600,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96032r4"></a></span></span><span 
+ id="x10-96032r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5720,7 +5623,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-96033r5"></a></span></span><span 
+ id="x10-96033r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5740,8 +5643,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3164--><p class="noindent" >
 <!--l. 3164--><p class="noindent" ><span class="paragraphHead"><a 
@@ -5753,9 +5655,8 @@ on their own previous instances (see below); but other kinds of intercycle depen
 too.<span class="footnote-mark"><a 
 href="#fn3x0" id="fn3x0-bk"><sup class="textsuperscript">3</sup></a></span><a 
  id="x10-97001f3"></a>
-Here&#8217;s how to express this kind of relationship in cylc: <!--l. 3176--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+Here&#8217;s how to express this kind of relationship in cylc: <!--l. 3176-->
+   <div class="lstlisting" id="listing-118"><span class="label"><a 
  id="x10-97002r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">dependencies</span><span 
@@ -5820,12 +5721,10 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 3182--><p class="indent" >   Intercycle and trigger type (and internal output) notation can be combined: <!--l. 3183--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3182--><p class="indent" >   Intercycle and trigger type (and internal output) notation can be combined: <!--l. 3183-->
+   <div class="lstlisting" id="listing-119"><span class="label"><a 
  id="x10-97006r1"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -5872,8 +5771,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3188--><p class="indent" >   At suite start-up inter-cycle triggers refer to a previous cycle that does not exist. This does not cause the
 dependent task to wait indefinitely, however, because cylc ignores triggers that reach back beyond the initial cycle
@@ -5886,9 +5784,8 @@ href="cug-htmlse7.html#x8-530007.23.1">7.23.1<!--tex4ht:ref: TutIntercycleTrigge
 briefly:
      <ul class="itemize1">
      <li class="itemize">initial <span 
-class="cmti-10">asynchronous tasks</span>:  <!--l. 3204--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="cmti-10">asynchronous tasks</span>:  <!--l. 3204-->
+     <div class="lstlisting" id="listing-120"><span class="label"><a 
  id="x10-97008r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -5968,17 +5865,15 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
-
-
+     
      </div>
      </li>
      <li class="itemize">initial <span 
-class="cmti-10">start-up tasks  </span><!--l. 3214--><div class="lstlisting">
+class="cmti-10">start-up tasks  </span><!--l. 3214-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+     <div class="lstlisting" id="listing-121"><span class="label"><a 
  id="x10-97013r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6069,14 +5964,12 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
-
-
+     
      </div>
      </li>
      <li class="itemize">initial <span 
-class="cmti-10">cold-start tasks  </span><!--l. 3225--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="cmti-10">cold-start tasks  </span><!--l. 3225-->
+     <div class="lstlisting" id="listing-122"><span class="label"><a 
  id="x10-97019r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6167,8 +6060,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
-
-
+     
      </div>
      </li></ul>
 <!--l. 3236--><p class="indent" >   The first two cases are the same, except that <span 
@@ -6198,9 +6090,8 @@ class="cmbx-10">Sequential Tasks</span></span>
 parallel if the opportunity arises. However, if such a task would interfere with its own siblings for
 internal reasons (e.g.&#x00A0;use of a hardwired non cycle time dependent temporary file or similar) then it
 can be forced to run sequentially. This can be done with explicit inter-cycle triggers in the graph:
-<!--l. 3271--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3271-->
+   <div class="lstlisting" id="listing-123"><span class="label"><a 
  id="x10-98001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6259,13 +6150,11 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3277--><p class="indent" >   or by declaring the task to be <span 
-class="cmti-10">sequential</span>:  <!--l. 3279--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="cmti-10">sequential</span>:  <!--l. 3279-->
+   <div class="lstlisting" id="listing-124"><span class="label"><a 
  id="x10-98005r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6343,17 +6232,15 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3288--><p class="indent" >   The <span 
 class="cmti-10">sequential </span>declaration also results in each instance of <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> triggering off its own predecessor, exactly as in the
 explicit version. The only difference is that implicit triggers will not appear in graph visualizations. The implicit
 version can also be considerably simpler when the task appears in multiple graph sections or in a non-uniform
-cycling sequence: this suite,  <!--l. 3295--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+cycling sequence: this suite,  <!--l. 3295-->
+   <div class="lstlisting" id="listing-125"><span class="label"><a 
  id="x10-98011r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6431,15 +6318,13 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">"</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
-<!--l. 3303--><p class="indent" >   is equivalent to this one:  <!--l. 3305--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3303--><p class="indent" >   is equivalent to this one:  <!--l. 3305-->
+   <div class="lstlisting" id="listing-126"><span class="label"><a 
  id="x10-98017r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6614,8 +6499,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3318--><p class="noindent" >
 <!--l. 3318--><p class="noindent" ><span class="paragraphHead"><a 
@@ -6635,9 +6519,8 @@ href="#x10-970009.3.4.10">9.3.4.10<!--tex4ht:ref: IntercycleTriggers --></a>.
 <!--l. 3331--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1000009.3.4.13"></a><span 
 class="cmbx-10">Future Triggers</span></span>
-   Cylc also supports inter-cycle triggering off tasks in the future (with respect to cycle time!): <!--l. 3335--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   Cylc also supports inter-cycle triggering off tasks in the future (with respect to cycle time!): <!--l. 3335-->
+   <div class="lstlisting" id="listing-127"><span class="label"><a 
  id="x10-100001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">dependencies</span><span 
@@ -6702,8 +6585,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">B</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3341--><p class="indent" >   In contrast to normal inter-cycle triggers, future triggers present a problem at the suite stop time rather than at
 start-up - in the final cycle <span class="lstinline"><span 
@@ -6716,9 +6598,8 @@ cycle.
  id="x10-1010009.3.5"></a>Model Restart Dependencies</h5>
 <!--l. 3350--><p class="noindent" >Warm-cycled forecast models generate <span 
 class="cmti-10">restart files</span>, e.g.&#x00A0;model background fields, to initialize the next forecast. This
-kind of dependence requires an inter-cycle trigger:  <!--l. 3354--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+kind of dependence requires an inter-cycle trigger:  <!--l. 3354-->
+   <div class="lstlisting" id="listing-128"><span class="label"><a 
  id="x10-101001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6805,12 +6686,10 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 3362--><p class="indent" >   Or if you don&#8217;t need an explicit cold-start task, this will do:  <!--l. 3364--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3362--><p class="indent" >   Or if you don&#8217;t need an explicit cold-start task, this will do:  <!--l. 3364-->
+   <div class="lstlisting" id="listing-129"><span class="label"><a 
  id="x10-101007r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6865,16 +6744,14 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3370--><p class="indent" >   If the model can emit an explicit output message as soon as its restart files are completed (see <span 
 class="cmti-10">Internal Message</span>
 <span 
 class="cmti-10">Outputs </span>- Section&#x00A0;<a 
-href="cug-htmlse10.html#x11-13400010.3">10.3<!--tex4ht:ref: RIOC --></a>) there&#8217;s no need to wait for it to finish:  <!--l. 3374--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+href="cug-htmlse10.html#x11-13400010.3">10.3<!--tex4ht:ref: RIOC --></a>) there&#8217;s no need to wait for it to finish:  <!--l. 3374-->
+   <div class="lstlisting" id="listing-130"><span class="label"><a 
  id="x10-101011r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -6964,12 +6841,12 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-101018r8"></a></span></span><span 
+ id="x10-101018r8"></a></span><span 
 class="pcrr7t-">sleep</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">10</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-101019r9"></a></span></span><span 
+ id="x10-101019r9"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">message</span><span 
@@ -6999,7 +6876,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-101020r10"></a></span></span><span 
+ id="x10-101020r10"></a></span><span 
 class="pcrr7t-">sleep</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">20</span><span 
@@ -7050,11 +6927,10 @@ class="pcrr7t-">[</span><span
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">+6]</span><span 
 class="pcrr7t-">"</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
 <!--l. 3389--><p class="indent" >   If your model is configured to write out additional restart files to allow one or more cycles to be skipped in an
 emergency <span 
@@ -7077,9 +6953,8 @@ class="pcrr7t-">[</span><span
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">-24</span><span 
 class="pcrr7t-">]</span></span> will always be finished first:
-<!--l. 3398--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3398-->
+   <div class="lstlisting" id="listing-131"><span class="label"><a 
  id="x10-101023r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -7186,8 +7061,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">A</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3406--><p class="indent" >   If you need to skip one or more cycles in a suite like this, manually remove the tasks that cannot run (or use
 <span class="lstinline"><span 
@@ -7253,9 +7127,8 @@ class="pcrr7t-">CYLC_TASK_NAME</span></span>
 variable.
 <!--l. 3469--><p class="indent" >   As an example, consider a suite containing an ensemble of closely related tasks that each invokes the same script
 but with a unique argument that identifies the calling task name:
-   <!--l. 3474--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 3474-->
+   <div class="lstlisting" id="listing-132"><span class="label"><a 
  id="x10-105001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -7325,8 +7198,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ensemble</span>
-
-
+   
    </div>
 <!--l. 3482--><p class="indent" >   For large ensembles Jinja2 template processing can be used to automatically generate the member names and
 associated dependencies (see Section&#x00A0;<a 
@@ -7337,9 +7209,10 @@ href="#x10-1230009.6">9.6<!--tex4ht:ref: Jinja2 --></a>).
 <!--l. 3488--><p class="noindent" >The following listing of the <span 
 class="cmti-10">inherit.single.one </span>example suite illustrates basic runtime inheritance with single
 parents.
+   <!--l. 3492--><div class="lstinputlisting">
 <a 
  id="x10-106001"></a>
-   <!--l. 3492--><pre class="listings"><!--l. 3492--><div class="lstinputlisting"><span 
+   <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x10-106002r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -7462,7 +7335,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">OBS</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-106011r10"></a></span></span><span 
+ id="x10-106011r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -8036,8 +7909,9 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">from</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">root</span><span 
-class="pcrro7t-">.</span></div>
-   </pre>
+class="pcrro7t-">.</span>
+   
+   </div>
 <!--l. 3495--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">9.4.5   </span> <a 
  id="x10-1070009.4.5"></a>Runtime Inheritance - Multiple</h5>
@@ -8064,9 +7938,10 @@ class="pcrr7t-">mro</span><span
 class="pcrr7t-">/</span></span>.
 <!--l. 3507--><p class="indent" >   The <span 
 class="cmti-10">inherit.multi.one </span>example suite, listed here, makes use of multiple inheritance:
+   <!--l. 3511--><div class="lstinputlisting">
 <a 
  id="x10-107001"></a>
-   <!--l. 3511--><pre class="listings"><!--l. 3511--><div class="lstinputlisting"><span 
+   <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x10-107002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
@@ -8106,9 +7981,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">works</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107006r5"></a></span></span><span 
+ id="x10-107006r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107007r6"></a></span></span><span 
+ id="x10-107007r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -8130,7 +8005,7 @@ class="pcrr7t-">list</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">namespaces</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107008r7"></a></span></span><span 
+ id="x10-107008r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -8149,7 +8024,7 @@ class="pcrr7t-">graph</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">namespaces</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107009r8"></a></span></span><span 
+ id="x10-107009r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -8174,9 +8049,9 @@ class="pcrr7t-">parent</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">namespaces</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107010r9"></a></span></span><span 
+ id="x10-107010r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107011r10"></a></span></span><span 
+ id="x10-107011r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
@@ -8200,7 +8075,7 @@ class="pcrr7t-">ops_s1</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">SUITE</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-107012r11"></a></span></span><span 
+ id="x10-107012r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%</span><span 
@@ -9044,9 +8919,10 @@ class="pcrro7t-">"</span><span
 class="pcrro7t-">fillcolor</span><span 
 class="pcrro7t-">=</span><span 
 class="pcrro7t-">green</span><span 
-class="pcrro7t-">"</span></div>
-   </pre>
-   <span class="lstinline"><span 
+class="pcrro7t-">"</span>
+   
+   </div>
+<!--l. 3514--><p class="indent" >   <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">get</span><span 
@@ -9054,9 +8930,8 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">config</span></span> provides an easy way to check the result of inheritance in a suite. You can extract
-specific items, e.g.: <!--l. 3516--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+specific items, e.g.: <!--l. 3516-->
+   <div class="lstlisting" id="listing-133"><span class="label"><a 
  id="x10-107064r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -9101,15 +8976,16 @@ class="pcrr7t-">var</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span><span 
 class="pcrr7t-">''</span>
-
-
+   
    </div>
 <!--l. 3520--><p class="indent" >   or use the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">sparse</span></span> option to print entire namespaces without obscuring the result with the dense runtime
-structure obtained from the root namespace: <!--l. 3523--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+structure obtained from the root namespace: <!--l. 3523-->
+                                                                                         
+
+                                                                                         
+   <div class="lstlisting" id="listing-134"><span class="label"><a 
  id="x10-107066r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -9187,21 +9063,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">serial</span>
-
-
+   
    </div>
-                                                                                         
-
-                                                                                         
 <!--l. 3531--><p class="noindent" >
 <!--l. 3531--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1080009.4.5.1"></a><span 
 class="cmbx-10">Suite Visualization And Multiple Inheritance</span></span>
    The first parent inherited by a namespace is also used as the collapsible family group when visualizing the suite.
 If this is not what you want, you can demote the first parent for visualization purposes, without affecting the order
-of inheritance of runtime properties: <!--l. 3537--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+of inheritance of runtime properties: <!--l. 3537-->
+   <div class="lstlisting" id="listing-135"><span class="label"><a 
  id="x10-108001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -9288,8 +9159,7 @@ class="pcrr7t-">None</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span>
-
-
+   
    </div>
 <!--l. 3547--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">9.4.6   </span> <a 
@@ -9313,9 +9183,8 @@ href="cug-htmlse11.html#x12-13900011">11<!--tex4ht:ref: TaskJobSubmission --></a
 preserved throughout so that variable assignment expressions can safely refer to previously defined
 variables.
 <!--l. 3573--><p class="indent" >   Additionally, access to cylc itself is configured prior to the user-defined environment, so that variable assignment
-expressions can make use of cylc utility commands:  <!--l. 3577--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+expressions can make use of cylc utility commands:  <!--l. 3577-->
+   <div class="lstlisting" id="listing-136"><span class="label"><a 
  id="x10-110001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -9376,8 +9245,7 @@ class="pcrr7t-">hours</span><span
 class="pcrr7t-">=6</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">)</span>
-
-
+   
    </div>
 <!--l. 3584--><p class="noindent" >
 <!--l. 3584--><p class="noindent" ><span class="paragraphHead"><a 
@@ -9386,9 +9254,8 @@ class="cmbx-10">User Environment Variables</span></span>
    A task&#8217;s user-defined environment results from its inherited <span class="lstinline"><span 
 class="pcrr7t-">[[[</span><span 
 class="pcrr7t-">environment</span><span 
-class="pcrr7t-">]]]</span></span> sections: <!--l. 3588--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="pcrr7t-">]]]</span></span> sections: <!--l. 3588-->
+   <div class="lstlisting" id="listing-137"><span class="label"><a 
  id="x10-111001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -9526,8 +9393,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">new</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">variable</span>
-
-
+   
    </div>
 <!--l. 3599--><p class="indent" >   This results in a task <span 
 class="cmti-10">foo </span>with <span class="lstinline"><span 
@@ -9552,9 +9418,8 @@ class="cmti-10">replaced </span>by the new
 definition. This applies to all items including those in the environment sub-sections which, strictly speaking, are not
 &#8220;environment variables&#8221; until they are written, post inheritance processing, to the task job script that executes the
 associated task. Consequently, if you override an environment variable you cannot also access the original parent
-value: <!--l. 3613--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+value: <!--l. 3613-->
+   <div class="lstlisting" id="listing-138"><span class="label"><a 
  id="x10-112001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -9721,8 +9586,7 @@ class="pcrro7t-">in</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
 class="pcrro7t-">.</span>
-
-
+   
    </div>
 <!--l. 3624--><p class="indent" >   The compressed variant of this, <span class="lstinline"><span 
 class="pcrr7t-">COLOR</span><span 
@@ -9733,9 +9597,8 @@ class="pcrr7t-">dark</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">COLOR</span></span>, is also in error for the same reason. To achieve the
-desired result you must use a different name for the parent variable: <!--l. 3627--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+desired result you must use a different name for the parent variable: <!--l. 3627-->
+   <div class="lstlisting" id="listing-139"><span class="label"><a 
  id="x10-112010r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -9845,16 +9708,14 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">OK</span>
-
-
+   
    </div>
 <!--l. 3638--><p class="noindent" >
 <!--l. 3638--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1130009.4.7.3"></a><span 
 class="cmbx-10">Suite And Task Identity Variables</span></span>
-   The task identity variables provided to tasks by cylc are:  <!--l. 3642--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   The task identity variables provided to tasks by cylc are:  <!--l. 3642-->
+   <div class="lstlisting" id="listing-140"><span class="label"><a 
  id="x10-113001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_TASK_ID</span><span 
@@ -10120,12 +9981,10 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">'</span><span 
 class="pcrro7t-">False</span><span 
 class="pcrro7t-">'</span>
-
-
+   
    </div>
-<!--l. 3653--><p class="indent" >   And the suite identity variables are: <!--l. 3654--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3653--><p class="indent" >   And the suite identity variables are: <!--l. 3654-->
+   <div class="lstlisting" id="listing-141"><span class="label"><a 
  id="x10-113010r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_DEF_PATH</span><span 
@@ -10258,8 +10117,7 @@ class="pcrro7t-">e</span><span
 class="pcrro7t-">.</span><span 
 class="pcrro7t-">g</span><span 
 class="pcrro7t-">.)</span>
-
-
+   
    </div>
 <!--l. 3662--><p class="indent" >   Some of these variables are also used by cylc task messaging commands in order to target the right task proxy
 object in the right suite.
@@ -10296,9 +10154,8 @@ spaces.
  id="x10-1150009.4.7.5"></a><span 
 class="cmbx-10">Other Cylc-Defined Environment Variables</span></span>
    Initial and final cycle times, if supplied via the suite.rc file or the command line, are passed to task execution
-environments as: <!--l. 3689--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+environments as: <!--l. 3689-->
+   <div class="lstlisting" id="listing-142"><span class="label"><a 
  id="x10-115001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_INITIAL_CYCLE_TIME</span><span 
@@ -10306,8 +10163,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
  id="x10-115002r2"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_FINAL_CYCLE_TIME</span>
-
-
+   
    </div>
 <!--l. 3693--><p class="indent" >   Tasks can use these to determine whether or not they are running in the first or final cycles.
 <!--l. 3699--><p class="noindent" >
@@ -10341,9 +10197,8 @@ host.
 <!--l. 3721--><p class="noindent" >If a task declares an owner other than the suite owner and/or a host other than the suite host, cylc will use
 passwordless ssh to execute the task on the <span class="lstinline"><span 
 class="pcrr7t-">owner@host</span></span> account by the configured job submission method,
-<!--l. 3726--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3726-->
+   <div class="lstlisting" id="listing-143"><span class="label"><a 
  id="x10-118001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -10448,8 +10303,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">pbs</span>
-
-
+   
    </div>
 <!--l. 3736--><p class="indent" >   For this to work,
      <ul class="itemize1">
@@ -10479,7 +10333,7 @@ class="cmbx-10">Dynamic Host Selection</span></span>
    Instead of hardwiring host names into the suite definition you can specify a shell command that prints a
 hostname, or an environment variable that holds a hostname, as the value of the host config item. See
 Section&#x00A0;<a 
-href="cug-htmlse17.html#x18-303000A.4.1.19.1">A.4.1.19.1<!--tex4ht:ref: DynamicHostSelection --></a>.
+href="cug-htmlse17.html#x18-299000A.4.1.19.1">A.4.1.19.1<!--tex4ht:ref: DynamicHostSelection --></a>.
 <!--l. 3768--><p class="noindent" >
 <!--l. 3768--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1200009.4.9.2"></a><span 
@@ -10503,9 +10357,8 @@ href="cug-htmlse17.html#x18-212000A">A<!--tex4ht:ref: SuiteRCReference --></a>) 
 <!--l. 3786--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">9.5.1   </span> <a 
  id="x10-1220009.5.1"></a>Collapsible Families In Suite Graphs</h5>
-   <!--l. 3789--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 3789-->
+   <div class="lstlisting" id="listing-144"><span class="label"><a 
  id="x10-122001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">visualization</span><span 
@@ -10526,8 +10379,7 @@ class="pcrr7t-">family1</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">family2</span>
-
-
+   
    </div>
 <!--l. 3795--><p class="indent" >   Nested families from the runtime inheritance hierarchy can be expanded and collapsed in suite
 graphs and the gcylc graph view. All families are displayed in the collapsed state at first, unless
@@ -10545,7 +10397,6 @@ failed).
 href="#x10-12200328">28<!--tex4ht:ref: fig-namespaces --></a> illustrates successive expansion of nested task families in the <span 
 class="cmti-10">namespaces </span>example suite.
 <!--l. 3809--><p class="indent" >   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -10555,46 +10406,46 @@ class="cmti-10">namespaces </span>example suite.
                                                                                          
 
                                                                                          
-<table class="minipage"><tr><td><div class="center" 
+<div class="minipage"><div class="center" 
 >
 <!--l. 3811--><p class="noindent" >
 
 <!--l. 3812--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-2.png" alt="PIC"  
-></div></td></tr></table>                            <table class="minipage"><tr><td><div class="center" 
+></div></div>                            <div class="minipage"><div class="center" 
 >
 <!--l. 3817--><p class="noindent" >
 
 <!--l. 3818--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-3.png" alt="PIC"  
-></div></td></tr></table><table class="minipage"><tr><td><div class="center" 
+></div></div><div class="minipage"><div class="center" 
 >
 <!--l. 3823--><p class="noindent" >
 
 <!--l. 3824--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-4.png" alt="PIC"  
-></div></td></tr></table>
-<table class="minipage"><tr><td><div class="center" 
+></div></div>
+<div class="minipage"><div class="center" 
 >
 <!--l. 3829--><p class="noindent" >
 
 <!--l. 3830--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-5.png" alt="PIC"  
-></div></td></tr></table>                            <table class="minipage"><tr><td><div class="center" 
+></div></div>                            <div class="minipage"><div class="center" 
 >
 <!--l. 3835--><p class="noindent" >
 
 <!--l. 3836--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-6.png" alt="PIC"  
-></div></td></tr></table><table class="minipage"><tr><td><div class="center" 
+></div></div><div class="minipage"><div class="center" 
 >
 <!--l. 3841--><p class="noindent" >
 
 <!--l. 3842--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-7.png" alt="PIC"  
-></div></td></tr></table>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;28: </td><td  
+></div></div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;28: </span><span  
 class="content"><span 
 class="cmr-7">Graphs of the </span><span 
 class="cmti-7">namespaces </span><span 
@@ -10602,20 +10453,19 @@ class="cmr-7">example suite showing various states of expansion of the nested na
 <span 
 class="cmr-7">from all families collapsed (top left) through to all expanded (bottom right). This can also be done by right-clicking on tasks in the</span>
 <span 
-class="cmr-7">gcylc graph view.</span></td></tr></table><!--tex4ht:label?: x10-12200328 -->
+class="cmr-7">gcylc graph view.</span></span></div><!--tex4ht:label?: x10-12200328 -->
                                                                                          
 
                                                                                          
-<!--l. 3851--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 3851--><p class="indent" >   </div><hr class="endfigure">
    <h4 class="subsectionHead"><span class="titlemark">9.6   </span> <a 
  id="x10-1230009.6"></a>Jinja2</h4>
 <!--l. 3857--><p class="noindent" >Cylc has built in support for the Jinja2 template processor in suite definitions. Jinja2 variables, mathematical
 expressions, loop control structures, conditional logic, etc., are automatically processed to generate the final suite
 definition seen by cylc.
 <!--l. 3862--><p class="indent" >   The need for Jinja2 processing must be declared with a hash-bang comment as the first line of the suite.rc file:
-<!--l. 3864--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3864-->
+   <div class="lstlisting" id="listing-145"><span class="label"><a 
  id="x10-123001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">!</span><span 
@@ -10625,8 +10475,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">...</span>
-
-
+   
    </div>
 <!--l. 3869--><p class="indent" >   Potential uses for this include automatic generation of repeated groups of similar tasks and dependencies, and
 inclusion or exclusion of entire suite sections according to the value of a single flag. Consider a large
@@ -10637,13 +10486,12 @@ suite definition that reconfigures itself according to the value of a flag varia
 use.
 <!--l. 3879--><p class="indent" >   Template processing is the first thing done on parsing a suite definition so Jinja2 expressions can appear
 anywhere in the file (inside strings and namespace headings, for example).
-<!--l. 3883--><p class="indent" >   Jinja2 is well documented at <span class="obeylines-h"><a 
+<!--l. 3883--><p class="indent" >   Jinja2 is well documented at <a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
-class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></span>, so here we just provide an example suite
-that uses it. The meaning of the embedded Jinja2 code should be reasonably self-evident to anyone familiar with
+class="pcrr7t-">http://jinja.pocoo.org/docs</span></a>, so here we just provide an example suite that
+uses it. The meaning of the embedded Jinja2 code should be reasonably self-evident to anyone familiar with
 standard programming techniques.
 <!--l. 3888--><p class="indent" >   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
 >
                                                                                          
 
@@ -10660,22 +10508,21 @@ standard programming techniques.
 <!--l. 3890--><p class="noindent" ><img 
 src="../../graphics/png/scaled/jinja2-ensemble-graph.png" alt="PIC"  
 ></div>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;29: </td><td  
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;29: </span><span  
 class="content"><span 
-class="cmr-7">The Jinja2 ensemble example suite graph.</span></td></tr></table><!--tex4ht:label?: x10-12300329 -->
+class="cmr-7">The Jinja2 ensemble example suite graph.</span></span></div><!--tex4ht:label?: x10-12300329 -->
                                                                                          
 
                                                                                          
-<!--l. 3895--><p class="indent" >   </td></tr></table></div><hr class="endfigure">
+<!--l. 3895--><p class="indent" >   </div><hr class="endfigure">
 <!--l. 3897--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">ensemble</span></span> example, graphed in Figure&#x00A0;<a 
 href="#x10-12300329">29<!--tex4ht:ref: fig-jinja2-ensemble --></a>, shows an ensemble of similar tasks generated using
-Jinja2:  <!--l. 3901--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+Jinja2:  <!--l. 3901-->
+   <div class="lstlisting" id="listing-146"><span class="label"><a 
  id="x10-123004r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!</span><span 
@@ -10734,7 +10581,7 @@ class="pcrr7t-">dependencies</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123009r6"></a></span></span><span 
+ id="x10-123009r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10766,7 +10613,7 @@ class="pcrr7t-">)</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123010r7"></a></span></span><span 
+ id="x10-123010r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10806,7 +10653,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123011r8"></a></span></span><span 
+ id="x10-123011r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10827,12 +10674,10 @@ class="pcrr7t-">%}</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
-<!--l. 3911--><p class="indent" >   Here is the generated suite definition, after Jinja2 processing:  <!--l. 3913--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 3911--><p class="indent" >   Here is the generated suite definition, after Jinja2 processing:  <!--l. 3913-->
+   <div class="lstlisting" id="listing-147"><span class="label"><a 
  id="x10-123012r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!</span><span 
@@ -10869,7 +10714,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123016r5"></a></span></span><span 
+ id="x10-123016r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10894,7 +10739,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123017r6"></a></span></span><span 
+ id="x10-123017r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10919,7 +10764,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123018r7"></a></span></span><span 
+ id="x10-123018r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10944,7 +10789,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123019r8"></a></span></span><span 
+ id="x10-123019r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10969,7 +10814,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123020r9"></a></span></span><span 
+ id="x10-123020r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -10994,7 +10839,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123021r10"></a></span></span><span 
+ id="x10-123021r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11014,8 +10859,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 3926--><p class="indent" >   And finally, the <span class="lstinline"><span 
 class="pcrr7t-">jinja2</span><span 
@@ -11026,9 +10870,10 @@ tasks that is repeated for each city in the suite. To add a new city and associa
 the city name to list at the top of the file. The suite is graphed, with the New York City task family expanded, in
 Figure&#x00A0;<a 
 href="#x10-12308030">30<!--tex4ht:ref: fig-jinja2-cities --></a>.
+   <!--l. 3936--><div class="lstinputlisting">
 <a 
  id="x10-123022"></a>
-   <!--l. 3936--><pre class="listings"><!--l. 3936--><div class="lstinputlisting"><span 
+   <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x10-123023r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -11062,7 +10907,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123027r5"></a></span></span><span 
+ id="x10-123027r5"></a></span><span 
 class="pcrr7t-">Illustrates</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">use</span><span 
@@ -11082,7 +10927,7 @@ class="pcrr7t-">and</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">programmatic</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123028r6"></a></span></span><span 
+ id="x10-123028r6"></a></span><span 
 class="pcrr7t-">generation</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">of</span><span 
@@ -11314,7 +11159,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123045r23"></a></span></span><span 
+ id="x10-123045r23"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11349,7 +11194,7 @@ class="pcrr7t-">#</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123046r24"></a></span></span><span 
+ id="x10-123046r24"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">for</span><span 
@@ -11368,7 +11213,7 @@ class="pcrr7t-">comment</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">#}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123047r25"></a></span></span><span 
+ id="x10-123047r25"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11400,7 +11245,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">}}</span><span 
 class="pcrr7t-">_one</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123048r26"></a></span></span><span 
+ id="x10-123048r26"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11432,7 +11277,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">}}</span><span 
 class="pcrr7t-">_two</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123049r27"></a></span></span><span 
+ id="x10-123049r27"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11487,7 +11332,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">}}</span><span 
 class="pcrr7t-">_four</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123050r28"></a></span></span><span 
+ id="x10-123050r28"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">if</span><span 
@@ -11496,7 +11341,7 @@ class="pcrr7t-">CLEANUP</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123051r29"></a></span></span><span 
+ id="x10-123051r29"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11537,21 +11382,21 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cleanup</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123052r30"></a></span></span><span 
+ id="x10-123052r30"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">endif</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123053r31"></a></span></span><span 
+ id="x10-123053r31"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">endfor</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-123054r32"></a></span></span><span 
+ id="x10-123054r32"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -11964,10 +11809,10 @@ class="pcrr7t-">'</span><span
 class="pcrr7t-">fillcolor</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">lightblue</span><span 
-class="pcrr7t-">'</span></div>
-   </pre>
-   <hr class="figure"><div class="figure" 
-><table class="figure"><tr class="figure"><td class="figure" 
+class="pcrr7t-">'</span>
+   
+   </div>
+<!--l. 3939--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -11984,21 +11829,20 @@ class="pcrr7t-">'</span></div>
 <!--l. 3941--><p class="noindent" ><img 
 src="../../graphics/png/scaled/jinja2-suite-graph.png" alt="PIC"  
 ></div>
-<br /> <table class="caption" 
-><tr style="vertical-align:baseline;" class="caption"><td class="id">Figure&#x00A0;30: </td><td  
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;30: </span><span  
 class="content"><span 
-class="cmr-7">The Jinja2 cities example suite graph, with the New York City task family expanded.</span></td></tr></table><!--tex4ht:label?: x10-12308030 -->
+class="cmr-7">The Jinja2 cities example suite graph, with the New York City task family expanded.</span></span></div><!--tex4ht:label?: x10-12308030 -->
                                                                                          
 
                                                                                          
-   </td></tr></table></div><hr class="endfigure">
+<!--l. 3947--><p class="indent" >   </div><hr class="endfigure">
    <h5 class="subsubsectionHead"><span class="titlemark">9.6.1   </span> <a 
  id="x10-1240009.6.1"></a>Accessing Environment Variables With Jinja2</h5>
 <!--l. 3951--><p class="noindent" >This functionality is not provided by Jinja2 by default, but cylc automatically imports the user environment to the
 template in a dictionary structure called <span 
-class="cmti-10">environ</span>. A usage example: <!--l. 3954--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+class="cmti-10">environ</span>. A usage example: <!--l. 3954-->
+   <div class="lstlisting" id="listing-148"><span class="label"><a 
  id="x10-124001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">!</span><span 
@@ -12057,8 +11901,7 @@ class="pcrr7t-">environ</span><span
 class="pcrr7t-">['</span><span 
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">']}}</span>
-
-
+   
    </div>
 <!--l. 3962--><p class="indent" >   This example is emphasizes that <span 
 class="cmti-10">the environment is read on the suite host at the time the suite definition is</span>
@@ -12069,9 +11912,8 @@ class="cmti-10">parsed </span>- it is not, for instance, read at task run time o
  id="x10-1250009.6.2"></a>Custom Jinja2 Filters</h5>
 <!--l. 3968--><p class="noindent" >Jinja2 variable values can be modified by &#8220;filters&#8221;, using pipe notation. For example, the built-in <span class="lstinline"><span 
 class="pcrr7t-">trim</span></span> filter strips
-leading and trailing white space from a string:  <!--l. 3972--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+leading and trailing white space from a string:  <!--l. 3972-->
+   <div class="lstlisting" id="listing-149"><span class="label"><a 
  id="x10-125001r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -12111,8 +11953,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">"</span><span 
 class="pcrro7t-">dog</span><span 
 class="pcrro7t-">"</span>
-
-
+   
    </div>
 <!--l. 3976--><p class="indent" >   (See official Jinja2 documentation for available built-in filters.)
 <!--l. 3978--><p class="indent" >   Cylc also supports custom Jinja2 filters. A custom filter is a single Python function in a source file with the same
@@ -12151,9 +11992,8 @@ class="pcrr7t-">/</span></span></li></ul>
 arguments can be whatever is needed. Currently there is one custom filter called &#8220;pad&#8221; in the central cylc Jinja2
 filter directory, for padding string values to some constant length with a fill character - useful for generating task
 names and related values in ensemble suites:
-   <!--l. 3996--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 3996-->
+   <div class="lstlisting" id="listing-150"><span class="label"><a 
  id="x10-125003r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -12238,8 +12078,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">endfor</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span>
-
-
+   
    </div>
 <!--l. 4003--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">9.6.3   </span> <a 
@@ -12254,9 +12093,8 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">dict</span></span>:
-   <!--l. 4009--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4009-->
+   <div class="lstlisting" id="listing-151"><span class="label"><a 
  id="x10-126001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!</span><span 
@@ -12488,15 +12326,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">endfor</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span>
+   
+                                                                                         
 
-
-
-
-
+                                                                                         
    </div>
-<!--l. 4029--><p class="indent" >   Here&#8217;s the result:  <!--l. 4031--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 4029--><p class="indent" >   Here&#8217;s the result:  <!--l. 4031-->
+   <div class="lstlisting" id="listing-152"><span class="label"><a 
  id="x10-126018r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -12529,8 +12365,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ncpus</span><span 
 class="pcrr7t-">=9</span>
-
-
+   
    </div>
 <!--l. 4036--><p class="noindent" >
    <h5 class="subsubsectionHead"><span class="titlemark">9.6.4   </span> <a 
@@ -12545,9 +12380,8 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">defaults</span></span>:
-   <!--l. 4043--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4043-->
+   <div class="lstlisting" id="listing-153"><span class="label"><a 
  id="x10-127001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!</span><span 
@@ -12590,7 +12424,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-127006r6"></a></span></span><span 
+ id="x10-127006r6"></a></span><span 
 class="pcrr7t-">The</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">template</span><span 
@@ -12615,7 +12449,7 @@ class="pcrr7t-">command</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">line</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-127007r7"></a></span></span><span 
+ id="x10-127007r7"></a></span><span 
 class="pcrr7t-">using</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
@@ -12642,7 +12476,7 @@ class="pcrr7t-">LAST_TASK</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">and</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-127008r8"></a></span></span><span 
+ id="x10-127008r8"></a></span><span 
 class="pcrr7t-">N_MEMBERS</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">can</span><span 
@@ -12839,7 +12673,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ens</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x10-127021r21"></a></span></span><span 
+ id="x10-127021r21"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -12945,13 +12779,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">endfor</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span>
-
-
+   
    </div>
 <!--l. 4073--><p class="indent" >   Here&#8217;s the result:
-   <!--l. 4076--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 4076-->
+   <div class="lstlisting" id="listing-154"><span class="label"><a 
  id="x10-127028r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
@@ -13122,8 +12954,7 @@ class="pcrr7t-">baz</span><span
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x10-127059r32"></a></span><span 
 class="pcrr7t-">bob</span>
-
-
+   
    </div>
 <!--l. 4112--><p class="indent" >   Note also that <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -13155,8 +12986,8 @@ class="pcrr7t-">[</span><span
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">+</span><span 
 class="pcrr7t-">n</span><span 
-class="pcrr7t-">]</span></span>
-     <br class="newline" />Where <span class="lstinline"><span 
+class="pcrr7t-">]</span></span> <br 
+class="newline" />Where <span class="lstinline"><span 
 class="pcrr7t-">n</span></span> is an integer cycle time offset, the unit of which (e.g. hours, days, months, or years) is
      determined by the cycling module in use. This is replaced, in internal task message strings under the
      runtime outputs config section, by the actual offset cycle time of the task. The syntax is the same as
@@ -13165,8 +12996,8 @@ class="pcrr7t-">n</span></span> is an integer cycle time offset, the unit of whi
      <li class="itemize"><span class="lstinline"><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">ASYNCID</span><span 
-class="pcrr7t-">&#x003E;</span></span>
-     <br class="newline" />This is replaced with the actual &#8220;asynchronous ID&#8221; (e.g. satellite pass ID) for repeating asynchronous
+class="pcrr7t-">&#x003E;</span></span><br 
+class="newline" />This is replaced with the actual &#8220;asynchronous ID&#8221; (e.g. satellite pass ID) for repeating asynchronous
      tasks.</li></ul>
 <!--l. 4139--><p class="indent" >   To use proper variables (c.f.&#x00A0;programming languages) in suite definitions, see the Jinja2 template processor
 (Section&#x00A0;<a 
@@ -13192,8 +13023,8 @@ class="pcrr7t-">submit</span></span>) use one or both of [scheduling][[special t
 class="cmti-10">include at start-up </span>or <span 
 class="cmti-10">exclude at start-up</span>
 (documented in Sections&#x00A0;<a 
-href="cug-htmlse17.html#x18-269000A.3.5.7">A.3.5.7<!--tex4ht:ref: IASU --></a> and&#x00A0;<a 
-href="cug-htmlse17.html#x18-268000A.3.5.6">A.3.5.6<!--tex4ht:ref: EASU --></a>). Then the graph still defines the validity of the tasks and their
+href="cug-htmlse17.html#x18-265000A.3.5.7">A.3.5.7<!--tex4ht:ref: IASU --></a> and&#x00A0;<a 
+href="cug-htmlse17.html#x18-264000A.3.5.6">A.3.5.6<!--tex4ht:ref: EASU --></a>). Then the graph still defines the validity of the tasks and their
 dependencies, but they are not actually inserted into the suite at start-up. Other tasks that depend on
 the omitted ones, if any, will have to wait on their insertion at a later time or otherwise be triggered
 manually.

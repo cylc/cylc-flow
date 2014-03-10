@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-03-04 09:58:00"> 
+<meta name="date" content="2014-03-10 23:44:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,7 +18,7 @@ href="cug-htmlse19.html#tailcug-htmlse19.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse20.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse20.html" >up</a>] </p></div>
    <h3 class="sectionHead"><span class="titlemark">D   </span> <a 
- id="x21-482000D"></a>The Cylc Lockserver</h3>
+ id="x21-478000D"></a>The Cylc Lockserver</h3>
    <div class="sectionTOCS">
    </div>
 <!--l. 6462--><p class="indent" >   Each cylc user can optionally run his/her own lockserver to prevent accidental invocation of multiple instances of
@@ -29,10 +29,9 @@ executing on one host and finish on another.
 consequences, so use of the lockserver should be considered for important operational suites, but it may be
 considered an unnecessary complication for general less critical usage, so it is currently disabled by
 default.
-<!--l. 6475--><p class="indent" >   To enable the lockserver:  <!--l. 6477--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x21-482001r1"></a></span><span 
+<!--l. 6475--><p class="indent" >   To enable the lockserver:  <!--l. 6477-->
+   <div class="lstlisting" id="listing-232"><span class="label"><a 
+ id="x21-478001r1"></a></span><span 
 class="pcrr7t-">use</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">lockserver</span><span 
@@ -40,14 +39,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">True</span>
-
-
+   
    </div>
 <!--l. 6481--><p class="indent" >   The suite will now abort at start-up if it cannot connect to the lockserver. To start your lockserver daemon,
-<!--l. 6484--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x21-482002r1"></a></span><span 
+<!--l. 6484-->
+   <div class="lstlisting" id="listing-233"><span class="label"><a 
+ id="x21-478002r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -56,13 +53,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">lockserver</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">start</span>
-
-
+   
    </div>
-<!--l. 6488--><p class="indent" >   To check that it is running, <!--l. 6489--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x21-482003r1"></a></span><span 
+<!--l. 6488--><p class="indent" >   To check that it is running, <!--l. 6489-->
+   <div class="lstlisting" id="listing-234"><span class="label"><a 
+ id="x21-478003r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -71,13 +66,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">lockserver</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">status</span>
-
-
+   
    </div>
-<!--l. 6493--><p class="indent" >   For detailed usage information, <!--l. 6494--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x21-482004r1"></a></span><span 
+<!--l. 6493--><p class="indent" >   For detailed usage information, <!--l. 6494-->
+   <div class="lstlisting" id="listing-235"><span class="label"><a 
+ id="x21-478004r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -87,13 +80,11 @@ class="pcrr7t-">lockserver</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span>
-
-
+   
    </div>
-<!--l. 6498--><p class="indent" >   There is a command line client interface, <!--l. 6499--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x21-482005r1"></a></span><span 
+<!--l. 6498--><p class="indent" >   There is a command line client interface, <!--l. 6499-->
+   <div class="lstlisting" id="listing-236"><span class="label"><a 
+ id="x21-478005r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -103,15 +94,13 @@ class="pcrr7t-">lockclient</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span>
-
-
+   
    </div>
 <!--l. 6502--><p class="indent" >   for interrogating the lockserver and managing locks manually (e.g.&#x00A0;releasing locks if a suite was killed before it
 could clean up after itself).
-<!--l. 6506--><p class="indent" >   To watch suite locks being acquired and released as a suite runs, <!--l. 6507--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x21-482006r1"></a></span><span 
+<!--l. 6506--><p class="indent" >   To watch suite locks being acquired and released as a suite runs, <!--l. 6507-->
+   <div class="lstlisting" id="listing-237"><span class="label"><a 
+ id="x21-478006r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -123,8 +112,7 @@ class="pcrr7t-">lockclient</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">print</span>
-
-
+   
    </div>
                                                                                          
 
