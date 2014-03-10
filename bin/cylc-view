@@ -50,12 +50,12 @@ parser.add_option( "--inline", "-i",
 
 parser.add_option( "--jinja2", "-j",
         help="View after Jinja2 template processing "
-        "(implies '-i' as well).",
+        "(implies '-i/--inline' as well).",
         action="store_true", default=False, dest="jinja2" )
 
 parser.add_option( "-p", "--process", 
         help="View after all processing (Jinja2, inlining, "
-        "line-continuation joining.",
+        "line-continuation joining).",
         action="store_true", default=False, dest="process" )
 
 parser.add_option( "--mark", "-m",
@@ -106,12 +106,12 @@ suitedir = os.path.dirname(suiterc)
 
 # read in the suite.rc file
 viewcfg = {
-        'mark' : options.mark,
+        'mark'   : options.mark,
         'single' : options.single,
-        'label' : options.label,
+        'label'  : options.label,
         'jinja2' : options.jinja2 or options.process,
         'contin' : options.cat or options.process,
-        'inline' : options.inline or options.process,
+        'inline' : options.inline or options.jinja2 or options.process,
         }
 try:
     lines = read_and_proc( suiterc,
