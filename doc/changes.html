@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.11">5.4.11</a></li>
 		<li><a href="#5.4.10">5.4.10</a></li>
 		<li><a href="#5.4.9">5.4.9</a></li>
 		<li><a href="#5.4.8">5.4.8</a></li>
@@ -41,6 +42,26 @@
 
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="5.4.11"/>
+		<h2>5.4.11</h2>
+
+		<ul>
+				<li>Fixed a recent bug (affecting 5.4.8 - 5.4.10) that prevents
+				successful <code>cylc restart SUITE</code> after using
+						<code>cylc reload SUITE</code>.</li>
+
+				<li>Fixed a Python traceback caused by attempting to
+				transpose an empty gcylc dot view prior to starting a
+				suite.</li>
+
+				<li>Minor simulation mode changes:</li>
+				<ul>
+						<li>simulation mode now runs on the real time clock</li>
+						<li>made the suite summary reflect task state changes to
+						'running' even if nothing else is happening at the time.</li>
+				</ul>
+		</ul>
 
 <a name="5.4.10"/>
 		<h2>5.4.10</h2>
