@@ -72,6 +72,7 @@ perl -pi -e "s@(Latest Release:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> (
 git add graphics/png/scaled/
 git add html/single/
 git add html/multi/
+git add screenshots/
 
 # any changes to update?
 git update-index -q --refresh

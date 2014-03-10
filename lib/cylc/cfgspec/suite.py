@@ -69,11 +69,6 @@ SPEC = {
         'dummy mode' : {
             'disable suite event hooks'       : vdr( vtype='boolean', default=True ),
             },
-        'accelerated clock' : {
-            'disable'                         : vdr( vtype='boolean', default=False ),
-            'rate'                            : vdr( vtype='integer', default=10 ),
-            'offset'                          : vdr( vtype='integer', default=24 ),
-            },
         'reference test' : {
             'suite shutdown event handler'    : vdr( vtype='string', default='cylc hook check-triggering' ),
             'required run mode'               : vdr( vtype='string', options=[ 'live','simulation','dummy'] ),
@@ -226,6 +221,7 @@ def upg( cfg, descr ):
     u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
     # TODO - should abort if obsoleted items are encountered
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
+    u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
     u.upgrade()
 
 class sconfig( config ):
