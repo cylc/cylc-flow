@@ -1,0 +1,21 @@
+#!jinja2
+
+title = "Jinja2 simple ensemble example"
+description = "Auto-generation of dependencies for related tasks."
+
+# Note that depending on the structure of the suite you may be able to
+# SIMPLY use a task family name in the graph to represent the entire
+# ensemble (which would be defined by inheritance under [runtime]).
+
+%include inc/default.jinja2
+
+# line \
+continuation
+
+[scheduling]
+    [[dependencies]]
+        graph = """ {# generate ensemble dependencies #}
+        {% for I in range( 0, N_MEMBERS ) %}
+          foo => mem_{{ I }} => post_{{ I }} => bar
+        {% endfor %}"""
+
