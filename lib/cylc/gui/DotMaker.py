@@ -168,8 +168,8 @@ class DotMaker(object):
             xpm = deepcopy(live[size])
 
         if not state or state not in self.theme:
-            # empty icon (assuming a white page background)
-            cols = ['white', 'white' ]
+            # empty icon ('None' is xpm transparent)
+            cols = ['None', 'None' ]
         else:
             style = self.theme[state]['style']
             color = self.theme[state]['color']
@@ -177,7 +177,7 @@ class DotMaker(object):
                 cols = [ color, color ]
             else:
                 # unfilled with thick border
-                cols = [ 'white', color ]
+                cols = [ 'None', color ]
 
         xpm[1] = xpm[1].replace( '<FILL>', cols[0] )
         xpm[2] = xpm[2].replace( '<BRDR>', cols[1] )
