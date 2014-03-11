@@ -209,9 +209,6 @@ class DotUpdater(threading.Thread):
             self.is_transposed = self.should_transpose_view
             return False
 
-        # hardwired 10px lamp image width!
-        lamp_width = 10
-
         self.led_liststore = new_led_liststore
 
         if (treeview_has_content and
@@ -231,7 +228,6 @@ class DotUpdater(threading.Thread):
                 #cr.set_property( 'cell_background', 'black' )
                 cr.set_property( 'xalign', 0 )
                 tvc = gtk.TreeViewColumn( ""  )
-                tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
                 tvc.pack_end( cr, True )
                 tvc.set_attributes( cr, pixbuf=model_col_num )
                 self.led_treeview.append_column( tvc )
@@ -265,7 +261,6 @@ class DotUpdater(threading.Thread):
             #cr.set_property( 'cell_background', 'black' )
             cr.set_property( 'xalign', 0 )
             tvc = gtk.TreeViewColumn( ""  )
-            tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cr, True )
             tvc.set_attributes( cr, pixbuf=n )
             self.led_treeview.append_column( tvc )
