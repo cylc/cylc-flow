@@ -156,6 +156,8 @@ if os.path.isfile( suiterc ):
 else:
     parser.error("File not found: " + suiterc )
 
+lines = [ i.rstrip() for i in lines ]
+
 # overwrite the (now backed up) original with the inlined file:
 h = open( suiterc, 'wb' )
 for line in lines:
