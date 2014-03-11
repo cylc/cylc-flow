@@ -18,6 +18,7 @@
 
 import gtk
 from copy import deepcopy
+from cylc.cfgspec.gcylc import gcfg
 
 stopped = {
         'small' : [
@@ -147,14 +148,12 @@ live = {
         }
 
 
-
 class DotMaker(object):
 
     """Make a dot icon for a task state."""
 
-    def __init__( self, theme, size='medium' ):
+    def __init__( self, theme ):
         self.theme = theme
-        self.size = size
 
     def get_icon( self, state=None, is_stopped=False ):
         """Generate a gtk.gdk.Pixbuf for a state.
@@ -162,10 +161,11 @@ class DotMaker(object):
         if is_stopped, generate a stopped form of the Pixbuf.
 
         """
+        size = gcfg.get(['dot icon size'])
         if is_stopped:
-            xpm = deepcopy(stopped[self.size])
+            xpm = deepcopy(stopped[size])
         else:
-            xpm = deepcopy(live[self.size])
+            xpm = deepcopy(live[size])
 
         if not state or state not in self.theme:
             # empty icon (assuming a white page background)
