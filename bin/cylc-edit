@@ -152,7 +152,7 @@ if os.path.isfile( suiterc ):
         lines = lines0
     else:
         recovery = False
-        lines = inline( lines0, suitedir, for_edit=True )
+        lines = inline( lines0, suitedir, suiterc, for_edit=True )
 else:
     parser.error("File not found: " + suiterc )
 

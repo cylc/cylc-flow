@@ -79,7 +79,7 @@ if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
     lines = h.readlines()
     h.close()
-    lines = inline( lines, suitedir, for_grep=True )
+    lines = inline( lines, suitedir, suiterc, for_grep=True )
 else:
     parser.error("File not found: " + suiterc )
 
