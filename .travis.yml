@@ -1,0 +1,72 @@
+# Configuration for the Travis continuous integration system
+# ==========================================================
+# 
+# Travis is a free service for running automatic tests on Github repositories.
+# This file configures Travis for Cylc, telling it how to install Cylc and run
+# the test battery.
+# 
+# Test results get posted back to Github. By default Travis will run tests on any
+# pull requests, adding a comment on the pull request page to say if the tests
+# pass or fail, it will also test any new commits, showing the test results on
+# the branch page, e.g. https://github.com/cylc/cylc/branches.
+# 
+# Connecting a Cylc branch
+# ------------------------
+# 
+# To make use of Travis you will first need to create a fork of Cylc in Github.
+# Log in to https://travis-ci.org using your Github credentials, it will ask for
+# permission to see your repositories, set the status of branches (whether the
+# build passes or fails tests) and create hooks so Travis gets notified of new
+# commits.
+# 
+# Travis will create a list of all of your public Github repositories, you can
+# enable automatic tests for a repository using the switches in this list.
+# 
+# More information for Travis can be found at http://docs.travis-ci.com/user/getting-started/
+
+---
+language: python
+
+# General environment setup before we start installing stuff
+before_install:
+    # Clear bashrc - the default does nothing if not in an interactive shell.
+    # SSH connections use the ~/.bashrc file for their environment, so we'll be
+    # loading our python environment here.
+    - echo > ~/.bashrc
+
+    # Setup virtualenv (using system packages for pygtk as pip won't install it)
+    - virtualenv --system-site-packages $HOME/virtualenv/cylc 
+    - echo "source $HOME/virtualenv/cylc/bin/activate" >> ~/.bashrc
+
+    # Make sure Cylc is in PATH when running jobs
+    - echo "export PATH=$PWD/bin:\$PATH" >> ~/.bashrc
+
+    # Load our new environment
+    - source ~/.bashrc
+
+
+# These commands are run before the test
+install: 
+    # Setup local SSH for Cylc jobs
+    - ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" -q
+    - cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+    - ssh-keyscan -t rsa localhost >> ~/.ssh/known_hosts
+
+    # Install dependencies
+    - sudo apt-get install build-essential
+    - sudo apt-get install at python-pip python-dev libgraphviz-dev # python-gtk2-dev
+    - pip install -r requirements.txt
+
+# Run tests
+script: 
+    # TESTS defines what tests to run
+    # The following failures appear to be artefacts of running on Travis
+    # lib/parsec/tests  - Cannot find 'validate' library in lib/parsec
+    # tests/cylcers     - Requires GTK for graphing
+    - TESTS=$(find . -name *.t -type f -not -path '*/cyclers/*' -not -path '*/parsec/*')
+    - cylc test-battery $TESTS -- -j 1
+
+# Check output (more useful if you narrow down what tests get run)
+after_script:
+    - for file in $(find $HOME/cylc-run -type f); do echo; echo "== $file =="; cat $file; done
+    - for file in $(find /tmp/cylc-tests-$USER -type f); do echo; echo "== $file =="; cat $file; done
