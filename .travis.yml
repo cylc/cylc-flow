@@ -6,7 +6,9 @@ python:
     - "2.7"
 
 # Install dependencies
-install: "pip install -r requirements.txt"
+install: 
+ - "pip install -r requirements.txt"
+ - "sudo apt-get install at" 
 
 # Run tests
 script: "bin/cylc test-battery"
