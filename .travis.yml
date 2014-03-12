@@ -14,4 +14,6 @@ install:
 script: "bin/cylc test-battery"
 
 # Print results
-after_script: "cat /tmp/cylc-tests/*"
+after_script: 
+ - "find /tmp/cylc-tests -type f"
+ - "cat /tmp/cylc-tests/*/*"
