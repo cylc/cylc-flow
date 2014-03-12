@@ -11,7 +11,7 @@ install:
  - "sudo apt-get install at" 
 
 # Run tests
-script: "bin/cylc test-battery"
+script: "bin/cylc test-battery -- --verbose --failures"
 
 # Print results
 after_script: 
