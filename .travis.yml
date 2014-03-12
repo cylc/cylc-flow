@@ -10,3 +10,6 @@ install: "pip install -r requirements.txt"
 
 # Run tests
 script: "bin/cylc test-battery"
+
+# Print results
+after_script: "cat /tmp/cylc-tests/*"
