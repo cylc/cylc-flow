@@ -15,7 +15,7 @@ install:
  - "ssh localhost true"
 
 # Run tests
-script: "bin/cylc test-battery"
+script: "bin/cylc test-battery -- -j 1"
 
 # Print results
 after_script: 
