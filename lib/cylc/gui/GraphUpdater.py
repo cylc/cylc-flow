@@ -17,11 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc import cylc_pyro_client, dump, graphing
-from cylc.cycle_time import ct
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from copy import deepcopy
 import gobject
 import os
@@ -311,11 +310,11 @@ class GraphUpdater(threading.Thread):
 
         extra_node_ids = {}
 
-        # TODO - mv ct().get() out of this call (for error checking):
         # TODO - remote connection exception handling?
+        # TODO ISO - ARE THE NEW str() CALLS REQUIRED HERE?
         try:
             res = self.updater.sinfo.get(
-                    'graph raw', ct(oldest).get(), ct(newest).get(),
+                    'graph raw', str(oldest), str(newest),
                     rawx, self.group, self.ungroup, self.ungroup_recursive,
                     self.group_all, self.ungroup_all)
         except Exception:  # PyroError
@@ -346,7 +345,7 @@ class GraphUpdater(threading.Thread):
         for id in self.state_summary:
             if not any( id in edge for edge in gr_edges ):
                 # this node is not present in the main graph
-                name, tag = id.split(TaskID.DELIM)
+                name, tag = cylc.TaskID.split( id )
                 if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
                     # must be a member of a collapsed family, don't graph it
                     omit.append(name)
@@ -374,7 +373,7 @@ class GraphUpdater(threading.Thread):
         # FAMILIES
         if needs_redraw:
             for node in self.graphw.nodes():
-                name, tag = node.get_name().split(TaskID.DELIM)
+                name, tag = cylc.TaskID.split( node.get_name() )
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
@@ -396,7 +395,7 @@ class GraphUpdater(threading.Thread):
             # FILTERING:
             for node in self.graphw.nodes():
                 id = node.get_name()
-                name, ctime = id.split(TaskID.DELIM)
+                name, ctime = cylc.TaskID.split( id )
                 if self.filter_exclude:
                     if re.match( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
@@ -432,7 +431,7 @@ class GraphUpdater(threading.Thread):
                 # Now that we have family state coloring with family
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
-                name, tag = id.split(TaskID.DELIM)
+                name, tag = cylc.TaskID.split( id )
                 if name in omit:
                     # (see above)
                     continue

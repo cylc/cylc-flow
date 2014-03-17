@@ -24,8 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
@@ -76,20 +75,14 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 target = args[1]
 stoptag = args[2]
 
-try:
-    tid = TaskID( target )
-except TaskIDError, x:
-    raise SystemExit(x)
-else:
-    task_id, (name, start) = tid.getstr(), tid.splitstr()
+if not cylc.TaskID.is_valid_id( target ):
+    sys.exit( "Invalid Task ID: " + target )
 
-stopid = 'junk' + TaskID.DELIM + stoptag
-try:
-    tid = TaskID( stopid )
-except TaskIDError, x:
-    raise SystemExit( 'ERROR, invalid purge stop tag: ' + stoptag )
-else:
-    junk, stop = tid.splitstr()
+task_id = target
+name, start = cylc.TaskID.split( target )
+
+# TODO ISO - VALIDATE STOP TAG
+stop = stoptag
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,

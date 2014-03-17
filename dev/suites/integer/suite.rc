@@ -1,0 +1,37 @@
+
+# TODO - TASK HOLD AT SHUTDOWN IS AFFECTED BY RECURRENCE BOUNDS
+
+[scheduling]
+    initial cycle time = 7
+    final cycle time = 16
+    runahead factor = 3 
+    cycling = integer
+    [[special tasks]]
+        sequential = seq
+    [[dependencies]]
+        # TODO - ASYNC TASKS
+
+        [[[ Integer(13,3) ]]]
+            graph = """
+            seq               # sequential task
+       foo[T-3] => foo => bar # prev instance trigger
+       woo[T+1] => baz        # implicit other prev cycle
+       woo[T-1] => waz        # implicit next prev cycle
+
+       foo[T-3]:out1 => on_toast # message outputs
+                    """
+        [[[ Integer(13,6) ]]]
+            graph = """
+        foo[T-3] => qux       # every second cycle
+                    """
+
+[runtime]
+    [[foo]]
+        command scripting = """
+sleep 5
+cylc task message "the cheese is ready for $(( CYLC_TASK_CYCLE_TIME + 3 ))"
+sleep 5
+                            """
+        [[[outputs]]]
+            out1 = "the cheese is ready for [T+3]"
+

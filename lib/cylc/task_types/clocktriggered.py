@@ -18,7 +18,6 @@
 
 import sys
 import datetime
-from cylc.cycle_time import ct
 from task import task
 from cylc.wallclock import now
 
@@ -37,7 +36,8 @@ class clocktriggered(object):
     def start_time_reached( self ):
         reached = False
         # check current time against expected start time
-        rt = ct( self.c_time ).get_datetime()
+        # TODO ISO - DATE TIME CONVERSION?
+        rt = self.c_time.get_datetime()
         delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 )
         if now() >= delayed_start:
            reached = True

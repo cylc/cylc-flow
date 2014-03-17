@@ -25,7 +25,6 @@ from datetime import datetime
 import os, re
 from cylc.config import TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
-from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
 from cylc.task_state import task_state
 from cylc.run import main
@@ -91,13 +90,6 @@ where they got to while the suite was down."""
         self.restart_from = None
         if len( self.args ) == 2:
             self.restart_from = self.args[1]
-            try:
-                ct( self.restart_from )
-            except:
-                pass
-            else:
-                # user must have meant to cold or warm start, not restart.
-                sys.exit("ERROR: restart dump filename is a valid cycle time!")
 
         scheduler.parse_commandline( self )
 
@@ -181,10 +173,6 @@ where they got to while the suite was down."""
             pass
         else:
             # the state dump prescribes a start cycle
-            try:
-                ct( oldstartcycle )
-            except:
-                raise Exception("ERROR, Illegal start cycle in state dump line 2: " + oldstartcycle)
             if self.options.ignore_startcycle:
                 # ignore it and take whatever the suite.rc file gives us
                 if self.start_tag:
@@ -218,10 +206,6 @@ where they got to while the suite was down."""
             pass
         else:
             # the state dump prescribes a stop cycle
-            try:
-                ct( oldstopcycle )
-            except:
-                raise Exception("ERROR, Illegal stop cycle in state dump line 3: " + oldstopcycle)
             if self.options.ignore_stopcycle:
                 # ignore it and take whatever the command line or suite.rc file gives us
                 if self.stop_tag:
@@ -411,11 +395,12 @@ where they got to while the suite was down."""
             else:
                 raise Exception( 'ERROR: unknown task state for ' + itask.id )
 
-            # check stop cycle in case the user has set a very quick stop
-            if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                # we've reached the stop cycle already: delete the new task
-                itask.log( 'WARNING', "HOLDING at configured stop cycle " + self.stop_tag )
-                itask.state.set_status('held')
+            ##ISO: CHECK WHAT HAPPENS IF TASK IS BEYOND STOP CYCLE?
+            #ISO # check stop cycle in case the user has set a very quick stop
+            #ISO if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
+            #ISO     # we've reached the stop cycle already: delete the new task
+            #ISO     itask.log( 'WARNING', "HOLDING at configured stop cycle " + self.stop_tag )
+            #ISO     itask.state.set_status('held')
             self.pool.add( itask )
 
 

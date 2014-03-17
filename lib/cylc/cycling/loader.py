@@ -16,36 +16,21 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.cycle_time import at
-from cylc.cycling.base import cycler
+"""
+Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
+Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
+"""
+#cycling = 'integer'
+cycling = 'iso8601'
 
-class async( cycler ):
-    is_async = True
-    @classmethod
-    def offset( cls, tag, n ):
-        return str(int(tag)-int(n))
+if cycling == 'integer':
+    from integer import point, interval, sequence
+elif cycling == 'iso8601':
+    from iso8601 import point, interval, sequence
+else:
+    raise "CYCLING IMPORT ERROR"
 
-    def __init__( self, *args ):
-        pass
-
-    def get_offset( self ):
-        return None
-
-    def get_min_cycling_interval( self ):
-        return None
-
-    def prev( self, tag ):
-        return str( int(tag) - 1 )
-
-    def next( self, tag ):
-        return str( int(tag) + 1 )
-
-    def initial_adjust_up( self, tag ):
-        return tag
-
-    def valid( self, tag ):
-        return True
-
-    def adjust_state( self, offset ):
-        pass
+# or use import by name:
+# mod = __import__( module_name, fromlist=[class_name] )
+# my_class = getattr( mod, class_name )
 

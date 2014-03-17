@@ -17,12 +17,11 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import Pyro.core
-from cycle_time import ct, CycleTimeError
 from copy import deepcopy
 from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
-from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
+import TaskID
 from rundb import RecordBroadcastObject
 
 class broadcast( Pyro.core.ObjBase ):
@@ -99,7 +98,7 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, tag = task_id.split( TaskID.DELIM )
+        name, tag = TaskID.split( task_id )
 
         ret = {}
         # The order is:

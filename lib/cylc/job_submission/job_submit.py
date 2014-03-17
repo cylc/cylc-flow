@@ -33,7 +33,7 @@ import socket
 from subprocess import Popen, PIPE
 from cylc.owner import user, is_remote_user
 from cylc.suite_host import is_remote_host
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from cylc.cfgspec.site import sitecfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
@@ -64,7 +64,7 @@ class job_submit(object):
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        tag = task_id + TaskID.DELIM + submit_num
+        tag = task_id + cylc.TaskID.DELIM + submit_num
 
         self.local_jobfile_path = os.path.join( \
                 sitecfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )

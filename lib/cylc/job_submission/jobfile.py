@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.TaskID import TaskID
+import cylc.TaskID
 
 import re, os
 import StringIO
@@ -43,7 +43,7 @@ class jobfile(object):
         self.owner = jobconfig['task owner']
         self.host = jobconfig['task host']
 
-        self.task_name, self.tag = task_id.split( TaskID.DELIM )
+        self.task_name, self.tag = cylc.TaskID.split( task_id )
 
     def write( self, path ):
         ############# !!!!!!!! WARNING !!!!!!!!!!! #####################

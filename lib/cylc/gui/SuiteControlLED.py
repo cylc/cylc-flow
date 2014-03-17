@@ -22,7 +22,7 @@ import gobject
 from DotUpdater import DotUpdater
 from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from util import EntryTempText
 
 class ControlLED(object):
@@ -93,7 +93,7 @@ LED suite control interface.
             ctime_column = treeview.get_model().get_n_columns() - 1
             ctime = treeview.get_model().get_value( r_iter, ctime_column )
 
-        task_id = name + TaskID.DELIM + ctime
+        task_id = cylc.TaskID.get( name, ctime )
 
         is_fam = (name in self.t.descendants)
 

@@ -25,7 +25,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
-from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
+import cylc.TaskID
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
@@ -47,14 +47,10 @@ prnt_id = False
 
 if len(args) == 2:
     target = args[1]
-    try:
-        tid = TaskID( target )
-    except InvalidTaskIDError:
+    if not TaskID.is_valid_id( target ):
         # must be a task name
         prnt_name = True
         name = target
-    except InvalidCycleTimeError, x:
-        raise SystemExit(x)
     else:
         # task ID
         prnt_id = True

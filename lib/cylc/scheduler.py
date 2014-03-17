@@ -24,7 +24,6 @@ from suite_host import get_suite_host
 from owner import user
 from shutil import copy as shcopy
 from copy import deepcopy
-from cycle_time import ct, CycleTimeError, ctime_ge, ctime_gt, ctime_lt, ctime_le
 import datetime, time
 import port_scan
 import logging
@@ -49,7 +48,7 @@ import threading
 from suite_cmd_interface import comqueue
 from suite_info_interface import info_interface
 from suite_log_interface import log_interface
-from TaskID import TaskID, TaskIDError
+import TaskID
 from task_pool import pool
 import flags
 import cylc.rundb
@@ -57,7 +56,7 @@ from Queue import Queue, Empty
 from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 from wallclock import now
-
+from cycling.loader import point
 
 class result:
     """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -133,7 +132,6 @@ class scheduler(object):
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
-        self.runtime_graph_on = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -270,6 +268,7 @@ class scheduler(object):
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
 
         self.runahead_limit = self.config.get_runahead_limit()
+
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         # RECEIVER FOR BROADCAST VARIABLES
@@ -285,10 +284,11 @@ class scheduler(object):
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.old_user_at_host_set = set()
         self.load_tasks()
-        self.initial_oldest_ctime = self.get_oldest_c_time()
+        if not self.pool.count():
+            raise SchedulerError, "No tasks loaded."
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.run_mode, self.initial_oldest_ctime )
+        self.suite_state = state_summary( self.config, self.run_mode, str(self.get_min_ctime()) )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         self.state_dumper.set_cts( self.start_tag, self.stop_tag )
@@ -329,18 +329,6 @@ class scheduler(object):
         if self.config.cfg['cylc']['event hooks']['timeout']:
             self.set_suite_timer()
 
-        self.runtime_graph_on = False
-        if self.config.cfg['visualization']['runtime graph']['enable']:
-            try:
-                from RuntimeGraph import rGraph
-            except ImportError, x:
-                # this imports pygraphviz via cylc.graphing
-                print >> sys.stderr, str(x)
-                print >> sys.stderr, "WARNING: runtime graphing disabled, please install pygraphviz."
-            else:
-                self.runtime_graph_on = True
-                self.runtime_graph = rGraph( self.suite, self.config, self.initial_oldest_ctime, self.start_tag )
-
         self.orphans = []
         self.reconfiguring = False
 
@@ -380,7 +368,7 @@ class scheduler(object):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
         if TaskID.DELIM in name_or_id:
-            name, tag = name.split(TaskID.DELIM)
+            name, tag = TaskID.split(name_or_id)
         if name in self.config.get_task_name_list():
             return True
         else:
@@ -438,8 +426,7 @@ class scheduler(object):
         return deepcopy(self.config.get_first_parent_descendants())
 
     def info_do_live_graph_movie( self ):
-        return ( self.config.cfg['visualization']['enable live graph movie'],
-                 self.config.cfg['visualization']['runtime graph']['directory'] )
+        return ( self.config.cfg['visualization']['enable live graph movie'], self.suite_dir )
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
@@ -523,15 +510,14 @@ class scheduler(object):
         self.set_stop_clock( dtime )
 
     def command_set_stop_after_task( self, tid ):
-        tid = TaskID( tid )
-        arg = tid.getstr()
-        self.set_stop_task( arg )
+        if tid.is_valid_id():
+            self.set_stop_task( tid )
 
     def command_release_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
@@ -542,7 +528,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
@@ -553,7 +539,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
@@ -567,7 +553,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
@@ -579,6 +565,7 @@ class scheduler(object):
 
     def command_hold_after_tag( self, tag ):
         """TODO - not currently used, add to the cylc hold command"""
+        # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME/TAG VS POINT
         self.hold_suite( tag )
         self.log.info( "The suite will pause when all tasks have passed " + tag )
 
@@ -623,7 +610,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
                 if spawn:
@@ -634,10 +621,10 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         for task_id in task_ids:
-            name, tag = task_id.split( TaskID.DELIM )
+            name, tag = TaskID.split( task_id )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
             new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
             self.add_new_task_proxy( new_task )
@@ -767,9 +754,9 @@ class scheduler(object):
         self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle time']
         self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle time']
         if self.start_tag:
-            self.start_tag = ct(self.start_tag).get()
+            self.start_tag = point( self.start_tag )
         if self.stop_tag:
-            self.stop_tag = ct(self.stop_tag).get()
+            self.stop_tag = point( self.stop_tag )
 
         if (not self.start_tag and not self.is_restart and
             self.config.cycling_tasks):
@@ -790,9 +777,7 @@ class scheduler(object):
             self.hold_suite_now = False
             self.hold_time = None
             if self.options.hold_time:
-                # raises CycleTimeError:
-                self.hold_time = ct( self.options.hold_time ).get()
-                #    self.parser.error( "invalid cycle time: " + self.hold_time )
+                self.hold_time = point( self.options.hold_time )
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config.cfg['cylc']['lockserver']['enable']
@@ -1009,15 +994,14 @@ class scheduler(object):
 
                 self.spawn()
 
-                if not self.config.cfg['development']['disable task elimination']:
-                    self.remove_spent_tasks()
+                self.remove_spent_tasks()
 
                 self.state_dumper.dump()
 
                 self.do_update_state_summary = True
 
                 # expire old broadcast variables
-                self.wireless.expire( self.get_oldest_c_time() )
+                self.wireless.expire( self.get_min_ctime() )
 
                 if flags.debug:
                     delta = now() - main_loop_start_time
@@ -1171,18 +1155,16 @@ class scheduler(object):
     def update_state_summary( self ):
         #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), 
-                self.get_oldest_c_time(), self.get_newest_c_time(),
-                self.get_newest_c_time(True), self.paused(),
+                self.get_min_ctime(), self.get_max_ctime(),
+                self.get_max_ctime(True), self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
-                self.will_stop_at(), self.runahead_limit )
+                self.will_stop_at(),  self.runahead_limit)
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what
         # at run time). Note 'triggered off' means 'prerequisites
         # satisfied by', but necessarily 'started running' too.
         for itask in tasks:
-            if self.runtime_graph_on:
-                self.runtime_graph.update( itask, self.get_oldest_c_time(), self.get_oldest_async_tag() )
             if self.config.cfg['cylc']['log resolved dependencies']:
                 itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
 
@@ -1307,9 +1289,6 @@ class scheduler(object):
             # port file may have been deleted
             print >> sys.stderr, x
 
-        if self.runtime_graph_on:
-            self.runtime_graph.finalize()
-
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
             self.db.close()
@@ -1323,14 +1302,14 @@ class scheduler(object):
 
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
-        self.stop_tag = stop_tag
+        self.stop_tag = point(stop_tag)
 
     def set_stop_clock( self, dtime ):
         self.log.info( "Setting stop clock time: " + dtime.isoformat() )
         self.stop_clock_time = dtime
 
     def set_stop_task( self, taskid ):
-        name, tag = taskid.split(TaskID.DELIM)
+        name, tag = TASKID.split(taskid)
         if name in self.config.get_task_name_list():
             self.log.info( "Setting stop task: " + taskid )
             self.stop_task = taskid
@@ -1357,12 +1336,12 @@ class scheduler(object):
             self.hold_time = None
         for itask in self.pool.get_tasks():
             if itask.state.is_currently('held'):
-                if self.stop_tag and ctime_gt(itask.c_time, self.stop_tag):
+                if self.stop_tag and itask.c_time > self.stop_tag:
                     # this task has passed the suite stop time
-                    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + self.stop_tag )
-                elif itask.stop_c_time and ctime_gt(itask.c_time, itask.stop_c_time):
+                    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_tag) )
+                elif itask.stop_c_time and itask.c_time > itask.stop_c_time:
                     # this task has passed its own stop time
-                    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + itask.stop_c_time )
+                    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_c_time) )
                 else:
                     # release this task
                     itask.reset_state_waiting()
@@ -1404,65 +1383,36 @@ class scheduler(object):
         # limit: take the oldest task not succeeded or failed (note this
         # excludes finished tasks and it includes runahead-limited tasks
         # - consequently "too low" a limit cannot actually stall a suite.
-        oldest_c_time = '99991228235959'
+        cycles = []
         for itask in self.pool.get_tasks():
-            if not itask.is_cycling:
+            if itask.state.is_currently('failed', 'succeeded'):
                 continue
-            #if itask.is_daemon:
-            #    # avoid daemon tasks
-            #    continue
-            if ctime_lt(itask.c_time, oldest_c_time):
-                if itask.state.is_currently('failed', 'succeeded'):
-                    continue
-                oldest_c_time = itask.c_time
+            cycles.append(itask.c_time)
+        base = None
+        if cycles:
+            base = min(cycles)
+        return base
 
-        return oldest_c_time
+    def get_min_ctime( self ):
+        cycles = [ t.c_time for t in self.pool.get_tasks() ]
+        minc = None
+        if cycles:
+            minc = min(cycles)
+        return minc
 
-    def get_oldest_async_tag( self ):
-        # return the tag of the oldest non-daemon task
-        oldest = 99999999999999
-        for itask in self.pool.get_tasks():
-            if itask.is_cycling:
+    def get_max_ctime( self, nonrunahead=False ):
+        cycles = []
+        if nonrunahead:
+            for t in self.pool.get_tasks():
+                if not t.state.is_currently('runahead'):
+                    cycles.append( t.c_time )
                 continue
-            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED
-            #    continue
-            if itask.is_daemon:
-                continue
-            if int( itask.tag ) < oldest:
-                oldest = int(itask.tag)
-        return oldest
-
-    def get_oldest_c_time( self ):
-        # return the cycle time of the oldest task
-        oldest_c_time = '99991228230000'
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling:
-                continue
-            #if itask.state.is_currently('failed'):  # uncomment for earliest NON-FAILED
-            #    continue
-            #if itask.is_daemon:
-            #    # avoid daemon tasks
-            #    continue
-            if ctime_lt( itask.c_time, oldest_c_time):
-                oldest_c_time = itask.c_time
-        return oldest_c_time
-
-    def get_newest_c_time( self, nonrunahead=False ):
-        # return the cycle time of the newest task
-        newest_c_time = ct('1000010101').get()
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling:
-                continue
-            if nonrunahead:
-                if itask.state.is_currently( 'runahead' ) or \
-                    ( self.stop_tag and ctime_gt( itask.c_time, self.stop_tag )):
-                        continue
-            # avoid daemon tasks
-            #if itask.is_daemon:
-            #    continue
-            if ctime_gt(itask.c_time, newest_c_time):
-                newest_c_time = itask.c_time
-        return newest_c_time
+        else:
+            cycles = [ t.c_time for t in self.pool.get_tasks() ]
+        maxc = None
+        if cycles:
+            maxc = max(cycles)
+        return maxc
 
     def no_active_tasks( self ):
         for itask in self.pool.get_tasks():
@@ -1504,19 +1454,16 @@ class scheduler(object):
 
     def release_runahead( self, runahead_base=None ):
         if self.runahead_limit:
-            if runahead_base is None:
-                runahead_base = self.get_runahead_base()
-            runahead_base_int = int(runahead_base)
+            runahead_base = runahead_base or self.get_runahead_base()
             for itask in self.pool.get_tasks():
                 if itask.state.is_currently('runahead'):
-                    if self.stop_tag and ctime_gt(itask.c_time, self.stop_tag):
+                    if self.stop_tag and itask.c_time > self.stop_tag:
                         # beyond the final cycle time
                         itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
                         itask.reset_state_held()
                         continue
-                    foo = ct( itask.c_time )
-                    foo.decrement( hours=self.runahead_limit )
-                    if int( foo.get() ) < runahead_base_int:
+
+                    if itask.c_time - self.runahead_limit <= runahead_base:
                         if self.hold_suite_now:
                             itask.log( 'DEBUG', "holding (suite stopping now)" )
                             itask.reset_state_held()
@@ -1524,8 +1471,7 @@ class scheduler(object):
                             itask.log( 'DEBUG', "releasing (runahead limit moved on)" )
                             itask.reset_state_waiting()
 
-    def check_hold_waiting_tasks( self, new_task, is_newly_added=False,
-                                  runahead_base=None ):
+    def check_hold_waiting_tasks( self, new_task, is_newly_added=False, runahead_base=None ):
         if not new_task.state.is_currently('waiting'):
             return
 
@@ -1539,25 +1485,22 @@ class scheduler(object):
             return
 
         # check cycle stop or hold conditions
-        if self.stop_tag and ctime_gt( new_task.c_time, self.stop_tag ):
-            new_task.log( 'DEBUG', "HOLDING (beyond suite stop cycle) " + self.stop_tag )
+        if self.stop_tag and new_task.c_time > self.stop_tag:
+            new_task.log( 'DEBUG', "HOLDING (beyond suite stop cycle) " + str(self.stop_tag) )
             new_task.reset_state_held()
             return
-        if self.hold_time and ctime_gt( new_task.c_time , self.hold_time ):
-            new_task.log( 'DEBUG', "HOLDING (beyond suite hold cycle) " + self.hold_time )
+
+        # TODO ISO - CHECK ALL STOP TIMES WORK
+        if self.hold_time and new_task.c_time > self.hold_time:
+            new_task.log( 'DEBUG', "HOLDING (beyond suite hold cycle) " + str(self.hold_time) )
             new_task.reset_state_held()
             return
 
         # tasks beyond the runahead limit
         if is_newly_added and self.runahead_limit:
-            if runahead_base is None:
-                ouct = self.get_runahead_base()
-            else:
-                ouct = runahead_base
-            foo = ct( new_task.c_time )
-            foo.decrement( hours=self.runahead_limit )
-            foo_str = foo.get()
-            if ctime_ge( foo_str, ouct ):
+            ouct = runahead_base or self.get_runahead_base()
+
+            if new_task.c_time - self.runahead_limit >= ouct:
                 new_task.log( "DEBUG", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()
                 return
@@ -1575,10 +1518,10 @@ class scheduler(object):
             return False
         for pct in set(itask.prerequisites.get_target_tags()):
             try:
-                if ctime_gt( pct, self.stop_tag ):
-                    # pct > self.stop_tag
+                if pct > self.stop_tag:
                     return True
             except:
+                raise
                 # pct invalid cycle time => is an asynch trigger
                 pass
         return False
@@ -1599,7 +1542,7 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if self.add_new_task_proxy( new_task ):
+        if new_task and self.add_new_task_proxy( new_task ):
             return new_task
         else:
             return None
@@ -1649,11 +1592,11 @@ class scheduler(object):
             if not itask.is_cycling:
                 continue
             if itask.state.is_currently('waiting', 'runahead', 'held' ):
-                if not cutoff or ctime_lt(itask.c_time, cutoff):
+                if not cutoff or itask.c_time < cutoff:
                     cutoff = itask.c_time
             elif not itask.has_spawned():
                 nxt = itask.next_tag()
-                if not cutoff or ctime_lt(nxt, cutoff):
+                if nxt and ( not cutoff or nxt < cutoff ):
                     cutoff = nxt
 
         # now check each succeeded task against the cutoff
@@ -1693,7 +1636,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
@@ -1742,7 +1685,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ i + TaskID.DELIM + tag for i in matches ]
+        task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         tasks = []
         for itask in self.pool.get_tasks():
@@ -1841,7 +1784,7 @@ class scheduler(object):
             self.negotiate()
             something_triggered = False
             for itask in self.pool.get_tasks():
-                if ctime_gt( itask.tag, stop ):
+                if itask.tag > stop:
                     continue
                 if itask.ready_to_run():
                     something_triggered = True
@@ -1909,9 +1852,9 @@ class scheduler(object):
                 stop = True
 
         elif self.stop_task:
-            name, tag = self.stop_task.split(TaskID.DELIM)
+            name, tag = TaskID.split(self.stop_task)
             for itask in self.pool.get_tasks():
-                iname, itag = itask.id.split(TaskID.DELIM)
+                iname, itag = TaskID.split(itask.id)
                 if itask.name == name and int(itag) == int(tag):
                     # found the stop task
                     if itask.state.is_currently('succeeded'):
@@ -1932,7 +1875,7 @@ class scheduler(object):
                     i_cyc = True
                     # don't stop if a cycling task has not passed the stop cycle
                     if self.stop_tag:
-                        if ctime_le( itask.c_time, self.stop_tag ):
+                        if itask.c_time <= self.stop_tag:
                             if itask.state.is_currently('succeeded') and itask.has_spawned():
                                 # ignore spawned succeeded tasks - their successors matter
                                 pass
@@ -1956,9 +1899,9 @@ class scheduler(object):
             if stop:
                 msg = "Stopping: "
                 if i_fut:
-                    msg += "\n  + all future-triggered tasks have run as far as possible toward " + self.stop_tag
+                    msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_tag)
                 if i_cyc:
-                    msg += "\n  + all cycling tasks have spawned past the final cycle " + self.stop_tag
+                    msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_tag)
                 if i_asy:
                     msg += "\n  + all non-cycling tasks have succeeded"
                 print msg

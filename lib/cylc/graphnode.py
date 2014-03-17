@@ -16,8 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cycling.loader import interval
 import re
-NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-]\s*\d+)\s*\]){0,1}(:[\w-]+){0,1}$')
+NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-])(\s*\w+)\s*\]){0,1}(:[\w-]+){0,1}$')
 
 
 class GraphNodeError( Exception ):
@@ -44,7 +45,7 @@ class graphnode( object ):
 
         m = re.match( NODE_RE, node )
         if m:
-            name, offset, outp = m.groups()
+            name, sign, offset, outp = m.groups()
 
             if outp:
                 self.special_output = True
@@ -60,8 +61,10 @@ class graphnode( object ):
 
             if offset:
                 self.intercycle = True
-                # negative offset is normal (foo[T-N])
-                self.offset = str( -int( offset ))
+                if sign == '+':
+                    self.offset = - interval( offset )
+                else:
+                    self.offset = interval( offset )
             else:
                 self.intercycle = False
                 self.offset = None
@@ -70,6 +73,7 @@ class graphnode( object ):
             raise GraphNodeError( 'Illegal graph node: ' + node )
 
 if __name__ == '__main__':
+    # TODO ISO - this is only for integer cycling:
     nodes = [
         'foo[T-24]:outx',
         'foo[T-24]',

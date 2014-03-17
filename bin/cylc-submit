@@ -29,7 +29,7 @@ from cylc.execute import execute
 from cylc.job_submission import jobfile
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
 from cylc.locking.suite_lock import suite_lock
 from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
@@ -60,7 +60,7 @@ the same task, NAME.TAG, is not currently running in the suite)."""
 def commandline_parser():
     parser = cop( usage, jset=True,
             argdoc=[ ("REG", "Suite name"),
-                ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
+                ("TASK", "Target task (" + cylc.TaskID.get( "NAME", "TAG" ) + ")")])
 
     parser.set_defaults( sched=False, dry_run=False )
 
@@ -90,12 +90,10 @@ suite_dir = os.path.dirname(suiterc)
 sys.path.append( os.path.join( suite_dir, 'python' ))
 
 # check task
-try:
-    tid = TaskID( task_id )
-except TaskIDError, x:
-    raise SystemExit(x)
-else:
-    task_name, ctime = tid.splitstr()
+if cylc.TaskID.is_valid_id( task_id ):
+    sys.exit("Invalid task ID " + task_id )
+
+task_name, ctime = cylc.TaskID.split( task_id )
 
 # load suite config
 try:

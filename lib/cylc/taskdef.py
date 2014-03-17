@@ -29,11 +29,10 @@ from prerequisites.plain_prerequisites import plain_prerequisites
 from prerequisites.conditionals import conditional_prerequisites
 from task_output_logs import logfiles
 from outputs import outputs
-from cycle_time import ct
-from cycling import container
-from TaskID import TaskID
+import TaskID
 from task_output_logs import logfiles
 from parsec.OrderedDict import OrderedDict
+from cycling.loader import point, interval
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -60,15 +59,16 @@ class taskdef(object):
         self.rtconfig = rtcfg
         self.ict = ict
 
+        self.sequences = []
+
         # some defaults
         self.intercycle = False
-        self.intercycle_offset = 0
+        self.intercycle_offset = interval.get_null()
         self.sequential = False
         self.cycling = False
         self.asyncid_pattern = None
         self.modifiers = []
         self.is_coldstart = False
-        self.cyclers = []
         self.suite_polling_cfg = {}
 
         self.follow_on_task = None
@@ -84,21 +84,20 @@ class taskdef(object):
         self.name = name
         self.type = 'cycling'
 
-    def add_trigger( self, trigger, cycler ):
-        if cycler not in self.triggers:
-            self.triggers[ cycler ] = []
-        self.triggers[cycler].append(trigger)
+    def add_trigger( self, trigger, sequence ):
+        if sequence not in self.triggers:
+            self.triggers[ sequence ] = []
+        self.triggers[sequence].append(trigger)
 
-    def add_conditional_trigger( self, triggers, exp, cycler ):
-        if cycler not in self.cond_triggers:
-            self.cond_triggers[ cycler ] = []
-        self.cond_triggers[ cycler ].append( [triggers,exp] )
+    def add_conditional_trigger( self, triggers, exp, sequence ):
+        if sequence not in self.cond_triggers:
+            self.cond_triggers[ sequence ] = []
+        self.cond_triggers[ sequence ].append( [triggers,exp] )
 
-    def add_to_valid_cycles( self, cyclr ):
-        if len( self.cyclers ) == 0:
-            self.cyclers = [cyclr]
-        else:
-            self.cyclers.append( cyclr )
+    def add_sequence( self, sequence ):
+        # TODO ISO - SEQUENCES CAN BE HELD BY TASK CLASS NOT INSTANCE
+        if sequence not in self.sequences:
+            self.sequences.append( sequence )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -173,10 +172,11 @@ class taskdef(object):
         def tclass_add_prerequisites( sself, startup, tag  ):
             # NOTE: Task objects hold all triggers defined for the task
             # in all cycling graph sections in this data structure:
-            #     self.triggers[cycler] = [list of triggers for this cycler]
-            # The list of triggers associated with cyclerX will only be
+            #     self.triggers[sequence] = [list of triggers for this
+            #     sequence]
+            # The list of triggers associated with sequenceX will only be
             # used by a particular task if the task's cycle time is a
-            # valid member of cyclerX's sequence of cycle times.
+            # valid member of sequenceX's sequence of cycle times.
 
             # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id, self.ict )
@@ -188,58 +188,77 @@ class taskdef(object):
                 # previous-instance inter-cycle trigger, and adjust the
                 # cleanup cutoff (determined by inter-cycle triggers)
                 # accordingly.
-                pp.add( sself.name + '.' + sself.cycon.prev( sself.c_time ) + ' succeeded' )
-                next_inst_ct = sself.cycon.next( sself.c_time )
-                if int(sself.cleanup_cutoff) < int(next_inst_ct):
-                    sself.cleanup_cutoff = next_inst_ct
 
-            for cyc in self.triggers:
-                for trig in self.triggers[ cyc ]:
+                p_next = None
+                adjusted = []
+                for seq in self.sequences:
+                    nxt = seq.get_next_point(sself.c_time)
+                    if nxt:
+                        # may be None if beyond the sequence bounds
+                        adjusted.append( nxt )
+                if adjusted:
+                    p_next = min( adjusted )
+                    if sself.cleanup_cutoff < p_next:
+                        sself.cleanup_cutoff = p_next
+                else:
+                    # TODO ISO - ??
+                    pass
+
+                p_prev = None
+                adjusted = []
+                for seq in self.sequences:
+                    prv = seq.get_prev_point(sself.c_time)
+                    if prv:
+                        # may be None if beyond the sequence bounds
+                        adjusted.append( prv )
+                if adjusted:
+                    p_prev = max( adjusted )
+                    pp.add( TaskID.get( sself.name, str(p_prev) ) + ' succeeded' )
+                else:
+                    # TODO ISO - ??
+                    pass
+
+            for sequence in self.triggers:
+                for trig in self.triggers[ sequence ]:
                     if trig.startup and not startup:
                             continue
-                    if trig.cycling and not cyc.valid( ct(sself.tag) ):
-                        # This trigger is not used in current cycle (see NOTE just above)
+                    if trig.cycling and not sequence.is_on_sequence( sself.tag ):
+                        # This trigger is not used in current cycle
                         continue
-                    # NOTE that if we need to check validity of async
-                    # tags, async tasks can appear in cycling sections
-                    # in which case cyc.valid( at(sself.tag)) will fail.
                     if trig.async_repeating:
-                        lp.add( trig.get( tag, cyc ))
+                        lp.add( trig.get( tag ))
                     elif trig.evaluation_offset is not None:
-                        if self.ict is not None and (int(tag) - int(trig.evaluation_offset)) >= int(self.ict):
+                        if self.ict is not None and ( tag - trig.evaluation_offset ) >= self.ict:
                             if trig.suicide:
-                                sp.add( trig.get( tag, cyc ))
+                                sp.add( trig.get( tag ))
                             else:
-                                pp.add( trig.get( tag, cyc))
+                                pp.add( trig.get( tag ))
                     elif trig.evaluation_offset is None:
                         if trig.suicide:
-                            sp.add( trig.get( tag, cyc ))
+                            sp.add( trig.get( tag ))
                         else:
-                            pp.add( trig.get( tag, cyc))
+                            pp.add( trig.get( tag ))
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
 
             # 2) conditional triggers
-            for cyc in self.cond_triggers.keys():
-                for ctrig, exp in self.cond_triggers[ cyc ]:
+            for sequence in self.cond_triggers.keys():
+                for ctrig, exp in self.cond_triggers[ sequence ]:
                     foo = ctrig.keys()[0]
                     if ctrig[foo].startup and not startup:
                         continue
-                    if ctrig[foo].cycling and not cyc.valid( ct(sself.tag)):
+                    if ctrig[foo].cycling and not sequence.is_on_sequence( sself.tag):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
-                    # NOTE that if we need to check validity of async
-                    # tags, async tasks can appear in cycling sections
-                    # in which case cyc.valid( at(sself.tag)) will fail.
                     cp = conditional_prerequisites( sself.id, self.ict )
                     for label in ctrig:
                         trig = ctrig[label]
                         if self.ict is not None and trig.evaluation_offset is not None:
-                            cp.add( trig.get( tag, cyc ), label,
+                            cp.add( trig.get( tag ), label,
                                     (int(tag) - int(trig.evaluation_offset)) < int(self.ict))
                         else:
-                            cp.add( trig.get( tag, cyc ), label )
+                            cp.add( trig.get( tag ), label )
                     cp.set_condition( exp )
                     if ctrig[foo].suicide:
                         sself.suicide_prerequisites.add_requisites( cp )
@@ -251,23 +270,34 @@ class taskdef(object):
         # class init function
         def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False, submit_num=0, exists=False ):
 
-            sself.cycon = container.cycon( self.cyclers )
-            sself.intercycle_offset = self.intercycle_offset
+            sself.sequences = self.sequences
             sself.startup = startup
             sself.submit_num = submit_num
             sself.exists=exists
+            sself.intercycle_offset = self.intercycle_offset
+
             if self.cycling: # and startup:
                 # adjust only needed at start-up but it does not hurt to
                 # do it every time as after the first adjust we're already
-                # on-cycle.
-                sself.tag = sself.cycon.initial_adjust_up( start_tag )
-                sself.cleanup_cutoff = sself.cycon.offset( sself.tag, str(-int(sself.intercycle_offset)) )
+                # on-cycle. TODO ISO - CAN WE JUST DO THIS AT START-UP?
+
+                adjusted = []
+                for seq in sself.sequences:
+                    adj = seq.get_nexteq_point( start_tag )
+                    if adj:
+                        # may be None if beyond the sequence bounds
+                        adjusted.append( adj )
+                if adjusted:
+                    p_min = min( adjusted )
+                # TODO ISO - WHAT IF POINT IS NONE (outside bounds)
+                sself.tag = p_min
+                sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
             else:
                 sself.tag = start_tag
 
             sself.c_time = sself.tag
 
-            sself.id = sself.name + TaskID.DELIM + sself.tag
+            sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.asyncid_pattern = self.asyncid_pattern
 

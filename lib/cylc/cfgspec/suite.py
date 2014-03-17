@@ -17,12 +17,20 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from parsec.validate import validator as vdr
-from parsec.validate import validate, expand, get_defaults
+from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
 
 "Define all legal items and values for cylc suite definition files."
+
+def _coerce_cycletime( value, keys, args ):
+    """Coerce value to a cycle time."""
+    value = _strip_and_unquote( keys, value )
+    # TODO ISO - CHECK VALIDITY
+    return value
+
+coercers['cycletime'] = _coerce_cycletime
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
@@ -82,8 +90,8 @@ SPEC = {
     'scheduling' : {
         'initial cycle time'                  : vdr(vtype='cycletime'),
         'final cycle time'                    : vdr(vtype='cycletime'),
-        'cycling'                             : vdr(vtype='string', default="HoursOfTheDay" ),
-        'runahead limit'                      : vdr(vtype='integer', vmin=0 ),
+        'cycling'                             : vdr(vtype='string', default="iso8601", options=["iso8601","integer"] ),
+        'runahead factor'                     : vdr(vtype='integer', default=2 ),
         'queues' : {
             'default' : {
                 'limit'                       : vdr( vtype='integer', default=0),
@@ -205,14 +213,6 @@ SPEC = {
         'node attributes' : {
             '__MANY__'                        : vdr( vtype='string_list', default=[] ),
             },
-        'runtime graph' : {
-            'enable'                          : vdr( vtype='boolean', default=False ),
-            'cutoff'                          : vdr( vtype='integer', default=24 ),
-            'directory'                       : vdr( vtype='string', default='$CYLC_SUITE_DEF_PATH/graphing'),
-            },
-        },
-    'development' : {
-        'disable task elimination'            : vdr( vtype='boolean', default=False ),
         },
     }
 
@@ -222,6 +222,11 @@ def upg( cfg, descr ):
     # TODO - should abort if obsoleted items are encountered
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
+    # TODO - replace ISO version here:
+    u.obsolete( '5.4.ISO', ['visualization', 'runtime graph'] )
+    u.obsolete( '5.4.ISO', ['development'] )
+    u.deprecate( '5.4.ISO', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
+            converter( lambda x:'2', 'using default runahead factor' ))
     u.upgrade()
 
 class sconfig( config ):

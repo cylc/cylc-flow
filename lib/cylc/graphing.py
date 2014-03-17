@@ -21,12 +21,13 @@ ImportError due to pygraphviz/graphviz not being installed."""
 
 import re
 import pygraphviz
-from TaskID import TaskID, AsyncTag
+import TaskID
+from cycling.loader import point, interval
 
-OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
+# TODO ISO - GET RID OF 'T', e.g. "a[-1D] => a"
+OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\w+)\s*\]')
 
 # TODO: Do we still need autoURL below?
-
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
@@ -40,7 +41,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.suite_polling_tasks = suite_polling_tasks
 
     def node_attr_by_taskname( self, n ):
-        name = re.sub( TaskID.DELIM_RE+'.*', '', n )
+        name, tag = TaskID.split( n )
         if name in self.task_attr:
             return self.task_attr[name]
         else:
@@ -50,8 +51,8 @@ class CGraphPlain( pygraphviz.AGraph ):
         pass
 
     def style_node( self, n, autoURL, base=False ):
-        node = self.get_node(n)
-        name, tag = re.split( TaskID.DELIM_RE, n )
+        node = self.get_node( n )
+        name, tag = TaskID.split( n )
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
@@ -176,11 +177,11 @@ class CGraph( CGraphPlain ):
 
 
 class edge( object):
-    def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
+    def __init__( self, l, r, sequence, sasl=False, suicide=False, conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = l
         self.right = r
-        self.cyclr = cyclr
+        self.sequence = sequence
         self.sasl = sasl
         self.suicide = suicide
         self.conditional = conditional
@@ -200,7 +201,7 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        return TaskID( self.right, tag )
+        return TaskID.get( self.right, tag )
 
     def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
         tag = str(intag)
@@ -213,7 +214,7 @@ class edge( object):
         # strip off special outputs
         left = re.sub( ':[\w-]+', '', self.left )
 
-        if re.search( '\[\s*T\s*-\d+\s*\]', left ) and first_cycle:
+        if re.search( '\[\s*T\s*-\w+\s*\]', left ) and first_cycle:
             # ignore intercycle deps in first cycle
             return None
 
@@ -228,11 +229,9 @@ class edge( object):
             m = re.match( OFFSET_RE, left )
             if m:
                 left, offset = m.groups()
-                # the cycler expects foo[T-offset] so change sign:
-                offset = str( -int( offset ))
-                tag = self.cyclr.__class__.offset( tag, offset )
+                tag = str( point(tag) + interval(offset) )
             else:
                 tag = tag
 
-        return TaskID( left, tag )
+        return TaskID.get( left, tag )
 

@@ -3,7 +3,6 @@
 import os, sys, re
 import datetime
 from difflib import unified_diff
-from cycle_time import ct
 
 class LogAnalyserError( Exception ):
     def __init__( self, msg ):
@@ -30,8 +29,6 @@ class LogSpec( object ):
                 tag = m.groups()[0]
                 if tag == "None":
                     tag = None
-                else:
-                    tag = ct(tag).get()
                 break
         if found:
             return tag
@@ -47,8 +44,6 @@ class LogSpec( object ):
                 tag = m.groups()[0]
                 if tag == "None":
                     return None
-                else:
-                    tag = ct(tag).get()
                 break
         if found:
             return tag

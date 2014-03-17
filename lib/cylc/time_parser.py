@@ -89,7 +89,7 @@ class CylcTimeParser(object):
             dump_format = u"±XCCYYMMDDThhmm" + timezone_format
         self.num_expanded_year_digits = num_expanded_year_digits
         self.timepoint_parser = isodatetime.parsers.TimePointParser(
-            allow_only_basic=True,
+            allow_only_basic=False, # TODO - Ben: why was this set True
             allow_truncated=True,
             num_expanded_year_digits=num_expanded_year_digits,
             dump_format=dump_format)
@@ -188,6 +188,7 @@ class CylcTimeParser(object):
                     end_point += context_end_point
                 if end_offset is not None:
                     end_point += end_offset
+
             return isodatetime.data.TimeRecurrence(
                          repetitions=repetitions,
                          start_point=start_point,

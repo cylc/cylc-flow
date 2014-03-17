@@ -16,9 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.TaskID import TaskID
+import cylc.TaskID
+from cylc.cycling.loader import interval
 
-import sys, re
+import re
 
 class TriggerXError( Exception ):
     def __init__( self, msg ):
@@ -67,19 +68,20 @@ where output x of foo may also have an offset:
     def set_special( self, msg ):
         # explicit internal output message ...
         self.msg = msg
+        # TODO ISO:
         m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', msg )
         if m:
             sign, offset = m.groups()
             if sign != '+':
                 raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.intrinsic_offset = int(offset)
+            self.intrinsic_offset = interval( offset )
     def set_type( self, type ):
         if type not in [ 'submitted', 'submit-failed', 'started', 'succeeded', 'failed' ]:
             raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
         self.type = type
     def set_offset( self, offset ):
-        self.evaluation_offset = int( offset )
-    def get( self, ctime, cycler ):
+        self.evaluation_offset = interval( offset )
+    def get( self, ctime ):
         if self.async_repeating:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
@@ -93,14 +95,14 @@ where output x of foo may also have an offset:
                 # explicit internal output ...
                 preq = self.msg
                 if self.intrinsic_offset:
-                    ctime = cycler.offset( ctime, - self.intrinsic_offset )
+                    ctime += self.intrinsic_offset
                 if self.evaluation_offset:
-                    ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = re.sub( '\[\s*T\s*.*?\]', ctime, preq )
+                    ctime -= self.evaluation_offset
+                preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
             else:
                 # implicit output
                 if self.evaluation_offset:
-                    ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = self.name + TaskID.DELIM + ctime + ' ' + self.type
+                    ctime -= self.evaluation_offset
+                preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
         return preq
 

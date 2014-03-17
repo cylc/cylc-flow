@@ -281,12 +281,12 @@ class task( object ):
         self.__class__.instance_count -= 1
 
     def record_db_event(self, event="", message=""):
-        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, self.user_at_host)
+        call = cylc.rundb.RecordEventObject(self.name, str(self.c_time), self.submit_num, event, message, self.user_at_host)
         self.db_queue.append(call)
         self.db_items = True
 
     def record_db_update(self, table, name, cycle, **kwargs):
-        call = cylc.rundb.UpdateObject(table, name, cycle, **kwargs)
+        call = cylc.rundb.UpdateObject(table, name, str(cycle), **kwargs)
         self.db_queue.append(call)
         self.db_items = True
 
@@ -294,7 +294,7 @@ class task( object ):
                      submit_num=None, is_manual_submit=None, try_num=None,
                      host=None, submit_method=None, submit_method_id=None,
                      status=None):
-        call = cylc.rundb.RecordStateObject(name, cycle,
+        call = cylc.rundb.RecordStateObject(name, str(cycle),
                      time_created=time_created, time_updated=time_updated,
                      submit_num=submit_num, is_manual_submit=is_manual_submit, try_num=try_num,
                      host=host, submit_method=submit_method, submit_method_id=submit_method_id,
@@ -558,16 +558,6 @@ class task( object ):
 
         if self.suite_polling_cfg:
             # generate automatic suite state polling command scripting
-            #____
-            # for an additional cycle time offset for --cycle:
-            #offset =  rtconfig['suite state polling']['offset']
-            #if offset:
-            #    foo = ct( self.c_time )
-            #    foo.decrement( hours=offset )
-            #    cycle = foo.get()
-            #else:
-            #    cycle = self.c_time
-            #____
             comstr = "cylc suite-state " + \
                      " --task=" + self.suite_polling_cfg['task'] + \
                      " --cycle=" + self.c_time + \
@@ -1085,10 +1075,15 @@ class task( object ):
 
     def spawn( self, state ):
         self.state.set_spawned()
-        successor = self.__class__( self.next_tag(), state )
-        # propagate task stop time
-        successor.stop_c_time = self.stop_c_time
-        return successor
+        next = self.next_tag()
+        if next:
+            successor = self.__class__( next, state )
+            # propagate task stop time
+            successor.stop_c_time = self.stop_c_time
+            return successor
+        else:
+            # next instance is out of the sequence bounds
+            return None
 
     def has_spawned( self ):
         # the one off task type modifier overrides this.
@@ -1123,7 +1118,7 @@ class task( object ):
         self.summary.setdefault( 'name', self.name )
         self.summary.setdefault( 'description', self.description )
         self.summary.setdefault( 'title', self.title )
-        self.summary.setdefault( 'label', self.tag )
+        self.summary.setdefault( 'label', str(self.tag) )
         self.summary[ 'state' ] = self.state.get_status()
         self.summary[ 'spawned' ] = self.state.has_spawned()
 
@@ -1159,9 +1154,8 @@ class task( object ):
         return tag
 
     def next_tag( self ):
-        # Asynchronous tasks: increment the tag by one.
-        # Cycling tasks override this to compute their next valid cycle time.
-        return str( int( self.tag ) + 1 )
+        # derived classes override this to compute next valid cycle time.
+        return None
 
     def poll( self ):
         """Poll my live task job and update status accordingly."""

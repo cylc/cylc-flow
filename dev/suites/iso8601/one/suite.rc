@@ -1,0 +1,18 @@
+
+[scheduling]
+    initial cycle time = 20140101T00
+    final cycle time = 20140102T12
+    #runahead limit = 'P4D'
+    [[dependencies]]
+        #[[[ Yearly( 201008, 2 ) ]]]
+        #[[[ Monthly( 2010, 2 ) ]]]
+        #[[[ Daily( 2010, 2 ) ]]]
+        #[[[ P1D ]]]
+
+        # TESTED:
+        #[[[ PT6H ]]]
+        #    graph = "foo[T-PT6H] => foo => bar"
+
+        # TESTED:
+        [[[ PT10M ]]]
+            graph = "foo[T-PT10M] => foo => bar"

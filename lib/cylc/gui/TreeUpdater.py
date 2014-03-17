@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.task_state import task_state
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
@@ -142,7 +142,7 @@ class TreeUpdater(threading.Thread):
             task_id = ctime
         else:
             # We are hovering over a task or family row.
-            task_id = name + TaskID.DELIM + ctime
+            task_id = cylc.TaskID.get( name, ctime )
         if task_id != self._prev_tooltip_task_id:
             # Clear tooltip when crossing row boundaries.
             self._prev_tooltip_task_id = task_id
@@ -177,7 +177,7 @@ class TreeUpdater(threading.Thread):
                               (self.updater.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
             for id in summary:
-                name, ctime = id.split( TaskID.DELIM )
+                name, ctime = cylc.TaskID.split( id )
                 if ctime not in dest:
                     dest[ ctime ] = {}
                 state = summary[ id ].get( 'state' )

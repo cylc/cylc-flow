@@ -22,7 +22,6 @@ from batch_submit import task_batcher
 from task_types import task
 import flags
 from Pyro.errors import NamingError, ProtocolError
-from cycle_time import ctime_gt
 
 class pool(object):
     def __init__( self, suite, config, wireless, pyro, log, run_mode ):
@@ -72,7 +71,7 @@ class pool(object):
         exist, and if the task has not passed its own stop cycle (if it
         has a stop cycle).
         """
-        if itask.stop_c_time and ctime_gt( itask.c_time, itask.stop_c_time ):
+        if itask.stop_c_time and itask.c_time > itask.stop_c_time:
             self.log.warning( itask.id + ' not adding to pool: task beyond its own stop cycle' )
             return False
 
@@ -130,6 +129,9 @@ class pool(object):
             tasks += self.queues[queue]
         #tasks.sort() # sorting any use here?
         return tasks
+
+    def count( self ):
+        return len( self.get_tasks() )
 
     def id_exists( self, id ):
         """Check if a task with the given ID is in the pool"""

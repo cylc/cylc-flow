@@ -18,7 +18,6 @@
 
 import re, sys, os
 import datetime
-from cycle_time import ct, CycleTimeError
 from batchproc import batchproc
 import flags
 
@@ -51,11 +50,6 @@ class config_line:
         self.source = source
         self.match = match
         self.ctime = ctime
-        try:
-            # check the validity of the base cycle time
-            ct(ctime)
-        except CycleTimeError,x:
-            raise HousekeepingError, str(x)
         self.offset = offset
         self.opern = oper
         self.destn = dest
@@ -104,8 +98,8 @@ class config_line:
             print "TARGET:", self.destn
         print "MATCH :", self.match
         print "ACTION:", self.opern
-        foo = ct( self.ctime )
-        foo.decrement( hours=self.offset )
+        # TODO ISO
+        foo = self.ctime - self.offset # offset is HOURS
         print "CUTOFF:", self.ctime, '-', self.offset, '=', foo.get()
         batch = batchproc( batchsize )
         for entry in os.listdir( self.source ):
@@ -254,22 +248,14 @@ class hkitem:
             print " > extracted time groups:", m.groups()
             return False
 
-        # check validity of extracted cycle time
-        try:
-            ct(self.matched_ctime)
-        except:
-            if flags.debug:
-                print " + extracted cycle time is NOT VALID: " + self.matched_ctime
-            return False
-        else:
-            if flags.debug:
-                print " + extracted cycle time: " + self.matched_ctime
+        # TODO ISO - check validity of extracted cycle time
+        if flags.debug:
+            print " + extracted cycle time: " + self.matched_ctime
 
         # assume ctime is >= self.matched_ctime
-        foo = ct( self.ctime )
-        bar = ct( self.matched_ctime )
-        # gap hours
-        gap = foo.subtract_hrs( bar )
+        # TODO ISO:
+        # gap HOURS
+        gap = self.ctime - self.matched_ctime
 
         if flags.debug:
             print " + computed offset hours", gap,

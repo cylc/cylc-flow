@@ -19,7 +19,6 @@
 
 import sys
 from task import task
-from cylc.cycle_time import ct
 from copy import deepcopy
 
 # Cycling tasks: cycle time also required for a cold start. Init with:
@@ -46,36 +45,27 @@ from copy import deepcopy
 
 class cycling( task ):
 
-    intercycle = False
-    # This is a statement that the task has only cotemporal dependants
-    # and as such can be deleted as soon as there are no unsucceeded
-    # tasks with cycle times equal to or older than its own cycle time
-    # (prior to that we can't be sure that an older unsucceeded
-    # task won't give rise to a new task that does depend on the task
-    # we're interested in).
     is_cycling = True
 
-    # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
+    intercycle = False  # no inter-cycle dependents
+
+    # derived classes must override ready_to_spawn()
 
     def __init__( self, state, stop_c_time = None, validate = False ):
-        # Call this AFTER derived class initialisation
-
-        # Derived class init MUST define:
-        #  * self.id after calling self.nearest_c_time()
-        #  * prerequisites and outputs
-        #  * self.env_vars
-
-        # Top level derived classes must define:
-        #   <class>.instance_count = 0
-
-        # A final stop time can be set by 'cylc insert' to create a temporary task.
         self.stop_c_time = stop_c_time
         task.__init__( self, state, validate )
 
-    def next_tag( self, ctime=None ):
-        if not ctime:
-            ctime = self.tag
-        return self.cycon.next( ctime )
+    def next_tag( self ):
+        p_next = None
+        adjusted = []
+        for seq in self.sequences:
+            nxt = seq.get_next_point(self.c_time)
+            if nxt:
+                # may be None if beyond the sequence bounds
+                adjusted.append( nxt )
+        if adjusted:
+            p_next = min( adjusted )
+        return p_next
 
     def get_state_summary( self ):
         summary = task.get_state_summary( self )

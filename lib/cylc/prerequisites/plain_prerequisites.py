@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys
+from cylc.cycling.loader import point
 
 # PREREQUISITES: A collection of messages representing the prerequisite
 # conditions for a task, each of which can be "satisfied" or not.  An
@@ -27,7 +28,7 @@ class plain_prerequisites(object):
 
     TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
 
-    def __init__( self, owner_id, ict=None ):
+    def __init__( self, owner_id, p_ict=None ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
@@ -35,16 +36,18 @@ class plain_prerequisites(object):
         self.target_tags = []   # list of target cycle times (tags)
         self.auto_label = 0
         self.owner_id = owner_id
-        self.ict = ict
+        self.p_ict = p_ict
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
-        if self.ict:
+        if self.p_ict:
             task = re.search( r'(.*).(.*) ', message)
             if task.group:
                 try:
-                    if (int(task.group().split(".")[1]) < int(self.ict) and
-                        int(task.group().split(".")[1]) != 1):
+                    foo = task.group().split(".")[1].rstrip()
+                    if ( point( foo ) <  self.p_ict and foo != '1' ):
+                        # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
+                        # INTEGER CYCLING (AND MORE?)
                         return
                 except IndexError:
                     pass
@@ -115,5 +118,5 @@ class plain_prerequisites(object):
     def get_target_tags( self ):
         """Return a list of cycle times target by each prerequisite,
         including each component of conditionals."""
-        return self.target_tags
+        return [ point(p) for p in self.target_tags ]
 

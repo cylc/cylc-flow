@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.task_state import task_state
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from copy import deepcopy
@@ -124,10 +124,17 @@ class DotUpdater(threading.Thread):
         state_summary.update(self.fam_state_summary)
 
         for id_ in state_summary:
-            name, ctime = id_.split( TaskID.DELIM )
+            name, ctime = cylc.TaskID.split( id_ )
             if ctime not in self.ctimes:
                 self.ctimes.append(ctime)
-        self.ctimes.sort()
+        try:
+            int( self.ctimes[0])
+        except:
+            # iso cycle times
+            self.ctimes.sort()
+        else:
+            # integer cycle times
+            self.ctimes.sort(key=int)
 
         if self.should_group_families:
             for key, val in self.ancestors_pruned.items():
@@ -137,7 +144,7 @@ class DotUpdater(threading.Thread):
                 name = val[-2]
                 if name not in self.task_list:
                     for ctime in self.ctimes:
-                        if name + TaskID.DELIM + ctime in state_summary:
+                        if cylc.TaskID.get( name, ctime ) in state_summary:
                             self.task_list.append( name )
                             break
 
@@ -288,7 +295,7 @@ class DotUpdater(threading.Thread):
             if col_index == 0:
                 task_id = name
             else:
-                task_id = name + TaskID.DELIM + ctime
+                task_id = cylc.TaskID.get( name, ctime )
         else:
             try:
                 ctime = self.ctimes[path[0]]
@@ -301,7 +308,7 @@ class DotUpdater(threading.Thread):
                     name = self.led_headings[col_index]
                 except IndexError:
                     return False
-                task_id = name + TaskID.DELIM + ctime
+                task_id = cylc.TaskID.get( name, ctime )
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
@@ -327,7 +334,7 @@ class DotUpdater(threading.Thread):
         tasks_by_ctime = {}
         tasks_by_name = {}
         for id_ in state_summary:
-            name, ctime = id_.split( TaskID.DELIM )
+            name, ctime = cylc.TaskID.split( id_ )
             tasks_by_ctime.setdefault( ctime, [] )
             tasks_by_ctime[ctime].append(name)
             tasks_by_name.setdefault( name, [] )
@@ -346,7 +353,7 @@ class DotUpdater(threading.Thread):
                 state_list = [ ]
                 for ctime in self.ctimes:
                     if ctime in ctimes_for_tasks:
-                        state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
+                        state = state_summary[ cylc.TaskID.get( name, ctime ) ][ 'state' ]
                         state_list.append( self.dots[state] )
                     else:
                         state_list.append( self.dots['empty'] )
@@ -361,7 +368,7 @@ class DotUpdater(threading.Thread):
                 state_list = [ ]
                 for name in self.task_list:
                     if name in tasks_at_ctime:
-                        state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
+                        state = state_summary[ cylc.TaskID.get( name, ctime ) ][ 'state' ]
                         try:
                             state_list.append( self.dots[state] )
                         except KeyError:

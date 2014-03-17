@@ -18,13 +18,12 @@
 
 import sys
 from cylc.remote import remrun
-from cylc.TaskID import TaskID
+import cylc.TaskID
 
 if remrun().execute():
     sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.cycle_time import ct, CycleTimeError
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and
 # right-click menu have been rather hastily stuck on to the original
@@ -38,7 +37,7 @@ def on_url_clicked( widget, url, event, window ):
     right_click_menu( event, url, type='live task', window=window )
 
 def right_click_menu( event, task_id, type='live task', window=None ):
-    name, ctime = task_id.split(TaskID.DELIM)
+    name, ctime = cylc.TaskID.split( task_id )
 
     menu = gtk.Menu()
     menu_root = gtk.MenuItem( task_id )
@@ -182,20 +181,11 @@ else:
 
     if len(args) > 1:
         # got START
-        try:
-            start_ctime = ct(args[1]).get()
-        except CycleTimeError,x:
-            raise SystemExit(x)
+        start_ctime = args[1]
 
         if len(args) == 3:
             # got STOP
-            try:
-                stop_ctime = ct(args[2]).get()
-            except CycleTimeError,x:
-                raise SystemExit(x)
-            #stop_delta = stop_ctime.subtract( ct(start_ctime) )
-            # timedelta: days, seconds, microseconds; ignoring microseconds
-            #stop = stop_delta.days * 24 + stop_delta.seconds / 3600
+            stop_ctime = args[2]
         else:
             stop_ctime = start_ctime
 

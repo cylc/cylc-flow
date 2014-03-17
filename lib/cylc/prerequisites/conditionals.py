@@ -18,6 +18,7 @@
 
 import re, sys
 from simplify import conditional_simplifier
+from cylc.cycling.loader import point
 
 # label1 => "foo ready for <TAG>
 # label2 => "bar.<TAG> succeeded"
@@ -91,8 +92,10 @@ class conditional_prerequisites(object):
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
                     try:
-                        if (int(task.group().split(".")[1]) < int(self.ict) and
-                            int(task.group().split(".")[1]) != 1):
+                        foo = task.group().split(".")[1].rstrip()
+                        if ( point( foo ) <  self.p_ict and foo != '1' ):
+                            # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
+                            # INTEGER CYCLING (AND MORE?)
                             drop_these.append(k)
                     except IndexError:
                         pass

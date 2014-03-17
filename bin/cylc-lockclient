@@ -20,13 +20,12 @@ import os, sys, re
 from cylc.suite_host import get_hostname
 from optparse import OptionParser
 from time import sleep
-from cylc.cycle_time import ct, CycleTimeError
 from cylc.port_scan import SuiteNotFoundError
 from cylc.registration import localdb, RegistrationError
 from cylc.locking.lockserver import lockserver
 from cylc.locking.task_lock import task_lock
 from cylc.locking.suite_lock import suite_lock
-from cylc.TaskID import TaskID
+import cylc.TaskID
 
 import Pyro.core, Pyro.errors
 
@@ -48,19 +47,16 @@ def check_task_spec( task_spec ):
     try:
         suite, task_id = task_spec.split( ':' )
     except:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+cylc.TaskID.DELIM+"CYCLE" )
 
     check_suite_spec( suite )
 
     try:
-        (name, tag) = task_id.split( TaskID.DELIM )
+        (name, tag) = task_id.split( cylc.TaskID.DELIM )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+TaskID.DELIM+"CYCLE" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK"+cylc.TaskID.DELIM+"CYCLE" )
 
-    try:
-        cycle = ct(tag).get()
-    except CycleTimeError,x:
-        raise SystemExit(x)
+    cycle = tag
 
     return ( suite, task_id )
 
@@ -87,10 +83,10 @@ See also:
             list_all=False, get_filenames=False )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SUITE:TASK"+TaskID.DELIM+"CYCLE", action="store", dest="acquire" )
+            metavar="SUITE:TASK"+cylc.TaskID.DELIM+"CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SUITE:TASK"+TaskID.DELIM+"CYCLE", action="store", dest="release" )
+            metavar="SUITE:TASK"+cylc.TaskID.DELIM+"CYCLE", action="store", dest="release" )
 
     parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire" )

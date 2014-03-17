@@ -39,8 +39,8 @@ class dumper( object ):
         self.wireless = None
 
     def set_cts( self, ict, fct ):
-        self.ict = ict
-        self.stop_tag = fct
+        self.ict = str(ict)
+        self.stop_tag = str(fct)
 
         self.cts_str = ""
         if self.ict:

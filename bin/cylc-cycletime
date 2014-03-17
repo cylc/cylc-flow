@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cylc.cycle_time import ct, CycleTimeError
 from cylc.cycling.Monthly import Monthly
 from cylc.cycling.Yearly import Yearly
 from optparse import OptionParser
@@ -85,23 +84,16 @@ parser.add_option( "--print-hour", help="Print only HH of result",
 
 (options, args) = parser.parse_args()
 
+# TODO ISO - THIS UTIL WILL BE COMPLETELY BROKEN
 if len( args ) == 0:
     # input cycle time must be definied in the environment.
     if 'CYLC_TASK_CYCLE_TIME' not in os.environ:
         parser.error( "Provide CYCLE arg, or define $CYLC_TASK_CYCLE_TIME" )
-    else:
-        try:
-            cycle = ct(os.environ[ 'CYLC_TASK_CYCLE_TIME' ])
-        except CycleTimeError, x:
-            raise SystemExit(x)
-    # DONE (no args)
 
 elif len( args ) == 1:
     # must be cycle time
-    try:
-        cycle = ct(args[0])
-    except CycleTimeError, x:
-        raise SystemExit(x)
+    cycle = args[0]
+
 else:
     parser.error( "Wrong number of arguments!" )
 

@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from cycling.loader import interval
 
 class OutputXError( Exception ):
     def __init__( self, msg ):
@@ -32,20 +33,19 @@ latter can have instrinsic (in message) and evaluation ([T-n]) offsets, but
 these only have intrinsic offsets - they are always evaluated at the task's
 own cycle time.
     """
-    def __init__(self, msg, cyclr ):
+    def __init__(self, msg ):
         self.offset = None
-        self.cyclr = cyclr
         self.msg = msg
         m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', self.msg )
         if m:
             sign, offset = m.groups()
             if sign != '+':
                 raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.offset = int(offset)
+            self.offset = interval( offset )
 
     def get( self, ctime ):
         # Replace [T] with actual cycle time
         if self.offset:
-            ctime = self.cyclr.offset( ctime, - self.offset )
-        return re.sub( '\[\s*T.*?\]', ctime, self.msg )
+            ctime += self.offset
+        return re.sub( '\[\s*T.*?\]', str(ctime), self.msg )
 

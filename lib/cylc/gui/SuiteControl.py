@@ -49,8 +49,7 @@ from util import (get_icon, get_image_dir, get_logo, EntryTempText,
                            EntryDialog, setup_icons, set_exception_hook_dialog)
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
 from cylc.version import cylc_version
 from cylc.strftime import strftime
 from option_group import controlled_option_group
@@ -833,14 +832,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stoptag == '':
                 warning_dialog( "ERROR: No stop TAG entered", self.window ).warn()
                 return
-            try:
-                ct(stoptag)
-            except CycleTimeError,x:
-                try:
-                    int(stoptag)
-                except ValueError:
-                    warning_dialog( 'ERROR, Invalid stop tag: ' + stoptag, self.window ).warn()
-                    return
+            # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON stoptag?
 
         elif stopnow_rb.get_active():
             stopnow = True
@@ -871,10 +863,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stoptask_id == '':
                 warning_dialog( "ERROR: No stop task ID entered", self.window ).warn()
                 return
-            try:
-                tid = TaskID( stoptask_id )
-            except TaskIDError,x:
-                warning_dialog( "ERROR: Bad task ID (TASK"+TaskID.DELIM+"YYYYMMDDHH): " + stoptask_id,
+            if not cylc.TaskID.is_valid_id( stoptask_id ):
+                warning_dialog( "ERROR: Bad task ID (" + cylc.TaskID.get( "TASK", "TAG" ) + "): " + stoptask_id,
                                 self.window ).warn()
                 return
             else:
@@ -968,20 +958,10 @@ been defined for this suite""").inform()
         if method != 'restart':
             # start time
             ctime = entry_ctime.get_text()
-            if ctime != '':
-                try:
-                    ct(ctime)
-                except CycleTimeError,x:
-                    warning_dialog( str(x), self.window ).warn()
-                    return
+            # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON ctime AND ste?
 
         ste = stoptime_entry.get_text()
         if ste:
-            try:
-                ct(ste)
-            except CycleTimeError,x:
-                warning_dialog( str(x), self.window ).warn()
-                return
             options += ' --until=' + ste
 
         hetxt = holdtime_entry.get_text()
@@ -1099,7 +1079,7 @@ The Cylc Suite Engine.
 
     def _get_right_click_menu_items( self, task_id, task_is_family=False ):
         # Return the default menu items for a task
-        name, ctime = task_id.split(TaskID.DELIM)
+        name, ctime = cylc.TaskID.split( task_id )
 
         items = []
 
@@ -1345,7 +1325,7 @@ The Cylc Suite Engine.
         label = gtk.Label( 'TASK: ' + task_id )
         vbox.pack_start( label, True )
 
-        label = gtk.Label( 'DEP (NAME'+TaskID.DELIM+'TAG or message)' )
+        label = gtk.Label( 'DEP (NAME' + cylc.TaskID.DELIM + 'TAG or message)' )
 
         entry = gtk.Entry()
 
@@ -1374,7 +1354,7 @@ The Cylc Suite Engine.
 
     def add_prerequisite( self, w, entry, window, task_id ):
         dep = entry.get_text()
-        m = re.match( '^(\w+)'+TaskID.DELIM_RE+'(\w+)$', dep )
+        m = re.match( '^(\w+)' + cylc.TaskID.DELIM_RE + '(\w+)$', dep )
         if m:
             #name, ctime = m.groups()
             msg = dep + ' succeeded'
@@ -1382,16 +1362,13 @@ The Cylc Suite Engine.
             msg = dep
 
         try:
-            (name, cycle ) = task_id.split(TaskID.DELIM)
+            (name, cycle ) = cylc.TaskID.split( task_id )
         except ValueError:
-            warning_dialog( "ERROR, Task or Group ID must be NAME"+TaskID.DELIM+"YYYYMMDDHH",
+            warning_dialog( "ERROR, Task or Group ID must be " + cylc.TaskID.get( "NAME", "TAG" ),
                             self.window ).warn()
             return
-        try:
-            ct(cycle)
-        except CycleTimeError,x:
-            warning_dialog( str(x), self.window ).warn()
-            return
+
+        # TODO ISO - RESTORE VALIDITY CHECK ON cycle?
 
         window.destroy()
         try:
@@ -1414,6 +1391,7 @@ The Cylc Suite Engine.
         try:
             result = self.get_pyro( 'suite-info' ).get( 'task requisites', [ task_id ] )
         except Exception,x:
+            print "SHITE"
             warning_dialog(str(x), self.window).warn()
             return
 
@@ -1540,7 +1518,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         try:
             if stop:
                 result = self.get_pyro( 'command-interface' ).put( 'hold task now', name, tag, is_family )
@@ -1559,7 +1537,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         try:
             result = self.get_pyro( 'command-interface' ).put( 'trigger task', name, tag, is_family )
         except Exception, x:
@@ -1574,7 +1552,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         try:
             result = self.get_pyro( 'command-interface' ).put( 'poll tasks', name, tag, is_family )
         except Exception, x:
@@ -1589,7 +1567,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         try:
             result = self.get_pyro( 'command-interface' ).put( 'kill tasks', name, tag, is_family )
         except Exception, x:
@@ -1604,7 +1582,7 @@ shown here in the state they were in at the time of triggering.''' )
             return False
         cmd = "reset"
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         msg = "reset " + task_id + " to " + state +"?"
         if not self.get_confirmation( cmd, task_id, msg ):
             return
@@ -1624,7 +1602,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         try:
             result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, True )
         except Exception, x:
@@ -1639,7 +1617,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
-        name, tag = task_id.split(TaskID.DELIM)
+        name, tag = cylc.TaskID.split( task_id )
         try:
             result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, False )
         except Exception, x:
@@ -1738,7 +1716,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label( 'STOP (task NAME'+TaskID.DELIM+'TAG)' )
+        label = gtk.Label( 'STOP (task ' + cylc.TaskID.get( 'NAME', 'TAG' ) + ')' )
         tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)

@@ -5,8 +5,6 @@ import os, sys
 fpath = os.path.dirname(os.path.abspath(__file__))
 # parsec
 sys.path.append( fpath + '/../../..' )
-# cylc (cycletime imported in validate.py!)
-sys.path.append( fpath + '/../../../..' )
 
 """
 An empty config file should successfully yield an empty sparse config dict.

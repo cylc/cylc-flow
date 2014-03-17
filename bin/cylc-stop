@@ -24,8 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
@@ -158,10 +157,7 @@ except Exception, x:
 method = None
 if shutdown_at:
     # STOP argument detected
-    try:
-        # is it a task ID?
-        tid = TaskID( shutdown_arg )
-    except TaskIDError:
+    if not cylc.TaskID.is_valid_id( shutdown_arg ):
         # not a task ID
         try:
             # is it a date time YYYY/MM/DD-HH:mm?
@@ -170,9 +166,11 @@ if shutdown_at:
             HH,MM = time.split(':')
         except:
             # not a task ID or a date time;
+            # TODO ISO - MOVE THIS LOGIC INTO SCHEDULER AND TEST
             try:
                 # is it a cycle time?
-                ct(shutdown_arg)
+                ##ct(shutdown_arg)
+                pass
             except CycleTimeError,x:
                 # nope: is it an async integer tag?
                 try:

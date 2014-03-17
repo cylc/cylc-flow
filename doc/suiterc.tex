@@ -477,16 +477,17 @@ or in the gcylc suite start panel.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
+\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead factor}
 
 The suite runahead limit prevents the fastest tasks in a suite from
 getting too far ahead of the slowest ones, as documented in
 Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
-sufficiently.
+sufficiently. The limit computed as this factor of the suite's minimum
+cycling interval.
 \begin{myitemize}
-    \item {\em type:} integer ($\geq 0$, hours)
-    \item {\em default:} (twice the minimum cycling interval in the suite)
+    \item {\em type:} integer multiple of the suite's minimum cycling interval
+    \item {\em default:} $2$
 \end{myitemize}
 
 \subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}
