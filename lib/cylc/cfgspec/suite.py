@@ -21,7 +21,7 @@ from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
-from cycle_time import ct
+from cylc.cycle_time import ct
 
 "Define all legal items and values for cylc suite definition files."
 
