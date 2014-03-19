@@ -20,7 +20,6 @@ import sys, re
 from OrderedDict import OrderedDict
 from util import m_override, un_many, itemstr
 from copy import copy
-from cylc.cycle_time import ct
 
 """
 Validate a nested dict parsed from a config file against a spec file:
@@ -252,14 +251,6 @@ def _coerce_boolean( value, keys, args ):
     else:
         raise IllegalValueError( 'boolean', keys, value )
 
-def _coerce_cycletime( value, keys, args ):
-    """Coerce value to a cycle time."""
-    value = _strip_and_unquote( keys, value )
-    try:
-        return ct( value ).get()
-    except:
-        raise IllegalValueError( 'cycle time', keys, value )
-
 def _coerce_str_list( value, keys, args ):
     """Coerce value to a list of strings."""
     return _strip_and_unquote_list( keys, value )
@@ -305,7 +296,6 @@ coercers = {
     'string'       : _coerce_str,
     'integer'      : _coerce_int,
     'float'        : _coerce_float,
-    'cycletime'    : _coerce_cycletime,
     'string_list'  : _coerce_str_list,
     'integer_list' : _coerce_int_list,
     'float_list'   : _coerce_float_list,

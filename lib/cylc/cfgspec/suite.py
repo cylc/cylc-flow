@@ -17,12 +17,24 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from parsec.validate import validator as vdr
-from parsec.validate import validate, expand, get_defaults
+from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
+from cylc.cycle_time import ct
 
 "Define all legal items and values for cylc suite definition files."
+
+def _coerce_cycletime( value, keys, args ):
+    """Coerce value to a cycle time."""
+    value = _strip_and_unquote( keys, value )
+    try:
+        return ct( value ).get()
+    except:
+        #raise
+        raise IllegalValueError( 'cycle time', keys, value )
+
+coercers['cycletime'] = _coerce_cycletime
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
