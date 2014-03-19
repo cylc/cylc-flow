@@ -6446,6 +6446,10 @@ Graph lines can also be split up without line breaks, like this:
 
 \pagebreak
 
+\input{gcylcrc.tex}
+
+\pagebreak
+
 
 \section{Command Reference}
 \label{CommandReference}
@@ -6511,35 +6515,29 @@ shell$ watch cylc lockclient --print
 \section{The gcylc Graph View}
 \label{TheGraphBasedcontrolGUI}
 
-The graph view in the gcylc GUI has the advantage that it shows
-the structure of a suite very clearly as it evolves. It works remarkably
-well even for very large suites (up to several hundred tasks or more)
-{\em but} because the graphviz engine does a new global layout every
-time the graph changes the layout is often not very stable. This may not
-be a solvable problem even in principle as it seems likely that making
-continual incremental changes to an existing graph without redoing the
-global layout would inevitably result in a horrible mess.
-
-The following features of the graph view, however, help mitigate the the
-jumping layout problem:
+The graph view in the gcylc GUI shows the structure of the suite as it
+evolves. It can work well even for large suites, but be aware that the
+graphviz layout engine has to do a new global layout every time a task
+proxy appears to disappears from the suite. The following may help
+mitigate any jumping layout problems:
 
 \begin{myitemize}
     \item The disconnect button can be used to temporarily prevent the
-        graph from changing as the content of the suite changes (and
-        in real time operation suites evolve quite slowly anyway)
-    \item In most suites, toggling the greyed-out ``base graph'' nodes
-        (which do not represent current live task proxies and are just
-        present to fill out the graph structure) will dramatically
-        reduce the size of the graph (but it will split into several
-        disconnected sub-trees).
-    \item Right-click on a task and choose the ``Focus'' option to restrict
-        the graph display to that task's cycle time. Anything interesting
-        happening in other cycles will show up as disconnected
-        rectangular nodes to the right of the graph (and you can click
-        on those to intantly refocus to their cycles).
-    \item Task filtering is the ultimate quick route to temporarily focusing
-        on just the tasks you're interested in (but this will
-        destroy the graph structure, to state the obvious).
+        graph from changing as the suite evolves.
+    \item By default, runahead-limited tasks (and the greyed-out base
+        graph nodes that connect the graph to them) are not displayed.
+        This typically reduces the size of the graph size quite a lot.
+    \item The greyed-out base nodes, which are only present to fill out
+        the graph structure, can be toggled off entirely (but this will 
+        split the graph into disconnected sub-trees).
+    \item Right-click ``Focus'' to restrict the graph display to the
+        clicked node's cycle time. Anything interesting happening in
+        other cycles will show up as disconnected rectangular nodes to
+        the right of the graph (and you can click on those to intantly
+        refocus to their cycles).
+    \item Task filtering is the ultimate quick route to focusing on just
+        the tasks you're interested in, but this will destroy the graph
+        structure.
 \end{myitemize}
 
 \section{Cylc Project README File}
