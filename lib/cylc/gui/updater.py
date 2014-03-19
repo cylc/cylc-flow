@@ -262,7 +262,7 @@ class Updater(threading.Thread):
 
             self.mode = glbl['run_mode']
 
-            if 'namespace definition order' in glbl: 
+            if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
                 # (protect for compat with old suite daemons)
                 nsdo = glbl['namespace definition order']
                 if self.ns_defn_order != nsdo:

@@ -265,8 +265,10 @@ class TreeUpdater(threading.Thread):
             # Sorting here every time the treeview is updated makes
             # definition sort order the default "unsorted" order
             # (any column-click sorting is done on top of this).
-            if self.updater.ns_defn_order:
+            if self.cfg.use_defn_order and self.updater.ns_defn_order:
                 task_named_paths.sort( key=lambda x: map( self.updater.dict_ns_defn_order.get, x ) )
+            else:
+                task_named_paths.sort()
 
             for named_path in task_named_paths:
                 name = named_path[-1]

@@ -141,7 +141,7 @@ class DotUpdater(threading.Thread):
                             self.task_list.append( name )
                             break
 
-        if self.updater.ns_defn_order and self.defn_order_on:
+        if self.cfg.use_defn_order and self.updater.ns_defn_order and self.defn_order_on:
             self.task_list = [ i for i in self.updater.ns_defn_order if i in self.task_list ]
         else:
             self.task_list.sort()
