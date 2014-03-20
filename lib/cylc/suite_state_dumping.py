@@ -16,18 +16,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
 import errno
 import os
 from cfgspec.site import sitecfg
+from wallclock import now
 
 class dumper( object ):
 
     BASE_NAME = 'state'
 
-    def __init__( self, suite, run_mode='live', clock=None, ict=None, stop_tag=None ):
+    def __init__( self, suite, run_mode='live', ict=None, stop_tag=None ):
         self.run_mode = run_mode
-        self.clock = clock
         self.set_cts(ict, stop_tag)
         self.dir_name = sitecfg.get_derived_host_item( suite,
                                                     'suite state directory' )
@@ -57,16 +56,12 @@ class dumper( object ):
     def dump( self, tasks=None, wireless=None ):
         """Dump suite states to disk. Return state file basename on success."""
 
-        tag = datetime.utcnow().strftime("%Y%m%dT%H%M%S.%fZ")
-        base_name = self.BASE_NAME + "." + tag
+        base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
         handle = open(os.path.join(self.dir_name, base_name), "wb")
 
-        # suite time
-        if self.run_mode == 'live':
-            handle.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
-        else:
-            handle.write( 'simulation time : ' + self.clock.dump_to_str() +
-                          ',' + str( self.clock.get_rate()) + '\n' )
+        
+        handle.write( 'run mode : ' + self.run_mode + '\n' )
+        handle.write( 'time : ' + now().strftime( "%Y:%m:%d:%H:%M:%S") + '\n' )
 
         handle.write(self.cts_str)
 

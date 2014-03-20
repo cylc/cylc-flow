@@ -27,7 +27,6 @@ from copy import deepcopy
 from cycle_time import ct, CycleTimeError, ctime_ge, ctime_gt, ctime_lt, ctime_le
 import datetime, time
 import port_scan
-import accelerated_clock
 import logging
 import re, os, sys, shutil
 from state_summary import state_summary
@@ -58,6 +57,8 @@ from Queue import Queue, Empty
 import subprocess
 from mp_pool import mp_pool
 from exceptions import SchedulerStop, SchedulerError
+from wallclock import now
+
 
 class result:
     """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
@@ -111,7 +112,6 @@ class scheduler(object):
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
         self.suite_id = None
-        self.clock = None
         self.wireless = None
         self.suite_state = None
         self.command_queue = None
@@ -246,7 +246,7 @@ class scheduler(object):
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.info( 'Suite starting at ' + str( datetime.datetime.now()) )
+        self.log.info( 'Suite starting at ' + str( now()) )
         if self.run_mode == 'live':
             self.log.info( 'Log event clock: real time' )
         else:
@@ -652,12 +652,11 @@ class scheduler(object):
         self.reconfigure()
 
     def set_suite_timer( self, reset=False ):
-        now = datetime.datetime.now()
-        self.suite_timer_start = now
-        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", str(now)
+        ts = now()
+        self.suite_timer_start = ts
+        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", str(ts)
 
     def reconfigure( self ):
-        # reload the suite definition while the suite runs
         print "RELOADING the suite definition"
         old_task_list = self.config.get_task_name_list()
         self.configure_suite( reconfigure=True )
@@ -683,6 +682,9 @@ class scheduler(object):
 
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
+
+        # update state dumper state
+        self.state_dumper.set_cts( self.start_tag, self.stop_tag )
 
     def reload_taskdefs( self ):
         found = False
@@ -777,14 +779,14 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
+            self.state_dumper = dumper( self.suite, self.run_mode, self.start_tag, self.stop_tag )
+
             run_dir = sitecfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
 
-        if not reconfigure:
-            # PAUSE TIME?
             self.hold_suite_now = False
             self.hold_time = None
             if self.options.hold_time:
@@ -806,28 +808,14 @@ class scheduler(object):
         self.exclusive_suite_lock = not self.config.cfg['cylc']['lockserver']['simultaneous instances']
 
         # Running in UTC time? (else just use the system clock)
-        self.utc = self.config.cfg['cylc']['UTC mode']
-        if self.utc:
+        flags.utc = self.config.cfg['cylc']['UTC mode']
+        if flags.utc:
             os.environ['TZ'] = 'UTC'
-
-        # ACCELERATED CLOCK for simulation and dummy run modes
-        rate = self.config.cfg['cylc']['accelerated clock']['rate']
-        offset = self.config.cfg['cylc']['accelerated clock']['offset']
-        disable = self.config.cfg['cylc']['accelerated clock']['disable']
-        if self.run_mode == 'live':
-            disable = True
-        if not reconfigure:
-            self.clock = accelerated_clock.clock( int(rate), int(offset), self.utc, disable )
-            task.task.clock = self.clock
-            clocktriggered.clocktriggered.clock = self.clock
-            self.pyro.connect( self.clock, 'clock' )
-
-        self.state_dumper = dumper( self.suite, self.run_mode, self.clock, self.start_tag, self.stop_tag )
 
         if not reconfigure:
             slog = suite_log( self.suite )
             self.suite_log_dir = slog.get_dir()
-            slog.pimp( self.logging_level, self.clock )
+            slog.pimp( self.logging_level )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
 
@@ -849,7 +837,7 @@ class scheduler(object):
 
         # static cylc and suite-specific variables:
         self.suite_env = {
-                'CYLC_UTC'               : str(self.utc),
+                'CYLC_UTC'               : str(flags.utc),
                 'CYLC_MODE'              : 'scheduler',
                 'CYLC_DEBUG'             : str( flags.debug ),
                 'CYLC_VERBOSE'           : str( flags.verbose ),
@@ -1002,8 +990,7 @@ class scheduler(object):
             if self.process_tasks():
                 if flags.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
-                    # loop timing: use real clock even in sim mode
-                    main_loop_start_time = datetime.datetime.now()
+                    main_loop_start_time = now()
 
                 self.negotiate()
 
@@ -1023,7 +1010,7 @@ class scheduler(object):
                 self.wireless.expire( self.get_oldest_c_time() )
 
                 if flags.debug:
-                    delta = datetime.datetime.now() - main_loop_start_time
+                    delta = now() - main_loop_start_time
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
@@ -1138,7 +1125,7 @@ class scheduler(object):
 
     def update_state_summary( self ):
         #self.log.debug( "UPDATING STATE SUMMARY" )
-        self.suite_state.update( self.pool.get_tasks(), self.clock,
+        self.suite_state.update( self.pool.get_tasks(), 
                 self.get_oldest_c_time(), self.get_newest_c_time(),
                 self.get_newest_c_time(True), self.paused(),
                 self.will_pause_at(), self.shutting_down,
@@ -1157,9 +1144,8 @@ class scheduler(object):
     def check_suite_timer( self ):
         if self.already_timed_out:
             return
-        now = datetime.datetime.now()
         timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.cfg['cylc']['event hooks']['timeout'] )
-        if now > timeout:
+        if now() > timeout:
             self.already_timed_out = True
             message = 'suite timed out after ' + str( self.config.cfg['cylc']['event hooks']['timeout']) + ' minutes'
             self.log.warning( message )
@@ -1208,19 +1194,19 @@ class scheduler(object):
         ##    # stimulate task processing every few seconds even during
         ##    # lulls in activity.  THIS SHOULD NOT BE NECESSARY, HOWEVER.
         ##    if not self.nudge_timer_on:
-        ##        self.nudge_timer_start = datetime.datetime.now()
+        ##        self.nudge_timer_start = now()
         ##        self.nudge_timer_on = True
         ##    else:
         ##        timeout = self.nudge_timer_start + \
         ##              datetime.timedelta( seconds=self.auto_nudge_interval )
-        ##      if datetime.datetime.now() > timeout:
+        ##      if now() > timeout:
         ##          process = True
         ##          self.nudge_timer_on = False
 
         return process
 
     def shutdown( self, reason='' ):
-        msg = "Suite shutting down at " + str(datetime.datetime.now())
+        msg = "Suite shutting down at " + str(now())
 
         # The getattr() calls below are used in case the suite is not
         # fully configured before the shutdown is called.
@@ -1253,7 +1239,7 @@ class scheduler(object):
             self.request_handler.quit = True
             self.request_handler.join()
 
-        for i in [ self.command_queue, self.clock, self.wireless, self.suite_id, self.suite_state ]:
+        for i in [ self.command_queue, self.wireless, self.suite_id, self.suite_state ]:
             if i:
                 self.pyro.disconnect( i )
 
@@ -1869,9 +1855,9 @@ class scheduler(object):
         return outlist
 
     def check_stop_clock( self ):
-        if self.stop_clock_time and self.clock.get_datetime() > self.stop_clock_time:
+        if self.stop_clock_time and now() > self.stop_clock_time:
             self.stop_clock_time = None
-            msg = "Clock stop time reached: " + self.stop_clock_time.isoformat()
+            msg = "Wall clock stop time reached: " + self.stop_clock_time.isoformat()
             self.command_set_stop_cleanly( msg )
 
     def check_stop_task( self ):
@@ -1950,18 +1936,18 @@ class scheduler(object):
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         # Update the 1, 5, 15 minute dt averages for a given category.
-        now = time.time()
+        tnow = time.time()
         self._profile_amounts.setdefault(category, [])
         amounts = self._profile_amounts[category]
-        amounts.append((now, amount))
+        amounts.append((tnow, amount))
         self._profile_update_times.setdefault(category, None)
         last_update = self._profile_update_times[category]
-        if last_update is not None and now < last_update + 60:
+        if last_update is not None and tnow < last_update + 60:
             return
-        self._profile_update_times[category] = now
+        self._profile_update_times[category] = tnow
         averages = {1: [], 5: [], 15: []}
         for then, amount in list(amounts):
-            age = (now - then) / 60.0
+            age = (tnow - then) / 60.0
             if age > 15:
                 amounts.remove((then, amount))
                 continue

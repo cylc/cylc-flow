@@ -33,8 +33,6 @@ from cylc.TaskID import TaskID, TaskIDError
 from cylc.locking.suite_lock import suite_lock
 from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
-from cylc.task_types import clocktriggered
-from cylc import accelerated_clock
 from cylc.suite_host import get_suite_host, get_hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
@@ -131,7 +129,6 @@ if config.cfg['cylc']['lockserver']['enable']:
 
 # Running in UTC time? (else just use the system clock)
 utc = config.cfg['cylc']['UTC mode']
-dclock = accelerated_clock.clock( 0, 0, utc, 'live' )
 
 # create log (after CYLC_MODE is exported)
 os.environ['CYLC_MODE'] = 'submit'
@@ -139,11 +136,9 @@ os.environ['CYLC_MODE'] = 'submit'
 sitecfg.create_cylc_run_tree( suite )
 slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
-slog.pimp( clock=dclock )
+slog.pimp()
 
 task.cylc_mode = 'submit'
-task.task.clock = dclock
-clocktriggered.clocktriggered.clock = dclock
 
 ict = config.cfg['scheduling']['initial cycle time']
 fct = config.cfg['scheduling']['final cycle time'  ]

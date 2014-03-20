@@ -281,9 +281,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                 image.show()
                 tip_hbox.pack_start(image, expand=False, fill=False)
             states_text = ", ".join(state_info)
-            suite_summary = status
+            if status is None:
+                suite_summary = "?"
+            else:
+                suite_summary = status
             if is_stopped:
-                suite_summary = "stopped with " + status
+                suite_summary = "stopped with " + suite_summary
             tip_label = gtk.Label(text_format % (suite, suite_summary, host))
             tip_label.show()
             tip_hbox.pack_start(tip_label, expand=False, fill=False,

@@ -17,12 +17,24 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from parsec.validate import validator as vdr
-from parsec.validate import validate, expand, get_defaults
+from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
+from cylc.cycle_time import ct
 
 "Define all legal items and values for cylc suite definition files."
+
+def _coerce_cycletime( value, keys, args ):
+    """Coerce value to a cycle time."""
+    value = _strip_and_unquote( keys, value )
+    try:
+        return ct( value ).get()
+    except:
+        #raise
+        raise IllegalValueError( 'cycle time', keys, value )
+
+coercers['cycletime'] = _coerce_cycletime
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
@@ -68,11 +80,6 @@ SPEC = {
             },
         'dummy mode' : {
             'disable suite event hooks'       : vdr( vtype='boolean', default=True ),
-            },
-        'accelerated clock' : {
-            'disable'                         : vdr( vtype='boolean', default=False ),
-            'rate'                            : vdr( vtype='integer', default=10 ),
-            'offset'                          : vdr( vtype='integer', default=24 ),
             },
         'reference test' : {
             'suite shutdown event handler'    : vdr( vtype='string', default='cylc hook check-triggering' ),
@@ -226,6 +233,7 @@ def upg( cfg, descr ):
     u.deprecate( '5.2.0', ['cylc','event handler execution'], ['cylc','event handler submission'] )
     # TODO - should abort if obsoleted items are encountered
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
+    u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
     u.upgrade()
 
 class sconfig( config ):

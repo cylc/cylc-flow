@@ -19,6 +19,7 @@
 import datetime
 import re
 from cylc.strftime import strftime
+from wallclock import now
 
 """
 CYCLE TIME: YYYY[MM[DD[HH[mm[ss]]]]]
@@ -64,7 +65,7 @@ class ct( object ):
 
     def parse( self, strx ):
         if strx == "now":
-            strx = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            strx = now().strftime("%Y%m%d%H%M%S")
         n = len(strx)
         if n == 4 or n == 6 or n == 8 or n == 10 or n == 12 or n == 14:
             self.strvalue = strx + ct.YYYYMMDDHHmmss[n:]

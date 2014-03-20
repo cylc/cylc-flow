@@ -23,18 +23,6 @@ from cfgspec.site import sitecfg
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
 
-class LogFilter(logging.Filter):
-    # Replace log timestamps with those of the supplied clock
-    # (which may be UTC or simulation time).
-    def __init__(self, clock, name = "" ):
-        logging.Filter.__init__( self, name )
-        self.clock = clock
-
-    def filter(self, record):
-        # replace log message time stamp with simulation time
-        record.created = self.clock.get_epoch()
-        return True
-
 class suite_log( object ):
     def __init__( self, suite ):
 
@@ -59,7 +47,7 @@ class suite_log( object ):
         # not really necessary: just get the main logger
         return logging.getLogger( 'main' )
 
-    def pimp( self, level=logging.INFO, clock=None ):
+    def pimp( self, level=logging.INFO ):
         log = logging.getLogger( 'main' )
         log.setLevel( level )
 
@@ -80,8 +68,4 @@ class suite_log( object ):
 
         h.setFormatter(f)
         log.addHandler(h)
-
-        # replace default time stamps
-        if clock:
-            log.addFilter( LogFilter( clock, "main" ))
 

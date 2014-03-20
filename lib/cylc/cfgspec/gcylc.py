@@ -32,9 +32,11 @@ SITE_FILE = os.path.join( os.environ['CYLC_DIR'], 'conf', 'gcylcrc', 'themes.rc'
 USER_FILE = os.path.join( os.environ['HOME'], '.cylc', 'gcylc.rc' )
 
 SPEC = {
-    'initial views' : vdr( vtype='string_list', default=["text"] ),
+    'initial views'   : vdr( vtype='string_list', default=["text"] ),
     'ungrouped views' : vdr( vtype='string_list', default=[] ),
-    'use theme'     : vdr( vtype='string', default="default" ),
+    'use theme'       : vdr( vtype='string', default="default" ),
+    'dot icon size'   : vdr( vtype='string', default="medium",
+                             options=["small","medium","large"]),
     'themes' : {
         '__MANY__' : {
             'inherit'       : vdr( vtype='string', default="default" ),
