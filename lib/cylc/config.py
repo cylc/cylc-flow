@@ -112,6 +112,7 @@ class config( object ):
         self.cycling_tasks = []
 
         self.sequences = []
+        self.actual_first_ctime = None
 
         self.runahead_limit = None
 
@@ -261,7 +262,7 @@ class config( object ):
 
         # initial and final cycles for visualization
         vict = self.cfg['visualization']['initial cycle time'] or \
-                self.cfg['scheduling']['initial cycle time']
+                str( self.get_actual_first_ctime( self.cfg['scheduling']['initial cycle time'] ))
         self.cfg['visualization']['initial cycle time'] = vict
 
         vict_rh = None
@@ -835,6 +836,11 @@ class config( object ):
             except Exception, x:
                 raise
                 raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
+            if not itask.tag:
+                if flags.verbose:
+                    print " + Task out of bounds for " + str(tag) + ": " + itask.name
+                continue
+
             # force trigger evaluation now
             try:
                 itask.prerequisites.eval_all()
@@ -846,10 +852,6 @@ class config( object ):
                 raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
             if flags.verbose:
                 print "  + " + itask.id + " ok"
-
-                #print itask.id, 'SEQUENCES:'
-                #for seq in itask.sequences:
-                #    seq.dump()
 
         # Check custom command scripting is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
@@ -1303,6 +1305,25 @@ class config( object ):
         expr = re.sub( '\+', 'x', expr ) # future triggers
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
 
+    def get_actual_first_ctime( self, start_ctime ):
+        # Get actual first cycle time for the suite (get all
+        # sequences to adjust the putative start time upward)
+        if self.actual_first_ctime:
+            # already computed
+            return self.actual_first_ctime
+        ctime = point(start_ctime)
+        adjusted = []
+        for seq in self.sequences:
+            foo = seq.get_first_point( ctime )
+            if foo:
+                adjusted.append( foo )
+        if len( adjusted ) > 0:
+            adjusted.sort()
+            self.actual_first_ctime = adjusted[0]
+        else:
+            self.actual_first_ctime = ctime
+        return self.actual_first_ctime
+
     def get_graph_raw( self, start_ctime_str, stop_str, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
@@ -1364,19 +1385,7 @@ class config( object ):
 
         start_ctime = point( start_ctime_str )
 
-        # Get actual first real cycle time for the whole suite (get all
-        # sequences to adjust the putative start time upward)
-        adjusted = []
-        for seq in self.sequences:
-            foo = seq.get_nexteq_point( start_ctime )
-            if foo:
-                # TODO ISO - ONEOFF TASKS SHOULD RETURN NONE HERE
-                adjusted.append( foo )
-        if len( adjusted ) > 0:
-            adjusted.sort()
-            actual_first_ctime = adjusted[0]
-        else:
-            actual_first_ctime = start_ctime
+        actual_first_ctime = self.get_actual_first_ctime( start_ctime )
 
         startup_exclude_list = self.get_coldstart_task_list() + \
                 self.get_startup_task_list()
@@ -1385,7 +1394,10 @@ class config( object ):
 
         for e in self.edges:
             # Get initial cycle time for this sequence
-            i_ctime = e.sequence.get_nexteq_point( start_ctime )
+            i_ctime = e.sequence.get_first_point( start_ctime )
+            if not i_ctime:
+                # out of bounds
+                return
             ctime = deepcopy(i_ctime)
 
             while True: 
@@ -1419,8 +1431,7 @@ class config( object ):
                     gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
                 # increment the cycle time
-                ctime = e.sequence.get_next_point( ctime )
-                # TODO - this will return None if beyond sequence context_end_point
+                ctime = e.sequence.get_next_point_on_sequence( ctime )
 
         return gr_edges
 

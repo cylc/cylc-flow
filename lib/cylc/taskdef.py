@@ -170,6 +170,10 @@ class taskdef(object):
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
         def tclass_add_prerequisites( sself, startup, tag  ):
+            # TODO ISO - startup is used to exclude start-up triggers in
+            # subsequent cycles. This needs to be extended to use
+            # sequence bounds.
+
             # NOTE: Task objects hold all triggers defined for the task
             # in all cycling graph sections in this data structure:
             #     self.triggers[sequence] = [list of triggers for this
@@ -209,7 +213,7 @@ class taskdef(object):
                 for seq in self.sequences:
                     prv = seq.get_prev_point(sself.c_time)
                     if prv:
-                        # may be None if beyond the sequence bounds
+                        # may be None if out of sequence bounds
                         adjusted.append( prv )
                 if adjusted:
                     p_prev = max( adjusted )
@@ -276,29 +280,27 @@ class taskdef(object):
             sself.exists=exists
             sself.intercycle_offset = self.intercycle_offset
 
-            if self.cycling: # and startup:
-                # adjust only needed at start-up but it does not hurt to
-                # do it every time as after the first adjust we're already
-                # on-cycle. TODO ISO - CAN WE JUST DO THIS AT START-UP?
-
+            if self.cycling and startup:
+                # adjust up to the first on-sequence cycle time
                 adjusted = []
                 for seq in sself.sequences:
-                    adj = seq.get_nexteq_point( start_tag )
+                    adj = seq.get_first_point( start_tag )
                     if adj:
-                        # may be None if beyond the sequence bounds
+                        # may be None if out of sequence bounds
                         adjusted.append( adj )
                 if adjusted:
-                    p_min = min( adjusted )
-                # TODO ISO - WHAT IF POINT IS NONE (outside bounds)
-                sself.tag = p_min
-                sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                    sself.tag = min( adjusted )
+                    sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                    sself.id = TaskID.get( sself.name, str(sself.tag) )
+                else:
+                    sself.tag = None
+                    # this task is out of sequence bounds (caller much
+                    # check for a tag of None)
+                    return
             else:
                 sself.tag = start_tag
 
             sself.c_time = sself.tag
-
-            sself.id = TaskID.get( sself.name, str(sself.tag) )
-
             sself.asyncid_pattern = self.asyncid_pattern
 
             if 'clocktriggered' in self.modifiers:
