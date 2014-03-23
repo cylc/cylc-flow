@@ -107,9 +107,11 @@ where they got to while the suite was down."""
         base_name = self.state_dumper.BASE_NAME
         file_name = base_name
         dir_name = self.state_dumper.dir_name
-        if self.restart_from:
+        if self.restart_from and os.path.isabs(self.restart_from):
             file_name = self.restart_from
-        if not os.path.isfile(file_name) and not os.path.isabs(file_name):
+        elif self.restart_from:
+            file_name = os.path.join(dir_name, self.restart_from)
+        else:
             file_name = os.path.join(dir_name, file_name)
         if not os.path.isfile(file_name):
             raise Exception("state dump file not found: " + file_name)
