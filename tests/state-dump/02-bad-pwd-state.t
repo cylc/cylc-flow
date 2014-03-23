@@ -15,9 +15,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Basic test for state dumps.
+#C: Basic test for state dumps restart, bogus state file in $PWD.
 run_restart() {
+    touch state
     suite_run_ok $TEST_NAME cylc restart --reference-test --debug $SUITE_NAME
 }
 . $(dirname $0)/test_impl
-
