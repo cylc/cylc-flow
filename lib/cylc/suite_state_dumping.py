@@ -56,33 +56,39 @@ class dumper( object ):
     def dump( self, tasks=None, wireless=None ):
         """Dump suite states to disk. Return state file basename on success."""
 
-        base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
-        handle = open(os.path.join(self.dir_name, base_name), "wb")
-
-        
-        handle.write( 'run mode : ' + self.run_mode + '\n' )
-        handle.write( 'time : ' + now().strftime( "%Y:%m:%d:%H:%M:%S") + '\n' )
-
-        handle.write(self.cts_str)
-
         if wireless is None:
             wireless = self.wireless
-        if wireless is not None:
-            wireless.dump(handle)
 
-        handle.write( 'Begin task states\n' )
+        base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
+        file_name = os.path.join(self.dir_name, base_name)
+        handle = open(file_name, "wb")
 
-        if tasks is None and self.pool is not None:
-            tasks = self.pool.get_tasks()
-        if tasks is not None:
-            for itask in sorted(tasks, key=lambda t: t.id):
-                # TODO - CHECK THIS STILL WORKS
-                itask.dump_class_vars( handle )
-                # task instance variables
-                itask.dump_state( handle )
+        try:
+            handle.write('run mode : %s\n' % self.run_mode)
+            handle.write('time : %s\n' % now().strftime("%Y:%m:%d:%H:%M:%S"))
 
-        os.fsync(handle.fileno())
-        handle.close()
+            handle.write(self.cts_str)
+
+            if wireless is not None:
+                wireless.dump(handle)
+
+            handle.write('Begin task states\n')
+
+            if tasks is None and self.pool is not None:
+                tasks = self.pool.get_tasks()
+            if tasks is not None:
+                for itask in sorted(tasks, key=lambda t: t.id):
+                    # TODO - CHECK THIS STILL WORKS
+                    itask.dump_class_vars( handle )
+                    # task instance variables
+                    itask.dump_state( handle )
+
+            os.fsync(handle.fileno())
+            handle.close()
+        except IOError as exc:
+            if not exc.filename:
+                exc.filename = file_name
+            raise
 
         # Point "state" symbolic link to new dated state dump
         try:
@@ -91,7 +97,7 @@ class dumper( object ):
             if x.errno != errno.ENOENT:
                 raise
         os.symlink(base_name, self.file_name)
-        self.arch_files.append(handle.name)
+        self.arch_files.append(file_name)
         # Remove state dump older than archive length
         while len(self.arch_files) > self.arch_len:
             try:

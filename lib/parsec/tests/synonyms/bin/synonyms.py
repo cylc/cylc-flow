@@ -8,8 +8,6 @@ fpath = os.path.dirname(os.path.abspath(__file__))
 sys.path.append( fpath + '/../lib/python' )
 # parsec
 sys.path.append( fpath + '/../../..' )
-# cylc (cycletime imported in validate.py!)
-sys.path.append( fpath + '/../../../..' )
 
 from cfgspec import SPEC
 from config import config
