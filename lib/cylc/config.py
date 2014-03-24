@@ -105,8 +105,6 @@ class config( object ):
         self.suite_polling_tasks = {}
         self.triggering_families = []
 
-        self.async_oneoff_edges = []
-        self.async_oneoff_tasks = []
         self.async_repeating_edges = []
         self.async_repeating_tasks = []
         self.cycling_tasks = []
@@ -755,8 +753,6 @@ class config( object ):
         if offset:
             trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
 
-        if task_name in self.async_oneoff_tasks:
-            trig.set_async_oneoff()
         elif task_name in self.async_repeating_tasks:
             trig.set_async_repeating( asyncid_pattern)
             if trig.suicide:
@@ -765,12 +761,6 @@ class config( object ):
                 raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
         elif task_name in self.cycling_tasks:
             trig.set_cycling()
-
-        if right in self.cycling_tasks and \
-            (task_name in self.cfg['scheduling']['special tasks']['start-up'] or \
-                 task_name in self.async_oneoff_tasks ):
-                # cycling tasks only depend on these tasks at startup
-                trig.set_startup()
 
         return trig
 
@@ -872,7 +862,7 @@ class config( object ):
         return self.cfg['scheduling']['special tasks']['cold-start']
 
     def get_startup_task_list( self ):
-        return self.cfg['scheduling']['special tasks']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
+        return self.async_repeating_tasks
 
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
@@ -882,8 +872,7 @@ class config( object ):
         names = []
         for tn in self.taskdefs:
             if self.taskdefs[tn].type == 'async_repeating' or \
-                    self.taskdefs[tn].type == 'async_daemon' or \
-                    self.taskdefs[tn].type == 'async_oneoff':
+                    self.taskdefs[tn].type == 'async_daemon':
                 names.append(tn)
         return names
 
@@ -1090,21 +1079,6 @@ class config( object ):
                     print >> sys.stderr, "  from:", orig_line
                     raise SuiteConfigError, "ERROR: self-dependence loop detected"
 
-            if section == 'once':
-                # Consistency check: synchronous special tasks are
-                # not allowed in asynchronous graph sections.
-                spec = self.cfg['scheduling']['special tasks']
-                bad = []
-                for name in lnames + rights:
-                    if name in spec['start-up'] or name in spec['cold-start'] or \
-                            name in spec['one-off']:
-                                bad.append(name)
-                if len(bad) > 0:
-                    print >> sys.stderr, orig_line
-                    print >> sys.stderr, 'ERROR, synchronous special tasks cannot be used in an asynchronous graph:'
-                    print >> sys.stderr, ' ', ', '.join(bad)
-                    raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
-
             for rt in rights:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
@@ -1124,10 +1098,7 @@ class config( object ):
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
-                        if ttype == 'async_oneoff':
-                            if name not in self.async_oneoff_tasks:
-                                self.async_oneoff_tasks.append(name)
-                        elif ttype == 'async_repeating':
+                        if ttype == 'async_repeating':
                             if name not in self.async_repeating_tasks:
                                 self.async_repeating_tasks.append(name)
                             m = re.match( '^ASYNCID:(.*)$', section )
@@ -1147,15 +1118,12 @@ class config( object ):
             conditional = True
 
         for left in lnames:
-            if left in self.async_oneoff_tasks + self.async_repeating_tasks:
+            if left in self.async_repeating_tasks:
                 sasl = True
             else:
                 sasl = False
             e = graphing.edge( left, right, seq, sasl, suicide, conditional )
-            if ttype == 'async_oneoff':
-                if e not in self.async_oneoff_edges:
-                    self.async_oneoff_edges.append( e )
-            elif ttype == 'async_repeating':
+            if ttype == 'async_repeating':
                 if e not in self.async_repeating_edges:
                     self.async_repeating_edges.append( e )
             else:
@@ -1200,11 +1168,7 @@ class config( object ):
                     raise SuiteConfigError, str(x)
 
             # TODO - setting type should be consolidated to get_taskdef()
-            if name in self.async_oneoff_tasks:
-                # this catches oneoff async tasks that begin a repeating
-                # async section as well.
-                self.taskdefs[name].type = 'async_oneoff'
-            elif ttype == 'async_repeating':
+            if ttype == 'async_repeating':
                 self.taskdefs[name].asyncid_pattern = asyncid_pattern
                 if name == self.cfg['scheduling']['dependencies'][section]['daemon']:
                     self.taskdefs[name].type = 'async_daemon'
@@ -1287,18 +1251,6 @@ class config( object ):
 
         if not conditional:
             return
-        # Conditional expression must contain all start-up (or async)
-        # tasks, or none - cannot mix with cycling tasks in the same
-        # expression. Count number of start-up or async_oneoff tasks:
-        countx = 0
-        for label in ctrig:
-            if right in self.cycling_tasks:
-                if (cname[label] in self.cfg['scheduling']['special tasks']['start-up'] or \
-                        cname[label] in self.async_oneoff_tasks ):
-                    countx += 1
-        if countx > 0 and countx != len(cname.keys()):
-            print >> sys.stderr, 'ERROR:', lexpression
-            raise SuiteConfigError, '(start-up or async) and (cycling) tasks in same conditional'
 
         # Replace some chars for later use in regular expressions.
         expr = re.sub( '[-\[\]:]', '_', lexpression )
@@ -1329,8 +1281,6 @@ class config( object ):
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
         actual edges for a concrete range of cycle times."""
-
-
 
         members = self.runtime['first-parent descendants']
         hierarchy = self.runtime['first-parent ancestors']
@@ -1377,7 +1327,7 @@ class config( object ):
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = []
 
-        for e in self.async_oneoff_edges + self.async_repeating_edges:
+        for e in self.async_repeating_edges:
             right = e.get_right(1, False, False, [], [])
             left  = e.get_left( 1, False, False, [], [])
             nl, nr = self.close_families( left, right )
@@ -1402,7 +1352,7 @@ class config( object ):
 
             while True: 
                 # Loop over cycles generated by this sequence
-                if not ctime or ctime >= stop:
+                if not ctime or ctime > stop:
                     break
 
                 not_initial_cycle = ( ctime != i_ctime )
@@ -1503,10 +1453,10 @@ class config( object ):
         self.graph_found = False
         for item in self.cfg['scheduling']['dependencies']:
             if item == 'graph':
-                # asynchronous graph
                 graph = self.cfg['scheduling']['dependencies']['graph']
                 if graph:
-                    section = "once"
+                    # TODO ISO - ADAPT TO ISO-CYCLING TOO
+                    section = sequence.get_async_expr()
                     self.parse_graph( section, graph )
             else:
                 try:
@@ -1521,15 +1471,9 @@ class config( object ):
     def parse_graph( self, section, graph ):
         self.graph_found = True
 
-        if section == "once":
-            ttype = 'async_oneoff'
-            # TODO ISO - async tasks need a different tag now, e.g.
-            # '.async'; they are not the same as a first integer cycle
-            # (that's similar to oneoff start-up tasks)
-            sec = 'Integer(1,0)'
-        elif re.match( '^ASYNCID:', section ):
+        if re.match( '^ASYNCID:', section ):
             ttype = 'async_repeating'
-            sec = 'Integer(1,0)'
+            # TODO ISO - THIS IS NOW BROKEN?
         else:
             ttype = 'cycling'
             sec = section
@@ -1578,8 +1522,8 @@ class config( object ):
             taskd.modifiers.append( 'oneoff' )
             taskd.is_coldstart = True
 
-        if name in self.cfg['scheduling']['special tasks']['one-off'] or \
-                name in self.cfg['scheduling']['special tasks']['start-up']:
+        # TODO ISO - NO LONGER NEEDED
+        if name in self.cfg['scheduling']['special tasks']['one-off']:
             taskd.modifiers.append( 'oneoff' )
 
         # SET CLOCK-TRIGGERED TASKS

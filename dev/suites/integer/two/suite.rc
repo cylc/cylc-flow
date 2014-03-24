@@ -1,27 +1,25 @@
 
 [scheduling]
-    initial cycle time = 1
+    initial cycle time = 1 # T0
     final cycle time = 9
-    # TODO - GENERALIZE AND DUMP THE 'start-up' SPECIAL TASK CATEGORY:
-    # by making cross-graph-section triggers apply to just the first
-    # instance of the section sequence?
-    [[special tasks]]
-        start-up = start
     [[dependencies]]
-        [[[ R1/c1/P2 ]]]
+        # once at T0 (async tasks now shorthand for R1/c0/P1)
+        graph = "start1 => foo"
+ 
+        [[[ R1/c0/P2 ]]]
             # once at T0
-            graph = start
-        [[[ R/c1/P2 ]]]
-            # repeat with step 2, from T0 + 1
-            graph = "start & foo[T-2] => foo"
-        [[[ R/c3/P2 ]]]
-            # repeat with step 2 from T0 + 3
+            graph = "start2 => foo"
+        [[[ R/c0/P2 ]]]
+            # repeat with step 2, from T0
+            graph = "foo[T-2] => foo"
+        [[[ R/c2/P2 ]]]
+            # repeat with step 2 from T0 + 2
             graph = "foo => bar"
-        [[[ R2/4/6 ]]]
-            # repeat twice, at 4 and 6
+        [[[ R2/3/5 ]]]
+            # repeat twice, at 3 and 5
             graph = "foo => qux"
-        [[[ R1/8/P2 ]]]
-            # once at 8
+        [[[ R1/9/P1 ]]]
+            # once at 9
             graph = "bar => stop"
 
 [visualization]
@@ -30,5 +28,6 @@
     [[node attributes]]
         bar = "fillcolor=skyblue"
         qux = "fillcolor=limegreen"
-        start = "fillcolor=lemonchiffon"
+        start1 = "fillcolor=lemonchiffon"
+        start2 = "fillcolor=lemonchiffon"
         stop = "fillcolor=orange"

@@ -169,11 +169,7 @@ class taskdef(object):
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
-        def tclass_add_prerequisites( sself, startup, tag  ):
-            # TODO ISO - startup is used to exclude start-up triggers in
-            # subsequent cycles. This needs to be extended to use
-            # sequence bounds.
-
+        def tclass_add_prerequisites( sself, tag  ):
             # NOTE: Task objects hold all triggers defined for the task
             # in all cycling graph sections in this data structure:
             #     self.triggers[sequence] = [list of triggers for this
@@ -224,8 +220,6 @@ class taskdef(object):
 
             for sequence in self.triggers:
                 for trig in self.triggers[ sequence ]:
-                    if trig.startup and not startup:
-                            continue
                     if trig.cycling and not sequence.is_valid( sself.tag ):
                         # This trigger is not used in current cycle
                         continue
@@ -250,8 +244,6 @@ class taskdef(object):
             for sequence in self.cond_triggers.keys():
                 for ctrig, exp in self.cond_triggers[ sequence ]:
                     foo = ctrig.keys()[0]
-                    if ctrig[foo].startup and not startup:
-                        continue
                     if ctrig[foo].cycling and not sequence.is_valid( sself.tag):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
@@ -311,7 +303,7 @@ class taskdef(object):
             # prerequisites
             sself.prerequisites = prerequisites( self.ict )
             sself.suicide_prerequisites = prerequisites( self.ict )
-            sself.add_prerequisites( startup, sself.tag )
+            sself.add_prerequisites( sself.tag )
 
             sself.logfiles = logfiles()
             for lfile in self.rtconfig[ 'extra log files' ]:

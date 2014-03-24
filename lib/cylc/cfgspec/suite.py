@@ -21,7 +21,6 @@ from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
-from cylc.cycle_time import ct
 
 "Define all legal items and values for cylc suite definition files."
 
@@ -105,7 +104,6 @@ SPEC = {
         'special tasks' : {
             'clock-triggered'                 : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
-            'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
             'one-off'                         : vdr(vtype='string_list', default=[]),
             'exclude at start-up'             : vdr(vtype='string_list', default=[]),

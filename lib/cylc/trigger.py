@@ -49,17 +49,11 @@ where output x of foo may also have an offset:
         self.evaluation_offset = None
         self.type = None
         self.cycling = False
-        self.async_oneoff = False
         self.async_repeating = False
         self.asyncid_pattern = None
-        self.startup = False
         self.suicide = False
     def set_suicide( self, suicide ):
         self.suicide = suicide
-    def set_startup( self ):
-        self.startup = True
-    def set_async_oneoff( self ):
-        self.async_oneoff = True
     def set_async_repeating( self, pattern ):
         self.async_repeating = True
         self.asyncid_pattern = pattern
@@ -86,11 +80,6 @@ where output x of foo may also have an offset:
             # repeating async
             preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
         else:
-            # cycling or oneoff async
-            if self.async_oneoff:
-                # ctime is defined by the cycling section, but this
-                # means the trigger is on an async oneoff task!
-                ctime = '1'
             if self.msg:
                 # explicit internal output ...
                 preq = self.msg
