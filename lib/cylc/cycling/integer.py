@@ -211,7 +211,7 @@ class sequence( object ):
             self.p_stop -= self.i_step
 
     def is_on_sequence( self, p ):
-        """Is p a point on-sequence, disregarding bounds?"""
+        """Is point p on-sequence, disregarding bounds?"""
         return ( p.value - self.p_start.value ) % self.i_step.value == 0
 
     def _get_point_in_bounds( self, p ):
@@ -220,6 +220,11 @@ class sequence( object ):
             return p
         else:
             return None
+
+    def is_valid( self, p ):
+        """Is point p on-sequence and in-bounds?"""
+        return self.is_on_sequence( p ) and \
+                p >= self.p_start and p <= self.p_stop
 
     def get_prev_point( self, p ):
         """Return the previous point < p, or None if out of bounds."""

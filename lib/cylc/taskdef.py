@@ -226,7 +226,7 @@ class taskdef(object):
                 for trig in self.triggers[ sequence ]:
                     if trig.startup and not startup:
                             continue
-                    if trig.cycling and not sequence.is_on_sequence( sself.tag ):
+                    if trig.cycling and not sequence.is_valid( sself.tag ):
                         # This trigger is not used in current cycle
                         continue
                     if trig.async_repeating:
@@ -252,7 +252,7 @@ class taskdef(object):
                     foo = ctrig.keys()[0]
                     if ctrig[foo].startup and not startup:
                         continue
-                    if ctrig[foo].cycling and not sequence.is_on_sequence( sself.tag):
+                    if ctrig[foo].cycling and not sequence.is_valid( sself.tag):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
                     cp = conditional_prerequisites( sself.id, self.ict )
