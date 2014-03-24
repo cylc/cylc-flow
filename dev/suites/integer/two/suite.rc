@@ -6,7 +6,7 @@
         # once at T0 (async tasks now shorthand for R1/c0/P1)
         graph = "start1 => foo"
  
-        [[[ R1/c0/P2 ]]]
+        [[[ R1/c0/P? ]]]
             # once at T0
             graph = "start2 => foo"
         [[[ R/c0/P2 ]]]
@@ -15,10 +15,13 @@
         [[[ R/c2/P2 ]]]
             # repeat with step 2 from T0 + 2
             graph = "foo => bar"
-        [[[ R2/3/5 ]]]
-            # repeat twice, at 3 and 5
+        [[[ R2/3/7 ]]] # or [[[ R2/3/P4 ]]]
+            # repeat twice, at 3 and 7
             graph = "foo => qux"
-        [[[ R1/9/P1 ]]]
+        [[[ R1/7/7 ]]]
+            # once at 7
+            graph = "qux => egg"
+        [[[ R1/9/P2 ]]]
             # once at 9
             graph = "bar => stop"
 
@@ -30,4 +33,6 @@
         qux = "fillcolor=limegreen"
         start1 = "fillcolor=lemonchiffon"
         start2 = "fillcolor=lemonchiffon"
-        stop = "fillcolor=orange"
+        egg = "fillcolor=orange"
+        stop = "fillcolor=orangered"
+

@@ -45,9 +45,7 @@ class plain_prerequisites(object):
             if task.group:
                 try:
                     foo = task.group().split(".")[1].rstrip()
-                    if ( point( foo ) <  self.p_ict and foo != '1' ):
-                        # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
-                        # INTEGER CYCLING (AND MORE?)
+                    if ( point( foo ) <  self.p_ict ):
                         return
                 except IndexError:
                     pass

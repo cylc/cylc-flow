@@ -123,7 +123,7 @@ Dependency graph suite control interface.
         self.t.quit = True
 
     def right_click_menu( self, event, task_id, type='live task' ):
-        name, ctime = TaskID.split( task_id )
+        name, ctime = cylc.TaskID.split( task_id )
 
         menu = gtk.Menu()
         menu_root = gtk.MenuItem( task_id )
@@ -489,7 +489,7 @@ Dependency graph suite control interface.
             window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
-        name, ctime = TaskID.split( id )
+        name, ctime = cylc.TaskID.split( id )
         # TODO - do we need to check that oldest_ctime is defined yet?
 
         # TODO ISO - RESTORE OR REMOVE THIS FUNCTIONALITY

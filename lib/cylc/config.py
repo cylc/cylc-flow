@@ -518,7 +518,9 @@ class config( object ):
         intervals = []
         offsets = []
         for seq in self.sequences:
-            intervals.append( seq.get_interval() )
+            i = seq.get_interval()
+            if i:
+                intervals.append( i )
             offsets.append( seq.get_offset() )
 
         if intervals:
@@ -1117,16 +1119,12 @@ class config( object ):
             conditional = True
 
         for left in lnames:
-            if left in self.async_repeating_tasks:
-                sasl = True
-            else:
-                sasl = False
+            sasl = left in self.async_repeating_tasks
             e = graphing.edge( left, right, seq, sasl, suicide, conditional )
             if ttype == 'async_repeating':
                 if e not in self.async_repeating_edges:
                     self.async_repeating_edges.append( e )
             else:
-                # cycling
                 self.edges.append(e)
 
     def generate_taskdefs( self, line, lnames, right, ttype, section, asyncid_pattern ):
@@ -1327,8 +1325,8 @@ class config( object ):
         gr_edges = []
 
         for e in self.async_repeating_edges:
-            right = e.get_right(1, False, False, [], [])
-            left  = e.get_left( 1, False, False, [], [])
+            right = e.get_right(1, False, False, [] )
+            left  = e.get_left( 1, False, False, [] )
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 
@@ -1346,7 +1344,7 @@ class config( object ):
             i_ctime = e.sequence.get_first_point( start_ctime )
             if not i_ctime:
                 # out of bounds
-                return
+                continue
             ctime = deepcopy(i_ctime)
 
             while True: 
@@ -1356,8 +1354,8 @@ class config( object ):
 
                 not_initial_cycle = ( ctime != i_ctime )
 
-                r_id = e.get_right(ctime, not_initial_cycle, raw, startup_exclude_list, [])
-                l_id = e.get_left( ctime, not_initial_cycle, raw, startup_exclude_list, [])
+                r_id = e.get_right(ctime, not_initial_cycle, raw, startup_exclude_list )
+                l_id = e.get_left( ctime, not_initial_cycle, raw, startup_exclude_list )
 
                 action = True
 
