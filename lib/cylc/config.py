@@ -813,7 +813,6 @@ class config( object ):
             tag = point( self.cfg['scheduling']['initial cycle time'] )
             try:
                 # instantiate a task
-                # startup True here or oneoff async tasks will be ignored:
                 itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
             except TypeError, x:
                 raise
@@ -1517,14 +1516,10 @@ class config( object ):
         taskd = taskdef.taskdef( name, rtcfg, self.run_mode, point(ict) )
 
         # TODO - put all taskd.foo items in a single config dict
-        # SET ONE-OFF AND COLD-START TASK INDICATORS
+        # SET COLD-START TASK INDICATORS
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
             taskd.modifiers.append( 'oneoff' )
             taskd.is_coldstart = True
-
-        # TODO ISO - NO LONGER NEEDED
-        if name in self.cfg['scheduling']['special tasks']['one-off']:
-            taskd.modifiers.append( 'oneoff' )
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:

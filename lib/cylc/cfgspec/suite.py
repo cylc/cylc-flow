@@ -105,7 +105,6 @@ SPEC = {
             'clock-triggered'                 : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
-            'one-off'                         : vdr(vtype='string_list', default=[]),
             'exclude at start-up'             : vdr(vtype='string_list', default=[]),
             'include at start-up'             : vdr(vtype='string_list', default=[]),
             },
