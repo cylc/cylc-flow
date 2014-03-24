@@ -299,6 +299,8 @@ class taskdef(object):
                     return
             else:
                 sself.tag = start_tag
+                sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.c_time = sself.tag
             sself.asyncid_pattern = self.asyncid_pattern
