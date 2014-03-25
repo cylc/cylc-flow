@@ -20,8 +20,8 @@
 Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
-cycling = 'integer'
-#cycling = 'iso8601'
+#cycling = 'integer'
+cycling = 'iso8601'
 
 if cycling == 'integer':
     from integer import (

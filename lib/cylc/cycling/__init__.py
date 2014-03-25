@@ -30,13 +30,15 @@ class PointBase(object):
 
     """The base class for single points in a cycler sequence.
 
-    Points should be initalised with, and based around, a string
-    value.
+    Points should be based around a string value.
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
     They should also provide self.cmp_, self.sub, self.add, and
     self.eq methods which should behave as __cmp__, __sub__,
     etc standard comparison methods. Note: "cmp_" not "cmp".
+    
+    Subclasses may also provide an overridden self.standardise
+    method to reprocess their value into a standard form.
 
     """
 
@@ -48,40 +50,65 @@ class PointBase(object):
             raise TypeError(type(value))
         self.value = value
 
+    def standardise(self):
+        """Format self.value into a standard representation."""
+        pass
+
     def __str__(self):
         return self.value
 
-    def __cmp__(self, p):
-        if self.TYPE != p.TYPE:
-            return cmp(self.TYPE_SORT_KEY, p.TYPE_SORT_KEY)
-        return self.cmp_(p)
+    def __cmp__(self, other):
+        if self.TYPE != other.TYPE:
+            return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
+        if self.value == other.value:
+            return 0
+        return self.cmp_(other)
 
-    def __sub__(self, i):
-        if self.TYPE != i.TYPE:
-            raise CyclerTypeError(self.TYPE, self, i.TYPE, i)
-        return self.sub(i)
+    def __sub__(self, other):
+        if self.TYPE != other.TYPE:
+            raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
+        return self.sub(other)
 
-    def __add__(self, i):
-        if self.TYPE != i.TYPE:
-            raise CyclerTypeError(self.TYPE, self, i.TYPE, i)
-        return self.add(i)
+    def __add__(self, other):
+        if self.TYPE != other.TYPE:
+            raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
+        return self.add(other)
 
 
 class IntervalBase(object):
 
-    """An interval separating points in a cycler sequence."""
+    """An interval separating points in a cycler sequence.
+
+    Intervals should be based around a string value.
+
+    Subclasses should provide values for TYPE and TYPE_SORT_KEY.
+    They should also provide self.cmp_, self.sub, self.add,
+    self.__mul__, and self.__abs__ methods which should behave as
+    __cmp__, __sub__, etc standard comparison methods. Note: "cmp_" not
+    "cmp". They should also provide self.get_null, which is a
+    method to extract the null interval of this type.
+
+    Subclasses may also provide an overridden self.standardise
+    method to reprocess their value into a standard form.
+
+    """
 
     TYPE = None
     TYPE_SORT_KEY = None
 
     @classmethod
     def get_null(self):
+        """Return a null interval."""
         raise NotImplementedError()
 
     def __init__(self, value):
         if not isinstance(value, basestring):
-            raise TypeError(value)
+            raise TypeError(type(value))
         self.value = value
+
+    def standardise(self):
+        """Format self.value into a standard representation."""
+        pass
 
     def is_null( self ):
         return (self == self.get_null())
@@ -89,10 +116,12 @@ class IntervalBase(object):
     def __str__( self ):
         return self.value
 
-    def __cmp__(self, i):
-        if self.TYPE != i.TYPE:
-            return cmp(self.TYPE_SORT_KEY, i.TYPE_SORT_KEY)
-        return self.cmp_(i)
+    def __cmp__(self, other):
+        if self.TYPE != other.TYPE:
+            return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
+        if self.value == other.value:
+            return 0
+        return self.cmp_(other)
 
     def __sub__(self, other):
         if self.TYPE != other.TYPE:

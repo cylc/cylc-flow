@@ -41,18 +41,20 @@ class ISO8601Point(PointBase):
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
 
+    def add(self, other):
+        return ISO8601Point(iso_point_add(self.value, other.value))
+
     def cmp_(self, other):
         return iso_point_cmp(self.value, other.value)
+
+    def standardise(self):
+        self.value = str(point_parse(self.value))
 
     def sub(self, other):
         if isinstance(other, ISO8601Point):
             return ISO8601Interval(
                 iso_point_sub_point(self.value, other.value))
-        return ISO8601Point(
-            iso_point_sub_interval(self.value, other.value))
-
-    def add(self, other):
-        return iso_point_add(self.value, other.value)
+        return ISO8601Point(iso_point_sub_interval(self.value, other.value))
 
 
 class ISO8601Interval(IntervalBase):
@@ -67,12 +69,15 @@ class ISO8601Interval(IntervalBase):
     def get_null(cls):
         return ISO8601Interval("P0Y")
 
+    def standardise(self):
+        self.value = str(interval_parse(self.value))
+
     def __mul__(self, m):
         # the suite runahead limit is a multiple of the smallest sequence interval
-        return iso_interval_mul(self.value, m)
+        return ISO8601Interval(iso_interval_mul(self.value, m))
 
     def __abs__(self):
-        return iso_interval_abs(self.value, self.NULL_INTERVAL_STRING)
+        return ISO8601Interval(iso_interval_abs(self.value, self.NULL_INTERVAL_STRING))
 
     def cmp_(self, other):
         return iso_interval_cmp(self.value, other.value)
@@ -102,6 +107,10 @@ class ISO8601Sequence(object):
 
         self.context_start_point = ISO8601Point(context_start_point)
         self.context_end_point = ISO8601Point(context_end_point)
+        
+        # Initial and final cycle times can be in funny formats.
+        self.context_start_point.standardise()
+        self.context_end_point.standardise()
 
         self.offset = ISO8601Interval.get_null()
 
@@ -133,11 +142,11 @@ class ISO8601Sequence(object):
         self.time_parser = CylcTimeParser(context_start_point, context_end_point)
         self.step = ISO8601Interval(i)
         self.recurrence = self.time_parser.parse_recurrence(i)
-        self._recurrence_str = str(self.recurrence)
+        self.value = str(self.recurrence)
 
     def set_offset(self, i):
         """Alter state to offset the entire sequence."""
-        self.offset = ISO8601Interval(i)
+        self.offset = i
         res = self.context_start_point + self.offset
         self.time_parser = CylcTimeParser(str(res), str(self.context_end_point))
         self.recurrence = self.time_parser.parse_recurrence(self.spec)
@@ -185,7 +194,9 @@ class ISO8601Sequence(object):
     def __eq__(self, other):
         if self.TYPE != other.TYPE:
             return False
-        return self.value == other.value
+        if self.value == other.value:
+            return True
+        return False
 
 
 def memoize(function):
@@ -217,7 +228,8 @@ def iso_interval_abs(interval_string, other_interval_string):
     interval = interval_parse(interval_string)
     other = interval_parse(other_interval_string)
     if interval < other:
-        return interval * -1
+        return str(interval * -1)
+    return interval_string
 
 
 @memoize
@@ -244,7 +256,7 @@ def iso_interval_mul(interval_string, factor):
 def iso_interval_cmp(interval_string, other_interval_string):
     interval = interval_parse(interval_string)
     other = interval_parse(other_interval_string)
-    return cmp(interval - other)
+    return cmp(interval, other)
 
 
 @memoize
@@ -276,7 +288,12 @@ def iso_point_add(point_string, interval_string):
 
 
 interval_parser = TimeIntervalParser()
-point_parser = TimePointParser()
+point_parser = TimePointParser(
+    allow_only_basic=False,
+    allow_truncated=True,
+    num_expanded_year_digits=0,
+    dump_format="CCYYMMDDThhmmZ"
+)
 
 
 def interval_parse(interval_string):
