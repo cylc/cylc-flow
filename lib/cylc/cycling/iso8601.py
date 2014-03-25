@@ -19,6 +19,7 @@
 import re
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from cylc.time_parser import CylcTimeParser
+from cylc.cycling import PointBase, IntervalBase
 
 # TODO - RESTORE MEMOIZATION FOR TIME POINT COMPARISONS
 # TODO - Consider copy vs reference of points, intervals, sequences
@@ -26,86 +27,98 @@ from cylc.time_parser import CylcTimeParser
 # TODO - ignoring anchor in back-compat sections
 
 
-class point( object ):
+CYCLER_TYPE_ISO8601 = "iso8601"
+CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
+
+MEMOIZE_LIMIT = 10000
+
+
+
+class ISO8601Point(PointBase):
+
     """A single point in an ISO8601 date time sequence."""
-    def __init__( self, value ):
-        self.value = TimePointParser().parse(value)
-    def __str__( self ):
-        return str(self.value)
-    def __cmp__( self, p):
-        return cmp( self.value, p.value )
-    def __sub__( self, i ):
-        return self.__class__( str( self.value - i.value ) )
-    def __add__( self, i ):
-        return self.__class__( str( self.value + i.value ) )
-    def __eq__( self, i ):
-        return self.value == i.value
-    def __neq__( self, i ):
-        return self.value != i.value
+
+    TYPE = CYCLER_TYPE_ISO8601
+    TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+
+    def cmp_(self, other):
+        return iso_point_cmp(self.value, other.value)
+
+    def sub(self, other):
+        if isinstance(other, ISO8601Point):
+            return ISO8601Interval(
+                iso_point_sub_point(self.value, other.value))
+        return ISO8601Point(
+            iso_point_sub_interval(self.value, other.value))
+
+    def add(self, other):
+        return iso_point_add(self.value, other.value)
 
 
-class interval( object ):
+class ISO8601Interval(IntervalBase):
+
     """The interval between points in an ISO8601 date time sequence."""
 
+    NULL_INTERVAL_STRING = "P0Y"
+    TYPE = CYCLER_TYPE_ISO8601
+    TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+
     @classmethod
-    def get_null( cls ):
-        return interval('P0Y')
+    def get_null(cls):
+        return ISO8601Interval("P0Y")
 
-    def __init__( self, value ):
-        self.value = TimeIntervalParser().parse(value)
-    def is_null( self ):
-        return self.value == self.__class__.get_null()
-    def __str__( self ):
-        return str(self.value)
-    def __cmp__( self, i ):
-        return cmp( self.value, i.value )
-    def __add__( self, i ):
-        return self.__class__( str( self.value + i.value) )
-    def __mul__( self, m ):
+    def __mul__(self, m):
         # the suite runahead limit is a multiple of the smallest sequence interval
-        return self.__class__( str(self.value * m ))
-    def __abs__( self ):
-        # hack: TimeIntervalParser can't parse str( TimeInterval * -1 )
-        # (if self.value has already been through __neg__)
-        res = self.__class__.get_null()
-        if self.value < self.__class__.get_null().value:
-            res.value = self.value * -1
-        return res
-    def __neg__( self ):
-        # hack: TimeIntervalParser can't parse str( TimeInterval * -1 )
-        res = self.__class__(str(self.value))
-        res.value = res.value * -1
-        return res
+        return iso_interval_mul(self.value, m)
+
+    def __abs__(self):
+        return iso_interval_abs(self.value, self.NULL_INTERVAL_STRING)
+
+    def cmp_(self, other):
+        return iso_interval_cmp(self.value, other.value)
+
+    def sub(self, other):
+        return ISO8601Interval(iso_interval_sub(self.value, other.value))
+
+    def add(self, other):
+        if isinstance(other, ISO8601Interval):
+            return ISO8601Interval(
+                iso_interval_add_interval(self.value, other.value))
+        return ISO8601Point(
+                iso_point_add(other.value, self.value))
 
 
-class sequence( object ):
+class ISO8601Sequence(object):
     """
     A sequence of ISO8601 date time points separated by an interval.
     """
 
-    def __init__( self, dep_section, context_start_point=None, context_end_point=None ):
+    TYPE = CYCLER_TYPE_ISO8601
+    TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+
+    def __init__(self, dep_section, context_start_point=None, context_end_point=None):
 
         self.dep_section = dep_section
 
-        self.context_start_point = context_start_point
-        self.context_end_point = context_end_point
+        self.context_start_point = ISO8601Point(context_start_point)
+        self.context_end_point = ISO8601Point(context_end_point)
 
-        self.offset = interval.get_null()
+        self.offset = ISO8601Interval.get_null()
 
         i = None
-        m = re.match( '^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section )
+        m = re.match('^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
         if m:
             # back compat Daily()
             anchor, step = m.groups()
             i = 'P' + step + 'D'
         else:
-            m = re.match( '^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section )
+            m = re.match('^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
             if m:
                 # back compat Monthly()
                 anchor, step = m.groups()
                 i = 'P' + step + 'M'
             else:
-                m = re.match( '^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section )
+                m = re.match('^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
                 if m:
                     # back compat Yearly()
                     anchor, step = m.groups()
@@ -116,74 +129,196 @@ class sequence( object ):
         if not i:
             raise "ERROR: iso8601 cycling init!"
 
-        self.time_parser = CylcTimeParser( context_start_point, context_end_point )
-        self.step = interval( i )
-        self.recurrence = self.time_parser.parse_recurrence( i )
+        self.spec = i
+        self.time_parser = CylcTimeParser(context_start_point, context_end_point)
+        self.step = ISO8601Interval(i)
+        self.recurrence = self.time_parser.parse_recurrence(i)
+        self._recurrence_str = str(self.recurrence)
 
-    def set_offset( self, i ):
+    def set_offset(self, i):
         """Alter state to offset the entire sequence."""
-        self.offset = i
-        res = point(self.context_start_point) + i
-        self.time_parser = CylcTimeParser( str(res), self.context_end_point )
+        self.offset = ISO8601Interval(i)
+        res = self.context_start_point + self.offset
+        self.time_parser = CylcTimeParser(str(res), str(self.context_end_point))
+        self.recurrence = self.time_parser.parse_recurrence(self.spec)
+        self.value = str(self.recurrence)
  
-    def get_offset( self ):
+    def get_offset(self):
         return self.offset
 
-    def get_interval( self ):
+    def get_interval(self):
         return self.step
 
-    def is_on_sequence( self, p ):
+    def is_on_sequence(self, p):
         """Return True if p is on-sequence."""
-        return self.recurrence.get_is_valid( p.value )
+        return self.recurrence.get_is_valid(point_parse(p.value))
 
-    def get_prev_point( self, p ):
+    def get_prev_point(self, p):
         # may be None if out of the recurrence bounds
         res = None
-        prv = self.recurrence.get_prev( p.value )
+        prv = self.recurrence.get_prev(point_parse(p.value))
         if prv:
-            res = point(str(prv))
+            res = ISO8601Point(str(prv))
         return res
 
-    def get_next_point( self, p ):
+    def get_next_point(self, p):
         # may be None if out of the recurrence bounds
         res = None
-        nxt = self.recurrence.get_next( p.value )
+        nxt = self.recurrence.get_next(point_parse(p.value))
         if nxt:
-            res = point(str(nxt))
+            res = ISO8601Point(str(nxt))
         return res
 
-    def get_nexteq_point( self, p ):
+    def get_nexteq_point(self, p):
         """return the on-sequence point greater than or equal to p."""
-        # TODO - NOT IMPLEMENTED
-        #   if p < Tstart return Tstart, else iterate until >= p?
-        return p
+        if self.TYPE != p.TYPE:
+            return self.context_start_point
+        p_iso_point = point_parse(p.value)
+        for i, iso_point in enumerate(self.recurrence):
+            if i == 0:
+                if iso_point < p_iso_point:
+                    return self.context_start_point
+            elif iso_point >= p_iso_point:
+                return ISO8601Point(str(iso_point))
+        return None
 
-    def __eq__( self, seq ):
-        # TODO - IMPLEMENT THIS TO AVOID HOLDING DUPLICATE SEQUENCES IN TASKS
-        return False
+    def __eq__(self, other):
+        if self.TYPE != other.TYPE:
+            return False
+        return self.value == other.value
+
+
+def memoize(function):
+    """This stores results for a given set of inputs to a function.
+
+    The inputs and results of the function must be immutable.
+    Keyword arguments are not allowed.
+
+    To avoid memory leaks, only the first 10000 separate input
+    permutations are cached for a given function.
+
+    """
+    inputs_results = {}
+    def _wrapper(*args):
+        try:
+            return inputs_results[args]
+        except KeyError:
+            results = function(*args)
+            if len(inputs_results) > MEMOIZE_LIMIT:
+                # Full up, no more room.
+                return results
+            inputs_results[args] = results
+            return results
+    return _wrapper
+
+
+@memoize
+def iso_interval_abs(interval_string, other_interval_string):
+    interval = interval_parse(interval_string)
+    other = interval_parse(other_interval_string)
+    if interval < other:
+        return interval * -1
+
+
+@memoize
+def iso_interval_add(interval_string, other_interval_string):
+    interval = interval_parse(interval_string)
+    other = interval_parse(other_interval_string)
+    return str(interval + other)
+
+
+@memoize
+def iso_interval_sub(interval_string, other_interval_string):
+    interval = interval_parse(interval_string)
+    other = interval_parse(other_interval_string)
+    return str(interval - other)
+
+
+@memoize
+def iso_interval_mul(interval_string, factor):
+    interval = interval_parse(interval_string)
+    return str(interval * factor)
+
+
+@memoize
+def iso_interval_cmp(interval_string, other_interval_string):
+    interval = interval_parse(interval_string)
+    other = interval_parse(other_interval_string)
+    return cmp(interval - other)
+
+
+@memoize
+def iso_point_cmp(point_string, other_point_string):
+    point = point_parse(point_string)
+    other_point = point_parse(other_point_string)
+    return cmp(point, other_point)
+
+
+@memoize
+def iso_point_sub_interval(point_string, interval_string):
+    point = point_parse(point_string)
+    interval = interval_parse(interval_string)
+    return str(point - interval)
+
+
+@memoize
+def iso_point_sub_point(point_string, other_point_string):
+    point = point_parse(point_string)
+    other_point = point_parse(other_point_string)
+    return str(point - other_point)
+
+
+@memoize
+def iso_point_add(point_string, interval_string):
+    point = point_parse(point_string)
+    interval = interval_parse(interval_string)
+    return str(point + interval)
+
+
+interval_parser = TimeIntervalParser()
+point_parser = TimePointParser()
+
+
+def interval_parse(interval_string):
+    try:
+        return _interval_parse(interval_string).copy()
+    except Exception:
+        return -1 * _interval_parse(interval_string.replace("-", "")).copy()
+
+
+@memoize
+def _interval_parse(interval_string):
+    return interval_parser.parse(interval_string)
+
+
+def point_parse(point_string):
+    return _point_parse(point_string).copy()
+
+
+@memoize
+def _point_parse(point_string):
+    return point_parser.parse(point_string)
 
 
 if __name__ == '__main__':
-
-    p_start = point( '20100808T00' )
-    p_stop = point( '20100808T02' )
-    i = interval( 'PT6H' )
+    p_start = ISO8601Point('20100808T00')
+    p_stop = ISO8601Point('20100808T02')
+    i = ISO8601Interval('PT6H')
     print p_start - i 
     print p_stop + i 
 
     print
-    r = sequence( 'PT10M', str(p_start), str(p_stop), )
-    r.set_offset( - interval('PT10M') )
-    p = r.get_nexteq_point( point('20100808T0000') )
+    r = ISO8601Sequence('PT10M', str(p_start), str(p_stop),)
+    r.set_offset(- ISO8601Interval('PT10M'))
+    p = r.get_nexteq_point(ISO8601Point('20100808T0000'))
     print p
     while p and p < p_stop:
         print ' + ' + str(p), r.is_on_sequence(p)
-        p = r.get_next_point( p )
+        p = r.get_next_point(p)
     print 
     while p and p >= p_start:
         print ' + ' + str(p), r.is_on_sequence(p)
-        p = r.get_prev_point( p )
+        p = r.get_prev_point(p)
      
     print
-    print r.is_on_sequence( point('20100809T0005') )
-
+    print r.is_on_sequence(ISO8601Point('20100809T0005'))
