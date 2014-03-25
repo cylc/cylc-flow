@@ -172,7 +172,6 @@ class sequence( object ):
                     else:
                         self.p_stop = point( stop )
                     self.i_step = interval( ( self.p_stop.value - self.p_start.value )/( int(n) - 1) )
-                print self.p_start, self.p_stop, self.i_step
             else:
                 # 3) REPEAT/PERIOD/STOP: R(n)/P(i)/([c])i
                 m = FULL_RE_3.match( dep_section )

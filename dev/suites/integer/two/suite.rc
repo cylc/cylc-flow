@@ -5,7 +5,6 @@
     [[dependencies]]
         # once at T0 (async tasks now shorthand for R1/c0/P1)
         graph = "start1 => foo"
- 
         [[[ R1/c0/P? ]]]
             # once at T0
             graph = "start2 => foo"
@@ -21,9 +20,12 @@
         [[[ R1/7/7 ]]]
             # once at 7
             graph = "qux => egg"
-        [[[ R1/9/P2 ]]]
-            # once at 9
-            graph = "bar => stop"
+        [[[ R1/P?/c0 ]]]
+            # once at final cycle
+            graph = "bar => final"
+        [[[ R2/P2/c0 ]]]
+            # final two cycles
+            graph = "bar => stopping"
 
 [visualization]
     default node attributes = "style=filled", "shape=box"
@@ -34,5 +36,6 @@
         start1 = "fillcolor=lemonchiffon"
         start2 = "fillcolor=lemonchiffon"
         egg = "fillcolor=orange"
-        stop = "fillcolor=orangered"
+        stopping = "fillcolor=orangered"
+        final = "fillcolor=red"
 
