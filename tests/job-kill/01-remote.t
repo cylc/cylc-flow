@@ -40,7 +40,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-ps
 run_fail $TEST_NAME \
-    $SSH $CYLC_TEST_HOST "ps \$(cat cylc-run/$SUITE_NAME/work/t*)"
+    $SSH $CYLC_TEST_HOST "ps \$(cat cylc-run/$SUITE_NAME/work/t*/file)"
 #-------------------------------------------------------------------------------
 $SSH $CYLC_TEST_HOST \
     "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
