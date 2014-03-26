@@ -148,12 +148,6 @@ class IntegerSequence( object ):
         if p_context_stop:
             self.p_context_stop  = IntegerPoint(p_context_stop)
 
-        # start context always exists
-        self.p_context_start = point(p_context_start)
-        # stop context may exist
-        if p_context_stop:
-            self.p_context_stop = point(p_context_stop)
-
         # state variables: start, stop, and step
         self.p_start = None
         self.p_stop  = None
@@ -169,20 +163,21 @@ class IntegerSequence( object ):
             if c == 'c':
                 self.p_start = self.p_context_start + IntegerPoint( start )
             else:
-                self.p_start = point( start )
+                self.p_start = IntegerPoint( start )
             if step == '?' or n and int(n) <= 1:
                 # one-off
                 self.i_step = None
                 self.p_stop = self.p_start
             else:
-                self.i_step = interval( step )
+                self.i_step = IntegerInterval( step )
                 if n:
                     self.p_stop = self.p_start + self.i_step * ( int(n) - 1 )
                 elif self.p_context_stop:
                     # stop at the point <= self.p_context_stop
                     # use p_start as an on-sequence reference
-                    r = ( self.p_context_stop.value - self.p_start.value ) % self.i_step.value
-                    self.p_stop = self.p_context_stop - interval(r)
+                    r = (int( self.p_context_stop - self.p_start ) %
+                         int(self.i_step))
+                    self.p_stop = self.p_context_stop - IntegerInterval(r)
 
         else:
             # 2) REPEAT/START/STOP: R(n)/([c])(i)/([c])(i)
@@ -191,7 +186,7 @@ class IntegerSequence( object ):
             if m:
                 n, c1, start, c2, stop = m.groups()
                 if c1 == 'c':
-                    self.p_start = self.p_context_start + point( start )
+                    self.p_start = self.p_context_start + IntegerPoint( start )
                 else:
                     self.p_start = IntegerPoint( start )
                 if int(n) == 1:
@@ -205,7 +200,7 @@ class IntegerSequence( object ):
                         else:
                             raise Exception( "ERROR: stop or stop context required with regex 2" )
                     else:
-                        self.p_stop = point( stop )
+                        self.p_stop = IntegerPoint( stop )
                     self.i_step = IntegerInterval(
                         int(self.p_stop - self.p_start) / int(n) + 1
                     )
@@ -233,7 +228,7 @@ class IntegerSequence( object ):
                 else:
                     raise Exception( "ERROR, bad integer cycling format:" + dep_section )
 
-        if self.i_step and self.i_step < interval.get_null():
+        if self.i_step and self.i_step < IntegerInterval.get_null():
             # (TODO - this should be easy to handle but needs testing)
             raise Exception( "ERROR, negative intervals not supported yet: " + self.i_step )
 
@@ -268,11 +263,11 @@ class IntegerSequence( object ):
             if self.p_start < self.p_context_start:
                 self.p_start = self.p_stop = None
             return
-        if not i_offset.value % self.i_step.value:
+        if not int(i_offset) % int(self.i_step):
             # offset is a multiple of step
             return
         # shift to 0 < offset < interval
-        i_offset = interval( i_offset.value % self.i_step.value )
+        i_offset = IntegerInterval( int(i_offset) % int(self.i_step) )
         self.i_offset = i_offset
         self.p_start += i_offset # can be negative
         if self.p_start < self.p_context_start:
@@ -360,10 +355,10 @@ class IntegerSequence( object ):
 if __name__ == '__main__':
 
     r = IntegerSequence( 'R/1/P3', 1, 10 )
-    #r = sequence( 'R/c2/P2', 1, 10 )
-    #r = sequence( 'R2/c2/P2', 1, 10 )
-    #r = sequence( 'R2/c4/c6', 1, 10 )
-    #r = sequence( 'R2/P2/c6', 1, 10 )
+    #r = IntegerSequence( 'R/c2/P2', 1, 10 )
+    #r = IntegerSequence( 'R2/c2/P2', 1, 10 )
+    #r = IntegerSequence( 'R2/c4/c6', 1, 10 )
+    #r = IntegerSequence( 'R2/P2/c6', 1, 10 )
 
     r.set_offset( IntegerInterval('4') )
 
@@ -382,8 +377,8 @@ if __name__ == '__main__':
         p = r.get_prev_point( p )
  
     print
-    r = sequence( 'R/c1/P1', 1, 10 )
-    q = sequence( 'R/c1/P1', 1, 10 )
+    r = IntegerSequence( 'R/c1/P1', 1, 10 )
+    q = IntegerSequence( 'R/c1/P1', 1, 10 )
     print r == q
     q.set_offset( IntegerInterval('-2') )
     print r == q

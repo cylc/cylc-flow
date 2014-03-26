@@ -144,25 +144,34 @@ class ISO8601Sequence(object):
         self.recurrence = self.time_parser.parse_recurrence(i)
         self.value = str(self.recurrence)
 
-    def set_offset(self, i):
-        """Alter state to offset the entire sequence."""
-        self.offset = i
-        res = self.context_start_point + self.offset
-        self.time_parser = CylcTimeParser(str(res), str(self.context_end_point))
-        self.recurrence = self.time_parser.parse_recurrence(self.spec)
-        self.value = str(self.recurrence)
- 
+    def get_interval(self):
+        return self.step
+
     def get_offset(self):
         return self.offset
 
-    def get_interval(self):
-        return self.step
+    def set_offset(self, i):
+        """Alter state to offset the entire sequence."""
+        self.offset = i
+        start_point = self.context_start_point + self.offset
+        end_point = self.context_end_point + self.offset
+        self.time_parser = CylcTimeParser(
+            str(start_point),
+            str(end_point)
+        )
+        self.recurrence = self.time_parser.parse_recurrence(self.spec)
+        self.value = str(self.recurrence)
 
     def is_on_sequence(self, p):
         """Return True if p is on-sequence."""
         return self.recurrence.get_is_valid(point_parse(p.value))
 
+    def is_valid(self, p):
+        """Return True if p is on-sequence and in-bounds."""
+        return self.is_on_sequence(p)
+
     def get_prev_point(self, p):
+        """Return the previous point < p, or None if out of bounds."""
         # may be None if out of the recurrence bounds
         res = None
         prv = self.recurrence.get_prev(point_parse(p.value))
@@ -171,24 +180,28 @@ class ISO8601Sequence(object):
         return res
 
     def get_next_point(self, p):
-        # may be None if out of the recurrence bounds
+        """Return the next point > p, or None if out of bounds."""
+        p_iso_point = point_parse(p.value)
+        for recurrence_iso_point in self.recurrence:
+            if recurrence_iso_point > p_iso_point:
+                return ISO8601Point(str(recurrence_iso_point))
+        return None
+
+    def get_next_point_on_sequence(self, p):
+        """Return the on-sequence point > p assuming that p is on-sequence,
+        or None if out of bounds."""
         res = None
         nxt = self.recurrence.get_next(point_parse(p.value))
         if nxt:
             res = ISO8601Point(str(nxt))
         return res
 
-    def get_nexteq_point(self, p):
-        """return the on-sequence point greater than or equal to p."""
-        if self.TYPE != p.TYPE:
-            return self.context_start_point
+    def get_first_point( self, p):
+        """Return the first point >= to p, or None if out of bounds."""
         p_iso_point = point_parse(p.value)
-        for i, iso_point in enumerate(self.recurrence):
-            if i == 0:
-                if iso_point < p_iso_point:
-                    return self.context_start_point
-            elif iso_point >= p_iso_point:
-                return ISO8601Point(str(iso_point))
+        for recurrence_iso_point in self.recurrence:
+            if recurrence_iso_point >= p_iso_point:
+                return ISO8601Point(str(recurrence_iso_point))
         return None
 
     def __eq__(self, other):
@@ -327,7 +340,7 @@ if __name__ == '__main__':
     print
     r = ISO8601Sequence('PT10M', str(p_start), str(p_stop),)
     r.set_offset(- ISO8601Interval('PT10M'))
-    p = r.get_nexteq_point(ISO8601Point('20100808T0000'))
+    p = r.get_next_point(ISO8601Point('20100808T0000'))
     print p
     while p and p < p_stop:
         print ' + ' + str(p), r.is_on_sequence(p)
