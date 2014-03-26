@@ -164,6 +164,8 @@ class TimeRecurrence(object):
 
     def get_next(self, timepoint):
         """Return the next timepoint after this timepoint, or None."""
+        if self.repetitions == 1:
+            return None
         next_timepoint = timepoint + self.interval
         if self._get_is_in_bounds(next_timepoint):
             return next_timepoint

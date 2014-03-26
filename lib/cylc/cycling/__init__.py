@@ -83,10 +83,11 @@ class IntervalBase(object):
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
     They should also provide self.cmp_, self.sub, self.add,
-    self.__mul__, and self.__abs__ methods which should behave as
-    __cmp__, __sub__, etc standard comparison methods. Note: "cmp_" not
-    "cmp". They should also provide self.get_null, which is a
-    method to extract the null interval of this type.
+    self.__mul__, self.__abs__, self.__nonzero__ methods which should
+    behave as __cmp__, __sub__, etc standard comparison methods.
+    Note: "cmp_" not "cmp", etc. They should also provide
+    self.get_null, which is a method to extract the null interval of
+    this type.
 
     Subclasses may also provide an overridden self.standardise
     method to reprocess their value into a standard form.
@@ -99,6 +100,16 @@ class IntervalBase(object):
     @classmethod
     def get_null(self):
         """Return a null interval."""
+        raise NotImplementedError()
+
+    def __abs__( self ):
+        raise NotImplementedError()
+
+    def __mul__( self, m ):
+        # the suite runahead limit is a multiple of the smallest sequence interval
+        raise NotImplementedError()
+
+    def __nonzero__(self):
         raise NotImplementedError()
 
     def __init__(self, value):
@@ -116,6 +127,11 @@ class IntervalBase(object):
     def __str__( self ):
         return self.value
 
+    def __add__(self, other):
+        if self.TYPE != other.TYPE:
+            raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
+        return self.add(other)
+
     def __cmp__(self, other):
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
@@ -127,18 +143,6 @@ class IntervalBase(object):
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.sub(other)
-
-    def __add__(self, other):
-        if self.TYPE != other.TYPE:
-            raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
-        return self.add(other)
-
-    def __mul__( self, m ):
-        # the suite runahead limit is a multiple of the smallest sequence interval
-        raise NotImplementedError()
-
-    def __abs__( self ):
-        raise NotImplementedError()
 
     def __neg__( self ):
         return self * -1

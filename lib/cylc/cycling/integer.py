@@ -105,12 +105,10 @@ class IntegerInterval(IntervalBase):
             value = str(value)
         super(IntegerInterval, self).__init__(value)
 
-    def __mul__(self, m):
-        # the suite runahead limit is a multiple of the smallest sequence interval
-        return IntegerInterval(int(self) * m)
-
-    def __abs__(self):
-        return IntegerInterval(abs(int(self)))
+    def add(self, other):
+        if isinstance(other, IntegerInterval):
+            return IntegerInterval(int(self) + int(other))
+        return IntegerPoint(int(self) + int(other))
 
     def cmp_(self, other):
         return cmp(int(self), int(other))
@@ -118,13 +116,18 @@ class IntegerInterval(IntervalBase):
     def sub(self, other):
         return IntegerInterval(int(self) - int(other))
 
-    def add(self, other):
-        if isinstance(other, IntegerInterval):
-            return IntegerInterval(int(self) + int(other))
-        return IntegerPoint(int(self) + int(other))
+    def __abs__(self):
+        return IntegerInterval(abs(int(self)))
 
     def __int__(self):
         return int(self.value)
+
+    def __mul__(self, m):
+        # the suite runahead limit is a multiple of the smallest sequence interval
+        return IntegerInterval(int(self) * m)
+
+    def __nonzero__(self):
+        return bool(int(self.value))
 
 
 class IntegerSequence( object ):

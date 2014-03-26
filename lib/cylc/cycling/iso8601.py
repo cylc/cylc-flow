@@ -72,12 +72,12 @@ class ISO8601Interval(IntervalBase):
     def standardise(self):
         self.value = str(interval_parse(self.value))
 
-    def __mul__(self, m):
-        # the suite runahead limit is a multiple of the smallest sequence interval
-        return ISO8601Interval(iso_interval_mul(self.value, m))
-
-    def __abs__(self):
-        return ISO8601Interval(iso_interval_abs(self.value, self.NULL_INTERVAL_STRING))
+    def add(self, other):
+        if isinstance(other, ISO8601Interval):
+            return ISO8601Interval(
+                iso_interval_add(self.value, other.value))
+        return ISO8601Point(
+                iso_point_add(other.value, self.value))
 
     def cmp_(self, other):
         return iso_interval_cmp(self.value, other.value)
@@ -85,12 +85,16 @@ class ISO8601Interval(IntervalBase):
     def sub(self, other):
         return ISO8601Interval(iso_interval_sub(self.value, other.value))
 
-    def add(self, other):
-        if isinstance(other, ISO8601Interval):
-            return ISO8601Interval(
-                iso_interval_add_interval(self.value, other.value))
-        return ISO8601Point(
-                iso_point_add(other.value, self.value))
+    def __abs__(self):
+        return ISO8601Interval(
+            iso_interval_abs(self.value, self.NULL_INTERVAL_STRING))
+
+    def __mul__(self, m):
+        # the suite runahead limit is a multiple of the smallest sequence interval
+        return ISO8601Interval(iso_interval_mul(self.value, m))
+
+    def __nonzero__(self):
+        return iso_interval_nonzero(self.value)
 
 
 class ISO8601Sequence(object):
@@ -140,8 +144,8 @@ class ISO8601Sequence(object):
 
         self.spec = i
         self.time_parser = CylcTimeParser(context_start_point, context_end_point)
-        self.step = ISO8601Interval(i)
         self.recurrence = self.time_parser.parse_recurrence(i)
+        self.step = ISO8601Interval(str(self.recurrence.interval))
         self.value = str(self.recurrence)
 
     def get_interval(self):
@@ -253,6 +257,13 @@ def iso_interval_add(interval_string, other_interval_string):
 
 
 @memoize
+def iso_interval_cmp(interval_string, other_interval_string):
+    interval = interval_parse(interval_string)
+    other = interval_parse(other_interval_string)
+    return cmp(interval, other)
+
+
+@memoize
 def iso_interval_sub(interval_string, other_interval_string):
     interval = interval_parse(interval_string)
     other = interval_parse(other_interval_string)
@@ -266,10 +277,9 @@ def iso_interval_mul(interval_string, factor):
 
 
 @memoize
-def iso_interval_cmp(interval_string, other_interval_string):
+def iso_interval_nonzero(interval_string):
     interval = interval_parse(interval_string)
-    other = interval_parse(other_interval_string)
-    return cmp(interval, other)
+    return bool(interval)
 
 
 @memoize
