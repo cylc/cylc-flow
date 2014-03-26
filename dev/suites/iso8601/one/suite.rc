@@ -17,25 +17,28 @@
             graph = "cold_foo => foo"
 
         # TESTED:
-        [[[ PT30M ]]]
-            graph = "foo[T-PT30M] => foo => bar"
+        [[[ PT1H30M ]]]
+            graph = "foo[T-PT1H30M] => foo => bar"
 
-        [[[ PT1H ]]]
-            graph = "qux[T-PT1H] => qux"
+        [[[ PT5H ]]]
+            graph = "qux[T-PT5H] => qux"
 
         [[[ T06 ]]]
             graph = "foo => wibble"
 
-        [[[ +P1D/PT1H ]]]
-            graph = "foo => wobble"
+        [[[ +P1D/PT3H ]]]
+            graph = "foo => baz"
 
         [[[ R1//-P1D ]]]
             graph = "bar => flob"
 
-        [[[ R5/PT2H ]]]
+        [[[ R1/P0D ]]]
+            graph = "foo => final_foo"
+
+        [[[ R5/PT3H ]]]
             graph = "xyzzy => bar"
 
-        [[[ 2014001/PT3H ]]]
+        [[[ 2014001/PT6H ]]]
             graph = "wubble => foo"
 
 
@@ -43,11 +46,13 @@
     default node attributes = "style=filled", "shape=box"
     use node color for edges = False
     [[node attributes]]
-        bar = "fillcolor=skyblue"
-        qux = "fillcolor=limegreen"
-        foo = "fillcolor=violet"
-        wibble = "fillcolor=purple"
-        wubble = "fillcolor=orange"
-        wobble = "fillcolor=yellow"
-        flob = "fillcolor=red"
-        xyzzy = "fillcolor=cyan"
+        foo = "fillcolor=purple4"
+        bar = "fillcolor=purple"
+        baz = "fillcolor=cyan"
+        xyzzy = "fillcolor=green"
+        wubble = "fillcolor=yellow"
+        qux = "fillcolor=orange"
+        wibble = "fillcolor=orange3"
+        flob = "fillcolor=orangered"
+        cold_foo = "fillcolor=red"
+        final_foo = "fillcolor=red4"
