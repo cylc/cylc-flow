@@ -1169,12 +1169,12 @@ class scheduler(object):
             shcopy( self.logfile, self.reflogfile)
 
     def update_state_summary( self ):
-        #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), 
                 self.get_oldest_c_time(), self.get_newest_c_time(),
                 self.get_newest_c_time(True), self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
-                self.will_stop_at(), self.runahead_limit )
+                self.will_stop_at(), self.runahead_limit,
+                self.config.ns_defn_order )
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what

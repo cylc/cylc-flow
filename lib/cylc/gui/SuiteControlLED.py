@@ -121,6 +121,13 @@ LED suite control interface.
         transpose_menu_item.connect( 'toggled', self.toggle_transpose )
         transpose_menu_item.show()
 
+        if self.cfg.use_defn_order:
+            defn_order_menu_item = gtk.CheckMenuItem( 'Toggle _Definition Order' )
+            defn_order_menu_item.set_active( self.t.defn_order_on )
+            menu.append( defn_order_menu_item )
+            defn_order_menu_item.connect( 'toggled', self.toggle_defn_order )
+            defn_order_menu_item.show()
+
         menu.popup( None, None, None, event.button, event.time )
 
         # TODO - popup menus are not automatically destroyed and can be
@@ -180,6 +187,17 @@ LED suite control interface.
         self.t.action_required = True
         return False
 
+    def toggle_defn_order( self, toggle_item ):
+        """Toggle definition vs alphabetic ordering of namespaces"""
+        defn_order_on = toggle_item.get_active()
+        if defn_order_on == self.t.defn_order_on:
+            return False
+        self.t.defn_order_on = defn_order_on
+        if toggle_item != self.defn_order_menu_item:
+            self.defn_order_menu_item.set_active( defn_order_on )
+        self.t.action_required = True
+        return False
+
     def stop(self):
         self.t.quit = True
 
@@ -212,6 +230,13 @@ LED suite control interface.
         self.transpose_menu_item.set_active( self.t.should_transpose_view )
         items.append( self.transpose_menu_item )
         self.transpose_menu_item.connect( 'toggled', self.toggle_transpose )
+
+        if self.cfg.use_defn_order:
+            self.defn_order_menu_item = gtk.CheckMenuItem( 'Toggle _Definition Order' )
+            self.defn_order_menu_item.set_active( self.t.defn_order_on )
+            items.append( self.defn_order_menu_item )
+            self.defn_order_menu_item.connect( 'toggled', self.toggle_defn_order )
+ 
         return items
 
     def get_toolitems( self ):

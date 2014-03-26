@@ -28,7 +28,6 @@ import string
 import threading
 from time import sleep
 
-
 class DotUpdater(threading.Thread):
 
     def __init__(self, cfg, updater, treeview, info_bar, theme ):
@@ -43,6 +42,7 @@ class DotUpdater(threading.Thread):
         self.should_group_families = ("dot" not in cfg.ungrouped_views)
         self.should_transpose_view = False
         self.is_transposed = False
+        self.defn_order_on = True
 
         self.cfg = cfg
         self.updater = updater
@@ -141,7 +141,11 @@ class DotUpdater(threading.Thread):
                             self.task_list.append( name )
                             break
 
-        self.task_list.sort()
+        if self.cfg.use_defn_order and self.updater.ns_defn_order and self.defn_order_on:
+            self.task_list = [ i for i in self.updater.ns_defn_order if i in self.task_list ]
+        else:
+            self.task_list.sort()
+
         if self.filter:
             try:
                 self.task_list = [

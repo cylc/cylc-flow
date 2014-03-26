@@ -33,7 +33,6 @@ from time import sleep, time
 
 from cylc import cylc_pyro_client, dump
 
-
 class PollSchd(object):
     """Keep information on whether the updater should poll or not."""
 
@@ -125,6 +124,8 @@ class Updater(threading.Thread):
         self.poll_schd = PollSchd()
         self._flag_new_update()
         self._reconnect()
+        self.ns_defn_order = []
+        self.dict_ns_defn_order = {}
 
     def _flag_new_update( self ):
         self.last_update_time = time()
@@ -260,6 +261,13 @@ class Updater(threading.Thread):
                 self.status = 'running'
 
             self.mode = glbl['run_mode']
+
+            if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
+                # (protect for compat with old suite daemons)
+                nsdo = glbl['namespace definition order']
+                if self.ns_defn_order != nsdo:
+                    self.ns_defn_order = nsdo
+                    self.dict_ns_defn_order = dict( zip( nsdo, range(0,len(nsdo))))
 
             dt = glbl[ 'last_updated' ]
             self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )

@@ -37,6 +37,7 @@ SPEC = {
     'use theme'       : vdr( vtype='string', default="default" ),
     'dot icon size'   : vdr( vtype='string', default="medium",
                              options=["small","medium","large"]),
+    'sort by definition order' : vdr( vtype='boolean', default=True ), 
     'themes' : {
         '__MANY__' : {
             'inherit'       : vdr( vtype='string', default="default" ),
