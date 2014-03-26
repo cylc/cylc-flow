@@ -25,27 +25,31 @@ Integer cycling by point, interval, and sequence classes.
 The same interface as for full ISO8601 date time cycling.
 """
 
+
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 
 
-# TODO - can args of get_next()-like methods be assumed on-sequence?
 # TODO - consider copy vs reference of points, intervals, sequences
-# TODO - does set_offset() need to recompute bounds in-context?
 # TODO - truncated integer recurrence notation?
-# TODO - handle cross-recurrence triggers properly (e.g. dependence of
-#           cycling tasks on start-up tasks.)
+# TODO - handle cross-recurrence triggers properly
+#        (e.g. dependence of cycling tasks on start-up tasks.)
 
 #___________________________
 # INTEGER RECURRENCE REGEXES
 #
 # Intended to be integer analogues of the ISO8601 date time notation.
-# For cycle points a special character 'c' means "context supplied";
-# if missing, context is required: the suite start and stop points.
+#
+# Unlike ISO8601 time points we can't tell if an integer point is
+# absolute, or relative to some context, so a special character 'c'
+# is used to signify that context is required. '?' can be used for
+# the period in one-off (no-repeat) expressions, otherwise an arbitrary
+# given value will be ignored (an arbitrary interval is not stored as 
+# it may affect the default runahead limit calculation).
 #
 # 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
 # missing n means repeat indefinitely
-FULL_RE_1 = re.compile( 'R(\d+)?/(c)?(\d+)/P(\d+)' )
+FULL_RE_1 = re.compile( 'R(\d+)?/(c)?(\d+)/P(\d+|\?)' )
 #
 # 2) REPEAT/START/STOP: Rn/[c]i/[c]i
 # n required: n times between START and STOP
@@ -54,7 +58,7 @@ FULL_RE_2 = re.compile( 'R(\d+)/(c)?(\d+)/(c)?(\d+)' )
 #
 # 3) REPEAT/PERIOD/STOP: Rn/Pi/[c]i
 # (n required to count back from stop)
-FULL_RE_3 = re.compile( 'R(\d+)?/P(\d+)/(c)?(\d+)' )
+FULL_RE_3 = re.compile( 'R(\d+)?/P(\d+|\?)/(c)?(\d+)' )
 #---------------------------
 
 
@@ -124,211 +128,262 @@ class IntegerInterval(IntervalBase):
 
 
 class IntegerSequence( object ):
-    """A sequence of integer points separated by an integer interval."""
+    """Integer points at a regular interval."""
+
+    @classmethod
+    def get_async_expr( cls ):
+        """Return an expression for a one-off point at the initial cycle time."""
+        return 'R1/c0/P1'
 
     def __init__( self, dep_section, p_context_start, p_context_stop=None ):
-        """Parse sequence state from graph section heading."""
+        """Parse state (start, stop, interval) from a graph section heading.
+        The start and stop points are always on-sequence, context points
+        might not be. If computed start and stop points are out of bounds,
+        they will be set to None. Context is used only initially, to defined 
+        the sequence bounds."""
 
-        self.dep_section = dep_section
-
-        # store context 
+        # start context always exists
         self.p_context_start = IntegerPoint(p_context_start)
+        # stop context may exist
         if p_context_stop:
             self.p_context_stop  = IntegerPoint(p_context_stop)
 
-        # state variables
+        # start context always exists
+        self.p_context_start = point(p_context_start)
+        # stop context may exist
+        if p_context_stop:
+            self.p_context_stop = point(p_context_stop)
+
+        # state variables: start, stop, and step
         self.p_start = None
         self.p_stop  = None
         self.i_step  = None
+
+        # offset must be stored to compute the runahead limit
         self.i_offset = IntegerInterval('0')
  
         # 1) REPEAT/START/PERIOD: R([n])/([c])(i)/P(i)
         m = FULL_RE_1.match( dep_section )
         if m:
             n, c, start, step = m.groups()
-            # step
-            self.i_step = IntegerInterval( step )
-            # start
             if c == 'c':
-                self.p_start = IntegerPoint( start )
-            else:
                 self.p_start = self.p_context_start + IntegerPoint( start )
-            # stop
-            if n:
-                p = self.p_start + self.i_step * ( int(n) - 1 )
-                if p <= self.p_context_stop:
-                    self.p_stop = p
-                else:
-                    self.p_stop = self._get_preveq_point( self.p_context_stop, p_ref=self.p_start )
             else:
-                self.p_stop = self._get_preveq_point( self.p_context_stop, p_ref=self.p_start )
+                self.p_start = point( start )
+            if step == '?' or n and int(n) <= 1:
+                # one-off
+                self.i_step = None
+                self.p_stop = self.p_start
+            else:
+                self.i_step = interval( step )
+                if n:
+                    self.p_stop = self.p_start + self.i_step * ( int(n) - 1 )
+                elif self.p_context_stop:
+                    # stop at the point <= self.p_context_stop
+                    # use p_start as an on-sequence reference
+                    r = ( self.p_context_stop.value - self.p_start.value ) % self.i_step.value
+                    self.p_stop = self.p_context_stop - interval(r)
 
         else:
             # 2) REPEAT/START/STOP: R(n)/([c])(i)/([c])(i)
             m = FULL_RE_2.match( dep_section )
+            # match fails if n is not given
             if m:
                 n, c1, start, c2, stop = m.groups()
-                # start
                 if c1 == 'c':
+                    self.p_start = self.p_context_start + point( start )
+                else:
                     self.p_start = IntegerPoint( start )
+                if int(n) == 1:
+                    # one-off: ignore stop point
+                    self.i_step = None
+                    self.p_stop = self.p_start
                 else:
-                    self.p_start = self.p_context_start + IntegerPoint( start )
-                # stop
-                if c2 == 'c':
-                    self.p_stop = IntegerPoint( stop )
-                elif self.p_context_stop:
-                    self.p_stop = self.p_context_stop + IntegerPoint( stop )
-                else:
-                    raise "ERROR: stop or stop context required with regex 2"
-                # step
-                self.i_step = IntegerInterval(
-                    (int(self.p_stop) - int(self.p_start)) / int(n) + 1
-                )
-
+                    if c2 == 'c':
+                        if self.p_context_stop:
+                            self.p_stop = self.p_context_stop + IntegerPoint( stop )
+                        else:
+                            raise Exception( "ERROR: stop or stop context required with regex 2" )
+                    else:
+                        self.p_stop = point( stop )
+                    self.i_step = IntegerInterval(
+                        int(self.p_stop - self.p_start) / int(n) + 1
+                    )
             else:
                 # 3) REPEAT/PERIOD/STOP: R(n)/P(i)/([c])i
                 m = FULL_RE_3.match( dep_section )
+                # match fails if n is not given
                 if m:
                     n, step, c, stop = m.groups()
-                    # step
-                    self.i_step = IntegerInterval( step )
-                    # stop
                     if c == 'c':
+                        if self.p_context_stop:
+                            self.p_stop = self.p_context_stop + IntegerPoint( stop )
+                        else:
+                            raise Exception( "ERROR: stop or stop context required with regex 2" )
+                    else: 
                         self.p_stop = IntegerPoint( stop )
-                    elif self.p_context_stop:
-                        self.p_stop = self.p_context_stop + IntegerPoint( stop )
+                    if int(n) <= 1:
+                        # one-off
+                        self.p_start = self.p_stop
+                        self.i_step = None
                     else:
-                        raise "ERROR: stop or stop context required with regex 2"
-                    # start
-                    self.p_start = self.p_stop - self.i_step * ( int(n) - 1 )
+                        self.i_step = IntegerInterval( step )
+                        self.p_start = self.p_stop - self.i_step * ( int(n) - 1 )
 
                 else:
-                    raise Exception( "ERROR in integer cycling initialization")
+                    raise Exception( "ERROR, bad integer cycling format:" + dep_section )
 
-        if self.p_start < self.p_context_start:
+        if self.i_step and self.i_step < interval.get_null():
+            # (TODO - this should be easy to handle but needs testing)
+            raise Exception( "ERROR, negative intervals not supported yet: " + self.i_step )
+
+        if self.i_step and self.p_start < self.p_context_start:
             # start from first point >= context start
             r = int( self.p_context_start - self.p_start ) % int(self.i_step)
             self.p_start = self.p_context_start + IntegerInterval(r)
-        if self.p_stop and self.p_context_stop and self.p_stop > self.p_context_stop:
+            # if step is None here, retrieved points will just None (out of bounds)
+
+        if self.i_step and self.p_stop and self.p_context_stop and self.p_stop > self.p_context_stop:
             # stop at first point <= context stop
             r = int( self.p_context_stop - self.p_start ) % int(self.i_step)
             self.p_stop = self.p_context_stop - self.i_step + IntegerInterval(r)
+            # if step is None here, retrieved points will just None (out of bounds)
 
-    def set_offset( self, i_offset ):
-        # shift the sequence by i_offset
-        if i_offset == self.i_step:
-            # nothing to do
-            return
-        self.i_offset = i_offset
-        # all points are calculated relative to self.p_start
-        self.p_start += IntegerInterval(
-            int(self.i_step) % int(i_offset)
-        )
-
-    def _is_in_bounds( self, p, use_context=False ):
-        if use_context:
-            min = self.p_context_start
-            max = self.p_context_stop
-        else:
-            min = self.p_start
-            max = self.p_stop
-        if p >= min and p <= max:
-            return True
-        else:
-            return False
-
-    def is_on_sequence( self, p ):
-        return int( p - self.p_start ) % int(self.i_step) == 0
-
-    def is_valid( self, p ):
-        return self._is_in_bounds(p) and self.is_on_sequence(p)
+    def get_interval( self ):
+        # interval may be None (a one-off sequence)
+        return self.i_step
 
     def get_offset( self ):
         return self.i_offset
 
-    def get_interval( self ):
-        return self.i_step
+    def set_offset( self, i_offset ):
+        """Shift the sequence by interval i_offset."""
+        if not i_offset.value:
+            # no offset
+            return
+        if not self.i_step:
+            # this is a one-off sequence
+            self.p_start += i_offset
+            self.p_stop += i_offset
+            if self.p_start < self.p_context_start:
+                self.p_start = self.p_stop = None
+            return
+        if not i_offset.value % self.i_step.value:
+            # offset is a multiple of step
+            return
+        # shift to 0 < offset < interval
+        i_offset = interval( i_offset.value % self.i_step.value )
+        self.i_offset = i_offset
+        self.p_start += i_offset # can be negative
+        if self.p_start < self.p_context_start:
+            self.p_start += self.i_step
+        self.p_stop += i_offset
+        if self.p_stop > self.p_context_stop:
+            self.p_stop -= self.i_step
+
+    def is_on_sequence( self, p ):
+        """Is point p on-sequence, disregarding bounds?"""
+        if self.i_step:
+            return int( p - self.p_start ) % int(self.i_step) == 0
+        else:
+            return p == self.p_start
+
+    def _get_point_in_bounds( self, p ):
+        """Return point p, or None if out of bounds."""
+        if p >= self.p_start and p <= self.p_stop:
+            return p
+        else:
+            return None
+
+    def is_valid( self, p ):
+        """Is point p on-sequence and in-bounds?"""
+        return self.is_on_sequence( p ) and \
+                p >= self.p_start and p <= self.p_stop
 
     def get_prev_point( self, p ):
-        # get prev point < p
+        """Return the previous point < p, or None if out of bounds."""
+        # Only used in computing special sequential task prerequisites.
+        if not self.i_step:
+            # implies a one-off task was declared sequential
+            # TODO - check this results in sensible behaviour
+            return None
         i = int( p - self.p_start ) % int(self.i_step)
         if i:
             p_prev = p - IntegerInterval(str(i))
         else:
             p_prev = p - self.i_step
-        if self._is_in_bounds( p_prev ):
-            return p_prev
-        else:
-            return None
+        return self._get_point_in_bounds( p_prev )
 
     def get_next_point( self, p ):
-        # get next point > p
+        """Return the next point > p, or None if out of bounds."""
+        if not self.i_step:
+            # this is a one-off sequence
+            # TODO - is this needed? if so, check it results in sensible behaviour
+            if p < self.p_start:
+                return self.p_start
+            else:
+                return None
         i = int( p - self.p_start ) % int(self.i_step)
-        p_next = p + self.i_step - IntegerInterval(int(i))
-        if self._is_in_bounds( p_next ):
-            return p_next
-        else:
+        p_next = p + self.i_step - IntegerInterval(i)
+        return self._get_point_in_bounds( p_next )
+
+    def get_next_point_on_sequence( self, p ):
+        """Return the next point > p assuming that p is on-sequence,
+        or None if out of bounds."""
+        # This can be used when working with a single sequence.
+        if not self.i_step:
             return None
+        p_next = p + self.i_step
+        return self._get_point_in_bounds( p_next )
 
-    def get_nexteq_point( self, p ):
-        # TODO - rename or replace this? (in the new framework for
-        # start-up we already know the first on-sequence point. Is
-        # also used get_graph_raw() though?)
-        if p < self.p_start:
-            return self.p_start
+    def get_first_point( self, p ):
+        """Return the first point >= to p, or None if out of bounds."""
+        # Used to find the first point >= suite initial cycle time.
+        if p <= self.p_start:
+            p = self._get_point_in_bounds( self.p_start )
+        elif self.is_on_sequence( p ):
+            p  = self._get_point_in_bounds( p )
         else:
-            return p
-
-    def _get_preveq_point( self, p, p_ref ):
-        # return the on-sequence point <= p
-        r = int( p - p_ref ) % int(self.i_step)
-        return p - self.i_step + IntegerInterval(str(r))
- 
-    def get_start( self ):
-        return self.p_start
-
-    def get_stop( self ):
-        return self.p_stop
+            p = self.get_next_point( p )
+        return p
 
     def __eq__( self, q ):
-        return self.dep_section == q.dep_section and \
-                self.i_offset == q.i_offset and \
-                self.i_step == q.i_step and \
-                self.p_start == q.p_start and \
-                self.p_stop == q.p_stop
+        if self.i_step and not q.i_step or \
+                not self.i_step and q.i_step:
+            return False
+        else:
+            return self.i_step == q.i_step and \
+               self.p_start == q.p_start and \
+               self.p_stop == q.p_stop
 
 
 if __name__ == '__main__':
 
-    r = IntegerSequence( 'R/2/P2', '1', '10' )
+    r = IntegerSequence( 'R/1/P3', 1, 10 )
     #r = sequence( 'R/c2/P2', 1, 10 )
     #r = sequence( 'R2/c2/P2', 1, 10 )
     #r = sequence( 'R2/c4/c6', 1, 10 )
     #r = sequence( 'R2/P2/c6', 1, 10 )
 
-    r.set_offset( IntegerInterval('-1') )
+    r.set_offset( IntegerInterval('4') )
 
-    start = r.get_start()
-    stop = r.get_stop()
+    start = r.p_start
+    stop = r.p_stop
 
     p = start
-    while p and p <= stop:
+    while p and stop and p <= stop:
         print ' + ' + str(p)
         p = r.get_next_point( p )
     print 
 
     p = stop
-    while p and p >= start:
+    while p and start and p >= start:
         print ' + ' + str(p)
         p = r.get_prev_point( p )
  
     print
-    print r.is_on_sequence( IntegerPoint('11') )
-    print r._is_in_bounds( IntegerPoint('11') )
-    print r.is_valid( IntegerPoint('11') )
-
-    print
-    q = IntegerSequence( 'R/1/P1', 1, 10 )
+    r = sequence( 'R/c1/P1', 1, 10 )
+    q = sequence( 'R/c1/P1', 1, 10 )
     print r == q
     q.set_offset( IntegerInterval('-2') )
     print r == q

@@ -186,11 +186,8 @@ class edge( object):
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, intag, not_first_cycle, raw, startup_only, exclude ):
+    def get_right( self, intag, not_first_cycle, raw, startup_only ):
         tag = str(intag)
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        if self.right in exclude:
-            return None
         if self.right == None:
             return None
         first_cycle = not not_first_cycle
@@ -203,20 +200,13 @@ class edge( object):
 
         return TaskID.get( self.right, tag )
 
-    def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
+    def get_left( self, intag, not_first_cycle, raw, startup_only ):
         tag = str(intag)
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        if self.left in exclude:
-            return None
 
         first_cycle = not not_first_cycle
 
         # strip off special outputs
         left = re.sub( ':[\w-]+', '', self.left )
-
-        if re.search( '\[\s*T\s*-\w+\s*\]', left ) and first_cycle:
-            # ignore intercycle deps in first cycle
-            return None
 
         if left in startup_only:
             if not first_cycle or raw:
@@ -224,6 +214,7 @@ class edge( object):
 
         if self.sasl:
             # left node is asynchronous, so override the cycler
+            # TODO ISO - this is no longer needed?
             tag = '1'
         else:
             m = re.match( OFFSET_RE, left )

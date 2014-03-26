@@ -1499,8 +1499,8 @@ class scheduler(object):
         # tasks beyond the runahead limit
         if is_newly_added and self.runahead_limit:
             ouct = runahead_base or self.get_runahead_base()
-
-            if new_task.c_time - self.runahead_limit >= ouct:
+            print new_task.c_time, ouct + self.runahead_limit, '<<<'
+            if new_task.c_time >= ouct + self.runahead_limit:
                 new_task.log( "DEBUG", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()
                 return

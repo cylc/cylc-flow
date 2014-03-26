@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
 #C:
@@ -15,10 +14,10 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from task import task
-from oneoff import oneoff
-
-class async_oneoff( oneoff, task ):
-    # a one-off asynchronous (non-cycling) task
-    pass
+#-------------------------------------------------------------------------------
+#C: Basic test for state dumps restart, bogus state file in $PWD.
+run_restart() {
+    touch state
+    suite_run_ok $TEST_NAME cylc restart --reference-test --debug $SUITE_NAME
+}
+. $(dirname $0)/test_impl

@@ -1,30 +1,26 @@
 
-# TODO - TASK HOLD AT SHUTDOWN IS AFFECTED BY RECURRENCE BOUNDS
-
 [scheduling]
-    initial cycle time = 7
+    initial cycle time = 1
     final cycle time = 16
-    runahead factor = 3 
+    runahead factor = 4 
     cycling = integer
     [[special tasks]]
         sequential = seq
     [[dependencies]]
-        # TODO - ASYNC TASKS
-
-        [[[ Integer(13,3) ]]]
+        [[[ R/c0/P3 ]]]
             graph = """
-            seq               # sequential task
-       foo[T-3] => foo => bar # prev instance trigger
-       woo[T+1] => baz        # implicit other prev cycle
-       woo[T-1] => waz        # implicit next prev cycle
+             seq => foo        # sequential task
+        foo[T-3] => foo        # prev instance trigger
+             foo => bar        # plain trigger
+        woo[T+1] => foo        # implicit prev cycle
+        woo[T-1] => foo        # implicit next cycle
 
-       foo[T-3]:out1 => on_toast # message outputs
+        foo[T-3]:out1 => on_toast # message outputs
                     """
-        [[[ Integer(13,6) ]]]
+        [[[ R/c6/P6 ]]]
             graph = """
-        foo[T-3] => qux       # every second cycle
+         foo[T-3] => qux       # every second cycle
                     """
-
 [runtime]
     [[foo]]
         command scripting = """
@@ -34,4 +30,14 @@ sleep 5
                             """
         [[[outputs]]]
             out1 = "the cheese is ready for [T+3]"
+
+[visualization]
+    default node attributes = "style=filled"
+    [[node attributes]]
+        foo = "fillcolor=slateblue"
+        woo = "fillcolor=limegreen"
+        bar = "fillcolor=orange"
+        seq = "fillcolor=navajowhite"
+        on_toast = "fillcolor=beige"
+        qux = "fillcolor=orangered"
 
