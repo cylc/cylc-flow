@@ -165,7 +165,7 @@ class lockserver( Pyro.core.ObjBase ):
         if os.path.getsize( log_file ) > 0:
             h.doRollover()
 
-        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
+        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S' )
         h.setFormatter(f)
         self.log.addHandler( h )
 

@@ -99,7 +99,8 @@ initial and final cycle time variables persists across suite restarts."""
         if len( self.args ) == 2:
             self.cli_start_tag = self.args[1]
             if self.cli_start_tag == "now":
-                self.cli_start_tag = datetime.datetime.now().strftime("%Y%m%d%H")
+                self.cli_start_tag = datetime.datetime.utcnow().strftime(
+                    "%Y%m%dT%HZ")
 
         scheduler.parse_commandline( self )
 

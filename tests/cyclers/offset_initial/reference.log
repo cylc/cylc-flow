@@ -1,0 +1,52 @@
+2014/03/31 10:14:49 INFO - Thread-2 start (Event Handlers)
+2014/03/31 10:14:49 INFO - Thread-3 start (Poll & Kill Commands)
+2014/03/31 10:14:49 INFO - port:7773
+2014/03/31 10:14:49 INFO - Suite starting at 2014-03-31 10:14:49.625421
+2014/03/31 10:14:49 INFO - Log event clock: real time
+2014/03/31 10:14:49 INFO - Run mode: live
+2014/03/31 10:14:49 INFO - Start tag: 20140101
+2014/03/31 10:14:49 INFO - Stop tag: 20140102T12
+2014/03/31 10:14:49 INFO - Thread-4 start (Job Submission)
+2014/03/31 10:14:49 INFO - Thread-5 start (Request Handling)
+2014/03/31 10:14:49 INFO - Cold Start 20140101
+2014/03/31 10:14:49 INFO - [bar.20140102T0000Z] -triggered off []
+2014/03/31 10:14:50 INFO - [bar.20140102T0000Z] -(current:ready)> bar.20140102T0000Z submitting now
+2014/03/31 10:14:51 INFO - [bar.20140102T0000Z] -(current:ready)> bar.20140102T0000Z submission succeeded
+2014/03/31 10:14:51 INFO - [bar.20140102T0000Z] -(current:submitted)> bar.20140102T0000Z submit_method_id=12923
+2014/03/31 10:14:52 INFO - [bar.20140102T0000Z] -(current:submitted)> bar.20140102T0000Z started at 2014-03-31T10:14:51
+2014/03/31 10:14:53 INFO - [bar.20140102T0600Z] -triggered off []
+2014/03/31 10:14:54 INFO - [bar.20140102T0600Z] -(current:ready)> bar.20140102T0600Z submitting now
+2014/03/31 10:14:54 INFO - [bar.20140102T0600Z] -(current:ready)> bar.20140102T0600Z submission succeeded
+2014/03/31 10:14:54 INFO - [bar.20140102T0600Z] -(current:submitted)> bar.20140102T0600Z submit_method_id=13353
+2014/03/31 10:14:55 INFO - [bar.20140102T0000Z] -(current:running)> bar.20140102T0000Z succeeded at 2014-03-31T10:14:54
+2014/03/31 10:14:55 INFO - [bar.20140102T0600Z] -(current:submitted)> bar.20140102T0600Z started at 2014-03-31T10:14:54
+2014/03/31 10:14:56 INFO - [baz.20140102T0000Z] -triggered off ['bar.20140102T0000Z']
+2014/03/31 10:14:56 INFO - [bar.20140102T1200Z] -triggered off []
+2014/03/31 10:14:57 INFO - [baz.20140102T0000Z] -(current:ready)> baz.20140102T0000Z submitting now
+2014/03/31 10:14:57 INFO - [bar.20140102T1200Z] -(current:ready)> bar.20140102T1200Z submitting now
+2014/03/31 10:14:58 INFO - [baz.20140102T0000Z] -(current:ready)> baz.20140102T0000Z submission succeeded
+2014/03/31 10:14:58 INFO - [baz.20140102T0000Z] -(current:submitted)> baz.20140102T0000Z submit_method_id=14255
+2014/03/31 10:14:58 INFO - [baz.20140102T0000Z] -(current:submitted)> baz.20140102T0000Z started at 2014-03-31T10:14:58
+2014/03/31 10:14:58 INFO - [bar.20140102T1200Z] -(current:ready)> bar.20140102T1200Z started at 2014-03-31T10:14:58
+2014/03/31 10:14:59 INFO - [bar.20140102T1200Z] -(current:running)> bar.20140102T1200Z submission succeeded
+2014/03/31 10:14:59 INFO - [bar.20140102T1200Z] -(current:running)> bar.20140102T1200Z submit_method_id=14340
+2014/03/31 10:15:00 INFO - [bar.20140102T0600Z] -(current:running)> bar.20140102T0600Z succeeded at 2014-03-31T10:14:59
+2014/03/31 10:15:01 INFO - [baz.20140102T0600Z] -triggered off ['bar.20140102T0600Z']
+2014/03/31 10:15:02 INFO - [bar.20140102T1200Z] -(current:running)> bar.20140102T1200Z succeeded at 2014-03-31T10:15:02
+2014/03/31 10:15:02 INFO - [baz.20140102T0600Z] -(current:ready)> baz.20140102T0600Z submitting now
+2014/03/31 10:15:02 INFO - [baz.20140102T0600Z] -(current:ready)> baz.20140102T0600Z submission succeeded
+2014/03/31 10:15:02 INFO - [baz.20140102T0600Z] -(current:submitted)> baz.20140102T0600Z submit_method_id=14767
+2014/03/31 10:15:03 INFO - [baz.20140102T0600Z] -(current:submitted)> baz.20140102T0600Z started at 2014-03-31T10:15:02
+2014/03/31 10:15:04 INFO - [baz.20140102T1200Z] -triggered off ['bar.20140102T1200Z']
+2014/03/31 10:15:05 INFO - [baz.20140102T1200Z] -(current:ready)> baz.20140102T1200Z submitting now
+2014/03/31 10:15:05 INFO - [baz.20140102T1200Z] -(current:ready)> baz.20140102T1200Z submission succeeded
+2014/03/31 10:15:05 INFO - [baz.20140102T1200Z] -(current:submitted)> baz.20140102T1200Z submit_method_id=15300
+2014/03/31 10:15:06 INFO - [baz.20140102T1200Z] -(current:submitted)> baz.20140102T1200Z started at 2014-03-31T10:15:06
+2014/03/31 10:15:09 INFO - [baz.20140102T1200Z] -(current:running)> baz.20140102T1200Z succeeded at 2014-03-31T10:15:09
+2014/03/31 10:15:14 INFO - [baz.20140102T0000Z] -(current:running)> baz.20140102T0000Z succeeded at 2014-03-31T10:15:14
+2014/03/31 10:15:14 INFO - [baz.20140102T0600Z] -(current:running)> baz.20140102T0600Z succeeded at 2014-03-31T10:15:13
+2014/03/31 10:15:14 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 20140102T12
+2014/03/31 10:15:15 INFO - Thread-4 exit (Job Submission)
+2014/03/31 10:15:15 INFO - Thread-2 exit (Event Handlers)
+2014/03/31 10:15:15 INFO - Thread-3 exit (Poll & Kill Commands)

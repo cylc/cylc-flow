@@ -1,0 +1,8 @@
+[scheduling]
+    initial cycle time = 20140101
+    final cycle time = 20140102T12
+    [[dependencies]]
+        [[[ R1 ]]]
+            graph = "cold_foo => foo"
+        [[[ PT12H ]]]
+            graph = "foo[-PT12H] => foo"

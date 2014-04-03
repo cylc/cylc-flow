@@ -915,8 +915,8 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec( self.reflogfile )
-                self.start_tag = spec.get_start_tag()
-                self.stop_tag = spec.get_stop_tag()
+                self.start_tag = point( spec.get_start_tag() )
+                self.stop_tag = point( spec.get_stop_tag() )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1499,7 +1499,6 @@ class scheduler(object):
         # tasks beyond the runahead limit
         if is_newly_added and self.runahead_limit:
             ouct = runahead_base or self.get_runahead_base()
-            print new_task.c_time, ouct + self.runahead_limit, '<<<'
             if new_task.c_time >= ouct + self.runahead_limit:
                 new_task.log( "DEBUG", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()

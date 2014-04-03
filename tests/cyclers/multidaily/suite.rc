@@ -1,0 +1,8 @@
+[scheduling]
+    initial cycle time = 20001231T0100
+    final cycle time = 200102
+    [[dependencies]]
+        [[[ P1D ]]]
+            graph = "foo[-P1D] => foo => bar"
+        [[[ P4D ]]]
+            graph = "baz[-P4D] => baz => qux"

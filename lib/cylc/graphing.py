@@ -24,8 +24,8 @@ import pygraphviz
 import TaskID
 from cycling.loader import point, interval
 
-# TODO ISO - GET RID OF 'T', e.g. "a[-1D] => a"
-OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\w+)\s*\]')
+# TODO ISO - Support T06, truncated relative times, [] for initial cycle time.
+OFFSET_RE =re.compile('(\w+)\s*\[\s*T?\s*([+-]?\s*[,.\w]*)\s*\]')
 
 # TODO: Do we still need autoURL below?
 

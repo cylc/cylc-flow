@@ -18,6 +18,9 @@
 
 """This provides data to drive ISO 8601 parsing functionality."""
 
+import re
+from . import timezone
+
 
 DATE_EXPRESSIONS = {
     "basic": {
@@ -90,6 +93,9 @@ hhmmss
 hhmmss,tt
 hhmm,nn
 hh,ii
+hhmmss.tt
+hhmm.nn
+hh.ii
 """,
         "reduced": u"""
 # No Time Zone
@@ -108,6 +114,9 @@ hh
 -mmss,tt
 -mm,nn
 --ss,tt
+-mmss.tt
+-mm.nn
+--ss.tt
 """    },
     "extended": {
         "complete": u"""
@@ -118,6 +127,9 @@ hh:mm:ss
 hh:mm:ss,tt
 hh:mm,nn
 hh,ii          # Deviation? Not allowed in standard ?
+hh:mm:ss.tt
+hh:mm.nn
+hh.ii          # Deviation? Not allowed in standard ?
 """,
         "reduced": u"""
 # No Time Zone
@@ -134,6 +146,9 @@ hh             # Deviation? Not allowed in standard ?
 -mm:ss,tt
 -mm,nn          # Deviation? Not allowed in standard ?
 --ss,tt         # Deviation? Not allowed in standard ?
+-mm:ss.tt
+-mm.nn          # Deviation? Not allowed in standard ?
+--ss.tt         # Deviation? Not allowed in standard ?
 """    }
 }
 TIMEZONE_EXPRESSIONS = {
@@ -184,14 +199,21 @@ _TIME_TRANSLATE_INFO = [
      "%(minute_of_hour)02d", "minute_of_hour"),
     (u"^hh", "(?P<hour_of_day>\d\d)",
      "%(hour_of_day)02d", "hour_of_day"),
-    (u",ii", "[,.](?P<hour_of_day_decimal>\d+)",
-     "%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    (u",nn", "[,.](?P<minute_of_hour_decimal>\d+)",
-     "%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
+    (u",ii", ",(?P<hour_of_day_decimal>\d+)",
+     ",%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
+    (u"\.ii", "\.(?P<hour_of_day_decimal>\d+)",
+     ".%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
+    (u",nn", ",(?P<minute_of_hour_decimal>\d+)",
+     ",%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
+    (u"\.nn", "\.(?P<minute_of_hour_decimal>\d+)",
+     ".%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
     (u"ss", "(?P<second_of_minute>\d\d)",
      "%(second_of_minute)02d", "second_of_minute"),
-    (u",tt", "[,.](?P<second_of_minute_decimal>\d+)",
-     "%(second_of_minute_decimal_string)s",
+    (u",tt", ",(?P<second_of_minute_decimal>\d+)",
+     ",%(second_of_minute_decimal_string)s",
+     "second_of_minute_decimal_string"),
+    (u"\.tt", "\.(?P<second_of_minute_decimal>\d+)",
+     ".%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
     (u"^--", "(?P<truncated>--)",
      "--", None),
@@ -211,6 +233,52 @@ _TIMEZONE_TRANSLATE_INFO = [
      "Z", None)
 ]
 
+LOCALE_TIMEZONE_BASIC = timezone.get_timezone_format_for_locale()
+LOCALE_TIMEZONE_BASIC_NO_Z = LOCALE_TIMEZONE_BASIC
+if LOCALE_TIMEZONE_BASIC_NO_Z == "Z":
+    LOCALE_TIMEZONE_BASIC_NO_Z = "+0000"
+LOCALE_TIMEZONE_EXTENDED = timezone.get_timezone_format_for_locale(
+    extended_mode=True)
+LOCALE_TIMEZONE_EXTENDED_NO_Z = LOCALE_TIMEZONE_EXTENDED
+if LOCALE_TIMEZONE_EXTENDED_NO_Z == "Z":
+    LOCALE_TIMEZONE_EXTENDED_NO_Z = "+0000"
+    
+# Note: we only accept the following subset of strftime syntax.
+# This is due to inconsistencies with the ISO 8601 representations.
+REC_SPLIT_STRFTIME_DIRECTIVE = re.compile(r"(%\w)")
+REC_STRFTIME_DIRECTIVE_TOKEN = re.compile(r"^%\w$")
+STRFTIME_TRANSLATE_INFO = {
+    "%d": ["day_of_month"],
+    "%F": ["century", "year_of_century", "-", "month_of_year", "-",
+           "day_of_month"],
+    "%H": ["hour_of_day"],
+    "%j": ["day_of_year"],
+    "%m": ["month_of_year"],
+    "%M": ["minute_of_hour"],
+    "%s": (
+        "(?P<seconds_since_unix_epoch>\d+[,.]?\d*)",
+        "%(seconds_since_unix_epoch)s", "seconds_since_unix_epoch"),
+    "%S": ["second_of_minute"],
+    "%X": ["hour_of_day", ":", "minute_of_hour", ":", "second_of_minute"],
+    "%Y": ["century", "year_of_century"],
+    "%z": LOCALE_TIMEZONE_BASIC_NO_Z,
+}
+STRPTIME_EXCLUSIVE_GROUP_INFO = {
+    "%X": ("%H", "%M", "%S"),
+    "%F": ("%Y", "%y", "%m", "%d"),
+    "%s": tuple([i for i in STRFTIME_TRANSLATE_INFO if i != "%s"])
+}
+
+
+class StrftimeSyntaxError(ValueError):
+
+    """An error denoting invalid or unsupported strftime/strptime syntax."""
+
+    BAD_STRFTIME_INPUT = "Invalid strftime/strptime representation: {0}"
+
+    def __str__(self):
+        return self.BAD_STRFTIME_INPUT.format(*self.args)
+
 
 def get_date_translate_info(num_expanded_year_digits=2):
     expanded_year_digit_regex = "\d" * num_expanded_year_digits
@@ -229,3 +297,57 @@ def get_time_translate_info():
 def get_timezone_translate_info():
     return _TIMEZONE_TRANSLATE_INFO
 
+
+def translate_strftime_token(strftime_token, num_expanded_year_digits=2):
+    """Convert a strftime format into our own dump format."""
+    return _translate_strftime_token(
+        strftime_token, dump_mode=True,
+        num_expanded_year_digits=num_expanded_year_digits
+    )
+
+
+def translate_strptime_token(strptime_token, num_expanded_year_digits=2):
+    """Convert a strptime format into our own parsing format."""
+    return _translate_strftime_token(
+        strptime_token, dump_mode=False,
+        num_expanded_year_digits=num_expanded_year_digits
+    )
+
+
+def _translate_strftime_token(strftime_token, dump_mode=False,
+                              num_expanded_year_digits=2):
+    if strftime_token not in STRFTIME_TRANSLATE_INFO:
+        raise StrftimeSyntaxError(strftime_token)
+    our_translation = ""
+    our_translate_info = (
+        get_date_translate_info(
+            num_expanded_year_digits=num_expanded_year_digits) +
+        get_time_translate_info() +
+        get_timezone_translate_info()
+    )
+    attr_names = STRFTIME_TRANSLATE_INFO[strftime_token]
+    if isinstance(attr_names, basestring):
+        if dump_mode:
+            return attr_names, []
+        return re.escape(attr_names), []
+    if isinstance(attr_names, tuple):
+        (substitute, format_, name) = attr_names
+        if dump_mode:
+            our_translation += format_
+        else:
+            our_translation += substitute
+        return our_translation, [name]
+    attr_names = list(attr_names)
+    for attr_name in list(attr_names):
+        for expr_regex, substitute, format_, name in our_translate_info:
+            if name == attr_name:
+                if dump_mode:
+                    our_translation += format_
+                else:
+                    our_translation += substitute
+                break
+        else:
+            # Not an attribute name, just a delimiter or something.
+            our_translation += attr_name
+            attr_names.remove(attr_name)
+    return our_translation, attr_names

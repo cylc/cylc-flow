@@ -1,0 +1,6 @@
+[scheduling]
+    initial cycle time = 2005W015T12
+    final cycle time = 2005W065T11-0100
+    [[dependencies]]
+        [[[ P1W ]]]
+            graph = "foo[-P1W] => foo => bar"

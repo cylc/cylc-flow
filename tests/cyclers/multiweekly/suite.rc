@@ -1,0 +1,8 @@
+[scheduling]
+    initial cycle time = 1000W011
+    final cycle time = 1000W134
+    [[dependencies]]
+        [[[ P1W ]]]
+            graph = "foo[-P1W] => foo => bar"
+        [[[ P3W ]]]
+            graph = "baz[-P3W] => baz => qux"
