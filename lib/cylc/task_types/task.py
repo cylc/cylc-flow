@@ -604,7 +604,7 @@ class task( object ):
         self.execution_poll_timer.set_host( self.task_host )
 
         if self.task_host not in self.__class__.suite_contact_env_hosts and \
-                self.task_host != 'localhost' and cylc_mode == 'scheduler':
+                self.user_at_host != 'localhost' and cylc_mode == 'scheduler':
             # If the suite contact file has not been copied to user@host
             # host yet, do so. This will happen for the first task on
             # this remote account inside the job-submission thread just

@@ -308,16 +308,16 @@ class scheduler(object):
         for user_at_host in self.old_user_at_host_set:
             # Reinstate suite contact file to each old job's user@host
             if '@' in user_at_host:
-                user, host = user_at_host.split('@', 1)
+                owner, host = user_at_host.split('@', 1)
             else:
-                user, host = None, user_at_host
-            if host == 'localhost':
+                owner, host = None, user_at_host
+            if (owner, host) in [(None, 'localhost'), (user, 'localhost')]:
                 continue
             r_suite_run_dir = sitecfg.get_derived_host_item(
                                 self.suite,
                                 'suite run directory',
                                 host,
-                                user)
+                                owner)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                                 user_at_host,
                                 r_suite_run_dir)
