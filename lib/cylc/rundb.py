@@ -21,6 +21,7 @@ from time import sleep
 import os
 import shutil
 import sqlite3
+import sys
 from threading import Thread
 from Queue import Queue
 from mkdir_p import mkdir_p
@@ -98,6 +99,11 @@ class ThreadedCursor(Thread):
         self.reqs=Queue()
         self.start()
         self.exception = None
+        self.integrity_msg = ("Database Integrity Error: %s:\n"+
+                              "\tConverting INSERT to INSERT OR REPLACE for:\n"+
+                              "\trequest: %s\n\targs: %s")
+        self.generic_err_msg = ("%s:%s occurred while trying to run:\n"+
+                              "\trequest: %s\n\targs: %s")
     def run(self):
         cnx = sqlite3.connect(self.db)
         cursor = cnx.cursor()
@@ -131,11 +137,22 @@ class ThreadedCursor(Thread):
                         res.put('--no more--')
                     cnx.commit()
                     break
+                except sqlite3.IntegrityError as e:
+                    # Capture integrity errors, refactor request and report to stderr
+                    attempt += 1
+                    if req.startswith("INSERT INTO"):
+                        print >> sys.stderr, self.integrity_msg%(str(e),req,arg)
+                        req = req.replace("INSERT INTO", "INSERT OR REPLACE INTO", 1)
+                    if attempt >= self.max_commit_attempts:
+                        self.exception = e
+                        raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
+                    sleep(1)
                 except Exception as e:
+                    # Capture all other integrity errors and raise more helpful message
                     attempt += 1
                     if attempt >= self.max_commit_attempts:
                         self.exception = e
-                        raise e
+                        raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
                     sleep(1)
             counter += 1
         cnx.commit()
