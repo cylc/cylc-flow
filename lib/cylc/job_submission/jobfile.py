@@ -433,7 +433,7 @@ echo ""''')
         self.FILE.write( """
 
 # EMPTY WORK DIRECTORY REMOVE:
-cd
+cd $CYLC_SUITE_RUN_DIR
 rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
