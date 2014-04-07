@@ -65,10 +65,11 @@ class jobfile(object):
         self.write_directives()
 
         self.write_prelude()
-        self.write_err_trap()
-        self.write_vacation_trap()
 
         self.write_initial_scripting()
+
+        self.write_err_trap()
+        self.write_vacation_trap()
 
         self.write_environment_1()
         self.write_enviro_scripting()
