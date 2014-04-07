@@ -65,10 +65,11 @@ class jobfile(object):
         self.write_directives()
 
         self.write_prelude()
-        self.write_err_trap()
-        self.write_vacation_trap()
 
         self.write_initial_scripting()
+
+        self.write_err_trap()
+        self.write_vacation_trap()
 
         self.write_environment_1()
         self.write_enviro_scripting()
@@ -141,7 +142,10 @@ class jobfile(object):
 
         self.FILE.write( "\n\n# DIRECTIVES:" )
         for d in directives:
-            self.FILE.write( '\n' + prefix + ' ' + d + connector + directives[ d ] )
+            if not directives[ d ]:
+                self.FILE.write( '\n' + prefix + ' ' + d )
+            else:
+                self.FILE.write( '\n' + prefix + ' ' + d + connector + directives[ d ] )
         if final:
             self.FILE.write( '\n' + final )
 
@@ -433,7 +437,7 @@ echo ""''')
         self.FILE.write( """
 
 # EMPTY WORK DIRECTORY REMOVE:
-cd
+cd $CYLC_SUITE_RUN_DIR
 rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true""" )
 
     def write_task_succeeded( self ):
