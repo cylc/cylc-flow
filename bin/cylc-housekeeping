@@ -155,7 +155,7 @@ try:
 except ValueError:
     parser.error( "Batch size must be integer: " + batchsize )
 
-print "START: ", datetime.datetime.now()
+print "START: ", datetime.datetime.now().isoformat()
 
 if len(args) == 0 or len(args) > 5:
     parser.usage()
@@ -178,4 +178,4 @@ else:
     config_line( source, match, opern, ctime, offset, destn,
             mode=options.mode, cheap=options.cheap ).action( batchsize )
 
-print '\nFINISH: ', datetime.datetime.now()
+print '\nFINISH: ', datetime.datetime.now().isoformat()

@@ -4,3 +4,6 @@
     [[dependencies]]
         [[[ P1D ]]]
             graph = "foo[-P1D] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

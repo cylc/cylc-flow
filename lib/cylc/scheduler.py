@@ -258,7 +258,7 @@ class scheduler(object):
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.info( 'Suite starting at ' + str( now()) )
+        self.log.info( 'Suite starting at ' + now().isoformat())
         if self.run_mode == 'live':
             self.log.info( 'Log event clock: real time' )
         else:
@@ -641,7 +641,7 @@ class scheduler(object):
     def set_suite_timer( self, reset=False ):
         ts = now()
         self.suite_timer_start = ts
-        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", str(ts)
+        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", ts.isoformat()
 
     def reconfigure( self ):
         print "RELOADING the suite definition"
@@ -1233,7 +1233,7 @@ class scheduler(object):
         return process
 
     def shutdown( self, reason='' ):
-        msg = "Suite shutting down at " + str(now())
+        msg = "Suite shutting down at " + now().isoformat()
 
         # The getattr() calls below are used in case the suite is not
         # fully configured before the shutdown is called.

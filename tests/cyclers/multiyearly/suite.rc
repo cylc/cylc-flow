@@ -1,3 +1,6 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 2.0
 [scheduling]
     initial cycle time = 1005
     final cycle time = 1014
@@ -6,3 +9,6 @@
             graph = "foo[-P1Y] => foo => bar"
         [[[ P4Y ]]]
             graph = "baz[-P4Y] => baz => qux"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

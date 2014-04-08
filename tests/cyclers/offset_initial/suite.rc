@@ -4,3 +4,6 @@
     [[dependencies]]
         [[[ +P1D/PT6H ]]]
             graph = "bar => baz"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

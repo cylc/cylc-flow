@@ -6,3 +6,6 @@
             graph = "cold_foo => foo"
         [[[ PT12H ]]]
             graph = "foo[-PT12H] => foo"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

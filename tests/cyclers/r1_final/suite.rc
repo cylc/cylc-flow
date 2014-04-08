@@ -4,3 +4,6 @@
     [[dependencies]]
         [[[ R1/P0D ]]]
             graph = "foo => final_foo"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

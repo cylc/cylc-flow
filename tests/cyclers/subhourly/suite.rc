@@ -4,3 +4,6 @@
     [[dependencies]]
         [[[ PT30M ]]]
             graph = "foo[-PT30M] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

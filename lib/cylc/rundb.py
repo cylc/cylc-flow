@@ -51,7 +51,7 @@ class RecordBroadcastObject(object):
     def __init__(self, timestamp, dumpstring):
         """Records a dumped string in the broadcast table"""
         self.s_fmt = "INSERT INTO broadcast_settings VALUES(?, ?)"
-        self.args = [timestamp, dumpstring]
+        self.args = [timestamp.isoformat(), dumpstring]
         self.to_run = True
 
 class RecordEventObject(object):
