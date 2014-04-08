@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.12">5.4.12</a></li>
 		<li><a href="#5.4.11">5.4.11</a></li>
 		<li><a href="#5.4.10">5.4.10</a></li>
 		<li><a href="#5.4.9">5.4.9</a></li>
@@ -42,6 +43,31 @@
 
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="5.4.12"/>
+		<h2>5.4.12</h2>
+
+		<ul>
+				<li>A choice of three sizes for the gcylc task state dot icon:
+				<em>small</em> (original), <em>medium</em> (new default),
+				and <em>large</em>.</li>
+
+				<li>Added documentation of <code>gcylc.rc</code> configuration
+				items to the user guide.</li>
+
+				<li>The default ordering of tasks and families in the gcylc text
+				and dot views is now the order in which they are defined in the
+				<code>suite.rc</code> file. </li>
+
+				<li>Fixed a bug which led to a <code>state</code> file in the
+				current working directory being loaded for a suite restart
+				instead of the correct state dump under the suite run directory.</li>
+
+				<li>Fixed a bug (since 5.4.10) in which the
+				<code>-j/--jinja2</code> option to <code>cylc view</code> did
+				not automatically imply the <code>-i/--inline</code></li>
+				option.
+		</ul>
 
 <a name="5.4.11"/>
 		<h2>5.4.11</h2>

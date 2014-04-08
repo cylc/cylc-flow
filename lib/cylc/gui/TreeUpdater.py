@@ -43,6 +43,8 @@ class TreeUpdater(threading.Thread):
         self.cleared = True
         self.autoexpand = True
 
+        self.count = 0
+
         self.cfg = cfg
         self.updater = updater
         self.theme = theme
@@ -166,6 +168,7 @@ class TreeUpdater(threading.Thread):
         and expand those as well.
 
         """
+        model = self.ttreeview.get_model()
 
         # Retrieve any user-expanded rows so that we can expand them later.
         expand_me = self._get_user_expanded_row_ids()
@@ -236,6 +239,7 @@ class TreeUpdater(threading.Thread):
         self.ttreestore.clear()
         times = new_data.keys()
         times.sort()
+
         for ctime in times:
             f_data = [ None ] * 7
             if "root" in new_fam_data[ctime]:
@@ -257,7 +261,15 @@ class TreeUpdater(threading.Thread):
                     families = []
                 task_path = families + [name]
                 task_named_paths.append(task_path)
-            task_named_paths.sort()
+
+            # Sorting here every time the treeview is updated makes
+            # definition sort order the default "unsorted" order
+            # (any column-click sorting is done on top of this).
+            if self.cfg.use_defn_order and self.updater.ns_defn_order:
+                task_named_paths.sort( key=lambda x: map( self.updater.dict_ns_defn_order.get, x ) )
+            else:
+                task_named_paths.sort()
+
             for named_path in task_named_paths:
                 name = named_path[-1]
                 state = new_data[ctime][name][0]
@@ -287,7 +299,6 @@ class TreeUpdater(threading.Thread):
                     autoexpand_me.remove(row_id)
             expand_me += autoexpand_me
             self._last_autoexpand_me = autoexpand_me
-        model = self.ttreeview.get_model()
         if model is None:
             return
         model.get_model().refilter()
