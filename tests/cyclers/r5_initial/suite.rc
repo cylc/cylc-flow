@@ -2,7 +2,7 @@
     initial cycle time = 20140101
     final cycle time = 20140102T12
     [[dependencies]]
-        [[[ R5/PT3H ]]]
+        [[[ R5//PT3H ]]]
             graph = "xyzzy => bar"
 [runtime]
     [[root]]

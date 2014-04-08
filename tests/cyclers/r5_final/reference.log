@@ -1,76 +1,76 @@
-2014/03/31 10:15:05 INFO - Thread-2 start (Event Handlers)
-2014/03/31 10:15:05 INFO - Thread-3 start (Poll & Kill Commands)
-2014/03/31 10:15:05 INFO - port:7777
-2014/03/31 10:15:05 INFO - Suite starting at 2014-03-31 10:15:05.149485
-2014/03/31 10:15:05 INFO - Log event clock: real time
-2014/03/31 10:15:05 INFO - Run mode: live
-2014/03/31 10:15:05 INFO - Start tag: 20140101
-2014/03/31 10:15:05 INFO - Stop tag: 20140102T12
-2014/03/31 10:15:05 INFO - Thread-4 start (Job Submission)
-2014/03/31 10:15:05 INFO - Thread-5 start (Request Handling)
-2014/03/31 10:15:05 INFO - Cold Start 20140101
-2014/03/31 10:15:05 INFO - [xyzzy.20140101T0000Z] -triggered off []
-2014/03/31 10:15:06 INFO - [xyzzy.20140101T0000Z] -(current:ready)> xyzzy.20140101T0000Z submitting now
-2014/03/31 10:15:07 INFO - [xyzzy.20140101T0000Z] -(current:ready)> xyzzy.20140101T0000Z submission succeeded
-2014/03/31 10:15:07 INFO - [xyzzy.20140101T0000Z] -(current:submitted)> xyzzy.20140101T0000Z submit_method_id=15432
-2014/03/31 10:15:08 INFO - [xyzzy.20140101T0000Z] -(current:submitted)> xyzzy.20140101T0000Z started at 2014-03-31T10:15:07
-2014/03/31 10:15:09 INFO - [xyzzy.20140101T0300Z] -triggered off []
-2014/03/31 10:15:10 INFO - [xyzzy.20140101T0300Z] -(current:ready)> xyzzy.20140101T0300Z submitting now
-2014/03/31 10:15:10 INFO - [xyzzy.20140101T0300Z] -(current:ready)> xyzzy.20140101T0300Z submission succeeded
-2014/03/31 10:15:10 INFO - [xyzzy.20140101T0300Z] -(current:submitted)> xyzzy.20140101T0300Z submit_method_id=16014
-2014/03/31 10:15:11 INFO - [xyzzy.20140101T0300Z] -(current:submitted)> xyzzy.20140101T0300Z started at 2014-03-31T10:15:10
-2014/03/31 10:15:12 INFO - [xyzzy.20140101T0600Z] -triggered off []
-2014/03/31 10:15:13 INFO - [xyzzy.20140101T0600Z] -(current:ready)> xyzzy.20140101T0600Z submitting now
-2014/03/31 10:15:13 INFO - [xyzzy.20140101T0600Z] -(current:ready)> xyzzy.20140101T0600Z submission succeeded
-2014/03/31 10:15:13 INFO - [xyzzy.20140101T0600Z] -(current:submitted)> xyzzy.20140101T0600Z submit_method_id=16526
-2014/03/31 10:15:14 INFO - [xyzzy.20140101T0600Z] -(current:submitted)> xyzzy.20140101T0600Z started at 2014-03-31T10:15:13
-2014/03/31 10:15:17 INFO - [xyzzy.20140101T0300Z] -(current:running)> xyzzy.20140101T0300Z succeeded at 2014-03-31T10:15:16
-2014/03/31 10:15:21 INFO - [xyzzy.20140101T0000Z] -(current:running)> xyzzy.20140101T0000Z succeeded at 2014-03-31T10:15:21
-2014/03/31 10:15:22 INFO - [bar.20140101T0000Z] -triggered off ['xyzzy.20140101T0000Z']
-2014/03/31 10:15:23 INFO - [bar.20140101T0000Z] -(current:ready)> bar.20140101T0000Z submitting now
-2014/03/31 10:15:23 INFO - [xyzzy.20140101T0600Z] -(current:running)> xyzzy.20140101T0600Z succeeded at 2014-03-31T10:15:22
-2014/03/31 10:15:24 INFO - [bar.20140101T0000Z] -(current:ready)> bar.20140101T0000Z submission succeeded
-2014/03/31 10:15:24 INFO - [bar.20140101T0000Z] -(current:submitted)> bar.20140101T0000Z submit_method_id=18242
-2014/03/31 10:15:24 INFO - [bar.20140101T0000Z] -(current:submitted)> bar.20140101T0000Z started at 2014-03-31T10:15:24
-2014/03/31 10:15:26 INFO - [bar.20140101T0300Z] -triggered off ['xyzzy.20140101T0300Z']
-2014/03/31 10:15:27 INFO - [bar.20140101T0000Z] -(current:running)> bar.20140101T0000Z succeeded at 2014-03-31T10:15:27
-2014/03/31 10:15:27 INFO - [bar.20140101T0300Z] -(current:ready)> bar.20140101T0300Z submitting now
-2014/03/31 10:15:27 INFO - [bar.20140101T0300Z] -(current:ready)> bar.20140101T0300Z submission succeeded
-2014/03/31 10:15:27 INFO - [bar.20140101T0300Z] -(current:submitted)> bar.20140101T0300Z submit_method_id=18688
-2014/03/31 10:15:28 INFO - [xyzzy.20140101T0900Z] -triggered off []
-2014/03/31 10:15:28 INFO - [bar.20140101T0300Z] -(current:submitted)> bar.20140101T0300Z started at 2014-03-31T10:15:27
-2014/03/31 10:15:29 INFO - [bar.20140101T0600Z] -triggered off ['xyzzy.20140101T0600Z']
-2014/03/31 10:15:29 INFO - [xyzzy.20140101T0900Z] -(current:ready)> xyzzy.20140101T0900Z submitting now
-2014/03/31 10:15:29 INFO - [xyzzy.20140101T0900Z] -(current:ready)> xyzzy.20140101T0900Z submission succeeded
-2014/03/31 10:15:29 INFO - [xyzzy.20140101T0900Z] -(current:submitted)> xyzzy.20140101T0900Z submit_method_id=19037
-2014/03/31 10:15:30 INFO - [xyzzy.20140101T0900Z] -(current:submitted)> xyzzy.20140101T0900Z started at 2014-03-31T10:15:29
-2014/03/31 10:15:31 INFO - [bar.20140101T0600Z] -(current:ready)> bar.20140101T0600Z submitting now
-2014/03/31 10:15:32 INFO - [bar.20140101T0600Z] -(current:ready)> bar.20140101T0600Z submission succeeded
-2014/03/31 10:15:32 INFO - [bar.20140101T0600Z] -(current:submitted)> bar.20140101T0600Z submit_method_id=20053
-2014/03/31 10:15:33 INFO - [bar.20140101T0600Z] -(current:submitted)> bar.20140101T0600Z started at 2014-03-31T10:15:32
-2014/03/31 10:15:37 INFO - [xyzzy.20140101T0900Z] -(current:running)> xyzzy.20140101T0900Z succeeded at 2014-03-31T10:15:36
-2014/03/31 10:15:38 INFO - [bar.20140101T0900Z] -triggered off ['xyzzy.20140101T0900Z']
-2014/03/31 10:15:39 INFO - [bar.20140101T0900Z] -(current:ready)> bar.20140101T0900Z submitting now
-2014/03/31 10:15:39 INFO - [bar.20140101T0900Z] -(current:ready)> bar.20140101T0900Z submission succeeded
-2014/03/31 10:15:39 INFO - [bar.20140101T0900Z] -(current:submitted)> bar.20140101T0900Z submit_method_id=21093
-2014/03/31 10:15:40 INFO - [bar.20140101T0300Z] -(current:running)> bar.20140101T0300Z succeeded at 2014-03-31T10:15:39
-2014/03/31 10:15:40 INFO - [bar.20140101T0900Z] -(current:submitted)> bar.20140101T0900Z started at 2014-03-31T10:15:39
-2014/03/31 10:15:41 INFO - [xyzzy.20140101T1200Z] -triggered off []
-2014/03/31 10:15:42 INFO - [bar.20140101T0600Z] -(current:running)> bar.20140101T0600Z succeeded at 2014-03-31T10:15:41
-2014/03/31 10:15:42 INFO - [xyzzy.20140101T1200Z] -(current:ready)> xyzzy.20140101T1200Z submitting now
-2014/03/31 10:15:42 INFO - [xyzzy.20140101T1200Z] -(current:ready)> xyzzy.20140101T1200Z submission succeeded
-2014/03/31 10:15:42 INFO - [xyzzy.20140101T1200Z] -(current:submitted)> xyzzy.20140101T1200Z submit_method_id=21687
-2014/03/31 10:15:43 INFO - [xyzzy.20140101T1200Z] -(current:submitted)> xyzzy.20140101T1200Z started at 2014-03-31T10:15:42
-2014/03/31 10:15:54 INFO - [xyzzy.20140101T1200Z] -(current:running)> xyzzy.20140101T1200Z succeeded at 2014-03-31T10:15:54
-2014/03/31 10:15:55 INFO - [bar.20140101T1200Z] -triggered off ['xyzzy.20140101T1200Z']
-2014/03/31 10:15:56 INFO - [bar.20140101T0900Z] -(current:running)> bar.20140101T0900Z succeeded at 2014-03-31T10:15:55
-2014/03/31 10:15:56 INFO - [bar.20140101T1200Z] -(current:ready)> bar.20140101T1200Z submitting now
-2014/03/31 10:15:57 INFO - [bar.20140101T1200Z] -(current:ready)> bar.20140101T1200Z submission succeeded
-2014/03/31 10:15:57 INFO - [bar.20140101T1200Z] -(current:submitted)> bar.20140101T1200Z submit_method_id=23727
-2014/03/31 10:15:57 INFO - [bar.20140101T1200Z] -(current:submitted)> bar.20140101T1200Z started at 2014-03-31T10:15:57
-2014/03/31 10:16:10 INFO - [bar.20140101T1200Z] -(current:running)> bar.20140101T1200Z succeeded at 2014-03-31T10:16:10
+2014/03/31 10:15:08 INFO - Thread-2 start (Event Handlers)
+2014/03/31 10:15:08 INFO - Thread-3 start (Poll & Kill Commands)
+2014/03/31 10:15:08 INFO - port:7772
+2014/03/31 10:15:08 INFO - Suite starting at 2014-03-31 10:15:08.907644
+2014/03/31 10:15:08 INFO - Log event clock: real time
+2014/03/31 10:15:08 INFO - Run mode: live
+2014/03/31 10:15:08 INFO - Start tag: 20140101
+2014/03/31 10:15:08 INFO - Stop tag: 20140102T12
+2014/03/31 10:15:08 INFO - Thread-5 start (Request Handling)
+2014/03/31 10:15:08 INFO - Thread-4 start (Job Submission)
+2014/03/31 10:15:08 INFO - Cold Start 20140101
+2014/03/31 10:15:08 INFO - [xyzzy.20140102T0000Z] -triggered off []
+2014/03/31 10:15:09 INFO - [xyzzy.20140102T0000Z] -(current:ready)> xyzzy.20140102T0000Z submitting now
+2014/03/31 10:15:10 INFO - [xyzzy.20140102T0000Z] -(current:ready)> xyzzy.20140102T0000Z submission succeeded
+2014/03/31 10:15:10 INFO - [xyzzy.20140102T0000Z] -(current:submitted)> xyzzy.20140102T0000Z submit_method_id=16149
+2014/03/31 10:15:11 INFO - [xyzzy.20140102T0000Z] -(current:submitted)> xyzzy.20140102T0000Z started at 2014-03-31T10:15:10
+2014/03/31 10:15:12 INFO - [xyzzy.20140102T0300Z] -triggered off []
+2014/03/31 10:15:13 INFO - [xyzzy.20140102T0300Z] -(current:ready)> xyzzy.20140102T0300Z submitting now
+2014/03/31 10:15:13 INFO - [xyzzy.20140102T0300Z] -(current:ready)> xyzzy.20140102T0300Z submission succeeded
+2014/03/31 10:15:13 INFO - [xyzzy.20140102T0300Z] -(current:submitted)> xyzzy.20140102T0300Z submit_method_id=16622
+2014/03/31 10:15:14 INFO - [xyzzy.20140102T0300Z] -(current:submitted)> xyzzy.20140102T0300Z started at 2014-03-31T10:15:14
+2014/03/31 10:15:15 INFO - [xyzzy.20140102T0600Z] -triggered off []
+2014/03/31 10:15:16 INFO - [xyzzy.20140102T0600Z] -(current:ready)> xyzzy.20140102T0600Z submitting now
+2014/03/31 10:15:16 INFO - [xyzzy.20140102T0600Z] -(current:ready)> xyzzy.20140102T0600Z submission succeeded
+2014/03/31 10:15:16 INFO - [xyzzy.20140102T0600Z] -(current:submitted)> xyzzy.20140102T0600Z submit_method_id=17173
+2014/03/31 10:15:18 INFO - [xyzzy.20140102T0600Z] -(current:submitted)> xyzzy.20140102T0600Z started at 2014-03-31T10:15:17
+2014/03/31 10:15:20 INFO - [xyzzy.20140102T0600Z] -(current:running)> xyzzy.20140102T0600Z succeeded at 2014-03-31T10:15:19
+2014/03/31 10:15:22 INFO - [xyzzy.20140102T0000Z] -(current:running)> xyzzy.20140102T0000Z succeeded at 2014-03-31T10:15:20
+2014/03/31 10:15:23 INFO - [bar.20140102T0000Z] -triggered off ['xyzzy.20140102T0000Z']
+2014/03/31 10:15:23 INFO - [xyzzy.20140102T0300Z] -(current:running)> xyzzy.20140102T0300Z succeeded at 2014-03-31T10:15:22
+2014/03/31 10:15:24 INFO - [bar.20140102T0000Z] -(current:ready)> bar.20140102T0000Z submitting now
+2014/03/31 10:15:25 INFO - [bar.20140102T0000Z] -(current:ready)> bar.20140102T0000Z submission succeeded
+2014/03/31 10:15:25 INFO - [bar.20140102T0000Z] -(current:submitted)> bar.20140102T0000Z submit_method_id=18333
+2014/03/31 10:15:25 INFO - [bar.20140102T0000Z] -(current:submitted)> bar.20140102T0000Z started at 2014-03-31T10:15:24
+2014/03/31 10:15:27 INFO - [bar.20140102T0300Z] -triggered off ['xyzzy.20140102T0300Z']
+2014/03/31 10:15:28 INFO - [bar.20140102T0300Z] -(current:ready)> bar.20140102T0300Z submitting now
+2014/03/31 10:15:28 INFO - [bar.20140102T0300Z] -(current:ready)> bar.20140102T0300Z submission succeeded
+2014/03/31 10:15:28 INFO - [bar.20140102T0300Z] -(current:submitted)> bar.20140102T0300Z submit_method_id=18800
+2014/03/31 10:15:29 INFO - [bar.20140102T0300Z] -(current:submitted)> bar.20140102T0300Z started at 2014-03-31T10:15:28
+2014/03/31 10:15:30 INFO - [bar.20140102T0600Z] -triggered off ['xyzzy.20140102T0600Z']
+2014/03/31 10:15:31 INFO - [bar.20140102T0600Z] -(current:ready)> bar.20140102T0600Z submitting now
+2014/03/31 10:15:31 INFO - [bar.20140102T0600Z] -(current:ready)> bar.20140102T0600Z submission succeeded
+2014/03/31 10:15:31 INFO - [bar.20140102T0600Z] -(current:submitted)> bar.20140102T0600Z submit_method_id=19541
+2014/03/31 10:15:32 INFO - [bar.20140102T0300Z] -(current:running)> bar.20140102T0300Z succeeded at 2014-03-31T10:15:31
+2014/03/31 10:15:32 INFO - [bar.20140102T0600Z] -(current:submitted)> bar.20140102T0600Z started at 2014-03-31T10:15:31
+2014/03/31 10:15:38 INFO - [bar.20140102T0600Z] -(current:running)> bar.20140102T0600Z succeeded at 2014-03-31T10:15:37
+2014/03/31 10:15:39 INFO - [bar.20140102T0000Z] -(current:running)> bar.20140102T0000Z succeeded at 2014-03-31T10:15:38
+2014/03/31 10:15:40 INFO - [xyzzy.20140102T0900Z] -triggered off []
+2014/03/31 10:15:41 INFO - [xyzzy.20140102T0900Z] -(current:ready)> xyzzy.20140102T0900Z submitting now
+2014/03/31 10:15:42 INFO - [xyzzy.20140102T0900Z] -(current:ready)> xyzzy.20140102T0900Z submission succeeded
+2014/03/31 10:15:42 INFO - [xyzzy.20140102T0900Z] -(current:submitted)> xyzzy.20140102T0900Z submit_method_id=21359
+2014/03/31 10:15:42 INFO - [xyzzy.20140102T0900Z] -(current:submitted)> xyzzy.20140102T0900Z started at 2014-03-31T10:15:41
+2014/03/31 10:15:44 INFO - [xyzzy.20140102T1200Z] -triggered off []
+2014/03/31 10:15:45 INFO - [xyzzy.20140102T1200Z] -(current:ready)> xyzzy.20140102T1200Z submitting now
+2014/03/31 10:15:46 INFO - [xyzzy.20140102T1200Z] -(current:ready)> xyzzy.20140102T1200Z submission succeeded
+2014/03/31 10:15:46 INFO - [xyzzy.20140102T1200Z] -(current:submitted)> xyzzy.20140102T1200Z submit_method_id=22348
+2014/03/31 10:15:47 INFO - [xyzzy.20140102T1200Z] -(current:submitted)> xyzzy.20140102T1200Z started at 2014-03-31T10:15:46
+2014/03/31 10:15:51 INFO - [xyzzy.20140102T1200Z] -(current:running)> xyzzy.20140102T1200Z succeeded at 2014-03-31T10:15:51
+2014/03/31 10:15:53 INFO - [xyzzy.20140102T0900Z] -(current:running)> xyzzy.20140102T0900Z succeeded at 2014-03-31T10:15:52
+2014/03/31 10:15:54 INFO - [bar.20140102T0900Z] -triggered off ['xyzzy.20140102T0900Z']
+2014/03/31 10:15:55 INFO - [bar.20140102T0900Z] -(current:ready)> bar.20140102T0900Z submitting now
+2014/03/31 10:15:55 INFO - [bar.20140102T0900Z] -(current:ready)> bar.20140102T0900Z submission succeeded
+2014/03/31 10:15:55 INFO - [bar.20140102T0900Z] -(current:submitted)> bar.20140102T0900Z submit_method_id=23255
+2014/03/31 10:15:56 INFO - [bar.20140102T0900Z] -(current:submitted)> bar.20140102T0900Z started at 2014-03-31T10:15:55
+2014/03/31 10:15:57 INFO - [bar.20140102T1200Z] -triggered off ['xyzzy.20140102T1200Z']
+2014/03/31 10:15:58 INFO - [bar.20140102T1200Z] -(current:ready)> bar.20140102T1200Z submitting now
+2014/03/31 10:15:58 INFO - [bar.20140102T1200Z] -(current:ready)> bar.20140102T1200Z submission succeeded
+2014/03/31 10:15:58 INFO - [bar.20140102T1200Z] -(current:submitted)> bar.20140102T1200Z submit_method_id=24088
+2014/03/31 10:15:59 INFO - [bar.20140102T1200Z] -(current:submitted)> bar.20140102T1200Z started at 2014-03-31T10:15:58
+2014/03/31 10:16:09 INFO - [bar.20140102T0900Z] -(current:running)> bar.20140102T0900Z succeeded at 2014-03-31T10:16:08
+2014/03/31 10:16:10 INFO - [bar.20140102T1200Z] -(current:running)> bar.20140102T1200Z succeeded at 2014-03-31T10:16:09
 2014/03/31 10:16:10 INFO - Stopping: 
   + all cycling tasks have spawned past the final cycle 20140102T12
-2014/03/31 10:16:11 INFO - Thread-2 exit (Event Handlers)
-2014/03/31 10:16:11 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/03/31 10:16:10 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/03/31 10:16:10 INFO - Thread-2 exit (Event Handlers)
 2014/03/31 10:16:11 INFO - Thread-4 exit (Job Submission)
