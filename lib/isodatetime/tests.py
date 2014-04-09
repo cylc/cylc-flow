@@ -134,6 +134,21 @@ def get_timepoint_dumper_tests():
              (u"±XCCYY-MM-DDThh:mm:ssZ", "-000056-11-12T23:01:00Z"),
              ("DD/MM/CCYY is a silly format", "13/11/0056 is a silly format"),
              ("ThhmmZ", "T2301Z")]
+        ),
+        (
+            {"year": 1000, "week_of_year": 1, "day_of_week": 1,
+             "time_zone_hour": 0},
+            [("CCYY-MMDDThhmmZ", "0999-1230T0000Z"),
+             ("CCYY-DDDThhmmZ", "0999-364T0000Z"),
+             ("CCYY-Www-DThhmm+0200", "1000-W01-1T0200+0200"),
+             ("CCYY-Www-DThhmm-0200", "0999-W52-7T2200-0200")]
+        ),
+        (
+            {"year": 999, "day_of_year": 364, "time_zone_hour": 0},
+            [("CCYY-MMDDThhmmZ", "0999-1230T0000Z"),
+             ("CCYY-DDDThhmmZ", "0999-364T0000Z"),
+             ("CCYY-Www-DThhmm+0200", "1000-W01-1T0200+0200"),
+             ("CCYY-Www-DThhmm-0200", "0999-W52-7T2200-0200")]
         )
     ]
 
