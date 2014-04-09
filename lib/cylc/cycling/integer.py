@@ -205,7 +205,7 @@ class IntegerSequence( object ):
                     else:
                         self.p_stop = IntegerPoint( stop )
                     self.i_step = IntegerInterval(
-                        int(self.p_stop - self.p_start) / int(n) + 1
+                        int(self.p_stop - self.p_start) / (int(n) - 1)
                     )
             else:
                 # 3) REPEAT/PERIOD/STOP: R(n)/P(i)/([c])i

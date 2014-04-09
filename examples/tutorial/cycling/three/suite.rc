@@ -5,11 +5,11 @@ title = "Inter-cycle dependence + a cold-start task"
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
-        [[[T00,12]]]
+        [[[T00,T12]]]
             graph = "foo[T-12] => foo => bar"
 [visualization]
-    initial cycle time = 2013080800
-    final cycle time = 2013080812
+    initial cycle time = 20130808T00
+    final cycle time = 20130808T12
     [[node attributes]]
         foo = "color=red"
         bar = "color=blue"
