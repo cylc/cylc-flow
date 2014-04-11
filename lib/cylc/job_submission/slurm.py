@@ -78,7 +78,6 @@ SLURM job submission.
         # 764305 mpi-seria   sbatch  m214089   R       1:07      1 ctc001
         #
         for line in out.splitlines():
-            print line
             items = line.strip().split(None, 1)
             if items and (items[0] == jid):
                 return 0
