@@ -48,6 +48,9 @@ SECONDS_IN_YEAR_LEAP = DAYS_IN_YEAR_LEAP * SECONDS_IN_DAY
 WEEK_DAY_START_REFERENCE = {"calendar": (2000, 1, 3),
                             "ordinal": (2000, 3)}
 
+UNIX_EPOCH_DATE_TIME_REFERENCE_PROPERTIES = {
+    "year": 1970, "time_zone_hour": 0, "time_zone_minute": 0}
+
 
 TIMEPOINT_DUMPER_MAP = {
     0: dumpers.TimePointDumper(num_expanded_year_digits=0),
@@ -164,6 +167,8 @@ class TimeRecurrence(object):
 
     def get_next(self, timepoint):
         """Return the next timepoint after this timepoint, or None."""
+        if self.repetitions == 1 or timepoint is None:
+            return None
         next_timepoint = timepoint + self.interval
         if self._get_is_in_bounds(next_timepoint):
             return next_timepoint
@@ -176,6 +181,8 @@ class TimeRecurrence(object):
 
     def get_prev(self, timepoint):
         """Return the previous timepoint before this timepoint, or None."""
+        if self.repetitions == 1 or timepoint is None:
+            return None
         prev_timepoint = timepoint - self.interval
         if self._get_is_in_bounds(prev_timepoint):
             return prev_timepoint
@@ -562,6 +569,9 @@ class TimePoint(object):
     truncated - (default False) a boolean denoting whether the
     date/time instant has purposefully incomplete information
     (ISO 8601:2000 truncation).
+    truncated_dump_format - a custom format string to control the
+    stringification of the timepoint if it is truncated. See
+    isodatetime.parser_spec for more details.
     truncated_property - a string that can either be "year_of_decade"
     or "year_of_century". This is used for truncated representations to
     distinguish between the two ways of truncating the year.
@@ -582,7 +592,7 @@ class TimePoint(object):
                  second_of_minute=None, second_of_minute_decimal=None,
                  time_zone_hour=None, time_zone_minute=None,
                  dump_format=None, truncated=False,
-                 truncated_property=None):
+                 truncated_dump_format=None, truncated_property=None):
         _type_checker(
             (expanded_year_digits, "expanded_year_digits", int),
             (year, "year", None, int),
@@ -602,10 +612,17 @@ class TimePoint(object):
             (time_zone_minute, "time_zone_minute", None, int)
         )
         if (dump_format is not None and not
-            isinstance(dump_format, basestring)):
+                isinstance(dump_format, basestring)):
             raise BadInputError(
                 BadInputError.TYPE,
                 "dump_format", repr(dump_format), type(dump_format))
+        if (truncated_dump_format is not None and not
+                isinstance(truncated_dump_format, basestring)):
+            raise BadInputError(
+                BadInputError.TYPE,
+                "truncated_dump_format", repr(truncated_dump_format),
+                type(truncated_dump_format)
+            )
         if (truncated_property is not None and
                 truncated_property not in ["year_of_decade",
                                            "year_of_century"]):
@@ -617,6 +634,7 @@ class TimePoint(object):
         self.expanded_year_digits = _int_caster(expanded_year_digits,
                                                 "expanded_year_digits")
         self.truncated = truncated
+        self.truncated_dump_format = truncated_dump_format
         self.truncated_property = truncated_property
         self.year = _int_caster(year, "year", allow_none=True)
         self.month_of_year = _int_caster(month_of_year, "year",
@@ -676,9 +694,11 @@ class TimePoint(object):
         if not self.truncated:
             if self.hour_of_day is None:
                 self.hour_of_day = 0
-            if self.minute_of_hour is None:
+            if hour_of_day_decimal is None and self.minute_of_hour is None:
                 self.minute_of_hour = 0
-            if self.second_of_minute is None:
+            if (hour_of_day_decimal is None and
+                    minute_of_hour_decimal is None and
+                    self.second_of_minute is None):
                 self.second_of_minute = 0
         self.time_zone = TimeZone()
         has_unknown_tz = True
@@ -786,22 +806,35 @@ class TimePoint(object):
         if property_name == "year_of_decade":
             return abs(self.year) % 10
         if property_name == "minute_of_hour":
+            if self.minute_of_hour is None:
+                return self.get_hour_minute_second()[1]
             return int(self.minute_of_hour)
         if property_name == "hour_of_day":
             return int(self.hour_of_day)
         if property_name == "hour_of_day_decimal_string":
             string = "%f" % (float(self.hour_of_day) - int(self.hour_of_day))
-            return string.replace("0.", ",", 1).rstrip("0")
+            string = string.replace("0.", "", 1).rstrip("0")
+            if not string:
+                return "0"
+            return string
         if property_name == "minute_of_hour_decimal_string":
             string = "%f" % (float(self.minute_of_hour) -
                              int(self.minute_of_hour))
-            return string.replace("0.", ",", 1).rstrip("0")
+            string = string.replace("0.", "", 1).rstrip("0")
+            if not string:
+                return "0"
+            return string
         if property_name == "second_of_minute":
+            if self.second_of_minute is None:
+                return self.get_hour_minute_second()[2]
             return int(self.second_of_minute)
         if property_name == "second_of_minute_decimal_string":
             string = "%f" % (float(self.second_of_minute) -
                              int(self.second_of_minute))
-            return string.replace("0.", ",", 1).rstrip("0")
+            string = string.replace("0.", "", 1).rstrip("0")
+            if not string:
+                return "0"
+            return string
         if property_name == "time_zone_minute_abs":
             return abs(self.time_zone.minutes)
         if property_name == "time_zone_hour_abs":
@@ -810,6 +843,13 @@ class TimePoint(object):
             if self.time_zone.hours < 0 or self.time_zone.minutes < 0:
                 return "-"
             return "+"
+        if property_name == "seconds_since_unix_epoch":
+            reference_timepoint = TimePoint(
+                **UNIX_EPOCH_DATE_TIME_REFERENCE_PROPERTIES)
+            days, seconds = (
+                self - reference_timepoint).get_days_and_seconds()
+            # N.B. This needs altering if we implement leap seconds.
+            return str(int(SECONDS_IN_DAY * days + seconds))
         raise NotImplementedError(property_name)
 
     def get_second_of_day(self):
@@ -1207,12 +1247,24 @@ class TimePoint(object):
 
     def _tick_over(self):
         """Correct all the units going from smallest to largest."""
+        if (self.hour_of_day is not None and
+                self.minute_of_hour is not None):
+            hours_remainder = self.hour_of_day - int(self.hour_of_day)
+            self.hour_of_day -= hours_remainder
+            self.minute_of_hour += hours_remainder * MINUTES_IN_HOUR
+        if (self.minute_of_hour is not None and
+                self.second_of_minute is not None):
+            minutes_remainder = self.minute_of_hour - int(self.minute_of_hour)
+            self.minute_of_hour -= minutes_remainder
+            self.second_of_minute += minutes_remainder * SECONDS_IN_MINUTE
         if self.second_of_minute is not None:
-            num_minutes, seconds = divmod(self.second_of_minute, 60)
+            num_minutes, seconds = divmod(self.second_of_minute,
+                                          SECONDS_IN_MINUTE)
             self.minute_of_hour += num_minutes
             self.second_of_minute = seconds
         if self.minute_of_hour is not None:
-            num_hours, minutes = divmod(self.minute_of_hour, 60)
+            num_hours, minutes = divmod(self.minute_of_hour,
+                                        MINUTES_IN_HOUR)
             self.hour_of_day += num_hours
             self.minute_of_hour = minutes
         if self.hour_of_day is not None:
@@ -1309,17 +1361,30 @@ class TimePoint(object):
                                 self.day_of_month = day
                                 return
 
-    def __str__(self, override_custom_dump_format=False):
+    def __str__(self, override_custom_dump_format=False,
+                strftime_format=None):
         if self.expanded_year_digits not in TIMEPOINT_DUMPER_MAP:
             TIMEPOINT_DUMPER_MAP[self.expanded_year_digits] = (
                 dumpers.TimePointDumper(
                     self.expanded_year_digits))
         dumper = TIMEPOINT_DUMPER_MAP[self.expanded_year_digits]
+        if strftime_format is not None:
+            return dumper.strftime(self, strftime_format)
         if self.truncated:
+            if self.truncated_dump_format and not override_custom_dump_format:
+                return dumper.dump(self, self.truncated_dump_format)
             return dumper.dump(self, self._get_truncated_dump_format())
         if self.dump_format and not override_custom_dump_format:
             return dumper.dump(self, self.dump_format)
         return dumper.dump(self, self._get_dump_format())
+
+    def strftime(self, strftime_format):
+        """Implement equivalent of Python 2's datetime.datetime.strftime.
+
+        Dump based on the format given in the strftime_format string.
+
+        """
+        return self.__str__(strftime_format=strftime_format)
 
     def _get_dump_format(self):
         year_digits = 4 + self.expanded_year_digits
@@ -1344,11 +1409,11 @@ class TimePoint(object):
         if self.get_is_week_date():
             date_string = year_string + "-Www-D"
         time_string = "Thh"
-        if int(self.hour_of_day) != self.hour_of_day:
+        if self.minute_of_hour is None:
             time_string += ",ii"
         else:
             time_string += ":mm"
-            if int(self.minute_of_hour) != self.minute_of_hour:
+            if self.second_of_minute is None:
                 time_string += ",nn"
             else:
                 seconds_int = int(self.second_of_minute)
@@ -1743,6 +1808,30 @@ def get_ordinal_date_week_date_start(year):
             return cal_year, total_days
 
 
+def get_timepoint_for_now():
+    """Return a TimePoint at the current date/time."""
+    import time
+    return get_timepoint_from_seconds_since_unix_epoch(time.time())
+
+
+def get_timepoint_from_seconds_since_unix_epoch(num_seconds):
+    """Return a TimePoint at a date/time specified in Unix time.
+
+    Note that Unix time always counts 1 day = 86400 seconds, so if
+    we implement leap seconds we need to make the distinction.
+
+    """
+    reference_timepoint = TimePoint(
+        **UNIX_EPOCH_DATE_TIME_REFERENCE_PROPERTIES)
+    return reference_timepoint + TimeInterval(seconds=float(num_seconds))
+
+
+def get_timepoint_properties_from_seconds_since_unix_epoch(num_seconds):
+    """Translate Unix time into a dict of TimePoint properties."""
+    return dict(
+        get_timepoint_from_seconds_since_unix_epoch(num_seconds).get_props())
+
+
 def iter_months_days(year, month_of_year=None, day_of_month=None,
                      in_reverse=False):
     """Iterate over each day in each month of year.
@@ -1833,3 +1922,9 @@ def _type_checker(*objects):
                     [str(v) for v in allowed_types])
             raise BadInputError(
                 BadInputError.TYPE, name, repr(value), values_string)
+
+
+PARSE_PROPERTY_TRANSLATORS = {
+    "seconds_since_unix_epoch":
+        get_timepoint_properties_from_seconds_since_unix_epoch
+}

@@ -58,7 +58,7 @@ class suite_log( object ):
             if os.path.getsize( self.path ) > 0:
                 h.doRollover()
 
-        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
+        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S' )
 
         # write warnings and worse to stderr as well as to the log
         h2 = logging.StreamHandler(sys.stderr)

@@ -258,7 +258,7 @@ class scheduler(object):
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.info( 'Suite starting at ' + str( now()) )
+        self.log.info( 'Suite starting at ' + now().isoformat())
         if self.run_mode == 'live':
             self.log.info( 'Log event clock: real time' )
         else:
@@ -641,7 +641,7 @@ class scheduler(object):
     def set_suite_timer( self, reset=False ):
         ts = now()
         self.suite_timer_start = ts
-        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", str(ts)
+        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", ts.isoformat()
 
     def reconfigure( self ):
         print "RELOADING the suite definition"
@@ -915,8 +915,8 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec( self.reflogfile )
-                self.start_tag = spec.get_start_tag()
-                self.stop_tag = spec.get_stop_tag()
+                self.start_tag = point( spec.get_start_tag() )
+                self.stop_tag = point( spec.get_stop_tag() )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1233,7 +1233,7 @@ class scheduler(object):
         return process
 
     def shutdown( self, reason='' ):
-        msg = "Suite shutting down at " + str(now())
+        msg = "Suite shutting down at " + now().isoformat()
 
         # The getattr() calls below are used in case the suite is not
         # fully configured before the shutdown is called.
@@ -1499,7 +1499,6 @@ class scheduler(object):
         # tasks beyond the runahead limit
         if is_newly_added and self.runahead_limit:
             ouct = runahead_base or self.get_runahead_base()
-            print new_task.c_time, ouct + self.runahead_limit, '<<<'
             if new_task.c_time >= ouct + self.runahead_limit:
                 new_task.log( "DEBUG", "HOLDING (beyond runahead limit)" )
                 new_task.reset_state_runahead()

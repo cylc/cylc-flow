@@ -20,13 +20,21 @@
 Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
-cycling = 'integer'
-#cycling = 'iso8601'
+#cycling = 'integer'
+cycling = 'iso8601'
 
 if cycling == 'integer':
-    from integer import point, interval, sequence
+    from integer import (
+        IntegerPoint as point,
+        IntegerInterval as interval,
+        IntegerSequence as sequence
+    )
 elif cycling == 'iso8601':
-    from iso8601 import point, interval, sequence
+    from iso8601 import (
+        ISO8601Point as point,
+        ISO8601Interval as interval,
+        ISO8601Sequence as sequence
+    )
 else:
     raise "CYCLING IMPORT ERROR"
 

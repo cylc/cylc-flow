@@ -1,0 +1,14 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 2.0
+[scheduling]
+    initial cycle time = 20001231T0100
+    final cycle time = 20010114
+    [[dependencies]]
+        [[[ P1D ]]]
+            graph = "foo[-P1D] => foo => bar"
+        [[[ P4D ]]]
+            graph = "baz[-P4D] => baz => qux"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

@@ -1,6 +1,6 @@
 
 [scheduling]
-    initial cycle time = 20140101T00
+    initial cycle time = 20140101
     final cycle time = 20140102T12
     #runahead limit = 'P4D'
     [[dependencies]]
@@ -13,6 +13,46 @@
         #[[[ PT6H ]]]
         #    graph = "foo[T-PT6H] => foo => bar"
 
+        [[[ R1 ]]]
+            graph = "cold_foo => foo"
+
         # TESTED:
-        [[[ PT10M ]]]
-            graph = "foo[T-PT10M] => foo => bar"
+        [[[ PT1H30M ]]]
+            graph = "foo[T-PT1H30M] => foo => bar"
+
+        [[[ PT5H ]]]
+            graph = "qux[T-PT5H] => qux"
+
+        [[[ T06 ]]]
+            graph = "foo => wibble"
+
+        [[[ +P1D/PT3H ]]]
+            graph = "foo => baz"
+
+        [[[ R1//-P1D ]]]
+            graph = "bar => flob"
+
+        [[[ R1/P0D ]]]
+            graph = "foo => final_foo"
+
+        [[[ R5/PT3H ]]]
+            graph = "xyzzy => bar"
+
+        [[[ 2014001/PT6H ]]]
+            graph = "wubble => foo"
+
+
+[visualization]
+    default node attributes = "style=filled", "shape=box"
+    use node color for edges = False
+    [[node attributes]]
+        foo = "fillcolor=purple4"
+        bar = "fillcolor=purple"
+        baz = "fillcolor=cyan"
+        xyzzy = "fillcolor=green"
+        wubble = "fillcolor=yellow"
+        qux = "fillcolor=orange"
+        wibble = "fillcolor=orange3"
+        flob = "fillcolor=orangered"
+        cold_foo = "fillcolor=red"
+        final_foo = "fillcolor=red4"

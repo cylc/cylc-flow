@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
         commands.append( command )
 
-    print 'SRT:', datetime.datetime.now()
+    print 'SRT:', datetime.datetime.now().isoformat()
 
     mp = multisubprocess( commands )
     out, err = mp.execute()
@@ -66,4 +66,4 @@ if __name__ == "__main__":
         print item
         count += 1
 
-    print 'END:', datetime.datetime.now()
+    print 'END:', datetime.datetime.now().isoformat()

@@ -1,0 +1,9 @@
+[scheduling]
+    initial cycle time = 20131231T2300
+    final cycle time = 20140103T0000
+    [[dependencies]]
+        [[[ P1D ]]]
+            graph = "foo[-P1D] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

@@ -1,0 +1,28 @@
+2014/03/31 10:15:01 INFO - Thread-2 start (Event Handlers)
+2014/03/31 10:15:01 INFO - Thread-3 start (Poll & Kill Commands)
+2014/03/31 10:15:01 INFO - port:7776
+2014/03/31 10:15:01 INFO - Suite starting at 2014-03-31 10:15:01.349810
+2014/03/31 10:15:01 INFO - Log event clock: real time
+2014/03/31 10:15:01 INFO - Run mode: live
+2014/03/31 10:15:01 INFO - Start tag: 20140101
+2014/03/31 10:15:01 INFO - Stop tag: 20140102T12
+2014/03/31 10:15:01 INFO - Thread-4 start (Job Submission)
+2014/03/31 10:15:01 INFO - Thread-5 start (Request Handling)
+2014/03/31 10:15:01 INFO - Cold Start 20140101
+2014/03/31 10:15:01 INFO - [foo.20140101T0010Z] -triggered off []
+2014/03/31 10:15:02 INFO - [foo.20140101T0010Z] -(current:ready)> foo.20140101T0010Z submitting now
+2014/03/31 10:15:03 INFO - [foo.20140101T0010Z] -(current:ready)> foo.20140101T0010Z submission succeeded
+2014/03/31 10:15:03 INFO - [foo.20140101T0010Z] -(current:submitted)> foo.20140101T0010Z submit_method_id=14876
+2014/03/31 10:15:04 INFO - [foo.20140101T0010Z] -(current:submitted)> foo.20140101T0010Z started at 2014-03-31T10:15:03
+2014/03/31 10:15:20 INFO - [foo.20140101T0010Z] -(current:running)> foo.20140101T0010Z succeeded at 2014-03-31T10:15:19
+2014/03/31 10:15:21 INFO - [bar.20140101T0010Z] -triggered off ['foo.20140101T0010Z']
+2014/03/31 10:15:22 INFO - [bar.20140101T0010Z] -(current:ready)> bar.20140101T0010Z submitting now
+2014/03/31 10:15:22 INFO - [bar.20140101T0010Z] -(current:ready)> bar.20140101T0010Z submission succeeded
+2014/03/31 10:15:22 INFO - [bar.20140101T0010Z] -(current:submitted)> bar.20140101T0010Z submit_method_id=18123
+2014/03/31 10:15:23 INFO - [bar.20140101T0010Z] -(current:submitted)> bar.20140101T0010Z started at 2014-03-31T10:15:22
+2014/03/31 10:15:32 INFO - [bar.20140101T0010Z] -(current:running)> bar.20140101T0010Z succeeded at 2014-03-31T10:15:32
+2014/03/31 10:15:32 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 20140102T12
+2014/03/31 10:15:33 INFO - Thread-4 exit (Job Submission)
+2014/03/31 10:15:33 INFO - Thread-2 exit (Event Handlers)
+2014/03/31 10:15:33 INFO - Thread-3 exit (Poll & Kill Commands)

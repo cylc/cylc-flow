@@ -96,7 +96,7 @@ class regdb(object):
         print "Locking database " + self.file
         lockfile = open( self.lockfile, 'wb' )
         lockfile.write( self.user + '\n' )
-        lockfile.write( str(datetime.datetime.now()))
+        lockfile.write( datetime.datetime.now().isoformat())
         lockfile.close()
 
     def unlock( self ):

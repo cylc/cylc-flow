@@ -59,17 +59,19 @@ class CylcTimeParser(object):
     """
 
     RECURRENCE_FORMAT_REGEXES = [
-         (r"^(?P<start>[^PR/][^/]*)$", 3),
-         (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
-         (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
-         (r"^(?P<intv>P[^/]*)$", 3),
-         (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
-         (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
-         (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
-         (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
-         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
-         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
-         (r"^R(?P<reps>1)(?P<start>$)", 3)]
+        (r"^(?P<start>[^PR/][^/]*)$", 3),
+        (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
+        (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
+        (r"^(?P<intv>P[^/]*)$", 3),
+        (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
+        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
+        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
+        (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
+        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
+        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
+        (r"^R(?P<reps>1)/?(?P<start>$)", 3),
+        (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
+    ]
 
     OFFSET_REGEX = r"(?P<sign>[+-])(?P<intv>P.+)$"
 
@@ -188,7 +190,6 @@ class CylcTimeParser(object):
                     end_point += context_end_point
                 if end_offset is not None:
                     end_point += end_offset
-
             return isodatetime.data.TimeRecurrence(
                          repetitions=repetitions,
                          start_point=start_point,

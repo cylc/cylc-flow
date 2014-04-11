@@ -18,7 +18,7 @@
 
 from cycling.loader import interval
 import re
-NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-])(\s*\w+)\s*\]){0,1}(:[\w-]+){0,1}$')
+NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T?\s*([+-]?)(\s*[,.\w]*)\s*\]){0,1}(:[\w-]+){0,1}$')
 
 
 class GraphNodeError( Exception ):

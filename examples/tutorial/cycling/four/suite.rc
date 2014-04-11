@@ -1,16 +1,16 @@
 title = "Inter-cycle dependence + a start-up task"
 [scheduling]
     #runahead limit = 120
-    initial cycle time = 2013080800
-    final cycle time = 2013081200
-    [[special tasks]]
-        start-up = prep
+    initial cycle time = 20130808T00
+    final cycle time = 20130812T00
     [[dependencies]]
-        [[[0,12]]]
-            graph = "prep & foo[T-12] => foo => bar"
+        [[[R1]]]
+            graph = "prep"
+        [[[T00,T12]]]
+            graph = "prep[] & foo[-PT12H] => foo => bar"
 [visualization]
-    initial cycle time = 2013080800
-    final cycle time = 2013080812
+    initial cycle time = 20130808T00
+    final cycle time = 20130808T12
     [[node attributes]]
         foo = "color=red"
         bar = "color=blue"
