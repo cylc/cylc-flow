@@ -132,12 +132,7 @@ initial and final cycle time variables persists across suite restarts."""
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
                 del itask
 
-            elif self.stop_tag and itask.tag > self.stop_tag:
-                # we've reached the stop cycle already: delete the new task
-                itask.log( "NORMAL", "STOPPING at configured stop cycle " + str(self.stop_tag) )
-                del itask
-            else:
-                self.pool.add( itask )
+            self.pool.add( itask )
 
     def load_tasks_warm( self ):
         if self.start_tag:
@@ -169,14 +164,7 @@ initial and final cycle time variables persists across suite restarts."""
                 del itask
                 continue
 
-            # TODO ISO - NO NEED TO DO THIS CHECK BECAUSE OF RECURRENCE BOUNDS
-            # check stop cycle in case the user has set a very quick stop
-            if self.stop_tag and itask.tag > self.stop_tag:
-                # we've reached the stop cycle already: delete the new task
-                itask.log( "NORMAL", "STOPPING at configured stop cycle " + str(self.stop_tag) )
-                del itask
-            else:
-                self.pool.add( itask )
+            self.pool.add( itask )
 
     def load_tasks_raw( self ):
         if self.start_tag:
@@ -186,8 +174,6 @@ initial and final cycle time variables persists across suite restarts."""
 
         coldstart_tasks = self.config.get_coldstart_task_list()
         startup_tasks = self.config.get_startup_task_list()
-        #if len( coldstart_tasks ) == 0:
-        #    self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'cold start task list' CONFIG ITEM" )
 
         for name in task_list:
             # startup=True only for cold start
@@ -205,14 +191,7 @@ initial and final cycle time variables persists across suite restarts."""
                 del itask
                 continue
 
-            # check stop cycle in case the user has set a very quick stop
-            if self.stop_tag and itask.tag > self.stop_tag:
-                # we've reached the stop cycle already: delete the new task
-                itask.log( "NORMAL", "STOPPING at configured stop cycle " + str(self.stop_tag) )
-                del itask
-                continue
-            else:
-                self.pool.add( itask )
+            self.pool.add( itask )
 
 if __name__ == '__main__':
     main("run", start)
