@@ -130,12 +130,11 @@ initial and final cycle time variables persists across suite restarts."""
 
             if not itask.tag:
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
-                itask.prepare_for_death()
                 del itask
+
             elif self.stop_tag and itask.tag > self.stop_tag:
                 # we've reached the stop cycle already: delete the new task
                 itask.log( "NORMAL", "STOPPING at configured stop cycle " + str(self.stop_tag) )
-                itask.prepare_for_death()
                 del itask
             else:
                 self.pool.add( itask )
@@ -167,7 +166,6 @@ initial and final cycle time variables persists across suite restarts."""
                 itask.outputs.set_all_completed()
             if name in startup_tasks:
                 itask.log( "NORMAL", "This is a warm start: I will self-destruct." )
-                itask.prepare_for_death()
                 del itask
                 continue
 
@@ -176,7 +174,6 @@ initial and final cycle time variables persists across suite restarts."""
             if self.stop_tag and itask.tag > self.stop_tag:
                 # we've reached the stop cycle already: delete the new task
                 itask.log( "NORMAL", "STOPPING at configured stop cycle " + str(self.stop_tag) )
-                itask.prepare_for_death()
                 del itask
             else:
                 self.pool.add( itask )
@@ -205,7 +202,6 @@ initial and final cycle time variables persists across suite restarts."""
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
             if name in coldstart_tasks or name in startup_tasks:
                 itask.log( "NORMAL", "This is a raw start: I will self-destruct." )
-                itask.prepare_for_death()
                 del itask
                 continue
 
@@ -213,7 +209,6 @@ initial and final cycle time variables persists across suite restarts."""
             if self.stop_tag and itask.tag > self.stop_tag:
                 # we've reached the stop cycle already: delete the new task
                 itask.log( "NORMAL", "STOPPING at configured stop cycle " + str(self.stop_tag) )
-                itask.prepare_for_death()
                 del itask
                 continue
             else:

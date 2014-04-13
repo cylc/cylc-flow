@@ -155,8 +155,6 @@ class taskdef(object):
         tclass.env_vars = OrderedDict()
 
         tclass.name = self.name        # TODO - NOT NEEDED, USED class.__name__
-        tclass.instance_count = 0
-        tclass.upward_instance_count = 0
 
         tclass.rtconfig = self.rtconfig
         tclass.run_mode = self.run_mode

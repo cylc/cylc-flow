@@ -1531,7 +1531,6 @@ class scheduler(object):
         if self.pool.add( new_task ):
             return True
         else:
-            new_task.prepare_for_death()
             del new_task
             return False
 
