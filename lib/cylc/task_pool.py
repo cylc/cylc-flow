@@ -24,6 +24,8 @@ from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 import cylc.rundb
+from CylcError import SchedulerError
+from broadcast import broadcast
 
 # All new task proxies (including spawned ones) are added first to the
 # runahead pool, which does not participate in dependency matching and 
@@ -40,7 +42,7 @@ import cylc.rundb
 
 
 class pool(object):
-    def __init__( self, suite, db, stop_tag, config, wireless, pyro, log, run_mode ):
+    def __init__( self, suite, db, stop_tag, config, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -61,7 +63,9 @@ class pool(object):
         self.pool_changed = []
         self.rhpool_changed = []
 
-        self.wireless = wireless
+        self.wireless = broadcast( self.config.get_linearized_ancestors() )
+        self.state_dumper.wireless = self.wireless
+        self.pyro.connect( self.wireless, 'broadcast_receiver')
 
         self.broker = broker()
 
@@ -528,4 +532,5 @@ class pool(object):
                 raise self.db.c.exception
             else:
                 raise SchedulerError( 'An unexpected error occurred while writing to the database' )
+
 

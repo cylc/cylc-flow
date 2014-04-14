@@ -37,10 +37,9 @@ from config import config, SuiteConfigError, TaskNotDefinedError
 from cfgspec.site import sitecfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from regpath import RegPath
-from CylcError import TaskNotFoundError, TaskStateError
+from CylcError import TaskNotFoundError, TaskStateError, SchedulerError
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
-from broadcast import broadcast
 from suite_state_dumping import dumper
 from suite_logging import suite_log
 import threading
@@ -64,17 +63,6 @@ class result:
         self.reason = reason
         self.value = value
 
-
-class SchedulerError( Exception ):
-    """
-    Attributes:
-        message - what the problem is.
-        TODO - element - config element causing the problem
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
 
 
 class request_handler( threading.Thread ):
@@ -119,7 +107,6 @@ class scheduler(object):
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
         self.suite_id = None
-        self.wireless = None
         self.suite_state = None
         self.command_queue = None
         self.pool = None
@@ -265,12 +252,7 @@ class scheduler(object):
 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        # RECEIVER FOR BROADCAST VARIABLES
-        self.wireless = broadcast( self.config.get_linearized_ancestors() )
-        self.state_dumper.wireless = self.wireless
-        self.pyro.connect( self.wireless, 'broadcast_receiver')
-
-        self.pool = pool( self.suite, self.db, self.stop_tag, self.config, self.wireless, self.pyro, self.log, self.run_mode )
+        self.pool = pool( self.suite, self.db, self.stop_tag, self.config, self.pyro, self.log, self.run_mode )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
@@ -937,8 +919,7 @@ class scheduler(object):
 
                 self.do_update_state_summary = True
 
-                # expire old broadcast variables
-                self.wireless.expire( self.pool.get_min_ctime() )
+                self.pool.wireless.expire( self.pool.get_min_ctime() )
 
                 if flags.debug:
                     delta = now() - main_loop_start_time
@@ -1141,7 +1122,7 @@ class scheduler(object):
                 q.quit = True # (should be done already)
                 q.join()
 
-        for i in [ self.command_queue, self.wireless,
+        for i in [ self.command_queue, self.pool.wireless,
                 self.suite_id, self.suite_state ]:
             if i:
                 self.pyro.disconnect( i )
