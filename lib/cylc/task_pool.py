@@ -552,3 +552,21 @@ class pool(object):
                 raise SchedulerError( 'An unexpected error occurred while writing to the database' )
 
 
+    def force_spawn( self, itask ):
+        # TODO - THIS SHOULD BE IN task.py
+        if itask.state.has_spawned():
+            return None
+        itask.state.set_spawned()
+        itask.log( 'DEBUG', 'forced spawning')
+        new_task = itask.spawn( 'waiting' )
+        if new_task and self.pool.add( new_task ):
+            return new_task
+        else:
+            return None
+
+
+    def spawn_tasks( self ):
+        for itask in self.get_tasks():
+            if itask.ready_to_spawn():
+                self.force_spawn( itask )
+

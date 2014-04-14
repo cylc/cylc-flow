@@ -506,11 +506,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
-
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                # (state check done in task module)
-                itask.kill()
+        self.pool.kill_tasks( task_ids )
 
     def command_release_suite( self ):
         self.release_suite()
@@ -560,7 +556,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.tag == tag:
                 if spawn:
-                    self.force_spawn( itask )
+                    self.pool.force_spawn( itask )
                 self.pool.remove( itask, 'by request' )
 
     def command_remove_task( self, name, tag, is_family, spawn ):
@@ -571,7 +567,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
                 if spawn:
-                    self.force_spawn( itask )
+                    self.pool.force_spawn( itask )
                 self.pool.remove( itask, 'by request' )
 
     def command_insert_task( self, name, tag, is_family, stop_tag ):
@@ -906,7 +902,7 @@ class scheduler(object):
                 ready = self.pool.process()
                 self.process_resolved( ready )
 
-                self.spawn()
+                self.pool.spawn_tasks()
 
                 self.remove_spent_tasks()
 
@@ -1211,23 +1207,6 @@ class scheduler(object):
         return self.hold_time
 
 
-    def force_spawn( self, itask ):
-        if itask.state.has_spawned():
-            return None
-        itask.state.set_spawned()
-        itask.log( 'DEBUG', 'forced spawning')
-        new_task = itask.spawn( 'waiting' )
-        if new_task and self.pool.add( new_task ):
-            return new_task
-        else:
-            return None
-
-    def spawn( self ):
-        # create new tasks foo(T+1) if foo has not got too far ahead of
-        # the slowest task, and if foo(T) spawns
-        for itask in self.pool.get_tasks():
-            if itask.ready_to_spawn():
-                self.force_spawn( itask )
 
     def remove_spent_tasks( self ):
         """Remove tasks no longer needed to satisfy others' prerequisites."""
@@ -1245,7 +1224,7 @@ class scheduler(object):
                         itask.log( 'WARNING', 'suiciding while active' )
                     else:
                         itask.log( 'NORMAL', 'suiciding' )
-                    self.force_spawn( itask )
+                    self.pool.force_spawn( itask )
                     self.pool.remove( itask, 'suicide' )
 
 
@@ -1383,7 +1362,7 @@ class scheduler(object):
             elif state == 'held':
                 itask.reset_state_held()
             elif state == 'spawn':
-                self.force_spawn(itask)
+                self.pool.force_spawn(itask)
 
     def command_add_prerequisite( self, task_id, message ):
         # find the task to reset
@@ -1444,7 +1423,7 @@ class scheduler(object):
                 itask.reset_state_succeeded(manual=False)
                 # force it to spawn
                 print '  Spawning', itask.id
-                foo = self.force_spawn( itask )
+                foo = self.pool.force_spawn( itask )
                 if foo:
                     spawn.append( foo )
                 # mark it for later removal
@@ -1466,7 +1445,7 @@ class scheduler(object):
                     print '  Triggering', itask.id
                     itask.reset_state_succeeded(manual=False)
                     print '  Spawning', itask.id
-                    foo = self.force_spawn( itask )
+                    foo = self.pool.force_spawn( itask )
                     if foo:
                         spawn.append( foo )
                     print '  Marking', itask.id, 'for deletion'
@@ -1475,7 +1454,7 @@ class scheduler(object):
                 elif itask.suicide_prerequisites.count() > 0:
                     if itask.suicide_prerequisites.all_satisfied():
                         print '  Spawning virtually activated suicide task', itask.id
-                        self.force_spawn( itask )
+                        self.pool.force_spawn( itask )
                         # remove these now (not setting succeeded; outputs not needed)
                         print '  Suiciding', itask.id, 'now'
                         self.pool.remove( itask, 'purge' )
