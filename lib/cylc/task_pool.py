@@ -724,3 +724,12 @@ class pool(object):
         return sim_task_succeeded
 
 
+    def shutdown( self ):
+        self.worker.quit = True # (should be done already)
+        self.worker.join()
+        # disconnect task message queues
+        for itask in self.get_tasks():
+            if itask.message_queue:
+                self.pyro.disconnect( itask.message_queue )
+
+

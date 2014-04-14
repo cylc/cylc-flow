@@ -1037,7 +1037,7 @@ class scheduler(object):
             process = True
 
         if self.run_mode == 'simulation':
-            self.pool.sim_time_check()
+            process = self.pool.sim_time_check()
 
         ##if not process:
         ##    # If we neglect to set flags.pflag on some event that
@@ -1065,8 +1065,6 @@ class scheduler(object):
     def shutdown( self, reason='' ):
         msg = "Suite shutting down at " + now().isoformat()
 
-        # TODO - should we pyro.disconnect all task proxies at shutdown?
-
         # The getattr() calls below are used in case the suite is not
         # fully configured before the shutdown is called.
 
@@ -1079,12 +1077,7 @@ class scheduler(object):
                 self.log.warning( "some active tasks will be orphaned" )
 
         if self.pool:
-            self.pool.worker.quit = True # (should be done already)
-            self.pool.worker.join()
-            # disconnect task message queues
-            for itask in self.pool.get_tasks():
-                if itask.message_queue:
-                    self.pyro.disconnect( itask.message_queue )
+            self.pool.shutdown()
             if self.state_dumper:
                 try:
                     self.state_dumper.dump()
