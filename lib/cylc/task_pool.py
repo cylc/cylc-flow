@@ -63,8 +63,7 @@ class pool(object):
         self.pool_changed = []
         self.rhpool_changed = []
 
-        self.wireless = broadcast( self.config.get_linearized_ancestors() )
-        self.state_dumper.wireless = self.wireless
+        self.wireless = broadcast( config.get_linearized_ancestors() )
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
         self.broker = broker()
@@ -413,6 +412,12 @@ class pool(object):
             if itask.state.is_currently('running', 'submitted'):
                 return False
         return True
+
+
+    def release_tasks( ids ):
+        for itask in self.get_tasks():
+            if itask.id in task_ids and itask.state.is_currently('held'):
+                itask.reset_state_waiting()
 
 
     def hold_all_tasks( self ):
