@@ -1263,22 +1263,7 @@ class scheduler(object):
             self.log.info( "RELEASE: new tasks will be queued when ready")
             self.hold_suite_now = False
             self.hold_time = None
-        for itask in self.pool.get_tasks():
-            if itask.state.is_currently('held'):
-                if self.stop_tag and itask.c_time > self.stop_tag:
-                    # this task has passed the suite stop time
-                    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_tag) )
-                elif itask.stop_c_time and itask.c_time > itask.stop_c_time:
-                    # this task has passed its own stop time
-                    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_c_time) )
-                else:
-                    # release this task
-                    itask.reset_state_waiting()
-
-        # TODO - write a separate method for cancelling a stop time:
-        #if self.stop_tag:
-        #    self.log.warning( "UNSTOP: unsetting suite stop time")
-        #    self.stop_tag = None
+        self.pool.release_all_tasks()
 
     def will_stop_at( self ):
         if self.stop_tag:
