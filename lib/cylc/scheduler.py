@@ -267,8 +267,6 @@ class scheduler(object):
         self.log.info( 'Start tag: ' + str(self.start_tag) )
         self.log.info( 'Stop tag: ' + str(self.stop_tag) )
 
-        self.runahead_limit = self.config.get_runahead_limit()
-
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         # RECEIVER FOR BROADCAST VARIABLES
@@ -276,7 +274,7 @@ class scheduler(object):
         self.state_dumper.wireless = self.wireless
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
-        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode )
+        self.pool = pool( self.suite, self.stop_tag, self.config, self.wireless, self.pyro, self.log, self.run_mode )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
@@ -284,11 +282,9 @@ class scheduler(object):
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.old_user_at_host_set = set()
         self.load_tasks()
-        if not self.pool.count():
-            raise SchedulerError, "No tasks loaded."
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.run_mode, str(self.get_min_ctime()) )
+        self.suite_state = state_summary( self.config, self.run_mode, str(self.pool.get_min_ctime()) )
         self.pyro.connect( self.suite_state, 'state_summary')
 
         self.state_dumper.set_cts( self.start_tag, self.stop_tag )
@@ -569,15 +565,6 @@ class scheduler(object):
         self.hold_suite( tag )
         self.log.info( "The suite will pause when all tasks have passed " + tag )
 
-    def command_set_runahead( self, hours=None ):
-        if hours:
-            self.log.info( "setting runahead limit to " + str(hours) )
-            self.runahead_limit = int(hours)
-        else:
-            # No limit
-            self.log.warning( "setting NO runahead limit" )
-            self.runahead_limit = None
-
     def command_set_verbosity( self, level ):
         # change logging verbosity:
         if level == 'debug':
@@ -627,7 +614,8 @@ class scheduler(object):
             name, tag = TaskID.split( task_id )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
             new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
-            self.add_new_task_proxy( new_task )
+            if new_task:
+                self.pool.add( new_task )
 
     def command_nudge( self ):
         # just to cause the task processing loop to be invoked
@@ -635,6 +623,10 @@ class scheduler(object):
 
     def command_reload_suite( self ):
         self.reconfigure()
+
+
+    def command_set_runahead( self  ):
+        self.pool.set_runahead()
 
     #___________________________________________________________________
 
@@ -657,10 +649,10 @@ class scheduler(object):
         # adjust the new suite config to handle the orphans
         self.config.adopt_orphans( self.orphans )
 
-        self.runahead_limit = self.config.get_runahead_limit()
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
-        self.pool.qconfig = self.config.cfg['scheduling']['queues']
-        self.pool.assign( reload=True )
+
+        self.pool.reconfigure( self.config )
+
         self.suite_state.config = self.config
         self.configure_suite_environment()
         self.reconfiguring = True
@@ -675,7 +667,7 @@ class scheduler(object):
 
     def reload_taskdefs( self ):
         found = False
-        for itask in self.pool.get_tasks():
+        for itask in self.pool.get_tasks(all=True):
             if itask.state.is_currently('running'):
                 # do not reload running tasks as some internal state
                 # (e.g. timers) not easily cloneable at the moment,
@@ -707,7 +699,7 @@ class scheduler(object):
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
                     self.pool.remove( itask, '(suite definition reload)' )
-                    self.add_new_task_proxy( new_task )
+                    self.pool.add( new_task )
 
         self.reconfiguring = found
 
@@ -982,6 +974,8 @@ class scheduler(object):
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
 
+            self.pool.release_runahead_tasks()
+
             if self.process_tasks():
                 if flags.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
@@ -1001,7 +995,7 @@ class scheduler(object):
                 self.do_update_state_summary = True
 
                 # expire old broadcast variables
-                self.wireless.expire( self.get_min_ctime() )
+                self.wireless.expire( self.pool.get_min_ctime() )
 
                 if flags.debug:
                     delta = now() - main_loop_start_time
@@ -1066,13 +1060,6 @@ class scheduler(object):
             # process queued commands
             self.process_command_queue()
 
-            # Hold waiting tasks if beyond stop cycle etc:
-            # (a) newly spawned beyond existing stop cycle
-            # (b) new stop cycle set by command
-            runahead_base = self.get_runahead_base()
-            for itask in self.pool.get_tasks():
-                self.check_hold_waiting_tasks( itask, runahead_base=runahead_base )
-
             #print '<Pyro'
             if flags.iflag or self.do_update_state_summary:
                 flags.iflag = False
@@ -1100,8 +1087,6 @@ class scheduler(object):
             if self.run_mode != 'simulation':
                 for itask in self.pool.get_tasks():
                     itask.check_timers()
-
-            self.release_runahead( runahead_base=runahead_base )
 
             if not self.do_shutdown:
                 # check if the suite should shut down automatically now
@@ -1155,10 +1140,10 @@ class scheduler(object):
     def update_state_summary( self ):
         #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), 
-                self.get_min_ctime(), self.get_max_ctime(),
-                self.get_max_ctime(True), self.paused(),
+                self.pool.get_min_ctime(), self.pool.get_max_ctime(),
+                self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
-                self.will_stop_at(),  self.runahead_limit)
+                self.will_stop_at(),  self.pool.runahead_limit)
 
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what
@@ -1234,6 +1219,8 @@ class scheduler(object):
 
     def shutdown( self, reason='' ):
         msg = "Suite shutting down at " + now().isoformat()
+
+        # TODO - should we pyro.disconnect all task proxies at shutdown?
 
         # The getattr() calls below are used in case the suite is not
         # fully configured before the shutdown is called.
@@ -1378,42 +1365,6 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_runahead_base( self ):
-        # Return the cycle time from which to compute the runahead
-        # limit: take the oldest task not succeeded or failed (note this
-        # excludes finished tasks and it includes runahead-limited tasks
-        # - consequently "too low" a limit cannot actually stall a suite.
-        cycles = []
-        for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed', 'succeeded'):
-                continue
-            cycles.append(itask.c_time)
-        base = None
-        if cycles:
-            base = min(cycles)
-        return base
-
-    def get_min_ctime( self ):
-        cycles = [ t.c_time for t in self.pool.get_tasks() ]
-        minc = None
-        if cycles:
-            minc = min(cycles)
-        return minc
-
-    def get_max_ctime( self, nonrunahead=False ):
-        cycles = []
-        if nonrunahead:
-            for t in self.pool.get_tasks():
-                if not t.state.is_currently('runahead'):
-                    cycles.append( t.c_time )
-                continue
-        else:
-            cycles = [ t.c_time for t in self.pool.get_tasks() ]
-        maxc = None
-        if cycles:
-            maxc = max(cycles)
-        return maxc
-
     def no_active_tasks( self ):
         for itask in self.pool.get_tasks():
             if itask.state.is_currently('running', 'submitted'):
@@ -1452,87 +1403,6 @@ class scheduler(object):
             if not itask.not_fully_satisfied():
                 itask.check_requisites()
 
-    def release_runahead( self, runahead_base=None ):
-        if self.runahead_limit:
-            runahead_base = runahead_base or self.get_runahead_base()
-            for itask in self.pool.get_tasks():
-                if itask.state.is_currently('runahead'):
-                    if self.stop_tag and itask.c_time > self.stop_tag:
-                        # beyond the final cycle time
-                        itask.log( 'DEBUG', "holding (beyond suite final cycle)" )
-                        itask.reset_state_held()
-                        continue
-
-                    if itask.c_time - self.runahead_limit <= runahead_base:
-                        if self.hold_suite_now:
-                            itask.log( 'DEBUG', "holding (suite stopping now)" )
-                            itask.reset_state_held()
-                        else:
-                            itask.log( 'DEBUG', "releasing (runahead limit moved on)" )
-                            itask.reset_state_waiting()
-
-    def check_hold_waiting_tasks( self, new_task, is_newly_added=False, runahead_base=None ):
-        if not new_task.state.is_currently('waiting'):
-            return
-
-        if is_newly_added and self.hold_suite_now:
-            new_task.log( 'DEBUG', "HOLDING (general suite hold) " )
-            new_task.reset_state_held()
-            return
-
-        # further checks only apply to cycling tasks
-        if not new_task.is_cycling:
-            return
-
-        # check cycle stop or hold conditions
-        if self.stop_tag and new_task.c_time > self.stop_tag:
-            new_task.log( 'DEBUG', "HOLDING (beyond suite stop cycle) " + str(self.stop_tag) )
-            new_task.reset_state_held()
-            return
-
-        # TODO ISO - CHECK ALL STOP TIMES WORK
-        if self.hold_time and new_task.c_time > self.hold_time:
-            new_task.log( 'DEBUG', "HOLDING (beyond suite hold cycle) " + str(self.hold_time) )
-            new_task.reset_state_held()
-            return
-
-        # tasks beyond the runahead limit
-        if is_newly_added and self.runahead_limit:
-            ouct = runahead_base or self.get_runahead_base()
-            if new_task.c_time >= ouct + self.runahead_limit:
-                new_task.log( "DEBUG", "HOLDING (beyond runahead limit)" )
-                new_task.reset_state_runahead()
-                return
-
-        # hold tasks with future triggers beyond the final cycle time
-        if self.task_has_future_trigger_overrun( new_task ):
-            new_task.log( "NORMAL", "HOLDING (future trigger beyond stop cycle)" )
-            self.held_future_tasks.append( new_task.id )
-            new_task.reset_state_held()
-            return
-
-    def task_has_future_trigger_overrun( self, itask ):
-        # check for future triggers extending beyond the final cycle
-        if not self.stop_tag:
-            return False
-        for pct in set(itask.prerequisites.get_target_tags()):
-            try:
-                if pct > self.stop_tag:
-                    return True
-            except:
-                raise
-                # pct invalid cycle time => is an asynch trigger
-                pass
-        return False
-
-    def add_new_task_proxy( self, new_task ):
-        """Add a given new task proxy to the pool, or destroy it."""
-        self.check_hold_waiting_tasks( new_task, is_newly_added=True )
-        if self.pool.add( new_task ):
-            return True
-        else:
-            del new_task
-            return False
 
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
@@ -1540,7 +1410,7 @@ class scheduler(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if new_task and self.add_new_task_proxy( new_task ):
+        if new_task and self.pool.add( new_task ):
             return new_task
         else:
             return None
@@ -1589,7 +1459,7 @@ class scheduler(object):
         for itask in self.pool.get_tasks():
             if not itask.is_cycling:
                 continue
-            if itask.state.is_currently('waiting', 'runahead', 'held' ):
+            if itask.state.is_currently('waiting', 'held' ):
                 if not cutoff or itask.c_time < cutoff:
                     cutoff = itask.c_time
             elif not itask.has_spawned():

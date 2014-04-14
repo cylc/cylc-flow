@@ -392,10 +392,6 @@ class task( object ):
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
 
-    def reset_state_runahead( self ):
-        self.set_status( 'runahead' )
-        self.turn_off_timeouts()
-
     def set_state_ready( self ):
         # called by scheduler main thread
         self.set_status( 'ready' )

@@ -42,7 +42,6 @@ SPEC = {
             'inherit'       : vdr( vtype='string', default="default" ),
             'defaults'      : vdr( vtype='string_list' ),
             'waiting'       : vdr( vtype='string_list' ),
-            'runahead'      : vdr( vtype='string_list' ),
             'held'          : vdr( vtype='string_list' ),
             'queued'        : vdr( vtype='string_list' ),
             'ready'         : vdr( vtype='string_list' ),

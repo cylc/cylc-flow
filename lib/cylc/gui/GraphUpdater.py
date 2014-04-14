@@ -72,7 +72,6 @@ class GraphUpdater(threading.Thread):
         self.best_fit = False # If True, xdot will zoom to page size
         self.normal_fit = False # if True, xdot will zoom to 1.0 scale
         self.crop = False
-        self.croprunahead = True
         self.filter_include = None
         self.filter_exclude = None
         self.state_filter = None
@@ -283,14 +282,7 @@ class GraphUpdater(threading.Thread):
         # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
         self.oldest_ctime = self.global_summary['oldest cycle time']
-        if self.croprunahead:
-            try:
-                self.newest_ctime = self.global_summary['newest non-runahead cycle time']
-            except KeyError:
-                # pre-5.4.0 suite daemon backward compatibility (crop runahead nodes)
-                self.newest_ctime = self.global_summary['newest cycle time']
-        else:
-            self.newest_ctime = self.global_summary['newest cycle time']
+        self.newest_ctime = self.global_summary['newest cycle time']
 
         if self.focus_start_ctime:
             oldest = self.focus_start_ctime
@@ -497,6 +489,6 @@ class GraphUpdater(threading.Thread):
         states = self.state_filter
         if self.state_filter:
             states = set(self.state_filter)
-        return ( set( edges ), set( extra_ids ), self.crop, self.croprunahead,
+        return ( set( edges ), set( extra_ids ), self.crop,
                  self.filter_exclude, self.filter_include, states,
                  self.orientation, self.ignore_suicide )

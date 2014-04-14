@@ -23,14 +23,41 @@ from task_types import task
 import flags
 from Pyro.errors import NamingError, ProtocolError
 
+# All new task proxies (including spawned ones) are added first to the
+# runahead pool, which does not participate in dependency matching and 
+# is not visible in the GUI. Tasks are then released to the task pool if
+# not beyond the current runahead limit.
+
+# TODO ISO -
+# Spawn-on-submit means a only one waiting instance of each task exists,
+# in the pool, so if a new stop cycle is set we just need to check
+# waiting pool tasks against the new stop cycle.
+
+# restart: runahead tasks are all in the 'waiting' state and will be
+# reloaded as such, on restart, into the runahead pool.
+
+
 class pool(object):
-    def __init__( self, suite, config, wireless, pyro, log, run_mode ):
+    def __init__( self, suite, stop_tag, config, wireless, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
-        self.config = config
-        self.assign()
+        self.stop_tag = stop_tag
+
+        self.runahead_limit = config.get_runahead_limit()
+
+        self.runahead_pool = {}
+        self.myq = {}
+        self.queues = {}
+        self.assign_queues()
+
+        self.pool_list = []
+        self.rhpool_list = []
+        self.pool_changed = []
+        self.rhpool_changed = []
+
+
         self.wireless = wireless
 
         self.jobqueue = Queue.Queue()
@@ -42,103 +69,168 @@ class pool(object):
 
         self.worker.start()
 
-    def assign( self, reload=False ):
-        # self.myq[taskname] = 'foo'
-        # self.queues['foo'] = [live tasks in queue foo]
 
+    def assign_queues( self ):
+        """self.myq[taskname] = qfoo"""
         self.myq = {}
         for queue in self.qconfig:
             for taskname in self.qconfig[queue]['members']:
                 self.myq[taskname] = queue
 
-        if not reload:
-            self.queues = {}
-        else:
-            # reassign live tasks from the old queues to the new
-            self.new_queues = {}
-            for queue in self.queues:
-                for itask in self.queues[queue]:
-                    myq = self.myq[itask.name]
-                    if myq not in self.new_queues:
-                        self.new_queues[myq] = [itask]
-                    else:
-                        self.new_queues[myq].append( itask )
-            self.queues = self.new_queues
+
+    def reconfigure( self, config ):
+
+        self.runahead_limit = config.get_runahead_limit()
+
+        # reassign live tasks from the old queues to the new.
+        # self.queues[queue][id] = task
+        self.qconfig = config.cfg['scheduling']['queues']
+        self.assign_queues()
+        self.new_queues = {}
+        for queue in self.queues:
+            for id,itask in self.queues[queue].items():
+                myq = self.myq[itask.name]
+                if myq not in self.new_queues:
+                    self.new_queues[myq] = {}
+                self.new_queues[myq][id] = itask
+        self.queues = self.new_queues
+
+
 
     def add( self, itask ):
-        """
-        Add the given new task if one with the same ID does not already
-        exist, and if the task has not passed its own stop cycle (if it
-        has a stop cycle).
-        """
+
+        if self.id_exists( itask.id ):
+            # e.g. an inserted task caught up with an existing one with the same ID.
+            self.log.warning( itask.id + ' cannot be added: task ID already exists' )
+            return False
+
+        # TODO ISO - no longer needed due to recurrence bounds?
         if itask.stop_c_time and itask.c_time > itask.stop_c_time:
             self.log.warning( itask.id + ' not adding to pool: task beyond its own stop cycle' )
             return False
 
-        if self.id_exists( itask.id ):
-            # This can happen by manual insertion of task that is
-            # already in the pool, or if an inserted cycling task
-            # catches up with an existing one with the same ID.
-            self.log.warning( itask.id + ' cannot be added: task ID already exists' )
-            return False
-        # Connect the new task to the pyro daemon
-        try:
-            self.pyro.connect( itask.message_queue, itask.id )
-        except Exception, x:
-            if flags.debug:
-                raise
-            print >> sys.stderr, x
-            self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )
-            return False
-        # add the new task to the appropriate queue
-        queue = self.myq[itask.name]
-        if queue not in self.queues:
-            self.queues[queue] = [itask]
-        else:
-            self.queues[queue].append(itask)
-        flags.pflag = True
-        itask.log('DEBUG', "task proxy added to the pool" )
+        # check cycle stop or hold conditions
+        if self.stop_tag and itask.c_time > self.stop_tag:
+            itask.log( 'DEBUG', "not adding (beyond suite stop cycle) " + str(self.stop_tag) )
+            itask.reset_state_held()
+            return
+
+        # TODO ISO -restore suite hold functionality
+        #if self.hold_time and itask.c_time > self.hold_time:
+        #    itask.log( 'DEBUG', "not adding (beyond suite hold cycle) " + str(self.hold_time) )
+        #    itask.reset_state_held()
+        #    return
+
+        # hold tasks with future triggers beyond the final cycle time
+        if self.task_has_future_trigger_overrun( itask ):
+            itask.log( "NORMAL", "not adding (future trigger beyond stop cycle)" )
+            self.held_future_tasks.append( itask.id )
+            itask.reset_state_held()
+            return
+
+        self.runahead_pool[itask.id] = itask
+
+        self.rhpool_changed = True
+
         return True
 
-    def remove( self, task, reason=None ):
-        # remove a task from the pool
+
+    def release_runahead_tasks( self ):
+
+        # compute runahead base: the oldest task not succeeded or failed
+        # (excludes finished and includes runahead-limited tasks so a low limit cannot stall a suite.
+        runahead_base = None
+        for itask in self.get_tasks(all=True):
+            if itask.state.is_currently('failed', 'succeeded'):
+                continue
+            if not runahead_base or itask.c_time < runahead_base:
+                runahead_base = itask.c_time
+
+        if self.runahead_limit and runahead_base:
+            for itask in self.runahead_pool.values():
+                if itask.c_time - self.runahead_limit <= runahead_base:
+                    # release task to the appropriate queue
+                    queue = self.myq[itask.name]
+                    if queue not in self.queues:
+                        self.queues[queue] = {}
+                    self.queues[queue][itask.id] = itask
+                    self.pool_changed = True
+                    flags.pflag = True
+                    itask.log('DEBUG', "released to the task pool" )
+                    del self.runahead_pool[itask.id]
+                    self.rhpool_changed = True
+                    try:
+                        self.pyro.connect( itask.message_queue, itask.id )
+                    except Exception, x:
+                        if flags.debug:
+                            raise
+                        print >> sys.stderr, x
+                        self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )
+                        return False
+
+
+    def remove( self, itask, reason=None ):
+        if itask.id in self.runahead_pool:
+            del self.runahead_pool[itask.id]
+            self.rhpool_changed = True
+            return
+
         try:
-            self.pyro.disconnect( task.message_queue )
+            self.pyro.disconnect( itask.message_queue )
         except NamingError, x:
             print >> sys.stderr, x
-            self.log.critical( task.id + ' cannot be removed (task not found)' )
+            self.log.critical( itask.id + ' cannot be removed (task not found)' )
             return
         except Exception, x:
             print >> sys.stderr, x
-            self.log.critical( task.id + ' cannot be removed (unknown error)' )
+            self.log.critical( itask.id + ' cannot be removed (unknown error)' )
             return
-        # remove task from its queue
-        queue = self.myq[task.name]
-        self.queues[queue].remove( task )
+        # remove from queue
+        queue = self.myq[itask.name]
+        del self.queues[queue][itask.id]
+        self.pool_changed = True
         msg = "task proxy removed"
         if reason:
             msg += " (" + reason + ")"
-        task.log( 'DEBUG', msg )
-        del task
+        itask.log( 'DEBUG', msg )
+        del itask
 
-    def get_tasks( self ):
-        """Return a list of all task proxies"""
-        tasks = []
-        for queue in self.queues:
-            tasks += self.queues[queue]
-        #tasks.sort() # sorting any use here?
-        return tasks
 
-    def count( self ):
-        return len( self.get_tasks() )
+
+    def get_tasks( self, all=False ):
+        """ Return the current list of task proxies."""
+
+        # Regenerate the task lists on demand only if they have changed
+        # (only necessary if computing the list takes significant time?)
+
+        # May not be necessary at all once we centralize all pool ops?
+
+        if self.pool_changed:
+            self.pool_changed = False
+            self.pool_list = []
+            for queue in self.queues:
+                for id,t in self.queues[queue].items():
+                    self.pool_list.append( t )
+        
+        if all:
+            if self.rhpool_changed: 
+                self.rhpool_changed = False
+                self.rhpool_list = self.runahead_pool.values()
+ 
+            return self.rhpool_list + self.pool_list
+        else:
+            return self.pool_list
+
 
     def id_exists( self, id ):
-        """Check if a task with the given ID is in the pool"""
+        """Check if task id is in the runahead_pool or pool"""
+        if id in self.runahead_pool:
+            return True
         for queue in self.queues:
-            for task in self.queues[queue]:
-                if task.id == id:
-                    return True
+            if id in self.queues[queue]:
+                return True
         return False
+
 
     def process( self ):
         """
@@ -178,14 +270,15 @@ class pool(object):
             n_active = 0
             n_release = 0
             n_limit = self.qconfig[queue]['limit']
+            tasks = self.queues[queue].values()
             if n_limit:
-                for itask in self.queues[queue]:
+                for itask in tasks:
                     if itask.state.is_currently('ready','submitted','running'):
                         n_active += 1
                 n_release = n_limit - n_active
 
             # 2.2) release queued tasks if not limited or if manually forced
-            for itask in self.queues[queue]:
+            for itask in tasks:
                 if not itask.state.is_currently( 'queued' ):
                     continue
                 if itask.manual_trigger or not n_limit or n_release > 0:
@@ -204,4 +297,46 @@ class pool(object):
                 self.jobqueue.put( itask )
 
         return readytogo
+
+    def task_has_future_trigger_overrun( self, itask ):
+        # check for future triggers extending beyond the final cycle
+        if not self.stop_tag:
+            return False
+        for pct in set(itask.prerequisites.get_target_tags()):
+            try:
+                if pct > self.stop_tag:
+                    return True
+            except:
+                raise
+                # pct invalid cycle time => is an asynch trigger
+                pass
+        return False
+
+
+    # TODO ISO - adapt to iso:
+    def set_runahead( self, hours=None ):
+        if hours:
+            self.log.info( "setting runahead limit to " + str(hours) )
+            self.runahead_limit = int(hours)
+        else:
+            # No limit
+            self.log.warning( "setting NO runahead limit" )
+            self.runahead_limit = None
+
+
+    def get_min_ctime( self ):
+        """Return the minimum cycle currently in the pool."""
+        cycles = [ t.c_time for t in self.get_tasks() ]
+        minc = None
+        if cycles:
+            minc = min(cycles)
+        return minc
+
+    def get_max_ctime( self ):
+        """Return the maximum cycle currently in the pool."""
+        cycles = [ t.c_time for t in self.get_tasks() ]
+        maxc = None
+        if cycles:
+            maxc = max(cycles)
+        return maxc
 

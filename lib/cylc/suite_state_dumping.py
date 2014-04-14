@@ -75,7 +75,7 @@ class dumper( object ):
             handle.write('Begin task states\n')
 
             if tasks is None and self.pool is not None:
-                tasks = self.pool.get_tasks()
+                tasks = self.pool.get_tasks( all=True )
             if tasks is not None:
                 for itask in sorted(tasks, key=lambda t: t.id):
                     # TODO - CHECK THIS STILL WORKS
