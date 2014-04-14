@@ -414,12 +414,6 @@ class pool(object):
         return True
 
 
-    def release_tasks( self,ids ):
-        for itask in self.get_tasks():
-            if itask.id in ids and itask.state.is_currently('held'):
-                itask.reset_state_waiting()
-
-
     def poll_tasks( self,ids ):
         for itask in self.get_tasks():
             if itask.id in ids:
@@ -438,6 +432,19 @@ class pool(object):
             if itask.id in ids:
                 # (state check done in task module)
                 itask.kill()
+
+
+    def hold_tasks( self, ids ):
+        for itask in self.get_tasks():
+            if itask.id in ids:
+                if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
+                    itask.reset_state_held()
+
+
+    def release_tasks( self,ids ):
+        for itask in self.get_tasks():
+            if itask.id in ids and itask.state.is_currently('held'):
+                itask.reset_state_waiting()
 
 
     def hold_all_tasks( self ):
