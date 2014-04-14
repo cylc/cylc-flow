@@ -18,6 +18,7 @@
 
 import sys
 import Queue
+import TaskID
 from batch_submit import task_batcher
 from task_types import task
 from broker import broker
@@ -760,4 +761,18 @@ class pool(object):
         pp = plain_prerequisites( id )
         pp.add( message )
         itask.prerequisites.add_requisites(pp)
+
+
+    def has_task_succeeded( self, id ):
+        res = False
+        name, tag = TaskID.split(id)
+        for itask in self.get_tasks():
+            iname, itag = TaskID.split(itask.id)
+            # TODO ISO - check the following works
+            if itask.name == name and point(itag) == point(tag):
+                if itask.state.is_currently('succeeded'):
+                    self.log.info( "Stop task " + self.stop_task + " finished" )
+                    res = True
+                break
+        return res
 

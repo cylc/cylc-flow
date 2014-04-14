@@ -1358,15 +1358,7 @@ class scheduler(object):
                 stop = True
 
         elif self.stop_task:
-            name, tag = TaskID.split(self.stop_task)
-            for itask in self.pool.get_tasks():
-                iname, itag = TaskID.split(itask.id)
-                if itask.name == name and int(itag) == int(tag):
-                    # found the stop task
-                    if itask.state.is_currently('succeeded'):
-                        self.log.info( "Stop task " + self.stop_task + " finished" )
-                        stop = True
-                    break
+            stop = self.pool.has_task_succeeded( self.stop_task )
 
         else:
             # all cycling tasks are held past the suite stop cycle and
