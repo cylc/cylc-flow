@@ -484,27 +484,22 @@ class scheduler(object):
         if tid.is_valid_id():
             self.set_stop_task( tid )
 
+
     def command_release_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
+        self.pool.release_tasks( task_ids )
 
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                if itask.state.is_currently('held'):
-                    itask.reset_state_waiting()
 
     def command_poll_tasks( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
+        self.pool.poll_tasks( task_ids )
 
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                # (state check done in task module)
-                itask.poll()
 
     def command_kill_tasks( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
