@@ -24,7 +24,8 @@ from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 import cylc.rundb
-from CylcError import SchedulerError
+from CylcError import SchedulerError, TaskNotFoundError
+from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
 
 # All new task proxies (including spawned ones) are added first to the
@@ -738,6 +739,7 @@ class pool(object):
             if itask.message_queue:
                 self.pyro.disconnect( itask.message_queue )
 
+
     def waiting_tasks_ready( self ):
         # waiting tasks can become ready for internal reasons:
         # namely clock-triggers or retry-delay timers
@@ -748,4 +750,14 @@ class pool(object):
                 break
         return result
 
+
+    def add_prereq_to_task( self, id, msg ):
+        for itask in self.get_tasks():
+            if itask.id == id:
+                break
+        else:
+            raise TaskNotFoundError, "Task not present in suite: " + id
+        pp = plain_prerequisites( id )
+        pp.add( message )
+        itask.prerequisites.add_requisites(pp)
 

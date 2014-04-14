@@ -19,7 +19,6 @@
 from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
 from job_submission import jobfile
-from prerequisites.plain_prerequisites import plain_prerequisites
 from suite_host import get_suite_host
 from owner import user
 from shutil import copy as shcopy
@@ -1237,16 +1236,8 @@ class scheduler(object):
 
 
     def command_add_prerequisite( self, task_id, message ):
-        for itask in self.pool.get_tasks():
-            if itask.id == task_id:
-                break
-        else:
-            raise TaskNotFoundError, "Task not present in suite: " + task_id
+        self.pool.add_prereq_to_task( task_id, message )
 
-        pp = plain_prerequisites( task_id )
-        pp.add( message )
-
-        itask.prerequisites.add_requisites(pp)
 
     def command_purge_tree( self, id, stop ):
         # Remove an entire dependancy tree rooted on the target task,
