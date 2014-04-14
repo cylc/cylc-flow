@@ -36,7 +36,6 @@ from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
 from cfgspec.site import sitecfg
 from port_file import port_file, PortFileExistsError, PortFileError
-from broker import broker
 from regpath import RegPath
 from CylcError import TaskNotFoundError, TaskStateError
 from RunEventHandler import RunHandler
@@ -103,9 +102,6 @@ class scheduler(object):
 
         # SUITE HOST
         self.host= get_suite_host()
-
-        # DEPENDENCY BROKER
-        self.broker = broker()
 
         self.lock_acquired = False
 
@@ -928,7 +924,7 @@ class scheduler(object):
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     main_loop_start_time = now()
 
-                self.negotiate()
+                self.pool.match_dependencies()
 
                 ready = self.pool.process()
                 self.process_resolved( ready )
@@ -1293,26 +1289,6 @@ class scheduler(object):
         return self.hold_time
 
 
-    def negotiate( self ):
-        # run time dependency negotiation: tasks attempt to get their
-        # prerequisites satisfied by other tasks' outputs.
-        # BROKERED NEGOTIATION is O(n) in number of tasks.
-
-        self.broker.reset()
-
-        self.broker.register( self.pool.get_tasks() )
-
-        for itask in self.pool.get_tasks():
-            # try to satisfy me (itask) if I'm not already satisfied.
-            if itask.not_fully_satisfied():
-                self.broker.negotiate( itask )
-
-        for itask in self.pool.get_tasks():
-            # (TODO - only used by repeating async tasks now)
-            if not itask.not_fully_satisfied():
-                itask.check_requisites()
-
-
     def force_spawn( self, itask ):
         if itask.state.has_spawned():
             return None
@@ -1558,7 +1534,7 @@ class scheduler(object):
         # trace out the tree of dependent tasks
         something_triggered = True
         while something_triggered:
-            self.negotiate()
+            self.pool.match_dependencies()
             something_triggered = False
             for itask in self.pool.get_tasks():
                 if itask.tag > stop:

@@ -20,6 +20,7 @@ import sys
 import Queue
 from batch_submit import task_batcher
 from task_types import task
+from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 
@@ -58,8 +59,9 @@ class pool(object):
         self.pool_changed = []
         self.rhpool_changed = []
 
-
         self.wireless = wireless
+
+        self.broker = broker()
 
         self.jobqueue = Queue.Queue()
 
@@ -448,4 +450,25 @@ class pool(object):
             if itask.state.is_currently('failed', 'submit-failed' ):
                 return True
         return False
+
+
+    def negotiate( self ):
+        # run time dependency negotiation: tasks attempt to get their
+        # prerequisites satisfied by other tasks' outputs.
+        # BROKERED NEGOTIATION is O(n) in number of tasks.
+
+        self.broker.reset()
+
+        self.broker.register( self.get_tasks() )
+
+        for itask in self.get_tasks():
+            # try to satisfy itask if not already satisfied.
+            if itask.not_fully_satisfied():
+                self.broker.negotiate( itask )
+
+        # TODO - RESTORE THE FOLLOWING FOR repeating_async TASKS:
+        #for itask in self.get_tasks():
+        #    if not itask.not_fully_satisfied():
+        #        itask.check_requisites()
+
 
