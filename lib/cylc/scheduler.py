@@ -55,14 +55,6 @@ import subprocess
 from wallclock import now
 from cycling.loader import point
 
-class result:
-    """TODO - GET RID OF THIS - ONLY USED BY INFO COMMANDS"""
-    def __init__( self, success, reason="Action succeeded", value=None ):
-        self.success = success
-        self.reason = reason
-        self.value = value
-
-
 
 class request_handler( threading.Thread ):
     def __init__( self, pyro ):
@@ -164,7 +156,7 @@ class scheduler(object):
     def configure( self ):
         # read-only commands to expose directly to the network
         self.info_commands = {
-                'ping suite'        : self.info_ping,
+                'ping suite'        : self.info_ping_suite,
                 'ping task'         : self.info_ping_task,
                 'suite info'        : self.info_get_suite_info,
                 'task list'         : self.info_get_task_list,
@@ -346,31 +338,21 @@ class scheduler(object):
 
     #_________INFO_COMMANDS_____________________________________________
 
-    def info_ping( self ):
-        return result( True )
+    def info_ping_suite( self ):
+        return True
+
 
     def info_ping_task( self, task_id ):
-        # is this task running at the moment
-        found = False
-        running = False
-        for itask in self.pool.get_tasks():
-            if itask.id == task_id:
-                found = True
-                if itask.state.is_currently('running'):
-                    running = True
-                break
-        if not found:
-            return result( False, "Task not found: " + task_id )
-        elif not running:
-            return result( False, task_id + " is not currently running" )
-        else:
-            return result( True, task_id + " is currently running" )
+        return self.pool.ping_task( task_id )
+
 
     def info_get_suite_info( self ):
         return [ self.config.cfg['title'], user ]
 
+
     def info_get_task_list( self, logit=True ):
         return self.config.get_task_name_list()
+
 
     def info_get_task_info( self, task_names ):
         info = {}
@@ -381,6 +363,7 @@ class scheduler(object):
                 info[ name ] = ['ERROR: no such task type']
         return info
 
+
     def info_get_all_families( self, exclude_root=False ):
         fams = self.config.get_first_parent_descendants().keys()
         if exclude_root:
@@ -388,19 +371,24 @@ class scheduler(object):
         else:
             return fams
 
+
     def info_get_triggering_families( self ):
         return self.config.triggering_families
+
 
     def info_get_first_parent_descendants( self ):
         # families for single-inheritance hierarchy based on first parents
         return deepcopy(self.config.get_first_parent_descendants())
 
+
     def info_do_live_graph_movie( self ):
         return ( self.config.cfg['visualization']['enable live graph movie'], self.suite_dir )
+
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
         return deepcopy(self.config.get_first_parent_ancestors(pruned) )
+
 
     def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):
@@ -408,6 +396,7 @@ class scheduler(object):
                 ungroup_nodes, ungroup_recursive, group_all, ungroup_all), \
                         self.config.suite_polling_tasks, \
                         self.config.leaves, self.config.feet
+
 
     def info_get_task_requisites( self, in_ids ):
         in_ids_real = {}
@@ -539,12 +528,12 @@ class scheduler(object):
             new_level = logging.CRITICAL
         else:
             self.log.warning( "Illegal logging level: " + level )
-            return result( False, "Illegal logging level: " + level)
+            return False, "Illegal logging level: " + level
 
         self.log.setLevel( new_level )
 
         flags.debug = ( level == 'debug' )
-        return result(True, 'OK')
+        return True, 'OK'
 
 
     def command_remove_cycle( self, tag, spawn ):

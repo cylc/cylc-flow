@@ -776,3 +776,20 @@ class pool(object):
                 break
         return res
 
+
+    def ping_task( self, id ):
+        found = False
+        running = False
+        for itask in self.get_tasks():
+            if itask.id == id:
+                found = True
+                if itask.state.is_currently('running'):
+                    running = True
+                break
+        if not found:
+            return False, "task not found"
+        elif not running:
+            return False, "task not running"
+        else:
+            return True, " running"
+
