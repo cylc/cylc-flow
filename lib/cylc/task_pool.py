@@ -710,7 +710,7 @@ class pool(object):
 
 
     def check_task_timers( self ):
-        for itask in self.pool.get_tasks():
+        for itask in self.get_tasks():
             itask.check_timers()
 
 
