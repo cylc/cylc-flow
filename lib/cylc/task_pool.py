@@ -407,3 +407,9 @@ class pool(object):
         return True
 
 
+    def hold_all_tasks( self ):
+        self.log.info( "Holding all waiting or queued tasks now")
+        for itask in self.get_tasks():
+            if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
+                itask.reset_state_held()
+

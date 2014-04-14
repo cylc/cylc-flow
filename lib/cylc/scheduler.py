@@ -1256,12 +1256,7 @@ class scheduler(object):
             self.hold_time = ctime
         else:
             self.hold_suite_now = True
-            self.log.info( "Holding all waiting or queued tasks now")
-            for itask in self.pool.get_tasks():
-                if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
-                    # (not runahead: we don't want these converted to
-                    # held or they'll be released immediately on restart)
-                    itask.reset_state_held()
+            self.pool.hold_all_tasks()
 
     def release_suite( self ):
         if self.hold_suite_now:
