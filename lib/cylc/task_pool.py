@@ -709,6 +709,12 @@ class pool(object):
                 self.remove( itask, 'by request' )
 
 
+    def trigger_tasks( self, ids ):
+        for itask in self.get_tasks():
+            if itask.id in ids:
+                itask.manual_trigger = True
+
+
     def check_task_timers( self ):
         for itask in self.get_tasks():
             itask.check_timers()

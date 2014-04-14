@@ -1190,11 +1190,8 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
+        self.pool.trigger_tasks( task_ids )
 
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                # set manual trigger flag
-                itask.manual_trigger = True
 
     def get_matching_tasks( self, name, is_family=False ):
         """name can be a task or family name, or a regex to match
