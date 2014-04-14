@@ -514,11 +514,8 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
+        self.pool.hold_tasks( task_ids )
 
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
-                    itask.reset_state_held()
 
     def command_hold_suite( self ):
         self.hold_suite()
@@ -550,23 +547,18 @@ class scheduler(object):
         flags.debug = ( level == 'debug' )
         return result(True, 'OK')
 
+
     def command_remove_cycle( self, tag, spawn ):
-        for itask in self.pool.get_tasks():
-            if itask.tag == tag:
-                if spawn:
-                    self.pool.force_spawn( itask )
-                self.pool.remove( itask, 'by request' )
+        self.pool.remove_entire_cycle( tag,spawn )
+
 
     def command_remove_task( self, name, tag, is_family, spawn ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                if spawn:
-                    self.pool.force_spawn( itask )
-                self.pool.remove( itask, 'by request' )
+        self.pool.remove_tasks( task_ids, spawn )
+
 
     def command_insert_task( self, name, tag, is_family, stop_tag ):
         matches = self.get_matching_tasks( name, is_family )

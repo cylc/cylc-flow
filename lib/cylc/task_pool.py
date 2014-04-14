@@ -693,3 +693,19 @@ class pool(object):
                 self.force_spawn(itask)
 
 
+    def remove_entire_cycle( self, tag, spawn ):
+        for itask in self.get_tasks():
+            if itask.tag == tag:
+                if spawn:
+                    self.force_spawn( itask )
+                self.remove( itask, 'by request' )
+
+
+    def remove_tasks( self, ids, spawn ):
+        for itask in self.get_tasks():
+            if itask.id in ids:
+                if spawn:
+                    self.force_spawn( itask )
+                self.remove( itask, 'by request' )
+
+
