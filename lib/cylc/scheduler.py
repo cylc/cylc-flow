@@ -57,12 +57,14 @@ from cycling.loader import point
 
 
 class request_handler( threading.Thread ):
+
     def __init__( self, pyro ):
         threading.Thread.__init__(self)
         self.pyro = pyro
         self.quit = False
         self.log = logging.getLogger( 'main' )
         self.log.info(  str(self.getName()) + " start (Request Handling)")
+
 
     def run( self ):
         while True:
@@ -152,6 +154,7 @@ class scheduler(object):
                 action="store_true", default=False, dest="reftest" )
 
         self.parse_commandline()
+
 
     def configure( self ):
         # read-only commands to expose directly to the network
@@ -298,6 +301,7 @@ class scheduler(object):
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
 
+
     def process_command_queue( self ):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
@@ -326,6 +330,7 @@ class scheduler(object):
                     self.do_process_tasks = True
             queue.task_done()
 
+
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
@@ -335,6 +340,7 @@ class scheduler(object):
             return True
         else:
             return False
+
 
     #_________INFO_COMMANDS_____________________________________________
 
@@ -416,18 +422,22 @@ class scheduler(object):
         self.do_shutdown = 'clean'
         self.threads_stopped = False
 
+
     def command_stop_quickly( self ):
         self.pool.worker.request_stop( empty_before_exit=False )
         self.do_shutdown = 'quick'
         self.threads_stopped = False
+
 
     def command_stop_now( self ):
         self.pool.worker.request_stop( empty_before_exit=False )
         self.do_shutdown = 'now'
         self.threads_stopped = False
 
+
     def command_set_stop_after_tag( self, tag ):
         self.set_stop_ctime( tag )
+
 
     def command_set_stop_after_clock_time( self, arg ):
         # format: YYYY/MM/DD-HH:mm
@@ -436,6 +446,7 @@ class scheduler(object):
         HH,MM = stime.split(':')
         dtime = datetime.datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
         self.set_stop_clock( dtime )
+
 
     def command_set_stop_after_task( self, tid ):
         if tid.is_valid_id():
@@ -465,8 +476,10 @@ class scheduler(object):
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.kill_tasks( task_ids )
 
+
     def command_release_suite( self ):
         self.release_suite()
+
 
     def command_hold_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -479,11 +492,13 @@ class scheduler(object):
     def command_hold_suite( self ):
         self.hold_suite()
 
+
     def command_hold_after_tag( self, tag ):
         """TODO - not currently used, add to the cylc hold command"""
         # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME/TAG VS POINT
         self.hold_suite( tag )
         self.log.info( "The suite will pause when all tasks have passed " + tag )
+
 
     def command_set_verbosity( self, level ):
         # change logging verbosity:
@@ -532,9 +547,11 @@ class scheduler(object):
             if new_task:
                 self.pool.add( new_task )
 
+
     def command_nudge( self ):
         # just to cause the task processing loop to be invoked
         pass
+
 
     def command_reload_suite( self ):
         self.reconfigure()
@@ -549,6 +566,7 @@ class scheduler(object):
         ts = now()
         self.suite_timer_start = ts
         print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", ts.isoformat()
+
 
     def reconfigure( self ):
         print "RELOADING the suite definition"
@@ -583,6 +601,7 @@ class scheduler(object):
         if self.options.genref:
             self.gen_reference_log = self.options.genref
 
+
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir,
@@ -597,6 +616,7 @@ class scheduler(object):
             raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
         except PortFileError,x:
             raise SchedulerError( str(x) )
+
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
@@ -690,6 +710,7 @@ class scheduler(object):
 
             self.log.info( "port:" +  str( self.port ))
 
+
     def configure_suite_environment( self ):
 
         # static cylc and suite-specific variables:
@@ -756,6 +777,7 @@ class scheduler(object):
         for var in cenv:
             os.environ[var] = os.path.expandvars(cenv[var])
 
+
     def configure_reftest( self, recon=False ):
         if self.gen_reference_log:
             self.config.cfg['cylc']['log resolved dependencies'] = True
@@ -784,6 +806,7 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['timeout'] = timeout
             self.config.cfg['cylc']['event hooks']['reset timer'] = False
 
+
     def run_event_handlers( self, name, fg, msg ):
         if self.run_mode != 'live' or \
                 ( self.run_mode == 'simulation' and \
@@ -808,6 +831,7 @@ class scheduler(object):
                         # TODO - this isn't true, it just means the
                         # shutdown handler run successfully:
                         print '\nSUITE REFERENCE TEST PASSED'
+
 
     def run( self ):
 
@@ -946,6 +970,7 @@ class scheduler(object):
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
 
+
     def update_state_summary( self ):
         #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), 
@@ -954,6 +979,7 @@ class scheduler(object):
                 self.will_pause_at(), self.do_shutdown is not None,
                 self.will_stop_at(),  self.pool.runahead_limit)
 
+
     def process_resolved( self, tasks ):
         # process resolved dependencies (what actually triggers off what
         # at run time). Note 'triggered off' means 'prerequisites
@@ -961,6 +987,7 @@ class scheduler(object):
         for itask in tasks:
             if self.config.cfg['cylc']['log resolved dependencies']:
                 itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
+
 
     def check_suite_timer( self ):
         if self.already_timed_out:
@@ -974,6 +1001,7 @@ class scheduler(object):
             self.run_event_handlers( 'timeout', abort, message )
             if self.config.cfg['cylc']['event hooks']['abort on timeout']:
                 raise SchedulerError, 'Abort on suite timeout is set'
+
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
@@ -1020,6 +1048,7 @@ class scheduler(object):
         ##          self.nudge_timer_on = False
 
         return process
+
 
     def shutdown( self, reason='' ):
         msg = "Suite shutting down at " + now().isoformat()
@@ -1084,13 +1113,16 @@ class scheduler(object):
 
         print "DONE" # main thread exit
 
+
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
         self.stop_tag = point(stop_tag)
 
+
     def set_stop_clock( self, dtime ):
         self.log.info( "Setting stop clock time: " + dtime.isoformat() )
         self.stop_clock_time = dtime
+
 
     def set_stop_task( self, taskid ):
         name, tag = TASKID.split(taskid)
@@ -1100,6 +1132,7 @@ class scheduler(object):
         else:
             self.log.warning( "Requested stop task name does not exist: " + name )
 
+
     def hold_suite( self, ctime = None ):
         if ctime:
             self.log.info( "Setting suite hold cycle time: " + ctime )
@@ -1108,12 +1141,14 @@ class scheduler(object):
             self.hold_suite_now = True
             self.pool.hold_all_tasks()
 
+
     def release_suite( self ):
         if self.hold_suite_now:
             self.log.info( "RELEASE: new tasks will be queued when ready")
             self.hold_suite_now = False
             self.hold_time = None
         self.pool.release_all_tasks()
+
 
     def will_stop_at( self ):
         if self.stop_tag:
@@ -1125,13 +1160,16 @@ class scheduler(object):
         else:
             return None
 
+
     def clear_stop_times( self ):
         self.stop_tag = None
         self.stop_clock_time = None
         self.stop_task = None
 
+
     def paused( self ):
         return self.hold_suite_now
+
 
     def stopping( self ):
         if self.stop_tag or self.stop_clock_time:
@@ -1200,100 +1238,8 @@ class scheduler(object):
 
 
     def command_purge_tree( self, id, stop ):
-        # Remove an entire dependancy tree rooted on the target task,
-        # through to the given stop time (inclusive). In general this
-        # involves tasks that do not even exist yet within the pool.
+        self.pool.purge_tree( id, stop )
 
-        # Method: trigger the target task *virtually* (i.e. without
-        # running the real task) by: setting it to the succeeded state,
-        # setting all of its outputs completed, and forcing it to spawn.
-        # (this is equivalent to instantaneous successful completion as
-        # far as cylc is concerned). Then enter the normal dependency
-        # negotation process to trace the downstream effects of this,
-        # also triggering subsequent tasks virtually. Each time a task
-        # triggers mark it as a dependency of the target task for later
-        # deletion (but not immmediate deletion because other downstream
-        # tasks may still trigger off its outputs).  Downstream tasks
-        # (freshly spawned or not) are not triggered if they have passed
-        # the stop time, and the process is stopped is soon as a
-        # dependency negotation round results in no new tasks
-        # triggering.
-
-        # Finally, reset the prerequisites of all tasks spawned during
-        # the purge to unsatisfied, since they may have been satisfied
-        # by the purged tasks in the "virtual" dependency negotiations.
-        # TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
-        # ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
-        # so we should explicitly record the tasks that get satisfied
-        # during the purge.
-
-
-        # Purge is an infrequently used power tool, so print
-        # comprehensive information on what it does to stdout.
-        print
-        print "PURGE ALGORITHM RESULTS:"
-
-        die = []
-        spawn = []
-
-        print 'ROOT TASK:'
-        for itask in self.pool.get_tasks():
-            # Find the target task
-            if itask.id == id:
-                # set it succeeded
-                print '  Setting', itask.id, 'succeeded'
-                itask.reset_state_succeeded(manual=False)
-                # force it to spawn
-                print '  Spawning', itask.id
-                foo = self.pool.force_spawn( itask )
-                if foo:
-                    spawn.append( foo )
-                # mark it for later removal
-                print '  Marking', itask.id, 'for deletion'
-                die.append( itask )
-                break
-
-        print 'VIRTUAL TRIGGERING'
-        # trace out the tree of dependent tasks
-        something_triggered = True
-        while something_triggered:
-            self.pool.match_dependencies()
-            something_triggered = False
-            for itask in self.pool.get_tasks():
-                if itask.tag > stop:
-                    continue
-                if itask.ready_to_run():
-                    something_triggered = True
-                    print '  Triggering', itask.id
-                    itask.reset_state_succeeded(manual=False)
-                    print '  Spawning', itask.id
-                    foo = self.pool.force_spawn( itask )
-                    if foo:
-                        spawn.append( foo )
-                    print '  Marking', itask.id, 'for deletion'
-                    # remove these later (their outputs may still be needed)
-                    die.append( itask )
-                elif itask.suicide_prerequisites.count() > 0:
-                    if itask.suicide_prerequisites.all_satisfied():
-                        print '  Spawning virtually activated suicide task', itask.id
-                        self.pool.force_spawn( itask )
-                        # remove these now (not setting succeeded; outputs not needed)
-                        print '  Suiciding', itask.id, 'now'
-                        self.pool.remove( itask, 'purge' )
-
-        # reset any prerequisites "virtually" satisfied during the purge
-        print 'RESETTING spawned tasks to unsatisified:'
-        for itask in spawn:
-            print '  ', itask.id
-            itask.prerequisites.set_all_unsatisfied()
-
-        # finally, purge all tasks marked as depending on the target
-        print 'REMOVING PURGED TASKS:'
-        for itask in die:
-            print '  ', itask.id
-            self.pool.remove( itask, 'purge' )
-
-        print 'PURGE DONE'
 
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config.cfg['scheduling']['special tasks']['include at start-up']
@@ -1307,6 +1253,7 @@ class scheduler(object):
                     continue
             outlist.append( name )
         return outlist
+
 
     def check_clean_stop_conditions( self ):
         stop = False
@@ -1367,6 +1314,7 @@ class scheduler(object):
 
         return stop
 
+
     def _update_profile_info(self, category, amount, amount_format="%s"):
         # Update the 1, 5, 15 minute dt averages for a given category.
         tnow = time.time()
@@ -1393,6 +1341,7 @@ class scheduler(object):
             output_text += (" %d: " + amount_format) % (
                 minute_num, averages[minute_num])
         self.log.info( output_text )
+
 
     def _update_cpu_usage(self):
         p = subprocess.Popen(["ps", "-o%cpu= ", str(os.getpid())], stdout=subprocess.PIPE)

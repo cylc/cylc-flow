@@ -815,4 +815,99 @@ class pool(object):
             self.log.warning( 'task state info request: task(s) not found' )
         return info
 
+    def purge_tree( self, id, stop ):
+        # Remove an entire dependancy tree rooted on the target task,
+        # through to the given stop time (inclusive). In general this
+        # involves tasks that do not even exist yet within the pool.
+
+        # Method: trigger the target task *virtually* (i.e. without
+        # running the real task) by: setting it to the succeeded state,
+        # setting all of its outputs completed, and forcing it to spawn.
+        # (this is equivalent to instantaneous successful completion as
+        # far as cylc is concerned). Then enter the normal dependency
+        # negotation process to trace the downstream effects of this,
+        # also triggering subsequent tasks virtually. Each time a task
+        # triggers mark it as a dependency of the target task for later
+        # deletion (but not immmediate deletion because other downstream
+        # tasks may still trigger off its outputs).  Downstream tasks
+        # (freshly spawned or not) are not triggered if they have passed
+        # the stop time, and the process is stopped is soon as a
+        # dependency negotation round results in no new tasks
+        # triggering.
+
+        # Finally, reset the prerequisites of all tasks spawned during
+        # the purge to unsatisfied, since they may have been satisfied
+        # by the purged tasks in the "virtual" dependency negotiations.
+        # TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
+        # ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
+        # so we should explicitly record the tasks that get satisfied
+        # during the purge.
+
+
+        # Purge is an infrequently used power tool, so print
+        # comprehensive information on what it does to stdout.
+        print
+        print "PURGE ALGORITHM RESULTS:"
+
+        die = []
+        spawn = []
+
+        print 'ROOT TASK:'
+        for itask in self.get_tasks():
+            # Find the target task
+            if itask.id == id:
+                # set it succeeded
+                print '  Setting', itask.id, 'succeeded'
+                itask.reset_state_succeeded(manual=False)
+                # force it to spawn
+                print '  Spawning', itask.id
+                foo = self.force_spawn( itask )
+                if foo:
+                    spawn.append( foo )
+                # mark it for later removal
+                print '  Marking', itask.id, 'for deletion'
+                die.append( itask )
+                break
+
+        print 'VIRTUAL TRIGGERING'
+        # trace out the tree of dependent tasks
+        something_triggered = True
+        while something_triggered:
+            self.match_dependencies()
+            something_triggered = False
+            for itask in self.get_tasks():
+                if itask.tag > stop:
+                    continue
+                if itask.ready_to_run():
+                    something_triggered = True
+                    print '  Triggering', itask.id
+                    itask.reset_state_succeeded(manual=False)
+                    print '  Spawning', itask.id
+                    foo = self.force_spawn( itask )
+                    if foo:
+                        spawn.append( foo )
+                    print '  Marking', itask.id, 'for deletion'
+                    # remove these later (their outputs may still be needed)
+                    die.append( itask )
+                elif itask.suicide_prerequisites.count() > 0:
+                    if itask.suicide_prerequisites.all_satisfied():
+                        print '  Spawning virtually activated suicide task', itask.id
+                        self.force_spawn( itask )
+                        # remove these now (not setting succeeded; outputs not needed)
+                        print '  Suiciding', itask.id, 'now'
+                        self.remove( itask, 'purge' )
+
+        # reset any prerequisites "virtually" satisfied during the purge
+        print 'RESETTING spawned tasks to unsatisified:'
+        for itask in spawn:
+            print '  ', itask.id
+            itask.prerequisites.set_all_unsatisfied()
+
+        # finally, purge all tasks marked as depending on the target
+        print 'REMOVING PURGED TASKS:'
+        for itask in die:
+            print '  ', itask.id
+            self.remove( itask, 'purge' )
+
+        print 'PURGE DONE'
 
