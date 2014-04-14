@@ -37,7 +37,7 @@ from config import config, SuiteConfigError, TaskNotDefinedError
 from cfgspec.site import sitecfg
 from port_file import port_file, PortFileExistsError, PortFileError
 from regpath import RegPath
-from CylcError import TaskNotFoundError, TaskStateError, SchedulerError
+from CylcError import TaskNotFoundError, SchedulerError
 from RunEventHandler import RunHandler
 from LogDiagnosis import LogSpec
 from suite_state_dumping import dumper
@@ -1254,14 +1254,11 @@ class scheduler(object):
         return matches
 
     def command_reset_task_state( self, name, tag, state, is_family ):
-        # we only allow resetting to a subset of available task states
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
-            raise TaskStateError, 'Illegal reset state: ' + state
-
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
+        self.pool.rest_task_states( task_ids, state )
 
         tasks = []
         for itask in self.pool.get_tasks():

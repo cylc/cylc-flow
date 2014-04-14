@@ -650,3 +650,33 @@ class pool(object):
         for itask in spent:
             self.remove( itask )
 
+
+    def reset_task_states( self, ids, state ):
+        # we only allow resetting to a subset of available task states
+        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
+            raise SchedulerError, 'Illegal reset state: ' + state
+
+        tasks = []
+        for itask in self.get_tasks():
+            if itask.id in ids:
+                tasks.append( itask )
+
+        for itask in tasks:
+            if itask.state.is_currently( 'ready' ):
+                # Currently can't reset a 'ready' task in the job submission thread!
+                self.log.warning( "A 'ready' task cannot be reset: " + itask.id )
+            itask.log( "NORMAL", "resetting to " + state + " state" )
+            if state == 'ready':
+                itask.reset_state_ready()
+            elif state == 'waiting':
+                itask.reset_state_waiting()
+            elif state == 'succeeded':
+                itask.reset_state_succeeded()
+            elif state == 'failed':
+                itask.reset_state_failed()
+            elif state == 'held':
+                itask.reset_state_held()
+            elif state == 'spawn':
+                self.force_spawn(itask)
+
+
