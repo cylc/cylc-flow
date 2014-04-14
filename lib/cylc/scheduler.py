@@ -270,7 +270,7 @@ class scheduler(object):
         self.state_dumper.wireless = self.wireless
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
-        self.pool = pool( self.suite, self.stop_tag, self.config, self.wireless, self.pyro, self.log, self.run_mode )
+        self.pool = pool( self.suite, self.db, self.stop_tag, self.config, self.wireless, self.pyro, self.log, self.run_mode )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
@@ -945,62 +945,8 @@ class scheduler(object):
                     seconds = delta.seconds + float(delta.microseconds)/10**6
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            state_recorders = []
-            state_updaters = []
-            event_recorders = []
-            other = []
+            self.pool.process_queued_task_messages()
 
-            # process queued task messages
-            for itask in self.pool.get_tasks():
-                itask.process_incoming_messages()
-                # if incoming messages have resulted in new database operations grab them
-                if itask.db_items:
-                    opers = itask.get_db_ops()
-                    for oper in opers:
-                        if isinstance(oper, cylc.rundb.UpdateObject):
-                            state_updaters += [oper]
-                        elif isinstance(oper, cylc.rundb.RecordStateObject):
-                            state_recorders += [oper]
-                        elif isinstance(oper, cylc.rundb.RecordEventObject):
-                            event_recorders += [oper]
-                        else:
-                            other += [oper]
-
-            #precedence is record states > update_states > record_events > anything_else
-            db_ops = state_recorders + state_updaters + event_recorders + other
-            # compact the set of operations
-            if len(db_ops) > 1:
-                db_opers = [db_ops[0]]
-                for i in range(1,len(db_ops)):
-                    if db_opers[-1].s_fmt == db_ops[i].s_fmt:
-                        if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
-                            db_opers[-1].add_oper(db_ops[i])
-                        else:
-                            new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
-                            new_oper.add_oper(db_ops[i])
-                            db_opers.pop(-1)
-                            db_opers += [new_oper]
-                    else:
-                        db_opers += [db_ops[i]]
-            else:
-                db_opers = db_ops
-
-            # record any broadcast settings to be dumped out
-            if self.wireless:
-                if self.wireless.new_settings:
-                    db_ops = self.wireless.get_db_ops()
-                    for d in db_ops:
-                        db_opers += [d]
-
-            for d in db_opers:
-                if self.db.c.is_alive():
-                    self.db.run_db_op(d)
-                elif self.db.c.exception:
-                    raise self.db.c.exception
-                else:
-                    raise SchedulerError( 'An unexpected error occurred while writing to the database' )
-
-            # process queued commands
             self.process_command_queue()
 
             #print '<Pyro'

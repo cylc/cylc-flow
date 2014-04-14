@@ -23,6 +23,7 @@ from task_types import task
 from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
+import cylc.rundb
 
 # All new task proxies (including spawned ones) are added first to the
 # runahead pool, which does not participate in dependency matching and 
@@ -39,13 +40,14 @@ from Pyro.errors import NamingError, ProtocolError
 
 
 class pool(object):
-    def __init__( self, suite, stop_tag, config, wireless, pyro, log, run_mode ):
+    def __init__( self, suite, db, stop_tag, config, wireless, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
         self.stop_tag = stop_tag
         self.reconfiguring = False
+        self.db = db
 
         self.runahead_limit = config.get_runahead_limit()
 
@@ -452,7 +454,7 @@ class pool(object):
         return False
 
 
-    def negotiate( self ):
+    def match_dependencies( self ):
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' outputs.
         # BROKERED NEGOTIATION is O(n) in number of tasks.
@@ -471,4 +473,59 @@ class pool(object):
         #    if not itask.not_fully_satisfied():
         #        itask.check_requisites()
 
+
+    def process_queued_task_messages( self ):
+        state_recorders = []
+        state_updaters = []
+        event_recorders = []
+        other = []
+
+        for itask in self.get_tasks():
+            itask.process_incoming_messages()
+            # if incoming messages have resulted in new database operations grab them
+            if itask.db_items:
+                opers = itask.get_db_ops()
+                for oper in opers:
+                    if isinstance(oper, cylc.rundb.UpdateObject):
+                        state_updaters += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordStateObject):
+                        state_recorders += [oper]
+                    elif isinstance(oper, cylc.rundb.RecordEventObject):
+                        event_recorders += [oper]
+                    else:
+                        other += [oper]
+
+        #precedence is record states > update_states > record_events > anything_else
+        db_ops = state_recorders + state_updaters + event_recorders + other
+        # compact the set of operations
+        if len(db_ops) > 1:
+            db_opers = [db_ops[0]]
+            for i in range(1,len(db_ops)):
+                if db_opers[-1].s_fmt == db_ops[i].s_fmt:
+                    if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
+                        db_opers[-1].add_oper(db_ops[i])
+                    else:
+                        new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
+                        new_oper.add_oper(db_ops[i])
+                        db_opers.pop(-1)
+                        db_opers += [new_oper]
+                else:
+                    db_opers += [db_ops[i]]
+        else:
+            db_opers = db_ops
+
+        # record any broadcast settings to be dumped out
+        if self.wireless:
+            if self.wireless.new_settings:
+                db_ops = self.wireless.get_db_ops()
+                for d in db_ops:
+                    db_opers += [d]
+
+        for d in db_opers:
+            if self.db.c.is_alive():
+                self.db.run_db_op(d)
+            elif self.db.c.exception:
+                raise self.db.c.exception
+            else:
+                raise SchedulerError( 'An unexpected error occurred while writing to the database' )
 
