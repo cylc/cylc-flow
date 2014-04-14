@@ -904,7 +904,7 @@ class scheduler(object):
 
                 self.pool.spawn_tasks()
 
-                self.remove_spent_tasks()
+                self.pool.remove_spent_tasks()
 
                 self.state_dumper.dump()
 
@@ -1203,88 +1203,10 @@ class scheduler(object):
         else:
             return False
 
+
     def will_pause_at( self ):
         return self.hold_time
 
-
-
-    def remove_spent_tasks( self ):
-        """Remove tasks no longer needed to satisfy others' prerequisites."""
-        self.remove_suiciding_tasks()
-        self.remove_spent_cycling_tasks()
-        self.remove_spent_async_tasks()
-
-
-    def remove_suiciding_tasks( self ):
-        """Remove any tasks that have suicide-triggered."""
-        for itask in self.pool.get_tasks():
-            if itask.suicide_prerequisites.count() != 0:
-                if itask.suicide_prerequisites.all_satisfied():
-                    if itask.state.is_currently('ready', 'submitted', 'running'):
-                        itask.log( 'WARNING', 'suiciding while active' )
-                    else:
-                        itask.log( 'NORMAL', 'suiciding' )
-                    self.pool.force_spawn( itask )
-                    self.pool.remove( itask, 'suicide' )
-
-
-    def remove_spent_cycling_tasks( self ):
-        """
-        Remove cycling tasks no longer needed to satisfy others' prerequisites.
-        Each task proxy knows its "cleanup cutoff" from the graph. For example:
-          graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
-        implies foo's cutoff is T+12: if foo has succeeded and spawned,
-        it can be removed if no unsatisfied task proxy exists with
-        T<=T+12. Note this only uses information about the cycle time of
-        downstream dependents - if we used specific IDs instead spent
-        tasks could be identified and removed even earlier).
-        """
-
-        # first find the cycle time of the earliest unsatisfied task
-        cutoff = None
-        for itask in self.pool.get_tasks():
-            if not itask.is_cycling:
-                continue
-            if itask.state.is_currently('waiting', 'held' ):
-                if not cutoff or itask.c_time < cutoff:
-                    cutoff = itask.c_time
-            elif not itask.has_spawned():
-                nxt = itask.next_tag()
-                if nxt and ( not cutoff or nxt < cutoff ):
-                    cutoff = nxt
-
-        # now check each succeeded task against the cutoff
-        spent = []
-        for itask in self.pool.get_tasks():
-            if not itask.state.is_currently('succeeded') or \
-                    not itask.is_cycling or \
-                    not itask.state.has_spawned():
-                continue
-            if cutoff and cutoff > itask.cleanup_cutoff:
-                spent.append(itask)
-        for itask in spent:
-            self.pool.remove( itask )
-
-
-    def remove_spent_async_tasks( self ):
-        cutoff = 0
-        for itask in self.pool.get_tasks():
-            if itask.is_cycling:
-                continue
-            if itask.is_daemon:
-                # avoid daemon tasks
-                continue
-            if not itask.done():
-                if itask.tag > cutoff:
-                    cutoff = itask.tag
-        spent = []
-        for itask in self.pool.get_tasks():
-            if itask.is_cycling:
-                continue
-            if itask.done() and itask.tag < cutoff:
-                spent.append( itask )
-        for itask in spent:
-            self.pool.remove( itask )
 
     def command_trigger_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )

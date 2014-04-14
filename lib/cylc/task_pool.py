@@ -76,7 +76,7 @@ class pool(object):
                 self.wireless, self.run_mode )
 
         self.orphans = []
-        self.task_name_list = self.config.get_task_name_list()
+        self.task_name_list = config.get_task_name_list()
 
         self.worker.start()
 
@@ -385,7 +385,7 @@ class pool(object):
                     # orphaned task
                     if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
                         # if not started running yet, remove it.
-                        self.pool.remove( itask, '(task orphaned by suite reload)' )
+                        self.remove( itask, '(task orphaned by suite reload)' )
                     else:
                         # set spawned already so it won't carry on into the future
                         itask.state.set_spawned()
@@ -401,8 +401,8 @@ class pool(object):
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
-                    self.pool.remove( itask, '(suite definition reload)' )
-                    self.pool.add( new_task )
+                    self.remove( itask, '(suite definition reload)' )
+                    self.add( new_task )
 
         self.reconfiguring = found
 
@@ -414,19 +414,20 @@ class pool(object):
         return True
 
 
-    def release_tasks( ids ):
+    def release_tasks( self,ids ):
         for itask in self.get_tasks():
             if itask.id in ids and itask.state.is_currently('held'):
                 itask.reset_state_waiting()
 
 
-    def poll_tasks( ids ):
+    def poll_tasks( self,ids ):
         for itask in self.get_tasks():
             if itask.id in ids:
                 # (state check done in task module)
                 itask.poll()
 
-    def kill_tasks( ids ):
+
+    def kill_tasks( self,ids ):
         for itask in self.get_tasks():
             if itask.id in ids:
                 # (state check done in task module)
@@ -553,13 +554,13 @@ class pool(object):
 
 
     def force_spawn( self, itask ):
-        # TODO - THIS SHOULD BE IN task.py
+        # TODO - THIS SHOULD BE IN task.py?
         if itask.state.has_spawned():
             return None
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if new_task and self.pool.add( new_task ):
+        if new_task and self.add( new_task ):
             return new_task
         else:
             return None
@@ -569,4 +570,83 @@ class pool(object):
         for itask in self.get_tasks():
             if itask.ready_to_spawn():
                 self.force_spawn( itask )
+
+
+    def remove_spent_tasks( self ):
+        """Remove tasks no longer needed to satisfy others' prerequisites."""
+        self.remove_suiciding_tasks()
+        self.remove_spent_cycling_tasks()
+        self.remove_spent_async_tasks()
+
+
+    def remove_suiciding_tasks( self ):
+        """Remove any tasks that have suicide-triggered."""
+        for itask in self.get_tasks():
+            if itask.suicide_prerequisites.count() != 0:
+                if itask.suicide_prerequisites.all_satisfied():
+                    if itask.state.is_currently('ready', 'submitted', 'running'):
+                        itask.log( 'WARNING', 'suiciding while active' )
+                    else:
+                        itask.log( 'NORMAL', 'suiciding' )
+                    self.force_spawn( itask )
+                    self.remove( itask, 'suicide' )
+
+
+    def remove_spent_cycling_tasks( self ):
+        """
+        Remove cycling tasks no longer needed to satisfy others' prerequisites.
+        Each task proxy knows its "cleanup cutoff" from the graph. For example:
+          graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
+        implies foo's cutoff is T+12: if foo has succeeded and spawned,
+        it can be removed if no unsatisfied task proxy exists with
+        T<=T+12. Note this only uses information about the cycle time of
+        downstream dependents - if we used specific IDs instead spent
+        tasks could be identified and removed even earlier).
+        """
+
+        # first find the cycle time of the earliest unsatisfied task
+        cutoff = None
+        for itask in self.get_tasks():
+            if not itask.is_cycling:
+                continue
+            if itask.state.is_currently('waiting', 'held' ):
+                if not cutoff or itask.c_time < cutoff:
+                    cutoff = itask.c_time
+            elif not itask.has_spawned():
+                nxt = itask.next_tag()
+                if nxt and ( not cutoff or nxt < cutoff ):
+                    cutoff = nxt
+
+        # now check each succeeded task against the cutoff
+        spent = []
+        for itask in self.get_tasks():
+            if not itask.state.is_currently('succeeded') or \
+                    not itask.is_cycling or \
+                    not itask.state.has_spawned():
+                continue
+            if cutoff and cutoff > itask.cleanup_cutoff:
+                spent.append(itask)
+        for itask in spent:
+            self.remove( itask )
+
+
+    def remove_spent_async_tasks( self ):
+        cutoff = 0
+        for itask in self.get_tasks():
+            if itask.is_cycling:
+                continue
+            if itask.is_daemon:
+                # avoid daemon tasks
+                continue
+            if not itask.done():
+                if itask.tag > cutoff:
+                    cutoff = itask.tag
+        spent = []
+        for itask in self.get_tasks():
+            if itask.is_cycling:
+                continue
+            if itask.done() and itask.tag < cutoff:
+                spent.append( itask )
+        for itask in spent:
+            self.remove( itask )
 
