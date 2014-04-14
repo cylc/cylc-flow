@@ -936,8 +936,7 @@ class scheduler(object):
 
             # check submission and execution timeout and polling timers
             if self.run_mode != 'simulation':
-                for itask in self.pool.get_tasks():
-                    itask.check_timers()
+                self.pool.check_task_timers()
 
             if not self.do_shutdown:
                 # check if the suite should shut down automatically now

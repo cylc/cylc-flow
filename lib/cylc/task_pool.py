@@ -709,3 +709,8 @@ class pool(object):
                 self.remove( itask, 'by request' )
 
 
+    def check_task_timers( self ):
+        for itask in self.pool.get_tasks():
+            itask.check_timers()
+
+
