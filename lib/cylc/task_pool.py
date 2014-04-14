@@ -399,3 +399,11 @@ class pool(object):
 
         self.reconfiguring = found
 
+
+    def no_active_tasks( self ):
+        for itask in self.get_tasks():
+            if itask.state.is_currently('running', 'submitted'):
+                return False
+        return True
+
+

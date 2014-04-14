@@ -1053,7 +1053,7 @@ class scheduler(object):
                     self.pollkq_worker.request_stop( empty_before_exit=False )
                 elif not self.threads_stopped and \
                         ( self.do_shutdown == 'quick' or \
-                        self.do_shutdown == 'clean' and self.no_active_tasks() ):
+                        self.do_shutdown == 'clean' and self.pool.no_active_tasks() ):
                     self.threads_stopped = True
                     # In a clean shutdown we don't stop the threads
                     # while there are still active tasks, because they
@@ -1177,7 +1177,7 @@ class scheduler(object):
         print msg
         if getattr(self, "log", None) is not None:
             self.log.info( msg )
-            if not self.no_active_tasks():
+            if not self.pool.no_active_tasks():
                 self.log.warning( "some active tasks will be orphaned" )
 
         if self.pool:
@@ -1311,12 +1311,6 @@ class scheduler(object):
 
     def will_pause_at( self ):
         return self.hold_time
-
-    def no_active_tasks( self ):
-        for itask in self.pool.get_tasks():
-            if itask.state.is_currently('running', 'submitted'):
-                return False
-        return True
 
     def get_failed_tasks( self ):
         failed = []
