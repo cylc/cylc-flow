@@ -1019,13 +1019,13 @@ class scheduler(object):
             # hard abort? (TODO - will a normal shutdown suffice here?)
             # 1) "abort if any task fails" is set, and one or more tasks failed
             if self.config.cfg['cylc']['abort if any task fails']:
-                if self.any_task_failed():
+                if self.pool.any_task_failed():
                     raise SchedulerError( 'One or more tasks failed and "abort if any task fails" is set' )
 
             # 4) the run is a reference test, and any disallowed failures occured
             if self.reference_test_mode:
                 if len( self.ref_test_allowed_failures ) > 0:
-                    for itask in self.get_failed_tasks():
+                    for itask in self.pool.get_failed_tasks():
                         if itask.id not in self.ref_test_allowed_failures:
                             print >> sys.stderr, itask.id
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
@@ -1292,18 +1292,6 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def get_failed_tasks( self ):
-        failed = []
-        for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed', 'submit-failed' ):
-                failed.append( itask )
-        return failed
-
-    def any_task_failed( self ):
-        for itask in self.pool.get_tasks():
-            if itask.state.is_currently('failed', 'submit-failed' ):
-                return True
-        return False
 
     def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their

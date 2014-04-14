@@ -434,3 +434,18 @@ class pool(object):
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
         #    self.stop_tag = None
 
+
+    def get_failed_tasks( self ):
+        failed = []
+        for itask in self.get_tasks():
+            if itask.state.is_currently('failed', 'submit-failed' ):
+                failed.append( itask )
+        return failed
+
+
+    def any_task_failed( self ):
+        for itask in self.get_tasks():
+            if itask.state.is_currently('failed', 'submit-failed' ):
+                return True
+        return False
+
