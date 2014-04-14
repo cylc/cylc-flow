@@ -399,42 +399,13 @@ class scheduler(object):
 
 
     def info_get_task_requisites( self, in_ids ):
-        in_ids_real = {}
-        in_ids_back = {}
-        for in_id in in_ids:
-            if not self._task_type_exists( in_id ):
+        ids = []
+        for id in in_ids:
+            if not self._task_type_exists( id ):
                 continue
-            real_id = in_id
-            in_ids_real[ in_id ] = real_id
-            in_ids_back[ real_id ] = in_id
+            ids.append( id )
+        return self.pool.get_task_requisites( ids )
 
-        dump = {}
-        found = False
-        for itask in self.pool.get_tasks():
-            # loop through the suite task list
-            task_id = itask.id
-            if task_id in in_ids_back:
-                found = True
-                extra_info = {}
-                # extra info for clocktriggered tasks
-                try:
-                    extra_info[ 'Delayed start time reached' ] = itask.start_time_reached()
-                    extra_info[ 'Triggers at' ] = 'T+' + str(itask.real_time_delay) + ' hours'
-                except AttributeError:
-                    # not a clocktriggered task
-                    pass
-                # extra info for cycling tasks
-                try:
-                    extra_info[ 'Valid cycles' ] = itask.valid_hours
-                except AttributeError:
-                    # not a cycling task
-                    pass
-
-                dump[ in_ids_back[ task_id ] ] = [ itask.prerequisites.dump(), itask.outputs.dump(), extra_info ]
-        if not found:
-            self.log.warning( 'task state info request: tasks not found' )
-        else:
-            return dump
 
      # CONTROL_COMMANDS__________________________________________________
 

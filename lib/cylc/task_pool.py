@@ -793,3 +793,26 @@ class pool(object):
         else:
             return True, " running"
 
+
+    def get_task_requisites( self, ids ):
+        info = {}
+        found = False
+        for itask in self.get_tasks():
+            id = itask.id
+            if id in ids:
+                found = True
+                extra_info = {}
+                # extra info for clocktriggered tasks
+                try:
+                    extra_info[ 'Delayed start time reached' ] = itask.start_time_reached()
+                    extra_info[ 'Triggers at' ] = 'T+' + str(itask.real_time_delay) + ' hours'
+                except AttributeError:
+                    # not a clocktriggered task
+                    pass
+
+                info[ id ] = [ itask.prerequisites.dump(), itask.outputs.dump(), extra_info ]
+        if not found:
+            self.log.warning( 'task state info request: task(s) not found' )
+        return info
+
+

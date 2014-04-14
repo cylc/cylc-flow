@@ -35,7 +35,7 @@ Interrogate a running suite for its title and task list, task
 descriptions, current state of task prerequisites and outputs and, for
 clock-triggered tasks, whether or not the trigger time is up yet.""",
     pyro=True, noforce=True,
-    argdoc=[('REG', 'Suite name'), ('[NAME['+TaskID.DELIM+'TAG]]', 'Task name or ID')])
+    argdoc=[('REG', 'Suite name'), ('[NAME['+cylc.TaskID.DELIM+'TAG]]', 'Task name or ID')])
 
 (options, args) = parser.parse_args()
 
@@ -47,15 +47,16 @@ prnt_id = False
 
 if len(args) == 2:
     target = args[1]
-    if not TaskID.is_valid_id( target ):
-        # must be a task name
+    try:
+        name, tag = cylc.TaskID.split( target )
+    except ValueError:
+        # just a task name
         prnt_name = True
         name = target
     else:
         # task ID
         prnt_id = True
-        task_id = tid.getstr()
-        name, junk = tid.splitstr()
+        task_id = target
 else:
     prnt_suite = True
 
@@ -91,7 +92,7 @@ if prnt_name or prnt_id:
     idx = name
     if prnt_id:
         idx = task_id
-    print '\nTASK ' + idx + ' in suite ' + suite + ':'
+    print 'TASK ' + idx + ' in suite ' + suite + ':'
     for name in info.keys():
         print ' ', info[name]
 
@@ -105,13 +106,13 @@ if prnt_id:
         sys.exit(x)
 
     if not result or task_id not in result:
-        print "\nTask " + task_id + " not found in " + suite
+        print "Task " + task_id + " not found in " + suite
         sys.exit(1)
 
     for task_id in result.keys():
         [ pre, out, extra_info ] = result[ task_id ]
 
-        print '\nPREREQUISITES (- => not satisfied):'
+        print 'PREREQUISITES (- => not satisfied):'
         if len( pre ) == 0:
             print '  (None)'
         for item in pre:
@@ -122,7 +123,7 @@ if prnt_id:
                 descr = '  - '
             print descr + msg
 
-        print '\nOUTPUTS (- => not completed):'
+        print 'OUTPUTS (- => not completed):'
         if len( out ) == 0:
             print '  (None)'
         for item in out:
@@ -134,7 +135,7 @@ if prnt_id:
             print descr + msg
 
         if len( extra_info.keys() ) > 0:
-            print '\nOther:'
+            print 'Other:'
             for item in extra_info:
                 print '  o ', item, '...', extra_info[ item ]
         print """
