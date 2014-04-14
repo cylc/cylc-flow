@@ -427,6 +427,12 @@ class pool(object):
                 itask.poll()
 
 
+    def kill_all_tasks( self ):
+        for itask in self.get_tasks():
+            if itask.state.is_currently( 'submitted', 'running' ):
+                itask.kill()
+
+
     def kill_tasks( self,ids ):
         for itask in self.get_tasks():
             if itask.id in ids:

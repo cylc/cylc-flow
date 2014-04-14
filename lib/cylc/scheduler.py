@@ -453,9 +453,7 @@ class scheduler(object):
     def command_stop_cleanly( self, kill_first=False ):
         self.pool.worker.request_stop( empty_before_exit=False )
         if kill_first:
-            for itask in self.pool.get_tasks():
-                if itask.state.is_currently( 'submitted', 'running' ):
-                    itask.kill()
+            self.pool.kill_all_tasks()
         self.do_shutdown = 'clean'
         self.threads_stopped = False
 
@@ -1253,6 +1251,7 @@ class scheduler(object):
 
         return matches
 
+
     def command_reset_task_state( self, name, tag, state, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
@@ -1260,28 +1259,6 @@ class scheduler(object):
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.rest_task_states( task_ids, state )
 
-        tasks = []
-        for itask in self.pool.get_tasks():
-            if itask.id in task_ids:
-                tasks.append( itask )
-
-        for itask in tasks:
-            if itask.state.is_currently( 'ready' ):
-                # Currently can't reset a 'ready' task in the job submission thread!
-                self.log.warning( "A 'ready' task cannot be reset: " + itask.id )
-            itask.log( "NORMAL", "resetting to " + state + " state" )
-            if state == 'ready':
-                itask.reset_state_ready()
-            elif state == 'waiting':
-                itask.reset_state_waiting()
-            elif state == 'succeeded':
-                itask.reset_state_succeeded()
-            elif state == 'failed':
-                itask.reset_state_failed()
-            elif state == 'held':
-                itask.reset_state_held()
-            elif state == 'spawn':
-                self.pool.force_spawn(itask)
 
     def command_add_prerequisite( self, task_id, message ):
         # find the task to reset
