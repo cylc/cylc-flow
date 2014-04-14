@@ -112,8 +112,6 @@ class scheduler(object):
         self._profile_amounts = {}
         self._profile_update_times = {}
 
-        self.held_future_tasks = []
-
         # provide a variable to allow persistance of reference test settings
         # across reloads
         self.reference_test_mode = False
@@ -923,7 +921,7 @@ class scheduler(object):
 
             if not self.do_shutdown:
                 # check if the suite should shut down automatically now
-                if self.check_clean_stop_conditions():
+                if self.check_stop_clock() or self.check_stop_task() or self.pool.check_stop():
                     self.command_stop_cleanly()
 
             if self.do_shutdown:
@@ -1255,64 +1253,20 @@ class scheduler(object):
         return outlist
 
 
-    def check_clean_stop_conditions( self ):
-        stop = False
-
-        if self.stop_clock_time:
-            if now() > self.stop_clock_time:
-                self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
-                self.stop_clock_time = None
-                stop = True
-
-        elif self.stop_task:
-            stop = self.pool.has_task_succeeded( self.stop_task )
-
+    def check_stop_clock( self ):
+        if self.stop_clock_time and now() > self.stop_clock_time:
+            self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
+            self.stop_clock_time = None
+            return True
         else:
-            # all cycling tasks are held past the suite stop cycle and
-            # all async tasks have succeeded.
-            stop = True
+            return False
 
-            i_cyc = False
-            i_asy = False
-            i_fut = False
-            for itask in self.pool.get_tasks():
-                if itask.is_cycling:
-                    i_cyc = True
-                    # don't stop if a cycling task has not passed the stop cycle
-                    if self.stop_tag:
-                        if itask.c_time <= self.stop_tag:
-                            if itask.state.is_currently('succeeded') and itask.has_spawned():
-                                # ignore spawned succeeded tasks - their successors matter
-                                pass
-                            elif itask.id in self.held_future_tasks:
-                                # unless held because a future trigger reaches beyond the stop cycle
-                                i_fut = True
-                                pass
-                            else:
-                                stop = False
-                                break
-                    else:
-                        # don't stop if there are cycling tasks and no stop cycle set
-                        stop = False
-                        break
-                else:
-                    i_asy = True
-                    # don't stop if an async task has not succeeded yet
-                    if not itask.state.is_currently('succeeded'):
-                        stop = False
-                        break
-            if stop:
-                msg = "Stopping: "
-                if i_fut:
-                    msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_tag)
-                if i_cyc:
-                    msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_tag)
-                if i_asy:
-                    msg += "\n  + all non-cycling tasks have succeeded"
-                print msg
-                self.log.info( msg )
 
-        return stop
+    def check_stop_task( self ):
+        if self.stop_task:
+            return self.pool.has_task_succeeded( self.stop_task )
+        else:
+            return False
 
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
@@ -1351,3 +1305,4 @@ class scheduler(object):
             self.log.warning( "Cannot get CPU % statistics: %s" % e )
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
+

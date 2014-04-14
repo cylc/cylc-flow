@@ -44,6 +44,7 @@ from broadcast import broadcast
 
 
 class pool(object):
+
     def __init__( self, suite, db, stop_tag, config, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
@@ -64,6 +65,8 @@ class pool(object):
         self.rhpool_list = []
         self.pool_changed = []
         self.rhpool_changed = []
+
+        self.held_future_tasks = []
 
         self.wireless = broadcast( config.get_linearized_ancestors() )
         self.pyro.connect( self.wireless, 'broadcast_receiver')
@@ -293,6 +296,7 @@ class pool(object):
 
         return readytogo
 
+
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
         if not self.stop_tag:
@@ -335,7 +339,6 @@ class pool(object):
         if cycles:
             maxc = max(cycles)
         return maxc
-
 
 
     def reconfigure( self, config ):
@@ -454,6 +457,7 @@ class pool(object):
         for itask in self.get_tasks():
             if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                 itask.reset_state_held()
+
 
     def release_all_tasks( self ):
         # TODO ISO - check that we're not still holding tasks beyond suite
@@ -722,6 +726,52 @@ class pool(object):
             itask.check_timers()
 
 
+    def check_stop( self ):
+        stop = True
+
+        i_cyc = False
+        i_asy = False
+        i_fut = False
+        for itask in self.get_tasks():
+            if itask.is_cycling:
+                i_cyc = True
+                # don't stop if a cycling task has not passed the stop cycle
+                if self.stop_tag:
+                    if itask.c_time <= self.stop_tag:
+                        if itask.state.is_currently('succeeded') and itask.has_spawned():
+                            # ignore spawned succeeded tasks - their successors matter
+                            pass
+                        elif itask.id in self.held_future_tasks:
+                            # unless held because a future trigger reaches beyond the stop cycle
+                            i_fut = True
+                            pass
+                        else:
+                            stop = False
+                            break
+                else:
+                    # don't stop if there are cycling tasks and no stop cycle set
+                    stop = False
+                    break
+            else:
+                i_asy = True
+                # don't stop if an async task has not succeeded yet
+                if not itask.state.is_currently('succeeded'):
+                    stop = False
+                    break
+        if stop:
+            msg = "Stopping: "
+            if i_fut:
+                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_tag)
+            if i_cyc:
+                msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_tag)
+            if i_asy:
+                msg += "\n  + all non-cycling tasks have succeeded"
+            print msg
+            self.log.info( msg )
+
+        return stop
+
+
     def sim_time_check( self ):
         sim_task_succeeded = False
         for itask in self.get_tasks():
@@ -814,6 +864,7 @@ class pool(object):
         if not found:
             self.log.warning( 'task state info request: task(s) not found' )
         return info
+
 
     def purge_tree( self, id, stop ):
         # Remove an entire dependancy tree rooted on the target task,
