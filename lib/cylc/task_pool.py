@@ -714,3 +714,13 @@ class pool(object):
             itask.check_timers()
 
 
+    def sim_time_check( self ):
+        sim_task_succeeded = False
+        for itask in self.get_tasks():
+            if itask.state.is_currently('running'):
+                # set sim-mode tasks to "succeeded" after their alotted run time
+                if itask.sim_time_check():
+                    sim_task_succeeded = True
+        return sim_task_succeeded
+
+

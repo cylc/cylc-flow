@@ -1037,12 +1037,7 @@ class scheduler(object):
             process = True
 
         if self.run_mode == 'simulation':
-            for itask in self.pool.get_tasks():
-                if itask.state.is_currently('running'):
-                    # set sim-mode tasks to "succeeded" after their
-                    # alotted run time
-                    if itask.sim_time_check():
-                        process = True
+            self.pool.sim_time_check()
 
         ##if not process:
         ##    # If we neglect to set flags.pflag on some event that
