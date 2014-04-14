@@ -325,9 +325,6 @@ class scheduler(object):
         if self.config.cfg['cylc']['event hooks']['timeout']:
             self.set_suite_timer()
 
-        self.orphans = []
-        self.reconfiguring = False
-
         self.nudge_timer_start = None
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
@@ -637,17 +634,7 @@ class scheduler(object):
 
     def reconfigure( self ):
         print "RELOADING the suite definition"
-        old_task_list = self.config.get_task_name_list()
         self.configure_suite( reconfigure=True )
-        new_task_list = self.config.get_task_name_list()
-
-        # find any old tasks that have been removed from the suite
-        self.orphans = []
-        for name in old_task_list:
-            if name not in new_task_list:
-                self.orphans.append(name)
-        # adjust the new suite config to handle the orphans
-        self.config.adopt_orphans( self.orphans )
 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
@@ -655,9 +642,6 @@ class scheduler(object):
 
         self.suite_state.config = self.config
         self.configure_suite_environment()
-        self.reconfiguring = True
-        for itask in self.pool.get_tasks():
-            itask.reconfigure_me = True
 
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
@@ -665,43 +649,6 @@ class scheduler(object):
         # update state dumper state
         self.state_dumper.set_cts( self.start_tag, self.stop_tag )
 
-    def reload_taskdefs( self ):
-        found = False
-        for itask in self.pool.get_tasks(all=True):
-            if itask.state.is_currently('running'):
-                # do not reload running tasks as some internal state
-                # (e.g. timers) not easily cloneable at the moment,
-                # and it is possible to make changes to the task config
-                # that would be incompatible with the running task.
-                if itask.reconfigure_me:
-                    found = True
-                continue
-            if itask.reconfigure_me:
-                itask.reconfigure_me = False
-                if itask.name in self.orphans:
-                    # orphaned task
-                    if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
-                        # if not started running yet, remove it.
-                        self.pool.remove( itask, '(task orphaned by suite reload)' )
-                    else:
-                        # set spawned already so it won't carry on into the future
-                        itask.state.set_spawned()
-                        self.log.warning( 'orphaned task will not continue: ' + itask.id  )
-                else:
-                    self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
-                    # set reloaded task's spawn status
-                    if itask.state.has_spawned():
-                        new_task.state.set_spawned()
-                    else:
-                        new_task.state.set_unspawned()
-                    # succeeded tasks need their outputs set completed:
-                    if itask.state.is_currently('succeeded'):
-                        new_task.reset_state_succeeded(manual=False)
-                    self.pool.remove( itask, '(suite definition reload)' )
-                    self.pool.add( new_task )
-
-        self.reconfiguring = found
 
     def parse_commandline( self ):
         self.run_mode = self.options.run_mode
@@ -970,9 +917,9 @@ class scheduler(object):
 
             t0 = time.time()
 
-            if self.reconfiguring:
-                # user has requested a suite definition reload
-                self.reload_taskdefs()
+            if self.pool.reconfiguring:
+                # suite definition reload still in progress
+                self.pool.reload_taskdefs()
 
             self.pool.release_runahead_tasks()
 

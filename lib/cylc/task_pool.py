@@ -44,6 +44,7 @@ class pool(object):
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
         self.stop_tag = stop_tag
+        self.reconfiguring = False
 
         self.runahead_limit = config.get_runahead_limit()
 
@@ -67,6 +68,9 @@ class pool(object):
                 config.cfg['cylc']['job submission']['delay between batches'],
                 self.wireless, self.run_mode )
 
+        self.orphans = []
+        self.task_name_list = self.config.get_task_name_list()
+
         self.worker.start()
 
 
@@ -76,24 +80,6 @@ class pool(object):
         for queue in self.qconfig:
             for taskname in self.qconfig[queue]['members']:
                 self.myq[taskname] = queue
-
-
-    def reconfigure( self, config ):
-
-        self.runahead_limit = config.get_runahead_limit()
-
-        # reassign live tasks from the old queues to the new.
-        # self.queues[queue][id] = task
-        self.qconfig = config.cfg['scheduling']['queues']
-        self.assign_queues()
-        self.new_queues = {}
-        for queue in self.queues:
-            for id,itask in self.queues[queue].items():
-                myq = self.myq[itask.name]
-                if myq not in self.new_queues:
-                    self.new_queues[myq] = {}
-                self.new_queues[myq][id] = itask
-        self.queues = self.new_queues
 
 
 
@@ -332,6 +318,7 @@ class pool(object):
             minc = min(cycles)
         return minc
 
+
     def get_max_ctime( self ):
         """Return the maximum cycle currently in the pool."""
         cycles = [ t.c_time for t in self.get_tasks() ]
@@ -339,4 +326,76 @@ class pool(object):
         if cycles:
             maxc = max(cycles)
         return maxc
+
+
+
+    def reconfigure( self, config ):
+
+        self.reconfiguring = True
+
+        self.runahead_limit = config.get_runahead_limit()
+
+        # reassign live tasks from the old queues to the new.
+        # self.queues[queue][id] = task
+        self.qconfig = config.cfg['scheduling']['queues']
+        self.assign_queues()
+        self.new_queues = {}
+        for queue in self.queues:
+            for id,itask in self.queues[queue].items():
+                myq = self.myq[itask.name]
+                if myq not in self.new_queues:
+                    self.new_queues[myq] = {}
+                self.new_queues[myq][id] = itask
+        self.queues = self.new_queues
+
+        for itask in self.get_tasks(all=True):
+            itask.reconfigure_me = True
+
+        # find any old tasks that have been removed from the suite
+        old_task_name_list = self.task_name_list
+        self.task_name_list = config.get_task_name_list()
+        for name in old_task_name_list:
+            if name not in new_task_list:
+                self.orphans.append(name)
+        # adjust the new suite config to handle the orphans
+        config.adopt_orphans( self.orphans )
+        
+
+    def reload_taskdefs( self ):
+        found = False
+        for itask in self.get_tasks(all=True):
+            if itask.state.is_currently('running'):
+                # do not reload running tasks as some internal state
+                # (e.g. timers) not easily cloneable at the moment,
+                # and it is possible to make changes to the task config
+                # that would be incompatible with the running task.
+                if itask.reconfigure_me:
+                    found = True
+                continue
+            if itask.reconfigure_me:
+                itask.reconfigure_me = False
+                if itask.name in self.orphans:
+                    # orphaned task
+                    if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
+                        # if not started running yet, remove it.
+                        self.pool.remove( itask, '(task orphaned by suite reload)' )
+                    else:
+                        # set spawned already so it won't carry on into the future
+                        itask.state.set_spawned()
+                        self.log.warning( 'orphaned task will not continue: ' + itask.id  )
+                else:
+                    self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
+                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
+                    # set reloaded task's spawn status
+                    if itask.state.has_spawned():
+                        new_task.state.set_spawned()
+                    else:
+                        new_task.state.set_unspawned()
+                    # succeeded tasks need their outputs set completed:
+                    if itask.state.is_currently('succeeded'):
+                        new_task.reset_state_succeeded(manual=False)
+                    self.pool.remove( itask, '(suite definition reload)' )
+                    self.pool.add( new_task )
+
+        self.reconfiguring = found
 
