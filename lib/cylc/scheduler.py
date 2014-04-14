@@ -1033,7 +1033,7 @@ class scheduler(object):
             if self.config.cfg['cylc']['event hooks']['timeout'] and self.config.cfg['cylc']['event hooks']['reset timer']:
                 self.set_suite_timer()
 
-        elif self.waiting_tasks_ready():
+        elif self.pool.waiting_tasks_ready():
             process = True
 
         if self.run_mode == 'simulation':
@@ -1237,7 +1237,6 @@ class scheduler(object):
 
 
     def command_add_prerequisite( self, task_id, message ):
-        # find the task to reset
         for itask in self.pool.get_tasks():
             if itask.id == task_id:
                 break
@@ -1344,16 +1343,6 @@ class scheduler(object):
             self.pool.remove( itask, 'purge' )
 
         print 'PURGE DONE'
-
-    def waiting_tasks_ready( self ):
-        # waiting tasks can become ready for internal reasons:
-        # namely clock-triggers or retry-delay timers
-        result = False
-        for itask in self.pool.get_tasks():
-            if itask.ready_to_run():
-                result = True
-                break
-        return result
 
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config.cfg['scheduling']['special tasks']['include at start-up']

@@ -738,4 +738,14 @@ class pool(object):
             if itask.message_queue:
                 self.pyro.disconnect( itask.message_queue )
 
+    def waiting_tasks_ready( self ):
+        # waiting tasks can become ready for internal reasons:
+        # namely clock-triggers or retry-delay timers
+        result = False
+        for itask in self.get_tasks():
+            if itask.ready_to_run():
+                result = True
+                break
+        return result
+
 
