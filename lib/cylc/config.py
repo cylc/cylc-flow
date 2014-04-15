@@ -1214,17 +1214,13 @@ class config( object ):
             # vast majority, we needn't use conditional prerequisites
             # (they may be less efficient due to python eval at run time).
 
-        for tname in lnames + [right]:
-            # initialize offsets to zero according to sequence type
-            t = graphnode(tname)  # (GraphNodeError checked above)
-            self.taskdefs[t.name].intercycle_offset = interval.get_null()
-
         ctrig = {}
         cname = {}
         for left in lnames:
             lnode = graphnode(left)  # (GraphNodeError checked above)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
+
                 if lnode.offset > self.taskdefs[lnode.name].intercycle_offset:
                     self.taskdefs[lnode.name].intercycle_offset = lnode.offset
 

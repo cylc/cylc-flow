@@ -34,6 +34,9 @@ from broadcast import broadcast
 # is not visible in the GUI. Tasks are then released to the task pool if
 # not beyond the current runahead limit.
 
+# The check_stop() and remove_spent_cycling_task() have to consider
+# tasks in the runahead pool too.
+
 # TODO ISO -
 # Spawn-on-submit means a only one waiting instance of each task exists,
 # in the pool, so if a new stop cycle is set we just need to check
@@ -104,12 +107,12 @@ class pool(object):
 
         # TODO ISO - no longer needed due to recurrence bounds?
         if itask.stop_c_time and itask.c_time > itask.stop_c_time:
-            self.log.warning( itask.id + ' not adding to pool: task beyond its own stop cycle' )
+            itask.log( 'WARNING', "not adding (beyond my stop cycle)" )
             return False
 
         # check cycle stop or hold conditions
         if self.stop_tag and itask.c_time > self.stop_tag:
-            itask.log( 'DEBUG', "not adding (beyond suite stop cycle) " + str(self.stop_tag) )
+            itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_tag) )
             itask.reset_state_held()
             return
 
@@ -121,7 +124,7 @@ class pool(object):
 
         # hold tasks with future triggers beyond the final cycle time
         if self.task_has_future_trigger_overrun( itask ):
-            itask.log( "NORMAL", "not adding (future trigger beyond stop cycle)" )
+            itask.log( "WARNING", "not adding (future trigger beyond stop cycle)" )
             self.held_future_tasks.append( itask.id )
             itask.reset_state_held()
             return
@@ -136,7 +139,8 @@ class pool(object):
     def release_runahead_tasks( self ):
 
         # compute runahead base: the oldest task not succeeded or failed
-        # (excludes finished and includes runahead-limited tasks so a low limit cannot stall a suite.
+        # (excludes finished and includes runahead-limited tasks so a
+        # low limit cannot stall the suite).
         runahead_base = None
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('failed', 'succeeded'):
@@ -144,10 +148,13 @@ class pool(object):
             if not runahead_base or itask.c_time < runahead_base:
                 runahead_base = itask.c_time
 
-        if self.runahead_limit and runahead_base:
+        # release tasks below the limit
+        if runahead_base:
             for itask in self.runahead_pool.values():
-                if itask.c_time - self.runahead_limit <= runahead_base:
+                if not self.runahead_limit or \
+                        itask.c_time - self.runahead_limit <= runahead_base:
                     # release task to the appropriate queue
+                    # (no runahead limit implies R1 tasks only)
                     queue = self.myq[itask.name]
                     if queue not in self.queues:
                         self.queues[queue] = {}
@@ -625,13 +632,16 @@ class pool(object):
 
         # first find the cycle time of the earliest unsatisfied task
         cutoff = None
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
+            # this has to consider tasks in the runahead pool too, e.g.
+            # ones that have just spawned and not been released yet.
             if not itask.is_cycling:
                 continue
             if itask.state.is_currently('waiting', 'held' ):
                 if not cutoff or itask.c_time < cutoff:
                     cutoff = itask.c_time
             elif not itask.has_spawned():
+                # (e.g. 'ready')
                 nxt = itask.next_tag()
                 if nxt and ( not cutoff or nxt < cutoff ):
                     cutoff = nxt
@@ -732,7 +742,7 @@ class pool(object):
         i_cyc = False
         i_asy = False
         i_fut = False
-        for itask in self.get_tasks():
+        for itask in self.get_tasks( all=True ):
             if itask.is_cycling:
                 i_cyc = True
                 # don't stop if a cycling task has not passed the stop cycle
