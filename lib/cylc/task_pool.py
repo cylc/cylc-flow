@@ -793,9 +793,11 @@ class pool(object):
 
 
     def shutdown( self ):
+        if not self.no_active_tasks():
+            self.log.warning( "some active tasks will be orphaned" )
         self.worker.quit = True # (should be done already)
         self.worker.join()
-        # disconnect task message queues
+        self.pyro.disconnect( self.wireless )
         for itask in self.get_tasks():
             if itask.message_queue:
                 self.pyro.disconnect( itask.message_queue )

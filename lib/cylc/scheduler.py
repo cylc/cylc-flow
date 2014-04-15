@@ -1059,8 +1059,6 @@ class scheduler(object):
         print msg
         if getattr(self, "log", None) is not None:
             self.log.info( msg )
-            if not self.pool.no_active_tasks():
-                self.log.warning( "some active tasks will be orphaned" )
 
         if self.pool:
             self.pool.shutdown()
@@ -1076,8 +1074,7 @@ class scheduler(object):
                 q.quit = True # (should be done already)
                 q.join()
 
-        for i in [ self.command_queue, self.pool.wireless,
-                self.suite_id, self.suite_state ]:
+        for i in [ self.command_queue, self.suite_id, self.suite_state ]:
             if i:
                 self.pyro.disconnect( i )
 
