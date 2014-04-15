@@ -755,9 +755,6 @@ class config( object ):
             # default: task succeeded
             trig.set_type( 'succeeded' )
 
-        print task_name, self.cycling_tasks
-        print "    ", self.async_repeating_tasks
-
         if offset:
             trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
 
@@ -769,20 +766,7 @@ class config( object ):
             if trig.type:
                 raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
         elif task_name in self.cycling_tasks:
-            print
             trig.set_cycling()
-        
-        print "######## TRIGGER #########"
-        print "name", trig.name
-        print "msg", trig.msg
-        print "intrinsic_offset", trig.intrinsic_offset
-        print "evaluation_offset", trig.evaluation_offset
-        print "type", trig.type
-        print "cycling", trig.cycling
-        print "async_repeating", trig.async_repeating
-        print "asyncid_pattern", trig.asyncid_pattern
-        print "suicide", trig.suicide
-        print
 
         return trig
 
