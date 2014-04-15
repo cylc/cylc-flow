@@ -63,7 +63,7 @@ where output x of foo may also have an offset:
         # explicit internal output message ...
         self.msg = msg
         # TODO ISO:
-        m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', msg )
+        m = re.search( '\[\s*T?\s*([+-]?)\s*(.+)\s*\]', msg )
         if m:
             sign, offset = m.groups()
             if sign != '+':

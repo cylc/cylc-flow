@@ -19,7 +19,8 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
-from cylc.cycling.loader import point, interval, sequence
+from cylc.cycling.loader import (point, interval, sequence,
+                                 cycling_init_from_cfg)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -180,6 +181,8 @@ class config( object ):
 
         # now expand with defaults
         self.cfg = self.pcfg.get( sparse=False )
+
+        cycling_init_from_cfg(self.cfg)
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -752,17 +755,34 @@ class config( object ):
             # default: task succeeded
             trig.set_type( 'succeeded' )
 
+        print task_name, self.cycling_tasks
+        print "    ", self.async_repeating_tasks
+
         if offset:
             trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
 
-        elif task_name in self.async_repeating_tasks:
+        # Should the following be 'elif' with offset?
+        if task_name in self.async_repeating_tasks: 
             trig.set_async_repeating( asyncid_pattern)
             if trig.suicide:
                 raise SuiteConfigError, "ERROR, '" + task_name + "': suicide triggers not implemented for repeating async tasks"
             if trig.type:
                 raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
         elif task_name in self.cycling_tasks:
+            print
             trig.set_cycling()
+        
+        print "######## TRIGGER #########"
+        print "name", trig.name
+        print "msg", trig.msg
+        print "intrinsic_offset", trig.intrinsic_offset
+        print "evaluation_offset", trig.evaluation_offset
+        print "type", trig.type
+        print "cycling", trig.cycling
+        print "async_repeating", trig.async_repeating
+        print "asyncid_pattern", trig.asyncid_pattern
+        print "suicide", trig.suicide
+        print
 
         return trig
 
@@ -1094,8 +1114,9 @@ class config( object ):
                     for n in lnames + [r]:
                         if not n:
                             continue
+                        
                         try:
-                            name = graphnode( n ).name
+                            name = graphnode( n, base_offset=seq.step ).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
@@ -1108,8 +1129,10 @@ class config( object ):
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
                     self.generate_edges( lexpression, lnames, r, ttype, seq, suicide )
-                self.generate_taskdefs( orig_line, lnames, r, ttype, section, asyncid_pattern )
-                self.generate_triggers( lexpression, lnames, r, seq, asyncid_pattern, suicide )
+                self.generate_taskdefs( orig_line, lnames, r, ttype, section,
+                                        asyncid_pattern, seq.step )
+                self.generate_triggers( lexpression, lnames, r, seq,
+                                         asyncid_pattern, suicide )
 
     def generate_edges( self, lexpression, lnames, right, ttype, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
@@ -1127,15 +1150,16 @@ class config( object ):
             else:
                 self.edges.append(e)
 
-    def generate_taskdefs( self, line, lnames, right, ttype, section, asyncid_pattern ):
+    def generate_taskdefs( self, line, lnames, right, ttype, section, asyncid_pattern,
+                           base_offset ):
         for node in lnames + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
             try:
-                name = graphnode( node ).name
-                offset = graphnode( node ).offset
+                name = graphnode( node, base_offset=base_offset ).name
+                offset = graphnode( node, base_offset=base_offset ).offset
             except GraphNodeError, x:
                 print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
@@ -1207,6 +1231,8 @@ class config( object ):
             # lefts are lone nodes; no more triggers to define.
             return
 
+        base_offset = seq.step
+
         conditional = False
         if re.search( '\|', lexpression ):
             conditional = True
@@ -1217,7 +1243,8 @@ class config( object ):
         ctrig = {}
         cname = {}
         for left in lnames:
-            lnode = graphnode(left)  # (GraphNodeError checked above)
+            # (GraphNodeError checked above)
+            lnode = graphnode(left, base_offset=base_offset)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
 
@@ -1444,7 +1471,14 @@ class config( object ):
             print "Parsing the dependency graph"
 
         self.graph_found = False
-        for item in self.cfg['scheduling']['dependencies']:
+        items = self.cfg['scheduling']['dependencies'].items()
+        while items:
+            item, value = items.pop(0)
+            
+            if re.search("(?![^(]+\)),", item):
+                new_items = re.split("(?![^(]+\)),", item)
+                for new_item in new_items:
+                    items.append((new_item, value))
             if item == 'graph':
                 graph = self.cfg['scheduling']['dependencies']['graph']
                 if graph:
@@ -1453,7 +1487,7 @@ class config( object ):
                     self.parse_graph( section, graph )
             else:
                 try:
-                    graph = self.cfg['scheduling']['dependencies'][item]['graph']
+                    graph = value['graph']
                 except KeyError:
                     pass
                 else:

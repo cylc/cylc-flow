@@ -65,6 +65,73 @@ logged by cylc will also be in UTC.
 \end{myitemize}
 
 
+\subsubsection[cycle point format]{ [cylc] $\rightarrow$ cycle point format}
+\label{cycle-point-format}
+
+To just alter the timezone used in the date/time cycle point format, see
+\ref{cycle-point-timezone}. To just alter the number of expanded year digits
+(for years below 0 or above 9999), see
+\ref{cycle-point-num-expanded-year-digits}.
+
+Cylc usually uses a $CCYYMMDDThhmmZ$ ($Z$ in the special case of UTC) or $CCYYMMDDThhmm±hhmm$ format for writing down date/time cycle points, which
+follows one of the basic formats outlined in the ISO 8601 standard. For
+example, a cycle point on the 3st of February 2001 at 4:50 in the morning,
+UTC (+0000 timezone), would be written $20010203T0450Z$. Similarly, for the
+the 3st of February 2001 at 4:50 in the morning, +1300 timezone, Cylc would
+write $20010203T0450+1300$.
+
+You may use the isodatetime library's syntax to write dates and
+times in ISO 8601 formats - $CC$ for century, $YY$ for decade and decadal
+year, $±X$ for expanded year digits, thereafter following the ISO 8601
+standard example notation. For example, to write date/times as week dates
+with fractional hours, set cycle point format to $CCYYWwwDThh,iiZ$ e.g.
+$1987W041T08,5Z$ for 08:30 UTC on Monday on the fourth ISO week of 1987.
+
+You can also use a subset of the strptime/strftime POSIX standard -
+supported tokens are $%F$, $%H$, $%M$, $%S$, $%Y$, $%d$, $%j$, $%m$, $%s$,
+$%z$.
+
+To use the old Cylc cycle time format (e.g. $2014020106$ for 06:00 on the
+1st of February 2014), set cycle point format to $%Y%m%d%H$.
+
+Please note that using characters like "/" will break task output files ("/"
+is a reserved character in POSIX file and directory naming). Using ":" is
+likely to interfere with usage of commands like "rsync" when applied to task
+output files and is not recommended.
+
+\subsubsection[cycle point num expanded year digits]{ [cylc] $\rightarrow$
+cycle point num expanded year digits}
+\label{cycle-point-num-expanded-year-digits}
+
+For years below 0 or above 9999, the ISO 8601 standard specifies that an
+extra number of year digits and a sign should be used. This extra number needs
+to be written down somewhere (here).
+
+For example, if this extra number is set to 2, the 1st of January in the year
+10040 will be represented as $+0100400101T0000$ (2 extra year digits used).
+06Z on the 4th of May 1985 would be written as $+00019850504T0600$ with this
+number set to 3.
+
+This number defaults to 0 (no sign or extra digits used).
+
+\subsubsection[cycle point time zone]{ [cylc] $\rightarrow$
+cycle point time zone}
+\label{cycle-point-time-zone}
+
+If you set UTC mode to True (\ref{utc-mode}) then this will default to $Z$.
+If you use a custom cycle point format (\ref{cycle-point-format}), you should
+specify the timezone choice (or null timezone choice) there.
+
+Otherwise, you may set your own time zone choice here, which will be used
+for all date/time cycle point dumping. Time zones should be expressed as ISO
+8601 time zone offsets from UTC, such as $+13$, $+1300$, $-0500$ or $+0645$,
+with $Z$ representing the special $+0000$ case. Cycle points will be converted
+to the time zone you give and will be represented with this string at the end.
+
+Note that the ISO standard also allows writing the hour and minute separated
+by a ":" (e.g. $+13:00$) - however, this is not recommended, given that the
+time zone is used as part of task output filenames.
+
 \subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
 
 Cylc does not normally abort if tasks fail, but if this item is turned

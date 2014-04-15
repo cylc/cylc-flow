@@ -85,9 +85,11 @@ class IntervalBase(object):
     They should also provide self.cmp_, self.sub, self.add,
     self.__mul__, self.__abs__, self.__nonzero__ methods which should
     behave as __cmp__, __sub__, etc standard comparison methods.
-    Note: "cmp_" not "cmp", etc. They should also provide
-    self.get_null, which is a method to extract the null interval of
+    Note: "cmp_" not "cmp", etc. They should also provide:
+     * self.get_null, which is a method to extract the null interval of
     this type.
+     * self.get_inferred_child to generate an offset from an input
+    without units using the current units of the instance (if any).
 
     Subclasses may also provide an overridden self.standardise
     method to reprocess their value into a standard form.
@@ -97,9 +99,14 @@ class IntervalBase(object):
     TYPE = None
     TYPE_SORT_KEY = None
 
+
     @classmethod
-    def get_null(self):
+    def get_null(cls):
         """Return a null interval."""
+        raise NotImplementedError()
+
+    def get_inferred_child(self, string):
+        """For a given string, infer the offset given my instance units."""
         raise NotImplementedError()
 
     def __abs__( self ):

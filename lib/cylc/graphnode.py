@@ -34,7 +34,7 @@ class GraphNodeError( Exception ):
 class graphnode( object ):
     """A node in the cycle suite.rc dependency graph."""
 
-    def __init__( self, node ):
+    def __init__( self, node, base_offset=None ):
         node_in = node
         # Get task name and properties from a graph node name.
 
@@ -65,6 +65,15 @@ class graphnode( object ):
                     self.offset = - interval( offset )
                 else:
                     self.offset = interval( offset )
+                # TODO: Post-backward compatibility: remove try-except block.
+                try:
+                    self.offset.standardise()
+                except ValueError:
+                    # An invalid offset, probably in the prev format.
+                    if base_offset is None:
+                        raise
+                    # If offset is '+24' & base_offset is 'P1D', infer 'P24D'.
+                    self.offset = base_offset.get_inferred_child(offset)
             else:
                 self.intercycle = False
                 self.offset = None

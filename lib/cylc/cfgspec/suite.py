@@ -16,27 +16,104 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 from parsec.validate import validator as vdr
 from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
+from isodatetime.dumpers import TimePointDumper
+from isodatetime.data import TimePoint
+from isodatetime.parsers import TimePointParser
 
 "Define all legal items and values for cylc suite definition files."
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle time."""
     value = _strip_and_unquote( keys, value )
-    # TODO ISO - CHECK VALIDITY
+    if re.match(r"\d{4}$|\d{6}$|\d{8}$|\d{10}$|\d{12}$|\d{14}$", value):
+        # Old cycle time format.
+        return value
+    if value.startswith("-") or value.startswith("+"):
+        # We don't know the value given for num expanded year digits...
+        for i in range(1, 101):
+            parser = TimePointParser(num_expanded_year_digits=i)
+            try:
+                parser.parse(value)
+            except ValueError:
+                continue
+            return value
+        raise IllegalValueError("cycle time", keys, value)
+    parser = TimePointParser()
+    try:
+        parser.parse(value)
+    except ValueError:
+        raise IllegalValueError("cycle time", keys, value)
     return value
 
+
+def _coerce_cycletime_format( value, keys, args ):
+    """Coerce value to a cycle time format (either CCYYMM... or %Y%m...)."""
+    value = _strip_and_unquote( keys, value )
+    test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
+                               hour_of_day=4, minute_of_hour=30,
+                               second_of_minute=54)
+    if "/" in value:
+        raise IllegalValueError("cycle time format", keys, value)
+    if "%" in value:
+        try:
+            TimePointDumper().strftime(test_timepoint, value)
+        except ValueError:
+            raise IllegalValueError("cycle time format", keys, value)
+        return value
+    if "X" in value:
+        for i in range(1, 101):
+            dumper = TimePointDumper(num_expanded_year_digits=i)
+            try:
+                dumper.dump(test_timepoint, value)
+            except ValueError:
+                continue
+            return value
+        raise IllegalValueError("cycle time format", keys, value)
+    dumper = TimePointDumper()
+    try:
+        dumper.dump(test_timepoint, value)
+    except ValueError:
+        raise IllegalValueError("cycle time format", keys, value)
+    return value
+
+
+def _coerce_cycletime_time_zone( value, keys, args ):
+    """Coerce value to a cycle time time zone format - Z, +13, -0800..."""
+    value = _strip_and_unquote( keys, value )
+    test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
+                               hour_of_day=4, minute_of_hour=30,
+                               second_of_minute=54)
+    dumper = TimePointDumper()
+    test_timepoint_string = dumper.dump(test_timepoint, "CCYYMMDDThhmmss")
+    test_timepoint_string += value
+    parser = TimePointParser(allow_only_basic=True)
+    try:
+        parser.parse(test_timepoint_string)
+    except ValueError:
+        raise IllegalValueError("cycle time time zone format", keys, value)
+    return value
+
+
 coercers['cycletime'] = _coerce_cycletime
+coercers['cycletime_format'] = _coerce_cycletime_format
+coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
+
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
     'description'                             : vdr( vtype='string', default="" ),
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
+        'cycle point format'                  : vdr( vtype='cycletime_format', default=None),
+        'cycle point num expanded year digits': vdr( vtype='integer', default=0),
+        'cycle point time zone'               : vdr( vtype='cycletime_time_zone', default=None),
         'required run mode'                   : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),

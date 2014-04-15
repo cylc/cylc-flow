@@ -100,6 +100,9 @@ class IntegerInterval(IntervalBase):
     def get_null(cls):
         return IntegerInterval("0")
 
+    def get_inferred_child(self, string):
+        return IntegerInterval(string)
+
     def __init__(self, value):
         if isinstance(value, int):
             value = str(value)
@@ -353,6 +356,11 @@ class IntegerSequence( object ):
             return self.i_step == q.i_step and \
                self.p_start == q.p_start and \
                self.p_stop == q.p_stop
+
+
+def init_from_cfg(cfg):
+    """Placeholder function required by all cycling modules."""
+    pass
 
 
 if __name__ == '__main__':

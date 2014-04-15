@@ -78,6 +78,11 @@ class TimePointDumper(object):
         TimePointParser internals. See TimePointParser.*_TRANSLATE_INFO.
 
         """
+        if "%" in formatting_string:
+            try:
+                return self.strftime(timepoint, formatting_string)
+            except ValueError:
+                pass
         expression, properties, custom_time_zone = (
             self._get_expression_and_properties(formatting_string))
         return self._dump_expression_with_properties(

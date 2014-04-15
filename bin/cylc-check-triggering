@@ -52,7 +52,7 @@ new_log = os.path.join( log_dir, 'log' )
 ref_log = os.path.join( suite_dir, 'reference.log' )
 
 try:
-    lanal = LogAnalyser( new_log, ref_log )
+    lanal = LogAnalyser( ref_log, new_log )
     lanal.verify_triggering()
 except Exception, x:
     print >> sys.stderr, x

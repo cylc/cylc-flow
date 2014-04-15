@@ -1,0 +1,52 @@
+2014-04-15T14:18:35 INFO - Thread-2 start (Event Handlers)
+2014-04-15T14:18:35 INFO - Thread-3 start (Poll & Kill Commands)
+2014-04-15T14:18:35 INFO - port:7766
+2014-04-15T14:18:35 INFO - Suite starting at 2014-04-15T14:18:35.498680
+2014-04-15T14:18:35 INFO - Log event clock: real time
+2014-04-15T14:18:35 INFO - Run mode: live
+2014-04-15T14:18:35 INFO - Start tag: 2005023T12
+2014-04-15T14:18:35 INFO - Stop tag: 2008001T11
+2014-04-15T14:18:35 INFO - Thread-4 start (Job Submission)
+2014-04-15T14:18:35 INFO - Thread-5 start (Request Handling)
+2014-04-15T14:18:35 INFO - Cold Start 2005023T12
+2014-04-15T14:18:35 INFO - [foo.20050123T1200Z] -triggered off []
+2014-04-15T14:18:36 INFO - [foo.20050123T1200Z] -(current:ready)> foo.20050123T1200Z submitting now
+2014-04-15T14:18:37 INFO - [foo.20050123T1200Z] -(current:ready)> foo.20050123T1200Z submission succeeded
+2014-04-15T14:18:37 INFO - [foo.20050123T1200Z] -(current:submitted)> foo.20050123T1200Z submit_method_id=2614
+2014-04-15T14:18:38 INFO - [foo.20050123T1200Z] -(current:submitted)> foo.20050123T1200Z started at 2014-04-15T14:18:37
+2014-04-15T14:18:40 INFO - [foo.20050123T1200Z] -(current:running)> foo.20050123T1200Z succeeded at 2014-04-15T14:18:39
+2014-04-15T14:18:41 INFO - [bar.20050123T1200Z] -triggered off ['foo.20050123T1200Z']
+2014-04-15T14:18:41 INFO - [foo.20060123T1200Z] -triggered off ['foo.20050123T1200Z']
+2014-04-15T14:18:42 INFO - [bar.20050123T1200Z] -(current:ready)> bar.20050123T1200Z submitting now
+2014-04-15T14:18:42 INFO - [bar.20050123T1200Z] -(current:ready)> bar.20050123T1200Z submission succeeded
+2014-04-15T14:18:42 INFO - [bar.20050123T1200Z] -(current:submitted)> bar.20050123T1200Z submit_method_id=2728
+2014-04-15T14:18:42 INFO - [foo.20060123T1200Z] -(current:ready)> foo.20060123T1200Z submitting now
+2014-04-15T14:18:43 INFO - [bar.20050123T1200Z] -(current:submitted)> bar.20050123T1200Z started at 2014-04-15T14:18:43
+2014-04-15T14:18:43 INFO - [foo.20060123T1200Z] -(current:ready)> foo.20060123T1200Z started at 2014-04-15T14:18:43
+2014-04-15T14:18:43 INFO - [foo.20060123T1200Z] -(current:running)> foo.20060123T1200Z submission succeeded
+2014-04-15T14:18:43 INFO - [foo.20060123T1200Z] -(current:running)> foo.20060123T1200Z submit_method_id=2819
+2014-04-15T14:18:45 INFO - [bar.20050123T1200Z] -(current:running)> bar.20050123T1200Z succeeded at 2014-04-15T14:18:44
+2014-04-15T14:18:45 INFO - [foo.20060123T1200Z] -(current:running)> foo.20060123T1200Z succeeded at 2014-04-15T14:18:45
+2014-04-15T14:18:46 INFO - [bar.20060123T1200Z] -triggered off ['foo.20060123T1200Z']
+2014-04-15T14:18:46 INFO - [foo.20070123T1200Z] -triggered off ['foo.20060123T1200Z']
+2014-04-15T14:18:47 INFO - [bar.20060123T1200Z] -(current:ready)> bar.20060123T1200Z submitting now
+2014-04-15T14:18:48 INFO - [bar.20060123T1200Z] -(current:ready)> bar.20060123T1200Z submission succeeded
+2014-04-15T14:18:48 INFO - [bar.20060123T1200Z] -(current:submitted)> bar.20060123T1200Z submit_method_id=3030
+2014-04-15T14:18:48 INFO - [foo.20070123T1200Z] -(current:ready)> foo.20070123T1200Z submitting now
+2014-04-15T14:18:49 INFO - [bar.20060123T1200Z] -(current:submitted)> bar.20060123T1200Z started at 2014-04-15T14:18:48
+2014-04-15T14:18:49 INFO - [foo.20070123T1200Z] -(current:ready)> foo.20070123T1200Z started at 2014-04-15T14:18:49
+2014-04-15T14:18:49 INFO - [foo.20070123T1200Z] -(current:running)> foo.20070123T1200Z submission succeeded
+2014-04-15T14:18:49 INFO - [foo.20070123T1200Z] -(current:running)> foo.20070123T1200Z submit_method_id=3125
+2014-04-15T14:18:50 INFO - [bar.20060123T1200Z] -(current:running)> bar.20060123T1200Z succeeded at 2014-04-15T14:18:50
+2014-04-15T14:18:51 INFO - [foo.20070123T1200Z] -(current:running)> foo.20070123T1200Z succeeded at 2014-04-15T14:18:50
+2014-04-15T14:18:52 INFO - [bar.20070123T1200Z] -triggered off ['foo.20070123T1200Z']
+2014-04-15T14:18:53 INFO - [bar.20070123T1200Z] -(current:ready)> bar.20070123T1200Z submitting now
+2014-04-15T14:18:53 INFO - [bar.20070123T1200Z] -(current:ready)> bar.20070123T1200Z submission succeeded
+2014-04-15T14:18:53 INFO - [bar.20070123T1200Z] -(current:submitted)> bar.20070123T1200Z submit_method_id=3254
+2014-04-15T14:18:54 INFO - [bar.20070123T1200Z] -(current:submitted)> bar.20070123T1200Z started at 2014-04-15T14:18:54
+2014-04-15T14:18:56 INFO - [bar.20070123T1200Z] -(current:running)> bar.20070123T1200Z succeeded at 2014-04-15T14:18:56
+2014-04-15T14:18:56 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2008001T11
+2014-04-15T14:18:57 INFO - Thread-4 exit (Job Submission)
+2014-04-15T14:18:57 INFO - Thread-2 exit (Event Handlers)
+2014-04-15T14:18:57 INFO - Thread-3 exit (Poll & Kill Commands)
