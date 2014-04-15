@@ -42,7 +42,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.start_time = start_time
         self._summary_update_time = None
 
-    def update( self, tasks, oldest, newest, newest_nonrunahead,
+    def update( self, tasks, oldest, newest,
             paused, will_pause_at, stopping, will_stop_at, runahead ):
 
         task_name_list = []
@@ -103,7 +103,6 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'start time' ] = self.str_or_None(self.start_time)
         global_summary[ 'oldest cycle time' ] = self.str_or_None(oldest)
         global_summary[ 'newest cycle time' ] = self.str_or_None(newest)
-        global_summary[ 'newest non-runahead cycle time' ] = self.str_or_None(newest_nonrunahead)
         global_summary[ 'last_updated' ] = now()
         global_summary[ 'run_mode' ] = self.run_mode
         global_summary[ 'paused' ] = paused
@@ -144,12 +143,11 @@ class state_summary( Pyro.core.ObjBase ):
 def extract_group_state( child_states, is_stopped=False ):
     """Summarise child states as a group."""
     ordered_states = ['submit-failed', 'failed', 'submit-retrying', 'retrying', 'running',
-            'submitted', 'ready', 'queued', 'waiting', 'held',
-            'runahead', 'succeeded']
+            'submitted', 'ready', 'queued', 'waiting', 'held', 'succeeded']
     if is_stopped:
         ordered_states = ['submit-failed', 'failed', 'running', 'submitted',
             'ready', 'submit-retrying', 'retrying', 'succeeded', 'queued', 'waiting',
-            'runahead', 'held']
+            'held']
     for state in ordered_states:
         if state in child_states:
             return state

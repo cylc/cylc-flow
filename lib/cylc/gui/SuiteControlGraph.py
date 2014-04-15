@@ -239,11 +239,6 @@ Dependency graph suite control interface.
         crop_item.set_active( self.t.crop )
         crop_item.connect( 'activate', self.toggle_crop )
 
-        croprunahead_item = gtk.CheckMenuItem( 'Toggle Crop _Runahead Tasks' )
-        items.append( croprunahead_item )
-        croprunahead_item.set_active( self.t.croprunahead )
-        croprunahead_item.connect( 'activate', self.toggle_croprunahead )
-
         menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
         menu_filter_item.set_image(img)
@@ -363,10 +358,6 @@ Dependency graph suite control interface.
 
     def toggle_crop( self, w ):
         self.t.crop = not self.t.crop
-        self.t.action_required = True
-
-    def toggle_croprunahead( self, w ):
-        self.t.croprunahead = not self.t.croprunahead
         self.t.action_required = True
 
     def toggle_left_to_right_mode( self, w ):

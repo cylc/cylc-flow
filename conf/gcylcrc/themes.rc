@@ -18,11 +18,9 @@
         # * The 'succeeded' state is uninteresting, hence grey.
         # * The 'retry' states are hollow (pre-running) orange (almost red)
         #   as a failure has occurred but we're doing something about it.
-        # * The 'waiting' state is light blue; runahead is a temporary
-        #   more interesting type of waiting, hence darker blue.
+        # * The 'waiting' state is light blue.
         defaults  = "color=#bbbbbb", "style=unfilled", "fontcolor=black"
         waiting   = "color=#88c6ff"
-        runahead  = "color=#397fac"
         held      = "color=#fe83ff"
         queued    = "color=#dcd901"
         ready     = "color=#a08f49"
@@ -42,7 +40,6 @@
     [[high-contrast]]
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=white"
         waiting   = "color=#008ed3"
-        runahead  = "color=#a24eff"
         held      = "color=#fc00ff"
         queued    = "color=#e6c522", "fontcolor=black"
         ready     = "color=#9c8320"
@@ -69,7 +66,6 @@
         succeeded = "color=#cccccc" # grey
         failed    = "color=#ff3333" # red
         held      = "color=#9900cc" # purple
-        runahead  = "color=#cc9999" # dusky pink
         retrying = "color=#009999" # turquoise
         submit-retrying = "color=#007777" # turquoise2
         # (10th color: black)

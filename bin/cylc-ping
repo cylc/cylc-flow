@@ -59,7 +59,7 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'suite-info' )
-    proxy.get( 'ping suite' )
+    res = proxy.get( 'ping suite' ) # (no need to check the result)
 except Exception, x:
     if cylc.flags.debug:
         raise
@@ -74,12 +74,12 @@ if not cylc.TaskID.is_valid_id( task_id ):
     sys.exit( "Invalid task ID: " + task_id )
 
 try:
-    result = proxy.get( 'ping task', task_id )
+    res, msg = proxy.get( 'ping task', task_id )
 except Exception,x:
     if cylc.flags.debug:
         raise
     sys.exit(x)
 
-if not result.success:
-    sys.exit( 'ERROR: ' + result.reason )
+if not res:
+    sys.exit( 'ERROR: ' + msg )
 

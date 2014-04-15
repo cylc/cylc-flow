@@ -57,7 +57,7 @@ class dumper( object ):
         """Dump suite states to disk. Return state file basename on success."""
 
         if wireless is None:
-            wireless = self.wireless
+            wireless = self.pool.wireless
 
         base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
         file_name = os.path.join(self.dir_name, base_name)
@@ -75,7 +75,7 @@ class dumper( object ):
             handle.write('Begin task states\n')
 
             if tasks is None and self.pool is not None:
-                tasks = self.pool.get_tasks()
+                tasks = self.pool.get_tasks( all=True )
             if tasks is not None:
                 for itask in sorted(tasks, key=lambda t: t.id):
                     # TODO - CHECK THIS STILL WORKS

@@ -179,14 +179,6 @@ class task( object ):
 
         self.stop_tag = None
 
-        # Count instances of each top level object derived from task.
-        # Top level derived classes must define:
-        #   <class>.instance_count = 0
-        # NOTE: top level derived classes are now defined dynamically
-        # (so this is initialised in src/taskdef.py).
-        self.__class__.instance_count += 1
-        self.__class__.upward_instance_count += 1
-
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
 
@@ -271,14 +263,6 @@ class task( object ):
         else:
             logger.warning( 'UNKNOWN PRIORITY: ' + priority )
             logger.warning( '-> ' + message )
-
-    def prepare_for_death( self ):
-        # Decrement the instance count of objects derived from task
-        # base. Was once used for constraining the number of instances
-        # of each task type. Python's __del__() function cannot be used
-        # for this as it is only called when a deleted object is about
-        # to be garbage collected (not guaranteed to be right away).
-        self.__class__.instance_count -= 1
 
     def record_db_event(self, event="", message=""):
         call = cylc.rundb.RecordEventObject(self.name, str(self.c_time), self.submit_num, event, message, self.user_at_host)
@@ -407,10 +391,6 @@ class task( object ):
         self.set_status( 'held' )
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
-
-    def reset_state_runahead( self ):
-        self.set_status( 'runahead' )
-        self.turn_off_timeouts()
 
     def set_state_ready( self ):
         # called by scheduler main thread

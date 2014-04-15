@@ -32,7 +32,6 @@ class TaskStateError( Exception ):
 class task_state(object):
 
     legal = [ 'waiting',
-              'runahead',
               'held',
               'queued',
               'ready',
@@ -61,7 +60,6 @@ class task_state(object):
             'failed'     : '_failed',
             'retrying'   : 'retr_ying',
             'held'       : '_held',
-            'runahead'   : 'r_unahead'
             }
     # terminal monitor color control codes
     ctrl = {
@@ -76,8 +74,9 @@ class task_state(object):
             'failed'     : "\033[1;37;41m",
             'retrying'   : "\033[1;35m",
             'held'       : "\033[1;37;43m",
-            'runahead'   : "\033[1;37;44m"
             }
+    # spare: "\033[1;37;44m"
+
     ctrl_end = "\033[0m"
 
     # Internal to this class spawned state is a string
