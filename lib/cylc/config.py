@@ -719,7 +719,9 @@ class config( object ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
-    def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
+    def set_trigger( self, task_name, right, output_name=None, offset=None,
+                     cycle_point=None, asyncid_pattern=None,
+                     suicide=False ):
         trig = triggerx(task_name)
         trig.set_suicide(suicide)
         if output_name:
@@ -757,6 +759,9 @@ class config( object ):
 
         if offset:
             trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
+
+        if cycle_point:
+            trig.set_cycle_point( cycle_point )
 
         # Should the following be 'elif' with offset?
         if task_name in self.async_repeating_tasks: 
@@ -914,23 +919,38 @@ class config( object ):
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section, ttype, seq ):
-        # Extract dependent pairs from the suite.rc textual dependency
-        # graph to use in constructing graphviz graphs.
+    def process_graph_line( self, line, section, ttype, seq,
+                            auto_remove_startup=False ):
+        """Extract dependent pairs from the suite.rc dependency text.
+        
+        Extract dependent pairs from the suite.rc textual dependency
+           graph to use in constructing graphviz graphs.
 
-        # 'A => B => C'    : [A => B], [B => C]
-        # 'A & B => C'     : [A => C], [B => C]
-        # 'A => C & D'     : [A => C], [A => D]
-        # 'A & B => C & D' : [A => C], [A => D], [B => C], [B => D]
+        line is the line of text within the 'graph' attribute of
+        this dependency section.
+        section is the text describing this dependency section (e.g.
+        T00).
+        ttype is either 'cycling' or an async indicator.
+        seq is the sequence generated from 'section' given the initial
+        and final cycle time.
+        auto_remove_startup, if True, indicates that start-up tasks
+        in expressions should be removed.
 
-        # '&' groups aren't really "conditional expressions"; they're
-        # equivalent to adding another line:
-        #  'A & B => C'
-        # is the same as:
-        #  'A => C' and 'B => C'
+        'A => B => C'    : [A => B], [B => C]
+        'A & B => C'     : [A => C], [B => C]
+        'A => C & D'     : [A => C], [A => D]
+        'A & B => C & D' : [A => C], [A => D], [B => C], [B => D]
 
-        #  An 'or' on the right side is an ERROR:
-        #  'A = > B | C' # ?!
+        '&' groups aren't really "conditional expressions"; they're
+        equivalent to adding another line:
+        'A & B => C'
+        is the same as:
+        'A => C' and 'B => C'
+
+        An 'or' on the right side is an ERROR:
+        'A = > B | C' # ?!
+
+        """
 
         orig_line = line
 
@@ -1006,6 +1026,9 @@ class config( object ):
         # Replace "foo:finish" with "( foo:succeed | foo:fail )"
         line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
 
+        # Replace all start-up tasks with new ISO 8601 compatible syntax.
+        startup_tasks = self.cfg['scheduling']['special tasks']['start-up']
+
         if flags.verbose and line != orig_line:
             print 'Graph line substitutions occurred:'
             print '  IN:', orig_line
@@ -1031,6 +1054,7 @@ class config( object ):
             raise SuiteConfigError, "ERROR: missing task name in graph line?"
 
         # get list of pairs
+        startup_dependencies = []
         for i in [0] + range( 1, len(tasks)-1 ):
             lexpression = tasks[i]
 
@@ -1098,7 +1122,6 @@ class config( object ):
                     for n in lnames + [r]:
                         if not n:
                             continue
-                        
                         try:
                             name = graphnode( n, base_offset=seq.step ).name
                         except GraphNodeError, x:
@@ -1110,6 +1133,18 @@ class config( object ):
                             m = re.match( '^ASYNCID:(.*)$', section )
                             asyncid_pattern = m.groups()[0]
 
+                if ttype == 'cycling':
+                    for n in lnames:
+                        try:
+                            name = graphnode( n, base_offset=seq.step ).name
+                        except GraphNodeError, x:
+                            print >> sys.stderr, orig_line
+                            raise SuiteConfigError, str(x)            
+                        if name in startup_tasks:
+                            startup_dependencies.append((name, r))
+                            if auto_remove_startup:
+                                lnames.remove(n)
+
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
                     self.generate_edges( lexpression, lnames, r, ttype, seq, suicide )
@@ -1117,6 +1152,8 @@ class config( object ):
                                         asyncid_pattern, seq.step )
                 self.generate_triggers( lexpression, lnames, r, seq,
                                          asyncid_pattern, suicide )
+        return startup_dependencies
+            
 
     def generate_edges( self, lexpression, lnames, right, ttype, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
@@ -1142,11 +1179,13 @@ class config( object ):
                 # for which we still define the taskdefs
                 continue
             try:
-                name = graphnode( node, base_offset=base_offset ).name
-                offset = graphnode( node, base_offset=base_offset ).offset
+                my_taskdef_node = graphnode( node, base_offset=base_offset )
             except GraphNodeError, x:
                 print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
+
+            name = my_taskdef_node.name
+            offset = my_taskdef_node.offset
 
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root
@@ -1193,15 +1232,10 @@ class config( object ):
             seq = sequence( section,
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
-
-            if offset:
-                # TODO ISO - CHANGE SIGN OF OFFSET (DEFAULT +)
-                seq.set_offset( - offset )
-                if seq not in self.sequences:
-                    # (already done if no offset)
-                    self.sequences.append( seq )
-            
-            self.taskdefs[ name ].add_sequence( seq )
+           
+            if not offset and not my_taskdef_node.is_absolute:
+                # Note: this removes all offset sequences...
+                self.taskdefs[ name ].add_sequence( seq )
 
             if self.run_mode == 'live':
                 # register any explicit internal outputs
@@ -1228,14 +1262,21 @@ class config( object ):
         cname = {}
         for left in lnames:
             # (GraphNodeError checked above)
+            cycle_point = None
             lnode = graphnode(left, base_offset=base_offset)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
-
                 if lnode.offset > self.taskdefs[lnode.name].intercycle_offset:
                     self.taskdefs[lnode.name].intercycle_offset = lnode.offset
-
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, asyncid_pattern, suicide )
+            if lnode.offset_is_from_ict:
+                last_point = seq.get_stop_point()
+                first_point = self.taskdefs[lnode.name].ict - lnode.offset
+                if first_point and last_point is not None:
+                    self.taskdefs[lnode.name].intercycle_offset = (last_point - first_point)
+                else:
+                    self.taskdefs[lnode.name].intercycle_offset = None
+                cycle_point = first_point
+            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, asyncid_pattern, suicide )
             if not trigger:
                 continue
             if not conditional:
@@ -1455,14 +1496,23 @@ class config( object ):
             print "Parsing the dependency graph"
 
         self.graph_found = False
-        items = self.cfg['scheduling']['dependencies'].items()
+        items = []
+        for item, value in self.cfg['scheduling']['dependencies'].items():
+            items.append((item, value, True, False))
+        start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
+        if start_up_tasks:
+            items.append(("R1", {"graph": " & ".join(start_up_tasks)}, False,
+                          True))
+        
         while items:
-            item, value = items.pop(0)
+            item, value, auto_remove_startup, is_inserted = items.pop(0)
             
             if re.search("(?![^(]+\)),", item):
                 new_items = re.split("(?![^(]+\)),", item)
                 for new_item in new_items:
                     items.append((new_item, value))
+                continue
+
             if item == 'graph':
                 graph = self.cfg['scheduling']['dependencies']['graph']
                 if graph:
@@ -1477,9 +1527,32 @@ class config( object ):
                 else:
                     if graph:
                         section = item
-                        self.parse_graph( section, graph )
+                        if is_inserted:
+                            print "INSERTED START-UP DEPENDENCIES REPLACEMENT:"
+                            print "[[[" + section + "]]]"
+                            print "    " + 'graph = """' + graph + '\n"""' 
+                        startup_dependencies = self.parse_graph(
+                            section, graph,
+                            auto_remove_startup=auto_remove_startup
+                        )
+                        if startup_dependencies and auto_remove_startup:
+                            section_seq = sequence(
+                                section,
+                                self.cfg['scheduling']['initial cycle time'],
+                                self.cfg['scheduling']['final cycle time']
+                            )
+                            first_point = section_seq.get_first_point(
+                                point(self.cfg['scheduling']['initial cycle time']))
+                            graph_text = ""
+                            for left, right in startup_dependencies:
+                                graph_text += left + "[] => " + right + "\n"
+                            
+                            section = "R1/" + str(first_point)
+                            items.append((section, {"graph": graph_text},
+                                          False, True))
+                                
 
-    def parse_graph( self, section, graph ):
+    def parse_graph( self, section, graph, auto_remove_startup=False ):
         self.graph_found = True
 
         if re.match( '^ASYNCID:', section ):
@@ -1498,6 +1571,7 @@ class config( object ):
 
         # split the graph string into successive lines
         lines = re.split( '\s*\n\s*', graph )
+        startup_dependencies = []
         for xline in lines:
             # strip comments
             line = re.sub( '#.*', '', xline )
@@ -1508,8 +1582,13 @@ class config( object ):
             line = re.sub( '^\s*', '', line )
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
-            self.process_graph_line( line, section, ttype, seq )
-
+            startup_dependencies.extend(self.process_graph_line(
+                line, section, ttype, seq,
+                auto_remove_startup=auto_remove_startup
+            ))
+        if ttype == 'cycling':
+            return startup_dependencies
+        return []
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)

@@ -348,6 +348,10 @@ class IntegerSequence( object ):
             p = self.get_next_point( p )
         return p
 
+    def get_stop_point( self ):
+        """Return the last point in this sequence, or None if unbounded."""
+        return self.p_stop
+
     def __eq__( self, q ):
         if self.i_step and not q.i_step or \
                 not self.i_step and q.i_step:

@@ -160,6 +160,7 @@ class ISO8601Interval(IntervalBase):
 
     def standardise(self):
         self.value = str(interval_parse(self.value))
+        return self
 
     def add(self, other):
         if isinstance(other, ISO8601Interval):
@@ -336,6 +337,18 @@ class ISO8601Sequence(object):
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point >= p_iso_point:
                 return ISO8601Point(str(recurrence_iso_point))
+        return None
+
+    def get_stop_point( self ):
+        """Return the last point in this sequence, or None if unbounded."""
+        if (self.recurrence.repetitions is not None or (
+                (self.recurrence.start_point is not None or
+                 self.recurrence.min_point is not None) and
+                (self.recurrence.end_point is not None or
+                 self.recurrence.max_point is not None))):
+            for recurrence_iso_point in self.recurrence:
+                pass
+            return ISO8601Point(str(recurrence_iso_point))
         return None
 
     def __eq__(self, other):

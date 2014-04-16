@@ -18,8 +18,29 @@
 
 from cycling.loader import interval
 import re
-NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T?\s*([+-]?)(\s*[,.\w]*)\s*\]){0,1}(:[\w-]+){0,1}$')
 
+# Previous node format.
+NODE_PREV_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-]?)(\s*[,.\w]*)\s*\]){0,1}(:[\w-]+){0,1}$')
+
+# Cylc's ISO 8601 format.
+NODE_ISO_RE = re.compile(
+    r"""^(\w+)        # Task name
+        (?:\[        # Begin optional [offset] syntax
+         (?!T[+-])   # Do not match a 'T-' or 'T+' (this is the old format)
+         ([^\]]+)    # Continue until next ']'
+         \]          # Stop at next ']'
+        )?           # End optional [offset] syntax]
+        (:[\w-]+|)$  # Optional type (e.g. :succeed)
+     """, re.X)
+NODE_ISO_ICT_RE = re.compile(
+    r"""^(\w+)        # Task name
+        \[\]      # ict offset marker
+        (?:\[        # Begin optional [offset] syntax
+         ([^\]]+)    # Continue until next ']'
+         \]          # Stop at next ']'
+        )?           # End optional [offset] syntax]
+        (:[\w-]+|)$  # Optional type (e.g. :succeed)
+     """, re.X)
 
 class GraphNodeError( Exception ):
     """
@@ -42,44 +63,62 @@ class graphnode( object ):
         # - output label: foo:m1
         # - intercycle dependence: foo[T-6]
         # These may be combined: foo[T-6]:m1
+        # Task may be defined at initial cycle time: foo[]
+        # or relative to initial cycle time: foo[][+P1D]
 
-        m = re.match( NODE_RE, node )
+        self.offset_is_from_ict = False
+        self.is_absolute = False
+        m = re.match( NODE_ISO_ICT_RE, node )
         if m:
-            name, sign, offset, outp = m.groups()
-
-            if outp:
-                self.special_output = True
-                self.output = outp[1:] # strip ':'
+            # node looks like foo[], foo[][-P4D], foo[]:fail, etc.
+            self.is_absolute = True
+            name, offset, outp = m.groups()
+            self.offset_is_from_ict = True
+            sign = ""
+            prev_format = False
+        else:
+            m = re.match( NODE_ISO_RE, node )
+            if m:
+                # node looks like foo, foo:fail, foo[-PT6H], foo[-P4D]:fail...
+                name, offset, outp = m.groups()
+                sign = ""
+                prev_format = False
             else:
-                self.special_output = False
-                self.output = None
+                m = re.match( NODE_PREV_RE, node )
+                if not m:
+                    raise GraphNodeError( 'Illegal graph node: ' + node )
+                # node looks like foo[T-6], foo[T-12]:fail...
+                name, sign, offset, outp = m.groups()
+                prev_format = True
 
-            if name:
-                self.name = name
-            else:
-                raise GraphNodeError( 'Illegal graph node: ' + node )
+        if outp:
+            self.special_output = True
+            self.output = outp[1:] # strip ':'
+        else:
+            self.special_output = False
+            self.output = None
 
-            if offset:
-                self.intercycle = True
+        if name:
+            self.name = name
+        else:
+            raise GraphNodeError( 'Illegal graph node: ' + node )
+            
+        if self.offset_is_from_ict and not offset:
+            offset = str(interval.get_null())
+        if offset:
+            self.intercycle = True
+            if prev_format:
                 if sign == '+':
                     self.offset = - interval( offset )
                 else:
                     self.offset = interval( offset )
-                # TODO: Post-backward compatibility: remove try-except block.
-                try:
-                    self.offset.standardise()
-                except ValueError:
-                    # An invalid offset, probably in the prev format.
-                    if base_offset is None:
-                        raise
-                    # If offset is '+24' & base_offset is 'P1D', infer 'P24D'.
-                    self.offset = base_offset.get_inferred_child(offset)
+                self.offset = base_offset.get_inferred_child(offset)
             else:
-                self.intercycle = False
-                self.offset = None
-
+                self.offset = (-interval(offset)).standardise()
         else:
-            raise GraphNodeError( 'Illegal graph node: ' + node )
+            self.intercycle = False
+            self.offset = None
+
 
 if __name__ == '__main__':
     # TODO ISO - this is only for integer cycling:

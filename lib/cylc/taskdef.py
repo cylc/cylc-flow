@@ -196,7 +196,8 @@ class taskdef(object):
                         adjusted.append( nxt )
                 if adjusted:
                     p_next = min( adjusted )
-                    if sself.cleanup_cutoff < p_next:
+                    if (sself.cleanup_cutoff is not None and
+                            sself.cleanup_cutoff < p_next):
                         sself.cleanup_cutoff = p_next
                 else:
                     # TODO ISO - ??
@@ -280,7 +281,10 @@ class taskdef(object):
                         adjusted.append( adj )
                 if adjusted:
                     sself.tag = min( adjusted )
-                    sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                    if sself.intercycle_offset is None:
+                        sself.cleanup_cutoff = None
+                    else:
+                        sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
                     sself.id = TaskID.get( sself.name, str(sself.tag) )
                 else:
                     sself.tag = None
@@ -289,7 +293,10 @@ class taskdef(object):
                     return
             else:
                 sself.tag = start_tag
-                sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                if sself.intercycle_offset is None:
+                    sself.cleanup_cutoff = None
+                else:
+                    sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
                 sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.c_time = sself.tag
