@@ -20,28 +20,39 @@
 Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
-#cycling = 'integer'
-cycling = 'iso8601'
+
+ISO8601_CYCLING_TYPE = 'iso8601'
+INTEGER_CYCLING_TYPE = 'integer'
+
+import integer
+import iso8601
 
 
-if cycling == 'integer':
-    from integer import (
-        IntegerPoint as point,
-        IntegerInterval as interval,
-        IntegerSequence as sequence,
-        init_from_cfg as cycling_init_from_cfg
-    )
-elif cycling == 'iso8601':
-    from iso8601 import (
-        ISO8601Point as point,
-        ISO8601Interval as interval,
-        ISO8601Sequence as sequence,
-        init_from_cfg as cycling_init_from_cfg
-    )
-else:
-    raise "CYCLING IMPORT ERROR"
+POINTS = {INTEGER_CYCLING: integer.IntegerPoint,
+          ISO8601_CYCLING: iso8601.ISO8601Point}
 
-# or use import by name:
-# mod = __import__( module_name, fromlist=[class_name] )
-# my_class = getattr( mod, class_name )
+INTERVALS = {INTEGER_CYCLING: integer.IntegerInterval,
+             ISO8601_CYCLING: iso8601.ISO8601Interval}
 
+SEQUENCES = {INTEGER_CYCLING: integer.IntegerSequence,
+             ISO8601_CYCLING: iso8601.ISO8601Sequence}
+
+INIT_FUNCTIONS = {INTEGER_CYCLING: integer.init_from_cfg,
+                  ISO8601_CYCLING: iso8601.init_from_cfg}
+
+
+def get_point(point_string, cycling_type=ISO8601_CYCLING):
+    return POINTS[cycling_type](point_string)
+
+
+def get_interval(interval_string, cycling_type=ISO8601_CYCLING):
+    return INTERVALS[cycling_type](interval_string)
+
+
+def get_sequence(sequence_string, cycling_type=ISO8601_CYCLING):
+    return SEQUENCES[cycling_type][interval_string)
+
+
+def init_cyclers(cfg):
+    for cycling_type, init_func in INIT_FUNCTIONS.items():
+        init_func(cfg)

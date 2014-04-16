@@ -1510,7 +1510,7 @@ class config( object ):
             if re.search("(?![^(]+\)),", item):
                 new_items = re.split("(?![^(]+\)),", item)
                 for new_item in new_items:
-                    items.append((new_item, value))
+                    items.append((new_item.strip(), value, True, False))
                 continue
 
             if item == 'graph':

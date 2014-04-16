@@ -482,9 +482,6 @@ def _get_old_strptime_format(point_string):
         return None
 
 
-YYYYMMDDHHmmss = '00010101000000'
-
-
 if __name__ == '__main__':
     cylc_config = {"cylc": {"cycle point num expanded year digits": 0,
                             "cycle point format": None,

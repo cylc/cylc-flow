@@ -22,7 +22,7 @@ ImportError due to pygraphviz/graphviz not being installed."""
 import re
 import pygraphviz
 import TaskID
-from cycling.loader import point, interval
+from cycling.loader import get_point, get_interval
 
 # TODO ISO - Support T06, truncated relative times, [] for initial cycle time.
 OFFSET_RE =re.compile('(\w+)\s*\[\s*T?\s*([+-]?\s*[,.\w]*)\s*\]')
@@ -220,7 +220,9 @@ class edge( object):
             m = re.match( OFFSET_RE, left )
             if m:
                 left, offset = m.groups()
-                tag = str( point(tag) + interval(offset) )
+                tag = str( get_point(tag, cycling_type=self.sequence.TYPE) + (
+                           get_interval(offset,
+                                        cycling_type=self.sequence.TYPE)))
             else:
                 tag = tag
 
