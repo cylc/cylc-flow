@@ -20,11 +20,25 @@ from cycling.loader import get_interval, get_interval_cls
 import re
 
 # Previous node format.
-NODE_PREV_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-]?)(\s*[,.\w]*)\s*\]){0,1}(:[\w-]+){0,1}$')
-
+NODE_PREV_RE = re.compile(
+    r"""^(\w+)          # Task name
+        \s*             # Optional whitespace
+        (?:\[           # Begin optional [offset] syntax, start [
+         \s*            # Optional whitespace
+         T              # T as in T-6, T+1, etc
+         \s*            # Optional whitespace
+         ([+-])         # Either + or - in e.g. T-6, T+1
+         (\s*\w+)       # Offset amount
+         \s*            # Optional whitespace
+         \]             # End ]
+        ){0,1}          # End optional [offset] syntax
+        (:[\w-]+){0,1}  # Optional type (e.g. :fail, :finish-all)
+        $               # End
+    """, re.X)
+              
 # Cylc's ISO 8601 format.
 NODE_ISO_RE = re.compile(
-    r"""^(\w+)        # Task name
+    r"""^(\w+)       # Task name
         (?:\[        # Begin optional [offset] syntax
          (?!T[+-])   # Do not match a 'T-' or 'T+' (this is the old format)
          ([^\]]+)    # Continue until next ']'
@@ -32,9 +46,11 @@ NODE_ISO_RE = re.compile(
         )?           # End optional [offset] syntax]
         (:[\w-]+|)$  # Optional type (e.g. :succeed)
      """, re.X)
+
+# Cylc's ISO 8601 initial cycle time based format
 NODE_ISO_ICT_RE = re.compile(
-    r"""^(\w+)        # Task name
-        \[\]      # ict offset marker
+    r"""^(\w+)       # Task name
+        \[\]         # Initial cycle time offset marker
         (?:\[        # Begin optional [offset] syntax
          ([^\]]+)    # Continue until next ']'
          \]          # Stop at next ']'

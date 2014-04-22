@@ -137,9 +137,9 @@ class IntegerSequence( object ):
     """Integer points at a regular interval."""
 
     @classmethod
-    def get_async_expr( cls ):
+    def get_async_expr( cls, start_point=0 ):
         """Return an expression for a one-off point at the initial cycle time."""
-        return 'R1/c0/P1'
+        return 'R1/c' + str(start_point) + '/P1'
 
     def __init__( self, dep_section, p_context_start, p_context_stop=None ):
         """Parse state (start, stop, interval) from a graph section heading.

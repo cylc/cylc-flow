@@ -1,0 +1,66 @@
+2014-04-22T15:04:12 INFO - Thread-2 start (Event Handlers)
+2014-04-22T15:04:12 INFO - Thread-3 start (Poll & Kill Commands)
+2014-04-22T15:04:12 INFO - port:7766
+2014-04-22T15:04:12 INFO - Suite starting at 2014-04-22T15:04:12.157690
+2014-04-22T15:04:12 INFO - Log event clock: real time
+2014-04-22T15:04:12 INFO - Run mode: live
+2014-04-22T15:04:12 INFO - Start tag: 20140101
+2014-04-22T15:04:12 INFO - Stop tag: 20140104
+2014-04-22T15:04:12 INFO - Thread-4 start (Job Submission)
+2014-04-22T15:04:12 INFO - Thread-5 start (Request Handling)
+2014-04-22T15:04:12 INFO - Cold Start 20140101
+2014-04-22T15:04:12 INFO - [cold_foo.20140101T0000Z] -triggered off []
+2014-04-22T15:04:13 INFO - [cold_foo.20140101T0000Z] -(current:ready)> cold_foo.20140101T0000Z submitting now
+2014-04-22T15:04:14 INFO - [cold_foo.20140101T0000Z] -(current:ready)> cold_foo.20140101T0000Z submission succeeded
+2014-04-22T15:04:14 INFO - [cold_foo.20140101T0000Z] -(current:submitted)> cold_foo.20140101T0000Z submit_method_id=23535
+2014-04-22T15:04:15 INFO - [cold_foo.20140101T0000Z] -(current:submitted)> cold_foo.20140101T0000Z started at 2014-04-22T15:04:14
+2014-04-22T15:04:16 INFO - [cold_foo.20140101T0000Z] -(current:running)> cold_foo.20140101T0000Z succeeded at 2014-04-22T15:04:15
+2014-04-22T15:04:17 INFO - [foo_midnight.20140101T0000Z] -triggered off ['cold_foo.20140101T0000Z']
+2014-04-22T15:04:17 INFO - [foo_dawn.20140101T0600Z] -triggered off ['cold_foo.20140101T0000Z']
+2014-04-22T15:04:18 INFO - [foo_midnight.20140101T0000Z] -(current:ready)> foo_midnight.20140101T0000Z submitting now
+2014-04-22T15:04:18 INFO - [foo_midnight.20140101T0000Z] -(current:ready)> foo_midnight.20140101T0000Z submission succeeded
+2014-04-22T15:04:18 INFO - [foo_midnight.20140101T0000Z] -(current:submitted)> foo_midnight.20140101T0000Z submit_method_id=23642
+2014-04-22T15:04:18 INFO - [foo_dawn.20140101T0600Z] -(current:ready)> foo_dawn.20140101T0600Z submitting now
+2014-04-22T15:04:19 INFO - [foo_midnight.20140101T0000Z] -(current:submitted)> foo_midnight.20140101T0000Z started at 2014-04-22T15:04:18
+2014-04-22T15:04:19 INFO - [foo_dawn.20140101T0600Z] -(current:ready)> foo_dawn.20140101T0600Z started at 2014-04-22T15:04:18
+2014-04-22T15:04:19 INFO - [foo_dawn.20140101T0600Z] -(current:running)> foo_dawn.20140101T0600Z submission succeeded
+2014-04-22T15:04:19 INFO - [foo_dawn.20140101T0600Z] -(current:running)> foo_dawn.20140101T0600Z submit_method_id=23727
+2014-04-22T15:04:20 INFO - [foo_midnight.20140101T0000Z] -(current:running)> foo_midnight.20140101T0000Z succeeded at 2014-04-22T15:04:19
+2014-04-22T15:04:21 INFO - [foo_midnight.20140102T0000Z] -triggered off ['foo_midnight.20140101T0000Z']
+2014-04-22T15:04:21 INFO - [foo_dawn.20140101T0600Z] -(current:running)> foo_dawn.20140101T0600Z succeeded at 2014-04-22T15:04:20
+2014-04-22T15:04:22 INFO - [foo_dawn.20140102T0600Z] -triggered off ['foo_dawn.20140101T0600Z']
+2014-04-22T15:04:22 INFO - [foo_midnight.20140102T0000Z] -(current:ready)> foo_midnight.20140102T0000Z submitting now
+2014-04-22T15:04:23 INFO - [foo_midnight.20140102T0000Z] -(current:ready)> foo_midnight.20140102T0000Z submission succeeded
+2014-04-22T15:04:23 INFO - [foo_midnight.20140102T0000Z] -(current:submitted)> foo_midnight.20140102T0000Z submit_method_id=23856
+2014-04-22T15:04:23 INFO - [foo_midnight.20140102T0000Z] -(current:submitted)> foo_midnight.20140102T0000Z started at 2014-04-22T15:04:23
+2014-04-22T15:04:25 INFO - [foo_midnight.20140102T0000Z] -(current:running)> foo_midnight.20140102T0000Z succeeded at 2014-04-22T15:04:24
+2014-04-22T15:04:25 INFO - [foo_dawn.20140102T0600Z] -(current:ready)> foo_dawn.20140102T0600Z submitting now
+2014-04-22T15:04:25 INFO - [foo_dawn.20140102T0600Z] -(current:ready)> foo_dawn.20140102T0600Z submission succeeded
+2014-04-22T15:04:25 INFO - [foo_dawn.20140102T0600Z] -(current:submitted)> foo_dawn.20140102T0600Z submit_method_id=23963
+2014-04-22T15:04:26 INFO - [foo_midnight.20140103T0000Z] -triggered off ['foo_midnight.20140102T0000Z']
+2014-04-22T15:04:26 INFO - [foo_dawn.20140102T0600Z] -(current:submitted)> foo_dawn.20140102T0600Z started at 2014-04-22T15:04:25
+2014-04-22T15:04:27 INFO - [foo_dawn.20140102T0600Z] -(current:running)> foo_dawn.20140102T0600Z succeeded at 2014-04-22T15:04:26
+2014-04-22T15:04:27 INFO - [foo_midnight.20140103T0000Z] -(current:ready)> foo_midnight.20140103T0000Z submitting now
+2014-04-22T15:04:27 INFO - [foo_midnight.20140103T0000Z] -(current:ready)> foo_midnight.20140103T0000Z submission succeeded
+2014-04-22T15:04:27 INFO - [foo_midnight.20140103T0000Z] -(current:submitted)> foo_midnight.20140103T0000Z submit_method_id=24070
+2014-04-22T15:04:28 INFO - [foo_dawn.20140103T0600Z] -triggered off ['foo_dawn.20140102T0600Z']
+2014-04-22T15:04:28 INFO - [foo_midnight.20140103T0000Z] -(current:submitted)> foo_midnight.20140103T0000Z started at 2014-04-22T15:04:27
+2014-04-22T15:04:29 INFO - [foo_midnight.20140103T0000Z] -(current:running)> foo_midnight.20140103T0000Z succeeded at 2014-04-22T15:04:29
+2014-04-22T15:04:29 INFO - [foo_dawn.20140103T0600Z] -(current:ready)> foo_dawn.20140103T0600Z submitting now
+2014-04-22T15:04:29 INFO - [foo_dawn.20140103T0600Z] -(current:ready)> foo_dawn.20140103T0600Z submission succeeded
+2014-04-22T15:04:29 INFO - [foo_dawn.20140103T0600Z] -(current:submitted)> foo_dawn.20140103T0600Z submit_method_id=24177
+2014-04-22T15:04:30 INFO - [foo_midnight.20140104T0000Z] -triggered off ['foo_midnight.20140103T0000Z']
+2014-04-22T15:04:30 WARNING - [foo_dawn.20140104T0600Z] -not adding (beyond suite stop cycle) 20140104
+2014-04-22T15:04:30 INFO - [foo_dawn.20140103T0600Z] -(current:submitted)> foo_dawn.20140103T0600Z started at 2014-04-22T15:04:29
+2014-04-22T15:04:31 INFO - [foo_midnight.20140104T0000Z] -(current:ready)> foo_midnight.20140104T0000Z submitting now
+2014-04-22T15:04:32 INFO - [foo_dawn.20140103T0600Z] -(current:running)> foo_dawn.20140103T0600Z succeeded at 2014-04-22T15:04:31
+2014-04-22T15:04:32 INFO - [foo_midnight.20140104T0000Z] -(current:ready)> foo_midnight.20140104T0000Z submission succeeded
+2014-04-22T15:04:32 INFO - [foo_midnight.20140104T0000Z] -(current:submitted)> foo_midnight.20140104T0000Z submit_method_id=24286
+2014-04-22T15:04:32 INFO - [foo_midnight.20140104T0000Z] -(current:submitted)> foo_midnight.20140104T0000Z started at 2014-04-22T15:04:32
+2014-04-22T15:04:33 WARNING - [foo_midnight.20140105T0000Z] -not adding (beyond suite stop cycle) 20140104
+2014-04-22T15:04:34 INFO - [foo_midnight.20140104T0000Z] -(current:running)> foo_midnight.20140104T0000Z succeeded at 2014-04-22T15:04:33
+2014-04-22T15:04:34 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 20140104
+2014-04-22T15:04:34 INFO - Thread-4 exit (Job Submission)
+2014-04-22T15:04:35 INFO - Thread-2 exit (Event Handlers)
+2014-04-22T15:04:35 INFO - Thread-3 exit (Poll & Kill Commands)

@@ -20,7 +20,8 @@ import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
 from cylc.cycling.loader import (get_point, get_interval_cls,
-                                 get_sequence, init_cyclers)
+                                 get_sequence, get_sequence_cls,
+                                 init_cyclers)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -920,11 +921,16 @@ class config( object ):
         return line
 
     def process_graph_line( self, line, section, ttype, seq,
-                            auto_remove_startup=False ):
+                            tasks_to_prune=None,
+                            return_all_dependencies=False ):
         """Extract dependent pairs from the suite.rc dependency text.
         
         Extract dependent pairs from the suite.rc textual dependency
-           graph to use in constructing graphviz graphs.
+        graph to use in constructing graphviz graphs.
+
+        Return a list of dependencies involving 'start-up' tasks
+        (backwards compatibility) or all dependencies if
+        return_all_dependencies keyword argument is True.
 
         line is the line of text within the 'graph' attribute of
         this dependency section.
@@ -933,8 +939,12 @@ class config( object ):
         ttype is either 'cycling' or an async indicator.
         seq is the sequence generated from 'section' given the initial
         and final cycle time.
-        auto_remove_startup, if True, indicates that start-up tasks
-        in expressions should be removed.
+        tasks_to_prune, if not None, is a list of tasks to remove
+        from dependency expressions (backwards compatibility for
+        start-up tasks and async graph tasks).
+        return_all_dependencies, if True, indicates that all
+        dependencies between tasks in this graph should be returned.
+        Otherwise, just return tasks_to_prune dependencies, if any.
 
         'A => B => C'    : [A => B], [B => C]
         'A & B => C'     : [A => C], [B => C]
@@ -951,6 +961,9 @@ class config( object ):
         'A = > B | C' # ?!
 
         """
+
+        if tasks_to_prune is None:
+            tasks_to_prune = []
 
         orig_line = line
 
@@ -1026,9 +1039,6 @@ class config( object ):
         # Replace "foo:finish" with "( foo:succeed | foo:fail )"
         line = re.sub(  r'\b(\w+(\[.*?]){0,1}):finish\b', r'( \1:succeed | \1:fail )', line )
 
-        # Replace all start-up tasks with new ISO 8601 compatible syntax.
-        startup_tasks = self.cfg['scheduling']['special tasks']['start-up']
-
         if flags.verbose and line != orig_line:
             print 'Graph line substitutions occurred:'
             print '  IN:', orig_line
@@ -1054,7 +1064,7 @@ class config( object ):
             raise SuiteConfigError, "ERROR: missing task name in graph line?"
 
         # get list of pairs
-        startup_dependencies = []
+        special_dependencies = []
         for i in [0] + range( 1, len(tasks)-1 ):
             lexpression = tasks[i]
 
@@ -1140,10 +1150,10 @@ class config( object ):
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)            
-                        if name in startup_tasks:
-                            startup_dependencies.append((name, r))
-                            if auto_remove_startup:
-                                lnames.remove(n)
+                        if name in tasks_to_prune or return_all_dependencies:
+                            special_dependencies.append((name, r))
+                        if name in tasks_to_prune:
+                            lnames.remove(n)
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
@@ -1152,7 +1162,7 @@ class config( object ):
                                         asyncid_pattern, seq.step )
                 self.generate_triggers( lexpression, lnames, r, seq,
                                          asyncid_pattern, suicide )
-        return startup_dependencies
+        return special_dependencies
             
 
     def generate_edges( self, lexpression, lnames, right, ttype, seq, suicide=False ):
@@ -1402,8 +1412,8 @@ class config( object ):
 
                 not_initial_cycle = ( ctime != i_ctime )
 
-                r_id = e.get_right(ctime, not_initial_cycle, raw, startup_exclude_list )
-                l_id = e.get_left( ctime, not_initial_cycle, raw, startup_exclude_list )
+                r_id = e.get_right(ctime, start_ctime, not_initial_cycle, raw, startup_exclude_list )
+                l_id = e.get_left( ctime, start_ctime, not_initial_cycle, raw, startup_exclude_list )
 
                 action = True
 
@@ -1495,67 +1505,83 @@ class config( object ):
         if flags.verbose:
             print "Parsing the dependency graph"
 
+        start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
+        initial_tasks = list(start_up_tasks)
+
         self.graph_found = False
+
+        # Set up our backwards-compatibility handling of async graphs.
+        async_graph = self.cfg['scheduling']['dependencies']['graph']
+        if async_graph:
+            section = get_sequence_cls().get_async_expr()
+            async_dependencies = self.parse_graph(
+                section, async_graph,
+                return_all_dependencies=True
+            )
+            for left, right in async_dependencies:
+                if left:
+                    initial_tasks.append(left)
+                if right:
+                    initial_tasks.append(right)
+
+        # Create a stack of sections (sequence strings) and graphs.
         items = []
         for item, value in self.cfg['scheduling']['dependencies'].items():
-            items.append((item, value, True, False))
-        start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
+            if item == 'graph':
+                continue
+            items.append((item, value, initial_tasks, False))
+
+        # Start-up tasks, unlike async tasks, need their own explicit section.
         if start_up_tasks:
-            items.append(("R1", {"graph": " & ".join(start_up_tasks)}, False,
-                          True))
-        
+            items.append((get_sequence_cls().get_async_expr(),
+                          {"graph": " & ".join(start_up_tasks)}, [], True))
+
         while items:
-            item, value, auto_remove_startup, is_inserted = items.pop(0)
-            
+            item, value, tasks_to_prune, is_inserted = items.pop(0)
+
+            # If the section consists of more than one sequence, split it up.
             if re.search("(?![^(]+\)),", item):
                 new_items = re.split("(?![^(]+\)),", item)
                 for new_item in new_items:
-                    items.append((new_item.strip(), value, True, False))
+                    items.append((new_item.strip(), value,
+                                  tasks_to_prune, False))
                 continue
 
-            if item == 'graph':
-                graph = self.cfg['scheduling']['dependencies']['graph']
-                if graph:
-                    # TODO ISO - ADAPT TO ISO-CYCLING TOO
-                    section = sequence.get_async_expr()
-                    self.parse_graph( section, graph )
-            else:
-                try:
-                    graph = value['graph']
-                except KeyError:
-                    pass
-                else:
-                    if graph:
-                        section = item
-                        if is_inserted:
-                            print "INSERTED START-UP DEPENDENCIES REPLACEMENT:"
-                            print "[[[" + section + "]]]"
-                            print "    " + 'graph = """' + graph + '\n"""' 
-                        startup_dependencies = self.parse_graph(
-                            section, graph,
-                            auto_remove_startup=auto_remove_startup
-                        )
-                        if startup_dependencies and auto_remove_startup:
-                            section_seq = get_sequence(
-                                section,
-                                self.cfg['scheduling']['initial cycle time'],
-                                self.cfg['scheduling']['final cycle time']
-                            )
-                            first_point = section_seq.get_first_point(
-                                get_point(self.cfg['scheduling'][
-                                    'initial cycle time']
-                                )
-                            )
-                            graph_text = ""
-                            for left, right in startup_dependencies:
-                                graph_text += left + "[] => " + right + "\n"
-                            
-                            section = "R1/" + str(first_point)
-                            items.append((section, {"graph": graph_text},
-                                          False, True))
+            try:
+                graph = value['graph']
+            except KeyError:
+                continue
+            if not graph:
+                continue
+
+            section = item
+            if is_inserted:
+                print "INSERTED DEPENDENCIES REPLACEMENT:"
+                print "[[[" + section + "]]]"
+                print "    " + 'graph = """' + graph + '"""' 
+            special_dependencies = self.parse_graph(
+                section, graph,
+                tasks_to_prune=tasks_to_prune
+            )
+            if special_dependencies and tasks_to_prune:
+                section_seq = get_sequence(
+                    section,
+                    self.cfg['scheduling']['initial cycle time'],
+                    self.cfg['scheduling']['final cycle time']
+                )
+                first_point = section_seq.get_first_point(
+                    get_point(self.cfg['scheduling']['initial cycle time'])
+                )
+                graph_text = ""
+                for left, right in special_dependencies:
+                    graph_text += left + "[] => " + right + "\n"
+                graph_text = graph_text.rstrip()
+                section = get_sequence_cls().get_async_expr(first_point)
+                items.append((section, {"graph": graph_text}, [], True))
                                 
 
-    def parse_graph( self, section, graph, auto_remove_startup=False ):
+    def parse_graph( self, section, graph, tasks_to_prune=None,
+                     return_all_dependencies=False ):
         self.graph_found = True
 
         if re.match( '^ASYNCID:', section ):
@@ -1574,7 +1600,7 @@ class config( object ):
 
         # split the graph string into successive lines
         lines = re.split( '\s*\n\s*', graph )
-        startup_dependencies = []
+        special_dependencies = []
         for xline in lines:
             # strip comments
             line = re.sub( '#.*', '', xline )
@@ -1585,12 +1611,13 @@ class config( object ):
             line = re.sub( '^\s*', '', line )
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
-            startup_dependencies.extend(self.process_graph_line(
+            special_dependencies.extend(self.process_graph_line(
                 line, section, ttype, seq,
-                auto_remove_startup=auto_remove_startup
+                tasks_to_prune=tasks_to_prune,
+                return_all_dependencies=return_all_dependencies
             ))
         if ttype == 'cycling':
-            return startup_dependencies
+            return special_dependencies
         return []
 
     def get_taskdef( self, name ):

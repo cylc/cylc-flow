@@ -238,6 +238,12 @@ class ISO8601Sequence(object):
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
 
+    @classmethod
+    def get_async_expr(cls, start_point=None):
+        if start_point is None:
+            return "R1"
+        return "R1/" + str(start_point)
+
     def __init__(self, dep_section, context_start_point=None,
                  context_end_point=None):
 
