@@ -28,8 +28,6 @@ import iso8601
 ISO8601_CYCLING_TYPE = 'iso8601'
 INTEGER_CYCLING_TYPE = 'integer'
 
-DEFAULT_CYCLING_TYPE = ISO8601_CYCLING_TYPE
-
 POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
           ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
 
@@ -43,33 +41,47 @@ INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
                   ISO8601_CYCLING_TYPE: iso8601.init_from_cfg}
 
 
+class DefaultCycler(object):
+
+    """Store the default TYPE for Cyclers."""
+
+    TYPE = None
+
+
 def get_point(*args, **kwargs):
-    cycling_type = kwargs.pop("cycling_type", DEFAULT_CYCLING_TYPE)
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return get_point_cls(cycling_type=cycling_type)(*args, **kwargs)
 
 
-def get_point_cls(cycling_type=ISO8601_CYCLING_TYPE):
+def get_point_cls(cycling_type=None):
+    if cycling_type is None:
+        cycling_type = DefaultCycler.TYPE
     return POINTS[cycling_type]
 
 
 def get_interval(*args, **kwargs):
-    cycling_type = kwargs.pop("cycling_type", DEFAULT_CYCLING_TYPE)
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return get_interval_cls(cycling_type=cycling_type)(*args, **kwargs)
 
 
-def get_interval_cls(cycling_type=ISO8601_CYCLING_TYPE):
+def get_interval_cls(cycling_type=None):
+    if cycling_type is None:
+        cycling_type = DefaultCycler.TYPE
     return INTERVALS[cycling_type]
 
 
 def get_sequence(*args, **kwargs):
-    cycling_type = kwargs.pop("cycling_type", DEFAULT_CYCLING_TYPE)
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return get_sequence_cls(cycling_type=cycling_type)(*args, **kwargs)
 
 
-def get_sequence_cls(cycling_type=ISO8601_CYCLING_TYPE):
+def get_sequence_cls(cycling_type=None):
+    if cycling_type is None:
+        cycling_type = DefaultCycler.TYPE
     return SEQUENCES[cycling_type]
 
 
 def init_cyclers(cfg):
+    DefaultCycler.TYPE = cfg['scheduling']['cycling']
     for cycling_type, init_func in INIT_FUNCTIONS.items():
         init_func(cfg)

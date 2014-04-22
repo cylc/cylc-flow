@@ -136,6 +136,9 @@ class IntegerInterval(IntervalBase):
 class IntegerSequence( object ):
     """Integer points at a regular interval."""
 
+    TYPE = CYCLER_TYPE_INTEGER
+    TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_INTEGER
+
     @classmethod
     def get_async_expr( cls, start_point=0 ):
         """Return an expression for a one-off point at the initial cycle time."""

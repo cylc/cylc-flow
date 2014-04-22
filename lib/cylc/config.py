@@ -21,7 +21,7 @@ import taskdef
 from cylc.cfgspec.suite import get_suitecfg
 from cylc.cycling.loader import (get_point, get_interval_cls,
                                  get_sequence, get_sequence_cls,
-                                 init_cyclers)
+                                 init_cyclers, INTEGER_CYCLING_TYPE)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -141,6 +141,25 @@ class config( object ):
                 tvars=template_vars, tvars_file=template_vars_file,
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
+
+        if 'cycling' not in self.cfg['scheduling']:
+            # Auto-detect integer cycling for pure async graph suites.
+            dependency_map = self.cfg.get('scheduling', {}).get(
+                'dependencies', {})
+            if dependency_map.get('graph'):
+                # There is an async graph setting.
+                for item, value in dependency_map.items():
+                    if item == 'graph':
+                        continue
+                    if value.get('graph'):
+                        break
+                else:
+                    # There aren't any other graphs, so set integer cycling.
+                    self.cfg['scheduling']['cycling'] = INTEGER_CYCLING_TYPE
+                    if 'initial cycle time' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['initial cycle time'] = "0"
+                    if 'final cycle time' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['final cycle time'] = "0"
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -1133,7 +1152,8 @@ class config( object ):
                         if not n:
                             continue
                         try:
-                            name = graphnode( n, base_offset=seq.step ).name
+                            name = graphnode(
+                                n, base_offset=seq.get_interval()).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
@@ -1146,7 +1166,8 @@ class config( object ):
                 if ttype == 'cycling':
                     for n in lnames:
                         try:
-                            name = graphnode( n, base_offset=seq.step ).name
+                            name = graphnode(
+                                n, base_offset=seq.get_interval()).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)            
@@ -1159,7 +1180,7 @@ class config( object ):
                     # edges not needed for validation
                     self.generate_edges( lexpression, lnames, r, ttype, seq, suicide )
                 self.generate_taskdefs( orig_line, lnames, r, ttype, section,
-                                        asyncid_pattern, seq.step )
+                                        asyncid_pattern, seq.get_interval() )
                 self.generate_triggers( lexpression, lnames, r, seq,
                                          asyncid_pattern, suicide )
         return special_dependencies
@@ -1259,7 +1280,7 @@ class config( object ):
             # lefts are lone nodes; no more triggers to define.
             return
 
-        base_offset = seq.step
+        base_offset = seq.get_interval()
 
         conditional = False
         if re.search( '\|', lexpression ):

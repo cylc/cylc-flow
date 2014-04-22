@@ -1,0 +1,28 @@
+2014-04-22T16:40:30 INFO - Thread-2 start (Event Handlers)
+2014-04-22T16:40:30 INFO - Thread-3 start (Poll & Kill Commands)
+2014-04-22T16:40:30 INFO - port:7766
+2014-04-22T16:40:30 INFO - Suite starting at 2014-04-22T16:40:30.054126
+2014-04-22T16:40:30 INFO - Log event clock: real time
+2014-04-22T16:40:30 INFO - Run mode: live
+2014-04-22T16:40:30 INFO - Start tag: 0
+2014-04-22T16:40:30 INFO - Stop tag: 0
+2014-04-22T16:40:30 INFO - Thread-4 start (Job Submission)
+2014-04-22T16:40:30 INFO - Thread-5 start (Request Handling)
+2014-04-22T16:40:30 INFO - Cold Start 0
+2014-04-22T16:40:30 INFO - [foo.0] -triggered off []
+2014-04-22T16:40:31 INFO - [foo.0] -(current:ready)> foo.0 submitting now
+2014-04-22T16:40:32 INFO - [foo.0] -(current:ready)> foo.0 submission succeeded
+2014-04-22T16:40:32 INFO - [foo.0] -(current:submitted)> foo.0 submit_method_id=344
+2014-04-22T16:40:33 INFO - [foo.0] -(current:submitted)> foo.0 started at 2014-04-22T16:40:32
+2014-04-22T16:40:34 INFO - [foo.0] -(current:running)> foo.0 succeeded at 2014-04-22T16:40:33
+2014-04-22T16:40:35 INFO - [bar.0] -triggered off ['foo.0']
+2014-04-22T16:40:36 INFO - [bar.0] -(current:ready)> bar.0 submitting now
+2014-04-22T16:40:36 INFO - [bar.0] -(current:ready)> bar.0 submission succeeded
+2014-04-22T16:40:36 INFO - [bar.0] -(current:submitted)> bar.0 submit_method_id=457
+2014-04-22T16:40:37 INFO - [bar.0] -(current:submitted)> bar.0 started at 2014-04-22T16:40:36
+2014-04-22T16:40:38 INFO - [bar.0] -(current:running)> bar.0 succeeded at 2014-04-22T16:40:37
+2014-04-22T16:40:38 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 0
+2014-04-22T16:40:38 INFO - Thread-4 exit (Job Submission)
+2014-04-22T16:40:39 INFO - Thread-2 exit (Event Handlers)
+2014-04-22T16:40:39 INFO - Thread-3 exit (Poll & Kill Commands)
