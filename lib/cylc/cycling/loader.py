@@ -21,36 +21,53 @@ Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
 
-ISO8601_CYCLING_TYPE = 'iso8601'
-INTEGER_CYCLING_TYPE = 'integer'
-
 import integer
 import iso8601
 
 
-POINTS = {INTEGER_CYCLING: integer.IntegerPoint,
-          ISO8601_CYCLING: iso8601.ISO8601Point}
+ISO8601_CYCLING_TYPE = 'iso8601'
+INTEGER_CYCLING_TYPE = 'integer'
 
-INTERVALS = {INTEGER_CYCLING: integer.IntegerInterval,
-             ISO8601_CYCLING: iso8601.ISO8601Interval}
+DEFAULT_CYCLING_TYPE = ISO8601_CYCLING_TYPE
 
-SEQUENCES = {INTEGER_CYCLING: integer.IntegerSequence,
-             ISO8601_CYCLING: iso8601.ISO8601Sequence}
+POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
+          ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
 
-INIT_FUNCTIONS = {INTEGER_CYCLING: integer.init_from_cfg,
-                  ISO8601_CYCLING: iso8601.init_from_cfg}
+INTERVALS = {INTEGER_CYCLING_TYPE: integer.IntegerInterval,
+             ISO8601_CYCLING_TYPE: iso8601.ISO8601Interval}
 
+SEQUENCES = {INTEGER_CYCLING_TYPE: integer.IntegerSequence,
+             ISO8601_CYCLING_TYPE: iso8601.ISO8601Sequence}
 
-def get_point(point_string, cycling_type=ISO8601_CYCLING):
-    return POINTS[cycling_type](point_string)
-
-
-def get_interval(interval_string, cycling_type=ISO8601_CYCLING):
-    return INTERVALS[cycling_type](interval_string)
+INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
+                  ISO8601_CYCLING_TYPE: iso8601.init_from_cfg}
 
 
-def get_sequence(sequence_string, cycling_type=ISO8601_CYCLING):
-    return SEQUENCES[cycling_type][interval_string)
+def get_point(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DEFAULT_CYCLING_TYPE)
+    return get_point_cls(cycling_type=cycling_type)(*args, **kwargs)
+
+
+def get_point_cls(cycling_type=ISO8601_CYCLING_TYPE):
+    return POINTS[cycling_type]
+
+
+def get_interval(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DEFAULT_CYCLING_TYPE)
+    return get_interval_cls(cycling_type=cycling_type)(*args, **kwargs)
+
+
+def get_interval_cls(cycling_type=ISO8601_CYCLING_TYPE):
+    return INTERVALS[cycling_type]
+
+
+def get_sequence(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DEFAULT_CYCLING_TYPE)
+    return get_sequence_cls(cycling_type=cycling_type)(*args, **kwargs)
+
+
+def get_sequence_cls(cycling_type=ISO8601_CYCLING_TYPE):
+    return SEQUENCES[cycling_type]
 
 
 def init_cyclers(cfg):

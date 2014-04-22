@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cylc.TaskID
-from cylc.cycling.loader import interval
+from cylc.cycling.loader import get_interval
 
 import re
 
@@ -73,7 +73,7 @@ where output x of foo may also have an offset:
             sign, offset = m.groups()
             if sign != '+':
                 raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.intrinsic_offset = interval( offset )
+            self.intrinsic_offset = get_interval( offset )
 
     def set_type( self, type ):
         if type not in [ 'submitted', 'submit-failed', 'started', 'succeeded', 'failed' ]:
@@ -84,7 +84,7 @@ where output x of foo may also have an offset:
         self.cycle_point = cycle_point
 
     def set_offset( self, offset ):
-        self.evaluation_offset = interval( offset )
+        self.evaluation_offset = get_interval( offset )
 
     def get( self, ctime ):
         if self.async_repeating:

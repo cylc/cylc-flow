@@ -18,7 +18,7 @@
 
 import re, sys
 from simplify import conditional_simplifier
-from cylc.cycling.loader import point
+from cylc.cycling.loader import get_point
 
 # label1 => "foo ready for <TAG>
 # label2 => "bar.<TAG> succeeded"
@@ -93,7 +93,7 @@ class conditional_prerequisites(object):
                 if task.group:
                     try:
                         foo = task.group().split(".")[1].rstrip()
-                        if ( point( foo ) <  self.p_ict and foo != '1' ):
+                        if ( get_point( foo ) <  self.p_ict and foo != '1' ):
                             # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
                             # INTEGER CYCLING (AND MORE?)
                             drop_these.append(k)

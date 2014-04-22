@@ -32,7 +32,7 @@ from outputs import outputs
 import TaskID
 from task_output_logs import logfiles
 from parsec.OrderedDict import OrderedDict
-from cycling.loader import point, interval
+from cycling.loader import get_interval_cls
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -63,7 +63,7 @@ class taskdef(object):
 
         # some defaults
         self.intercycle = False
-        self.intercycle_offset = interval.get_null()
+        self.intercycle_offset = get_interval_cls().get_null()
         self.sequential = False
         self.cycling = False
         self.asyncid_pattern = None

@@ -19,8 +19,8 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
-from cylc.cycling.loader import (point, interval, sequence,
-                                 cycling_init_from_cfg)
+from cylc.cycling.loader import (get_point, get_interval_cls,
+                                 get_sequence, init_cyclers)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -182,7 +182,7 @@ class config( object ):
         # now expand with defaults
         self.cfg = self.pcfg.get( sparse=False )
 
-        cycling_init_from_cfg(self.cfg)
+        init_cyclers(self.cfg)
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -268,7 +268,7 @@ class config( object ):
 
         vict_rh = None
         if vict and self.runahead_limit:
-            vict_rh = str( point( vict ) + self.runahead_limit )
+            vict_rh = str( get_point( vict ) + self.runahead_limit )
         
         vfct = self.cfg['visualization']['final cycle time'] or vict_rh or vict
         self.cfg['visualization']['final cycle time'] = vfct
@@ -530,7 +530,7 @@ class config( object ):
             rlim = min( intervals ) * rfactor
         if offsets:
            min_offset = min( offsets )
-           if min_offset < interval.get_null():
+           if min_offset < get_interval_cls().get_null():
                # future triggers...
                if abs(min_offset) >= rlim:
                    #... that extend past the default rl
@@ -821,7 +821,7 @@ class config( object ):
         for name in self.taskdefs.keys():
             type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
-            tag = point( self.cfg['scheduling']['initial cycle time'] )
+            tag = get_point( self.cfg['scheduling']['initial cycle time'] )
             try:
                 # instantiate a task
                 itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
@@ -1229,7 +1229,7 @@ class config( object ):
                         'task'   : self.suite_polling_tasks[name][1],
                         'status' : self.suite_polling_tasks[name][2] }
 
-            seq = sequence( section,
+            seq = get_sequence( section,
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
            
@@ -1308,7 +1308,7 @@ class config( object ):
         if self.actual_first_ctime:
             # already computed
             return self.actual_first_ctime
-        ctime = point(start_ctime)
+        ctime = get_point(start_ctime)
         adjusted = []
         for seq in self.sequences:
             foo = seq.get_first_point( ctime )
@@ -1378,14 +1378,14 @@ class config( object ):
             nl, nr = self.close_families( left, right )
             gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 
-        start_ctime = point( start_ctime_str )
+        start_ctime = get_point( start_ctime_str )
 
         actual_first_ctime = self.get_actual_first_ctime( start_ctime )
 
         startup_exclude_list = self.get_coldstart_task_list() + \
                 self.get_startup_task_list()
 
-        stop = point( stop_str )
+        stop = get_point( stop_str )
 
         for e in self.edges:
             # Get initial cycle time for this sequence
@@ -1417,7 +1417,7 @@ class config( object ):
                     ## NOTE BUG GITHUB #919
                     ##sct = start_ctime
                     sct = actual_first_ctime
-                    lct = point(lctime)
+                    lct = get_point(lctime)
                     if sct > lct:
                         action = False
 
@@ -1536,13 +1536,16 @@ class config( object ):
                             auto_remove_startup=auto_remove_startup
                         )
                         if startup_dependencies and auto_remove_startup:
-                            section_seq = sequence(
+                            section_seq = get_sequence(
                                 section,
                                 self.cfg['scheduling']['initial cycle time'],
                                 self.cfg['scheduling']['final cycle time']
                             )
                             first_point = section_seq.get_first_point(
-                                point(self.cfg['scheduling']['initial cycle time']))
+                                get_point(self.cfg['scheduling'][
+                                    'initial cycle time']
+                                )
+                            )
                             graph_text = ""
                             for left, right in startup_dependencies:
                                 graph_text += left + "[] => " + right + "\n"
@@ -1562,7 +1565,7 @@ class config( object ):
             ttype = 'cycling'
             sec = section
 
-        seq = sequence( sec,
+        seq = get_sequence( sec,
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
 
@@ -1604,7 +1607,7 @@ class config( object ):
         # initial cycle via restart (accidentally or otherwise).
 
         # Get the taskdef object for generating the task proxy class
-        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, point(ict) )
+        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, get_point(ict) )
 
         # TODO - put all taskd.foo items in a single config dict
         # SET COLD-START TASK INDICATORS

@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from cycling.loader import interval
+from cycling.loader import get_interval
 
 class OutputXError( Exception ):
     def __init__( self, msg ):
@@ -41,7 +41,7 @@ own cycle time.
             sign, offset = m.groups()
             if sign != '+':
                 raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.offset = interval( offset )
+            self.offset = get_interval( offset )
 
     def get( self, ctime ):
         # Replace [T] with actual cycle time

@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys
-from cylc.cycling.loader import point
+from cylc.cycling.loader import get_point
 
 # PREREQUISITES: A collection of messages representing the prerequisite
 # conditions for a task, each of which can be "satisfied" or not.  An
@@ -45,7 +45,7 @@ class plain_prerequisites(object):
             if task.group:
                 try:
                     foo = task.group().split(".")[1].rstrip()
-                    if ( point( foo ) <  self.p_ict ):
+                    if ( get_point( foo ) <  self.p_ict ):
                         return
                 except IndexError:
                     pass
@@ -116,5 +116,5 @@ class plain_prerequisites(object):
     def get_target_tags( self ):
         """Return a list of cycle times target by each prerequisite,
         including each component of conditionals."""
-        return [ point(p) for p in self.target_tags ]
+        return [ get_point(p) for p in self.target_tags ]
 

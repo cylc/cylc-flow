@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cycling.loader import interval
+from cycling.loader import get_interval, get_interval_cls
 import re
 
 # Previous node format.
@@ -104,17 +104,17 @@ class graphnode( object ):
             raise GraphNodeError( 'Illegal graph node: ' + node )
             
         if self.offset_is_from_ict and not offset:
-            offset = str(interval.get_null())
+            offset = str(get_interval_cls().get_null())
         if offset:
             self.intercycle = True
             if prev_format:
                 if sign == '+':
-                    self.offset = - interval( offset )
+                    self.offset = - get_interval( offset )
                 else:
-                    self.offset = interval( offset )
+                    self.offset = get_interval( offset )
                 self.offset = base_offset.get_inferred_child(offset)
             else:
-                self.offset = (-interval(offset)).standardise()
+                self.offset = (-get_interval(offset)).standardise()
         else:
             self.intercycle = False
             self.offset = None
