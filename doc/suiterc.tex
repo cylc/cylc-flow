@@ -75,9 +75,9 @@ To just alter the timezone used in the date/time cycle point format, see
 
 Cylc usually uses a $CCYYMMDDThhmmZ$ ($Z$ in the special case of UTC) or $CCYYMMDDThhmm±hhmm$ format for writing down date/time cycle points, which
 follows one of the basic formats outlined in the ISO 8601 standard. For
-example, a cycle point on the 3st of February 2001 at 4:50 in the morning,
+example, a cycle point on the 3rd of February 2001 at 4:50 in the morning,
 UTC (+0000 timezone), would be written $20010203T0450Z$. Similarly, for the
-the 3st of February 2001 at 4:50 in the morning, +1300 timezone, Cylc would
+the 3rd of February 2001 at 4:50 in the morning, +1300 timezone, cylc would
 write $20010203T0450+1300$.
 
 You may use the isodatetime library's syntax to write dates and
@@ -91,13 +91,13 @@ You can also use a subset of the strptime/strftime POSIX standard -
 supported tokens are $%F$, $%H$, $%M$, $%S$, $%Y$, $%d$, $%j$, $%m$, $%s$,
 $%z$.
 
-To use the old Cylc cycle time format (e.g. $2014020106$ for 06:00 on the
+To use the old cylc cycle time format (e.g. $2014020106$ for 06:00 on the
 1st of February 2014), set cycle point format to $%Y%m%d%H$.
 
-Please note that using characters like "/" will break task output files ("/"
-is a reserved character in POSIX file and directory naming). Using ":" is
-likely to interfere with usage of commands like "rsync" when applied to task
-output files and is not recommended.
+Please note that using characters like "/" is not allowed, as it will break
+task output files ("/" is a reserved character in POSIX file and directory
+naming). Using ":" is also not allowed, as it is likely to interfere with
+usage of commands like "rsync" when applied to task output files.
 
 \subsubsection[cycle point num expanded year digits]{ [cylc] $\rightarrow$
 cycle point num expanded year digits}
@@ -174,7 +174,7 @@ roughly the duration of the slowest member process.
 \paragraph[batch size]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ batch size}
 
 The maximum number of tasks to be submitted in a single batch, in the
-job submission thread. Cylc waits for all batch member job-submissions
+job submission thread. cylc waits for all batch member job-submissions
 to complete before proceeding to the next batch.
 
 \begin{myitemize}

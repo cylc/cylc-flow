@@ -1779,11 +1779,11 @@ The syntax for writing this single date/time occurrence is \lstinline=R1=,
 which stands for \lstinline=R1/no-specified-date-time/no-specified-period=.
 This is an adaptation of the ISO 8601 date/time standard's recurrence syntax (
 \lstinline=Rn/DATETIME/PERIOD=) with some special context information supplied
-by Cylc in place of our \lstinline=no-specified= data.
+by cylc in place of our \lstinline=no-specified= data.
 
 The \lstinline=1= means repeat once. As we've specified no date-time, Cylc will
 use the initial cycle point date/time by default, which is what we want. We've
-also missed out specifying the period - this is set by Cylc to a zero interval
+also missed out specifying the period - this is set by cylc to a zero interval
 in this case (although given that it never repeats, it's not important).
 
 There is a full primer for cycling syntax later in the user guide, which also
@@ -2636,7 +2636,7 @@ initial cycle point". Cylc allows you to start (or end) at any particular
 time, repeat at whatever frequency you like, and even optionally limit the
 number of repetitions.
 
-For example, all these are valid in Cylc:
+For example, all these are valid in cylc:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -2732,7 +2732,7 @@ For example, \lstinline=R3/P5D/20140430T06= means:
 \lstinline=20140425T06=
 \lstinline=20140430T06=. This kind of form can be used for specifying special
 behaviour near the end of the suite, at the final cycle point's date/time. We
-can also represent this in Cylc with a collapsed form:
+can also represent this in cylc with a collapsed form:
 \lstinline=R[limit?]/[interval]=
 \lstinline=R[limit?]//[date-time]=
 \lstinline=[interval]/[date-time]=
