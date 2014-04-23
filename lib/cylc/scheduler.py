@@ -447,7 +447,7 @@ class scheduler(object):
 
 
     def command_set_stop_after_task( self, tid ):
-        if tid.is_valid_id():
+        if TaskID.is_valid_id(tid):
             self.set_stop_task( tid )
 
 

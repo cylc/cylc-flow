@@ -22,6 +22,7 @@ from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
 import TaskID
+from cycling.loader import get_point
 from rundb import RecordBroadcastObject
 
 class broadcast( Pyro.core.ObjBase ):
@@ -120,8 +121,9 @@ class broadcast( Pyro.core.ObjBase ):
         for ctime in self.settings.keys():
             if ctime == 'all-cycles':
                 continue
-            elif ctime < cutoff:
-                self.log.info( 'Expiring ' + ctime + ' broadcast settings now' )
+            point = get_point(ctime)
+            if point < cutoff:
+                self.log.info( 'Expiring ' + str(point) + ' broadcast settings now' )
                 del self.settings[ ctime ]
 
     def clear( self, namespaces, tags ):

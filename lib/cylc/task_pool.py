@@ -822,7 +822,7 @@ class pool(object):
         else:
             raise TaskNotFoundError, "Task not present in suite: " + id
         pp = plain_prerequisites( id )
-        pp.add( message )
+        pp.add( msg )
         itask.prerequisites.add_requisites(pp)
 
 
