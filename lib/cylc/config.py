@@ -157,9 +157,9 @@ class config( object ):
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling'] = INTEGER_CYCLING_TYPE
                     if 'initial cycle time' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['initial cycle time'] = "0"
+                        self.cfg['scheduling']['initial cycle time'] = "1"
                     if 'final cycle time' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['final cycle time'] = "0"
+                        self.cfg['scheduling']['final cycle time'] = "1"
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
