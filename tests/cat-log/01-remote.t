@@ -38,12 +38,12 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-2
-cylc cat-log -o $SUITE_NAME echo_2.1 >$TEST_NAME.out
-grep_ok '^echo_2.1$' $TEST_NAME.out
+cylc cat-log -o $SUITE_NAME echo_2.0 >$TEST_NAME.out
+grep_ok '^echo_2.0$' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-3
-cylc cat-log -o $SUITE_NAME echo_3.1 >$TEST_NAME.out
-grep_ok '^echo_3.1$' $TEST_NAME.out
+cylc cat-log -o $SUITE_NAME echo_3.0 >$TEST_NAME.out
+grep_ok '^echo_3.0$' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 ssh -oBatchMode=yes -oConnectTimeout=5 $CYLC_TEST_HOST \
     "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"

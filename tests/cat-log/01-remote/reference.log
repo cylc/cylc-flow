@@ -8,21 +8,21 @@
 2013/12/16 12:09:21 INFO - Stop tag: None
 2013/12/16 12:09:21 INFO - Thread-4 start (Job Submission)
 2013/12/16 12:09:21 INFO - Thread-5 start (Request Handling)
-2013/12/16 12:09:21 INFO - [echo_2.1] -triggered off []
-2013/12/16 12:09:21 INFO - [echo_3.1] -triggered off []
-2013/12/16 12:09:22 INFO - [echo_2.1] -Task host: hpc2e
-2013/12/16 12:09:22 INFO - [echo_2.1] -Copying suite contact file to hpc2e
-2013/12/16 12:09:22 INFO - [echo_2.1] -(current:ready)> echo_2.1 submitting now
-2013/12/16 12:09:23 INFO - [echo_3.1] -Task host: hpc2e
-2013/12/16 12:09:24 INFO - [echo_2.1] -(current:ready)> echo_2.1 submission succeeded
-2013/12/16 12:09:24 INFO - [echo_2.1] -(current:submitted)> echo_2.1 submit_method_id=46007076
-2013/12/16 12:09:24 INFO - [echo_3.1] -(current:ready)> echo_3.1 submitting now
-2013/12/16 12:09:25 INFO - [echo_2.1] -(current:submitted)> echo_2.1 started at 2013-12-16T12:09:24
-2013/12/16 12:09:25 INFO - [echo_2.1] -(current:running)> echo_2.1 succeeded at 2013-12-16T12:09:25
-2013/12/16 12:09:25 INFO - [echo_3.1] -(current:ready)> echo_3.1 started at 2013-12-16T12:09:24
-2013/12/16 12:09:25 INFO - [echo_3.1] -(current:running)> echo_3.1 submission succeeded
-2013/12/16 12:09:25 INFO - [echo_3.1] -(current:running)> echo_3.1 submit_method_id=11929198
-2013/12/16 12:09:25 INFO - [echo_3.1] -(current:running)> echo_3.1 succeeded at 2013-12-16T12:09:25
+2013/12/16 12:09:21 INFO - [echo_2.0] -triggered off []
+2013/12/16 12:09:21 INFO - [echo_3.0] -triggered off []
+2013/12/16 12:09:22 INFO - [echo_2.0] -Task host: my_hpc
+2013/12/16 12:09:22 INFO - [echo_2.0] -Copying suite contact file to my_hpc
+2013/12/16 12:09:22 INFO - [echo_2.0] -(current:ready)> echo_2.0 submitting now
+2013/12/16 12:09:23 INFO - [echo_3.0] -Task host: my_hpc
+2013/12/16 12:09:24 INFO - [echo_2.0] -(current:ready)> echo_2.0 submission succeeded
+2013/12/16 12:09:24 INFO - [echo_2.0] -(current:submitted)> echo_2.0 submit_method_id=46007076
+2013/12/16 12:09:24 INFO - [echo_3.0] -(current:ready)> echo_3.0 submitting now
+2013/12/16 12:09:25 INFO - [echo_2.0] -(current:submitted)> echo_2.0 started at 2013-12-16T12:09:24
+2013/12/16 12:09:25 INFO - [echo_2.0] -(current:running)> echo_2.0 succeeded at 2013-12-16T12:09:25
+2013/12/16 12:09:25 INFO - [echo_3.0] -(current:ready)> echo_3.0 started at 2013-12-16T12:09:24
+2013/12/16 12:09:25 INFO - [echo_3.0] -(current:running)> echo_3.0 submission succeeded
+2013/12/16 12:09:25 INFO - [echo_3.0] -(current:running)> echo_3.0 submit_method_id=11929198
+2013/12/16 12:09:25 INFO - [echo_3.0] -(current:running)> echo_3.0 succeeded at 2013-12-16T12:09:25
 2013/12/16 12:09:25 INFO - Stopping: 
   + all non-cycling tasks have succeeded
 2013/12/16 12:09:26 INFO - Thread-4 exit (Job Submission)
