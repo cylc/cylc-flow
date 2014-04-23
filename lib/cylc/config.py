@@ -1297,7 +1297,9 @@ class config( object ):
             lnode = graphnode(left, base_offset=base_offset)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
-                if lnode.offset > self.taskdefs[lnode.name].intercycle_offset:
+                if (lnode.offset is not None and
+                        lnode.offset >
+                        self.taskdefs[lnode.name].intercycle_offset):
                     self.taskdefs[lnode.name].intercycle_offset = lnode.offset
             if lnode.offset_is_from_ict:
                 last_point = seq.get_stop_point()
@@ -1413,8 +1415,7 @@ class config( object ):
 
         actual_first_ctime = self.get_actual_first_ctime( start_ctime )
 
-        startup_exclude_list = self.get_coldstart_task_list() + \
-                self.get_startup_task_list()
+        startup_exclude_list = self.get_coldstart_task_list()
 
         stop = get_point( stop_str )
 
@@ -1433,8 +1434,11 @@ class config( object ):
 
                 not_initial_cycle = ( ctime != i_ctime )
 
-                r_id = e.get_right(ctime, start_ctime, not_initial_cycle, raw, startup_exclude_list )
-                l_id = e.get_left( ctime, start_ctime, not_initial_cycle, raw, startup_exclude_list )
+                r_id = e.get_right(ctime, start_ctime, not_initial_cycle, raw,
+                                   startup_exclude_list )
+                l_id = e.get_left( ctime, start_ctime, not_initial_cycle, raw,
+                                   startup_exclude_list,
+                                   e.sequence.get_interval() )
 
                 action = True
 

@@ -1,4 +1,6 @@
-
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 3.0
 [scheduling]
     initial cycle time = 1
     final cycle time = 16

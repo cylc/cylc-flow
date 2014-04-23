@@ -32,8 +32,8 @@ from isodatetime.parsers import TimePointParser
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle time."""
     value = _strip_and_unquote( keys, value )
-    if re.match(r"\d{4}$|\d{6}$|\d{8}$|\d{10}$|\d{12}$|\d{14}$", value):
-        # Old cycle time format.
+    if re.match(r"\d+$", value):
+        # Old cycle time format, or integer format.
         return value
     if value.startswith("-") or value.startswith("+"):
         # We don't know the value given for num expanded year digits...

@@ -52,7 +52,7 @@ class PointBase(object):
 
     def standardise(self):
         """Format self.value into a standard representation."""
-        pass
+        return self
 
     def __str__(self):
         return self.value
@@ -126,7 +126,7 @@ class IntervalBase(object):
 
     def standardise(self):
         """Format self.value into a standard representation."""
-        pass
+        return self
 
     def is_null( self ):
         return (self == self.get_null())
