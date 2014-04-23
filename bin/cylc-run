@@ -128,11 +128,13 @@ initial and final cycle time variables persists across suite restarts."""
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
 
-            if not itask.tag:
+            if itask.tag:
+                self.pool.add( itask )
+            else:
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
                 del itask
 
-            self.pool.add( itask )
+
 
     def load_tasks_warm( self ):
         if self.start_tag:

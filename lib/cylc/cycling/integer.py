@@ -49,16 +49,16 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 #
 # 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
 # missing n means repeat indefinitely
-FULL_RE_1 = re.compile( 'R(\d+)?/(c)?(\d+)/P(\d+|\?)' )
+FULL_RE_1 = re.compile( 'R(\d+)?/(c)?([+-]?\d+)/P(\d+|\?)' )
 #
 # 2) REPEAT/START/STOP: Rn/[c]i/[c]i
 # n required: n times between START and STOP
 # (R1 means just START, R2 means START and STOP)
-FULL_RE_2 = re.compile( 'R(\d+)/(c)?(\d+)/(c)?(\d+)' )
+FULL_RE_2 = re.compile( 'R(\d+)/(c)?([+-]?\d+)/(c)?(\d+)' )
 #
 # 3) REPEAT/PERIOD/STOP: Rn/Pi/[c]i
 # (n required to count back from stop)
-FULL_RE_3 = re.compile( 'R(\d+)?/P(\d+|\?)/(c)?(\d+)' )
+FULL_RE_3 = re.compile( 'R(\d+)?/P(\d+|\?)/(c)?([+-]?\d+)' )
 #---------------------------
 
 
@@ -98,14 +98,19 @@ class IntegerInterval(IntervalBase):
 
     @classmethod
     def get_null(cls):
-        return IntegerInterval("0")
+        return IntegerInterval("P0")
 
     def get_inferred_child(self, string):
         return IntegerInterval(string)
 
     def __init__(self, value):
+        if isinstance(value, basestring) and "P" not in value:
+            value = int(value)
         if isinstance(value, int):
-            value = str(value)
+            if value < 0:
+                value = "-P" + str(abs(value))
+            else:
+                value = "P" + str(value)
         super(IntegerInterval, self).__init__(value)
 
     def add(self, other):
@@ -123,14 +128,14 @@ class IntegerInterval(IntervalBase):
         return IntegerInterval(abs(int(self)))
 
     def __int__(self):
-        return int(self.value)
+        return int(self.value.replace("P", ""))
 
     def __mul__(self, m):
         # the suite runahead limit is a multiple of the smallest sequence interval
         return IntegerInterval(int(self) * m)
 
     def __nonzero__(self):
-        return bool(int(self.value))
+        return bool(int(self))
 
 
 class IntegerSequence( object ):
@@ -187,7 +192,6 @@ class IntegerSequence( object ):
                     r = (int( self.p_context_stop - self.p_start ) %
                          int(self.i_step))
                     self.p_stop = self.p_context_stop - IntegerInterval(r)
-
         else:
             # 2) REPEAT/START/STOP: R(n)/([c])(i)/([c])(i)
             m = FULL_RE_2.match( dep_section )
