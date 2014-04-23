@@ -1552,11 +1552,7 @@ class config( object ):
                 continue
             items.append((item, value, initial_tasks, False))
 
-        # Start-up tasks, unlike async tasks, need their own explicit section.
-        if start_up_tasks:
-            items.append((get_sequence_cls().get_async_expr(),
-                          {"graph": " & ".join(start_up_tasks)}, [], True))
-
+        start_up_tasks_graphed = []
         while items:
             item, value, tasks_to_prune, is_inserted = items.pop(0)
 
@@ -1596,6 +1592,12 @@ class config( object ):
                 graph_text = ""
                 for left, right in special_dependencies:
                     graph_text += left + "[] => " + right + "\n"
+                    if (left in start_up_tasks and
+                            left not in start_up_tasks_graphed):
+                        # Start-up tasks need their own explicit section.
+                        items.append((get_sequence_cls().get_async_expr(),
+                                     {"graph": left}, [], True))
+                        start_up_tasks_graphed.append(left)
                 graph_text = graph_text.rstrip()
                 section = get_sequence_cls().get_async_expr(first_point)
                 items.append((section, {"graph": graph_text}, [], True))
