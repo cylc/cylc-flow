@@ -1164,7 +1164,7 @@ class config( object ):
                             asyncid_pattern = m.groups()[0]
 
                 if ttype == 'cycling':
-                    for n in lnames:
+                    for n in list(lnames):
                         try:
                             name = graphnode(
                                 n, base_offset=seq.get_interval()).name

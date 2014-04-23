@@ -4,102 +4,102 @@
 2013/10/17 10:29:08 INFO - Suite starting at 2013-10-17 10:29:08.030736
 2013/10/17 10:29:08 INFO - Log event clock: real time
 2013/10/17 10:29:08 INFO - Run mode: live
-2013/10/17 10:29:08 INFO - Start tag: 0
-2013/10/17 10:29:08 INFO - Stop tag: 0
+2013/10/17 10:29:08 INFO - Start tag: 1
+2013/10/17 10:29:08 INFO - Stop tag: 1
 2013/10/17 10:29:08 INFO - Thread-4 start (Job Submission)
 2013/10/17 10:29:08 INFO - Thread-5 start (Request Handling)
-2013/10/17 10:29:08 DEBUG - [a.0] -task proxy added to the pool
-2013/10/17 10:29:08 DEBUG - [c.0] -task proxy added to the pool
-2013/10/17 10:29:08 DEBUG - [b.0] -task proxy added to the pool
-2013/10/17 10:29:08 DEBUG - [d.0] -task proxy added to the pool
+2013/10/17 10:29:08 DEBUG - [a.1] -task proxy added to the pool
+2013/10/17 10:29:08 DEBUG - [c.1] -task proxy added to the pool
+2013/10/17 10:29:08 DEBUG - [b.1] -task proxy added to the pool
+2013/10/17 10:29:08 DEBUG - [d.1] -task proxy added to the pool
 2013/10/17 10:29:08 DEBUG - BEGIN TASK PROCESSING
-2013/10/17 10:29:08 INFO - [a.0] -(setting:queued)
-2013/10/17 10:29:08 INFO - [a.0] -(setting:submitting)
-2013/10/17 10:29:08 INFO - [a.0] -triggered off []
+2013/10/17 10:29:08 INFO - [a.1] -(setting:queued)
+2013/10/17 10:29:08 INFO - [a.1] -(setting:submitting)
+2013/10/17 10:29:08 INFO - [a.1] -triggered off []
 2013/10/17 10:29:08 DEBUG - END TASK PROCESSING (took 0.019732 sec)
 2013/10/17 10:29:08 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:09 DEBUG - Job Submission batch 1/1 (1 members):
-2013/10/17 10:29:09 INFO - [a.0] -(current:submitting)> a.0 submitting now
+2013/10/17 10:29:09 INFO - [a.1] -(current:submitting)> a.1 submitting now
 2013/10/17 10:29:09 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:09 DEBUG - Job Submission: batch completed
   Time taken: 0:00:00.230629
   All 1 items succeeded
-2013/10/17 10:29:10 INFO - [a.0] -(current:submitting)> a.0 submission succeeded
-2013/10/17 10:29:10 INFO - [a.0] -(setting:submitted)
-2013/10/17 10:29:10 INFO - [a.0] -(current:submitted)> a.0 submit_method_id=21873
+2013/10/17 10:29:10 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
+2013/10/17 10:29:10 INFO - [a.1] -(setting:submitted)
+2013/10/17 10:29:10 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=21873
 2013/10/17 10:29:10 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:11 DEBUG - BEGIN TASK PROCESSING
 2013/10/17 10:29:11 DEBUG - END TASK PROCESSING (took 0.016003 sec)
-2013/10/17 10:29:11 INFO - [a.0] -(current:submitted)> a.0 started at 2013-10-17T10:29:10
-2013/10/17 10:29:11 INFO - [a.0] -(setting:running)
+2013/10/17 10:29:11 INFO - [a.1] -(current:submitted)> a.1 started at 2013-10-17T10:29:10
+2013/10/17 10:29:11 INFO - [a.1] -(setting:running)
 2013/10/17 10:29:11 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:12 DEBUG - BEGIN TASK PROCESSING
 2013/10/17 10:29:12 DEBUG - END TASK PROCESSING (took 0.013639 sec)
-2013/10/17 10:29:12 INFO - Command succeeded: add prerequisite(d.0,b.0 succeeded)
+2013/10/17 10:29:12 INFO - Command succeeded: add prerequisite(d.1,b.1 succeeded)
 2013/10/17 10:29:12 DEBUG - UPDATING STATE SUMMARY
-2013/10/17 10:29:22 INFO - [a.0] -(current:running)> a.0 succeeded at 2013-10-17T10:29:22
-2013/10/17 10:29:22 INFO - [a.0] -(setting:succeeded)
+2013/10/17 10:29:22 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-10-17T10:29:22
+2013/10/17 10:29:22 INFO - [a.1] -(setting:succeeded)
 2013/10/17 10:29:22 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:23 DEBUG - BEGIN TASK PROCESSING
-2013/10/17 10:29:23 INFO - [c.0] -(setting:queued)
-2013/10/17 10:29:23 INFO - [b.0] -(setting:queued)
-2013/10/17 10:29:23 INFO - [c.0] -(setting:submitting)
-2013/10/17 10:29:23 INFO - [b.0] -(setting:submitting)
-2013/10/17 10:29:23 INFO - [c.0] -triggered off ['a.0']
-2013/10/17 10:29:23 INFO - [b.0] -triggered off ['a.0']
+2013/10/17 10:29:23 INFO - [c.1] -(setting:queued)
+2013/10/17 10:29:23 INFO - [b.1] -(setting:queued)
+2013/10/17 10:29:23 INFO - [c.1] -(setting:submitting)
+2013/10/17 10:29:23 INFO - [b.1] -(setting:submitting)
+2013/10/17 10:29:23 INFO - [c.1] -triggered off ['a.1']
+2013/10/17 10:29:23 INFO - [b.1] -triggered off ['a.1']
 2013/10/17 10:29:23 DEBUG - END TASK PROCESSING (took 0.017143 sec)
 2013/10/17 10:29:23 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:23 DEBUG - Job Submission batch 1/1 (2 members):
-2013/10/17 10:29:24 INFO - [c.0] -(current:submitting)> c.0 submitting now
-2013/10/17 10:29:24 INFO - [c.0] -(current:submitting)> c.0 submission succeeded
-2013/10/17 10:29:24 INFO - [c.0] -(setting:submitted)
-2013/10/17 10:29:24 INFO - [c.0] -(current:submitted)> c.0 submit_method_id=21989
-2013/10/17 10:29:24 INFO - [b.0] -(current:submitting)> b.0 submitting now
+2013/10/17 10:29:24 INFO - [c.1] -(current:submitting)> c.1 submitting now
+2013/10/17 10:29:24 INFO - [c.1] -(current:submitting)> c.1 submission succeeded
+2013/10/17 10:29:24 INFO - [c.1] -(setting:submitted)
+2013/10/17 10:29:24 INFO - [c.1] -(current:submitted)> c.1 submit_method_id=21989
+2013/10/17 10:29:24 INFO - [b.1] -(current:submitting)> b.1 submitting now
 2013/10/17 10:29:24 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:24 DEBUG - Job Submission: batch completed
   Time taken: 0:00:01.365507
   All 2 items succeeded
 2013/10/17 10:29:25 DEBUG - BEGIN TASK PROCESSING
 2013/10/17 10:29:25 DEBUG - END TASK PROCESSING (took 0.012907 sec)
-2013/10/17 10:29:25 INFO - [c.0] -(current:submitted)> c.0 started at 2013-10-17T10:29:24
-2013/10/17 10:29:25 INFO - [c.0] -(setting:running)
-2013/10/17 10:29:25 INFO - [b.0] -(current:submitting)> b.0 submission succeeded
-2013/10/17 10:29:25 INFO - [b.0] -(setting:submitted)
-2013/10/17 10:29:25 INFO - [b.0] -(current:submitted)> b.0 submit_method_id=22056
-2013/10/17 10:29:25 INFO - [b.0] -(current:submitted)> b.0 started at 2013-10-17T10:29:24
-2013/10/17 10:29:25 INFO - [b.0] -(setting:running)
+2013/10/17 10:29:25 INFO - [c.1] -(current:submitted)> c.1 started at 2013-10-17T10:29:24
+2013/10/17 10:29:25 INFO - [c.1] -(setting:running)
+2013/10/17 10:29:25 INFO - [b.1] -(current:submitting)> b.1 submission succeeded
+2013/10/17 10:29:25 INFO - [b.1] -(setting:submitted)
+2013/10/17 10:29:25 INFO - [b.1] -(current:submitted)> b.1 submit_method_id=22056
+2013/10/17 10:29:25 INFO - [b.1] -(current:submitted)> b.1 started at 2013-10-17T10:29:24
+2013/10/17 10:29:25 INFO - [b.1] -(setting:running)
 2013/10/17 10:29:25 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:26 DEBUG - BEGIN TASK PROCESSING
 2013/10/17 10:29:26 DEBUG - END TASK PROCESSING (took 0.012717 sec)
-2013/10/17 10:29:26 INFO - [c.0] -(current:running)> c.0 succeeded at 2013-10-17T10:29:25
-2013/10/17 10:29:26 INFO - [c.0] -(setting:succeeded)
-2013/10/17 10:29:26 INFO - [b.0] -(current:running)> b.0 succeeded at 2013-10-17T10:29:25
-2013/10/17 10:29:26 INFO - [b.0] -(setting:succeeded)
+2013/10/17 10:29:26 INFO - [c.1] -(current:running)> c.1 succeeded at 2013-10-17T10:29:25
+2013/10/17 10:29:26 INFO - [c.1] -(setting:succeeded)
+2013/10/17 10:29:26 INFO - [b.1] -(current:running)> b.1 succeeded at 2013-10-17T10:29:25
+2013/10/17 10:29:26 INFO - [b.1] -(setting:succeeded)
 2013/10/17 10:29:26 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:27 DEBUG - BEGIN TASK PROCESSING
-2013/10/17 10:29:27 INFO - [d.0] -(setting:queued)
-2013/10/17 10:29:27 INFO - [d.0] -(setting:submitting)
-2013/10/17 10:29:27 INFO - [d.0] -triggered off ['b.0']
+2013/10/17 10:29:27 INFO - [d.1] -(setting:queued)
+2013/10/17 10:29:27 INFO - [d.1] -(setting:submitting)
+2013/10/17 10:29:27 INFO - [d.1] -triggered off ['b.1']
 2013/10/17 10:29:27 DEBUG - END TASK PROCESSING (took 0.014147 sec)
 2013/10/17 10:29:27 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:27 DEBUG - Job Submission batch 1/1 (1 members):
 2013/10/17 10:29:27 DEBUG - Job Submission: batch completed
   Time taken: 0:00:00.219651
   All 1 items succeeded
-2013/10/17 10:29:28 INFO - [d.0] -(current:submitting)> d.0 submitting now
-2013/10/17 10:29:28 INFO - [d.0] -(current:submitting)> d.0 submission succeeded
-2013/10/17 10:29:28 INFO - [d.0] -(setting:submitted)
-2013/10/17 10:29:28 INFO - [d.0] -(current:submitted)> d.0 submit_method_id=22201
+2013/10/17 10:29:28 INFO - [d.1] -(current:submitting)> d.1 submitting now
+2013/10/17 10:29:28 INFO - [d.1] -(current:submitting)> d.1 submission succeeded
+2013/10/17 10:29:28 INFO - [d.1] -(setting:submitted)
+2013/10/17 10:29:28 INFO - [d.1] -(current:submitted)> d.1 submit_method_id=22201
 2013/10/17 10:29:28 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:29 DEBUG - BEGIN TASK PROCESSING
 2013/10/17 10:29:29 DEBUG - END TASK PROCESSING (took 0.013136 sec)
-2013/10/17 10:29:29 INFO - [d.0] -(current:submitted)> d.0 started at 2013-10-17T10:29:28
-2013/10/17 10:29:29 INFO - [d.0] -(setting:running)
+2013/10/17 10:29:29 INFO - [d.1] -(current:submitted)> d.1 started at 2013-10-17T10:29:28
+2013/10/17 10:29:29 INFO - [d.1] -(setting:running)
 2013/10/17 10:29:29 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:30 DEBUG - BEGIN TASK PROCESSING
 2013/10/17 10:29:30 DEBUG - END TASK PROCESSING (took 0.012368 sec)
-2013/10/17 10:29:30 INFO - [d.0] -(current:running)> d.0 succeeded at 2013-10-17T10:29:29
-2013/10/17 10:29:30 INFO - [d.0] -(setting:succeeded)
+2013/10/17 10:29:30 INFO - [d.1] -(current:running)> d.1 succeeded at 2013-10-17T10:29:29
+2013/10/17 10:29:30 INFO - [d.1] -(setting:succeeded)
 2013/10/17 10:29:30 DEBUG - UPDATING STATE SUMMARY
 2013/10/17 10:29:30 INFO - All non-cycling tasks have succeeded
 2013/10/17 10:29:30 INFO - Suite shutting down at 2013-10-17 10:29:30.267063

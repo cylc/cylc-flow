@@ -9,19 +9,19 @@
 2013/07/25 14:05:53 INFO - Thread-4 start (Job Submission)
 2013/07/25 14:05:53 INFO - Thread-5 start (Request Handling)
 2013/07/25 14:05:53 INFO - Cold Start 2010080800
-2013/07/25 14:05:54 INFO - [x1.1] -(setting:submitting)
+2013/07/25 14:05:54 INFO - [x1.2010080800] -(setting:submitting)
 2013/07/25 14:05:54 INFO - [sup.2010080800] -(setting:submitting)
-2013/07/25 14:05:54 INFO - [x1.1] -triggered off []
+2013/07/25 14:05:54 INFO - [x1.2010080800] -triggered off []
 2013/07/25 14:05:54 INFO - [sup.2010080800] -triggered off []
-2013/07/25 14:05:55 INFO - [x1.1] -(current:submitting)> x1.1 submitting now
-2013/07/25 14:05:55 INFO - [x1.1] -(current:submitting)> x1.1 submission succeeded
-2013/07/25 14:05:55 INFO - [x1.1] -(setting:submitted)
-2013/07/25 14:05:55 INFO - [x1.1] -(current:submitted)> x1.1 submit_method_id=20877
+2013/07/25 14:05:55 INFO - [x1.2010080800] -(current:submitting)> x1.2010080800 submitting now
+2013/07/25 14:05:55 INFO - [x1.2010080800] -(current:submitting)> x1.2010080800 submission succeeded
+2013/07/25 14:05:55 INFO - [x1.2010080800] -(setting:submitted)
+2013/07/25 14:05:55 INFO - [x1.2010080800] -(current:submitted)> x1.2010080800 submit_method_id=20877
 2013/07/25 14:05:55 INFO - [sup.2010080800] -(current:submitting)> sup.2010080800 submitting now
-2013/07/25 14:05:56 INFO - [x1.1] -(current:submitted)> x1.1 started at 2013-07-25T14:05:55
-2013/07/25 14:05:56 INFO - [x1.1] -(setting:running)
-2013/07/25 14:05:56 INFO - [x1.1] -(current:running)> x1.1 succeeded at 2013-07-25T14:05:55
-2013/07/25 14:05:56 INFO - [x1.1] -(setting:succeeded)
+2013/07/25 14:05:56 INFO - [x1.2010080800] -(current:submitted)> x1.2010080800 started at 2013-07-25T14:05:55
+2013/07/25 14:05:56 INFO - [x1.2010080800] -(setting:running)
+2013/07/25 14:05:56 INFO - [x1.2010080800] -(current:running)> x1.2010080800 succeeded at 2013-07-25T14:05:55
+2013/07/25 14:05:56 INFO - [x1.2010080800] -(setting:succeeded)
 2013/07/25 14:05:56 INFO - [sup.2010080800] -(current:submitting)> sup.2010080800 started at 2013-07-25T14:05:55
 2013/07/25 14:05:56 INFO - [sup.2010080800] -(setting:running)
 2013/07/25 14:05:56 INFO - [sup.2010080800] -(current:running)> sup.2010080800 succeeded at 2013-07-25T14:05:55
@@ -30,18 +30,18 @@
 sup.2010080800 submitted
 2013/07/25 14:05:56 INFO - [sup.2010080800] -(current:succeeded)> sup.2010080800 submission succeeded
 2013/07/25 14:05:56 INFO - [sup.2010080800] -(current:succeeded)> sup.2010080800 submit_method_id=20880
-2013/07/25 14:05:56 INFO - [x2.1] -(setting:submitting)
-2013/07/25 14:05:56 INFO - [x2.1] -triggered off ['x1.1']
-2013/07/25 14:05:58 INFO - [x2.1] -(current:submitting)> x2.1 submitting now
-2013/07/25 14:05:58 INFO - [x2.1] -(current:submitting)> x2.1 submission succeeded
-2013/07/25 14:05:58 INFO - [x2.1] -(setting:submitted)
-2013/07/25 14:05:58 INFO - [x2.1] -(current:submitted)> x2.1 submit_method_id=20988
-2013/07/25 14:05:58 INFO - [x2.1] -(current:submitted)> x2.1 started at 2013-07-25T14:05:58
-2013/07/25 14:05:58 INFO - [x2.1] -(setting:running)
-2013/07/25 14:05:59 INFO - [x2.1] -(current:running)> x2.1 succeeded at 2013-07-25T14:05:58
-2013/07/25 14:05:59 INFO - [x2.1] -(setting:succeeded)
+2013/07/25 14:05:56 INFO - [x2.2010080800] -(setting:submitting)
+2013/07/25 14:05:56 INFO - [x2.2010080800] -triggered off ['x1.2010080800']
+2013/07/25 14:05:58 INFO - [x2.2010080800] -(current:submitting)> x2.2010080800 submitting now
+2013/07/25 14:05:58 INFO - [x2.2010080800] -(current:submitting)> x2.2010080800 submission succeeded
+2013/07/25 14:05:58 INFO - [x2.2010080800] -(setting:submitted)
+2013/07/25 14:05:58 INFO - [x2.2010080800] -(current:submitted)> x2.2010080800 submit_method_id=20988
+2013/07/25 14:05:58 INFO - [x2.2010080800] -(current:submitted)> x2.2010080800 started at 2013-07-25T14:05:58
+2013/07/25 14:05:58 INFO - [x2.2010080800] -(setting:running)
+2013/07/25 14:05:59 INFO - [x2.2010080800] -(current:running)> x2.2010080800 succeeded at 2013-07-25T14:05:58
+2013/07/25 14:05:59 INFO - [x2.2010080800] -(setting:succeeded)
 2013/07/25 14:05:59 INFO - [foo.2010080800] -(setting:submitting)
-2013/07/25 14:05:59 INFO - [foo.2010080800] -triggered off ['sup.2010080800', 'x2.1']
+2013/07/25 14:05:59 INFO - [foo.2010080800] -triggered off ['sup.2010080800', 'x2.2010080800']
 2013/07/25 14:06:00 INFO - [foo.2010080800] -(current:submitting)> foo.2010080800 submitting now
 2013/07/25 14:06:00 INFO - [foo.2010080800] -(current:submitting)> foo.2010080800 submission succeeded
 2013/07/25 14:06:00 INFO - [foo.2010080800] -(setting:submitted)

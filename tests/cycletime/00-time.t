@@ -18,7 +18,7 @@
 #C: basic jinja2 expansion test
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 33
+set_test_number 27
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-use-env-var
 export CYLC_TASK_CYCLE_TIME=2010010203
@@ -77,21 +77,9 @@ __OUT__
 #Test with a supplied cycle time 
 # N.B. this also checks environment variable being by CLI options
 TEST_NAME=$TEST_NAME_BASE-print-supplied-ctime
-run_ok $TEST_NAME.full cylc cycletime 2011010101
+run_ok $TEST_NAME.full cylc cycletime 20110101T01
 cmp_ok $TEST_NAME.full.stdout - << __OUT__
-2011010101
-__OUT__
-run_ok $TEST_NAME.year cylc cycletime 2011
-cmp_ok $TEST_NAME.year.stdout - << __OUT__
-2011010100
-__OUT__
-run_ok $TEST_NAME.month cylc cycletime 201102
-cmp_ok $TEST_NAME.month.stdout - << __OUT__
-2011020100
-__OUT__
-run_ok $TEST_NAME.day cylc cycletime 20110203
-cmp_ok $TEST_NAME.day.stdout - << __OUT__
-2011020300
+20110101T01
 __OUT__
 #-------------------------------------------------------------------------------
 unset CYLC_TASK_CYCLE_TIME

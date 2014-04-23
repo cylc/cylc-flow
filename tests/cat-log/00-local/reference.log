@@ -4,16 +4,16 @@
 2013/12/16 12:02:25 INFO - Suite starting at 2013-12-16 12:02:25.981717
 2013/12/16 12:02:25 INFO - Log event clock: real time
 2013/12/16 12:02:25 INFO - Run mode: live
-2013/12/16 12:02:25 INFO - Start tag: 0
-2013/12/16 12:02:25 INFO - Stop tag: 0
+2013/12/16 12:02:25 INFO - Start tag: 1
+2013/12/16 12:02:25 INFO - Stop tag: 1
 2013/12/16 12:02:25 INFO - Thread-4 start (Job Submission)
 2013/12/16 12:02:25 INFO - Thread-5 start (Request Handling)
-2013/12/16 12:02:25 INFO - [echo_1.0] -triggered off []
-2013/12/16 12:02:27 INFO - [echo_1.0] -(current:ready)> echo_1.0 submitting now
-2013/12/16 12:02:28 INFO - [echo_1.0] -(current:ready)> echo_1.0 submission succeeded
-2013/12/16 12:02:28 INFO - [echo_1.0] -(current:submitted)> echo_1.0 submit_method_id=1671
-2013/12/16 12:02:29 INFO - [echo_1.0] -(current:submitted)> echo_1.0 started at 2013-12-16T12:02:28
-2013/12/16 12:02:29 INFO - [echo_1.0] -(current:running)> echo_1.0 succeeded at 2013-12-16T12:02:28
+2013/12/16 12:02:25 INFO - [echo_1.1] -triggered off []
+2013/12/16 12:02:27 INFO - [echo_1.1] -(current:ready)> echo_1.1 submitting now
+2013/12/16 12:02:28 INFO - [echo_1.1] -(current:ready)> echo_1.1 submission succeeded
+2013/12/16 12:02:28 INFO - [echo_1.1] -(current:submitted)> echo_1.1 submit_method_id=1671
+2013/12/16 12:02:29 INFO - [echo_1.1] -(current:submitted)> echo_1.1 started at 2013-12-16T12:02:28
+2013/12/16 12:02:29 INFO - [echo_1.1] -(current:running)> echo_1.1 succeeded at 2013-12-16T12:02:28
 2013/12/16 12:02:29 INFO - Stopping: 
   + all non-cycling tasks have succeeded
 2013/12/16 12:02:29 INFO - Thread-4 exit (Job Submission)

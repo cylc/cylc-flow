@@ -405,29 +405,10 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
 
 def init_from_cfg(cfg):
     """Initialise global variables (yuk) based on the configuration."""
-    global point_parser
-    global DUMP_FORMAT
-    global NUM_EXPANDED_YEAR_DIGITS
-    attempt_strptime_from_dump_format = False
-    DUMP_FORMAT = "CCYYMMDDThhmm"
-    NUM_EXPANDED_YEAR_DIGITS = (
-        cfg['cylc']['cycle point num expanded year digits']
-    )
-    if NUM_EXPANDED_YEAR_DIGITS:
-        DUMP_FORMAT = u"±XCCYYMMDDThhmm"
+    num_expanded_year_digits = cfg['cylc'][
+        'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
-    if cfg['cylc']['cycle point format'] is not None:
-        DUMP_FORMAT = cfg['cylc']['cycle point format']
-        if u"±X" not in DUMP_FORMAT and NUM_EXPANDED_YEAR_DIGITS:
-            raise IllegalValueError(
-                'cycle time format',
-                ('cylc', 'cycle point format'),
-                DUMP_FORMAT
-            )
-    elif time_zone is not None:
-        DUMP_FORMAT += time_zone
-    else:
-        DUMP_FORMAT += "Z"
+    custom_dump_format = cfg['cylc']['cycle point format']
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
     test_cycle_time = initial_cycle_time
@@ -437,9 +418,38 @@ def init_from_cfg(cfg):
         for key in cfg['scheduling']['dependencies']:
             if convert_old_cycler_syntax(key, only_detect_old=True):
                 # Old cycling syntax is present.
-                DUMP_FORMAT = PREV_DATE_TIME_FORMAT
-                NUM_EXPANDED_YEAR_DIGITS = 0
+                custom_dump_format = PREV_DATE_TIME_FORMAT
+                num_expanded_year_digits = 0
                 break
+    init(
+        num_expanded_year_digits=num_expanded_year_digits,
+        custom_dump_format=custom_dump_format,
+        time_zone=time_zone
+    )
+
+
+def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None):
+    """Initialise global variables (yuk)."""
+    global point_parser
+    global DUMP_FORMAT
+    global NUM_EXPANDED_YEAR_DIGITS
+    if time_zone is None:
+        time_zone = "Z"
+    NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
+    if custom_dump_format is None:
+        if num_expanded_year_digits > 0:
+            DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
+        else:
+            DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
+        
+    else:
+        DUMP_FORMAT = custom_dump_format
+        if u"±X" not in custom_dump_format and num_expanded_year_digits:
+            raise IllegalValueError(
+                'cycle time format',
+                ('cylc', 'cycle point format'),
+                DUMP_FORMAT
+            )
     point_parser = TimePointParser(
         allow_only_basic=False,
         allow_truncated=True,

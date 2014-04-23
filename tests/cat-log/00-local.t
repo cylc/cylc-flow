@@ -28,8 +28,8 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-1
-cylc cat-log -o $SUITE_NAME echo_1.0 >$TEST_NAME.out
-grep_ok '^echo_1.0$' $TEST_NAME.out
+cylc cat-log -o $SUITE_NAME echo_1.1 >$TEST_NAME.out
+grep_ok '^echo_1.1$' $TEST_NAME.out
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit
