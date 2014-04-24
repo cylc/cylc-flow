@@ -90,10 +90,10 @@ cmp_ok $TEST_NAME.stderr - </dev/null
 TEST_NAME=$TEST_NAME_BASE-section1
 run_ok $TEST_NAME cylc get-config --item=[scheduling] $SUITE_NAME
 cmp_ok $TEST_NAME.stdout - <<__OUT__
-cycling = HoursOfTheDay
-initial cycle time = 
-runahead limit = 
-final cycle time = 
+runahead factor = 2
+cycling = integer
+initial cycle time = 1
+final cycle time = 1
 [[queues]]
    [[[default]]]
       limit = 0
@@ -101,9 +101,8 @@ final cycle time =
 [[special tasks]]
    include at start-up = 
    start-up = 
-   one-off = 
-   sequential = 
    cold-start = 
+   sequential = 
    clock-triggered = 
    exclude at start-up = 
 [[dependencies]]

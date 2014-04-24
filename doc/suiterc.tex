@@ -64,7 +64,6 @@ logged by cylc will also be in UTC.
     \item {\em default:} False
 \end{myitemize}
 
-
 \subsubsection[cycle point format]{ [cylc] $\rightarrow$ cycle point format}
 \label{cycle-point-format}
 
@@ -73,7 +72,8 @@ To just alter the timezone used in the date/time cycle point format, see
 (for years below 0 or above 9999), see
 \ref{cycle-point-num-expanded-year-digits}.
 
-Cylc usually uses a $CCYYMMDDThhmmZ$ ($Z$ in the special case of UTC) or $CCYYMMDDThhmm±hhmm$ format for writing down date/time cycle points, which
+Cylc usually uses a $CCYYMMDDThhmmZ$ ($Z$ in the special case of UTC) or
+$CCYYMMDDThhmm±hhmm$ format for writing down date/time cycle points, which
 follows one of the basic formats outlined in the ISO 8601 standard. For
 example, a cycle point on the 3rd of February 2001 at 4:50 in the morning,
 UTC (+0000 timezone), would be written $20010203T0450Z$. Similarly, for the
@@ -88,11 +88,11 @@ with fractional hours, set cycle point format to $CCYYWwwDThh,iiZ$ e.g.
 $1987W041T08,5Z$ for 08:30 UTC on Monday on the fourth ISO week of 1987.
 
 You can also use a subset of the strptime/strftime POSIX standard -
-supported tokens are $%F$, $%H$, $%M$, $%S$, $%Y$, $%d$, $%j$, $%m$, $%s$,
-$%z$.
+supported tokens are $\%F$, $\%H$, $\%M$, $\%S$, $\%Y$, $\%d$, $\%j$, $\%m$,
+$\%s$, $\%z$.
 
 To use the old cylc cycle time format (e.g. $2014020106$ for 06:00 on the
-1st of February 2014), set cycle point format to $%Y%m%d%H$.
+1st of February 2014), set cycle point format to $\%Y\%m\%d\%H$.
 
 Please note that using characters like "/" is not allowed, as it will break
 task output files ("/" is a reserved character in POSIX file and directory

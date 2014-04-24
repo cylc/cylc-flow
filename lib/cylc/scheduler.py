@@ -26,7 +26,7 @@ from copy import deepcopy
 import datetime, time
 import port_scan
 import logging
-import re, os, sys, shutil
+import re, os, sys, shutil, traceback
 from state_summary import state_summary
 from passphrase import passphrase
 from locking.lockserver import lockserver
@@ -319,6 +319,7 @@ class scheduler(object):
                 self.control_commands[ name ]( *args )
             except Exception, x:
                 # don't let a bad command bring the suite down
+                self.log.warning( traceback.format_exc() )
                 self.log.warning( str(x) )
                 self.log.warning( 'Command failed: ' +  cmdstr )
             else:
@@ -538,10 +539,16 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
 
+        point = get_point(tag)
+        if stop_tag is None:
+            stop_point = None
+        else:
+            stop_point = get_point(stop_tag)
+
         for task_id in task_ids:
             name, tag = TaskID.split( task_id )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
-            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
+            new_task = self.config.get_task_proxy( name, point, 'waiting', stop_point, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
             if new_task:
                 self.pool.add( new_task )
 

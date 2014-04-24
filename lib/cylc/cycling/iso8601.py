@@ -334,7 +334,6 @@ class ISO8601Sequence(object):
         nxt = self.recurrence.get_next(point_parse(p.value))
         if nxt:
             res = ISO8601Point(str(nxt))
-        print res
         return res
 
     def get_first_point( self, p):
@@ -391,13 +390,13 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
         anchor, step = m.groups()
         anchor = str(ISO8601Point.from_nonstandard_string(anchor))
         return anchor + '/P' + step + 'Y'
-    m = re.match('(0?[0-9]|1[0-9]|2[0-3])', dep_section)
+    m = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
     if m:
         # back compat 0,6,12 etc.
         if only_detect_old:
             return True
         anchor = m.groups()[0]
-        return "T%02d/P1D" % int(anchor)
+        return "T%02d/PT24H" % int(anchor)
     if only_detect_old:
         return False
     return dep_section
@@ -415,8 +414,16 @@ def init_from_cfg(cfg):
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
     if test_cycle_time is not None and re.match("\d+$", test_cycle_time):
-        for key in cfg['scheduling']['dependencies']:
-            if convert_old_cycler_syntax(key, only_detect_old=True):
+        dep_sections = list(cfg['scheduling']['dependencies'])
+        while dep_sections:
+            dep_section = dep_sections.pop(0)
+            if re.search("(?![^(]+\)),", dep_section):
+                dep_sections.extend(re.split("(?![^(]+\)),", dep_section))
+                continue
+            if ((dep_section == "graph" and
+                    cfg['scheduling']['dependencies']['graph']) or
+                    convert_old_cycler_syntax(dep_section,
+                                              only_detect_old=True)):
                 # Old cycling syntax is present.
                 custom_dump_format = PREV_DATE_TIME_FORMAT
                 num_expanded_year_digits = 0

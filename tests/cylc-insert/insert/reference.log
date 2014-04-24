@@ -9,17 +9,17 @@
 2014/02/01 23:49:29 INFO - Thread-5 start (Request Handling)
 2014/02/01 23:49:29 INFO - Thread-4 start (Job Submission)
 2014/02/01 23:49:29 INFO - Cold Start 2014010100
-2014/02/01 23:49:29 INFO - [prep.1] -triggered off []
-2014/02/01 23:49:30 INFO - [prep.1] -(current:ready)> prep.1 submitting now
-2014/02/01 23:49:31 INFO - [prep.1] -(current:ready)> prep.1 submission succeeded
-2014/02/01 23:49:31 INFO - [prep.1] -(current:submitted)> prep.1 submit_method_id=43973
-2014/02/01 23:49:31 INFO - [prep.1] -(current:submitted)> prep.1 started at 2014-02-01T23:49:31
-2014/02/01 23:49:31 INFO - [prep.1] -(current:running)> prep.1 succeeded at 2014-02-01T23:49:31
-2014/02/01 23:49:31 INFO - pre-insertion state dump: /home/oliverh/cylc-run/insert/state/state.2014:2:1:23:49:31
+2014/02/01 23:49:29 INFO - [prep.2014010100] -triggered off []
+2014/02/01 23:49:30 INFO - [prep.2014010100] -(current:ready)> prep.2014010100 submitting now
+2014/02/01 23:49:31 INFO - [prep.2014010100] -(current:ready)> prep.2014010100 submission succeeded
+2014/02/01 23:49:31 INFO - [prep.2014010100] -(current:submitted)> prep.2014010100 submit_method_id=43973
+2014/02/01 23:49:31 INFO - [prep.2014010100] -(current:submitted)> prep.2014010100 started at 2014-02-01T23:49:31
+2014/02/01 23:49:31 INFO - [prep.2014010100] -(current:running)> prep.2014010100 succeeded at 2014-02-01T23:49:31
+2014/02/01 23:49:31 INFO - pre-insertion state dump: /some/where/cylc-run/insert/state/state.2014:2:1:23:49:31
 2014/02/01 23:49:32 INFO - Command succeeded: insert task(bar,2014010100,False,None)
-2014/02/01 23:49:32 INFO - pre-insertion state dump: /home/oliverh/cylc-run/insert/state/state.2014:2:1:23:49:32
+2014/02/01 23:49:32 INFO - pre-insertion state dump: /some/where/cylc-run/insert/state/state.2014:2:1:23:49:32
 2014/02/01 23:49:32 INFO - Command succeeded: insert task(baz,2014010100,False,2014010200)
-2014/02/01 23:49:33 INFO - [foo.2014010100] -triggered off ['prep.1']
+2014/02/01 23:49:33 INFO - [foo.2014010100] -triggered off ['prep.2014010100']
 2014/02/01 23:49:33 INFO - [bar.2014010100] -triggered off []
 2014/02/01 23:49:33 INFO - [baz.2014010100] -triggered off []
 2014/02/01 23:49:34 INFO - [foo.2014010100] -(current:ready)> foo.2014010100 submitting now

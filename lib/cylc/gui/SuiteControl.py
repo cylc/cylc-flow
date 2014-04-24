@@ -1391,7 +1391,6 @@ The Cylc Suite Engine.
         try:
             result = self.get_pyro( 'suite-info' ).get( 'task requisites', [ task_id ] )
         except Exception,x:
-            print "SHITE"
             warning_dialog(str(x), self.window).warn()
             return
 
