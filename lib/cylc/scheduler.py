@@ -800,7 +800,9 @@ class scheduler(object):
             if not recon:
                 spec = LogSpec( self.reflogfile )
                 self.start_tag = get_point( spec.get_start_tag() )
-                self.stop_tag = get_point( spec.get_stop_tag() )
+                self.stop_tag = spec.get_stop_tag()
+                if self.stop_tag is not None:
+                    self.stop_tag = get_point( self.stop_tag )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1127,7 +1129,7 @@ class scheduler(object):
 
 
     def set_stop_task( self, taskid ):
-        name, tag = TASKID.split(taskid)
+        name, tag = TaskID.split(taskid)
         if name in self.config.get_task_name_list():
             self.log.info( "Setting stop task: " + taskid )
             self.stop_task = taskid

@@ -86,6 +86,10 @@ class CylcTimeParser(object):
                  context_end_point, num_expanded_year_digits=0,
                  dump_format=None,
                  custom_point_parse_function=None):
+        if context_start_point is not None:
+            context_start_point = str(context_start_point)
+        if context_end_point is not None:
+            context_end_point = str(context_end_point)
         self.num_expanded_year_digits = num_expanded_year_digits
         if dump_format is None:
             if num_expanded_year_digits:

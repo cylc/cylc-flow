@@ -271,8 +271,9 @@ class ISO8601Sequence(object):
         self.custom_point_parse_function = None
         if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
             self.custom_point_parse_function = point_parse
+
         self.time_parser = CylcTimeParser(
-            str(self.context_start_point), str(self.context_end_point),
+            self.context_start_point, self.context_end_point,
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function
@@ -418,7 +419,8 @@ def init_from_cfg(cfg):
         while dep_sections:
             dep_section = dep_sections.pop(0)
             if re.search("(?![^(]+\)),", dep_section):
-                dep_sections.extend(re.split("(?![^(]+\)),", dep_section))
+                dep_sections.extend([i.strip() for i in 
+                                     re.split("(?![^(]+\)),", dep_section)])
                 continue
             if ((dep_section == "graph" and
                     cfg['scheduling']['dependencies']['graph']) or

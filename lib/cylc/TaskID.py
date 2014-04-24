@@ -15,5 +15,5 @@ def is_valid_name( name ):
 
 def is_valid_id( name ):
     # TODO!
-    return True
+    return DELIM in name
 

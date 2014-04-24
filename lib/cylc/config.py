@@ -1273,7 +1273,7 @@ class config( object ):
                 # register any explicit internal outputs
                 if 'outputs' in self.cfg['runtime'][name]:
                     for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = outputx(msg)
+                        outp = outputx(msg, base_interval)
                         self.taskdefs[ name ].outputs.append( outp )
 
     def generate_triggers( self, lexpression, lnames, right, seq, asyncid_pattern, suicide ):

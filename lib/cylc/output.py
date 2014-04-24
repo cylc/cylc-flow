@@ -33,15 +33,16 @@ latter can have instrinsic (in message) and evaluation ([T-n]) offsets, but
 these only have intrinsic offsets - they are always evaluated at the task's
 own cycle time.
     """
-    def __init__(self, msg ):
+    def __init__(self, msg, base_interval=None ):
         self.offset = None
         self.msg = msg
+        # TODO ISO: support "+P1D", etc.
         m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', self.msg )
         if m:
             sign, offset = m.groups()
             if sign != '+':
                 raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.offset = get_interval( offset )
+            self.offset = base_interval.get_inferred_child( offset )
 
     def get( self, ctime ):
         # Replace [T] with actual cycle time
