@@ -1028,7 +1028,7 @@ class scheduler(object):
         elif self.pool.waiting_tasks_ready():
             process = True
 
-        if self.run_mode == 'simulation':
+        elif self.run_mode == 'simulation':
             process = self.pool.sim_time_check()
 
         ##if not process:
