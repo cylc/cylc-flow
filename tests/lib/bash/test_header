@@ -161,7 +161,7 @@ function cmp_ok() {
     if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
         CMP_COMMAND="xxdiff -D"
     fi
-    if $CMP_COMMAND $FILE_TEST $FILE_CONTROL; then
+    if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL"; then
         ok $TEST_NAME
         return
     fi
@@ -171,8 +171,8 @@ function cmp_ok() {
 function grep_ok() {
     local BRE=$1
     local FILE=$2
-    local TEST_NAME=$(basename $FILE)-grep-ok
-    if grep -q -e "$BRE" $FILE; then
+    local TEST_NAME=$(basename "$FILE")-grep-ok
+    if grep -q -e "$BRE" "$FILE"; then
         ok $TEST_NAME
         return
     fi
@@ -181,7 +181,7 @@ function grep_ok() {
 
 function exists_ok() {
     local FILE=$1
-    local TEST_NAME=$(basename $FILE)-file-exists-ok
+    local TEST_NAME=$(basename "$FILE")-file-exists-ok
     if [[ -a $FILE ]]; then
         ok $TEST_NAME
         return

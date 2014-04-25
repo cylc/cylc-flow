@@ -2,6 +2,7 @@
     
 {% set HELLO=False %}    
 [  scheduling   ]    
+    initial cycle time = 2014010100
     [[  special tasks  ]]    
         sequential = foo , bar ,  baz   
         start-up =   \

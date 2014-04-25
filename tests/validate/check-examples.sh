@@ -4,7 +4,7 @@ declare -A BAD
 
 for SDEF in $( find $CYLC_DIR/examples -name suite.rc ); do
     # capture validation stderr:
-    RES=$( cylc val --no-write $SDEF 2>&1 >/dev/null )
+    RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
     # store it, if any, keyed by suite dir:  
     [[ -n $RES ]] && BAD[$SDEF]=$RES
 done

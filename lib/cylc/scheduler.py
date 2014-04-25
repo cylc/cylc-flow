@@ -574,9 +574,8 @@ class scheduler(object):
 
 
     def reconfigure( self ):
-        print "RELOADING the suite definition"
         self.configure_suite( reconfigure=True )
-
+        
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         self.pool.reconfigure( self.config )
@@ -1242,7 +1241,7 @@ class scheduler(object):
 
 
     def command_purge_tree( self, id, stop ):
-        self.pool.purge_tree( id, stop )
+        self.pool.purge_tree( id, get_point(stop) )
 
 
     def filter_initial_task_list( self, inlist ):

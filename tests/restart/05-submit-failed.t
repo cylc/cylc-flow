@@ -69,23 +69,23 @@ final cycle : 2013092306
 .
 Begin task states
 force_restart.2013092300 : status=running, spawned=true
-force_restart.2013092306 : status=runahead, spawned=false
+force_restart.2013092306 : status=waiting, spawned=false
 output_states.2013092300 : status=waiting, spawned=false
 submit_fail_task.2013092300 : status=submit-failed, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|running
-force_restart|2013092306|0|1|runahead
+force_restart|2013092306|0|1|waiting
 output_states|2013092300|0|1|waiting
 submit_fail_task|2013092300|1|1|submit-failed
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|runahead
+force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|runahead
+output_states|2013092306|0|1|waiting
 submit_fail_task|2013092300|1|1|submit-failed
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
@@ -97,7 +97,6 @@ final cycle : 2013092306
 .
 Begin task states
 force_restart.2013092306 : status=running, spawned=true
-force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
 submit_fail_task.2013092306 : status=submit-failed, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
@@ -106,7 +105,6 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 submit_fail_task|2013092300|1|1|submit-failed
@@ -118,10 +116,8 @@ __DB_DUMP__
 cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
-output_states|2013092312|0|1|held
 submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
 tidy|2013092300|1|1|succeeded
@@ -134,11 +130,7 @@ final cycle : 2013092306
 (dp1
 .
 Begin task states
-force_restart.2013092312 : status=held, spawned=false
-output_states.2013092312 : status=held, spawned=false
-submit_fail_task.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
-tidy.2013092312 : status=held, spawned=false
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
@@ -147,16 +139,12 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
 cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
-output_states|2013092312|0|1|held
 submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
-submit_fail_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
-tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

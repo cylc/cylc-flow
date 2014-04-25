@@ -10,6 +10,8 @@
     [[dependencies]]
         [[[0, 6]]]
             graph = "start & c[T-6] => a => b => c"
+        [[[18]]]
+            graph = "c"
 [runtime]
     [[a,c,start]]
         command scripting = "sleep 1"

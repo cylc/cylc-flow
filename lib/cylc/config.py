@@ -1298,9 +1298,10 @@ class config( object ):
             lnode = graphnode(left, base_interval=base_interval)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
-                if (lnode.offset is not None and
+                if (self.taskdefs[lnode.name].intercycle_offset is None or (
+                        lnode.offset is not None and
                         lnode.offset >
-                        self.taskdefs[lnode.name].intercycle_offset):
+                        self.taskdefs[lnode.name].intercycle_offset)):
                     self.taskdefs[lnode.name].intercycle_offset = lnode.offset
             if lnode.offset_is_from_ict:
                 last_point = seq.get_stop_point()
