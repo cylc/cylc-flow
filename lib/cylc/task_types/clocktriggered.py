@@ -42,7 +42,7 @@ class clocktriggered(object):
             iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.c_time))
             self.c_time_as_seconds = int(iso_timepoint.get(
                 "seconds_since_unix_epoch"))
-        delayed_start = self.c_time_as_seconds + self.real_time_delay * 60
+        delayed_start = self.c_time_as_seconds + self.real_time_delay * 3600
         if time.time() > delayed_start:
            reached = True
         return reached

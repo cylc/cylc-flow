@@ -54,6 +54,8 @@ from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 from wallclock import now
 from cycling.loader import get_point
+import isodatetime.data
+import isodatetime.parsers
 
 
 class request_handler( threading.Thread ):
@@ -121,7 +123,8 @@ class scheduler(object):
         self.threads_stopped = False
 
         self.stop_task = None
-        self.stop_clock_time = None
+        self.stop_clock_time = None  # When not None, in Unix time
+        self.stop_clock_time_description = None  # Human-readable format.
 
         self.start_tag = None
         self.stop_tag = None
@@ -439,12 +442,18 @@ class scheduler(object):
 
 
     def command_set_stop_after_clock_time( self, arg ):
-        # format: YYYY/MM/DD-HH:mm
-        sdate, stime = arg.split('-')
-        yyyy, mm, dd = sdate.split('/')
-        HH,MM = stime.split(':')
-        dtime = datetime.datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
-        self.set_stop_clock( dtime )
+        # format: ISO 8601 compatible or YYYY/MM/DD-HH:mm (backwards comp.)
+        parser = isodatetime.parsers.TimePointParser()
+        try:
+            stop_point = parser.parse(arg)
+        except ValueError as exc:
+            try:
+                stop_point = parser.strptime("%Y/%m/%d-%H:%M")
+            except ValueError:
+                raise exc  # Raise the first (prob. more relevant) ValueError.
+        stop_time_in_epoch_seconds = int(stop_point.get(
+            "seconds_since_unix_epoch"))
+        self.set_stop_clock( stop_time_in_epoch_seconds, str(stop_point) )
 
 
     def command_set_stop_after_task( self, tid ):
@@ -574,8 +583,9 @@ class scheduler(object):
 
 
     def reconfigure( self ):
+        print "RELOADING the suite definition"
         self.configure_suite( reconfigure=True )
-        
+
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         self.pool.reconfigure( self.config )
@@ -1122,9 +1132,11 @@ class scheduler(object):
         self.stop_tag = get_point(stop_tag)
 
 
-    def set_stop_clock( self, dtime ):
-        self.log.info( "Setting stop clock time: " + dtime.isoformat() )
-        self.stop_clock_time = dtime
+    def set_stop_clock( self, unix_time, date_time_string ):
+        self.log.info( "Setting stop clock time: " + date_time_string +
+                       " (unix time: " + str(unix_time) + ")")
+        self.stop_clock_time = unix_time
+        self.stop_clock_time_string = date_time_string
 
 
     def set_stop_task( self, taskid ):
@@ -1155,9 +1167,9 @@ class scheduler(object):
 
     def will_stop_at( self ):
         if self.stop_tag:
-            return self.stop_tag
-        elif self.stop_clock_time:
-            return self.stop_clock_time.isoformat()
+            return str(self.stop_tag)
+        elif self.stop_clock_time is not None:
+            return self.stop_clock_time_description
         elif self.stop_task:
             return self.stop_task
         else:
@@ -1167,6 +1179,7 @@ class scheduler(object):
     def clear_stop_times( self ):
         self.stop_tag = None
         self.stop_clock_time = None
+        self.stop_clock_time_description = None
         self.stop_task = None
 
 
@@ -1175,7 +1188,7 @@ class scheduler(object):
 
 
     def stopping( self ):
-        if self.stop_tag or self.stop_clock_time:
+        if self.stop_tag or self.stop_clock_time is not None:
             return True
         else:
             return False
@@ -1259,9 +1272,16 @@ class scheduler(object):
 
 
     def check_stop_clock( self ):
-        if self.stop_clock_time and now() > self.stop_clock_time:
-            self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
+        if self.stop_clock_time is not None and now() > self.stop_clock_time:
+            time_point = (
+                isodatetime.data.get_timepoint_from_seconds_since_unix_epoch(
+                    self.stop_clock_time
+                )
+            )
+                
+            self.log.info( "Wall clock stop time reached: " + str(time_point))
             self.stop_clock_time = None
+            self.stop_clock_time_description = None
             return True
         else:
             return False
@@ -1269,7 +1289,7 @@ class scheduler(object):
 
     def check_stop_task( self ):
         if self.stop_task:
-            return self.pool.has_task_succeeded( self.stop_task )
+            return self.pool.has_stop_task_succeeded( self.stop_task )
         else:
             return False
 

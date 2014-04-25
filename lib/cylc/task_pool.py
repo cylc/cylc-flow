@@ -25,6 +25,7 @@ from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 import cylc.rundb
+from cylc.cycling.loader import get_point
 from CylcError import SchedulerError, TaskNotFoundError
 from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
@@ -58,7 +59,7 @@ class pool(object):
         self.db = db
 
         self.runahead_limit = config.get_runahead_limit()
-        self.get_task_proxy = config.get_task_proxy
+        self.config = config
 
         self.runahead_pool = {}
         self.myq = {}
@@ -136,6 +137,9 @@ class pool(object):
 
         return True
 
+
+    def get_task_proxy( self, *args, **kwargs ):
+        return self.config.get_task_proxy(*args, **kwargs)
 
     def release_runahead_tasks( self ):
 
@@ -354,6 +358,7 @@ class pool(object):
         self.reconfiguring = True
 
         self.runahead_limit = config.get_runahead_limit()
+        self.config = config
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id] = task
@@ -448,21 +453,21 @@ class pool(object):
 
 
     def hold_tasks( self, ids ):
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.id in ids:
                 if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
                     itask.reset_state_held()
 
 
     def release_tasks( self,ids ):
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.id in ids and itask.state.is_currently('held'):
                 itask.reset_state_waiting()
 
 
     def hold_all_tasks( self ):
         self.log.info( "Holding all waiting or queued tasks now")
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                 itask.reset_state_held()
 
@@ -471,7 +476,7 @@ class pool(object):
         # TODO ISO - check that we're not still holding tasks beyond suite
         # stop time (no point as finite-range tasks now disappear beyond
         # their stop time).
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
                 #if self.stop_tag and itask.c_time > self.stop_tag:
                 #    # this task has passed the suite stop time
@@ -827,15 +832,15 @@ class pool(object):
         itask.prerequisites.add_requisites(pp)
 
 
-    def has_task_succeeded( self, id ):
+    def has_stop_task_succeeded( self, id ):
         res = False
         name, tag = TaskID.split(id)
         for itask in self.get_tasks():
             iname, itag = TaskID.split(itask.id)
             # TODO ISO - check the following works
-            if itask.name == name and point(itag) == point(tag):
+            if itask.name == name and get_point(itag) == get_point(tag):
                 if itask.state.is_currently('succeeded'):
-                    self.log.info( "Stop task " + self.stop_task + " finished" )
+                    self.log.info( "Stop task " + id + " finished" )
                     res = True
                 break
         return res

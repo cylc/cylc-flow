@@ -82,8 +82,12 @@ tasks, or on queued event handlers and job poll and kill commands.
 
 5/ cylc stop REG STOP
    Do a clean shutdown after (a) all tasks have succeeded out to cycle
-time STOP, or (b) all tasks have succeeded out to wall clock time STOP
-(YYYY/MM/DD-HH:mm), or (c) task ID STOP has succeeded.
+time STOP, or (b) task ID STOP has succeeded.
+
+6/ cylc stop --wall-clock=DATETIME REG
+    Do a clean shutdown after all tasks have succeeded out to wall clock time
+    DATETIME (ISO 8601 date/time format e.g. CCYYMMDDThh:mm, CCYY-MM-DDThh,
+    etc).
 
 Note that cylc does not shut down automatically at a designated future
 cycle time (either by the "final cycle time" in the suite definition, or
@@ -111,6 +115,11 @@ parser.add_option( "-Q", "--quick",
         "remaining event handlers and job poll/kill commands."
         "(see above).",
         action="store_true", default=False, dest="quick" )
+
+parser.add_option( "-w", "--wall-clock", metavar="DATETIME",
+        help="Do a clean shutdown after all tasks have succeeded out to wall"
+        " clock DATETIME (ISO 8601 formatted)", action="store",
+        dest="wall_clock" )
 
 stop_poller.add_to_cmd_options( parser, d_max_polls=0 )
 
@@ -154,50 +163,47 @@ except Exception, x:
         raise
     raise SystemExit(x)
 
+
 method = None
-if shutdown_at:
+if options.wall_clock:
+    method = 'stop after clock time'
+    prompt_text = 'Set shutdown at wall clock ' + options.wall_clock
+    shutdown_arg = options.wall_clock
+elif shutdown_at:
     # STOP argument detected
     if not cylc.TaskID.is_valid_id( shutdown_arg ):
         # not a task ID
+        # not a task ID or a date time;
+        # TODO ISO - MOVE THIS LOGIC INTO SCHEDULER AND TEST
         try:
-            # is it a date time YYYY/MM/DD-HH:mm?
-            date, time = shutdown_arg.split('-')
-            yyyy, mm, dd = date.split('/')
-            HH,MM = time.split(':')
-        except:
-            # not a task ID or a date time;
-            # TODO ISO - MOVE THIS LOGIC INTO SCHEDULER AND TEST
+            # is it a cycle time?
+            ##ct(shutdown_arg)
+            pass
+        except CycleTimeError,x:
+            # nope: is it an async integer tag?
             try:
-                # is it a cycle time?
-                ##ct(shutdown_arg)
-                pass
-            except CycleTimeError,x:
-                # nope: is it an async integer tag?
-                try:
-                    int( shutdown_arg )
-                except ValueError:
-                    # nope: not task ID, date time, or TAG
-                    raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
-                else:
-                    # is probably an async TAG
-                    method = 'stop after tag'
-                    #print 'async'
+                int( shutdown_arg )
+            except ValueError:
+                # nope: not task ID, date time, or TAG
+                raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
             else:
-                # is a cycle time
+                # is probably an async TAG
                 method = 'stop after tag'
-                #print 'cycling'
+                prompt_text = 'Set shutdown at cycle point ' + shutdown_at
+                #print 'async'
         else:
-            # is a date time
-            method = 'stop after clock time'
-            #print 'date-time'
+            # is a cycle time
+            method = 'stop after tag'
+            prompt_text = 'Set shutdown at cycle point ' + shutdown_at
+            #print 'cycling'
     else:
         # is a task ID
         method = 'stop after task'
+        prompt_text = 'Set shutdown after task ' + shutdown_at
         #print 'task id'
 
-    #print method
-
-    prompt( 'Set shutdown ' + shutdown_arg + ' for ' + suite, options.force )
+if method:
+    prompt( prompt_text + ' for ' + suite, options.force )
     try:
         result = proxy.put( method, shutdown_arg )
     except Exception,x:
