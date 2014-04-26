@@ -12,4 +12,3 @@
 [runtime]
     [[a]]
         command scripting = "sleep 1"
-

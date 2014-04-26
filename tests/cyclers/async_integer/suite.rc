@@ -1,0 +1,6 @@
+[scheduling]
+    [[dependencies]]
+        graph = "foo => bar"
+[runtime]
+    [[root]]
+        command scripting = sleep 1

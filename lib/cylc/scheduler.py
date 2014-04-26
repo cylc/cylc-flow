@@ -53,7 +53,7 @@ from Queue import Queue, Empty
 from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 from wallclock import now
-from cycling.loader import point
+from cycling.loader import get_point
 
 
 class request_handler( threading.Thread ):
@@ -629,9 +629,9 @@ class scheduler(object):
         self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle time']
         self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle time']
         if self.start_tag:
-            self.start_tag = point( self.start_tag )
+            self.start_tag = get_point( self.start_tag )
         if self.stop_tag:
-            self.stop_tag = point( self.stop_tag )
+            self.stop_tag = get_point( self.stop_tag )
 
         if (not self.start_tag and not self.is_restart and
             self.config.cycling_tasks):
@@ -652,7 +652,7 @@ class scheduler(object):
             self.hold_suite_now = False
             self.hold_time = None
             if self.options.hold_time:
-                self.hold_time = point( self.options.hold_time )
+                self.hold_time = get_point( self.options.hold_time )
 
         # USE LOCKSERVER?
         self.use_lockserver = self.config.cfg['cylc']['lockserver']['enable']
@@ -792,8 +792,8 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec( self.reflogfile )
-                self.start_tag = point( spec.get_start_tag() )
-                self.stop_tag = point( spec.get_stop_tag() )
+                self.start_tag = get_point( spec.get_start_tag() )
+                self.stop_tag = get_point( spec.get_stop_tag() )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1111,7 +1111,7 @@ class scheduler(object):
 
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
-        self.stop_tag = point(stop_tag)
+        self.stop_tag = get_point(stop_tag)
 
 
     def set_stop_clock( self, dtime ):

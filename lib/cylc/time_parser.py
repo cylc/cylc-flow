@@ -84,29 +84,28 @@ class CylcTimeParser(object):
 
     def __init__(self, context_start_point,
                  context_end_point, num_expanded_year_digits=0,
-                 timezone_format="Z"):
-        if num_expanded_year_digits == 0:
-            dump_format = "CCYYMMDDThhmm" + timezone_format
-        else:
-            dump_format = u"±XCCYYMMDDThhmm" + timezone_format
+                 dump_format="CCYYMMDDThhmmZ",
+                 custom_point_parse_function=None):
         self.num_expanded_year_digits = num_expanded_year_digits
         self.timepoint_parser = isodatetime.parsers.TimePointParser(
             allow_only_basic=False, # TODO - Ben: why was this set True
             allow_truncated=True,
             num_expanded_year_digits=num_expanded_year_digits,
-            dump_format=dump_format)
-        if isinstance(context_start_point, basestring):
-            context_start_point = self.timepoint_parser.parse(
-                                                 context_start_point)
-        self.context_start_point = context_start_point
-        if isinstance(context_end_point, basestring):
-            context_end_point = self.timepoint_parser.parse(
-                                                 context_end_point)
-        self.context_end_point = context_end_point
+            dump_format=dump_format
+        )
         self._recur_format_recs = []
         for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:
             self._recur_format_recs.append((re.compile(regex), format_num))
         self._offset_rec = re.compile(self.OFFSET_REGEX)
+        self.custom_point_parse_function = custom_point_parse_function
+        if isinstance(context_start_point, basestring):
+            context_start_point, offset = self._get_point_from_expression(
+                context_start_point, None)
+        self.context_start_point = context_start_point
+        if isinstance(context_end_point, basestring):
+            context_end_point, offset = self._get_point_from_expression(
+                context_end_point, None)
+        self.context_end_point = context_end_point
         self.timeinterval_parser = isodatetime.parsers.TimeIntervalParser()
         self.recurrence_parser = isodatetime.parsers.TimeRecurrenceParser(
                         timepoint_parser=self.timepoint_parser)
@@ -130,7 +129,8 @@ class CylcTimeParser(object):
         if context_point is None:
             context_point = self.context_start_point
         point, offset = self._get_point_from_expression(
-                                                  expr, context_point)
+                                                  expr, context_point,
+                                                  allow_truncated=True)
         if point is not None:
             if point.truncated:
                 point += context_point
@@ -162,11 +162,15 @@ class CylcTimeParser(object):
             start_required = (format_num in [1, 3])
             end_required = (format_num in [1, 4])
             start_point, start_offset = self._get_point_from_expression(
-                                                  start, context_start_point,
-                                                  is_required=start_required)
+                start, context_start_point,
+                is_required=start_required,
+                allow_truncated=True
+            )
             end_point, end_offset = self._get_point_from_expression(
-                                              end, context_end_point,
-                                              is_required=end_required)
+                end, context_end_point,
+                is_required=end_required,
+                allow_truncated=True
+            )
             intv = result.groupdict().get("intv")
             intv_context_truncated_point = None
             if start_point is not None and start_point.truncated:
@@ -190,13 +194,15 @@ class CylcTimeParser(object):
                     end_point += context_end_point
                 if end_offset is not None:
                     end_point += end_offset
+
             return isodatetime.data.TimeRecurrence(
                          repetitions=repetitions,
                          start_point=start_point,
                          interval=interval,
-                         end_point=end_point,
-                         min_point=context_start_point,
-                         max_point=context_end_point)
+                         end_point=end_point
+                        # min_point=context_start_point,
+                        # max_point=context_end_point
+            )
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
     def _get_interval_from_expression(self, expr, context=None):
@@ -226,9 +232,10 @@ class CylcTimeParser(object):
             return isodatetime.data.TimeInterval(**kwargs)
         return self.timeinterval_parser.parse(expr)
 
-    def _get_point_from_expression(self, expr, context, is_required=False):
+    def _get_point_from_expression(self, expr, context, is_required=False,
+                                   allow_truncated=False):
         if expr is None:
-            if is_required:
+            if is_required and allow_truncated:
                 return context.copy(), None
             return None, None
         expr_point = None
@@ -241,26 +248,30 @@ class CylcTimeParser(object):
                                                 expr_offset)
             if split_expr[0] == "-":
                 expr_offset *= -1
-        if not expr:
+        if not expr and allow_truncated:
             return context.copy(), expr_offset
         expr_to_parse = expr
         if expr.endswith("T"):
             expr_to_parse = expr + "00"
+        parse_function = self.timepoint_parser.parse
+        if self.custom_point_parse_function is not None:
+            parse_function = self.custom_point_parse_function
         try:
-            expr_point = self.timepoint_parser.parse(expr_to_parse)
-        except isodatetime.parsers.ISO8601SyntaxError:
+            expr_point = parse_function(expr_to_parse)
+        except ValueError:
             pass
         else:
             return expr_point, expr_offset
-        for truncation_string, recs in self.TRUNCATED_REC_MAP.items():
-            for rec in recs:
-                if rec.search(expr):
-                    try:
-                        expr_point = self.timepoint_parser.parse(
-                                          truncation_string + expr_to_parse)
-                    except isodatetime.parsers.ISO8601SyntaxError:
-                        continue
-                    return expr_point, expr_offset
+        if allow_truncated:
+            for truncation_string, recs in self.TRUNCATED_REC_MAP.items():
+                for rec in recs:
+                    if rec.search(expr):
+                        try:
+                            expr_point = parse_function(
+                                truncation_string + expr_to_parse)
+                        except ValueError:
+                            continue
+                        return expr_point, expr_offset
         raise CylcTimeSyntaxError(
                   ("'%s': not a valid cylc-shorthand or full " % expr) +
                   "ISO 8601 date representation")

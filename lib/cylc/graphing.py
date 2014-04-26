@@ -22,10 +22,8 @@ ImportError due to pygraphviz/graphviz not being installed."""
 import re
 import pygraphviz
 import TaskID
-from cycling.loader import point, interval
-
-# TODO ISO - Support T06, truncated relative times, [] for initial cycle time.
-OFFSET_RE =re.compile('(\w+)\s*\[\s*T?\s*([+-]?\s*[,.\w]*)\s*\]')
+from cycling.loader import get_point, get_interval
+from graphnode import graphnode
 
 # TODO: Do we still need autoURL below?
 
@@ -186,7 +184,7 @@ class edge( object):
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, intag, not_first_cycle, raw, startup_only ):
+    def get_right( self, intag, start_tag, not_first_cycle, raw, startup_only ):
         tag = str(intag)
         if self.right == None:
             return None
@@ -200,8 +198,8 @@ class edge( object):
 
         return TaskID.get( self.right, tag )
 
-    def get_left( self, intag, not_first_cycle, raw, startup_only ):
-        tag = str(intag)
+    def get_left( self, intag, start_tag, not_first_cycle, raw, startup_only,
+                  base_offset ):
 
         first_cycle = not not_first_cycle
 
@@ -212,17 +210,14 @@ class edge( object):
             if not first_cycle or raw:
                 return None
 
-        if self.sasl:
-            # left node is asynchronous, so override the cycler
-            # TODO ISO - this is no longer needed?
-            tag = '1'
+        left_graphnode = graphnode(left, base_offset=base_offset)
+        if left_graphnode.offset_is_from_ict:
+            tag = start_tag - left_graphnode.offset
+        elif left_graphnode.offset:
+            tag = intag - left_graphnode.offset
         else:
-            m = re.match( OFFSET_RE, left )
-            if m:
-                left, offset = m.groups()
-                tag = str( point(tag) + interval(offset) )
-            else:
-                tag = tag
+            tag = intag
+        name = left_graphnode.name
 
-        return TaskID.get( left, tag )
+        return TaskID.get( name, str(tag) )
 

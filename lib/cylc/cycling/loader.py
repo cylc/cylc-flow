@@ -20,25 +20,68 @@
 Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
-#cycling = 'integer'
-cycling = 'iso8601'
 
-if cycling == 'integer':
-    from integer import (
-        IntegerPoint as point,
-        IntegerInterval as interval,
-        IntegerSequence as sequence
-    )
-elif cycling == 'iso8601':
-    from iso8601 import (
-        ISO8601Point as point,
-        ISO8601Interval as interval,
-        ISO8601Sequence as sequence
-    )
-else:
-    raise "CYCLING IMPORT ERROR"
+import integer
+import iso8601
 
-# or use import by name:
-# mod = __import__( module_name, fromlist=[class_name] )
-# my_class = getattr( mod, class_name )
 
+ISO8601_CYCLING_TYPE = 'iso8601'
+INTEGER_CYCLING_TYPE = 'integer'
+
+POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
+          ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
+
+INTERVALS = {INTEGER_CYCLING_TYPE: integer.IntegerInterval,
+             ISO8601_CYCLING_TYPE: iso8601.ISO8601Interval}
+
+SEQUENCES = {INTEGER_CYCLING_TYPE: integer.IntegerSequence,
+             ISO8601_CYCLING_TYPE: iso8601.ISO8601Sequence}
+
+INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
+                  ISO8601_CYCLING_TYPE: iso8601.init_from_cfg}
+
+
+class DefaultCycler(object):
+
+    """Store the default TYPE for Cyclers."""
+
+    TYPE = None
+
+
+def get_point(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return get_point_cls(cycling_type=cycling_type)(*args, **kwargs)
+
+
+def get_point_cls(cycling_type=None):
+    if cycling_type is None:
+        cycling_type = DefaultCycler.TYPE
+    return POINTS[cycling_type]
+
+
+def get_interval(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return get_interval_cls(cycling_type=cycling_type)(*args, **kwargs)
+
+
+def get_interval_cls(cycling_type=None):
+    if cycling_type is None:
+        cycling_type = DefaultCycler.TYPE
+    return INTERVALS[cycling_type]
+
+
+def get_sequence(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return get_sequence_cls(cycling_type=cycling_type)(*args, **kwargs)
+
+
+def get_sequence_cls(cycling_type=None):
+    if cycling_type is None:
+        cycling_type = DefaultCycler.TYPE
+    return SEQUENCES[cycling_type]
+
+
+def init_cyclers(cfg):
+    DefaultCycler.TYPE = cfg['scheduling']['cycling']
+    for cycling_type, init_func in INIT_FUNCTIONS.items():
+        init_func(cfg)

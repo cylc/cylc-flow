@@ -18,7 +18,7 @@
 
 import re, sys
 from simplify import conditional_simplifier
-from cylc.cycling.loader import point
+from cylc.cycling.loader import get_point
 
 # label1 => "foo ready for <TAG>
 # label2 => "bar.<TAG> succeeded"
@@ -34,7 +34,7 @@ class conditional_prerequisites(object):
 
     TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
 
-    def __init__( self, owner_id, ict=None ):
+    def __init__( self, owner_id, p_ict=None ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
@@ -43,7 +43,7 @@ class conditional_prerequisites(object):
         self.target_tags = []   # list of target cycle times (tags)
         self.auto_label = 0
         self.excess_labels = []
-        self.ict = ict
+        self.p_ict = p_ict
         self.pre_initial_messages = []
 
     def add( self, message, label = None, pre_initial = False ):
@@ -88,12 +88,12 @@ class conditional_prerequisites(object):
 
         drop_these = []
         for k in self.messages:
-            if self.ict:
+            if self.p_ict:
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
                     try:
                         foo = task.group().split(".")[1].rstrip()
-                        if ( point( foo ) <  self.p_ict and foo != '1' ):
+                        if ( get_point( foo ) <  self.p_ict and foo != '1' ):
                             # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
                             # INTEGER CYCLING (AND MORE?)
                             drop_these.append(k)
@@ -173,5 +173,5 @@ class conditional_prerequisites(object):
     def get_target_tags( self ):
         """Return a list of cycle times target by each prerequisite,
         including each component of conditionals."""
-        return self.target_tags
+        return [get_point(p) for p in self.target_tags]
 

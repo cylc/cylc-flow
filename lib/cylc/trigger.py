@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cylc.TaskID
-from cylc.cycling.loader import interval
+from cylc.cycling.loader import get_interval
 
 import re
 
@@ -47,34 +47,45 @@ where output x of foo may also have an offset:
         self.msg = None
         self.intrinsic_offset = None
         self.evaluation_offset = None
+        self.cycle_point = None
         self.type = None
         self.cycling = False
         self.async_repeating = False
         self.asyncid_pattern = None
         self.suicide = False
+
     def set_suicide( self, suicide ):
         self.suicide = suicide
+
     def set_async_repeating( self, pattern ):
         self.async_repeating = True
         self.asyncid_pattern = pattern
+
     def set_cycling( self ):
         self.cycling = True
+
     def set_special( self, msg ):
         # explicit internal output message ...
         self.msg = msg
         # TODO ISO:
-        m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', msg )
+        m = re.search( '\[\s*T?\s*([+-]?)\s*(.+)\s*\]', msg )
         if m:
             sign, offset = m.groups()
             if sign != '+':
                 raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.intrinsic_offset = interval( offset )
+            self.intrinsic_offset = get_interval( offset )
+
     def set_type( self, type ):
         if type not in [ 'submitted', 'submit-failed', 'started', 'succeeded', 'failed' ]:
             raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
         self.type = type
+
+    def set_cycle_point( self, cycle_point ):
+        self.cycle_point = cycle_point
+
     def set_offset( self, offset ):
-        self.evaluation_offset = interval( offset )
+        self.evaluation_offset = get_interval( offset )
+
     def get( self, ctime ):
         if self.async_repeating:
             # repeating async
@@ -87,11 +98,14 @@ where output x of foo may also have an offset:
                     ctime += self.intrinsic_offset
                 if self.evaluation_offset:
                     ctime -= self.evaluation_offset
+                if self.cycle_point:
+                    ctime = self.cycle_point
                 preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
             else:
                 # implicit output
                 if self.evaluation_offset:
                     ctime -= self.evaluation_offset
+                if self.cycle_point:
+                    ctime = self.cycle_point
                 preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
         return preq
-

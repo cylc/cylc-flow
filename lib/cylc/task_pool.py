@@ -653,7 +653,8 @@ class pool(object):
                     not itask.is_cycling or \
                     not itask.state.has_spawned():
                 continue
-            if cutoff and cutoff > itask.cleanup_cutoff:
+            if (cutoff and itask.cleanup_cutoff is not None and
+                    cutoff > itask.cleanup_cutoff):
                 spent.append(itask)
         for itask in spent:
             self.remove( itask )

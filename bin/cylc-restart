@@ -30,7 +30,7 @@ from cylc.task_state import task_state
 from cylc.run import main
 from cylc.command_prep import prep_file
 import cylc.TaskID
-from cylc.cycling.loader import point
+from cylc.cycling.loader import get_point
 
 
 class restart( scheduler ):
@@ -173,7 +173,7 @@ where they got to while the suite was down."""
             print >> sys.stderr, ' ', line2
             raise Exception("ERROR: corrupted state dump")
         if oldstartcycle != '(none)':
-            oldstartcycle = point(oldstartcycle)
+            oldstartcycle = get_point(oldstartcycle)
             # the state dump prescribes a start cycle
             # (else we take whatever the suite.rc file gives us)
             if self.options.ignore_startcycle:
@@ -207,7 +207,7 @@ where they got to while the suite was down."""
         if oldstopcycle != '(none)':
             # the state dump prescribes a stop cycle
             # (else we take whatever the command line or suite.rc file gives us)
-            oldstopcycle = point(oldstopcycle)
+            oldstopcycle = get_point(oldstopcycle)
             if self.options.ignore_stopcycle:
                 # ignore it and take whatever the command line or suite.rc file gives us
                 if self.stop_tag:
@@ -316,7 +316,10 @@ where they got to while the suite was down."""
                 # startup is True only for a cold start
                 submit_num = self.db.get_task_current_submit_num(name,tag)
                 exists = self.db.get_task_state_exists(name,tag)
-                itask = self.config.get_task_proxy( name, point(tag), state, stopctime=None, startup=False, submit_num=submit_num, exists=exists )
+                itask = self.config.get_task_proxy(
+                    name, get_point(tag), state, stopctime=None,
+                    startup=False, submit_num=submit_num, exists=exists
+                )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"

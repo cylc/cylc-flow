@@ -3,8 +3,8 @@
        required run mode = live
        live mode suite timeout = 1.0 # minutes
 [scheduling]
-    initial cycle time = 20130130
-    final cycle time = 20130202
+    initial cycle time = 2013013000
+    final cycle time = 2013020200
     runahead limit = 24 # enforce sequential running
     [[dependencies]]
         # off-topic: this shows how to trigger a monthly task 
