@@ -540,7 +540,7 @@ class task( object ):
             # generate automatic suite state polling command scripting
             comstr = "cylc suite-state " + \
                      " --task=" + self.suite_polling_cfg['task'] + \
-                     " --cycle=" + self.c_time + \
+                     " --cycle=" + str(self.c_time) + \
                      " --status=" + self.suite_polling_cfg['status']
             if rtconfig['suite state polling']['user']:
                 comstr += " --user=" + rtconfig['suite state polling']['user']

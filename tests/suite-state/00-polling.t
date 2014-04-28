@@ -34,11 +34,9 @@ cylc reg $UPSTREAM $TEST_DIR/upstream
 # validate both suites as tests
 TEST_NAME=$TEST_NAME_BASE-validate-upstream
 run_ok $TEST_NAME cylc val --debug $UPSTREAM
-echo $TEST_NAME.stderr >/dev/tty
 
 TEST_NAME=$TEST_NAME_BASE-validate-polling
 run_ok $TEST_NAME cylc val --debug --set UPSTREAM=$UPSTREAM $SUITE_NAME
-echo $TEST_NAME.stderr >/dev/tty
 
 #-------------------------------------------------------------------------------
 # run the upstream suite and detach (not a test)
