@@ -1279,8 +1279,10 @@ class scheduler(object):
             if self.state_dumper:
                 try:
                     self.state_dumper.dump()
-                # catch log rolling error when cylc-run contents have been deleted
-                except IOError:
+                except (OSError, IOError) as exc:
+                    # (see comments in the state dumping module)
+                    # ignore errors here in order to shut down cleanly
+                    self.log.warning( 'Final state dump failed: ' + str(exc) )
                     pass
 
         for q in [ self.eventq_worker, self.pollkq_worker, self.request_handler ]:
