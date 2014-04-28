@@ -189,17 +189,17 @@ elif shutdown_at:
             else:
                 # is probably an async TAG
                 method = 'stop after tag'
-                prompt_text = 'Set shutdown at cycle point ' + shutdown_at
+                prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
                 #print 'async'
         else:
             # is a cycle time
             method = 'stop after tag'
-            prompt_text = 'Set shutdown at cycle point ' + shutdown_at
+            prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
             #print 'cycling'
     else:
         # is a task ID
         method = 'stop after task'
-        prompt_text = 'Set shutdown after task ' + shutdown_at
+        prompt_text = 'Set shutdown after task ' + shutdown_arg
         #print 'task id'
 
 if method:

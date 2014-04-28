@@ -588,7 +588,7 @@ class scheduler(object):
 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool.reconfigure( self.config )
+        self.pool.reconfigure( self.config, self.stop_tag )
 
         self.suite_state.config = self.config
         self.configure_suite_environment()
@@ -1130,6 +1130,7 @@ class scheduler(object):
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
         self.stop_tag = get_point(stop_tag)
+        self.pool.stop_tag = self.stop_tag
 
 
     def set_stop_clock( self, unix_time, date_time_string ):

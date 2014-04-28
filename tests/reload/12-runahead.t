@@ -31,6 +31,6 @@ run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-check-fail
 TASKS=$(sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select count(*) from task_states where status is 'failed'")
 # manual comparison for the test
-shift 1; if (($TASKS==3)); then ok $TEST_NAME; else fail $TEST_NAME; fi 
+shift 1; if (($TASKS==4)); then ok $TEST_NAME; else fail $TEST_NAME; fi 
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

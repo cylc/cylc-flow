@@ -7,18 +7,18 @@ description = """change final cycle."""
        live mode suite timeout = 1.0 # minutes
 
 [scheduling]
-    initial cycle time = 2010010100
-    final cycle time = 2010010200 # marker
+    initial cycle time = 20100101T00
+    final cycle time = 20100102T00 # marker
     [[dependencies]]
-        [[[0]]]
+        [[[R1]]]
             graph = "reloader => a"
-        [[[0,6,12,18]]]
-        graph = "a[T-6] => a"
+        [[[PT6H]]]
+        graph = "a[-PT6H] => a"
 [runtime]
     [[reloader]]
         command scripting = """
 # change the final cycle:
-perl -pi -e 's/(final cycle time = )2010010200( # marker)/\1 2010010112\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(final cycle time = )20100102T00( # marker)/\1 2010010112\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 sleep 5

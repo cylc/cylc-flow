@@ -27,7 +27,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-run_ok $TEST_NAME cylc run --reference-test $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
 # Make sure t1.1.1's status file is in place
@@ -37,6 +37,10 @@ while [[ ! -f $T1_STATUS_FILE ]] && (($TIMEOUT > $(date +%s))); do
     sleep 1
 done
 T1_PID=$(awk -F= '$1=="CYLC_JOB_PID" {print $2}' $T1_STATUS_FILE)
+if [[ -z $T1_PID ]]; then
+    echo "Cannot extract PID" >&2
+    exit 1
+fi
 # Kill the job and see what happens
 kill -s USR1 $T1_PID
 while ps $T1_PID 1>/dev/null 2>&1; do

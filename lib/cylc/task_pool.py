@@ -353,12 +353,13 @@ class pool(object):
         return maxc
 
 
-    def reconfigure( self, config ):
+    def reconfigure( self, config, stop_tag ):
 
         self.reconfiguring = True
 
         self.runahead_limit = config.get_runahead_limit()
         self.config = config
+        self.stop_tag = stop_tag
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id] = task

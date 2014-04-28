@@ -32,7 +32,7 @@
 2013/10/06 23:34:19 INFO - [bar.20130808T0000Z] -(setting:submitting)
 2013/10/06 23:34:19 INFO - [bar.20130808T0000Z] -triggered off ['foo.20130808T0000Z']
 2013/10/06 23:34:20 INFO - [foo.20130808T1200Z] -(setting:submitting)
-2013/10/06 23:34:20 INFO - [foo.20130808T1200Z] -triggered off ['foo.20130808T0000Z','prep.20130808T0000Z']
+2013/10/06 23:34:20 INFO - [foo.20130808T1200Z] -triggered off ['foo.20130808T0000Z', 'prep.20130808T0000Z']
 2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:submitting)> bar.20130808T0000Z submitting now
 2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:submitting)> bar.20130808T0000Z submission succeeded
 2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(setting:submitted)
