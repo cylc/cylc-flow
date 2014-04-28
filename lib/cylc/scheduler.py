@@ -1130,7 +1130,7 @@ class scheduler(object):
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
         self.stop_tag = get_point(stop_tag)
-        self.pool.stop_tag = self.stop_tag
+        self.pool.set_stop_tag(self.stop_tag)
 
 
     def set_stop_clock( self, unix_time, date_time_string ):

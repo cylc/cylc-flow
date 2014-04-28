@@ -137,7 +137,6 @@ class pool(object):
 
         return True
 
-
     def get_task_proxy( self, *args, **kwargs ):
         return self.config.get_task_proxy(*args, **kwargs)
 
@@ -359,7 +358,7 @@ class pool(object):
 
         self.runahead_limit = config.get_runahead_limit()
         self.config = config
-        self.stop_tag = stop_tag
+        self.stop_tag = stop_tag  # TODO: Any point in using set_stop_tag?
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id] = task
@@ -424,6 +423,19 @@ class pool(object):
                     self.add( new_task )
 
         self.reconfiguring = found
+
+    def set_stop_tag( self, stop_tag ):
+        """Set the global suite stop point."""
+        self.stop_tag = stop_tag
+        for itask in self.get_tasks():
+            # check cycle stop or hold conditions
+            if (self.stop_tag and itask.c_time > self.stop_tag and
+                    itask.state.is_currently('waiting')):
+                itask.log( 'WARNING',
+                           "not running (beyond suite stop cycle) " +
+                           str(self.stop_tag) )
+                itask.reset_state_held()
+                return
 
 
     def no_active_tasks( self ):
