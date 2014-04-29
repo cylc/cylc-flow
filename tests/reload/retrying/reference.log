@@ -1,0 +1,38 @@
+2014/04/29 16:12:17 INFO - Thread-2 start (Event Handlers)
+2014/04/29 16:12:17 INFO - port:7766
+2014/04/29 16:12:17 INFO - Suite starting at 2014-04-29 16:12:17.181302
+2014/04/29 16:12:17 INFO - Log event clock: real time
+2014/04/29 16:12:17 INFO - Run mode: live
+2014/04/29 16:12:17 INFO - Start tag: None
+2014/04/29 16:12:17 INFO - Stop tag: None
+2014/04/29 16:12:17 INFO - Thread-3 start (Poll & Kill Commands)
+2014/04/29 16:12:17 INFO - Thread-5 start (Request Handling)
+2014/04/29 16:12:17 INFO - Thread-4 start (Job Submission)
+2014/04/29 16:12:17 INFO - [retrier.1] -triggered off []
+2014/04/29 16:12:17 INFO - [reloader.1] -triggered off []
+2014/04/29 16:12:18 INFO - [retrier.1] -(current:ready)> retrier.1 submitting now
+2014/04/29 16:12:19 INFO - [retrier.1] -(current:ready)> retrier.1 submission succeeded
+2014/04/29 16:12:19 INFO - [retrier.1] -(current:submitted)> retrier.1 submit_method_id=7939
+2014/04/29 16:12:19 INFO - [retrier.1] -(current:submitted)> retrier.1 started at 2014-04-29T16:12:18
+2014/04/29 16:12:19 CRITICAL - [retrier.1] -(current:running)> Task job script received signal ERR at 2014-04-29T16:12:18
+2014/04/29 16:12:19 CRITICAL - [retrier.1] -(current:running)> retrier.1 failed at 2014-04-29T16:12:18
+2014/04/29 16:12:19 INFO - [retrier.1] -job failed, retrying in 0.3 minutes
+2014/04/29 16:12:19 INFO - [reloader.1] -(current:ready)> reloader.1 submitting now
+2014/04/29 16:12:19 INFO - [reloader.1] -(current:ready)> reloader.1 started at 2014-04-29T16:12:18
+2014/04/29 16:12:20 INFO - [reloader.1] -(current:running)> reloader.1 submission succeeded
+2014/04/29 16:12:20 INFO - [reloader.1] -(current:running)> reloader.1 submit_method_id=7964
+2014/04/29 16:12:20 INFO - [reloader.1] -(current:running)> reloader.1 succeeded at 2014-04-29T16:12:20
+2014/04/29 16:12:20 INFO - Command succeeded: reload suite()
+2014/04/29 16:12:21 INFO - RELOADING TASK DEFINITION FOR retrier.1
+2014/04/29 16:12:21 INFO - RELOADING TASK DEFINITION FOR reloader.1
+2014/04/29 16:12:37 INFO - [retrier.1] -triggered off []
+2014/04/29 16:12:38 INFO - [retrier.1] -(current:ready)> retrier.1 submitting now
+2014/04/29 16:12:38 INFO - [retrier.1] -(current:ready)> retrier.1 submission succeeded
+2014/04/29 16:12:38 INFO - [retrier.1] -(current:submitted)> retrier.1 submit_method_id=8049
+2014/04/29 16:12:38 INFO - [retrier.1] -(current:submitted)> retrier.1 started at 2014-04-29T16:12:37
+2014/04/29 16:12:38 INFO - [retrier.1] -(current:running)> retrier.1 succeeded at 2014-04-29T16:12:37
+2014/04/29 16:12:38 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2014/04/29 16:12:38 INFO - Thread-4 exit (Job Submission)
+2014/04/29 16:12:39 INFO - Thread-2 exit (Event Handlers)
+2014/04/29 16:12:39 INFO - Thread-3 exit (Poll & Kill Commands)
