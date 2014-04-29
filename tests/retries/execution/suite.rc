@@ -8,10 +8,5 @@
 [runtime]
     [[foo]]
         retry delays = 3*0.1
-        command scripting = """
-        if (($CYLC_TASK_TRY_NUMBER<4)); then
-            false
-        else
-            true
-        fi
-        """
+        command scripting = "((CYLC_TASK_TRY_NUMBER >= 4))"
+
