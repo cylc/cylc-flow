@@ -13,13 +13,7 @@ new task proxy; ref github #945"""
 [runtime]
     [[retrier]]
         retry delays = 1*0.1
-        command scripting = """
-if (($CYLC_TASK_TRY_NUMBER<2)); then
-    false
-else
-    true
-fi
-"""
+        command scripting = "((CYLC_TASK_TRY_NUMBER >= 2))"
     [[reloader]]
         command scripting = """
 cylc suite-state --max-polls=10 --interval=1 --task=retrier --cycle=1 \
