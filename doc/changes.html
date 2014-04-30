@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.13">5.4.13</a></li>
 		<li><a href="#5.4.12">5.4.12</a></li>
 		<li><a href="#5.4.11">5.4.11</a></li>
 		<li><a href="#5.4.10">5.4.10</a></li>
@@ -41,8 +42,26 @@
 </ul>
 </div>
 
+
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="5.4.13"/>
+		<h2>5.4.13</h2>
+
+		<ul>
+				<li>bug fix: reloading the suite definition after changes was
+				causing tasks in the 'retrying' state at reload time not to
+				resubmit.</li>
+				<li>If an OSError or IOError occurs when attempting to write a
+				state dump file, cylc will retry up to 5 times before shutting
+				down the suite.</li> 
+				<li>full support - including job poll and kill - for the SLURM
+				resource manager.</li>
+				<li>timeout after 10 sec if network problems prevent cylc from
+				coping the suite environment file to task hosts on suite
+				restart.</li>
+		</ul>
 
 <a name="5.4.12"/>
 		<h2>5.4.12</h2>
