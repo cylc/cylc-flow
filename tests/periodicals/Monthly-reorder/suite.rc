@@ -7,10 +7,11 @@
     final cycle time = 2013020200
     runahead limit = 24 # enforce sequential running
     [[dependencies]]
-        # off-topic: this shows how to trigger a monthly task 
-        # off the *last* daily task of each month. 
+        # (this triggers a monthly task off the last daily task each month)
         [[[00]]]
-            graph = "daily[T-24] => dummy" # marker1
+            graph = """
+                daily
+            daily[T-24] => dummy""" # marker1
         [[[Monthly(201001,1)]]]
             graph = "dummy => monthly" # marker2
 [runtime]
