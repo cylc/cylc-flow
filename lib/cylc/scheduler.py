@@ -1702,8 +1702,8 @@ class scheduler(object):
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                # set manual trigger flag
                 itask.manual_trigger = True
+                itask.reset_state_ready()
 
     def get_matching_tasks( self, name, is_family=False ):
         """name can be a task or family name, or a regex to match
