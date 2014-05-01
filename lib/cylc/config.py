@@ -1620,7 +1620,7 @@ class config( object ):
             ttype = 'cycling'
             sec = section
 
-        seq = get_sequence( sec,
+        seq = get_sequence( section,
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
 

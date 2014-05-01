@@ -4,30 +4,31 @@ description = """
     post-processing every 12 months.
               """
 [scheduling]
-    initial cycle time = 201001
-    final cycle time = 201212
-    cycling = Monthly
-    [[special tasks]]
-        cold-start = prep
+    initial cycle time = 2010-01  # Note: '201001' is not permitted.
+    final cycle time = 2012-12
     [[dependencies]]
-        [[[2010010100,1]]]
+        [[[R1]]]
+            graph = """
+                prep => model
+            """
+        [[[P1M]]]
             # sequence anchored on Januray 1st, 2010)
             graph = """
-                prep | model[T-1] => model
+                model[-P1M] => model
                     """
-        [[[2010010100,6]]]
+        [[[P6M]]]
             # every sixth month, same anniversary date and anchor.
             graph = """
                 model => archive
                     """
-        [[[2010010100,12]]]
+        [[[P12M]]]
             # every twelve month, same anniversary date and anchor.
             graph = """
                 model => post
                     """
 [visualization]
-    initial cycle time = 201001
-    final cycle time = 201212
+    initial cycle time = 2010-01
+    final cycle time = 2012-12
     [[node attributes]]
         prep    =  "style=filled", "fillcolor=orange", "shape=circle"	
         model   =  "style=filled", "fillcolor=lightblue"	

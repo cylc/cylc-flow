@@ -471,7 +471,12 @@ def interval_parse(interval_string):
     try:
         return _interval_parse(interval_string).copy()
     except Exception:
-        return -1 * _interval_parse(interval_string.replace("-", "")).copy()
+        try:
+            return -1 * _interval_parse(
+                interval_string.replace("-", "", 1)).copy()
+        except Exception:
+            return _interval_parse(
+                interval_string.replace("+", "", 1)).copy()
 
 
 @memoize

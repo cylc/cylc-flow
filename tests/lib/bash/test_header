@@ -161,10 +161,12 @@ function cmp_ok() {
     if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
         CMP_COMMAND="xxdiff -D"
     fi
-    if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL"; then
+    if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL" \
+            1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         ok $TEST_NAME
         return
     fi
+    diff "$FILE_TEST" "$FILE_CONTROL" 2>>$TEST_NAME.stderr
     fail $TEST_NAME
 }
 

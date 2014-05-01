@@ -12,12 +12,13 @@ output message is explicited target at the next cycle."""
 [scheduling]
     initial cycle time = 2010
     final cycle time = 2011
-    cycling = Yearly
-    [[special tasks]]
-        cold-start = cfoo
     [[dependencies]]
-        [[[2010,1]]]
-            graph = """cfoo | foo[T-1]:x => foo => bar"""
+        [[[R1]]]
+            graph = """
+                cfoo => foo
+            """
+        [[[P1Y]]]
+            graph = """foo[-P1Y]:x => foo => bar"""
 
 [runtime]
     [[foo]]

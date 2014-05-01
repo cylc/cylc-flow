@@ -1247,7 +1247,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
-        self.pool.rest_task_states( task_ids, state )
+        self.pool.reset_task_states( task_ids, state )
 
 
     def command_add_prerequisite( self, task_id, message ):
