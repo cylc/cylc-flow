@@ -1,7 +1,7 @@
 #!Jinja2
 
-{% set START = 20100808T00 %}
-{% set STOP  = 20100812T00 %}
+{% set START = "20100808T00" %}
+{% set STOP  = "20100812T00" %}
 
 [scheduling]
     initial cycle time = {{ START }}

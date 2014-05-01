@@ -22,7 +22,7 @@
                 tidy[T-6] => retrying_task
                 retrying_task:start => force_restart
                 force_restart => output_states
-                output_states => tidy
+                output_states & retrying_task => tidy
             """
 [runtime]
     [[root]]
@@ -103,5 +103,9 @@
                 cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME 'retrying_task' $CYLC_TASK_CYCLE_TIME
             fi
             sleep 5
+            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
+                "select name, cycle, submit_num, try_num, status
+                 from task_states
+                 order by name, cycle;" > {{ TEST_DIR }}/states-db-tidy-$CYLC_TASK_CYCLE_TIME
         """
         description = "Tidy up the cycle so that the next can start"
