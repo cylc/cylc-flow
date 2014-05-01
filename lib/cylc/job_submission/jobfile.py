@@ -140,8 +140,11 @@ class jobfile(object):
             return
 
         self.FILE.write( "\n\n# DIRECTIVES:" )
-        for d in directives:
-            self.FILE.write( '\n' + prefix + ' ' + d + connector + directives[ d ] )
+        for key, value in directives.items():
+            if value:
+                self.FILE.write( '\n' + prefix + ' ' + key + connector + value )
+            else:
+                self.FILE.write( '\n' + prefix + ' ' + key )
         if final:
             self.FILE.write( '\n' + final )
 

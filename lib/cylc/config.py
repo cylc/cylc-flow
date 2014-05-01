@@ -168,6 +168,8 @@ class config( object ):
         if 'root' not in self.cfg['runtime']:
             self.cfg['runtime']['root'] = {}
 
+        self.ns_defn_order = self.cfg['runtime'].keys()
+
         if flags.verbose:
             print "Expanding [runtime] name lists"
         # If a runtime section heading is a list of names then the
@@ -186,6 +188,10 @@ class config( object ):
                 self.cfg['runtime'][name] = pdeepcopy( self.cfg['runtime'][item] )
             # delete the original multi-task section
             del self.cfg['runtime'][item]
+            # replace in the definition order list too (TODO - not nec. after #829?)
+            i = self.ns_defn_order.index(item)
+            self.ns_defn_order.remove(item)
+            self.ns_defn_order[i:i] = task_names
 
         # check var names before inheritance to avoid repetition
         self.check_env_names()
@@ -1234,6 +1240,7 @@ class config( object ):
                 self.runtime['first-parent ancestors'][name] = [name, 'root']
                 self.runtime['descendants']['root'].append(name)
                 self.runtime['first-parent descendants']['root'].append(name)
+                self.ns_defn_order.append(name)
 
             # check task name legality and create the taskdef
             if name not in self.taskdefs:

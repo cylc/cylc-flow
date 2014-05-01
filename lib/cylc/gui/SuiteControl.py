@@ -103,7 +103,7 @@ Class to hold initialisation data.
     """
     def __init__( self, suite, owner, host, port, db,
             pyro_timeout, template_vars, template_vars_file,
-            ungrouped_views ):
+            ungrouped_views, use_defn_order ):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -122,6 +122,7 @@ Class to hold initialisation data.
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
         self.ungrouped_views = ungrouped_views
+        self.use_defn_order = use_defn_order
 
         self.cylc_tmpdir = sitecfg.get_tmpdir()
         self.no_prompt = sitecfg.get( ['disable interactive command prompts'] )
@@ -389,7 +390,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
-                gcfg.get( ["ungrouped views"] ) )
+                gcfg.get( ["ungrouped views"] ),
+                gcfg.get( ["sort by definition order"] ) )
 
         self.theme_name = gcfg.get( ['use theme'] )
         self.theme = gcfg.get( ['themes', self.theme_name ] )

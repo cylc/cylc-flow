@@ -275,23 +275,28 @@ class scheduler(object):
         r_suite_run_dir = os.path.expandvars(
                 sitecfg.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
-            self.log.info( 'Restart: copying suite contact file to ' + user_at_host )
+            # Reinstate suite contact file to each old job's user@host
             if '@' in user_at_host:
-                user, host = user_at_host.split('@', 1)
+                owner, host = user_at_host.split('@', 1)
             else:
-                user, host = None, user_at_host
-            # this handles defaulting to localhost:
+                owner, host = None, user_at_host
+            if (owner, host) in [(None, 'localhost'), (user, 'localhost')]:
+                continue
             r_suite_run_dir = sitecfg.get_derived_host_item(
-                    self.suite, 'suite run directory', host, user)
+                                self.suite,
+                                'suite run directory',
+                                host,
+                                owner)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
-                    user_at_host, r_suite_run_dir)
-            # just in case the remote dir was deleted:
-            if host != 'localhost':
-                cmd1 = ['ssh', '-oBatchMode=yes', user_at_host, 'mkdir', '-p', r_suite_run_dir]
-                cmd2 = ['scp', '-oBatchMode=yes', env_file_path, r_env_file_path]
-                for cmd in [cmd1,cmd2]:
-                    if subprocess.call(cmd): # return non-zero
-                        raise Exception("ERROR: " + str(cmd))
+                                user_at_host,
+                                r_suite_run_dir)
+            self.log.info('Installing %s' % r_env_file_path)
+            cmd1 = (['ssh'] + task.task.SUITE_CONTACT_ENV_SSH_OPTS +
+                    [user_at_host, 'mkdir', '-p', r_suite_run_dir])
+            cmd2 = (['scp'] + task.task.SUITE_CONTACT_ENV_SSH_OPTS +
+                    [env_file_path, r_env_file_path])
+            for cmd in [cmd1, cmd2]:
+                subprocess.check_call(cmd)
             task.task.suite_contact_env_hosts.append( user_at_host )
 
         self.already_timed_out = False
@@ -988,12 +993,12 @@ class scheduler(object):
 
 
     def update_state_summary( self ):
-        #self.log.debug( "UPDATING STATE SUMMARY" )
         self.suite_state.update( self.pool.get_tasks(), 
                 self.pool.get_min_ctime(), self.pool.get_max_ctime(),
                 self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
-                self.will_stop_at(),  self.pool.runahead_limit)
+                self.will_stop_at(),  self.pool.runahead_limit,
+                self.config.ns_defn_order )
 
 
     def process_resolved( self, tasks ):
@@ -1083,8 +1088,10 @@ class scheduler(object):
             if self.state_dumper:
                 try:
                     self.state_dumper.dump()
-                # catch log rolling error when cylc-run contents have been deleted
-                except IOError:
+                except (OSError, IOError) as exc:
+                    # (see comments in the state dumping module)
+                    # ignore errors here in order to shut down cleanly
+                    self.log.warning( 'Final state dump failed: ' + str(exc) )
                     pass
 
         for q in [ self.eventq_worker, self.pollkq_worker, self.request_handler ]:

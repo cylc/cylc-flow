@@ -1,0 +1,22 @@
+
+title = "test that a reloaded retrying task does retry"
+description = """this requires some state vars to be carried over to the
+new task proxy; ref github #945"""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 0.5 # minutes
+[scheduling]
+    [[dependencies]]
+        graph = "retrier & reloader"
+[runtime]
+    [[retrier]]
+        retry delays = 1*0.1
+        command scripting = "((CYLC_TASK_TRY_NUMBER >= 2))"
+    [[reloader]]
+        command scripting = """
+cylc suite-state --max-polls=10 --interval=1 --task=retrier --cycle=1 \
+    --status=retrying $CYLC_SUITE_NAME
+cylc reload $CYLC_SUITE_NAME"""
+
