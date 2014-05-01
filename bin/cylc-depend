@@ -53,7 +53,7 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 task_id = args[1]
 dep = args[2]
 
-m = re.match( '^(\w+)'+TaskID.DELIM_RE+'(\w+)$', dep )
+m = re.match( '^(\w+)'+cylc.TaskID.DELIM_RE+'(\w+)$', dep )
 if m:
     #name, ctime = m.groups()
     msg = dep + ' succeeded'
@@ -64,8 +64,6 @@ else:
 
 if not cylc.TaskID.is_valid_id( task_id ):
     sys.exit( "Invalid task ID: " + task_id )
-
-task_id = tid.getstr()
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,

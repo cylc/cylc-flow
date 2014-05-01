@@ -243,41 +243,41 @@ class CylcRuntimeDAO(object):
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
-        args = [name, cycle, "submitting now"]
+        args = [name, str(cycle), "submitting now"]
         count = self.c.select(s_fmt, args).next()[0]
         submit_num = count + 1 #submission numbers should start at 0
         return submit_num
 
     def get_task_current_submit_num(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
-        args = [name, cycle, "submitting now"]
+        args = [name, str(cycle), "submitting now"]
         count = self.c.select(s_fmt, args).next()[0]
         return count
 
     def get_task_state_exists(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        args = [name, cycle]
+        args = [name, str(cycle)]
         count = self.c.select(s_fmt, args).next()[0]
         return count > 0
 
     def get_task_host(self, name, cycle):
         """Return the host name for task "name" at a given cycle."""
         s_fmt = r"SELECT host FROM task_states WHERE name==? AND cycle==?"
-        for row in self.c.select(s_fmt, [name, cycle]):
+        for row in self.c.select(s_fmt, [name, str(cycle)]):
             return row[0]
 
     def get_task_location(self, name, cycle):
         s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==?
                    AND event=="submission succeeded" AND misc!=""
                    ORDER BY submit_num DESC LIMIT 1"""
-        args = [name, cycle]
+        args = [name, str(cycle)]
         res = self.c.select(s_fmt, args).next()
         return res
 
-    def get_task_sumbit_method_id_and_try(self, name, cycle):
+    def get_task_submit_method_id_and_try(self, name, cycle):
         s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==?
                    ORDER BY submit_num DESC LIMIT 1"""
-        args = [name, cycle]
+        args = [name, str(cycle)]
         res = self.c.select(s_fmt, args).next()
         return res
 

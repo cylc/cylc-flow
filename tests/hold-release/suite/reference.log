@@ -9,23 +9,23 @@
 2014/01/10 08:41:32 INFO - Thread-5 start (Request Handling)
 2014/01/10 08:41:32 INFO - Thread-4 start (Job Submission)
 2014/01/10 08:41:32 INFO - Cold Start 2014010100
-2014/01/10 08:41:32 INFO - [holdrelease.1] -triggered off []
-2014/01/10 08:41:33 INFO - [holdrelease.1] -(current:ready)> holdrelease.1 submitting now
-2014/01/10 08:41:34 INFO - [holdrelease.1] -(current:ready)> holdrelease.1 submission succeeded
-2014/01/10 08:41:34 INFO - [holdrelease.1] -(current:submitted)> holdrelease.1 submit_method_id=56971
-2014/01/10 08:41:34 INFO - [holdrelease.1] -(current:submitted)> holdrelease.1 started at 2014-01-10T08:41:33
+2014/01/10 08:41:32 INFO - [holdrelease.2014010100] -triggered off []
+2014/01/10 08:41:33 INFO - [holdrelease.2014010100] -(current:ready)> holdrelease.2014010100 submitting now
+2014/01/10 08:41:34 INFO - [holdrelease.2014010100] -(current:ready)> holdrelease.2014010100 submission succeeded
+2014/01/10 08:41:34 INFO - [holdrelease.2014010100] -(current:submitted)> holdrelease.2014010100 submit_method_id=56971
+2014/01/10 08:41:34 INFO - [holdrelease.2014010100] -(current:submitted)> holdrelease.2014010100 started at 2014-01-10T08:41:33
 2014/01/10 08:41:39 INFO - Holding all waiting or queued tasks now
 2014/01/10 08:41:39 INFO - Command succeeded: hold suite now()
 2014/01/10 08:41:44 INFO - RELEASE: new tasks will be queued when ready
 2014/01/10 08:41:44 INFO - Command succeeded: release suite()
-2014/01/10 08:41:49 INFO - [holdrelease.1] -(current:running)> holdrelease.1 succeeded at 2014-01-10T08:41:49
-2014/01/10 08:41:50 INFO - [foo.1] -triggered off ['holdrelease.1']
-2014/01/10 08:41:50 INFO - [bar.2014010100] -triggered off ['holdrelease.1']
-2014/01/10 08:41:51 INFO - [foo.1] -(current:ready)> foo.1 submitting now
-2014/01/10 08:41:51 INFO - [foo.1] -(current:ready)> foo.1 submission succeeded
-2014/01/10 08:41:51 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=57051
-2014/01/10 08:41:51 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-01-10T08:41:51
-2014/01/10 08:41:51 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-01-10T08:41:51
+2014/01/10 08:41:49 INFO - [holdrelease.2014010100] -(current:running)> holdrelease.2014010100 succeeded at 2014-01-10T08:41:49
+2014/01/10 08:41:50 INFO - [foo.2014010100] -triggered off ['holdrelease.2014010100']
+2014/01/10 08:41:50 INFO - [bar.2014010100] -triggered off ['holdrelease.2014010100']
+2014/01/10 08:41:51 INFO - [foo.2014010100] -(current:ready)> foo.2014010100 submitting now
+2014/01/10 08:41:51 INFO - [foo.2014010100] -(current:ready)> foo.2014010100 submission succeeded
+2014/01/10 08:41:51 INFO - [foo.2014010100] -(current:submitted)> foo.2014010100 submit_method_id=57051
+2014/01/10 08:41:51 INFO - [foo.2014010100] -(current:submitted)> foo.2014010100 started at 2014-01-10T08:41:51
+2014/01/10 08:41:51 INFO - [foo.2014010100] -(current:running)> foo.2014010100 succeeded at 2014-01-10T08:41:51
 2014/01/10 08:41:51 INFO - [bar.2014010100] -(current:ready)> bar.2014010100 submitting now
 2014/01/10 08:41:51 INFO - [bar.2014010100] -(current:ready)> bar.2014010100 started at 2014-01-10T08:41:51
 2014/01/10 08:41:52 INFO - [bar.2014010100] -(current:running)> bar.2014010100 succeeded at 2014-01-10T08:41:51

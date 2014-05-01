@@ -231,7 +231,7 @@ where they got to while the suite was down."""
                 # every pickle stream ends with a period
                 break
             index += 1
-        self.wireless.load( pickled )
+        self.pool.wireless.load( pickled )
 
         index += 1
         line = lines[index].rstrip()
@@ -361,7 +361,7 @@ where they got to while the suite was down."""
 
                 # get submit_method_id and try_num from run-db
                 submit_method_id = try_num = None
-                row = self.db.get_task_sumbit_method_id_and_try(name, tag)
+                row = self.db.get_task_submit_method_id_and_try(name, tag)
                 if row and row[0]:
                     submit_method_id, try_num = row
                 else:

@@ -2,20 +2,20 @@
     initial cycle time = 20120909
     final cycle time   = 20120913
 
-    cycling = Daily
-    [[special tasks]]
-        cold-start = cfoo
     [[dependencies]]
-        graph = waz1 => waz2
-        [[[2012090912]]]
+        [[[R1/T12]]]
             graph = """
-cfoo | foo[T-1] => foo => bar
-waz2 => foo
-                    """
-        [[[2012090912, 2]]]
+                waz1 => waz2
+                cfoo => foo
+            """
+        [[[T12]]]
             graph = """
-foo => BAZ
-                    """
+                foo[-P1D] => foo => bar
+            """
+        [[[T12/P2D]]]
+            graph = """
+                foo => BAZ
+            """
 [visualization]
     initial cycle time = 20120909
     final cycle time   = 20120913

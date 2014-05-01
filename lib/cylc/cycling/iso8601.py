@@ -271,8 +271,9 @@ class ISO8601Sequence(object):
         self.custom_point_parse_function = None
         if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
             self.custom_point_parse_function = point_parse
+
         self.time_parser = CylcTimeParser(
-            str(self.context_start_point), str(self.context_end_point),
+            self.context_start_point, self.context_end_point,
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function
@@ -334,7 +335,6 @@ class ISO8601Sequence(object):
         nxt = self.recurrence.get_next(point_parse(p.value))
         if nxt:
             res = ISO8601Point(str(nxt))
-        print res
         return res
 
     def get_first_point( self, p):
@@ -391,13 +391,13 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
         anchor, step = m.groups()
         anchor = str(ISO8601Point.from_nonstandard_string(anchor))
         return anchor + '/P' + step + 'Y'
-    m = re.match('(0?[0-9]|1[0-9]|2[0-3])', dep_section)
+    m = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
     if m:
         # back compat 0,6,12 etc.
         if only_detect_old:
             return True
         anchor = m.groups()[0]
-        return "T%02d/P1D" % int(anchor)
+        return "T%02d/PT24H" % int(anchor)
     if only_detect_old:
         return False
     return dep_section
@@ -405,41 +405,60 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
 
 def init_from_cfg(cfg):
     """Initialise global variables (yuk) based on the configuration."""
-    global point_parser
-    global DUMP_FORMAT
-    global NUM_EXPANDED_YEAR_DIGITS
-    attempt_strptime_from_dump_format = False
-    DUMP_FORMAT = "CCYYMMDDThhmm"
-    NUM_EXPANDED_YEAR_DIGITS = (
-        cfg['cylc']['cycle point num expanded year digits']
-    )
-    if NUM_EXPANDED_YEAR_DIGITS:
-        DUMP_FORMAT = u"±XCCYYMMDDThhmm"
+    num_expanded_year_digits = cfg['cylc'][
+        'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
-    if cfg['cylc']['cycle point format'] is not None:
-        DUMP_FORMAT = cfg['cylc']['cycle point format']
-        if u"±X" not in DUMP_FORMAT and NUM_EXPANDED_YEAR_DIGITS:
-            raise IllegalValueError(
-                'cycle time format',
-                ('cylc', 'cycle point format'),
-                DUMP_FORMAT
-            )
-    elif time_zone is not None:
-        DUMP_FORMAT += time_zone
-    else:
-        DUMP_FORMAT += "Z"
+    custom_dump_format = cfg['cylc']['cycle point format']
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
     test_cycle_time = initial_cycle_time
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
     if test_cycle_time is not None and re.match("\d+$", test_cycle_time):
-        for key in cfg['scheduling']['dependencies']:
-            if convert_old_cycler_syntax(key, only_detect_old=True):
+        dep_sections = list(cfg['scheduling']['dependencies'])
+        while dep_sections:
+            dep_section = dep_sections.pop(0)
+            if re.search("(?![^(]+\)),", dep_section):
+                dep_sections.extend([i.strip() for i in 
+                                     re.split("(?![^(]+\)),", dep_section)])
+                continue
+            if ((dep_section == "graph" and
+                    cfg['scheduling']['dependencies']['graph']) or
+                    convert_old_cycler_syntax(dep_section,
+                                              only_detect_old=True)):
                 # Old cycling syntax is present.
-                DUMP_FORMAT = PREV_DATE_TIME_FORMAT
-                NUM_EXPANDED_YEAR_DIGITS = 0
+                custom_dump_format = PREV_DATE_TIME_FORMAT
+                num_expanded_year_digits = 0
                 break
+    init(
+        num_expanded_year_digits=num_expanded_year_digits,
+        custom_dump_format=custom_dump_format,
+        time_zone=time_zone
+    )
+
+
+def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None):
+    """Initialise global variables (yuk)."""
+    global point_parser
+    global DUMP_FORMAT
+    global NUM_EXPANDED_YEAR_DIGITS
+    if time_zone is None:
+        time_zone = "Z"
+    NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
+    if custom_dump_format is None:
+        if num_expanded_year_digits > 0:
+            DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
+        else:
+            DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
+        
+    else:
+        DUMP_FORMAT = custom_dump_format
+        if u"±X" not in custom_dump_format and num_expanded_year_digits:
+            raise IllegalValueError(
+                'cycle time format',
+                ('cylc', 'cycle point format'),
+                DUMP_FORMAT
+            )
     point_parser = TimePointParser(
         allow_only_basic=False,
         allow_truncated=True,
@@ -452,7 +471,12 @@ def interval_parse(interval_string):
     try:
         return _interval_parse(interval_string).copy()
     except Exception:
-        return -1 * _interval_parse(interval_string.replace("-", "")).copy()
+        try:
+            return -1 * _interval_parse(
+                interval_string.replace("-", "", 1)).copy()
+        except Exception:
+            return _interval_parse(
+                interval_string.replace("+", "", 1)).copy()
 
 
 @memoize

@@ -199,7 +199,7 @@ class edge( object):
         return TaskID.get( self.right, tag )
 
     def get_left( self, intag, start_tag, not_first_cycle, raw, startup_only,
-                  base_offset ):
+                  base_interval ):
 
         first_cycle = not not_first_cycle
 
@@ -210,7 +210,7 @@ class edge( object):
             if not first_cycle or raw:
                 return None
 
-        left_graphnode = graphnode(left, base_offset=base_offset)
+        left_graphnode = graphnode(left, base_interval=base_interval)
         if left_graphnode.offset_is_from_ict:
             tag = start_tag - left_graphnode.offset
         elif left_graphnode.offset:

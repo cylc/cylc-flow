@@ -741,13 +741,14 @@ class config( object ):
 
     def set_trigger( self, task_name, right, output_name=None, offset=None,
                      cycle_point=None, asyncid_pattern=None,
-                     suicide=False ):
+                     suicide=False, base_interval=None ):
         trig = triggerx(task_name)
         trig.set_suicide(suicide)
         if output_name:
             try:
                 # check for internal outputs
-                trig.set_special( self.cfg['runtime'][task_name]['outputs'][output_name] )
+                trig.set_special( self.cfg['runtime'][task_name]['outputs'][output_name],
+                                  base_interval=base_interval )
             except KeyError:
                 # There is no matching output defined under the task runtime section
                 if output_name == 'submit':
@@ -1153,7 +1154,7 @@ class config( object ):
                             continue
                         try:
                             name = graphnode(
-                                n, base_offset=seq.get_interval()).name
+                                n, base_interval=seq.get_interval()).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
@@ -1164,10 +1165,10 @@ class config( object ):
                             asyncid_pattern = m.groups()[0]
 
                 if ttype == 'cycling':
-                    for n in lnames:
+                    for n in list(lnames):
                         try:
                             name = graphnode(
-                                n, base_offset=seq.get_interval()).name
+                                n, base_interval=seq.get_interval()).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)            
@@ -1203,14 +1204,14 @@ class config( object ):
                 self.edges.append(e)
 
     def generate_taskdefs( self, line, lnames, right, ttype, section, asyncid_pattern,
-                           base_offset ):
+                           base_interval ):
         for node in lnames + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
             try:
-                my_taskdef_node = graphnode( node, base_offset=base_offset )
+                my_taskdef_node = graphnode( node, base_interval=base_interval )
             except GraphNodeError, x:
                 print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
@@ -1272,7 +1273,7 @@ class config( object ):
                 # register any explicit internal outputs
                 if 'outputs' in self.cfg['runtime'][name]:
                     for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = outputx(msg)
+                        outp = outputx(msg, base_interval)
                         self.taskdefs[ name ].outputs.append( outp )
 
     def generate_triggers( self, lexpression, lnames, right, seq, asyncid_pattern, suicide ):
@@ -1280,7 +1281,7 @@ class config( object ):
             # lefts are lone nodes; no more triggers to define.
             return
 
-        base_offset = seq.get_interval()
+        base_interval = seq.get_interval()
 
         conditional = False
         if re.search( '\|', lexpression ):
@@ -1294,12 +1295,13 @@ class config( object ):
         for left in lnames:
             # (GraphNodeError checked above)
             cycle_point = None
-            lnode = graphnode(left, base_offset=base_offset)
+            lnode = graphnode(left, base_interval=base_interval)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
-                if (lnode.offset is not None and
+                if (self.taskdefs[lnode.name].intercycle_offset is None or (
+                        lnode.offset is not None and
                         lnode.offset >
-                        self.taskdefs[lnode.name].intercycle_offset):
+                        self.taskdefs[lnode.name].intercycle_offset)):
                     self.taskdefs[lnode.name].intercycle_offset = lnode.offset
             if lnode.offset_is_from_ict:
                 last_point = seq.get_stop_point()
@@ -1309,7 +1311,7 @@ class config( object ):
                 else:
                     self.taskdefs[lnode.name].intercycle_offset = None
                 cycle_point = first_point
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, asyncid_pattern, suicide )
+            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, asyncid_pattern, suicide, seq.get_interval() )
             if not trigger:
                 continue
             if not conditional:
@@ -1618,7 +1620,7 @@ class config( object ):
             ttype = 'cycling'
             sec = section
 
-        seq = get_sequence( sec,
+        seq = get_sequence( section,
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
 

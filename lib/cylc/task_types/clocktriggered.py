@@ -17,8 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import datetime
+import cylc.cycling.iso8601
 from task import task
+import time
 from cylc.wallclock import now
 
 # TODO - the task base class now has clock-triggering functionality too, to
@@ -37,9 +38,12 @@ class clocktriggered(object):
         reached = False
         # check current time against expected start time
         # TODO ISO - DATE TIME CONVERSION?
-        rt = self.c_time.get_datetime()
-        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 )
-        if now() >= delayed_start:
+        if not hasattr(self, "c_time_as_seconds"):
+            iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.c_time))
+            self.c_time_as_seconds = int(iso_timepoint.get(
+                "seconds_since_unix_epoch"))
+        delayed_start = self.c_time_as_seconds + self.real_time_delay * 3600
+        if time.time() > delayed_start:
            reached = True
         return reached
 

@@ -26,7 +26,7 @@ from copy import deepcopy
 import datetime, time
 import port_scan
 import logging
-import re, os, sys, shutil
+import re, os, sys, shutil, traceback
 from state_summary import state_summary
 from passphrase import passphrase
 from locking.lockserver import lockserver
@@ -54,6 +54,8 @@ from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 from wallclock import now
 from cycling.loader import get_point
+import isodatetime.data
+import isodatetime.parsers
 
 
 class request_handler( threading.Thread ):
@@ -121,7 +123,8 @@ class scheduler(object):
         self.threads_stopped = False
 
         self.stop_task = None
-        self.stop_clock_time = None
+        self.stop_clock_time = None  # When not None, in Unix time
+        self.stop_clock_time_description = None  # Human-readable format.
 
         self.start_tag = None
         self.stop_tag = None
@@ -319,6 +322,7 @@ class scheduler(object):
                 self.control_commands[ name ]( *args )
             except Exception, x:
                 # don't let a bad command bring the suite down
+                self.log.warning( traceback.format_exc() )
                 self.log.warning( str(x) )
                 self.log.warning( 'Command failed: ' +  cmdstr )
             else:
@@ -438,16 +442,22 @@ class scheduler(object):
 
 
     def command_set_stop_after_clock_time( self, arg ):
-        # format: YYYY/MM/DD-HH:mm
-        sdate, stime = arg.split('-')
-        yyyy, mm, dd = sdate.split('/')
-        HH,MM = stime.split(':')
-        dtime = datetime.datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
-        self.set_stop_clock( dtime )
+        # format: ISO 8601 compatible or YYYY/MM/DD-HH:mm (backwards comp.)
+        parser = isodatetime.parsers.TimePointParser()
+        try:
+            stop_point = parser.parse(arg)
+        except ValueError as exc:
+            try:
+                stop_point = parser.strptime("%Y/%m/%d-%H:%M")
+            except ValueError:
+                raise exc  # Raise the first (prob. more relevant) ValueError.
+        stop_time_in_epoch_seconds = int(stop_point.get(
+            "seconds_since_unix_epoch"))
+        self.set_stop_clock( stop_time_in_epoch_seconds, str(stop_point) )
 
 
     def command_set_stop_after_task( self, tid ):
-        if tid.is_valid_id():
+        if TaskID.is_valid_id(tid):
             self.set_stop_task( tid )
 
 
@@ -538,10 +548,16 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
 
+        point = get_point(tag)
+        if stop_tag is None:
+            stop_point = None
+        else:
+            stop_point = get_point(stop_tag)
+
         for task_id in task_ids:
             name, tag = TaskID.split( task_id )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
-            new_task = self.config.get_task_proxy( name, tag, 'waiting', stop_tag, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
+            new_task = self.config.get_task_proxy( name, point, 'waiting', stop_point, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
             if new_task:
                 self.pool.add( new_task )
 
@@ -572,7 +588,7 @@ class scheduler(object):
 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool.reconfigure( self.config )
+        self.pool.reconfigure( self.config, self.stop_tag )
 
         self.suite_state.config = self.config
         self.configure_suite_environment()
@@ -793,7 +809,9 @@ class scheduler(object):
             if not recon:
                 spec = LogSpec( self.reflogfile )
                 self.start_tag = get_point( spec.get_start_tag() )
-                self.stop_tag = get_point( spec.get_stop_tag() )
+                self.stop_tag = spec.get_stop_tag()
+                if self.stop_tag is not None:
+                    self.stop_tag = get_point( self.stop_tag )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1021,7 +1039,7 @@ class scheduler(object):
         elif self.pool.waiting_tasks_ready():
             process = True
 
-        if self.run_mode == 'simulation':
+        elif self.run_mode == 'simulation':
             process = self.pool.sim_time_check()
 
         ##if not process:
@@ -1112,15 +1130,18 @@ class scheduler(object):
     def set_stop_ctime( self, stop_tag ):
         self.log.info( "Setting stop cycle time: " + stop_tag )
         self.stop_tag = get_point(stop_tag)
+        self.pool.set_stop_tag(self.stop_tag)
 
 
-    def set_stop_clock( self, dtime ):
-        self.log.info( "Setting stop clock time: " + dtime.isoformat() )
-        self.stop_clock_time = dtime
+    def set_stop_clock( self, unix_time, date_time_string ):
+        self.log.info( "Setting stop clock time: " + date_time_string +
+                       " (unix time: " + str(unix_time) + ")")
+        self.stop_clock_time = unix_time
+        self.stop_clock_time_string = date_time_string
 
 
     def set_stop_task( self, taskid ):
-        name, tag = TASKID.split(taskid)
+        name, tag = TaskID.split(taskid)
         if name in self.config.get_task_name_list():
             self.log.info( "Setting stop task: " + taskid )
             self.stop_task = taskid
@@ -1147,9 +1168,9 @@ class scheduler(object):
 
     def will_stop_at( self ):
         if self.stop_tag:
-            return self.stop_tag
-        elif self.stop_clock_time:
-            return self.stop_clock_time.isoformat()
+            return str(self.stop_tag)
+        elif self.stop_clock_time is not None:
+            return self.stop_clock_time_description
         elif self.stop_task:
             return self.stop_task
         else:
@@ -1159,6 +1180,7 @@ class scheduler(object):
     def clear_stop_times( self ):
         self.stop_tag = None
         self.stop_clock_time = None
+        self.stop_clock_time_description = None
         self.stop_task = None
 
 
@@ -1167,7 +1189,7 @@ class scheduler(object):
 
 
     def stopping( self ):
-        if self.stop_tag or self.stop_clock_time:
+        if self.stop_tag or self.stop_clock_time is not None:
             return True
         else:
             return False
@@ -1225,7 +1247,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
-        self.pool.rest_task_states( task_ids, state )
+        self.pool.reset_task_states( task_ids, state )
 
 
     def command_add_prerequisite( self, task_id, message ):
@@ -1233,7 +1255,7 @@ class scheduler(object):
 
 
     def command_purge_tree( self, id, stop ):
-        self.pool.purge_tree( id, stop )
+        self.pool.purge_tree( id, get_point(stop) )
 
 
     def filter_initial_task_list( self, inlist ):
@@ -1251,9 +1273,16 @@ class scheduler(object):
 
 
     def check_stop_clock( self ):
-        if self.stop_clock_time and now() > self.stop_clock_time:
-            self.log.info( "Wall clock stop time reached: " + self.stop_clock_time.isoformat() )
+        if self.stop_clock_time is not None and now() > self.stop_clock_time:
+            time_point = (
+                isodatetime.data.get_timepoint_from_seconds_since_unix_epoch(
+                    self.stop_clock_time
+                )
+            )
+                
+            self.log.info( "Wall clock stop time reached: " + str(time_point))
             self.stop_clock_time = None
+            self.stop_clock_time_description = None
             return True
         else:
             return False
@@ -1261,7 +1290,7 @@ class scheduler(object):
 
     def check_stop_task( self ):
         if self.stop_task:
-            return self.pool.has_task_succeeded( self.stop_task )
+            return self.pool.has_stop_task_succeeded( self.stop_task )
         else:
             return False
 

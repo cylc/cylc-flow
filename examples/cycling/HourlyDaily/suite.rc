@@ -1,21 +1,21 @@
 #!Jinja2
 
-{% set START = 2010080800 %}
-{% set STOP  = 2010081200 %}
+{% set START = "20100808T00" %}
+{% set STOP  = "20100812T00" %}
 
 [scheduling]
-    runahead limit = 24
     initial cycle time = {{ START }}
     final cycle time   = {{ STOP }}
-    cycling = HoursOfTheDay
-    [[special tasks]]
-        cold-start = cfoo
     [[dependencies]]
-        [[[0,12]]]
+        [[[R1]]]
             graph = """
-                cfoo | foo[T-12] => foo => bar
+                cfoo => foo
+            """
+        [[[PT12H]]]
+            graph = """
+               foo[T-12] => foo => bar
                     """
-        [[[Daily(20100809,2)]]]
+        [[[P2D]]]
             graph = """
                 foo => baz
                     """

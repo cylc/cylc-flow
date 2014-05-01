@@ -16,6 +16,7 @@ on the fly then used by 'cylc admin test-suite' and should not be
 modified unless you know what you're doing."""
 
 [scheduling]
+    initial cycle time = 2013
     [[special tasks]]
     start-up         = prep
     cold-start       = ColdA, ColdB, ColdC

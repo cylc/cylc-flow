@@ -7,22 +7,17 @@ the watcher task runs indefinitely so you need to stop the suite
 with '--now' and kill the external watcher script manually."""
 
 [scheduling]
-    initial cycle time = 2011010100
-    final cycle time = 2011010212
-    [[special tasks]]
-        cold-start = ColdA
+    initial cycle time = 20110101T00
+    final cycle time = 20110102T12
     [[dependencies]]
-        # make everything wait on a oneoff asynchronous task
-        graph = "prep"
+        # make everything wait on a start-cycle-only task.
+        [[[R1]]]
+            graph = "prep => ColdA => A"
         [[[ASYNCID:SATID-\d+]]]
-            graph = """prep => watcher:a => upload:a & archive:a"""
+            graph = """prep[] => watcher:a => upload:a & archive:a"""
             daemon = watcher
-
-        [[[0,12]]]
-            # a couple of cycling tasks in the same suite, because we can.
-            graph = """
-                prep => ColdA
-                ColdA | A[T-12] => A => B"""
+        [[[PT12H]]]
+            graph = """A[-PT12H] => A => B"""
 [runtime]
     [[watcher]]
         description = "watch for incoming satellite data"

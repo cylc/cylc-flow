@@ -13,12 +13,13 @@ generation of groups of related dependencies and runtime properties."""
 {% set CLEANUP = True %}
 
 [scheduling]
+    initial cycle time = 2020-01-01  # Equivalent to 20200101.
     [[ dependencies ]]
 {% if CLEANUP %}
-        [[[23]]]
+        [[[T23]]]
             graph = "clean"
 {% endif %}
-        [[[0,12]]]
+        [[[T00,T12]]]
             graph = """
                     setup => get_lbc & get_ic # foo
 {% for CITY in CITIES %} {# comment #}

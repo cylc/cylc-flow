@@ -25,6 +25,7 @@ from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 import cylc.rundb
+from cylc.cycling.loader import get_point
 from CylcError import SchedulerError, TaskNotFoundError
 from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
@@ -58,6 +59,7 @@ class pool(object):
         self.db = db
 
         self.runahead_limit = config.get_runahead_limit()
+        self.config = config
 
         self.runahead_pool = {}
         self.myq = {}
@@ -135,6 +137,8 @@ class pool(object):
 
         return True
 
+    def get_task_proxy( self, *args, **kwargs ):
+        return self.config.get_task_proxy(*args, **kwargs)
 
     def release_runahead_tasks( self ):
 
@@ -348,11 +352,13 @@ class pool(object):
         return maxc
 
 
-    def reconfigure( self, config ):
+    def reconfigure( self, config, stop_tag ):
 
         self.reconfiguring = True
 
         self.runahead_limit = config.get_runahead_limit()
+        self.config = config
+        self.stop_tag = stop_tag  # TODO: Any point in using set_stop_tag?
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id] = task
@@ -374,7 +380,7 @@ class pool(object):
         old_task_name_list = self.task_name_list
         self.task_name_list = config.get_task_name_list()
         for name in old_task_name_list:
-            if name not in new_task_list:
+            if name not in self.task_name_list:
                 self.orphans.append(name)
         # adjust the new suite config to handle the orphans
         config.adopt_orphans( self.orphans )
@@ -404,7 +410,7 @@ class pool(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.config.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
+                    new_task = self.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
@@ -417,6 +423,19 @@ class pool(object):
                     self.add( new_task )
 
         self.reconfiguring = found
+
+    def set_stop_tag( self, stop_tag ):
+        """Set the global suite stop point."""
+        self.stop_tag = stop_tag
+        for itask in self.get_tasks():
+            # check cycle stop or hold conditions
+            if (self.stop_tag and itask.c_time > self.stop_tag and
+                    itask.state.is_currently('waiting')):
+                itask.log( 'WARNING',
+                           "not running (beyond suite stop cycle) " +
+                           str(self.stop_tag) )
+                itask.reset_state_held()
+                return
 
 
     def no_active_tasks( self ):
@@ -447,21 +466,21 @@ class pool(object):
 
 
     def hold_tasks( self, ids ):
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.id in ids:
                 if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying' ):
                     itask.reset_state_held()
 
 
     def release_tasks( self,ids ):
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.id in ids and itask.state.is_currently('held'):
                 itask.reset_state_waiting()
 
 
     def hold_all_tasks( self ):
         self.log.info( "Holding all waiting or queued tasks now")
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                 itask.reset_state_held()
 
@@ -470,7 +489,7 @@ class pool(object):
         # TODO ISO - check that we're not still holding tasks beyond suite
         # stop time (no point as finite-range tasks now disappear beyond
         # their stop time).
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
                 #if self.stop_tag and itask.c_time > self.stop_tag:
                 #    # this task has passed the suite stop time
@@ -822,19 +841,19 @@ class pool(object):
         else:
             raise TaskNotFoundError, "Task not present in suite: " + id
         pp = plain_prerequisites( id )
-        pp.add( message )
+        pp.add( msg )
         itask.prerequisites.add_requisites(pp)
 
 
-    def has_task_succeeded( self, id ):
+    def has_stop_task_succeeded( self, id ):
         res = False
         name, tag = TaskID.split(id)
         for itask in self.get_tasks():
             iname, itag = TaskID.split(itask.id)
             # TODO ISO - check the following works
-            if itask.name == name and point(itag) == point(tag):
+            if itask.name == name and get_point(itag) == get_point(tag):
                 if itask.state.is_currently('succeeded'):
-                    self.log.info( "Stop task " + self.stop_task + " finished" )
+                    self.log.info( "Stop task " + id + " finished" )
                     res = True
                 break
         return res

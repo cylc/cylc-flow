@@ -38,7 +38,7 @@ error status. For tasks, success means the task proxy is currently in
 the 'running' state.""",
     pyro=True,
     argdoc=[('REG', 'Suite name'),
-            ('[TASK]', 'Task NAME'+TaskID.DELIM+'TAG')])
+            ('[TASK]', 'Task NAME'+cylc.TaskID.DELIM+'TAG')])
 
 parser.add_option( "--print-ports",
         help="Print the port range from the cylc site config file.",

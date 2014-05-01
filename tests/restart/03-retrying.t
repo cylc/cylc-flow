@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 13
+set_test_number 14
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE retrying
 TEST_SUITE_RUN_OPTIONS=
@@ -69,28 +69,38 @@ final cycle : 2013092306
 .
 Begin task states
 force_restart.2013092300 : status=running, spawned=true
-force_restart.2013092306 : status=runahead, spawned=false
+force_restart.2013092306 : status=waiting, spawned=false
 output_states.2013092300 : status=waiting, spawned=false
 retrying_task.2013092300 : status=retrying, spawned=true
-retrying_task.2013092306 : status=runahead, spawned=false
+retrying_task.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|running
-force_restart|2013092306|0|1|runahead
+force_restart|2013092306|0|1|waiting
 output_states|2013092300|0|1|waiting
 retrying_task|2013092300|1|2|retrying
-retrying_task|2013092306|0|1|runahead
+retrying_task|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|runahead
+force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|runahead
+output_states|2013092306|0|1|waiting
 retrying_task|2013092300|2|2|retrying
-retrying_task|2013092306|0|1|runahead
+retrying_task|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
+__DB_DUMP__
+cmp_ok $TEST_DIR/states-db-tidy-2013092300 <<'__DB_DUMP__'
+force_restart|2013092300|1|1|succeeded
+force_restart|2013092306|0|1|waiting
+output_states|2013092300|1|1|succeeded
+output_states|2013092306|0|1|waiting
+retrying_task|2013092300|2|2|succeeded
+retrying_task|2013092306|0|1|waiting
+tidy|2013092300|1|1|running
+tidy|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 run mode : live
@@ -100,35 +110,28 @@ final cycle : 2013092306
 .
 Begin task states
 force_restart.2013092306 : status=running, spawned=true
-force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
 retrying_task.2013092306 : status=retrying, spawned=true
-retrying_task.2013092312 : status=held, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|1|2|retrying
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
-output_states|2013092312|0|1|held
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|2|2|retrying
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -139,11 +142,7 @@ final cycle : 2013092306
 (dp1
 .
 Begin task states
-force_restart.2013092312 : status=held, spawned=false
-output_states.2013092312 : status=held, spawned=false
-retrying_task.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
-tidy.2013092312 : status=held, spawned=false
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
@@ -152,19 +151,15 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
 cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
-output_states|2013092312|0|1|held
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|4|3|succeeded
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
-tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+#purge_suite $SUITE_NAME
 if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' && -n $SUITE_NAME ]]; then
     ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
 fi

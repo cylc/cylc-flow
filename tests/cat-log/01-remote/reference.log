@@ -4,16 +4,16 @@
 2013/12/16 12:09:21 INFO - Suite starting at 2013-12-16 12:09:21.568477
 2013/12/16 12:09:21 INFO - Log event clock: real time
 2013/12/16 12:09:21 INFO - Run mode: live
-2013/12/16 12:09:21 INFO - Start tag: None
-2013/12/16 12:09:21 INFO - Stop tag: None
+2013/12/16 12:09:21 INFO - Start tag: 1
+2013/12/16 12:09:21 INFO - Stop tag: 1
 2013/12/16 12:09:21 INFO - Thread-4 start (Job Submission)
 2013/12/16 12:09:21 INFO - Thread-5 start (Request Handling)
 2013/12/16 12:09:21 INFO - [echo_2.1] -triggered off []
 2013/12/16 12:09:21 INFO - [echo_3.1] -triggered off []
-2013/12/16 12:09:22 INFO - [echo_2.1] -Task host: hpc2e
-2013/12/16 12:09:22 INFO - [echo_2.1] -Copying suite contact file to hpc2e
+2013/12/16 12:09:22 INFO - [echo_2.1] -Task host: my_hpc
+2013/12/16 12:09:22 INFO - [echo_2.1] -Copying suite contact file to my_hpc
 2013/12/16 12:09:22 INFO - [echo_2.1] -(current:ready)> echo_2.1 submitting now
-2013/12/16 12:09:23 INFO - [echo_3.1] -Task host: hpc2e
+2013/12/16 12:09:23 INFO - [echo_3.1] -Task host: my_hpc
 2013/12/16 12:09:24 INFO - [echo_2.1] -(current:ready)> echo_2.1 submission succeeded
 2013/12/16 12:09:24 INFO - [echo_2.1] -(current:submitted)> echo_2.1 submit_method_id=46007076
 2013/12/16 12:09:24 INFO - [echo_3.1] -(current:ready)> echo_3.1 submitting now

@@ -84,9 +84,19 @@ class CylcTimeParser(object):
 
     def __init__(self, context_start_point,
                  context_end_point, num_expanded_year_digits=0,
-                 dump_format="CCYYMMDDThhmmZ",
+                 dump_format=None,
                  custom_point_parse_function=None):
+        if context_start_point is not None:
+            context_start_point = str(context_start_point)
+        if context_end_point is not None:
+            context_end_point = str(context_end_point)
         self.num_expanded_year_digits = num_expanded_year_digits
+        if dump_format is None:
+            if num_expanded_year_digits:
+                dump_format = u"±XCCYYMMDDThhmmZ"
+            else:
+                dump_format = "CCYYMMDDThhmmZ"
+            
         self.timepoint_parser = isodatetime.parsers.TimePointParser(
             allow_only_basic=False, # TODO - Ben: why was this set True
             allow_truncated=True,
@@ -298,11 +308,12 @@ class TestRecurrenceSuite(unittest.TestCase):
                   0,
                   "R5/19991227T0600Z/20010604T1530Z",
                   ["19991227T0600Z", "20000506T1422Z",
-                   "20000914T2245Z", "20010124T0707Z"]),
+                   "20000914T2245Z", "20010124T0707Z",
+                   "20010604T1530Z"]),
                  ("R2/-0450000101T04Z/+0020630405T2200-05",
                   2,
                   "R2/-0450000101T0400Z/+0020630406T0300Z",
-                  []),
+                  ["-0450000101T0400Z", "+0020630406T0300Z"]),
                  ("R10/T12+P10D/-P1Y",
                   0,
                   "R10/20000105T1200Z/20000506T1000Z",
@@ -378,6 +389,8 @@ class TestRecurrenceSuite(unittest.TestCase):
                 continue
             test_results = []
             for i, test_result in enumerate(recurrence):
+                if i > len(ctrl_results) - 1:
+                    break
                 self.assertEqual(str(test_result), ctrl_results[i])
                 test_results.append(str(test_result))
             self.assertEqual(test_results, ctrl_results)

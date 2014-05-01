@@ -71,7 +71,7 @@ class GraphNodeError( Exception ):
 class graphnode( object ):
     """A node in the cycle suite.rc dependency graph."""
 
-    def __init__( self, node, base_offset=None ):
+    def __init__( self, node, base_interval=None ):
         node_in = node
         # Get task name and properties from a graph node name.
 
@@ -128,7 +128,7 @@ class graphnode( object ):
                     self.offset = - get_interval( offset )
                 else:
                     self.offset = get_interval( offset )
-                self.offset = base_offset.get_inferred_child(offset)
+                self.offset = base_interval.get_inferred_child(offset)
             else:
                 self.offset = (-get_interval(offset)).standardise()
         else:

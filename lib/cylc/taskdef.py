@@ -250,8 +250,10 @@ class taskdef(object):
                     for label in ctrig:
                         trig = ctrig[label]
                         if self.ict is not None and trig.evaluation_offset is not None:
+                            is_less_than_ict = (
+                                tag - trig.evaluation_offset < self.ict)
                             cp.add( trig.get( tag ), label,
-                                    (int(tag) - int(trig.evaluation_offset)) < int(self.ict))
+                                    is_less_than_ict)
                         else:
                             cp.add( trig.get( tag ), label )
                     cp.set_condition( exp )

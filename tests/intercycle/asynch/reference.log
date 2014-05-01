@@ -9,31 +9,31 @@
 2013/11/15 12:33:30 INFO - Thread-4 start (Job Submission)
 2013/11/15 12:33:30 INFO - Thread-5 start (Request Handling)
 2013/11/15 12:33:30 INFO - Cold Start 2012010100
-2013/11/15 12:33:30 DEBUG - [a.1] -task proxy added to the pool
+2013/11/15 12:33:30 DEBUG - [a.2012010100] -task proxy added to the pool
 2013/11/15 12:33:30 DEBUG - [b.2012010100] -task proxy added to the pool
 2013/11/15 12:33:30 DEBUG - BEGIN TASK PROCESSING
-2013/11/15 12:33:30 INFO - [a.1] -(setting:queued)
-2013/11/15 12:33:30 INFO - [a.1] -(setting:submitting)
-2013/11/15 12:33:30 INFO - [a.1] -triggered off []
+2013/11/15 12:33:30 INFO - [a.2012010100] -(setting:queued)
+2013/11/15 12:33:30 INFO - [a.2012010100] -(setting:submitting)
+2013/11/15 12:33:30 INFO - [a.2012010100] -triggered off []
 2013/11/15 12:33:30 DEBUG - END TASK PROCESSING (took 0.014872 sec)
 2013/11/15 12:33:31 DEBUG - Job Submission batch 1/1 (1 members):
-2013/11/15 12:33:31 INFO - [a.1] -(current:submitting)> a.1 submitting now
+2013/11/15 12:33:31 INFO - [a.2012010100] -(current:submitting)> a.2012010100 submitting now
 2013/11/15 12:33:31 DEBUG - Job Submission: batch completed
   Time taken: 0:00:00.313495
   All 1 items succeeded
-2013/11/15 12:33:32 INFO - [a.1] -(current:submitting)> a.1 submission succeeded
-2013/11/15 12:33:32 INFO - [a.1] -(setting:submitted)
-2013/11/15 12:33:32 INFO - [a.1] -(current:submitted)> a.1 submit_method_id=8081
-2013/11/15 12:33:32 INFO - [a.1] -(current:submitted)> a.1 started at 2013-11-15T12:33:32
-2013/11/15 12:33:32 INFO - [a.1] -(setting:running)
+2013/11/15 12:33:32 INFO - [a.2012010100] -(current:submitting)> a.2012010100 submission succeeded
+2013/11/15 12:33:32 INFO - [a.2012010100] -(setting:submitted)
+2013/11/15 12:33:32 INFO - [a.2012010100] -(current:submitted)> a.2012010100 submit_method_id=8081
+2013/11/15 12:33:32 INFO - [a.2012010100] -(current:submitted)> a.2012010100 started at 2013-11-15T12:33:32
+2013/11/15 12:33:32 INFO - [a.2012010100] -(setting:running)
 2013/11/15 12:33:33 DEBUG - BEGIN TASK PROCESSING
 2013/11/15 12:33:33 DEBUG - END TASK PROCESSING (took 0.012717 sec)
-2013/11/15 12:33:33 INFO - [a.1] -(current:running)> a.1 succeeded at 2013-11-15T12:33:32
-2013/11/15 12:33:33 INFO - [a.1] -(setting:succeeded)
+2013/11/15 12:33:33 INFO - [a.2012010100] -(current:running)> a.2012010100 succeeded at 2013-11-15T12:33:32
+2013/11/15 12:33:33 INFO - [a.2012010100] -(setting:succeeded)
 2013/11/15 12:33:34 DEBUG - BEGIN TASK PROCESSING
 2013/11/15 12:33:34 INFO - [b.2012010100] -(setting:queued)
 2013/11/15 12:33:34 INFO - [b.2012010100] -(setting:submitting)
-2013/11/15 12:33:34 INFO - [b.2012010100] -triggered off ['a.1']
+2013/11/15 12:33:34 INFO - [b.2012010100] -triggered off ['a.2012010100']
 2013/11/15 12:33:34 DEBUG - END TASK PROCESSING (took 0.014701 sec)
 2013/11/15 12:33:34 DEBUG - Job Submission batch 1/1 (1 members):
 2013/11/15 12:33:35 DEBUG - Job Submission: batch completed
@@ -57,7 +57,7 @@
 2013/11/15 12:33:38 DEBUG - BEGIN TASK PROCESSING
 2013/11/15 12:33:38 INFO - [b.2012010106] -(setting:queued)
 2013/11/15 12:33:38 INFO - [b.2012010106] -(setting:submitting)
-2013/11/15 12:33:38 INFO - [b.2012010106] -triggered off ['b.2012010100']
+2013/11/15 12:33:38 INFO - [b.2012010106] -triggered off ['a.2012010100']
 2013/11/15 12:33:38 DEBUG - END TASK PROCESSING (took 0.014217 sec)
 2013/11/15 12:33:39 DEBUG - Job Submission batch 1/1 (1 members):
 2013/11/15 12:33:39 DEBUG - Job Submission: batch completed
@@ -81,7 +81,7 @@
 2013/11/15 12:33:42 DEBUG - BEGIN TASK PROCESSING
 2013/11/15 12:33:42 INFO - [b.2012010112] -(setting:queued)
 2013/11/15 12:33:42 INFO - [b.2012010112] -(setting:submitting)
-2013/11/15 12:33:42 INFO - [b.2012010112] -triggered off ['b.2012010106']
+2013/11/15 12:33:42 INFO - [b.2012010112] -triggered off ['a.2012010100']
 2013/11/15 12:33:42 DEBUG - END TASK PROCESSING (took 0.014486 sec)
 2013/11/15 12:33:43 DEBUG - Job Submission batch 1/1 (1 members):
 2013/11/15 12:33:43 DEBUG - Job Submission: batch completed
@@ -105,7 +105,7 @@
 2013/11/15 12:33:46 DEBUG - BEGIN TASK PROCESSING
 2013/11/15 12:33:46 INFO - [b.2012010118] -(setting:queued)
 2013/11/15 12:33:46 INFO - [b.2012010118] -(setting:submitting)
-2013/11/15 12:33:46 INFO - [b.2012010118] -triggered off ['b.2012010112']
+2013/11/15 12:33:46 INFO - [b.2012010118] -triggered off ['a.2012010100']
 2013/11/15 12:33:46 DEBUG - END TASK PROCESSING (took 0.014103 sec)
 2013/11/15 12:33:47 DEBUG - Job Submission batch 1/1 (1 members):
 2013/11/15 12:33:47 INFO - [b.2012010118] -(current:submitting)> b.2012010118 submitting now
