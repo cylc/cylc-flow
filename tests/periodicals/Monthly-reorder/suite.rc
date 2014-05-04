@@ -3,16 +3,16 @@
        required run mode = live
        live mode suite timeout = 1.0 # minutes
 [scheduling]
-    initial cycle time = 2013013000
-    final cycle time = 2013020200
-    runahead limit = 24 # enforce sequential running
+    initial cycle time = 20130130T00
+    final cycle time =   20130202T00
+    runahead factor = 1 # enforce sequential running
     [[dependencies]]
         # (this triggers a monthly task off the last daily task each month)
-        [[[00]]]
+        [[[T00]]]
             graph = """
                 daily
-            daily[T-24] => dummy""" # marker1
-        [[[Monthly(201001,1)]]]
+            daily[-PT24H] => dummy""" # marker1
+        [[[R/01T/P1M]]]
             graph = "dummy => monthly" # marker2
 [runtime]
     [[root]]
