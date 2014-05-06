@@ -18,9 +18,10 @@
 
 import sys
 import cylc.cycling.iso8601
+from isodatetime.timezone import get_timezone_for_locale
 from task import task
 import time
-from cylc.wallclock import now
+from cylc.flags import utc
 
 # TODO - the task base class now has clock-triggering functionality too, to
 # handle retry delays, so this class could probably disappear now to leave
@@ -42,6 +43,13 @@ class clocktriggered(object):
             iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.c_time))
             self.c_time_as_seconds = int(iso_timepoint.get(
                 "seconds_since_unix_epoch"))
+            if iso_timepoint.time_zone.unknown:
+                utc_offset_hours, utc_offset_minutes = (
+                    get_timezone_for_locale()
+                )
+                utc_offset_in_seconds = (
+                    3600 * utc_offset_hours + 60 * utc_offset_minutes)
+                self.c_time_as_seconds += utc_offset_in_seconds
         delayed_start = self.c_time_as_seconds + self.real_time_delay * 3600
         if time.time() > delayed_start:
            reached = True

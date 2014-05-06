@@ -19,6 +19,7 @@
 import re
 from isodatetime.data import TimeInterval
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
+from isodatetime.timezone import get_timezone_format_for_locale
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import PointBase, IntervalBase
 from parsec.validate import IllegalValueError
@@ -51,6 +52,7 @@ PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 point_parser = None
 NUM_EXPANDED_YEAR_DIGITS = None
 DUMP_FORMAT = None
+ASSUME_UTC = False
 
 
 def memoize(function):
@@ -276,7 +278,8 @@ class ISO8601Sequence(object):
             self.context_start_point, self.context_end_point,
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
-            custom_point_parse_function=self.custom_point_parse_function
+            custom_point_parse_function=self.custom_point_parse_function,
+            assume_utc=ASSUME_UTC
         )
         self.recurrence = self.time_parser.parse_recurrence(i)
         self.step = ISO8601Interval(str(self.recurrence.interval))
@@ -298,7 +301,8 @@ class ISO8601Sequence(object):
             str(end_point),
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
-            custom_point_parse_function=self.custom_point_parse_function
+            custom_point_parse_function=self.custom_point_parse_function,
+            assume_utc=ASSUME_UTC
         )
         self.recurrence = self.time_parser.parse_recurrence(self.spec)
         self.value = str(self.recurrence)
@@ -411,6 +415,7 @@ def init_from_cfg(cfg):
     custom_dump_format = cfg['cylc']['cycle point format']
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
+    assume_utc = cfg['cylc']['UTC mode']
     test_cycle_time = initial_cycle_time
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
@@ -433,17 +438,24 @@ def init_from_cfg(cfg):
     init(
         num_expanded_year_digits=num_expanded_year_digits,
         custom_dump_format=custom_dump_format,
-        time_zone=time_zone
+        time_zone=time_zone,
+        assume_utc=assume_utc
     )
 
 
-def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None):
+def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
+         assume_utc=False):
     """Initialise global variables (yuk)."""
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
+    global ASSUME_UTC
+    ASSUME_UTC = assume_utc
     if time_zone is None:
-        time_zone = "Z"
+        if assume_utc:
+            time_zone = "Z"
+        else:
+            time_zone = get_timezone_format_for_locale()
     NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
@@ -464,6 +476,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None):
         allow_truncated=True,
         num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
         dump_format=DUMP_FORMAT,
+        assume_utc=assume_utc
     )
 
 

@@ -20,6 +20,7 @@
 
 
 from . import dumpers
+from . import timezone
 from . import util
 
 
@@ -500,6 +501,9 @@ class TimeZone(TimeInterval):
                 time_string = "-%02d:%02d"
             return time_string % (abs(self.hours), abs(self.minutes))
 
+    def __repr__(self):
+        return "<isodatetime.data.TimeZone:" + repr(str(self)) + ">"
+
 
 class TimePoint(object):
 
@@ -582,7 +586,7 @@ class TimePoint(object):
         "day_of_year", "day_of_month", "day_of_week",
         "week_of_year", "hour_of_day", "minute_of_hour",
         "second_of_minute", "truncated", "truncated_property",
-        "dump_format"
+        "dump_format", "time_zone"
     ]
 
     def __init__(self, expanded_year_digits=0, year=None, month_of_year=None,
@@ -914,6 +918,11 @@ class TimePoint(object):
         self.apply_time_zone_offset(dest_time_zone - self.get_time_zone())
         self.time_zone = dest_time_zone
 
+    def set_time_zone_to_local(self):
+        """Set the time zone to the local timezone, if it's not already."""
+        local_hours, local_minutes = timezone.get_timezone_for_locale()
+        self.set_time_zone(TimeZone(hours=local_hours, minutes=local_minutes))
+
     def set_time_zone_to_utc(self):
         """Set the time zone to UTC, if it's not already."""
         self.set_time_zone(TimeZone(hours=0, minutes=0))
@@ -1134,7 +1143,10 @@ class TimePoint(object):
         """Return the data properties of this TimePoint."""
         hash_ = []
         for attr in self.DATA_ATTRIBUTES:
-            hash_.append((attr, getattr(self, attr, None)))
+            value = getattr(self, attr, None)
+            if callable(getattr(value, "copy", None)):
+                value = value.copy()
+            hash_.append((attr, value))
         return hash_
 
     def __cmp__(self, other):
@@ -1827,9 +1839,13 @@ def get_timepoint_from_seconds_since_unix_epoch(num_seconds):
 
 
 def get_timepoint_properties_from_seconds_since_unix_epoch(num_seconds):
-    """Translate Unix time into a dict of TimePoint properties."""
-    return dict(
+    """Translate Unix time into a dict of TimePoint constructor properties."""
+    properties = dict(
         get_timepoint_from_seconds_since_unix_epoch(num_seconds).get_props())
+    time_zone = properties.pop("time_zone")
+    properties["time_zone_hour"] = time_zone.hours
+    properties["time_zone_minute"] = time_zone.minutes
+    return properties
 
 
 def iter_months_days(year, month_of_year=None, day_of_month=None,
@@ -1883,6 +1899,38 @@ def iter_months_days(year, month_of_year=None, day_of_month=None,
                 for day in day_range:
                     yield i + 1, day
 
+
+def set_360_calendar():
+    """Set constants for the 360 day calendar"""
+    globals()['DAYS_IN_MONTHS'] = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30]
+    globals()['DAYS_IN_MONTHS_LEAP'] = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30]
+    globals()['MONTHS_IN_YEAR'] = 12
+    globals()['ROUGH_DAYS_IN_MONTH'] = 30 # Used for duration conversion, nowhere else.
+    globals()['DAYS_IN_YEAR'] = 360
+    globals()['ROUGH_DAYS_IN_YEAR'] = 360
+    globals()['DAYS_IN_YEAR_LEAP'] = 360
+    globals()['HOURS_IN_YEAR'] = 360 * HOURS_IN_DAY
+    globals()['MINUTES_IN_YEAR'] = 360 * MINUTES_IN_DAY
+    globals()['SECONDS_IN_YEAR'] = 360 * SECONDS_IN_DAY
+    globals()['HOURS_IN_YEAR_LEAP'] = 360 * HOURS_IN_DAY
+    globals()['MINUTES_IN_YEAR_LEAP'] = 360 * MINUTES_IN_DAY
+    globals()['SECONDS_IN_YEAR_LEAP'] = 360 * SECONDS_IN_DAY
+
+def set_gregorian_calendar():
+    """Set constants for the gregorian calendar"""
+    globals()['DAYS_IN_MONTHS'] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    globals()['DAYS_IN_MONTHS_LEAP'] = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    globals()['MONTHS_IN_YEAR'] = 12
+    globals()['ROUGH_DAYS_IN_MONTH'] = 30 # Used for duration conversion, nowhere else.
+    globals()['DAYS_IN_YEAR'] = sum(DAYS_IN_MONTHS)
+    globals()['ROUGH_DAYS_IN_YEAR'] = DAYS_IN_YEAR
+    globals()['DAYS_IN_YEAR_LEAP'] = sum(DAYS_IN_MONTHS_LEAP)
+    globals()['HOURS_IN_YEAR'] = DAYS_IN_YEAR* HOURS_IN_DAY
+    globals()['MINUTES_IN_YEAR'] = DAYS_IN_YEAR * MINUTES_IN_DAY
+    globals()['SECONDS_IN_YEAR'] = DAYS_IN_YEAR * SECONDS_IN_DAY
+    globals()['HOURS_IN_YEAR_LEAP'] = DAYS_IN_YEAR_LEAP * HOURS_IN_DAY
+    globals()['MINUTES_IN_YEAR_LEAP'] = DAYS_IN_YEAR_LEAP * MINUTES_IN_DAY
+    globals()['SECONDS_IN_YEAR_LEAP'] = DAYS_IN_YEAR_LEAP * SECONDS_IN_DAY
 
 def _int_caster(number, name="number", allow_none=False):
     if allow_none and number is None:

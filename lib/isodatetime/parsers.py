@@ -24,6 +24,7 @@ import sre_constants
 from . import data
 from . import dumpers
 from . import parser_spec
+from . import timezone
 
 
 class ISO8601SyntaxError(ValueError):
@@ -127,8 +128,15 @@ class TimePointParser(object):
     is not allowed, and must be written as "20000102T011402".
 
     assume_utc (default False) specifies that dates and times without
-    timezone information should be assumed UTC (Z). Otherwise, these
-    will be converted to the local timezone.
+    time zone information should be assumed UTC (Z). If assume_utc and
+    assume_unknown_time_zone are both False, the local time zone will
+    be used. If they are both True, assume_utc will take precedence.
+    
+    assume_unknown_time_zone (default False) specifies that dates and
+    times without time zone information should be left with an unknown
+    time zone setting, unless assume_utc is True. If assume_utc and
+    assume_unknown_time_zone are both False, the local time zone will
+    be used. If they are both True, assume_utc will take precedence.
 
     dump_format (default None) specifies a default custom dump format
     string for TimePoint instances. See data.TimePoint documentation
@@ -140,11 +148,13 @@ class TimePointParser(object):
                  allow_truncated=False,
                  allow_only_basic=False,
                  assume_utc=False,
+                 assume_unknown_time_zone=False,
                  dump_format=None):
         self.expanded_year_digits = num_expanded_year_digits
         self.allow_truncated = allow_truncated
         self.allow_only_basic = allow_only_basic
         self.assume_utc = assume_utc
+        self.assume_unknown_time_zone = assume_unknown_time_zone
         self.dump_format = dump_format
         self._generate_regexes()
 
@@ -423,6 +433,9 @@ class TimePointParser(object):
             format_key, type_key, date_expr = keys
             parsed_expr += date_expr
             time_info = {}
+            timezone_info = (
+                self.process_timezone_info({}))
+            time_info.update(timezone_info)
         else:
             date, time_timezone = date_time_timezone
             if not date and self.allow_truncated:
@@ -474,9 +487,6 @@ class TimePointParser(object):
                 timezone_expr = ""
                 timezone_info = (
                     self.process_timezone_info(timezone_info))
-                if self.assume_utc:
-                    timezone_info["time_zone_hour"] = 0
-                    timezone_info["time_zone_minute"] = 0
             else:
                 timezone_expr, timezone_info = self.get_timezone_info(
                     timezone,
@@ -496,6 +506,11 @@ class TimePointParser(object):
             if self.assume_utc:
                 timezone_info["time_zone_hour"] = 0
                 timezone_info["time_zone_minute"] = 0
+            elif not self.assume_unknown_time_zone:
+                utc_hour_offset, utc_minute_offset = (
+                    timezone.get_timezone_for_locale())
+                timezone_info["time_zone_hour"] = utc_hour_offset
+                timezone_info["time_zone_minute"] = utc_minute_offset
             return timezone_info
         if timezone_info.pop("time_zone_sign", "+") == "-":
             timezone_info["time_zone_hour"] = (

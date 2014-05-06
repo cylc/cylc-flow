@@ -85,7 +85,8 @@ class CylcTimeParser(object):
     def __init__(self, context_start_point,
                  context_end_point, num_expanded_year_digits=0,
                  dump_format=None,
-                 custom_point_parse_function=None):
+                 custom_point_parse_function=None,
+                 assume_utc=False):
         if context_start_point is not None:
             context_start_point = str(context_start_point)
         if context_end_point is not None:
@@ -101,7 +102,8 @@ class CylcTimeParser(object):
             allow_only_basic=False, # TODO - Ben: why was this set True
             allow_truncated=True,
             num_expanded_year_digits=num_expanded_year_digits,
-            dump_format=dump_format
+            dump_format=dump_format,
+            assume_utc=assume_utc
         )
         self._recur_format_recs = []
         for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:

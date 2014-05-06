@@ -24,10 +24,10 @@ import time
 def get_timezone_for_locale():
     """Return the UTC offset for this locale in hours and minutes."""
     utc_offset_seconds = -time.timezone
-    if time.localtime().tm_isdst == 0 and time.daylight:
+    if time.localtime().tm_isdst == 1 and time.daylight:
         utc_offset_seconds = -time.altzone
-    utc_offset_minutes = (-time.timezone // 60) % 60
-    utc_offset_hours = -time.timezone // 3600
+    utc_offset_minutes = (utc_offset_seconds // 60) % 60
+    utc_offset_hours = utc_offset_seconds // 3600
     return utc_offset_hours, utc_offset_minutes
 
 
