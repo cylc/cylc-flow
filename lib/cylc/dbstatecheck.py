@@ -98,8 +98,8 @@ class CylcSuiteDBChecker(object):
             while next:
                 res.append(next[0])
                 next = self.c.fetchmany()
-        except:
-            sys.stderr.write("unable to query suite database\n")
+        except Exception as err:
+            sys.stderr.write("unable to query suite database: " + str(err))
             sys.exit(1)
 
         return res
