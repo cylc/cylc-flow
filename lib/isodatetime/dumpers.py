@@ -164,11 +164,11 @@ class TimePointDumper(object):
             elif "+" in time_string:
                 time_string, time_zone_string = time_string.split("+")
                 time_zone_string = "+" + time_zone_string
-                custom_time_zone = self._get_time_zone(time_zone_string)
+                custom_time_zone = self.get_time_zone(time_zone_string)
             elif "-" in time_string.lstrip("-"):
                 time_string, time_zone_string = time_string.split("-")
                 time_zone_string = "-" + time_zone_string
-                custom_time_zone = self._get_time_zone(time_zone_string)
+                custom_time_zone = self.get_time_zone(time_zone_string)
         point_prop_list = []
         string_map = {"date": "", "time": "", "time_zone": ""}
         for string, key in [(date_string, "date"),
@@ -187,7 +187,7 @@ class TimePointDumper(object):
         return expression, tuple(point_prop_list), custom_time_zone
 
     @util.cache_results
-    def _get_time_zone(self, time_zone_string):
+    def get_time_zone(self, time_zone_string):
         from . import parsers
         if not hasattr(self, "_timepoint_parser"):
             self._timepoint_parser = parsers.TimePointParser()
@@ -197,6 +197,8 @@ class TimePointDumper(object):
         except parsers.ISO8601SyntaxError as e:
             return None
         info = self._timepoint_parser.process_timezone_info(info)
+        if info.get('time_zone_utc'):
+            return (0, 0)
         if "time_zone_hour" not in info and "time_zone_minute" not in info:
             return None
         return info.get("time_zone_hour", 0), info.get("time_zone_minute", 0)

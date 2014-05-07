@@ -1,4 +1,6 @@
 title = "Inter-cycle dependence + a start-up task"
+[cylc]
+    UTC mode = True
 [scheduling]
     #runahead limit = 120
     initial cycle time = 20130808T00

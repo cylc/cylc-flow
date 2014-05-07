@@ -1,4 +1,5 @@
 [cylc]
+    UTC mode = True
     [[reference test]]
         live mode suite timeout = 3.0
 [scheduling]
@@ -11,4 +12,4 @@
             graph = "baz[-P3W] => baz => qux"
 [runtime]
     [[root]]
-        command scripting = sleep 1
+        command scripting = true

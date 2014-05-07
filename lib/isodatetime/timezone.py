@@ -31,14 +31,17 @@ def get_timezone_for_locale():
     return utc_offset_hours, utc_offset_minutes
 
 
-def get_timezone_format_for_locale(extended_mode=False):
+def get_timezone_format_for_locale(extended_mode=False, reduced_mode=False):
     """Return the timezone format string for this locale (e.g. '+0300')."""
     utc_offset_hours, utc_offset_minutes = get_timezone_for_locale()
     if utc_offset_hours == 0 and utc_offset_minutes == 0:
         return "Z"
+    reduced_timezone_template = "%s%02d"
     timezone_template = "%s%02d%02d"
     if extended_mode:
         timezone_template = "%s%02d:%02d"
     sign = "-" if (utc_offset_hours < 0 or utc_offset_minutes < 0) else "+"
+    if reduced_mode and utc_offset_minutes == 0:
+        return reduced_timezone_template % (sign, abs(utc_offset_hours))
     return timezone_template % (
         sign, abs(utc_offset_hours), abs(utc_offset_minutes))

@@ -18,8 +18,10 @@
 
 import re
 from isodatetime.data import TimeInterval
+from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
-from isodatetime.timezone import get_timezone_format_for_locale
+from isodatetime.timezone import (
+    get_timezone_for_locale, get_timezone_format_for_locale)
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import PointBase, IntervalBase
 from parsec.validate import IllegalValueError
@@ -52,7 +54,7 @@ PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 point_parser = None
 NUM_EXPANDED_YEAR_DIGITS = None
 DUMP_FORMAT = None
-ASSUME_UTC = False
+ASSUMED_TIME_ZONE = None
 
 
 def memoize(function):
@@ -279,7 +281,7 @@ class ISO8601Sequence(object):
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function,
-            assume_utc=ASSUME_UTC
+            assumed_time_zone=ASSUMED_TIME_ZONE
         )
         self.recurrence = self.time_parser.parse_recurrence(i)
         self.step = ISO8601Interval(str(self.recurrence.interval))
@@ -302,7 +304,7 @@ class ISO8601Sequence(object):
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function,
-            assume_utc=ASSUME_UTC
+            assumed_time_zone=ASSUMED_TIME_ZONE
         )
         self.recurrence = self.time_parser.parse_recurrence(self.spec)
         self.value = str(self.recurrence)
@@ -449,13 +451,17 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
-    global ASSUME_UTC
-    ASSUME_UTC = assume_utc
+    global ASSUMED_TIME_ZONE
     if time_zone is None:
         if assume_utc:
             time_zone = "Z"
+            time_zone_hours_minutes = (0, 0)
         else:
-            time_zone = get_timezone_format_for_locale()
+            time_zone = get_timezone_format_for_locale(reduced_mode=True)
+            time_zone_hours_minutes = get_timezone_for_locale()
+    else:       
+        time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
+    ASSUMED_TIME_ZONE = time_zone_hours_minutes
     NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
@@ -476,7 +482,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         allow_truncated=True,
         num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
         dump_format=DUMP_FORMAT,
-        assume_utc=assume_utc
+        assumed_time_zone=time_zone_hours_minutes
     )
 
 

@@ -1,4 +1,5 @@
 [cylc]
+    UTC mode = True
     [[event hooks]]
         timeout = 0.2
         abort on timeout = True

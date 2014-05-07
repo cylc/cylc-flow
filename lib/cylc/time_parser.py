@@ -86,7 +86,7 @@ class CylcTimeParser(object):
                  context_end_point, num_expanded_year_digits=0,
                  dump_format=None,
                  custom_point_parse_function=None,
-                 assume_utc=False):
+                 assumed_time_zone=None):
         if context_start_point is not None:
             context_start_point = str(context_start_point)
         if context_end_point is not None:
@@ -103,7 +103,7 @@ class CylcTimeParser(object):
             allow_truncated=True,
             num_expanded_year_digits=num_expanded_year_digits,
             dump_format=dump_format,
-            assume_utc=assume_utc
+            assumed_time_zone=assumed_time_zone
         )
         self._recur_format_recs = []
         for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:
@@ -299,10 +299,12 @@ class TestRecurrenceSuite(unittest.TestCase):
         # or offsets are applied. 
         self._end_point = "20010506T1200+0200"
         self._parsers = {0: CylcTimeParser(self._start_point,
-                                           self._end_point),
+                                           self._end_point,
+                                           assumed_time_zone=(0, 0)),
                          2: CylcTimeParser(self._start_point,
                                            self._end_point,
-                                           num_expanded_year_digits=2)}
+                                           num_expanded_year_digits=2,
+                                           assumed_time_zone=(0, 0))}
 
     def test_first_recurrence_format(self):
         """Test the first ISO 8601 recurrence format."""
@@ -402,15 +404,15 @@ class TestRecurrenceSuite(unittest.TestCase):
         tests = [("PT6H/20000101T0500Z", "R/PT6H/20000101T0500Z"),
                  ("P12D/+P2W", "R/P12D/20010520T1000Z"),
                  ("P1W/-P1M1D", "R/P1W/20010405T1000Z"),
-                 ("P6D/T12", "R/P6D/20010506T1000Z"),
-                 ("P6DT12H/01T", "R/P6DT12H/20010531T2200Z"),
+                 ("P6D/T12+02", "R/P6D/20010506T1000Z"),
+                 ("P6DT12H/01T00+02", "R/P6DT12H/20010531T2200Z"),
                  ("R/P1D/20010506T1200+0200", "R/P1D/20010506T1000Z"),
                  ("R/PT5M/+PT2M", "R/PT5M/20010506T1002Z"),
                  ("R/P20Y/-P20Y", "R/P20Y/19810506T1000Z"),
                  ("R/P3YT2H/T18-02", "R/P3YT2H/20010506T2000Z"),
-                 ("R/PT3H/31T", "R/PT3H/20010530T2200Z"),
+                 ("R/PT3H/31T", "R/PT3H/20010531T0000Z"),
                  ("R5/P1Y/", "R5/P1Y/20010506T1000Z"),
-                 ("R3/P2Y/02T", "R3/P2Y/20010601T2200Z"),
+                 ("R3/P2Y/02T", "R3/P2Y/20010602T0000Z"),
                  ("R/P2Y", "R/P2Y/20010506T1000Z"),
                  ("R48/PT2H", "R48/PT2H/20010506T1000Z"),
                  ("R/P21Y/", "R/P21Y/20010506T1000Z")]

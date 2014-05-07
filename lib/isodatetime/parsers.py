@@ -127,16 +127,17 @@ class TimePointParser(object):
     extraneous punctuation). This means that "2000-01-02T01:14:02"
     is not allowed, and must be written as "20000102T011402".
 
-    assume_utc (default False) specifies that dates and times without
-    time zone information should be assumed UTC (Z). If assume_utc and
-    assume_unknown_time_zone are both False, the local time zone will
-    be used. If they are both True, assume_utc will take precedence.
-    
-    assume_unknown_time_zone (default False) specifies that dates and
-    times without time zone information should be left with an unknown
-    time zone setting, unless assume_utc is True. If assume_utc and
-    assume_unknown_time_zone are both False, the local time zone will
-    be used. If they are both True, assume_utc will take precedence.
+    assumed_time_zone (default None) is a tuple of hours (integer)
+    and minutes (integer) that specifies that dates and times
+    without time zone information should be set to have a time zone
+    whose offset from UTC is the (hours, minutes) information in this
+    variable. To assume UTC, set this to (0, 0).
+
+    no_assume_local_time_zone (default False) specifies that dates and
+    times without time zone information (in the absence of
+    assumed_time_zone_hours_minutes), should not be assumed to be
+    in the local time zone. They would then be left with an unknown
+    time zone setting.
 
     dump_format (default None) specifies a default custom dump format
     string for TimePoint instances. See data.TimePoint documentation
@@ -147,14 +148,14 @@ class TimePointParser(object):
     def __init__(self, num_expanded_year_digits=2,
                  allow_truncated=False,
                  allow_only_basic=False,
-                 assume_utc=False,
-                 assume_unknown_time_zone=False,
+                 assumed_time_zone=None,
+                 no_assume_local_time_zone=False,
                  dump_format=None):
         self.expanded_year_digits = num_expanded_year_digits
         self.allow_truncated = allow_truncated
         self.allow_only_basic = allow_only_basic
-        self.assume_utc = assume_utc
-        self.assume_unknown_time_zone = assume_unknown_time_zone
+        self.assumed_time_zone = assumed_time_zone
+        self.no_assume_local_time_zone = no_assume_local_time_zone
         self.dump_format = dump_format
         self._generate_regexes()
 
@@ -503,15 +504,24 @@ class TimePointParser(object):
 
     def process_timezone_info(self, timezone_info):
         if not timezone_info:
-            if self.assume_utc:
-                timezone_info["time_zone_hour"] = 0
-                timezone_info["time_zone_minute"] = 0
-            elif not self.assume_unknown_time_zone:
+            # There is no time zone information specified.
+            if self.assumed_time_zone is None:
+                # No given value to assume.
+                if self.no_assume_local_time_zone:
+                    # Return no time zone information.
+                    return timezone_info 
+                # Set the time zone to the current local time zone.
                 utc_hour_offset, utc_minute_offset = (
                     timezone.get_timezone_for_locale())
                 timezone_info["time_zone_hour"] = utc_hour_offset
                 timezone_info["time_zone_minute"] = utc_minute_offset
-            return timezone_info
+                return timezone_info
+            else:
+                # Set the time zone to a given value.
+                utc_hour_offset, utc_minute_offset = self.assumed_time_zone
+                timezone_info["time_zone_hour"] = utc_hour_offset
+                timezone_info["time_zone_minute"] = utc_minute_offset
+                return timezone_info
         if timezone_info.pop("time_zone_sign", "+") == "-":
             timezone_info["time_zone_hour"] = (
                 -int(timezone_info["time_zone_hour"]))
@@ -561,7 +571,7 @@ class TimeIntervalParser(object):
             try:
                 timepoint = parse_timepoint_expression(
                     expression[1:], allow_truncated=False,
-                    assume_utc=True
+                    assumed_time_zone=(0, 0)
                 )
             except ISO8601SyntaxError:
                 raise

@@ -3,4 +3,4 @@
         graph = "foo => bar"
 [runtime]
     [[root]]
-        command scripting = sleep 1
+        command scripting = true
