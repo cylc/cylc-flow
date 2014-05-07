@@ -1,0 +1,39 @@
+#!jinja2
+title=manual-trigger-dep
+description=Test manual trigger dependency problem
+[cylc]
+    UTC mode=True
+[scheduling]
+    [[dependencies]]
+        graph="""t1=>t2=>t3"""
+[runtime]
+    [[root]]
+        command scripting="""
+TIMEOUT=$(($(date +%s) + 120))
+while (($(date +%s) < TIMEOUT)) \
+    && [[ ! -e $CYLC_SUITE_RUN_DIR/$CYLC_TASK_ID.txt ]]
+do
+    sleep 1
+done
+rm -f $CYLC_SUITE_RUN_DIR/$CYLC_TASK_ID.txt
+"""
+    [[t1]]
+        pre-command scripting="""
+if [[ "$CYLC_TASK_LOG_ROOT" == *.1 ]]; then
+    # Allow t1 to complete on 1st submit
+    touch $CYLC_SUITE_RUN_DIR/$CYLC_TASK_ID.txt
+elif [[ "$CYLC_TASK_LOG_ROOT" == *.2 ]]; then
+    # Allow t3 to complete on 2nd submit of t1
+    touch $CYLC_SUITE_RUN_DIR/t3.1.txt
+fi
+"""
+    [[t2]]
+        pre-command scripting="""
+# Allow t2 to complete on any submit
+touch $CYLC_SUITE_RUN_DIR/$CYLC_TASK_ID.txt
+"""
+    [[t3]]
+        pre-command scripting="""
+cylc trigger -f $CYLC_SUITE_NAME t1 1
+cylc reset -f -s waiting $CYLC_SUITE_NAME t2 1
+"""

@@ -18,6 +18,8 @@
 
 import errno
 import os
+import time
+import logging
 from cfgspec.site import sitecfg
 from wallclock import now
 
@@ -37,6 +39,7 @@ class dumper( object ):
         self.arch_files = []
         self.pool = None
         self.wireless = None
+        self.log = logging.getLogger('main')
 
     def set_cts( self, ict, fct ):
         self.ict = str(ict)
@@ -61,34 +64,53 @@ class dumper( object ):
 
         base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
         file_name = os.path.join(self.dir_name, base_name)
-        handle = open(file_name, "wb")
 
-        try:
-            handle.write('run mode : %s\n' % self.run_mode)
-            handle.write('time : %s\n' % now().strftime("%Y:%m:%d:%H:%M:%S"))
+        # write the state dump file, retrying several times in case of:
+        # (a) log rolling error when cylc-run contents have been deleted,
+        # (b) "[Errno 9] bad file descriptor" at BoM - see github #926. 
+        max_attempts = 5
+        n_attempt = 1
+        while True:
+            try:
+                handle = open(file_name, "wb")
 
-            handle.write(self.cts_str)
+                handle.write('run mode : %s\n' % self.run_mode)
+                handle.write('time : %s\n' % now().strftime("%Y:%m:%d:%H:%M:%S"))
 
-            if wireless is not None:
-                wireless.dump(handle)
+                handle.write(self.cts_str)
 
-            handle.write('Begin task states\n')
+                if wireless is not None:
+                    wireless.dump(handle)
 
-            if tasks is None and self.pool is not None:
-                tasks = self.pool.get_tasks( all=True )
-            if tasks is not None:
-                for itask in sorted(tasks, key=lambda t: t.id):
-                    # TODO - CHECK THIS STILL WORKS
-                    itask.dump_class_vars( handle )
-                    # task instance variables
-                    itask.dump_state( handle )
+                handle.write('Begin task states\n')
 
-            os.fsync(handle.fileno())
-            handle.close()
-        except IOError as exc:
-            if not exc.filename:
-                exc.filename = file_name
-            raise
+                if tasks is None and self.pool is not None:
+                    tasks = self.pool.get_tasks( all=True )
+                if tasks is not None:
+                    for itask in sorted(tasks, key=lambda t: t.id):
+                        itask.dump_class_vars( handle )
+                        itask.dump_state( handle )
+
+                # To generate "OSError [Errno 9] bad file descriptor",
+                # close the file with os.close() before calling fsync():
+                ## os.close( handle.fileno() )
+
+                os.fsync( handle.fileno() )
+                handle.close()
+            except (IOError, OSError) as exc:
+                if not exc.filename:
+                    exc.filename = file_name
+                self.log.warning( 'State dumping failed, #' + str(n_attempt) + ' ' + str(exc) )
+                if n_attempt >= max_attempts:
+                    raise exc
+                n_attempt += 1
+                try:
+                    handle.close()
+                except:
+                    pass
+                time.sleep(0.2)
+            else:
+                break
 
         # Point "state" symbolic link to new dated state dump
         try:

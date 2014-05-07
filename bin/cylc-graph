@@ -87,19 +87,23 @@ parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START [STOP]]
 Plot cylc dependency graphs in a pannable, zoomable viewer.
 
 The viewer updates automatically when the suite.rc file is saved during
-editing. By default the full cold start graph is plotted; you can omit
-cold start tasks with the '-w,--warmstart' option.  Specify the optional
-initial and final cycle time arguments to override the suite.rc defaults.
-If you just override the intitial cycle, only that cycle will be plotted.
-You can save an image of your graph using the "Save" button on the toolbar.
+editing. Supply the optional initial and final cycle time arguments to
+override the suite.rc file, which overrides the system defaults (if only
+an initial cycle is supplied, only that cycle will be graphed). The
+"Save" button generates an image of the current view, of format (e.g.
+png, svg, jpg, eps) determined by the filename extension. If the chosen
+format is not available a dialog box will show those that are available.
 
 GRAPH VIEWER CONTROLS:
-    * Left-click to center the graph on a node.
-    * Left-drag to pan the view.
-    * Zoom buttons, mouse-wheel, or ctrl-left-drag to zoom in and out.
-    * Shift-left-drag to zoom in on a box.
-    * Also: "Best Fit" and "Normal Size".
-    * Left-to-right graphing mode on/off.
+    * Center on a node: left-click.
+    * Pan view: left-drag.
+    * Zoom: +/- buttons, mouse-wheel, or ctrl-left-drag.
+    * Box zoom: shift-left-drag.
+    * "Best Fit" and "Normal Size" buttons.
+    * Left-to-right graphing mode toggle button.
+    * "Ignore suicide triggers" button.
+    * "Ignore cold-start tasks" button.
+    * "Save" button: save an image of the view.
   Family (namespace) grouping controls:
     Toolbar:
     * "group" - group all families up to root.

@@ -1,0 +1,134 @@
+
+\section{Gcylc Config File Reference}
+\label{GcylcRCReference}
+
+\lstset{language=bash}
+
+This section defines all legal items and values for the gcylc user
+config file, which should be located in
+\lstinline=$HOME/.cylc/gcylc.rc=.
+Current settings can be printed with the \lstinline=cylc get-gui-config=
+command.
+
+\subsection{Top Level Items}
+
+\subsubsection{initial views}
+
+Set the suite view panel(s) displayed initially, when the GUI starts.
+This can be changed later using the tool bar.
+
+\begin{myitemize}
+\item {\em type:} string (a list of one or two view names)
+\item {\em legal values:} ``text'', ``dot'',  ``graph''
+\item {\em default:} ``text''
+\item {\em example:} \lstinline@initial views = graph, dot@
+\end{myitemize}
+
+\subsubsection{ungrouped views}
+
+List suite views, if any, that should be displayed initially in an
+ungrouped state. Namespace family grouping can be changed later
+using the tool bar.
+
+\begin{myitemize}
+\item {\em type:} string (a list of zero or more view names)
+\item {\em legal values:} ``text'', ``dot'',  ``graph''
+\item {\em default:} (none)
+\item {\em example:} \lstinline@ungrouped views = text, dot@
+\end{myitemize}
+
+\subsubsection{use theme}
+
+Set the task state color theme, common to all views, to use
+initially. The color theme can be changed later using the tool bar. 
+See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
+\lstinline@$CYLC_DIR/conf/gcylcrc/@ for how to modify existing color
+themes or define your own. Use \lstinline@cylc get-gui-config@
+to list your available themes.
+
+\begin{myitemize}
+\item {\em type:} string (theme name)
+\item {\em legal values:} ``default'', ``solid'', ``high-contrast'',
+    ``color-blind'', and any custom or user-modified themes.
+\item {\em default:} ``default''
+\end{myitemize}
+
+\subsubsection{dot icon size}
+
+Set the size of the task state dot icons displayed in the text and dot
+views.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em legal values:} ``small'' (10px), ``medium'' (14px), ``large'' (20px)
+\item {\em default:} ``medium''
+\end{myitemize}
+
+\subsubsection{sort by definition order}
+
+If this is not turned off the default sort order for task names and
+families in the dot and text views will the order they appear in the
+suite definition. Clicking on the task name column in the treeview will
+toggle to alphanumeric sort, and a View menu item does the same for the
+dot view.  If turned off, the default sort order is alphanumeric and
+definition order is not available at all.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} True
+\end{myitemize}
+
+\subsection{[themes]}
+
+This section may contain task state color theme definitions.
+
+\subsubsection[THEME]{[themes] $\rightarrow$ THEME}
+
+The name of the task state color-theme to be defined in this section.
+
+\begin{myitemize}
+\item {\em type:} string
+\end{myitemize}
+
+\subsubsection[inherit]{[themes] $\rightarrow$ [THEME] $\rightarrow$ inherit}
+
+You can inherit from another theme in order to avoid defining all states.
+
+\begin{myitemize}
+\item {\em type:} string (parent theme name)
+\item {\em default:} ``default''
+\end{myitemize}
+
+\subsubsection[defaults]{[themes] $\rightarrow$ [THEME] $\rightarrow$ defaults}
+
+Set default icon attributes for all state icons in this theme.
+
+\begin{myitemize}
+\item {\em type:} string list (icon attributes)
+\item {\em legal values:} ``color=COLOR``, ``style=STYLE'', ``fontcolor=FONTCOLOR''
+\item {\em default:} (none)
+\end{myitemize}
+
+For the attribute values, COLOR and FONTCOLOR are X color names or hex codes (e.g.
+\lstinline@#ff0000@ for red); and STYLE can be ``filled'' or ``unfilled''. 
+See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
+\lstinline@$CYLC_DIR/conf/gcylcrc/@ for examples. 
+
+\subsubsection[STATE]{[themes] $\rightarrow$ [THEME] $\rightarrow$ STATE}
+
+Set icon attributes for all task states in THEME, or for a subset of them if 
+you have used theme inheritance and/or defaults. Legal values of STATE are
+any of the cylc task proxy states: {\em waiting, runahead, held, queued, ready, 
+submitted, submit-failed, running, succeeded, failed, retrying, submit-retrying}.
+ 
+\begin{myitemize}
+\item {\em type:} string list (icon attributes)
+\item {\em legal values:} ``color=COLOR``, ``style=STYLE'', ``fontcolor=FONTCOLOR''
+\item {\em default:} (none)
+\end{myitemize}
+
+For the attribute values, COLOR and FONTCOLOR are X color names or hex codes (e.g.
+\lstinline@#ff0000@ for red); and STYLE can be ``filled'' or ``unfilled''. 
+See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
+\lstinline@$CYLC_DIR/conf/gcylcrc/@ for examples. 
+
