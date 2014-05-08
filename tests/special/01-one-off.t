@@ -29,6 +29,7 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_ok $TEST_NAME cylc run --debug --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-runs
+sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db ".dump" >/dev/tty
 TASKS=$(sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select count(*) from task_states where name is 'once'")
 # manual comparison for the test
 shift 1; if (($TASKS==1)); then ok $TEST_NAME; else fail $TEST_NAME; fi

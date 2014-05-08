@@ -28,7 +28,6 @@ else
     CURRENT_TZ_UTC_OFFSET=${CURRENT_TZ_UTC_OFFSET%00}
 fi
 sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" reference.log
-cat reference.log >/dev/tty
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
