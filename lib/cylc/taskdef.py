@@ -205,17 +205,15 @@ class taskdef(object):
                     # in which case cyc.valid( at(sself.tag)) will fail.
                     if trig.async_repeating:
                         lp.add( trig.get( tag, cyc ))
-                    elif trig.evaluation_offset is not None:
-                        if self.ict is not None and (int(tag) - int(trig.evaluation_offset)) >= int(self.ict):
+                    elif self.ict is None or \
+                            trig.evaluation_offset is None or \
+                                (int(tag) - int(trig.evaluation_offset)) >= int(self.ict):
+                            # i.c.t. can be None after a restart, if one
+                            # is not specified in the suite definition.
                             if trig.suicide:
                                 sp.add( trig.get( tag, cyc ))
                             else:
                                 pp.add( trig.get( tag, cyc))
-                    elif trig.evaluation_offset is None:
-                        if trig.suicide:
-                            sp.add( trig.get( tag, cyc ))
-                        else:
-                            pp.add( trig.get( tag, cyc))
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
