@@ -1,15 +1,6 @@
-title = EcoConnect Operational Suite
-description = "EcoConnect Operation, circa August 2011"
-
-# This is a version of the NIWA suite ecoconnect suite with some
-# operational settings removed (e.g. remote task ownership and 
-# execution, and external task scripts removed) ... to serve 
-# as a simulation-mode-only large suite example.
-
-# CURRENT STATUS: JUST TRANSLATED TO THE NEW RUNTIME SUITE FORMULATION.
-# As such the suite runs (in sim mode) with a sensible runtime
-# inheritance hierarchy BUT inheritance has not yet been utilized to
-# make efficient use of common configuration settings.
+title = ecox demo suite
+description= """A cut down version NIWA Operational Suite from 2011.
+edit 2014: this pre-dates runtime inheritance and other new features!"""
 
 [cylc]
     force run mode = simulation # demo suite out of context
@@ -23,31 +14,31 @@ description = "EcoConnect Operation, circa August 2011"
 
     [[special tasks]]
         sequential = topnet, ricom, nztide, mos_nzlam_coeffs, \
-                     mos_nzlam_apply, ext_get_clidbdata, \
-                     mos_nzlam_vp_5day, mos_nzlam_vp_curr, UM_nzlam, nzwave, \
-                     ext_create_streamflow, globalwave, ncep_get, ncep_run, ncep_xml
+            mos_nzlam_apply, ext_get_clidbdata, \
+            mos_nzlam_vp_5day, mos_nzlam_vp_curr, UM_nzlam, nzwave, \
+            ext_create_streamflow, globalwave, ncep_get, ncep_run, ncep_xml
 
         clock-triggered =  ext_get_clidbdata(2.0), ext_create_streamflow(3.0), \
-                           ecan_rain_obs(2.0), ext_check_globalwind_ukmet(4.30), \
-                           ext_check_globalice_ukmet(4.30), ext_check_frames_ukmet(-2.25), \
-                           ext_check_bgerr_ukmet(3.15), ext_check_obstore_ukmet(3.15), \
-                           ext_check_sst_ukmet(3.50), ext_check_dump_ukmet(-1.25), ncep_get(6)
+            ecan_rain_obs(2.0), ext_check_globalwind_ukmet(4.30), \
+            ext_check_globalice_ukmet(4.30), ext_check_frames_ukmet(-2.25), \
+            ext_check_bgerr_ukmet(3.15), ext_check_obstore_ukmet(3.15), \
+            ext_check_sst_ukmet(3.50), ext_check_dump_ukmet(-1.25), ncep_get(6)
 
         cold-start = ext_check_dump_ukmet, ext_get_dump_ukmet, \
-                UM_nzlam_coldstart, UM_GLtoGL_recon, UM_GLtoNZ_recon, \
-                globalwave_cold, topnet_cold, \
-                ricom_cold, nzwave_cold
+            UM_nzlam_coldstart, UM_GLtoGL_recon, UM_GLtoNZ_recon, \
+            globalwave_cold, topnet_cold, \
+            ricom_cold, nzwave_cold
 
-    [[dependencies]] 
+    [[dependencies]]
         [[[0,6,12,18 ]]]
             graph = """
-    # UKMO data 
+    # UKMO data
     ext_check_bgerr_ukmet => ext_get_bgerr_ukmet => unpack_bgerr
     ext_check_obstore_ukmet => ext_get_obstore_ukmet => unpack_obstores
     ext_check_frames_ukmet => ext_get_frames_ukmet => unpack_frames
     UM_nzlam => ukmodata_housekeeping
 
-    # NZLAM (UM, OPS, VAR) 
+    # NZLAM (UM, OPS, VAR)
     unpack_bgerr & unpack_obstores => OPS
     unpack_frames => make_alabc => UM_nzlam
     OPS:succeed-any & OPS:finish-all & VAR_ConfigureLS => VAR_AnalysePF => UM_nzlam
@@ -62,7 +53,7 @@ description = "EcoConnect Operation, circa August 2011"
 
     # Housekeeping
     cycle_check_transfer => jobsubmission_housekeeping
-    
+
     # Topnet
     nzlam_conv_tn => tn_llclean """
 
@@ -75,7 +66,7 @@ description = "EcoConnect Operation, circa August 2011"
             graph = """
     # NZLAM product generation and housekeeping
     # Parallel NZLAM product generation
-    nzlam_conv_met => nzlam_ncl 
+    nzlam_conv_met => nzlam_ncl
     nzlam_ncl & mos_nzlam_apply => nzlam_products => nzlam_housekeeping
 
     # NZWAVE product generation and housekeeping
@@ -98,17 +89,17 @@ description = "EcoConnect Operation, circa August 2011"
     mos_nzlam_apply => mos_nzlam_vp_curr => mos_nzlam_vp_5day => mos_housekeeping
 
     # Restart and cold start for the downstream models
-    nzwave_cold | nzwave[T-6] => nzwave #| nzwave[T-12] | nzwave[T-18] | nzwave[T-24] | nzwave[T-30] | nzwave[T-36] | nzwave[T-42] | nzwave[T-48] => nzwave 
-    ricom_cold | ricom[T-12] => ricom #| ricom[T-24] | ricom[T-36] | ricom[T-48] => ricom
-    topnet_cold | topnet[T-12] => topnet """#| topnet[T-24] | topnet[T-36] => topnet """
+    nzwave_cold | nzwave[T-6] => nzwave
+    ricom_cold | ricom[T-12] => ricom
+    topnet_cold | topnet[T-12] => topnet"""
 
         [[[0,12]]]
             graph = """
     # NZWAVE restart and cold start (short forecast at 0,12 UTC)
-    nzwave_cold | nzwave[T-6] => nzwave #| nzwave[T-12] | nzwave[T-18] | nzwave[T-24] | nzwave[T-30] | nzwave[T-36] | nzwave[T-42] | nzwave[T-48] => nzwave """
-  
-        [[[0]]] 
-            graph = """ 
+    nzwave_cold | nzwave[T-6] => nzwave"""
+
+        [[[0]]]
+            graph = """
     # NZLAM reconfiguration at 0 UTC
     UM_nzlam_coldstart | UM_nzlam[T-6] => UM_NZtoNZ_recon => UM_nzlam
 
@@ -123,10 +114,10 @@ description = "EcoConnect Operation, circa August 2011"
     sls_globalwind_copy & sls_globalice_copy => globalwave => globalwave_ncl => globalwave_products => globalwave_housekeeping
 
     # Global wave cold start
-    globalwave_cold | globalwave[T-24] => globalwave #| globalwave[T-48] | globalwave[T-72] | globalwave[T-96] | globalwave[T-120] | globalwave[T-144] => globalwave
+    globalwave_cold | globalwave[T-24] => globalwave
 
     # Statistics
-    globalnwp_housekeeping & globalwave_housekeeping & ukmodata_housekeeping & nzwave & nzlam_conv_met & nzlam_conv_tn & nzlam_conv_escape=> cycle_check => cycle_check_transfer """
+    globalnwp_housekeeping & globalwave_housekeeping & ukmodata_housekeeping & nzwave & nzlam_conv_met & nzlam_conv_tn & nzlam_conv_escape=> cycle_check => cycle_check_transfer"""
 
         [[[12]]]
             graph = """
@@ -156,7 +147,7 @@ description = "EcoConnect Operation, circa August 2011"
         [[[job submission]]]
             method = loadleveler
         [[[directives]]]
-            class = ec_prod1   # Loadleveler class for all Linux tasks 
+            class = ec_prod1   # Loadleveler class for all Linux tasks
             wall_clock_limit = "2:00:10,2:00:00"
         [[[environment]]]
             SYS = "${USER##*_}"
@@ -217,13 +208,13 @@ description = "EcoConnect Operation, circa August 2011"
 
 [visualization]
     #use node color for edges = False
-    #collapsed families = NZWAVE, NZTIDE, NCEP, RICOM, TOPNET, MOS, GLOBALWAVE, GLOBALNWP, CLEANUP, UKMO, OPS, VAR, GEN, NZLAM 
+    #collapsed families = NZWAVE, NZTIDE, NCEP, RICOM, TOPNET, MOS, GLOBALWAVE, GLOBALNWP, CLEANUP, UKMO, OPS, VAR, GEN, NZLAM
     [[node groups]]
         g_ukmet = ext_check_globalwind_ukmet, ext_check_globalice_ukmet, ext_check_bgerr_ukmet, ext_check_obstore_ukmet, ext_check_frames_ukmet, \
 		  ext_check_sst_ukmet, ext_get_globalwind_ukmet, ext_get_globalice_ukmet, ext_get_bgerr_ukmet, ext_get_obstore_ukmet, ext_get_frames_ukmet, \
 		  ext_get_sst_ukmet, unpack_frames, unpack_obstores, unpack_bgerr, ukmodata_housekeeping
         g_frames = make_alabc
-        g_mos = ext_get_clidbdata, mos_nzlam_coeffs, mos_nzlam_apply, mos_nzlam_vp_5day, mos_nzlam_vp_curr, mos_housekeeping, 
+        g_mos = ext_get_clidbdata, mos_nzlam_coeffs, mos_nzlam_apply, mos_nzlam_vp_5day, mos_nzlam_vp_curr, mos_housekeeping,
         g_topnet = ecan_rain_obs, ext_create_streamflow, ext_get_streamq, tn_llclean, topnet, topnet_ncl, topnet_products, topnet_housekeeping
         g_ricom = ricom, ricom_ncl, ricom_products, ricom_housekeeping
         g_nztide = nztide, nztide_ncl, nztide_products, nztide_housekeeping
@@ -237,7 +228,7 @@ description = "EcoConnect Operation, circa August 2011"
         g_var = VAR_ConfigureLS, VAR_AnalysePF, VAR_monitoring
  	    g_cycle = cycle_check, cycle_check_transfer, jobsubmission_housekeeping
 
-    [[node attributes]] 
+    [[node attributes]]
         g_cold   = "style=bold", "color=blue"
         g_ukmet = "shape=rect", "style=filled", "fillcolor=grey"
         g_mos = "shape=rect", "style=filled", "fillcolor=burlywood2"
