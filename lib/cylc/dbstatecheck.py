@@ -21,6 +21,14 @@ import sqlite3
 import sys
 
 
+class DBOperationError(Exception):
+
+    """An exception raised when a db operation fails, typically due to a lock."""
+
+    def __str__(self):
+        return "Suite database not found at: %s" % self.args
+
+
 class DBNotFoundError(Exception):
 
     """An exception raised when a suite is already running."""
@@ -46,7 +54,7 @@ class CylcSuiteDBChecker(object):
         self.db_address = suite_dir + "/" + suite + "/" + self.DB_FILE_BASE_NAME
         if not os.path.exists(self.db_address):
             raise DBNotFoundError(self.db_address)
-        self.conn = sqlite3.connect(self.db_address)
+        self.conn = sqlite3.connect(self.db_address, timeout=10.0)
         self.c = self.conn.cursor()
 
     def display_maps(self, res):
@@ -98,6 +106,8 @@ class CylcSuiteDBChecker(object):
             while next:
                 res.append(next[0])
                 next = self.c.fetchmany()
+        except sqlite3.OperationalError as err:
+            raise DBOperationError(str(err))
         except Exception as err:
             sys.stderr.write("unable to query suite database: " + str(err))
             sys.exit(1)
