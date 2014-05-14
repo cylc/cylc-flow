@@ -18,7 +18,7 @@
 
 import sys
 import cylc.cycling.iso8601
-from isodatetime.timezone import get_timezone_for_locale
+from isodatetime.timezone import get_local_time_zone
 from task import task
 import time
 from cylc.flags import utc
@@ -45,7 +45,7 @@ class clocktriggered(object):
                 "seconds_since_unix_epoch"))
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
-                    get_timezone_for_locale()
+                    get_local_time_zone()
                 )
                 utc_offset_in_seconds = (
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)

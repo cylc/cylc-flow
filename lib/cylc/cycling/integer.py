@@ -322,6 +322,20 @@ class IntegerSequence( object ):
             p_prev = p - self.i_step
         return self._get_point_in_bounds( p_prev )
 
+    def get_nearest_prev_point(self, p):
+        """Return the largest point < some arbitrary point p."""
+        if self.is_on_sequence(p):
+            return self.get_prev_point(p)
+        point = self._get_point_in_bounds( self.p_start )
+        prev_point = None
+        while point is not None:
+            if point > p:
+                # Technically, >=, but we already test for this above.
+                break
+            prev_point = point
+            point = self.get_next_point(point)
+        return prev_point
+
     def get_next_point( self, p ):
         """Return the next point > p, or None if out of bounds."""
         if not self.i_step:

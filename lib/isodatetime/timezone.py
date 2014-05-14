@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-----------------------------------------------------------------------------
 
-"""This provides utilites for extracting the local timezone."""
+"""This provides utilites for extracting the local time zone."""
 
 import time
 
 
-def get_timezone_for_locale():
-    """Return the UTC offset for this locale in hours and minutes."""
+def get_local_time_zone():
+    """Return the current local UTC offset in hours and minutes."""
     utc_offset_seconds = -time.timezone
     if time.localtime().tm_isdst == 1 and time.daylight:
         utc_offset_seconds = -time.altzone
@@ -31,9 +31,9 @@ def get_timezone_for_locale():
     return utc_offset_hours, utc_offset_minutes
 
 
-def get_timezone_format_for_locale(extended_mode=False, reduced_mode=False):
-    """Return the timezone format string for this locale (e.g. '+0300')."""
-    utc_offset_hours, utc_offset_minutes = get_timezone_for_locale()
+def get_local_time_zone_format(extended_mode=False, reduced_mode=False):
+    """Return a string denoting the current local UTC offset."""
+    utc_offset_hours, utc_offset_minutes = get_local_time_zone()
     if utc_offset_hours == 0 and utc_offset_minutes == 0:
         return "Z"
     reduced_timezone_template = "%s%02d"

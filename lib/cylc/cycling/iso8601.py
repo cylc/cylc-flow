@@ -21,7 +21,7 @@ from isodatetime.data import TimeInterval
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
-    get_timezone_for_locale, get_timezone_format_for_locale)
+    get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import PointBase, IntervalBase
 from parsec.validate import IllegalValueError
@@ -326,6 +326,21 @@ class ISO8601Sequence(object):
             res = ISO8601Point(str(prv))
         return res
 
+    def get_nearest_prev_point(self, p):
+        """Return the largest point < some arbitrary point p."""
+        if self.is_on_sequence(p):
+            return self.get_prev_point(p)
+        p_iso_point = point_parse(p.value)
+        prev_iso_point = None
+        for recurrence_iso_point in self.recurrence:
+            if recurrence_iso_point > p_iso_point:
+                # Technically, >=, but we already test for this above.
+                break
+            prev_iso_point = recurrence_iso_point
+        if prev_iso_point is None:
+            return None
+        return ISO8601Point(str(prev_iso_point))
+
     def get_next_point(self, p):
         """Return the next point > p, or None if out of bounds."""
         p_iso_point = point_parse(p.value)
@@ -457,8 +472,8 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             time_zone = "Z"
             time_zone_hours_minutes = (0, 0)
         else:
-            time_zone = get_timezone_format_for_locale(reduced_mode=True)
-            time_zone_hours_minutes = get_timezone_for_locale()
+            time_zone = get_local_time_zone_format(reduced_mode=True)
+            time_zone_hours_minutes = get_local_time_zone()
     else:       
         time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
     ASSUMED_TIME_ZONE = time_zone_hours_minutes

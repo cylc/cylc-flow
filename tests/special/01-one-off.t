@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-run_ok $TEST_NAME cylc run --debug --reference-test $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-runs
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db ".dump" >/dev/tty

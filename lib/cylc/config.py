@@ -1153,6 +1153,8 @@ class config( object ):
                 else:
                     r = rt
 
+                pruned_lnames = list(lnames)  # Create copy of LHS tasks.
+
                 asyncid_pattern = None
                 if ttype != 'cycling':
                     for n in lnames + [r]:
@@ -1171,24 +1173,28 @@ class config( object ):
                             asyncid_pattern = m.groups()[0]
 
                 if ttype == 'cycling':
-                    for n in list(lnames):
+                    for n in lnames:
                         try:
-                            name = graphnode(
-                                n, base_interval=seq.get_interval()).name
+                            node = graphnode(
+                                n, base_interval=seq.get_interval())
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)            
+                            raise SuiteConfigError, str(x)
+                        name = node.name
+                        output = node.output  
                         if name in tasks_to_prune or return_all_dependencies:
-                            special_dependencies.append((name, r))
+                            special_dependencies.append((name, output, r))
                         if name in tasks_to_prune:
-                            lnames.remove(n)
+                            pruned_lnames.remove(n)
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, lnames, r, ttype, seq, suicide )
-                self.generate_taskdefs( orig_line, lnames, r, ttype, section,
-                                        asyncid_pattern, seq.get_interval() )
-                self.generate_triggers( lexpression, lnames, r, seq,
+                    self.generate_edges( lexpression, pruned_lnames, r, ttype,
+                                         seq, suicide )
+                self.generate_taskdefs( orig_line, pruned_lnames, r, ttype,
+                                        section, asyncid_pattern,
+                                        seq.get_interval() )
+                self.generate_triggers( lexpression, pruned_lnames, r, seq,
                                          asyncid_pattern, suicide )
         return special_dependencies
             
@@ -1552,7 +1558,7 @@ class config( object ):
                 section, async_graph,
                 return_all_dependencies=True
             )
-            for left, right in async_dependencies:
+            for left, left_output, right in async_dependencies:
                 if left:
                     initial_tasks.append(left)
                 if right:
@@ -1603,8 +1609,11 @@ class config( object ):
                     get_point(self.cfg['scheduling']['initial cycle time'])
                 )
                 graph_text = ""
-                for left, right in special_dependencies:
-                    graph_text += left + "[] => " + right + "\n"
+                for left, left_output, right in special_dependencies:
+                    graph_text += left + "[]"
+                    if left_output:
+                        graph_text += ":" + left_output
+                    graph_text += " => " + right + "\n"
                     if (left in start_up_tasks and
                             left not in start_up_tasks_graphed):
                         # Start-up tasks need their own explicit section.

@@ -563,11 +563,11 @@ class TimePoint(object):
     for leap seconds at 60 yet)
     second_of_minute_decimal - a float between 0 and 1, if using decimal
     accuracy for seconds.
-    time_zone_hour - (default 0) an integer denoting the hour timezone
+    time_zone_hour - (default 0) an integer denoting the hour time zone
     offset from UTC. Note that unless this is a truncated
     representation, 0 will be assumed if this is not provided.
     time_zone_minute - (default 0) an integer between 0 and 59 denoting
-    the minute component of the timezone offset from UTC.
+    the minute component of the time zone offset from UTC.
     dump_format - a custom format string to control the stringification
     of the timepoint. See isodatetime.parser_spec for more details.
     truncated - (default False) a boolean denoting whether the
@@ -919,8 +919,8 @@ class TimePoint(object):
         self.time_zone = dest_time_zone
 
     def set_time_zone_to_local(self):
-        """Set the time zone to the local timezone, if it's not already."""
-        local_hours, local_minutes = timezone.get_timezone_for_locale()
+        """Set the time zone to the local time zone, if it's not already."""
+        local_hours, local_minutes = timezone.get_local_time_zone()
         self.set_time_zone(TimeZone(hours=local_hours, minutes=local_minutes))
 
     def set_time_zone_to_utc(self):

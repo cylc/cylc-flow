@@ -5,14 +5,13 @@
 [scheduling]
     initial cycle time = 2010010100
     final cycle time   = 2010010118
- #   [[special tasks]]
- #       sequential = "foo"
+    [[special tasks]]
+        sequential = "foo"
     [[dependencies]]
         graph = "monitor"
         [[[0,6,12,18]]]
             graph = """
                 monitor:start => foo
-                foo[T-6] => foo
             """
 [runtime]
     [[foo]]
