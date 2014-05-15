@@ -1,40 +1,40 @@
-2013/11/01 15:40:38 INFO - Thread-2 start (Event Handler Submission)
-2013/11/01 15:40:38 INFO - Thread-3 start (Poll and Kill Command Submission)
-2013/11/01 15:40:38 INFO - port:7766
-2013/11/01 15:40:38 INFO - Suite starting at 2013-11-01 15:40:38.253388
-2013/11/01 15:40:38 INFO - Log event clock: real time
-2013/11/01 15:40:38 INFO - Run mode: live
-2013/11/01 15:40:38 INFO - Start tag: 2010011100
-2013/11/01 15:40:38 INFO - Stop tag: 2010011800
-2013/11/01 15:40:38 INFO - Thread-4 start (Job Submission)
-2013/11/01 15:40:38 INFO - Thread-5 start (Request Handling)
-2013/11/01 15:40:38 INFO - Cold Start 2010011100
-2013/11/01 15:40:38 INFO - [a.2010011300] -(setting:queued)
-2013/11/01 15:40:38 INFO - [a.2010011300] -(setting:submitting)
-2013/11/01 15:40:38 INFO - [a.2010011300] -triggered off []
-2013/11/01 15:40:40 INFO - [a.2010011300] -(current:submitting)> a.2010011300 submitting now
-2013/11/01 15:40:40 INFO - [a.2010011300] -(current:submitting)> a.2010011300 submission succeeded
-2013/11/01 15:40:40 INFO - [a.2010011300] -(setting:submitted)
-2013/11/01 15:40:40 INFO - [a.2010011300] -(current:submitted)> a.2010011300 submit_method_id=8817
-2013/11/01 15:40:41 INFO - [a.2010011600] -HOLDING (beyond runahead limit)
-2013/11/01 15:40:41 INFO - [a.2010011600] -(setting:runahead)
-2013/11/01 15:40:41 INFO - [a.2010011300] -(current:submitted)> a.2010011300 started at 2013-11-01T15:40:40
-2013/11/01 15:40:41 INFO - [a.2010011300] -(setting:running)
-2013/11/01 15:40:43 INFO - [a.2010011300] -(current:running)> a.2010011300 succeeded at 2013-11-01T15:40:42
-2013/11/01 15:40:43 INFO - [a.2010011300] -(setting:succeeded)
-2013/11/01 15:40:43 INFO - [a.2010011600] -(setting:waiting)
-2013/11/01 15:40:44 INFO - [a.2010011600] -(setting:queued)
-2013/11/01 15:40:44 INFO - [a.2010011600] -(setting:submitting)
-2013/11/01 15:40:44 INFO - [a.2010011600] -triggered off []
-2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitting)> a.2010011600 submitting now
-2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitting)> a.2010011600 submission succeeded
-2013/11/01 15:40:45 INFO - [a.2010011600] -(setting:submitted)
-2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitted)> a.2010011600 submit_method_id=8875
-2013/11/01 15:40:45 INFO - [a.2010011600] -(current:submitted)> a.2010011600 started at 2013-11-01T15:40:45
-2013/11/01 15:40:45 INFO - [a.2010011600] -(setting:running)
-2013/11/01 15:40:46 INFO - [a.2010011900] -HOLDING (beyond suite stop cycle) 2010011800
-2013/11/01 15:40:46 INFO - [a.2010011900] -(setting:held)
-2013/11/01 15:40:47 INFO - [a.2010011600] -(current:running)> a.2010011600 succeeded at 2013-11-01T15:40:46
-2013/11/01 15:40:47 INFO - [a.2010011600] -(setting:succeeded)
-2013/11/01 15:40:47 INFO - All normal cycling tasks have spawned past the final cycle 2010011800
-2013/11/01 15:40:47 INFO - Suite shutting down at 2013-11-01 15:40:47.624505
+2014/05/15 22:12:12 INFO - Thread-2 start (Event Handlers)
+2014/05/15 22:12:12 INFO - Thread-3 start (Poll & Kill Commands)
+2014/05/15 22:12:12 INFO - port:7766
+2014/05/15 22:12:12 INFO - Suite starting at 2014-05-15 22:12:12.283756
+2014/05/15 22:12:12 INFO - Log event clock: real time
+2014/05/15 22:12:12 INFO - Run mode: live
+2014/05/15 22:12:12 INFO - Start tag: 2014010700
+2014/05/15 22:12:12 INFO - Stop tag: 2014011800
+2014/05/15 22:12:12 INFO - Thread-4 start (Job Submission)
+2014/05/15 22:12:12 INFO - Thread-5 start (Request Handling)
+2014/05/15 22:12:12 INFO - Cold Start 2014010700
+2014/05/15 22:12:12 INFO - [a.2014010706] -triggered off []
+2014/05/15 22:12:13 INFO - [a.2014010706] -(current:ready)> a.2014010706 submitting now
+2014/05/15 22:12:14 INFO - [a.2014010706] -(current:ready)> a.2014010706 submission succeeded
+2014/05/15 22:12:14 INFO - [a.2014010706] -(current:submitted)> a.2014010706 submit_method_id=22026
+2014/05/15 22:12:14 INFO - [a.2014010706] -(current:submitted)> a.2014010706 started at 2014-05-15T22:12:14
+2014/05/15 22:12:16 INFO - [a.2014010706] -(current:running)> a.2014010706 succeeded at 2014-05-15T22:12:15
+2014/05/15 22:12:17 INFO - [a.2014011006] -triggered off []
+2014/05/15 22:12:18 INFO - [a.2014011006] -(current:ready)> a.2014011006 submitting now
+2014/05/15 22:12:18 INFO - [a.2014011006] -(current:ready)> a.2014011006 submission succeeded
+2014/05/15 22:12:18 INFO - [a.2014011006] -(current:submitted)> a.2014011006 submit_method_id=22069
+2014/05/15 22:12:18 INFO - [a.2014011006] -(current:submitted)> a.2014011006 started at 2014-05-15T22:12:18
+2014/05/15 22:12:20 INFO - [a.2014011006] -(current:running)> a.2014011006 succeeded at 2014-05-15T22:12:19
+2014/05/15 22:12:21 INFO - [a.2014011306] -triggered off []
+2014/05/15 22:12:22 INFO - [a.2014011306] -(current:ready)> a.2014011306 submitting now
+2014/05/15 22:12:22 INFO - [a.2014011306] -(current:ready)> a.2014011306 submission succeeded
+2014/05/15 22:12:22 INFO - [a.2014011306] -(current:submitted)> a.2014011306 submit_method_id=22112
+2014/05/15 22:12:22 INFO - [a.2014011306] -(current:submitted)> a.2014011306 started at 2014-05-15T22:12:22
+2014/05/15 22:12:24 INFO - [a.2014011306] -(current:running)> a.2014011306 succeeded at 2014-05-15T22:12:23
+2014/05/15 22:12:25 INFO - [a.2014011606] -triggered off []
+2014/05/15 22:12:26 INFO - [a.2014011606] -(current:ready)> a.2014011606 submitting now
+2014/05/15 22:12:26 INFO - [a.2014011606] -(current:ready)> a.2014011606 submission succeeded
+2014/05/15 22:12:26 INFO - [a.2014011606] -(current:submitted)> a.2014011606 submit_method_id=22154
+2014/05/15 22:12:27 INFO - [a.2014011606] -(current:submitted)> a.2014011606 started at 2014-05-15T22:12:26
+2014/05/15 22:12:28 INFO - [a.2014011606] -(current:running)> a.2014011606 succeeded at 2014-05-15T22:12:27
+2014/05/15 22:12:28 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2014011800
+2014/05/15 22:12:29 INFO - Thread-2 exit (Event Handlers)
+2014/05/15 22:12:29 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/05/15 22:12:29 INFO - Thread-4 exit (Job Submission)
