@@ -105,7 +105,7 @@ class ThreadedCursor(Thread):
         self.generic_err_msg = ("%s:%s occurred while trying to run:\n"+
                               "\trequest: %s\n\targs: %s")
     def run(self):
-        cnx = sqlite3.connect(self.db)
+        cnx = sqlite3.connect(self.db, timeout=10.0)
         cursor = cnx.cursor()
         counter = 1
         while True:
