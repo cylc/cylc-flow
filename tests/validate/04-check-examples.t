@@ -18,8 +18,26 @@
 #C: Test cylc get-config
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-examples
-run_ok $TEST_NAME $TEST_SOURCE_DIR/check-examples.sh
 
+SDEFS=$(find $CYLC_DIR/examples -name suite.rc)
+set_test_number $(echo "$SDEFS" | wc -l)
+
+for SDEF in $SDEFS; do
+    # capture validation stderr:
+    SDEF_NAME=$(basename $(dirname $SDEF))
+    if [[ "$SDEF_NAME" == satellite ]]; then
+        skip 1 "no async satellite support (yet?)"
+    else
+        RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
+        TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
+        if [[ -n $RES ]]; then
+            fail $TEST_NAME
+            echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
+            echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
+        else
+            ok $TEST_NAME
+        fi
+    fi
+done

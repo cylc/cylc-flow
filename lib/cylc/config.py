@@ -1530,7 +1530,7 @@ class config( object ):
             if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = TaskID.get(fam,tag), TaskID.get(fam,rtag)
+                nl,nr = TaskID.get(fam,ltag), TaskID.get(fam,rtag)
                 break
             elif lname in members[fam]:
                 # l is a member of fam
