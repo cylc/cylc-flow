@@ -454,7 +454,7 @@ class pool(object):
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
             if (self.stop_tag and itask.c_time > self.stop_tag and
-                    itask.state.is_currently('waiting')):
+                    itask.state.is_currently('waiting', 'queued')):
                 itask.log( 'WARNING',
                            "not running (beyond suite stop cycle) " +
                            str(self.stop_tag) )
