@@ -1278,8 +1278,10 @@ class config( object ):
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
            
-            if not offset and not my_taskdef_node.is_absolute:
-                # Note: this removes all offset sequences...
+            if not my_taskdef_node.is_absolute:
+                if offset:
+                    # Automatic offset sequences are deprecated...
+                    seq.set_offset(offset)
                 self.taskdefs[ name ].add_sequence( seq )
 
             if self.run_mode == 'live':

@@ -124,11 +124,9 @@ class graphnode( object ):
         if offset:
             self.intercycle = True
             if prev_format:
-                if sign == '+':
-                    self.offset = - get_interval( offset )
-                else:
-                    self.offset = get_interval( offset )
                 self.offset = base_interval.get_inferred_child(offset)
+                if sign == "+":
+                    self.offset = (-self.offset).standardise()
             else:
                 self.offset = (-get_interval(offset)).standardise()
         else:
