@@ -159,7 +159,7 @@ tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-#purge_suite $SUITE_NAME
+purge_suite $SUITE_NAME
 if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' && -n $SUITE_NAME ]]; then
     ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
 fi
