@@ -21,7 +21,8 @@ import taskdef
 from cylc.cfgspec.suite import get_suitecfg
 from cylc.cycling.loader import (get_point, get_interval_cls,
                                  get_sequence, get_sequence_cls,
-                                 init_cyclers, INTEGER_CYCLING_TYPE)
+                                 init_cyclers, INTEGER_CYCLING_TYPE,
+                                 get_backwards_compatibility_mode)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -209,6 +210,8 @@ class config( object ):
         self.cfg = self.pcfg.get( sparse=False )
 
         init_cyclers(self.cfg)
+        flags.back_comp_cycling = (
+            get_backwards_compatibility_mode())
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -868,6 +871,13 @@ class config( object ):
                     print " + Task out of bounds for " + str(tag) + ": " + itask.name
                 continue
 
+            # warn for purely-implicit-cycling tasks (these are deprecated).
+            if itask.sequences == itask.implicit_sequences:
+                print >> sys.stderr, (
+                    "WARNING, " + name + ": not explicitly defined in " +
+                    "dependency graphs (deprecated)"
+                )
+
             # force trigger evaluation now
             try:
                 itask.prerequisites.eval_all()
@@ -1277,12 +1287,17 @@ class config( object ):
             seq = get_sequence( section,
                 self.cfg['scheduling']['initial cycle time'],
                 self.cfg['scheduling']['final cycle time'] )
-           
+
             if not my_taskdef_node.is_absolute:
                 if offset:
-                    # Automatic offset sequences are deprecated...
-                    seq.set_offset(offset)
-                self.taskdefs[ name ].add_sequence( seq )
+                    if flags.back_comp_cycling:
+                        # Implicit cycling means foo[T+6] generates a +6 sequence.
+                        seq.set_offset(offset)
+                        self.taskdefs[ name ].add_sequence(
+                            seq, is_implicit=True)
+                    # We don't handle implicit cycling in new-style cycling.
+                else:
+                    self.taskdefs[ name ].add_sequence(seq)
 
             if self.run_mode == 'live':
                 # register any explicit internal outputs
@@ -1551,6 +1566,7 @@ class config( object ):
         initial_tasks = list(start_up_tasks)
 
         self.graph_found = False
+        has_non_async_graphs = False
 
         # Set up our backwards-compatibility handling of async graphs.
         async_graph = self.cfg['scheduling']['dependencies']['graph']
@@ -1571,6 +1587,7 @@ class config( object ):
         for item, value in self.cfg['scheduling']['dependencies'].items():
             if item == 'graph':
                 continue
+            has_non_async_graphs = True
             items.append((item, value, initial_tasks, False))
 
         start_up_tasks_graphed = []
@@ -1625,7 +1642,17 @@ class config( object ):
                 graph_text = graph_text.rstrip()
                 section = get_sequence_cls().get_async_expr(first_point)
                 items.append((section, {"graph": graph_text}, [], True))
-                                
+        if not flags.back_comp_cycling:
+            if async_graph and has_non_async_graphs:
+                raise SuiteConfigError(
+                    "Error: mixed async & cycling graphs is not allowed in " +
+                    "new-style cycling. Use 'R1...' tasks instead."
+                )
+            if start_up_tasks:
+                raise SuiteConfigError(
+                    "Error: start-up tasks should be 'R1...' tasks in " +
+                    "new-style cycling"
+                )
 
     def parse_graph( self, section, graph, tasks_to_prune=None,
                      return_all_dependencies=False ):

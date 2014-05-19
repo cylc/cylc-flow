@@ -60,6 +60,7 @@ class taskdef(object):
         self.ict = ict
 
         self.sequences = []
+        self.implicit_sequences = []  # Implicit sequences are deprecated.
 
         # some defaults
         self.intercycle = False
@@ -94,10 +95,12 @@ class taskdef(object):
             self.cond_triggers[ sequence ] = []
         self.cond_triggers[ sequence ].append( [triggers,exp] )
 
-    def add_sequence( self, sequence ):
+    def add_sequence( self, sequence, is_implicit=False ):
         # TODO ISO - SEQUENCES CAN BE HELD BY TASK CLASS NOT INSTANCE
         if sequence not in self.sequences:
             self.sequences.append( sequence )
+            if is_implicit:
+                self.implicit_sequences.append( sequence )
 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
@@ -268,6 +271,7 @@ class taskdef(object):
         def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False, submit_num=0, exists=False ):
 
             sself.sequences = self.sequences
+            sself.implicit_sequences = self.implicit_sequences
             sself.startup = startup
             sself.submit_num = submit_num
             sself.exists=exists

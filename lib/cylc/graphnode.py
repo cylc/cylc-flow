@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cycling.loader import get_interval, get_interval_cls
+import flags
 import re
 
 # Previous node format.
@@ -84,6 +85,9 @@ class graphnode( object ):
 
         self.offset_is_from_ict = False
         self.is_absolute = False
+        
+        is_prev_cycling_format = False
+
         m = re.match( NODE_ISO_ICT_RE, node )
         if m:
             # node looks like foo[], foo[][-P4D], foo[]:fail, etc.
@@ -103,6 +107,7 @@ class graphnode( object ):
                 m = re.match( NODE_PREV_RE, node )
                 if not m:
                     raise GraphNodeError( 'Illegal graph node: ' + node )
+                is_prev_cycling_format = True
                 # node looks like foo[T-6], foo[T-12]:fail...
                 name, sign, offset, outp = m.groups()
                 prev_format = True
@@ -132,6 +137,11 @@ class graphnode( object ):
         else:
             self.intercycle = False
             self.offset = None
+        if not flags.back_comp_cycling and is_prev_cycling_format:
+            raise GraphNodeError(
+                'Illegal graph offset (new-style cycling): ' + str(offset) +
+                ' should be ' + str(self.offset)
+            )
 
 
 if __name__ == '__main__':
