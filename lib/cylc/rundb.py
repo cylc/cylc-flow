@@ -304,3 +304,13 @@ class CylcRuntimeDAO(object):
         else:
             self.c.execute(db_oper.s_fmt, db_oper.args)
 
+    def get_restart_info(self, cycle):
+        s_fmt = """SELECT task_states.name, (SELECT count(*) FROM task_events WHERE event ==? 
+                   and task_events.name = task_states.name and task_events.cycle = task_states.cycle)
+                   FROM task_states where cycle ==?;"""
+                   
+        args = ["submitting now", cycle]
+        res = {}
+        for row in self.c.select(s_fmt, args):
+            res[row[0]] = row[1]
+        return res
