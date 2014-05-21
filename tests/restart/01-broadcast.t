@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 13
+set_test_number 14
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE broadcast
 TEST_SUITE_RUN_OPTIONS=
@@ -89,15 +89,8 @@ send_a_broadcast_task.2013092300 : status=succeeded, spawned=true
 send_a_broadcast_task.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
-broadcast_task|2013092300|0|1|waiting
-force_restart|2013092300|1|1|running
-force_restart|2013092306|0|1|waiting
-output_states|2013092300|0|1|waiting
-send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|0|1|waiting
-tidy|2013092300|0|1|waiting
-__DB_DUMP__
+grep_ok "broadcast_task|2013092300|0|1|waiting" $TEST_DIR/states-db-pre-restart-2013092300
+grep_ok "send_a_broadcast_task|2013092300|1|1|succeeded" $TEST_DIR/states-db-pre-restart-2013092300
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 force_restart|2013092300|1|1|succeeded
