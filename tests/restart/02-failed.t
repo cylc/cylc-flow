@@ -75,14 +75,7 @@ force_restart.2013092306 : status=waiting, spawned=false
 output_states.2013092300 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
-failed_task|2013092300|1|1|failed
-failed_task|2013092306|0|1|waiting
-force_restart|2013092300|1|1|running
-force_restart|2013092306|0|1|waiting
-output_states|2013092300|0|1|waiting
-tidy|2013092300|0|1|waiting
-__DB_DUMP__
+grep_ok "failed_task|2013092300|1|1|failed" $TEST_DIR/states-db-pre-restart-2013092300
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|0|1|waiting
