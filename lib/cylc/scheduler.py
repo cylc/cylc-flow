@@ -576,8 +576,8 @@ class scheduler(object):
         self.reconfigure()
 
 
-    def command_set_runahead( self  ):
-        self.pool.set_runahead()
+    def command_set_runahead( self, *args  ):
+        self.pool.set_runahead(*args)
 
     #___________________________________________________________________
 

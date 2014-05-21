@@ -95,7 +95,7 @@ ColdA.2010010106 submitted
 2014/01/07 17:36:17 INFO - [D.2010010106] -(current:submitted)> D.2010010106 started at 2014-01-07T17:36:16
 2014/01/07 17:36:17 INFO - [F.2010010106] -(current:ready)> F.2010010106 started at 2014-01-07T17:36:16
 2014/01/07 17:36:17 INFO - [X.2010010118] -(current:running)> X.2010010118 succeeded at 2014-01-07T17:36:17
-2014/01/07 17:36:18 INFO - [X.2010010200] -triggered off []
+2014/01/07 17:36:18 INFO - [X.2010010200] -triggered off ['prep.2010010106']
 2014/01/07 17:36:18 INFO - [D.2010010106] -(current:running)> D.2010010106 succeeded at 2014-01-07T17:36:17
 2014/01/07 17:36:18 INFO - [F.2010010106] -(current:running)> F.2010010106 succeeded at 2014-01-07T17:36:17
 2014/01/07 17:36:18 WARNING - [F.2010010106] -Assuming non-reported outputs were completed:
