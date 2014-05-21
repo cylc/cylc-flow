@@ -293,9 +293,9 @@ class ISO8601Sequence(object):
     def get_offset(self):
         return self.offset
 
-    def set_offset(self, i):
+    def set_offset(self, interval):
         """Alter state to offset the entire sequence."""
-        self.offset = i
+        self.offset = interval
         start_point = self.context_start_point + self.offset
         end_point = self.context_end_point + self.offset
         self.time_parser = CylcTimeParser(
@@ -309,28 +309,28 @@ class ISO8601Sequence(object):
         self.recurrence = self.time_parser.parse_recurrence(self.spec)
         self.value = str(self.recurrence)
 
-    def is_on_sequence(self, p):
-        """Return True if p is on-sequence."""
-        return self.recurrence.get_is_valid(point_parse(p.value))
+    def is_on_sequence(self, point):
+        """Return True if point is on-sequence."""
+        return self.recurrence.get_is_valid(point_parse(point.value))
 
-    def is_valid(self, p):
-        """Return True if p is on-sequence and in-bounds."""
-        return self.is_on_sequence(p)
+    def is_valid(self, point):
+        """Return True if point is on-sequence and in-bounds."""
+        return self.is_on_sequence(point)
 
-    def get_prev_point(self, p):
-        """Return the previous point < p, or None if out of bounds."""
+    def get_prev_point(self, point):
+        """Return the previous point < point, or None if out of bounds."""
         # may be None if out of the recurrence bounds
         res = None
-        prv = self.recurrence.get_prev(point_parse(p.value))
-        if prv:
-            res = ISO8601Point(str(prv))
+        prev_point = self.recurrence.get_prev(point_parse(point.value))
+        if prev_point:
+            res = ISO8601Point(str(prev_point))
         return res
 
-    def get_nearest_prev_point(self, p):
-        """Return the largest point < some arbitrary point p."""
-        if self.is_on_sequence(p):
-            return self.get_prev_point(p)
-        p_iso_point = point_parse(p.value)
+    def get_nearest_prev_point(self, point):
+        """Return the largest point < some arbitrary point."""
+        if self.is_on_sequence(point):
+            return self.get_prev_point(point)
+        p_iso_point = point_parse(point.value)
         prev_iso_point = None
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point > p_iso_point:
@@ -341,26 +341,26 @@ class ISO8601Sequence(object):
             return None
         return ISO8601Point(str(prev_iso_point))
 
-    def get_next_point(self, p):
+    def get_next_point(self, point):
         """Return the next point > p, or None if out of bounds."""
-        p_iso_point = point_parse(p.value)
+        p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point > p_iso_point:
                 return ISO8601Point(str(recurrence_iso_point))
         return None
 
-    def get_next_point_on_sequence(self, p):
-        """Return the on-sequence point > p assuming that p is on-sequence,
-        or None if out of bounds."""
-        res = None
-        nxt = self.recurrence.get_next(point_parse(p.value))
-        if nxt:
-            res = ISO8601Point(str(nxt))
-        return res
+    def get_next_point_on_sequence(self, point):
+        """Return the on-sequence point > point assuming that point is
+        on-sequence, or None if out of bounds."""
+        result = None
+        next_point = self.recurrence.get_next(point_parse(point.value))
+        if next_point:
+            result = ISO8601Point(str(next_point))
+        return result
 
-    def get_first_point( self, p):
-        """Return the first point >= to p, or None if out of bounds."""
-        p_iso_point = point_parse(p.value)
+    def get_first_point( self, point):
+        """Return the first point >= to poing, or None if out of bounds."""
+        p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point >= p_iso_point:
                 return ISO8601Point(str(recurrence_iso_point))
