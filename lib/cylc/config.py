@@ -1177,7 +1177,7 @@ class config( object ):
                     for left_node in left_nodes:
                         try:
                             left_graph_node = graphnode(
-                                n, base_interval=seq.get_interval())
+                                left_node, base_interval=seq.get_interval())
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
