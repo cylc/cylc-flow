@@ -39,6 +39,9 @@ from cylc.task_state import task_state
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 import cylc.flags
+from cylc.wallclock import (
+    get_current_time_string, get_time_string_from_unix_time
+)
 
 compress = True
 
@@ -134,6 +137,11 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
+            dt = convert_unix_time_to_local_datetime(dt)
+            dt = (
+                dt.strftime(DATE_TIME_FORMAT_EXTENDED) + 
+                TIME_ZONE_STRING_LOCAL_EXTENDED
+            )
             run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
@@ -218,7 +226,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + get_time_string_from_unix_time(dt) + ctrl_end )
 
             foo = 'mode: ' + run_mode
             baz = header

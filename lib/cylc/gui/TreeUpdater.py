@@ -21,6 +21,8 @@ import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
+from cylc.wallclock import get_time_string_from_unix_time
+from isodatetime.data import TimeInterval
 from copy import deepcopy
 import datetime
 import gobject
@@ -187,35 +189,24 @@ class TreeUpdater(threading.Thread):
                 message = summary[ id ].get( 'latest_message', )
 
                 tsub = summary[ id ].get( 'submitted_time' )
-                if isinstance(tsub, basestring) and tsub != "*":
-                    if "T" in tsub:
-                        # TODO: get rid of this condition (here for backwards compatibility)
-                        tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") )
+                if isinstance(tsub, float):
+                    tsub = get_time_string_from_unix_time(
+                        tsub, only_display_time=True)
                 tstt = summary[ id ].get( 'started_time' )
                 tsut = summary[ id ].get( 'succeeded_time' )
                 meant = summary[ id ].get( 'mean total elapsed time' )
                 tetc = "*"
-                if (tstt and (tsut is None or tsut == "*") and
-                    self.updater.dt_date is not None and
-                    (isinstance(meant, float) or isinstance(meant, int))):
-                    try:
-                        tstt_date = datetime.datetime.strptime(
-                            tstt, "%Y-%m-%dT%H:%M:%S.%f")
-                    except (TypeError, ValueError):
-                        pass
-                    else:
-                        run_time = self.updater.dt_date - tstt_date
-                        run_time = run_time.days * 86400.0 + run_time.seconds
-                        to_go = meant - run_time
-                        tetc = isoformat_strftime(
-                            (self.updater.dt_date +
-                             datetime.timedelta(seconds=to_go)).isoformat(),
-                            "%H:%M:%S"
-                        )
-                if isinstance(tstt, basestring) and tstt != "*":
-                    # TODO: get rid of the following condition (here for backwards compatibility)
-                    if "T" in tstt:
-                        tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") )
+                if isinstance(tstt, float):
+                    # Cylc 6 suites - don't populate info for others.
+                    if ((tsut is None or tsut == "*") and
+                            (isinstance(meant, float) or
+                             isinstance(meant, int))):
+                        # We can calculate an expected time of completion.
+                        tetc_unix = tstt + meant
+                        tetc_date = get_time_string_from_unix_time(tetc_unix)                       
+                    # Convert tstt from unix time to a shortened time format
+                    tstt_date = get_time_string_from_unix_time(
+                        tstt, only_display_time=True)
                 if isinstance(meant, float) or isinstance(meant, int):
                     # TODO: get rid of the following condition (here for backwards compatibility)
                     try:
@@ -225,8 +216,9 @@ class TreeUpdater(threading.Thread):
                     else:
                         meant_hours, remainder = divmod(int(meant), 3600)
                         meant_minutes, meant_seconds = divmod(remainder, 60)
-                        meant = "%d:%02d:%02d" % (meant_hours, meant_minutes,
-                                                  meant_seconds)
+                        meant = str(TimeInterval(hours=meant_hours,
+                                                 minutes=meant_minutes,
+                                                 seconds=meant_seconds))
                 priority = summary[ id ].get( 'latest_message_priority' )
                 try:
                     icon = self.dots[state]

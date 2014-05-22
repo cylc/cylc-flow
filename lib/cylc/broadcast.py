@@ -24,6 +24,7 @@ import cPickle as pickle
 import TaskID
 from cycling.loader import get_point
 from rundb import RecordBroadcastObject
+from wallclock import get_current_time_string
 
 class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
@@ -88,7 +89,10 @@ class broadcast( Pyro.core.ObjBase ):
         self.prune( self.settings )
 
         if self.get_dump() != self.last_settings:
-            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            current_time_string = cylc.wallclock.get_current_time_string(
+                display_sub_seconds=True)
+            self.settings_queue.append(RecordBroadcastObject(
+                current_time_string, self.get_dump() ))
             self.last_settings = self.settings
             self.new_settings = True
 
@@ -149,7 +153,10 @@ class broadcast( Pyro.core.ObjBase ):
                     except:
                         pass
         if self.get_dump() != self.last_settings:
-            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.settings_queue.append(RecordBroadcastObject(
+                get_current_time_string(display_sub_seconds=True),
+                self.get_dump()
+            ))
             self.last_settings = self.settings
             self.new_settings = True
 

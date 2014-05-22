@@ -23,6 +23,7 @@ import os, sys
 import datetime
 from optparse import OptionParser
 from cylc.housekeeping import config_file, config_line
+from cylc.wallclock import get_current_time_string
 import cylc.flags
 
 usage = """1/ cylc [util] housekeeping [OPTIONS] SOURCE MATCH OPER OFFSET [TARGET]
@@ -155,7 +156,7 @@ try:
 except ValueError:
     parser.error( "Batch size must be integer: " + batchsize )
 
-print "START: ", datetime.datetime.now().isoformat()
+print "START: ", get_current_time_string(display_sub_seconds=True)
 
 if len(args) == 0 or len(args) > 5:
     parser.usage()
@@ -178,4 +179,4 @@ else:
     config_line( source, match, opern, ctime, offset, destn,
             mode=options.mode, cheap=options.cheap ).action( batchsize )
 
-print '\nFINISH: ', datetime.datetime.now().isoformat()
+print '\nFINISH: ', get_current_time_string(display_sub_seconds=True)

@@ -19,6 +19,8 @@
 import datetime, time
 import subprocess
 import cylc.TaskID
+from cylc.wallclock import DATE_TIME_FORMAT_EXTENDED
+
 
 def get_stop_state(suite, owner=None, host=None):
     """Return the contents of the last 'state' file."""
@@ -40,6 +42,7 @@ def get_stop_state(suite, owner=None, host=None):
         return stdout
     else:
         return None
+
 
 def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     """Load the contents of the last 'state' file into summary maps."""
@@ -64,9 +67,20 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     else:
         # (line0 is run mode)
         line1 = lines.pop(0)
+        while not line1.startswith("time :"):
+            line1 = lines.pop(0)
         time_string = line1.rstrip().split(' : ')[1]
 
-    dt = datetime.datetime( *(time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")[0:6]))
+    # Remove time zone (bit rubbish...).
+    if time_string.endswith("Z"):
+        time_string, time_zone = time_string[:-1]
+
+    try:
+        attributes = time.strptime(time_string, DATE_TIME_FORMAT_EXTENDED)
+    except ValueError:
+        attributes = time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")
+    
+    dt = datetime.datetime( *(attributes[0:6]))
 
     global_summary["last_updated"] = dt
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]

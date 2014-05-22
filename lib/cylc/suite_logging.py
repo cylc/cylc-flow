@@ -16,9 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re
+import os, sys, re, time
 import logging, logging.handlers
 from cfgspec.site import sitecfg
+from cylc.wallclock import (
+    DATE_TIME_FORMAT_EXTENDED, TIME_ZONE_STRING_LOCAL_EXTENDED)
 
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
@@ -58,7 +60,9 @@ class suite_log( object ):
             if os.path.getsize( self.path ) > 0:
                 h.doRollover()
 
-        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S' )
+        f = ProperDateTimeFormatter(
+            '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S'
+        )
 
         # write warnings and worse to stderr as well as to the log
         h2 = logging.StreamHandler(sys.stderr)
@@ -69,3 +73,15 @@ class suite_log( object ):
         h.setFormatter(f)
         log.addHandler(h)
 
+
+class ProperDateTimeFormatter(logging.Formatter):
+
+    """Format date/times with the local time zone."""
+
+    def formatTime(self, record, datefmt=None):
+        ct = time.localtime(record.created)
+        if datefmt:
+            time_string = time.strftime(datefmt, ct)
+        else:
+            time_string = time.strftime(DATE_TIME_FORMAT_EXTENDED, ct)
+        return time_string + TIME_ZONE_STRING_LOCAL_EXTENDED

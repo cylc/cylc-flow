@@ -31,6 +31,7 @@ from cylc.run import main
 from cylc.command_prep import prep_file
 import cylc.TaskID
 from cylc.cycling.loader import get_point
+from cylc.wallclock import get_current_time_string
 
 
 class restart( scheduler ):
@@ -115,7 +116,7 @@ where they got to while the suite was down."""
         src_name = file_name
         if os.path.realpath(dir_name) == os.path.dirname(file_name):
             src_name = os.path.basename(file_name)
-        now_str = datetime.utcnow().strftime("%Y%m%dT%H%M%S.%fZ")
+        now_str = get_current_time_string(use_basic_format=True)
         lnk_name = os.path.join(dir_name, base_name + "-restart." + now_str)
         os.symlink(src_name, lnk_name)
 

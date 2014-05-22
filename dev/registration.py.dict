@@ -19,6 +19,7 @@
 import pickle
 import datetime, time
 import os, sys, re
+from cylc.wallclock import get_current_time_string
 #from conf.CylcGlobals import central_regdb_dir, local_regdb_dir
 
 # NOTE:ABSPATH (see below)
@@ -96,7 +97,7 @@ class regdb(object):
         print "Locking database " + self.file
         lockfile = open( self.lockfile, 'wb' )
         lockfile.write( self.user + '\n' )
-        lockfile.write( datetime.datetime.now().isoformat())
+        lockfile.write( get_current_time_string(display_sub_seconds=True))
         lockfile.close()
 
     def unlock( self ):

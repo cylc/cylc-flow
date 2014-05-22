@@ -99,6 +99,7 @@ initial and final cycle time variables persists across suite restarts."""
         if len( self.args ) == 2:
             self.cli_start_tag = self.args[1]
             if self.cli_start_tag == "now":
+                # TODO ISO: will it ever be useful to have this in minutes?
                 self.cli_start_tag = datetime.datetime.utcnow().strftime(
                     "%Y%m%dT%HZ")
 
