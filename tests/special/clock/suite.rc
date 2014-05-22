@@ -1,5 +1,6 @@
 #!Jinja2
 [cylc]
+    UTC mode = {{UTC_MODE}}
     [[event hooks]]
         abort on timeout = True
         timeout = 0.5

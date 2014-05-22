@@ -206,7 +206,7 @@ class taskdef(object):
                 p_prev = None
                 adjusted = []
                 for seq in self.sequences:
-                    prv = seq.get_prev_point(sself.c_time)
+                    prv = seq.get_nearest_prev_point(sself.c_time)
                     if prv:
                         # may be None if out of sequence bounds
                         adjusted.append( prv )

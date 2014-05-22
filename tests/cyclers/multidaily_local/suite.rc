@@ -1,5 +1,4 @@
 [cylc]
-    cycle point time zone = Z
     [[reference test]]
         live mode suite timeout = 2.0
 [scheduling]

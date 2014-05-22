@@ -107,10 +107,10 @@ For years below 0 or above 9999, the ISO 8601 standard specifies that an
 extra number of year digits and a sign should be used. This extra number needs
 to be written down somewhere (here).
 
-For example, if this extra number is set to 2, the 1st of January in the year
-10040 will be represented as $+0100400101T0000$ (2 extra year digits used).
-06Z on the 4th of May 1985 would be written as $+00019850504T0600$ with this
-number set to 3.
+For example, if this extra number is set to 2, 00Z on the 1st of January in
+the year 10040 will be represented as $+0100400101T0000Z$ (2 extra year digits
+used). With this number set to 3, 06Z on the 4th of May 1985 would be written
+as $+00019850504T0600Z$.
 
 This number defaults to 0 (no sign or extra digits used).
 
@@ -120,13 +120,17 @@ cycle point time zone}
 
 If you set UTC mode to True (\ref{utc-mode}) then this will default to $Z$.
 If you use a custom cycle point format (\ref{cycle-point-format}), you should
-specify the timezone choice (or null timezone choice) there.
+specify the timezone choice (or null timezone choice) here as well.
 
-Otherwise, you may set your own time zone choice here, which will be used
+You may set your own time zone choice here, which will be used
 for all date/time cycle point dumping. Time zones should be expressed as ISO
 8601 time zone offsets from UTC, such as $+13$, $+1300$, $-0500$ or $+0645$,
 with $Z$ representing the special $+0000$ case. Cycle points will be converted
 to the time zone you give and will be represented with this string at the end.
+
+Cycle points that are input without time zones (e.g. as an initial cycle time
+setting) will use this time zone if set. If this isn't set (and UTC mode is
+also not set), then they will default to the current local time zone.
 
 Note that the ISO standard also allows writing the hour and minute separated
 by a ":" (e.g. $+13:00$) - however, this is not recommended, given that the

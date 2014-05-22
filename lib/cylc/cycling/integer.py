@@ -289,84 +289,98 @@ class IntegerSequence( object ):
         if self.p_stop > self.p_context_stop:
             self.p_stop -= self.i_step
 
-    def is_on_sequence( self, p ):
-        """Is point p on-sequence, disregarding bounds?"""
+    def is_on_sequence( self, point ):
+        """Is point on-sequence, disregarding bounds?"""
         if self.i_step:
-            return int( p - self.p_start ) % int(self.i_step) == 0
+            return int( point - self.p_start ) % int(self.i_step) == 0
         else:
-            return p == self.p_start
+            return point == self.p_start
 
-    def _get_point_in_bounds( self, p ):
-        """Return point p, or None if out of bounds."""
-        if p >= self.p_start and p <= self.p_stop:
-            return p
+    def _get_point_in_bounds( self, point ):
+        """Return point, or None if out of bounds."""
+        if point >= self.p_start and point <= self.p_stop:
+            return point
         else:
             return None
 
-    def is_valid( self, p ):
-        """Is point p on-sequence and in-bounds?"""
-        return self.is_on_sequence( p ) and \
-                p >= self.p_start and p <= self.p_stop
+    def is_valid( self, point ):
+        """Is point on-sequence and in-bounds?"""
+        return self.is_on_sequence( point ) and \
+                point >= self.p_start and point <= self.p_stop
 
-    def get_prev_point( self, p ):
-        """Return the previous point < p, or None if out of bounds."""
+    def get_prev_point( self, point ):
+        """Return the previous point < point, or None if out of bounds."""
         # Only used in computing special sequential task prerequisites.
         if not self.i_step:
             # implies a one-off task was declared sequential
             # TODO - check this results in sensible behaviour
             return None
-        i = int( p - self.p_start ) % int(self.i_step)
+        i = int( point - self.p_start ) % int(self.i_step)
         if i:
-            p_prev = p - IntegerInterval(str(i))
+            prev_point = point - IntegerInterval(str(i))
         else:
-            p_prev = p - self.i_step
-        return self._get_point_in_bounds( p_prev )
+            prev_point = point - self.i_step
+        return self._get_point_in_bounds( prev_point )
 
-    def get_next_point( self, p ):
-        """Return the next point > p, or None if out of bounds."""
+    def get_nearest_prev_point(self, point):
+        """Return the largest point < some arbitrary point."""
+        if self.is_on_sequence(point):
+            return self.get_prev_point(point)
+        sequence_point = self._get_point_in_bounds( self.p_start )
+        prev_point = None
+        while sequence_point is not None:
+            if sequence_point > point:
+                # Technically, >=, but we already test for this above.
+                break
+            prev_point = sequence_point
+            sequence_point = self.get_next_point(sequence_point)
+        return prev_point
+
+    def get_next_point( self, point ):
+        """Return the next point > point, or None if out of bounds."""
         if not self.i_step:
             # this is a one-off sequence
             # TODO - is this needed? if so, check it results in sensible behaviour
-            if p < self.p_start:
+            if point < self.p_start:
                 return self.p_start
             else:
                 return None
-        i = int( p - self.p_start ) % int(self.i_step)
-        p_next = p + self.i_step - IntegerInterval(i)
-        return self._get_point_in_bounds( p_next )
+        i = int( point - self.p_start ) % int(self.i_step)
+        next_point = point + self.i_step - IntegerInterval(i)
+        return self._get_point_in_bounds( next_point )
 
-    def get_next_point_on_sequence( self, p ):
-        """Return the next point > p assuming that p is on-sequence,
+    def get_next_point_on_sequence( self, point ):
+        """Return the next point > point assuming that point is on-sequence,
         or None if out of bounds."""
         # This can be used when working with a single sequence.
         if not self.i_step:
             return None
-        p_next = p + self.i_step
-        return self._get_point_in_bounds( p_next )
+        next_point = point + self.i_step
+        return self._get_point_in_bounds( next_point )
 
-    def get_first_point( self, p ):
-        """Return the first point >= to p, or None if out of bounds."""
+    def get_first_point( self, point ):
+        """Return the first point >= to point, or None if out of bounds."""
         # Used to find the first point >= suite initial cycle time.
-        if p <= self.p_start:
-            p = self._get_point_in_bounds( self.p_start )
-        elif self.is_on_sequence( p ):
-            p  = self._get_point_in_bounds( p )
+        if point <= self.p_start:
+            point = self._get_point_in_bounds( self.p_start )
+        elif self.is_on_sequence( point ):
+            point = self._get_point_in_bounds( point )
         else:
-            p = self.get_next_point( p )
-        return p
+            point = self.get_next_point( point )
+        return point
 
     def get_stop_point( self ):
         """Return the last point in this sequence, or None if unbounded."""
         return self.p_stop
 
-    def __eq__( self, q ):
-        if self.i_step and not q.i_step or \
-                not self.i_step and q.i_step:
+    def __eq__( self, other ):
+        if self.i_step and not other.i_step or \
+                not self.i_step and other.i_step:
             return False
         else:
-            return self.i_step == q.i_step and \
-               self.p_start == q.p_start and \
-               self.p_stop == q.p_stop
+            return self.i_step == other.i_step and \
+               self.p_start == other.p_start and \
+               self.p_stop == other.p_stop
 
 
 def init_from_cfg(cfg):

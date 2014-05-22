@@ -19,6 +19,7 @@
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3
+skip 3 "one-off not supported any more (?)" && exit 0
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE oneoff
 #-------------------------------------------------------------------------------
@@ -26,7 +27,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-run_ok $TEST_NAME cylc run --debug --reference-test $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-runs
 TASKS=$(sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select count(*) from task_states where name is 'once'")

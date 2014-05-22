@@ -45,7 +45,7 @@
 2014/01/07 17:36:06 WARNING - [ColdA.2010010106] -Assuming non-reported outputs were completed:
 ColdA.2010010106 submitted
 2014/01/07 17:36:07 INFO - [A.2010010106] -triggered off ['ColdA.2010010106', 'X.2010010106']
-2014/01/07 17:36:07 INFO - [X.2010010112] -triggered off []
+2014/01/07 17:36:07 INFO - [X.2010010112] -triggered off ['prep.2010010106']
 2014/01/07 17:36:07 INFO - [ColdA.2010010106] -(current:succeeded)> ColdA.2010010106 submission succeeded
 2014/01/07 17:36:07 INFO - [ColdA.2010010106] -(current:succeeded)> ColdA.2010010106 submit_method_id=20480
 2014/01/07 17:36:09 INFO - [A.2010010106] -(current:ready)> A.2010010106 submitting now
@@ -65,7 +65,7 @@ ColdA.2010010106 submitted
 2014/01/07 17:36:10 WARNING - [X.2010010112] -  X.2010010112 submit_method_id=20659
 2014/01/07 17:36:11 INFO - [C.2010010106] -triggered off ['A.2010010106', 'ColdC.2010010106']
 2014/01/07 17:36:11 INFO - [B.2010010106] -triggered off ['A.2010010106', 'ColdB.2010010106']
-2014/01/07 17:36:12 INFO - [X.2010010118] -triggered off []
+2014/01/07 17:36:12 INFO - [X.2010010118] -triggered off ['prep.2010010106']
 2014/01/07 17:36:12 INFO - [C.2010010106] -(current:ready)> C.2010010106 submitting now
 2014/01/07 17:36:13 INFO - [C.2010010106] -(current:ready)> C.2010010106 submission succeeded
 2014/01/07 17:36:13 INFO - [C.2010010106] -(current:submitted)> C.2010010106 submit_method_id=20797

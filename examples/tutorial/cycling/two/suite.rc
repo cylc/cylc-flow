@@ -1,5 +1,7 @@
 
 title = "Two cycling tasks with inter-cycle dependence"
+[cylc]
+    cycle point time zone = Z
 [scheduling]
     #runahead limit = 120
     initial cycle time = 20130808T00

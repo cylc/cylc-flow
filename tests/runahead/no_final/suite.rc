@@ -1,4 +1,5 @@
 [cylc]
+    cycle point time zone = Z
     [[event hooks]]
         timeout = 0.1
         abort on timeout = True

@@ -151,7 +151,7 @@ hh             # Deviation? Not allowed in standard ?
 --ss.tt         # Deviation? Not allowed in standard ?
 """    }
 }
-TIMEZONE_EXPRESSIONS = {
+TIME_ZONE_EXPRESSIONS = {
     "basic": u"""
 Z
 ±hh
@@ -220,7 +220,7 @@ _TIME_TRANSLATE_INFO = [
     (u"^-", "(?P<truncated>-)",
      "-", None)
 ]
-_TIMEZONE_TRANSLATE_INFO = [
+_TIME_ZONE_TRANSLATE_INFO = [
     (u"(?<=±hh)mm", "(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
     (u"(?<=±hh:)mm", "(?P<time_zone_minute>\d\d)",
@@ -233,15 +233,15 @@ _TIMEZONE_TRANSLATE_INFO = [
      "Z", None)
 ]
 
-LOCALE_TIMEZONE_BASIC = timezone.get_timezone_format_for_locale()
-LOCALE_TIMEZONE_BASIC_NO_Z = LOCALE_TIMEZONE_BASIC
-if LOCALE_TIMEZONE_BASIC_NO_Z == "Z":
-    LOCALE_TIMEZONE_BASIC_NO_Z = "+0000"
-LOCALE_TIMEZONE_EXTENDED = timezone.get_timezone_format_for_locale(
+LOCAL_TIME_ZONE_BASIC = timezone.get_local_time_zone_format()
+LOCAL_TIME_ZONE_BASIC_NO_Z = LOCAL_TIME_ZONE_BASIC
+if LOCAL_TIME_ZONE_BASIC_NO_Z == "Z":
+    LOCAL_TIME_ZONE_BASIC_NO_Z = "+0000"
+LOCAL_TIME_ZONE_EXTENDED = timezone.get_local_time_zone_format(
     extended_mode=True)
-LOCALE_TIMEZONE_EXTENDED_NO_Z = LOCALE_TIMEZONE_EXTENDED
-if LOCALE_TIMEZONE_EXTENDED_NO_Z == "Z":
-    LOCALE_TIMEZONE_EXTENDED_NO_Z = "+0000"
+LOCAL_TIME_ZONE_EXTENDED_NO_Z = LOCAL_TIME_ZONE_EXTENDED
+if LOCAL_TIME_ZONE_EXTENDED_NO_Z == "Z":
+    LOCAL_TIME_ZONE_EXTENDED_NO_Z = "+0000"
     
 # Note: we only accept the following subset of strftime syntax.
 # This is due to inconsistencies with the ISO 8601 representations.
@@ -261,7 +261,7 @@ STRFTIME_TRANSLATE_INFO = {
     "%S": ["second_of_minute"],
     "%X": ["hour_of_day", ":", "minute_of_hour", ":", "second_of_minute"],
     "%Y": ["century", "year_of_century"],
-    "%z": LOCALE_TIMEZONE_BASIC_NO_Z,
+    "%z": ["time_zone_sign", "time_zone_hour_abs", "time_zone_minute_abs"],
 }
 STRPTIME_EXCLUSIVE_GROUP_INFO = {
     "%X": ("%H", "%M", "%S"),
@@ -294,8 +294,8 @@ def get_time_translate_info():
     return _TIME_TRANSLATE_INFO
 
 
-def get_timezone_translate_info():
-    return _TIMEZONE_TRANSLATE_INFO
+def get_time_zone_translate_info():
+    return _TIME_ZONE_TRANSLATE_INFO
 
 
 def translate_strftime_token(strftime_token, num_expanded_year_digits=2):
@@ -323,7 +323,7 @@ def _translate_strftime_token(strftime_token, dump_mode=False,
         get_date_translate_info(
             num_expanded_year_digits=num_expanded_year_digits) +
         get_time_translate_info() +
-        get_timezone_translate_info()
+        get_time_zone_translate_info()
     )
     attr_names = STRFTIME_TRANSLATE_INFO[strftime_token]
     if isinstance(attr_names, basestring):

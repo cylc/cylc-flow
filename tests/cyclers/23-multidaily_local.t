@@ -15,29 +15,24 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test cylc get-config
+#C: Test intercycle dependencies, local time.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
+set_test_number 2
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-examples
-
-SDEFS=$(find $CYLC_DIR/examples -name suite.rc)
-set_test_number $(echo "$SDEFS" | wc -l)
-
-for SDEF in $SDEFS; do
-    # capture validation stderr:
-    SDEF_NAME=$(basename $(dirname $SDEF))
-    if [[ "$SDEF_NAME" == satellite ]]; then
-        skip 1 "no async satellite support (yet?)"
-    else
-        RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
-        TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
-        if [[ -n $RES ]]; then
-            fail $TEST_NAME
-            echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
-            echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
-        else
-            ok $TEST_NAME
-        fi
-    fi
-done
+install_suite $TEST_NAME_BASE $(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
+CURRENT_TZ_UTC_OFFSET=$(date +%z)
+if [[ $CURRENT_TZ_UTC_OFFSET == '+0000' ]]; then
+    CURRENT_TZ_UTC_OFFSET="Z"
+else
+    CURRENT_TZ_UTC_OFFSET=${CURRENT_TZ_UTC_OFFSET%00}
+fi
+sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" reference.log
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+#-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME

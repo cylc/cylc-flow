@@ -1,4 +1,5 @@
 [cylc]
+    UTC mode = True
     [[reference test]]
         live mode suite timeout = 3.0
 [scheduling]
@@ -9,4 +10,4 @@
             graph = "foo[-P1Y] => foo => bar"
 [runtime]
     [[root]]
-        command scripting = sleep 1
+        command scripting = true

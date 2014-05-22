@@ -2,6 +2,7 @@ title = final cycle reload test
 description = """change final cycle."""
 
 [cylc]
+   UTC mode = True
    [[reference test]]
        required run mode = live
        live mode suite timeout = 1.0 # minutes

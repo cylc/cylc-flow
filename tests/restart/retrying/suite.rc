@@ -52,6 +52,7 @@
     [[force_restart]]
         pre-command scripting = """
             # We need to make sure that the results stay consistent.
+            sleep 2
             cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
                 --max-polls=120 --status=retrying $CYLC_SUITE_REG_NAME
             sleep 2

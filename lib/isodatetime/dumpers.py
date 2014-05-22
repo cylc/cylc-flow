@@ -35,7 +35,7 @@ class TimePointDumper(object):
     of valid patterns is found in the parser_spec module, with lots
     of examples (coincidentally, used to generate the parsing).
     Anything not matched will get left as it is in the string.
-    Specifying a particular timezone will result in a timezone
+    Specifying a particular time zone will result in a time zone
     conversion of the date/time information before it is output.
 
     For example, the following formatting_string
@@ -47,7 +47,7 @@ class TimePointDumper(object):
     T - left alone, date/time separator
     hh - hour of day information, e.g. 06
     mm - minute of hour information, e.g. 58
-    Z - Zulu or UTC zero-offset timezone, left in, forces timezone
+    Z - Zulu or UTC zero-offset time zone, left in, forces time zone
     conversion
     and might dump a TimePoint instance like this: '19850531T0658Z'.
 
@@ -66,7 +66,7 @@ class TimePointDumper(object):
                     num_expanded_year_digits),
                  "date"),
                 (parser_spec.get_time_translate_info(), "time"),
-                (parser_spec.get_timezone_translate_info(), "time_zone")]:
+                (parser_spec.get_time_zone_translate_info(), "time_zone")]:
             for regex, regex_sub, format_sub, prop_name in info:
                 rec = re.compile(regex)
                 self._rec_formats[key].append((rec, format_sub, prop_name))
@@ -164,11 +164,11 @@ class TimePointDumper(object):
             elif "+" in time_string:
                 time_string, time_zone_string = time_string.split("+")
                 time_zone_string = "+" + time_zone_string
-                custom_time_zone = self._get_time_zone(time_zone_string)
+                custom_time_zone = self.get_time_zone(time_zone_string)
             elif "-" in time_string.lstrip("-"):
                 time_string, time_zone_string = time_string.split("-")
                 time_zone_string = "-" + time_zone_string
-                custom_time_zone = self._get_time_zone(time_zone_string)
+                custom_time_zone = self.get_time_zone(time_zone_string)
         point_prop_list = []
         string_map = {"date": "", "time": "", "time_zone": ""}
         for string, key in [(date_string, "date"),
@@ -187,16 +187,18 @@ class TimePointDumper(object):
         return expression, tuple(point_prop_list), custom_time_zone
 
     @util.cache_results
-    def _get_time_zone(self, time_zone_string):
+    def get_time_zone(self, time_zone_string):
         from . import parsers
         if not hasattr(self, "_timepoint_parser"):
             self._timepoint_parser = parsers.TimePointParser()
         try:
             (expr, info) = (
-                self._timepoint_parser.get_timezone_info(time_zone_string))
+                self._timepoint_parser.get_time_zone_info(time_zone_string))
         except parsers.ISO8601SyntaxError as e:
             return None
-        info = self._timepoint_parser.process_timezone_info(info)
+        info = self._timepoint_parser.process_time_zone_info(info)
+        if info.get('time_zone_utc'):
+            return (0, 0)
         if "time_zone_hour" not in info and "time_zone_minute" not in info:
             return None
         return info.get("time_zone_hour", 0), info.get("time_zone_minute", 0)

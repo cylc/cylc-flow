@@ -1,3 +1,5 @@
+[cylc]
+    UTC mode = True
 [scheduling]
     initial cycle time = 20000229T2000
     final cycle time = 20000301
@@ -6,4 +8,4 @@
             graph = "foo[-PT1H] => foo => bar"
 [runtime]
     [[root]]
-        command scripting = sleep 1
+        command scripting = true

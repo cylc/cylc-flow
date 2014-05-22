@@ -1115,92 +1115,104 @@ class config( object ):
                     raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
                 # now split on '&' (AND) and generate corresponding pairs
-                rights = re.split( '\s*&\s*', rgroup )
+                right_nodes = re.split( '\s*&\s*', rgroup )
             else:
-                rights = [None]
+                right_nodes = [None]
 
-            new_rights = []
-            for r in rights:
-                if r:
+            new_right_nodes = []
+            for right_node in right_nodes:
+                if right_node:
                     # ignore output labels on the right (for chained
                     # tasks they are only meaningful on the left)
-                    new_rights.append( re.sub( ':\w+', '', r ))
+                    new_right_nodes.append( re.sub( ':\w+', '', right_node ))
                 else:
                     # retain None's in order to handle lone nodes on the left
-                    new_rights.append( None )
+                    new_right_nodes.append( None )
 
-            rights = new_rights
+            right_nodes = new_right_nodes
 
             # extract task names from lexpression
             nstr = re.sub( '[(|&)]', ' ', lexpression )
             nstr = nstr.strip()
-            lnames = re.split( ' +', nstr )
+            left_nodes = re.split( ' +', nstr )
 
             # detect and fail and self-dependence loops (foo => foo)
-            for r_name in rights:
-                if r_name in lnames:
-                    print >> sys.stderr, "Self-dependence detected in '" + r_name + "':"
+            for right_node in right_nodes:
+                if right_node in left_nodes:
+                    print >> sys.stderr, (
+                        "Self-dependence detected in '" + right_node + "':")
                     print >> sys.stderr, "  line:", line
                     print >> sys.stderr, "  from:", orig_line
                     raise SuiteConfigError, "ERROR: self-dependence loop detected"
 
-            for rt in rights:
+            for right_node in right_nodes:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
-                if rt and rt.startswith('!'):
-                    r = rt[1:]
+                if right_node and right_node.startswith('!'):
+                    right_name = right_node[1:]
                     suicide = True
                 else:
-                    r = rt
+                    right_name = right_node
+
+                pruned_left_nodes = list(left_nodes)  # Create copy of LHS tasks.
 
                 asyncid_pattern = None
                 if ttype != 'cycling':
-                    for n in lnames + [r]:
-                        if not n:
+                    for node in left_nodes + [right_name]:
+                        if not node:
                             continue
                         try:
-                            name = graphnode(
-                                n, base_interval=seq.get_interval()).name
+                            node_name = graphnode(
+                                node, base_interval=seq.get_interval()).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
                         if ttype == 'async_repeating':
-                            if name not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(name)
+                            if node_name not in self.async_repeating_tasks:
+                                self.async_repeating_tasks.append(node_name)
                             m = re.match( '^ASYNCID:(.*)$', section )
                             asyncid_pattern = m.groups()[0]
 
                 if ttype == 'cycling':
-                    for n in list(lnames):
+                    for left_node in left_nodes:
                         try:
-                            name = graphnode(
-                                n, base_interval=seq.get_interval()).name
+                            left_graph_node = graphnode(
+                                left_node, base_interval=seq.get_interval())
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)            
-                        if name in tasks_to_prune or return_all_dependencies:
-                            special_dependencies.append((name, r))
-                        if name in tasks_to_prune:
-                            lnames.remove(n)
+                            raise SuiteConfigError, str(x)
+                        left_name = left_graph_node.name
+                        left_output = left_graph_node.output  
+                        if (left_name in tasks_to_prune or
+                                return_all_dependencies):
+                            special_dependencies.append(
+                                (left_name, left_output, right_name))
+                        if left_name in tasks_to_prune:
+                            pruned_left_nodes.remove(left_node)
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, lnames, r, ttype, seq, suicide )
-                self.generate_taskdefs( orig_line, lnames, r, ttype, section,
-                                        asyncid_pattern, seq.get_interval() )
-                self.generate_triggers( lexpression, lnames, r, seq,
-                                         asyncid_pattern, suicide )
+                    self.generate_edges( lexpression, pruned_left_nodes,
+                                         right_name, ttype,
+                                         seq, suicide )
+                self.generate_taskdefs( orig_line, pruned_left_nodes,
+                                        right_name, ttype,
+                                        section, asyncid_pattern,
+                                        seq.get_interval() )
+                self.generate_triggers( lexpression, pruned_left_nodes,
+                                        right_name, seq,
+                                        asyncid_pattern, suicide )
         return special_dependencies
             
 
-    def generate_edges( self, lexpression, lnames, right, ttype, seq, suicide=False ):
+    def generate_edges( self, lexpression, left_nodes, right, ttype, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
         if re.search( '\|', lexpression ):
             # plot conditional triggers differently
             conditional = True
 
-        for left in lnames:
+        for left in left_nodes:
             sasl = left in self.async_repeating_tasks
             e = graphing.edge( left, right, seq, sasl, suicide, conditional )
             if ttype == 'async_repeating':
@@ -1209,9 +1221,9 @@ class config( object ):
             else:
                 self.edges.append(e)
 
-    def generate_taskdefs( self, line, lnames, right, ttype, section, asyncid_pattern,
+    def generate_taskdefs( self, line, left_nodes, right, ttype, section, asyncid_pattern,
                            base_interval ):
-        for node in lnames + [right]:
+        for node in left_nodes + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
@@ -1283,7 +1295,7 @@ class config( object ):
                         outp = outputx(msg, base_interval)
                         self.taskdefs[ name ].outputs.append( outp )
 
-    def generate_triggers( self, lexpression, lnames, right, seq, asyncid_pattern, suicide ):
+    def generate_triggers( self, lexpression, left_nodes, right, seq, asyncid_pattern, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -1299,7 +1311,7 @@ class config( object ):
 
         ctrig = {}
         cname = {}
-        for left in lnames:
+        for left in left_nodes:
             # (GraphNodeError checked above)
             cycle_point = None
             lnode = graphnode(left, base_interval=base_interval)
@@ -1524,7 +1536,7 @@ class config( object ):
             if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = TaskID.get(fam,tag), TaskID.get(fam,rtag)
+                nl,nr = TaskID.get(fam,ltag), TaskID.get(fam,rtag)
                 break
             elif lname in members[fam]:
                 # l is a member of fam
@@ -1552,7 +1564,7 @@ class config( object ):
                 section, async_graph,
                 return_all_dependencies=True
             )
-            for left, right in async_dependencies:
+            for left, left_output, right in async_dependencies:
                 if left:
                     initial_tasks.append(left)
                 if right:
@@ -1603,8 +1615,11 @@ class config( object ):
                     get_point(self.cfg['scheduling']['initial cycle time'])
                 )
                 graph_text = ""
-                for left, right in special_dependencies:
-                    graph_text += left + "[] => " + right + "\n"
+                for left, left_output, right in special_dependencies:
+                    graph_text += left + "[]"
+                    if left_output:
+                        graph_text += ":" + left_output
+                    graph_text += " => " + right + "\n"
                     if (left in start_up_tasks and
                             left not in start_up_tasks_graphed):
                         # Start-up tasks need their own explicit section.

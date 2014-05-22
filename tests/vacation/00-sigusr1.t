@@ -20,7 +20,7 @@
 #C: will no longer be poll-able after the kill.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 8
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -30,17 +30,30 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
+
 # Make sure t1.1.1's status file is in place
 T1_STATUS_FILE=$SUITE_RUN_DIR/log/job/t1.1.1.status
+
+TEST_NAME=$TEST_NAME_BASE-find-status-file
 TIMEOUT=$(($(date +%s) + 120))
-while [[ ! -f $T1_STATUS_FILE ]] && (($TIMEOUT > $(date +%s))); do
+while [[ ! -f $T1_STATUS_FILE ]]; do
     sleep 1
+    if (($(date +%s) > $TIMEOUT)); then
+        fail $TEST_NAME
+        exit 1
+    fi
 done
+ok $TEST_NAME
+
+# Read the process id from the file.
+TEST_NAME=$TEST_NAME_BASE-get-pid-from-status-file
 T1_PID=$(awk -F= '$1=="CYLC_JOB_PID" {print $2}' $T1_STATUS_FILE)
 if [[ -z $T1_PID ]]; then
-    echo "Cannot extract PID" >&2
+    fail $TEST_NAME
     exit 1
 fi
+ok $TEST_NAME
+
 # Kill the job and see what happens
 kill -s USR1 $T1_PID
 while ps $T1_PID 1>/dev/null 2>&1; do

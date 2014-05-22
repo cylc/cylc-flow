@@ -18,7 +18,10 @@
 
 import re
 from isodatetime.data import TimeInterval
+from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
+from isodatetime.timezone import (
+    get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import PointBase, IntervalBase
 from parsec.validate import IllegalValueError
@@ -51,6 +54,7 @@ PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 point_parser = None
 NUM_EXPANDED_YEAR_DIGITS = None
 DUMP_FORMAT = None
+ASSUMED_TIME_ZONE = None
 
 
 def memoize(function):
@@ -276,7 +280,8 @@ class ISO8601Sequence(object):
             self.context_start_point, self.context_end_point,
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
-            custom_point_parse_function=self.custom_point_parse_function
+            custom_point_parse_function=self.custom_point_parse_function,
+            assumed_time_zone=ASSUMED_TIME_ZONE
         )
         self.recurrence = self.time_parser.parse_recurrence(i)
         self.step = ISO8601Interval(str(self.recurrence.interval))
@@ -288,9 +293,9 @@ class ISO8601Sequence(object):
     def get_offset(self):
         return self.offset
 
-    def set_offset(self, i):
+    def set_offset(self, interval):
         """Alter state to offset the entire sequence."""
-        self.offset = i
+        self.offset = interval
         start_point = self.context_start_point + self.offset
         end_point = self.context_end_point + self.offset
         self.time_parser = CylcTimeParser(
@@ -298,48 +303,64 @@ class ISO8601Sequence(object):
             str(end_point),
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
-            custom_point_parse_function=self.custom_point_parse_function
+            custom_point_parse_function=self.custom_point_parse_function,
+            assumed_time_zone=ASSUMED_TIME_ZONE
         )
         self.recurrence = self.time_parser.parse_recurrence(self.spec)
         self.value = str(self.recurrence)
 
-    def is_on_sequence(self, p):
-        """Return True if p is on-sequence."""
-        return self.recurrence.get_is_valid(point_parse(p.value))
+    def is_on_sequence(self, point):
+        """Return True if point is on-sequence."""
+        return self.recurrence.get_is_valid(point_parse(point.value))
 
-    def is_valid(self, p):
-        """Return True if p is on-sequence and in-bounds."""
-        return self.is_on_sequence(p)
+    def is_valid(self, point):
+        """Return True if point is on-sequence and in-bounds."""
+        return self.is_on_sequence(point)
 
-    def get_prev_point(self, p):
-        """Return the previous point < p, or None if out of bounds."""
+    def get_prev_point(self, point):
+        """Return the previous point < point, or None if out of bounds."""
         # may be None if out of the recurrence bounds
         res = None
-        prv = self.recurrence.get_prev(point_parse(p.value))
-        if prv:
-            res = ISO8601Point(str(prv))
+        prev_point = self.recurrence.get_prev(point_parse(point.value))
+        if prev_point:
+            res = ISO8601Point(str(prev_point))
         return res
 
-    def get_next_point(self, p):
+    def get_nearest_prev_point(self, point):
+        """Return the largest point < some arbitrary point."""
+        if self.is_on_sequence(point):
+            return self.get_prev_point(point)
+        p_iso_point = point_parse(point.value)
+        prev_iso_point = None
+        for recurrence_iso_point in self.recurrence:
+            if recurrence_iso_point > p_iso_point:
+                # Technically, >=, but we already test for this above.
+                break
+            prev_iso_point = recurrence_iso_point
+        if prev_iso_point is None:
+            return None
+        return ISO8601Point(str(prev_iso_point))
+
+    def get_next_point(self, point):
         """Return the next point > p, or None if out of bounds."""
-        p_iso_point = point_parse(p.value)
+        p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point > p_iso_point:
                 return ISO8601Point(str(recurrence_iso_point))
         return None
 
-    def get_next_point_on_sequence(self, p):
-        """Return the on-sequence point > p assuming that p is on-sequence,
-        or None if out of bounds."""
-        res = None
-        nxt = self.recurrence.get_next(point_parse(p.value))
-        if nxt:
-            res = ISO8601Point(str(nxt))
-        return res
+    def get_next_point_on_sequence(self, point):
+        """Return the on-sequence point > point assuming that point is
+        on-sequence, or None if out of bounds."""
+        result = None
+        next_point = self.recurrence.get_next(point_parse(point.value))
+        if next_point:
+            result = ISO8601Point(str(next_point))
+        return result
 
-    def get_first_point( self, p):
-        """Return the first point >= to p, or None if out of bounds."""
-        p_iso_point = point_parse(p.value)
+    def get_first_point( self, point):
+        """Return the first point >= to poing, or None if out of bounds."""
+        p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point >= p_iso_point:
                 return ISO8601Point(str(recurrence_iso_point))
@@ -411,6 +432,7 @@ def init_from_cfg(cfg):
     custom_dump_format = cfg['cylc']['cycle point format']
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
+    assume_utc = cfg['cylc']['UTC mode']
     test_cycle_time = initial_cycle_time
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
@@ -433,17 +455,28 @@ def init_from_cfg(cfg):
     init(
         num_expanded_year_digits=num_expanded_year_digits,
         custom_dump_format=custom_dump_format,
-        time_zone=time_zone
+        time_zone=time_zone,
+        assume_utc=assume_utc
     )
 
 
-def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None):
+def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
+         assume_utc=False):
     """Initialise global variables (yuk)."""
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
+    global ASSUMED_TIME_ZONE
     if time_zone is None:
-        time_zone = "Z"
+        if assume_utc:
+            time_zone = "Z"
+            time_zone_hours_minutes = (0, 0)
+        else:
+            time_zone = get_local_time_zone_format(reduced_mode=True)
+            time_zone_hours_minutes = get_local_time_zone()
+    else:       
+        time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
+    ASSUMED_TIME_ZONE = time_zone_hours_minutes
     NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
@@ -464,6 +497,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None):
         allow_truncated=True,
         num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
         dump_format=DUMP_FORMAT,
+        assumed_time_zone=time_zone_hours_minutes
     )
 
 

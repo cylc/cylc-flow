@@ -4,8 +4,8 @@
 2013/06/06 16:25:44 INFO - Suite starting at 2013-06-06 16:25:44.368764
 2013/06/06 16:25:44 INFO - Log event clock: real time
 2013/06/06 16:25:44 INFO - Run mode: live
-2013/06/06 16:25:44 INFO - Start tag: None
-2013/06/06 16:25:44 INFO - Stop tag: None
+2013/06/06 16:25:44 INFO - Start tag: 1
+2013/06/06 16:25:44 INFO - Stop tag: 1
 2013/06/06 16:25:44 INFO - Thread-4 start (Job Submission)
 2013/06/06 16:25:44 INFO - Thread-5 start (Request Handling)
 2013/06/06 16:25:44 INFO - [prep.1] -triggered off []

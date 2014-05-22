@@ -1,8 +1,8 @@
 2013/04/30 09:18:53 INFO - Suite starting at 2013-04-30 09:18:53.515014
 2013/04/30 09:18:53 INFO - Log event clock: real time
 2013/04/30 09:18:53 INFO - Run mode: live
-2013/04/30 09:18:53 INFO - Start tag: None
-2013/04/30 09:18:53 INFO - Stop tag: None
+2013/04/30 09:18:53 INFO - Start tag: 1
+2013/04/30 09:18:53 INFO - Stop tag: 1
 2013/04/30 09:18:54 INFO - TASK READY: foo.1
 2013/04/30 09:18:54 INFO - [foo.1] -triggered off []
 2013/04/30 09:18:54 INFO - [foo.1] -> foo.1 submitting now
