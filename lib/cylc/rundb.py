@@ -306,7 +306,7 @@ class CylcRuntimeDAO(object):
 
     def get_restart_info(self, cycle):
         """Get all the task names and submit count for a particular cycle"""
-        s_fmt = """SELECT name FROM task_states where cycle ==?"""
+        s_fmt = """SELECT name FROM task_states WHERE cycle ==?"""
         args = [cycle]
         res = {}
         for row in self.c.select(s_fmt, args):
