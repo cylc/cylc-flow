@@ -316,7 +316,7 @@ class CylcRuntimeDAO(object):
                    event ==? GROUP BY name"""
         args = [cycle, "submitting now"]
         
-        for row in self.c.select(s_fmt, args):
-            res[row[0]] = row[1]
+        for name, count in self.c.select(s_fmt, args):
+            res[name] = count
 
         return res
