@@ -25,7 +25,8 @@ from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 import cylc.rundb
-from cylc.cycling.loader import get_point
+from cylc.cycling.loader import (
+    get_point, get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from CylcError import SchedulerError, TaskNotFoundError
 from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
@@ -225,7 +226,7 @@ class pool(object):
             if self.rhpool_changed: 
                 self.rhpool_changed = False
                 self.rhpool_list = self.runahead_pool.values()
- 
+
             return self.rhpool_list + self.pool_list
         else:
             return self.pool_list
@@ -322,16 +323,23 @@ class pool(object):
                 pass
         return False
 
-
-    # TODO ISO - adapt to iso:
-    def set_runahead( self, hours=None ):
-        if hours:
-            self.log.info( "setting runahead limit to " + str(hours) )
-            self.runahead_limit = int(hours)
-        else:
+    def set_runahead( self, interval=None ):
+        if isinstance(interval, int) or isinstance(interval, basestring):
+            # The unit is assumed to be hours (backwards compatibility).
+            interval = str(interval)
+            interval_cls = get_interval_cls()
+            if interval_cls.TYPE == ISO8601_CYCLING_TYPE:
+                interval = get_interval("PT%sH" % interval)
+            else:
+                interval = get_interval(interval)
+        if interval is None:
             # No limit
             self.log.warning( "setting NO runahead limit" )
             self.runahead_limit = None
+        else:
+            self.log.info( "setting runahead limit to " + str(interval) )
+            self.runahead_limit = interval
+        self.release_runahead_tasks()
 
 
     def get_min_ctime( self ):
@@ -961,7 +969,7 @@ class pool(object):
         spawn = []
 
         print 'ROOT TASK:'
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all=True):
             # Find the target task
             if itask.id == id:
                 # set it succeeded
@@ -977,13 +985,13 @@ class pool(object):
                 die.append( itask )
                 break
 
-        print 'VIRTUAL TRIGGERING'
+        print 'VIRTUAL TRIGGERING STOPPING AT', stop
         # trace out the tree of dependent tasks
         something_triggered = True
         while something_triggered:
             self.match_dependencies()
             something_triggered = False
-            for itask in self.get_tasks():
+            for itask in sorted(self.get_tasks(all=True), key=lambda t: t.id):
                 if itask.tag > stop:
                     continue
                 if itask.ready_to_run():
@@ -1004,7 +1012,7 @@ class pool(object):
                         # remove these now (not setting succeeded; outputs not needed)
                         print '  Suiciding', itask.id, 'now'
                         self.remove( itask, 'purge' )
-
+            self.release_runahead_tasks()
         # reset any prerequisites "virtually" satisfied during the purge
         print 'RESETTING spawned tasks to unsatisified:'
         for itask in spawn:

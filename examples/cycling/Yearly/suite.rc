@@ -10,7 +10,7 @@
         [[[0505T05+1300/P1Y]]]
             # every 5 May at 0500, UTC + 13 hours timezone
             graph = """
-                foo[T-1] => foo => bar
+                foo[-P1Y] => foo => bar
                     """
         [[[0505T05+1300/P2Y]]]
             # every second year, same anniversary date/time.

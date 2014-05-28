@@ -293,20 +293,12 @@ class ISO8601Sequence(object):
     def get_offset(self):
         return self.offset
 
-    def set_offset(self, interval):
+    def set_offset(self, offset):
         """Alter state to offset the entire sequence."""
-        self.offset = interval
-        start_point = self.context_start_point + self.offset
-        end_point = self.context_end_point + self.offset
-        self.time_parser = CylcTimeParser(
-            str(start_point),
-            str(end_point),
-            num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
-            dump_format=DUMP_FORMAT,
-            custom_point_parse_function=self.custom_point_parse_function,
-            assumed_time_zone=ASSUMED_TIME_ZONE
-        )
-        self.recurrence = self.time_parser.parse_recurrence(self.spec)
+        if self.recurrence.start_point is not None:
+            self.recurrence.start_point -= interval_parse(str(offset))
+        if self.recurrence.end_point is not None:
+            self.recurrence.end_point -= interval_parse(str(offset))
         self.value = str(self.recurrence)
 
     def is_on_sequence(self, point):
@@ -424,6 +416,11 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
     return dep_section
 
 
+def get_backwards_compatibility_mode():
+    """Return whether we are in the old cycling syntax regime."""
+    return DUMP_FORMAT == PREV_DATE_TIME_FORMAT
+
+
 def init_from_cfg(cfg):
     """Initialise global variables (yuk) based on the configuration."""
     num_expanded_year_digits = cfg['cylc'][
@@ -538,6 +535,7 @@ def _point_parse(point_string):
         if strptime_string is None:
             raise
         return point_parser.strptime(point_string, strptime_string)
+
 
 def _get_old_strptime_format(point_string):
     try:

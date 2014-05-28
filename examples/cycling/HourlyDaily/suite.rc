@@ -13,7 +13,7 @@
             """
         [[[PT12H]]]
             graph = """
-               foo[T-12] => foo => bar
+               foo[-PT12H] => foo => bar
                     """
         [[[P2D]]]
             graph = """

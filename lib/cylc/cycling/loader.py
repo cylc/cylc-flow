@@ -40,12 +40,22 @@ SEQUENCES = {INTEGER_CYCLING_TYPE: integer.IntegerSequence,
 INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
                   ISO8601_CYCLING_TYPE: iso8601.init_from_cfg}
 
+BACKWARDS_COMPATIBILITY_FUNCTIONS = {
+    INTEGER_CYCLING_TYPE: lambda: True,
+    ISO8601_CYCLING_TYPE: iso8601.get_backwards_compatibility_mode
+}
+
 
 class DefaultCycler(object):
 
     """Store the default TYPE for Cyclers."""
 
     TYPE = None
+
+
+def get_backwards_compatibility_mode(*args, **kwargs):
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return BACKWARDS_COMPATIBILITY_FUNCTIONS[cycling_type](*args, **kwargs)
 
 
 def get_point(*args, **kwargs):
