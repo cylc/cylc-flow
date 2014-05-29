@@ -691,8 +691,6 @@ class scheduler(object):
 
         # Running in UTC time? (else just use the system clock)
         flags.utc = self.config.cfg['cylc']['UTC mode']
-        if flags.utc:
-            os.environ['TZ'] = 'UTC'
 
         if not reconfigure:
             slog = suite_log( self.suite )

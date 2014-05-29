@@ -30,6 +30,9 @@ DATE_TIME_FORMAT_BASIC_SUB_SECOND = "%Y%m%dT%H%M%S.%f"
 DATE_TIME_FORMAT_EXTENDED = "%Y-%m-%dT%H:%M:%S"
 DATE_TIME_FORMAT_EXTENDED_SUB_SECOND = "%Y-%m-%dT%H:%M:%S.%f"
 
+RE_DATE_TIME_FORMAT_EXTENDED = (
+    "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-][\d:]+)")
+
 TIME_FORMAT_BASIC = "%H%M%S"
 TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"
 TIME_FORMAT_EXTENDED = "%H:%M:%S"
@@ -53,7 +56,8 @@ def now(override_use_utc=None):
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
-                            use_basic_format=False, only_display_time=False):
+                            use_basic_format=False, only_display_time=False,
+                            no_display_time_zone=False):
     """Return a string representing the current system time.
 
     Keyword arguments:
@@ -68,18 +72,22 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
     most useful for filenames where ":" may cause problems.
     only_display_time (default False) - a boolean that, if True, only
     represents the sub-day part of the date/time.
-    
+    no_display_time_zone (default False) - a boolean that, if True,
+    means that the date/time representation is returned without a time
+    zone.
+
     """
     date_time = now(override_use_utc=override_use_utc)
     return get_time_string(date_time, display_sub_seconds=display_sub_seconds,
                            override_use_utc=override_use_utc,
                            use_basic_format=use_basic_format,
-                           only_display_time=only_display_time)
+                           only_display_time=only_display_time,
+                           no_display_time_zone=no_display_time_zone)
 
 
 def get_time_string(date_time, display_sub_seconds=False,
                     override_use_utc=None, use_basic_format=False,
-                    only_display_time=False):
+                    only_display_time=False, no_display_time_zone=False):
     """Return a string representing the current system time.
 
     Arguments:
@@ -97,6 +105,9 @@ def get_time_string(date_time, display_sub_seconds=False,
     most useful for filenames where ":" may cause problems.
     only_display_time (default False) - a boolean that, if True, only
     represents the sub-day part of the date/time.
+    no_display_time_zone (default False) - a boolean that, if True,
+    means that the date/time representation is returned without a time
+    zone.
 
     """
     if override_use_utc or (override_use_utc is None and utc):
@@ -124,13 +135,16 @@ def get_time_string(date_time, display_sub_seconds=False,
             date_time_format_string = DATE_TIME_FORMAT_EXTENDED
             if display_sub_seconds:
                 date_time_format_string = DATE_TIME_FORMAT_EXTENDED_SUB_SECOND
-    date_time_string = date_time.strftime(date_time_format_string) 
+    date_time_string = date_time.strftime(date_time_format_string)
+    if no_display_time_zone:
+        return date_time_string
     return date_time_string + time_zone_string
 
 
 def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
                                    use_basic_format=False,
-                                   only_display_time=False):
+                                   only_display_time=False,
+                                   no_display_time_zone=False):
     """Convert a unix timestamp into a local time zone datetime.datetime.
 
     Arguments:
@@ -145,9 +159,15 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
     most useful for filenames where ":" may cause problems.
     only_display_time (default False) - a boolean that, if True, only
     represents the sub-day part of the date/time.
+    no_display_time_zone (default False) - a boolean that, if True,
+    means that the date/time representation is returned without a time
+    zone.
 
     """
     date_time = datetime.fromtimestamp(unix_time)
-    return get_time_string(date_time, display_sub_seconds=display_sub_seconds,
+    return get_time_string(date_time,
+                           display_sub_seconds=display_sub_seconds,
                            use_basic_format=use_basic_format,
-                           only_display_time=only_display_time)
+                           override_use_utc=None,
+                           only_display_time=only_display_time,
+                           no_display_time_zone=no_display_time_zone)

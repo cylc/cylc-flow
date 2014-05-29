@@ -16,7 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime, time
+import re
+import sys
 import subprocess
 import cylc.TaskID
 from cylc.wallclock import DATE_TIME_FORMAT_EXTENDED
@@ -71,18 +72,8 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             line1 = lines.pop(0)
         time_string = line1.rstrip().split(' : ')[1]
 
-    # Remove time zone (bit rubbish...).
-    if time_string.endswith("Z"):
-        time_string, time_zone = time_string[:-1]
-
-    try:
-        attributes = time.strptime(time_string, DATE_TIME_FORMAT_EXTENDED)
-    except ValueError:
-        attributes = time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")
-    
-    dt = datetime.datetime( *(attributes[0:6]))
-
-    global_summary["last_updated"] = dt
+   
+    global_summary["last_updated"] = time_string
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     if start != "(none)":
@@ -95,8 +86,11 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             continue
         try:
             ( task_id, info ) = line.split(' : ')
-            ( name, tag ) = TaskID.split( task_id )
-        except:
+            ( name, tag ) = cylc.TaskID.split( task_id )
+        except ValueError:
+            continue
+        except Exception as e:
+            sys.stderr.write(str(e) + "\n")
             continue
         task_summary.setdefault(task_id, {"name": name, "tag": tag,
                                           "label": tag})

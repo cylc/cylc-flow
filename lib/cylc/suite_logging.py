@@ -19,8 +19,7 @@
 import os, sys, re, time
 import logging, logging.handlers
 from cfgspec.site import sitecfg
-from cylc.wallclock import (
-    DATE_TIME_FORMAT_EXTENDED, TIME_ZONE_STRING_LOCAL_EXTENDED)
+from cylc.wallclock import get_time_string_from_unix_time
 
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
@@ -79,9 +78,4 @@ class ProperDateTimeFormatter(logging.Formatter):
     """Format date/times with the local time zone."""
 
     def formatTime(self, record, datefmt=None):
-        ct = time.localtime(record.created)
-        if datefmt:
-            time_string = time.strftime(datefmt, ct)
-        else:
-            time_string = time.strftime(DATE_TIME_FORMAT_EXTENDED, ct)
-        return time_string + TIME_ZONE_STRING_LOCAL_EXTENDED
+        return get_time_string_from_unix_time(record.created)

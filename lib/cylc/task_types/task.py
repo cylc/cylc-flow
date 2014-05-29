@@ -27,7 +27,10 @@ from cylc.cfgspec.site import sitecfg
 from cylc.owner import user
 import logging
 import cylc.flags as flags
-from cylc.wallclock import now, get_current_time_string
+from cylc.wallclock import (
+    now, get_current_time_string, get_time_string_from_unix_time,
+    RE_DATE_TIME_FORMAT_EXTENDED
+)
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.command_env import cv_scripting_sl
@@ -35,7 +38,8 @@ from cylc.host_select import get_task_host
 from parsec.util import pdeepcopy, poverride
 
 cylc_mode = 'scheduler'
-poll_suffix_re = re.compile( ' at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}|unknown-time)$' ) 
+poll_suffix_re = re.compile(
+    ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$') 
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -190,9 +194,12 @@ class task( object ):
         self.etc = None
         self.summary = { 'latest_message': self.latest_message,
                          'latest_message_priority': self.latest_message_priority,
-                         'started_time': '*',
-                         'submitted_time': '*',
-                         'succeeded_time': '*' }
+                         'started_time': None,
+                         'started_time_string': '*',
+                         'submitted_time': None,
+                         'submitted_time_string': '*',
+                         'succeeded_time': None,
+                         'succeeded_time_string': '*' }
 
         self.retries_configured = False
 
@@ -490,6 +497,11 @@ class task( object ):
         if self.__class__.run_mode == 'simulation':
             self.started_time = time.time()
             self.summary[ 'started_time' ] = self.started_time
+            self.summary[ 'started_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.started_time, no_display_time_zone=True
+                )
+            )
             self.outputs.set_completed( self.id + " started" )
             self.set_status( 'running' )
             return (None,None)
@@ -728,8 +740,8 @@ class task( object ):
             return
 
         # if timed out, log warning, poll, queue event handler, and turn off the timer
-        current_time = now()
-        cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
+        current_time = time.time()
+        cutoff = self.submission_timer_start + timeout * 60
         if current_time > cutoff:
             msg = 'job submitted ' + str(timeout) + ' minutes ago, but has not started'
             self.log( 'WARNING', msg )
@@ -908,7 +920,11 @@ class task( object ):
             # TODO - should we use the real event time from the message here?
             self.submitted_time = time.time()
             self.summary[ 'submitted_time' ] = self.submitted_time
-
+            self.summary[ 'submitted_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.submitted_time, no_display_time_zone=True
+                )
+            )
             outp = self.id + " submitted" # hack: see github #476
             self.outputs.set_completed( outp )
             self.record_db_event(event="submission succeeded" )
@@ -966,6 +982,11 @@ class task( object ):
             self.record_db_event(event="started" )
             self.started_time = time.time()
             self.summary[ 'started_time' ] = self.started_time
+            self.summary[ 'started_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.started_time, no_display_time_zone=True
+                )
+            )
 
             # TODO - should we use the real event time extracted from the message here:
             self.execution_timer_start = self.started_time
@@ -982,8 +1003,12 @@ class task( object ):
             self.execution_timer_start = None
             flags.pflag = True
             self.succeeded_time = time.time()
-            
             self.summary[ 'succeeded_time' ] = self.succeeded_time
+            self.summary[ 'succeeded_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.succeeded_time, no_display_time_zone=True
+                )
+            )
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
             self.set_status( 'succeeded' )
             self.record_db_event(event="succeeded" )

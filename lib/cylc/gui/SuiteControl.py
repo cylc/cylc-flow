@@ -340,7 +340,11 @@ Class to create an information bar.
             #o> summary += ": {0} failed tasks".format(num_failed)
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
-        self.set_time(get_time_string_from_unix_time(glob["last_updated"]))
+        dt = glob["last_updated"]
+        if isinstance(dt, basestring):
+            self.set_time(dt)
+        else:
+            self.set_time(get_time_string_from_unix_time(dt))
 
     def set_time(self, time):
         """Set last update text."""
