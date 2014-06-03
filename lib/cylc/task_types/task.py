@@ -28,7 +28,7 @@ from cylc.owner import user
 import logging
 import cylc.flags as flags
 from cylc.wallclock import (
-    now, get_current_time_string, get_time_string_from_unix_time,
+    get_current_time_string, get_time_string_from_unix_time,
     RE_DATE_TIME_FORMAT_EXTENDED
 )
 from cylc.task_receiver import msgqueue
@@ -80,15 +80,15 @@ class PollTimer( object ):
 
         if self.current_interval:
             self.log( 'NORMAL', 'setting ' + self.name + ' poll timer for ' + str(self.current_interval) + ' seconds' )
-            self.timer_start = now()
+            self.timer_start = time.time()
         else:
             self.timer_start = None
 
     def get( self ):
         if not self.timer_start:
             return False
-        timeout = self.timer_start + datetime.timedelta( seconds=self.current_interval )
-        if now() > timeout:
+        timeout = self.timer_start + self.current_interval
+        if time.time() > timeout:
             return True
 
 
@@ -313,14 +313,15 @@ class task( object ):
 
     def retry_delay_done( self ):
         done = False
+        now_time = time.time()
         if self.retry_delay_timer_start:
-            diff = now() - self.retry_delay_timer_start
-            foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
+            diff = now_time - self.retry_delay_timer_start
+            foo = 60 * self.retry_delay
             if diff >= foo:
                 done = True
         elif self.sub_retry_delay_timer_start:
-            diff = now() - self.sub_retry_delay_timer_start
-            foo = datetime.timedelta( 0,0,0,0,self.sub_retry_delay,0,0 )
+            diff = now_time - self.sub_retry_delay_timer_start
+            foo = 60 * self.sub_retry_delay
             if diff >= foo:
                 done = True
         return done
@@ -758,8 +759,8 @@ class task( object ):
             return
 
         # if timed out: log warning, poll, queue event handler, and turn off the timer
-        current_time = now()
-        cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
+        current_time = time.time()
+        cutoff = self.execution_timer_start + 60 * timeout
         if current_time > cutoff:
             if self.event_hooks['reset timer']:
                 # the timer is being re-started by put messages
@@ -772,9 +773,8 @@ class task( object ):
             self.execution_timer_start = None
 
     def sim_time_check( self ):
-        timeout = self.started_time + \
-                datetime.timedelta( seconds=self.sim_mode_run_length )
-        if now() > timeout:
+        timeout = self.started_time + self.sim_mode_run_length
+        if time.time() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
                 self.message_queue.put( 'NORMAL', self.id + ' submitted' )
                 self.message_queue.put( 'CRITICAL', self.id + ' failed' )
@@ -900,7 +900,7 @@ class task( object ):
 
         if self.event_hooks['reset timer']:
             # Reset execution timer on incoming messages
-            self.execution_timer_start = now()
+            self.execution_timer_start = time.time()
 
         if content == 'submitting now':
             # (A fake task message from the job submission thread).
@@ -966,7 +966,7 @@ class task( object ):
                 # There is a retry lined up
                 msg = "job submission failed, retrying in " + str(self.sub_retry_delay) +  " minutes"
                 self.log( "NORMAL", msg )
-                self.sub_retry_delay_timer_start = now()
+                self.sub_retry_delay_timer_start = time.time()
                 self.sub_try_number += 1
                 self.set_status( 'submit-retrying' )
                 self.record_db_event(event="submission failed", message="submit-retrying in " + str(self.sub_retry_delay) )
@@ -1046,7 +1046,7 @@ class task( object ):
                 # There is a retry lined up
                 msg = "job failed, retrying in " + str(self.retry_delay) + " minutes"
                 self.log( "NORMAL", msg )
-                self.retry_delay_timer_start = now()
+                self.retry_delay_timer_start = time.time()
                 self.try_number += 1
                 self.set_status( 'retrying' )
                 self.record_db_event(event="failed", message="retrying in " + str( self.retry_delay) )

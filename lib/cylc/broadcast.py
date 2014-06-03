@@ -89,7 +89,7 @@ class broadcast( Pyro.core.ObjBase ):
         self.prune( self.settings )
 
         if self.get_dump() != self.last_settings:
-            current_time_string = cylc.wallclock.get_current_time_string(
+            current_time_string = get_current_time_string(
                 display_sub_seconds=True)
             self.settings_queue.append(RecordBroadcastObject(
                 current_time_string, self.get_dump() ))

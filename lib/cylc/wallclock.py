@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from flags import utc
-from datetime import datetime, timedelta
+from datetime import datetime
 from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import get_local_time_zone_format
 
@@ -32,7 +32,7 @@ DATE_TIME_FORMAT_EXTENDED = "%Y-%m-%dT%H:%M:%S"
 DATE_TIME_FORMAT_EXTENDED_SUB_SECOND = "%Y-%m-%dT%H:%M:%S.%f"
 
 RE_DATE_TIME_FORMAT_EXTENDED = (
-    "(?:\d+|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-][\d:]+))")
+    "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-][\d:]+)?")
 
 TIME_FORMAT_BASIC = "%H%M%S"
 TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"

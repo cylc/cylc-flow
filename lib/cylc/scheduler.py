@@ -582,8 +582,7 @@ class scheduler(object):
     #___________________________________________________________________
 
     def set_suite_timer( self, reset=False ):
-        ts = now()
-        self.suite_timer_start = ts
+        self.suite_timer_start = time.time()
         if flags.verbose:
             print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", get_current_time_string()
 
@@ -1011,8 +1010,9 @@ class scheduler(object):
     def check_suite_timer( self ):
         if self.already_timed_out:
             return
-        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.cfg['cylc']['event hooks']['timeout'] )
-        if now() > timeout:
+        timeout = self.suite_timer_start + 60 * (
+            self.config.cfg['cylc']['event hooks']['timeout'])
+        if time.time() > timeout:
             self.already_timed_out = True
             message = 'suite timed out after ' + str( self.config.cfg['cylc']['event hooks']['timeout']) + ' minutes'
             self.log.warning( message )
