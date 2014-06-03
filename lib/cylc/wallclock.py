@@ -18,6 +18,7 @@
 
 from flags import utc
 from datetime import datetime, timedelta
+from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import get_local_time_zone_format
 
 TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(reduced_mode=True)
@@ -31,7 +32,7 @@ DATE_TIME_FORMAT_EXTENDED = "%Y-%m-%dT%H:%M:%S"
 DATE_TIME_FORMAT_EXTENDED_SUB_SECOND = "%Y-%m-%dT%H:%M:%S.%f"
 
 RE_DATE_TIME_FORMAT_EXTENDED = (
-    "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-][\d:]+)")
+    "(?:\d+|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-][\d:]+))")
 
 TIME_FORMAT_BASIC = "%H%M%S"
 TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"
@@ -171,3 +172,10 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
                            override_use_utc=None,
                            only_display_time=only_display_time,
                            no_display_time_zone=no_display_time_zone)
+
+
+def get_unix_time_from_time_string(time_string):
+    """Convert a time string into a unix timestemp."""
+    parser = TimePointParser()
+    time_point = parser.parse(time_string)
+    return time_point.get("seconds_since_unix_epoch")

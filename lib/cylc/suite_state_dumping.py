@@ -76,7 +76,8 @@ class dumper( object ):
                 handle = open(file_name, "wb")
 
                 handle.write('run mode : %s\n' % self.run_mode)
-                handle.write('time : %s\n' % get_current_time_string())
+                handle.write('time : %s (%d)\n' % (
+                   get_current_time_string(), time.time()))
 
                 handle.write(self.cts_str)
 

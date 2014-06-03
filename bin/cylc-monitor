@@ -137,11 +137,7 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
-            dt = convert_unix_time_to_local_datetime(dt)
-            dt = (
-                dt.strftime(DATE_TIME_FORMAT_EXTENDED) + 
-                TIME_ZONE_STRING_LOCAL_EXTENDED
-            )
+            dt = get_time_string_from_unix_time(dt)
             run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
@@ -226,7 +222,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + get_time_string_from_unix_time(dt) + ctrl_end )
+            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + dt + ctrl_end )
 
             foo = 'mode: ' + run_mode
             baz = header

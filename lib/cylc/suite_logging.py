@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re, time
+import os, sys, re
 import logging, logging.handlers
 from cfgspec.site import sitecfg
 from cylc.wallclock import get_time_string_from_unix_time

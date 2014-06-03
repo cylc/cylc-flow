@@ -20,7 +20,6 @@ import re
 import sys
 import subprocess
 import cylc.TaskID
-from cylc.wallclock import DATE_TIME_FORMAT_EXTENDED
 
 
 def get_stop_state(suite, owner=None, host=None):
@@ -64,16 +63,19 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     if line0.startswith( 'suite time' ) or \
             line0.startswith( 'simulation time' ):
         # backward compatibility with pre-5.4.11 state dumps
-        time_string = line0.rstrip().split(' : ')[1]
+        global_summary["last_updated"] = time.time()
     else:
         # (line0 is run mode)
         line1 = lines.pop(0)
         while not line1.startswith("time :"):
             line1 = lines.pop(0)
-        time_string = line1.rstrip().split(' : ')[1]
-
-   
-    global_summary["last_updated"] = time_string
+        try:
+            time_string = line1.rstrip().split(' : ')[1]
+            unix_time_string = time_string.rsplit('(', 1)[1].rstrip(")")
+            global_summary["last_updated"] = int(unix_time_string)
+        except (TypeError, ValueError):
+            global_summary["last_updated"] = time.time()
+  
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     if start != "(none)":
