@@ -210,6 +210,7 @@ class config( object ):
         self.cfg = self.pcfg.get( sparse=False )
 
         init_cyclers(self.cfg)
+
         flags.back_comp_cycling = (
             get_backwards_compatibility_mode())
 
@@ -1379,7 +1380,10 @@ class config( object ):
         if self.actual_first_ctime:
             # already computed
             return self.actual_first_ctime
-        ctime = get_point(start_ctime)
+        if isinstance(start_ctime, basestring):
+            ctime = get_point(start_ctime)
+        else:
+            ctime = start_ctime
         adjusted = []
         for seq in self.sequences:
             foo = seq.get_first_point( ctime )

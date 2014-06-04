@@ -1031,28 +1031,24 @@ Run the suite at the terminal with the \lstinline=cylc run= command:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc run --no-detach tut.oneoff.basic
-*************************************************************************
-*             The Cylc Suite Engine [5.3.0-436-ge9ba-dirty]             *
-*              Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
-*                                                                       *
-* This program comes with ABSOLUTELY NO WARRANTY.  It is free software; *
-* you are welcome to redistribute it under certain conditions. Details: *
-*           `cylc license conditions'; `cylc license warranty'          *
-*************************************************************************
-
-1 task ready
-  * hello.1 submitting now
-SUBMIT No.1(1,1):
-    (/home/hilary/cylc-run/tut.oneoff.basic/log/job/hello.1.1 </dev/null
-    1>/home/hilary/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out
-    2>/home/hilary/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err &
-    echo $!; wait )
-  * hello.1 submission succeeded
-  * hello.1 submit_method_id=28480
-  * hello.1 started at 2013-09-20T13:51:34
-  * hello.1 succeeded at 2013-09-20T13:51:46
-
-Initiating suite shutdown
+************************************************************************
+*              The Cylc Suite Engine [5.4.13-113-g89224]               *
+*             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
+*                                                                      *
+* This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
+* you are welcome to redistribute it under certain conditions. Details:*
+*          `cylc license conditions'; `cylc license warranty'          *
+************************************************************************
+SUBMIT No.1(1,1): ( perl -e "setpgrp(0,0);exec(@ARGV)" $HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1 </dev/null 1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out 2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err & echo $!; wait )
+Stopping: 
+  + all cycling tasks have spawned past the final cycle 1
+Requesting Job Submission stop - ignoring remaining items (currently 0)
+Requesting Event Handlers stop - after remaining items (currently 0)
+Requesting Poll & Kill Commands stop - after remaining items (currently 0)
+Thread-4 exit (Job Submission)
+Thread-2 exit (Event Handlers)
+Thread-3 exit (Poll & Kill Commands)
+Suite shutting down at 2014-06-04T10:18:27.142923Z
 DONE
 \end{lstlisting}
 The \lstinline=--no-detach= option tells cylc not to daemonize so that
@@ -1060,8 +1056,7 @@ output is printed to the terminal. When the task is
 ready to run cylc generates a special {\em job script} to run
 it. The command line used to submit the job script, which depends on the
 task's job submission method and host machine, is printed to suite
-stdout.  Messages subsequently received from the running task are
-also printed. More detailed information is written, time-stamped, to
+stdout. More detailed information is written, time-stamped, to
 a {\em suite log}. The suite automatically shuts down when and if
 all tasks have succeeded.
 
@@ -1109,10 +1104,9 @@ usually a date/time or an integer representation:
 \lstset{language=transcript}
 \begin{lstlisting}
 foo.20100808T00Z   # a task with a date/time cycle point
-bar.1              # a task with an integer cycle point %Q non-cycling task?
+bar.1              # a task with an integer cycle point (could be non-cycling)
 \end{lstlisting}
-Non-cycling tasks %Q still true?
- usually just have the tag \lstinline=1=, but this
+Non-cycling tasks usually just have the tag \lstinline=1=, but this
 still has to be used to target the task instance with cylc commands.
 
 \subsection{Job Submission: How Tasks Are Executed}
@@ -1159,18 +1153,26 @@ If you run the suite (first check that the {\em at daemon}
 to stdout:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.oneoff.jobsub
-#...
-1 task ready
-  * hello.1 submitting now
-SUBMIT No.1(1,1):
-    (echo "/home/hilary/cylc-run/tut.oneoff.jobsub/hello.1.1 \
-     1>/home/hilary/cylc-run/tut.oneoff.jobsub/hello.1.1.out \
-     2>/home/hilary/cylc-run/tut.oneoff.jobsub/hello.1.1.err" | at now)
-  * hello.1 submission succeeded
-  * hello.1 started at 2013-09-28T17:25:07
-  * hello.1 submit_method_id=2191
-  * hello.1 succeeded at 2013-09-28T17:25:17
+shell$ cylc run --no-detach tut.oneoff.basic 
+************************************************************************
+*           The Cylc Suite Engine [5.4.13-113-g89224-dirty]            *
+*             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
+*                                                                      *
+* This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
+* you are welcome to redistribute it under certain conditions. Details:*
+*          `cylc license conditions'; `cylc license warranty'          *
+************************************************************************
+SUBMIT No.1(1,1): (echo "perl -e \"setpgrp(0,0);exec(@ARGV)\" $HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1 1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out 2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err" | at now)
+Stopping: 
+  + all cycling tasks have spawned past the final cycle 1
+Requesting Job Submission stop - ignoring remaining items (currently 0)
+Requesting Event Handlers stop - after remaining items (currently 0)
+Requesting Poll & Kill Commands stop - after remaining items (currently 0)
+Thread-4 exit (Job Submission)
+Thread-2 exit (Event Handlers)
+Thread-3 exit (Poll & Kill Commands)
+Suite shutting down at 2014-06-04T10:48:14.944483Z
+DONE
 \end{lstlisting}
 Cylc supports a number of different job submission methods. Tasks
 submitted to external batch queuing systems like \lstinline=at=,
@@ -1208,8 +1210,8 @@ shell$ tree $HOME/cylc-run/tut.oneoff.basic/
 |       `-- out                 # suite stdout log
 |-- state               # suite state dump files
 |   |-- state
-|   |-- state-1
-|   `-- state-2
+|   |-- state.20140604T104814.945181Z
+|   `-- state.20140604T104814.942055Z
 |-- share               # suite share directory
 `-- work                # suite work directory
 \end{lstlisting}
@@ -1381,10 +1383,9 @@ task:
 shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/goodbye.1.1.out
 # (or cylc log -o tut.oneoff.goodbye goodbye.1
 JOB SCRIPT STARTING
-cylc (scheduler - 2013/09/23 18:15:09): goodbye.1 started at 2013-09-23T18:15:09
-Send message: try 1 of 7 succeeded
+cylc (scheduler - 2014-06-04T11:20:29Z): goodbye.1 started at 2014-06-04T11:20:29Z
 cylc Suite and Task Identity:
-  Suite Name  : tut.oneoff.goodbye
+  Suite Name  : tut.oneoff.basic
   Suite Host  : server0
   Suite Port  : 7766
   Suite Owner : hilary
@@ -1394,10 +1395,9 @@ cylc Suite and Task Identity:
   Task Try No.: 1
 
 Goodbye World!
-
-cylc (scheduler - 2013/09/23 18:15:20): hello.1 succeeded at 2013-09-23T18:15:20
-Send message: try 1 of 7 succeeded
+cylc (scheduler - 2014-06-04T11:20:39Z): goodbye.1 succeeded at 2014-06-04T11:20:39Z
 JOB SCRIPT EXITING (TASK SUCCEEDED)
+
 \end{lstlisting}
 
 \subsubsection{Failure And Suicide Triggering}
@@ -1717,8 +1717,8 @@ work.
     %Q Runahead factor now
     \item The suite runahead limit is configurable - see
         Section~\ref{RunaheadLimit}.
-    \item Stepped daily, monthly, and yearly cycling is also supported -
-    see Section~\ref{OtherCyclingModules}.
+    \item Other date-time cycling is also supported (multihourly, daily,
+ monthly, yearly...) - see Section~\ref{OtherCyclingModules}.
 \end{myitemize}
 
 \subsubsection{Inter-Cycle-Point Triggers}
@@ -1732,13 +1732,14 @@ to the previous example:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
+        # cycle times of 00 and 12 UTC every day:
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
-For any given cycle point \lstinline=T= in the sequence defined by the
+For any given cycle point in the sequence defined by the
 cycling graph section heading, \lstinline=bar= triggers off
 \lstinline=foo= as before, but now \lstinline=foo= triggers off its own
-previous instance \lstinline=foo[T-12]=. Figure~\ref{fig-tut-two} shows
+previous instance \lstinline=foo[-PT12H]=. Figure~\ref{fig-tut-two} shows
 how this connects the cycling graph sections together.
 \begin{figure}
     \begin{center}
@@ -1748,6 +1749,11 @@ how this connects the cycling graph sections together.
 \label{fig-tut-two}
 \end{figure}
 
+Note that the \lstinline=[[[T00,T12]]]= (at 00 and 12 hours) syntax could be
+written as \lstinline=[[[PT12H]]]= (repeat every 12 hours, starting at the
+initial cycle time) provided that the initial cycle time was always at 00 and
+12 hours.
+
 Experiment with this suite to see how inter-cycle-point triggers work.
 Note that the first instance of \lstinline=foo=, at suite start-up, will
 trigger immediately in spite of its inter-cycle-point trigger, because cylc
@@ -1756,33 +1762,33 @@ ignores triggers that reach back beyond the initial cycle point.
 The presence of an inter-cycle-point trigger usually implies something
 special has to happen at start-up, however. If a model depends on its
 own previous instance for restart files, for instance, then some special
-process will typically have to
-generate the initial set of restart files when there is no previous
-cycle point to do it.  The following sections illustrate several ways of
-handling this in cylc suites.
+process will typically have to generate the initial set of restart files when
+there is no previous cycle point to do it. The following sections illustrate
+several ways of handling this in cylc suites.
 
 \subsubsection{Initial Non-Repeating (R1) Tasks}
-
+\label{initial-non-repeating-r1-tasks}
 \hilight{ suite: \lstinline=tut.cycling.three= }
 \vspace{3mm}
 
-Tasks can appear in more than one dependencies subsection graph, and we
-can write a sequence that only gives a single date/time occurrence. Together,
-this means that we can write an extra set of dependencies that are only
-valid at this single date/time cycle point. We can choose this single
-date/time to be the initial cycle point date/time, so that our extra tasks and
-dependencies apply at the very start of the suite.
+Sometimes we want to be able to run a task at the initial cycle point, but
+refrain from running it in subsequent cycles. We can do this by writing an
+extra set of dependencies that are only valid at a single date/time cycle
+point. If we choose this to be the initial cycle point, these will only apply
+at the very start of the suite.
 
-The syntax for writing this single date/time occurrence is \lstinline=R1=,
-which stands for \lstinline=R1/no-specified-date-time/no-specified-period=.
-This is an adaptation of the ISO 8601 date/time standard's recurrence syntax (
-\lstinline=Rn/DATETIME/PERIOD=) with some special context information supplied
-by cylc in place of our \lstinline=no-specified= data.
+The cylc syntax for writing this single date/time cycle point occurrence is
+\lstinline=R1=, which stands for
+\lstinline=R1/no-specified-date-time/no-specified-period=.
+This is an adaptation of part of the ISO 8601 date/time standard's recurrence
+syntax (\lstinline=Rn/date-time/period=) with some special context information
+supplied by cylc for the \lstinline=no-specified-*= data.
 
-The \lstinline=1= means repeat once. As we've specified no date-time, Cylc will
-use the initial cycle point date/time by default, which is what we want. We've
-also missed out specifying the period - this is set by cylc to a zero interval
-in this case (although given that it never repeats, it's not important).
+The \lstinline=1= in the \lstinline=R1= means repeat once. As we've specified
+no date-time, Cylc will use the initial cycle point date/time by default,
+which is what we want. We've also missed out specifying the period - this is
+set by cylc to a zero amount of time in this case (as it never
+repeats, this is not significant).
 
 There is a full primer for cycling syntax later in the user guide, which also
 explains how the other syntax in this example (\lstinline=T00= and
@@ -1791,6 +1797,8 @@ explains how the other syntax in this example (\lstinline=T00= and
 For example, in \lstinline=tut.cycling.three=:
 \lstset{language=suiterc}
 \begin{lstlisting}
+[cylc]
+    cycle point time zone = +13
 [scheduling]
     initial cycle time = 20130808T00
     final cycle time = 20130812T00
@@ -1800,43 +1808,45 @@ For example, in \lstinline=tut.cycling.three=:
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
-This is shown in the right of Figure~\ref{fig-tut-three}.
+This is shown in Figure~\ref{fig-tut-three}.
+
+Note that the time zone has been set to \lstinline=+1300= in this case,
+instead of UTC (\lstinline=Z=) as before. If no time zone or UTC mode was
+set, the local time zone of your machine will be used in the cycle points.
+
 \lstset{language=transcript}
 
 At the initial cycle point, \lstinline=foo= will depend on the
 \lstinline=foo[-PT12H]= and also \lstinline=prep=:
 \lstset{language=suiterc}
 \begin{lstlisting}
-prep & foo.20130807T1200 => foo.20130808T0000
+prep.20130808T0000+13 & foo.20130807T1200+13 => foo.20130808T0000+13
 \end{lstlisting}
 \lstset{language=transcript}
 
 Thereafter, it will just look like e.g.:
 \lstset{language=suiterc}
 \begin{lstlisting}
-foo.20130808T0000 => foo.20130808T1200
+foo.20130808T0000+13 => foo.20130808T1200+13
 \end{lstlisting}
 \lstset{language=transcript}
 
 However, in our initial cycle point example, the dependence on
-\lstinline=foo.20130807T1200= will be ignored, because that task's cycle point
-is earlier than the suite's initial cycle point and so it cannot run. This
+\lstinline=foo.20130807T1200+13= will be ignored, because that task's cycle
+point is earlier than the suite's initial cycle point and so it cannot run. This
 means that the initial cycle point dependencies for \lstinline=foo= actually
 look like:
 \lstset{language=suiterc}
 \begin{lstlisting}
-prep => foo.20130808T0000
+prep.20130808T0000+13 => foo.20130808T0000+13
 \end{lstlisting}
 \lstset{language=transcript}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.3\textwidth]{graphics/png/orig/tut-three.png}
-        \hspace{20mm}
-        \includegraphics[width=0.3\textwidth]{graphics/png/orig/tut-four.png}
+        \includegraphics[width=0.5\textwidth]{graphics/png/orig/tut-three.png}
     \end{center}
-    \caption{The \lstinline=tut.cycling.three= and
-    \lstinline=tut.cycling.four= suites}
+    \caption{The \lstinline=tut.cycling.three= suite}
 \label{fig-tut-three}
 \end{figure}
 
@@ -2380,13 +2390,15 @@ vary depending on the particular cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
+    initial cycle time = 20200401
+    final cycle time = 20200405
     [[dependencies]]
-        [[[T00,T06,T12,T18]]] # validity (hours of the day)
+        [[[T00,T06,T12,T18]]] # validity (hours)
             graph = """
 A => B & C   # B and C trigger off A
 A[-PT6H] => A  # Model A restart trigger
                     """
-        [[[T06,T18]]]
+        [[[T06,T18]]] # hours
             graph = "C => X"
 \end{lstlisting}
 \lstset{language=transcript}
@@ -2399,8 +2411,12 @@ task runtime properties such as command scripting).
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = "Dependency Graph Example"
+title = "Dependency Example 1"
+[cylc]
+    UTC mode = True
 [scheduling]
+    initial cycle time = 20200401
+    final cycle time = 20200405
     [[dependencies]]
         [[[T00,T06,T12,T18]]] # validity (hours)
             graph = """
@@ -2410,6 +2426,8 @@ A[-PT6H] => A  # Model A restart trigger
         [[[T06,T18]]] # hours
             graph = "C => X"
 [visualization]
+    initial cycle time = 20200401
+    final cycle time = 20200401T06
     [[node attributes]]
         X = "color=red"
 \end{lstlisting}
@@ -2566,14 +2584,12 @@ tasks. Additionally, there may be multiple graph strings under different
 VALIDITY sections for cycling tasks with different dependencies at
 different cycle points.
 
-\paragraph{One-off Asynchronous Tasks}
+\paragraph{One-off (Non-Cycling) Tasks}
 
-Figure~\ref{fig-test1} shows a small suite of one-off asynchronous
-tasks; these have no associated cycle points and don't spawn successors
-(once they're all finished the suite just exits).  The integer $1$
-attached to each graph node is just an arbitrary label, akin to the task
-cycle point in cycling tasks; it increments when a repeating asynchronous
-task (below) spawns.
+Figure~\ref{fig-test1} shows a small suite of one-off non-cycling
+tasks; these all share a single cycle point (\lstinline=1=) and don't spawn
+successors (once they're all finished the suite just exits).  The integer
+\lstinline=1= attached to each graph node is just an arbitrary label here.
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
@@ -2591,7 +2607,7 @@ title = some one-off asynchronous tasks
         \includegraphics[width=0.25\textwidth]{graphics/png/orig/test1.png}
     \end{center}
 \end{minipage}
-\caption[One-off Asynchronous Tasks]{\scriptsize One-off Asynchronous Tasks.}
+\caption[One-off (Non-Cycling) Tasks]{\scriptsize One-off (Non-Cycling) Tasks.}
 \label{fig-test1}
 \end{figure}
 
@@ -2687,7 +2703,10 @@ For example, all these are valid in cylc:
 Here is a quick summary of the syntax rules:
 
 Date/time cycling information is made up of a starting {\em date-time}, an
-{\em interval\}, and an optional {\em limit}.
+{\em interval}, and an optional {\em limit}.
+
+The time is assumed to be in the local time zone unless you set
+\lstinline=[cylc]cycle point time zone= or \lstinline=[cylc]UTC mode=.
 
 The syntax for representations is based on the ISO 8601 date-time standard.
 This includes the representation of {\em date-time}, {\em interval}. What we
@@ -2696,12 +2715,14 @@ of ISO 8601 recurrence syntax. The most common full form is:
 \lstinline=R[limit?]/[date-time]/[interval]=. However, we allow omitting
 information that can be guessed from the context (rules below). This means
 that it can be written as:
-\lstinline=R[limit?]/[date-time]=
-\lstinline=R[limit?]//[interval]=
-\lstinline=[date-time]/[interval]=
-\lstinline=R[limit?] # Special limit of 1 case=
-\lstinline=[date-time]=
-\lstinline=[interval]=.
+\begin{lstlisting}
+R[limit?]/[date-time]
+R[limit?]//[interval]
+[date-time]/[interval]
+R[limit?] # Special limit of 1 case
+[date-time]
+[interval]
+\end{lstlisting}
 For example, \lstinline=T00= is an example of \lstinline=[date-time]=, with an
 inferred 1 day period and no limit.
 
@@ -2726,14 +2747,20 @@ Another supported form of ISO 8601 recurrence is:
 \lstinline=R[limit?]/[interval]/[date-time]=. This form uses the
 {\em date-time } as the end of the cycling sequence rather than the start.
 For example, \lstinline=R3/P5D/20140430T06= means:
-\lstinline=20140420T06=
-\lstinline=20140425T06=
-\lstinline=20140430T06=. This kind of form can be used for specifying special
-behaviour near the end of the suite, at the final cycle point's date/time. We
-can also represent this in cylc with a collapsed form:
-\lstinline=R[limit?]/[interval]=
-\lstinline=R[limit?]//[date-time]=
-\lstinline=[interval]/[date-time]=
+\begin{lstlisting}
+20140420T06
+20140425T06
+20140430T06
+\end{lstlisting}
+
+This kind of form can be used for specifying special behaviour near the end of
+the suite, at the final cycle point's date/time. We can also represent this in
+cylc with a collapsed form:
+\begin{lstlisting}
+R[limit?]/[interval]
+R[limit?]//[date-time]
+[interval]/[date-time]
+\end{lstlisting}
 
 So, for example, you can write:
 \lstset{language=suiterc}
@@ -2772,64 +2799,115 @@ hours may appear in multiple section headings) and the same tasks may
 appear in multiple sections, but individual dependencies should be
 unique across the entire graph. For example, the following graph defines
 a duplicate prerequisite for task C:
+\lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[T00,T06,T12,T18]]]
             graph = "A => B => C"
-        [[[6,18]]]
+        [[[T06,T18]]]
             graph = "B => C => X"
-            # duplicate prerequisite: B => C already defined at 6, 18
+            # duplicate prerequisite: B => C already defined at T06, T18
 \end{lstlisting}
+\lstset{language=transcript}
 This does not affect scheduling, but for the sake of clarity and brevity
 the graph should be written like this:
+\lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[T00,T06,T12,T18]]]
             graph = "A => B => C"
-        [[[6,18]]]
+        [[[T06,T18]]]
             # X triggers off C only at 6 and 18 hours
             graph = "C => X"
 \end{lstlisting}
+\lstset{language=transcript}
 
-\paragraph{Combined Asynchronous And Synchronous Graphs}
+\subparagraph{Advanced Starting Up}
 
-Cycling tasks can be made to wait on one-off asynchronous tasks, as
-shown in Figure~\ref{fig-test4}. Alternatively, they can be made to wait
-on one-off synchronous start-up tasks, which have an associated cycle point even
-though they are non-cycling - see Figure~\ref{fig-test5}.
-
-\subparagraph{Synchronous Start-up vs One-off Asynchronous Tasks}
-
-One-off synchronous start-up tasks run only when a cycling suite is
-{\em cold-started} and they are often associated with subsequent one-off
-{\em cold-start tasks} used to bootstrap a cycling suite into existence.
-
-The distinction between cold- and warm-start is only meaningful for
-cycling tasks, and one-off asynchronous tasks may be best used in
-constructing entirely non-cycling suites.
-
-However, one-off asynchronous tasks can precede cycling tasks in the
-same suite, as shown above. It seems likely that, if used in this way,
-they will be intended as start-up tasks - so currently {\em one-off
-asynchronous tasks only run in a cold-start}.
-
+Dependencies that are only valid at the initial cycle point can be written
+using the \lstinline=R1= notation (e.g. as in Section
+\ref{initial-non-repeating-r1-tasks}. For example:
 \lstset{language=suiterc}
+\begin{lstlisting}
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle time = 20130808T00
+    final cycle time = 20130812T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = "prep => foo"
+        [[[T00]]]
+            graph = "foo[-P1D] => foo => bar"
+\end{lstlisting}
+\lstset{language=transcript}
+
+In the example above, \lstinline=R1= implies \lstinline=R1/20130808T00=, so
+\lstinline=prep= only runs once at that cycle point (the initial cycle point).
+At that cycle point, \lstinline=foo= will have a dependence on
+\lstinline=prep= - but not at subsequent cycle points.
+
+However, what if we have a staggered start (e.g. a task set beginning at \lstinline=T00=,
+and another at \lstinline=T12=) with multiple cycles needing to feed off a
+starting task or tasks?
+
+Let's suppose that we add the following section to the suite example above:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle time = 20130808T00
+    final cycle time = 20130812T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = "prep => foo"
+        [[[T00]]]
+            graph = "foo[-P1D] => foo => bar"
+        [[[T12]]]
+            graph = "baz[-P1D] => baz => qux"
+\end{lstlisting}
+\lstset{language=transcript}
+
+We'll also say that there should be a starting dependence between
+\lstinline=prep= and our new task \lstinline=baz= - but we still want to have
+a single \lstinline=prep= task, at a single cycle.
+
+We can write this using a special case of the \lstinline=task[-interval]= syntax -
+if the interval is null, this implies the task at the initial cycle time.
+
+For example, we can write our suite like this:
+
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = one-off async and cycling tasks
-# (with dependence between cycle points too)
+[cylc]
+    UTC mode = True
 [scheduling]
+    initial cycle time = 20130808T00
+    final cycle time = 20130812T00
     [[dependencies]]
-        graph = "prep1 => prep2"
-        [[[0,12]]]
-            graph = """
-    prep2 => foo => bar & baz => qux
-    foo[T-12] => foo
-                    """
+        [[[R1]]]
+            graph = "prep"
+        [[[R1/T00]]]
+            graph = "prep[] => foo"   # prep[] implies prep at the initial cycle time
+        [[[R1/T12]]]
+            graph = "prep[] => baz"   # prep[], as above
+        [[[T00]]]
+            graph = "foo[-P1D] => foo => bar"
+        [[[T12]]]
+            graph = "baz[-P1D] => baz => qux"
+[visualization]
+    initial cycle time = 20130808T00
+    final cycle time = 20130810T00
+    [[node attributes]]
+        foo = "color=red"
+        bar = "color=orange"
+        baz = "color=green"
+        qux = "color=blue"
 \end{lstlisting}
 \lstset{language=transcript}
 \end{minipage}
@@ -2839,39 +2917,12 @@ title = one-off async and cycling tasks
         \includegraphics[width=\textwidth]{graphics/png/orig/test4.png}
     \end{center}
 \end{minipage}
-\caption[One-off Asynchronous and Cycling Tasks]{\scriptsize One-off
-asynchronous and cycling tasks in the same suite.}
+\caption[Staggered Start Suite]{\scriptsize Staggered Start Suite}
 \label{fig-test4}
 \end{figure}
 
-\begin{figure}
-\begin{minipage}[b]{0.5\textwidth}
-\lstset{language=suiterc}
-\begin{lstlisting}
-title = one-off start-up and cycling tasks
-# (with dependence between cycle points too)
-[scheduling]
-    [[special tasks]]
-        start-up = prep1, prep2
-    [[dependencies]]
-        [[[0,12]]]
-            graph = """
-    prep1 => prep2 => foo => bar & baz => qux
-    foo[T-12] => foo
-                    """
-\end{lstlisting}
-\lstset{language=transcript}
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.5\textwidth}
-    \begin{center}
-        \includegraphics[width=\textwidth]{graphics/png/orig/test5.png}
-    \end{center}
-\end{minipage}
-\caption[One-off Synchronous and Cycling Tasks]{\scriptsize One-off
-synchronous and cycling tasks in the same suite.}
-\label{fig-test5}
-\end{figure}
+This neatly expresses what we want - a task running at the initial cycle point
+that has one-off dependencies with other task sets at different cycles.
 
 \paragraph{Repeating Asynchronous Tasks}
 
@@ -3281,14 +3332,14 @@ generated by the previous forecast.} Here's how to express this
 kind of relationship in cylc:
 \begin{lstlisting}
 [dependencies]
-    [[0,6,12,18]]
+    [[PT6H]]
         # B triggers off A in the previous cycle point
-        graph = "A[T-6] => B"
+        graph = "A[-PT6H] => B"
 \end{lstlisting}
 inter-cycle-point and trigger type (and internal output) notation can be combined:
 \begin{lstlisting}
     # B triggers if A in the previous cycle point fails:
-    graph = "A[T-6]:fail => B"
+    graph = "A[-PT6H]:fail => B"
 \end{lstlisting}
 
 At suite start-up inter-cycle-point triggers refer to a previous cycle point
@@ -3305,25 +3356,17 @@ start-up.  They are illustrated in Tutorial
 Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
 
 \begin{myitemize}
-    \item initial {\em asynchronous tasks}:
+    \item \lstinline=R1= tasks (recommended):
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        graph = "prep"
-        [[[0,12]]]
-            graph = "prep & foo[T-12] => foo => bar"
-\end{lstlisting}
-
-    \item initial {\em start-up tasks}
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[special tasks]]
-        start-up = prep
-    [[dependencies]]
-        [[[0,12]]]
-            graph = "prep & foo[T-12] => foo => bar"
+        [[[R1]]]
+            graph = "prep"
+        [[[R1/T00,R1/T12]]]
+            graph = "prep[] => foo"
+        [[[T00,T12]]]
+            graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
 
     \item initial {\em cold-start tasks}
@@ -3339,25 +3382,28 @@ Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
 
 \end{myitemize}
 
-The first two cases are the same, except that {\em start-up} tasks are
-assigned a cycle point (even though they don't cycle) whereas {\em
-asynchronous} tasks are not. In the first cycle point the previous-cycle trigger is
-ignored and the first cycling tasks trigger off the initial tasks; subsequently
-dependence on the initial tasks is ignored and the inter-cycle-point trigger
-takes effect. Cold-start tasks, on the other hand, can be used for real
-model cold-start processes, whereby a warm-cycled model at any given cycle
-point can in principle have its inputs satisfied by a previous instance of
-itself, {\em or} by a cold-start task with (nominally) the same cycle point.
-In effect, the cold-start task masquerades as the previous-cycle-point trigger
-of its associated cycling task. At suite start-up cold-start tasks will
+\lstinline=R1=, or \lstinline=R1/date-time= tasks are the recommended way to
+specify unusual start up conditions. They allow you to specify a clean
+distinction between the dependencies of initial cycles and the dependencies
+of the subsequent cycles.
+
+Initial tasks can be used for real model cold-start processes, whereby a
+warm-cycled model at any given cycle point can in principle have its inputs
+satisfied by a previous instance of itself, {\em or} by an initial task with
+(nominally) the same cycle point.
+
+In effect, the \lstinline=R1= task masquerades as the previous-cycle-point trigger
+of its associated cycling task. At suite start-up initial tasks will
 trigger the first cycling tasks, and thereafter the inter-cycle-point trigger
-will take effect. Unlike for asynchronous and start-up initial tasks,
-however, the cold-start ``OR'' construct means that cold-start triggers
-don't have to be ignored by cylc after the first cycle point, so it is
-possible to insert cold-start task into a suite mid-run to do mid-stream
+will take effect.
+
+When using \lstinline=cold-start tasks=, unlike for asynchronous and start-up
+initial tasks, however, the cold-start ``OR'' construct means that cold-start
+triggers don't have to be ignored by cylc after the first cycle point, so it
+is possible to insert cold-start task into a suite mid-run to do mid-stream
 cold-starts after problems that preclude continued normal warm cycling.
 
-One-off initial tasks can invoke real processing to generate the files
+Initial tasks can invoke real processing to generate the files
 that are subsequently produced by a tasks in the previous cycle point; or
 they could be dummy tasks that represent some external process that does the
 same before the suite is started - in which case the initial task can
@@ -3377,8 +3423,8 @@ This can be done with explicit inter-cycle-point triggers in the graph:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,12]]]
-            graph = "foo[T-12] => foo => bar"
+        [[[T00,T12]]]
+            graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
 or by declaring the task to be {\em sequential}:
 \lstset{language=suiterc}
@@ -3387,7 +3433,7 @@ or by declaring the task to be {\em sequential}:
     [[special tasks]]
         sequential = foo
     [[dependencies]]
-        [[[0,12]]]
+        [[[T00,T12]]]
             graph = "foo => bar"
 \end{lstlisting}
 
@@ -3403,7 +3449,7 @@ in a non-uniform cycling sequence: this suite,
     [[special tasks]]
         sequential = foo
     [[dependencies]]
-        [[[0,3,11]]]
+        [[[T00,T03,T11]]]
             graph = "foo => bar"
 \end{lstlisting}
 is equivalent to this one:
@@ -3411,14 +3457,14 @@ is equivalent to this one:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,3,11]]]
+        [[[T00,T03,T11]]]
             graph = "foo => bar"
-        [[[0]]]
-            graph = "foo[T-13] => foo"
-        [[[3]]]
-            graph = "foo[T-3] => foo"
-        [[[11]]]
-            graph = "foo[T-8] => foo"
+        [[[T00]]]
+            graph = "foo[-PT13H] => foo"
+        [[[T03]]]
+            graph = "foo[-PT3H] => foo"
+        [[[T11]]]
+            graph = "foo[-PT8H] => foo"
 \end{lstlisting}
 
 \paragraph{Warm Start}
@@ -3427,11 +3473,10 @@ For suites with inter-cycle-point dependence a {\em warm start} is essentially
 an implicit restart. Rather than loading tasks from a previous recorded
 suite state, cylc loads all cycling tasks at a given cycle point assuming
 that the previous cycle was completed in an earlier suite run. Any initial
-tasks - asynchronous, start-up, or cold-start - therefore do not need to
-run again. Dependence on tasks from before the start cycle is still
-ignored, but cold-start tasks have to be loaded in the {\em succeeded}
-state because dependence on them (in the cold-start OR construct) is
-retained throughout the suite run as is explained above in
+tasks therefore may not need to run again. Dependence on tasks from before
+the start cycle is still ignored, but cold-start tasks have to be loaded in
+the {\em succeeded} state because dependence on them (in the cold-start OR
+construct) is retained throughout the suite run as is explained above in
 Section~\ref{InterCyclePointTriggers}.
 
 \paragraph{Future Triggers}
@@ -3439,10 +3484,14 @@ Section~\ref{InterCyclePointTriggers}.
 Cylc also supports inter-cycle-point triggering off tasks in the future (with
 respect to cycle point date/time, not real time!):
 \begin{lstlisting}
-[dependencies]
-    [[0,6,12,18]]
-        # B triggers off A in the next cycle
-        graph = "A[T+6] => B"
+[[dependencies]]
+    [[[T00,T06,T12,T18]]]
+        # Run A in this cycle.
+        # B triggers off A in the next cycle.
+        graph = """
+            A[+PT6H] => B
+            A
+        """
 \end{lstlisting}
 In contrast to normal inter-cycle-point triggers, future triggers present a
 problem at the suite stop time rather than at start-up - in the final cycle
@@ -3462,7 +3511,7 @@ dependence requires an inter-cycle-point trigger:
     [[special tasks]]
         cold-start = ColdA
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[T00,T06,T12,T18]]]
             graph = "ColdA | A[T-6] => A"
 \end{lstlisting}
 Or if you don't need an explicit cold-start task, this will do:
@@ -3470,8 +3519,8 @@ Or if you don't need an explicit cold-start task, this will do:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,6,12,18]]]
-            graph = "A[T-6] => A"
+        [[[T00,T06,T12,T18]]]
+            graph = "A[-PT6H] => A"
 \end{lstlisting}
 If the model can emit an explicit output message as soon as its
 restart files are completed (see {\em Internal Message Outputs} -
@@ -3480,8 +3529,8 @@ Section~\ref{RIOC}) there's no need to wait for it to finish:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,6,12,18]]]
-            graph = "A[T-6]:res1 => A"
+        [[[T00,T06,T12,T18]]]
+            graph = "A[-PT6H]:res1 => A"
 [runtime]
     [[A]]
         command scripting = """
@@ -3504,9 +3553,9 @@ be finished first:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[T00,T06,T12,T18]]]
             # DO NOT DO THIS (SEE ACCOMPANYING TEXT):
-            graph = "A[T-24] | A[T-18] | A[T-12] | A[T-6] => A"
+            graph = "A[-PT24H] | A[-PT18H] | A[-PT12H] | A[-PT6H] => A"
 \end{lstlisting}
 
 If you need to skip one or more cycle points in a suite like this, manually
@@ -3746,10 +3795,10 @@ must use a different name for the parent variable:
 The task identity variables provided to tasks by cylc are:
 \lstset{language=bash}
 \begin{lstlisting}
-$CYLC_TASK_ID                    # X.2011051118 (e.g.)
+$CYLC_TASK_ID                    # X.20110511T1800Z (e.g.)
 $CYLC_TASK_NAME                  # X
-$CYLC_TASK_CYCLE_TIME            # 2011051118
-$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.2011051118.1
+$CYLC_TASK_CYCLE_TIME            # 20110511T1800Z
+$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.20110511T1800Z.1
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
 $CYLC_TASK_WORK_DIR              # task work directory (see below)
@@ -4162,8 +4211,8 @@ N_MEMBERS can be set similarly, but if not they have default values."""
 {# input of FIRST_TASK is required - no default #}
 
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time   = 2010081600
+    initial cycle time = 20100808T00
+    final cycle time   = 20100816T00
     [[dependencies]]
         [[[0]]]
             graph = """{{ FIRST_TASK }} => ens
@@ -5393,8 +5442,8 @@ suite stdout.
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time = 2010081000
+    initial cycle time = 20100808T00
+    final cycle time = 20100810T00
     [[dependencies]]
         [[[0]]]
             graph = "foo => bar"
@@ -5501,12 +5550,12 @@ When a suite is started with the \lstinline=cylc run= command (cold or
 warm start) the cycle point at which it starts can be given on the command
 line or hardwired into the suite.rc file:
 \begin{lstlisting}
-cylc run foo 2012080806
+cylc run foo 20120808T06Z
 \end{lstlisting}
 or,
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 2010080806
+    initial cycle time = 20100808T06Z
 \end{lstlisting}
 An initial cycle given on the command line will override one in the
 suite.rc file.
@@ -5829,8 +5878,8 @@ trigger a task \lstinline=bar= off a task \lstinline=foo= in another
 suite called \lstinline=other.suite=:
 \begin{lstlisting}
 [scheduling]
-    [[ dependencies]]
-        [[[0,12]]]
+    [[dependencies]]
+        [[[T00,T12]]]
             graph = "FOO<other.suite::foo> => bar"
 \end{lstlisting}
 Local task \lstinline=FOO= will poll for the success of \lstinline=foo=
@@ -5847,7 +5896,7 @@ runtime section:
 \begin{lstlisting}
 [scheduling]
     [[ dependencies]]
-        [[[0,12]]]
+        [[[T00,T12]]]
             graph = "FOO<other.suite::foo> => bar"
 [runtime]
     [[FOO]]
@@ -5878,9 +5927,9 @@ remote task \lstinline=dog= with cycle points of \lstinline=3,9,15,21=
 hours,
 \begin{lstlisting}
 [scheduling]
-    [[ dependencies]]
-        [[[0,6,12,18]]]
-            graph = "DOG<other.suite::dog>[T-3] => cat"
+    [[dependencies]]
+        [[[T00,T06,T12,T18]]]
+            graph = "DOG<other.suite::dog>[-PT3H] => cat"
 \end{lstlisting}
 This results in \lstinline=DOG= having cycle points of
 \lstinline=3,9,15,21= - the sames as \lstinline=dog= in
@@ -6291,7 +6340,7 @@ operation as required.
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[T00,T06,T12,T18]]]
             graph = "foo => bar => baz"
 [runtime]
     [[bar]]
@@ -6310,9 +6359,9 @@ echo $SENTENCE"""
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[0,12]]]
+        [[[T00,T12]]]
             graph = "foo => bar_a => baz"
-        [[[6,18]]]
+        [[[T06,T18]]]
             graph = "foo => bar_b => baz"
 [runtime]
     [[BAR]]
@@ -6327,6 +6376,10 @@ echo $SENTENCE"""
         [[[environment]]]
             SENTENCE = "the lazy dog"
 \end{lstlisting}
+
+    Similarly, if your task has a different behaviour at the initial or final
+    cycle point, consider using an \lstinline=R1= syntax to separate out the
+    functionality.
 
         \subsection{Use Suite Visualization}
 
