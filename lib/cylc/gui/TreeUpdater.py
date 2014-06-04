@@ -23,7 +23,6 @@ from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
 from cylc.wallclock import (
     get_time_string_from_unix_time, TIME_ZONE_STRING_LOCAL_BASIC)
-from isodatetime.data import TimeInterval
 from copy import deepcopy
 import datetime
 import gobject
