@@ -63,7 +63,9 @@ class dumper( object ):
             wireless = self.pool.wireless
 
         base_name = self.BASE_NAME + "." + get_current_time_string(
-            override_use_utc=True, use_basic_format=True)
+            override_use_utc=True, use_basic_format=True,
+            display_sub_seconds=True
+        )
         file_name = os.path.join(self.dir_name, base_name)
 
         # write the state dump file, retrying several times in case of:

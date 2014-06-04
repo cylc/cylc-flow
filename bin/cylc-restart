@@ -122,7 +122,7 @@ where they got to while the suite was down."""
 
         # The state dump file format is:
         # run mode : <mode> 
-        # time : <time>
+        # time : <time> (<unix time>)
         # class <classname>: item1=value1, item2=value2, ...
         # <task_id> : <state>
         # <task_id> : <state>
