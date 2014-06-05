@@ -1278,7 +1278,8 @@ class scheduler(object):
 
 
     def check_stop_clock( self ):
-        if self.stop_clock_time is not None and now() > self.stop_clock_time:
+        if (self.stop_clock_time is not None and
+                time.time() > self.stop_clock_time):
             time_point = (
                 isodatetime.data.get_timepoint_from_seconds_since_unix_epoch(
                     self.stop_clock_time
