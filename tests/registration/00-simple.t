@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 13
 #-------------------------------------------------------------------------------
-SUITE_NAME=$(date -u +%Y%m%d%H%M)_cylc_test_$(basename $TEST_SOURCE_DIR)_regtest
+SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_$(basename $TEST_SOURCE_DIR)_regtest
 mkdir $TEST_DIR/$SUITE_NAME/ 2>&1 
 cp -r $TEST_SOURCE_DIR/basic/* $TEST_DIR/$SUITE_NAME 2>&1
 cylc unregister $SUITE_NAME 2>&1

@@ -19,6 +19,7 @@
 import os, sys, re
 import logging, logging.handlers
 from cfgspec.site import sitecfg
+from cylc.wallclock import get_time_string_from_unix_time
 
 """Configure suite logging with the Python logging module, 'main'
 logger, in a sub-directory of the suite running directory."""
@@ -58,7 +59,9 @@ class suite_log( object ):
             if os.path.getsize( self.path ) > 0:
                 h.doRollover()
 
-        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S' )
+        f = ISO8601DateTimeFormatter(
+            '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S'
+        )
 
         # write warnings and worse to stderr as well as to the log
         h2 = logging.StreamHandler(sys.stderr)
@@ -69,3 +72,10 @@ class suite_log( object ):
         h.setFormatter(f)
         log.addHandler(h)
 
+
+class ISO8601DateTimeFormatter(logging.Formatter):
+
+    """Format date/times with the local time zone."""
+
+    def formatTime(self, record, datefmt=None):
+        return get_time_string_from_unix_time(record.created)

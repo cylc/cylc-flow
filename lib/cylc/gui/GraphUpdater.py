@@ -19,7 +19,6 @@
 from cylc import cylc_pyro_client, dump, graphing
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
-from cylc.strftime import strftime
 import cylc.TaskID
 from copy import deepcopy
 import gobject

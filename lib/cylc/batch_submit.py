@@ -134,7 +134,7 @@ class job_batcher( threading.Thread ):
         """Submit a batch of jobs in parallel, then wait and collect results."""
 
         batch_size = len(batch)
-        before = datetime.datetime.now()
+        before = time.time()
 
         # submit each item
         jobs = []
@@ -182,10 +182,10 @@ class job_batcher( threading.Thread ):
                 break
             self.do_quit()
             time.sleep(1)
-        after = datetime.datetime.now()
+        after = time.time()
 
         msg = """batch completed
-  """ + "Time taken: " + str( after - before )
+  """ + "Time taken: " + str( after - before ) + " seconds"
         if n_succ == 0:
             msg += """
   All """ + str(batch_size) + " items FAILED"

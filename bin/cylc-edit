@@ -29,6 +29,7 @@ from cylc.cfgspec.site import sitecfg
 from cylc.CylcOptionParsers import cop
 from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
+from cylc.wallclock import get_current_time_string
 
 parser = cop( """cylc [prep] edit [OPTIONS] ARGS
 
@@ -190,7 +191,10 @@ print 'EDITING DONE'
 
 # Now back up the inlined file in case of absolute disaster, so as the
 # user or his editor corrupting the inlined-include-file marker lines.
-inlined_suiterc_backup = suitedir + '/suite.rc.INLINED.EDIT.' + datetime.datetime.now().isoformat()
+inlined_suiterc_backup = (
+    suitedir + '/suite.rc.INLINED.EDIT.' +
+    get_current_time_string(override_use_utc=True, use_basic_format=True)
+)
 copy( suiterc, inlined_suiterc_backup )
 
 # read in the edited inlined file
