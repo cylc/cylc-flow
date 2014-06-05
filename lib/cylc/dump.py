@@ -19,6 +19,7 @@
 import re
 import sys
 import subprocess
+import time
 import cylc.TaskID
 
 

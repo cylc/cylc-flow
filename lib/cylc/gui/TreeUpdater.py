@@ -206,19 +206,15 @@ class TreeUpdater(threading.Thread):
                 tsucceeded = summary[ id ].get( 'succeeded_time' )
 
                 if tsub_string is not None:
-                    if last_update_date is not None:
-                        tsub_string = tsub_string.replace(
-                            last_update_date + "T", "", 1)
-                    if display_time_zone:
-                        tsub_string += daemon_time_zone
-                
+                    tsub_string = self._alter_date_time_string_for_context(
+                        tsub_string, last_update_date, daemon_time_zone,
+                        display_time_zone=display_time_zone
+                    )
                 if tstart_string is not None:
-                    if last_update_date is not None:
-                        tstart_string = tstart_string.replace(
-                            last_update_date + "T", "", 1)
-                    if display_time_zone:
-                        tstart_string += daemon_time_zone
-
+                    tstart_string = self._alter_date_time_string_for_context(
+                        tstart_string, last_update_date, daemon_time_zone,
+                        display_time_zone=display_time_zone
+                    )
                 meant = summary[ id ].get( 'mean total elapsed time' )
                 meant_string = None
                 tetc_string = None
@@ -233,8 +229,13 @@ class TreeUpdater(threading.Thread):
                             tetc_unix,
                             no_display_time_zone=(not display_time_zone)
                         )
-                        tetc_string = tetc_string.replace(
-                            last_update_date + "T", "", 1)
+                        tetc_string = (
+                            self._alter_date_time_string_for_context(
+                                tetc_string, last_update_date,
+                                daemon_time_zone,
+                                display_time_zone=display_time_zone
+                            )
+                        )
                 if isinstance(meant, float):
                     if not meant:
                         # This is a very fast (sub-cylc-resolution) task.
@@ -372,6 +373,18 @@ class TreeUpdater(threading.Thread):
         self.ttree_paths[path]['states'].append( descendant_state )
         self.ttree_paths[path].setdefault( 'names', [] )
         self.ttree_paths[path]['names'].append( descendant_name )
+
+    def _alter_date_time_string_for_context(
+            self, date_time_string, context_date, context_time_zone,
+            display_time_zone=False):
+        """Alter a date/time string based on date and time zone contexts."""
+        if context_date is not None:
+            # Remove the date part if it matches the context date.
+            date_time_string = date_time_string.replace(
+                context_date + "T", "", 1)
+        if display_time_zone:
+            date_time_string += context_time_zone
+        return date_time_string
 
     def _get_autoexpand_rows( self ):
         # Return a list of rows that meet the auto-expansion criteria.
