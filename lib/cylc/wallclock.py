@@ -113,11 +113,10 @@ def get_time_string(date_time, display_sub_seconds=False,
     """
     if override_use_utc or (override_use_utc is None and utc):
         time_zone_string = TIME_ZONE_STRING_UTC
+    elif use_basic_format:
+        time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
     else:
-        if use_basic_format:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
-        else:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
+        time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
     if only_display_time:
         if use_basic_format:
             date_time_format_string = TIME_FORMAT_BASIC
@@ -127,15 +126,14 @@ def get_time_string(date_time, display_sub_seconds=False,
             date_time_format_string = TIME_FORMAT_EXTENDED
         if display_sub_seconds:
             date_time_format_string = TIME_FORMAT_EXTENDED_SUB_SECOND
+    elif use_basic_format:
+        date_time_format_string = DATE_TIME_FORMAT_BASIC
+        if display_sub_seconds:
+            date_time_format_string = DATE_TIME_FORMAT_BASIC_SUB_SECOND
     else:
-        if use_basic_format:
-            date_time_format_string = DATE_TIME_FORMAT_BASIC
-            if display_sub_seconds:
-                date_time_format_string = DATE_TIME_FORMAT_BASIC_SUB_SECOND
-        else:
-            date_time_format_string = DATE_TIME_FORMAT_EXTENDED
-            if display_sub_seconds:
-                date_time_format_string = DATE_TIME_FORMAT_EXTENDED_SUB_SECOND
+        date_time_format_string = DATE_TIME_FORMAT_EXTENDED
+        if display_sub_seconds:
+            date_time_format_string = DATE_TIME_FORMAT_EXTENDED_SUB_SECOND
     date_time_string = date_time.strftime(date_time_format_string)
     if no_display_time_zone:
         return date_time_string

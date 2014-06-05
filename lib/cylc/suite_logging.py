@@ -59,7 +59,7 @@ class suite_log( object ):
             if os.path.getsize( self.path ) > 0:
                 h.doRollover()
 
-        f = ProperDateTimeFormatter(
+        f = ISO8601DateTimeFormatter(
             '%(asctime)s %(levelname)-2s - %(message)s', '%Y-%m-%dT%H:%M:%S'
         )
 
@@ -73,7 +73,7 @@ class suite_log( object ):
         log.addHandler(h)
 
 
-class ProperDateTimeFormatter(logging.Formatter):
+class ISO8601DateTimeFormatter(logging.Formatter):
 
     """Format date/times with the local time zone."""
 
