@@ -1208,7 +1208,7 @@ class config( object ):
                                          seq, suicide )
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
                                         right_name, ttype,
-                                        section, asyncid_pattern,
+                                        section, seq, asyncid_pattern,
                                         seq.get_interval() )
                 self.generate_triggers( lexpression, pruned_left_nodes,
                                         right_name, seq,
@@ -1232,8 +1232,8 @@ class config( object ):
             else:
                 self.edges.append(e)
 
-    def generate_taskdefs( self, line, left_nodes, right, ttype, section, asyncid_pattern,
-                           base_interval ):
+    def generate_taskdefs( self, line, left_nodes, right, ttype, section, seq,
+                           asyncid_pattern, base_interval ):
         for node in left_nodes + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
@@ -1290,10 +1290,6 @@ class config( object ):
                         'suite'  : self.suite_polling_tasks[name][0],
                         'task'   : self.suite_polling_tasks[name][1],
                         'status' : self.suite_polling_tasks[name][2] }
-
-            seq = get_sequence( section,
-                self.cfg['scheduling']['initial cycle time'],
-                self.cfg['scheduling']['final cycle time'] )
 
             if not my_taskdef_node.is_absolute:
                 if offset:
