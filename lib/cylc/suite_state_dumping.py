@@ -21,7 +21,7 @@ import os
 import time
 import logging
 from cfgspec.site import sitecfg
-from wallclock import now
+from wallclock import now, get_current_time_string
 
 class dumper( object ):
 
@@ -62,7 +62,10 @@ class dumper( object ):
         if wireless is None:
             wireless = self.pool.wireless
 
-        base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
+        base_name = self.BASE_NAME + "." + get_current_time_string(
+            override_use_utc=True, use_basic_format=True,
+            display_sub_seconds=True
+        )
         file_name = os.path.join(self.dir_name, base_name)
 
         # write the state dump file, retrying several times in case of:
@@ -75,7 +78,8 @@ class dumper( object ):
                 handle = open(file_name, "wb")
 
                 handle.write('run mode : %s\n' % self.run_mode)
-                handle.write('time : %s\n' % now().strftime("%Y:%m:%d:%H:%M:%S"))
+                handle.write('time : %s (%d)\n' % (
+                   get_current_time_string(), time.time()))
 
                 handle.write(self.cts_str)
 

@@ -52,7 +52,7 @@ import cylc.rundb
 from Queue import Queue, Empty
 from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
-from wallclock import now
+from wallclock import now, get_current_time_string
 from cycling.loader import get_point
 import isodatetime.data
 import isodatetime.parsers
@@ -236,7 +236,7 @@ class scheduler(object):
 
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.info( 'Suite starting at ' + now().isoformat())
+        self.log.info( 'Suite starting at ' + get_current_time_string() )
         if self.run_mode == 'live':
             self.log.info( 'Log event clock: real time' )
         else:
@@ -582,9 +582,9 @@ class scheduler(object):
     #___________________________________________________________________
 
     def set_suite_timer( self, reset=False ):
-        ts = now()
-        self.suite_timer_start = ts
-        print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", ts.isoformat()
+        self.suite_timer_start = time.time()
+        if flags.verbose:
+            print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", get_current_time_string()
 
 
     def reconfigure( self ):
@@ -690,8 +690,6 @@ class scheduler(object):
 
         # Running in UTC time? (else just use the system clock)
         flags.utc = self.config.cfg['cylc']['UTC mode']
-        if flags.utc:
-            os.environ['TZ'] = 'UTC'
 
         if not reconfigure:
             slog = suite_log( self.suite )
@@ -889,7 +887,7 @@ class scheduler(object):
             if self.process_tasks():
                 if flags.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
-                    main_loop_start_time = now()
+                    main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
 
@@ -907,8 +905,7 @@ class scheduler(object):
                 self.pool.wireless.expire( self.pool.get_min_ctime() )
 
                 if flags.debug:
-                    delta = now() - main_loop_start_time
-                    seconds = delta.seconds + float(delta.microseconds)/10**6
+                    seconds = time.time() - main_loop_start_time
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
             self.pool.process_queued_task_messages()
@@ -1013,8 +1010,9 @@ class scheduler(object):
     def check_suite_timer( self ):
         if self.already_timed_out:
             return
-        timeout = self.suite_timer_start + datetime.timedelta( minutes=self.config.cfg['cylc']['event hooks']['timeout'] )
-        if now() > timeout:
+        timeout = self.suite_timer_start + 60 * (
+            self.config.cfg['cylc']['event hooks']['timeout'])
+        if time.time() > timeout:
             self.already_timed_out = True
             message = 'suite timed out after ' + str( self.config.cfg['cylc']['event hooks']['timeout']) + ' minutes'
             self.log.warning( message )
@@ -1072,7 +1070,7 @@ class scheduler(object):
 
 
     def shutdown( self, reason='' ):
-        msg = "Suite shutting down at " + now().isoformat()
+        msg = "Suite shutting down at " + get_current_time_string()
 
         # The getattr() calls below are used in case the suite is not
         # fully configured before the shutdown is called.

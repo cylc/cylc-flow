@@ -65,6 +65,8 @@ from cylc.suite_logging import suite_log
 from cylc.registration import localdb
 from cylc.cfgspec.site import sitecfg
 from cylc.cfgspec.gcylc import gcfg
+from cylc.wallclock import get_time_string_from_unix_time
+
 
 def run_get_stdout( command, filter=False ):
     try:
@@ -338,7 +340,8 @@ Class to create an information bar.
             #o> summary += ": {0} failed tasks".format(num_failed)
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
-        self.set_time( strftime( glob["last_updated"], "%Y-%m-%dT%H:%M:%S"))
+        dt = glob["last_updated"]
+        self.set_time(get_time_string_from_unix_time(dt))
 
     def set_time(self, time):
         """Set last update text."""

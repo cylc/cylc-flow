@@ -3,8 +3,8 @@ title = "User Guide [runtime] example."
 [cylc]
     required run mode = simulation # (no task implementations)
 [scheduling]
-    initial cycle time = 2011010106
-    final cycle time = 2011010200
+    initial cycle time = 20110101T06
+    final cycle time = 20110102T00
     [[dependencies]]
         graph = """foo => OBS
              OBS:succeed-all => bar"""

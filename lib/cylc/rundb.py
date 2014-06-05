@@ -25,12 +25,14 @@ import sys
 from threading import Thread
 from Queue import Queue
 from mkdir_p import mkdir_p
+from cylc.wallclock import get_current_time_string
+
 
 class UpdateObject(object):
     """UpdateObject for using in tasks"""
     def __init__(self, table, name, cycle, **kwargs):
         """Update a row in a table."""
-        kwargs["time_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        kwargs["time_updated"] = get_current_time_string()
         s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
         cols = ""
         args = []
@@ -47,38 +49,41 @@ class UpdateObject(object):
         self.args = args
         self.to_run = True
 
+
 class RecordBroadcastObject(object):
     """RecordBroadcastObject for using in broadcast settings dumps"""
-    def __init__(self, timestamp, dumpstring):
+    def __init__(self, time_string, dump_string):
         """Records a dumped string in the broadcast table"""
         self.s_fmt = "INSERT INTO broadcast_settings VALUES(?, ?)"
-        self.args = [timestamp.isoformat(), dumpstring]
+        self.args = [time_string, dump_string]
         self.to_run = True
+
 
 class RecordEventObject(object):
     """RecordEventObject for using in tasks"""
     def __init__(self, name, cycle, submit_num, event=None, message=None, misc=None):
         """Records an event in the table"""
         self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
-        self.args = [name, cycle, datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        self.args = [name, cycle, get_current_time_string(),
                      submit_num, event, message, misc]
         self.to_run = True
 
 
 class RecordStateObject(object):
     """RecordStateObject for using in tasks"""
-    def __init__(self, name, cycle, time_created=datetime.now(), time_updated=None,
-                     submit_num=None, is_manual_submit=None, try_num=None,
-                     host=None, submit_method=None, submit_method_id=None,
-                     status=None):
+    def __init__(self, name, cycle, time_created_string=None,
+                 time_updated_string=None, submit_num=None,
+                 is_manual_submit=None, try_num=None, host=None,
+                 submit_method=None, submit_method_id=None, status=None):
         """Insert a new row into the states table"""
+        if time_created_string is None:
+            time_created_string = get_current_time_string()
         self.s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        if time_updated is not None:
-            time_updated = time_updated.strftime("%Y-%m-%dT%H:%M:%S")
-        self.args = [name, cycle, time_created.strftime("%Y-%m-%dT%H:%M:%S"),
-                     time_updated, submit_num, is_manual_submit, try_num, host,
+        self.args = [name, cycle, time_created_string, time_updated_string,
+                     submit_num, is_manual_submit, try_num, host,
                      submit_method, submit_method_id, status]
         self.to_run = True
+
 
 class BulkDBOperObject(object):
     """BulkDBOperObject for grouping together related operations"""
@@ -90,6 +95,7 @@ class BulkDBOperObject(object):
         if db_object.s_fmt != self.s_fmt:
             raise Exception( "ERROR: cannot combine different types of database operation" )
         self.args.append(db_object.args)
+
 
 class ThreadedCursor(Thread):
     def __init__(self, db):

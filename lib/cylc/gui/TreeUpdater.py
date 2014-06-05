@@ -21,6 +21,8 @@ import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
+from cylc.wallclock import (
+    get_time_string_from_unix_time, TIME_ZONE_STRING_LOCAL_BASIC)
 from copy import deepcopy
 import datetime
 import gobject
@@ -31,6 +33,7 @@ def _time_trim(time_value):
     if time_value is not None:
         return time_value.rsplit(".", 1)[0]
     return time_value
+
 
 class TreeUpdater(threading.Thread):
 
@@ -172,10 +175,17 @@ class TreeUpdater(threading.Thread):
 
         # Retrieve any user-expanded rows so that we can expand them later.
         expand_me = self._get_user_expanded_row_ids()
-
+        daemon_time_zone = self.updater.global_summary.get("daemon time zone")
+        my_time_zone = TIME_ZONE_STRING_LOCAL_BASIC
+        display_time_zone = (daemon_time_zone != my_time_zone)
         new_data = {}
         new_fam_data = {}
         self.ttree_paths.clear()
+        if "T" in self.updater.dt:
+            last_update_date = self.updater.dt.split("T")[0]
+        else:
+            last_update_date = None
+        
         for summary, dest in [(self.updater.state_summary, new_data),
                               (self.updater.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
@@ -186,54 +196,66 @@ class TreeUpdater(threading.Thread):
                 state = summary[ id ].get( 'state' )
                 message = summary[ id ].get( 'latest_message', )
 
+                if message is not None and last_update_date is not None:
+                    message = message.replace(last_update_date + "T", "", 1)
+
                 tsub = summary[ id ].get( 'submitted_time' )
-                if isinstance(tsub, basestring) and tsub != "*":
-                    if "T" in tsub:
-                        # TODO: get rid of this condition (here for backwards compatibility)
-                        tsub = _time_trim( isoformat_strftime(tsub, "%H:%M:%S") )
-                tstt = summary[ id ].get( 'started_time' )
-                tsut = summary[ id ].get( 'succeeded_time' )
+                tsub_string = summary[ id ].get( 'submitted_time_string' )
+                tstart = summary[ id ].get( 'started_time' )
+                tstart_string = summary[ id ].get( 'started_time_string' )
+                tsucceeded = summary[ id ].get( 'succeeded_time' )
+
+                if tsub_string is not None:
+                    if last_update_date is not None:
+                        tsub_string = tsub_string.replace(
+                            last_update_date + "T", "", 1)
+                    if display_time_zone:
+                        tsub_string += daemon_time_zone
+                
+                if tstart_string is not None:
+                    if last_update_date is not None:
+                        tstart_string = tstart_string.replace(
+                            last_update_date + "T", "", 1)
+                    if display_time_zone:
+                        tstart_string += daemon_time_zone
+
                 meant = summary[ id ].get( 'mean total elapsed time' )
-                tetc = "*"
-                if (tstt and (tsut is None or tsut == "*") and
-                    self.updater.dt_date is not None and
-                    (isinstance(meant, float) or isinstance(meant, int))):
-                    try:
-                        tstt_date = datetime.datetime.strptime(
-                            tstt, "%Y-%m-%dT%H:%M:%S.%f")
-                    except (TypeError, ValueError):
-                        pass
-                    else:
-                        run_time = self.updater.dt_date - tstt_date
-                        run_time = run_time.days * 86400.0 + run_time.seconds
-                        to_go = meant - run_time
-                        tetc = isoformat_strftime(
-                            (self.updater.dt_date +
-                             datetime.timedelta(seconds=to_go)).isoformat(),
-                            "%H:%M:%S"
+                meant_string = None
+                tetc_string = None
+                if isinstance(tstart, float):
+                    # Cylc 6 suites - don't populate info for others.
+                    if (tsucceeded is None and
+                            (isinstance(meant, float) or
+                             isinstance(meant, int))):
+                        # We can calculate an expected time of completion.
+                        tetc_unix = tstart + meant
+                        tetc_string = get_time_string_from_unix_time(
+                            tetc_unix,
+                            no_display_time_zone=(not display_time_zone)
                         )
-                if isinstance(tstt, basestring) and tstt != "*":
-                    # TODO: get rid of the following condition (here for backwards compatibility)
-                    if "T" in tstt:
-                        tstt = _time_trim( isoformat_strftime(tstt, "%H:%M:%S") )
-                if isinstance(meant, float) or isinstance(meant, int):
-                    # TODO: get rid of the following condition (here for backwards compatibility)
-                    try:
-                        meant = int(meant)
-                    except (TypeError, ValueError):
-                        pass
+                        tetc_string = tetc_string.replace(
+                            last_update_date + "T", "", 1)
+                if isinstance(meant, float):
+                    if not meant:
+                        # This is a very fast (sub-cylc-resolution) task.
+                        meant = 1
+                    meant = int(meant)
+                    meant_minutes, meant_seconds = divmod(meant, 60)
+                    # Technically, we should have a leading "PT" here.
+                    if meant_minutes:
+                        meant_string = "%dM%dS" % (
+                            meant_minutes, meant_seconds)
                     else:
-                        meant_hours, remainder = divmod(int(meant), 3600)
-                        meant_minutes, meant_seconds = divmod(remainder, 60)
-                        meant = "%d:%02d:%02d" % (meant_hours, meant_minutes,
-                                                  meant_seconds)
+                        meant_string = "%dS" % meant
                 priority = summary[ id ].get( 'latest_message_priority' )
                 try:
                     icon = self.dots[state]
                 except KeyError:
                     icon = self.dots['empty']
 
-                dest[ ctime ][ name ] = [ state, message, tsub, tstt, meant, tetc, icon ]
+                dest[ ctime ][ name ] = [ state, message, tsub_string,
+                                          tstart_string, meant_string,
+                                          tetc_string, icon ]
 
         tree_data = {}
         self.ttreestore.clear()

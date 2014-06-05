@@ -19,10 +19,9 @@
 import Pyro.core
 import logging
 import TaskID
-from cylc.strftime import strftime
 import time
 from datetime import datetime
-from wallclock import now
+from wallclock import now, TIME_ZONE_STRING_LOCAL_BASIC
 
 
 class state_summary( Pyro.core.ObjBase ):
@@ -103,7 +102,8 @@ class state_summary( Pyro.core.ObjBase ):
         global_summary[ 'start time' ] = self.str_or_None(self.start_time)
         global_summary[ 'oldest cycle time' ] = self.str_or_None(oldest)
         global_summary[ 'newest cycle time' ] = self.str_or_None(newest)
-        global_summary[ 'last_updated' ] = now()
+        global_summary[ 'daemon time zone' ] = TIME_ZONE_STRING_LOCAL_BASIC
+        global_summary[ 'last_updated' ] = time.time()
         global_summary[ 'run_mode' ] = self.run_mode
         global_summary[ 'paused' ] = paused
         global_summary[ 'stopping' ] = stopping

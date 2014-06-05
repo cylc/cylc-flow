@@ -179,7 +179,8 @@ Text Treeview suite control interface.
         ts.set_mode( gtk.SELECTION_SINGLE )
 
         self.ttreeview.connect( 'button_press_event', self.on_treeview_button_pressed )
-        headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart', 'mean dT', 'ETC' ]
+        headings = [ None, 'task', 'state', 'message', 'Tsubmit', 'Tstart',
+                     'mean dT', 'ETC' ]
 
         for n in range(1, len(headings)):
             # Skip first column (cycle time)
