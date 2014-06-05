@@ -31,27 +31,28 @@ Arithmetic cycle time offset computation, and filename templating.
 Examples:
 
 1) print offset from an explicit cycle time:
-  % cylc [util] cycletime --offset-hours=6 2010082318
-  2010082400
+  % cylc [util] cycletime --offset-hours=6 20100823T1800Z
+  20100824T0000Z
 
 2) print offset from $CYLC_TASK_CYCLE_TIME (as in suite tasks):
-  % export CYLC_TASK_CYCLE_TIME=2010082318
+  % export CYLC_TASK_CYCLE_TIME=20100823T1800Z
   % cylc cycletime --offset-hours=-6
-  2010082312
+  20100823T1200Z
 
 3) cycle time filename templating, explicit template:
-  % export CYLC_TASK_CYCLE_TIME=201008
-  % cylc cycletime --offset-years=2 --template=foo-YYYYMM.nc
-  foo-201208.nc
+  % export CYLC_TASK_CYCLE_TIME=2010-08
+  % cylc cycletime --offset-years=2 --template=foo-YYYY-MM.nc
+  foo-2012-08.nc
 
 4) cycle time filename templating, template in a variable:
-  % export CYLC_TASK_CYCLE_TIME=201008
-  % export MYTEMPLATE=foo-YYYYMM.nc
+  % export CYLC_TASK_CYCLE_TIME=2010-08
+  % export MYTEMPLATE=foo-YYYY-MM.nc
   % cylc cycletime --offset-years=2 --template=MYTEMPLATE
-  foo-201208.nc
+  foo-2012-08.nc
 
 Arguments:
-   [CYCLE]    YYYY[MM[DD[HH[mm[ss]]]]], default $CYLC_TASK_CYCLE_TIME""" )
+   [CYCLE]  ISO 8601 date-time, e.g. 20140201T0000Z, default
+      $CYLC_TASK_CYCLE_TIME""" )
 
 parser.add_option( "--offset-hours", metavar="HOURS",
         help="Add N hours to CYCLE (may be negative)",

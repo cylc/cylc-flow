@@ -60,12 +60,12 @@ from datetime import datetime
 from gcapture import gcapture_tmpfile
 from cylc.task_state import task_state
 from cylc.passphrase import passphrase
-
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
 from cylc.cfgspec.site import sitecfg
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_time_string_from_unix_time
+from isodatetime.parsers import TimePointParser
 
 
 def run_get_stdout( command, filter=False ):
@@ -852,13 +852,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 warning_dialog( "ERROR: No stop time entered", self.window ).warn()
                 return
             try:
-                # YYYY/MM/DD-HH:mm
-                date, time = stopclock_time.split('-')
-                yyyy, mm, dd = date.split('/')
-                HH,MM = time.split(':')
-                stop_dtime = datetime( int(yyyy), int(mm), int(dd), int(HH), int(MM) )
-            except:
-                warning_dialog( "ERROR: Bad datetime (YYYY/MM/DD-HH:mm): " + stopclock_time,
+                parser = TimePointParser()
+                timepoint = parser.parse(stopclock_time)
+            except ValueError:
+                warning_dialog( "ERROR: Bad ISO 8601 datetime: " + stopclock_time,
                                 self.window ).warn()
                 return
 
@@ -1705,7 +1702,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox.pack_start (stopct_rb, True)
 
         sc_box = gtk.HBox()
-        label = gtk.Label( 'STOP (YYYY/MM/DD-HH:mm)' )
+        label = gtk.Label( 'STOP (ISO 8601 date-time e.g. CCYYMMDDThhmm)' )
         sc_box.pack_start( label, True )
         stopclock_entry = gtk.Entry()
         stopclock_entry.set_max_length(16)
