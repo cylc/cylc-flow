@@ -95,7 +95,11 @@ class ISO8601Point(PointBase):
     def add(self, other):
         return ISO8601Point(self._iso_point_add(self.value, other.value))
 
-    def cmp_(self, other):
+    def __cmp__(self, other):
+        if self.TYPE != other.TYPE:
+            return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
+        if self.value == other.value:
+            return 0
         return self._iso_point_cmp(self.value, other.value)
 
     def standardise(self):

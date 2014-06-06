@@ -67,7 +67,6 @@ class state_summary( Pyro.core.ObjBase ):
             # based on the first-parent single-inheritance tree
 
             c_fam_task_states = {}
-            c_task_states = task_states.get(ctime, {})
 
             for key, parent_list in self.config.get_first_parent_ancestors().items():
                 state = c_task_states.get(key)
