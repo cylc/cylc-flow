@@ -1718,7 +1718,7 @@ work.
     \item The suite runahead limit is configurable - see
         Section~\ref{RunaheadLimit}.
     \item Other date-time cycling is also supported (multihourly, daily,
- monthly, yearly...) - see Section~\ref{OtherCyclingModules}.
+ monthly, yearly...) - see Section~\ref{AdvancedCycling}.
 \end{myitemize}
 
 \subsubsection{Inter-Cycle-Point Triggers}
@@ -1833,9 +1833,9 @@ foo.20130808T0000+13 => foo.20130808T1200+13
 
 However, in our initial cycle point example, the dependence on
 \lstinline=foo.20130807T1200+13= will be ignored, because that task's cycle
-point is earlier than the suite's initial cycle point and so it cannot run. This
-means that the initial cycle point dependencies for \lstinline=foo= actually
-look like:
+point is earlier than the suite's initial cycle point and so it cannot run.
+This means that the initial cycle point dependencies for \lstinline=foo=
+actually look like:
 \lstset{language=suiterc}
 \begin{lstlisting}
 prep.20130808T0000+13 => foo.20130808T0000+13
@@ -2640,7 +2640,7 @@ title = some cycling tasks
 \end{figure}
 
 \subparagraph{Advanced Cycling}
-\label{OtherCyclingModules}
+\label{AdvancedCycling}
 
 The hour-based section heading examples shown above (\lstinline=T00=,
 \lstinline=T06=, etc) are just one small part of cylc's cycling syntax.
@@ -2849,9 +2849,9 @@ In the example above, \lstinline=R1= implies \lstinline=R1/20130808T00=, so
 At that cycle point, \lstinline=foo= will have a dependence on
 \lstinline=prep= - but not at subsequent cycle points.
 
-However, what if we have a staggered start (e.g. a task set beginning at \lstinline=T00=,
-and another at \lstinline=T12=) with multiple cycles needing to feed off a
-starting task or tasks?
+However, it is possible to have a suite that has multiple effective initial
+cycles - for example, one starting at \lstinline=T00= and another starting
+at \lstinline=T12=. What if they need to share an initial task?
 
 Let's suppose that we add the following section to the suite example above:
 \lstset{language=suiterc}

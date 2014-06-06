@@ -1300,7 +1300,7 @@ class config( object ):
                     if flags.back_comp_cycling:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
                         seq.set_offset(offset)
-                        self.taskdefs[name].add_sequence(
+                        self.taskdefs[ name ].add_sequence(
                             seq, is_implicit=True)
                     # We don't handle implicit cycling in new-style cycling.
                 else:

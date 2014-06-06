@@ -52,6 +52,7 @@ expensive real tasks during suite development.
 \end{myitemize}
 
 \subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
+\label{UTC-mode}
 
 Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
@@ -124,7 +125,7 @@ This number defaults to 0 (no sign or extra digits used).
 cycle point time zone}
 \label{cycle-point-time-zone}
 
-If you set UTC mode to True (\ref{utc-mode}) then this will default to
+If you set UTC mode to True (\ref{UTC-mode}) then this will default to
 \lstinline=Z=. If you use a custom cycle point format
 (\ref{cycle-point-format}), you should specify the timezone choice (or null
 timezone choice) here as well.
@@ -539,8 +540,13 @@ are inserted, and in what state they are inserted, depends on the start
 up method - cold, warm, or raw.  If this item is provided you can
 override it on the command line or in the gcylc suite start panel.
 
+In date-time cycling, if you do not provide time zone information for this,
+it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
+the \ref{cycle-point-time-zone} if that is set.
+
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date/time point representation (e.g. CCYYMMDDThhmm)
+    \item {\em type:} ISO 8601 date/time point representation (e.g.
+ \lstinline=CCYYMMDDThhmm=, 19951231T0630)
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -551,8 +557,13 @@ specified. Once all tasks have achieved this state the suite will shut
 down. If this item is provided you can override it on the command line
 or in the gcylc suite start panel.
 
+In date-time cycling, if you do not provide time zone information for this,
+it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
+the \ref{cycle-point-time-zone} if that is set.
+
 \begin{myitemize}
-    \item {\em type:} ISO 8601 date/time point representation (e.g. CCYYMMDDThhmm)
+    \item {\em type:} ISO 8601 date/time point representation (e.g.
+ \lstinline=CCYYMMDDThhmm=, 19951231T1230)
     \item {\em default:} (none)
 \end{myitemize}
 

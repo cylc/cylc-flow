@@ -855,7 +855,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 parser = TimePointParser()
                 timepoint = parser.parse(stopclock_time)
             except ValueError:
-                warning_dialog( "ERROR: Bad ISO 8601 datetime: " + stopclock_time,
+                warning_dialog( "ERROR: Bad ISO 8601 date-time: " + stopclock_time,
                                 self.window ).warn()
                 return
 
@@ -1702,7 +1702,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox.pack_start (stopct_rb, True)
 
         sc_box = gtk.HBox()
-        label = gtk.Label( 'STOP (ISO 8601 date-time e.g. CCYYMMDDThhmm)' )
+        label = gtk.Label( 'STOP (ISO 8601 date-time e.g. CCYYMMDDThhmmZ)' )
         sc_box.pack_start( label, True )
         stopclock_entry = gtk.Entry()
         stopclock_entry.set_max_length(16)
