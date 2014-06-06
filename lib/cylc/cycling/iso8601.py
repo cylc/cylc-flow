@@ -276,6 +276,7 @@ class ISO8601Sequence(object):
         if not i:
             raise "ERROR: iso8601 cycling init!"
 
+        self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
 
@@ -307,6 +308,7 @@ class ISO8601Sequence(object):
             self.recurrence.start_point -= interval_parse(str(offset))
         if self.recurrence.end_point is not None:
             self.recurrence.end_point -= interval_parse(str(offset))
+        self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
         self.value = str(self.recurrence)
@@ -379,10 +381,20 @@ class ISO8601Sequence(object):
 
     def get_first_point( self, point):
         """Return the first point >= to poing, or None if out of bounds."""
+        try:
+            return ISO8601Point(self._cached_first_point_values[point.value])
+        except KeyError:
+            pass
         p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point >= p_iso_point:
-                return ISO8601Point(str(recurrence_iso_point))
+                first_point_value = str(recurrence_iso_point)
+                if (len(self._cached_first_point_values) >
+                        self._MAX_CACHED_POINTS):
+                    self._cached_first_point_values.popitem()
+                self._cached_first_point_values[point.value] = (
+                    first_point_value)
+                return ISO8601Point(first_point_value)
         return None
 
     def get_stop_point( self ):
