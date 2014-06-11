@@ -347,7 +347,7 @@ class pool(object):
 
     def get_min_ctime( self ):
         """Return the minimum cycle currently in the pool."""
-        cycles = [t.c_time for t in self.get_tasks()]
+        cycles = [ t.c_time for t in self.get_tasks() ]
         minc = None
         if cycles:
             minc = min(cycles)
@@ -356,7 +356,7 @@ class pool(object):
 
     def get_max_ctime( self ):
         """Return the maximum cycle currently in the pool."""
-        cycles = [t.c_time for t in self.get_tasks()]
+        cycles = [ t.c_time for t in self.get_tasks() ]
         maxc = None
         if cycles:
             maxc = max(cycles)
@@ -672,7 +672,7 @@ class pool(object):
                     self.remove( itask, 'suicide' )
 
 
-    def _calculate_earliest_unsatisfied_cycle_point( self ):
+    def _get_earliest_unsatisfied_cycle_point( self ):
         cutoff = None
         for itask in self.get_tasks(all=True):
             # this has to consider tasks in the runahead pool too, e.g.
@@ -702,7 +702,7 @@ class pool(object):
         """
 
         # first find the cycle time of the earliest unsatisfied task
-        cutoff = self._calculate_earliest_unsatisfied_cycle_point()
+        cutoff = self._get_earliest_unsatisfied_cycle_point()
 
         if not cutoff:
             return
