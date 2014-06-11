@@ -52,6 +52,7 @@ expensive real tasks during suite development.
 \end{myitemize}
 
 \subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
+\label{UTC-mode}
 
 Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
@@ -68,31 +69,37 @@ logged by cylc will also be in UTC.
 \label{cycle-point-format}
 
 To just alter the timezone used in the date/time cycle point format, see
-\ref{cycle-point-timezone}. To just alter the number of expanded year digits
+\ref{cycle-point-time-zone}. To just alter the number of expanded year digits
 (for years below 0 or above 9999), see
 \ref{cycle-point-num-expanded-year-digits}.
 
-Cylc usually uses a $CCYYMMDDThhmmZ$ ($Z$ in the special case of UTC) or
-$CCYYMMDDThhmm±hhmm$ format for writing down date/time cycle points, which
-follows one of the basic formats outlined in the ISO 8601 standard. For
-example, a cycle point on the 3rd of February 2001 at 4:50 in the morning,
-UTC (+0000 timezone), would be written $20010203T0450Z$. Similarly, for the
-the 3rd of February 2001 at 4:50 in the morning, +1300 timezone, cylc would
-write $20010203T0450+1300$.
+Cylc usually uses a \lstinline=CCYYMMDDThhmmZ= (\lstinline=Z= in the special
+case of UTC) or \lstinline=CCYYMMDDThhmm±hhmm= format for writing down
+date/time cycle points, which follows one of the basic formats outlined in the
+ISO 8601 standard. For example, a cycle point on the 3rd of February 2001 at
+4:50 in the morning, UTC (+0000 timezone), would be written
+\lstinline=20010203T0450Z=. Similarly, for the the 3rd of February 2001 at
+4:50 in the morning, +1300 timezone, cylc would write
+\lstinline=20010203T0450+1300=.
 
-You may use the isodatetime library's syntax to write dates and
-times in ISO 8601 formats - $CC$ for century, $YY$ for decade and decadal
-year, $±X$ for expanded year digits, thereafter following the ISO 8601
-standard example notation. For example, to write date/times as week dates
-with fractional hours, set cycle point format to $CCYYWwwDThh,iiZ$ e.g.
-$1987W041T08,5Z$ for 08:30 UTC on Monday on the fourth ISO week of 1987.
+You may use the isodatetime library's syntax to write dates and times in ISO
+8601 formats - \lstinline=CC= for century, \lstinline=YY= for decade and
+decadal year, \lstinline=±X= for expanded year digits, thereafter following
+the ISO 8601 standard example notation except for fractional digits, which are
+represented as \lstinline=,ii= for \lstinline=hh=, \lstinline=,nn= for
+\lstinline=mm=, etc. For example, to write date/times as week dates with
+fractional hours, set cycle point format to \lstinline=CCYYWwwDThh,iiZ= e.g.
+\lstinline=1987W041T08,5Z= for 08:30 UTC on Monday on the fourth ISO week of
+1987.
 
-You can also use a subset of the strptime/strftime POSIX standard -
-supported tokens are $\%F$, $\%H$, $\%M$, $\%S$, $\%Y$, $\%d$, $\%j$, $\%m$,
-$\%s$, $\%z$.
+You can also use a subset of the strptime/strftime POSIX standard - supported
+tokens are \lstinline=\%F=, \lstinline=\%H=, \lstinline=\%M=, \lstinline=\%S=,
+\lstinline=\%Y=, \lstinline=\%d=, \lstinline=\%j=, \lstinline=\%m=,
+\lstinline=\%s=, \lstinline=\%z=.
 
-To use the old cylc cycle time format (e.g. $2014020106$ for 06:00 on the
-1st of February 2014), set cycle point format to $\%Y\%m\%d\%H$.
+To use the old cylc cycle time format (e.g. \lstinline=2014020106= for 06:00
+on the 1st of February 2014), set cycle point format to
+\lstinline=\%Y\%m\%d\%H=.
 
 Please note that using characters like "/" is not allowed, as it will break
 task output files ("/" is a reserved character in POSIX file and directory
@@ -108,9 +115,9 @@ extra number of year digits and a sign should be used. This extra number needs
 to be written down somewhere (here).
 
 For example, if this extra number is set to 2, 00Z on the 1st of January in
-the year 10040 will be represented as $+0100400101T0000Z$ (2 extra year digits
-used). With this number set to 3, 06Z on the 4th of May 1985 would be written
-as $+00019850504T0600Z$.
+the year 10040 will be represented as \lstinline=+0100400101T0000Z= (2 extra
+year digits used). With this number set to 3, 06Z on the 4th of May 1985 would
+be written as \lstinline=+00019850504T0600Z=.
 
 This number defaults to 0 (no sign or extra digits used).
 
@@ -118,23 +125,25 @@ This number defaults to 0 (no sign or extra digits used).
 cycle point time zone}
 \label{cycle-point-time-zone}
 
-If you set UTC mode to True (\ref{utc-mode}) then this will default to $Z$.
-If you use a custom cycle point format (\ref{cycle-point-format}), you should
-specify the timezone choice (or null timezone choice) here as well.
+If you set UTC mode to True (\ref{UTC-mode}) then this will default to
+\lstinline=Z=. If you use a custom cycle point format
+(\ref{cycle-point-format}), you should specify the timezone choice (or null
+timezone choice) here as well.
 
-You may set your own time zone choice here, which will be used
-for all date/time cycle point dumping. Time zones should be expressed as ISO
-8601 time zone offsets from UTC, such as $+13$, $+1300$, $-0500$ or $+0645$,
-with $Z$ representing the special $+0000$ case. Cycle points will be converted
-to the time zone you give and will be represented with this string at the end.
+You may set your own time zone choice here, which will be used for all
+date/time cycle point dumping. Time zones should be expressed as ISO 8601 time
+zone offsets from UTC, such as \lstinline=+13=, \lstinline=+1300=,
+\lstinline=-0500= or \lstinline=+0645=, with \lstinline=Z= representing the
+special \lstinline=+0000= case. Cycle points will be converted to the time
+zone you give and will be represented with this string at the end.
 
 Cycle points that are input without time zones (e.g. as an initial cycle time
 setting) will use this time zone if set. If this isn't set (and UTC mode is
 also not set), then they will default to the current local time zone.
 
 Note that the ISO standard also allows writing the hour and minute separated
-by a ":" (e.g. $+13:00$) - however, this is not recommended, given that the
-time zone is used as part of task output filenames.
+by a ":" (e.g. \lstinline=+13:00=) - however, this is not recommended, given
+that the time zone is used as part of task output filenames.
 
 \subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
 
@@ -531,8 +540,13 @@ are inserted, and in what state they are inserted, depends on the start
 up method - cold, warm, or raw.  If this item is provided you can
 override it on the command line or in the gcylc suite start panel.
 
+In date-time cycling, if you do not provide time zone information for this,
+it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
+the \ref{cycle-point-time-zone} if that is set.
+
 \begin{myitemize}
-    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em type:} ISO 8601 date/time point representation (e.g.
+ \lstinline=CCYYMMDDThhmm=, 19951231T0630)
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -543,8 +557,13 @@ specified. Once all tasks have achieved this state the suite will shut
 down. If this item is provided you can override it on the command line
 or in the gcylc suite start panel.
 
+In date-time cycling, if you do not provide time zone information for this,
+it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
+the \ref{cycle-point-time-zone} if that is set.
+
 \begin{myitemize}
-    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em type:} ISO 8601 date/time point representation (e.g.
+ \lstinline=CCYYMMDDThhmm=, 19951231T1230)
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -1560,7 +1579,7 @@ http://www.graphviz.org/Documentation.php.
 
 The cycle time from which to start the suite graph.
 \begin{myitemize}
-    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
     \item {\em default:} the suite initial cycle time or 2999010100
 \end{myitemize}
 
@@ -1568,7 +1587,7 @@ The cycle time from which to start the suite graph.
 
 The cycle time at which to end the suite graph.
 \begin{myitemize}
-    \item {\em type:} integer (YYYY[MM[DD[HH[mm[ss]]]]])
+    \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
     \item {\em default:} the visualization initial cycle time plus the default runahead limit
 \end{myitemize}
 

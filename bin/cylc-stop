@@ -98,7 +98,7 @@ The command exits immediately unless --max-polls is greater than zero
 in which case it polls to wait for suite shutdown.""",
     pyro=True, argdoc=[ ("REG", "Suite name"),
     ("[STOP]", """a/ task TAG (cycle time or integer), or
-                        b/ YYYY/MM/DD-HH:mm (clock time), or
+                        b/ ISO 8601 date-time (clock time), or
                         c/ TASK (task ID).""")] )
 
 parser.add_option( "-k", "--kill",
