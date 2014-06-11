@@ -146,6 +146,10 @@ class pool(object):
         # compute runahead base: the oldest task not succeeded or failed
         # (excludes finished and includes runahead-limited tasks so a
         # low limit cannot stall the suite).
+
+        if not self.runahead_pool:
+            return
+
         runahead_base = None
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('failed', 'succeeded'):
@@ -204,7 +208,6 @@ class pool(object):
             msg += " (" + reason + ")"
         itask.log( 'DEBUG', msg )
         del itask
-
 
 
     def get_tasks( self, all=False ):
@@ -344,7 +347,7 @@ class pool(object):
 
     def get_min_ctime( self ):
         """Return the minimum cycle currently in the pool."""
-        cycles = [ t.c_time for t in self.get_tasks() ]
+        cycles = [t.c_time for t in self.get_tasks()]
         minc = None
         if cycles:
             minc = min(cycles)
@@ -353,7 +356,7 @@ class pool(object):
 
     def get_max_ctime( self ):
         """Return the maximum cycle currently in the pool."""
-        cycles = [ t.c_time for t in self.get_tasks() ]
+        cycles = [t.c_time for t in self.get_tasks()]
         maxc = None
         if cycles:
             maxc = max(cycles)
@@ -669,6 +672,23 @@ class pool(object):
                     self.remove( itask, 'suicide' )
 
 
+    def _calculate_earliest_unsatisfied_cycle_point( self ):
+        cutoff = None
+        for itask in self.get_tasks(all=True):
+            # this has to consider tasks in the runahead pool too, e.g.
+            # ones that have just spawned and not been released yet.
+            if not itask.is_cycling:
+                continue
+            if itask.state.is_currently('waiting', 'held' ):
+                if cutoff is None or itask.c_time < cutoff:
+                    cutoff = itask.c_time
+            elif not itask.has_spawned():
+                # (e.g. 'ready')
+                nxt = itask.next_tag()
+                if nxt is not None and ( cutoff is None or nxt < cutoff ):
+                    cutoff = nxt
+        return cutoff
+
     def remove_spent_cycling_tasks( self ):
         """
         Remove cycling tasks no longer needed to satisfy others' prerequisites.
@@ -682,30 +702,20 @@ class pool(object):
         """
 
         # first find the cycle time of the earliest unsatisfied task
-        cutoff = None
-        for itask in self.get_tasks(all=True):
-            # this has to consider tasks in the runahead pool too, e.g.
-            # ones that have just spawned and not been released yet.
-            if not itask.is_cycling:
-                continue
-            if itask.state.is_currently('waiting', 'held' ):
-                if not cutoff or itask.c_time < cutoff:
-                    cutoff = itask.c_time
-            elif not itask.has_spawned():
-                # (e.g. 'ready')
-                nxt = itask.next_tag()
-                if nxt and ( not cutoff or nxt < cutoff ):
-                    cutoff = nxt
+        cutoff = self._calculate_earliest_unsatisfied_cycle_point()
+
+        if not cutoff:
+            return
 
         # now check each succeeded task against the cutoff
         spent = []
         for itask in self.get_tasks():
             if not itask.state.is_currently('succeeded') or \
                     not itask.is_cycling or \
-                    not itask.state.has_spawned():
+                    not itask.state.has_spawned() or \
+                    itask.cleanup_cutoff is None:
                 continue
-            if (cutoff and itask.cleanup_cutoff is not None and
-                    cutoff > itask.cleanup_cutoff):
+            if cutoff > itask.cleanup_cutoff:
                 spent.append(itask)
         for itask in spent:
             self.remove( itask )

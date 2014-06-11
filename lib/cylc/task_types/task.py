@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import Queue
 import os, sys, re, time
 import datetime
 import subprocess
@@ -821,7 +822,10 @@ class task( object ):
     def process_incoming_messages( self ):
         queue = self.message_queue.get_queue()
         while queue.qsize() > 0:
-            self.process_incoming_message( queue.get() )
+            try:
+                self.process_incoming_message( queue.get(block=False) )
+            except Queue.Empty:
+                break
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
