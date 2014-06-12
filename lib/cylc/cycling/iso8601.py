@@ -557,6 +557,7 @@ def _interval_parse(interval_string):
 def point_parse(point_string):
     return _point_parse(point_string).copy()
 
+
 @memoize
 def _point_parse(point_string):
     if "%" in DUMP_FORMAT:
