@@ -111,6 +111,7 @@ SPEC = {
     'description'                             : vdr( vtype='string', default="" ),
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
+        'calendar'                            : vdr( vtype='string', default='gregorian', options=['360','gregorian'] ),
         'cycle point format'                  : vdr( vtype='cycletime_format', default=None),
         'cycle point num expanded year digits': vdr( vtype='integer', default=0),
         'cycle point time zone'               : vdr( vtype='cycletime_time_zone', default=None),

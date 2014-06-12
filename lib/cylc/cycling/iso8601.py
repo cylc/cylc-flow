@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from isodatetime.data import TimeInterval
+import isodatetime.data
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
@@ -159,7 +159,7 @@ class ISO8601Interval(IntervalBase):
                           "hours", "minutes", "seconds"]:
             if getattr(interval, attribute):
                 unit_amounts[attribute] = amount_per_unit
-        interval = TimeInterval(**unit_amounts)
+        interval = isodatetime.data.TimeInterval(**unit_amounts)
         return ISO8601Interval(str(interval))
 
     def standardise(self):
@@ -430,6 +430,7 @@ def init_from_cfg(cfg):
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
     assume_utc = cfg['cylc']['UTC mode']
+    calendar = cfg['cylc']['calendar']
     test_cycle_time = initial_cycle_time
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
@@ -453,17 +454,22 @@ def init_from_cfg(cfg):
         num_expanded_year_digits=num_expanded_year_digits,
         custom_dump_format=custom_dump_format,
         time_zone=time_zone,
-        assume_utc=assume_utc
+        assume_utc=assume_utc,
+        calendar=calendar
     )
 
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
-         assume_utc=False):
+         assume_utc=False, calendar="gregorian"):
     """Initialise global variables (yuk)."""
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
     global ASSUMED_TIME_ZONE
+
+    if calendar == "360":
+        isodatetime.data.set_360_calendar()
+
     if time_zone is None:
         if assume_utc:
             time_zone = "Z"

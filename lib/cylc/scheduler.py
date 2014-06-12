@@ -691,6 +691,9 @@ class scheduler(object):
         # Running in UTC time? (else just use the system clock)
         flags.utc = self.config.cfg['cylc']['UTC mode']
 
+        # Capture calendar mode
+        flags.calendar = self.config.cfg['cylc']['calendar']
+
         if not reconfigure:
             slog = suite_log( self.suite )
             self.suite_log_dir = slog.get_dir()
@@ -733,6 +736,7 @@ class scheduler(object):
         # static cylc and suite-specific variables:
         self.suite_env = {
                 'CYLC_UTC'               : str(flags.utc),
+                'CYLC_CALENDAR'          : str(flags.calendar),
                 'CYLC_MODE'              : 'scheduler',
                 'CYLC_DEBUG'             : str( flags.debug ),
                 'CYLC_VERBOSE'           : str( flags.verbose ),
