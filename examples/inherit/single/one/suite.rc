@@ -6,8 +6,9 @@ title = "User Guide [runtime] example."
     initial cycle time = 20110101T06
     final cycle time = 20110102T00
     [[dependencies]]
-        graph = """foo => OBS
-             OBS:succeed-all => bar"""
+        [[[T00]]]
+            graph = """foo => OBS
+                 OBS:succeed-all => bar"""
 [runtime]
     [[root]] # base namespace for all tasks (defines suite-wide defaults)
         [[[job submission]]]

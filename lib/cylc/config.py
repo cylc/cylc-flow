@@ -1299,8 +1299,8 @@ class config( object ):
                 if offset:
                     if flags.back_comp_cycling:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
-                        if offset in offset_seq_map:
-                            seq_offset = offset_seq_map[offset]
+                        if str(offset) in offset_seq_map:
+                            seq_offset = offset_seq_map[str(offset)]
                         else:
                             seq_offset = get_sequence(
                                 section,
@@ -1308,7 +1308,7 @@ class config( object ):
                                 self.cfg['scheduling']['final cycle time']
                             )
                             seq_offset.set_offset(offset)
-                            offset_seq_map[offset] = seq_offset
+                            offset_seq_map[str(offset)] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)
                     # We don't handle implicit cycling in new-style cycling.
@@ -1700,7 +1700,7 @@ class config( object ):
             sec = section
 
         if section in section_seq_map:
-            seq = section_seq_map
+            seq = section_seq_map[section]
         else:
             seq = get_sequence(
                 section,
