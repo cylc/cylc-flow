@@ -65,6 +65,20 @@ logged by cylc will also be in UTC.
     \item {\em default:} False
 \end{myitemize}
 
+\subsubsection[calendar]{ [cylc] $\rightarrow$ calendar}
+\label{calendar}
+
+Cylc runs using the proleptic Gregorian calendar by default. This item allows
+you to run the suite using the 360 day calendar - 12 months of 30 days in a 
+year.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} gregorian, 360
+    \item {\em default:} gregorian
+    
+\end{myitemize}
+
 \subsubsection[cycle point format]{ [cylc] $\rightarrow$ cycle point format}
 \label{cycle-point-format}
 
