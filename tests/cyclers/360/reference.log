@@ -1,0 +1,41 @@
+2014-06-13T09:54:26+01 INFO - Thread-2 start (Event Handlers)
+2014-06-13T09:54:26+01 INFO - Thread-3 start (Poll & Kill Commands)
+2014-06-13T09:54:26+01 INFO - port:7766
+2014-06-13T09:54:26+01 INFO - Suite starting at 2014-06-13T09:54:26+01
+2014-06-13T09:54:26+01 INFO - Log event clock: real time
+2014-06-13T09:54:26+01 INFO - Run mode: live
+2014-06-13T09:54:26+01 INFO - Start tag: 20130228T00
+2014-06-13T09:54:26+01 INFO - Stop tag: 20130301T00
+2014-06-13T09:54:26+01 INFO - Thread-5 start (Request Handling)
+2014-06-13T09:54:26+01 INFO - Thread-4 start (Job Submission)
+2014-06-13T09:54:26+01 INFO - Cold Start 20130228T00
+2014-06-13T09:54:26+01 INFO - [foo.20130228T0000Z] -triggered off []
+2014-06-13T09:54:27+01 INFO - [foo.20130228T0000Z] -(current:ready)> foo.20130228T0000Z submitting now
+2014-06-13T09:54:28+01 INFO - [foo.20130228T0000Z] -(current:ready)> foo.20130228T0000Z submission succeeded
+2014-06-13T09:54:28+01 INFO - [foo.20130228T0000Z] -(current:submitted)> foo.20130228T0000Z submit_method_id=7793
+2014-06-13T09:54:28+01 INFO - [foo.20130228T0000Z] -(current:submitted)> foo.20130228T0000Z started at 2014-06-13T08:54:28Z
+2014-06-13T09:54:29+01 INFO - [foo.20130228T0000Z] -(current:running)> foo.20130228T0000Z succeeded at 2014-06-13T08:54:28Z
+2014-06-13T09:54:30+01 INFO - [foo.20130229T0000Z] -triggered off ['foo.20130228T0000Z']
+2014-06-13T09:54:31+01 INFO - [foo.20130229T0000Z] -(current:ready)> foo.20130229T0000Z submitting now
+2014-06-13T09:54:31+01 INFO - [foo.20130229T0000Z] -(current:ready)> foo.20130229T0000Z submission succeeded
+2014-06-13T09:54:31+01 INFO - [foo.20130229T0000Z] -(current:submitted)> foo.20130229T0000Z submit_method_id=7902
+2014-06-13T09:54:32+01 INFO - [foo.20130229T0000Z] -(current:submitted)> foo.20130229T0000Z started at 2014-06-13T08:54:31Z
+2014-06-13T09:54:32+01 INFO - [foo.20130229T0000Z] -(current:running)> foo.20130229T0000Z succeeded at 2014-06-13T08:54:32Z
+2014-06-13T09:54:33+01 INFO - [foo.20130230T0000Z] -triggered off ['foo.20130229T0000Z']
+2014-06-13T09:54:34+01 INFO - [foo.20130230T0000Z] -(current:ready)> foo.20130230T0000Z submitting now
+2014-06-13T09:54:34+01 INFO - [foo.20130230T0000Z] -(current:ready)> foo.20130230T0000Z submission succeeded
+2014-06-13T09:54:34+01 INFO - [foo.20130230T0000Z] -(current:submitted)> foo.20130230T0000Z submit_method_id=8008
+2014-06-13T09:54:35+01 INFO - [foo.20130230T0000Z] -(current:submitted)> foo.20130230T0000Z started at 2014-06-13T08:54:35Z
+2014-06-13T09:54:35+01 INFO - [foo.20130230T0000Z] -(current:running)> foo.20130230T0000Z succeeded at 2014-06-13T08:54:35Z
+2014-06-13T09:54:36+01 INFO - [foo.20130301T0000Z] -triggered off ['foo.20130230T0000Z']
+2014-06-13T09:54:37+01 INFO - [foo.20130301T0000Z] -(current:ready)> foo.20130301T0000Z submitting now
+2014-06-13T09:54:38+01 INFO - [foo.20130301T0000Z] -(current:ready)> foo.20130301T0000Z submission succeeded
+2014-06-13T09:54:38+01 INFO - [foo.20130301T0000Z] -(current:submitted)> foo.20130301T0000Z submit_method_id=8117
+2014-06-13T09:54:38+01 INFO - [foo.20130301T0000Z] -(current:submitted)> foo.20130301T0000Z started at 2014-06-13T08:54:38Z
+2014-06-13T09:54:38+01 INFO - [foo.20130301T0000Z] -(current:running)> foo.20130301T0000Z succeeded at 2014-06-13T08:54:38Z
+2014-06-13T09:54:39+01 WARNING - [foo.20130302T0000Z] -not adding (beyond suite stop cycle) 20130301T00
+2014-06-13T09:54:39+01 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 20130301T00
+2014-06-13T09:54:40+01 INFO - Thread-2 exit (Event Handlers)
+2014-06-13T09:54:40+01 INFO - Thread-3 exit (Poll & Kill Commands)
+2014-06-13T09:54:40+01 INFO - Thread-4 exit (Job Submission)

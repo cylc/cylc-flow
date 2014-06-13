@@ -87,6 +87,7 @@
       sed "/^#/d; /^[^=]*$/d; /__many__/d; s/^ *\([^=]*\) =.*$/      <keyword>\1<\/keyword>/g" $CYLC_DIR/conf/suiterc/* | sort | uniq
       -->
       <keyword>UTC mode</keyword>
+      <keyword>calendar</keyword>
       <keyword>abort if any task fails</keyword>
       <keyword>abort if shutdown handler fails</keyword>
       <keyword>abort if startup handler fails</keyword>
