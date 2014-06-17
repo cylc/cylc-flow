@@ -1,6 +1,6 @@
 [cylc]
     UTC mode = True
-    calendar = 360
+    cycling mode = 360
    [[reference test]]
        required run mode = live
        live mode suite timeout = 0.5 # minutes

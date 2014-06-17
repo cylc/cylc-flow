@@ -469,7 +469,7 @@ def init_from_cfg(cfg):
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
     assume_utc = cfg['cylc']['UTC mode']
-    calendar = cfg['cylc']['calendar']
+    cycling_mode = cfg['cylc']['cycling mode']
     test_cycle_time = initial_cycle_time
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
@@ -494,19 +494,19 @@ def init_from_cfg(cfg):
         custom_dump_format=custom_dump_format,
         time_zone=time_zone,
         assume_utc=assume_utc,
-        calendar=calendar
+        cycling_mode=cycling_mode
     )
 
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
-         assume_utc=False, calendar="gregorian"):
+         assume_utc=False, cycling_mode="gregorian"):
     """Initialise global variables (yuk)."""
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
     global ASSUMED_TIME_ZONE
 
-    if calendar == "360":
+    if cycling_mode == "360":
         isodatetime.data.set_360_calendar()
 
     if time_zone is None:
