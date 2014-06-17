@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import Queue
 import os, sys, re, time
 import datetime
 import subprocess
@@ -199,7 +200,12 @@ class task( object ):
                          'submitted_time': None,
                          'submitted_time_string': '*',
                          'succeeded_time': None,
-                         'succeeded_time_string': '*' }
+                         'succeeded_time_string': '*',
+                         'name': self.name,
+                         'description': self.description,
+                         'title': self.title,
+                         'label': str(self.tag),
+                         'logfiles': self.logfiles.get_paths()}
 
         self.retries_configured = False
 
@@ -816,7 +822,10 @@ class task( object ):
     def process_incoming_messages( self ):
         queue = self.message_queue.get_queue()
         while queue.qsize() > 0:
-            self.process_incoming_message( queue.get() )
+            try:
+                self.process_incoming_message( queue.get(block=False) )
+            except Queue.Empty:
+                break
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
@@ -1139,25 +1148,13 @@ class task( object ):
         # derived classes can call this method and then
         # add more information to the summary if necessary.
 
-        self.summary.setdefault( 'name', self.name )
-        self.summary.setdefault( 'description', self.description )
-        self.summary.setdefault( 'title', self.title )
-        self.summary.setdefault( 'label', str(self.tag) )
         self.summary[ 'state' ] = self.state.get_status()
         self.summary[ 'spawned' ] = self.state.has_spawned()
 
-        # str(timedelta) => "1 day, 23:59:55.903937" (for example)
-        # to strip off fraction of seconds:
-        # timedelta = re.sub( '\.\d*$', '', timedelta )
-
-        if self.__class__.mean_total_elapsed_time:
-            met = self.__class__.mean_total_elapsed_time
-            self.summary[ 'mean total elapsed time' ] =  met
-        else:
-            # first instance: no mean time computed yet
-            self.summary[ 'mean total elapsed time' ] =  '*'
-
-        self.summary[ 'logfiles' ] = self.logfiles.get_paths()
+        met = self.__class__.mean_total_elapsed_time
+        if not met:
+            met = "*"
+        self.summary[ 'mean total elapsed time' ] =  met
 
         return self.summary
 

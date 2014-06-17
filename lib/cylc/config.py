@@ -957,7 +957,7 @@ class config( object ):
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section, ttype, seq,
+    def process_graph_line( self, line, section, ttype, seq, offset_seq_map,
                             tasks_to_prune=None,
                             return_all_dependencies=False ):
         """Extract dependent pairs from the suite.rc dependency text.
@@ -976,6 +976,8 @@ class config( object ):
         ttype is either 'cycling' or an async indicator.
         seq is the sequence generated from 'section' given the initial
         and final cycle time.
+        offset_seq_map is a cache of seq with various offsets for
+        speeding up backwards-compatible cycling.
         tasks_to_prune, if not None, is a list of tasks to remove
         from dependency expressions (backwards compatibility for
         start-up tasks and async graph tasks).
@@ -1208,7 +1210,8 @@ class config( object ):
                                          seq, suicide )
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
                                         right_name, ttype,
-                                        section, asyncid_pattern,
+                                        section, seq, offset_seq_map,
+                                        asyncid_pattern,
                                         seq.get_interval() )
                 self.generate_triggers( lexpression, pruned_left_nodes,
                                         right_name, seq,
@@ -1232,8 +1235,9 @@ class config( object ):
             else:
                 self.edges.append(e)
 
-    def generate_taskdefs( self, line, left_nodes, right, ttype, section, asyncid_pattern,
-                           base_interval ):
+    def generate_taskdefs( self, line, left_nodes, right, ttype, section, seq,
+                           offset_seq_map, asyncid_pattern, base_interval ):
+        """Generate task definitions for nodes on a given line."""
         for node in left_nodes + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
@@ -1291,17 +1295,22 @@ class config( object ):
                         'task'   : self.suite_polling_tasks[name][1],
                         'status' : self.suite_polling_tasks[name][2] }
 
-            seq = get_sequence( section,
-                self.cfg['scheduling']['initial cycle time'],
-                self.cfg['scheduling']['final cycle time'] )
-
             if not my_taskdef_node.is_absolute:
                 if offset:
                     if flags.back_comp_cycling:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
-                        seq.set_offset(offset)
+                        if str(offset) in offset_seq_map:
+                            seq_offset = offset_seq_map[str(offset)]
+                        else:
+                            seq_offset = get_sequence(
+                                section,
+                                self.cfg['scheduling']['initial cycle time'],
+                                self.cfg['scheduling']['final cycle time']
+                            )
+                            seq_offset.set_offset(offset)
+                            offset_seq_map[str(offset)] = seq_offset
                         self.taskdefs[name].add_sequence(
-                            seq, is_implicit=True)
+                            seq_offset, is_implicit=True)
                     # We don't handle implicit cycling in new-style cycling.
                 else:
                     self.taskdefs[ name ].add_sequence(seq)
@@ -1578,12 +1587,14 @@ class config( object ):
         self.graph_found = False
         has_non_async_graphs = False
 
+        section_seq_map = {}
+
         # Set up our backwards-compatibility handling of async graphs.
         async_graph = self.cfg['scheduling']['dependencies']['graph']
         if async_graph:
             section = get_sequence_cls().get_async_expr()
             async_dependencies = self.parse_graph(
-                section, async_graph,
+                section, async_graph, section_seq_map=section_seq_map,
                 return_all_dependencies=True
             )
             for left, left_output, right in async_dependencies:
@@ -1625,7 +1636,7 @@ class config( object ):
                 print "[[[" + section + "]]]"
                 print "    " + 'graph = """' + graph + '"""' 
             special_dependencies = self.parse_graph(
-                section, graph,
+                section, graph, section_seq_map=section_seq_map,
                 tasks_to_prune=tasks_to_prune
             )
             if special_dependencies and tasks_to_prune:
@@ -1664,8 +1675,21 @@ class config( object ):
                     "new-style cycling"
                 )
 
-    def parse_graph( self, section, graph, tasks_to_prune=None,
-                     return_all_dependencies=False ):
+    def parse_graph( self, section, graph, section_seq_map=None,
+                     tasks_to_prune=None, return_all_dependencies=False ):
+        """Parse a multi-line graph string for section.
+
+        section should be a string like "R1" or "T00".
+        graph should be a single or multi-line string like "foo => bar"
+        section_seq_map should be a dictionary that indexes cycling
+        sequences by their section string
+        tasks_to_prune is a list of task names that should be
+        automatically removed when processing graph
+        return_all_dependencies is a boolean that, if True, returns a
+        list of task dependencies - e.g. [('foo', 'start', 'bar')] for
+        a graph of 'foo:start => bar'.
+
+        """
         self.graph_found = True
 
         if re.match( '^ASYNCID:', section ):
@@ -1675,9 +1699,16 @@ class config( object ):
             ttype = 'cycling'
             sec = section
 
-        seq = get_sequence( section,
+        if section in section_seq_map:
+            seq = section_seq_map[section]
+        else:
+            seq = get_sequence(
+                section,
                 self.cfg['scheduling']['initial cycle time'],
-                self.cfg['scheduling']['final cycle time'] )
+                self.cfg['scheduling']['final cycle time']
+            )
+            section_seq_map[section] = seq
+        offset_seq_map = {}
 
         if seq not in self.sequences:
             self.sequences.append(seq)
@@ -1696,7 +1727,7 @@ class config( object ):
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
             special_dependencies.extend(self.process_graph_line(
-                line, section, ttype, seq,
+                line, section, ttype, seq, offset_seq_map,
                 tasks_to_prune=tasks_to_prune,
                 return_all_dependencies=return_all_dependencies
             ))

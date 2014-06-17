@@ -95,7 +95,11 @@ class ISO8601Point(PointBase):
     def add(self, other):
         return ISO8601Point(self._iso_point_add(self.value, other.value))
 
-    def cmp_(self, other):
+    def __cmp__(self, other):
+        if self.TYPE != other.TYPE:
+            return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
+        if self.value == other.value:
+            return 0
         return self._iso_point_cmp(self.value, other.value)
 
     def standardise(self):
@@ -241,6 +245,7 @@ class ISO8601Sequence(object):
 
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
+    _MAX_CACHED_POINTS = 100
 
     @classmethod
     def get_async_expr(cls, start_point=None):
@@ -271,6 +276,10 @@ class ISO8601Sequence(object):
         if not i:
             raise "ERROR: iso8601 cycling init!"
 
+        self._cached_first_point_values = {}
+        self._cached_next_point_values = {}
+        self._cached_valid_point_booleans = {}
+
         self.spec = i
         self.custom_point_parse_function = None
         if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
@@ -299,6 +308,9 @@ class ISO8601Sequence(object):
             self.recurrence.start_point -= interval_parse(str(offset))
         if self.recurrence.end_point is not None:
             self.recurrence.end_point -= interval_parse(str(offset))
+        self._cached_first_point_values = {}
+        self._cached_next_point_values = {}
+        self._cached_valid_point_booleans = {}
         self.value = str(self.recurrence)
 
     def is_on_sequence(self, point):
@@ -307,7 +319,15 @@ class ISO8601Sequence(object):
 
     def is_valid(self, point):
         """Return True if point is on-sequence and in-bounds."""
-        return self.is_on_sequence(point)
+        try:
+            return self._cached_valid_point_booleans[point.value]
+        except KeyError:
+            is_valid = self.is_on_sequence(point)
+            if (len(self._cached_valid_point_booleans) >
+                    self._MAX_CACHED_POINTS):
+                self._cached_valid_point_booleans.popitem()
+            self._cached_valid_point_booleans[point.value] = is_valid
+            return is_valid
 
     def get_prev_point(self, point):
         """Return the previous point < point, or None if out of bounds."""
@@ -335,10 +355,19 @@ class ISO8601Sequence(object):
 
     def get_next_point(self, point):
         """Return the next point > p, or None if out of bounds."""
+        try:
+            return ISO8601Point(self._cached_next_point_values[point.value])
+        except KeyError:
+            pass
         p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point > p_iso_point:
-                return ISO8601Point(str(recurrence_iso_point))
+                next_point_value = str(recurrence_iso_point)
+                if (len(self._cached_next_point_values) >
+                        self._MAX_CACHED_POINTS):
+                    self._cached_next_point_values.popitem()
+                self._cached_next_point_values[point.value] = next_point_value
+                return ISO8601Point(next_point_value)
         return None
 
     def get_next_point_on_sequence(self, point):
@@ -352,10 +381,20 @@ class ISO8601Sequence(object):
 
     def get_first_point( self, point):
         """Return the first point >= to poing, or None if out of bounds."""
+        try:
+            return ISO8601Point(self._cached_first_point_values[point.value])
+        except KeyError:
+            pass
         p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point >= p_iso_point:
-                return ISO8601Point(str(recurrence_iso_point))
+                first_point_value = str(recurrence_iso_point)
+                if (len(self._cached_first_point_values) >
+                        self._MAX_CACHED_POINTS):
+                    self._cached_first_point_values.popitem()
+                self._cached_first_point_values[point.value] = (
+                    first_point_value)
+                return ISO8601Point(first_point_value)
         return None
 
     def get_stop_point( self ):
@@ -523,6 +562,7 @@ def _interval_parse(interval_string):
 
 def point_parse(point_string):
     return _point_parse(point_string).copy()
+
 
 @memoize
 def _point_parse(point_string):
