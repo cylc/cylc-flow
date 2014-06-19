@@ -506,7 +506,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     global NUM_EXPANDED_YEAR_DIGITS
     global ASSUMED_TIME_ZONE
 
-    if cycling_mode == "360":
+    if cycling_mode == "360 day":
         isodatetime.data.set_360_calendar()
 
     if time_zone is None:

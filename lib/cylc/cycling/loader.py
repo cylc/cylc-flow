@@ -94,7 +94,7 @@ def get_sequence_cls(cycling_type=None):
 
 def init_cyclers(cfg):
     DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
-    if DefaultCycler.TYPE in ['360','gregorian']:
+    if DefaultCycler.TYPE in ['360 day','gregorian']:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
     for cycling_type, init_func in INIT_FUNCTIONS.items():
         init_func(cfg)
