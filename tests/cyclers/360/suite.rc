@@ -6,7 +6,7 @@
 [scheduling]
     initial cycle time = 20130228T00
     final cycle time = 20130301T00
-    cycling = 360
+    cycling mode = 360
     [[dependencies]]
         [[[ P1D ]]]
             graph = foo[-P1D] => foo

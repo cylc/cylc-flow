@@ -5,7 +5,7 @@
     initial cycle time = 1
     final cycle time = 16
     runahead factor = 4 
-    cycling = integer
+    cycling mode = integer
     [[special tasks]]
         sequential = seq
     [[dependencies]]

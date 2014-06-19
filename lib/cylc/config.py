@@ -143,7 +143,7 @@ class config( object ):
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
 
-        if 'cycling' not in self.cfg['scheduling']:
+        if 'cycling mode' not in self.cfg['scheduling']:
             # Auto-detect integer cycling for pure async graph suites.
             dependency_map = self.cfg.get('scheduling', {}).get(
                 'dependencies', {})
@@ -156,7 +156,9 @@ class config( object ):
                         break
                 else:
                     # There aren't any other graphs, so set integer cycling.
-                    self.cfg['scheduling']['cycling'] = INTEGER_CYCLING_TYPE
+                    self.cfg['scheduling']['cycling mode'] = (
+                        INTEGER_CYCLING_TYPE
+                    )
                     if 'initial cycle time' not in self.cfg['scheduling']:
                         self.cfg['scheduling']['initial cycle time'] = "1"
                     if 'final cycle time' not in self.cfg['scheduling']:
