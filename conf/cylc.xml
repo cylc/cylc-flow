@@ -101,7 +101,6 @@
         <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if any task fails '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
-        <RegExpr attribute='Keyword' String=' cycling mode '/>
         <!-- Non-keyword syntax -->
         <RegExpr attribute="Section" String="^ *\[.*\] *$" />
         <RegExpr attribute='Assignment' String='=&gt;'/>

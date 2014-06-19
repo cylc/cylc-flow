@@ -692,7 +692,7 @@ class scheduler(object):
         flags.utc = self.config.cfg['cylc']['UTC mode']
 
         # Capture cycling mode
-        flags.cycling_mode = self.config.cfg['cylc']['cycling mode']
+        flags.cycling_mode = self.config.cfg['scheduling']['cycling']
 
         if not reconfigure:
             slog = suite_log( self.suite )

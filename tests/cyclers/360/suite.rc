@@ -1,12 +1,12 @@
 [cylc]
     UTC mode = True
-    cycling mode = 360
    [[reference test]]
        required run mode = live
        live mode suite timeout = 0.5 # minutes
 [scheduling]
     initial cycle time = 20130228T00
     final cycle time = 20130301T00
+    cycling = 360
     [[dependencies]]
         [[[ P1D ]]]
             graph = foo[-P1D] => foo

@@ -469,7 +469,7 @@ def init_from_cfg(cfg):
     initial_cycle_time = cfg['scheduling']['initial cycle time']
     final_cycle_time = cfg['scheduling']['final cycle time']
     assume_utc = cfg['cylc']['UTC mode']
-    cycling_mode = cfg['cylc']['cycling mode']
+    cycling_mode = cfg['scheduling']['cycling']
     test_cycle_time = initial_cycle_time
     if initial_cycle_time is None:
         test_cycle_time = final_cycle_time
