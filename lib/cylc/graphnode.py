@@ -51,11 +51,10 @@ NODE_ISO_RE = re.compile(
 # Cylc's ISO 8601 initial cycle time based format
 NODE_ISO_ICT_RE = re.compile(
     r"""^(\w+)       # Task name
-        \[\]         # Initial cycle time offset marker
-        (?:\[        # Begin optional [offset] syntax
-         ([^\]]+)    # Continue until next ']'
-         \]          # Stop at next ']'
-        )?           # End optional [offset] syntax]
+        \[           # Begin square bracket syntax
+        \^           # Initial cycle time offset marker
+        ([^\]]*)     # Optional ^offset syntax
+        \]           # End square bracket syntax
         (:[\w-]+|)$  # Optional type (e.g. :succeed)
      """, re.X)
 
@@ -80,8 +79,8 @@ class graphnode( object ):
         # - output label: foo:m1
         # - intercycle dependence: foo[T-6]
         # These may be combined: foo[T-6]:m1
-        # Task may be defined at initial cycle time: foo[]
-        # or relative to initial cycle time: foo[][+P1D]
+        # Task may be defined at initial cycle time: foo[^]
+        # or relative to initial cycle time: foo[^+P1D]
 
         self.offset_is_from_ict = False
         self.is_absolute = False
@@ -90,7 +89,7 @@ class graphnode( object ):
 
         m = re.match( NODE_ISO_ICT_RE, node )
         if m:
-            # node looks like foo[], foo[][-P4D], foo[]:fail, etc.
+            # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
             self.is_absolute = True
             name, offset, outp = m.groups()
             self.offset_is_from_ict = True

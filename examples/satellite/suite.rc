@@ -14,7 +14,7 @@ with '--now' and kill the external watcher script manually."""
         [[[R1]]]
             graph = "prep => ColdA => A"
         [[[ASYNCID:SATID-\d+]]]
-            graph = """prep[] => watcher:a => upload:a & archive:a"""
+            graph = """prep[^] => watcher:a => upload:a & archive:a"""
             daemon = watcher
         [[[PT12H]]]
             graph = """A[-PT12H] => A => B"""
