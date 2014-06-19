@@ -1650,7 +1650,8 @@ class config( object ):
                 )
                 graph_text = ""
                 for left, left_output, right in special_dependencies:
-                    graph_text += left + "[]"
+                    # Set e.g. (foo, fail, bar) to be foo[^]:fail => bar.
+                    graph_text += left + "[^]"
                     if left_output:
                         graph_text += ":" + left_output
                     graph_text += " => " + right + "\n"

@@ -7,9 +7,9 @@
         [[[ R1 ]]]
             graph = "cold_foo"
         [[[ R1/T00 ]]]
-            graph = "cold_foo[] => foo_midnight"
+            graph = "cold_foo[^] => foo_midnight"
         [[[ R1/T06 ]]]
-            graph = "cold_foo[] => foo_dawn"
+            graph = "cold_foo[^] => foo_dawn"
         [[[ T00 ]]]
             graph = "foo_midnight[-P1D] => foo_midnight"
         [[[ T06 ]]]

@@ -2895,9 +2895,9 @@ For example, we can write our suite like this:
         [[[R1]]]
             graph = "prep"
         [[[R1/T00]]]
-            graph = "prep[] => foo"   # prep[] implies prep at the initial cycle time
+            graph = "prep[^] => foo"   # ^ implies prep at the initial cycle time
         [[[R1/T12]]]
-            graph = "prep[] => baz"   # prep[], as above
+            graph = "prep[^] => baz"   # ^ is initial cycle time, as above
         [[[T00]]]
             graph = "foo[-P1D] => foo => bar"
         [[[T12]]]
@@ -3366,7 +3366,7 @@ Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
         [[[R1]]]
             graph = "prep"
         [[[R1/T00,R1/T12]]]
-            graph = "prep[] => foo"
+            graph = "prep[^] => foo"
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
@@ -3378,11 +3378,12 @@ Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
-        [[[0,12]]]
-            graph = "cfoo | foo[T-12] => foo => bar"
+        [[[T00,T12]]]
+            graph = "cfoo | foo[-PT12H] => foo => bar"
 \end{lstlisting}
 
 \end{myitemize}
+\lstset{language=transcript}
 
 \lstinline=R1=, or \lstinline=R1/date-time= tasks are the recommended way to
 specify unusual start up conditions. They allow you to specify a clean
@@ -3398,6 +3399,47 @@ In effect, the \lstinline=R1= task masquerades as the previous-cycle-point trigg
 of its associated cycling task. At suite start-up initial tasks will
 trigger the first cycling tasks, and thereafter the inter-cycle-point trigger
 will take effect.
+
+If a task has a dependency on another task in a different cycle point, the
+dependency can be written using the \lstinline=[offset]= syntax such as
+\lstinline=[-PT12H]= in \lstinline@foo[-PT12H] => foo@. This means that
+\lstinline=foo= at the current cycle point depends on a previous instance of
+ \lstinline=foo= at 12 hours before the current cycle point. Unlike the
+ cycling section headings (e.g. \lstinline=[[[T00,T12]]]=), dependencies
+ assume that relative times are relative to the current cycle point, not the
+ initial cycle point.
+ 
+However, it can be useful to have specific dependencies on tasks at or near
+the initial cycle point. You can switch the context of the offset to be
+the initial cycle point by using the caret symbol \lstinline=^=.
+
+For example, you can write \lstinline=foo[^]= to mean foo at the initial
+cycle point, and \lstinline=foo[^+PT6H]= to mean foo 6 hours after the initial
+cycle point. Usually, this kind of dependency will only apply in a limited
+number of cycle points near the start of the suite, so you may want to write
+it in \lstinline=R1=-based cycling sections. Here's the example inter-cycle
+\lstinline=R1= suite from above again:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[R1]]]
+            graph = "prep"
+        [[[R1/T00,R1/T12]]]
+            graph = "prep[^] => foo"
+        [[[T00,T12]]]
+            graph = "foo[-PT12H] => foo => bar"
+\end{lstlisting}
+\lstset{language=transcript}
+
+You can see there is a dependence on the initial \lstinline=R1= task
+\lstinline=prep= for \lstinline=foo= at the first \lstinline=T00= cycle point,
+and at the first \lstinline=T12= cycle point. Thereafter, \lstinline=foo= just
+depends on its previous (12 hours ago) instance.
+
+This is quite different to the non-preferred \lstinline=cold-start tasks=
+way of working.
 
 When using \lstinline=cold-start tasks=, unlike for asynchronous and start-up
 initial tasks, however, the cold-start ``OR'' construct means that cold-start
