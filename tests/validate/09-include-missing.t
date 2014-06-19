@@ -15,14 +15,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test strict validation of suite with case mismatches in task names
+# Test validation missing include-file.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 2
+echo '%include foo.rc' >suite.rc
+echo '%include bar.rc' >foo.rc
+run_fail "$TEST_NAME_BASE" cylc validate suite.rc
+cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
+ParseError: File not found: $PWD/bar.rc
+   via $PWD/foo.rc
+   via $PWD/suite.rc
+__ERR__
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-val
-run_fail $TEST_NAME cylc validate --strict $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+exit

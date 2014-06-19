@@ -20,6 +20,5 @@
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-examples
-run_ok $TEST_NAME $TEST_SOURCE_DIR/check-examples.sh
-
+TEST_NAME=$TEST_NAME_BASE
+run_ok $TEST_NAME $TEST_SOURCE_DIR/$TEST_NAME_BASE.sh

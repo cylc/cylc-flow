@@ -106,10 +106,10 @@ def inline( lines, dir, file, for_grep=False, for_edit=False, viewcfg={}, level=
                     if for_grep or single or label or for_edit:
                         outf.append('#++++ START INLINED INCLUDE FILE ' + match + msg )
                     h = open(inc, 'rb')
-                    inc = [ line.rstrip('\n') for line in h ]
+                    finc = [ line.rstrip('\n') for line in h ]
                     h.close()
                     # recursive inclusion
-                    outf.extend( inline( inc, dir, inc, for_grep,for_edit,viewcfg,level ))
+                    outf.extend( inline( finc, dir, inc, for_grep,for_edit,viewcfg,level ))
                     if for_grep or single or label or for_edit:
                         outf.append('#++++ END INLINED INCLUDE FILE ' + match + msg )
                 else:
