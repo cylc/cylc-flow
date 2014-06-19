@@ -111,7 +111,6 @@ SPEC = {
     'description'                             : vdr( vtype='string', default="" ),
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
-        'calendar'                            : vdr( vtype='string', default='gregorian', options=['360','gregorian'] ),
         'cycle point format'                  : vdr( vtype='cycletime_format', default=None),
         'cycle point num expanded year digits': vdr( vtype='integer', default=0),
         'cycle point time zone'               : vdr( vtype='cycletime_time_zone', default=None),
@@ -168,7 +167,7 @@ SPEC = {
     'scheduling' : {
         'initial cycle time'                  : vdr(vtype='cycletime'),
         'final cycle time'                    : vdr(vtype='cycletime'),
-        'cycling'                             : vdr(vtype='string', default="iso8601", options=["iso8601","integer"] ),
+        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
         'runahead factor'                     : vdr(vtype='integer', default=2 ),
         'queues' : {
             'default' : {

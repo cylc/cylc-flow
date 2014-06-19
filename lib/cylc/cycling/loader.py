@@ -28,6 +28,7 @@ import iso8601
 ISO8601_CYCLING_TYPE = 'iso8601'
 INTEGER_CYCLING_TYPE = 'integer'
 
+
 POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
           ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
 
@@ -92,6 +93,8 @@ def get_sequence_cls(cycling_type=None):
 
 
 def init_cyclers(cfg):
-    DefaultCycler.TYPE = cfg['scheduling']['cycling']
+    DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
+    if DefaultCycler.TYPE in ['360day','gregorian']:
+        DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
     for cycling_type, init_func in INIT_FUNCTIONS.items():
         init_func(cfg)
