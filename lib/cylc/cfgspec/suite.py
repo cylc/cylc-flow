@@ -167,7 +167,7 @@ SPEC = {
     'scheduling' : {
         'initial cycle time'                  : vdr(vtype='cycletime'),
         'final cycle time'                    : vdr(vtype='cycletime'),
-        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360 day","gregorian","integer"] ),
+        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
         'runahead factor'                     : vdr(vtype='integer', default=2 ),
         'queues' : {
             'default' : {
