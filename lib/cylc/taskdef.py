@@ -227,17 +227,17 @@ class taskdef(object):
                         continue
                     if trig.async_repeating:
                         lp.add( trig.get( tag ))
-                    elif trig.evaluation_offset is not None:
-                        if self.ict is not None and ( tag - trig.evaluation_offset ) >= self.ict:
+                    elif self.ict is None or \
+                            trig.evaluation_offset is None or \
+                                ( tag - trig.evaluation_offset ) >= self.ict:
+                            # i.c.t. can be None after a restart, if one
+                            # is not specified in the suite definition.
+
                             if trig.suicide:
                                 sp.add( trig.get( tag ))
                             else:
                                 pp.add( trig.get( tag ))
-                    elif trig.evaluation_offset is None:
-                        if trig.suicide:
-                            sp.add( trig.get( tag ))
-                        else:
-                            pp.add( trig.get( tag ))
+
             sself.prerequisites.add_requisites( pp )
             sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )

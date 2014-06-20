@@ -1,0 +1,13 @@
+
+How to generate a new cylc release and update the cylc homepage (on
+github gh-pages):
+
+ 1 run the test battery
+ 2 update doc/changes.html and commit the change
+ 3 tag with the new release number x.y.z
+ 4 push new commit and the tag to master on cylc/cylc
+ 5 generate the new documentation and update it to gh-pages:
+
+ % admin/update-gh-pages -p "release x.y.z"
+
+

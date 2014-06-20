@@ -244,6 +244,7 @@ where they got to while the suite was down."""
         # parse each line and create the task it represents
         tasknames = {}
         taskstates = {}
+        taskcycles = []
         for line in lines[index:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
@@ -278,7 +279,13 @@ where they got to while the suite was down."""
                 print >> sys.stderr, "ERROR: ", type(e).__name__, e
                 raise Exception( "ERROR: corrupted state dump" )
             taskstates[id] = (name, tag, state )
+            taskcycles.append(tag)
 
+        taskcycles = list(set(taskcycles))
+        cycleinfo = {}
+        for cycle in taskcycles:
+            res = self.db.get_restart_info(cycle)
+            cycleinfo[cycle] = res
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
         #
         # The state of task prerequisites (satisfied or not) and outputs
@@ -315,8 +322,12 @@ where they got to while the suite was down."""
             print " +", id
             try:
                 # startup is True only for a cold start
-                submit_num = self.db.get_task_current_submit_num(name,tag)
-                exists = self.db.get_task_state_exists(name,tag)
+                if name in cycleinfo[tag].keys():
+                    submit_num = cycleinfo[tag][name]
+                else:
+                    submit_num = 0
+                exists = name in cycleinfo[tag].keys()
+                
                 itask = self.config.get_task_proxy(
                     name, get_point(tag), state, stopctime=None,
                     startup=False, submit_num=submit_num, exists=exists

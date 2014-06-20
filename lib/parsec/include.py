@@ -61,10 +61,15 @@ def inline( lines, dir, file, for_grep=False, for_edit=False, viewcfg={}, level=
     global modtimes
 
     outf = []
+    initial_line_index = 0
 
     if level == None:
         level = ''
         if for_edit:
+            m = re.match( '^(#![jJ]inja2)', lines[0])
+            if m:
+                outf.append( m.groups()[0] )
+                initial_line_index = 1
             outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
 # !WARNING! This is an inlined parsec config file; include-files are split
 # !WARNING! out again on exiting the edit session.  If you are editing
@@ -83,7 +88,7 @@ def inline( lines, dir, file, for_grep=False, for_edit=False, viewcfg={}, level=
     else:
         msg = ''
 
-    for line in lines:
+    for line in lines[initial_line_index:]:
         m = include_re.match( line )
         if m:
             q1, match, q2 = m.groups()
@@ -101,10 +106,10 @@ def inline( lines, dir, file, for_grep=False, for_edit=False, viewcfg={}, level=
                     if for_grep or single or label or for_edit:
                         outf.append('#++++ START INLINED INCLUDE FILE ' + match + msg )
                     h = open(inc, 'rb')
-                    inc = [ line.rstrip('\n') for line in h ]
+                    finc = [ line.rstrip('\n') for line in h ]
                     h.close()
                     # recursive inclusion
-                    outf.extend( inline( inc, dir, inc, for_grep,for_edit,viewcfg,level ))
+                    outf.extend( inline( finc, dir, inc, for_grep,for_edit,viewcfg,level ))
                     if for_grep or single or label or for_edit:
                         outf.append('#++++ END INLINED INCLUDE FILE ' + match + msg )
                 else:

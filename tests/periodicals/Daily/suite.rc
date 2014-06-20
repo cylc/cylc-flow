@@ -3,13 +3,18 @@
        required run mode = live
        live mode suite timeout = 1.0 # minutes
 [scheduling]
-    initial cycle time = 20100111
-    final cycle time = 20100118
+    initial cycle time = 20140107
+    final cycle time = 20140118
     runahead limit = 2 # enforce sequential running
     [[dependencies]]
-        [[[Daily(20100110,3)]]]
+        [[[Daily(2014011006,3)]]]
+            # daily cycling *with a non-zero hour* is a more stringent test
             graph = "a"
 [runtime]
     [[a]]
         command scripting = "sleep 1"
+
+[visualization]
+    initial cycle time = 20140107
+    final cycle time = 20140118
 
