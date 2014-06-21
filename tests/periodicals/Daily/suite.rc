@@ -1,4 +1,6 @@
 [cylc]
+    # for the pre-ISO8601 reference log:
+    cycle point format = "%Y%m%d%H"
    [[reference test]]
        required run mode = live
        live mode suite timeout = 1.0 # minutes
@@ -7,7 +9,7 @@
     final cycle time = 20140118
     runahead limit = 2 # enforce sequential running
     [[dependencies]]
-        [[[Daily(2014011006,3)]]]
+        [[[ R/+PT6H/P3D ]]]
             # daily cycling *with a non-zero hour* is a more stringent test
             graph = "a"
 [runtime]
