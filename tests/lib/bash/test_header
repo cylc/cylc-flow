@@ -167,7 +167,7 @@ function cmp_ok() {
     local FILE_TEST=$1
     local FILE_CONTROL=${2:--}
     local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
-    local CMP_COMMAND="diff"
+    local CMP_COMMAND="diff -u"
     if [[ -n ${CYLC_TEST_DEBUG_CMP:-} ]]; then
         CMP_COMMAND="xxdiff -D"
     fi

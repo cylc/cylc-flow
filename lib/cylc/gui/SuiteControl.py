@@ -2165,22 +2165,20 @@ or remove task definitions without restarting the suite."""
         err = []
         out = []
         extra = []
-        for f in logfiles:
-            if f.endswith('.err'):
-                err.append(f)
-            elif f.endswith('.out'):
-                out.append(f)
-            elif re.search( '.*' + task_id + '\.\d+$', f ): # /a/b/c/foo.1.2
-                js = f
+        for logfile in logfiles:
+            if logfile.endswith('/job.err'):
+                err.append(logfile)
+            elif logfile.endswith('/job.out'):
+                out.append(logfile)
+            elif logfile.endswith('/job'):
+                js = logfile
             else:
-                extra.append( f )
+                extra.append( logfile )
 
         # for re-tries this sorts in time order due to filename:
         # (TODO - does this still work, post secs-since-epoch file extensions?)
-        key_func = lambda x: [int(w) if w.isdigit() else w for w in
-                              re.split("(\d+)", x)]
-        err.sort(key=key_func, reverse=True)
-        out.sort(key=key_func, reverse=True)
+        err.sort(key=self._sort_key_func, reverse=True)
+        out.sort(key=self._sort_key_func, reverse=True)
         window.set_size_request(800, 400)
         if choice == 'job script':
             window.set_title( task_id + ": Job Script" )
@@ -2205,6 +2203,9 @@ or remove task definitions without restarting the suite."""
 
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
+
+    def _sort_key_func(self, x):
+        return [int(w) if w.isdigit() else w for w in re.split("(\d+)", x)]
 
     def _set_tooltip( self, widget, tip_text ):
         tooltip = gtk.Tooltips()

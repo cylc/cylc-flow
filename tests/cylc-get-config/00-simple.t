@@ -137,7 +137,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -201,7 +201,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -264,7 +264,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -328,7 +328,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -392,7 +392,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -456,7 +456,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -520,7 +520,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -584,7 +584,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -647,7 +647,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -711,7 +711,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -775,7 +775,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -838,7 +838,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 
@@ -902,7 +902,7 @@ cmp_ok $TEST_NAME.stdout - <<'__OUT__'
    execution polling intervals = 
    title = 
    extra log files = 
-   work sub-directory = $CYLC_TASK_ID
+   work sub-directory = $CYLC_TASK_CYCLE_TIME/$CYLC_TASK_NAME
    submission polling intervals = 
    description = 
    initial scripting = 

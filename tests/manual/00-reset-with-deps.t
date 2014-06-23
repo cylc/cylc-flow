@@ -35,7 +35,7 @@ run_ok "$TEST_NAME" cylc validate "$SUITE_NAME"
 TEST_NAME="$TEST_NAME_BASE-run"
 run_ok "$TEST_NAME" cylc run "$SUITE_NAME"
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
-poll_while ! test -e "$SUITE_RUN_DIR/log/job/t1.1.2.status"
+poll_while ! test -e "$SUITE_RUN_DIR/log/job/1/t1/02/job.status"
 #-------------------------------------------------------------------------------
 # Ensure that t2.1.2 is waiting for t1.1.2
 TEST_NAME="$TEST_NAME_BASE-show-t2.1.out"
