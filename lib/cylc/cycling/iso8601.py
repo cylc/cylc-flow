@@ -271,7 +271,8 @@ class ISO8601Sequence(object):
 
         self.offset = ISO8601Interval.get_null()
 
-        i = convert_old_cycler_syntax(dep_section)
+        i = convert_old_cycler_syntax(
+            dep_section, start_point=self.context_start_point)
 
         if not i:
             raise "ERROR: iso8601 cycling init!"
@@ -417,32 +418,22 @@ class ISO8601Sequence(object):
         return False
 
 
-def convert_old_cycler_syntax(dep_section, only_detect_old=False):
+def convert_old_cycler_syntax(dep_section, only_detect_old=False,
+                              start_point=None):
     """Convert old cycler syntax into our Cylc-ISO8601 format."""
-    m = re.match('^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
-    if m:
-        # back compat Daily()
+    for re_old_format, unit in [
+            ("^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "D"),
+            ("^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "M"),
+            ("^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "Y")]:
+        m = re.search(re_old_format, dep_section)
+        if not m:
+            continue
         if only_detect_old:
             return True
         anchor, step = m.groups()
-        anchor = str(ISO8601Point.from_nonstandard_string(anchor))
-        return anchor + '/P' + step + 'D'
-    m = re.match('^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
-    if m:
-        # back compat Monthly()
-        if only_detect_old:
-            return True
-        anchor, step = m.groups()
-        anchor = str(ISO8601Point.from_nonstandard_string(anchor))
-        return anchor + '/P' + step + 'M'
-    m = re.match('^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
-    if m:
-        # back compat Yearly()
-        if only_detect_old:
-            return True
-        anchor, step = m.groups()
-        anchor = str(ISO8601Point.from_nonstandard_string(anchor))
-        return anchor + '/P' + step + 'Y'
+        step = ISO8601Interval("P%s%s" % (step, unit))
+        return _get_old_anchor_step_recurrence(anchor, step, start_point)
+    # Check for the hourly syntax.
     m = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
     if m:
         # back compat 0,6,12 etc.
@@ -453,6 +444,16 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
     if only_detect_old:
         return False
     return dep_section
+
+
+def _get_old_anchor_step_recurrence(anchor, step, start_point):
+    """Return a string representing an old-format recurrence translation."""
+    anchor_point = ISO8601Point.from_nonstandard_string(anchor)
+    # We may need to adjust the anchor downwards if it is ahead of the start.
+    if start_point is not None:
+        while anchor_point >= start_point + step:
+            anchor_point -= step
+    return str(anchor_point) + "/" + str(step)
 
 
 def get_backwards_compatibility_mode():
