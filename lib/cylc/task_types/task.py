@@ -181,7 +181,7 @@ class task( object ):
         self.state = task_state.task_state( state )
         self.manual_trigger = False
 
-        self.stop_tag = None
+        self.stop_point = None
 
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"

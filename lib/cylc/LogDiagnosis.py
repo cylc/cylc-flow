@@ -20,7 +20,7 @@ class LogSpec( object ):
         self.lines = h.readlines()
         h.close()
 
-    def get_start_tag( self ):
+    def get_start_string( self ):
         found = False
         for line in self.lines:
             m = re.search( 'Start tag: (.*)$',line)
@@ -35,7 +35,7 @@ class LogSpec( object ):
         else:
             raise LogAnalyserError( "ERROR: logged start tag not found" )
 
-    def get_stop_tag( self ):
+    def get_stop_string( self ):
         found = False
         for line in self.lines:
             m = re.search( 'Stop tag: (.*)$',line)
