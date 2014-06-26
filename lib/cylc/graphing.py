@@ -109,7 +109,38 @@ class CGraphPlain( pygraphviz.AGraph ):
                 # override
                 style='dashed'
 
-            self.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead )
+            penwidth = 2
+
+            self.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead,
+                                penwidth=penwidth )
+
+    def add_subgraph(self, nbunch=None, name=None, **attr):
+        """Return subgraph induced by nodes in nbunch.
+
+        Overrides (but does the same thing as) pygraphviz's
+        AGraph.add_subgraph method.
+
+        """
+
+        name = name.encode(self.encoding)
+
+        handle = pygraphviz.graphviz.agsubg(
+            self.handle, name, 1)
+
+        subgraph = pygraphviz.AGraph(
+            handle=handle, name=name,
+            strict=self.strict, directed=self.directed,
+            **attr
+        )
+
+        nodes = self.prepare_nbunch(nbunch)
+        subgraph.add_nodes_from(nodes)
+
+        for left, right in self.edges():
+            if left in subgraph and right in subgraph: 
+                subgraph.add_edge(left, right)
+
+        return subgraph
 
 
 class CGraph( CGraphPlain ):

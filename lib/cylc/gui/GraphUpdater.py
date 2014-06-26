@@ -353,6 +353,20 @@ class GraphUpdater(threading.Thread):
             self.graphw = graphing.CGraphPlain( self.cfg.suite, suite_polling_tasks )
             self.graphw.add_edges( gr_edges, ignore_suicide=self.ignore_suicide )
 
+            ctime_id_map = {}
+            for edge_entry in gr_edges:
+                for id_ in edge_entry[:2]:
+                    if id_ is None:
+                        continue
+                    ctime = cylc.TaskID.split(id_)[1]
+                    ctime_id_map.setdefault(ctime, [])
+                    ctime_id_map[ctime].append(id_)
+            for ctime, ids in ctime_id_map.items():
+                self.graphw.add_subgraph(
+                    nbunch=ids, name="cluster_" + ctime,
+                    label=ctime, fontsize=28, rank="max", style="dashed"
+                )
+
         for n in self.graphw.nodes(): # base node defaults
             n.attr['style'] = 'filled'
             n.attr['color'] = '#888888'

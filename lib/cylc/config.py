@@ -1528,7 +1528,19 @@ class config( object ):
 
         graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
         graph.add_edges( gr_edges, ignore_suicide )
-
+        ctime_id_map = {}
+        for edge_entry in gr_edges:
+            for id_ in edge_entry[:2]:
+                if id_ is None:
+                    continue
+                ctime = TaskID.split(id_)[1]
+                ctime_id_map.setdefault(ctime, [])
+                ctime_id_map[ctime].append(id_)
+        for ctime, ids in ctime_id_map.items():
+            graph.add_subgraph(
+                nbunch=ids, name="cluster_" + ctime,
+                label=ctime, fontsize=28, rank="max", style="dashed"
+            )
         return graph
 
     def get_node_labels( self, start_ctime, stop, raw ):
