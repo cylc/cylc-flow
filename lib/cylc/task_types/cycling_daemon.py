@@ -38,6 +38,7 @@ class cycling_daemon( oneoff, cycling ):
         else:
             self.last_reported = self.c_time
 
+        self.env_vars[ 'START_CYCLE_POINT' ] = self.last_reported
         self.env_vars[ 'START_CYCLE_TIME' ] = self.last_reported
 
         cycling.__init__( self, state, validate )

@@ -48,11 +48,11 @@ NODE_ISO_RE = re.compile(
         (:[\w-]+|)$  # Optional type (e.g. :succeed)
      """, re.X)
 
-# Cylc's ISO 8601 initial cycle time based format
+# Cylc's ISO 8601 initial cycle point based format
 NODE_ISO_ICT_RE = re.compile(
     r"""^(\w+)       # Task name
         \[           # Begin square bracket syntax
-        \^           # Initial cycle time offset marker
+        \^           # Initial cycle point offset marker
         ([^\]]*)     # Optional ^offset syntax
         \]           # End square bracket syntax
         (:[\w-]+|)$  # Optional type (e.g. :succeed)
@@ -79,8 +79,8 @@ class graphnode( object ):
         # - output label: foo:m1
         # - intercycle dependence: foo[T-6]
         # These may be combined: foo[T-6]:m1
-        # Task may be defined at initial cycle time: foo[^]
-        # or relative to initial cycle time: foo[^+P1D]
+        # Task may be defined at initial cycle point: foo[^]
+        # or relative to initial cycle point: foo[^+P1D]
 
         self.offset_is_from_ict = False
         self.is_absolute = False

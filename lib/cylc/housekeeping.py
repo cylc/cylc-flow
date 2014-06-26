@@ -225,7 +225,7 @@ class hkitem:
         if flags.debug:
             print " + MATCH"
 
-        # extract cycle time from path
+        # extract cycle point from path
         mgrps = m.groups()
         if len(mgrps) == 1:
             self.matched_ctime = mgrps[0]
@@ -248,9 +248,9 @@ class hkitem:
             print " > extracted time groups:", m.groups()
             return False
 
-        # TODO ISO - check validity of extracted cycle time
+        # TODO ISO - check validity of extracted cycle point
         if flags.debug:
-            print " + extracted cycle time: " + self.matched_ctime
+            print " + extracted cycle point: " + self.matched_ctime
 
         # assume ctime is >= self.matched_ctime
         # TODO ISO:
@@ -269,9 +269,9 @@ class hkitem:
         return True
 
     def interpolate_destination( self ):
-        # Interpolate cycle time components into destination if necessary.
+        # Interpolate cycle point components into destination if necessary.
         if self.destn:
-            # destination directory may be cycle time dependent
+            # destination directory may be cycle point dependent
             dest = self.destn
             dest = re.sub( 'YYYYMMDDHH', self.matched_ctime, dest )
             dest = re.sub( 'YYYYMMDD', self.matched_ctime[0:8], dest )

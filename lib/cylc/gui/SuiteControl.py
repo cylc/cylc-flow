@@ -835,7 +835,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             stopat = True
             stoptag = stoptag_entry.get_text()
             if stoptag == '':
-                warning_dialog( "ERROR: No stop TAG entered", self.window ).warn()
+                warning_dialog(
+                    "ERROR: No stop CYCLE_POINT entered", self.window
+                ).warn()
                 return
             # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON stoptag?
 
@@ -866,8 +868,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 warning_dialog( "ERROR: No stop task ID entered", self.window ).warn()
                 return
             if not cylc.TaskID.is_valid_id( stoptask_id ):
-                warning_dialog( "ERROR: Bad task ID (" + cylc.TaskID.get( "TASK", "TAG" ) + "): " + stoptask_id,
-                                self.window ).warn()
+                warning_dialog(
+                    "ERROR: Bad task ID (" +
+                    cylc.TaskID.get( "TASK", "CYCLE_POINT") + "): " +
+                    stoptask_id,
+                    self.window
+                ).warn()
                 return
             else:
                 stoptask_id = tid.getstr()
@@ -901,8 +907,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #    info_dialog( result[1], self.window ).inform()
 
     def loadctimes( self, bt, startentry, stopentry ):
-        item1 = " -i '[scheduling]initial cycle time'"
-        item2 = " -i '[scheduling]final cycle time'"
+        item1 = " -i '[scheduling]initial cycle point'"
+        item2 = " -i '[scheduling]final cycle point'"
         command = "cylc get-suite-config --mark-up --host=" + self.cfg.host + \
                 " " + self.cfg.template_vars_opts + " " + \
                 " --user=" + self.cfg.owner + " --one-line" + item1 + item2 + " " + \
@@ -912,14 +918,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if res[0]:
             out1, out2 = res[1][0].split()
             if out1 == "None" and out2 == "None":  # (default value from suite.rc spec)
-                info_dialog( """Initial and final cycle times have not
+                info_dialog( """Initial and final cycle points have not
 been defined for this suite""").inform()
             elif out1 == "None":
-                info_dialog( """An initial cycle time has not
+                info_dialog( """An initial cycle point has not
 been defined for this suite""").inform()
                 stopentry.set_text( out2 )
             elif out2 == "None":
-                info_dialog( """A final cycle time has not
+                info_dialog( """A final cycle point has not
 been defined for this suite""").inform()
                 startentry.set_text( out1 )
             else:
@@ -1327,7 +1333,8 @@ The Cylc Suite Engine.
         label = gtk.Label( 'TASK: ' + task_id )
         vbox.pack_start( label, True )
 
-        label = gtk.Label( 'DEP (NAME' + cylc.TaskID.DELIM + 'TAG or message)' )
+        label = gtk.Label(
+            'DEP (NAME' + cylc.TaskID.DELIM + 'CYCLE_POINT or message)' )
 
         entry = gtk.Entry()
 
@@ -1366,8 +1373,11 @@ The Cylc Suite Engine.
         try:
             (name, cycle ) = cylc.TaskID.split( task_id )
         except ValueError:
-            warning_dialog( "ERROR, Task or Group ID must be " + cylc.TaskID.get( "NAME", "TAG" ),
-                            self.window ).warn()
+            warning_dialog(
+                "ERROR, Task or Group ID must be " +
+                cylc.TaskID.get( "NAME", "CYCLE_POINT" ),
+                self.window
+            ).warn()
             return
 
         # TODO ISO - RESTORE VALIDITY CHECK ON cycle?
@@ -1685,11 +1695,12 @@ shown here in the state they were in at the time of triggering.''' )
         stopquick_rb = gtk.RadioButton( stop_rb, "Quickly (see Help)" )
         vbox.pack_start (stopquick_rb, True)
 
-        stopat_rb = gtk.RadioButton( stop_rb, "After all tasks have passed a given TAG" )
+        stopat_rb = gtk.RadioButton(
+            stop_rb, "After all tasks have passed a given CYCLE_POINT" )
         vbox.pack_start (stopat_rb, True)
 
         st_box = gtk.HBox()
-        label = gtk.Label( "STOP (CYCLE or INT')" )
+        label = gtk.Label( "STOP CYCLE POINT" )
         st_box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(14)
@@ -1717,7 +1728,8 @@ shown here in the state they were in at the time of triggering.''' )
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label( 'STOP (task ' + cylc.TaskID.get( 'NAME', 'TAG' ) + ')' )
+        label = gtk.Label( 'STOP (task ' +
+                           cylc.TaskID.get( 'NAME', 'CYCLE_POINT' ) + ')' )
         tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)
@@ -2037,7 +2049,7 @@ shown here in the state they were in at the time of triggering.''' )
             entry_match.set_text(kwargs['name'])
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'TAG' )
+        label = gtk.Label( 'CYCLE_POINT' )
         hbox.pack_start( label, True )
         entry_tag = gtk.Entry()
         hbox.pack_start (entry_tag, True)

@@ -20,7 +20,7 @@ import sys, re
 from task import task
 
 class async_repeating( task ):
-    """ A repeating asynchronous (no cycle time) task for use in
+    """ A repeating asynchronous (no cycle point) task for use in
     processing satellite data or similar. Its prerequisites contain
     a pattern to match the "satellite pass ID" (which is essentially
     arbitrary but must uniquely identify any associated data sets).

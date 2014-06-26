@@ -213,6 +213,7 @@ class jobfile(object):
         BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( sitecfg.get( ['task messaging','maximum number of tries'])) )
         BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( sitecfg.get( ['task messaging','connection timeout in seconds'])) )
         BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_POINT=" + self.tag )
         BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')

@@ -56,12 +56,18 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (i.e. only if
-the same task, NAME.TAG, is not currently running in the suite)."""
+the same task, NAME.CYCLE_POINT, is not currently running in the suite)."""
 
 def commandline_parser():
-    parser = cop( usage, jset=True,
-            argdoc=[ ("REG", "Suite name"),
-                ("TASK", "Target task (" + cylc.TaskID.get( "NAME", "TAG" ) + ")")])
+    parser = cop(
+        usage, jset=True,
+        argdoc=[
+            ("REG", "Suite name"),
+            ("TASK",
+             "Target task (" + cylc.TaskID.get("NAME", "CYCLE_POINT") +
+             ")"),
+        ]
+    )
 
     parser.set_defaults( sched=False, dry_run=False )
 
@@ -139,8 +145,8 @@ slog.pimp()
 
 task.cylc_mode = 'submit'
 
-ict = config.cfg['scheduling']['initial cycle time']
-fct = config.cfg['scheduling']['final cycle time'  ]
+ict = config.cfg['scheduling']['initial cycle point']
+fct = config.cfg['scheduling']['final cycle point'  ]
 
 # static cylc and suite-specific variables:
 suite_env = {
@@ -158,6 +164,8 @@ suite_env = {
         'CYLC_SUITE_PORT'        : 'None',
         'CYLC_SUITE_REG_PATH'    : RegPath( suite ).get_fpath(), # DEPRECATED
         'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : suite_dir,
+        'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( ict ), # may be "None"
+        'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( fct ), # may be "None"
         'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( ict ), # may be "None"
         'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( fct ), # may be "None"
         'CYLC_SUITE_LOG_DIR'     : suite_log_dir # needed by the test battery

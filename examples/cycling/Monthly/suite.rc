@@ -4,8 +4,8 @@ description = """
     post-processing every 12 months.
               """
 [scheduling]
-    initial cycle time = 2010-01  # Note: '201001' is not permitted.
-    final cycle time = 2012-12
+    initial cycle point = 2010-01  # Note: '201001' is not permitted.
+    final cycle point = 2012-12
     [[dependencies]]
         [[[R1]]]
             graph = """
@@ -27,8 +27,8 @@ description = """
                 model => post
                     """
 [visualization]
-    initial cycle time = 2010-01
-    final cycle time = 2012-12
+    initial cycle point = 2010-01
+    final cycle point = 2012-12
     [[node attributes]]
         prep    =  "style=filled", "fillcolor=orange", "shape=circle"	
         model   =  "style=filled", "fillcolor=lightblue"	

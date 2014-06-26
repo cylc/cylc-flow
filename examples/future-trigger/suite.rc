@@ -1,6 +1,6 @@
 
 [scheduling]
-    initial cycle time = 2010080800
+    initial cycle point = 2010080800
     runahead factor = 4
     [[special tasks]]
         cold-start = cold

@@ -39,10 +39,10 @@ For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc [info] show'.
 
 Examples:
- Display the state of all running tasks, sorted by cycle time:
+ Display the state of all running tasks, sorted by cycle point:
  % cylc [info] dump --tasks --sort SUITE | grep running
 
- Display the state of all tasks in a particular cycle:
+ Display the state of all tasks in a particular cycle point:
  % cylc [info] dump -t SUITE | grep 2010082406""", pyro=True, noforce=True )
 
 parser.add_option( "-g", "--global", help="Global information only.",
@@ -52,7 +52,7 @@ parser.add_option( "-t", "--tasks", help="Task states only.",
         action="store_true", default=False, dest="tasks_only" )
 
 parser.add_option( "-s", "--sort", help="Task states only; "
-        "sort by cycle time instead of name.",
+        "sort by cycle point instead of name.",
         action="store_true", default=False, dest="sort_by_cycle" )
 
 ( options, args ) = parser.parse_args()
@@ -79,7 +79,7 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy('state_summary' )
-    # get state summary, task names, cycle times
+    # get state summary, task names, cycle points
     [glbl, states, fam_states] = proxy.get_state_summary()
 except Exception, x:
     if cylc.flags.debug:

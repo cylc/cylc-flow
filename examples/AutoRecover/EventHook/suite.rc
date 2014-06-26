@@ -4,8 +4,8 @@ description = """
 Illustrates use of a task event hook script to clean up failed tasks."""
 
 [scheduling]
-    initial cycle time = 2011010106
-    final cycle time = 2011010200
+    initial cycle point = 2011010106
+    final cycle point = 2011010200
     [[dependencies]]
         [[[0,6,12,18]]]
             graph =  """A => fam

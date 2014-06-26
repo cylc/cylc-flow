@@ -63,7 +63,7 @@ class state_summary( Pyro.core.ObjBase ):
         fam_states = {}
         all_states = []
         for ctime, c_task_states in task_states.items():
-            # For each cycle time, construct a family state tree
+            # For each cycle point, construct a family state tree
             # based on the first-parent single-inheritance tree
 
             c_fam_task_states = {}

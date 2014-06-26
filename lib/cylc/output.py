@@ -31,7 +31,7 @@ Hold and process explicit internal task outputs during suite configuration.
 This is for outputs used as outputs, not outputs used as prerequisites. The
 latter can have instrinsic (in message) and evaluation ([T-n]) offsets, but
 these only have intrinsic offsets - they are always evaluated at the task's
-own cycle time.
+own cycle point.
     """
     def __init__(self, msg, base_interval=None ):
         self.offset = None
@@ -45,7 +45,7 @@ own cycle time.
             self.offset = base_interval.get_inferred_child( offset )
 
     def get( self, ctime ):
-        # Replace [T] with actual cycle time
+        # Replace [T] with actual cycle point
         if self.offset:
             ctime += self.offset
         return re.sub( '\[\s*T.*?\]', str(ctime), self.msg )

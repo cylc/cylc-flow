@@ -68,14 +68,14 @@ where they got to while the suite was down."""
                 action="store_true", default=False, dest="profile_mode" )
 
         self.parser.add_option( "--ignore-final-cycle",
-            help="Ignore the final cycle time in the state dump. If one is"
+            help="Ignore the final cycle point in the state dump. If one is"
             "specified in the suite definition it will be used, however.",
             action="store_true", default=False, dest="ignore_stopcycle" )
 
         self.parser.add_option( "--ignore-initial-cycle",
-            help="Ignore the initial cycle time in the state dump. If one is "
+            help="Ignore the initial cycle point in the state dump. If one is "
             "specified in the suite definition it will be used, however. In a "
-            "restart this is only used to set $CYLC_SUITE_INITIAL_CYCLE_TIME.",
+            "restart this is only used to set $CYLC_SUITE_INITIAL_CYCLE_POINT.",
             action="store_true", default=False, dest="ignore_startcycle" )
 
         scheduler.__init__( self, is_restart=True )
@@ -357,7 +357,7 @@ where they got to while the suite was down."""
                 # Only waiting tasks get held. These need to be released
                 # on restart to avoid the automatic shutdown criterion:
                 # if all tasks are succeeded or held (e.g. because they
-                # passed the final cycle time) shut down automatically.
+                # passed the final cycle point) shut down automatically.
                 itask.state.set_status('waiting')
 
             elif itask.state.is_currently('submitted', 'running'):

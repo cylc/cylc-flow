@@ -131,16 +131,16 @@ class scheduler(object):
         self.cli_start_tag = None
 
         self.parser.add_option( "--until",
-                help="Shut down after all tasks have PASSED this cycle time.",
-                metavar="CYCLE", action="store", dest="stop_tag" )
+                help="Shut down after all tasks have PASSED this cycle point.",
+                metavar="CYCLE_POINT", action="store", dest="stop_tag" )
 
         self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
                 action="store_true", default=False, dest="start_held" )
 
         self.parser.add_option( "--hold-after",
-                help="Hold (don't run tasks) AFTER this cycle time.",
-                metavar="CYCLE", action="store", dest="hold_time" )
+                help="Hold (don't run tasks) AFTER this cycle point.",
+                metavar="CYCLE_POINT", action="store", dest="hold_time" )
 
         self.parser.add_option( "-m", "--mode",
                 help="Run mode: live, simulation, or dummy; default is live.",
@@ -508,7 +508,7 @@ class scheduler(object):
 
     def command_hold_after_tag( self, tag ):
         """TODO - not currently used, add to the cylc hold command"""
-        # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME/TAG VS POINT
+        # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME VS POINT
         self.hold_suite( tag )
         self.log.info( "The suite will pause when all tasks have passed " + tag )
 
@@ -646,9 +646,9 @@ class scheduler(object):
                 cli_start_tag=self.cli_start_tag,
                 is_restart=self.is_restart, is_reload=reconfigure)
 
-        # Initial and final cycle times - command line takes precedence
-        self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle time']
-        self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle time']
+        # Initial and final cycle points - command line takes precedence
+        self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle point']
+        self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle point']
         if self.start_tag:
             self.start_tag = get_point( self.start_tag )
         if self.stop_tag:
@@ -656,7 +656,7 @@ class scheduler(object):
 
         if (not self.start_tag and not self.is_restart and
             self.config.cycling_tasks):
-            print >> sys.stderr, 'WARNING: No initial cycle time provided - no cycling tasks will be loaded.'
+            print >> sys.stderr, 'WARNING: No initial cycle point provided - no cycling tasks will be loaded.'
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -750,6 +750,8 @@ class scheduler(object):
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
+                'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( self.start_tag ), # may be "None"
+                'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( self.stop_tag ), # may be "None"
                 'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.start_tag ), # may be "None"
                 'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_tag ), # may be "None"
                 'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
@@ -1137,7 +1139,7 @@ class scheduler(object):
 
 
     def set_stop_ctime( self, stop_tag ):
-        self.log.info( "Setting stop cycle time: " + stop_tag )
+        self.log.info( "Setting stop cycle point: " + stop_tag )
         self.stop_tag = get_point(stop_tag)
         self.pool.set_stop_tag(self.stop_tag)
 
@@ -1160,7 +1162,7 @@ class scheduler(object):
 
     def hold_suite( self, ctime = None ):
         if ctime:
-            self.log.info( "Setting suite hold cycle time: " + ctime )
+            self.log.info( "Setting suite hold cycle point: " + ctime )
             self.hold_time = ctime
         else:
             self.hold_suite_now = True

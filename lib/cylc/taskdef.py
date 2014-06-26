@@ -176,8 +176,8 @@ class taskdef(object):
             #     self.triggers[sequence] = [list of triggers for this
             #     sequence]
             # The list of triggers associated with sequenceX will only be
-            # used by a particular task if the task's cycle time is a
-            # valid member of sequenceX's sequence of cycle times.
+            # used by a particular task if the task's cycle point is a
+            # valid member of sequenceX's sequence of cycle points.
 
             # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id, self.ict )
@@ -278,7 +278,7 @@ class taskdef(object):
             sself.intercycle_offset = self.intercycle_offset
 
             if self.cycling and startup:
-                # adjust up to the first on-sequence cycle time
+                # adjust up to the first on-sequence cycle point
                 adjusted = []
                 for seq in sself.sequences:
                     adj = seq.get_first_point( start_tag )
@@ -329,7 +329,7 @@ class taskdef(object):
             sself.outputs.register()
 
             if stop_c_time:
-                # cycling tasks with a final cycle time set
+                # cycling tasks with a final cycle point set
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
             else:
                 # TODO - TEMPORARY HACK FOR ASYNC

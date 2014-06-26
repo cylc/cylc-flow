@@ -28,7 +28,7 @@ from prerequisites import prerequisites
 
 # FUZZY_PREREQUISITES:
 # For cycle-time based prerequisites of the form "X more recent than
-# or equal to this cycle time". A delimited time cutoff is expected
+# or equal to this cycle point". A delimited time cutoff is expected
 # in the message string. Requires a more complex satisfy_me() method.
 
 # TODO - THIS NEEDS TO BE UPDATED FOR NEW PREREQUISITE AND OUTPUT
@@ -40,7 +40,7 @@ class fuzzy_prerequisites( prerequisites ):
 
         # check for fuzziness before pass on to the base class method
 
-        # extract fuzzy cycle time bounds from my prerequisite
+        # extract fuzzy cycle point bounds from my prerequisite
         m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( message )
         if not m:
             # ADD ARTIFICIAL BOUNDS
@@ -70,7 +70,7 @@ class fuzzy_prerequisites( prerequisites ):
         # can any completed outputs satisfy any of my unsatisfied prequisites?
         for prereq in self.get_not_satisfied_list():
             # for each of my unsatisfied prerequisites
-            # extract fuzzy cycle time bounds from my prerequisite
+            # extract fuzzy cycle point bounds from my prerequisite
             m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
             [ my_start, my_minmax, my_end ] = m.groups()
             [ my_min, my_max ] = my_minmax.split(':')

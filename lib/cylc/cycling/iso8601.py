@@ -466,8 +466,8 @@ def init_from_cfg(cfg):
         'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
     custom_dump_format = cfg['cylc']['cycle point format']
-    initial_cycle_time = cfg['scheduling']['initial cycle time']
-    final_cycle_time = cfg['scheduling']['final cycle time']
+    initial_cycle_time = cfg['scheduling']['initial cycle point']
+    final_cycle_time = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
     test_cycle_time = initial_cycle_time
@@ -530,7 +530,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         DUMP_FORMAT = custom_dump_format
         if u"±X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
-                'cycle time format',
+                'cycle point format',
                 ('cylc', 'cycle point format'),
                 DUMP_FORMAT
             )
