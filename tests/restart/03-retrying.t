@@ -105,6 +105,7 @@ Begin task states
 force_restart.2013092306 : status=running, spawned=true
 output_states.2013092306 : status=waiting, spawned=false
 retrying_task.2013092306 : status=retrying, spawned=true
+retrying_task.2013092312 : status=held, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
@@ -115,6 +116,7 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|1|2|retrying
+retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -125,6 +127,7 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|2|2|retrying
+retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -135,6 +138,7 @@ final cycle : 2013092306
 (dp1
 .
 Begin task states
+retrying_task.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
@@ -148,6 +152,7 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|4|3|succeeded
+retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
 __DB_DUMP__

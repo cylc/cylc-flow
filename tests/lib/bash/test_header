@@ -133,7 +133,6 @@ function suite_run_ok() {
         fail $TEST_NAME
         SUITE_RUN_FAILS=true
     fi
-    printenv | sort >/dev/tty
     SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
     mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
     cp $TEST_NAME.stdout $SUITE_LOG_DIR/out

@@ -57,6 +57,7 @@ cmp_ok $TEST_NAME.state <<'__STATE__'
 initial cycle : 2013010100
 final cycle : 2013011000
 t1.2013011000 : status=succeeded, spawned=true
+t1.2013011100 : status=held, spawned=false
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
