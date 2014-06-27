@@ -114,6 +114,22 @@ class CGraphPlain( pygraphviz.AGraph ):
             self.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead,
                                 penwidth=penwidth )
 
+    def add_cycle_point_subgraphs( self, edges ):
+        """Draw nodes within cycle point groups (subgraphs)."""
+        ctime_id_map = {}
+        for edge_entry in edges:
+            for id_ in edge_entry[:2]:
+                if id_ is None:
+                    continue
+                ctime = TaskID.split(id_)[1]
+                ctime_id_map.setdefault(ctime, [])
+                ctime_id_map[ctime].append(id_)
+        for ctime, ids in ctime_id_map.items():
+            self.add_subgraph(
+                nbunch=ids, name="cluster_" + ctime,
+                label=ctime, fontsize=28, rank="max", style="dashed"
+            )
+
     def add_subgraph(self, nbunch=None, name=None, **attr):
         """Return subgraph induced by nodes in nbunch.
 

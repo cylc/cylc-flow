@@ -264,6 +264,15 @@ Dependency graph suite control interface.
         menu_left_to_right_item.connect( 'activate',
                                          self.toggle_left_to_right_mode )
 
+        self.menu_subgraphs_item = gtk.CheckMenuItem(
+            '_Organise by Cycle Point' )
+        items.append( self.menu_subgraphs_item )
+        self.menu_subgraphs_item.set_active( self.t.subgraphs_on )
+        self.menu_subgraphs_item.connect(
+            'activate',
+            self.toggle_cycle_point_subgraphs
+        )
+
         igsui_item = gtk.CheckMenuItem( '_Ignore Suicide Triggers' )
         items.append( igsui_item )
         igsui_item.set_active( self.t.ignore_suicide )
@@ -298,6 +307,19 @@ Dependency graph suite control interface.
         self.ungroup_toolbutton.connect( 'clicked', self.group_all, False )
         self._set_tooltip( self.ungroup_toolbutton, "Graph View - Click to ungroup all task families" )
         items.append( self.ungroup_toolbutton )
+
+        self.subgraphs_button = gtk.ToggleToolButton()
+        image = gtk.image_new_from_stock( gtk.STOCK_LEAVE_FULLSCREEN,
+                                          gtk.ICON_SIZE_SMALL_TOOLBAR )
+        self.subgraphs_button.set_icon_widget( image )
+        self.subgraphs_button.connect(
+            'clicked', self.toggle_cycle_point_subgraphs )
+        self.subgraphs_button.set_label( None )
+        self._set_tooltip(
+            self.subgraphs_button,
+            "Graph View - Click to organise by cycle point"
+        )
+        items.append( self.subgraphs_button )
 
         zoomin_button = gtk.ToolButton( gtk.STOCK_ZOOM_IN )
         zoomin_button.connect( 'clicked', self.xdot.widget.on_zoom_in )
@@ -358,6 +380,17 @@ Dependency graph suite control interface.
 
     def toggle_crop( self, w ):
         self.t.crop = not self.t.crop
+        self.t.action_required = True
+
+    def toggle_cycle_point_subgraphs( self, toggle_item ):
+        subgraphs_on = toggle_item.get_active()
+        if subgraphs_on == self.t.subgraphs_on:
+            return
+        self.t.subgraphs_on = subgraphs_on
+        if isinstance( toggle_item, gtk.ToggleToolButton ):
+            self.menu_subgraphs_item.set_active( self.t.subgraphs_on )
+        else:
+            self.subgraphs_button.set_active( self.t.subgraphs_on )
         self.t.action_required = True
 
     def toggle_left_to_right_mode( self, w ):

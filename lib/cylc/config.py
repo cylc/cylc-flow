@@ -1520,7 +1520,7 @@ class config( object ):
 
     def get_graph( self, start_ctime, stop, raw=False, group_nodes=[],
             ungroup_nodes=[], ungroup_recursive=False, group_all=False,
-            ungroup_all=False, ignore_suicide=False ):
+            ungroup_all=False, ignore_suicide=False, subgraphs_on=False ):
 
         gr_edges = self.get_graph_raw( start_ctime, stop, raw,
                 group_nodes, ungroup_nodes, ungroup_recursive,
@@ -1528,19 +1528,8 @@ class config( object ):
 
         graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
         graph.add_edges( gr_edges, ignore_suicide )
-        ctime_id_map = {}
-        for edge_entry in gr_edges:
-            for id_ in edge_entry[:2]:
-                if id_ is None:
-                    continue
-                ctime = TaskID.split(id_)[1]
-                ctime_id_map.setdefault(ctime, [])
-                ctime_id_map[ctime].append(id_)
-        for ctime, ids in ctime_id_map.items():
-            graph.add_subgraph(
-                nbunch=ids, name="cluster_" + ctime,
-                label=ctime, fontsize=28, rank="max", style="dashed"
-            )
+        if subgraphs_on:
+            graph.add_cycle_point_subgraphs( gr_edges )
         return graph
 
     def get_node_labels( self, start_ctime, stop, raw ):
