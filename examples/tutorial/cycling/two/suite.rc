@@ -7,7 +7,7 @@ title = "Two cycling tasks with inter-cycle dependence"
     initial cycle point = 20130808T00
     final cycle point = 20130812T00
     [[dependencies]]
-        # cycle times of 00 and 12 UTC every day:
+        # Repeat at 00 and 12 UTC every day:
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 [visualization]

@@ -76,7 +76,7 @@ class config_line:
         try:
             int( self.offset )
         except ValueError:
-            raise HousekeepingError, 'Cycle time offset must be integer: ' + self.offset
+            raise HousekeepingError, 'Cycle point offset must be integer: ' + self.offset
 
         # check the validity of the source directory
         if not os.path.isdir( self.source ):

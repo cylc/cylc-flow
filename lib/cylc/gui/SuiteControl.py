@@ -2000,7 +2000,7 @@ shown here in the state they were in at the time of triggering.''' )
         vbox = gtk.VBox()
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'Cycle Time' )
+        label = gtk.Label( 'Cycle Point' )
         hbox.pack_start( label, True )
         entry_ctime = gtk.Entry()
         entry_ctime.set_max_length(14)
