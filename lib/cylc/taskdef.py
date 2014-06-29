@@ -268,7 +268,9 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False, submit_num=0, exists=False ):
+        def tclass_init( sself, start_point, initial_state, stop_c_time=None,
+                         startup=False, validate=False, submit_num=0,
+                         exists=False ):
 
             sself.sequences = self.sequences
             sself.implicit_sequences = self.implicit_sequences
@@ -281,7 +283,7 @@ class taskdef(object):
                 # adjust up to the first on-sequence cycle time
                 adjusted = []
                 for seq in sself.sequences:
-                    adj = seq.get_first_point( start_tag )
+                    adj = seq.get_first_point( start_point )
                     if adj:
                         # may be None if out of sequence bounds
                         adjusted.append( adj )
@@ -298,7 +300,7 @@ class taskdef(object):
                     # check for a tag of None)
                     return
             else:
-                sself.tag = start_tag
+                sself.tag = start_point
                 if sself.intercycle_offset is None:
                     sself.cleanup_cutoff = None
                 else:

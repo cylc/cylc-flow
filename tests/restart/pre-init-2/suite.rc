@@ -18,7 +18,10 @@
     final cycle time = 2010081000
     [[dependencies]]
         [[[0]]]
-            graph = "foo[T-24] => bar"
+            graph = """
+                foo[T-24] => bar
+                # foo <- should not be implicit (deprecated feature)
+            """
 [runtime]
     [[root]]
         command scripting = /bin/true
