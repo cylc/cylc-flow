@@ -571,11 +571,6 @@ class pool(object):
             if itask.not_fully_satisfied():
                 self.broker.negotiate( itask )
 
-        # TODO - RESTORE THE FOLLOWING FOR repeating_async TASKS:
-        #for itask in self.get_tasks():
-        #    if not itask.not_fully_satisfied():
-        #        itask.check_requisites()
-
 
     def process_queued_task_messages( self ):
         state_recorders = []

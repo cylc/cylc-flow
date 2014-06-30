@@ -23,7 +23,6 @@
 # (detection is currently disabled).
 
 import sys, re, os
-from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
 from prerequisites.plain_prerequisites import plain_prerequisites
 from prerequisites.conditionals import conditional_prerequisites
@@ -67,7 +66,6 @@ class taskdef(object):
         self.intercycle_offset = get_interval_cls().get_null()
         self.sequential = False
         self.cycling = False
-        self.asyncid_pattern = None
         self.modifiers = []
         self.is_coldstart = False
         self.suite_polling_cfg = {}
@@ -80,7 +78,6 @@ class taskdef(object):
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = {}
         self.outputs = [] # list of explicit internal outputs; change to dict if need to vary per cycle.
-        self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name
         self.type = 'cycling'
@@ -182,7 +179,6 @@ class taskdef(object):
             # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id, self.ict )
             sp = plain_prerequisites( sself.id, self.ict )
-            lp = loose_prerequisites( sself.id, self.ict )
 
             if self.sequential:
                 # For tasks declared 'sequential' we automatically add a
@@ -225,9 +221,7 @@ class taskdef(object):
                     if trig.cycling and not sequence.is_valid( sself.tag ):
                         # This trigger is not used in current cycle
                         continue
-                    if trig.async_repeating:
-                        lp.add( trig.get( tag ))
-                    elif self.ict is None or \
+                    if self.ict is None or \
                             trig.evaluation_offset is None or \
                                 ( tag - trig.evaluation_offset ) >= self.ict:
                             # i.c.t. can be None after a restart, if one
@@ -239,7 +233,6 @@ class taskdef(object):
                                 pp.add( trig.get( tag ))
 
             sself.prerequisites.add_requisites( pp )
-            sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
 
             # 2) conditional triggers
@@ -308,7 +301,6 @@ class taskdef(object):
                 sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.c_time = sself.tag
-            sself.asyncid_pattern = self.asyncid_pattern
 
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )

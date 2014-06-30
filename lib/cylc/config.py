@@ -108,8 +108,6 @@ class config( object ):
         self.suite_polling_tasks = {}
         self.triggering_families = []
 
-        self.async_repeating_edges = []
-        self.async_repeating_tasks = []
         self.cycling_tasks = []
 
         self.sequences = []
@@ -759,8 +757,7 @@ class config( object ):
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
     def set_trigger( self, task_name, right, output_name=None, offset=None,
-                     cycle_point=None, asyncid_pattern=None,
-                     suicide=False, base_interval=None ):
+                     cycle_point=None, suicide=False, base_interval=None ):
         trig = triggerx(task_name)
         trig.set_suicide(suicide)
         if output_name:
@@ -803,14 +800,7 @@ class config( object ):
         if cycle_point:
             trig.set_cycle_point( cycle_point )
 
-        # Should the following be 'elif' with offset?
-        if task_name in self.async_repeating_tasks: 
-            trig.set_async_repeating( asyncid_pattern)
-            if trig.suicide:
-                raise SuiteConfigError, "ERROR, '" + task_name + "': suicide triggers not implemented for repeating async tasks"
-            if trig.type:
-                raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
-        elif task_name in self.cycling_tasks:
+        if task_name in self.cycling_tasks:
             trig.set_cycling()
 
         return trig
@@ -918,20 +908,9 @@ class config( object ):
         # For now user must define this:
         return self.cfg['scheduling']['special tasks']['cold-start']
 
-    def get_startup_task_list( self ):
-        return self.async_repeating_tasks
-
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
         return self.taskdefs.keys()
-
-    def get_asynchronous_task_name_list( self ):
-        names = []
-        for tn in self.taskdefs:
-            if self.taskdefs[tn].type == 'async_repeating' or \
-                    self.taskdefs[tn].type == 'async_daemon':
-                names.append(tn)
-        return names
 
     def replace_family_triggers( self, line_in, fam, members, orig='' ):
         # Replace family trigger expressions with member trigger expressions.
@@ -982,7 +961,7 @@ class config( object ):
         this dependency section.
         section is the text describing this dependency section (e.g.
         T00).
-        ttype is either 'cycling' or an async indicator.
+        ttype is now always 'cycling' (TODO - is not needed now)
         seq is the sequence generated from 'section' given the initial
         and final cycle time.
         offset_seq_map is a cache of seq with various offsets for
@@ -1178,7 +1157,6 @@ class config( object ):
 
                 pruned_left_nodes = list(left_nodes)  # Create copy of LHS tasks.
 
-                asyncid_pattern = None
                 if ttype != 'cycling':
                     for node in left_nodes + [right_name]:
                         if not node:
@@ -1189,11 +1167,6 @@ class config( object ):
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
-                        if ttype == 'async_repeating':
-                            if node_name not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(node_name)
-                            m = re.match( '^ASYNCID:(.*)$', section )
-                            asyncid_pattern = m.groups()[0]
 
                 if ttype == 'cycling':
                     for left_node in left_nodes:
@@ -1220,11 +1193,10 @@ class config( object ):
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
                                         right_name, ttype,
                                         section, seq, offset_seq_map,
-                                        asyncid_pattern,
                                         seq.get_interval() )
                 self.generate_triggers( lexpression, pruned_left_nodes,
                                         right_name, seq,
-                                        asyncid_pattern, suicide )
+                                        suicide )
         return special_dependencies
             
 
@@ -1236,16 +1208,11 @@ class config( object ):
             conditional = True
 
         for left in left_nodes:
-            sasl = left in self.async_repeating_tasks
-            e = graphing.edge( left, right, seq, sasl, suicide, conditional )
-            if ttype == 'async_repeating':
-                if e not in self.async_repeating_edges:
-                    self.async_repeating_edges.append( e )
-            else:
-                self.edges.append(e)
+            e = graphing.edge( left, right, seq, False, suicide, conditional )
+            self.edges.append(e)
 
     def generate_taskdefs( self, line, left_nodes, right, ttype, section, seq,
-                           offset_seq_map, asyncid_pattern, base_interval ):
+                           offset_seq_map, base_interval ):
         """Generate task definitions for nodes on a given line."""
         for node in left_nodes + [right]:
             if not node:
@@ -1287,13 +1254,7 @@ class config( object ):
                     raise SuiteConfigError, str(x)
 
             # TODO - setting type should be consolidated to get_taskdef()
-            if ttype == 'async_repeating':
-                self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self.cfg['scheduling']['dependencies'][section]['daemon']:
-                    self.taskdefs[name].type = 'async_daemon'
-                else:
-                    self.taskdefs[name].type = 'async_repeating'
-            elif ttype == 'cycling':
+            if ttype == 'cycling':
                 self.taskdefs[name].cycling = True
                 if name not in self.cycling_tasks:
                     self.cycling_tasks.append(name)
@@ -1331,7 +1292,7 @@ class config( object ):
                         outp = outputx(msg, base_interval)
                         self.taskdefs[ name ].outputs.append( outp )
 
-    def generate_triggers( self, lexpression, left_nodes, right, seq, asyncid_pattern, suicide ):
+    def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
@@ -1366,7 +1327,7 @@ class config( object ):
                 else:
                     self.taskdefs[lnode.name].intercycle_offset = None
                 cycle_point = first_point
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, asyncid_pattern, suicide, seq.get_interval() )
+            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, suicide, seq.get_interval() )
             if not trigger:
                 continue
             if not conditional:
@@ -1374,9 +1335,6 @@ class config( object ):
                 continue
 
             # CONDITIONAL TRIGGERS
-            if trigger.async_repeating:
-                # (extend taskdef.py:tclass_add_prerequisites to allow this)
-                raise SuiteConfigError, 'ERROR, ' + left + ': repeating async tasks are not allowed in conditional triggers.'
             # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
@@ -1464,12 +1422,6 @@ class config( object ):
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = []
-
-        for e in self.async_repeating_edges:
-            right = e.get_right(1, False, False, [] )
-            left  = e.get_left( 1, False, False, [] )
-            nl, nr = self.close_families( left, right )
-            gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
 
         start_ctime = get_point( start_ctime_str )
 
@@ -1702,12 +1654,8 @@ class config( object ):
         """
         self.graph_found = True
 
-        if re.match( '^ASYNCID:', section ):
-            ttype = 'async_repeating'
-            # TODO ISO - THIS IS NOW BROKEN?
-        else:
-            ttype = 'cycling'
-            sec = section
+        ttype = 'cycling'
+        sec = section
 
         if section in section_seq_map:
             seq = section_seq_map[section]

@@ -790,16 +790,6 @@ monthly, or yearly cycling module:
         \end{myitemize}
     \item {\em default:} (none)
 \end{myitemize}
-For repeating asynchronous tasks put `ASYNCID:{\em pattern}' in the
-section heading, where {\em pattern} is a regular expression that
-matches an asynchronous task ID:
-\begin{myitemize}
-    \item {\em examples:}
-        \begin{myitemize}
-            \item repeating asynchronous tasks: \lstinline@[[ASYNCID:SAT-\d+]]@
-        \end{myitemize}
-    \item {\em default:} (none)
-\end{myitemize}
 
 See Section~\ref{GraphTypes}, {\em Graph Types} for the meaning of the
 stepped cycler arguments, how multiple graph sections combine within a
@@ -833,18 +823,6 @@ graph = """
    # comment
    """
   \end{lstlisting}
-\item {\em default:} (none)
-\end{myitemize}
-
-\subparagraph[daemon]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]] $\rightarrow$ daemon }
-
-For [[[ASYNCID:pattern]]] validity sections only, list
-{\em asynchronous daemon} tasks by name. This item is located here rather than
-under [scheduling] $\rightarrow$ [[special tasks]] because a damon task
-is associated with a particular asynchronous ID.
-
-\begin{myitemize}
-\item {\em type:} list of task names
 \item {\em default:} (none)
 \end{myitemize}
 

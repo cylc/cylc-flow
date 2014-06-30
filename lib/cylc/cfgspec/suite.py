@@ -191,7 +191,6 @@ SPEC = {
             '__MANY__' :
             {
                 'graph'                       : vdr( vtype='string'),
-                'daemon'                      : vdr( vtype='string'),
                 },
             },
         },
@@ -299,10 +298,11 @@ def upg( cfg, descr ):
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
     # TODO - replace ISO version here:
-    u.obsolete( '5.4.ISO', ['visualization', 'runtime graph'] )
-    u.obsolete( '5.4.ISO', ['development'] )
-    u.deprecate( '5.4.ISO', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
+    u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
+    u.obsolete( '6.0.0', ['development'] )
+    u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
             converter( lambda x:'2', 'using default runahead factor' ))
+    u.obsolete( '6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'] )
     u.upgrade()
 
 class sconfig( config ):

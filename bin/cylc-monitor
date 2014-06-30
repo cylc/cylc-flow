@@ -185,9 +185,6 @@ try:
             for task_id in task_ids:
 
                 name = states[ task_id ][ 'name' ]
-                asyncid = ''
-                if 'asyncid' in states[ task_id ]:
-                    asyncid = '(' + states[ task_id ][ 'asyncid' ] + ')'
                 ctime = states[ task_id ][ 'label' ]
 
                 name     =      states[ task_id ][ 'name' ]
@@ -203,7 +200,7 @@ try:
                 # color displayed info according to run status
                 ctrl_start = task_state.ctrl[state]
                 # construct the display string for this task
-                task_info[ ctime ][ name ] = ctrl_start + name + asyncid + ctrl_end + abd
+                task_info[ ctime ][ name ] = ctrl_start + name + ctrl_end + abd
 
             # construct an array of lines to blit to the screen
 

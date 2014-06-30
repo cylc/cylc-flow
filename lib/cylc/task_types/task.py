@@ -525,7 +525,7 @@ class task( object ):
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
-            # (currently only used by async_repeating tasks)
+            # (not currently used?)
             rtconfig['environment'].update( self.env_vars )
 
         # construct the job launcher here so that a new one is used if
@@ -1139,10 +1139,6 @@ class task( object ):
             return True
         else:
             return False
-
-    def check_requisites( self ):
-        # overridden by repeating asynchronous tasks
-        pass
 
     def get_state_summary( self ):
         # derived classes can call this method and then

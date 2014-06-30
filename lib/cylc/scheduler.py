@@ -244,8 +244,6 @@ class scheduler(object):
         self.log.info( 'Start tag: ' + str(self.start_point) )
         self.log.info( 'Stop tag: ' + str(self.stop_point) )
 
-        self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
-
         self.pool = pool( self.suite, self.db, self.stop_point, self.config,
                           self.pyro, self.log, self.run_mode )
         self.state_dumper.pool = self.pool
@@ -590,8 +588,6 @@ class scheduler(object):
     def reconfigure( self ):
         print "RELOADING the suite definition"
         self.configure_suite( reconfigure=True )
-
-        self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
         self.pool.reconfigure( self.config, self.stop_point )
 
