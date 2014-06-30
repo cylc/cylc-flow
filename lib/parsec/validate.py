@@ -84,6 +84,7 @@ def validate( cfig, spec, keys=[] ):
         elif val and not isinstance( specval, dict):
             # (if val is null we're only checking item validity)
             cfig[key] = spec[speckey].check( val, keys+[key] )
+           # print keys, key, val, "=>", cfig[key]
         else:
             #raise IllegalItemError( keys, key )
             # THIS IS OK: blank value

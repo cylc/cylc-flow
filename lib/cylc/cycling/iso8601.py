@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from isodatetime.data import TimeInterval
+from isodatetime.data import TimeInterval, SECONDS_IN_DAY
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
@@ -75,7 +75,7 @@ def memoize(function):
             results = function(*args)
             if len(inputs_results) > MEMOIZE_LIMIT:
                 # Full up, no more room.
-                return results
+                inputs_results.popitem()
             inputs_results[args] = results
             return results
     return _wrapper
@@ -542,6 +542,34 @@ def _get_old_strptime_format(point_string):
         return OLD_STRPTIME_FORMATS_BY_LENGTH[len(point_string)]
     except KeyError:
         return None
+
+
+def get_interval_in_seconds(interval_string, back_comp_unit_factor=1):
+    """Return an ISO 8601 Interval string as a number of seconds.
+
+    For backwards compatibility, also allow a raw number to be passed
+    in, together with a multiplicative factor (back_comp_unit_factor)
+    that should depend on the implicit units of the old interval - e.g.
+    60 for minutes.
+
+    """
+    return _get_interval_in_seconds(interval_string, back_comp_unit_factor)
+
+
+@memoize
+def _get_interval_in_seconds(interval_string, back_comp_unit_factor):
+    print "Let's parse", interval_string
+    try:
+        return float(interval_string) * back_comp_unit_factor
+    except (TypeError, ValueError):
+        pass
+    try:
+        interval = interval_parser.parse(interval_string)
+    except ValueError:
+        raise IllegalValueError("ISO 8601 interval", keys, value)
+    days, seconds = interval.get_days_and_seconds()
+    print "Done parsing", interval_string, days, seconds
+    return seconds + days * SECONDS_IN_DAY
 
 
 if __name__ == '__main__':

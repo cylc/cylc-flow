@@ -81,10 +81,12 @@ class pool(object):
 
         self.jobqueue = Queue.Queue()
 
-        self.worker = task_batcher( 'Job Submission', self.jobqueue,
-                config.cfg['cylc']['job submission']['batch size'],
-                config.cfg['cylc']['job submission']['delay between batches'],
-                self.wireless, self.run_mode )
+        delay = config.cfg['cylc']['job submission']['delay between batches']
+        self.worker = task_batcher(
+            'Job Submission', self.jobqueue,
+            config.cfg['cylc']['job submission']['batch size'],
+            delay, self.wireless, self.run_mode
+        )
 
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
