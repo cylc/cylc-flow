@@ -470,7 +470,6 @@ class pool(object):
                            "not running (beyond suite stop cycle) " +
                            str(self.stop_point) )
                 itask.reset_state_held()
-                return
 
 
     def no_active_tasks( self ):
