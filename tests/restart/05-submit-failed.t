@@ -124,6 +124,7 @@ final cycle : 2013092306
 (dp1
 .
 Begin task states
+submit_fail_task.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
@@ -137,6 +138,7 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
 submit_fail_task|2013092300|1|1|submit-failed
 submit_fail_task|2013092306|1|1|submit-failed
+submit_fail_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
 __DB_DUMP__

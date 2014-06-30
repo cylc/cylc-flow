@@ -126,13 +126,14 @@ class scheduler(object):
         self.stop_clock_time = None  # When not None, in Unix time
         self.stop_clock_time_description = None  # Human-readable format.
 
-        self.start_tag = None
-        self.stop_tag = None
-        self.cli_start_tag = None
+        self._start_string = None
+        self._stop_string = None
+        self._cli_start_string = None
 
         self.parser.add_option( "--until",
-                help="Shut down after all tasks have PASSED this cycle point.",
-                metavar="CYCLE_POINT", action="store", dest="stop_tag" )
+                help=("Shut down after all tasks have PASSED " +
+                      "this cycle point."),
+                metavar="CYCLE_POINT", action="store", dest="stop_string" )
 
         self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
@@ -216,7 +217,6 @@ class scheduler(object):
             'reload suite',
             'prerequisite'
             ]
-
         self.configure_suite()
 
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
@@ -242,12 +242,13 @@ class scheduler(object):
         else:
             self.log.info( 'Log event clock: accelerated' )
         self.log.info( 'Run mode: ' + self.run_mode )
-        self.log.info( 'Start tag: ' + str(self.start_tag) )
-        self.log.info( 'Stop tag: ' + str(self.stop_tag) )
+        self.log.info( 'Start tag: ' + str(self.start_point) )
+        self.log.info( 'Stop tag: ' + str(self.stop_point) )
 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool = pool( self.suite, self.db, self.stop_tag, self.config, self.pyro, self.log, self.run_mode )
+        self.pool = pool( self.suite, self.db, self.stop_point, self.config,
+                          self.pyro, self.log, self.run_mode )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
@@ -260,7 +261,7 @@ class scheduler(object):
         self.suite_state = state_summary( self.config, self.run_mode, str(self.pool.get_min_ctime()) )
         self.pyro.connect( self.suite_state, 'state_summary')
 
-        self.state_dumper.set_cts( self.start_tag, self.stop_tag )
+        self.state_dumper.set_cts( self.start_point, self.stop_point )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
@@ -547,17 +548,17 @@ class scheduler(object):
         self.pool.remove_tasks( task_ids, spawn )
 
 
-    def command_insert_task( self, name, tag, is_family, stop_tag ):
+    def command_insert_task( self, name, tag, is_family, stop_string ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
 
         point = get_point(tag)
-        if stop_tag is None:
+        if stop_string is None:
             stop_point = None
         else:
-            stop_point = get_point(stop_tag)
+            stop_point = get_point(stop_string)
 
         for task_id in task_ids:
             name, tag = TaskID.split( task_id )
@@ -593,7 +594,7 @@ class scheduler(object):
 
         self.asynchronous_task_list = self.config.get_asynchronous_task_name_list()
 
-        self.pool.reconfigure( self.config, self.stop_tag )
+        self.pool.reconfigure( self.config, self.stop_point )
 
         self.suite_state.config = self.config
         self.configure_suite_environment()
@@ -602,7 +603,7 @@ class scheduler(object):
             self.configure_reftest(recon=True)
 
         # update state dumper state
-        self.state_dumper.set_cts( self.start_tag, self.stop_tag )
+        self.state_dumper.set_cts( self.start_point, self.stop_point )
 
 
     def parse_commandline( self ):
@@ -640,21 +641,29 @@ class scheduler(object):
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
 
-        self.config = config( self.suite, self.suiterc,
-                self.options.templatevars,
-                self.options.templatevars_file, run_mode=self.run_mode,
-                cli_start_tag=self.cli_start_tag,
-                is_restart=self.is_restart, is_reload=reconfigure)
+        if self.is_restart:
+            self._cli_start_string = self.get_state_start_string()
+            self.do_process_tasks = True
 
-        # Initial and final cycle points - command line takes precedence
-        self.start_tag = self.cli_start_tag or self.config.cfg['scheduling']['initial cycle point']
-        self.stop_tag = self.options.stop_tag or self.config.cfg['scheduling']['final cycle point']
-        if self.start_tag:
-            self.start_tag = get_point( self.start_tag )
-        if self.stop_tag:
-            self.stop_tag = get_point( self.stop_tag )
+        self.config = config(
+            self.suite, self.suiterc,
+            self.options.templatevars,
+            self.options.templatevars_file, run_mode=self.run_mode,
+            cli_start_string=(self._start_string or
+                              self._cli_start_string),
+            is_restart=self.is_restart, is_reload=reconfigure
+        )
 
-        if (not self.start_tag and not self.is_restart and
+        # Initial and final cycle times - command line takes precedence
+        self.start_point = get_point(
+            self._start_string or self._cli_start_string) or
+            self.config.cfg['scheduling']['initial cycle point']
+        )
+        self.stop_point = get_point(
+            self.options.stop_string or
+            self.config.cfg['scheduling']['final cycle point']
+        )
+        if (not self.start_point and not self.is_restart and
             self.config.cycling_tasks):
             print >> sys.stderr, 'WARNING: No initial cycle point provided - no cycling tasks will be loaded.'
 
@@ -662,7 +671,8 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
-            self.state_dumper = dumper( self.suite, self.run_mode, self.start_tag, self.stop_tag )
+            self.state_dumper = dumper( self.suite, self.run_mode,
+                                        self.start_point, self.stop_point )
 
             run_dir = sitecfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
@@ -750,10 +760,10 @@ class scheduler(object):
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
-                'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( self.start_tag ), # may be "None"
-                'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( self.stop_tag ), # may be "None"
-                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.start_tag ), # may be "None"
-                'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_tag ), # may be "None"
+                'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( self.start_point ), # may be "None"
+                'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( self.stop_point ), # may be "None"
+                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.start_point ), # may be "None"
+                'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_point ), # may be "None"
                 'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
                 }
 
@@ -817,10 +827,8 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec( self.reflogfile )
-                self.start_tag = get_point( spec.get_start_tag() )
-                self.stop_tag = spec.get_stop_tag()
-                if self.stop_tag is not None:
-                    self.stop_tag = get_point( self.stop_tag )
+                self.start_point = get_point( spec.get_start_string() )
+                self.stop_point = get_point( spec.get_stop_string() )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1138,10 +1146,10 @@ class scheduler(object):
         print "DONE" # main thread exit
 
 
-    def set_stop_ctime( self, stop_tag ):
-        self.log.info( "Setting stop cycle point: " + stop_tag )
-        self.stop_tag = get_point(stop_tag)
-        self.pool.set_stop_tag(self.stop_tag)
+    def set_stop_ctime( self, stop_string ):
+        self.log.info( "Setting stop cycle point: " + stop_string )
+        self.stop_point = get_point(stop_string)
+        self.pool.set_stop_point(self.stop_point)
 
 
     def set_stop_clock( self, unix_time, date_time_string ):
@@ -1178,8 +1186,8 @@ class scheduler(object):
 
 
     def will_stop_at( self ):
-        if self.stop_tag:
-            return str(self.stop_tag)
+        if self.stop_point:
+            return str(self.stop_point)
         elif self.stop_clock_time is not None:
             return self.stop_clock_time_description
         elif self.stop_task:
@@ -1189,7 +1197,7 @@ class scheduler(object):
 
 
     def clear_stop_times( self ):
-        self.stop_tag = None
+        self.stop_point = None
         self.stop_clock_time = None
         self.stop_clock_time_description = None
         self.stop_task = None
@@ -1200,7 +1208,7 @@ class scheduler(object):
 
 
     def stopping( self ):
-        if self.stop_tag or self.stop_clock_time is not None:
+        if self.stop_point is not None or self.stop_clock_time is not None:
             return True
         else:
             return False

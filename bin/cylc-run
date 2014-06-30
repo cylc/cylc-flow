@@ -97,11 +97,12 @@ initial and final cycle point variables persists across suite restarts."""
         sys.path.append( os.path.join( self.suite_dir, 'python' ))
 
         if len( self.args ) == 2:
-            self.cli_start_tag = self.args[1]
-            if self.cli_start_tag == "now":
+            self._cli_start_string = self.args[1]
+            if self._cli_start_string == "now":
                 # TODO ISO: will it ever be useful to have this in minutes?
-                self.cli_start_tag = datetime.datetime.utcnow().strftime(
-                    "%Y%m%dT%HZ")
+                self._cli_start_string = (
+                    datetime.datetime.utcnow().strftime("%Y%m%dT%HZ")
+                )
 
         scheduler.parse_commandline( self )
 
@@ -113,8 +114,8 @@ initial and final cycle point variables persists across suite restarts."""
             self.load_tasks = self.load_tasks_cold
 
     def load_tasks_cold( self ):
-        if self.start_tag:
-            self.log.info( 'Cold Start ' + str(self.start_tag) )
+        if self.start_point is not None:
+            self.log.info( 'Cold Start ' + str(self.start_point) )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
@@ -122,8 +123,8 @@ initial and final cycle point variables persists across suite restarts."""
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                if self.start_tag:
-                    tag = self.start_tag
+                if self.start_point is not None:
+                    tag = self.start_point
                 else:
                     # no initial cycle point: we can't load cycling tasks
                     continue
@@ -138,8 +139,8 @@ initial and final cycle point variables persists across suite restarts."""
 
 
     def load_tasks_warm( self ):
-        if self.start_tag:
-            self.log.info( 'Warm Start ' + str(self.start_tag) )
+        if self.start_point is not None:
+            self.log.info( 'Warm Start ' + str(self.start_point) )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
@@ -149,10 +150,10 @@ initial and final cycle point variables persists across suite restarts."""
         for name in task_list:
             # (startup=True is only for cold start)
             if name in self.asynchronous_task_list:
-                tag = '1' # asynchronous tasks start with tag = 1
+                tag = '1' # TODO ISO: no longer applicable
             else:
-                if self.start_tag:
-                    tag = self.start_tag
+                if self.start_point is not None:
+                    tag = self.start_point
                 else:
                     # no initial cycle point: we can't load cycling tasks
                     continue
@@ -170,8 +171,8 @@ initial and final cycle point variables persists across suite restarts."""
             self.pool.add( itask )
 
     def load_tasks_raw( self ):
-        if self.start_tag:
-            self.log.info( 'Raw Start ' + str(self.start_tag) )
+        if self.start_point is not None:
+            self.log.info( 'Raw Start ' + str(self.start_point) )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
@@ -183,8 +184,8 @@ initial and final cycle point variables persists across suite restarts."""
             if name in self.asynchronous_task_list:
                 tag = '1' # asynchronous tasks start with tag = 1
             else:
-                if self.start_tag:
-                    tag = self.start_tag
+                if self.start_point is not None:
+                    tag = self.start_point
                 else:
                     # no initial cycle point: we can't load cycling tasks
                     continue

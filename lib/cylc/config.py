@@ -88,7 +88,7 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             validation=False, strict=False, collapsed=[],
-            cli_start_tag=None, is_restart=False, is_reload=False,
+            cli_start_string=None, is_restart=False, is_reload=False,
             write_proc=True ):
 
         self.suite = suite  # suite name
@@ -101,7 +101,7 @@ class config( object ):
         self.edges = []
         self.taskdefs = {}
         self.validation = validation
-        self.cli_start_tag = cli_start_tag
+        self._cli_start_string = cli_start_string
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
@@ -142,6 +142,10 @@ class config( object ):
                 tvars=template_vars, tvars_file=template_vars_file,
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
+
+        if self._cli_start_string is not None:
+            self.cfg['scheduling']['initial cycle time'] = (
+                self._cli_start_string)
 
         if 'cycling mode' not in self.cfg['scheduling']:
             # Auto-detect integer cycling for pure async graph suites.
@@ -211,7 +215,10 @@ class config( object ):
         # now expand with defaults
         self.cfg = self.pcfg.get( sparse=False )
 
+        # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
+
+        self.cli_start_point = get_point(self._cli_start_string)
 
         flags.back_comp_cycling = (
             get_backwards_compatibility_mode())
@@ -1747,12 +1754,13 @@ class config( object ):
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
 
-        ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle point']
+        ict_point = (self.cli_start_point or
+                     get_point(self.cfg['scheduling']['initial cycle point']))
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
         # Get the taskdef object for generating the task proxy class
-        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, get_point(ict) )
+        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict_point )
 
         # TODO - put all taskd.foo items in a single config dict
         # SET COLD-START TASK INDICATORS

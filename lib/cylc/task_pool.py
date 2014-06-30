@@ -50,12 +50,12 @@ from broadcast import broadcast
 
 class pool(object):
 
-    def __init__( self, suite, db, stop_tag, config, pyro, log, run_mode ):
+    def __init__( self, suite, db, stop_point, config, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
-        self.stop_tag = stop_tag
+        self.stop_point = stop_point
         self.reconfiguring = False
         self.db = db
 
@@ -114,10 +114,10 @@ class pool(object):
             return False
 
         # check cycle stop or hold conditions
-        if self.stop_tag and itask.c_time > self.stop_tag:
-            itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_tag) )
+        if self.stop_point and itask.c_time > self.stop_point:
+          #  itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_point) )
             itask.reset_state_held()
-            return
+           # return
 
         # TODO ISO -restore suite hold functionality
         #if self.hold_time and itask.c_time > self.hold_time:
@@ -314,11 +314,11 @@ class pool(object):
 
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
-        if not self.stop_tag:
+        if not self.stop_point:
             return False
         for pct in set(itask.prerequisites.get_target_tags()):
             try:
-                if pct > self.stop_tag:
+                if pct > self.stop_point:
                     return True
             except:
                 raise
@@ -363,13 +363,13 @@ class pool(object):
         return maxc
 
 
-    def reconfigure( self, config, stop_tag ):
+    def reconfigure( self, config, stop_point ):
 
         self.reconfiguring = True
 
         self.runahead_limit = config.get_runahead_limit()
         self.config = config
-        self.stop_tag = stop_tag  # TODO: Any point in using set_stop_tag?
+        self.stop_point = stop_point  # TODO: Any point in using set_stop_point?
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id] = task
@@ -459,16 +459,16 @@ class pool(object):
 
         self.reconfiguring = found
 
-    def set_stop_tag( self, stop_tag ):
+    def set_stop_point( self, stop_point ):
         """Set the global suite stop point."""
-        self.stop_tag = stop_tag
+        self.stop_point = stop_point
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
-            if (self.stop_tag and itask.c_time > self.stop_tag and
+            if (self.stop_point and itask.c_time > self.stop_point and
                     itask.state.is_currently('waiting', 'queued')):
                 itask.log( 'WARNING',
                            "not running (beyond suite stop cycle) " +
-                           str(self.stop_tag) )
+                           str(self.stop_point) )
                 itask.reset_state_held()
                 return
 
@@ -526,9 +526,9 @@ class pool(object):
         # their stop time).
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
-                #if self.stop_tag and itask.c_time > self.stop_tag:
+                #if self.stop_point and itask.c_time > self.stop_point:
                 #    # this task has passed the suite stop time
-                #    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_tag) )
+                #    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_point) )
                 #elif itask.stop_c_time and itask.c_time > itask.stop_c_time:
                 #    # this task has passed its own stop time
                 #    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_c_time) )
@@ -537,9 +537,9 @@ class pool(object):
                 itask.reset_state_waiting()
 
         # TODO - write a separate method for cancelling a stop time:
-        #if self.stop_tag:
+        #if self.stop_point:
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
-        #    self.stop_tag = None
+        #    self.stop_point = None
 
 
     def get_failed_tasks( self ):
@@ -809,8 +809,8 @@ class pool(object):
             if itask.is_cycling:
                 i_cyc = True
                 # don't stop if a cycling task has not passed the stop cycle
-                if self.stop_tag:
-                    if itask.c_time <= self.stop_tag:
+                if self.stop_point:
+                    if itask.c_time <= self.stop_point:
                         if itask.state.is_currently('succeeded') and itask.has_spawned():
                             # ignore spawned succeeded tasks - their successors matter
                             pass
@@ -834,9 +834,9 @@ class pool(object):
         if stop:
             msg = "Stopping: "
             if i_fut:
-                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_tag)
+                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_point)
             if i_cyc:
-                msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_tag)
+                msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_point)
             if i_asy:
                 msg += "\n  + all non-cycling tasks have succeeded"
             print msg
