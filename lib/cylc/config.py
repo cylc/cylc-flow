@@ -144,7 +144,7 @@ class config( object ):
         self.cfg = self.pcfg.get(sparse=True)
 
         if self._cli_start_string is not None:
-            self.cfg['scheduling']['initial cycle time'] = (
+            self.cfg['scheduling']['initial cycle point'] = (
                 self._cli_start_string)
 
         if 'cycling mode' not in self.cfg['scheduling']:
