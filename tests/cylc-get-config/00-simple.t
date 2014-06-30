@@ -92,8 +92,8 @@ run_ok $TEST_NAME cylc get-config --item=[scheduling] $SUITE_NAME
 cmp_ok $TEST_NAME.stdout - <<__OUT__
 cycling mode = integer
 runahead factor = 2
-initial cycle time = 1
-final cycle time = 1
+initial cycle point = 1
+final cycle point = 1
 [[queues]]
    [[[default]]]
       limit = 0
