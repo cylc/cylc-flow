@@ -656,7 +656,7 @@ class scheduler(object):
 
         # Initial and final cycle times - command line takes precedence
         self.start_point = get_point(
-            self._start_string or self._cli_start_string) or
+            self._start_string or self._cli_start_string or
             self.config.cfg['scheduling']['initial cycle point']
         )
         self.stop_point = get_point(
