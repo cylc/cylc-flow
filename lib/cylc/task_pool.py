@@ -109,10 +109,17 @@ class pool(object):
         # do not add if a task with the same ID already exists
         # e.g. an inserted task caught up with an existing one
         if self.id_exists( itask.id ):
-            self.log.warning( itask.id + ' cannot be added: task ID already exists' )
+            self.log.warning( itask.id + ' cannot be added to pool: task ID already exists' )
             del itask
             return
 
+        # do not add if an inserted task is beyond its own stop point
+        # (note this is not the same as recurrence bounds)
+        if itask.stop_c_time and itask.c_time > itask.stop_c_time:
+            self.log.info( itask.id + ' not adding to pool: beyond task stop cycle' )
+            del itask
+            return
+ 
         # add in held state if beyond the suite stop point
         if self.stop_point and itask.c_time > self.stop_point:
             itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
