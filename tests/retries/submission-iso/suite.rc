@@ -11,7 +11,7 @@
     [[foo]]
         command scripting = true
         [[[job submission]]]
-            retry delays = 3*0.1
+            retry delays = PT4S, PT5S, PT7S # 3*0.1
         [[[remote]]]
             host = notahost
 

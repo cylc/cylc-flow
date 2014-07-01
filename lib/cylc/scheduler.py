@@ -586,8 +586,8 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['timeout']
         )
         if flags.verbose:
-            print "%s suite timer starts NOW: %s" % (
-                self.config.cfg['cylc']['event hooks']['timeout'],
+            print "PT%.1fM suite timer starts NOW: %s" % (
+                self.config.cfg['cylc']['event hooks']['timeout'] / 60.0,
                 get_current_time_string()
             )
 
@@ -1023,8 +1023,8 @@ class scheduler(object):
             return
         if time.time() > self.suite_timer_timeout:
             self.already_timed_out = True
-            message = 'suite timed out after %s' % (
-                self.config.cfg['cylc']['event hooks']['timeout'])
+            message = 'suite timed out after %.1f minutes' % (
+                self.config.cfg['cylc']['event hooks']['timeout'] / 60.0)
             self.log.warning( message )
             abort = self.config.cfg['cylc']['event hooks']['abort if timeout handler fails']
             self.run_event_handlers( 'timeout', abort, message )

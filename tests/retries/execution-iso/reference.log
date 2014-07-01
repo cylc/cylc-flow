@@ -1,0 +1,102 @@
+2013/11/07 14:54:01 INFO - Thread-2 start (Event Handlers)
+2013/11/07 14:54:01 INFO - Thread-3 start (Poll & Kill Commands)
+2013/11/07 14:54:01 INFO - port:7766
+2013/11/07 14:54:01 INFO - Suite starting at 2013-11-07 14:54:01.270437
+2013/11/07 14:54:01 INFO - Log event clock: real time
+2013/11/07 14:54:01 INFO - Run mode: live
+2013/11/07 14:54:01 INFO - Start tag: 1
+2013/11/07 14:54:01 INFO - Stop tag: 1
+2013/11/07 14:54:01 INFO - Thread-4 start (Job Submission)
+2013/11/07 14:54:01 INFO - Thread-5 start (Request Handling)
+2013/11/07 14:54:01 DEBUG - [foo.1] -task proxy added to the pool
+2013/11/07 14:54:01 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:01 INFO - [foo.1] -(setting:queued)
+2013/11/07 14:54:01 INFO - [foo.1] -(setting:submitting)
+2013/11/07 14:54:01 INFO - [foo.1] -triggered off []
+2013/11/07 14:54:01 DEBUG - END TASK PROCESSING (took 0.013718 sec)
+2013/11/07 14:54:02 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 14:54:02 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 14:54:02 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.181295
+  All 1 items succeeded
+2013/11/07 14:54:03 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/07 14:54:03 INFO - [foo.1] -(setting:submitted)
+2013/11/07 14:54:03 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=9864
+2013/11/07 14:54:03 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-07T14:54:02
+2013/11/07 14:54:03 INFO - [foo.1] -(setting:running)
+2013/11/07 14:54:04 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:04 DEBUG - END TASK PROCESSING (took 0.012537 sec)
+2013/11/07 14:54:04 CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2013-11-07T14:54:03
+2013/11/07 14:54:04 CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2013-11-07T14:54:03
+2013/11/07 14:54:04 INFO - [foo.1] -job failed, retrying in 0.1 minutes
+2013/11/07 14:54:04 INFO - [foo.1] -(setting:retrying)
+2013/11/07 14:54:10 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:10 INFO - [foo.1] -(setting:queued)
+2013/11/07 14:54:10 INFO - [foo.1] -(setting:submitting)
+2013/11/07 14:54:10 INFO - [foo.1] -triggered off []
+2013/11/07 14:54:10 DEBUG - END TASK PROCESSING (took 0.014176 sec)
+2013/11/07 14:54:10 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 14:54:10 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.222060
+  All 1 items succeeded
+2013/11/07 14:54:11 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 14:54:11 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/07 14:54:11 INFO - [foo.1] -(setting:submitted)
+2013/11/07 14:54:11 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=10025
+2013/11/07 14:54:11 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-07T14:54:11
+2013/11/07 14:54:11 INFO - [foo.1] -(setting:running)
+2013/11/07 14:54:12 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:12 DEBUG - END TASK PROCESSING (took 0.012466 sec)
+2013/11/07 14:54:12 CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2013-11-07T14:54:11
+2013/11/07 14:54:12 CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2013-11-07T14:54:11
+2013/11/07 14:54:12 INFO - [foo.1] -job failed, retrying in 0.1 minutes
+2013/11/07 14:54:12 INFO - [foo.1] -(setting:retrying)
+2013/11/07 14:54:18 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:18 INFO - [foo.1] -(setting:queued)
+2013/11/07 14:54:18 INFO - [foo.1] -(setting:submitting)
+2013/11/07 14:54:18 INFO - [foo.1] -triggered off []
+2013/11/07 14:54:18 DEBUG - END TASK PROCESSING (took 0.014607 sec)
+2013/11/07 14:54:18 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 14:54:18 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.235205
+  All 1 items succeeded
+2013/11/07 14:54:19 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 14:54:19 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/07 14:54:19 INFO - [foo.1] -(setting:submitted)
+2013/11/07 14:54:19 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=10194
+2013/11/07 14:54:20 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:20 DEBUG - END TASK PROCESSING (took 0.012949 sec)
+2013/11/07 14:54:20 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-07T14:54:19
+2013/11/07 14:54:20 INFO - [foo.1] -(setting:running)
+2013/11/07 14:54:20 CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2013-11-07T14:54:19
+2013/11/07 14:54:20 CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2013-11-07T14:54:19
+2013/11/07 14:54:20 INFO - [foo.1] -job failed, retrying in 0.1 minutes
+2013/11/07 14:54:20 INFO - [foo.1] -(setting:retrying)
+2013/11/07 14:54:21 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:21 DEBUG - END TASK PROCESSING (took 0.012161 sec)
+2013/11/07 14:54:26 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:26 INFO - [foo.1] -(setting:queued)
+2013/11/07 14:54:26 INFO - [foo.1] -(setting:submitting)
+2013/11/07 14:54:26 INFO - [foo.1] -triggered off []
+2013/11/07 14:54:26 DEBUG - END TASK PROCESSING (took 0.014071 sec)
+2013/11/07 14:54:26 DEBUG - Job Submission batch 1/1 (1 members):
+2013/11/07 14:54:27 DEBUG - Job Submission: batch completed
+  Time taken: 0:00:00.224722
+  All 1 items succeeded
+2013/11/07 14:54:27 INFO - [foo.1] -(current:submitting)> foo.1 submitting now
+2013/11/07 14:54:27 INFO - [foo.1] -(current:submitting)> foo.1 submission succeeded
+2013/11/07 14:54:27 INFO - [foo.1] -(setting:submitted)
+2013/11/07 14:54:27 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=10355
+2013/11/07 14:54:28 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:28 DEBUG - END TASK PROCESSING (took 0.01126 sec)
+2013/11/07 14:54:28 INFO - [foo.1] -(current:submitted)> foo.1 started at 2013-11-07T14:54:27
+2013/11/07 14:54:28 INFO - [foo.1] -(setting:running)
+2013/11/07 14:54:28 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2013-11-07T14:54:27
+2013/11/07 14:54:28 INFO - [foo.1] -(setting:succeeded)
+2013/11/07 14:54:28 INFO - Stopping: 
+  + all non-cycling tasks have succeeded
+2013/11/07 14:54:29 INFO - Thread-4 exit (Job Submission)
+2013/11/07 14:54:29 INFO - Thread-3 exit (Poll & Kill Commands)
+2013/11/07 14:54:29 INFO - Thread-2 exit (Event Handlers)
+2013/11/07 14:54:29 DEBUG - BEGIN TASK PROCESSING
+2013/11/07 14:54:29 DEBUG - END TASK PROCESSING (took 0.013672 sec)

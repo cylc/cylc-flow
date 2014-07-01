@@ -12,6 +12,7 @@ REF_LOG=$CYLC_SUITE_DEF_PATH/events.log
 # result in multiple 'started' messages etc.
 if ! diff <(sort -u $NEW_LOG) <(sort -u $REF_LOG); then 
     echo "ERROR: event handler output logs differ" >&2
+    diff <(sort -u $NEW_LOG) <(sort -u $REF_LOG) >&2
     exit 1
 else
     echo "OK: event handler output logs agree"
