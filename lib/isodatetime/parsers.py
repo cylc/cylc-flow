@@ -552,6 +552,10 @@ class TimeIntervalParser(object):
 
     def parse(self, expression):
         """Parse an ISO duration expression into a TimeInterval instance."""
+        sign_factor = 1
+        if expression.startswith("-"):
+            sign_factor = -1
+            expression = expression[1:]
         for rec_regex in self.INTERVAL_REGEXES:
             result = rec_regex.search(expression)
             if not result:
@@ -567,9 +571,10 @@ class TimeIntervalParser(object):
                     if "," in value:
                         value = value.replace(",", ".")
                     value = float(value)
-                result_map[key] = value
+                result_map[key] = value * sign_factor
             return data.TimeInterval(**result_map)
-        if expression.startswith("P"):
+        if expression.startswith("P") and sign_factor != -1:
+            # TimePoint-like duration - don't allow our negative extension.
             try:
                 timepoint = parse_timepoint_expression(
                     expression[1:], allow_truncated=False,

@@ -257,10 +257,33 @@ class TimeRecurrence(object):
 
 class TimeInterval(object):
 
-    """Represent a duration or period of time."""
+    """Represent a duration or period of time.
+
+    Keyword arguments:
+    years (default 0): number of calendar years in the duration (an
+    inexact unit)
+    months (default 0): number of calendar months in the duration (also
+    an inexact unit)
+    weeks (default 0): number of weeks in the duration - cannot be
+    used in conjunction with other units (use multiples of 7 days
+    instead)
+    days (default 0): number of days in the duration
+    hours (default 0): number of hours in the duration
+    minutes (default 0): number of minutes in the duration
+    seconds (default 0): number of seconds in the duration
+    standardize (default False): boolean that, if True, switches on
+    adjusting the attributes so that small units have minimal values.
+    For example, 3664.4 seconds would become 1 hour, 1 minute, and 4.4
+    seconds. Attributes will not adjust for units that are inexact
+    (months and years).
+
+    """
+
+    DATA_ATTRIBUTES = [
+        "years", "months", "weeks", "days", "hours", "minutes", "seconds"]
 
     def __init__(self, years=0, months=0, weeks=0, days=0,
-                 hours=0.0, minutes=0.0, seconds=0.0):
+                 hours=0.0, minutes=0.0, seconds=0.0, standardize=False):
         _type_checker(
             (years, "years", int, float, None),
             (months, "months", int, float, None),
@@ -288,6 +311,25 @@ class TimeInterval(object):
             self.weeks = self.days / DAYS_IN_WEEK
             self.years, self.months, self.days = (None, None, None)
             self.hours, self.minutes, self.seconds = (None, None, None)
+        if standardize:
+            if self.seconds:
+                num_minutes, self.seconds = divmod(
+                    self.seconds, SECONDS_IN_MINUTE)
+                if self.minutes is None:
+                    self.minutes = 0
+                self.minutes += num_minutes
+            if self.minutes:
+                num_hours, self.minutes = divmod(
+                    self.minutes, MINUTES_IN_HOUR)
+                if self.hours is None:
+                    self.hours = 0
+                self.hours += num_hours
+            if self.hours:
+                num_days, self.hours = divmod(
+                    self.hours, HOURS_IN_DAY)
+                if self.days is None:
+                    self.days = 0
+                self.days += num_days
 
     def copy(self):
         """Return an unlinked copy of this instance."""
@@ -299,9 +341,8 @@ class TimeInterval(object):
     def get_days_and_seconds(self):
         """Return a roughly-converted duration in days and seconds.
 
-        This is not particularly nice, as years have to be assumed
-        equal to 365 days, months to 30, in order to work (no context
-        can be supplied). This code needs improving.
+        This is not particularly nice for non-uniform units such as
+        years and months.
 
         Seconds are returned in the range
         0 <= seconds < SECONDS_IN_DAY, which means that a TimeInterval
@@ -321,6 +362,16 @@ class TimeInterval(object):
         diff_days, new_seconds = divmod(new_seconds, SECONDS_IN_DAY)
         new_days += diff_days
         return new_days, new_seconds
+
+    def get_seconds(self):
+        """Return a roughly-converted duration in seconds.
+
+        This is not particularly nice for non-uniform units such as
+        years and months.
+
+        """
+        days, seconds = self.get_days_and_seconds()
+        return days * SECONDS_IN_DAY + seconds
 
     def get_is_in_weeks(self):
         """Return whether we are in week representation."""
@@ -342,6 +393,14 @@ class TimeInterval(object):
             self.weeks = self.days / DAYS_IN_WEEK
             self.years, self.months, self.days = (None, None, None)
             self.hours, self.minutes, self.seconds = (None, None, None)
+
+    def __abs__(self):
+        new = self.copy()
+        for attribute in new.DATA_ATTRIBUTES:
+            attr_value = getattr(new, attribute)
+            if attr_value is not None:
+                setattr(new, attribute, abs(attr_value))
+        return new
 
     def __add__(self, other):
         new = self.copy()
@@ -435,29 +494,45 @@ class TimeInterval(object):
         start_string = "P"
         date_string = ""
         time_string = ""
+
+        # Handle negative intervals.
+        is_fully_negative = False
+        for attribute in self.DATA_ATTRIBUTES:
+            attr_value = getattr(self, attribute)
+            if attr_value is not None:
+                if attr_value > 0:
+                    is_fully_negative = False
+                    break
+                if attr_value < 0:
+                    is_fully_negative = True
+        if is_fully_negative:
+            # Support negative intervals as extensions to the standard.
+            return "-" + str(abs(self))
+
+        # Weeks are not combined with any other unit.
         if self.get_is_in_weeks():
             return (start_string + str(self.weeks) + "W").replace(".", ",")
-        if self.years:
-            date_string += str(self.years) + "Y"
-        if self.months:
-            date_string += str(self.months) + "M"
-        if self.days:
-            date_string += str(self.days) + "D"
-        if self.hours:
-            if int(self.hours) == self.hours:
-                time_string += str(int(self.hours)) + "H"
-            else:
-                time_string += ("%f" % self.hours).rstrip("0") + "H"
-        if self.minutes:
-            if int(self.minutes) == self.minutes:
-                time_string += str(int(self.minutes)) + "M"
-            else:
-                time_string += ("%f" % self.minutes).rstrip("0") + "M"
-        if self.seconds:
-            if int(self.seconds) == self.seconds:
-                time_string += str(int(self.seconds)) + "S"
-            else:
-                time_string += ("%f" % self.seconds).rstrip("0") + "S"
+
+        # Construct the date part of the string.
+        for prop_, unit in [("years", "Y"), ("months", "M"), ("days", "D")]:
+            prop_val = getattr(self, prop_)
+            if prop_val:
+                if int(prop_val) == prop_val:
+                    date_string += str(int(prop_val)) + unit
+                else:
+                    date_string += str(prop_val) + unit
+
+        # Construct the time part of the string.
+        for prop_, unit in [("hours", "H"), ("minutes", "M"),
+                            ("seconds", "S")]:
+            prop_val = getattr(self, prop_)
+            if prop_val:
+                if int(prop_val) == prop_val:
+                    time_string += str(int(prop_val)) + unit
+                else:
+                    time_string += str(prop_val) + unit
+
+        # Combine the date and time strings.
         if time_string:
             time_string = "T" + time_string
         elif not date_string:
