@@ -13,7 +13,7 @@ class LogAnalyserError( Exception ):
 class LogSpec( object ):
     """Get important information from an existing reference run log
     file, in order to do the same run for a reference test. Currently
-    just gets the start and stop cycle times."""
+    just gets the start and stop cycle points."""
 
     def __init__( self, log ):
         h = open( log, 'rb' )

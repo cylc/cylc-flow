@@ -32,7 +32,7 @@ Print parsed suite configuration items, after runtime inheritance.
 
 By default all settings are printed. For specific sections or items
 use -i/--item and wrap sections in square brackets, e.g.:
-   cylc get-suite-config --item '[scheduling]initial cycle time'
+   cylc get-suite-config --item '[scheduling]initial cycle point'
 Multiple items can be retrieved at once.
 
 By default, unset values are printed as an empty string, or (for

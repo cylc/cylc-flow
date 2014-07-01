@@ -7,8 +7,8 @@ the watcher task runs indefinitely so you need to stop the suite
 with '--now' and kill the external watcher script manually."""
 
 [scheduling]
-    initial cycle time = 20110101T00
-    final cycle time = 20110102T12
+    initial cycle point = 20110101T00
+    final cycle point = 20110102T12
     [[dependencies]]
         # make everything wait on a start-cycle-only task.
         [[[R1]]]
@@ -38,6 +38,6 @@ with '--now' and kill the external watcher script manually."""
             a = "<ASYNCID> archived"
 
 [visualization]
-    initial cycle time = 2011010100
-    final cycle time = 2011010212
+    initial cycle point = 2011010100
+    final cycle point = 2011010212
  

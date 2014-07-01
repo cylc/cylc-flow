@@ -4,8 +4,8 @@ A:start  => B: means B triggers after A starts running.
 A:finish => B: means B triggers after A finishes, by success or failure.
               """
 [scheduling]
-    initial cycle time = 2012010800
-    final cycle time = 2012010818
+    initial cycle point = 2012010800
+    final cycle point = 2012010818
     [[dependencies]]
         [[[0,12]]]
            graph = """

@@ -13,7 +13,7 @@ generation of groups of related dependencies and runtime properties."""
 {% set CLEANUP = True %}
 
 [scheduling]
-    initial cycle time = 2020-01-01  # Equivalent to 20200101.
+    initial cycle point = 2020-01-01  # Equivalent to 20200101.
     [[ dependencies ]]
 {% if CLEANUP %}
         [[[T23]]]
@@ -49,8 +49,8 @@ generation of groups of related dependencies and runtime properties."""
 {% endfor %}
 
 [visualization]
-    initial cycle time = 2011080812
-    final cycle time = 2011080823
+    initial cycle point = 2011080812
+    final cycle point = 2011080823
     [[node groups]]
         cleaning = clean, cleanup
     [[node attributes]]

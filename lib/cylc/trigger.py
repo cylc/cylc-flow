@@ -36,7 +36,7 @@ Note on trigger time offsets:
     foo[T-n] => bar   # bar triggers off "foo succeeded at T-n"
 (a) foo[T-n]:x => bar # bar triggers off "output x of foo evaluated at T-n"
 where output x of foo may also have an offset:
-(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_TIME[+n]>"
+(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_POINT[+n]>"
 
 (a) is an "evaluation offset"
 (b) is an "intrinsic offset"

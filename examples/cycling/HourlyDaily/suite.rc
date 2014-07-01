@@ -4,7 +4,7 @@
 {% set STOP  = "20100812T00" %}
 
 [scheduling]
-    initial cycle time = {{ START }}
+    initial cycle point = {{ START }}
     final cycle time   = {{ STOP }}
     [[dependencies]]
         [[[R1]]]
@@ -20,7 +20,7 @@
                 foo => baz
                     """
 [visualization]
-    initial cycle time = {{ START }}
+    initial cycle point = {{ START }}
     final cycle time   = {{ STOP }}
     [[node attributes]]
         root = "style=filled", "fillcolor=yellow"

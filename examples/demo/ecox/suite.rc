@@ -9,8 +9,8 @@ edit 2014: this pre-dates runtime inheritance and other new features!"""
 
 [scheduling]
     #runahead limit = 48
-    initial cycle time = 2011010106
-    final cycle time = 2011010206
+    initial cycle point = 2011010106
+    final cycle point = 2011010206
 
     [[special tasks]]
         sequential = topnet, ricom, nztide, mos_nzlam_coeffs, \

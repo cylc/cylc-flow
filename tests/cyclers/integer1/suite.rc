@@ -2,8 +2,8 @@
     [[reference test]]
         live mode suite timeout = 3.0
 [scheduling]
-    initial cycle time = 1
-    final cycle time = 16
+    initial cycle point = 1
+    final cycle point = 16
     runahead factor = 4 
     cycling mode = integer
     [[special tasks]]
@@ -32,7 +32,7 @@
     [[foo]]
         command scripting = """
 sleep 5
-cylc task message "the cheese is ready for $(( CYLC_TASK_CYCLE_TIME + 3 ))"
+cylc task message "the cheese is ready for $(( CYLC_TASK_CYCLE_POINT + 3 ))"
 sleep 5
                             """
         [[[outputs]]]

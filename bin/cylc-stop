@@ -90,14 +90,14 @@ time STOP, or (b) task ID STOP has succeeded.
     etc).
 
 Note that cylc does not shut down automatically at a designated future
-cycle time (either by the "final cycle time" in the suite definition, or
+cycle point (either by the "final cycle point" in the suite definition, or
 by usage case 5/ above) if any failed tasks are present in the suite.
 This is to ensure that failed tasks do not go unnoticed.
 
 The command exits immediately unless --max-polls is greater than zero
 in which case it polls to wait for suite shutdown.""",
     pyro=True, argdoc=[ ("REG", "Suite name"),
-    ("[STOP]", """a/ task TAG (cycle time or integer), or
+    ("[STOP]", """a/ task POINT (cycle point), or
                         b/ ISO 8601 date-time (clock time), or
                         c/ TASK (task ID).""")] )
 
@@ -176,7 +176,7 @@ elif shutdown_at:
         # not a task ID or a date time;
         # TODO ISO - MOVE THIS LOGIC INTO SCHEDULER AND TEST
         try:
-            # is it a cycle time?
+            # is it a cycle point?
             ##ct(shutdown_arg)
             pass
         except CycleTimeError,x:
@@ -184,15 +184,15 @@ elif shutdown_at:
             try:
                 int( shutdown_arg )
             except ValueError:
-                # nope: not task ID, date time, or TAG
+                # nope: not task ID, date time, or CYCLE_POINT
                 raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
             else:
-                # is probably an async TAG
+                # is probably an async CYCLE_POINT
                 method = 'stop after tag'
                 prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
                 #print 'async'
         else:
-            # is a cycle time
+            # is a cycle point
             method = 'stop after tag'
             prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
             #print 'cycling'

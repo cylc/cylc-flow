@@ -1732,7 +1732,7 @@ to the previous example:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        # cycle times of 00 and 12 UTC every day:
+        # Repeat at 00 and 12 UTC every day:
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
@@ -1751,7 +1751,7 @@ how this connects the cycling graph sections together.
 
 Note that the \lstinline=[[[T00,T12]]]= (at 00 and 12 hours) syntax could be
 written as \lstinline=[[[PT12H]]]= (repeat every 12 hours, starting at the
-initial cycle time) provided that the initial cycle time was always at 00 and
+initial cycle point) provided that the initial cycle point was always at 00 and
 12 hours.
 
 Experiment with this suite to see how inter-cycle-point triggers work.
@@ -1800,8 +1800,8 @@ For example, in \lstinline=tut.cycling.three=:
 [cylc]
     cycle point time zone = +13
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
@@ -2390,8 +2390,8 @@ vary depending on the particular cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 20200401
-    final cycle time = 20200405
+    initial cycle point = 20200401
+    final cycle point = 20200405
     [[dependencies]]
         [[[T00,T06,T12,T18]]] # validity (hours)
             graph = """
@@ -2415,8 +2415,8 @@ title = "Dependency Example 1"
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20200401
-    final cycle time = 20200405
+    initial cycle point = 20200401
+    final cycle point = 20200405
     [[dependencies]]
         [[[T00,T06,T12,T18]]] # validity (hours)
             graph = """
@@ -2426,8 +2426,8 @@ A[-PT6H] => A  # Model A restart trigger
         [[[T06,T18]]] # hours
             graph = "C => X"
 [visualization]
-    initial cycle time = 20200401
-    final cycle time = 20200401T06
+    initial cycle point = 20200401
+    final cycle point = 20200401T06
     [[node attributes]]
         X = "color=red"
 \end{lstlisting}
@@ -2836,8 +2836,8 @@ using the \lstinline=R1= notation (e.g. as in Section
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
@@ -2861,8 +2861,8 @@ Let's suppose that we add the following section to the suite example above:
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
@@ -2878,7 +2878,7 @@ We'll also say that there should be a starting dependence between
 a single \lstinline=prep= task, at a single cycle.
 
 We can write this using a special case of the \lstinline=task[-interval]= syntax -
-if the interval is null, this implies the task at the initial cycle time.
+if the interval is null, this implies the task at the initial cycle point.
 
 For example, we can write our suite like this:
 
@@ -2889,22 +2889,22 @@ For example, we can write our suite like this:
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep"
         [[[R1/T00]]]
-            graph = "prep[^] => foo"   # ^ implies prep at the initial cycle time
+            graph = "prep[^] => foo"   # ^ implies prep at the initial cycle point
         [[[R1/T12]]]
-            graph = "prep[^] => baz"   # ^ is initial cycle time, as above
+            graph = "prep[^] => baz"   # ^ is initial cycle point, as above
         [[[T00]]]
             graph = "foo[-P1D] => foo => bar"
         [[[T12]]]
             graph = "baz[-P1D] => baz => qux"
 [visualization]
-    initial cycle time = 20130808T00
-    final cycle time = 20130810T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130810T00
     [[node attributes]]
         foo = "color=red"
         bar = "color=orange"
@@ -4255,8 +4255,8 @@ N_MEMBERS can be set similarly, but if not they have default values."""
 {# input of FIRST_TASK is required - no default #}
 
 [scheduling]
-    initial cycle time = 20100808T00
-    final cycle time   = 20100816T00
+    initial cycle point = 20100808T00
+    final cycle point   = 20100816T00
     [[dependencies]]
         [[[0]]]
             graph = """{{ FIRST_TASK }} => ens
@@ -5486,8 +5486,8 @@ suite stdout.
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 20100808T00
-    final cycle time = 20100810T00
+    initial cycle point = 20100808T00
+    final cycle point = 20100810T00
     [[dependencies]]
         [[[0]]]
             graph = "foo => bar"
@@ -5599,7 +5599,7 @@ cylc run foo 20120808T06Z
 or,
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 20100808T06Z
+    initial cycle point = 20100808T06Z
 \end{lstlisting}
 An initial cycle given on the command line will override one in the
 suite.rc file.

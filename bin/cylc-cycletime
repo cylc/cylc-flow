@@ -24,35 +24,35 @@ import isodatetime.dumpers
 import isodatetime.parsers
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [CYCLE]
+parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [POINT]
 
-Arithmetic cycle time offset computation, and filename templating.
+Arithmetic date-time cycle point offset computation, and filename templating.
 
 Examples:
 
-1) print offset from an explicit cycle time:
+1) print offset from an explicit cycle point:
   % cylc [util] cycletime --offset-hours=6 20100823T1800Z
   20100824T0000Z
 
-2) print offset from $CYLC_TASK_CYCLE_TIME (as in suite tasks):
-  % export CYLC_TASK_CYCLE_TIME=20100823T1800Z
+2) print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):
+  % export CYLC_TASK_CYCLE_POINT=20100823T1800Z
   % cylc cycletime --offset-hours=-6
   20100823T1200Z
 
-3) cycle time filename templating, explicit template:
-  % export CYLC_TASK_CYCLE_TIME=2010-08
+3) cycle point filename templating, explicit template:
+  % export CYLC_TASK_CYCLE_POINT=2010-08
   % cylc cycletime --offset-years=2 --template=foo-YYYY-MM.nc
   foo-2012-08.nc
 
-4) cycle time filename templating, template in a variable:
-  % export CYLC_TASK_CYCLE_TIME=2010-08
+4) cycle point filename templating, template in a variable:
+  % export CYLC_TASK_CYCLE_POINT=2010-08
   % export MYTEMPLATE=foo-YYYY-MM.nc
   % cylc cycletime --offset-years=2 --template=MYTEMPLATE
   foo-2012-08.nc
 
 Arguments:
    [CYCLE]  ISO 8601 date-time, e.g. 20140201T0000Z, default
-      $CYLC_TASK_CYCLE_TIME""" )
+      $CYLC_TASK_CYCLE_POINT""" )
 
 parser.add_option( "--offset-hours", metavar="HOURS",
         help="Add N hours to CYCLE (may be negative)",
@@ -105,14 +105,14 @@ parser.add_option( "--print-hour", help="Print only HH of result",
 
 # TODO ISO - THIS UTIL WILL BE COMPLETELY BROKEN
 if len( args ) == 0:
-    # input cycle time must be definied in the environment.
-    if 'CYLC_TASK_CYCLE_TIME' not in os.environ:
-        parser.error( "Provide CYCLE arg, or define $CYLC_TASK_CYCLE_TIME" )
-    cycle = os.environ['CYLC_TASK_CYCLE_TIME'] 
+    # input cycle point must be defined in the environment.
+    if 'CYLC_TASK_CYCLE_POINT' not in os.environ:
+        parser.error( "Provide CYCLE arg, or define $CYLC_TASK_CYCLE_POINT" )
+    cycle_point_string = os.environ['CYLC_TASK_CYCLE_POINT'] 
 
 elif len( args ) == 1:
-    # must be cycle time
-    cycle = args[0]
+    # must be cycle point
+    cycle_point_string = args[0]
 
 else:
     parser.error( "Wrong number of arguments!" )
@@ -155,7 +155,7 @@ else:
     if n_chosen != 0 and n_chosen != 1:
         parser.error( "Choose NONE or ONE of print_(year|month|day|hour)" )
 
-if (template is None and re.match("\d{10}$", cycle)):
+if (template is None and re.match("\d{10}$", cycle_point_string)):
     # Auto-detect prev Cylc format.
     template="%Y%m%d%H"
 
@@ -171,11 +171,11 @@ iso_point_dumper = isodatetime.dumpers.TimePointDumper(
 )
 try:
     cycle_point = iso_point_parser.parse(
-        cycle, dump_as_parsed=(template is None))
+        cycle_point_string, dump_as_parsed=(template is None))
 except ValueError:
     # May be in prev Cylc format.
     try:
-        cycle_point = cylc.cycling.iso8601.point_parse(cycle)
+        cycle_point = cylc.cycling.iso8601.point_parse(cycle_point_string)
     except ValueError as exc:
         parser.error( 'ERROR: invalid cycle: ' + str(exc) )
 

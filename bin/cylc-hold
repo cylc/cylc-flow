@@ -38,9 +38,9 @@ submit even if they are ready to run.
 See also 'cylc [control] release'.""", pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
     ('[MATCH]', 'Task or family name matching regular expression'),
-    ('[TAG]', 'Task cycle time or integer tag') ])
+    ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
 
-# TODO - hold after TAG etc. as per the stop command?
+# TODO - hold after CYCLE_POINT etc. as per the stop command?
 
 (options, args) = parser.parse_args()
 
