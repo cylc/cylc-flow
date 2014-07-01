@@ -1000,7 +1000,7 @@ class task( object ):
             execution_timeout = self.event_hooks['execution timeout']
             if execution_timeout:
                 self.execution_timer_timeout = (
-                    start_time_in_seconds + execution_timeout
+                    self.started_time + execution_timeout
                 )
             else:
                 self.execution_timer_timeout = None
