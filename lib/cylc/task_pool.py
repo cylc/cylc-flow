@@ -115,19 +115,19 @@ class pool(object):
 
         # add in held state if beyond the suite stop point
         if self.stop_point and itask.c_time > self.stop_point:
-            itask.log( 'WARNING', "holding (beyond suite stop point) " + str(self.stop_point) )
+            itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
             itask.reset_state_held()
 
         # add in held state if beyond the suite hold point
         # TODO ISO -restore this functionality
         #elif self.hold_time and itask.c_time > self.hold_time:
-        #    itask.log( 'WARNING', "holding (beyond suite hold point) " + str(self.hold_time) )
+        #    itask.log( 'NORMAL', "holding (beyond suite hold point) " + str(self.hold_time) )
         #    itask.reset_state_held()
 
         # add in held state if a future trigger goes beyond the suite stop point
         # (note this only applies to tasks below the suite stop point themselves)
         elif self.task_has_future_trigger_overrun( itask ):
-            itask.log( "WARNING", "holding (future trigger beyond stop point)" )
+            itask.log( "NORMAL", "holding (future trigger beyond stop point)" )
             self.held_future_tasks.append( itask.id )
             itask.reset_state_held()
 
