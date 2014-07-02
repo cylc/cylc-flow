@@ -142,7 +142,7 @@ class config( object ):
         self.cfg = self.pcfg.get(sparse=True)
 
         if self._cli_start_string is not None:
-            self.cfg['scheduling']['initial cycle time'] = (
+            self.cfg['scheduling']['initial cycle point'] = (
                 self._cli_start_string)
 
         if 'cycling mode' not in self.cfg['scheduling']:
@@ -161,10 +161,10 @@ class config( object ):
                     self.cfg['scheduling']['cycling mode'] = (
                         INTEGER_CYCLING_TYPE
                     )
-                    if 'initial cycle time' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['initial cycle time'] = "1"
-                    if 'final cycle time' not in self.cfg['scheduling']:
-                        self.cfg['scheduling']['final cycle time'] = "1"
+                    if 'initial cycle point' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['initial cycle point'] = "1"
+                    if 'final cycle point' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['final cycle point'] = "1"
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -299,16 +299,16 @@ class config( object ):
             self.check_tasks()
 
         # initial and final cycles for visualization
-        vict = self.cfg['visualization']['initial cycle time'] or \
-                str( self.get_actual_first_ctime( self.cfg['scheduling']['initial cycle time'] ))
-        self.cfg['visualization']['initial cycle time'] = vict
+        vict = self.cfg['visualization']['initial cycle point'] or \
+                str( self.get_actual_first_ctime( self.cfg['scheduling']['initial cycle point'] ))
+        self.cfg['visualization']['initial cycle point'] = vict
 
         vict_rh = None
         if vict and self.runahead_limit:
             vict_rh = str( get_point( vict ) + self.runahead_limit )
         
-        vfct = self.cfg['visualization']['final cycle time'] or vict_rh or vict
-        self.cfg['visualization']['final cycle time'] = vfct
+        vfct = self.cfg['visualization']['final cycle point'] or vict_rh or vict
+        self.cfg['visualization']['final cycle point'] = vfct
 
         ngs = self.cfg['visualization']['node groups']
 
@@ -851,7 +851,7 @@ class config( object ):
         for name in self.taskdefs.keys():
             type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
-            tag = get_point( self.cfg['scheduling']['initial cycle time'] )
+            tag = get_point( self.cfg['scheduling']['initial cycle point'] )
             try:
                 # instantiate a task
                 itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
@@ -963,7 +963,7 @@ class config( object ):
         T00).
         ttype is now always 'cycling' (TODO - is not needed now)
         seq is the sequence generated from 'section' given the initial
-        and final cycle time.
+        and final cycle point.
         offset_seq_map is a cache of seq with various offsets for
         speeding up backwards-compatible cycling.
         tasks_to_prune, if not None, is a list of tasks to remove
@@ -1274,8 +1274,8 @@ class config( object ):
                         else:
                             seq_offset = get_sequence(
                                 section,
-                                self.cfg['scheduling']['initial cycle time'],
-                                self.cfg['scheduling']['final cycle time']
+                                self.cfg['scheduling']['initial cycle point'],
+                                self.cfg['scheduling']['final cycle point']
                             )
                             seq_offset.set_offset(offset)
                             offset_seq_map[str(offset)] = seq_offset
@@ -1351,7 +1351,7 @@ class config( object ):
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
 
     def get_actual_first_ctime( self, start_ctime ):
-        # Get actual first cycle time for the suite (get all
+        # Get actual first cycle point for the suite (get all
         # sequences to adjust the putative start time upward)
         if self.actual_first_ctime:
             # already computed
@@ -1376,7 +1376,7 @@ class config( object ):
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
-        actual edges for a concrete range of cycle times."""
+        actual edges for a concrete range of cycle points."""
 
         members = self.runtime['first-parent descendants']
         hierarchy = self.runtime['first-parent ancestors']
@@ -1432,7 +1432,7 @@ class config( object ):
         stop = get_point( stop_str )
 
         for e in self.edges:
-            # Get initial cycle time for this sequence
+            # Get initial cycle point for this sequence
             i_ctime = e.sequence.get_first_point( start_ctime )
             if not i_ctime:
                 # out of bounds
@@ -1472,7 +1472,7 @@ class config( object ):
                     nl, nr = self.close_families( l_id, r_id )
                     gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
-                # increment the cycle time
+                # increment the cycle point
                 ctime = e.sequence.get_next_point_on_sequence( ctime )
 
         return gr_edges
@@ -1603,11 +1603,11 @@ class config( object ):
             if special_dependencies and tasks_to_prune:
                 section_seq = get_sequence(
                     section,
-                    self.cfg['scheduling']['initial cycle time'],
-                    self.cfg['scheduling']['final cycle time']
+                    self.cfg['scheduling']['initial cycle point'],
+                    self.cfg['scheduling']['final cycle point']
                 )
                 first_point = section_seq.get_first_point(
-                    get_point(self.cfg['scheduling']['initial cycle time'])
+                    get_point(self.cfg['scheduling']['initial cycle point'])
                 )
                 graph_text = ""
                 for left, left_output, right in special_dependencies:
@@ -1662,8 +1662,8 @@ class config( object ):
         else:
             seq = get_sequence(
                 section,
-                self.cfg['scheduling']['initial cycle time'],
-                self.cfg['scheduling']['final cycle time']
+                self.cfg['scheduling']['initial cycle point'],
+                self.cfg['scheduling']['final cycle point']
             )
             section_seq_map[section] = seq
         offset_seq_map = {}
@@ -1703,7 +1703,7 @@ class config( object ):
             raise SuiteConfigError, "Task not found: " + name
 
         ict_point = (self.cli_start_point or
-                     get_point(self.cfg['scheduling']['initial cycle time']))
+                     get_point(self.cfg['scheduling']['initial cycle point']))
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 

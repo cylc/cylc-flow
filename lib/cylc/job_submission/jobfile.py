@@ -179,12 +179,13 @@ class jobfile(object):
         BUFFER.write( "\n\n# CYLC SUITE ENVIRONMENT:" )
 
         # write the static suite variables
-        for var, val in self.__class__.suite_env.items():
+        for var, val in sorted(self.__class__.suite_env.items()):
             BUFFER.write( "\nexport " + var + "=" + str(val) )
 
         if str(self.__class__.suite_env.get('CYLC_UTC')) == 'True':
             BUFFER.write( "\nexport TZ=UTC" )
 
+        BUFFER.write("\n")
         # override and write task-host-specific suite variables
         suite_work_dir = sitecfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
         st_env = deepcopy( self.__class__.suite_task_env ) 
@@ -198,7 +199,7 @@ class jobfile(object):
         else:
             # replace home dir with '$HOME' for evaluation on the task host
             st_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', st_env['CYLC_SUITE_DEF_PATH'] )
-        for var, val in st_env.items():
+        for var, val in sorted(st_env.items()):
             BUFFER.write( "\nexport " + var + "=" + str(val) )
 
         task_work_dir  = os.path.join( suite_work_dir, self.jobconfig['work sub-directory'] )
@@ -207,18 +208,19 @@ class jobfile(object):
         comms = sitecfg.get_host_item( 'task communication method', self.host, self.owner )
 
         BUFFER.write( "\n\n# CYLC TASK ENVIRONMENT:" )
-        BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
-        BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( sitecfg.get( ['task messaging','retry interval in seconds'])) )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( sitecfg.get( ['task messaging','maximum number of tries'])) )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( sitecfg.get( ['task messaging','connection timeout in seconds'])) )
-        BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
-        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
-        BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
-        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
-        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_COMMS_METHOD=" + comms )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_POINT=" + self.tag )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
+        BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
+        BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
+        BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( sitecfg.get( ['task messaging','maximum number of tries'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( sitecfg.get( ['task messaging','retry interval in seconds'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( sitecfg.get( ['task messaging','connection timeout in seconds'])) )
+        BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
+        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
+        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED
 

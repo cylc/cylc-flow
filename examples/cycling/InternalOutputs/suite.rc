@@ -10,8 +10,8 @@ of an internal task output: foo[T] depends on foo[T-1]:x, where the
 output message is explicited target at the next cycle."""
 
 [scheduling]
-    initial cycle time = 2010
-    final cycle time = 2011
+    initial cycle point = 2010
+    final cycle point = 2011
     [[dependencies]]
         [[[R1]]]
             graph = """

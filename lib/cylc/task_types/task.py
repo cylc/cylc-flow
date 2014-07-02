@@ -1171,7 +1171,7 @@ class task( object ):
         return tag
 
     def next_tag( self ):
-        # derived classes override this to compute next valid cycle time.
+        # derived classes override this to compute next valid cycle point.
         return None
 
     def poll( self ):

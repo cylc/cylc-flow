@@ -103,7 +103,7 @@ try:
         while True:
             # continual redisplay loop
 
-            # get state summary, task names, cycle times
+            # get state summary, task names, cycle points
             try:
                 [glbl, states, fam_states] = proxy.get_state_summary()
 
@@ -168,7 +168,7 @@ try:
             n_task_types = len( name_list )
 
             # initialize a dict-of-dicts to store display information
-            # for all tasks at each current cycle time
+            # for all tasks at each current cycle point
             #   task_info[ c_time ][ task_name ] = info
             task_info = {}
             for rt in c_time_list:
@@ -240,7 +240,7 @@ try:
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )
 
-            # construct a line of text to display for each cycle time
+            # construct a line of text to display for each cycle point
             for rt in c_time_list:
                 indx = rt
                 line = '\033[1;34m' + rt + ctrl_end

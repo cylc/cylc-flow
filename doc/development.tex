@@ -117,7 +117,7 @@ tasks from triggering.   So\dots we may want to revist Multithreading\dots
 %
 %EcoConnect's Topnet model (mentioned just above) runs hourly and
 %triggers off the most recent regional weather forecast available.
-%The cycle time interval between the two tasks can vary. This makes 
+%The cycle point interval between the two tasks can vary. This makes 
 %use of cylc's {\em fuzzy prerequisites}, which the task definition
 %parser is not currently aware of (hence the custom Python taskdef).
 
@@ -143,18 +143,18 @@ tasks from triggering.   So\dots we may want to revist Multithreading\dots
 %
 %\end{myitemize}
 %
-%\subsubsection{Cycle Time}
+%\subsubsection{Cycle Point}
 %
-%{\em Prerequisites and outputs should always contain a cycle time} to
+%{\em Prerequisites and outputs should always contain a cycle point} to
 %distinguish between different instances of a task (at different 
 %forecast cycles) that may coexist in the task pool at any time. 
 %
 %Prerequisites that reflect same-cycle dependencies, which is the usual
-%case, should mention the host task's own cycle time, expressed as
+%case, should mention the host task's own cycle point, expressed as
 %\lstinline=$(CYCLE_TIME)= in task definition files.
 %
-%For intercycle dependencies, the cycle time in a prerequisite message
-%should be expressed as some offset from the task's own cycle time, e.g.\
+%For intercycle dependencies, the cycle point in a prerequisite message
+%should be expressed as some offset from the task's own cycle point, e.g.\
 %\lstinline=$(CYCLE_TIME - 6)=. However, the only intercycle dependencies
 %you are likely to encounter (see the TopNet model in EcoConnect,
 %Section~\ref{EcoConnect}, for a counter example) are the restart

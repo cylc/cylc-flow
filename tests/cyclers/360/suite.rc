@@ -4,8 +4,8 @@
        required run mode = live
        live mode suite timeout = 0.5 # minutes
 [scheduling]
-    initial cycle time = 20130228T00
-    final cycle time = 20130301T00
+    initial cycle point = 20130228T00
+    final cycle point = 20130301T00
     cycling mode = 360day
     [[dependencies]]
         [[[ P1D ]]]

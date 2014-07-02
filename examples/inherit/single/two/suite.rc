@@ -6,8 +6,8 @@ To see the result, use 'cylc get-config' or examine task job scripts
 generated with 'cylc jobscript'."""
 
 [scheduling]
-    initial cycle time = 2011010100
-    final cycle time = 2011010300
+    initial cycle point = 2011010100
+    final cycle point = 2011010300
     [[dependencies]]
         [[[0]]]
             graph = """

@@ -183,7 +183,7 @@ Text Treeview suite control interface.
                      'mean dT', 'ETC' ]
 
         for n in range(1, len(headings)):
-            # Skip first column (cycle time)
+            # Skip first column (cycle point)
             cr = gtk.CellRendererText()
             tvc = gtk.TreeViewColumn( headings[n] )
             if n == 2:
@@ -295,7 +295,7 @@ Text Treeview suite control interface.
                 return cmp(ctime2, ctime1)
             return cmp(ctime1, ctime2)
 
-        # Columns do not include the cycle time (0th col), so add 1.
+        # Columns do not include the cycle point (0th col), so add 1.
         prop1 = model.get_value( iter1, col_num + 1 )
         prop2 = model.get_value( iter2, col_num + 1 )
         return cmp( prop1, prop2 )

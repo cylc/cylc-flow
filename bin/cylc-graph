@@ -87,10 +87,10 @@ parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START [STOP]]
 Plot cylc dependency graphs in a pannable, zoomable viewer.
 
 The viewer updates automatically when the suite.rc file is saved during
-editing. Supply the optional initial and final cycle time arguments to
+editing. Supply the optional initial and final cycle point arguments to
 override the suite.rc file, which overrides the system defaults (if only
-an initial cycle is supplied, only that cycle will be graphed). The
-"Save" button generates an image of the current view, of format (e.g.
+an initial cycle point is supplied, only that cycle point will be graphed).
+The "Save" button generates an image of the current view, of format (e.g.
 png, svg, jpg, eps) determined by the filename extension. If the chosen
 format is not available a dialog box will show those that are available.
 
@@ -113,8 +113,8 @@ GRAPH VIEWER CONTROLS:
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
     jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'),
-        ('[START]', 'Initial cycle time to plot (default=2999010100)'),
-        ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
+        ('[START]', 'Initial cycle point to plot (default=2999010100)'),
+        ('[STOP]', 'Final cycle point to plot (default=2999010123)') ])
 
 #parser.add_option( "-l", "--live",
 #    help="Update image in real time if the source file changes. Otherwise "

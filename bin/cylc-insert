@@ -47,7 +47,7 @@ See also 'cylc submit', for running tasks without the scheduler.
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
         ('MATCH', 'Task or family name matching regular expression'),
-        ('TAG', 'Cycle time or integer tag'),
+        ('CYCLE_POINT', 'Cycle point (e.g. date-time or integer)'),
         ('[STOP]', 'Optional stop tag for inserted task.' )])
 
 (options, args) = parser.parse_args()

@@ -143,7 +143,7 @@ class TreeUpdater(threading.Thread):
         ctime = model.get_value(model.get_iter(path), 0)
         name = model.get_value(model.get_iter(path), 1)
         if ctime == name:
-            # We are hovering over a cycle time row.
+            # We are hovering over a cycle point row.
             task_id = ctime
         else:
             # We are hovering over a task or family row.
@@ -422,7 +422,7 @@ class TreeUpdater(threading.Thread):
         if any( [ s in self.autoexpand_states for s in sub_st ] ):
             # return True  # TODO: Option for different expansion rules?
             if ctime == name:
-                # Expand cycle times if any child states comply.
+                # Expand cycle points if any child states comply.
                 return True
             child_iter = self.ttreestore.iter_children( row_iter )
             while child_iter is not None:

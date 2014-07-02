@@ -43,22 +43,22 @@ The following are all equivalent if no intercycle dependence exists:
   3/ Raw  start (-r,--raw)   : assume nothing
 
 1/ COLD START -- any designated cold-start tasks will be inserted in the
-waiting state. The variable $CYLC_SUITE_INITIAL_CYCLE_TIME will be set
-to the initial cycle time, in task environments.
+waiting state. The variable $CYLC_SUITE_INITIAL_CYCLE_POINT will be set
+to the initial cycle point, in task environments.
 
 2/ WARM START -- any designated cold-start tasks will be inserted in the
 succeeded state, to stand in for a previous cycle. The variable
-$CYLC_SUITE_INITIAL_CYCLE_TIME will be set to 'None' in task environments
+$CYLC_SUITE_INITIAL_CYCLE_POINT will be set to 'None' in task environments
 unless '--ict' is used.
 
 3/ RAW START -- do not insert any cold-start tasks (mainly for testing).
 
-In task environments, $CYLC_SUITE_FINAL_CYCLE_TIME is always set to the
-final cycle time if one is set (by suite.rc file or command line). The
-initial and final cycle time variables persists across suite restarts."""
+In task environments, $CYLC_SUITE_FINAL_CYCLE_POINT is always set to the
+final cycle point if one is set (by suite.rc file or command line). The
+initial and final cycle point variables persists across suite restarts."""
 
         self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"),
-                ("[START]", """Initial cycle time or 'now'; overrides the
+                ("[START_POINT]", """Initial cycle point or 'now'; overrides the
                          suite definition.""")])
 
         self.parser.add_option( "--non-daemon",
@@ -80,8 +80,8 @@ initial and final cycle time variables persists across suite restarts."""
                 action="store_true", default=False, dest="raw" )
 
         self.parser.add_option( "--ict",
-                help="Set $CYLC_SUITE_INITIAL_CYCLE_TIME to the initial "
-                "cycle time even in a warm start (as for cold starts).",
+                help="Set $CYLC_SUITE_INITIAL_CYCLE_POINT to the initial "
+                "cycle point even in a warm start (as for cold starts).",
                 action="store_true", default=False, dest="set_ict" )
 
         scheduler.__init__( self )
@@ -126,7 +126,7 @@ initial and final cycle time variables persists across suite restarts."""
                 if self.start_point is not None:
                     tag = self.start_point
                 else:
-                    # no initial cycle time: we can't load cycling tasks
+                    # no initial cycle point: we can't load cycling tasks
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
 
@@ -154,7 +154,7 @@ initial and final cycle time variables persists across suite restarts."""
                 if self.start_point is not None:
                     tag = self.start_point
                 else:
-                    # no initial cycle time: we can't load cycling tasks
+                    # no initial cycle point: we can't load cycling tasks
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
             if name in coldstart_tasks:
@@ -181,7 +181,7 @@ initial and final cycle time variables persists across suite restarts."""
                 if self.start_point is not None:
                     tag = self.start_point
                 else:
-                    # no initial cycle time: we can't load cycling tasks
+                    # no initial cycle point: we can't load cycling tasks
                     continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
             if name in coldstart_tasks:

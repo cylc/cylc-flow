@@ -186,7 +186,7 @@ class CylcRuntimeDAO(object):
     TABLES = {
             TASK_EVENTS: [                      # each task event gets a row
                     "name TEXT",
-                    "cycle TEXT",               # current cycle time of the task
+                    "cycle TEXT",               # current cycle point of the task
                     "time INTEGER",             # actual time
                     "submit_num INTEGER",
                     "event TEXT",

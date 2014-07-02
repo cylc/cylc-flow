@@ -4,8 +4,8 @@ description = """This suite contrives to use every possible task state,
 to show what they look like live in gcylc."""
 
 [scheduling]
-    initial cycle time = 2012080800
-    final cycle time = 2012081200
+    initial cycle point = 2012080800
+    final cycle point = 2012081200
     # Set a runahead limit halfway to the final cycle, in order to see
     # tasks in the 'runahead' state (twice the min cycling interval is
     # the default anyway: 48 hours in this case). 

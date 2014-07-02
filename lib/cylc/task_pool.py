@@ -125,7 +125,7 @@ class pool(object):
         #    itask.reset_state_held()
         #    return
 
-        # hold tasks with future triggers beyond the final cycle time
+        # hold tasks with future triggers beyond the final cycle point
         if self.task_has_future_trigger_overrun( itask ):
             itask.log( "WARNING", "not adding (future trigger beyond stop cycle)" )
             self.held_future_tasks.append( itask.id )
@@ -322,7 +322,7 @@ class pool(object):
                     return True
             except:
                 raise
-                # pct invalid cycle time => is an asynch trigger
+                # pct invalid cycle point => is an asynch trigger
                 pass
         return False
 
@@ -470,7 +470,6 @@ class pool(object):
                            "not running (beyond suite stop cycle) " +
                            str(self.stop_point) )
                 itask.reset_state_held()
-                return
 
 
     def no_active_tasks( self ):
@@ -691,12 +690,12 @@ class pool(object):
           graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
         implies foo's cutoff is T+12: if foo has succeeded and spawned,
         it can be removed if no unsatisfied task proxy exists with
-        T<=T+12. Note this only uses information about the cycle time of
+        T<=T+12. Note this only uses information about the cycle point of
         downstream dependents - if we used specific IDs instead spent
         tasks could be identified and removed even earlier).
         """
 
-        # first find the cycle time of the earliest unsatisfied task
+        # first find the cycle point of the earliest unsatisfied task
         cutoff = self._get_earliest_unsatisfied_cycle_point()
 
         if not cutoff:

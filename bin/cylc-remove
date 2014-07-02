@@ -31,14 +31,14 @@ import cylc.flags
 
 parser = cop( """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks, or all tasks with a common TAG (cycle time or
-integer tag) from a running suite.
+Remove one or more tasks, or all tasks with a common cycle point from a
+running suite.
 
 Tasks will spawn successors first if they have not done so already.
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
         ('[MATCH]', 'Task or family name matching regular expression'),
-        ('TAG', 'Task cycle time or integer tag') ])
+        ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
 
 parser.add_option( "--no-spawn",
         help="Do not spawn successors before removal.",
