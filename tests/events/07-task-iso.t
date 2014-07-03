@@ -15,18 +15,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Validate and run the events/suite test suite
+#C: Validate and run the task events suite.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE timeout
+install_suite $TEST_NAME_BASE task-iso
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run --debug $SUITE_NAME
-grep_ok "WARNING - suite timed out after PT6S" "$TEST_NAME.stderr"
+suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

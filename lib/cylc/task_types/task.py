@@ -29,7 +29,7 @@ import logging
 import cylc.flags as flags
 from cylc.wallclock import (
     get_current_time_string, get_time_string_from_unix_time,
-    RE_DATE_TIME_FORMAT_EXTENDED
+    RE_DATE_TIME_FORMAT_EXTENDED, get_seconds_as_interval_string
 )
 from cylc.task_receiver import msgqueue
 import cylc.rundb
@@ -737,9 +737,10 @@ class task( object ):
 
         # if timed out, log warning, poll, queue event handler, and turn off the timer
         if time.time() > self.submission_timer_timeout:
-            timeout = self.event_hooks['submission timeout']
-            msg = 'job submitted %.1f minutes ago, but has not started' % (
-                timeout / 60.0)
+            msg = 'job submitted %s ago, but has not started' % (
+                get_seconds_as_interval_string(
+                    self.event_hooks['submission timeout'])
+            )
             self.log( 'WARNING', msg )
             self.poll()
             self.queue_event_handlers( 'submission timeout', msg )
@@ -754,13 +755,13 @@ class task( object ):
 
         # if timed out: log warning, poll, queue event handler, and turn off the timer
         if time.time() > self.execution_timer_timeout:
-            timeout = self.event_hooks['execution timeout']
             if self.event_hooks['reset timer']:
                 # the timer is being re-started by put messages
-                msg = 'last message %.1f minutes ago, but job not finished'
+                msg = 'last message %s ago, but job not finished'
             else:
-                msg = 'job started %.1f minutes ago, but has not finished'
-            msg = msg % (timeout / 60.0)
+                msg = 'job started %s ago, but has not finished'
+            msg = msg % get_seconds_as_interval_string(
+                self.event_hooks['execution timeout'])
             self.log( 'WARNING', msg )
             self.poll()
             self.queue_event_handlers( 'execution timeout', msg )
@@ -969,8 +970,8 @@ class task( object ):
             else:
                 # There is a retry lined up
                 self.sub_retry_delay = sub_retry_delay
-                delay_msg = "submit-retrying in %.1f minutes" % (
-                    sub_retry_delay / 60.0)
+                delay_msg = "submit-retrying in %s" % (
+                    get_seconds_as_interval_string(sub_retry_delay))
                 msg = "job submission failed, " + delay_msg
                 self.log( "NORMAL", msg )
                 self.sub_retry_delay_timer_timeout = (
@@ -1060,7 +1061,8 @@ class task( object ):
             else:
                 self.retry_delay = retry_delay
                 # There is a retry lined up
-                delay_msg = "retrying in %.1f minutes" % (retry_delay / 60.0)
+                delay_msg = "retrying in %s" % (
+                    get_seconds_as_interval_string(retry_delay))
                 msg = "job failed, " + delay_msg
                 self.log( "NORMAL", msg )
                 self.retry_delay_timer_timeout = (

@@ -28,6 +28,6 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 RUN_MODE=$(basename $0 | sed "s/.*-ref-\(.*\).t/\1/g")
 suite_run_fail $TEST_NAME cylc run --reference-test --mode=$RUN_MODE --debug $SUITE_NAME
-grep_ok "WARNING - suite timed out after 0.1 minutes" "$TEST_NAME.stderr"
+grep_ok "WARNING - suite timed out after PT6S" "$TEST_NAME.stderr"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
