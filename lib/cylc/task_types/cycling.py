@@ -45,8 +45,6 @@ from copy import deepcopy
 
 class cycling( task ):
 
-    is_cycling = True
-
     intercycle = False  # no inter-cycle dependents
 
     # derived classes must override ready_to_spawn()

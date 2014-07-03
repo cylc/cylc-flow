@@ -28,18 +28,14 @@ set_test_number $(echo "$SDEFS" | wc -l)
 for SDEF in $SDEFS; do
     # capture validation stderr:
     SDEF_NAME=$(basename $(dirname $SDEF))
-    if [[ "$SDEF_NAME" == satellite ]]; then
-        skip 1 "no async satellite support (yet?)"
+    RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
+    TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
+    if [[ -n $RES ]]; then
+        fail $TEST_NAME
+        echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
+        echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
     else
-        RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
-        TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
-        if [[ -n $RES ]]; then
-            fail $TEST_NAME
-            echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
-            echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
-        else
-            ok $TEST_NAME
-        fi
+        ok $TEST_NAME
     fi
 done
 

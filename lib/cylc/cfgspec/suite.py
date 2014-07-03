@@ -191,7 +191,6 @@ SPEC = {
             '__MANY__' :
             {
                 'graph'                       : vdr( vtype='string'),
-                'daemon'                      : vdr( vtype='string'),
                 },
             },
         },
@@ -299,30 +298,31 @@ def upg( cfg, descr ):
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
     # TODO - replace ISO version here:
-    u.obsolete( '5.4.ISO', ['visualization', 'runtime graph'] )
-    u.obsolete( '5.4.ISO', ['development'] )
+    u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
+    u.obsolete( '6.0.0', ['development'] )
     u.deprecate(
-        '6',
+        '6.0.0',
         ['scheduling', 'initial cycle time'], ['scheduling', 'initial cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
     u.deprecate(
-        '6',
+        '6.0.0',
         ['scheduling', 'final cycle time'], ['scheduling', 'final cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
     u.deprecate(
-        '6',
+        '6.0.0',
         ['visualization', 'initial cycle time'], ['visualization', 'initial cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
     u.deprecate(
-        '6',
+        '6.0.0',
         ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
-    u.deprecate( '5.4.ISO', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
+    u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
             converter( lambda x:'2', 'using default runahead factor' ))
+    u.obsolete( '6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'] )
     u.upgrade()
 
 class sconfig( config ):

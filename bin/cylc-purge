@@ -30,9 +30,6 @@ from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
-# NOTE: it is not clear that this command does the right thing for
-# asynchronous tasks - testing needed if purge is required for such.
-
 parser = cop( """cylc [control] purge [OPTIONS] ARGS
 
 Remove an entire tree of dependent tasks, over multiple cycles into the
