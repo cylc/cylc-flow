@@ -85,6 +85,10 @@ class IntervalBase(object):
     They should also provide self.cmp_, self.sub, self.add,
     self.__mul__, self.__abs__, self.__nonzero__ methods which should
     behave as __cmp__, __sub__, etc standard comparison methods.
+
+    They can also just override the provided comparison methods (such
+    as __cmp__) instead.
+
     Note: "cmp_" not "cmp", etc. They should also provide:
      * self.get_null, which is a method to extract the null interval of
     this type.

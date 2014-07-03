@@ -111,7 +111,7 @@ class ThreadedCursor(Thread):
         self.generic_err_msg = ("%s:%s occurred while trying to run:\n"+
                               "\trequest: %s\n\targs: %s")
     def run(self):
-        cnx = sqlite3.connect(self.db)
+        cnx = sqlite3.connect(self.db, timeout=10.0)
         cursor = cnx.cursor()
         counter = 1
         while True:
@@ -186,7 +186,7 @@ class CylcRuntimeDAO(object):
     TABLES = {
             TASK_EVENTS: [                      # each task event gets a row
                     "name TEXT",
-                    "cycle TEXT",               # current cycle time of the task
+                    "cycle TEXT",               # current cycle point of the task
                     "time INTEGER",             # actual time
                     "submit_num INTEGER",
                     "event TEXT",
@@ -310,3 +310,19 @@ class CylcRuntimeDAO(object):
         else:
             self.c.execute(db_oper.s_fmt, db_oper.args)
 
+    def get_restart_info(self, cycle):
+        """Get all the task names and submit count for a particular cycle"""
+        s_fmt = """SELECT name FROM task_states WHERE cycle ==?"""
+        args = [cycle]
+        res = {}
+        for row in self.c.select(s_fmt, args):
+            res[row[0]] = 0
+        
+        s_fmt = """SELECT name, count(*) FROM task_events WHERE cycle ==? AND
+                   event ==? GROUP BY name"""
+        args = [cycle, "submitting now"]
+        
+        for name, count in self.c.select(s_fmt, args):
+            res[name] = count
+
+        return res

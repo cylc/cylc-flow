@@ -93,6 +93,7 @@ final cycle : 2013092306
 .
 Begin task states
 failed_task.2013092306 : status=failed, spawned=true
+failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092306 : status=running, spawned=true
 output_states.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
@@ -101,6 +102,7 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
+failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
 output_states|2013092300|1|1|succeeded
@@ -111,6 +113,7 @@ __DB_DUMP__
 cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
+failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 output_states|2013092300|1|1|succeeded
@@ -125,6 +128,7 @@ final cycle : 2013092306
 (dp1
 .
 Begin task states
+failed_task.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
@@ -134,6 +138,7 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
 cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
+failed_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 output_states|2013092300|1|1|succeeded

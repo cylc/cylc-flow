@@ -16,6 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import Queue
 import os, sys, re, time
 import datetime
 import subprocess
@@ -106,8 +107,6 @@ class task( object ):
     # environments to allow changed behaviour after previous failures.
 
     intercycle = False
-    is_cycling = False
-    is_daemon = False
     is_clock_triggered = False
 
     event_queue = None
@@ -169,16 +168,11 @@ class task( object ):
     def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
 
-        # Derived class init MUST define:
-        #  * self.id: unique identity (e.g. NAME.CYCLE for cycling tasks)
-        #  * prerequisites and outputs
-        #  * self.env_vars
-
         class_vars = {}
         self.state = task_state.task_state( state )
         self.manual_trigger = False
 
-        self.stop_tag = None
+        self.stop_point = None
 
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
@@ -197,7 +191,12 @@ class task( object ):
                          'submitted_time': None,
                          'submitted_time_string': '*',
                          'succeeded_time': None,
-                         'succeeded_time_string': '*' }
+                         'succeeded_time_string': '*',
+                         'name': self.name,
+                         'description': self.description,
+                         'title': self.title,
+                         'label': str(self.tag),
+                         'logfiles': self.logfiles.get_paths()}
 
         self.retries_configured = False
 
@@ -514,7 +513,7 @@ class task( object ):
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
-            # (currently only used by async_repeating tasks)
+            # (not currently used?)
             rtconfig['environment'].update( self.env_vars )
 
         # construct the job launcher here so that a new one is used if
@@ -811,7 +810,10 @@ class task( object ):
     def process_incoming_messages( self ):
         queue = self.message_queue.get_queue()
         while queue.qsize() > 0:
-            self.process_incoming_message( queue.get() )
+            try:
+                self.process_incoming_message( queue.get(block=False) )
+            except Queue.Empty:
+                break
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
@@ -1151,33 +1153,17 @@ class task( object ):
         else:
             return False
 
-    def check_requisites( self ):
-        # overridden by repeating asynchronous tasks
-        pass
-
     def get_state_summary( self ):
         # derived classes can call this method and then
         # add more information to the summary if necessary.
 
-        self.summary.setdefault( 'name', self.name )
-        self.summary.setdefault( 'description', self.description )
-        self.summary.setdefault( 'title', self.title )
-        self.summary.setdefault( 'label', str(self.tag) )
         self.summary[ 'state' ] = self.state.get_status()
         self.summary[ 'spawned' ] = self.state.has_spawned()
 
-        # str(timedelta) => "1 day, 23:59:55.903937" (for example)
-        # to strip off fraction of seconds:
-        # timedelta = re.sub( '\.\d*$', '', timedelta )
-
-        if self.__class__.mean_total_elapsed_time:
-            met = self.__class__.mean_total_elapsed_time
-            self.summary[ 'mean total elapsed time' ] =  met
-        else:
-            # first instance: no mean time computed yet
-            self.summary[ 'mean total elapsed time' ] =  '*'
-
-        self.summary[ 'logfiles' ] = self.logfiles.get_paths()
+        met = self.__class__.mean_total_elapsed_time
+        if not met:
+            met = "*"
+        self.summary[ 'mean total elapsed time' ] =  met
 
         return self.summary
 
@@ -1198,7 +1184,7 @@ class task( object ):
         return tag
 
     def next_tag( self ):
-        # derived classes override this to compute next valid cycle time.
+        # derived classes override this to compute next valid cycle point.
         return None
 
     def poll( self ):

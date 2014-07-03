@@ -43,10 +43,14 @@ class job_submit(object):
 
     LOCAL_COMMAND_TEMPLATE = ( "(%(command)s)" )
 
+    # For remote jobs copy the job file to a temporary file and
+    # then rename it, in case of a common filesystem (else this 
+    # is trouble: 'ssh HOST "cat > $DIR/foo.sh" < $DIR/foo.sh').
     REMOTE_COMMAND_TEMPLATE = ( " '"
             + pr_scripting_sl + "; "
             + " mkdir -p $(dirname %(jobfile_path)s)"
-            + " && cat >%(jobfile_path)s"
+            + " && cat >%(jobfile_path)s.tmp"
+            + " && mv %(jobfile_path)s.tmp %(jobfile_path)s"
             + " && chmod +x %(jobfile_path)s"
             + " && rm -f %(jobfile_path)s.status"
             + " && (%(command)s)"

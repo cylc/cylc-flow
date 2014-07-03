@@ -50,12 +50,12 @@ from broadcast import broadcast
 
 class pool(object):
 
-    def __init__( self, suite, db, stop_tag, config, pyro, log, run_mode ):
+    def __init__( self, suite, db, stop_point, config, pyro, log, run_mode ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
-        self.stop_tag = stop_tag
+        self.stop_point = stop_point
         self.reconfiguring = False
         self.db = db
 
@@ -116,10 +116,10 @@ class pool(object):
             return False
 
         # check cycle stop or hold conditions
-        if self.stop_tag and itask.c_time > self.stop_tag:
-            itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_tag) )
+        if self.stop_point and itask.c_time > self.stop_point:
+          #  itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_point) )
             itask.reset_state_held()
-            return
+           # return
 
         # TODO ISO -restore suite hold functionality
         #if self.hold_time and itask.c_time > self.hold_time:
@@ -127,7 +127,7 @@ class pool(object):
         #    itask.reset_state_held()
         #    return
 
-        # hold tasks with future triggers beyond the final cycle time
+        # hold tasks with future triggers beyond the final cycle point
         if self.task_has_future_trigger_overrun( itask ):
             itask.log( "WARNING", "not adding (future trigger beyond stop cycle)" )
             self.held_future_tasks.append( itask.id )
@@ -148,6 +148,10 @@ class pool(object):
         # compute runahead base: the oldest task not succeeded or failed
         # (excludes finished and includes runahead-limited tasks so a
         # low limit cannot stall the suite).
+
+        if not self.runahead_pool:
+            return
+
         runahead_base = None
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('failed', 'succeeded'):
@@ -206,7 +210,6 @@ class pool(object):
             msg += " (" + reason + ")"
         itask.log( 'DEBUG', msg )
         del itask
-
 
 
     def get_tasks( self, all=False ):
@@ -313,16 +316,11 @@ class pool(object):
 
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
-        if not self.stop_tag:
+        if not self.stop_point:
             return False
         for pct in set(itask.prerequisites.get_target_tags()):
-            try:
-                if pct > self.stop_tag:
-                    return True
-            except:
-                raise
-                # pct invalid cycle time => is an asynch trigger
-                pass
+            if pct > self.stop_point:
+                return True
         return False
 
     def set_runahead( self, interval=None ):
@@ -362,13 +360,13 @@ class pool(object):
         return maxc
 
 
-    def reconfigure( self, config, stop_tag ):
+    def reconfigure( self, config, stop_point ):
 
         self.reconfiguring = True
 
         self.runahead_limit = config.get_runahead_limit()
         self.config = config
-        self.stop_tag = stop_tag  # TODO: Any point in using set_stop_tag?
+        self.stop_point = stop_point  # TODO: Any point in using set_stop_point?
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id] = task
@@ -460,18 +458,17 @@ class pool(object):
 
         self.reconfiguring = found
 
-    def set_stop_tag( self, stop_tag ):
+    def set_stop_point( self, stop_point ):
         """Set the global suite stop point."""
-        self.stop_tag = stop_tag
+        self.stop_point = stop_point
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
-            if (self.stop_tag and itask.c_time > self.stop_tag and
+            if (self.stop_point and itask.c_time > self.stop_point and
                     itask.state.is_currently('waiting', 'queued')):
                 itask.log( 'WARNING',
                            "not running (beyond suite stop cycle) " +
-                           str(self.stop_tag) )
+                           str(self.stop_point) )
                 itask.reset_state_held()
-                return
 
 
     def no_active_tasks( self ):
@@ -527,9 +524,9 @@ class pool(object):
         # their stop time).
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
-                #if self.stop_tag and itask.c_time > self.stop_tag:
+                #if self.stop_point and itask.c_time > self.stop_point:
                 #    # this task has passed the suite stop time
-                #    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_tag) )
+                #    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_point) )
                 #elif itask.stop_c_time and itask.c_time > itask.stop_c_time:
                 #    # this task has passed its own stop time
                 #    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_c_time) )
@@ -538,9 +535,9 @@ class pool(object):
                 itask.reset_state_waiting()
 
         # TODO - write a separate method for cancelling a stop time:
-        #if self.stop_tag:
+        #if self.stop_point:
         #    self.log.warning( "UNSTOP: unsetting suite stop time")
-        #    self.stop_tag = None
+        #    self.stop_point = None
 
 
     def get_failed_tasks( self ):
@@ -571,11 +568,6 @@ class pool(object):
             # try to satisfy itask if not already satisfied.
             if itask.not_fully_satisfied():
                 self.broker.negotiate( itask )
-
-        # TODO - RESTORE THE FOLLOWING FOR repeating_async TASKS:
-        #for itask in self.get_tasks():
-        #    if not itask.not_fully_satisfied():
-        #        itask.check_requisites()
 
 
     def process_queued_task_messages( self ):
@@ -657,7 +649,6 @@ class pool(object):
         """Remove tasks no longer needed to satisfy others' prerequisites."""
         self.remove_suiciding_tasks()
         self.remove_spent_cycling_tasks()
-        self.remove_spent_async_tasks()
 
 
     def remove_suiciding_tasks( self ):
@@ -673,6 +664,21 @@ class pool(object):
                     self.remove( itask, 'suicide' )
 
 
+    def _get_earliest_unsatisfied_cycle_point( self ):
+        cutoff = None
+        for itask in self.get_tasks(all=True):
+            # this has to consider tasks in the runahead pool too, e.g.
+            # ones that have just spawned and not been released yet.
+            if itask.state.is_currently('waiting', 'held' ):
+                if cutoff is None or itask.c_time < cutoff:
+                    cutoff = itask.c_time
+            elif not itask.has_spawned():
+                # (e.g. 'ready')
+                nxt = itask.next_tag()
+                if nxt is not None and ( cutoff is None or nxt < cutoff ):
+                    cutoff = nxt
+        return cutoff
+
     def remove_spent_cycling_tasks( self ):
         """
         Remove cycling tasks no longer needed to satisfy others' prerequisites.
@@ -680,58 +686,26 @@ class pool(object):
           graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
         implies foo's cutoff is T+12: if foo has succeeded and spawned,
         it can be removed if no unsatisfied task proxy exists with
-        T<=T+12. Note this only uses information about the cycle time of
+        T<=T+12. Note this only uses information about the cycle point of
         downstream dependents - if we used specific IDs instead spent
         tasks could be identified and removed even earlier).
         """
 
-        # first find the cycle time of the earliest unsatisfied task
-        cutoff = None
-        for itask in self.get_tasks(all=True):
-            # this has to consider tasks in the runahead pool too, e.g.
-            # ones that have just spawned and not been released yet.
-            if not itask.is_cycling:
-                continue
-            if itask.state.is_currently('waiting', 'held' ):
-                if not cutoff or itask.c_time < cutoff:
-                    cutoff = itask.c_time
-            elif not itask.has_spawned():
-                # (e.g. 'ready')
-                nxt = itask.next_tag()
-                if nxt and ( not cutoff or nxt < cutoff ):
-                    cutoff = nxt
+        # first find the cycle point of the earliest unsatisfied task
+        cutoff = self._get_earliest_unsatisfied_cycle_point()
+
+        if not cutoff:
+            return
 
         # now check each succeeded task against the cutoff
         spent = []
         for itask in self.get_tasks():
             if not itask.state.is_currently('succeeded') or \
-                    not itask.is_cycling or \
-                    not itask.state.has_spawned():
+                    not itask.state.has_spawned() or \
+                    itask.cleanup_cutoff is None:
                 continue
-            if (cutoff and itask.cleanup_cutoff is not None and
-                    cutoff > itask.cleanup_cutoff):
+            if cutoff > itask.cleanup_cutoff:
                 spent.append(itask)
-        for itask in spent:
-            self.remove( itask )
-
-
-    def remove_spent_async_tasks( self ):
-        cutoff = 0
-        for itask in self.get_tasks():
-            if itask.is_cycling:
-                continue
-            if itask.is_daemon:
-                # avoid daemon tasks
-                continue
-            if not itask.done():
-                if itask.tag > cutoff:
-                    cutoff = itask.tag
-        spent = []
-        for itask in self.get_tasks():
-            if itask.is_cycling:
-                continue
-            if itask.done() and itask.tag < cutoff:
-                spent.append( itask )
         for itask in spent:
             self.remove( itask )
 
@@ -797,42 +771,32 @@ class pool(object):
         stop = True
 
         i_cyc = False
-        i_asy = False
         i_fut = False
         for itask in self.get_tasks( all=True ):
-            if itask.is_cycling:
-                i_cyc = True
-                # don't stop if a cycling task has not passed the stop cycle
-                if self.stop_tag:
-                    if itask.c_time <= self.stop_tag:
-                        if itask.state.is_currently('succeeded') and itask.has_spawned():
-                            # ignore spawned succeeded tasks - their successors matter
-                            pass
-                        elif itask.id in self.held_future_tasks:
-                            # unless held because a future trigger reaches beyond the stop cycle
-                            i_fut = True
-                            pass
-                        else:
-                            stop = False
-                            break
-                else:
-                    # don't stop if there are cycling tasks and no stop cycle set
-                    stop = False
-                    break
+            i_cyc = True
+            # don't stop if a cycling task has not passed the stop cycle
+            if self.stop_point:
+                if itask.c_time <= self.stop_point:
+                    if itask.state.is_currently('succeeded') and itask.has_spawned():
+                        # ignore spawned succeeded tasks - their successors matter
+                        pass
+                    elif itask.id in self.held_future_tasks:
+                        # unless held because a future trigger reaches beyond the stop cycle
+                        i_fut = True
+                        pass
+                    else:
+                        stop = False
+                        break
             else:
-                i_asy = True
-                # don't stop if an async task has not succeeded yet
-                if not itask.state.is_currently('succeeded'):
-                    stop = False
-                    break
+                # don't stop if there are cycling tasks and no stop cycle set
+                stop = False
+                break
         if stop:
             msg = "Stopping: "
             if i_fut:
-                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_tag)
+                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_point)
             if i_cyc:
-                msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_tag)
-            if i_asy:
-                msg += "\n  + all non-cycling tasks have succeeded"
+                msg += "\n  + all tasks have spawned past the final cycle " + str(self.stop_point)
             print msg
             self.log.info( msg )
 

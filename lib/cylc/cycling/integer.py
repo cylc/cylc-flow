@@ -146,7 +146,7 @@ class IntegerSequence( object ):
 
     @classmethod
     def get_async_expr( cls, start_point=0 ):
-        """Return an expression for a one-off point at the initial cycle time."""
+        """Return an expression for a one-off point at the initial cycle point."""
         return 'R1/c' + str(start_point) + '/P1'
 
     def __init__( self, dep_section, p_context_start, p_context_stop=None ):
@@ -360,7 +360,7 @@ class IntegerSequence( object ):
 
     def get_first_point( self, point ):
         """Return the first point >= to point, or None if out of bounds."""
-        # Used to find the first point >= suite initial cycle time.
+        # Used to find the first point >= suite initial cycle point.
         if point <= self.p_start:
             point = self._get_point_in_bounds( self.p_start )
         elif self.is_on_sequence( point ):

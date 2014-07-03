@@ -27,9 +27,9 @@ class dumper( object ):
 
     BASE_NAME = 'state'
 
-    def __init__( self, suite, run_mode='live', ict=None, stop_tag=None ):
+    def __init__( self, suite, run_mode='live', ict=None, stop_point=None ):
         self.run_mode = run_mode
-        self.set_cts(ict, stop_tag)
+        self.set_cts(ict, stop_point)
         self.dir_name = sitecfg.get_derived_host_item( suite,
                                                     'suite state directory' )
         self.file_name = os.path.join( self.dir_name, self.BASE_NAME )
@@ -42,17 +42,17 @@ class dumper( object ):
         self.log = logging.getLogger('main')
 
     def set_cts( self, ict, fct ):
-        self.ict = str(ict)
-        self.stop_tag = str(fct)
+        self.ict_string = str(ict)
+        self.stop_string = str(fct)
 
         self.cts_str = ""
-        if self.ict:
-            self.cts_str += 'initial cycle : ' + self.ict + '\n'
+        if self.ict_string:
+            self.cts_str += 'initial cycle : ' + self.ict_string + '\n'
         else:
             self.cts_str += 'initial cycle : (none)\n'
 
-        if self.stop_tag:
-            self.cts_str += 'final cycle : ' + self.stop_tag + '\n'
+        if self.stop_string:
+            self.cts_str += 'final cycle : ' + self.stop_string + '\n'
         else:
             self.cts_str += 'final cycle : (none)\n'
 
@@ -110,8 +110,9 @@ class dumper( object ):
                 n_attempt += 1
                 try:
                     handle.close()
-                except:
-                    pass
+                except Exception as exc:
+                    self.log.warning('State file handle closing failed: %s' %
+                                     exc)
                 time.sleep(0.2)
             else:
                 break

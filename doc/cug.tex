@@ -1732,7 +1732,7 @@ to the previous example:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        # cycle times of 00 and 12 UTC every day:
+        # Repeat at 00 and 12 UTC every day:
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
@@ -1751,7 +1751,7 @@ how this connects the cycling graph sections together.
 
 Note that the \lstinline=[[[T00,T12]]]= (at 00 and 12 hours) syntax could be
 written as \lstinline=[[[PT12H]]]= (repeat every 12 hours, starting at the
-initial cycle time) provided that the initial cycle time was always at 00 and
+initial cycle point) provided that the initial cycle point was always at 00 and
 12 hours.
 
 Experiment with this suite to see how inter-cycle-point triggers work.
@@ -1800,8 +1800,8 @@ For example, in \lstinline=tut.cycling.three=:
 [cylc]
     cycle point time zone = +13
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
@@ -2390,8 +2390,8 @@ vary depending on the particular cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 20200401
-    final cycle time = 20200405
+    initial cycle point = 20200401
+    final cycle point = 20200405
     [[dependencies]]
         [[[T00,T06,T12,T18]]] # validity (hours)
             graph = """
@@ -2415,8 +2415,8 @@ title = "Dependency Example 1"
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20200401
-    final cycle time = 20200405
+    initial cycle point = 20200401
+    final cycle point = 20200405
     [[dependencies]]
         [[[T00,T06,T12,T18]]] # validity (hours)
             graph = """
@@ -2426,8 +2426,8 @@ A[-PT6H] => A  # Model A restart trigger
         [[[T06,T18]]] # hours
             graph = "C => X"
 [visualization]
-    initial cycle time = 20200401
-    final cycle time = 20200401T06
+    initial cycle point = 20200401
+    final cycle point = 20200401T06
     [[node attributes]]
         X = "color=red"
 \end{lstlisting}
@@ -2706,7 +2706,9 @@ Date/time cycling information is made up of a starting {\em date-time}, an
 {\em interval}, and an optional {\em limit}.
 
 The time is assumed to be in the local time zone unless you set
-\lstinline=[cylc]cycle point time zone= or \lstinline=[cylc]UTC mode=.
+\lstinline=[cylc]cycle point time zone= or \lstinline=[cylc]UTC mode=. The 
+calendar is assumed to be the proleptic Gregorian calendar unless you set
+\lstinline=[scheduling]cycling mode=.
 
 The syntax for representations is based on the ISO 8601 date-time standard.
 This includes the representation of {\em date-time}, {\em interval}. What we
@@ -2834,8 +2836,8 @@ using the \lstinline=R1= notation (e.g. as in Section
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
@@ -2859,8 +2861,8 @@ Let's suppose that we add the following section to the suite example above:
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep => foo"
@@ -2876,7 +2878,7 @@ We'll also say that there should be a starting dependence between
 a single \lstinline=prep= task, at a single cycle.
 
 We can write this using a special case of the \lstinline=task[-interval]= syntax -
-if the interval is null, this implies the task at the initial cycle time.
+if the interval is null, this implies the task at the initial cycle point.
 
 For example, we can write our suite like this:
 
@@ -2887,22 +2889,22 @@ For example, we can write our suite like this:
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20130808T00
-    final cycle time = 20130812T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
         [[[R1]]]
             graph = "prep"
         [[[R1/T00]]]
-            graph = "prep[] => foo"   # prep[] implies prep at the initial cycle time
+            graph = "prep[^] => foo"   # ^ implies prep at the initial cycle point
         [[[R1/T12]]]
-            graph = "prep[] => baz"   # prep[], as above
+            graph = "prep[^] => baz"   # ^ is initial cycle point, as above
         [[[T00]]]
             graph = "foo[-P1D] => foo => bar"
         [[[T12]]]
             graph = "baz[-P1D] => baz => qux"
 [visualization]
-    initial cycle time = 20130808T00
-    final cycle time = 20130810T00
+    initial cycle point = 20130808T00
+    final cycle point = 20130810T00
     [[node attributes]]
         foo = "color=red"
         bar = "color=orange"
@@ -2923,69 +2925,6 @@ For example, we can write our suite like this:
 
 This neatly expresses what we want - a task running at the initial cycle point
 that has one-off dependencies with other task sets at different cycles.
-
-\paragraph{Repeating Asynchronous Tasks}
-
-Repeating asynchronous tasks can be used, for example, to process
-satellite data that arrives at irregular time intervals. Each new
-dataset must have a unique ``asynchronous ID''. If it doesn't naturally
-have such an ID a string representation of the data arrival time could
-be used.  The graph VALIDITY section heading must contain ``ASYNCID:''
-followed by a regular expression that matches the actual IDs.
-Additionally, one task in the suite must be a designated ``daemon''
-that waits indefinitely on incoming data and reports each new dataset
-(and its ID) back to the suite by means of a special output message.
-When the daemon task proxy receives a matching message it dynamically
-registers a new output (containing the ID) that downstream tasks can
-then trigger off. The downstream tasks likewise have prerequisites
-containing the ID pattern (because they trigger off the aforementioned
-outputs) and when these get satisfied during dependency negotiation the
-actual ID is substituted into their own registered outputs.
-Finally, each asynchronous repeating task proxy passes the ID to its
-task execution environment as
-\lstinline=$ASYNCID= to allow identification of the correct dataset by
-task scripts.
-In this way a tree of tasks becomes dedicated to processing each
-new dataset, and multiple datasets can be processed in parallel if
-they become available in quick succession. As Figure~\ref{fig-test3}
-shows, a repeating asynchronous suite currently plots just like a
-one-off asynchronous suite. But at run time the daemon task stays put,
-while the others continually spawn successors to wait for new datasets
-to come in. The {\em asynchronous.repeating} example suite demonstrates
-how to do this in a real suite. {\em Note that other trigger types
-(success, failure, start, suicide, and conditional) cannot currently be
-used in a repeating asynchronous graph section.}
-\begin{figure}
-\begin{minipage}[b]{0.5\textwidth}
-\lstset{language=suiterc}
-\begin{lstlisting}
-title = a suite of repeating asynchronous tasks
-# for processing real time satellite datasets
-[scheduling]
-    [[dependencies]]
-        [[[ASYNCID:satX-\d{6}]]]
-            # match datasets satX-1424433 (e.g.)
-            graph = "watcher:a => foo:a & bar:a => baz"
-            daemon = watcher
-[runtime]
-    [[watcher]]
-        [[[outputs]]]
-            a = "New dataset <ASYNCID> ready for processing"
-    [[foo,bar]]
-        [[[outputs]]]
-            a = "Products generated from dataset <ASYNCID>"
-\end{lstlisting}
-\lstset{language=transcript}
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.5\textwidth}
-    \begin{center}
-        \includegraphics[width=0.45\textwidth]{graphics/png/orig/test6.png}
-    \end{center}
-\end{minipage}
-\caption[Repeating Asynchronous Tasks]{\scriptsize Repeating Asynchronous Tasks.}
-\label{fig-test3}
-\end{figure}
 
 \subsubsection{Trigger Types}
 \label{TriggerTypes}
@@ -3364,7 +3303,7 @@ Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
         [[[R1]]]
             graph = "prep"
         [[[R1/T00,R1/T12]]]
-            graph = "prep[] => foo"
+            graph = "prep[^] => foo"
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
@@ -3376,11 +3315,12 @@ Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
-        [[[0,12]]]
-            graph = "cfoo | foo[T-12] => foo => bar"
+        [[[T00,T12]]]
+            graph = "cfoo | foo[-PT12H] => foo => bar"
 \end{lstlisting}
 
 \end{myitemize}
+\lstset{language=transcript}
 
 \lstinline=R1=, or \lstinline=R1/date-time= tasks are the recommended way to
 specify unusual start up conditions. They allow you to specify a clean
@@ -3396,6 +3336,47 @@ In effect, the \lstinline=R1= task masquerades as the previous-cycle-point trigg
 of its associated cycling task. At suite start-up initial tasks will
 trigger the first cycling tasks, and thereafter the inter-cycle-point trigger
 will take effect.
+
+If a task has a dependency on another task in a different cycle point, the
+dependency can be written using the \lstinline=[offset]= syntax such as
+\lstinline=[-PT12H]= in \lstinline@foo[-PT12H] => foo@. This means that
+\lstinline=foo= at the current cycle point depends on a previous instance of
+ \lstinline=foo= at 12 hours before the current cycle point. Unlike the
+ cycling section headings (e.g. \lstinline=[[[T00,T12]]]=), dependencies
+ assume that relative times are relative to the current cycle point, not the
+ initial cycle point.
+ 
+However, it can be useful to have specific dependencies on tasks at or near
+the initial cycle point. You can switch the context of the offset to be
+the initial cycle point by using the caret symbol: \lstinline=^=.
+
+For example, you can write \lstinline=foo[^]= to mean foo at the initial
+cycle point, and \lstinline=foo[^+PT6H]= to mean foo 6 hours after the initial
+cycle point. Usually, this kind of dependency will only apply in a limited
+number of cycle points near the start of the suite, so you may want to write
+it in \lstinline=R1=-based cycling sections. Here's the example inter-cycle
+\lstinline=R1= suite from above again.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[R1]]]
+            graph = "prep"
+        [[[R1/T00,R1/T12]]]
+            graph = "prep[^] => foo"
+        [[[T00,T12]]]
+            graph = "foo[-PT12H] => foo => bar"
+\end{lstlisting}
+\lstset{language=transcript}
+
+You can see there is a dependence on the initial \lstinline=R1= task
+\lstinline=prep= for \lstinline=foo= at the first \lstinline=T00= cycle point,
+and at the first \lstinline=T12= cycle point. Thereafter, \lstinline=foo= just
+depends on its previous (12 hours ago) instance.
+
+This is quite different to the non-preferred \lstinline=cold-start tasks=
+way of working.
 
 When using \lstinline=cold-start tasks=, unlike for asynchronous and start-up
 initial tasks, however, the cold-start ``OR'' construct means that cold-start
@@ -4211,8 +4192,8 @@ N_MEMBERS can be set similarly, but if not they have default values."""
 {# input of FIRST_TASK is required - no default #}
 
 [scheduling]
-    initial cycle time = 20100808T00
-    final cycle time   = 20100816T00
+    initial cycle point = 20100808T00
+    final cycle point   = 20100816T00
     [[dependencies]]
         [[[0]]]
             graph = """{{ FIRST_TASK }} => ens
@@ -4285,10 +4266,6 @@ Several special variables are used as placeholders in cylc suite definitions:
         message strings under the runtime outputs config section, by the
         actual offset cycle of the task. The syntax is the same as
         for cycle offsets in the suite graph.
-
-    \item \lstinline=<ASYNCID>=\newline
-        This is replaced with the actual ``asynchronous ID'' (e.g.
-        satellite pass ID) for repeating asynchronous tasks.
 \end{myitemize}
 
 To use proper variables (c.f.\ programming languages) in suite
@@ -5442,8 +5419,8 @@ suite stdout.
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 20100808T00
-    final cycle time = 20100810T00
+    initial cycle point = 20100808T00
+    final cycle point = 20100810T00
     [[dependencies]]
         [[[0]]]
             graph = "foo => bar"
@@ -5555,7 +5532,7 @@ cylc run foo 20120808T06Z
 or,
 \begin{lstlisting}
 [scheduling]
-    initial cycle time = 20100808T06Z
+    initial cycle point = 20100808T06Z
 \end{lstlisting}
 An initial cycle given on the command line will override one in the
 suite.rc file.

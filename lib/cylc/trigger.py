@@ -36,7 +36,7 @@ Note on trigger time offsets:
     foo[T-n] => bar   # bar triggers off "foo succeeded at T-n"
 (a) foo[T-n]:x => bar # bar triggers off "output x of foo evaluated at T-n"
 where output x of foo may also have an offset:
-(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_TIME[+n]>"
+(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_POINT[+n]>"
 
 (a) is an "evaluation offset"
 (b) is an "intrinsic offset"
@@ -50,16 +50,10 @@ where output x of foo may also have an offset:
         self.cycle_point = None
         self.type = None
         self.cycling = False
-        self.async_repeating = False
-        self.asyncid_pattern = None
         self.suicide = False
 
     def set_suicide( self, suicide ):
         self.suicide = suicide
-
-    def set_async_repeating( self, pattern ):
-        self.async_repeating = True
-        self.asyncid_pattern = pattern
 
     def set_cycling( self ):
         self.cycling = True
@@ -91,25 +85,21 @@ where output x of foo may also have an offset:
         self.evaluation_offset = get_interval( offset )
 
     def get( self, ctime ):
-        if self.async_repeating:
-            # repeating async
-            preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
+        if self.msg:
+            # explicit internal output ...
+            preq = self.msg
+            if self.intrinsic_offset:
+                ctime += self.intrinsic_offset
+            if self.evaluation_offset:
+                ctime -= self.evaluation_offset
+            if self.cycle_point:
+                ctime = self.cycle_point
+            preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
         else:
-            if self.msg:
-                # explicit internal output ...
-                preq = self.msg
-                if self.intrinsic_offset:
-                    ctime += self.intrinsic_offset
-                if self.evaluation_offset:
-                    ctime -= self.evaluation_offset
-                if self.cycle_point:
-                    ctime = self.cycle_point
-                preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
-            else:
-                # implicit output
-                if self.evaluation_offset:
-                    ctime -= self.evaluation_offset
-                if self.cycle_point:
-                    ctime = self.cycle_point
-                preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
+            # implicit output
+            if self.evaluation_offset:
+                ctime -= self.evaluation_offset
+            if self.cycle_point:
+                ctime = self.cycle_point
+            preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
         return preq

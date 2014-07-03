@@ -15,18 +15,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test asynchronous tasks for satellite processing.
+# Test validation missing include-file.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
-skip 2 "async satellite tasks not supported (yet?)" && exit 0
+echo '%include foo.rc' >suite.rc
+echo '%include bar.rc' >foo.rc
+run_fail "$TEST_NAME_BASE" cylc validate suite.rc
+cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
+ParseError: File not found: $PWD/bar.rc
+   via $PWD/foo.rc
+   via $PWD/suite.rc
+__ERR__
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE basic
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+exit

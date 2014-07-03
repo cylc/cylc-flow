@@ -1,0 +1,30 @@
+# Test restart with an inter-cycle trigger and no initial cycle time in
+# the suite definition. See github #957.
+
+# INSTRUCTIONS:
+# 1) first run to set up the restart:
+#      cylc run --until=2010080800 SUITE 2010080800
+# 2) the restart as reference test:
+#      cylc restart --debug --reference-test SUITE
+
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = 1.0
+
+[scheduling]
+    # DO NOT PUT AN INITIAL CYCLE TIME HERE,
+    # use the command line as described above
+    final cycle time = 2010081000
+    [[dependencies]]
+        [[[0]]]
+            graph = """
+                foo[T-24] => bar
+                # foo <- should not be implicit (deprecated feature)
+            """
+[runtime]
+    [[root]]
+        command scripting = /bin/true
+    [[foo]]
+    [[bar]]
+

@@ -1,15 +1,15 @@
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 2014-01-01
-    final cycle time = 2014-01-04
+    initial cycle point = 2014-01-01
+    final cycle point = 2014-01-04
     [[dependencies]]
         [[[ R1 ]]]
             graph = "cold_foo"
         [[[ R1/T00 ]]]
-            graph = "cold_foo[] => foo_midnight"
+            graph = "cold_foo[^] => foo_midnight"
         [[[ R1/T06 ]]]
-            graph = "cold_foo[] => foo_dawn"
+            graph = "cold_foo[^] => foo_dawn"
         [[[ T00 ]]]
             graph = "foo_midnight[-P1D] => foo_midnight"
         [[[ T06 ]]]

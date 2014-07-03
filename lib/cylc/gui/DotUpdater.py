@@ -130,10 +130,10 @@ class DotUpdater(threading.Thread):
         try:
             int( self.ctimes[0])
         except:
-            # iso cycle times
+            # iso cycle points
             self.ctimes.sort()
         else:
-            # integer cycle times
+            # integer cycle points
             self.ctimes.sort(key=int)
 
         if self.should_group_families:

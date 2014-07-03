@@ -15,11 +15,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test cylc get-config
+# Test validation of example suites
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check-examples
+
+TEST_NAME=$TEST_NAME_BASE
 
 SDEFS=$(find $CYLC_DIR/examples -name suite.rc)
 set_test_number $(echo "$SDEFS" | wc -l)
@@ -27,17 +28,14 @@ set_test_number $(echo "$SDEFS" | wc -l)
 for SDEF in $SDEFS; do
     # capture validation stderr:
     SDEF_NAME=$(basename $(dirname $SDEF))
-    if [[ "$SDEF_NAME" == satellite ]]; then
-        skip 1 "no async satellite support (yet?)"
+    RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
+    TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
+    if [[ -n $RES ]]; then
+        fail $TEST_NAME
+        echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
+        echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
     else
-        RES=$( cylc val --no-write --debug $SDEF 2>&1 >/dev/null )
-        TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
-        if [[ -n $RES ]]; then
-            fail $TEST_NAME
-            echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
-            echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
-        else
-            ok $TEST_NAME
-        fi
+        ok $TEST_NAME
     fi
 done
+

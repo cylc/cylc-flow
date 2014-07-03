@@ -13,14 +13,14 @@ class LogAnalyserError( Exception ):
 class LogSpec( object ):
     """Get important information from an existing reference run log
     file, in order to do the same run for a reference test. Currently
-    just gets the start and stop cycle times."""
+    just gets the start and stop cycle points."""
 
     def __init__( self, log ):
         h = open( log, 'rb' )
         self.lines = h.readlines()
         h.close()
 
-    def get_start_tag( self ):
+    def get_start_string( self ):
         found = False
         for line in self.lines:
             m = re.search( 'Start tag: (.*)$',line)
@@ -35,7 +35,7 @@ class LogSpec( object ):
         else:
             raise LogAnalyserError( "ERROR: logged start tag not found" )
 
-    def get_stop_tag( self ):
+    def get_stop_string( self ):
         found = False
         for line in self.lines:
             m = re.search( 'Stop tag: (.*)$',line)

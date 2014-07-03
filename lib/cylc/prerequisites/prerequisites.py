@@ -50,8 +50,6 @@ class prerequisites(object):
 
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prerequisites?
-        # DELEGATE TO CONTAINED CLASSES (TODO - CHECK EFFICIENCY)
-        # (asynchronous tasks have different satisfy_me() requirements)
         for reqs in self.container:
         ##    for label in reqs.satisfied:
         ##        for msg in outputs:
@@ -92,7 +90,7 @@ class prerequisites(object):
                 reqs.satisfied[ label ] = False
 
     def get_target_tags( self ):
-        """Return a list of cycle times target by each prerequisite,
+        """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
         tags = []
         for reqs in self.container:

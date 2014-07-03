@@ -184,7 +184,8 @@ class edge( object):
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, intag, start_tag, not_first_cycle, raw, startup_only ):
+    def get_right( self, intag, start_point, not_first_cycle, raw,
+                   startup_only ):
         tag = str(intag)
         if self.right == None:
             return None
@@ -198,8 +199,8 @@ class edge( object):
 
         return TaskID.get( self.right, tag )
 
-    def get_left( self, intag, start_tag, not_first_cycle, raw, startup_only,
-                  base_interval ):
+    def get_left( self, intag, start_point, not_first_cycle, raw,
+                  startup_only, base_interval ):
 
         first_cycle = not not_first_cycle
 
@@ -212,7 +213,7 @@ class edge( object):
 
         left_graphnode = graphnode(left, base_interval=base_interval)
         if left_graphnode.offset_is_from_ict:
-            tag = start_tag - left_graphnode.offset
+            tag = start_point - left_graphnode.offset
         elif left_graphnode.offset:
             tag = intag - left_graphnode.offset
         else:

@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
 		<li><a href="#">TOP</a></li>
+		<li><a href="#5.4.14">5.4.14</a></li>
 		<li><a href="#5.4.13">5.4.13</a></li>
 		<li><a href="#5.4.12">5.4.12</a></li>
 		<li><a href="#5.4.11">5.4.11</a></li>
@@ -46,6 +47,29 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="5.4.14"/>
+    <h2>5.4.14</h2>
+
+    <ul>
+        <li> much faster restart for large suites
+        <li> bug fix in Daily cycling - for non-zero hour and step
+        greater than one day, the wrong sequence was generated
+        <li> bug fix: if no initial cycle time was specified in the
+        suite.rc file of a suite with inter-cycle triggers, and a
+        cold-start OR construct is not used with the inter-cycle
+        triggers, restarting the suite would wipe out the inter-cycle
+        triggers
+        <li> bug fix: task job scripts could infrequently be corrupted 
+        if suite and task host shared a common filesystem
+        <li> bug fix: manually retriggering a task now resets its
+        outputs to not completed, so that a dependent downstream task,
+        if reset to 'waiting', will wait on it again 
+        <li> maintain Jinja2 validity during inlined edit sessions (when
+        include-files are temporarily inlined in the live suite
+        definition)
+    </ul>
+
+	
 <a name="5.4.13"/>
 		<h2>5.4.13</h2>
 

@@ -23,7 +23,6 @@
 # (detection is currently disabled).
 
 import sys, re, os
-from prerequisites.prerequisites_loose import loose_prerequisites
 from prerequisites.prerequisites import prerequisites
 from prerequisites.plain_prerequisites import plain_prerequisites
 from prerequisites.conditionals import conditional_prerequisites
@@ -67,7 +66,6 @@ class taskdef(object):
         self.intercycle_offset = get_interval_cls().get_null()
         self.sequential = False
         self.cycling = False
-        self.asyncid_pattern = None
         self.modifiers = []
         self.is_coldstart = False
         self.suite_polling_cfg = {}
@@ -80,7 +78,6 @@ class taskdef(object):
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = {}
         self.outputs = [] # list of explicit internal outputs; change to dict if need to vary per cycle.
-        self.loose_prerequisites = [] # asynchronous tasks
 
         self.name = name
         self.type = 'cycling'
@@ -176,13 +173,12 @@ class taskdef(object):
             #     self.triggers[sequence] = [list of triggers for this
             #     sequence]
             # The list of triggers associated with sequenceX will only be
-            # used by a particular task if the task's cycle time is a
-            # valid member of sequenceX's sequence of cycle times.
+            # used by a particular task if the task's cycle point is a
+            # valid member of sequenceX's sequence of cycle points.
 
             # 1) non-conditional triggers
             pp = plain_prerequisites( sself.id, self.ict )
             sp = plain_prerequisites( sself.id, self.ict )
-            lp = loose_prerequisites( sself.id, self.ict )
 
             if self.sequential:
                 # For tasks declared 'sequential' we automatically add a
@@ -225,21 +221,18 @@ class taskdef(object):
                     if trig.cycling and not sequence.is_valid( sself.tag ):
                         # This trigger is not used in current cycle
                         continue
-                    if trig.async_repeating:
-                        lp.add( trig.get( tag ))
-                    elif trig.evaluation_offset is not None:
-                        if self.ict is not None and ( tag - trig.evaluation_offset ) >= self.ict:
+                    if self.ict is None or \
+                            trig.evaluation_offset is None or \
+                                ( tag - trig.evaluation_offset ) >= self.ict:
+                            # i.c.t. can be None after a restart, if one
+                            # is not specified in the suite definition.
+
                             if trig.suicide:
                                 sp.add( trig.get( tag ))
                             else:
                                 pp.add( trig.get( tag ))
-                    elif trig.evaluation_offset is None:
-                        if trig.suicide:
-                            sp.add( trig.get( tag ))
-                        else:
-                            pp.add( trig.get( tag ))
+
             sself.prerequisites.add_requisites( pp )
-            sself.prerequisites.add_requisites( lp )
             sself.suicide_prerequisites.add_requisites( sp )
 
             # 2) conditional triggers
@@ -268,7 +261,9 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_tag, initial_state, stop_c_time=None, startup=False, validate=False, submit_num=0, exists=False ):
+        def tclass_init( sself, start_point, initial_state, stop_c_time=None,
+                         startup=False, validate=False, submit_num=0,
+                         exists=False ):
 
             sself.sequences = self.sequences
             sself.implicit_sequences = self.implicit_sequences
@@ -278,10 +273,10 @@ class taskdef(object):
             sself.intercycle_offset = self.intercycle_offset
 
             if self.cycling and startup:
-                # adjust up to the first on-sequence cycle time
+                # adjust up to the first on-sequence cycle point
                 adjusted = []
                 for seq in sself.sequences:
-                    adj = seq.get_first_point( start_tag )
+                    adj = seq.get_first_point( start_point )
                     if adj:
                         # may be None if out of sequence bounds
                         adjusted.append( adj )
@@ -298,7 +293,7 @@ class taskdef(object):
                     # check for a tag of None)
                     return
             else:
-                sself.tag = start_tag
+                sself.tag = start_point
                 if sself.intercycle_offset is None:
                     sself.cleanup_cutoff = None
                 else:
@@ -306,7 +301,6 @@ class taskdef(object):
                 sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.c_time = sself.tag
-            sself.asyncid_pattern = self.asyncid_pattern
 
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
@@ -329,7 +323,7 @@ class taskdef(object):
             sself.outputs.register()
 
             if stop_c_time:
-                # cycling tasks with a final cycle time set
+                # cycling tasks with a final cycle point set
                 super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
             else:
                 # TODO - TEMPORARY HACK FOR ASYNC

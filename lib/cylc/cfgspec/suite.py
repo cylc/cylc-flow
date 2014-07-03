@@ -37,10 +37,10 @@ interval_parser = TimeIntervalParser()
 
 
 def _coerce_cycletime( value, keys, args ):
-    """Coerce value to a cycle time."""
+    """Coerce value to a cycle point."""
     value = _strip_and_unquote( keys, value )
     if re.match(r"\d+$", value):
-        # Old cycle time format, or integer format.
+        # Old date-time cycle point format, or integer format.
         return value
     if value.startswith("-") or value.startswith("+"):
         # We don't know the value given for num expanded year digits...
@@ -51,28 +51,28 @@ def _coerce_cycletime( value, keys, args ):
             except ValueError:
                 continue
             return value
-        raise IllegalValueError("cycle time", keys, value)
+        raise IllegalValueError("cycle point", keys, value)
     parser = TimePointParser()
     try:
         parser.parse(value)
     except ValueError:
-        raise IllegalValueError("cycle time", keys, value)
+        raise IllegalValueError("cycle point", keys, value)
     return value
 
 
 def _coerce_cycletime_format( value, keys, args ):
-    """Coerce value to a cycle time format (either CCYYMM... or %Y%m...)."""
+    """Coerce value to a cycle point format (either CCYYMM... or %Y%m...)."""
     value = _strip_and_unquote( keys, value )
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
     if "/" in value or ":" in value:
-        raise IllegalValueError("cycle time format", keys, value)
+        raise IllegalValueError("cycle point format", keys, value)
     if "%" in value:
         try:
             TimePointDumper().strftime(test_timepoint, value)
         except ValueError:
-            raise IllegalValueError("cycle time format", keys, value)
+            raise IllegalValueError("cycle point format", keys, value)
         return value
     if "X" in value:
         for i in range(1, 101):
@@ -82,17 +82,17 @@ def _coerce_cycletime_format( value, keys, args ):
             except ValueError:
                 continue
             return value
-        raise IllegalValueError("cycle time format", keys, value)
+        raise IllegalValueError("cycle point format", keys, value)
     dumper = TimePointDumper()
     try:
         dumper.dump(test_timepoint, value)
     except ValueError:
-        raise IllegalValueError("cycle time format", keys, value)
+        raise IllegalValueError("cycle point format", keys, value)
     return value
 
 
 def _coerce_cycletime_time_zone( value, keys, args ):
-    """Coerce value to a cycle time time zone format - Z, +13, -0800..."""
+    """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
     value = _strip_and_unquote( keys, value )
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
@@ -104,7 +104,7 @@ def _coerce_cycletime_time_zone( value, keys, args ):
     try:
         parser.parse(test_timepoint_string)
     except ValueError:
-        raise IllegalValueError("cycle time time zone format", keys, value)
+        raise IllegalValueError("cycle point time zone format", keys, value)
     return value
 
 
@@ -208,9 +208,9 @@ SPEC = {
             },
         },
     'scheduling' : {
-        'initial cycle time'                  : vdr(vtype='cycletime'),
-        'final cycle time'                    : vdr(vtype='cycletime'),
-        'cycling'                             : vdr(vtype='string', default="iso8601", options=["iso8601","integer"] ),
+        'initial cycle point'                 : vdr(vtype='cycletime'),
+        'final cycle point'                   : vdr(vtype='cycletime'),
+        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
         'runahead factor'                     : vdr(vtype='integer', default=2 ),
         'queues' : {
             'default' : {
@@ -234,7 +234,6 @@ SPEC = {
             '__MANY__' :
             {
                 'graph'                       : vdr( vtype='string'),
-                'daemon'                      : vdr( vtype='string'),
                 },
             },
         },
@@ -318,8 +317,8 @@ SPEC = {
             },
         },
     'visualization' : {
-        'initial cycle time'                  : vdr( vtype='cycletime' ),
-        'final cycle time'                    : vdr( vtype='cycletime' ),
+        'initial cycle point'                  : vdr( vtype='cycletime' ),
+        'final cycle point'                    : vdr( vtype='cycletime' ),
         'collapsed families'                  : vdr( vtype='string_list', default=[] ),
         'use node color for edges'            : vdr( vtype='boolean', default=True ),
         'use node color for labels'           : vdr( vtype='boolean', default=False ),
@@ -342,10 +341,31 @@ def upg( cfg, descr ):
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
     # TODO - replace ISO version here:
-    u.obsolete( '5.4.ISO', ['visualization', 'runtime graph'] )
-    u.obsolete( '5.4.ISO', ['development'] )
-    u.deprecate( '5.4.ISO', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
+    u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
+    u.obsolete( '6.0.0', ['development'] )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'initial cycle time'], ['scheduling', 'initial cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'final cycle time'], ['scheduling', 'final cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate(
+        '6.0.0',
+        ['visualization', 'initial cycle time'], ['visualization', 'initial cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate(
+        '6.0.0',
+        ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
             converter( lambda x:'2', 'using default runahead factor' ))
+    u.obsolete( '6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'] )
     u.upgrade()
 
 class sconfig( config ):

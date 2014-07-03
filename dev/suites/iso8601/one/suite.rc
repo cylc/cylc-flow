@@ -1,7 +1,7 @@
 
 [scheduling]
-    initial cycle time = 20140101
-    final cycle time = 20140102T12
+    initial cycle point = 20140101
+    final cycle point = 20140102T12
     #runahead limit = 'P4D'
     [[dependencies]]
         #[[[ Yearly( 201008, 2 ) ]]]
