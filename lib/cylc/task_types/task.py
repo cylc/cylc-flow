@@ -109,8 +109,6 @@ class task( object ):
     # environments to allow changed behaviour after previous failures.
 
     intercycle = False
-    is_cycling = False
-    is_daemon = False
     is_clock_triggered = False
 
     event_queue = None
@@ -171,11 +169,6 @@ class task( object ):
 
     def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
-
-        # Derived class init MUST define:
-        #  * self.id: unique identity (e.g. NAME.CYCLE for cycling tasks)
-        #  * prerequisites and outputs
-        #  * self.env_vars
 
         class_vars = {}
         self.state = task_state.task_state( state )
