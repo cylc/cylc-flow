@@ -120,14 +120,11 @@ initial and final cycle point variables persists across suite restarts."""
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
         for name in task_list:
-            if name in self.asynchronous_task_list:
-                tag = '1' # asynchronous tasks start with tag = 1
+            if self.start_point is not None:
+                tag = self.start_point
             else:
-                if self.start_point is not None:
-                    tag = self.start_point
-                else:
-                    # no initial cycle point: we can't load cycling tasks
-                    continue
+                # no initial cycle point: we can't load cycling tasks
+                continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
 
             if itask.tag:
@@ -148,14 +145,11 @@ initial and final cycle point variables persists across suite restarts."""
             self.log.info( "This suite has not defined any cold start tasks" )
         for name in task_list:
             # (startup=True is only for cold start)
-            if name in self.asynchronous_task_list:
-                tag = '1' # TODO ISO: no longer applicable
+            if self.start_point is not None:
+                tag = self.start_point
             else:
-                if self.start_point is not None:
-                    tag = self.start_point
-                else:
-                    # no initial cycle point: we can't load cycling tasks
-                    continue
+                # no initial cycle point: we can't load cycling tasks
+                continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
             if name in coldstart_tasks:
                 itask.log( "NORMAL", "warm start: starting in succeeded state" )
@@ -175,14 +169,11 @@ initial and final cycle point variables persists across suite restarts."""
 
         for name in task_list:
             # startup=True only for cold start
-            if name in self.asynchronous_task_list:
-                tag = '1' # asynchronous tasks start with tag = 1
+            if self.start_point is not None:
+                tag = self.start_point
             else:
-                if self.start_point is not None:
-                    tag = self.start_point
-                else:
-                    # no initial cycle point: we can't load cycling tasks
-                    continue
+                # no initial cycle point: we can't load cycling tasks
+                continue
             itask = self.config.get_task_proxy( name, tag, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
             if name in coldstart_tasks:
                 itask.log( "NORMAL", "This is a raw start: I will self-destruct." )
