@@ -582,17 +582,18 @@ in a year) or using integer cycling.
 \end{myitemize}
 
 
-\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead factor}
+\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 
 The suite runahead limit prevents the fastest tasks in a suite from
 getting too far ahead of the slowest ones, as documented in
 Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
-sufficiently. The limit computed as this factor of the suite's minimum
-cycling interval.
+sufficiently. The default limit is computed as a factor (2) of the
+suite's minimum cycling interval.
 \begin{myitemize}
-    \item {\em type:} integer multiple of the suite's minimum cycling interval
-    \item {\em default:} $2$
+    \item {\em type:} ISO 8601 interval string e.g. \lstinline=PT12H=
+    for a 12 hour limit.
+    \item {\em default:} (twice the minimum cycling interval in the suite)
 \end{myitemize}
 
 \subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}

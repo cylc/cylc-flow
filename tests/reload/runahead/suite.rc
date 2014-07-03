@@ -4,7 +4,6 @@
         timeout = 0.2
         abort on timeout = True
 [scheduling]
-    runahead factor = 2 # marker
     initial cycle time = 2010-01-01
     final cycle time = 2010-01-05
     [[dependencies]]

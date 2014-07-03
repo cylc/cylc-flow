@@ -25,9 +25,23 @@ from parsec.fileparse import parse
 from parsec.config import config
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import TimePoint
-from isodatetime.parsers import TimePointParser
+from isodatetime.parsers import TimePointParser, TimeIntervalParser
 
 "Define all legal items and values for cylc suite definition files."
+
+def _coerce_cycleinterval( value, keys, args ):
+    """Coerce value to a cycle interval."""
+    value = _strip_and_unquote( keys, value )
+    if value.isdigit():
+        # Old runahead limit format.
+        return "PT%dH" % int(value)
+    parser = TimeIntervalParser()
+    try:
+        parser.parse(value)
+    except ValueError:
+        raise IllegalValueError("interval", keys, value)
+    return value
+
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
@@ -100,10 +114,10 @@ def _coerce_cycletime_time_zone( value, keys, args ):
         raise IllegalValueError("cycle point time zone format", keys, value)
     return value
 
-
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
+coercers['cycleinterval'] = _coerce_cycleinterval
 
 
 SPEC = {
@@ -168,7 +182,7 @@ SPEC = {
         'initial cycle point'                 : vdr(vtype='cycletime'),
         'final cycle point'                   : vdr(vtype='cycletime'),
         'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
-        'runahead factor'                     : vdr(vtype='integer', default=2 ),
+        'runahead limit'                     : vdr(vtype='cycleinterval' ),
         'queues' : {
             'default' : {
                 'limit'                       : vdr( vtype='integer', default=0),
@@ -320,8 +334,6 @@ def upg( cfg, descr ):
         ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
-    u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
-            converter( lambda x:'2', 'using default runahead factor' ))
     u.obsolete( '6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'] )
     u.upgrade()
 

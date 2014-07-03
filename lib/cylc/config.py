@@ -19,7 +19,8 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
-from cylc.cycling.loader import (get_point, get_interval_cls,
+from cylc.cycling.loader import (get_point,
+                                 get_interval, get_interval_cls,
                                  get_sequence, get_sequence_cls,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  get_backwards_compatibility_mode)
@@ -42,6 +43,7 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
+AUTO_RUNAHEAD_FACTOR = 2
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
@@ -113,6 +115,7 @@ class config( object ):
         self.sequences = []
         self.actual_first_ctime = None
 
+        self.custom_runahead_limit = None
         self.runahead_limit = None
 
         # runtime hierarchy dicts keyed by namespace name:
@@ -545,14 +548,11 @@ class config( object ):
                 print '  ', '  ', item, val
 
     def compute_runahead_limit( self ):
-        rfactor = self.cfg['scheduling']['runahead factor']
-        if not rfactor:
-            # no runahead limit!
+        self.custom_runahead_limit = get_interval(
+            self.cfg['scheduling']['runahead limit'])
+        if self.custom_runahead_limit is not None:
+            self.runahead_limit = self.custom_runahead_limit
             return
-        try:
-            rfactor = int( rfactor )
-        except ValueError:
-            raise SuiteConfigError, "ERROR, illegal runahead limit: " + str(rfactor)
 
         rlim = None
         intervals = []
@@ -564,7 +564,7 @@ class config( object ):
             offsets.append( seq.get_offset() )
 
         if intervals:
-            rlim = min( intervals ) * rfactor
+            rlim = min( intervals ) * AUTO_RUNAHEAD_FACTOR
         if offsets:
            min_offset = min( offsets )
            if min_offset < get_interval_cls().get_null():
@@ -575,6 +575,7 @@ class config( object ):
                    rlim = abs(min_offset) + rlim
 
         self.runahead_limit = rlim
+        
         if flags.verbose:
             print "Runahead limit:", self.runahead_limit
 

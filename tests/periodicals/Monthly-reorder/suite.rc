@@ -6,7 +6,7 @@
 [scheduling]
     initial cycle time = 20130130T00
     final cycle time =   20130202T00
-    runahead factor = 1 # enforce sequential running
+    runahead limit = PT12H # Enforces sequential behaviour
     [[dependencies]]
         # (this triggers a monthly task off the last daily task each month)
         [[[T00]]]

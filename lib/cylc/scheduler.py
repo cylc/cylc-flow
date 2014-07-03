@@ -1004,7 +1004,7 @@ class scheduler(object):
                 self.pool.get_min_ctime(), self.pool.get_max_ctime(),
                 self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
-                self.will_stop_at(),  self.pool.runahead_limit,
+                self.will_stop_at(), self.pool.runahead_limit,
                 self.config.ns_defn_order )
 
 
