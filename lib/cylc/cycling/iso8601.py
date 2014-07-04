@@ -381,7 +381,7 @@ class ISO8601Sequence(object):
         return result
 
     def get_first_point( self, point):
-        """Return the first point >= to poing, or None if out of bounds."""
+        """Return the first point >= to point, or None if out of bounds."""
         try:
             return ISO8601Point(self._cached_first_point_values[point.value])
         except KeyError:

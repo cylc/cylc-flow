@@ -1,0 +1,23 @@
+[cylc]
+    UTC mode = True
+    [[event hooks]]
+        timeout = 0.1
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
+    [[dependencies]]
+        # Every hour, so would expect a 2 hour runahead limit.
+        [[[PT1H]]]
+            graph = "foo => bar"
+        # A 6 hour future trigger, => 2 + 6 = 8 hour runahead limit.
+        [[[T04/PT6H]]]
+            graph = """
+                baz[+PT6H] => bar
+                baz
+            """
+[runtime]
+    [[foo]]
+        command scripting = false
+    [[bar]]
+        command scripting = true

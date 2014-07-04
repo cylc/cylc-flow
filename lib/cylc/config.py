@@ -43,8 +43,9 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
-AUTO_RUNAHEAD_FACTOR = 2
+AUTO_RUNAHEAD_FACTOR = 2  # Factor to apply to the minimum cycling interval.
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
+NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
 try:
@@ -554,17 +555,67 @@ class config( object ):
             self.runahead_limit = self.custom_runahead_limit
             return
 
-        rlim = None
-        intervals = []
-        offsets = []
-        for seq in self.sequences:
-            i = seq.get_interval()
-            if i:
-                intervals.append( i )
-            offsets.append( seq.get_offset() )
+        initial_point = get_point(
+            self.cfg['scheduling']['initial cycle point'])
+        
+        offsets = set([])
+        seq_points = {}
+        point_tasks = {}
 
-        if intervals:
-            rlim = min( intervals ) * AUTO_RUNAHEAD_FACTOR
+        # Loop through all sequences and extract the first few points.
+        for seq in self.sequences:
+            seq_points[seq] = []
+            seq_point_0 = seq.get_first_point(initial_point)
+            if seq_point_0 is None:
+                continue
+            seq_points[seq].append(seq_point_0)
+            point_tasks.setdefault(seq_point_0, set())
+            iter_point = seq_point_0
+            for i in range(NUM_RUNAHEAD_SEQ_POINTS - 1):
+                next_point = seq.get_next_point(iter_point)
+                if next_point is None:
+                    break
+                seq_points[seq].append(next_point)
+                point_tasks.setdefault(next_point, set())
+                iter_point = next_point
+
+        # Loop through all tasks and log their sequences.
+        for name, taskdef in self.taskdefs.items():
+            if taskdef.min_intercycle_offset is not None:
+                if taskdef.min_intercycle_offset:
+                    offsets.add(taskdef.min_intercycle_offset)
+            for seq in taskdef.sequences:
+                for point in seq_points.get(seq, []):
+                    point_tasks[point].add(name)
+        
+        points = sorted(point_tasks.keys())
+        min_interval = None
+
+        # Loop through all point pairs with common tasks to get the interval.
+        for i, point in enumerate(points):
+            tasks = point_tasks[point]
+            for other_point in points[i + 1:]:
+                other_tasks = point_tasks[other_point]
+                if point == other_point:
+                    # Technically, hash-different points could compare equal.
+                    continue
+                common_tasks = tasks.intersection(other_tasks)
+                if common_tasks:
+                    # These points share the same task or tasks.
+                    interval = abs(other_point - point)
+                    if min_interval is None or interval < min_interval:
+                        min_interval = interval
+                        min_interval_task_example = common_tasks.pop()
+                        min_interval_points = [point, other_point]
+
+        if min_interval is None:
+            rlim = get_interval_cls().get_null()  # Null interval.
+            description = "(null)"
+        else:
+            rlim = min_interval * AUTO_RUNAHEAD_FACTOR
+            description = "from %d * %s (min interval)" % (
+                AUTO_RUNAHEAD_FACTOR, min_interval
+            )
         if offsets:
            min_offset = min( offsets )
            if min_offset < get_interval_cls().get_null():
@@ -573,11 +624,12 @@ class config( object ):
                    #... that extend past the default rl
                    # set to offsets plus one minimum interval
                    rlim = abs(min_offset) + rlim
+                   description += " + %s (future trigger)" % (
+                       abs(min_offset))
+        if flags.verbose:
+            print "Runahead limit: %s: %s" % (rlim, description)
 
         self.runahead_limit = rlim
-        
-        if flags.verbose:
-            print "Runahead limit:", self.runahead_limit
 
     def get_runahead_limit( self ):
         # may be None (no cycling tasks)
@@ -1282,6 +1334,8 @@ class config( object ):
                             offset_seq_map[str(offset)] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)
+                        if seq_offset not in self.sequences:
+                            self.sequences.append(seq_offset)
                     # We don't handle implicit cycling in new-style cycling.
                 else:
                     self.taskdefs[ name ].add_sequence(seq)
@@ -1313,20 +1367,23 @@ class config( object ):
             # (GraphNodeError checked above)
             cycle_point = None
             lnode = graphnode(left, base_interval=base_interval)
+            ltaskdef = self.taskdefs[lnode.name]
+
             if lnode.intercycle:
-                self.taskdefs[lnode.name].intercycle = True
-                if (self.taskdefs[lnode.name].intercycle_offset is None or (
-                        lnode.offset is not None and
-                        lnode.offset >
-                        self.taskdefs[lnode.name].intercycle_offset)):
-                    self.taskdefs[lnode.name].intercycle_offset = lnode.offset
+                ltaskdef.intercycle = True
+                if (ltaskdef.max_intercycle_offset is None or
+                        lnode.offset > ltaskdef.max_intercycle_offset):
+                    ltaskdef.max_intercycle_offset = lnode.offset
+                if (ltaskdef.min_intercycle_offset is None or
+                        lnode.offset < ltaskdef.min_intercycle_offset):
+                    ltaskdef.min_intercycle_offset = lnode.offset
+
             if lnode.offset_is_from_ict:
                 last_point = seq.get_stop_point()
-                first_point = self.taskdefs[lnode.name].ict - lnode.offset
+                first_point = ltaskdef.ict - lnode.offset
                 if first_point and last_point is not None:
-                    self.taskdefs[lnode.name].intercycle_offset = (last_point - first_point)
-                else:
-                    self.taskdefs[lnode.name].intercycle_offset = None
+                    offset = (last_point - first_point)
+                    ltaskdef.max_intercycle_offset = offset
                 cycle_point = first_point
             trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, suicide, seq.get_interval() )
             if not trigger:

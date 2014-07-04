@@ -18,12 +18,13 @@
 #C: Test default runahead limit behaviour is still the same
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE default
+install_suite $TEST_NAME_BASE default-complex
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate -v $SUITE_NAME
+grep_ok "Runahead limit: PT4H" $TEST_NAME.stdout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
@@ -32,7 +33,7 @@ TEST_NAME=$TEST_NAME_BASE-check-fail
 DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
 RUNAHEAD=$(sqlite3 $DB "select max(cycle) from task_states")
 # manual comparison for the test
-if [[ "$RUNAHEAD" == "20100101T0600Z" ]]; then
+if [[ "$RUNAHEAD" == "20100101T0400Z" ]]; then
     ok $TEST_NAME
 else
     fail $TEST_NAME
