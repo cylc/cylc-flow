@@ -341,8 +341,9 @@ class TimeInterval(object):
     def get_days_and_seconds(self):
         """Return a roughly-converted duration in days and seconds.
 
-        This is not particularly nice for non-uniform units such as
-        years and months.
+        This cannot be accurate for non-uniform units such as years and
+        months, and may yield incorrect results if used for comparisons
+        derived from intervals using these units.
 
         Seconds are returned in the range
         0 <= seconds < SECONDS_IN_DAY, which means that a TimeInterval
@@ -366,8 +367,8 @@ class TimeInterval(object):
     def get_seconds(self):
         """Return a roughly-converted duration in seconds.
 
-        This is not particularly nice for non-uniform units such as
-        years and months.
+        This is not rigorous when converting from non-uniform units
+        such as years and months.
 
         """
         days, seconds = self.get_days_and_seconds()
@@ -492,8 +493,7 @@ class TimeInterval(object):
 
     def __str__(self):
         start_string = "P"
-        date_string = ""
-        time_string = ""
+        content_string = ""
 
         # Handle negative intervals.
         is_fully_negative = False
@@ -513,32 +513,26 @@ class TimeInterval(object):
         if self.get_is_in_weeks():
             return (start_string + str(self.weeks) + "W").replace(".", ",")
 
-        # Construct the date part of the string.
-        for prop_, unit in [("years", "Y"), ("months", "M"), ("days", "D")]:
-            prop_val = getattr(self, prop_)
-            if prop_val:
-                if int(prop_val) == prop_val:
-                    date_string += str(int(prop_val)) + unit
-                else:
-                    date_string += str(prop_val) + unit
-
-        # Construct the time part of the string.
-        for prop_, unit in [("hours", "H"), ("minutes", "M"),
+        for prop_, unit in [("years", "Y"), ("months", "M"), ("days", "D"),
+                            ("hours", "H"), ("minutes", "M"),
                             ("seconds", "S")]:
             prop_val = getattr(self, prop_)
             if prop_val:
                 if int(prop_val) == prop_val:
-                    time_string += str(int(prop_val)) + unit
+                    content_string += str(int(prop_val)) + unit
                 else:
-                    time_string += str(prop_val) + unit
+                    content_string += str(prop_val) + unit
+            if prop_ == "days":
+                content_string += "T"
+        
+        if content_string == "T":
+            # No content, zero duration.
+            content_string = "0Y"
+        elif content_string.endswith("T"):
+            # No time unit information, so strip the delimiter.
+            content_string = content_string[:-1]  
 
-        # Combine the date and time strings.
-        if time_string:
-            time_string = "T" + time_string
-        elif not date_string:
-            # Zero duration.
-            date_string = "0Y"
-        total_string = start_string + date_string + time_string
+        total_string = start_string + content_string
         return total_string.replace(".", ",")
 
 
