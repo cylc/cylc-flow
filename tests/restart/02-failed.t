@@ -35,7 +35,7 @@ fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate -v $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run

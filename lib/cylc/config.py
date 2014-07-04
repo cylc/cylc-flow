@@ -23,6 +23,7 @@ from cylc.cycling.loader import (get_point,
                                  get_interval, get_interval_cls,
                                  get_sequence, get_sequence_cls,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
+                                 ISO8601_CYCLING_TYPE,
                                  get_backwards_compatibility_mode)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
@@ -549,8 +550,12 @@ class config( object ):
                 print '  ', '  ', item, val
 
     def compute_runahead_limit( self ):
-        self.custom_runahead_limit = get_interval(
-            self.cfg['scheduling']['runahead limit'])
+        limit = self.cfg['scheduling']['runahead limit']
+        if (limit is not None and limit.isdigit() and
+                get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
+            # Backwards-compatibility for raw number of hours.
+            limit = "PT%sH" % limit
+        self.custom_runahead_limit = get_interval(limit)
         if self.custom_runahead_limit is not None:
             self.runahead_limit = self.custom_runahead_limit
             return

@@ -29,12 +29,13 @@ from isodatetime.parsers import TimePointParser, TimeIntervalParser
 
 "Define all legal items and values for cylc suite definition files."
 
+
 def _coerce_cycleinterval( value, keys, args ):
     """Coerce value to a cycle interval."""
     value = _strip_and_unquote( keys, value )
     if value.isdigit():
         # Old runahead limit format.
-        return "PT%dH" % int(value)
+        return value
     parser = TimeIntervalParser()
     try:
         parser.parse(value)

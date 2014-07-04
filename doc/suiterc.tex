@@ -589,10 +589,11 @@ getting too far ahead of the slowest ones, as documented in
 Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
 sufficiently. The default limit is computed as a factor (2) of the
-suite's minimum cycling interval.
+suite's minimum cycling interval, and is up-adjusted from there as
+necessary for any longer-offset future triggering.
 \begin{myitemize}
-    \item {\em type:} ISO 8601 interval string e.g. \lstinline=PT12H=
-    for a 12 hour limit.
+    \item {\em type:} Cycle interval string e.g. \lstinline=PT12H=
+    for a 12 hour limit under ISO 8601 cycling.
     \item {\em default:} (twice the minimum cycling interval in the suite)
 \end{myitemize}
 
