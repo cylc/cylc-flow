@@ -323,13 +323,8 @@ class pool(object):
         if not self.stop_point:
             return False
         for pct in set(itask.prerequisites.get_target_tags()):
-            try:
-                if pct > self.stop_point:
-                    return True
-            except:
-                raise
-                # pct invalid cycle point => is an asynch trigger
-                pass
+            if pct > self.stop_point:
+                return True
         return False
 
     def set_runahead( self, interval=None ):
@@ -576,11 +571,6 @@ class pool(object):
             if itask.not_fully_satisfied():
                 self.broker.negotiate( itask )
 
-        # TODO - RESTORE THE FOLLOWING FOR repeating_async TASKS:
-        #for itask in self.get_tasks():
-        #    if not itask.not_fully_satisfied():
-        #        itask.check_requisites()
-
 
     def process_queued_task_messages( self ):
         state_recorders = []
@@ -661,7 +651,6 @@ class pool(object):
         """Remove tasks no longer needed to satisfy others' prerequisites."""
         self.remove_suiciding_tasks()
         self.remove_spent_cycling_tasks()
-        self.remove_spent_async_tasks()
 
 
     def remove_suiciding_tasks( self ):
@@ -682,8 +671,6 @@ class pool(object):
         for itask in self.get_tasks(all=True):
             # this has to consider tasks in the runahead pool too, e.g.
             # ones that have just spawned and not been released yet.
-            if not itask.is_cycling:
-                continue
             if itask.state.is_currently('waiting', 'held' ):
                 if cutoff is None or itask.c_time < cutoff:
                     cutoff = itask.c_time
@@ -716,33 +703,11 @@ class pool(object):
         spent = []
         for itask in self.get_tasks():
             if not itask.state.is_currently('succeeded') or \
-                    not itask.is_cycling or \
                     not itask.state.has_spawned() or \
                     itask.cleanup_cutoff is None:
                 continue
             if cutoff > itask.cleanup_cutoff:
                 spent.append(itask)
-        for itask in spent:
-            self.remove( itask )
-
-
-    def remove_spent_async_tasks( self ):
-        cutoff = 0
-        for itask in self.get_tasks():
-            if itask.is_cycling:
-                continue
-            if itask.is_daemon:
-                # avoid daemon tasks
-                continue
-            if not itask.done():
-                if itask.tag > cutoff:
-                    cutoff = itask.tag
-        spent = []
-        for itask in self.get_tasks():
-            if itask.is_cycling:
-                continue
-            if itask.done() and itask.tag < cutoff:
-                spent.append( itask )
         for itask in spent:
             self.remove( itask )
 
@@ -808,42 +773,32 @@ class pool(object):
         stop = True
 
         i_cyc = False
-        i_asy = False
         i_fut = False
         for itask in self.get_tasks( all=True ):
-            if itask.is_cycling:
-                i_cyc = True
-                # don't stop if a cycling task has not passed the stop cycle
-                if self.stop_point:
-                    if itask.c_time <= self.stop_point:
-                        if itask.state.is_currently('succeeded') and itask.has_spawned():
-                            # ignore spawned succeeded tasks - their successors matter
-                            pass
-                        elif itask.id in self.held_future_tasks:
-                            # unless held because a future trigger reaches beyond the stop cycle
-                            i_fut = True
-                            pass
-                        else:
-                            stop = False
-                            break
-                else:
-                    # don't stop if there are cycling tasks and no stop cycle set
-                    stop = False
-                    break
+            i_cyc = True
+            # don't stop if a cycling task has not passed the stop cycle
+            if self.stop_point:
+                if itask.c_time <= self.stop_point:
+                    if itask.state.is_currently('succeeded') and itask.has_spawned():
+                        # ignore spawned succeeded tasks - their successors matter
+                        pass
+                    elif itask.id in self.held_future_tasks:
+                        # unless held because a future trigger reaches beyond the stop cycle
+                        i_fut = True
+                        pass
+                    else:
+                        stop = False
+                        break
             else:
-                i_asy = True
-                # don't stop if an async task has not succeeded yet
-                if not itask.state.is_currently('succeeded'):
-                    stop = False
-                    break
+                # don't stop if there are cycling tasks and no stop cycle set
+                stop = False
+                break
         if stop:
             msg = "Stopping: "
             if i_fut:
                 msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_point)
             if i_cyc:
-                msg += "\n  + all cycling tasks have spawned past the final cycle " + str(self.stop_point)
-            if i_asy:
-                msg += "\n  + all non-cycling tasks have succeeded"
+                msg += "\n  + all tasks have spawned past the final cycle " + str(self.stop_point)
             print msg
             self.log.info( msg )
 

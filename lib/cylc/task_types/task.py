@@ -109,8 +109,6 @@ class task( object ):
     # environments to allow changed behaviour after previous failures.
 
     intercycle = False
-    is_cycling = False
-    is_daemon = False
     is_clock_triggered = False
 
     event_queue = None
@@ -171,11 +169,6 @@ class task( object ):
 
     def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
-
-        # Derived class init MUST define:
-        #  * self.id: unique identity (e.g. NAME.CYCLE for cycling tasks)
-        #  * prerequisites and outputs
-        #  * self.env_vars
 
         class_vars = {}
         self.state = task_state.task_state( state )
@@ -525,7 +518,7 @@ class task( object ):
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
-            # (currently only used by async_repeating tasks)
+            # (not currently used?)
             rtconfig['environment'].update( self.env_vars )
 
         # construct the job launcher here so that a new one is used if
@@ -1139,10 +1132,6 @@ class task( object ):
             return True
         else:
             return False
-
-    def check_requisites( self ):
-        # overridden by repeating asynchronous tasks
-        pass
 
     def get_state_summary( self ):
         # derived classes can call this method and then

@@ -133,9 +133,6 @@ def dump_to_stdout( states, sort_by_cycle=False ):
 
         line += state + ', ' + spawned
 
-        if 'asyncid' in states[id]:
-            line += ', ' + states[id]['asyncid']
-
         lines.append( line )
 
     lines.sort()

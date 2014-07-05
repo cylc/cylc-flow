@@ -207,10 +207,7 @@ for var in cenv:
     os.environ[var] = os.path.expandvars(cenv[var])
 
 # instantiate the task--------------------------------------------------
-if task_name in config.get_asynchronous_task_name_list():
-    point = get_point('1')  # asynchronous tasks always start with tag = 1
-else:
-    point = get_point(ctime)
+point = get_point(ctime)
 try:
     # try to get a graphed task of the given name
     task_proxy = config.get_task_proxy( task_name, point, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
