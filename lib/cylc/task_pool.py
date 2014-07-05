@@ -100,7 +100,7 @@ class pool(object):
                 self.myq[taskname] = queue
 
 
-    def add( self, itask ):
+    def add_to_runahead_pool( self, itask ):
         """Add a new task to the runahead pool if possible.
         Tasks whose recurrences allow them to spawn beyond the suite
         stop point are added to the pool in the held state, ready to be
@@ -111,14 +111,14 @@ class pool(object):
         if self.id_exists( itask.id ):
             self.log.warning( itask.id + ' cannot be added to pool: task ID already exists' )
             del itask
-            return
+            return False
 
         # do not add if an inserted task is beyond its own stop point
         # (note this is not the same as recurrence bounds)
         if itask.stop_c_time and itask.c_time > itask.stop_c_time:
             self.log.info( itask.id + ' not adding to pool: beyond task stop cycle' )
             del itask
-            return
+            return False
  
         # add in held state if beyond the suite stop point
         if self.stop_point and itask.c_time > self.stop_point:
@@ -141,6 +141,7 @@ class pool(object):
         # add to the runahead pool
         self.runahead_pool[itask.id] = itask
         self.rhpool_changed = True
+        return True
 
 
     def get_task_proxy( self, *args, **kwargs ):
@@ -456,7 +457,7 @@ class pool(object):
 
 
                     self.remove( itask, '(suite definition reload)' )
-                    self.add( new_task )
+                    self.add_to_runahead_pool( new_task )
 
         self.reconfiguring = found
 
@@ -635,7 +636,7 @@ class pool(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if new_task and self.add( new_task ):
+        if new_task and self.add_to_runahead_pool( new_task ):
             return new_task
         else:
             return None
