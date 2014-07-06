@@ -45,6 +45,7 @@ class Daily( cycler ):
             raise CyclerError, str(x)
         else:
             # anchor day
+            self.anchorYYYYMMDDHH = T
             self.anchorYYYYMMDD = T[0:8]
             self.HH = T[8:]
 
@@ -82,7 +83,7 @@ class Daily( cycler ):
                 foo.increment( days=1 )
 
         # now adjust up to the next on-sequence cycle
-        diff = ct(self.anchorYYYYMMDD).subtract( foo )
+        diff = ct(self.anchorYYYYMMDDHH).subtract( foo )
         rem = diff.days % self.step
         foo.increment( days=rem )
 

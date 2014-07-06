@@ -15,16 +15,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test Daily cycling
+# Test validation missing include-file.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 2
+echo '%include foo.rc' >suite.rc
+echo '%include bar.rc' >foo.rc
+run_fail "$TEST_NAME_BASE" cylc validate suite.rc
+cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
+ParseError: File not found: $PWD/bar.rc
+   via $PWD/foo.rc
+   via $PWD/suite.rc
+__ERR__
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE Daily
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-perl -pi -e 's/(Start tag: ).*$/${1}2014010606/' $TEST_DIR/$SUITE_NAME/reference.log
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
-
+exit

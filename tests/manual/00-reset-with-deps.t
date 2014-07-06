@@ -15,16 +15,37 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test Daily cycling
+#C: Test reset to waiting for 2 tasks with dependencies t1=>t2
+#C: See https://github.com/cylc/cylc/pull/947
 . $(dirname $0)/test_header
+poll_while() {
+    local TIMEOUT=$(($(date +%s) + 120)) # poll for 2 minutes
+    while (($(date +%s) < $TIMEOUT)) && eval "$@" >/dev/null 2>&1; do
+        sleep 1
+    done
+}
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE Daily
+install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-perl -pi -e 's/(Start tag: ).*$/${1}2014010606/' $TEST_DIR/$SUITE_NAME/reference.log
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+TEST_NAME="$TEST_NAME_BASE-validate"
+run_ok "$TEST_NAME" cylc validate "$SUITE_NAME"
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
-
+TEST_NAME="$TEST_NAME_BASE-run"
+run_ok "$TEST_NAME" cylc run "$SUITE_NAME"
+SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
+poll_while ! test -e "$SUITE_RUN_DIR/log/job/t1.1.2.status"
+#-------------------------------------------------------------------------------
+# Ensure that t2.1.2 is waiting for t1.1.2
+TEST_NAME="$TEST_NAME_BASE-show-t2.1.out"
+cylc show "$SUITE_NAME" t2.1 | sed -n '/^PREREQUISITES/{N;p;}' >"$TEST_NAME"
+cmp_ok "$TEST_NAME" <<__OUT__
+PREREQUISITES (- => not satisfied):
+  - t1.1 succeeded
+__OUT__
+touch "$SUITE_RUN_DIR/t1.1.txt" # Release t1.1.2
+#-------------------------------------------------------------------------------
+poll_while test -e "$HOME/.cylc/ports/$SUITE_NAME"
+purge_suite "$SUITE_NAME"
+exit

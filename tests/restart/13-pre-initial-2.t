@@ -15,16 +15,23 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test Daily cycling
+# Test restarting a suite with pre-initial cycle dependencies and no
+# initial cycle time in suite definition, ref. github #957.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE Daily
+install_suite $TEST_NAME_BASE pre-init-2
+export TEST_DIR
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-perl -pi -e 's/(Start tag: ).*$/${1}2014010606/' $TEST_DIR/$SUITE_NAME/reference.log
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug --until=2010080800 $SUITE_NAME 2010080800 
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-restart
+suite_run_ok $TEST_NAME cylc restart --debug --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 

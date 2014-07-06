@@ -198,7 +198,6 @@ class task( object ):
         self.started_time = None
         self.succeeded_time = None
         self.etc = None
-        self.to_go = None
         self.summary = { 'latest_message': self.latest_message,
                          'latest_message_priority': self.latest_message_priority,
                          'started_time': '*',
@@ -208,9 +207,11 @@ class task( object ):
         self.retries_configured = False
 
         self.try_number = 1
+        self.retry_delay = None
         self.retry_delay_timer_start = None
 
         self.sub_try_number = 1
+        self.sub_retry_delay = None
         self.sub_retry_delay_timer_start = None
 
         self.message_queue = msgqueue()
@@ -1025,7 +1026,7 @@ class task( object ):
             self.execution_timer_start = self.started_time
 
             # submission was successful so reset submission try number
-            self.sub_try_number = 0
+            self.sub_try_number = 1
             self.sub_retry_delays = copy( self.sub_retry_delays_orig )
             self.handle_event( 'started', 'job started' )
             self.execution_poll_timer.set_timer()

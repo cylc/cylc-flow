@@ -694,11 +694,9 @@ class scheduler(object):
     def reload_taskdefs( self ):
         found = False
         for itask in self.pool.get_tasks():
-            if itask.state.is_currently('running'):
-                # do not reload running tasks as some internal state
-                # (e.g. timers) not easily cloneable at the moment,
-                # and it is possible to make changes to the task config
-                # that would be incompatible with the running task.
+            if itask.state.is_currently('submitted','running'):
+                # do not reload active tasks as it would be possible to
+                # get a task proxy incompatible with the running task
                 if itask.reconfigure_me:
                     found = True
                 continue
@@ -724,6 +722,31 @@ class scheduler(object):
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
                         new_task.reset_state_succeeded(manual=False)
+
+                    # carry some task proxy state over to the new instance
+                    new_task.summary = itask.summary
+                    new_task.started_time = itask.started_time
+                    new_task.submitted_time = itask.submitted_time
+                    new_task.succeeded_time = itask.succeeded_time
+                    new_task.etc = itask.etc
+
+                    # if currently retrying, retain the old retry delay
+                    # list, to avoid extra retries (the next instance
+                    # of the task will still be as newly configured)
+                    if itask.state.is_currently( 'retrying' ):
+                        new_task.retry_delay = itask.retry_delay
+                        new_task.retry_delays = itask.retry_delays
+                        new_task.retry_delay_timer_start = itask.retry_delay_timer_start
+                    elif itask.state.is_currently( 'submit-retrying' ):
+                        new_task.sub_retry_delay = itask.sub_retry_delay
+                        new_task.sub_retry_delays = itask.sub_retry_delays
+                        new_task.sub_retry_delays_orig = itask.sub_retry_delays_orig
+                        new_task.sub_retry_delay_timer_start = itask.sub_retry_delay_timer_start
+
+                    new_task.try_number = itask.try_number
+                    new_task.sub_try_number = itask.sub_try_number
+                    new_task.submit_num = itask.submit_num
+
                     self.pool.remove( itask, '(suite definition reload)' )
                     self.add_new_task_proxy( new_task )
 
@@ -1236,8 +1259,10 @@ class scheduler(object):
             if self.state_dumper:
                 try:
                     self.state_dumper.dump()
-                # catch log rolling error when cylc-run contents have been deleted
-                except IOError:
+                except (OSError, IOError) as exc:
+                    # (see comments in the state dumping module)
+                    # ignore errors here in order to shut down cleanly
+                    self.log.warning( 'Final state dump failed: ' + str(exc) )
                     pass
 
         if self.request_handler:
@@ -1657,8 +1682,8 @@ class scheduler(object):
 
         for itask in self.pool.get_tasks():
             if itask.id in task_ids:
-                # set manual trigger flag
                 itask.manual_trigger = True
+                itask.reset_state_ready()
 
     def get_matching_tasks( self, name, is_family=False ):
         """name can be a task or family name, or a regex to match

@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE incomplete-quotes
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
 run_fail $TEST_NAME cylc validate $SUITE_NAME

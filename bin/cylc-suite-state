@@ -25,7 +25,7 @@ if remrun().execute():
     sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError
+from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError, DBOperationError
 from cylc.cfgspec.site import sitecfg
 from cylc.command_polling import poller
 import cylc.flags
@@ -57,11 +57,14 @@ class suite_poller( poller ):
                 connected = True
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
-            except DBNotFoundError:
+            except (DBNotFoundError, DBOperationError) as err:
                 if cylc.flags.verbose:
                     sys.stdout.write('.')
                 if self.n_polls >= max_polls:
-                    break
+                    if isinstance(err, DBOperationError):
+                        sys.exit("unable to query suite database: " + str(err))
+                    else:
+                        break
                 sleep(self.interval)
         if cylc.flags.verbose:
             sys.stdout.write('\n')
