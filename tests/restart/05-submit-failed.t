@@ -39,7 +39,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --debug -v $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
 # Sleep until penultimate task (the suite stops and starts, so port files alone
 # won't help)
 TEST_NAME=$TEST_NAME_BASE-monitor
@@ -77,9 +77,7 @@ __STATE__
 grep_ok "submit_fail_task|2013092300|1|1|submit-failed" $TEST_DIR/states-db-pre-restart-2013092300
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|waiting
 submit_fail_task|2013092300|1|1|submit-failed
 tidy|2013092300|0|1|waiting
 __DB_DUMP__

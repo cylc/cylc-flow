@@ -94,11 +94,8 @@ grep_ok "send_a_broadcast_task|2013092300|1|1|succeeded" $TEST_DIR/states-db-pre
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|waiting
 send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
@@ -151,7 +148,6 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
-send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -165,7 +161,6 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
-send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__

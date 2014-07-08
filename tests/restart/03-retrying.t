@@ -78,22 +78,15 @@ __STATE__
 grep_ok "retrying_task|2013092300|1|2|retrying" $TEST_DIR/states-db-pre-restart-2013092300
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|waiting
 retrying_task|2013092300|2|2|retrying
-retrying_task|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/states-db-tidy-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|succeeded
-output_states|2013092306|0|1|waiting
 retrying_task|2013092300|4|3|succeeded
-retrying_task|2013092306|0|1|waiting
 tidy|2013092300|1|1|running
-tidy|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 run mode : live
@@ -116,7 +109,6 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|1|2|retrying
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -127,7 +119,6 @@ output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|2|2|retrying
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
