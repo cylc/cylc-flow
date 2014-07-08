@@ -100,7 +100,7 @@ sys.path.append( os.path.join( suite_dir, 'python' ))
 if not cylc.TaskID.is_valid_id( task_id ):
     sys.exit("Invalid task ID " + task_id )
 
-task_name, ctime = cylc.TaskID.split( task_id )
+task_name, point_string = cylc.TaskID.split( task_id )
 
 # load suite config
 try:
@@ -207,10 +207,13 @@ for var in cenv:
     os.environ[var] = os.path.expandvars(cenv[var])
 
 # instantiate the task--------------------------------------------------
-point = get_point(ctime)
+point = get_point(point_string)
 try:
     # try to get a graphed task of the given name
-    task_proxy = config.get_task_proxy( task_name, point, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
+    task_proxy = config.get_task_proxy(
+        task_name, point, 'waiting', stop_point=None, startup=True,
+        submit_num=0, exists=False
+    )
 except TaskNotDefinedError, x:
     print >> sys.stderr, 'WARNING: "' + task_name + \
             '" type and validity are not constrained by the graph.'

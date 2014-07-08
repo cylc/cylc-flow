@@ -49,15 +49,15 @@ class cycling( task ):
 
     # derived classes must override ready_to_spawn()
 
-    def __init__( self, state, stop_c_time = None, validate = False ):
-        self.stop_c_time = stop_c_time
+    def __init__( self, state, stop_point = None, validate = False ):
+        self.stop_point = stop_point
         task.__init__( self, state, validate )
 
     def next_point( self ):
         p_next = None
         adjusted = []
         for seq in self.sequences:
-            nxt = seq.get_next_point(self.c_time)
+            nxt = seq.get_next_point(self.point)
             if nxt:
                 # may be None if beyond the sequence bounds
                 adjusted.append( nxt )

@@ -256,7 +256,8 @@ class scheduler(object):
         self.load_tasks()
 
         # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary( self.config, self.run_mode, str(self.pool.get_min_ctime()) )
+        self.suite_state = state_summary(
+            self.config, self.run_mode, str(self.pool.get_min_point()))
         self.pyro.connect( self.suite_state, 'state_summary')
 
         self.state_dumper.set_cts( self.start_point, self.stop_point )
@@ -442,7 +443,7 @@ class scheduler(object):
 
 
     def command_set_stop_after_point( self, point_string ):
-        self.set_stop_ctime( point_string )
+        self.set_stop_point( point_string )
 
 
     def command_set_stop_after_clock_time( self, arg ):
@@ -507,7 +508,6 @@ class scheduler(object):
 
     def command_hold_after_point_string( self, point_string ):
         """TODO - not currently used, add to the cylc hold command"""
-        # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME VS POINT
         self.hold_suite( get_point(point_string) )
         self.log.info(
             "The suite will pause when all tasks have passed " + point_string)
@@ -919,7 +919,7 @@ class scheduler(object):
 
                 self.do_update_state_summary = True
 
-                self.pool.wireless.expire( self.pool.get_min_ctime() )
+                self.pool.wireless.expire( self.pool.get_min_point() )
 
                 if flags.debug:
                     seconds = time.time() - main_loop_start_time
@@ -1008,7 +1008,7 @@ class scheduler(object):
 
     def update_state_summary( self ):
         self.suite_state.update( self.pool.get_tasks(), 
-                self.pool.get_min_ctime(), self.pool.get_max_ctime(),
+                self.pool.get_min_point(), self.pool.get_max_point(),
                 self.paused(),
                 self.will_pause_at(), self.do_shutdown is not None,
                 self.will_stop_at(),  self.pool.runahead_limit,
@@ -1149,9 +1149,9 @@ class scheduler(object):
         print "DONE" # main thread exit
 
 
-    def set_stop_ctime( self, stop_string ):
-        self.log.info( "Setting stop cycle point: " + stop_string )
-        self.stop_point = get_point(stop_string)
+    def set_stop_point( self, stop_point_string ):
+        self.log.info( "Setting stop cycle point: " + stop_point_string )
+        self.stop_point = get_point(stop_point_string)
         self.pool.set_stop_point(self.stop_point)
 
 
@@ -1171,13 +1171,13 @@ class scheduler(object):
             self.log.warning( "Requested stop task name does not exist: " + name )
 
 
-    def hold_suite( self, ctime = None ):
-        if ctime:
-            self.log.info( "Setting suite hold cycle point: " + ctime )
-            self.hold_time = ctime
-        else:
+    def hold_suite( self, point=None ):
+        if point is None:
             self.hold_suite_now = True
             self.pool.hold_all_tasks()
+        else:
+            self.log.info( "Setting suite hold cycle point: " + str(point) )
+            self.hold_time = point
 
 
     def release_suite( self ):

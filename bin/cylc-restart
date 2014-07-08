@@ -375,8 +375,9 @@ where they got to while the suite was down."""
                 exists = name in cycleinfo[point_string].keys()
                 
                 itask = self.config.get_task_proxy(
-                    name, get_point(point_string), state, stopctime=None,
-                    startup=False, submit_num=submit_num, exists=exists
+                    name, get_point(point_string), state,
+                    stoppoint_string=None, startup=False,
+                    submit_num=submit_num, exists=exists
                 )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)

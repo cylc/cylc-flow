@@ -189,7 +189,7 @@ class taskdef(object):
                 p_next = None
                 adjusted = []
                 for seq in self.sequences:
-                    nxt = seq.get_next_point(sself.c_time)
+                    nxt = seq.get_next_point(sself.point)
                     if nxt:
                         # may be None if beyond the sequence bounds
                         adjusted.append( nxt )
@@ -205,7 +205,7 @@ class taskdef(object):
                 p_prev = None
                 adjusted = []
                 for seq in self.sequences:
-                    prv = seq.get_nearest_prev_point(sself.c_time)
+                    prv = seq.get_nearest_prev_point(sself.point)
                     if prv:
                         # may be None if out of sequence bounds
                         adjusted.append( prv )
@@ -262,7 +262,7 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_point, initial_state, stop_c_time=None,
+        def tclass_init( sself, start_point, initial_state, stop_point=None,
                          startup=False, validate=False, submit_num=0,
                          exists=False ):
 
@@ -303,8 +303,6 @@ class taskdef(object):
                         sself.point + sself.intercycle_offset)
                 sself.id = TaskID.get( sself.name, str(sself.point) )
 
-            sself.c_time = sself.point
-
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
@@ -325,12 +323,13 @@ class taskdef(object):
                     sself.outputs.add( msg )
             sself.outputs.register()
 
-            if stop_c_time:
+            if stop_point:
                 # cycling tasks with a final cycle point set
-                super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
+                super( sself.__class__, sself ).__init__(
+                    initial_state, stop_point, validate=validate )
             else:
-                # TODO - TEMPORARY HACK FOR ASYNC
-                sself.stop_c_time = '99991231230000'
+                # TODO ISO - is this OK for vanished Async tasks?
+                sself.stop_point = None
                 super( sself.__class__, sself ).__init__( initial_state, validate=validate )
 
             sself.suite_polling_cfg = self.suite_polling_cfg

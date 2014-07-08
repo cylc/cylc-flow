@@ -62,13 +62,13 @@ Text Treeview suite control interface.
         # and matching name against current name filter setting.
         # (state result: sres; name result: nres)
 
-        ctime = model.get_value(iter, 0 )
+        point_string = model.get_value(iter, 0 )
         name = model.get_value(iter, 1)
-        if name is None or ctime is None:
+        if name is None or point_string is None:
             return True
         name = re.sub( r'<.*?>', '', name )
 
-        if ctime == name:
+        if point_string == name:
             # Cycle-time line (not state etc.)
             return True
 
@@ -255,13 +255,13 @@ Text Treeview suite control interface.
 
         selection = treeview.get_selection()
         treemodel, iter = selection.get_selected()
-        ctime = treemodel.get_value( iter, 0 )
+        point_string = treemodel.get_value( iter, 0 )
         name = treemodel.get_value( iter, 1 )
-        if ctime == name:
-            # must have clicked on the top level ctime
+        if point_string == name:
+            # must have clicked on the top level point_string
             return
 
-        task_id = cylc.TaskID.get( name, ctime )
+        task_id = cylc.TaskID.get( name, point_string )
 
         is_fam = (name in self.t.descendants)
 
@@ -288,12 +288,13 @@ Text Treeview suite control interface.
 
     def sort_column( self, model, iter1, iter2, col_num ):
         cols = self.ttreeview.get_columns()
-        ctime1 = model.get_value( iter1 , 0 )
-        ctime2 = model.get_value( iter2, 0 )
-        if ctime1 != ctime2:
+        point_string1 = model.get_value( iter1 , 0 )
+        point_string2 = model.get_value( iter2, 0 )
+        if point_string1 != point_string2:
+            # TODO ISO: worth a proper comparison here?
             if cols[col_num].get_sort_order() == gtk.SORT_DESCENDING:
-                return cmp(ctime2, ctime1)
-            return cmp(ctime1, ctime2)
+                return cmp(point_string2, point_string1)
+            return cmp(point_string1, point_string2)
 
         # Columns do not include the cycle point (0th col), so add 1.
         prop1 = model.get_value( iter1, col_num + 1 )

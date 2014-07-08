@@ -284,16 +284,16 @@ class MyDotWindow( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file,  watch, ctime, stop_after,
+                 template_vars_file,  watch, point_string, stop_point_string,
                  orientation="TB" ):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.suiterc = None
-        self.ctime = ctime
+        self.start_point_string = start_point_string
         self.raw = False
-        self.stop_after = stop_after
+        self.stop_point_string = stop_point_string
         self.watch = []
         self.orientation = orientation
         self.template_vars = template_vars
@@ -420,9 +420,9 @@ class MyDotWindow( CylcDotViewerCommon ):
         graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks
 
-        if self.ctime != None and self.stop_after != None:
-            one = self.ctime
-            two = self.stop_after
+        if self.start_point_string != None and self.stop_point_string != None:
+            one = self.start_point_string
+            two = self.stop_point_string
         else:
             one = str( self.suiterc.cfg['visualization']['initial cycle point'])
             two = str(self.suiterc.cfg['visualization']['final cycle point'])

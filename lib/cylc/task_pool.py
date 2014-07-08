@@ -109,18 +109,18 @@ class pool(object):
             return False
 
         # TODO ISO - no longer needed due to recurrence bounds?
-        if itask.stop_c_time and itask.c_time > itask.stop_c_time:
+        if itask.stop_point and itask.point > itask.stop_point:
             itask.log( 'WARNING', "not adding (beyond my stop cycle)" )
             return False
 
         # check cycle stop or hold conditions
-        if self.stop_point and itask.c_time > self.stop_point:
+        if self.stop_point and itask.point > self.stop_point:
           #  itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_point) )
             itask.reset_state_held()
            # return
 
         # TODO ISO -restore suite hold functionality
-        #if self.hold_time and itask.c_time > self.hold_time:
+        #if self.hold_time and itask.point > self.hold_time:
         #    itask.log( 'DEBUG', "not adding (beyond suite hold cycle) " + str(self.hold_time) )
         #    itask.reset_state_held()
         #    return
@@ -154,14 +154,14 @@ class pool(object):
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('failed', 'succeeded'):
                 continue
-            if not runahead_base or itask.c_time < runahead_base:
-                runahead_base = itask.c_time
+            if not runahead_base or itask.point < runahead_base:
+                runahead_base = itask.point
 
         # release tasks below the limit
         if runahead_base:
             for itask in self.runahead_pool.values():
                 if not self.runahead_limit or \
-                        itask.c_time - self.runahead_limit <= runahead_base:
+                        itask.point - self.runahead_limit <= runahead_base:
                     # release task to the appropriate queue
                     # (no runahead limit implies R1 tasks only)
                     queue = self.myq[itask.name]
@@ -340,22 +340,22 @@ class pool(object):
         self.release_runahead_tasks()
 
 
-    def get_min_ctime( self ):
-        """Return the minimum cycle currently in the pool."""
-        cycles = [ t.c_time for t in self.get_tasks() ]
-        minc = None
-        if cycles:
-            minc = min(cycles)
-        return minc
+    def get_min_point( self ):
+        """Return the minimum cycle point currently in the pool."""
+        points = [ t.point for t in self.get_tasks() ]
+        min_point = None
+        if points:
+            min_point = min(points)
+        return min_point
 
 
-    def get_max_ctime( self ):
-        """Return the maximum cycle currently in the pool."""
-        cycles = [ t.c_time for t in self.get_tasks() ]
-        maxc = None
-        if cycles:
-            maxc = max(cycles)
-        return maxc
+    def get_max_point( self ):
+        """Return the maximum cycle point currently in the pool."""
+        points = [ t.point for t in self.get_tasks() ]
+        max_point = None
+        if points:
+            max_point = max(points)
+        return max_point
 
 
     def reconfigure( self, config, stop_point ):
@@ -465,7 +465,7 @@ class pool(object):
         self.stop_point = stop_point
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
-            if (self.stop_point and itask.c_time > self.stop_point and
+            if (self.stop_point and itask.point > self.stop_point and
                     itask.state.is_currently('waiting', 'queued')):
                 itask.log( 'WARNING',
                            "not running (beyond suite stop cycle) " +
@@ -526,12 +526,12 @@ class pool(object):
         # their stop time).
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
-                #if self.stop_point and itask.c_time > self.stop_point:
+                #if self.stop_point and itask.point > self.stop_point:
                 #    # this task has passed the suite stop time
                 #    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_point) )
-                #elif itask.stop_c_time and itask.c_time > itask.stop_c_time:
+                #elif itask.stop_point and itask.point > itask.stop_point:
                 #    # this task has passed its own stop time
-                #    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_c_time) )
+                #    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_point) )
                 #else:
                 # release this task
                 itask.reset_state_waiting()
@@ -672,8 +672,8 @@ class pool(object):
             # this has to consider tasks in the runahead pool too, e.g.
             # ones that have just spawned and not been released yet.
             if itask.state.is_currently('waiting', 'held' ):
-                if cutoff is None or itask.c_time < cutoff:
-                    cutoff = itask.c_time
+                if cutoff is None or itask.point < cutoff:
+                    cutoff = itask.point
             elif not itask.has_spawned():
                 # (e.g. 'ready')
                 nxt = itask.next_point()
@@ -778,7 +778,7 @@ class pool(object):
             i_cyc = True
             # don't stop if a cycling task has not passed the stop cycle
             if self.stop_point:
-                if itask.c_time <= self.stop_point:
+                if itask.point <= self.stop_point:
                     if itask.state.is_currently('succeeded') and itask.has_spawned():
                         # ignore spawned succeeded tasks - their successors matter
                         pass

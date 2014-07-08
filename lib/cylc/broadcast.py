@@ -123,14 +123,14 @@ class broadcast( Pyro.core.ObjBase ):
         if not cutoff:
             self.log.info( 'Expiring all broadcast settings now' )
             self.settings = {}
-        for ctime in self.settings.keys():
+        for point_string in self.settings.keys():
             # DEPRECATED at cylc 6: 'all-cycles'
-            if ctime in ['all-cycle-points', 'all-cycles']:
+            if point_string in ['all-cycle-points', 'all-cycles']:
                 continue
-            point = get_point(ctime)
+            point = get_point(point_string)
             if point < cutoff:
                 self.log.info( 'Expiring ' + str(point) + ' broadcast settings now' )
-                del self.settings[ ctime ]
+                del self.settings[ point_string ]
 
     def clear( self, namespaces, point_strings ):
         """

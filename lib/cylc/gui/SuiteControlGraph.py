@@ -484,8 +484,8 @@ Dependency graph suite control interface.
             window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
-        name, ctime = cylc.TaskID.split( id )
-        # TODO - do we need to check that oldest_ctime is defined yet?
+        name, point_string = cylc.TaskID.split( id )
+        # TODO - do we need to check that oldest_point_string is defined yet?
 
         # TODO ISO - RESTORE OR REMOVE THIS FUNCTIONALITY
         #diff_pre = ctime - self.t.oldest_ctime.hours
@@ -516,7 +516,7 @@ Dependency graph suite control interface.
 
         apply_button = gtk.Button( "_Apply" )
         apply_button.connect("clicked", self.focused_timezoom,
-               ctime, start_entry, stop_entry )
+               point_string, start_entry, stop_entry )
 
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
@@ -528,9 +528,9 @@ Dependency graph suite control interface.
         window.add( vbox )
         window.show_all()
 
-    def focused_timezoom_direct( self, w, ctime ):
-        self.t.focus_start_ctime = ctime
-        self.t.focus_stop_ctime = ctime
+    def focused_timezoom_direct( self, w, point_string ):
+        self.t.focus_start_point_string = point_string
+        self.t.focus_stop_point_string = point_string
         self.t.action_required = True
         self.t.best_fit = True
 
@@ -552,8 +552,8 @@ Dependency graph suite control interface.
         box.pack_start( label, True )
         start_entry = gtk.Entry()
         start_entry.set_max_length(14)
-        if self.t.oldest_ctime:
-            start_entry.set_text(self.t.oldest_ctime)
+        if self.t.oldest_point_string:
+            start_entry.set_text(self.t.oldest_point_string)
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
@@ -562,8 +562,8 @@ Dependency graph suite control interface.
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(14)
-        if self.t.newest_ctime:
-            stop_entry.set_text(self.t.newest_ctime)
+        if self.t.newest_point_string:
+            stop_entry.set_text(self.t.newest_point_string)
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 
@@ -588,17 +588,17 @@ Dependency graph suite control interface.
         window.show_all()
 
     def graph_timezoom(self, w, start_e, stop_e):
-        self.t.focus_start_ctime = start_e.get_text()
-        self.t.focus_stop_ctime = stop_e.get_text()
+        self.t.focus_start_point_string = start_e.get_text()
+        self.t.focus_stop_point_string = stop_e.get_text()
         self.t.best_fit = True
         self.t.action_required = True
 
-    def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
+    def focused_timezoom(self, w, focus_point_string, start_e, stop_e):
         pre_hours = start_e.get_text()
         post_hours = stop_e.get_text()
         # TODO ISO:
-        #self.t.focus_ctime = focus_ctime - pre_hours
-        #self.t.focus_stop_ctime = focus_ctime + post_hours
+        #self.t.focus_point_string = focus_point_string - pre_hours
+        #self.t.focus_stop_point_string = focus_point_string + post_hours
         return
         self.t.best_fit = True
         self.t.action_required = True

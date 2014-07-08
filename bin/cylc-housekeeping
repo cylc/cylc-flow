@@ -92,8 +92,13 @@ parser = OptionParser( usage )
 
 parser.add_option( "--cycletime",
         metavar='YYYYMMDDHH',
+        help="Deprecated. Cycle point, defaults to $CYLC_TASK_CYCLE_POINT",
+        action="store", dest="point_string" )
+
+parser.add_option( "--point",
+        metavar='YYYYMMDDHH',
         help="Cycle point, defaults to $CYLC_TASK_CYCLE_POINT",
-        action="store", dest="ctime" )
+        action="store", dest="point_string" )
 
 #parser.add_option( "--dry-run",
 #        help="print what would be done, but don't do it.",
@@ -145,10 +150,10 @@ cylc.flags.debug = options.debug
 if len(args) != 1  and len( args ) != 4 and len(args) != 5:
     parser.error( "Wrong number of arguments" )
 
-if options.ctime:
-    ctime = options.ctime
+if options.point_string:
+    point_string = options.point_string
 elif 'CYLC_TASK_CYCLE_POINT' in os.environ:
-    ctime = os.environ[ 'CYLC_TASK_CYCLE_POINT' ]
+    point_string = os.environ[ 'CYLC_TASK_CYCLE_POINT' ]
 else:
     parser.error( "Use --cycletime or define $CYLC_TASK_CYCLE_POINT" )
 
@@ -166,7 +171,7 @@ if len(args) == 0 or len(args) > 5:
 
 if len(args) == 1:
     file = args[0]
-    config_file( file, ctime,
+    config_file( file, point_string,
             only=options.only, excpt=options.excpt, mode=options.mode,
             cheap=options.cheap ).action( batchsize )
 else:
@@ -178,7 +183,7 @@ else:
     if len(args) == 5:
         destn = args[4]
 
-    config_line( source, match, opern, ctime, offset, destn,
+    config_line( source, match, opern, point_string, offset, destn,
             mode=options.mode, cheap=options.cheap ).action( batchsize )
 
 print '\nFINISH: ', get_current_time_string(display_sub_seconds=True)

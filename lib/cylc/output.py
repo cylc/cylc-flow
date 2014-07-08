@@ -44,9 +44,9 @@ own cycle point.
                 raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
             self.offset = base_interval.get_inferred_child( offset )
 
-    def get( self, ctime ):
+    def get( self, point ):
         # Replace [T] with actual cycle point
         if self.offset:
-            ctime += self.offset
-        return re.sub( '\[\s*T.*?\]', str(ctime), self.msg )
+            new_point = point + self.offset
+        return re.sub( '\[\s*T.*?\]', str(new_point), self.msg )
 

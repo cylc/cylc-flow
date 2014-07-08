@@ -238,13 +238,14 @@ class task( object ):
         else:
             if not self.exists:
                 self.record_db_state(
-                    self.name, self.c_time,
+                    self.name, str(self.point),
                     time_created_string=get_current_time_string(),
                     submit_num=self.submit_num, try_num=self.try_number,
                     status=self.state.get_status()
                 )
             if self.submit_num > 0:
-                self.record_db_update("task_states", self.name, self.c_time,
+                self.record_db_update("task_states", self.name,
+                                      str(self.point),
                                       status=self.state.get_status())
 
     def queue_event_handlers( self, name, msg='' ):
@@ -277,7 +278,10 @@ class task( object ):
             logger.warning( '-> ' + message )
 
     def record_db_event(self, event="", message=""):
-        call = cylc.rundb.RecordEventObject(self.name, str(self.c_time), self.submit_num, event, message, self.user_at_host)
+        call = cylc.rundb.RecordEventObject(
+            self.name, str(self.point), self.submit_num, event, message,
+            self.user_at_host
+        )
         self.db_queue.append(call)
         self.db_items = True
 
@@ -509,7 +513,10 @@ class task( object ):
         self.message_queue.put( 'NORMAL', self.id + " submitting now" )
 
         self.submit_num += 1
-        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
+        self.record_db_update(
+            "task_states", self.name, str(self.point),
+            submit_num=self.submit_num
+        )
 
         rtconfig = pdeepcopy( self.__class__.rtconfig )
         poverride( rtconfig, overrides )
@@ -561,7 +568,7 @@ class task( object ):
             # generate automatic suite state polling command scripting
             comstr = "cylc suite-state " + \
                      " --task=" + self.suite_polling_cfg['task'] + \
-                     " --cycle=" + str(self.c_time) + \
+                     " --point=" + str(self.point) + \
                      " --status=" + self.suite_polling_cfg['status']
             if rtconfig['suite state polling']['user']:
                 comstr += " --user=" + rtconfig['suite state polling']['user']
@@ -620,7 +627,10 @@ class task( object ):
                 subprocess.check_call(cmd)
             self.__class__.suite_contact_env_hosts.append( self.task_host )
 
-        self.record_db_update("task_states", self.name, self.c_time, submit_method=module_name, host=self.user_at_host)
+        self.record_db_update(
+            "task_states", self.name, str(self.point),
+            submit_method=module_name, host=self.user_at_host
+        )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
@@ -945,7 +955,10 @@ class task( object ):
             # (A fake task message from the job submission thread).
             # Capture and record the submit method job ID.
             self.submit_method_id = content[len('submit_method_id='):]
-            self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
+            self.record_db_update(
+                "task_states", self.name, str(self.point),
+                submit_method_id=self.submit_method_id
+            )
 
         elif ( content == 'submission failed' or content == 'kill command succeeded' ) and \
                 self.state.is_currently('ready','submitted'):
@@ -1083,9 +1096,11 @@ class task( object ):
             flags.iflag = True
             self.log( 'DEBUG', '(setting:' + status + ')' )
             self.state.set_status( status )
-            self.record_db_update("task_states", self.name, self.c_time,
-                                  submit_num=self.submit_num, try_num=self.try_number,
-                                  status=status)
+            self.record_db_update(
+                "task_states", self.name, str(self.point),
+                submit_num=self.submit_num, try_num=self.try_number,
+                status=status
+            )
 
     def update( self, reqs ):
         for req in reqs.get_list():
@@ -1105,7 +1120,7 @@ class task( object ):
         if next:
             successor = self.__class__( next, state )
             # propagate task stop time
-            successor.stop_c_time = self.stop_c_time
+            successor.stop_point = self.stop_point
             return successor
         else:
             # next instance is out of the sequence bounds

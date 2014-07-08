@@ -125,7 +125,10 @@ initial and final cycle point variables persists across suite restarts."""
             else:
                 # no initial cycle point: we can't load cycling tasks
                 continue
-            itask = self.config.get_task_proxy( name, point, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
+            itask = self.config.get_task_proxy(
+                name, point, 'waiting', stop_point=None, startup=True,
+                submit_num=0, exists=False
+            )
 
             if itask.point is None:
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
@@ -148,7 +151,10 @@ initial and final cycle point variables persists across suite restarts."""
             else:
                 # no initial cycle point: we can't load cycling tasks
                 continue
-            itask = self.config.get_task_proxy( name, point, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
+            itask = self.config.get_task_proxy(
+                name, point, 'waiting', stop_point=None, startup=False,
+                submit_num=0, exists=False
+            )
             if name in coldstart_tasks:
                 itask.log( "NORMAL", "warm start: starting in succeeded state" )
                 itask.state.set_status( 'succeeded' )
@@ -172,7 +178,10 @@ initial and final cycle point variables persists across suite restarts."""
             else:
                 # no initial cycle point: we can't load cycling tasks
                 continue
-            itask = self.config.get_task_proxy( name, point, 'waiting', stopctime=None, startup=False, submit_num=0, exists=False )
+            itask = self.config.get_task_proxy(
+                name, point, 'waiting', stop_point=None, startup=False,
+                submit_num=0, exists=False
+            )
             if name in coldstart_tasks:
                 itask.log( "NORMAL", "This is a raw start: I will self-destruct." )
                 del itask
