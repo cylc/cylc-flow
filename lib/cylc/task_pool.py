@@ -81,9 +81,9 @@ class pool(object):
 
         self.jobqueue = Queue.Queue()
 
-        self.worker = task_batcher('Job Submission', self.jobqueue,
+        self.worker = task_batcher( 'Job Submission', self.jobqueue,
                 config.cfg['cylc']['job submission']['batch size'],
-                config.cfg['cylc']['job submission']['delay between batches']
+                config.cfg['cylc']['job submission']['delay between batches'],
                 self.wireless, self.run_mode )
 
         self.orphans = []

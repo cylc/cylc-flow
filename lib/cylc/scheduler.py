@@ -719,25 +719,21 @@ class scheduler(object):
 
             self.event_queue = Queue()
             task.task.event_queue = self.event_queue
-            delay = self.config.cfg['cylc']['event handler submission'][
-                'delay between batches']
             self.eventq_worker = event_batcher(
-                'Event Handlers', self.event_queue,
-                self.config.cfg['cylc']['event handler submission'][
-                    'batch size'],
-                delay, self.suite
+                    'Event Handlers', self.event_queue,
+                    self.config.cfg['cylc']['event handler submission']['batch size'],
+                    self.config.cfg['cylc']['event handler submission']['delay between batches'],
+                    self.suite
             )
             self.eventq_worker.start()
 
             self.poll_and_kill_queue = Queue()
             task.task.poll_and_kill_queue = self.poll_and_kill_queue
-            delay = self.config.cfg['cylc']['poll and kill command submission'][
-                'delay between batches']
             self.pollkq_worker = poll_and_kill_batcher(
                 'Poll & Kill Commands', self.poll_and_kill_queue,
-                self.config.cfg['cylc']['poll and kill command submission'][
-                    'batch size'],
-                delay, self.suite
+                self.config.cfg['cylc']['poll and kill command submission']['batch size'],
+                self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
+                self.suite
             )
             self.pollkq_worker.start()
 
