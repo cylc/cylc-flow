@@ -39,7 +39,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.suite_polling_tasks = suite_polling_tasks
 
     def node_attr_by_taskname( self, n ):
-        name, tag = TaskID.split( n )
+        name, point_string = TaskID.split( n )
         if name in self.task_attr:
             return self.task_attr[name]
         else:
@@ -50,11 +50,11 @@ class CGraphPlain( pygraphviz.AGraph ):
 
     def style_node( self, n, autoURL, base=False ):
         node = self.get_node( n )
-        name, tag = TaskID.split( n )
+        name, point_string = TaskID.split( n )
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
-        label += "\\n" + tag
+        label += "\\n" + point_string
         node.attr[ 'label' ] = label
         if autoURL:
             if base:
@@ -184,9 +184,9 @@ class edge( object):
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, intag, start_point, not_first_cycle, raw,
+    def get_right( self, inpoint, start_point, not_first_cycle, raw,
                    startup_only ):
-        tag = str(intag)
+        inpoint_string = str(inpoint)
         if self.right == None:
             return None
         first_cycle = not not_first_cycle
@@ -197,9 +197,9 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        return TaskID.get( self.right, tag )
+        return TaskID.get( self.right, inpoint_string )
 
-    def get_left( self, intag, start_point, not_first_cycle, raw,
+    def get_left( self, inpoint, start_point, not_first_cycle, raw,
                   startup_only, base_interval ):
 
         first_cycle = not not_first_cycle
@@ -213,12 +213,12 @@ class edge( object):
 
         left_graphnode = graphnode(left, base_interval=base_interval)
         if left_graphnode.offset_is_from_ict:
-            tag = start_point - left_graphnode.offset
+            point = start_point - left_graphnode.offset
         elif left_graphnode.offset:
-            tag = intag - left_graphnode.offset
+            point = inpoint - left_graphnode.offset
         else:
-            tag = intag
+            point = inpoint
         name = left_graphnode.name
 
-        return TaskID.get( name, str(tag) )
+        return TaskID.get( name, str(point) )
 

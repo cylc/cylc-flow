@@ -316,7 +316,7 @@ class pool(object):
         # check for future triggers extending beyond the final cycle
         if not self.stop_point:
             return False
-        for pct in set(itask.prerequisites.get_target_tags()):
+        for pct in set(itask.prerequisites.get_target_points()):
             if pct > self.stop_point:
                 return True
         return False
@@ -414,7 +414,13 @@ class pool(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
+                    new_task = self.get_task_proxy(
+                        itask.name, itask.point, itask.state.get_status(),
+                        None, itask.startup,
+                        submit_num=self.db.get_task_current_submit_num(
+                            itask.name, str(itask.point)),
+                        exists=self.db.get_task_state_exists(
+                            itask.name, str(itask.point)) )
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
@@ -670,7 +676,7 @@ class pool(object):
                     cutoff = itask.c_time
             elif not itask.has_spawned():
                 # (e.g. 'ready')
-                nxt = itask.next_tag()
+                nxt = itask.next_point()
                 if nxt is not None and ( cutoff is None or nxt < cutoff ):
                     cutoff = nxt
         return cutoff
@@ -735,9 +741,9 @@ class pool(object):
                 self.force_spawn(itask)
 
 
-    def remove_entire_cycle( self, tag, spawn ):
+    def remove_entire_cycle( self, point, spawn ):
         for itask in self.get_tasks():
-            if itask.tag == tag:
+            if itask.point == point:
                 if spawn:
                     self.force_spawn( itask )
                 self.remove( itask, 'by request' )
@@ -844,11 +850,12 @@ class pool(object):
 
     def has_stop_task_succeeded( self, id ):
         res = False
-        name, tag = TaskID.split(id)
+        name, point_string = TaskID.split(id)
         for itask in self.get_tasks():
-            iname, itag = TaskID.split(itask.id)
+            iname, ipoint_string = TaskID.split(itask.id)
             # TODO ISO - check the following works
-            if itask.name == name and get_point(itag) == get_point(tag):
+            if (itask.name == name and
+                    get_point(point_string) == get_point(ipoint_string):
                 if itask.state.is_currently('succeeded'):
                     self.log.info( "Stop task " + id + " finished" )
                     res = True
@@ -956,7 +963,7 @@ class pool(object):
             self.match_dependencies()
             something_triggered = False
             for itask in sorted(self.get_tasks(all=True), key=lambda t: t.id):
-                if itask.tag > stop:
+                if itask.point > stop:
                     continue
                 if itask.ready_to_run():
                     something_triggered = True

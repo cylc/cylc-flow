@@ -437,7 +437,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, tag = TaskID.split( node.get_name() )
+            name, point_string = TaskID.split( node.get_name() )
             if name in family_nodes:
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'

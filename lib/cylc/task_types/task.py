@@ -197,7 +197,7 @@ class task( object ):
                          'name': self.name,
                          'description': self.description,
                          'title': self.title,
-                         'label': str(self.tag),
+                         'label': str(self.point),
                          'logfiles': self.logfiles.get_paths()}
 
         self.retries_configured = False
@@ -1101,7 +1101,7 @@ class task( object ):
 
     def spawn( self, state ):
         self.state.set_spawned()
-        next = self.next_tag()
+        next = self.next_point()
         if next:
             successor = self.__class__( next, state )
             # propagate task stop time
@@ -1159,11 +1159,11 @@ class task( object ):
         if self.suicide_prerequisites.count() > 0:
             self.suicide_prerequisites.satisfy_me( outputs )
 
-    def adjust_tag( self, tag ):
-        # Override to modify initial tag if necessary.
-        return tag
+    def adjust_point( self, point ):
+        # Override to modify initial point if necessary.
+        return point
 
-    def next_tag( self ):
+    def next_point( self ):
         # derived classes override this to compute next valid cycle point.
         return None
 

@@ -30,7 +30,7 @@ class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
 
     # examples:
-    #self.settings[ 'all-cycles' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
+    #self.settings[ 'all-cycle-points' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
     #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
 
     def __init__( self, linearized_ancestors ):
@@ -103,13 +103,14 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, tag = TaskID.split( task_id )
+        name, point_string = TaskID.split( task_id )
 
         ret = {}
         # The order is:
         #    all:root -> all:FAM -> ... -> all:task
         # -> tag:root -> tag:FAM -> ... -> tag:task
-        for cycle in [ 'all-cycles', tag ]:
+        # DEPRECATED at cylc 6: 'all-cycles'
+        for cycle in [ 'all-cycle-points', 'all-cycles', point_string ]:
             if cycle not in self.settings:
                 continue
             for ns in reversed(self.linearized_ancestors[name]):
@@ -123,33 +124,34 @@ class broadcast( Pyro.core.ObjBase ):
             self.log.info( 'Expiring all broadcast settings now' )
             self.settings = {}
         for ctime in self.settings.keys():
-            if ctime == 'all-cycles':
+            # DEPRECATED at cylc 6: 'all-cycles'
+            if ctime in ['all-cycle-points', 'all-cycles']:
                 continue
             point = get_point(ctime)
             if point < cutoff:
                 self.log.info( 'Expiring ' + str(point) + ' broadcast settings now' )
                 del self.settings[ ctime ]
 
-    def clear( self, namespaces, tags ):
+    def clear( self, namespaces, point_strings ):
         """
-        Clear settings globally, or for listed namespaces and/or tags.
+        Clear settings globally, or for listed namespaces and/or points.
         """
-        if not namespaces and not tags:
+        if not namespaces and not point_strings:
             # clear all settings
             self.settings = {}
-        elif tags:
-            # clear all settings specific to given tags
-            for tag in tags:
+        elif point_strings:
+            # clear all settings specific to given point_strings
+            for point_string in point_strings:
                 try:
-                    del self.settings[tag]
+                    del self.settings[point_string]
                 except:
                     pass
         elif namespaces:
             # clear all settings specific to given namespaces
-            for tag in self.settings.keys():
+            for point_string in self.settings.keys():
                 for ns in namespaces:
                     try:
-                        del self.settings[tag][ns]
+                        del self.settings[point_string][ns]
                     except:
                         pass
         if self.get_dump() != self.last_settings:

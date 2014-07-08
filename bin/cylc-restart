@@ -68,15 +68,15 @@ where they got to while the suite was down."""
                 help="Output profiling (performance) information",
                 action="store_true", default=False, dest="profile_mode" )
 
-        self.parser.add_option( "--ignore-final-cycle",
+        self.parser.add_option( "--ignore-final-cycle-point",
             help="Ignore the final cycle point in the state dump. If one is"
             "specified in the suite definition it will be used, however.",
-            action="store_true", default=False, dest="ignore_stopcycle" )
+            action="store_true", default=False, dest="ignore_stop_point" )
 
-        self.parser.add_option( "--ignore-initial-cycle",
+        self.parser.add_option( "--ignore-initial-cycle-point",
             help="Ignore the initial cycle point in the state dump. If one is "
             "specified in the suite definition it will be used, however.",
-            action="store_true", default=False, dest="ignore_startcycle" )
+            action="store_true", default=False, dest="ignore_start_point" )
 
         scheduler.__init__( self, is_restart=True )
 
@@ -252,19 +252,19 @@ where they got to while the suite was down."""
             # the state dump prescribes a start cycle
             # (else we take whatever the suite.rc file gives us)
             state_start_point = get_point(state_start_string)
-            if self.options.ignore_startcycle:
+            if self.options.ignore_start_point:
                 # ignore it and take whatever the suite.rc file gives us
                 if self.start_point is not None:
-                    print >> sys.stderr, """WARNING: I'm ignoring the old initial cycle as requested, but I
+                    print >> sys.stderr, """WARNING: I'm ignoring the old initial cycle point as requested, but I
   can't ignore the one set in the suite definition."""
             elif self.start_point is not None:
                 # a start cycle was given in the suite.rc file
                 if self.start_point != state_start_point:
                     # the state dump doesn't lie about start cycles
-                    if self.options.ignore_startcycle:
-                        print >> sys.stderr, "WARNING: ignoring old initial cycle", state_start_point, "; using suite.rc", self.start_point
+                    if self.options.ignore_start_point:
+                        print >> sys.stderr, "WARNING: ignoring old initial cycle point", state_start_point, "; using suite.rc", self.start_point
                     else:
-                        print >> sys.stderr, "WARNING: old initial cycle", state_start_point, "overriding suite.rc", self.start_point
+                        print >> sys.stderr, "WARNING: old initial cycle point", state_start_point, "overriding suite.rc", self.start_point
                         self.start_point = state_start_point
             else:
                 # reinstate the former start cycle
@@ -274,15 +274,15 @@ where they got to while the suite was down."""
             # the state dump prescribes a stop cycle
             # (else we take whatever the command line or suite.rc file gives us)
             state_stop_point = get_point(state_stop_string)
-            if self.options.ignore_stopcycle:
+            if self.options.ignore_stop_point:
                 # ignore it and take whatever the command line or suite.rc file gives us
                 if self.stop_point is not None:
-                    print >> sys.stderr, """WARNING: I'm ignoring the old final cycle as requested, but I
+                    print >> sys.stderr, """WARNING: I'm ignoring the old final cycle point as requested, but I
   can't ignore the one set on the command line or in the suite definition."""
             elif self.stop_point is not None:
                 # a stop cycle was given on the restart command line or suite.rc file
                 if self.stop_point != state_stop_point:
-                    print >> sys.stderr, "WARNING: overriding the old stop cycle", state_stop_point, "with", self.stop_point
+                    print >> sys.stderr, "WARNING: overriding the old stop cycle point", state_stop_point, "with", self.stop_point
             else:
                 # reinstate the old stop cycle
                 self.stop_point = state_stop_point
@@ -292,7 +292,7 @@ where they got to while the suite was down."""
         # parse each task line and create the task it represents
         tasknames = {}
         taskstates = {}
-        taskcycles = []
+        task_point_strings = []
         for line in task_lines:
 
             if re.match( '^class', line ):
@@ -309,7 +309,7 @@ where they got to while the suite was down."""
             # instance variables
             try:
                 ( id, state ) = line.split(' : ')
-                ( name, tag ) = cylc.TaskID.split(id)
+                ( name, point_string ) = cylc.TaskID.split(id)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
@@ -324,13 +324,13 @@ where they got to while the suite was down."""
             except Exception as e:
                 print >> sys.stderr, "ERROR: ", type(e).__name__, e
                 raise Exception( "ERROR: corrupted state dump" )
-            taskstates[id] = (name, tag, state )
-            taskcycles.append(tag)
+            taskstates[id] = (name, point_string, state )
+            task_point_strings.append(point_string)
 
-        taskcycles = list(set(taskcycles))
+        task_point_strings = list(set(task_point_strings))
         cycleinfo = {}
-        for cycle in taskcycles:
-            res = self.db.get_restart_info(cycle)
+        for point_string in task_point_strings:
+            res = self.db.get_restart_info(point_string)
             cycleinfo[cycle] = res
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
         #
@@ -361,21 +361,21 @@ where they got to while the suite was down."""
         print "RELOADING task proxies"
 
         for id in taskstates:
-            name, tag, state = taskstates[id]
+            name, point_string, state = taskstates[id]
             if name not in task_list:
                 continue
 
             print " +", id
             try:
                 # startup is True only for a cold start
-                if name in cycleinfo[tag].keys():
-                    submit_num = cycleinfo[tag][name]
+                if name in cycleinfo[point_string].keys():
+                    submit_num = cycleinfo[point_string][name]
                 else:
                     submit_num = 0
-                exists = name in cycleinfo[tag].keys()
+                exists = name in cycleinfo[point_string].keys()
                 
                 itask = self.config.get_task_proxy(
-                    name, get_point(tag), state, stopctime=None,
+                    name, get_point(point_string), state, stopctime=None,
                     startup=False, submit_num=submit_num, exists=exists
                 )
             except TaskNotDefinedError, x:
@@ -410,7 +410,7 @@ where they got to while the suite was down."""
                 itask.prerequisites.set_all_satisfied()
                 # get user_at_host from run-db
                 user_at_host = None
-                row = self.db.get_task_location(name, tag)
+                row = self.db.get_task_location(name, point_string)
                 if row and row[0]:
                     user_at_host = row[0]
                     self.old_user_at_host_set.add(str(user_at_host))
@@ -419,7 +419,8 @@ where they got to while the suite was down."""
 
                 # get submit_method_id and try_num from run-db
                 submit_method_id = try_num = None
-                row = self.db.get_task_submit_method_id_and_try(name, tag)
+                row = self.db.get_task_submit_method_id_and_try(
+                    name, point_string)
                 if row and row[0]:
                     submit_method_id, try_num = row
                 else:

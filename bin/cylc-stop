@@ -180,7 +180,7 @@ elif shutdown_at:
             ##ct(shutdown_arg)
             pass
         except CycleTimeError,x:
-            # nope: is it an async integer tag?
+            # nope: is it an async integer point string?
             try:
                 int( shutdown_arg )
             except ValueError:
@@ -188,12 +188,12 @@ elif shutdown_at:
                 raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
             else:
                 # is probably an async CYCLE_POINT
-                method = 'stop after tag'
+                method = 'stop after point'
                 prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
                 #print 'async'
         else:
             # is a cycle point
-            method = 'stop after tag'
+            method = 'stop after point'
             prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
             #print 'cycling'
     else:

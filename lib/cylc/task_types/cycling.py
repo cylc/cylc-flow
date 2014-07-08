@@ -53,7 +53,7 @@ class cycling( task ):
         self.stop_c_time = stop_c_time
         task.__init__( self, state, validate )
 
-    def next_tag( self ):
+    def next_point( self ):
         p_next = None
         adjusted = []
         for seq in self.sequences:

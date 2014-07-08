@@ -180,7 +180,7 @@ class scheduler(object):
                 'stop cleanly'          : self.command_stop_cleanly,
                 'stop quickly'          : self.command_stop_quickly,
                 'stop now'              : self.command_stop_now,
-                'stop after tag'        : self.command_set_stop_after_tag,
+                'stop after point'        : self.command_set_stop_after_point,
                 'stop after clock time' : self.command_set_stop_after_clock_time,
                 'stop after task'       : self.command_set_stop_after_task,
                 'release suite'         : self.command_release_suite,
@@ -242,8 +242,8 @@ class scheduler(object):
         else:
             self.log.info( 'Log event clock: accelerated' )
         self.log.info( 'Run mode: ' + self.run_mode )
-        self.log.info( 'Start tag: ' + str(self.start_point) )
-        self.log.info( 'Stop tag: ' + str(self.stop_point) )
+        self.log.info( 'Start point: ' + str(self.start_point) )
+        self.log.info( 'Stop point: ' + str(self.stop_point) )
 
         self.pool = pool( self.suite, self.db, self.stop_point, self.config,
                           self.pyro, self.log, self.run_mode )
@@ -341,7 +341,7 @@ class scheduler(object):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
         if TaskID.DELIM in name_or_id:
-            name, tag = TaskID.split(name_or_id)
+            name, point_string = TaskID.split(name_or_id)
         if name in self.config.get_task_name_list():
             return True
         else:
@@ -441,8 +441,8 @@ class scheduler(object):
         self.threads_stopped = False
 
 
-    def command_set_stop_after_tag( self, tag ):
-        self.set_stop_ctime( tag )
+    def command_set_stop_after_point( self, point_string ):
+        self.set_stop_ctime( point_string )
 
 
     def command_set_stop_after_clock_time( self, arg ):
@@ -465,27 +465,27 @@ class scheduler(object):
             self.set_stop_task( tid )
 
 
-    def command_release_task( self, name, tag, is_family ):
+    def command_release_task( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.release_tasks( task_ids )
 
 
-    def command_poll_tasks( self, name, tag, is_family ):
+    def command_poll_tasks( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.poll_tasks( task_ids )
 
 
-    def command_kill_tasks( self, name, tag, is_family ):
+    def command_kill_tasks( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.kill_tasks( task_ids )
 
 
@@ -493,11 +493,11 @@ class scheduler(object):
         self.release_suite()
 
 
-    def command_hold_task( self, name, tag, is_family ):
+    def command_hold_task( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.hold_tasks( task_ids )
 
 
@@ -505,11 +505,12 @@ class scheduler(object):
         self.hold_suite()
 
 
-    def command_hold_after_tag( self, tag ):
+    def command_hold_after_point_string( self, point_string ):
         """TODO - not currently used, add to the cylc hold command"""
         # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME VS POINT
-        self.hold_suite( tag )
-        self.log.info( "The suite will pause when all tasks have passed " + tag )
+        self.hold_suite( get_point(point_string) )
+        self.log.info(
+            "The suite will pause when all tasks have passed " + point_string)
 
 
     def command_set_verbosity( self, level ):
@@ -534,34 +535,40 @@ class scheduler(object):
         return True, 'OK'
 
 
-    def command_remove_cycle( self, tag, spawn ):
-        self.pool.remove_entire_cycle( tag,spawn )
+    def command_remove_cycle( self, point_string, spawn ):
+        self.pool.remove_entire_cycle( get_point(point_string) ,spawn )
 
 
-    def command_remove_task( self, name, tag, is_family, spawn ):
+    def command_remove_task( self, name, point_string, is_family, spawn ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.remove_tasks( task_ids, spawn )
 
 
-    def command_insert_task( self, name, tag, is_family, stop_string ):
+    def command_insert_task( self, name, point_string, is_family, stop_string ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
 
-        point = get_point(tag)
+        point = get_point(point_string)
         if stop_string is None:
             stop_point = None
         else:
             stop_point = get_point(stop_string)
 
         for task_id in task_ids:
-            name, tag = TaskID.split( task_id )
+            name, task_point_string = TaskID.split( task_id )
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
-            new_task = self.config.get_task_proxy( name, point, 'waiting', stop_point, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
+            new_task = self.config.get_task_proxy(
+                name, point, 'waiting', stop_point, startup=False,
+                submit_num=self.db.get_task_current_submit_num(
+                    name, task_point_string),
+                exists=self.db.get_task_state_exists(
+                    name, task_point_string)
+            )
             if new_task:
                 self.pool.add( new_task )
 
@@ -1156,7 +1163,7 @@ class scheduler(object):
 
 
     def set_stop_task( self, taskid ):
-        name, tag = TaskID.split(taskid)
+        name, point_string = TaskID.split(taskid)
         if name in self.config.get_task_name_list():
             self.log.info( "Setting stop task: " + taskid )
             self.stop_task = taskid
@@ -1214,11 +1221,11 @@ class scheduler(object):
         return self.hold_time
 
 
-    def command_trigger_task( self, name, tag, is_family ):
+    def command_trigger_task( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.trigger_tasks( task_ids )
 
 
@@ -1257,11 +1264,11 @@ class scheduler(object):
         return matches
 
 
-    def command_reset_task_state( self, name, tag, state, is_family ):
+    def command_reset_task_state( self, name, point_string, state, is_family ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i,tag) for i in matches ]
+        task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.reset_task_states( task_ids, state )
 
 

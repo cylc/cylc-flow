@@ -816,7 +816,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def stopsuite( self, bt, window, kill_cb,
             stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
-            stoptag_entry, stopclock_entry, stoptask_entry ):
+            stoppoint_entry, stopclock_entry, stoptask_entry ):
         stop = False
         stopat = False
         stopnow = False
@@ -833,13 +833,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         elif stopat_rb.get_active():
             stopat = True
-            stoptag = stoptag_entry.get_text()
-            if stoptag == '':
+            stoppoint_string = stoppoint_entry.get_text()
+            if stoppoint_string == '':
                 warning_dialog(
                     "ERROR: No stop CYCLE_POINT entered", self.window
                 ).warn()
                 return
-            # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON stoptag?
+            # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON stoppoint?
 
         elif stopnow_rb.get_active():
             stopnow = True
@@ -889,7 +889,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stop:
                 result = god.put( 'stop cleanly', killfirst )
             elif stopat:
-                result = god.put( 'stop after tag', stoptag )
+                result = god.put( 'stop after point', stoppoint_string )
             elif stopnow:
                 result = god.put( 'stop now' )
             elif stopquick:
@@ -1529,12 +1529,14 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         try:
             if stop:
-                result = self.get_pyro( 'command-interface' ).put( 'hold task now', name, tag, is_family )
+                result = self.get_pyro( 'command-interface' ).put(
+                    'hold task now', name, point_string, is_family)
             else:
-                result = self.get_pyro( 'command-interface' ).put( 'release task', name, tag, is_family )
+                result = self.get_pyro( 'command-interface' ).put(
+                    'release task', name, point_string, is_family)
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1548,9 +1550,10 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'trigger task', name, tag, is_family )
+            result = self.get_pyro( 'command-interface' ).put(
+                'trigger task', name, point_string, is_family)
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1563,9 +1566,10 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'poll tasks', name, tag, is_family )
+            result = self.get_pyro( 'command-interface' ).put(
+                'poll tasks', name, point_string, is_family)
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1578,9 +1582,10 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'kill tasks', name, tag, is_family )
+            result = self.get_pyro( 'command-interface' ).put(
+                'kill tasks', name, point_string, is_family)
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1593,13 +1598,14 @@ shown here in the state they were in at the time of triggering.''' )
             return False
         cmd = "reset"
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         msg = "reset " + task_id + " to " + state +"?"
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'reset task state', name, tag, state, is_family )
+            result = self.get_pyro( 'command-interface' ).put(
+                'reset task state', name, point_string, state, is_family)
         except Exception, x:
             # the suite was probably shut down by another process
             warning_dialog( x.__str__(), self.window ).warn()
@@ -1613,9 +1619,10 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, True )
+            result = self.get_pyro( 'command-interface' ).put(
+                'remove task', name, point_string, is_family, True)
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1628,9 +1635,10 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
-        name, tag = cylc.TaskID.split( task_id )
+        name, point_string = cylc.TaskID.split( task_id )
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'remove task', name, tag, is_family, False )
+            result = self.get_pyro( 'command-interface' ).put(
+                'remove task', name, point_string, is_family, False)
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1641,7 +1649,8 @@ shown here in the state they were in at the time of triggering.''' )
         stop = e.get_text()
         w.destroy()
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'purge tree', task_id, stop )
+            result = self.get_pyro( 'command-interface' ).put(
+                'purge tree', task_id, stop)
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -1654,7 +1663,8 @@ shown here in the state they were in at the time of triggering.''' )
         stop = e.get_text()
         w.destroy()
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'purge tree', task_id, stop )
+            result = self.get_pyro( 'command-interface' ).put(
+                'purge tree', task_id, stop)
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
@@ -2051,19 +2061,19 @@ shown here in the state they were in at the time of triggering.''' )
         hbox = gtk.HBox()
         label = gtk.Label( 'CYCLE_POINT' )
         hbox.pack_start( label, True )
-        entry_tag = gtk.Entry()
-        hbox.pack_start (entry_tag, True)
+        entry_point_string = gtk.Entry()
+        hbox.pack_start (entry_point_string, True)
         vbox.pack_start(hbox)
 
-        if "tag" in kwargs:
-            entry_tag.set_text(kwargs['tag'])
+        if "point_string" in kwargs:
+            entry_point_string.set_text(kwargs['point_string'])
 
         hbox = gtk.HBox()
         label = gtk.Label( '[STOP]' )
         hbox.pack_start( label, True )
-        entry_stoptag = gtk.Entry()
-        entry_stoptag.set_max_length(14)
-        hbox.pack_start (entry_stoptag, True)
+        entry_stoppoint = gtk.Entry()
+        entry_stoppoint.set_max_length(20)
+        hbox.pack_start (entry_stoppoint, True)
         vbox.pack_start(hbox)
 
         help_button = gtk.Button( "_Help" )
@@ -2071,7 +2081,10 @@ shown here in the state they were in at the time of triggering.''' )
 
         hbox = gtk.HBox()
         insert_button = gtk.Button( "_Insert" )
-        insert_button.connect("clicked", self.insert_task, window, entry_match, entry_tag, entry_stoptag, fam_cb )
+        insert_button.connect(
+            "clicked", self.insert_task, window, entry_match,
+            entry_point_string, entry_stoppoint, fam_cb
+        )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         hbox.pack_start(insert_button, False)
@@ -2082,24 +2095,26 @@ shown here in the state they were in at the time of triggering.''' )
         window.add( vbox )
         window.show_all()
 
-    def insert_task( self, w, window, entry_match, entry_tag, entry_stoptag, fam_cb ):
+    def insert_task( self, w, window, entry_match, entry_point_string,
+                     entry_stoppoint, fam_cb ):
         match = entry_match.get_text()
-        tag = entry_tag.get_text()
+        point_string = entry_point_string.get_text()
         is_family = fam_cb.get_active()
-        stoptag = entry_stoptag.get_text()
+        stoppoint_string = entry_stoppoint.get_text()
 
-        if match == '' or tag == '':
+        if match == '' or point_string == '':
             warning_dialog( "Enter task or family name MATCH expression", self.window ).warn()
             return
 
         window.destroy()
 
         stop = None
-        if stoptag != '':
-            stop = stoptag
+        if stoppoint_string != '':
+            stop = stoppoint_string
 
         try:
-            result = self.get_pyro( 'command-interface' ).put( 'insert task', match, tag, is_family, stop )
+            result = self.get_pyro( 'command-interface' ).put(
+                'insert task', match, point_string, is_family, stop)
         except Exception, x:
             warning_dialog( x.__str__(), self.window ).warn()
             return

@@ -851,10 +851,10 @@ class config( object ):
         for name in self.taskdefs.keys():
             type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
-            tag = get_point( self.cfg['scheduling']['initial cycle point'] )
+            start_point = get_point( self.cfg['scheduling']['initial cycle point'] )
             try:
                 # instantiate a task
-                itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
+                itask = self.taskdefs[name].get_task_class()( start_point, 'waiting', None, True, validate=True )
             except TypeError, x:
                 raise
                 # This should not happen as we now explicitly catch use
@@ -866,9 +866,9 @@ class config( object ):
             except Exception, x:
                 raise
                 raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
-            if not itask.tag:
+            if itask.point is None:
                 if flags.verbose:
-                    print " + Task out of bounds for " + str(tag) + ": " + itask.name
+                    print " + Task out of bounds for " + str(start_point) + ": " + itask.name
                 continue
 
             # warn for purely-implicit-cycling tasks (these are deprecated).
@@ -1500,18 +1500,18 @@ class config( object ):
 
         members = self.runtime['first-parent descendants']
 
-        lname, ltag = None, None
-        rname, rtag = None, None
+        lname, lpoint_string = None, None
+        rname, rpoint_string = None, None
         nr, nl = None, None
         if nlid:
             one, two = TaskID.split(nlid)
             lname = one
-            ltag = two
+            lpoint_string = two
             nl = nlid
         if nrid:
             one, two = TaskID.split(nrid)
             rname = one
-            rtag = two
+            rpoint_string = two
             nr = nrid
 
         # for nested families, only consider the outermost one
@@ -1527,14 +1527,15 @@ class config( object ):
             if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = TaskID.get(fam,ltag), TaskID.get(fam,rtag)
+                nl = TaskID.get(fam, lpoint_string)
+                nr = TaskID.get(fam, rpoint_string)
                 break
             elif lname in members[fam]:
                 # l is a member of fam
-                nl = TaskID.get(fam,ltag)
+                nl = TaskID.get(fam, lpoint_string)
             elif rname in members[fam]:
                 # r is a member of fam
-                nr = TaskID.get(fam,rtag)
+                nr = TaskID.get(fam, rpoint_string)
 
         return nl, nr
 
@@ -1736,17 +1737,17 @@ class config( object ):
             raise TaskNotDefinedError("ERROR, No such task name: " + name )
         return tdef.get_task_class()( ctime, state, stopctime, startup, submit_num=submit_num, exists=exists )
 
-    def get_task_proxy_raw( self, name, tag, state, stoptag, startup, submit_num, exists ):
+    def get_task_proxy_raw( self, name, point, state, stoppoint, startup, submit_num, exists ):
         # Used by 'cylc submit' to submit tasks defined by runtime
         # config but not currently present in the graph (so we must
-        # assume that the given tag is valid for the task).
+        # assume that the given point is valid for the task).
         try:
             truntime = self.cfg['runtime'][name]
         except KeyError:
             raise TaskNotDefinedError("ERROR, task not defined: " + name )
         tdef = self.get_taskdef( name )
-        # TODO ISO - TEST THIS (did set 'tdef.hours' from tag)
-        return tdef.get_task_class()( tag, state, stoptag, startup, submit_num=submit_num, exists=exists )
+        # TODO ISO - TEST THIS (did set 'tdef.hours' from point)
+        return tdef.get_task_class()( point, state, stoppoint, startup, submit_num=submit_num, exists=exists )
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()

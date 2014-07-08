@@ -336,7 +336,7 @@ class GraphUpdater(threading.Thread):
         for id in self.state_summary:
             if not any( id in edge for edge in gr_edges ):
                 # this node is not present in the main graph
-                name, tag = cylc.TaskID.split( id )
+                name, point_string = cylc.TaskID.split( id )
                 if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
                     # must be a member of a collapsed family, don't graph it
                     omit.append(name)
@@ -364,7 +364,7 @@ class GraphUpdater(threading.Thread):
         # FAMILIES
         if needs_redraw:
             for node in self.graphw.nodes():
-                name, tag = cylc.TaskID.split( node.get_name() )
+                name, point_string = cylc.TaskID.split( node.get_name() )
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
@@ -422,7 +422,7 @@ class GraphUpdater(threading.Thread):
                 # Now that we have family state coloring with family
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
-                name, tag = cylc.TaskID.split( id )
+                name, point_string = cylc.TaskID.split( id )
                 if name in omit:
                     # (see above)
                     continue
