@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test trying to reload a file with invalid dependencies section header
+# Test trying to reload a file with invalid dependencies section header
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3

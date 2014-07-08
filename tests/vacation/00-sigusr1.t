@@ -15,9 +15,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test handle of SIGUSR1. (Handle a mock job vacation.)
-#C: Obviously, job vacation does not happen with background job, and the job
-#C: will no longer be poll-able after the kill.
+# Test handle of SIGUSR1. (Handle a mock job vacation.)
+# Obviously, job vacation does not happen with background job, and the job
+# will no longer be poll-able after the kill.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 8

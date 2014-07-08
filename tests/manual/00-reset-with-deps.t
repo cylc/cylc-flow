@@ -15,8 +15,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test reset to waiting for 2 tasks with dependencies t1=>t2
-#C: See https://github.com/cylc/cylc/pull/947
+# Test reset to waiting for 2 tasks with dependencies t1=>t2
+# See https://github.com/cylc/cylc/pull/947
 . $(dirname $0)/test_header
 poll_while() {
     local TIMEOUT=$(($(date +%s) + 120)) # poll for 2 minutes

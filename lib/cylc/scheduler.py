@@ -563,7 +563,7 @@ class scheduler(object):
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
             new_task = self.config.get_task_proxy( name, point, 'waiting', stop_point, startup=False, submit_num=self.db.get_task_current_submit_num(name, tag), exists=self.db.get_task_state_exists(name, tag))
             if new_task:
-                self.pool.add( new_task )
+                self.pool.add_to_runahead_pool( new_task )
 
 
     def command_nudge( self ):

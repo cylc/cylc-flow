@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a simple suite with a waiting task
+# Test restarting a simple suite with a waiting task
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
@@ -100,7 +100,6 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 tidy|2013092300|1|1|succeeded
@@ -114,6 +113,7 @@ force_restart|2013092306|1|1|succeeded
 force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
+output_states|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 waiting_task|2013092300|1|1|succeeded
@@ -127,7 +127,10 @@ final cycle : 2013092306
 .
 Begin task states
 force_restart.2013092312 : status=held, spawned=false
+output_states.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
+tidy.2013092312 : status=held, spawned=false
+waiting_task.2013092312 : status=held, spawned=false
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
@@ -139,10 +142,13 @@ force_restart|2013092306|1|1|succeeded
 force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
+output_states|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
+tidy|2013092312|0|1|held
 waiting_task|2013092300|1|1|succeeded
 waiting_task|2013092306|1|1|succeeded
+waiting_task|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

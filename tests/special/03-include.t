@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test include at start-up is working
+# Test include at start-up is working
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

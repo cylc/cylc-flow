@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: basic jinja2 include and expand test
+# basic jinja2 include and expand test
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
