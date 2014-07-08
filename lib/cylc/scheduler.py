@@ -730,10 +730,10 @@ class scheduler(object):
             self.poll_and_kill_queue = Queue()
             task.task.poll_and_kill_queue = self.poll_and_kill_queue
             self.pollkq_worker = poll_and_kill_batcher(
-                'Poll & Kill Commands', self.poll_and_kill_queue,
-                self.config.cfg['cylc']['poll and kill command submission']['batch size'],
-                self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
-                self.suite
+                    'Poll & Kill Commands', self.poll_and_kill_queue,
+                    self.config.cfg['cylc']['poll and kill command submission']['batch size'],
+                    self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
+                    self.suite
             )
             self.pollkq_worker.start()
 
