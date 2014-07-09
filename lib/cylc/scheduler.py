@@ -116,7 +116,7 @@ class scheduler(object):
         self.suite_state = None
         self.command_queue = None
         self.pool = None
-        self.workers = None
+        self.proc_pool = None
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
@@ -132,7 +132,8 @@ class scheduler(object):
         self.reference_test_mode = False
         self.gen_reference_log = False
 
-        self.shutting_down = False
+        self.shutting_down_cleanly = False
+        self.shutting_down_quickly = False
 
         self.stop_task = None
         self.stop_clock_time = None
@@ -263,7 +264,9 @@ class scheduler(object):
         self.state_dumper.wireless = self.wireless
         self.pyro.connect( self.wireless, 'broadcast_receiver')
 
-        self.pool = pool( self.suite, self.config, self.wireless, self.pyro, self.log, self.run_mode )
+        self.pool = pool(
+                self.suite, self.config, self.wireless, self.pyro,
+                self.log, self.run_mode, self.proc_pool )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
@@ -494,29 +497,24 @@ class scheduler(object):
         their event handlers and poll and kill commands have finished."""
         if reason:
             self.log.info( "Stopping: " + reason )
-        self.pool.workers.shutdown( flush=False )
+        self.proc_pool.cease_job_submission()
         if kill_active:
             self.kill_active_tasks()
-        self.shutting_down = True
-        # now just wait for a normal shutdown
+        self.shutting_down_cleanly = True
 
     def command_stop_quickly( self ):
         """Cease submitting tasks then shut down without waiting for
         active tasks to finish, but do wait for current event handlers
         and job poll and kill commands to finish."""
-        self.pool.workers.shutdown( flush=False )
-        # wait on event handlers and poll-and-kill commands:
-        self.workers.shutdown( flush=True )
-        raise SchedulerStop( "Stopping by request" )
+        self.proc_pool.cease_job_submission()
+        self.shutting_down_quickly = True
 
     def command_stop_now( self ):
-        """Cease submitting tasks and shutdown without waiting for
-        active tasks or current event handlers and poll and kill
-        commands to finish."""
-        self.pool.workers.shutdown( flush=False )
-        # don't wait on event handlers or poll-and-kill-commands:
-        self.workers.shutdown( flush=False )
-        raise SchedulerStop( "Stopping by request" )
+        """Shutdown immediately without waiting for active tasks, event
+        handlers, or poll and kill commands to finish."""
+        self.proc_pool.terminate()
+        self.proc_pool.join()
+        raise SchedulerStop( "Stopping NOW" )
 
     def command_set_stop_after_tag( self, tag ):
         self.set_stop_ctime( tag )
@@ -850,8 +848,8 @@ class scheduler(object):
             self.command_queue = comqueue( self.control_commands.keys() )
             self.pyro.connect( self.command_queue, 'command-interface' )
 
-            self.workers = mp_pool()
-            task.task.workers = self.workers
+            self.proc_pool = mp_pool()
+            task.task.proc_pool = self.proc_pool
 
             self.info_interface = info_interface( self.info_commands )
             self.pyro.connect( self.info_interface, 'suite-info' )
@@ -1012,8 +1010,7 @@ class scheduler(object):
                 # user has requested a suite definition reload
                 self.reload_taskdefs()
 
-            self.workers.check_results()
-            self.pool.workers.check_results()
+            self.proc_pool.handle_results_async()
 
             if self.process_tasks():
                 if flags.debug:
@@ -1155,7 +1152,7 @@ class scheduler(object):
         self.suite_state.update( self.pool.get_tasks(), 
                 self.get_oldest_c_time(), self.get_newest_c_time(),
                 self.get_newest_c_time(True), self.paused(),
-                self.will_pause_at(), self.shutting_down,
+                self.will_pause_at(), self.shutting_down_cleanly,
                 self.will_stop_at(), self.runahead_limit,
                 self.config.ns_defn_order )
 
@@ -1242,6 +1239,7 @@ class scheduler(object):
         if reason:
             msg += ' (' + reason + ')'
         print msg
+
         if getattr(self, "log", None) is not None:
             self.log.info( msg )
             if not self.no_active_tasks():
@@ -1912,10 +1910,12 @@ class scheduler(object):
         i_asy = False
         i_fut = False
         i_cln = False
+        i_qik = False
 
-        if self.shutting_down and self.no_active_tasks():
+        if self.shutting_down_cleanly and self.no_active_tasks():
             i_cln = True
-
+        elif self.shutting_down_quickly:
+            i_qik = True
         else:
             for itask in self.pool.get_tasks():
                 if itask.is_cycling:
@@ -1943,10 +1943,13 @@ class scheduler(object):
                     if not itask.state.is_currently('succeeded'):
                         stop = False
                         break
+
         if stop:
             msg = ""
             if i_cln:
-                msg = "\n + clean shutdown - all active tasks have finished."
+                msg = "\n + clean shutdown - no active tasks left"
+            elif i_qik:
+                msg = "\n + quick shutdown"
             else:
                 if i_fut:
                     msg += "\n  + all future-triggered tasks have run as far as possible toward " + self.stop_tag
@@ -1957,10 +1960,9 @@ class scheduler(object):
 
             self.log.info( "Stopping: " + msg )
 
-            # cease submitting tasks
-            self.pool.workers.shutdown( flush=False )
-            # wait on event handlers and poll-and-kill commands:
-            self.workers.shutdown( flush=True )
+            # Wait for any remaining commands to finish.
+            self.proc_pool.close()
+            self.proc_pool.join()
             raise SchedulerStop( "Normal shutdown" )
 
 

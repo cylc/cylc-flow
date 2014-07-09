@@ -38,7 +38,7 @@ debug = False
 
 # multiprocessing or thread pool for spawned shell commands?
 MP_USE_PROCESS_POOL=True
-MP_NPROC = None # None gets default: number of cores on host
+MP_NPROC = None # None implies number of cores on host
 
 # utc mode
 utc = False

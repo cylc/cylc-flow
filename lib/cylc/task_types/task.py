@@ -34,6 +34,7 @@ import cylc.rundb
 from cylc.command_env import cv_scripting_sl
 from cylc.host_select import get_task_host
 from parsec.util import pdeepcopy, poverride
+from cylc.mp_pool import command_types
 
 cylc_mode = 'scheduler'
 poll_suffix_re = re.compile( ' at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}|unknown-time)$' ) 
@@ -109,7 +110,7 @@ class task( object ):
     is_daemon = False
     is_clock_triggered = False
 
-    workers = None
+    proc_pool = None
 
     suite_contact_env_hosts = []
     suite_contact_env = {}
@@ -406,7 +407,7 @@ class task( object ):
     def set_state_queued( self ):
         self.set_status( 'queued' )
 
-    def job_submission_result( self, result ):
+    def submission_command_callback( self, result ):
         out, err = result['OUT'], result['ERR']
         if result['EXIT'] != 0:
             self.job_submission_failed( out, err )
@@ -418,7 +419,7 @@ class task( object ):
             out, err = self.job_sub_method.filter_output( out, err )
             self.job_submission_succeeded( out, err )
 
-    def poll_result( self, result ):
+    def poll_command_callback( self, result ):
         rcode = result['EXIT']
         out   = result['OUT'].strip()
         err   = result['ERR'].strip()
@@ -430,7 +431,7 @@ class task( object ):
         # poll results emulate task messages
         self.process_incoming_message( ('NORMAL', out) )
 
-    def kill_result( self, result ):
+    def kill_command_callback( self, result ):
         rcode = result['EXIT']
         out   = result['OUT'].strip()
         err   = result['ERR'].strip()
@@ -446,6 +447,20 @@ class task( object ):
             else:
                 # should not happen
                 self.log( 'WARNING', 'job kill error? task state ' + self.state.get_status() )
+
+
+    def event_handler_callback( self, result ):
+        command = result['COMMAND']
+        rcode = result['EXIT']
+        out   = result['OUT'].strip()
+        err   = result['ERR'].strip()
+        if rcode:
+            self.log ('WARNING', 'event handler failed:\n' + command )
+            if err:
+                self.log('WARNING', err)
+        elif out:
+            self.log( 'NORMAL', out )
+
 
     def handle_event( self, event, descr=None, db_update=True, db_event=None, db_msg=None ):
         # extra args for inconsistent use between events, logging, and db updates
@@ -465,11 +480,12 @@ class task( object ):
             self.log( 'DEBUG', "Queueing " + event + " event handler(s)" )
             for handler in handlers:
                 self.log( 'DEBUG', "Queueing " + event + " event handler" )
-                command = ""
+                cmd = ""
                 for var, val in self.__class__.event_handler_env.items():
-                    command += var + '=' + val + ' '
-                command += " ".join( [handler, "'" + event + "'", self.suite_name, self.id, "'" + descr + "'"] )
-                self.__class__.workers.put( command )
+                    cmd += var + '=' + val + ' '
+                cmd += " ".join( [handler, "'" + event + "'", self.suite_name, self.id, "'" + descr + "'"] )
+                cmd_spec = ( command_types.EVENT_HANDLER, cmd )
+                self.__class__.proc_pool.put_command( cmd_spec, self.event_handler_callback )
 
     def job_submission_failed( self, out=None, err=None ):
         if out:
@@ -517,14 +533,10 @@ class task( object ):
             if not self.outputs.is_completed( outp ):
                 flags.pflag = True
                 self.outputs.set_completed( outp )
-                # TODO - THIS SHOULD BE RECORDED:
-                #self.record_db_event(event="output completed", message="submitted")
             else:
-                # This output has already been reported complete.
                 self.log( "WARNING", "already submitted" )
 
-        # flag task processing loop to allow submitted tasks to spawn
-        # even if nothing else is happening
+        # allow submitted tasks to spawn even if nothing else is happening
         flags.pflag = True
 
         # TODO - should we use the real event time from the message here?
@@ -1210,7 +1222,8 @@ class task( object ):
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
 
         self.log( 'NORMAL', 'polling now' )
-        self.__class__.workers.put( cmd, self.poll_result )
+        cmd_spec = ( command_types.POLL_OR_KILL, cmd )
+        self.__class__.proc_pool.put_command( cmd_spec, self.poll_command_callback )
 
     def kill( self ):
         if self.__class__.run_mode == 'simulation':
@@ -1250,5 +1263,6 @@ class task( object ):
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
         # TODO - just pass self.message_queue.put rather than whole self?
         self.log( 'CRITICAL', "Killing job" )
-        self.__class__.workers.put( cmd, self.kill_result )
+        cmd_spec = ( command_types.POLL_OR_KILL, cmd )
+        self.__class__.proc_pool.put_command( cmd_spec, self.kill_command_callback )
 

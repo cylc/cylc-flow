@@ -18,13 +18,13 @@
 
 import sys
 from task_types import task
-from mp_pool import mp_pool
 import flags
 from Pyro.errors import NamingError, ProtocolError
 from cycle_time import ctime_gt
+from mp_pool import command_types
 
 class pool(object):
-    def __init__( self, suite, config, wireless, pyro, log, run_mode ):
+    def __init__( self, suite, config, wireless, pyro, log, run_mode, proc_pool ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -32,7 +32,7 @@ class pool(object):
         self.config = config
         self.assign()
         self.wireless = wireless
-        self.workers = mp_pool() 
+        self.proc_pool = proc_pool
 
     def assign( self, reload=False ):
         # self.myq[taskname] = 'foo'
@@ -189,21 +189,21 @@ class pool(object):
         self.log.debug( '%d task(s) ready' % len(readytogo) )
 
         for itask in readytogo:
+            itask.set_state_ready()
             if self.run_mode == 'simulation':
                 itask.job_submission_succeeded( '','' )
                 continue
-            if self.workers.finished:
-                continue
             try:
-                command = itask.get_command( overrides=self.wireless.get(itask.id))
+                cmd = itask.get_command( overrides=self.wireless.get(itask.id))
             except Exception, e:
                 # TODO - is this the right response?
                 itask.job_submission_failed( err=str(e) )
             else:
-                if self.workers.put( command, itask.job_submission_result,\
-                        itask.job_sub_method_name=='background', True ):
-                    # TODO - set_state_ready() should increment sub number etc.
-                    itask.set_state_ready()
+                capture_first_line = itask.job_sub_method_name=='background'
+                cmd_spec = ( command_types.JOB_SUBMISSION, cmd )
+                self.proc_pool.put_command(
+                        cmd_spec, itask.submission_command_callback,
+                        capture_first_line)
 
         return readytogo
 
