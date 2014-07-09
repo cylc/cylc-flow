@@ -46,6 +46,7 @@ own cycle point.
 
     def get( self, point ):
         # Replace [T] with actual cycle point
+        new_point = point
         if self.offset:
             new_point = point + self.offset
         return re.sub( '\[\s*T.*?\]', str(new_point), self.msg )
