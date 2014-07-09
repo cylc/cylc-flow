@@ -15,8 +15,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test pre-initial cycling works under warm starts with a new initial cycle 
-#C: time that is later than the suite.rc initial cycle time.
+# Test pre-initial cycling works under warm starts with a new initial cycle 
+# time that is later than the suite.rc initial cycle time.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test intercycle dependencies, local time.
+# Test intercycle dependencies, local time.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

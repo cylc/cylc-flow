@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test cylc-get-site-config
+# Test cylc-get-site-config
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 9
