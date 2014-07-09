@@ -45,18 +45,6 @@ SPEC = {
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
-        'job submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
-            },
-        'event handler submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
-            },
-        'poll and kill command submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
-            },
         'lockserver' : {
             'enable'                          : vdr( vtype='boolean', default=False ),
             'simultaneous instances'          : vdr( vtype='boolean', default=False ),
