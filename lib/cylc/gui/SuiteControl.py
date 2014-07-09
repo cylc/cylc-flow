@@ -833,8 +833,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         elif stopat_rb.get_active():
             stopat = True
-            stoppoint_string = stoppoint_entry.get_text()
-            if stoppoint_string == '':
+            stop_point_string = stoppoint_entry.get_text()
+            if stop_point_string == '':
                 warning_dialog(
                     "ERROR: No stop CYCLE_POINT entered", self.window
                 ).warn()
@@ -889,7 +889,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stop:
                 result = god.put( 'stop cleanly', killfirst )
             elif stopat:
-                result = god.put( 'stop after point', stoppoint_string )
+                result = god.put( 'stop after point', stop_point_string )
             elif stopnow:
                 result = god.put( 'stop now' )
             elif stopquick:
@@ -2103,7 +2103,7 @@ shown here in the state they were in at the time of triggering.''' )
         match = entry_match.get_text()
         point_string = entry_point_string.get_text()
         is_family = fam_cb.get_active()
-        stoppoint_string = entry_stoppoint.get_text()
+        stop_point_string = entry_stoppoint.get_text()
 
         if match == '' or point_string == '':
             warning_dialog( "Enter task or family name MATCH expression", self.window ).warn()
@@ -2112,8 +2112,8 @@ shown here in the state they were in at the time of triggering.''' )
         window.destroy()
 
         stop = None
-        if stoppoint_string != '':
-            stop = stoppoint_string
+        if stop_point_string != '':
+            stop = stop_point_string
 
         try:
             result = self.get_pyro( 'command-interface' ).put(

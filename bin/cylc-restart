@@ -331,7 +331,7 @@ where they got to while the suite was down."""
         cycleinfo = {}
         for point_string in task_point_strings:
             res = self.db.get_restart_info(point_string)
-            cycleinfo[cycle] = res
+            cycleinfo[point_string] = res
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
         #
         # The state of task prerequisites (satisfied or not) and outputs
@@ -376,7 +376,7 @@ where they got to while the suite was down."""
                 
                 itask = self.config.get_task_proxy(
                     name, get_point(point_string), state,
-                    stoppoint_string=None, startup=False,
+                    stop_point=None, startup=False,
                     submit_num=submit_num, exists=exists
                 )
             except TaskNotDefinedError, x:

@@ -855,7 +855,7 @@ class pool(object):
             iname, ipoint_string = TaskID.split(itask.id)
             # TODO ISO - check the following works
             if (itask.name == name and
-                    get_point(point_string) == get_point(ipoint_string):
+                    get_point(point_string) == get_point(ipoint_string)):
                 if itask.state.is_currently('succeeded'):
                     self.log.info( "Stop task " + id + " finished" )
                     res = True

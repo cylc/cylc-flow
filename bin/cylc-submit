@@ -220,7 +220,10 @@ except TaskNotDefinedError, x:
     print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
     try:
         # try to get an ungraphed task of the given name
-        task_proxy = config.get_task_proxy_raw( task_name, point, 'waiting', stoptag=None, startup=True, submit_num=0, exists=False )
+        task_proxy = config.get_task_proxy_raw(
+            task_name, point, 'waiting', stop_point=None, startup=True,
+            submit_num=0, exists=False
+        )
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
