@@ -461,7 +461,6 @@ class task( object ):
         elif out:
             self.log( 'NORMAL', out )
 
-
     def handle_event( self, event, descr=None, db_update=True, db_event=None, db_msg=None ):
         # extra args for inconsistent use between events, logging, and db updates
         db_event = db_event or event

@@ -47,7 +47,10 @@ def execute_shell_command( command_spec, capture_flag ):
     """Called by pool workers to execute a shell command and optionally
     capture its output and exit status.
     """
+
     command_type, command_string = command_spec
+
+    print current_process().name + ": " + command_type
 
     command_result = {
             'COMMAND' : command_string,
@@ -126,13 +129,16 @@ class mp_pool( object ):
     def cease_job_submission( self ):
         """Tell workers not to execute any more job submission commands."""
         CEASE_JOB_SUBMISSION.value = TRUE
+        print "CEASE"
 
     def close( self ):
         """Close the process pool to new commands."""
+        print "CLOSE"
         self.pool.close()
 
     def terminate( self ):
         """Terminate pool workers immediately."""
+        print "TERMINATE"
         self.pool.terminate()
 
     def join( self ):
@@ -166,6 +172,7 @@ if __name__ == '__main__':
     time.sleep(3)
     pool.cease_job_submission()
     pool.close()
+    #pool.terminate()
     pool.handle_results_async()
     print 'sleeping'
     time.sleep(3)

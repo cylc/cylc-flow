@@ -58,6 +58,7 @@ import subprocess
 from mp_pool import mp_pool
 from exceptions import SchedulerStop, SchedulerError
 from wallclock import now
+from multiprocessing.pool import CLOSE
 
 
 class result:
@@ -134,6 +135,7 @@ class scheduler(object):
 
         self.shutting_down_cleanly = False
         self.shutting_down_quickly = False
+        self.shutting_down_now = False
 
         self.stop_task = None
         self.stop_clock_time = None
@@ -497,9 +499,10 @@ class scheduler(object):
         their event handlers and poll and kill commands have finished."""
         if reason:
             self.log.info( "Stopping: " + reason )
-        self.proc_pool.cease_job_submission()
         if kill_active:
             self.kill_active_tasks()
+        self.proc_pool.cease_job_submission()
+        self.proc_pool.close()
         self.shutting_down_cleanly = True
 
     def command_stop_quickly( self ):
@@ -507,11 +510,12 @@ class scheduler(object):
         active tasks to finish, but do wait for current event handlers
         and job poll and kill commands to finish."""
         self.proc_pool.cease_job_submission()
+        self.proc_pool.close()
         self.shutting_down_quickly = True
 
     def command_stop_now( self ):
-        """Shutdown immediately without waiting for active tasks, event
-        handlers, or poll and kill commands to finish."""
+        """Shutdown immediately."""
+        print "NOW"
         self.proc_pool.terminate()
         self.proc_pool.join()
         raise SchedulerStop( "Stopping NOW" )
@@ -1004,6 +1008,15 @@ class scheduler(object):
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
+            if self.shutting_down_now:
+                self.process_command_queue()
+                if self.proc_pool.pool._state == CLOSE:
+                    # bide our time to allow use of terminate command
+                    time.sleep(1)
+                    continue
+                else:
+                    raise SchedulerStop("Finished")
+
             t0 = time.time()
 
             if self.reconfiguring:
@@ -1094,7 +1107,6 @@ class scheduler(object):
                 else:
                     raise SchedulerError( 'An unexpected error occurred while writing to the database' )
 
-            # process queued commands
             self.process_command_queue()
 
             # Hold waiting tasks if beyond stop cycle etc:
@@ -1958,12 +1970,12 @@ class scheduler(object):
                 if i_asy:
                     msg += "\n  + all non-cycling tasks have succeeded"
 
-            self.log.info( "Stopping: " + msg )
+            msg = "Stopping: " + msg
+            self.log.info( msg )
+            print msg
 
-            # Wait for any remaining commands to finish.
             self.proc_pool.close()
-            self.proc_pool.join()
-            raise SchedulerStop( "Normal shutdown" )
+            self.shutting_down_now = True
 
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
