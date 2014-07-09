@@ -37,7 +37,7 @@ def daemonize( suite, port ):
             print " + Name:", suite
             print " + PID: ", pid
             print " + Port:", port
-            print " + Logs: %s/(log|out|err)" % os.path.dirname( sout.get_path() )
+            print " + Logs: %s/{log,out,err}" % os.path.dirname( sout.get_path() )
             print
             print "To see if this suite is still running:"
             print " * cylc scan"
