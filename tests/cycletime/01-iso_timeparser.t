@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Run the time_parser.py tests
+# Run the time_parser.py tests
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 1

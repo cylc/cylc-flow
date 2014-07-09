@@ -15,9 +15,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a simple suite using loadleveler with a submit-failed task
-#C:     This test requires a [directive-tests]loadleveler-host entry in 
-#C:     site/user config in order to run, otherwise it will be bypassed
+# Test restarting a simple suite using loadleveler with a submit-failed task
+#     This test requires a [directive-tests]loadleveler-host entry in 
+#     site/user config in order to run, otherwise it will be bypassed
 #-------------------------------------------------------------------------------
 TEST_BASE_PATH=$(cd $(dirname $0) && pwd)/05-submit-failed.t
 . $(dirname $0)/test_header

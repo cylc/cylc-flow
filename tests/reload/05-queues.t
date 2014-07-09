@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test changing queue size via reload doesn't break anything
+# Test changing queue size via reload doesn't break anything
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
