@@ -444,12 +444,14 @@ class pool(object):
                     if itask.state.is_currently( 'retrying' ):
                         new_task.retry_delay = itask.retry_delay
                         new_task.retry_delays = itask.retry_delays
-                        new_task.retry_delay_timer_start = itask.retry_delay_timer_start
+                        new_task.retry_delay_timer_timeout = (
+                            itask.retry_delay_timer_timeout)
                     elif itask.state.is_currently( 'submit-retrying' ):
                         new_task.sub_retry_delay = itask.sub_retry_delay
                         new_task.sub_retry_delays = itask.sub_retry_delays
                         new_task.sub_retry_delays_orig = itask.sub_retry_delays_orig
-                        new_task.sub_retry_delay_timer_start = itask.sub_retry_delay_timer_start
+                        new_task.sub_retry_delay_timer_timeout = (
+                            itask.sub_retry_delay_timer_timeout)
 
                     new_task.try_number = itask.try_number
                     new_task.sub_try_number = itask.sub_try_number

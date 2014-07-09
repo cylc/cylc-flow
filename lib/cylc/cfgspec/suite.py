@@ -19,15 +19,22 @@
 import re
 
 from parsec.validate import validator as vdr
-from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
+from parsec.validate import (
+    coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
+    IllegalValueError
+)
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
 from isodatetime.dumpers import TimePointDumper
-from isodatetime.data import TimePoint
-from isodatetime.parsers import TimePointParser
+from isodatetime.data import TimePoint, SECONDS_IN_DAY
+from isodatetime.parsers import TimePointParser, TimeIntervalParser
+
 
 "Define all legal items and values for cylc suite definition files."
+
+interval_parser = TimeIntervalParser()
+
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
@@ -101,10 +108,46 @@ def _coerce_cycletime_time_zone( value, keys, args ):
     return value
 
 
+def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
+    """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
+    value = _strip_and_unquote( keys, value )
+    try:
+        return float(value) * back_comp_unit_factor
+    except (TypeError, ValueError):
+        pass
+    try:
+        interval = interval_parser.parse(value)
+    except ValueError:
+        raise IllegalValueError("ISO 8601 interval", keys, value)
+    days, seconds = interval.get_days_and_seconds()
+    seconds += days * SECONDS_IN_DAY
+    return seconds
+
+
+def _coerce_interval_list( value, keys, args, back_comp_unit_factor=1 ):
+    """Coerce a list of intervals (or numbers: back-comp) into seconds."""
+    values_list = _strip_and_unquote_list( keys, value )
+    type_converter = (
+        lambda v: _coerce_interval(
+            v, keys, args,
+            back_comp_unit_factor=back_comp_unit_factor
+        )
+    )
+    seconds_list = _expand_list( values_list, keys, type_converter, True )
+    return seconds_list
+
+
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
-
+coercers['interval'] = _coerce_interval
+coercers['interval_minutes'] = lambda *a: _coerce_interval(
+    *a, back_comp_unit_factor=60)
+coercers['interval_seconds'] = _coerce_interval
+coercers['interval_list'] = _coerce_interval_list
+coercers['interval_minutes_list'] = lambda *a: _coerce_interval_list(
+    *a, back_comp_unit_factor=60)
+coercers['interval_seconds_list'] = _coerce_interval_list
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
@@ -120,11 +163,11 @@ SPEC = {
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
         'job submission' : {
             'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
+            'delay between batches'           : vdr( vtype='interval_seconds', vmin=0, default=0 ),
             },
         'event handler submission' : {
             'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
+            'delay between batches'           : vdr( vtype='interval_seconds', vmin=0, default=0  ),
             },
         'poll and kill command submission' : {
             'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
@@ -141,7 +184,7 @@ SPEC = {
             'startup handler'                 : vdr( vtype='string_list', default=[] ),
             'timeout handler'                 : vdr( vtype='string_list', default=[] ),
             'shutdown handler'                : vdr( vtype='string_list', default=[] ),
-            'timeout'                         : vdr( vtype='float'  ),
+            'timeout'                         : vdr( vtype='interval_minutes'  ),
             'reset timer'                     : vdr( vtype='boolean', default=True ),
             'abort if startup handler fails'  : vdr( vtype='boolean', default=False ),
             'abort if shutdown handler fails' : vdr( vtype='boolean', default=False ),
@@ -159,9 +202,9 @@ SPEC = {
             'required run mode'               : vdr( vtype='string', options=[ 'live','simulation','dummy'] ),
             'allow task failures'             : vdr( vtype='boolean', default=False ),
             'expected task failures'          : vdr( vtype='string_list', default=[] ),
-            'live mode suite timeout'         : vdr( vtype='float', default=1.0 ),
-            'dummy mode suite timeout'        : vdr( vtype='float', default=1.0 ),
-            'simulation mode suite timeout'   : vdr( vtype='float', default=1.0 ),
+            'live mode suite timeout'         : vdr( vtype='interval_minutes', default=60 ),
+            'dummy mode suite timeout'        : vdr( vtype='interval_minutes', default=60 ),
+            'simulation mode suite timeout'   : vdr( vtype='interval_minutes', default=60 ),
             },
         },
     'scheduling' : {
@@ -204,19 +247,19 @@ SPEC = {
             'pre-command scripting'           : vdr( vtype='string' ),
             'command scripting'               : vdr( vtype='string', default='echo Default command scripting; sleep $(cylc rnd 1 16)'),
             'post-command scripting'          : vdr( vtype='string' ),
-            'retry delays'                    : vdr( vtype='float_list', default=[] ),
+            'retry delays'                    : vdr( vtype='interval_minutes_list', default=[] ),
             'manual completion'               : vdr( vtype='boolean', default=False ),
             'extra log files'                 : vdr( vtype='string_list', default=[] ),
             'enable resurrection'             : vdr( vtype='boolean', default=False ),
             'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
-            'submission polling intervals'    : vdr( vtype='float_list', default=[] ),
-            'execution polling intervals'     : vdr( vtype='float_list', default=[] ),
+            'submission polling intervals'    : vdr( vtype='interval_minutes_list', default=[] ),
+            'execution polling intervals'     : vdr( vtype='interval_minutes_list', default=[] ),
             'environment filter' : {
                 'include'                     : vdr( vtype='string_list' ),
                 'exclude'                     : vdr( vtype='string_list' ),
             },
             'simulation mode' :  {
-                'run time range'              : vdr( vtype='integer_list', default=[1,16]),
+                'run time range'              : vdr( vtype='interval_seconds_list', default=[1, 16]),
                 'simulate failure'            : vdr( vtype='boolean', default=False ),
                 'disable task event hooks'    : vdr( vtype='boolean', default=True ),
                 'disable retries'             : vdr( vtype='boolean', default=True ),
@@ -232,7 +275,7 @@ SPEC = {
                 'method'                      : vdr( vtype='string', default='background' ),
                 'command template'            : vdr( vtype='string' ),
                 'shell'                       : vdr( vtype='string',  default='/bin/bash' ),
-                'retry delays'                : vdr( vtype='float_list', default=[] ),
+                'retry delays'                : vdr( vtype='interval_minutes_list', default=[] ),
                 },
             'remote' : {
                 'host'                        : vdr( vtype='string' ),
@@ -249,15 +292,15 @@ SPEC = {
                 'retry handler'               : vdr( vtype='string_list', default=[] ),
                 'submission retry handler'    : vdr( vtype='string_list', default=[] ),
                 'submission timeout handler'  : vdr( vtype='string_list', default=[] ),
-                'submission timeout'          : vdr( vtype='float' ),
+                'submission timeout'          : vdr( vtype='interval_minutes' ),
                 'execution timeout handler'   : vdr( vtype='string_list', default=[] ),
-                'execution timeout'           : vdr( vtype='float'),
+                'execution timeout'           : vdr( vtype='interval_minutes'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
                 },
             'suite state polling' : {
                 'user'                        : vdr( vtype='string' ),
                 'host'                        : vdr( vtype='string' ),
-                'interval'                    : vdr( vtype='integer' ),
+                'interval'                    : vdr( vtype='interval_seconds' ),
                 'max-polls'                   : vdr( vtype='integer' ),
                 'run-dir'                     : vdr( vtype='string' ),
                 'verbose mode'                : vdr( vtype='boolean' ),
@@ -328,8 +371,10 @@ def upg( cfg, descr ):
 class sconfig( config ):
     pass
 
+
 suitecfg = None
 cfpath = None
+
 
 def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=False ):
     global suitecfg, cfpath
@@ -339,4 +384,3 @@ def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=Fals
         suitecfg = sconfig( SPEC, upg, tvars=tvars, tvars_file=tvars_file, write_proc=write_proc )
         suitecfg.loadcfg( fpath, "suite definition", strict=True )
         return suitecfg
-

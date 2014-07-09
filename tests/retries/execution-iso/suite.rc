@@ -1,0 +1,12 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+[scheduling]
+    [[dependencies]]
+        graph = "foo"
+[runtime]
+    [[foo]]
+        retry delays = 3*PT6S
+        command scripting = "((CYLC_TASK_TRY_NUMBER >= 4))"
+
