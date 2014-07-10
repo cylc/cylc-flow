@@ -90,7 +90,16 @@ def main(name, start):
         server.shutdown()
         sys.exit(1)
 
-    except Exception, x:
+    except KeyboardInterrupt as x:
+        import traceback
+        try:
+            server.shutdown(str(x))
+        except Exception as y:
+            # In case of exceptions in the shutdown method itself.
+            traceback.print_exc(y)
+            sys.exit(1)
+
+    except (KeyboardInterrupt,Exception) as x:
         import traceback
         traceback.print_exc(x)
         print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"

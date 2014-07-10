@@ -20,7 +20,7 @@ import sys
 import time
 import subprocess
 from multiprocessing import Value, current_process
-
+from multiprocessing.pool import CLOSE
 import flags
 if flags.MP_USE_PROCESS_POOL:
     from multiprocessing.pool import Pool
@@ -35,15 +35,15 @@ class Enum(set):
             return name
         raise AttributeError
 
-output_capture = Enum( ['ALL_LINES', 'FIRST_LINE', 'NONE'] )
-command_types = Enum( ['JOB_SUBMISSION', 'POLL_OR_KILL', 'EVENT_HANDLER' ] )
+output_capture = Enum(['ALL_LINES', 'FIRST_LINE', 'NONE'])
+command_types = Enum(['JOB_SUBMISSION', 'POLL_OR_KILL', 'EVENT_HANDLER' ])
 
 # Shared memory flag to ignore already-queued job submission commands:
 TRUE=1
 FALSE=0
-CEASE_JOB_SUBMISSION = Value('i',FALSE)
+STOP_JOB_SUBMISSION = Value('i',FALSE)
 
-def execute_shell_command( command_spec, capture_flag ):
+def execute_shell_command(command_spec, capture_flag):
     """Called by pool workers to execute a shell command and optionally
     capture its output and exit status.
     """
@@ -58,7 +58,7 @@ def execute_shell_command( command_spec, capture_flag ):
             'OUT': None,
             'ERR': None }
 
-    if CEASE_JOB_SUBMISSION.value == TRUE and \
+    if STOP_JOB_SUBMISSION.value == TRUE and \
             command_type == command_types.JOB_SUBMISSION:
         if flags.debug:
             print >> sys.stderr, '(process pool) ignoring:', command_string
@@ -70,7 +70,7 @@ def execute_shell_command( command_spec, capture_flag ):
         out_err = subprocess.PIPE
 
     try:
-        p = subprocess.Popen( command_string, stdout=out_err, stderr=out_err, shell=True )
+        p = subprocess.Popen(command_string, stdout=out_err, stderr=out_err, shell=True)
     except Exception, e:
         command_result[ 'EXIT' ] = 1
         command_result[ 'ERR'  ] = str(e)
@@ -86,16 +86,16 @@ def execute_shell_command( command_spec, capture_flag ):
     return command_result
 
 
-class mp_pool( object ):
+class mp_pool(object):
     """Uses multiprocessing.Pool to execute shell commands and
     optionally capture command exit status and output.
     """
 
-    def __init__( self, nproc=flags.MP_NPROC ):
+    def __init__(self, nproc=flags.MP_NPROC):
         self.pool = Pool(processes=nproc)
         self.unprocessed_results = []
 
-    def put_command( self, command_spec, callback_func=None, capture_first_line=False ):
+    def put_command(self, command_spec, callback_func=None, capture_first_line=False):
         """Queue a command, and capture results if a callback is given."""
 
         # If a callback is given capture command output, else don't.
@@ -113,9 +113,9 @@ class mp_pool( object ):
             print >> sys.stderr, "WARNING, ignoring command (process pool closed):", command_spec[1]
         else:
             if callback_func:
-                self.unprocessed_results.append( (result,callback_func) )
+                self.unprocessed_results.append((result,callback_func))
 
-    def handle_results_async( self ):
+    def handle_results_async(self):
         """Check for command results and pass them to the callback if given."""
         still_to_do = []
         for item in self.unprocessed_results:
@@ -126,22 +126,22 @@ class mp_pool( object ):
                 still_to_do.append((res,callback))
         self.unprocessed_results = still_to_do
 
-    def cease_job_submission( self ):
-        """Tell workers not to execute any more job submission commands."""
-        CEASE_JOB_SUBMISSION.value = TRUE
-        print "CEASE"
+    def stop_job_submission(self):
+        """Tell workers not to execute further job submission commands."""
+        STOP_JOB_SUBMISSION.value = TRUE
 
-    def close( self ):
+    def close(self):
         """Close the process pool to new commands."""
-        print "CLOSE"
         self.pool.close()
 
-    def terminate( self ):
+    def is_closed(self):
+        return self.pool._state == CLOSE
+
+    def terminate(self):
         """Terminate pool workers immediately."""
-        print "TERMINATE"
         self.pool.terminate()
 
-    def join( self ):
+    def join(self):
         self.pool.join()
 
 
@@ -150,27 +150,27 @@ if __name__ == '__main__':
 
     flags.debug = True
 
-    def print_result( result ):
+    def print_result(result):
         if result['OUT'] is None:
             return
         print 'RESULT:', result['OUT'].strip()
 
     pool = mp_pool(3)
 
-    for i in range( 0,3 ):
+    for i in range(0,3):
         com = "sleep 5 && echo JOB " + str(i)
-        pool.put_command( (command_types.JOB_SUBMISSION,com), print_result )
+        pool.put_command((command_types.JOB_SUBMISSION,com), print_result)
         com = "sleep 5 && echo POLL " + str(i)
-        pool.put_command( (command_types.POLL_OR_KILL,com), print_result )
+        pool.put_command((command_types.POLL_OR_KILL,com), print_result)
         com = "sleep 5 && echo HANDLER " + str(i)
-        pool.put_command( (command_types.EVENT_HANDLER,com), print_result )
+        pool.put_command((command_types.EVENT_HANDLER,com), print_result)
 
     print 'sleeping'
     time.sleep(3)
     pool.handle_results_async()
     print 'sleeping'
     time.sleep(3)
-    pool.cease_job_submission()
+    pool.stop_job_submission()
     pool.close()
     #pool.terminate()
     pool.handle_results_async()

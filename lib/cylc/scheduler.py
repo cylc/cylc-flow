@@ -52,8 +52,6 @@ import cylc.rundb
 from Queue import Queue, Empty
 import subprocess
 from mp_pool import mp_pool
-# TODO - put this in an mp_pool function:
-from multiprocessing.pool import CLOSE
 from exceptions import SchedulerStop, SchedulerError
 from wallclock import (
     now, get_current_time_string, get_seconds_as_interval_string)
@@ -122,9 +120,9 @@ class scheduler(object):
         self.reference_test_mode = False
         self.gen_reference_log = False
 
-        self.shutting_down_cleanly = False
-        self.shutting_down_quickly = False
-        self.shutting_down_now = False
+        self.shut_down_cleanly = False
+        self.shut_down_quickly = False
+        self.shut_down_now = False
 
         # TODO - stop task should be held by the task pool.
         self.stop_task = None
@@ -427,37 +425,28 @@ class scheduler(object):
             ids.append( id )
         return self.pool.get_task_requisites( ids )
 
-    def command_set_stop_cleanly( self, kill_active=False, reason=None ):
-        """Cease submitting tasks then shut down after active tasks and
-        their event handlers and poll and kill commands have finished."""
-        if reason:
-            self.log.info( "Stopping: " + reason )
-        if kill_active:
+    def command_set_stop_cleanly(self, kill_active_tasks=False):
+        """Stop job submission and set the flag for clean shutdown."""
+        if kill_active_tasks:
             self.pool.kill_active_tasks()
-        self.proc_pool.cease_job_submission()
+        self.proc_pool.stop_job_submission()
         self.proc_pool.close()
-        self.shutting_down_cleanly = True
+        self.shut_down_cleanly = True
 
-    def command_stop_quickly( self ):
-        """Cease submitting tasks then shut down without waiting for
-        active tasks to finish, but do wait for current event handlers
-        and job poll and kill commands to finish."""
-        self.proc_pool.cease_job_submission()
+    def command_stop_quickly(self):
+        """Stop job submission and set the flag for quick shutdown."""
+        self.proc_pool.stop_job_submission()
         self.proc_pool.close()
-        self.shutting_down_quickly = True
+        self.shut_down_quickly = True
 
-
-    def command_stop_now( self ):
+    def command_stop_now(self):
         """Shutdown immediately."""
-        print "NOW"
         self.proc_pool.terminate()
         self.proc_pool.join()
-        raise SchedulerStop( "Stopping NOW" )
-
+        raise SchedulerStop("Stopping NOW")
 
     def command_set_stop_after_tag( self, tag ):
         self.set_stop_ctime( tag )
-
 
     def command_set_stop_after_clock_time( self, arg ):
         # format: ISO 8601 compatible or YYYY/MM/DD-HH:mm (backwards comp.)
@@ -890,10 +879,11 @@ class scheduler(object):
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
-            if self.shutting_down_now:
-                self.process_command_queue()
-                if self.proc_pool.pool._state == CLOSE:
+            if self.shut_down_now:
+                if not self.proc_pool.is_closed():
                     # bide our time to allow use of terminate command
+                    print '.',
+                    self.process_command_queue()
                     time.sleep(1)
                     continue
                 else:
@@ -962,11 +952,15 @@ class scheduler(object):
             if self.run_mode != 'simulation':
                 self.pool.check_task_timers()
 
-            if (self.check_stop_clock() or
-                    self.check_stop_task() or
+            if (self.stop_clock_done() or self.stop_task_done()):
+                # This flag can also be set by manual command.
+                self.shut_down_cleanly = True
+
+            if ((self.shut_down_cleanly and self.pool.no_active_tasks()) or 
+                    self.shut_down_quickly or
                     self.pool.check_stop()):
                 self.proc_pool.close()
-                self.shutting_down_now = True
+                self.shut_down_now = True
 
             if self.options.profile_mode:
                 t1 = time.time()
@@ -985,18 +979,18 @@ class scheduler(object):
                 self.pool.get_tasks(), 
                 self.pool.get_min_ctime(), self.pool.get_max_ctime(),
                 self.paused(),
-                self.will_pause_at(), self.shutting_down_cleanly,
+                self.will_pause_at(),
+                (self.shut_down_cleanly or self.shut_down_quickly),
                 self.will_stop_at(), self.pool.runahead_limit,
                 self.config.ns_defn_order)
 
-    def process_resolved( self, tasks ):
+    def process_resolved(self, tasks):
         # process resolved dependencies (what actually triggers off what
         # at run time). Note 'triggered off' means 'prerequisites
         # satisfied by', but necessarily 'started running' too.
         for itask in tasks:
             if self.config.cfg['cylc']['log resolved dependencies']:
                 itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
-
 
     def check_suite_timer( self ):
         if self.already_timed_out:
@@ -1078,6 +1072,11 @@ class scheduler(object):
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
 
+        if self.proc_pool:
+            if not self.proc_pool.is_closed():
+                # e.g. KeyboardInterrupt
+                self.proc_pool.terminate()
+
         if self.pool:
             self.pool.shutdown()
             if self.state_dumper:
@@ -1148,7 +1147,7 @@ class scheduler(object):
         else:
             self.log.warning("Requested stop task name does not exist: " + name)
 
-    def check_stop_task(self):
+    def stop_task_done(self):
         """Return True if stop task has succeeded."""
         id = self.stop_task
         if (id is None or not self.task_succeeded(id)):
@@ -1278,7 +1277,7 @@ class scheduler(object):
             outlist.append( name )
         return outlist
 
-    def check_stop_clock(self):
+    def stop_clock_done(self):
         if (self.stop_clock_time is not None and
                 time.time() > self.stop_clock_time):
             time_point = (

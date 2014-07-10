@@ -789,50 +789,27 @@ class pool(object):
 
         i_cyc = False
         i_fut = False
-        i_cln = False
-        i_qik = False
 
-        if self.shutting_down_cleanly and self.no_active_tasks():
-            i_cln = True
-        elif self.shutting_down_quickly:
-            i_qik = True
-        else:
-            for itask in self.get_tasks( all=True ):
-                i_cyc = True
-                # Don't stop if a cycling task has not passed the stop cycle
-                # (note finite recurrence tasks disappear once finished).
-                if self.stop_point:
-                    if itask.c_time <= self.stop_point:
-                        if itask.state.is_currently('succeeded') and itask.has_spawned():
-                            # ignore spawned succeeded tasks - their successors matter
-                            pass
-                        elif itask.id in self.held_future_tasks:
-                            # unless held because a future trigger reaches beyond the stop cycle
-                            i_fut = True
-                            pass
-                        else:
-                            stop = False
-                            break
-                else:
-                    # don't stop if there are cycling tasks and no stop cycle set
-                    stop = False
-                    break
-        if stop:
-            msg = ""
-            if i_cln:
-                msg = "\n + clean shutdown - no active tasks left"
-            elif i_qik:
-                msg = "\n + quick shutdown"
+        for itask in self.get_tasks( all=True ):
+            i_cyc = True
+            # Don't stop if a cycling task has not passed the stop cycle
+            # (note finite recurrence tasks disappear once finished).
+            if self.stop_point:
+                if itask.c_time <= self.stop_point:
+                    if itask.state.is_currently('succeeded') and itask.has_spawned():
+                        # ignore spawned succeeded tasks - their successors matter
+                        pass
+                    elif itask.id in self.held_future_tasks:
+                        # unless held because a future trigger reaches beyond the stop cycle
+                        i_fut = True
+                        pass
+                    else:
+                        stop = False
+                        break
             else:
-                if i_fut:
-                    msg += "\n  + all future-triggered tasks have run as far as possible toward " + self.stop_tag
-                if i_cyc:
-                    msg += "\n  + all cycling tasks have spawned past the final cycle " + self.stop_tag
-
-            msg = "Stopping: " + msg
-            self.log.info( msg )
-            print msg
-
+                # don't stop if there are cycling tasks and no stop cycle set
+                stop = False
+                break
         return stop
 
 
@@ -849,8 +826,6 @@ class pool(object):
     def shutdown( self ):
         if not self.no_active_tasks():
             self.log.warning( "some active tasks will be orphaned" )
-        self.worker.quit = True # (should be done already)
-        self.worker.join()
         self.pyro.disconnect( self.wireless )
         for itask in self.get_tasks():
             if itask.message_queue:
