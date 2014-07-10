@@ -27,7 +27,7 @@ from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
 from isodatetime.dumpers import TimePointDumper
-from isodatetime.data import TimePoint, SECONDS_IN_DAY
+from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 
 
@@ -120,7 +120,7 @@ def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
     days, seconds = interval.get_days_and_seconds()
-    seconds += days * SECONDS_IN_DAY
+    seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds
 
 
