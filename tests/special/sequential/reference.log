@@ -10,30 +10,30 @@
 2014/01/07 16:58:20 INFO - Thread-4 start (Job Submission)
 2014/01/07 16:58:20 INFO - Cold Start 2010010100
 2014/01/07 16:58:20 DEBUG - [foo.2010010100] -task proxy added to the pool
-2014/01/07 16:58:20 DEBUG - [monitor.1] -task proxy added to the pool
+2014/01/07 16:58:20 DEBUG - [monitor.2010010100] -task proxy added to the pool
 2014/01/07 16:58:20 DEBUG - BEGIN TASK PROCESSING
-2014/01/07 16:58:20 DEBUG - [monitor.1] -(setting:queued)
+2014/01/07 16:58:20 DEBUG - [monitor.2010010100] -(setting:queued)
 2014/01/07 16:58:20 DEBUG - 1 task(s) ready
-2014/01/07 16:58:20 DEBUG - [monitor.1] -(setting:ready)
-2014/01/07 16:58:20 INFO - [monitor.1] -triggered off []
+2014/01/07 16:58:20 DEBUG - [monitor.2010010100] -(setting:ready)
+2014/01/07 16:58:20 INFO - [monitor.2010010100] -triggered off []
 2014/01/07 16:58:20 DEBUG - END TASK PROCESSING (took 0.011029 sec)
 2014/01/07 16:58:21 DEBUG - Job Submission batch 1/1 (1 members):
-2014/01/07 16:58:21 INFO - [monitor.1] -(current:ready)> monitor.1 submitting now
+2014/01/07 16:58:21 INFO - [monitor.2010010100] -(current:ready)> monitor.2010010100 submitting now
 2014/01/07 16:58:22 DEBUG - Job Submission: batch completed
   Time taken: 0:00:00.396208
   All 1 items succeeded
-2014/01/07 16:58:22 INFO - [monitor.1] -(current:ready)> monitor.1 submission succeeded
-2014/01/07 16:58:22 DEBUG - [monitor.1] -(setting:submitted)
-2014/01/07 16:58:22 INFO - [monitor.1] -(current:submitted)> monitor.1 submit_method_id=3884
+2014/01/07 16:58:22 INFO - [monitor.2010010100] -(current:ready)> monitor.2010010100 submission succeeded
+2014/01/07 16:58:22 DEBUG - [monitor.2010010100] -(setting:submitted)
+2014/01/07 16:58:22 INFO - [monitor.2010010100] -(current:submitted)> monitor.2010010100 submit_method_id=3884
 2014/01/07 16:58:23 DEBUG - BEGIN TASK PROCESSING
 2014/01/07 16:58:23 DEBUG - END TASK PROCESSING (took 0.001394 sec)
-2014/01/07 16:58:23 INFO - [monitor.1] -(current:submitted)> monitor.1 started at 2014-01-07T16:58:22
-2014/01/07 16:58:23 DEBUG - [monitor.1] -(setting:running)
+2014/01/07 16:58:23 INFO - [monitor.2010010100] -(current:submitted)> monitor.2010010100 started at 2014-01-07T16:58:22
+2014/01/07 16:58:23 DEBUG - [monitor.2010010100] -(setting:running)
 2014/01/07 16:58:24 DEBUG - BEGIN TASK PROCESSING
 2014/01/07 16:58:24 DEBUG - [foo.2010010100] -(setting:queued)
 2014/01/07 16:58:24 DEBUG - 1 task(s) ready
 2014/01/07 16:58:24 DEBUG - [foo.2010010100] -(setting:ready)
-2014/01/07 16:58:24 INFO - [foo.2010010100] -triggered off ['monitor.1']
+2014/01/07 16:58:24 INFO - [foo.2010010100] -triggered off ['monitor.2010010100']
 2014/01/07 16:58:24 DEBUG - END TASK PROCESSING (took 0.015301 sec)
 2014/01/07 16:58:25 DEBUG - Job Submission batch 1/1 (1 members):
 2014/01/07 16:58:25 DEBUG - Job Submission: batch completed
@@ -57,7 +57,7 @@
 2014/01/07 16:58:37 DEBUG - [foo.2010010106] -(setting:queued)
 2014/01/07 16:58:37 DEBUG - 1 task(s) ready
 2014/01/07 16:58:37 DEBUG - [foo.2010010106] -(setting:ready)
-2014/01/07 16:58:37 INFO - [foo.2010010106] -triggered off ['foo.2010010100']
+2014/01/07 16:58:37 INFO - [foo.2010010106] -triggered off ['foo.2010010100', 'monitor.2010010100']
 2014/01/07 16:58:37 DEBUG - [foo.2010010100] -task proxy removed
 2014/01/07 16:58:37 DEBUG - END TASK PROCESSING (took 0.007193 sec)
 2014/01/07 16:58:38 DEBUG - Job Submission batch 1/1 (1 members):
@@ -82,7 +82,7 @@
 2014/01/07 16:58:49 DEBUG - [foo.2010010112] -(setting:queued)
 2014/01/07 16:58:49 DEBUG - 1 task(s) ready
 2014/01/07 16:58:49 DEBUG - [foo.2010010112] -(setting:ready)
-2014/01/07 16:58:49 INFO - [foo.2010010112] -triggered off ['foo.2010010106']
+2014/01/07 16:58:49 INFO - [foo.2010010112] -triggered off ['foo.2010010106', 'monitor.2010010100']
 2014/01/07 16:58:49 DEBUG - [foo.2010010106] -task proxy removed
 2014/01/07 16:58:49 DEBUG - END TASK PROCESSING (took 0.007156 sec)
 2014/01/07 16:58:50 DEBUG - Job Submission batch 1/1 (1 members):
@@ -107,7 +107,7 @@
 2014/01/07 16:59:01 DEBUG - [foo.2010010118] -(setting:queued)
 2014/01/07 16:59:01 DEBUG - 1 task(s) ready
 2014/01/07 16:59:01 DEBUG - [foo.2010010118] -(setting:ready)
-2014/01/07 16:59:01 INFO - [foo.2010010118] -triggered off ['foo.2010010112']
+2014/01/07 16:59:01 INFO - [foo.2010010118] -triggered off ['foo.2010010112', 'monitor.2010010100']
 2014/01/07 16:59:02 DEBUG - [foo.2010010112] -task proxy removed
 2014/01/07 16:59:02 DEBUG - END TASK PROCESSING (took 0.012032 sec)
 2014/01/07 16:59:02 DEBUG - Job Submission batch 1/1 (1 members):
@@ -132,8 +132,8 @@
 2014/01/07 16:59:13 DEBUG - [foo.2010010118] -(setting:succeeded)
 2014/01/07 16:59:14 DEBUG - BEGIN TASK PROCESSING
 2014/01/07 16:59:14 DEBUG - END TASK PROCESSING (took 0.004854 sec)
-2014/01/07 16:59:14 INFO - [monitor.1] -(current:running)> monitor.1 succeeded at 2014-01-07T16:59:13
-2014/01/07 16:59:14 DEBUG - [monitor.1] -(setting:succeeded)
+2014/01/07 16:59:14 INFO - [monitor.2010010100] -(current:running)> monitor.2010010100 succeeded at 2014-01-07T16:59:13
+2014/01/07 16:59:14 DEBUG - [monitor.2010010100] -(setting:succeeded)
 2014/01/07 16:59:14 INFO - Stopping: 
   + all cycling tasks have spawned past the final cycle 2010010118
   + all non-cycling tasks have succeeded

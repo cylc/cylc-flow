@@ -54,14 +54,14 @@ try:
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
     prompt( "Set logging level to " + verbosity + " in " + suite, options.force )
-    result = proxy.put( 'set verbosity', verbosity )
+    res, msg = proxy.put( 'set verbosity', verbosity )
 except Exception, x:
     if cylc.flags.debug:
         raise
     sys.exit(x)
 
-if result[0]:
-    print result[1]
+if res:
+    print msg
 else:
-    sys.exit( result[1] )
+    sys.exit( msg )
 

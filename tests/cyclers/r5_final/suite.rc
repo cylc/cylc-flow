@@ -1,0 +1,11 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20140101
+    final cycle point = 20140102T12
+    [[dependencies]]
+        [[[ R5/PT3H ]]]
+            graph = "xyzzy => bar"
+[runtime]
+    [[root]]
+        command scripting = true

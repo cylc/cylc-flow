@@ -16,31 +16,147 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 from parsec.validate import validator as vdr
-from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
+from parsec.validate import (
+    coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
+    IllegalValueError
+)
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
-from cylc.cycle_time import ct
+from isodatetime.dumpers import TimePointDumper
+from isodatetime.data import TimePoint, SECONDS_IN_DAY
+from isodatetime.parsers import TimePointParser, TimeIntervalParser
+
 
 "Define all legal items and values for cylc suite definition files."
 
+interval_parser = TimeIntervalParser()
+
+
 def _coerce_cycletime( value, keys, args ):
-    """Coerce value to a cycle time."""
+    """Coerce value to a cycle point."""
+    value = _strip_and_unquote( keys, value )
+    if re.match(r"\d+$", value):
+        # Old date-time cycle point format, or integer format.
+        return value
+    if value.startswith("-") or value.startswith("+"):
+        # We don't know the value given for num expanded year digits...
+        for i in range(1, 101):
+            parser = TimePointParser(num_expanded_year_digits=i)
+            try:
+                parser.parse(value)
+            except ValueError:
+                continue
+            return value
+        raise IllegalValueError("cycle point", keys, value)
+    parser = TimePointParser()
+    try:
+        parser.parse(value)
+    except ValueError:
+        raise IllegalValueError("cycle point", keys, value)
+    return value
+
+
+def _coerce_cycletime_format( value, keys, args ):
+    """Coerce value to a cycle point format (either CCYYMM... or %Y%m...)."""
+    value = _strip_and_unquote( keys, value )
+    test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
+                               hour_of_day=4, minute_of_hour=30,
+                               second_of_minute=54)
+    if "/" in value or ":" in value:
+        raise IllegalValueError("cycle point format", keys, value)
+    if "%" in value:
+        try:
+            TimePointDumper().strftime(test_timepoint, value)
+        except ValueError:
+            raise IllegalValueError("cycle point format", keys, value)
+        return value
+    if "X" in value:
+        for i in range(1, 101):
+            dumper = TimePointDumper(num_expanded_year_digits=i)
+            try:
+                dumper.dump(test_timepoint, value)
+            except ValueError:
+                continue
+            return value
+        raise IllegalValueError("cycle point format", keys, value)
+    dumper = TimePointDumper()
+    try:
+        dumper.dump(test_timepoint, value)
+    except ValueError:
+        raise IllegalValueError("cycle point format", keys, value)
+    return value
+
+
+def _coerce_cycletime_time_zone( value, keys, args ):
+    """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
+    value = _strip_and_unquote( keys, value )
+    test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
+                               hour_of_day=4, minute_of_hour=30,
+                               second_of_minute=54)
+    dumper = TimePointDumper()
+    test_timepoint_string = dumper.dump(test_timepoint, "CCYYMMDDThhmmss")
+    test_timepoint_string += value
+    parser = TimePointParser(allow_only_basic=True)
+    try:
+        parser.parse(test_timepoint_string)
+    except ValueError:
+        raise IllegalValueError("cycle point time zone format", keys, value)
+    return value
+
+
+def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
+    """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
     try:
-        return ct( value ).get()
-    except:
-        #raise
-        raise IllegalValueError( 'cycle time', keys, value )
+        return float(value) * back_comp_unit_factor
+    except (TypeError, ValueError):
+        pass
+    try:
+        interval = interval_parser.parse(value)
+    except ValueError:
+        raise IllegalValueError("ISO 8601 interval", keys, value)
+    days, seconds = interval.get_days_and_seconds()
+    seconds += days * SECONDS_IN_DAY
+    return seconds
+
+
+def _coerce_interval_list( value, keys, args, back_comp_unit_factor=1 ):
+    """Coerce a list of intervals (or numbers: back-comp) into seconds."""
+    values_list = _strip_and_unquote_list( keys, value )
+    type_converter = (
+        lambda v: _coerce_interval(
+            v, keys, args,
+            back_comp_unit_factor=back_comp_unit_factor
+        )
+    )
+    seconds_list = _expand_list( values_list, keys, type_converter, True )
+    return seconds_list
+
 
 coercers['cycletime'] = _coerce_cycletime
+coercers['cycletime_format'] = _coerce_cycletime_format
+coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
+coercers['interval'] = _coerce_interval
+coercers['interval_minutes'] = lambda *a: _coerce_interval(
+    *a, back_comp_unit_factor=60)
+coercers['interval_seconds'] = _coerce_interval
+coercers['interval_list'] = _coerce_interval_list
+coercers['interval_minutes_list'] = lambda *a: _coerce_interval_list(
+    *a, back_comp_unit_factor=60)
+coercers['interval_seconds_list'] = _coerce_interval_list
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
     'description'                             : vdr( vtype='string', default="" ),
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
+        'cycle point format'                  : vdr( vtype='cycletime_format', default=None),
+        'cycle point num expanded year digits': vdr( vtype='integer', default=0),
+        'cycle point time zone'               : vdr( vtype='cycletime_time_zone', default=None),
         'required run mode'                   : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
@@ -56,7 +172,7 @@ SPEC = {
             'startup handler'                 : vdr( vtype='string_list', default=[] ),
             'timeout handler'                 : vdr( vtype='string_list', default=[] ),
             'shutdown handler'                : vdr( vtype='string_list', default=[] ),
-            'timeout'                         : vdr( vtype='float'  ),
+            'timeout'                         : vdr( vtype='interval_minutes'  ),
             'reset timer'                     : vdr( vtype='boolean', default=True ),
             'abort if startup handler fails'  : vdr( vtype='boolean', default=False ),
             'abort if shutdown handler fails' : vdr( vtype='boolean', default=False ),
@@ -74,16 +190,16 @@ SPEC = {
             'required run mode'               : vdr( vtype='string', options=[ 'live','simulation','dummy'] ),
             'allow task failures'             : vdr( vtype='boolean', default=False ),
             'expected task failures'          : vdr( vtype='string_list', default=[] ),
-            'live mode suite timeout'         : vdr( vtype='float', default=1.0 ),
-            'dummy mode suite timeout'        : vdr( vtype='float', default=1.0 ),
-            'simulation mode suite timeout'   : vdr( vtype='float', default=1.0 ),
+            'live mode suite timeout'         : vdr( vtype='interval_minutes', default=60 ),
+            'dummy mode suite timeout'        : vdr( vtype='interval_minutes', default=60 ),
+            'simulation mode suite timeout'   : vdr( vtype='interval_minutes', default=60 ),
             },
         },
     'scheduling' : {
-        'initial cycle time'                  : vdr(vtype='cycletime'),
-        'final cycle time'                    : vdr(vtype='cycletime'),
-        'cycling'                             : vdr(vtype='string', default="HoursOfTheDay" ),
-        'runahead limit'                      : vdr(vtype='integer', vmin=0 ),
+        'initial cycle point'                 : vdr(vtype='cycletime'),
+        'final cycle point'                   : vdr(vtype='cycletime'),
+        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
+        'runahead factor'                     : vdr(vtype='integer', default=2 ),
         'queues' : {
             'default' : {
                 'limit'                       : vdr( vtype='integer', default=0),
@@ -98,7 +214,6 @@ SPEC = {
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
-            'one-off'                         : vdr(vtype='string_list', default=[]),
             'exclude at start-up'             : vdr(vtype='string_list', default=[]),
             'include at start-up'             : vdr(vtype='string_list', default=[]),
             },
@@ -107,7 +222,6 @@ SPEC = {
             '__MANY__' :
             {
                 'graph'                       : vdr( vtype='string'),
-                'daemon'                      : vdr( vtype='string'),
                 },
             },
         },
@@ -121,19 +235,19 @@ SPEC = {
             'pre-command scripting'           : vdr( vtype='string' ),
             'command scripting'               : vdr( vtype='string', default='echo Default command scripting; sleep $(cylc rnd 1 16)'),
             'post-command scripting'          : vdr( vtype='string' ),
-            'retry delays'                    : vdr( vtype='float_list', default=[] ),
+            'retry delays'                    : vdr( vtype='interval_minutes_list', default=[] ),
             'manual completion'               : vdr( vtype='boolean', default=False ),
             'extra log files'                 : vdr( vtype='string_list', default=[] ),
             'enable resurrection'             : vdr( vtype='boolean', default=False ),
             'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
-            'submission polling intervals'    : vdr( vtype='float_list', default=[] ),
-            'execution polling intervals'     : vdr( vtype='float_list', default=[] ),
+            'submission polling intervals'    : vdr( vtype='interval_minutes_list', default=[] ),
+            'execution polling intervals'     : vdr( vtype='interval_minutes_list', default=[] ),
             'environment filter' : {
                 'include'                     : vdr( vtype='string_list' ),
                 'exclude'                     : vdr( vtype='string_list' ),
             },
             'simulation mode' :  {
-                'run time range'              : vdr( vtype='integer_list', default=[1,16]),
+                'run time range'              : vdr( vtype='interval_seconds_list', default=[1, 16]),
                 'simulate failure'            : vdr( vtype='boolean', default=False ),
                 'disable task event hooks'    : vdr( vtype='boolean', default=True ),
                 'disable retries'             : vdr( vtype='boolean', default=True ),
@@ -149,7 +263,7 @@ SPEC = {
                 'method'                      : vdr( vtype='string', default='background' ),
                 'command template'            : vdr( vtype='string' ),
                 'shell'                       : vdr( vtype='string',  default='/bin/bash' ),
-                'retry delays'                : vdr( vtype='float_list', default=[] ),
+                'retry delays'                : vdr( vtype='interval_minutes_list', default=[] ),
                 },
             'remote' : {
                 'host'                        : vdr( vtype='string' ),
@@ -166,15 +280,15 @@ SPEC = {
                 'retry handler'               : vdr( vtype='string_list', default=[] ),
                 'submission retry handler'    : vdr( vtype='string_list', default=[] ),
                 'submission timeout handler'  : vdr( vtype='string_list', default=[] ),
-                'submission timeout'          : vdr( vtype='float' ),
+                'submission timeout'          : vdr( vtype='interval_minutes' ),
                 'execution timeout handler'   : vdr( vtype='string_list', default=[] ),
-                'execution timeout'           : vdr( vtype='float'),
+                'execution timeout'           : vdr( vtype='interval_minutes'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
                 },
             'suite state polling' : {
                 'user'                        : vdr( vtype='string' ),
                 'host'                        : vdr( vtype='string' ),
-                'interval'                    : vdr( vtype='integer' ),
+                'interval'                    : vdr( vtype='interval_seconds' ),
                 'max-polls'                   : vdr( vtype='integer' ),
                 'run-dir'                     : vdr( vtype='string' ),
                 'verbose mode'                : vdr( vtype='boolean' ),
@@ -191,8 +305,8 @@ SPEC = {
             },
         },
     'visualization' : {
-        'initial cycle time'                  : vdr( vtype='cycletime' ),
-        'final cycle time'                    : vdr( vtype='cycletime' ),
+        'initial cycle point'                  : vdr( vtype='cycletime' ),
+        'final cycle point'                    : vdr( vtype='cycletime' ),
         'collapsed families'                  : vdr( vtype='string_list', default=[] ),
         'use node color for edges'            : vdr( vtype='boolean', default=True ),
         'use node color for labels'           : vdr( vtype='boolean', default=False ),
@@ -205,14 +319,6 @@ SPEC = {
         'node attributes' : {
             '__MANY__'                        : vdr( vtype='string_list', default=[] ),
             },
-        'runtime graph' : {
-            'enable'                          : vdr( vtype='boolean', default=False ),
-            'cutoff'                          : vdr( vtype='integer', default=24 ),
-            'directory'                       : vdr( vtype='string', default='$CYLC_SUITE_DEF_PATH/graphing'),
-            },
-        },
-    'development' : {
-        'disable task elimination'            : vdr( vtype='boolean', default=False ),
         },
     }
 
@@ -222,13 +328,44 @@ def upg( cfg, descr ):
     # TODO - should abort if obsoleted items are encountered
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
+    # TODO - replace ISO version here:
+    u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
+    u.obsolete( '6.0.0', ['development'] )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'initial cycle time'], ['scheduling', 'initial cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'final cycle time'], ['scheduling', 'final cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate(
+        '6.0.0',
+        ['visualization', 'initial cycle time'], ['visualization', 'initial cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate(
+        '6.0.0',
+        ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
+        converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
+    )
+    u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
+            converter( lambda x:'2', 'using default runahead factor' ))
+    u.obsolete('6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'])
+    u.obsolete('6.0.0', ['cylc', 'job submission'])
+    u.obsolete('6.0.0', ['cylc', 'event handler submission'])
+    u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
     u.upgrade()
 
 class sconfig( config ):
     pass
 
+
 suitecfg = None
 cfpath = None
+
 
 def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=False ):
     global suitecfg, cfpath
@@ -238,4 +375,3 @@ def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=Fals
         suitecfg = sconfig( SPEC, upg, tvars=tvars, tvars_file=tvars_file, write_proc=write_proc )
         suitecfg.loadcfg( fpath, "suite definition", strict=True )
         return suitecfg
-

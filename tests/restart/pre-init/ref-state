@@ -2,5 +2,5 @@ bar|2010080800|succeeded
 bar|2010080900|held
 foo|2010080800|succeeded
 foo|2010080900|held
-p1|1|succeeded
-p2|1|succeeded
+p1|2010080800|succeeded
+p2|2010080800|succeeded

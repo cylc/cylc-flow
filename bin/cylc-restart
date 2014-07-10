@@ -25,12 +25,15 @@ from datetime import datetime
 import os, re
 from cylc.config import TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
-from cylc.cycle_time import ct
 from cylc.scheduler import scheduler
+from cylc.suite_state_dumping import dumper
 from cylc.task_state import task_state
 from cylc.run import main
 from cylc.command_prep import prep_file
-from cylc.TaskID import TaskID
+import cylc.TaskID
+from cylc.cycling.loader import get_point
+from cylc.wallclock import get_current_time_string
+
 
 class restart( scheduler ):
     def __init__( self ):
@@ -66,14 +69,13 @@ where they got to while the suite was down."""
                 action="store_true", default=False, dest="profile_mode" )
 
         self.parser.add_option( "--ignore-final-cycle",
-            help="Ignore the final cycle time in the state dump. If one is"
+            help="Ignore the final cycle point in the state dump. If one is"
             "specified in the suite definition it will be used, however.",
             action="store_true", default=False, dest="ignore_stopcycle" )
 
         self.parser.add_option( "--ignore-initial-cycle",
-            help="Ignore the initial cycle time in the state dump. If one is "
-            "specified in the suite definition it will be used, however. In a "
-            "restart this is only used to set $CYLC_SUITE_INITIAL_CYCLE_TIME.",
+            help="Ignore the initial cycle point in the state dump. If one is "
+            "specified in the suite definition it will be used, however.",
             action="store_true", default=False, dest="ignore_startcycle" )
 
         scheduler.__init__( self, is_restart=True )
@@ -91,22 +93,21 @@ where they got to while the suite was down."""
         self.restart_from = None
         if len( self.args ) == 2:
             self.restart_from = self.args[1]
-            try:
-                ct( self.restart_from )
-            except:
-                pass
-            else:
-                # user must have meant to cold or warm start, not restart.
-                sys.exit("ERROR: restart dump filename is a valid cycle time!")
 
         scheduler.parse_commandline( self )
 
-    def load_tasks( self ):
-
-        # FIND THE INITIAL STATE DUMP FILE
-        base_name = self.state_dumper.BASE_NAME
+    def get_state_start_string( self ):
+        """Return the start string specified in the state file, if any."""
+        return self.get_state_file_info()[0]
+        
+    def get_state_file_path( self ):
+        """Return the state file path that we are restarting from."""
+        my_dumper = self.state_dumper
+        if my_dumper is None:
+            my_dumper = dumper(self.suite)
+        base_name = my_dumper.BASE_NAME
         file_name = base_name
-        dir_name = self.state_dumper.dir_name
+        dir_name = my_dumper.dir_name
         if self.restart_from and os.path.isabs(self.restart_from):
             file_name = self.restart_from
         elif self.restart_from:
@@ -115,30 +116,28 @@ where they got to while the suite was down."""
             file_name = os.path.join(dir_name, file_name)
         if not os.path.isfile(file_name):
             raise Exception("state dump file not found: " + file_name)
+        return os.path.realpath(file_name)
 
-        file_name = os.path.realpath(file_name)
-        self.log.info( 'Restart ' + file_name )
-        src_name = file_name
-        if os.path.realpath(dir_name) == os.path.dirname(file_name):
-            src_name = os.path.basename(file_name)
-        now_str = datetime.utcnow().strftime("%Y%m%dT%H%M%S.%fZ")
-        lnk_name = os.path.join(dir_name, base_name + "-restart." + now_str)
-        os.symlink(src_name, lnk_name)
+    def get_state_file_info( self ):
+        """Return the state file start & stop strings, broadcast, tasks.
 
-        # The state dump file format is:
-        # run mode : <mode> 
-        # time : <time>
-        # class <classname>: item1=value1, item2=value2, ...
-        # <task_id> : <state>
-        # <task_id> : <state>
-        #   ...
-        # task <state> format is defined by task_state.dump()
+        The state dump file format is:
+        run mode : <mode> 
+        time : <time> (<unix time>)
+        class <classname>: item1=value1, item2=value2, ...
+        <task_id> : <state>
+        <task_id> : <state>
+          ...
+        task <state> format is defined by task_state.dump()
 
+        """
+        file_name = self.get_state_file_path()
         try:
             FILE = open( file_name, 'r' )
         except IOError,x:
             print >> sys.stderr, x
-            raise Exception( "ERROR, cannot open suite state dump: " + file_name )
+            raise Exception(
+                "ERROR, cannot open suite state dump: %s" % file_name)
         lines = FILE.readlines()
         FILE.close()
 
@@ -146,11 +145,13 @@ where they got to while the suite was down."""
         if nlines == 0:
             raise Exception( "ERROR, empty suite state dump: " + file_name )
         elif nlines < 3:
-            print >> sys.stderr, "ERROR, The suite state dump contains only", nlines, "lines:"
+            print >> sys.stderr, ("ERROR, The suite state dump contains only",
+                                  nlines, "lines:")
             for l in lines:
                 print ' ', l.rstrip()
-            raise Exception( "ERROR, incomplete suite state dump: " + file_name )
-
+            raise Exception(
+                "ERROR, incomplete suite state dump: " + file_name)
+       
         index = 0
         # run mode : <mode>
         line0 = lines[index].rstrip()
@@ -167,102 +168,132 @@ where they got to while the suite was down."""
             # time : <time> (not used here)
 
         if self.run_mode == 'live' and old_run_mode != 'live':
-            raise Exception("ERROR: cannot RESTART in " + self.run_mode + " from a " + old_run_mode + " state dump")
-  
+            raise Exception(
+                "ERROR: cannot RESTART in " + self.run_mode + " from a " +
+                old_run_mode + " state dump"
+            )
+
+        state_start_string = None
         index += 1
         line2 = lines[index]
         line2 = line2.rstrip()
         try:
             label, oldstartcycle = line2.split(' : ')
         except ValueError, x:
-            print >> sys.stderr, 'ERROR, Illegal state dump line 2 (initial cycle):'
+            print >> sys.stderr, (
+                'ERROR, Illegal state dump line 2 (initial cycle):')
             print >> sys.stderr, ' ', line2
             raise Exception("ERROR: corrupted state dump")
-        if oldstartcycle == '(none)':
-            # then we take whatever the suite.rc file gives us
-            pass
-        else:
-            # the state dump prescribes a start cycle
-            try:
-                ct( oldstartcycle )
-            except:
-                raise Exception("ERROR, Illegal start cycle in state dump line 2: " + oldstartcycle)
-            if self.options.ignore_startcycle:
-                # ignore it and take whatever the suite.rc file gives us
-                if self.start_tag:
-                    print >> sys.stderr, """WARNING: I'm ignoring the old initial cycle as requested, but I
-  can't ignore the one set in the suite definition."""
-            elif self.start_tag:
-                # a start cycle was given in the suite.rc file
-                if self.start_tag != oldstartcycle:
-                    # the state dump doesn't lie about start cycles
-                    if self.options.ignore_startcycle:
-                        print >> sys.stderr, "WARNING: ignoring old initial cycle", oldstartcycle, "; using suite.rc", self.start_tag
-                    else:
-                        print >> sys.stderr, "WARNING: old initial cycle", oldstartcycle, "overriding suite.rc", self.start_tag
-                        self.start_tag = oldstartcycle
-            else:
-                # reinstate the former start cycle
-                self.start_tag = oldstartcycle
+        if oldstartcycle != '(none)':
+            state_start_string = oldstartcycle
 
+        state_stop_string = None
         index += 1
         line3 = lines[index]
         line3 = line3.rstrip()
         try:
             label, oldstopcycle = line3.split(' : ')
         except ValueError, x:
-            print >> sys.stderr, 'ERROR, Illegal state dump line 3 (final cycle):'
+            print >> sys.stderr, (
+                'ERROR, Illegal state dump line 3 (final cycle):')
             print >> sys.stderr, ' ', line3
             raise Exception("ERROR: corrupted state dump")
 
-        if oldstopcycle == '(none)':
-            # then we take whatever the command line or suite.rc file gives us
-            pass
-        else:
-            # the state dump prescribes a stop cycle
-            try:
-                ct( oldstopcycle )
-            except:
-                raise Exception("ERROR, Illegal stop cycle in state dump line 3: " + oldstopcycle)
-            if self.options.ignore_stopcycle:
-                # ignore it and take whatever the command line or suite.rc file gives us
-                if self.stop_tag:
-                    print >> sys.stderr, """WARNING: I'm ignoring the old final cycle as requested, but I
-  can't ignore the one set on the command line or in the suite definition."""
-            elif self.stop_tag:
-                # a stop cycle was given on the restart command line or suite.rc file
-                if self.stop_tag != oldstopcycle:
-                    print >> sys.stderr, "WARNING: overriding the old stop cycle", oldstopcycle, "with", self.stop_tag
-            else:
-                # reinstate the old stop cycle
-                self.stop_tag = oldstopcycle
+        if oldstopcycle != '(none)':
+            state_stop_string = oldstopcycle
 
         # broadcast variables (universal):
         index += 1
 
-        pickled = ""
+        pickled_broadcast = ""
         while True:
-            pickled += lines[index]
-            if pickled.endswith(".\n"):
+            pickled_broadcast += lines[index]
+            if pickled_broadcast.endswith(".\n"):
                 # every pickle stream ends with a period
                 break
             index += 1
-        self.wireless.load( pickled )
 
         index += 1
         line = lines[index].rstrip()
         if line != 'Begin task states':
-            raise Exception("ERROR, illegal state dump line (expected 'Begin task states'): " + line )
+            raise Exception(
+                "ERROR, illegal state dump line " +
+                "(expected 'Begin task states'): " + line
+            )
 
         index += 1
 
-        # parse each line and create the task it represents
+        task_lines = []
+        for line in lines[index:]:
+            # strip trailing newlines
+            task_lines.append(line.rstrip('\n'))
+        return (state_start_string, state_stop_string,
+                pickled_broadcast, task_lines)
+
+    def load_tasks( self ):
+
+        # FIND THE INITIAL STATE DUMP FILE
+        base_name = self.state_dumper.BASE_NAME
+        dir_name = self.state_dumper.dir_name
+        file_name = self.get_state_file_path()
+
+        self.log.info( 'Restart ' + file_name )
+        src_name = file_name
+        if os.path.realpath(dir_name) == os.path.dirname(file_name):
+            src_name = os.path.basename(file_name)
+        now_str = get_current_time_string(use_basic_format=True)
+        lnk_name = os.path.join(dir_name, base_name + "-restart." + now_str)
+        os.symlink(src_name, lnk_name)
+
+        state_start_string, state_stop_string, broadcast, task_lines = (
+            self.get_state_file_info())
+
+        if state_start_string is not None:
+            # the state dump prescribes a start cycle
+            # (else we take whatever the suite.rc file gives us)
+            state_start_point = get_point(state_start_string)
+            if self.options.ignore_startcycle:
+                # ignore it and take whatever the suite.rc file gives us
+                if self.start_point is not None:
+                    print >> sys.stderr, """WARNING: I'm ignoring the old initial cycle as requested, but I
+  can't ignore the one set in the suite definition."""
+            elif self.start_point is not None:
+                # a start cycle was given in the suite.rc file
+                if self.start_point != state_start_point:
+                    # the state dump doesn't lie about start cycles
+                    if self.options.ignore_startcycle:
+                        print >> sys.stderr, "WARNING: ignoring old initial cycle", state_start_point, "; using suite.rc", self.start_point
+                    else:
+                        print >> sys.stderr, "WARNING: old initial cycle", state_start_point, "overriding suite.rc", self.start_point
+                        self.start_point = state_start_point
+            else:
+                # reinstate the former start cycle
+                self.start_point = state_start_point
+        
+        if state_stop_string is not None:
+            # the state dump prescribes a stop cycle
+            # (else we take whatever the command line or suite.rc file gives us)
+            state_stop_point = get_point(state_stop_string)
+            if self.options.ignore_stopcycle:
+                # ignore it and take whatever the command line or suite.rc file gives us
+                if self.stop_point is not None:
+                    print >> sys.stderr, """WARNING: I'm ignoring the old final cycle as requested, but I
+  can't ignore the one set on the command line or in the suite definition."""
+            elif self.stop_point is not None:
+                # a stop cycle was given on the restart command line or suite.rc file
+                if self.stop_point != state_stop_point:
+                    print >> sys.stderr, "WARNING: overriding the old stop cycle", state_stop_point, "with", self.stop_point
+            else:
+                # reinstate the old stop cycle
+                self.stop_point = state_stop_point
+
+        self.pool.wireless.load( broadcast )
+
+        # parse each task line and create the task it represents
         tasknames = {}
         taskstates = {}
         taskcycles = []
-        for line in lines[index:]:
-            # strip trailing newlines
-            line = line.rstrip( '\n' )
+        for line in task_lines:
 
             if re.match( '^class', line ):
                 # class variables
@@ -278,7 +309,7 @@ where they got to while the suite was down."""
             # instance variables
             try:
                 ( id, state ) = line.split(' : ')
-                ( name, tag ) = id.split(TaskID.DELIM)
+                ( name, tag ) = cylc.TaskID.split(id)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
@@ -303,16 +334,11 @@ where they got to while the suite was down."""
             cycleinfo[cycle] = res
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
         #
-        # The current state of task prerequisites (satisfied or not) and
-        # outputs (completed or not) is not recorded in the suite state
-        # dump; we set them according task state (which is recorded).
+        # The state of task prerequisites (satisfied or not) and outputs
+        # (completed or not) is determined by the recorded task state:
         #
-        # The default state of a new task proxy is 'waiting' with
-        # prerequisites unsatisfied and no outputs completed.
-        #
-        # 'waiting'    - prerequisites and outputs unsatisified (the default)
+        # 'waiting'    - prerequisites and outputs unsatisified (default)
         # 'held'       - ditto (only waiting tasks can be held)
-        # 'runahead'   - ditto (runahead tasks are waiting tasks on hold)
         #
         # 'queued'     - prerequisites satisfied, outputs not completed
         #                 (only tasks ready to run can get queued)
@@ -324,9 +350,10 @@ where they got to while the suite was down."""
         # 'retrying'   - ditto (tasks must fail in order to retry)
         # 'succeeded'  - prerequisites satisfied, outputs completed
         #
-        # (*) HOWEVER, tasks reloaded with 'submitted' or 'running' are
-        # now polled by cylc to determine what their current status is.
         # The two 'retrying' states are held states akin to 'queued'.
+        #
+        # (*) but tasks reloaded with 'submitted' or 'running' are
+        # polled to determine what their current true status is.
 
         initial_task_list = tasknames.keys()
         task_list = self.filter_initial_task_list( initial_task_list )
@@ -339,7 +366,6 @@ where they got to while the suite was down."""
                 continue
 
             print " +", id
-
             try:
                 # startup is True only for a cold start
                 if name in cycleinfo[tag].keys():
@@ -348,10 +374,10 @@ where they got to while the suite was down."""
                     submit_num = 0
                 exists = name in cycleinfo[tag].keys()
                 
-                itask = self.config.get_task_proxy( name, tag, state, 
-                            stopctime=None, startup=False, 
-                            submit_num=submit_num, 
-                            exists=exists)
+                itask = self.config.get_task_proxy(
+                    name, get_point(tag), state, stopctime=None,
+                    startup=False, submit_num=submit_num, exists=exists
+                )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)
                 print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
@@ -370,14 +396,14 @@ where they got to while the suite was down."""
 
             print "  ", itask.state.get_status()
 
-            if itask.state.is_currently('waiting', 'runahead'):
+            if itask.state.is_currently('waiting'):
                 pass
 
             elif itask.state.is_currently('held'):
                 # Only waiting tasks get held. These need to be released
                 # on restart to avoid the automatic shutdown criterion:
                 # if all tasks are succeeded or held (e.g. because they
-                # passed the final cycle time) shut down automatically.
+                # passed the final cycle point) shut down automatically.
                 itask.state.set_status('waiting')
 
             elif itask.state.is_currently('submitted', 'running'):
@@ -393,7 +419,7 @@ where they got to while the suite was down."""
 
                 # get submit_method_id and try_num from run-db
                 submit_method_id = try_num = None
-                row = self.db.get_task_sumbit_method_id_and_try(name, tag)
+                row = self.db.get_task_submit_method_id_and_try(name, tag)
                 if row and row[0]:
                     submit_method_id, try_num = row
                 else:
@@ -429,12 +455,7 @@ where they got to while the suite was down."""
             else:
                 raise Exception( 'ERROR: unknown task state for ' + itask.id )
 
-            # check stop cycle in case the user has set a very quick stop
-            if self.stop_tag and int( itask.tag ) > int( self.stop_tag ):
-                # we've reached the stop cycle already: delete the new task
-                itask.log( 'WARNING', "HOLDING at configured stop cycle " + self.stop_tag )
-                itask.state.set_status('held')
-            self.pool.add( itask )
+            self.pool.add_to_runahead_pool( itask )
 
 
 if __name__ == '__main__':

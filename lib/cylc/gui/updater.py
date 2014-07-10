@@ -18,10 +18,10 @@
 
 from cylc import cylc_pyro_client, dump
 from cylc.task_state import task_state
-from cylc.TaskID import TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
+from cylc.wallclock import get_time_string_from_unix_time
 import gobject
 import gtk
 import Pyro
@@ -150,7 +150,7 @@ class Updater(threading.Thread):
             self.triggering_families = self.sinfo.get( 'triggering families' )
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except Exception, x:
-            #print str(x) # (port file not found, if suite not running)
+            # (port file not found, if suite not running)
             if self.stop_summary is None:
                 self.stop_summary = dump.get_stop_state_summary(
                                                        self.cfg.suite,
@@ -269,10 +269,11 @@ class Updater(threading.Thread):
                     self.ns_defn_order = nsdo
                     self.dict_ns_defn_order = dict( zip( nsdo, range(0,len(nsdo))))
 
-            dt = glbl[ 'last_updated' ]
-            self.dt = strftime( dt, " %Y/%m/%d %H:%M:%S" )
-            self.dt_date = dt
-
+            try:
+                self.dt = get_time_string_from_unix_time(glbl['last_updated'])
+            except (TypeError, ValueError):
+                # Older suite...
+                self.dt = glbl['last_updated'].isoformat()
             self.global_summary = glbl
             self.state_summary = states
             self.fam_state_summary = fam_states

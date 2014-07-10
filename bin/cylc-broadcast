@@ -28,9 +28,8 @@ from cylc.CylcOptionParsers import cop
 from cylc.task_message import message
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
-from cylc.cycle_time import ct, CycleTimeError
 from cylc.print_tree import print_tree
-from cylc.TaskID import TaskID
+import cylc.TaskID as TaskID
 from parsec.validate import validate
 from cylc.cfgspec.suite import SPEC
 import cylc.flags
@@ -77,7 +76,7 @@ by normal [runtime] inheritance. In other words, it follows this order:
 all:root -> all:FAM -> all:task -> tag:root -> tag:FAM -> tag:task
 
 Broadcasts persist, even across suite restarts, until they expire when
-their target cycle time is older than the oldest current in the suite,
+their target cycle point is older than the oldest current in the suite,
 or until they are explicitly cancelled with this command.  All-cycle
 broadcasts do not expire.
 
@@ -104,8 +103,8 @@ See also 'cylc reload' - reload a modified suite definition at run time."""
 
 parser = cop( usage, pyro=True )
 
-parser.add_option( "-t", "--tag", metavar="TAG",
-        help="Target cycle time or tag. Defaults "
+parser.add_option( "-t", "--tag", metavar="CYCLE_POINT",
+        help="Target cycle point. Defaults "
         "to 'all-cycles' with --set and --cancel, "
         "and nothing with --clear.",
         action="append", dest="tags", default=[] )
@@ -126,7 +125,7 @@ parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM",
 parser.add_option( "-C", "--clear",
         help="Cancel all broadcasts, or with -t/--tag, "
         "-n/--namespace, cancel all broadcasts to targeted "
-        "namespaces and/or cycle times. Use '-C -t all-cycles' "
+        "namespaces and/or cycle points. Use '-C -t all-cycles' "
         "to cancel all all-cycle broadcasts without canceling "
         "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
@@ -142,7 +141,7 @@ parser.add_option( "-d", "--display",
 
 parser.add_option( "-k", "--display-task", metavar="TASKID",
         help="Print active broadcasts for a given task "
-        "(NAME"+TaskID.DELIM+"TAG).",
+        "(NAME"+TaskID.DELIM+"CYCLE_POINT).",
         action="store", default=None, dest="showtask" )
 
 parser.add_option( "-b", "--box",
@@ -185,7 +184,7 @@ if options.show or options.showtask:
         try:
             name, tag = options.showtask.split(TaskID.DELIM)
         except ValueError:
-            parser.error( "TASKID must be NAME"+TaskID.DELIM+"TAG" )
+            parser.error( "TASKID must be NAME"+TaskID.DELIM+"CYCLE_POINT" )
     try:
         settings = proxy.get( options.showtask )
     except Exception,x:

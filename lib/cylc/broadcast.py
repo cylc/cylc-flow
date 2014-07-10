@@ -17,13 +17,14 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import Pyro.core
-from cycle_time import ct, CycleTimeError
 from copy import deepcopy
 from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
-from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
+import TaskID
+from cycling.loader import get_point
 from rundb import RecordBroadcastObject
+from wallclock import get_current_time_string
 
 class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
@@ -88,7 +89,10 @@ class broadcast( Pyro.core.ObjBase ):
         self.prune( self.settings )
 
         if self.get_dump() != self.last_settings:
-            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            current_time_string = get_current_time_string(
+                display_sub_seconds=True)
+            self.settings_queue.append(RecordBroadcastObject(
+                current_time_string, self.get_dump() ))
             self.last_settings = self.settings
             self.new_settings = True
 
@@ -99,7 +103,7 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, tag = task_id.split( TaskID.DELIM )
+        name, tag = TaskID.split( task_id )
 
         ret = {}
         # The order is:
@@ -114,15 +118,16 @@ class broadcast( Pyro.core.ObjBase ):
         return ret
 
     def expire( self, cutoff ):
-        """Clear all settings targetting cycle times earlier than cutoff."""
+        """Clear all settings targetting cycle points earlier than cutoff."""
         if not cutoff:
             self.log.info( 'Expiring all broadcast settings now' )
             self.settings = {}
         for ctime in self.settings.keys():
             if ctime == 'all-cycles':
                 continue
-            elif ctime < cutoff:
-                self.log.info( 'Expiring ' + ctime + ' broadcast settings now' )
+            point = get_point(ctime)
+            if point < cutoff:
+                self.log.info( 'Expiring ' + str(point) + ' broadcast settings now' )
                 del self.settings[ ctime ]
 
     def clear( self, namespaces, tags ):
@@ -148,7 +153,10 @@ class broadcast( Pyro.core.ObjBase ):
                     except:
                         pass
         if self.get_dump() != self.last_settings:
-            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.settings_queue.append(RecordBroadcastObject(
+                get_current_time_string(display_sub_seconds=True),
+                self.get_dump()
+            ))
             self.last_settings = self.settings
             self.new_settings = True
 

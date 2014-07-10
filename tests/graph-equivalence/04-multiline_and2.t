@@ -15,10 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test graph = """a => c
-#C:                 b => c"""
-#C: gives the same result as
-#C:      graph = "a & b => c"
+# Test graph = """a => c
+#                 b => c"""
+# gives the same result as
+#      graph = "a & b => c"
 
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------

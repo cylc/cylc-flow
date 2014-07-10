@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
@@ -17,39 +18,41 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.cycling.Monthly import Monthly
-from cylc.cycling.Yearly import Yearly
+import cylc.cycling.iso8601
+import isodatetime.data
+import isodatetime.dumpers
+import isodatetime.parsers
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [CYCLE]
+parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [POINT]
 
-Arithmetic cycle time offset computation, and filename templating.
+Arithmetic date-time cycle point offset computation, and filename templating.
 
 Examples:
 
-1) print offset from an explicit cycle time:
-  % cylc [util] cycletime --offset-hours=6 2010082318
-  2010082400
+1) print offset from an explicit cycle point:
+  % cylc [util] cycletime --offset-hours=6 20100823T1800Z
+  20100824T0000Z
 
-2) print offset from $CYLC_TASK_CYCLE_TIME (as in suite tasks):
-  % export CYLC_TASK_CYCLE_TIME=2010082318
+2) print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):
+  % export CYLC_TASK_CYCLE_POINT=20100823T1800Z
   % cylc cycletime --offset-hours=-6
-  2010082312
+  20100823T1200Z
 
-3) cycle time filename templating, explicit template:
-  % export CYLC_TASK_CYCLE_TIME=201008
-  % cylc cycletime --offset-years=2 --template=foo-YYYYMM.nc
-  foo-201208.nc
+3) cycle point filename templating, explicit template:
+  % export CYLC_TASK_CYCLE_POINT=2010-08
+  % cylc cycletime --offset-years=2 --template=foo-YYYY-MM.nc
+  foo-2012-08.nc
 
-4) cycle time filename templating, template in a variable:
-  % export CYLC_TASK_CYCLE_TIME=201008
-  % export MYTEMPLATE=foo-YYYYMM.nc
+4) cycle point filename templating, template in a variable:
+  % export CYLC_TASK_CYCLE_POINT=2010-08
+  % export MYTEMPLATE=foo-YYYY-MM.nc
   % cylc cycletime --offset-years=2 --template=MYTEMPLATE
-  foo-201208.nc
+  foo-2012-08.nc
 
 Arguments:
-   [CYCLE]    YYYY[MM[DD[HH[mm[ss]]]]], default $CYLC_TASK_CYCLE_TIME""" )
+   [CYCLE]  ISO 8601 date-time, e.g. 20140201T0000Z, default
+      $CYLC_TASK_CYCLE_POINT""" )
 
 parser.add_option( "--offset-hours", metavar="HOURS",
         help="Add N hours to CYCLE (may be negative)",
@@ -67,9 +70,23 @@ parser.add_option( "--offset-years", metavar="YEARS",
         help="Add N years to CYCLE (N may be negative)",
         action="store", dest="offsetyears" )
 
+parser.add_option( "--offset", metavar="ISO_OFFSET",
+        help="Add an ISO 8601-based interval representation to CYCLE",
+        action="store", dest="offset" )
+
 parser.add_option( "--template", metavar="TEMPLATE",
         help="Filename template string or variable",
         action="store", dest="template" )
+
+parser.add_option( "--time-zone", metavar="TEMPLATE",
+        help=("Control the formatting of the result's timezone e.g. " +
+              "(Z, +13:00, -hh"),
+        action="store", default=None, dest="time_zone" )
+
+parser.add_option( "--num-expanded-year-digits", metavar="NUMBER",
+        help=("Specify a number of expanded year digits to print in the " +
+              "result"),
+        action="store", default=0, dest="num_expanded_year_digits" )
 
 parser.add_option( "--print-year", help="Print only YYYY of result",
         action="store_true", default=False, dest="print_year" )
@@ -83,25 +100,20 @@ parser.add_option( "--print-day", help="Print only DD of result",
 parser.add_option( "--print-hour", help="Print only HH of result",
         action="store_true", default=False, dest="print_hour" )
 
+
 (options, args) = parser.parse_args()
 
+# TODO ISO - THIS UTIL WILL BE COMPLETELY BROKEN
 if len( args ) == 0:
-    # input cycle time must be definied in the environment.
-    if 'CYLC_TASK_CYCLE_TIME' not in os.environ:
-        parser.error( "Provide CYCLE arg, or define $CYLC_TASK_CYCLE_TIME" )
-    else:
-        try:
-            cycle = ct(os.environ[ 'CYLC_TASK_CYCLE_TIME' ])
-        except CycleTimeError, x:
-            raise SystemExit(x)
-    # DONE (no args)
+    # input cycle point must be defined in the environment.
+    if 'CYLC_TASK_CYCLE_POINT' not in os.environ:
+        parser.error( "Provide CYCLE arg, or define $CYLC_TASK_CYCLE_POINT" )
+    cycle_point_string = os.environ['CYLC_TASK_CYCLE_POINT'] 
 
 elif len( args ) == 1:
-    # must be cycle time
-    try:
-        cycle = ct(args[0])
-    except CycleTimeError, x:
-        raise SystemExit(x)
+    # must be cycle point
+    cycle_point_string = args[0]
+
 else:
     parser.error( "Wrong number of arguments!" )
 
@@ -118,110 +130,96 @@ if options.template:
     else:
         # or a raw template string
         template = tmp
+else:
+    n_chosen = 0
 
-n_chosen = 0
+    if options.print_year:
+        n_chosen +=1
+        if options.num_expanded_year_digits:
+            template = u"±XCCYY"
+        else:
+            template = "CCYY"
 
-#hours = int( cycle.hour )
+    if options.print_month:
+        n_chosen +=1
+        template = "MM"
 
-offset_hours  = False
-offset_days   = False
-offset_months = False
-offset_years  = False
+    if options.print_day:
+        n_chosen +=1
+        template = "DD"
+
+    if options.print_hour:
+        n_chosen +=1
+        template = "%H"
+
+    if n_chosen != 0 and n_chosen != 1:
+        parser.error( "Choose NONE or ONE of print_(year|month|day|hour)" )
+
+if (template is None and re.match("\d{10}$", cycle_point_string)):
+    # Auto-detect prev Cylc format.
+    template="%Y%m%d%H"
+
+cylc.cycling.iso8601.init(
+    num_expanded_year_digits=options.num_expanded_year_digits,
+    time_zone=options.time_zone
+)
+iso_point_parser = isodatetime.parsers.TimePointParser(
+    num_expanded_year_digits=options.num_expanded_year_digits
+)
+iso_point_dumper = isodatetime.dumpers.TimePointDumper(
+    num_expanded_year_digits=options.num_expanded_year_digits
+)
+try:
+    cycle_point = iso_point_parser.parse(
+        cycle_point_string, dump_as_parsed=(template is None))
+except ValueError:
+    # May be in prev Cylc format.
+    try:
+        cycle_point = cylc.cycling.iso8601.point_parse(cycle_point_string)
+    except ValueError as exc:
+        parser.error( 'ERROR: invalid cycle: ' + str(exc) )
+
+offset_props = {}
 
 if options.offsethours:
-    offset_hours = True
-    n_chosen += 1
     try:
-        hours = int( options.offsethours )
+        offset_props["hours"] = int( options.offsethours )
     except ValueError:
         parser.error( 'ERROR: offset must be integer' )
 
 if options.offsetdays:
-    offset_days = True
-    n_chosen += 1
     try:
-        days = int( options.offsetdays )
+        offset_props["days"] = int( options.offsetdays )
     except ValueError:
         parser.error( 'ERROR: offset must be integer' )
 
 if options.offsetmonths:
-    offset_months = True
-    n_chosen += 1
     try:
-        months = int( options.offsetmonths )
+        offset_props["months"] = int( options.offsetmonths )
     except ValueError:
         parser.error( 'ERROR: offset must be integer' )
 
 if options.offsetyears:
-    offset_years = True
-    n_chosen += 1
     try:
-        years = int( options.offsetyears )
+        offset_props["years"] = int( options.offsetyears )
     except ValueError:
         parser.error( 'ERROR: offset must be integer' )
 
-# (can chose to offset months and years, for example)
-#if n_chosen > 1:
-#    parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
+offset = isodatetime.data.TimeInterval(**offset_props)
 
-n_chosen = 0
-print_year = False
-print_month = False
-print_day = False
-print_hour = False
-
-if options.print_year:
-    n_chosen +=1
-    print_year = True
-
-if options.print_month:
-    n_chosen +=1
-    print_month = True
-
-if options.print_day:
-    n_chosen +=1
-    print_day = True
-
-if options.print_hour:
-    n_chosen +=1
-    print_hour = True
-
-if n_chosen != 0 and n_chosen != 1:
-    parser.error( "Choose NONE or ONE of print_(year|month|day|hour)" )
-
-if offset_hours:
-    cycle.increment( hours=hours )
-
-if offset_days:
-    cycle.increment( days=days )
-
-if offset_months:
-    cycle = ct( Monthly.offset( cycle.get(), -months ) )
-
-if offset_years:
-    cycle = ct( Yearly.offset( cycle.get(), -years ) )
-
-if template:
-    string = template
-    # replace YYYYMMDDHH
-    string = re.sub( "YYYYMMDDHH", cycle.get(), string )
-    # replace YYYYMM
-    string = re.sub( "YYYYMM", cycle.year + cycle.month, string )
-    # replace YYYY, MM, DD, HH
-    string = re.sub( 'YYYY', cycle.year,  string )
-    string = re.sub( 'MM',   cycle.month,  string )
-    string = re.sub( 'DD',   cycle.day,  string )
-    string = re.sub( 'HH',   cycle.hour, string )
-    # replace YY
-    string = re.sub( 'YY',   cycle.year[2:4],  string )
-    print string
-elif print_year:
-    print cycle.year
-elif print_month:
-    print cycle.month
-elif print_day:
-    print cycle.day
-elif print_hour:
-    print cycle.hour
+if options.offset:
+    opt_offset = options.offset
+    sign_factor = 1
+    if options.offset.startswith("-"):
+        opt_offset = options.offset[1:]
+        sign_factor = -1
+    try:
+        offset += isodatetime.parsers.TimeIntervalParser().parse(
+            opt_offset) * sign_factor
+    except ValueError as exc:
+        parser.error( 'ERROR: offset not valid: ' + str(exc) )
+cycle_point += offset
+if template is None:
+    print cycle_point
 else:
-    print cycle.get()
+    print iso_point_dumper.dump(cycle_point, template)

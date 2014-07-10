@@ -19,9 +19,12 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
+from cylc.cycling.loader import (get_point, get_interval_cls,
+                                 get_sequence, get_sequence_cls,
+                                 init_cyclers, INTEGER_CYCLING_TYPE,
+                                 get_backwards_compatibility_mode)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from cycle_time import ct, CycleTimeError
 from output import outputx
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
@@ -29,7 +32,7 @@ from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import triggerx
 from parsec.util import replicate, pdeepcopy
-from TaskID import TaskID
+import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
 import flags
@@ -85,7 +88,7 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             validation=False, strict=False, collapsed=[],
-            cli_start_tag=None, is_restart=False, is_reload=False,
+            cli_start_string=None, is_restart=False, is_reload=False,
             write_proc=True ):
 
         self.suite = suite  # suite name
@@ -96,25 +99,21 @@ class config( object ):
         self.strict = strict
         self.naked_dummy_tasks = []
         self.edges = []
-        self.cyclers = []
         self.taskdefs = {}
         self.validation = validation
-        self.cli_start_tag = cli_start_tag
+        self._cli_start_string = cli_start_string
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
 
-        self.async_oneoff_edges = []
-        self.async_oneoff_tasks = []
-        self.async_repeating_edges = []
-        self.async_repeating_tasks = []
         self.cycling_tasks = []
-        self.tasks_by_cycler = {}
+
+        self.sequences = []
+        self.actual_first_ctime = None
 
         self.runahead_limit = None
-        self.default_runahead_limit = None
 
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
@@ -141,6 +140,31 @@ class config( object ):
                 tvars=template_vars, tvars_file=template_vars_file,
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
+
+        if self._cli_start_string is not None:
+            self.cfg['scheduling']['initial cycle point'] = (
+                self._cli_start_string)
+
+        if 'cycling mode' not in self.cfg['scheduling']:
+            # Auto-detect integer cycling for pure async graph suites.
+            dependency_map = self.cfg.get('scheduling', {}).get(
+                'dependencies', {})
+            if dependency_map.get('graph'):
+                # There is an async graph setting.
+                for item, value in dependency_map.items():
+                    if item == 'graph':
+                        continue
+                    if value.get('graph'):
+                        break
+                else:
+                    # There aren't any other graphs, so set integer cycling.
+                    self.cfg['scheduling']['cycling mode'] = (
+                        INTEGER_CYCLING_TYPE
+                    )
+                    if 'initial cycle point' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['initial cycle point'] = "1"
+                    if 'final cycle point' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['final cycle point'] = "1"
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -188,6 +212,14 @@ class config( object ):
 
         # now expand with defaults
         self.cfg = self.pcfg.get( sparse=False )
+
+        # after the call to init_cyclers, we can start getting proper points.
+        init_cyclers(self.cfg)
+
+        self.cli_start_point = get_point(self._cli_start_string)
+
+        flags.back_comp_cycling = (
+            get_backwards_compatibility_mode())
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -267,21 +299,16 @@ class config( object ):
             self.check_tasks()
 
         # initial and final cycles for visualization
-        self.cfg['visualization']['initial cycle time'] = \
-                self.cfg['visualization']['initial cycle time'] or \
-                self.cfg['scheduling']['initial cycle time'] or '2999010100'
+        vict = self.cfg['visualization']['initial cycle point'] or \
+                str( self.get_actual_first_ctime( self.cfg['scheduling']['initial cycle point'] ))
+        self.cfg['visualization']['initial cycle point'] = vict
 
-        def get_vizstop():
-            if not self.default_runahead_limit:
-                # no cycling tasks
-                return None
-            st = ct( self.cfg['visualization']['initial cycle time'] )
-            st.increment( hours=self.default_runahead_limit )
-            return st.get()
-
-        self.cfg['visualization']['final cycle time'] = \
-                self.cfg['visualization']['final cycle time'] or \
-                get_vizstop() or self.cfg['visualization']['initial cycle time']
+        vict_rh = None
+        if vict and self.runahead_limit:
+            vict_rh = str( get_point( vict ) + self.runahead_limit )
+        
+        vfct = self.cfg['visualization']['final cycle point'] or vict_rh or vict
+        self.cfg['visualization']['final cycle point'] = vfct
 
         ngs = self.cfg['visualization']['node groups']
 
@@ -518,40 +545,38 @@ class config( object ):
                 print '  ', '  ', item, val
 
     def compute_runahead_limit( self ):
-        # take the smallest of the default limits from each graph section
-        rl = None
-        if len(self.cyclers) != 0:
-            # runahead limit is only relevant for cycling sections
+        rfactor = self.cfg['scheduling']['runahead factor']
+        if not rfactor:
+            # no runahead limit!
+            return
+        try:
+            rfactor = int( rfactor )
+        except ValueError:
+            raise SuiteConfigError, "ERROR, illegal runahead limit: " + str(rfactor)
 
-            # configured runahead limit
-            crl = self.cfg['scheduling']['runahead limit']
+        rlim = None
+        intervals = []
+        offsets = []
+        for seq in self.sequences:
+            i = seq.get_interval()
+            if i:
+                intervals.append( i )
+            offsets.append( seq.get_offset() )
 
-            # computed default runahead limit
-            drl = None
-            mcis = []
-            offs = []
-            for cyc in self.cyclers:
-                m = cyc.get_min_cycling_interval()
-                if m:
-                    mcis.append(m)
-                o = cyc.get_offset()
-                if o:
-                    offs.append(o)
-            if len(mcis) > 0:
-                # set runahead limit twice the minimum cycling interval
-                drl = 2 * min(mcis)
-                if len(offs) > 0:
-                    mo = min(offs)
-                    if mo < 0:
-                        # we have future triggers...
-                        if abs(mo) >= drl:
-                            #... that extend past the default rl
-                            # set to offset plus one minimum interval
-                            drl = abs(mo) + min(mcis)
-        self.default_runahead_limit = drl
-        self.runahead_limit = crl or drl
+        if intervals:
+            rlim = min( intervals ) * rfactor
+        if offsets:
+           min_offset = min( offsets )
+           if min_offset < get_interval_cls().get_null():
+               # future triggers...
+               if abs(min_offset) >= rlim:
+                   #... that extend past the default rl
+                   # set to offsets plus one minimum interval
+                   rlim = abs(min_offset) + rlim
+
+        self.runahead_limit = rlim
         if flags.verbose:
-            print "Runahead limit:", rl, "hours"
+            print "Runahead limit:", self.runahead_limit
 
     def get_runahead_limit( self ):
         # may be None (no cycling tasks)
@@ -730,15 +755,16 @@ class config( object ):
         os.environ['CYLC_SUITE_NAME'] = self.suite
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
-        self.cfg['visualization']['runtime graph']['directory'] = expandvars( self.cfg['visualization']['runtime graph']['directory'], self.owner)
 
-    def set_trigger( self, task_name, right, output_name=None, offset=None, asyncid_pattern=None, suicide=False ):
+    def set_trigger( self, task_name, right, output_name=None, offset=None,
+                     cycle_point=None, suicide=False, base_interval=None ):
         trig = triggerx(task_name)
         trig.set_suicide(suicide)
         if output_name:
             try:
                 # check for internal outputs
-                trig.set_special( self.cfg['runtime'][task_name]['outputs'][output_name] )
+                trig.set_special( self.cfg['runtime'][task_name]['outputs'][output_name],
+                                  base_interval=base_interval )
             except KeyError:
                 # There is no matching output defined under the task runtime section
                 if output_name == 'submit':
@@ -769,24 +795,13 @@ class config( object ):
             trig.set_type( 'succeeded' )
 
         if offset:
-            trig.set_offset(offset)
+            trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
 
-        if task_name in self.async_oneoff_tasks:
-            trig.set_async_oneoff()
-        elif task_name in self.async_repeating_tasks:
-            trig.set_async_repeating( asyncid_pattern)
-            if trig.suicide:
-                raise SuiteConfigError, "ERROR, '" + task_name + "': suicide triggers not implemented for repeating async tasks"
-            if trig.type:
-                raise SuiteConfigError, "ERROR, '" + task_name + "': '" + trig.type + "' triggers not implemented for repeating async tasks"
-        elif task_name in self.cycling_tasks:
+        if cycle_point:
+            trig.set_cycle_point( cycle_point )
+
+        if task_name in self.cycling_tasks:
             trig.set_cycling()
-
-        if right in self.cycling_tasks and \
-            (task_name in self.cfg['scheduling']['special tasks']['start-up'] or \
-                 task_name in self.async_oneoff_tasks ):
-                # cycling tasks only depend on these tasks at startup
-                trig.set_startup()
 
         return trig
 
@@ -833,44 +848,47 @@ class config( object ):
         # Instantiate tasks and force evaluation of conditional trigger expressions.
         if flags.verbose:
             print "Instantiating tasks to check trigger expressions"
-        for cyclr in self.tasks_by_cycler:
-            # for each graph section
-            for name in self.tasks_by_cycler[cyclr]:
-                # instantiate one of each task appearing in this section
-                type = self.taskdefs[name].type
-                if type != 'async_repeating' and type != 'async_daemon' and type != 'async_oneoff':
-                    tag = cyclr.initial_adjust_up( '2999010100' )
-                else:
-                    tag = '1'
-                try:
-                    # instantiate a task
-                    # startup True here or oneoff async tasks will be ignored:
-                    itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
-                except TypeError, x:
-                    raise
-                    # This should not happen as we now explicitly catch use
-                    # of synchronous special tasks in an asynchronous graph.
-                    # But in principle a clash of multiply inherited base
-                    # classes due to choice of "special task" modifiers
-                    # could cause a TypeError.
-                    print >> sys.stderr, x
-                    raise SuiteConfigError, '(inconsistent use of special tasks?)'
-                except Exception, x:
-                    print >> sys.stderr, x
-                    raise
-                    raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
-                # force trigger evaluation now
-                try:
-                    itask.prerequisites.eval_all()
-                except TriggerExpressionError, x:
-                    print >> sys.stderr, x
-                    raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
-                except Exception, x:
-                    print >> sys.stderr, x
-                    raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
-                tag = itask.next_tag()
+        for name in self.taskdefs.keys():
+            type = self.taskdefs[name].type
+            # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
+            tag = get_point( self.cfg['scheduling']['initial cycle point'] )
+            try:
+                # instantiate a task
+                itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
+            except TypeError, x:
+                raise
+                # This should not happen as we now explicitly catch use
+                # of synchronous special tasks in an asynchronous graph.
+                # But in principle a clash of multiply inherited base
+                # classes due to choice of "special task" modifiers
+                # could cause a TypeError.
+                raise SuiteConfigError, '(inconsistent use of special tasks?)'
+            except Exception, x:
+                raise
+                raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
+            if not itask.tag:
                 if flags.verbose:
-                    print "  + " + itask.id + " ok"
+                    print " + Task out of bounds for " + str(tag) + ": " + itask.name
+                continue
+
+            # warn for purely-implicit-cycling tasks (these are deprecated).
+            if itask.sequences == itask.implicit_sequences:
+                print >> sys.stderr, (
+                    "WARNING, " + name + ": not explicitly defined in " +
+                    "dependency graphs (deprecated)"
+                )
+
+            # force trigger evaluation now
+            try:
+                itask.prerequisites.eval_all()
+            except TriggerExpressionError, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
+            except Exception, x:
+                print >> sys.stderr, x
+                raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
+            if flags.verbose:
+                print "  + " + itask.id + " ok"
 
         # Check custom command scripting is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
@@ -890,21 +908,9 @@ class config( object ):
         # For now user must define this:
         return self.cfg['scheduling']['special tasks']['cold-start']
 
-    def get_startup_task_list( self ):
-        return self.cfg['scheduling']['special tasks']['start-up'] + self.async_oneoff_tasks + self.async_repeating_tasks
-
     def get_task_name_list( self ):
         # return a list of all tasks used in the dependency graph
         return self.taskdefs.keys()
-
-    def get_asynchronous_task_name_list( self ):
-        names = []
-        for tn in self.taskdefs:
-            if self.taskdefs[tn].type == 'async_repeating' or \
-                    self.taskdefs[tn].type == 'async_daemon' or \
-                    self.taskdefs[tn].type == 'async_oneoff':
-                names.append(tn)
-        return names
 
     def replace_family_triggers( self, line_in, fam, members, orig='' ):
         # Replace family trigger expressions with member trigger expressions.
@@ -939,23 +945,52 @@ class config( object ):
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section, ttype, cyclr ):
-        # Extract dependent pairs from the suite.rc textual dependency
-        # graph to use in constructing graphviz graphs.
+    def process_graph_line( self, line, section, ttype, seq, offset_seq_map,
+                            tasks_to_prune=None,
+                            return_all_dependencies=False ):
+        """Extract dependent pairs from the suite.rc dependency text.
+        
+        Extract dependent pairs from the suite.rc textual dependency
+        graph to use in constructing graphviz graphs.
 
-        # 'A => B => C'    : [A => B], [B => C]
-        # 'A & B => C'     : [A => C], [B => C]
-        # 'A => C & D'     : [A => C], [A => D]
-        # 'A & B => C & D' : [A => C], [A => D], [B => C], [B => D]
+        Return a list of dependencies involving 'start-up' tasks
+        (backwards compatibility) or all dependencies if
+        return_all_dependencies keyword argument is True.
 
-        # '&' groups aren't really "conditional expressions"; they're
-        # equivalent to adding another line:
-        #  'A & B => C'
-        # is the same as:
-        #  'A => C' and 'B => C'
+        line is the line of text within the 'graph' attribute of
+        this dependency section.
+        section is the text describing this dependency section (e.g.
+        T00).
+        ttype is now always 'cycling' (TODO - is not needed now)
+        seq is the sequence generated from 'section' given the initial
+        and final cycle point.
+        offset_seq_map is a cache of seq with various offsets for
+        speeding up backwards-compatible cycling.
+        tasks_to_prune, if not None, is a list of tasks to remove
+        from dependency expressions (backwards compatibility for
+        start-up tasks and async graph tasks).
+        return_all_dependencies, if True, indicates that all
+        dependencies between tasks in this graph should be returned.
+        Otherwise, just return tasks_to_prune dependencies, if any.
 
-        #  An 'or' on the right side is an ERROR:
-        #  'A = > B | C' # ?!
+        'A => B => C'    : [A => B], [B => C]
+        'A & B => C'     : [A => C], [B => C]
+        'A => C & D'     : [A => C], [A => D]
+        'A & B => C & D' : [A => C], [A => D], [B => C], [B => D]
+
+        '&' groups aren't really "conditional expressions"; they're
+        equivalent to adding another line:
+        'A & B => C'
+        is the same as:
+        'A => C' and 'B => C'
+
+        An 'or' on the right side is an ERROR:
+        'A = > B | C' # ?!
+
+        """
+
+        if tasks_to_prune is None:
+            tasks_to_prune = []
 
         orig_line = line
 
@@ -1056,6 +1091,7 @@ class config( object ):
             raise SuiteConfigError, "ERROR: missing task name in graph line?"
 
         # get list of pairs
+        special_dependencies = []
         for i in [0] + range( 1, len(tasks)-1 ):
             lexpression = tasks[i]
 
@@ -1075,124 +1111,122 @@ class config( object ):
                     raise SuiteConfigError, "ERROR: OR '|' is not legal on the right side of dependencies: " + rgroup
 
                 # (T+/-N) offsets not allowed on the right side (as yet)
-                if re.search( '\[\s*T\s*[+-]\s*\d+\s*\]', rgroup ):
+                if re.search( '\[\s*T\s*[+-]\s*\w+\s*\]', rgroup ):
                     print >> sys.stderr, orig_line
                     raise SuiteConfigError, "ERROR: time offsets are not legal on the right side of dependencies: " + rgroup
 
                 # now split on '&' (AND) and generate corresponding pairs
-                rights = re.split( '\s*&\s*', rgroup )
+                right_nodes = re.split( '\s*&\s*', rgroup )
             else:
-                rights = [None]
+                right_nodes = [None]
 
-            new_rights = []
-            for r in rights:
-                if r:
+            new_right_nodes = []
+            for right_node in right_nodes:
+                if right_node:
                     # ignore output labels on the right (for chained
                     # tasks they are only meaningful on the left)
-                    new_rights.append( re.sub( ':\w+', '', r ))
+                    new_right_nodes.append( re.sub( ':\w+', '', right_node ))
                 else:
                     # retain None's in order to handle lone nodes on the left
-                    new_rights.append( None )
+                    new_right_nodes.append( None )
 
-            rights = new_rights
+            right_nodes = new_right_nodes
 
             # extract task names from lexpression
             nstr = re.sub( '[(|&)]', ' ', lexpression )
             nstr = nstr.strip()
-            lnames = re.split( ' +', nstr )
+            left_nodes = re.split( ' +', nstr )
 
             # detect and fail and self-dependence loops (foo => foo)
-            for r_name in rights:
-                if r_name in lnames:
-                    print >> sys.stderr, "Self-dependence detected in '" + r_name + "':"
+            for right_node in right_nodes:
+                if right_node in left_nodes:
+                    print >> sys.stderr, (
+                        "Self-dependence detected in '" + right_node + "':")
                     print >> sys.stderr, "  line:", line
                     print >> sys.stderr, "  from:", orig_line
                     raise SuiteConfigError, "ERROR: self-dependence loop detected"
 
-            if section == 'once':
-                # Consistency check: synchronous special tasks are
-                # not allowed in asynchronous graph sections.
-                spec = self.cfg['scheduling']['special tasks']
-                bad = []
-                for name in lnames + rights:
-                    if name in spec['start-up'] or name in spec['cold-start'] or \
-                            name in spec['one-off']:
-                                bad.append(name)
-                if len(bad) > 0:
-                    print >> sys.stderr, orig_line
-                    print >> sys.stderr, 'ERROR, synchronous special tasks cannot be used in an asynchronous graph:'
-                    print >> sys.stderr, ' ', ', '.join(bad)
-                    raise SuiteConfigError, 'ERROR: inconsistent use of special tasks.'
-
-            for rt in rights:
+            for right_node in right_nodes:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
-                if rt and rt.startswith('!'):
-                    r = rt[1:]
+                if right_node and right_node.startswith('!'):
+                    right_name = right_node[1:]
                     suicide = True
                 else:
-                    r = rt
+                    right_name = right_node
 
-                asyncid_pattern = None
+                pruned_left_nodes = list(left_nodes)  # Create copy of LHS tasks.
+
                 if ttype != 'cycling':
-                    for n in lnames + [r]:
-                        if not n:
+                    for node in left_nodes + [right_name]:
+                        if not node:
                             continue
                         try:
-                            name = graphnode( n ).name
+                            node_name = graphnode(
+                                node, base_interval=seq.get_interval()).name
                         except GraphNodeError, x:
                             print >> sys.stderr, orig_line
                             raise SuiteConfigError, str(x)
-                        if ttype == 'async_oneoff':
-                            if name not in self.async_oneoff_tasks:
-                                self.async_oneoff_tasks.append(name)
-                        elif ttype == 'async_repeating':
-                            if name not in self.async_repeating_tasks:
-                                self.async_repeating_tasks.append(name)
-                            m = re.match( '^ASYNCID:(.*)$', section )
-                            asyncid_pattern = m.groups()[0]
+
+                if ttype == 'cycling':
+                    for left_node in left_nodes:
+                        try:
+                            left_graph_node = graphnode(
+                                left_node, base_interval=seq.get_interval())
+                        except GraphNodeError, x:
+                            print >> sys.stderr, orig_line
+                            raise SuiteConfigError, str(x)
+                        left_name = left_graph_node.name
+                        left_output = left_graph_node.output  
+                        if (left_name in tasks_to_prune or
+                                return_all_dependencies):
+                            special_dependencies.append(
+                                (left_name, left_output, right_name))
+                        if left_name in tasks_to_prune:
+                            pruned_left_nodes.remove(left_node)
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, lnames, r, ttype, cyclr, suicide )
-                self.generate_taskdefs( orig_line, lnames, r, ttype, section, cyclr, asyncid_pattern )
-                self.generate_triggers( lexpression, lnames, r, cyclr, asyncid_pattern, suicide )
+                    self.generate_edges( lexpression, pruned_left_nodes,
+                                         right_name, ttype,
+                                         seq, suicide )
+                self.generate_taskdefs( orig_line, pruned_left_nodes,
+                                        right_name, ttype,
+                                        section, seq, offset_seq_map,
+                                        seq.get_interval() )
+                self.generate_triggers( lexpression, pruned_left_nodes,
+                                        right_name, seq,
+                                        suicide )
+        return special_dependencies
+            
 
-    def generate_edges( self, lexpression, lnames, right, ttype, cyclr, suicide=False ):
+    def generate_edges( self, lexpression, left_nodes, right, ttype, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
         if re.search( '\|', lexpression ):
             # plot conditional triggers differently
             conditional = True
 
-        for left in lnames:
-            if left in self.async_oneoff_tasks + self.async_repeating_tasks:
-                sasl = True
-            else:
-                sasl = False
-            e = graphing.edge( left, right, cyclr, sasl, suicide, conditional )
-            if ttype == 'async_oneoff':
-                if e not in self.async_oneoff_edges:
-                    self.async_oneoff_edges.append( e )
-            elif ttype == 'async_repeating':
-                if e not in self.async_repeating_edges:
-                    self.async_repeating_edges.append( e )
-            else:
-                # cycling
-                self.edges.append(e)
+        for left in left_nodes:
+            e = graphing.edge( left, right, seq, False, suicide, conditional )
+            self.edges.append(e)
 
-    def generate_taskdefs( self, line, lnames, right, ttype, section, cyclr, asyncid_pattern ):
-        for node in lnames + [right]:
+    def generate_taskdefs( self, line, left_nodes, right, ttype, section, seq,
+                           offset_seq_map, base_interval ):
+        """Generate task definitions for nodes on a given line."""
+        for node in left_nodes + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
                 # for which we still define the taskdefs
                 continue
             try:
-                name = graphnode( node ).name
-                offset = graphnode( node ).offset
+                my_taskdef_node = graphnode( node, base_interval=base_interval )
             except GraphNodeError, x:
                 print >> sys.stderr, line
                 raise SuiteConfigError, str(x)
+
+            name = my_taskdef_node.name
+            offset = my_taskdef_node.offset
 
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root
@@ -1220,17 +1254,7 @@ class config( object ):
                     raise SuiteConfigError, str(x)
 
             # TODO - setting type should be consolidated to get_taskdef()
-            if name in self.async_oneoff_tasks:
-                # this catches oneoff async tasks that begin a repeating
-                # async section as well.
-                self.taskdefs[name].type = 'async_oneoff'
-            elif ttype == 'async_repeating':
-                self.taskdefs[name].asyncid_pattern = asyncid_pattern
-                if name == self.cfg['scheduling']['dependencies'][section]['daemon']:
-                    self.taskdefs[name].type = 'async_daemon'
-                else:
-                    self.taskdefs[name].type = 'async_repeating'
-            elif ttype == 'cycling':
+            if ttype == 'cycling':
                 self.taskdefs[name].cycling = True
                 if name not in self.cycling_tasks:
                     self.cycling_tasks.append(name)
@@ -1241,37 +1265,39 @@ class config( object ):
                         'task'   : self.suite_polling_tasks[name][1],
                         'status' : self.suite_polling_tasks[name][2] }
 
-            if offset:
-                # adjust cycler state and add
-                cyc = deepcopy( cyclr )
-                cyc.adjust_state(offset)
-                # record the adjusted one too
-                self.cyclers.append( cyc )
-                self.taskdefs[ name ].add_to_valid_cycles( cyc )
-            else:
-                # add cycler if we don't already have it
-                if cyclr not in self.taskdefs[name].cyclers:
-                    self.taskdefs[ name ].add_to_valid_cycles( cyclr )
+            if not my_taskdef_node.is_absolute:
+                if offset:
+                    if flags.back_comp_cycling:
+                        # Implicit cycling means foo[T+6] generates a +6 sequence.
+                        if str(offset) in offset_seq_map:
+                            seq_offset = offset_seq_map[str(offset)]
+                        else:
+                            seq_offset = get_sequence(
+                                section,
+                                self.cfg['scheduling']['initial cycle point'],
+                                self.cfg['scheduling']['final cycle point']
+                            )
+                            seq_offset.set_offset(offset)
+                            offset_seq_map[str(offset)] = seq_offset
+                        self.taskdefs[name].add_sequence(
+                            seq_offset, is_implicit=True)
+                    # We don't handle implicit cycling in new-style cycling.
+                else:
+                    self.taskdefs[ name ].add_sequence(seq)
 
             if self.run_mode == 'live':
                 # register any explicit internal outputs
                 if 'outputs' in self.cfg['runtime'][name]:
                     for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = outputx(msg,cyclr)
+                        outp = outputx(msg, base_interval)
                         self.taskdefs[ name ].outputs.append( outp )
 
-            # collate which tasks appear in each section
-            # (used in checking conditional trigger expressions)
-            if cyclr not in self.tasks_by_cycler:
-                self.tasks_by_cycler[cyclr] = []
-            if name not in self.tasks_by_cycler[cyclr]:
-                self.tasks_by_cycler[cyclr].append(name)
-
-
-    def generate_triggers( self, lexpression, lnames, right, cycler, asyncid_pattern, suicide ):
+    def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
             return
+
+        base_interval = seq.get_interval()
 
         conditional = False
         if re.search( '\|', lexpression ):
@@ -1282,24 +1308,33 @@ class config( object ):
 
         ctrig = {}
         cname = {}
-        for left in lnames:
-            lnode = graphnode(left)  # (GraphNodeError checked above)
+        for left in left_nodes:
+            # (GraphNodeError checked above)
+            cycle_point = None
+            lnode = graphnode(left, base_interval=base_interval)
             if lnode.intercycle:
                 self.taskdefs[lnode.name].intercycle = True
-                if int(lnode.offset) > int(self.taskdefs[lnode.name].intercycle_offset):
+                if (self.taskdefs[lnode.name].intercycle_offset is None or (
+                        lnode.offset is not None and
+                        lnode.offset >
+                        self.taskdefs[lnode.name].intercycle_offset)):
                     self.taskdefs[lnode.name].intercycle_offset = lnode.offset
-
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, asyncid_pattern, suicide )
+            if lnode.offset_is_from_ict:
+                last_point = seq.get_stop_point()
+                first_point = self.taskdefs[lnode.name].ict - lnode.offset
+                if first_point and last_point is not None:
+                    self.taskdefs[lnode.name].intercycle_offset = (last_point - first_point)
+                else:
+                    self.taskdefs[lnode.name].intercycle_offset = None
+                cycle_point = first_point
+            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, suicide, seq.get_interval() )
             if not trigger:
                 continue
             if not conditional:
-                self.taskdefs[right].add_trigger( trigger, cycler )
+                self.taskdefs[right].add_trigger( trigger, seq )
                 continue
 
             # CONDITIONAL TRIGGERS
-            if trigger.async_repeating:
-                # (extend taskdef.py:tclass_add_prerequisites to allow this)
-                raise SuiteConfigError, 'ERROR, ' + left + ': repeating async tasks are not allowed in conditional triggers.'
             # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
@@ -1309,29 +1344,40 @@ class config( object ):
 
         if not conditional:
             return
-        # Conditional expression must contain all start-up (or async)
-        # tasks, or none - cannot mix with cycling tasks in the same
-        # expression. Count number of start-up or async_oneoff tasks:
-        countx = 0
-        for label in ctrig:
-            if right in self.cycling_tasks:
-                if (cname[label] in self.cfg['scheduling']['special tasks']['start-up'] or \
-                        cname[label] in self.async_oneoff_tasks ):
-                    countx += 1
-        if countx > 0 and countx != len(cname.keys()):
-            print >> sys.stderr, 'ERROR:', lexpression
-            raise SuiteConfigError, '(start-up or async) and (cycling) tasks in same conditional'
 
         # Replace some chars for later use in regular expressions.
         expr = re.sub( '[-\[\]:]', '_', lexpression )
         expr = re.sub( '\+', 'x', expr ) # future triggers
-        self.taskdefs[right].add_conditional_trigger( ctrig, expr, cycler )
+        self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
 
-    def get_graph_raw( self, start_ctime, stop, raw=False,
+    def get_actual_first_ctime( self, start_ctime ):
+        # Get actual first cycle point for the suite (get all
+        # sequences to adjust the putative start time upward)
+        if self.actual_first_ctime:
+            # already computed
+            return self.actual_first_ctime
+        if isinstance(start_ctime, basestring):
+            ctime = get_point(start_ctime)
+        else:
+            ctime = start_ctime
+        adjusted = []
+        for seq in self.sequences:
+            foo = seq.get_first_point( ctime )
+            if foo:
+                adjusted.append( foo )
+        if len( adjusted ) > 0:
+            adjusted.sort()
+            self.actual_first_ctime = adjusted[0]
+        else:
+            self.actual_first_ctime = ctime
+        return self.actual_first_ctime
+
+    def get_graph_raw( self, start_ctime_str, stop_str, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
-        actual edges for a concrete range of cycle times."""
+        actual edges for a concrete range of cycle points."""
+
         members = self.runtime['first-parent descendants']
         hierarchy = self.runtime['first-parent ancestors']
 
@@ -1377,42 +1423,34 @@ class config( object ):
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = []
 
-        for e in self.async_oneoff_edges + self.async_repeating_edges:
-            right = e.get_right(1, False, False, [], [])
-            left  = e.get_left( 1, False, False, [], [])
-            nl, nr = self.close_families( left, right )
-            gr_edges.append( (nl, nr, False, e.suicide, e.conditional) )
+        start_ctime = get_point( start_ctime_str )
 
-        # Get actual first real cycle time for the whole suite (get all
-        # cyclers to adjust the putative start time upward)
-        adjusted = []
-        for cyc in self.cyclers:
-            if hasattr( cyc.__class__, 'is_async' ):
-                # ignore asynchronous tasks
-                continue
-            foo = cyc.initial_adjust_up( start_ctime )
-            adjusted.append( foo )
-        if len( adjusted ) > 0:
-            adjusted.sort()
-            actual_first_ctime = adjusted[0]
-        else:
-            actual_first_ctime = start_ctime
+        actual_first_ctime = self.get_actual_first_ctime( start_ctime )
 
-        startup_exclude_list = self.get_coldstart_task_list() + \
-                self.get_startup_task_list()
+        startup_exclude_list = self.get_coldstart_task_list()
+
+        stop = get_point( stop_str )
 
         for e in self.edges:
-            # Get initial cycle time for this cycler
-            i_ctime = e.cyclr.initial_adjust_up( start_ctime )
-            ctime = i_ctime
+            # Get initial cycle point for this sequence
+            i_ctime = e.sequence.get_first_point( start_ctime )
+            if not i_ctime:
+                # out of bounds
+                continue
+            ctime = deepcopy(i_ctime)
 
-            while int(ctime) <= int(stop):
-                # Loop over cycles generated by this cycler
+            while True: 
+                # Loop over cycles generated by this sequence
+                if not ctime or ctime > stop:
+                    break
 
                 not_initial_cycle = ( ctime != i_ctime )
 
-                r_id = e.get_right(ctime, not_initial_cycle, raw, startup_exclude_list, [])
-                l_id = e.get_left( ctime, not_initial_cycle, raw, startup_exclude_list, [])
+                r_id = e.get_right(ctime, start_ctime, not_initial_cycle, raw,
+                                   startup_exclude_list )
+                l_id = e.get_left( ctime, start_ctime, not_initial_cycle, raw,
+                                   startup_exclude_list,
+                                   e.sequence.get_interval() )
 
                 action = True
 
@@ -1422,19 +1460,20 @@ class config( object ):
 
                 if l_id != None and not e.sasl:
                     # check that l_id is not earlier than start time
-                    tmp, lctime = l_id.split()
-                    #sct = ct(start_ctime)
-                    sct = ct(actual_first_ctime)
-                    diffhrs = sct.subtract_hrs( lctime )
-                    if diffhrs > 0:
+                    tmp, lctime = TaskID.split(l_id)
+                    ## NOTE BUG GITHUB #919
+                    ##sct = start_ctime
+                    sct = actual_first_ctime
+                    lct = get_point(lctime)
+                    if sct > lct:
                         action = False
 
                 if action:
                     nl, nr = self.close_families( l_id, r_id )
                     gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
-                # increment the cycle time
-                ctime = e.cyclr.next( ctime )
+                # increment the cycle point
+                ctime = e.sequence.get_next_point_on_sequence( ctime )
 
         return gr_edges
 
@@ -1459,27 +1498,21 @@ class config( object ):
         # Generate final node names, replacing family members with
         # family nodes if requested.
 
-        # TODO - FORMATTED NODE NAMES
-        # can't be used until comparison with internal IDs cope
-        # for gcylc (get non-formatted tasks as disconnected nodes on
-        # the right of the formatted-name base graph).
-        formatted=False
-
         members = self.runtime['first-parent descendants']
 
         lname, ltag = None, None
         rname, rtag = None, None
         nr, nl = None, None
         if nlid:
-            one, two = nlid.split()
-            lname = one.getstr()
-            ltag = two.getstr(formatted)
-            nl = nlid.getstr(formatted)
+            one, two = TaskID.split(nlid)
+            lname = one
+            ltag = two
+            nl = nlid
         if nrid:
-            one, two = nrid.split()
-            rname = one.getstr()
-            rtag = two.getstr(formatted)
-            nr = nrid.getstr(formatted)
+            one, two = TaskID.split(nrid)
+            rname = one
+            rtag = two
+            nr = nrid
 
         # for nested families, only consider the outermost one
         clf = copy( self.closed_families )
@@ -1494,14 +1527,14 @@ class config( object ):
             if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = fam + TaskID.DELIM +ltag, fam + TaskID.DELIM +rtag
+                nl,nr = TaskID.get(fam,ltag), TaskID.get(fam,rtag)
                 break
             elif lname in members[fam]:
                 # l is a member of fam
-                nl = fam + TaskID.DELIM + ltag
+                nl = TaskID.get(fam,ltag)
             elif rname in members[fam]:
                 # r is a member of fam
-                nr = fam + TaskID.DELIM + rtag
+                nr = TaskID.get(fam,rtag)
 
         return nl, nr
 
@@ -1509,57 +1542,138 @@ class config( object ):
         if flags.verbose:
             print "Parsing the dependency graph"
 
-        self.graph_found = False
-        for item in self.cfg['scheduling']['dependencies']:
-            if item == 'graph':
-                # asynchronous graph
-                graph = self.cfg['scheduling']['dependencies']['graph']
-                if graph:
-                    section = "once"
-                    self.parse_graph( section, graph )
-            else:
-                try:
-                    graph = self.cfg['scheduling']['dependencies'][item]['graph']
-                except KeyError:
-                    pass
-                else:
-                    if graph:
-                        section = item
-                        self.parse_graph( section, graph )
+        start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
+        initial_tasks = list(start_up_tasks)
 
-    def parse_graph( self, section, graph ):
+        self.graph_found = False
+        has_non_async_graphs = False
+
+        section_seq_map = {}
+
+        # Set up our backwards-compatibility handling of async graphs.
+        async_graph = self.cfg['scheduling']['dependencies']['graph']
+        if async_graph:
+            section = get_sequence_cls().get_async_expr()
+            async_dependencies = self.parse_graph(
+                section, async_graph, section_seq_map=section_seq_map,
+                return_all_dependencies=True
+            )
+            for left, left_output, right in async_dependencies:
+                if left:
+                    initial_tasks.append(left)
+                if right:
+                    initial_tasks.append(right)
+
+        # Create a stack of sections (sequence strings) and graphs.
+        items = []
+        for item, value in self.cfg['scheduling']['dependencies'].items():
+            if item == 'graph':
+                continue
+            has_non_async_graphs = True
+            items.append((item, value, initial_tasks, False))
+
+        start_up_tasks_graphed = []
+        while items:
+            item, value, tasks_to_prune, is_inserted = items.pop(0)
+
+            # If the section consists of more than one sequence, split it up.
+            if re.search("(?![^(]+\)),", item):
+                new_items = re.split("(?![^(]+\)),", item)
+                for new_item in new_items:
+                    items.append((new_item.strip(), value,
+                                  tasks_to_prune, False))
+                continue
+
+            try:
+                graph = value['graph']
+            except KeyError:
+                continue
+            if not graph:
+                continue
+
+            section = item
+            if is_inserted:
+                print "INSERTED DEPENDENCIES REPLACEMENT:"
+                print "[[[" + section + "]]]"
+                print "    " + 'graph = """' + graph + '"""' 
+            special_dependencies = self.parse_graph(
+                section, graph, section_seq_map=section_seq_map,
+                tasks_to_prune=tasks_to_prune
+            )
+            if special_dependencies and tasks_to_prune:
+                section_seq = get_sequence(
+                    section,
+                    self.cfg['scheduling']['initial cycle point'],
+                    self.cfg['scheduling']['final cycle point']
+                )
+                first_point = section_seq.get_first_point(
+                    get_point(self.cfg['scheduling']['initial cycle point'])
+                )
+                graph_text = ""
+                for left, left_output, right in special_dependencies:
+                    # Set e.g. (foo, fail, bar) to be foo[^]:fail => bar.
+                    graph_text += left + "[^]"
+                    if left_output:
+                        graph_text += ":" + left_output
+                    graph_text += " => " + right + "\n"
+                    if (left in start_up_tasks and
+                            left not in start_up_tasks_graphed):
+                        # Start-up tasks need their own explicit section.
+                        items.append((get_sequence_cls().get_async_expr(),
+                                     {"graph": left}, [], True))
+                        start_up_tasks_graphed.append(left)
+                graph_text = graph_text.rstrip()
+                section = get_sequence_cls().get_async_expr(first_point)
+                items.append((section, {"graph": graph_text}, [], True))
+        if not flags.back_comp_cycling:
+            if async_graph and has_non_async_graphs:
+                raise SuiteConfigError(
+                    "Error: mixed async & cycling graphs is not allowed in " +
+                    "new-style cycling. Use 'R1...' tasks instead."
+                )
+            if start_up_tasks:
+                raise SuiteConfigError(
+                    "Error: start-up tasks should be 'R1...' tasks in " +
+                    "new-style cycling"
+                )
+
+    def parse_graph( self, section, graph, section_seq_map=None,
+                     tasks_to_prune=None, return_all_dependencies=False ):
+        """Parse a multi-line graph string for section.
+
+        section should be a string like "R1" or "T00".
+        graph should be a single or multi-line string like "foo => bar"
+        section_seq_map should be a dictionary that indexes cycling
+        sequences by their section string
+        tasks_to_prune is a list of task names that should be
+        automatically removed when processing graph
+        return_all_dependencies is a boolean that, if True, returns a
+        list of task dependencies - e.g. [('foo', 'start', 'bar')] for
+        a graph of 'foo:start => bar'.
+
+        """
         self.graph_found = True
 
-        # section: [list of valid hours], or ["once"], or ["ASYNCID:pattern"]
-        if section == "once":
-            ttype = 'async_oneoff'
-            modname = 'async'
-            args = []
-        elif re.match( '^ASYNCID:', section ):
-            ttype = 'async_repeating'
-            modname = 'async'
-            args = []
-        else:
-            ttype = 'cycling'
-            # match cycler, e.g. "Yearly( 2010, 2 )"
-            m = re.match( '^(\w+)\(([\s\w,]*)\)$', section )
-            if m:
-                modname, cycargs = m.groups()
-                # remove leading and trailing space
-                cycargs = cycargs.strip()
-                arglist = re.sub( '\s+$', '', cycargs )
-                # split on comma with optional space each side
-                args = re.split( '\s*,\s*', arglist )
-            else:
-                modname = self.cfg['scheduling']['cycling']
-                args = re.split( ',\s*', section )
+        ttype = 'cycling'
+        sec = section
 
-        mod = __import__( 'cylc.cycling.' + modname, globals(), locals(), [modname] )
-        cyclr = getattr( mod, modname )(*args)
-        self.cyclers.append(cyclr)
+        if section in section_seq_map:
+            seq = section_seq_map[section]
+        else:
+            seq = get_sequence(
+                section,
+                self.cfg['scheduling']['initial cycle point'],
+                self.cfg['scheduling']['final cycle point']
+            )
+            section_seq_map[section] = seq
+        offset_seq_map = {}
+
+        if seq not in self.sequences:
+            self.sequences.append(seq)
 
         # split the graph string into successive lines
         lines = re.split( '\s*\n\s*', graph )
+        special_dependencies = []
         for xline in lines:
             # strip comments
             line = re.sub( '#.*', '', xline )
@@ -1570,8 +1684,14 @@ class config( object ):
             line = re.sub( '^\s*', '', line )
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
-            self.process_graph_line( line, section, ttype, cyclr )
-
+            special_dependencies.extend(self.process_graph_line(
+                line, section, ttype, seq, offset_seq_map,
+                tasks_to_prune=tasks_to_prune,
+                return_all_dependencies=return_all_dependencies
+            ))
+        if ttype == 'cycling':
+            return special_dependencies
+        return []
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
@@ -1582,22 +1702,19 @@ class config( object ):
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
 
-        ict = self.cli_start_tag or self.cfg['scheduling']['initial cycle time']
+        ict_point = (self.cli_start_point or
+                     get_point(self.cfg['scheduling']['initial cycle point']))
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
         # Get the taskdef object for generating the task proxy class
-        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict )
+        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict_point )
 
         # TODO - put all taskd.foo items in a single config dict
-        # SET ONE-OFF AND COLD-START TASK INDICATORS
+        # SET COLD-START TASK INDICATORS
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
             taskd.modifiers.append( 'oneoff' )
             taskd.is_coldstart = True
-
-        if name in self.cfg['scheduling']['special tasks']['one-off'] or \
-                name in self.cfg['scheduling']['special tasks']['start-up']:
-            taskd.modifiers.append( 'oneoff' )
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:
@@ -1628,16 +1745,8 @@ class config( object ):
         except KeyError:
             raise TaskNotDefinedError("ERROR, task not defined: " + name )
         tdef = self.get_taskdef( name )
-        try:
-            foo = ct(tag)
-        except CycleTimeError, x:
-            # must be async
-            tdef.type = 'async_oneoff'
-        else:
-            # assume input cycle is valid
-            tdef.hours = [ int( foo.hour ) ]
+        # TODO ISO - TEST THIS (did set 'tdef.hours' from tag)
         return tdef.get_task_class()( tag, state, stoptag, startup, submit_num=submit_num, exists=exists )
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
-

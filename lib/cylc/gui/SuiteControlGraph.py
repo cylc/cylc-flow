@@ -21,10 +21,9 @@ import os, re
 import gobject
 from GraphUpdater import GraphUpdater
 from warning_dialog import warning_dialog, info_dialog
-from cylc.cycle_time import ct
 from cylc.cylc_xdot import xdot_widgets
 from cylc.task_state import task_state
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from gcapture import gcapture_tmpfile
 
 
@@ -124,7 +123,7 @@ Dependency graph suite control interface.
         self.t.quit = True
 
     def right_click_menu( self, event, task_id, type='live task' ):
-        name, ctime = task_id.split(TaskID.DELIM)
+        name, ctime = cylc.TaskID.split( task_id )
 
         menu = gtk.Menu()
         menu_root = gtk.MenuItem( task_id )
@@ -239,11 +238,6 @@ Dependency graph suite control interface.
         items.append( crop_item )
         crop_item.set_active( self.t.crop )
         crop_item.connect( 'activate', self.toggle_crop )
-
-        croprunahead_item = gtk.CheckMenuItem( 'Toggle Crop _Runahead Tasks' )
-        items.append( croprunahead_item )
-        croprunahead_item.set_active( self.t.croprunahead )
-        croprunahead_item.connect( 'activate', self.toggle_croprunahead )
 
         menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
         img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
@@ -366,10 +360,6 @@ Dependency graph suite control interface.
         self.t.crop = not self.t.crop
         self.t.action_required = True
 
-    def toggle_croprunahead( self, w ):
-        self.t.croprunahead = not self.t.croprunahead
-        self.t.action_required = True
-
     def toggle_left_to_right_mode( self, w ):
         """Change the graph to left-to-right or top-to-bottom."""
         if self.t.orientation == "TB":  # Top -> bottom ordering
@@ -490,20 +480,19 @@ Dependency graph suite control interface.
             window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
         vbox = gtk.VBox()
 
-        name, ctime = id.split(TaskID.DELIM)
-        # TODO - do we need to check that oldeset_ctime is defined yet?
-        cti = ct(ctime)
-        octi = ct( self.t.oldest_ctime )
-        ncti = ct( self.t.newest_ctime )
-        diff_pre = cti.subtract_hrs( octi )
-        diff_post = ncti.subtract_hrs( cti )
+        name, ctime = cylc.TaskID.split( id )
+        # TODO - do we need to check that oldest_ctime is defined yet?
+
+        # TODO ISO - RESTORE OR REMOVE THIS FUNCTIONALITY
+        #diff_pre = ctime - self.t.oldest_ctime.hours
+        #diff_post = self.t.newest_ctime - ctime.hours
 
         # TODO - error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Pre (hours)' )
         box.pack_start( label, True )
         start_entry = gtk.Entry()
-        start_entry.set_text(str(diff_pre))
+        #start_entry.set_text(str(diff_pre))
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
@@ -511,7 +500,7 @@ Dependency graph suite control interface.
         label = gtk.Label( 'Post (hours)' )
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
-        stop_entry.set_text(str(diff_post))
+        #stop_entry.set_text(str(diff_post))
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 
@@ -555,7 +544,7 @@ Dependency graph suite control interface.
 
         # TODO - error checking on date range given
         box = gtk.HBox()
-        label = gtk.Label( 'Start (YYYY[MM[DD[HH[mm[ss]]]]])' )
+        label = gtk.Label( 'Start CYCLE' )
         box.pack_start( label, True )
         start_entry = gtk.Entry()
         start_entry.set_max_length(14)
@@ -565,7 +554,7 @@ Dependency graph suite control interface.
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Stop (YYYY[MM[DD[HH[mm[ss]]]]])' )
+        label = gtk.Label( 'Stop CYCLE' )
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
         stop_entry.set_max_length(14)
@@ -603,12 +592,10 @@ Dependency graph suite control interface.
     def focused_timezoom(self, w, focus_ctime, start_e, stop_e):
         pre_hours = start_e.get_text()
         post_hours = stop_e.get_text()
-        foo = ct(focus_ctime)
-        foo.decrement( hours=pre_hours )
-        self.t.focus_start_ctime = foo.get()
-        bar = ct(focus_ctime)
-        bar.increment( hours=post_hours )
-        self.t.focus_stop_ctime = bar.get()
+        # TODO ISO:
+        #self.t.focus_ctime = focus_ctime - pre_hours
+        #self.t.focus_stop_ctime = focus_ctime + post_hours
+        return
         self.t.best_fit = True
         self.t.action_required = True
 

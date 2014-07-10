@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test default runahead limit behaviour is still the same
+# Test default runahead limit behaviour is still the same
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -32,7 +32,7 @@ TEST_NAME=$TEST_NAME_BASE-check-fail
 DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
 RUNAHEAD=$(sqlite3 $DB "select max(cycle) from task_states")
 # manual comparison for the test
-if (($RUNAHEAD==2010010106)); then
+if [[ "$RUNAHEAD" == "20100101T0600Z" ]]; then
     ok $TEST_NAME
 else
     fail $TEST_NAME

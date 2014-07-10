@@ -1,0 +1,40 @@
+2014-07-01T15:33:14+01 INFO - Thread-2 start (Event Handlers)
+2014-07-01T15:33:14+01 INFO - Thread-3 start (Poll & Kill Commands)
+2014-07-01T15:33:14+01 INFO - port:7768
+2014-07-01T15:33:14+01 INFO - Suite starting at 2014-07-01T15:33:14+01
+2014-07-01T15:33:14+01 INFO - Log event clock: real time
+2014-07-01T15:33:14+01 INFO - Run mode: live
+2014-07-01T15:33:14+01 INFO - Start tag: 1
+2014-07-01T15:33:14+01 INFO - Stop tag: 1
+2014-07-01T15:33:14+01 INFO - Thread-4 start (Job Submission)
+2014-07-01T15:33:14+01 INFO - Thread-5 start (Request Handling)
+2014-07-01T15:33:14+01 INFO - Cold Start 1
+2014-07-01T15:33:14+01 DEBUG - [foo.1] -released to the task pool
+2014-07-01T15:33:14+01 DEBUG - BEGIN TASK PROCESSING
+2014-07-01T15:33:14+01 DEBUG - [foo.1] -(setting:queued)
+2014-07-01T15:33:14+01 DEBUG - 1 task(s) ready
+2014-07-01T15:33:14+01 DEBUG - [foo.1] -(setting:ready)
+2014-07-01T15:33:14+01 INFO - [foo.1] -triggered off []
+2014-07-01T15:33:14+01 DEBUG - END TASK PROCESSING (took 0.0554459095001 sec)
+2014-07-01T15:33:15+01 DEBUG - Job Submission batch 1/1 (1 members):
+2014-07-01T15:33:15+01 INFO - [foo.1] -(current:ready)> foo.1 submitting now
+2014-07-01T15:33:16+01 DEBUG - Job Submission: batch completed
+  Time taken: 0.759932041168 seconds
+  All 1 items succeeded
+2014-07-01T15:33:16+01 INFO - [foo.1] -(current:ready)> foo.1 submission succeeded
+2014-07-01T15:33:16+01 DEBUG - [foo.1] -(setting:submitted)
+2014-07-01T15:33:16+01 INFO - [foo.1] -(current:submitted)> foo.1 submit_method_id=20010
+2014-07-01T15:33:17+01 DEBUG - BEGIN TASK PROCESSING
+2014-07-01T15:33:17+01 DEBUG - [foo.1] -forced spawning
+2014-07-01T15:33:17+01 DEBUG - END TASK PROCESSING (took 0.0497229099274 sec)
+2014-07-01T15:33:18+01 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-07-01T15:33:16+01
+2014-07-01T15:33:18+01 DEBUG - [foo.1] -(setting:running)
+2014-07-01T15:33:18+01 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-07-01T15:33:18+01
+2014-07-01T15:33:18+01 DEBUG - [foo.1] -(setting:succeeded)
+2014-07-01T15:33:18+01 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 1
+2014-07-01T15:33:19+01 INFO - Thread-4 exit (Job Submission)
+2014-07-01T15:33:19+01 INFO - Thread-2 exit (Event Handlers)
+2014-07-01T15:33:19+01 INFO - Thread-3 exit (Poll & Kill Commands)
+2014-07-01T15:33:19+01 DEBUG - BEGIN TASK PROCESSING
+2014-07-01T15:33:19+01 DEBUG - END TASK PROCESSING (took 0.0498149394989 sec)

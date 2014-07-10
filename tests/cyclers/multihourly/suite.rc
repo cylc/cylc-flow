@@ -1,0 +1,15 @@
+[cylc]
+    cycle point time zone = +13
+    [[reference test]]
+        live mode suite timeout = 2.0
+[scheduling]
+    initial cycle point = 20000131T0100Z
+    final cycle point = 20000202T0600+0600
+    [[dependencies]]
+        [[[ PT3H ]]]
+            graph = "foo[-PT3H] => foo => bar"
+        [[[ PT6H ]]]
+            graph = "baz[-PT6H] => baz => qux"
+[runtime]
+    [[root]]
+        command scripting = true

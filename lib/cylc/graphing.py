@@ -21,12 +21,11 @@ ImportError due to pygraphviz/graphviz not being installed."""
 
 import re
 import pygraphviz
-from TaskID import TaskID, AsyncTag
-
-OFFSET_RE =re.compile('(\w+)\s*\[\s*T\s*([+-]\s*\d+)\s*\]')
+import TaskID
+from cycling.loader import get_point, get_interval
+from graphnode import graphnode
 
 # TODO: Do we still need autoURL below?
-
 
 class CGraphPlain( pygraphviz.AGraph ):
     """Directed Acyclic Graph class for cylc dependency graphs."""
@@ -40,7 +39,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.suite_polling_tasks = suite_polling_tasks
 
     def node_attr_by_taskname( self, n ):
-        name = re.sub( TaskID.DELIM_RE+'.*', '', n )
+        name, tag = TaskID.split( n )
         if name in self.task_attr:
             return self.task_attr[name]
         else:
@@ -50,8 +49,8 @@ class CGraphPlain( pygraphviz.AGraph ):
         pass
 
     def style_node( self, n, autoURL, base=False ):
-        node = self.get_node(n)
-        name, tag = re.split( TaskID.DELIM_RE, n )
+        node = self.get_node( n )
+        name, tag = TaskID.split( n )
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
@@ -176,20 +175,18 @@ class CGraph( CGraphPlain ):
 
 
 class edge( object):
-    def __init__( self, l, r, cyclr, sasl=False, suicide=False, conditional=False ):
+    def __init__( self, l, r, sequence, sasl=False, suicide=False, conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = l
         self.right = r
-        self.cyclr = cyclr
+        self.sequence = sequence
         self.sasl = sasl
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, intag, not_first_cycle, raw, startup_only, exclude ):
+    def get_right( self, intag, start_point, not_first_cycle, raw,
+                   startup_only ):
         tag = str(intag)
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        if self.right in exclude:
-            return None
         if self.right == None:
             return None
         first_cycle = not not_first_cycle
@@ -200,39 +197,28 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        return TaskID( self.right, tag )
+        return TaskID.get( self.right, tag )
 
-    def get_left( self, intag, not_first_cycle, raw, startup_only, exclude ):
-        tag = str(intag)
-        # (exclude was briefly used - April 2011 - to stop plotting temporary tasks)
-        if self.left in exclude:
-            return None
+    def get_left( self, intag, start_point, not_first_cycle, raw,
+                  startup_only, base_interval ):
 
         first_cycle = not not_first_cycle
 
         # strip off special outputs
         left = re.sub( ':[\w-]+', '', self.left )
 
-        if re.search( '\[\s*T\s*-\d+\s*\]', left ) and first_cycle:
-            # ignore intercycle deps in first cycle
-            return None
-
         if left in startup_only:
             if not first_cycle or raw:
                 return None
 
-        if self.sasl:
-            # left node is asynchronous, so override the cycler
-            tag = '1'
+        left_graphnode = graphnode(left, base_interval=base_interval)
+        if left_graphnode.offset_is_from_ict:
+            tag = start_point - left_graphnode.offset
+        elif left_graphnode.offset:
+            tag = intag - left_graphnode.offset
         else:
-            m = re.match( OFFSET_RE, left )
-            if m:
-                left, offset = m.groups()
-                # the cycler expects foo[T-offset] so change sign:
-                offset = str( -int( offset ))
-                tag = self.cyclr.__class__.offset( tag, offset )
-            else:
-                tag = tag
+            tag = intag
+        name = left_graphnode.name
 
-        return TaskID( left, tag )
+        return TaskID.get( name, str(tag) )
 

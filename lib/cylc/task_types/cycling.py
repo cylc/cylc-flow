@@ -19,11 +19,10 @@
 
 import sys
 from task import task
-from cylc.cycle_time import ct
 from copy import deepcopy
 
-# Cycling tasks: cycle time also required for a cold start. Init with:
-#  (1) cycle time
+# Cycling tasks: cycle point also required for a cold start. Init with:
+#  (1) cycle point
 #  (2) state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')
 
 # For a restart from previous state, however, some tasks may require
@@ -33,7 +32,7 @@ from copy import deepcopy
 # of bar to some extent, and changes its behavior according whether or
 # not it was triggered by a "old" bar (i.e. one already used by the
 # previous foo instance) or a "new" one. In this case, currently, we
-# use a class variable in task type foo to record the cycle time of
+# use a class variable in task type foo to record the cycle point of
 # the most recent bar used by any foo instance. This is written to the
 # the state dump file so that task foo does not have to automatically
 # assume it was triggered by a "new" bar after a restart.
@@ -46,41 +45,22 @@ from copy import deepcopy
 
 class cycling( task ):
 
-    intercycle = False
-    # This is a statement that the task has only cotemporal dependants
-    # and as such can be deleted as soon as there are no unsucceeded
-    # tasks with cycle times equal to or older than its own cycle time
-    # (prior to that we can't be sure that an older unsucceeded
-    # task won't give rise to a new task that does depend on the task
-    # we're interested in).
-    is_cycling = True
+    intercycle = False  # no inter-cycle dependents
 
-    # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
+    # derived classes must override ready_to_spawn()
 
     def __init__( self, state, stop_c_time = None, validate = False ):
-        # Call this AFTER derived class initialisation
-
-        # Derived class init MUST define:
-        #  * self.id after calling self.nearest_c_time()
-        #  * prerequisites and outputs
-        #  * self.env_vars
-
-        # Top level derived classes must define:
-        #   <class>.instance_count = 0
-
-        # A final stop time can be set by 'cylc insert' to create a temporary task.
         self.stop_c_time = stop_c_time
         task.__init__( self, state, validate )
 
-    def next_tag( self, ctime=None ):
-        if not ctime:
-            ctime = self.tag
-        return self.cycon.next( ctime )
-
-    def get_state_summary( self ):
-        summary = task.get_state_summary( self )
-        # derived classes can call this method and then
-        # add more information to the summary if necessary.
-        summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
-        return summary
-
+    def next_tag( self ):
+        p_next = None
+        adjusted = []
+        for seq in self.sequences:
+            nxt = seq.get_next_point(self.c_time)
+            if nxt:
+                # may be None if beyond the sequence bounds
+                adjusted.append( nxt )
+        if adjusted:
+            p_next = min( adjusted )
+        return p_next

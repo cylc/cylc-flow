@@ -24,9 +24,8 @@ import time
 import gobject
 import config
 import os, sys
-from cycle_time import ct
 from graphing import CGraphPlain
-from TaskID import TaskID
+import TaskID
 
 """
 Cylc-modified xdot windows for the "cylc graph" command.
@@ -425,11 +424,10 @@ class MyDotWindow( CylcDotViewerCommon ):
             one = self.ctime
             two = self.stop_after
         else:
-            one = str( self.suiterc.cfg['visualization']['initial cycle time'])
-            two = str(self.suiterc.cfg['visualization']['final cycle time'])
+            one = str( self.suiterc.cfg['visualization']['initial cycle point'])
+            two = str(self.suiterc.cfg['visualization']['final cycle point'])
 
-        # TODO: move ct().get() out of this call (for error checking):
-        graph = self.suiterc.get_graph( ct(one).get(), ct(two).get(),
+        graph = self.suiterc.get_graph( one, two,
                 raw=self.raw, group_nodes=group_nodes,
                 ungroup_nodes=ungroup_nodes,
                 ungroup_recursive=ungroup_recursive,
@@ -439,7 +437,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, tag = node.get_name().split(TaskID.DELIM)
+            name, tag = TaskID.split( node.get_name() )
             if name in family_nodes:
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'

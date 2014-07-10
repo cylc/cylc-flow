@@ -1,15 +1,17 @@
-title = "Intercycle dependence + an asynchronous task"
+title = "Inter-cycle dependence + a cold-start task"
+[cylc]
+    cycle point time zone = +13
 [scheduling]
-    #runahead limit = 120
-    initial cycle time = 2013080800
-    final cycle time = 2013081200
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
-        graph = prep
-        [[[0,12]]]
-            graph = "prep & foo[T-12] => foo => bar"
+        [[[R1]]]
+            graph = "prep => foo"
+        [[[T00,T12]]]
+            graph = "foo[-PT12H] => foo => bar"
 [visualization]
-    initial cycle time = 2013080800
-    final cycle time = 2013080812
+    initial cycle point = 20130808T00
+    final cycle point = 20130808T12
     [[node attributes]]
         foo = "color=red"
         bar = "color=blue"

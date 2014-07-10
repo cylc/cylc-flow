@@ -1,0 +1,50 @@
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 3.0
+[scheduling]
+    initial cycle point = 1
+    final cycle point = 16
+    runahead factor = 4 
+    cycling mode = integer
+    [[special tasks]]
+        sequential = seq
+    [[dependencies]]
+        [[[ R/c0/P3 ]]]
+            graph = """
+             seq => foo        # sequential task
+        foo[-P3] => foo        # prev instance trigger
+             foo => bar        # plain trigger
+        woo[+P1] => foo        # prev cycle
+        woo[+P1] => bar
+        woo[-P1] => foo        # next cycle
+
+        foo[-P3]:out1 => on_toast # message outputs
+                    """
+        [[[ R/c1/P3 ]]]
+            graph = woo
+        [[[ R/c2/P3 ]]]
+            graph = woo
+        [[[ R/c6/P6 ]]]
+            graph = """
+         foo[-P3] => qux       # every second cycle
+                    """
+[runtime]
+    [[foo]]
+        command scripting = """
+sleep 5
+cylc task message "the cheese is ready for $(( CYLC_TASK_CYCLE_POINT + 3 ))"
+sleep 5
+                            """
+        [[[outputs]]]
+            out1 = "the cheese is ready for [T+3]"
+
+[visualization]
+    default node attributes = "style=filled"
+    [[node attributes]]
+        foo = "fillcolor=slateblue"
+        woo = "fillcolor=limegreen"
+        bar = "fillcolor=orange"
+        seq = "fillcolor=navajowhite"
+        on_toast = "fillcolor=beige"
+        qux = "fillcolor=orangered"
+

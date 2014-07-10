@@ -29,7 +29,8 @@ from cylc.execute import execute
 from cylc.job_submission import jobfile
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
+from cylc.cycling.loader import get_point
 from cylc.locking.suite_lock import suite_lock
 from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
@@ -55,12 +56,18 @@ exclusive suite lock (which means you cannot running multiple instances
 of the suite at once, even under different registrations) then the
 lockserver will let you 'submit' a task from the suite only under the
 same registration, and only if the task is not locked (i.e. only if
-the same task, NAME.TAG, is not currently running in the suite)."""
+the same task, NAME.CYCLE_POINT, is not currently running in the suite)."""
 
 def commandline_parser():
-    parser = cop( usage, jset=True,
-            argdoc=[ ("REG", "Suite name"),
-                ("TASK", "Target task (NAME"+TaskID.DELIM+"TAG)")])
+    parser = cop(
+        usage, jset=True,
+        argdoc=[
+            ("REG", "Suite name"),
+            ("TASK",
+             "Target task (" + cylc.TaskID.get("NAME", "CYCLE_POINT") +
+             ")"),
+        ]
+    )
 
     parser.set_defaults( sched=False, dry_run=False )
 
@@ -90,12 +97,10 @@ suite_dir = os.path.dirname(suiterc)
 sys.path.append( os.path.join( suite_dir, 'python' ))
 
 # check task
-try:
-    tid = TaskID( task_id )
-except TaskIDError, x:
-    raise SystemExit(x)
-else:
-    task_name, ctime = tid.splitstr()
+if not cylc.TaskID.is_valid_id( task_id ):
+    sys.exit("Invalid task ID " + task_id )
+
+task_name, ctime = cylc.TaskID.split( task_id )
 
 # load suite config
 try:
@@ -140,8 +145,8 @@ slog.pimp()
 
 task.cylc_mode = 'submit'
 
-ict = config.cfg['scheduling']['initial cycle time']
-fct = config.cfg['scheduling']['final cycle time'  ]
+ict = config.cfg['scheduling']['initial cycle point']
+fct = config.cfg['scheduling']['final cycle point'  ]
 
 # static cylc and suite-specific variables:
 suite_env = {
@@ -159,6 +164,8 @@ suite_env = {
         'CYLC_SUITE_PORT'        : 'None',
         'CYLC_SUITE_REG_PATH'    : RegPath( suite ).get_fpath(), # DEPRECATED
         'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : suite_dir,
+        'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( ict ), # may be "None"
+        'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( fct ), # may be "None"
         'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( ict ), # may be "None"
         'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( fct ), # may be "None"
         'CYLC_SUITE_LOG_DIR'     : suite_log_dir # needed by the test battery
@@ -183,20 +190,17 @@ suite_task_env = {
 jobfile.jobfile.suite_env = suite_env
 jobfile.jobfile.suite_task_env = suite_task_env
 
-if task_name in config.get_asynchronous_task_name_list():
-    tag = '1'  # asynchronous tasks always start with tag = 1
-else:
-    tag = ctime
+point = get_point(ctime)
 try:
     # try to get a graphed task of the given name
-    task_proxy = config.get_task_proxy( task_name, tag, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
+    task_proxy = config.get_task_proxy( task_name, point, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
 except TaskNotDefinedError, x:
     print >> sys.stderr, 'WARNING: "' + task_name + \
             '" type and validity are not constrained by the graph.'
     print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
     try:
         # try to get an ungraphed task of the given name
-        task_proxy = config.get_task_proxy_raw( task_name, tag, 'waiting', stoptag=None, startup=True, submit_num=0, exists=False )
+        task_proxy = config.get_task_proxy_raw( task_name, point, 'waiting', stoptag=None, startup=True, submit_num=0, exists=False )
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 

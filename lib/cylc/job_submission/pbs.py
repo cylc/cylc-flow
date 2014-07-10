@@ -18,7 +18,6 @@
 
 import re
 from job_submit import job_submit
-from cylc.TaskID import TaskID
 from subprocess import check_call, Popen, PIPE
 
 class pbs( job_submit ):

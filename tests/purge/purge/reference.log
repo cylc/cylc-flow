@@ -45,7 +45,7 @@
 2014/01/07 17:36:06 WARNING - [ColdA.2010010106] -Assuming non-reported outputs were completed:
 ColdA.2010010106 submitted
 2014/01/07 17:36:07 INFO - [A.2010010106] -triggered off ['ColdA.2010010106', 'X.2010010106']
-2014/01/07 17:36:07 INFO - [X.2010010112] -triggered off []
+2014/01/07 17:36:07 INFO - [X.2010010112] -triggered off ['prep.2010010106']
 2014/01/07 17:36:07 INFO - [ColdA.2010010106] -(current:succeeded)> ColdA.2010010106 submission succeeded
 2014/01/07 17:36:07 INFO - [ColdA.2010010106] -(current:succeeded)> ColdA.2010010106 submit_method_id=20480
 2014/01/07 17:36:09 INFO - [A.2010010106] -(current:ready)> A.2010010106 submitting now
@@ -65,7 +65,7 @@ ColdA.2010010106 submitted
 2014/01/07 17:36:10 WARNING - [X.2010010112] -  X.2010010112 submit_method_id=20659
 2014/01/07 17:36:11 INFO - [C.2010010106] -triggered off ['A.2010010106', 'ColdC.2010010106']
 2014/01/07 17:36:11 INFO - [B.2010010106] -triggered off ['A.2010010106', 'ColdB.2010010106']
-2014/01/07 17:36:12 INFO - [X.2010010118] -triggered off []
+2014/01/07 17:36:12 INFO - [X.2010010118] -triggered off ['prep.2010010106']
 2014/01/07 17:36:12 INFO - [C.2010010106] -(current:ready)> C.2010010106 submitting now
 2014/01/07 17:36:13 INFO - [C.2010010106] -(current:ready)> C.2010010106 submission succeeded
 2014/01/07 17:36:13 INFO - [C.2010010106] -(current:submitted)> C.2010010106 submit_method_id=20797
@@ -95,7 +95,7 @@ ColdA.2010010106 submitted
 2014/01/07 17:36:17 INFO - [D.2010010106] -(current:submitted)> D.2010010106 started at 2014-01-07T17:36:16
 2014/01/07 17:36:17 INFO - [F.2010010106] -(current:ready)> F.2010010106 started at 2014-01-07T17:36:16
 2014/01/07 17:36:17 INFO - [X.2010010118] -(current:running)> X.2010010118 succeeded at 2014-01-07T17:36:17
-2014/01/07 17:36:18 INFO - [X.2010010200] -triggered off []
+2014/01/07 17:36:18 INFO - [X.2010010200] -triggered off ['prep.2010010106']
 2014/01/07 17:36:18 INFO - [D.2010010106] -(current:running)> D.2010010106 succeeded at 2014-01-07T17:36:17
 2014/01/07 17:36:18 INFO - [F.2010010106] -(current:running)> F.2010010106 succeeded at 2014-01-07T17:36:17
 2014/01/07 17:36:18 WARNING - [F.2010010106] -Assuming non-reported outputs were completed:
@@ -108,7 +108,7 @@ F.2010010106 submitted
 2014/01/07 17:36:20 INFO - [X.2010010200] -(current:submitted)> X.2010010200 submit_method_id=21265
 2014/01/07 17:36:20 INFO - [X.2010010200] -(current:submitted)> X.2010010200 started at 2014-01-07T17:36:20
 2014/01/07 17:36:21 INFO - [X.2010010200] -(current:running)> X.2010010200 succeeded at 2014-01-07T17:36:20
-2014/01/07 17:36:22 INFO - [X.2010010206] -triggered off []
+2014/01/07 17:36:22 INFO - [X.2010010206] -triggered off ['prep.2010010106']
 2014/01/07 17:36:22 INFO - [recover.2010010112] -(current:ready)> recover.2010010112 submitting now
 2014/01/07 17:36:22 INFO - [recover.2010010112] -(current:ready)> recover.2010010112 submission succeeded
 2014/01/07 17:36:22 INFO - [recover.2010010112] -(current:submitted)> recover.2010010112 submit_method_id=21338

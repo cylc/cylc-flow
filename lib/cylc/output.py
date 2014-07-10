@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from cycling.loader import get_interval
 
 class OutputXError( Exception ):
     def __init__( self, msg ):
@@ -30,22 +31,22 @@ Hold and process explicit internal task outputs during suite configuration.
 This is for outputs used as outputs, not outputs used as prerequisites. The
 latter can have instrinsic (in message) and evaluation ([T-n]) offsets, but
 these only have intrinsic offsets - they are always evaluated at the task's
-own cycle time.
+own cycle point.
     """
-    def __init__(self, msg, cyclr ):
+    def __init__(self, msg, base_interval=None ):
         self.offset = None
-        self.cyclr = cyclr
         self.msg = msg
+        # TODO ISO: support "+P1D", etc.
         m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', self.msg )
         if m:
             sign, offset = m.groups()
             if sign != '+':
                 raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.offset = int(offset)
+            self.offset = base_interval.get_inferred_child( offset )
 
     def get( self, ctime ):
-        # Replace [T] with actual cycle time
+        # Replace [T] with actual cycle point
         if self.offset:
-            ctime = self.cyclr.offset( ctime, - self.offset )
-        return re.sub( '\[\s*T.*?\]', ctime, self.msg )
+            ctime += self.offset
+        return re.sub( '\[\s*T.*?\]', str(ctime), self.msg )
 

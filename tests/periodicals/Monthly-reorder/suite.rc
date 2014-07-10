@@ -1,17 +1,19 @@
 [cylc]
+   UTC mode = True
    [[reference test]]
        required run mode = live
        live mode suite timeout = 1.0 # minutes
 [scheduling]
-    initial cycle time = 20130130
-    final cycle time = 20130202
-    runahead limit = 24 # enforce sequential running
+    initial cycle time = 20130130T00
+    final cycle time =   20130202T00
+    runahead factor = 1 # enforce sequential running
     [[dependencies]]
-        # off-topic: this shows how to trigger a monthly task 
-        # off the *last* daily task of each month. 
-        [[[00]]]
-            graph = "daily[T-24] => dummy" # marker1
-        [[[Monthly(201001,1)]]]
+        # (this triggers a monthly task off the last daily task each month)
+        [[[T00]]]
+            graph = """
+                daily
+            daily[-PT24H] => dummy""" # marker1
+        [[[R/01T/P1M]]]
             graph = "dummy => monthly" # marker2
 [runtime]
     [[root]]

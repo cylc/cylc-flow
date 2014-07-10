@@ -15,12 +15,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a simple suite with a retrying task
+# Test restarting a simple suite with a retrying task
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 13
+set_test_number 14
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE retrying
 TEST_SUITE_RUN_OPTIONS=
@@ -69,28 +69,31 @@ final cycle : 2013092306
 .
 Begin task states
 force_restart.2013092300 : status=running, spawned=true
-force_restart.2013092306 : status=runahead, spawned=false
+force_restart.2013092306 : status=waiting, spawned=false
 output_states.2013092300 : status=waiting, spawned=false
 retrying_task.2013092300 : status=retrying, spawned=true
-retrying_task.2013092306 : status=runahead, spawned=false
+retrying_task.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
-force_restart|2013092300|1|1|running
-force_restart|2013092306|0|1|runahead
-output_states|2013092300|0|1|waiting
-retrying_task|2013092300|1|2|retrying
-retrying_task|2013092306|0|1|runahead
-tidy|2013092300|0|1|waiting
-__DB_DUMP__
+grep_ok "retrying_task|2013092300|1|2|retrying" $TEST_DIR/states-db-pre-restart-2013092300
 cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|runahead
+force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|runahead
+output_states|2013092306|0|1|waiting
 retrying_task|2013092300|2|2|retrying
-retrying_task|2013092306|0|1|runahead
+retrying_task|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
+__DB_DUMP__
+cmp_ok $TEST_DIR/states-db-tidy-2013092300 <<'__DB_DUMP__'
+force_restart|2013092300|1|1|succeeded
+force_restart|2013092306|0|1|waiting
+output_states|2013092300|1|1|succeeded
+output_states|2013092306|0|1|waiting
+retrying_task|2013092300|4|3|succeeded
+retrying_task|2013092306|0|1|waiting
+tidy|2013092300|1|1|running
+tidy|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 run mode : live

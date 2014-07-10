@@ -4,7 +4,8 @@
     [[dependencies]]
         [[[ 12 ]]]
             graph = """
-                (a[T-12]:fail | b[T-12]:fail | c[T-12]:fail) => d
+                (a[T-24]:fail | b[T-24]:fail | c[T-24]:fail) => d
+                a & b & c  # Implied by implicit cycling now...
             """
 [runtime]
     [[root]]

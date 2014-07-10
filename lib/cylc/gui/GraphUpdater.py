@@ -17,11 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc import cylc_pyro_client, dump, graphing
-from cylc.cycle_time import ct
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
-from cylc.strftime import strftime
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from copy import deepcopy
 import gobject
 import os
@@ -73,7 +71,6 @@ class GraphUpdater(threading.Thread):
         self.best_fit = False # If True, xdot will zoom to page size
         self.normal_fit = False # if True, xdot will zoom to 1.0 scale
         self.crop = False
-        self.croprunahead = True
         self.filter_include = None
         self.filter_exclude = None
         self.state_filter = None
@@ -284,14 +281,7 @@ class GraphUpdater(threading.Thread):
         # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
         self.oldest_ctime = self.global_summary['oldest cycle time']
-        if self.croprunahead:
-            try:
-                self.newest_ctime = self.global_summary['newest non-runahead cycle time']
-            except KeyError:
-                # pre-5.4.0 suite daemon backward compatibility (crop runahead nodes)
-                self.newest_ctime = self.global_summary['newest cycle time']
-        else:
-            self.newest_ctime = self.global_summary['newest cycle time']
+        self.newest_ctime = self.global_summary['newest cycle time']
 
         if self.focus_start_ctime:
             oldest = self.focus_start_ctime
@@ -311,11 +301,11 @@ class GraphUpdater(threading.Thread):
 
         extra_node_ids = {}
 
-        # TODO - mv ct().get() out of this call (for error checking):
         # TODO - remote connection exception handling?
+        # TODO ISO - ARE THE NEW str() CALLS REQUIRED HERE?
         try:
             res = self.updater.sinfo.get(
-                    'graph raw', ct(oldest).get(), ct(newest).get(),
+                    'graph raw', str(oldest), str(newest),
                     rawx, self.group, self.ungroup, self.ungroup_recursive,
                     self.group_all, self.ungroup_all)
         except Exception:  # PyroError
@@ -346,7 +336,7 @@ class GraphUpdater(threading.Thread):
         for id in self.state_summary:
             if not any( id in edge for edge in gr_edges ):
                 # this node is not present in the main graph
-                name, tag = id.split(TaskID.DELIM)
+                name, tag = cylc.TaskID.split( id )
                 if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
                     # must be a member of a collapsed family, don't graph it
                     omit.append(name)
@@ -374,7 +364,7 @@ class GraphUpdater(threading.Thread):
         # FAMILIES
         if needs_redraw:
             for node in self.graphw.nodes():
-                name, tag = node.get_name().split(TaskID.DELIM)
+                name, tag = cylc.TaskID.split( node.get_name() )
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
@@ -396,7 +386,7 @@ class GraphUpdater(threading.Thread):
             # FILTERING:
             for node in self.graphw.nodes():
                 id = node.get_name()
-                name, ctime = id.split(TaskID.DELIM)
+                name, ctime = cylc.TaskID.split( id )
                 if self.filter_exclude:
                     if re.match( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
@@ -432,7 +422,7 @@ class GraphUpdater(threading.Thread):
                 # Now that we have family state coloring with family
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
-                name, tag = id.split(TaskID.DELIM)
+                name, tag = cylc.TaskID.split( id )
                 if name in omit:
                     # (see above)
                     continue
@@ -498,6 +488,6 @@ class GraphUpdater(threading.Thread):
         states = self.state_filter
         if self.state_filter:
             states = set(self.state_filter)
-        return ( set( edges ), set( extra_ids ), self.crop, self.croprunahead,
+        return ( set( edges ), set( extra_ids ), self.crop,
                  self.filter_exclude, self.filter_include, states,
                  self.orientation, self.ignore_suicide )

@@ -3,7 +3,6 @@
 import os, sys, re
 import datetime
 from difflib import unified_diff
-from cycle_time import ct
 
 class LogAnalyserError( Exception ):
     def __init__( self, msg ):
@@ -14,14 +13,14 @@ class LogAnalyserError( Exception ):
 class LogSpec( object ):
     """Get important information from an existing reference run log
     file, in order to do the same run for a reference test. Currently
-    just gets the start and stop cycle times."""
+    just gets the start and stop cycle points."""
 
     def __init__( self, log ):
         h = open( log, 'rb' )
         self.lines = h.readlines()
         h.close()
 
-    def get_start_tag( self ):
+    def get_start_string( self ):
         found = False
         for line in self.lines:
             m = re.search( 'Start tag: (.*)$',line)
@@ -30,15 +29,13 @@ class LogSpec( object ):
                 tag = m.groups()[0]
                 if tag == "None":
                     tag = None
-                else:
-                    tag = ct(tag).get()
                 break
         if found:
             return tag
         else:
             raise LogAnalyserError( "ERROR: logged start tag not found" )
 
-    def get_stop_tag( self ):
+    def get_stop_string( self ):
         found = False
         for line in self.lines:
             m = re.search( 'Stop tag: (.*)$',line)
@@ -47,8 +44,6 @@ class LogSpec( object ):
                 tag = m.groups()[0]
                 if tag == "None":
                     return None
-                else:
-                    tag = ct(tag).get()
                 break
         if found:
             return tag

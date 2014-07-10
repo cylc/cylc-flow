@@ -48,8 +48,8 @@ else:
     jinja2_disabled = False
 
 # heading/sections can contain commas (namespace name lists) and any
-# regex pattern characters - for ASYNCID tasks. Proper task names are
-# checked later in config.py.
+# regex pattern characters (this was for pre cylc-6 satellite tasks).
+# Proper task names are checked later in config.py.
 _HEADING = re.compile(r'''^
     (\s*)                     # 1: indentation
     ((?:\[)+)                 # 2: section marker open

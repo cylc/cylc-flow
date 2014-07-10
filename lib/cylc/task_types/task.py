@@ -16,19 +16,22 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re
+import Queue
+import os, sys, re, time
 import datetime
 import subprocess
 from copy import copy
 from random import randrange
 from collections import deque
 from cylc import task_state
-from cylc.strftime import strftime
 from cylc.cfgspec.site import sitecfg
 from cylc.owner import user
 import logging
 import cylc.flags as flags
-from cylc.wallclock import now
+from cylc.wallclock import (
+    get_current_time_string, get_time_string_from_unix_time,
+    RE_DATE_TIME_FORMAT_EXTENDED, get_seconds_as_interval_string
+)
 from cylc.task_receiver import msgqueue
 import cylc.rundb
 from cylc.command_env import cv_scripting_sl
@@ -37,7 +40,8 @@ from parsec.util import pdeepcopy, poverride
 from cylc.mp_pool import command_types
 
 cylc_mode = 'scheduler'
-poll_suffix_re = re.compile( ' at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}|unknown-time)$' ) 
+poll_suffix_re = re.compile(
+    ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
 
 def displaytd( td ):
     # Display a python timedelta sensibly.
@@ -58,7 +62,7 @@ class PollTimer( object ):
         self.name = name
         self.log = log
         self.current_interval = None
-        self.timer_start = None
+        self.timeout = None
 
     def set_host( self, host, set_timer=False ):
         # the polling comms method is host-specific
@@ -71,23 +75,21 @@ class PollTimer( object ):
 
     def set_timer( self ):
         try:
-            self.current_interval = self.intervals.popleft() * 60.0 # seconds
+            self.current_interval = self.intervals.popleft() # seconds
         except IndexError:
             # no more intervals, keep the last one
             pass
 
         if self.current_interval:
             self.log( 'NORMAL', 'setting ' + self.name + ' poll timer for ' + str(self.current_interval) + ' seconds' )
-            self.timer_start = now()
+            self.timeout = time.time() + self.current_interval
         else:
-            self.timer_start = None
+            self.timeout = None
 
     def get( self ):
-        if not self.timer_start:
+        if not self.timeout:
             return False
-        timeout = self.timer_start + datetime.timedelta( seconds=self.current_interval )
-        if now() > timeout:
-            return True
+        return (time.time() > self.timeout)
 
 
 class task( object ):
@@ -106,8 +108,6 @@ class task( object ):
     # environments to allow changed behaviour after previous failures.
 
     intercycle = False
-    is_cycling = False
-    is_daemon = False
     is_clock_triggered = False
 
     proc_pool = None
@@ -163,37 +163,23 @@ class task( object ):
             # in case the started messaged did not get through
             return
         cls.elapsed_times.append( succeeded - started )
-        elt_sec = [x.days * 86400 + x.seconds for x in cls.elapsed_times ]
-        mtet_sec = sum( elt_sec ) / len( elt_sec )
+        mtet_sec = sum( cls.elapsed_times ) / len( cls.elapsed_times )
         cls.mean_total_elapsed_time = mtet_sec
 
     def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
 
-        # Derived class init MUST define:
-        #  * self.id: unique identity (e.g. NAME.CYCLE for cycling tasks)
-        #  * prerequisites and outputs
-        #  * self.env_vars
-
         class_vars = {}
         self.state = task_state.task_state( state )
         self.manual_trigger = False
 
-        self.stop_tag = None
-
-        # Count instances of each top level object derived from task.
-        # Top level derived classes must define:
-        #   <class>.instance_count = 0
-        # NOTE: top level derived classes are now defined dynamically
-        # (so this is initialised in src/taskdef.py).
-        self.__class__.instance_count += 1
-        self.__class__.upward_instance_count += 1
+        self.stop_point = None
 
         self.latest_message = ""
         self.latest_message_priority = "NORMAL"
 
-        self.submission_timer_start = None
-        self.execution_timer_start = None
+        self.submission_timer_timeout = None
+        self.execution_timer_timeout = None
 
         self.submitted_time = None
         self.started_time = None
@@ -201,19 +187,27 @@ class task( object ):
         self.etc = None
         self.summary = { 'latest_message': self.latest_message,
                          'latest_message_priority': self.latest_message_priority,
-                         'started_time': '*',
-                         'submitted_time': '*',
-                         'succeeded_time': '*' }
+                         'started_time': None,
+                         'started_time_string': '*',
+                         'submitted_time': None,
+                         'submitted_time_string': '*',
+                         'succeeded_time': None,
+                         'succeeded_time_string': '*',
+                         'name': self.name,
+                         'description': self.description,
+                         'title': self.title,
+                         'label': str(self.tag),
+                         'logfiles': self.logfiles.get_paths()}
 
         self.retries_configured = False
 
         self.try_number = 1
         self.retry_delay = None
-        self.retry_delay_timer_start = None
+        self.retry_delay_timer_timeout = None
 
         self.sub_try_number = 1
         self.sub_retry_delay = None
-        self.sub_retry_delay_timer_start = None
+        self.sub_retry_delay_timer_timeout = None
 
         self.message_queue = msgqueue()
         self.db_queue = []
@@ -242,9 +236,15 @@ class task( object ):
             self.submit_num = 0
         else:
             if not self.exists:
-                self.record_db_state(self.name, self.c_time, submit_num=self.submit_num, try_num=self.try_number, status=self.state.get_status())
+                self.record_db_state(
+                    self.name, self.c_time,
+                    time_created_string=get_current_time_string(),
+                    submit_num=self.submit_num, try_num=self.try_number,
+                    status=self.state.get_status()
+                )
             if self.submit_num > 0:
-                self.record_db_update("task_states", self.name, self.c_time, status=self.state.get_status())
+                self.record_db_update("task_states", self.name, self.c_time,
+                                      status=self.state.get_status())
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" )
@@ -261,33 +261,28 @@ class task( object ):
             logger.warning( 'UNKNOWN PRIORITY: ' + priority )
             logger.warning( '-> ' + message )
 
-    def prepare_for_death( self ):
-        # Decrement the instance count of objects derived from task
-        # base. Was once used for constraining the number of instances
-        # of each task type. Python's __del__() function cannot be used
-        # for this as it is only called when a deleted object is about
-        # to be garbage collected (not guaranteed to be right away).
-        self.__class__.instance_count -= 1
-
     def record_db_event(self, event="", message=""):
-        call = cylc.rundb.RecordEventObject(self.name, self.c_time, self.submit_num, event, message, self.user_at_host)
+        call = cylc.rundb.RecordEventObject(self.name, str(self.c_time), self.submit_num, event, message, self.user_at_host)
         self.db_queue.append(call)
         self.db_items = True
 
     def record_db_update(self, table, name, cycle, **kwargs):
-        call = cylc.rundb.UpdateObject(table, name, cycle, **kwargs)
+        call = cylc.rundb.UpdateObject(table, name, str(cycle), **kwargs)
         self.db_queue.append(call)
         self.db_items = True
 
-    def record_db_state(self, name, cycle, time_created=now(), time_updated=None,
-                     submit_num=None, is_manual_submit=None, try_num=None,
-                     host=None, submit_method=None, submit_method_id=None,
-                     status=None):
-        call = cylc.rundb.RecordStateObject(name, cycle,
-                     time_created=time_created, time_updated=time_updated,
-                     submit_num=submit_num, is_manual_submit=is_manual_submit, try_num=try_num,
-                     host=host, submit_method=submit_method, submit_method_id=submit_method_id,
-                     status=status)
+    def record_db_state(self, name, cycle, time_created_string=None,
+                        time_updated_string=None, submit_num=None,
+                        is_manual_submit=None, try_num=None, host=None,
+                        submit_method=None, submit_method_id=None,
+                        status=None):
+        call = cylc.rundb.RecordStateObject(name, str(cycle),
+                     time_created_string=time_created_string,
+                     time_updated_string=time_updated_string,
+                     submit_num=submit_num,
+                     is_manual_submit=is_manual_submit, try_num=try_num,
+                     host=host, submit_method=submit_method,
+                     submit_method_id=submit_method_id, status=status)
         self.db_queue.append(call)
         self.db_items = True
 
@@ -302,15 +297,12 @@ class task( object ):
 
     def retry_delay_done( self ):
         done = False
-        if self.retry_delay_timer_start:
-            diff = now() - self.retry_delay_timer_start
-            foo = datetime.timedelta( 0,0,0,0,self.retry_delay,0,0 )
-            if diff >= foo:
+        now_time = time.time()
+        if self.retry_delay_timer_timeout:
+            if now_time > self.retry_delay_timer_timeout:
                 done = True
-        elif self.sub_retry_delay_timer_start:
-            diff = now() - self.sub_retry_delay_timer_start
-            foo = datetime.timedelta( 0,0,0,0,self.sub_retry_delay,0,0 )
-            if diff >= foo:
+        elif self.sub_retry_delay_timer_timeout:
+            if now_time > self.sub_retry_delay_timer_timeout:
                 done = True
         return done
 
@@ -348,8 +340,8 @@ class task( object ):
             self.outputs.remove(failed_msg)
 
     def turn_off_timeouts( self ):
-        self.submission_timer_start = None
-        self.execution_timer_start = None
+        self.submission_timer_timeout = None
+        self.execution_timer_timeout = None
 
     def reset_state_ready( self ):
         self.set_status( 'waiting' )
@@ -396,10 +388,6 @@ class task( object ):
         self.set_status( 'held' )
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
-
-    def reset_state_runahead( self ):
-        self.set_status( 'runahead' )
-        self.turn_off_timeouts()
 
     def set_state_ready( self ):
         self.set_status( 'ready' )
@@ -495,10 +483,9 @@ class task( object ):
 
         self.submit_method_id = None
         try:
-            # Is there a retry lined up for this task?
-            self.sub_retry_delay = float(self.sub_retry_delays.popleft())
+            sub_retry_delay = self.sub_retry_delays.popleft()
         except IndexError:
-            # There is no submission retry lined up: definitive failure.
+            # No submission retry lined up: definitive failure.
             flags.pflag = True
             outp = self.id + " submit-failed" # hack: see github #476
             self.outputs.add( outp )
@@ -506,65 +493,84 @@ class task( object ):
             self.set_status( 'submit-failed' )
             self.handle_event( 'submission failed', 'job submission failed' )
         else:
-            # There is a retry lined up
-            msg = "job submission failed, retrying in " + str(self.sub_retry_delay) +  " minutes"
+            # There is a submission retry lined up.
+            delay_msg = "submit-retrying in %s" % (
+                get_seconds_as_interval_string(sub_retry_delay))
+            msg = "job submission failed, " + delay_msg
             self.log( "NORMAL", msg )
-            self.sub_retry_delay_timer_start = now()
+
+            self.sub_retry_delay_timer_timeout = (
+                time.time() + sub_retry_delay)
             self.sub_try_number += 1
             self.set_status( 'submit-retrying' )
+            self.record_db_event(event="submission failed",
+                                 message=delay_msg)
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
-            # TODO: THIS RECORD IS REDUNDANT WITH THAT IN handle_event?
-            self.record_db_event(event="submission failed", message="submit-retrying in " + str(self.sub_retry_delay) )
+            self.queue_event_handlers( 'submission retry', msg )
+
+            # TODO - is this record is redundant with that in handle_event?
+            self.record_db_event(
+                    event="submission failed",
+                    message="submit-retrying in " + str(self.sub_retry_delay))
             self.handle_event( 'submission retry', msg )
 
     def job_submission_succeeded( self, out, err ):
         self.log( 'NORMAL', 'submission succeeded' )
         if self.__class__.run_mode == 'simulation':
-            self.started_time = now()
-            self.summary[ 'started_time' ] = self.started_time.isoformat()
+            self.started_time = time.time()
+            self.summary[ 'started_time' ] = self.started_time
+            self.summary[ 'started_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.started_time, no_display_time_zone=True
+                )
+            )
             self.outputs.set_completed( self.id + " started" )
             self.set_status( 'running' )
             return
 
         outp = self.id + ' submitted'
-        if self.outputs.exists( outp ):
-            if not self.outputs.is_completed( outp ):
-                flags.pflag = True
-                self.outputs.set_completed( outp )
-            else:
-                self.log( "WARNING", "already submitted" )
+        if not self.outputs.is_completed( outp ):
+            # Allow submitted tasks to spawn even if nothing else is happening.
+            flags.pflag = True
+            self.outputs.set_completed( outp )
+        else:
+            self.log( "WARNING", "already submitted" )
 
         # allow submitted tasks to spawn even if nothing else is happening
         flags.pflag = True
 
         # TODO - should we use the real event time from the message here?
-        self.submitted_time = now()
-        self.summary[ 'submitted_time' ] = self.submitted_time.isoformat()
-
+        self.submitted_time = time.time()
+        self.summary[ 'submitted_time' ] = self.submitted_time
+        self.summary[ 'submitted_time_string' ] = (
+            get_time_string_from_unix_time(
+                self.submitted_time, no_display_time_zone=True
+            )
+        )
         self.handle_event( 'submitted', 'job submitted', db_event='submission succeeded' )
 
         if self.state.is_currently( 'ready' ):
             # The 'started' message can arrive before this.
-            # (TODO - is this still true?)
+            # TODO - is this still true under mp_pool?
             self.set_status( 'submitted' )
-            self.submission_timer_start = self.submitted_time
+            submit_timeout = self.event_hooks['submission timeout']
+            if submit_timeout:
+                self.submission_timer_timeout = (
+                    self.submitted_time + submit_timeout
+                )
+            else:
+                self.submission_timer_timeout = None
             self.submission_poll_timer.set_timer()
 
     def job_execution_failed( self ):
-        # (submit* states in case of very fast submission and
-        # execution; and the fact that polling tasks 1-2 secs)
 
-        # Received a 'task failed' message, or polled as failed
-        self.execution_timer_start = None
+        self.execution_timer_timeout = None
         try:
-            # Is there a retry lined up for this task?
-            self.retry_delay = float(self.retry_delays.popleft())
+            retry_delay = self.retry_delays.popleft()
         except IndexError:
-            # There is no retry lined up: definitive failure.
-            # Add the failed message as a task output so that other tasks can
-            # trigger off the failure event (failure outputs are not added in
-            # advance - they are not completed outputs in case of success):
+            # No retry lined up: definitive failure.
+            # Note the 'failed' output is only added if needed.
             flags.pflag = True
             msg = self.id + ' failed'
             self.outputs.add( msg )
@@ -574,11 +580,14 @@ class task( object ):
 
         else:
             # There is a retry lined up
-            msg = "job failed, retrying in " + str(self.retry_delay) + " minutes"
+            delay_msg = "retrying in %s" % (
+                get_seconds_as_interval_string(retry_delay))
+            msg = "job failed, " + delay_msg
             self.log( "NORMAL", msg )
-            self.retry_delay_timer_start = now()
+            self.retry_delay_timer_timeout = (
+                time.time() + self.retry_delay)
             self.try_number += 1
-            self.set_status( 'retrying' )
+            self.set_status('retrying')
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
             self.handle_event( 'retry', msg, db_msg= "retrying in " + str( self.retry_delay) )
@@ -587,8 +596,8 @@ class task( object ):
         # call immediately after manual trigger flag used
         self.manual_trigger = False
         # unset any retry delay timers
-        self.retry_delay_timer_start = None
-        self.sub_retry_delay_timer_start = None
+        self.retry_delay_timer_timeout = None
+        self.sub_retry_delay_timer_timeout = None
 
     def set_from_rtconfig( self, cfg={} ):
         """Some [runtime] config requiring consistency checking on reload,
@@ -630,11 +639,12 @@ class task( object ):
         if len(rrange) != 2:
             ok = False
         try:
-            res = [ int( rrange[0] ), int( rrange[1] ) ]
+            res = [rrange[0],rrange[1]]
         except:
             ok = False
         if not ok:
-            raise Exception, "ERROR, " + self.name + ": simulation mode run time range must be 'int, int'"
+            raise Exception, ("ERROR, " + self.name + ": simulation mode " +
+                              "run time range should be ISO 8601-compatible")
         try:
             self.sim_mode_run_length = randrange( res[0], res[1] )
         except Exception, x:
@@ -668,7 +678,7 @@ class task( object ):
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
-            # (currently only used by async_repeating tasks)
+            # (not currently used?)
             rtconfig['environment'].update( self.env_vars )
 
         # construct the job_sub_method here so that a new one is used if
@@ -711,14 +721,15 @@ class task( object ):
             # generate automatic suite state polling command scripting
             comstr = "cylc suite-state " + \
                      " --task=" + self.suite_polling_cfg['task'] + \
-                     " --cycle=" + self.c_time + \
+                     " --cycle=" + str(self.c_time) + \
                      " --status=" + self.suite_polling_cfg['status']
             if rtconfig['suite state polling']['user']:
                 comstr += " --user=" + rtconfig['suite state polling']['user']
             if rtconfig['suite state polling']['host']:
                 comstr += " --host=" + rtconfig['suite state polling']['host']
             if rtconfig['suite state polling']['interval']:
-                comstr += " --interval=" + str(rtconfig['suite state polling']['interval'])
+                comstr += " --interval=" + str(int(
+                    rtconfig['suite state polling']['interval']))
             if rtconfig['suite state polling']['max-polls']:
                 comstr += " --max-polls=" + str(rtconfig['suite state polling']['max-polls'])
             if rtconfig['suite state polling']['run-dir']:
@@ -876,48 +887,46 @@ class task( object ):
 
     def check_submission_timeout( self ):
         # only called if in the 'submitted' state
-        timeout = self.event_hooks['submission timeout']
-        if not self.submission_timer_start or timeout is None:
+        if self.submission_timer_timeout is None:
             # (explicit None in case of a zero timeout!)
             # no timer set
             return
 
         # if timed out, log warning, poll, queue event handler, and turn off the timer
-        current_time = now()
-        cutoff = self.submission_timer_start + datetime.timedelta( minutes=timeout )
-        if current_time > cutoff:
-            msg = 'job submitted ' + str(timeout) + ' minutes ago, but has not started'
+        if time.time() > self.submission_timer_timeout:
+            msg = 'job submitted %s ago, but has not started' % (
+                get_seconds_as_interval_string(
+                    self.event_hooks['submission timeout'])
+            )
             self.log( 'WARNING', msg )
             self.poll()
             self.handle_event( 'submission timeout', msg )
-            self.submission_timer_start = None
+            self.submission_timer_timeout = None
 
     def check_execution_timeout( self ):
         # only called if in the 'running' state
-        timeout = self.event_hooks['execution timeout']
-        if not self.execution_timer_start or timeout is None:
+        if self.execution_timer_timeout is None:
             # (explicit None in case of a zero timeout!)
             # no timer set
             return
 
         # if timed out: log warning, poll, queue event handler, and turn off the timer
-        current_time = now()
-        cutoff = self.execution_timer_start + datetime.timedelta( minutes=timeout )
-        if current_time > cutoff:
+        if time.time() > self.execution_timer_timeout:
             if self.event_hooks['reset timer']:
                 # the timer is being re-started by put messages
-                msg = 'last message ' + str(timeout) + ' minutes ago, but job not finished'
+                msg = 'last message %s ago, but job not finished'
             else:
-                msg = 'job started ' + str(timeout) + ' minutes ago, but has not finished'
+                msg = 'job started %s ago, but has not finished'
+            msg = msg % get_seconds_as_interval_string(
+                self.event_hooks['execution timeout'])
             self.log( 'WARNING', msg )
             self.poll()
             self.handle_event( 'execution timeout', msg )
-            self.execution_timer_start = None
+            self.execution_timer_timeout = None
 
     def sim_time_check( self ):
-        timeout = self.started_time + \
-                datetime.timedelta( seconds=self.sim_mode_run_length )
-        if now() > timeout:
+        timeout = self.started_time + self.sim_mode_run_length
+        if time.time() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
                 self.message_queue.put( 'NORMAL', self.id + ' submitted' )
                 self.message_queue.put( 'CRITICAL', self.id + ' failed' )
@@ -959,7 +968,10 @@ class task( object ):
     def process_incoming_messages( self ):
         queue = self.message_queue.get_queue()
         while queue.qsize() > 0:
-            self.process_incoming_message( queue.get() )
+            try:
+                self.process_incoming_message( queue.get(block=False) )
+            except Queue.Empty:
+                break
             queue.task_done()
 
     def process_incoming_message( self, (priority, message) ):
@@ -976,7 +988,8 @@ class task( object ):
         # always update the suite state summary for latest message
         self.latest_message = message
         self.latest_message_priority = priority
-        self.summary[ 'latest_message' ] = self.latest_message
+        self.summary[ 'latest_message' ] = (
+            self.latest_message.replace(self.id, "", 1).strip())
         self.summary[ 'latest_message_priority' ] = self.latest_message_priority
         flags.iflag = True
 
@@ -1023,18 +1036,34 @@ class task( object ):
 
         if self.event_hooks['reset timer']:
             # Reset execution timer on incoming messages
-            self.execution_timer_start = now()
+            execution_timeout = self.event_hooks['execution timeout']
+            if execution_timeout:
+                self.execution_timer_timeout = (
+                    time.time() + execution_timeout
+                )
 
         elif content == 'started' and self.state.is_currently( 'ready','submitted','submit-failed' ):
             # Received a 'task started' message
 
             flags.pflag = True
             self.set_status( 'running' )
-            self.started_time = now()
-            self.summary[ 'started_time' ] = self.started_time.isoformat()
+
+            self.started_time = time.time()
+            self.summary[ 'started_time' ] = self.started_time
+            self.summary[ 'started_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.started_time, no_display_time_zone=True
+                )
+            )
 
             # TODO - should we use the real event time extracted from the message here:
-            self.execution_timer_start = self.started_time
+            execution_timeout = self.event_hooks['execution timeout']
+            if execution_timeout:
+                self.execution_timer_timeout = (
+                    self.started_time + execution_timeout
+                )
+            else:
+                self.execution_timer_timeout = None
 
             # submission was successful so reset submission try number
             self.sub_try_number = 1
@@ -1045,10 +1074,15 @@ class task( object ):
         elif content == 'succeeded' and self.state.is_currently('ready','submitted','submit-failed','running','failed'):
             # Received a 'task succeeded' message
             # (submit* states in case of very fast submission and execution)
-            self.execution_timer_start = None
+            self.execution_timer_timeout = None
             flags.pflag = True
-            self.succeeded_time = now()
-            self.summary[ 'succeeded_time' ] = self.succeeded_time.isoformat()
+            self.succeeded_time = time.time()
+            self.summary[ 'succeeded_time' ] = self.succeeded_time
+            self.summary[ 'succeeded_time_string' ] = (
+                get_time_string_from_unix_time(
+                    self.succeeded_time, no_display_time_zone=True
+                )
+            )
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
             self.set_status( 'succeeded' )
             self.handle_event( "succeeded", "job succeeded" )
@@ -1061,6 +1095,7 @@ class task( object ):
                 self.outputs.set_all_completed()
 
         elif content == 'failed' and self.state.is_currently('ready','submitted','submit-failed','running'):
+            # (submit- states in case of very fast submission and execution).
             self.job_execution_failed()
 
         elif content.startswith("Task job script received signal"):
@@ -1071,7 +1106,7 @@ class task( object ):
             flags.pflag = True
             self.set_status('submitted')
             self.record_db_event(event="vacated", message=content)
-            self.execution_timer_start = None
+            self.execution_timer_timeout = None
             self.summary['started_time'] = '*'
             self.sub_try_number = 0
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
@@ -1108,10 +1143,15 @@ class task( object ):
 
     def spawn( self, state ):
         self.state.set_spawned()
-        successor = self.__class__( self.next_tag(), state )
-        # propagate task stop time
-        successor.stop_c_time = self.stop_c_time
-        return successor
+        next = self.next_tag()
+        if next:
+            successor = self.__class__( next, state )
+            # propagate task stop time
+            successor.stop_c_time = self.stop_c_time
+            return successor
+        else:
+            # next instance is out of the sequence bounds
+            return None
 
     def has_spawned( self ):
         # the one off task type modifier overrides this.
@@ -1135,33 +1175,17 @@ class task( object ):
         else:
             return False
 
-    def check_requisites( self ):
-        # overridden by repeating asynchronous tasks
-        pass
-
     def get_state_summary( self ):
         # derived classes can call this method and then
         # add more information to the summary if necessary.
 
-        self.summary.setdefault( 'name', self.name )
-        self.summary.setdefault( 'description', self.description )
-        self.summary.setdefault( 'title', self.title )
-        self.summary.setdefault( 'label', self.tag )
         self.summary[ 'state' ] = self.state.get_status()
         self.summary[ 'spawned' ] = self.state.has_spawned()
 
-        # str(timedelta) => "1 day, 23:59:55.903937" (for example)
-        # to strip off fraction of seconds:
-        # timedelta = re.sub( '\.\d*$', '', timedelta )
-
-        if self.__class__.mean_total_elapsed_time:
-            met = self.__class__.mean_total_elapsed_time
-            self.summary[ 'mean total elapsed time' ] =  met
-        else:
-            # first instance: no mean time computed yet
-            self.summary[ 'mean total elapsed time' ] =  '*'
-
-        self.summary[ 'logfiles' ] = self.logfiles.get_paths()
+        met = self.__class__.mean_total_elapsed_time
+        if not met:
+            met = "*"
+        self.summary[ 'mean total elapsed time' ] =  met
 
         return self.summary
 
@@ -1182,9 +1206,8 @@ class task( object ):
         return tag
 
     def next_tag( self ):
-        # Asynchronous tasks: increment the tag by one.
-        # Cycling tasks override this to compute their next valid cycle time.
-        return str( int( self.tag ) + 1 )
+        # derived classes override this to compute next valid cycle point.
+        return None
 
     def poll( self ):
         """Poll my live task job and update status accordingly."""

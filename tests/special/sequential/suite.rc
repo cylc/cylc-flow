@@ -10,7 +10,9 @@
     [[dependencies]]
         graph = "monitor"
         [[[0,6,12,18]]]
-            graph = "monitor:start => foo"
+            graph = """
+                monitor:start => foo
+            """
 [runtime]
     [[foo]]
         command scripting = sleep 10

@@ -18,9 +18,10 @@
 
 import re, sys
 from simplify import conditional_simplifier
+from cylc.cycling.loader import get_point
 
-# label1 => "foo ready for <TAG>
-# label2 => "bar.<TAG> succeeded"
+# label1 => "foo ready for <CYCLE_POINT>
+# label2 => "bar.<CYCLE_POINT> succeeded"
 # expr   => "( [label1] or [label2] )"
 
 class TriggerExpressionError( Exception ):
@@ -31,18 +32,20 @@ class TriggerExpressionError( Exception ):
 
 class conditional_prerequisites(object):
 
-    TAG_RE = re.compile( '^\w+\.(\d+).*$' ) # to extract T from "foo.T succeeded" etc.
+    # TODO ISO: how does this work??
+    # Extracts T from "foo.T succeeded" etc.
+    CYCLE_POINT_RE = re.compile( '^\w+\.(\d+).*$' ) # 
 
-    def __init__( self, owner_id, ict=None ):
+    def __init__( self, owner_id, p_ict=None ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
-        self.target_tags = []   # list of target cycle times (tags)
+        self.target_tags = []   # list of target cycle points (tags)
         self.auto_label = 0
         self.excess_labels = []
-        self.ict = ict
+        self.p_ict = p_ict
         self.pre_initial_messages = []
 
     def add( self, message, label = None, pre_initial = False ):
@@ -67,7 +70,7 @@ class conditional_prerequisites(object):
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label]  = False
-        m = re.match( self.__class__.TAG_RE, message )
+        m = re.match( self.__class__.CYCLE_POINT_RE, message )
         if m:
             self.target_tags.append( m.groups()[0] )
         if pre_initial:
@@ -87,12 +90,14 @@ class conditional_prerequisites(object):
 
         drop_these = []
         for k in self.messages:
-            if self.ict:
+            if self.p_ict:
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
                     try:
-                        if (int(task.group().split(".")[1]) < int(self.ict) and
-                            int(task.group().split(".")[1]) != 1):
+                        foo = task.group().split(".")[1].rstrip()
+                        if ( get_point( foo ) <  self.p_ict and foo != '1' ):
+                            # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
+                            # INTEGER CYCLING (AND MORE?)
                             drop_these.append(k)
                     except IndexError:
                         pass
@@ -168,7 +173,7 @@ class conditional_prerequisites(object):
             self.satisfied[ label ] = False
 
     def get_target_tags( self ):
-        """Return a list of cycle times target by each prerequisite,
+        """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        return self.target_tags
+        return [get_point(p) for p in self.target_tags]
 

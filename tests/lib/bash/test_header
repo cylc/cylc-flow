@@ -127,16 +127,16 @@ function run_fail() {
 function suite_run_ok() {
     local TEST_NAME=$1
     shift 1
-    if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        ok $TEST_NAME
+    else
         fail $TEST_NAME
-        SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
-        mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
-        cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
-        cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
         SUITE_RUN_FAILS=true
-        return
     fi
-    ok $TEST_NAME
+    SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
+    mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
+    cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
+    cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
 }
 
 function suite_run_fail() {
@@ -161,31 +161,41 @@ function cmp_ok() {
     if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
         CMP_COMMAND="xxdiff -D"
     fi
-    if $CMP_COMMAND $FILE_TEST $FILE_CONTROL; then
+    if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL" \
+            1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
         ok $TEST_NAME
         return
     fi
+    diff "$FILE_TEST" "$FILE_CONTROL" 2>>$TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
 }
 
 function grep_ok() {
     local BRE=$1
     local FILE=$2
-    local TEST_NAME=$(basename $FILE)-grep-ok
-    if grep -q -e "$BRE" $FILE; then
+    local TEST_NAME=$(basename "$FILE")-grep-ok
+    if grep -q -e "$BRE" "$FILE"; then
         ok $TEST_NAME
         return
     fi
+    echo "Can't find $BRE in $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
 }
 
 function exists_ok() {
     local FILE=$1
-    local TEST_NAME=$(basename $FILE)-file-exists-ok
+    local TEST_NAME=$(basename "$FILE")-file-exists-ok
     if [[ -a $FILE ]]; then
         ok $TEST_NAME
         return
     fi
+    echo "Does not exist: $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
 }
 
@@ -196,12 +206,15 @@ function exists_fail() {
         ok $TEST_NAME
         return
     fi
+    echo "Exists: $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
 }
 
 function init_suite() {
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
-    SUITE_NAME=$(date -u +%Y%m%d%H%M%S)_cylc_test_${SNAME}_${1}
+    SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${1}
     mkdir $TEST_DIR/$SUITE_NAME/
     cat >$TEST_DIR/$SUITE_NAME/suite.rc
     cylc unregister $SUITE_NAME 2>/dev/null
@@ -217,7 +230,7 @@ function init_suite() {
 function install_suite() {
     ORIG_SUITE_NAME=$2
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
-    SUITE_NAME=$(date -u +%Y%m%d%H%M%S)_cylc_test_${SNAME}_${1}
+    SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${1}
     mkdir $TEST_DIR/$SUITE_NAME/
     cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME
     cylc unregister $SUITE_NAME 2>/dev/null
@@ -268,7 +281,7 @@ TEST_NAME_BASE=$(basename $0 .t)
 TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
 TEST_DIR=$(mktemp -d)
 cd $TEST_DIR
-TEST_LOG_DIR=${TMPDIR:-/tmp}/cylc-tests/$(basename $TEST_SOURCE_DIR)
+TEST_LOG_DIR=${TMPDIR:-/tmp}/cylc-tests-"$LOGNAME"/$(basename $TEST_SOURCE_DIR)
 SUITE_RUN_FAILS=false
 
 # these variables should be moved to site/user config:

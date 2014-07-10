@@ -17,7 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-import datetime
+from cylc.wallclock import get_current_time_string
+
 
 class multisubprocess:
     def __init__( self, commandlist, shell=True ):
@@ -49,7 +50,7 @@ if __name__ == "__main__":
 
         commands.append( command )
 
-    print 'SRT:', datetime.datetime.now()
+    print 'SRT:', get_current_time_string(display_sub_seconds=True)
 
     mp = multisubprocess( commands )
     out, err = mp.execute()
@@ -66,4 +67,4 @@ if __name__ == "__main__":
         print item
         count += 1
 
-    print 'END:', datetime.datetime.now()
+    print 'END:', get_current_time_string(display_sub_seconds=True)

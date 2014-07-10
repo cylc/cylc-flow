@@ -10,14 +10,15 @@ of an internal task output: foo[T] depends on foo[T-1]:x, where the
 output message is explicited target at the next cycle."""
 
 [scheduling]
-    initial cycle time = 2010
-    final cycle time = 2011
-    cycling = Yearly
-    [[special tasks]]
-        cold-start = cfoo
+    initial cycle point = 2010
+    final cycle point = 2011
     [[dependencies]]
-        [[[2010,1]]]
-            graph = """cfoo | foo[T-1]:x => foo => bar"""
+        [[[R1]]]
+            graph = """
+                cfoo => foo
+            """
+        [[[P1Y]]]
+            graph = """foo[-P1Y]:x => foo => bar"""
 
 [runtime]
     [[foo]]

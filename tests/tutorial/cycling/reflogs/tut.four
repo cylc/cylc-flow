@@ -4,65 +4,65 @@
 2013/10/06 23:34:15 INFO - Suite starting at 2013-10-06 23:34:15.780208
 2013/10/06 23:34:15 INFO - Log event clock: real time
 2013/10/06 23:34:15 INFO - Run mode: live
-2013/10/06 23:34:15 INFO - Start tag: 2013080800
-2013/10/06 23:34:15 INFO - Stop tag: 2013080812
+2013/10/06 23:34:15 INFO - Start tag: 20130808T0000Z
+2013/10/06 23:34:15 INFO - Stop tag: 20130808T1200Z
 2013/10/06 23:34:15 INFO - Thread-4 start (Job Submission)
 2013/10/06 23:34:15 INFO - Thread-5 start (Request Handling)
-2013/10/06 23:34:15 INFO - Cold Start 2013080800
-2013/10/06 23:34:15 INFO - [prep.2013080800] -(setting:submitting)
-2013/10/06 23:34:15 INFO - [prep.2013080800] -triggered off []
-2013/10/06 23:34:16 INFO - [prep.2013080800] -(current:submitting)> prep.2013080800 submitting now
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(current:submitting)> prep.2013080800 submission succeeded
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(setting:submitted)
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(current:submitted)> prep.2013080800 submit_method_id=3835
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(current:submitted)> prep.2013080800 started at 2013-10-06T23:34:17
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(setting:running)
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(current:running)> prep.2013080800 succeeded at 2013-10-06T23:34:17
-2013/10/06 23:34:17 INFO - [prep.2013080800] -(setting:succeeded)
-2013/10/06 23:34:17 INFO - [foo.2013080800] -(setting:submitting)
-2013/10/06 23:34:17 INFO - [foo.2013080800] -triggered off ['prep.2013080800']
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(current:submitting)> foo.2013080800 submitting now
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(current:submitting)> foo.2013080800 submission succeeded
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(setting:submitted)
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(current:submitted)> foo.2013080800 submit_method_id=3879
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(current:submitted)> foo.2013080800 started at 2013-10-06T23:34:19
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(setting:running)
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(current:running)> foo.2013080800 succeeded at 2013-10-06T23:34:19
-2013/10/06 23:34:19 INFO - [foo.2013080800] -(setting:succeeded)
-2013/10/06 23:34:19 INFO - [bar.2013080800] -(setting:submitting)
-2013/10/06 23:34:19 INFO - [bar.2013080800] -triggered off ['foo.2013080800']
-2013/10/06 23:34:20 INFO - [foo.2013080812] -(setting:submitting)
-2013/10/06 23:34:20 INFO - [foo.2013080812] -triggered off ['foo.2013080800']
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(current:submitting)> bar.2013080800 submitting now
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(current:submitting)> bar.2013080800 submission succeeded
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(setting:submitted)
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(current:submitted)> bar.2013080800 submit_method_id=3923
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(current:submitted)> bar.2013080800 started at 2013-10-06T23:34:21
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(setting:running)
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(current:running)> bar.2013080800 succeeded at 2013-10-06T23:34:21
-2013/10/06 23:34:21 INFO - [bar.2013080800] -(setting:succeeded)
-2013/10/06 23:34:21 INFO - [foo.2013080812] -(current:submitting)> foo.2013080812 submitting now
-2013/10/06 23:34:21 INFO - [foo.2013080812] -(current:submitting)> foo.2013080812 started at 2013-10-06T23:34:21
-2013/10/06 23:34:21 INFO - [foo.2013080812] -(setting:running)
-2013/10/06 23:34:21 INFO - [foo.2013080812] -(current:running)> foo.2013080812 succeeded at 2013-10-06T23:34:21
-2013/10/06 23:34:21 INFO - [foo.2013080812] -(setting:succeeded)
-2013/10/06 23:34:21 WARNING - [foo.2013080812] -Assuming non-reported outputs were completed:
-foo.2013080812 submitted
-2013/10/06 23:34:21 INFO - [foo.2013080900] -HOLDING (beyond suite stop cycle) 2013080812
-2013/10/06 23:34:21 INFO - [foo.2013080900] -(setting:held)
-2013/10/06 23:34:22 INFO - [foo.2013080812] -(current:succeeded)> foo.2013080812 submission succeeded
-2013/10/06 23:34:22 INFO - [foo.2013080812] -(current:succeeded)> foo.2013080812 submit_method_id=3948
-2013/10/06 23:34:22 INFO - [bar.2013080812] -(setting:submitting)
-2013/10/06 23:34:22 INFO - [bar.2013080812] -triggered off ['foo.2013080812']
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(current:submitting)> bar.2013080812 submitting now
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(current:submitting)> bar.2013080812 submission succeeded
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(setting:submitted)
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(current:submitted)> bar.2013080812 submit_method_id=4012
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(current:submitted)> bar.2013080812 started at 2013-10-06T23:34:24
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(setting:running)
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(current:running)> bar.2013080812 succeeded at 2013-10-06T23:34:24
-2013/10/06 23:34:24 INFO - [bar.2013080812] -(setting:succeeded)
-2013/10/06 23:34:24 INFO - [bar.2013080900] -HOLDING (beyond suite stop cycle) 2013080812
-2013/10/06 23:34:24 INFO - [bar.2013080900] -(setting:held)
-2013/10/06 23:34:25 INFO - All normal cycling tasks have spawned past the final cycle 2013080812
+2013/10/06 23:34:15 INFO - Cold Start 20130808T0000Z
+2013/10/06 23:34:15 INFO - [prep.20130808T0000Z] -(setting:submitting)
+2013/10/06 23:34:15 INFO - [prep.20130808T0000Z] -triggered off []
+2013/10/06 23:34:16 INFO - [prep.20130808T0000Z] -(current:submitting)> prep.20130808T0000Z submitting now
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(current:submitting)> prep.20130808T0000Z submission succeeded
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(setting:submitted)
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(current:submitted)> prep.20130808T0000Z submit_method_id=3835
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(current:submitted)> prep.20130808T0000Z started at 2013-10-06T23:34:17
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(setting:running)
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(current:running)> prep.20130808T0000Z succeeded at 2013-10-06T23:34:17
+2013/10/06 23:34:17 INFO - [prep.20130808T0000Z] -(setting:succeeded)
+2013/10/06 23:34:17 INFO - [foo.20130808T0000Z] -(setting:submitting)
+2013/10/06 23:34:17 INFO - [foo.20130808T0000Z] -triggered off ['prep.20130808T0000Z']
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(current:submitting)> foo.20130808T0000Z submitting now
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(current:submitting)> foo.20130808T0000Z submission succeeded
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(setting:submitted)
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(current:submitted)> foo.20130808T0000Z submit_method_id=3879
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(current:submitted)> foo.20130808T0000Z started at 2013-10-06T23:34:19
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(setting:running)
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(current:running)> foo.20130808T0000Z succeeded at 2013-10-06T23:34:19
+2013/10/06 23:34:19 INFO - [foo.20130808T0000Z] -(setting:succeeded)
+2013/10/06 23:34:19 INFO - [bar.20130808T0000Z] -(setting:submitting)
+2013/10/06 23:34:19 INFO - [bar.20130808T0000Z] -triggered off ['foo.20130808T0000Z']
+2013/10/06 23:34:20 INFO - [foo.20130808T1200Z] -(setting:submitting)
+2013/10/06 23:34:20 INFO - [foo.20130808T1200Z] -triggered off ['foo.20130808T0000Z', 'prep.20130808T0000Z']
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:submitting)> bar.20130808T0000Z submitting now
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:submitting)> bar.20130808T0000Z submission succeeded
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(setting:submitted)
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:submitted)> bar.20130808T0000Z submit_method_id=3923
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:submitted)> bar.20130808T0000Z started at 2013-10-06T23:34:21
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(setting:running)
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(current:running)> bar.20130808T0000Z succeeded at 2013-10-06T23:34:21
+2013/10/06 23:34:21 INFO - [bar.20130808T0000Z] -(setting:succeeded)
+2013/10/06 23:34:21 INFO - [foo.20130808T1200Z] -(current:submitting)> foo.20130808T1200Z submitting now
+2013/10/06 23:34:21 INFO - [foo.20130808T1200Z] -(current:submitting)> foo.20130808T1200Z started at 2013-10-06T23:34:21
+2013/10/06 23:34:21 INFO - [foo.20130808T1200Z] -(setting:running)
+2013/10/06 23:34:21 INFO - [foo.20130808T1200Z] -(current:running)> foo.20130808T1200Z succeeded at 2013-10-06T23:34:21
+2013/10/06 23:34:21 INFO - [foo.20130808T1200Z] -(setting:succeeded)
+2013/10/06 23:34:21 WARNING - [foo.20130808T1200Z] -Assuming non-reported outputs were completed:
+foo.20130808T1200Z submitted
+2013/10/06 23:34:21 INFO - [foo.20130809T0000Z] -HOLDING (beyond suite stop cycle) 20130808T1200Z
+2013/10/06 23:34:21 INFO - [foo.20130809T0000Z] -(setting:held)
+2013/10/06 23:34:22 INFO - [foo.20130808T1200Z] -(current:succeeded)> foo.20130808T1200Z submission succeeded
+2013/10/06 23:34:22 INFO - [foo.20130808T1200Z] -(current:succeeded)> foo.20130808T1200Z submit_method_id=3948
+2013/10/06 23:34:22 INFO - [bar.20130808T1200Z] -(setting:submitting)
+2013/10/06 23:34:22 INFO - [bar.20130808T1200Z] -triggered off ['foo.20130808T1200Z']
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(current:submitting)> bar.20130808T1200Z submitting now
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(current:submitting)> bar.20130808T1200Z submission succeeded
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(setting:submitted)
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(current:submitted)> bar.20130808T1200Z submit_method_id=4012
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(current:submitted)> bar.20130808T1200Z started at 2013-10-06T23:34:24
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(setting:running)
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(current:running)> bar.20130808T1200Z succeeded at 2013-10-06T23:34:24
+2013/10/06 23:34:24 INFO - [bar.20130808T1200Z] -(setting:succeeded)
+2013/10/06 23:34:24 INFO - [bar.20130809T0000Z] -HOLDING (beyond suite stop cycle) 20130808T1200Z
+2013/10/06 23:34:24 INFO - [bar.20130809T0000Z] -(setting:held)
+2013/10/06 23:34:25 INFO - All normal cycling tasks have spawned past the final cycle 20130808T1200Z
 2013/10/06 23:34:25 INFO - Suite shutting down at 2013-10-06 23:34:25.841156

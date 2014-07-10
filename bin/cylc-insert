@@ -24,7 +24,6 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.TaskID import TaskID, TaskIDError
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
@@ -48,7 +47,7 @@ See also 'cylc submit', for running tasks without the scheduler.
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
         ('MATCH', 'Task or family name matching regular expression'),
-        ('TAG', 'Cycle time or integer tag'),
+        ('CYCLE_POINT', 'Cycle point (e.g. date-time or integer)'),
         ('[STOP]', 'Optional stop tag for inserted task.' )])
 
 (options, args) = parser.parse_args()
@@ -59,10 +58,7 @@ name = args[1]
 tag = args[2]
 if len(args) == 4:
     stoptag = args[3]
-    try:
-        tid = TaskID( 'junk' + TaskID.DELIM + stoptag )
-    except TaskIDError, x:
-        raise SystemExit('ERROR, invalid stop tag: ' + stoptag )
+    # TODO ISO - VALIDATE stoptag
 else:
     stoptag = None
 

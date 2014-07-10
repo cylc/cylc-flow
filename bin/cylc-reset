@@ -45,7 +45,7 @@ Tasks set to 'ready' will trigger immediately (see also "cylc trigger").
 """ + multitask_usage, pyro=True, multitask=True,
         argdoc=[ ('REG', 'Suite name'),
             ('MATCH', 'Task or family name matching regular expression'),
-            ('TAG', 'Task cycle time or integer tag') ])
+            ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
 
 allowed_states = ['waiting', 'ready', 'succeeded', 'failed', 'spawn']
 

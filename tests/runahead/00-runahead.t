@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test runahead limit is being enforced
+# Test runahead limit is being enforced
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -32,7 +32,7 @@ TEST_NAME=$TEST_NAME_BASE-check-fail
 DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
 TASKS=$(sqlite3 $DB 'select count(*) from task_states where status is "failed"')
 # manual comparison for the test
-if (($TASKS==3)); then
+if (($TASKS==4)); then
     ok $TEST_NAME
 else 
     fail $TEST_NAME

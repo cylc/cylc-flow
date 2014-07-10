@@ -5,8 +5,8 @@ description = """This suite runs a single task that internally submits a
 to handle task completion messaging manually - see the Cylc User Guide."""
 
 [scheduling]
-    initial cycle time = 2011010106
-    final cycle time = 2011010200
+    initial cycle point = 20110101T06
+    final cycle point = 20110102T00
     [[special tasks]]
         sequential = model
     [[dependencies]]

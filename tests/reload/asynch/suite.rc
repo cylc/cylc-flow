@@ -9,6 +9,8 @@
         graph = "asynch"
         [[[0, 6]]]
             graph = "asynch & c[T-6] => a => b => c"
+        [[[18 ]]]
+            graph = "c"
 [runtime]
     [[a,c,asynch]]
         command scripting = "true"

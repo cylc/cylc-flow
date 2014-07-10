@@ -9,7 +9,7 @@ The template variable N_MEMBERS can be set on the command line with
 {% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
 
 [scheduling]
-    initial cycle time = 2010080800
+    initial cycle point = 2010080800
     final cycle time   = 2010081600
     [[dependencies]]
         [[[0]]]
