@@ -107,7 +107,8 @@ def is_remote_host(name):
     """Return True if name has different IP address than the current host.
     Return False if name is None.  Abort if host is unknown.
     """
-    if not name or name == "localhost":
+    if name is None or name.startswith("localhost"):
+        # e.g. localhost.localdomain
         return False
     try:
         ipa = socket.gethostbyname(name)

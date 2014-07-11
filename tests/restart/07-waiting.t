@@ -100,6 +100,7 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
+force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 tidy|2013092300|1|1|succeeded
