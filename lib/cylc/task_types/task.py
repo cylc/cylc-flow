@@ -206,7 +206,7 @@ class task( object ):
         self.retry_delay_timer_timeout = None
 
         self.sub_try_number = 1
-        self.sub_retry_delay = None
+        self.sub_retry = None
         self.sub_retry_delay_timer_timeout = None
 
         self.message_queue = msgqueue()
@@ -269,6 +269,7 @@ class task( object ):
     def record_db_update(self, table, name, cycle, **kwargs):
         call = cylc.rundb.UpdateObject(table, name, str(cycle), **kwargs)
         self.db_queue.append(call)
+        print 'DB UPDATE:', table, name, str(cycle), kwargs
         self.db_items = True
 
     def record_db_state(self, name, cycle, time_created_string=None,
@@ -494,6 +495,7 @@ class task( object ):
             self.handle_event( 'submission failed', 'job submission failed' )
         else:
             # There is a submission retry lined up.
+            self.sub_retry_delay = sub_retry_delay
             delay_msg = "submit-retrying in %s" % (
                 get_seconds_as_interval_string(sub_retry_delay))
             msg = "job submission failed, " + delay_msg
@@ -507,12 +509,11 @@ class task( object ):
                                  message=delay_msg)
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
-            self.queue_event_handlers( 'submission retry', msg )
 
             # TODO - is this record is redundant with that in handle_event?
             self.record_db_event(
                     event="submission failed",
-                    message="submit-retrying in " + str(self.sub_retry_delay))
+                    message="submit-retrying in " + str(sub_retry_delay))
             self.handle_event( 'submission retry', msg )
 
     def job_submission_succeeded( self, out, err ):
@@ -580,17 +581,18 @@ class task( object ):
 
         else:
             # There is a retry lined up
+            self.retry_delay = retry_delay
             delay_msg = "retrying in %s" % (
                 get_seconds_as_interval_string(retry_delay))
             msg = "job failed, " + delay_msg
             self.log( "NORMAL", msg )
             self.retry_delay_timer_timeout = (
-                time.time() + self.retry_delay)
+                time.time() + retry_delay)
             self.try_number += 1
             self.set_status('retrying')
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
-            self.handle_event( 'retry', msg, db_msg= "retrying in " + str( self.retry_delay) )
+            self.handle_event( 'retry', msg, db_msg= "retrying in " + str( retry_delay) )
 
     def reset_manual_trigger( self ):
         # call immediately after manual trigger flag used

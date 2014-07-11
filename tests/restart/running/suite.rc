@@ -9,6 +9,7 @@
 {%- endif %}
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
+    UTC mode = True
     [[event hooks]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
         timeout = 3
@@ -56,12 +57,12 @@
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
                 cd $CYLC_SUITE_RUN_DIR && \
                     cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
+                    cylc restart --debug {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
                     touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
             else
                 cd $CYLC_SUITE_RUN_DIR && \
                     cylc shutdown --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
+                    cylc restart --debug {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
                     touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
             fi
         """

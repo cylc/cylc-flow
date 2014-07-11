@@ -126,8 +126,7 @@ class pool(object):
             itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
             itask.reset_state_held()
 
-        # add in held state if beyond the suite hold point
-        # TODO ISO -restore this functionality
+        # TODO ISO - restore this functionality
         #elif self.hold_time and itask.c_time > self.hold_time:
         #    itask.log( 'NORMAL', "holding (beyond suite hold point) " + str(self.hold_time) )
         #    itask.reset_state_held()

@@ -38,31 +38,29 @@ class Enum(set):
 output_capture = Enum(['ALL_LINES', 'FIRST_LINE', 'NONE'])
 command_types = Enum(['JOB_SUBMISSION', 'POLL_OR_KILL', 'EVENT_HANDLER' ])
 
-# Shared memory flag to ignore already-queued job submission commands:
 TRUE=1
 FALSE=0
+# Shared memory flag.
 STOP_JOB_SUBMISSION = Value('i',FALSE)
 
-def execute_shell_command(command_spec, capture_flag):
-    """Called by pool workers to execute a shell command and optionally
-    capture its output and exit status.
+def execute_shell_command(cmd_spec, capture_flag):
+    """Execute a shell command and optionally capture output and exit status.
     """
+    cmd_type, cmd_string = cmd_spec
 
-    command_type, command_string = command_spec
+    #print current_process().name + ": " + cmd_type
 
-    print current_process().name + ": " + command_type
-
-    command_result = {
-            'COMMAND' : command_string,
+    cmd_result = {
+            'COMMAND': cmd_string,
             'EXIT': None,
             'OUT': None,
             'ERR': None }
 
     if STOP_JOB_SUBMISSION.value == TRUE and \
-            command_type == command_types.JOB_SUBMISSION:
+            cmd_type == cmd_types.JOB_SUBMISSION:
         if flags.debug:
-            print >> sys.stderr, '(process pool) ignoring:', command_string
-        return command_result
+            print >> sys.stderr, '(process pool) ignoring:', cmd_string
+        return cmd_result
 
     if capture_flag == output_capture.NONE:
         out_err = None
@@ -70,20 +68,20 @@ def execute_shell_command(command_spec, capture_flag):
         out_err = subprocess.PIPE
 
     try:
-        p = subprocess.Popen(command_string, stdout=out_err, stderr=out_err, shell=True)
+        p = subprocess.Popen(cmd_string, stdout=out_err, stderr=out_err, shell=True)
     except Exception, e:
-        command_result[ 'EXIT' ] = 1
-        command_result[ 'ERR'  ] = str(e)
+        cmd_result[ 'EXIT' ] = 1
+        cmd_result[ 'ERR'  ] = str(e)
     else:
         if capture_flag == output_capture.FIRST_LINE:
-            command_result['EXIT'] = 0
-            command_result['OUT' ] = p.stdout.readline().rstrip()
+            cmd_result['EXIT'] = 0
+            cmd_result['OUT' ] = p.stdout.readline().rstrip()
         elif capture_flag == output_capture.ALL_LINES:
-            command_result['EXIT'] = p.wait()
-            if command_result['EXIT'] is not None:
-                command_result['OUT'], command_result['ERR'] = p.communicate()
+            cmd_result['EXIT'] = p.wait()
+            if cmd_result['EXIT'] is not None:
+                cmd_result['OUT'], cmd_result['ERR'] = p.communicate()
 
-    return command_result
+    return cmd_result
 
 
 class mp_pool(object):
