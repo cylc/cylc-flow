@@ -26,7 +26,6 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate -s q_size=5 $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-cylc gui $SUITE_NAME &
 suite_run_ok $TEST_NAME cylc run --reference-test --debug -s q_size=5 $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

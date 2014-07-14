@@ -162,19 +162,19 @@ class pool(object):
         if not self.runahead_pool:
             return
 
-        points = set()
-        for point, itasks in self.get_tasks_by_point(all=True):
-            has_ok_itasks = False
+        points = []
+        for point, itasks in sorted(
+                self.get_tasks_by_point(all=True).items()):
+            has_unfinished_itasks = False
             for itask in itasks:
                 if not itask.state.is_currently('failed', 'succeeded'):
-                    has_ok_itasks = True
+                    has_unfinished_itasks = True
                     break
-            if has_ok_itasks:
-                points.add(point)
-
-        if not points:
-            return
-
+            if not points and not has_unfinished_itasks:
+                # We need to begin with an unfinished cycle point.
+                continue
+            points.append(point)
+            
         runahead_base_point = min(points)
 
         if self.custom_runahead_limit is None:
@@ -193,12 +193,12 @@ class pool(object):
             latest_allowed_point = (
                 runahead_base_point + self.custom_runahead_limit)
         
-        for point, itask_id_map in self.runahead_pool.values():
+        for point, itask_id_map in self.runahead_pool.items():
             if point <= latest_allowed_point:
                 for itask in itask_id_map.values():
                     self.release_runahead_task(itask)
                     
-    def release_runahead_task(itask):
+    def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
         queue = self.myq[itask.name]
         if queue not in self.queues:
@@ -211,7 +211,7 @@ class pool(object):
         itask.log('DEBUG', "released to the task pool" )
         del self.runahead_pool[itask.c_time][itask.id]
         if not self.runahead_pool[itask.c_time]:
-            self.runahead_pool.pop(itask.c_time)
+            del self.runahead_pool[itask.c_time]
         self.rhpool_changed = True
         try:
             self.pyro.connect( itask.message_queue, itask.id )
@@ -231,7 +231,7 @@ class pool(object):
             pass
         else:
             if not self.runahead_pool[itask.c_time]:
-                self.runahead_pool.pop(itask.c_time)
+                del self.runahead_pool[itask.c_time]
             self.rhpool_changed = True
             return
 
@@ -250,7 +250,7 @@ class pool(object):
         del self.queues[queue][itask.id]
         del self.pool[itask.c_time][itask.id]
         if not self.pool[itask.c_time]:
-            self.pool.pop(itask_c_time)
+            del self.pool[itask.c_time]
         self.pool_changed = True
         msg = "task proxy removed"
         if reason:
@@ -288,7 +288,7 @@ class pool(object):
     def get_tasks_by_point( self, all=False ):
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
-        for point, itask_id_map in self.cycle_point_itask_map.items():
+        for point, itask_id_map in self.pool.items():
             point_itasks[point] = itask_id_map.values()
 
         if not all:
@@ -297,7 +297,7 @@ class pool(object):
         for point, itask_id_map in self.runahead_pool.items():
             point_itasks.setdefault(point, [])
             point_itasks[point].extend(itask_id_map.values())
-            return point_itasks
+        return point_itasks
 
     def id_exists( self, id ):
         """Check if task id is in the runahead_pool or pool"""

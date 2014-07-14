@@ -7,10 +7,10 @@
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[dependencies]]
-        # Every hour, so would expect a 2 hour runahead limit.
+        # T00, T01, T02, ...
         [[[PT1H]]]
             graph = "foo => bar"
-        # A 6 hour future trigger, => 2 + 6 = 8 hour runahead limit.
+        # T04 (depending on T10)
         [[[T04/PT6H]]]
             graph = """
                 baz[+PT6H] => bar

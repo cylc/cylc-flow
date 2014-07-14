@@ -10,11 +10,13 @@
         # T00, T07, T14, ...
         [[[PT7H]]]
             graph = "foo => bar"
-        # T00, T12, T18... 2 hours difference
+        # T00, T12, T18... 
         [[[T00, T12, T18]]]
             graph = "foo"
+        # T04...
         [[[T04]]]
             graph = "run_ok"
+        # T05...
         [[[T05]]]
             graph = "never_run"
 [runtime]
