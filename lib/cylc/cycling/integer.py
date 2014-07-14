@@ -44,8 +44,7 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 # absolute, or relative to some context, so a special character 'c'
 # is used to signify that context is required. '?' can be used for
 # the period in one-off (no-repeat) expressions, otherwise an arbitrary
-# given value will be ignored (an arbitrary interval is not stored as 
-# it may affect the default runahead limit calculation).
+# given value will be ignored.
 #
 # 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
 # missing n means repeat indefinitely
@@ -131,7 +130,6 @@ class IntegerInterval(IntervalBase):
         return int(self.value.replace("P", ""))
 
     def __mul__(self, m):
-        # the suite runahead limit is a multiple of the smallest sequence interval
         return IntegerInterval(int(self) * m)
 
     def __nonzero__(self):

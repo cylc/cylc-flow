@@ -183,7 +183,8 @@ SPEC = {
         'initial cycle point'                 : vdr(vtype='cycletime'),
         'final cycle point'                   : vdr(vtype='cycletime'),
         'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
-        'runahead limit'                     : vdr(vtype='cycleinterval' ),
+        'runahead limit'                      : vdr(vtype='cycleinterval' ),
+        'max active cycle points'             : vdr(vtype='integer', default=3),
         'queues' : {
             'default' : {
                 'limit'                       : vdr( vtype='integer', default=0),

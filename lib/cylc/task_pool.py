@@ -59,9 +59,13 @@ class pool(object):
         self.reconfiguring = False
         self.db = db
 
-        self.runahead_limit = config.get_runahead_limit()
+        self.custom_runahead_limit = config.get_custom_runahead_limit()
+        self.minimum_runahead_limit = config.get_minimum_runahead_limit()
+        self.max_num_active_cycle_points = (
+            config.get_max_num_active_cycle_points())
         self.config = config
 
+        self.pool = {}
         self.runahead_pool = {}
         self.myq = {}
         self.queues = {}
@@ -139,7 +143,8 @@ class pool(object):
             itask.reset_state_held()
 
         # add to the runahead pool
-        self.runahead_pool[itask.id] = itask
+        self.runahead_pool.setdefault(itask.c_time, {})
+        self.runahead_pool[itask.c_time][itask.id] = itask
         self.rhpool_changed = True
         return True
 
@@ -157,42 +162,76 @@ class pool(object):
         if not self.runahead_pool:
             return
 
-        runahead_base = None
-        for itask in self.get_tasks(all=True):
-            if itask.state.is_currently('failed', 'succeeded'):
-                continue
-            if not runahead_base or itask.c_time < runahead_base:
-                runahead_base = itask.c_time
+        points = set()
+        for point, itasks in self.get_tasks_by_point(all=True):
+            has_ok_itasks = False
+            for itask in itasks:
+                if not itask.state.is_currently('failed', 'succeeded'):
+                    has_ok_itasks = True
+                    break
+            if has_ok_itasks:
+                points.add(point)
 
-        # release tasks below the limit
-        if runahead_base:
-            for itask in self.runahead_pool.values():
-                if not self.runahead_limit or \
-                        itask.c_time - self.runahead_limit <= runahead_base:
-                    # release task to the appropriate queue
-                    # (no runahead limit implies R1 tasks only)
-                    queue = self.myq[itask.name]
-                    if queue not in self.queues:
-                        self.queues[queue] = {}
-                    self.queues[queue][itask.id] = itask
-                    self.pool_changed = True
-                    flags.pflag = True
-                    itask.log('DEBUG', "released to the task pool" )
-                    del self.runahead_pool[itask.id]
-                    self.rhpool_changed = True
-                    try:
-                        self.pyro.connect( itask.message_queue, itask.id )
-                    except Exception, x:
-                        if flags.debug:
-                            raise
-                        print >> sys.stderr, x
-                        self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )
-                        return False
+        if not points:
+            return
+
+        runahead_base_point = min(points)
+
+        if self.custom_runahead_limit is None:
+            # Calculate which tasks to release based on a maximum number of
+            # active cycle points (active meaning non-finished tasks).
+            limit = self.max_num_active_cycle_points
+            latest_allowed_point = sorted(points)[:limit][-1]
+            if self.minimum_runahead_limit is not None:
+                latest_allowed_point = max([
+                    latest_allowed_point,
+                    runahead_base_point + self.minimum_runahead_limit
+                ])
+        else:
+            # Calculate which tasks to release based on a maximum duration
+            # measured from the oldest non-finished task.
+            latest_allowed_point = (
+                runahead_base_point + self.custom_runahead_limit)
+        
+        for point, itask_id_map in self.runahead_pool.values():
+            if point <= latest_allowed_point:
+                for itask in itask_id_map.values():
+                    self.release_runahead_task(itask)
+                    
+    def release_runahead_task(itask):
+        """Release itask to the appropriate queue in the active pool."""
+        queue = self.myq[itask.name]
+        if queue not in self.queues:
+            self.queues[queue] = {}
+        self.queues[queue][itask.id] = itask
+        self.pool.setdefault(itask.c_time, {})
+        self.pool[itask.c_time][itask.id] = itask
+        self.pool_changed = True
+        flags.pflag = True
+        itask.log('DEBUG', "released to the task pool" )
+        del self.runahead_pool[itask.c_time][itask.id]
+        if not self.runahead_pool[itask.c_time]:
+            self.runahead_pool.pop(itask.c_time)
+        self.rhpool_changed = True
+        try:
+            self.pyro.connect( itask.message_queue, itask.id )
+        except Exception, x:
+            if flags.debug:
+                raise
+            print >> sys.stderr, x
+            self.log.warning(
+                '%s cannot be added (use --debug and see stderr)' % itask.id)
+            return False
 
 
     def remove( self, itask, reason=None ):
-        if itask.id in self.runahead_pool:
-            del self.runahead_pool[itask.id]
+        try:
+            del self.runahead_pool[itask.c_time][itask.id]
+        except KeyError:
+            pass
+        else:
+            if not self.runahead_pool[itask.c_time]:
+                self.runahead_pool.pop(itask.c_time)
             self.rhpool_changed = True
             return
 
@@ -209,6 +248,9 @@ class pool(object):
         # remove from queue
         queue = self.myq[itask.name]
         del self.queues[queue][itask.id]
+        del self.pool[itask.c_time][itask.id]
+        if not self.pool[itask.c_time]:
+            self.pool.pop(itask_c_time)
         self.pool_changed = True
         msg = "task proxy removed"
         if reason:
@@ -235,17 +277,33 @@ class pool(object):
         if all:
             if self.rhpool_changed: 
                 self.rhpool_changed = False
-                self.rhpool_list = self.runahead_pool.values()
+                self.rhpool_list = []
+                for itask_id_maps in self.runahead_pool.values():
+                    self.rhpool_list.extend(itask_id_maps.values())
 
             return self.rhpool_list + self.pool_list
         else:
             return self.pool_list
 
+    def get_tasks_by_point( self, all=False ):
+        """Return a map of task proxies by cycle point."""
+        point_itasks = {}
+        for point, itask_id_map in self.cycle_point_itask_map.items():
+            point_itasks[point] = itask_id_map.values()
+
+        if not all:
+            return point_itasks
+        
+        for point, itask_id_map in self.runahead_pool.items():
+            point_itasks.setdefault(point, [])
+            point_itasks[point].extend(itask_id_map.values())
+            return point_itasks
 
     def id_exists( self, id ):
         """Check if task id is in the runahead_pool or pool"""
-        if id in self.runahead_pool:
-            return True
+        for point, itask_ids in self.runahead_pool.items():
+            if id in itask_ids:
+                return True
         for queue in self.queues:
             if id in self.queues[queue]:
                 return True
@@ -340,16 +398,16 @@ class pool(object):
         if interval is None:
             # No limit
             self.log.warning( "setting NO runahead limit" )
-            self.runahead_limit = None
+            self.custom_runahead_limit = None
         else:
             self.log.info( "setting runahead limit to " + str(interval) )
-            self.runahead_limit = interval
+            self.custom_runahead_limit = interval
         self.release_runahead_tasks()
 
 
     def get_min_ctime( self ):
         """Return the minimum cycle currently in the pool."""
-        cycles = [ t.c_time for t in self.get_tasks() ]
+        cycles = self.pool.keys()
         minc = None
         if cycles:
             minc = min(cycles)
@@ -358,7 +416,7 @@ class pool(object):
 
     def get_max_ctime( self ):
         """Return the maximum cycle currently in the pool."""
-        cycles = [ t.c_time for t in self.get_tasks() ]
+        cycles = self.pool.keys()
         maxc = None
         if cycles:
             maxc = max(cycles)
@@ -369,7 +427,10 @@ class pool(object):
 
         self.reconfiguring = True
 
-        self.runahead_limit = config.get_runahead_limit()
+        self.custom_runahead_limit = config.get_custom_runahead_limit()
+        self.minimum_runahead_limit = config.get_minimum_runahead_limit()
+        self.max_num_active_cycle_points = (
+            config.get_max_num_active_cycle_points())
         self.config = config
         self.stop_point = stop_point  # TODO: Any point in using set_stop_point?
 

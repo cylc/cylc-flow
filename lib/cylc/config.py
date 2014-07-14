@@ -118,7 +118,7 @@ class config( object ):
         self.actual_first_ctime = None
 
         self.custom_runahead_limit = None
-        self.runahead_limit = None
+        self.max_num_active_cycle_points = None
 
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
@@ -286,7 +286,7 @@ class config( object ):
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
-        self.compute_runahead_limit()
+        self.compute_runahead_limits()
 
         self.configure_queues()
 
@@ -309,8 +309,10 @@ class config( object ):
         self.cfg['visualization']['initial cycle point'] = vict
 
         vict_rh = None
-        if vict and self.runahead_limit:
-            vict_rh = str( get_point( vict ) + self.runahead_limit )
+        v_runahead_limit = (
+            self.custom_runahead_limit or self.minimum_runahead_limit)
+        if vict and v_runahead_limit:
+            vict_rh = str( get_point( vict ) + v_runahead_limit )
         
         vfct = self.cfg['visualization']['final cycle point'] or vict_rh or vict
         self.cfg['visualization']['final cycle point'] = vfct
@@ -549,96 +551,55 @@ class config( object ):
             for item, val in self.runtime[foo].items():
                 print '  ', '  ', item, val
 
-    def compute_runahead_limit( self ):
+    def compute_runahead_limits( self ):
+        """Extract the custom and the minimum runahead limits."""
+
+        self.max_num_active_cycle_points = self.cfg['scheduling'][
+            'max active cycle points']
+
         limit = self.cfg['scheduling']['runahead limit']
         if (limit is not None and limit.isdigit() and
                 get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
             # Backwards-compatibility for raw number of hours.
             limit = "PT%sH" % limit
+
+        # The custom runahead limit is None if not user-configured.
         self.custom_runahead_limit = get_interval(limit)
-        if self.custom_runahead_limit is not None:
-            self.runahead_limit = self.custom_runahead_limit
-            return
 
-        initial_point = get_point(
-            self.cfg['scheduling']['initial cycle point'])
-        
-        offsets = set([])
-        seq_points = {}
-        point_tasks = {}
+        # Find the minimum runahead limit necessary for any future triggers.
+        self.minimum_runahead_limit = None
 
-        # Loop through all sequences and extract the first few points.
-        for seq in self.sequences:
-            seq_points[seq] = []
-            seq_point_0 = seq.get_first_point(initial_point)
-            if seq_point_0 is None:
-                continue
-            seq_points[seq].append(seq_point_0)
-            point_tasks.setdefault(seq_point_0, set())
-            iter_point = seq_point_0
-            for i in range(NUM_RUNAHEAD_SEQ_POINTS - 1):
-                next_point = seq.get_next_point(iter_point)
-                if next_point is None:
-                    break
-                seq_points[seq].append(next_point)
-                point_tasks.setdefault(next_point, set())
-                iter_point = next_point
-
-        # Loop through all tasks and log their sequences.
+        offsets = set()
         for name, taskdef in self.taskdefs.items():
-            if taskdef.min_intercycle_offset is not None:
-                if taskdef.min_intercycle_offset:
-                    offsets.add(taskdef.min_intercycle_offset)
-            for seq in taskdef.sequences:
-                for point in seq_points.get(seq, []):
-                    point_tasks[point].add(name)
-        
-        points = sorted(point_tasks.keys())
-        min_interval = None
+            if taskdef.min_intercycle_offset:
+                offsets.add(taskdef.min_intercycle_offset)
 
-        # Loop through all point pairs with common tasks to get the interval.
-        for i, point in enumerate(points):
-            tasks = point_tasks[point]
-            for other_point in points[i + 1:]:
-                other_tasks = point_tasks[other_point]
-                if point == other_point:
-                    # Technically, hash-different points could compare equal.
-                    continue
-                common_tasks = tasks.intersection(other_tasks)
-                if common_tasks:
-                    # These points share the same task or tasks.
-                    interval = abs(other_point - point)
-                    if min_interval is None or interval < min_interval:
-                        min_interval = interval
-                        min_interval_task_example = common_tasks.pop()
-                        min_interval_points = [point, other_point]
-
-        if min_interval is None:
-            rlim = get_interval_cls().get_null()  # Null interval.
-            description = "(null)"
-        else:
-            rlim = min_interval * AUTO_RUNAHEAD_FACTOR
-            description = "from %d * %s (min interval)" % (
-                AUTO_RUNAHEAD_FACTOR, min_interval
-            )
         if offsets:
-           min_offset = min( offsets )
-           if min_offset < get_interval_cls().get_null():
-               # future triggers...
-               if abs(min_offset) >= rlim:
-                   #... that extend past the default rl
-                   # set to offsets plus one minimum interval
-                   rlim = abs(min_offset) + rlim
-                   description += " + %s (future trigger)" % (
-                       abs(min_offset))
-        if flags.verbose:
-            print "Runahead limit: %s: %s" % (rlim, description)
+            min_offset = min(offsets)
+            if min_offset < get_interval_cls().get_null():
+                # A negative offset comes from future triggering.
+                self.minimum_runahead_limit = abs(min_offset)
+                if (self.custom_runahead_limit is not None and
+                        self.custom_runahead_limit <
+                        self.minimum_runahead_limit):
+                    print >> sys.stderr, (
+                        '  WARNING, custom runahead limit of %s is less than '
+                        'future triggering offset %s: suite may stall.' %
+                        (self.custom_runahead_limit,
+                         self.minimum_runahead_limit)
+                    )
 
-        self.runahead_limit = rlim
+    def get_custom_runahead_limit( self ):
+        """Return the custom runahead limit (may be None)."""
+        return self.custom_runahead_limit
 
-    def get_runahead_limit( self ):
-        # may be None (no cycling tasks)
-        return self.runahead_limit
+    def get_max_num_active_cycle_points( self ):
+        """Return the maximum allowed number of pool cycle points."""
+        return self.max_num_active_cycle_points
+
+    def get_minimum_runahead_limit( self ):
+        """Return the minimum runahead limit to apply."""
+        return self.minimum_runahead_limit
 
     def get_config( self, args, sparse=False ):
         return self.pcfg.get( args, sparse )
