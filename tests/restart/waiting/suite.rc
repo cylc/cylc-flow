@@ -15,7 +15,6 @@
 [scheduling]
     initial cycle time = 2013092300
     final cycle time   = 2013092306
-    runahead limit = 2
     [[dependencies]]
         [[[0,6,12,18]]]
             graph = """
@@ -45,7 +44,7 @@
     [[force_restart]]
         pre-command scripting = """
             # We need to make sure that the results stay consistent.
-            sleep 2
+            sleep 5
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
                 "select name, cycle, submit_num, try_num, status
                  from task_states

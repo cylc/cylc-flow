@@ -19,11 +19,10 @@
 import os, sys, re
 from fileparse import parse, FileNotFoundError
 from util import printcfg
-from validate import validate, check_compulsory, expand
+from validate import validate, check_compulsory, expand, validator
 from OrderedDict import OrderedDict
 from util import replicate, itemstr
 from upgrade import UpgradeError
-from validate import validator
 import cylc.flags
 
 class ParsecError( Exception ):

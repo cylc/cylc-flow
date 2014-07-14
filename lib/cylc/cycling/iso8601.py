@@ -75,7 +75,7 @@ def memoize(function):
             results = function(*args)
             if len(inputs_results) > MEMOIZE_LIMIT:
                 # Full up, no more room.
-                return results
+                inputs_results.popitem()
             inputs_results[args] = results
             return results
     return _wrapper

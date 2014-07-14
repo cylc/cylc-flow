@@ -27,6 +27,31 @@ from . import parsers
 from . import parser_spec
 
 
+def get_timeinterval_tests():
+    """Yield tests for the time interval class."""
+    tests = {
+        "get_days_and_seconds": [
+            ([], {"hours": 25}, (1, 3600)),
+            ([], {"seconds": 59}, (0, 59)),
+            ([], {"minutes": 10}, (0, 600)),
+            ([], {"days": 5, "minutes": 2}, (5, 120)),
+            ([], {"hours": 2, "minutes": 5, "seconds": 11.5}, (0, 7511.5)),
+            ([], {"hours": 23, "minutes": 1446}, (1, 83160))
+        ],
+        "get_seconds": [
+            ([], {"hours": 25}, 90000),
+            ([], {"seconds": 59}, 59),
+            ([], {"minutes": 10}, 600),
+            ([], {"days": 5, "minutes": 2}, 432120),
+            ([], {"hours": 2, "minutes": 5, "seconds": 11.5}, 7511.5),
+            ([], {"hours": 23, "minutes": 1446}, 169560)
+        ]
+    }
+    for method, method_tests in tests.items():
+        for method_args, test_props, ctrl_results in method_tests:
+            yield test_props, method, method_args, ctrl_results
+
+
 def get_timeintervalparser_tests():
     """Yield tests for the time interval parser."""
     test_expressions = {
@@ -59,11 +84,48 @@ def get_timeintervalparser_tests():
         "P0004-078T10,5": {"years": 4, "days": 78, "hours": 10.5},
         "P00000020T133702": {"days": 20, "hours": 13, "minutes": 37,
                              "seconds": 02},
-        
+        "-P3YT4H2M": {"years": -3, "hours": -4, "minutes": -2},
+        "-PT5M": {"minutes": -5},
+        "-P7Y": {"years": -7, "hours": 0}
     }
     for expression, ctrl_result in test_expressions.items():
         ctrl_data = str(data.TimeInterval(**ctrl_result))
         yield expression, ctrl_data
+
+
+def get_timeintervaldumper_tests():
+    """Yield tests for the time interval dumper."""
+    test_expressions = {
+        "P3Y": {"years": 3},
+        "P90Y": {"years": 90},
+        "P1Y2M": {"years": 1, "months": 2},
+        "P20Y2M": {"years": 20, "months": 2},
+        "P2M": {"months": 2},
+        "P52M": {"months": 52},
+        "P20Y10M2D": {"years": 20, "months": 10, "days": 2},
+        "P1Y3D": {"years": 1, "days": 3},
+        "P4M1D": {"months": 4, "days": 1},
+        "P3Y404D": {"years": 3, "days": 404},
+        "P30Y2D": {"years": 30, "days": 2},
+        "PT6H": {"hours": 6},
+        "PT1034H": {"hours": 1034},
+        "P3YT4H2M": {"years": 3, "hours": 4, "minutes": 2},
+        "P30Y2DT10S": {"years": 30, "days": 2, "seconds": 10},
+        "PT2S": {"seconds": 2},
+        "PT2,5S": {"seconds": 2.5},
+        "PT5,5023H": {"hours": 5.5023},
+        "P5W": {"weeks": 5},
+        "P100W": {"weeks": 100},
+        "-P3YT4H2M": {"years": -3, "hours": -4, "minutes": -2},
+        "-PT5M": {"minutes": -5},
+        "-P7Y": {"years": -7, "hours": 0},
+        "PT1H": {"seconds": 3600, "standardize": True},
+        "P1DT5M": {"minutes": 1445, "standardize": True},
+        "PT59S": {"seconds": 59, "standardize": True},
+        "PT1H4M56S": {"minutes": 10, "seconds": 3296, "standardize": True},
+    }
+    for expression, ctrl_result in test_expressions.items():
+        yield expression, ctrl_result
 
 
 def get_timepoint_dumper_tests():
@@ -594,6 +656,9 @@ def get_timerecurrenceparser_tests():
             interval_tests = get_timeintervalparser_tests()
             start_point = point_parser.parse(point_expr)
             for interval_expr, interval_result in interval_tests:
+                if interval_expr.startswith("-P"):
+                    # Our negative intervals are not supported in recurrences.
+                    continue
                 interval = interval_parser.parse(interval_expr)
                 end_point = start_point + interval
                 if reps is not None:
@@ -637,6 +702,18 @@ class TestSuite(unittest.TestCase):
                     (source, test, control))
         super(TestSuite, self).assertEqual(test, control, info)
 
+    def test_timeinterval(self):
+        """Test the time interval class methods."""
+        for test_props, method, method_args, ctrl_results in (
+                get_timeinterval_tests()):
+            interval = data.TimeInterval(**test_props)
+            interval_method = getattr(interval, method)
+            test_results = interval_method(*method_args)
+            self.assertEqual(
+                test_results, ctrl_results,
+                "%s -> %s(%s)" % (test_props, method, method_args)
+            )
+
     def test_timeinterval_parser(self):
         """Test the time interval parsing."""
         parser = parsers.TimeIntervalParser()
@@ -649,6 +726,14 @@ class TestSuite(unittest.TestCase):
                     expression
                 )
             self.assertEqual(test_result, ctrl_result, expression)
+
+    def test_timeinterval_dumper(self):
+        """Test the time interval dumping."""
+        for ctrl_expression, test_props in get_timeintervaldumper_tests():
+            interval = data.TimeInterval(**test_props)
+            test_expression = str(interval)
+            self.assertEqual(test_expression, ctrl_expression,
+                             str(test_props))
 
     def test_timepoint(self):
         """Test the time point data model (takes a while)."""

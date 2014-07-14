@@ -18,6 +18,7 @@
 
 from flags import utc
 from datetime import datetime
+from isodatetime.data import TimeInterval
 from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import get_local_time_zone_format
 
@@ -177,3 +178,8 @@ def get_unix_time_from_time_string(time_string):
     parser = TimePointParser()
     time_point = parser.parse(time_string)
     return time_point.get("seconds_since_unix_epoch")
+
+
+def get_seconds_as_interval_string(seconds):
+    """Convert a number of seconds into an ISO 8601 duration string."""
+    return str(TimeInterval(seconds=seconds, standardize=True))

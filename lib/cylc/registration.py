@@ -16,9 +16,14 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re
-from regpath import RegPath
+import os
+import sys
+import re
 import flags
+from regpath import RegPath
+from cylc.passphrase import passphrase
+from cylc.suite_host import get_hostname
+from cylc.owner import user
 
 """Simple suite name registration database."""
 
@@ -79,6 +84,9 @@ class localdb(object):
         with open( os.path.join( self.dbpath, name ), 'w' ) as file:
             file.write( 'path=' + dir + '\n' )
             file.write( 'title=' + title + '\n' )
+
+        # create a new passphrase for the suite if necessary
+        passphrase(name,user,get_hostname()).generate(dir)
 
     def get_suite_data( self, suite ):
         suite = RegPath(suite).get()
@@ -153,16 +161,16 @@ class localdb(object):
                 newsuite = targ
                 data = self.get_suite_data( suite )
                 dir, title = data['path'], data['title']
-                self.register( targ, data['path'] )
                 self.unregister( suite )
+                self.register( targ, data['path'] )
                 found = True
             elif suite.startswith( srce + RegPath.delimiter ):
                 # group of suites
                 data = self.get_suite_data( suite )
                 dir, title = data['path'], data['title']
                 newsuite = re.sub( '^' + srce, targ, suite )
-                self.register( newsuite, data['path'] )
                 self.unregister( suite )
+                self.register( newsuite, data['path'] )
                 found = True
         if not found:
             raise RegistrationError, "ERROR, suite or group not found: " + srce

@@ -15,23 +15,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test execution retries are working
+#C: Validate and run the suite timeout suite
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE submission
+install_suite $TEST_NAME_BASE timeout
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select try_num, submit_num from task_states" > submits
-cmp_ok submits <<'__DB_DUMP__'
-1|4
-__DB_DUMP__
+suite_run_fail $TEST_NAME cylc run --debug $SUITE_NAME
+grep_ok "WARNING - suite timed out after PT6S" "$TEST_NAME.stderr"
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
