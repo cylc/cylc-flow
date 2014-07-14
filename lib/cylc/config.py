@@ -1759,4 +1759,3 @@ class config( object ):
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
-

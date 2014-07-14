@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a simple suite with a broadcast
+# Test restarting a simple suite with a broadcast
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
@@ -136,6 +136,7 @@ ssss.
 Begin task states
 broadcast_task.2013092306 : status=waiting, spawned=false
 force_restart.2013092306 : status=running, spawned=true
+force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
 send_a_broadcast_task.2013092306 : status=succeeded, spawned=true
 send_a_broadcast_task.2013092312 : status=held, spawned=false
@@ -147,6 +148,7 @@ broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
+force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 send_a_broadcast_task|2013092300|1|1|succeeded
@@ -161,8 +163,10 @@ broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
+force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
+output_states|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
@@ -189,8 +193,12 @@ S'2013092306'
 p9
 ssss.
 Begin task states
+broadcast_task.2013092312 : status=held, spawned=false
+force_restart.2013092312 : status=held, spawned=false
+output_states.2013092312 : status=held, spawned=false
 send_a_broadcast_task.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
+tidy.2013092312 : status=held, spawned=false
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
@@ -199,15 +207,19 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
 cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded
+broadcast_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
+force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
+output_states|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
+tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

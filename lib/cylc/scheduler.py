@@ -52,7 +52,8 @@ import cylc.rundb
 from Queue import Queue, Empty
 from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
-from wallclock import now, get_current_time_string
+from wallclock import (
+    now, get_current_time_string, get_seconds_as_interval_string)
 from cycling.loader import get_point
 import isodatetime.data
 import isodatetime.parsers
@@ -570,7 +571,7 @@ class scheduler(object):
                     name, task_point_string)
             )
             if new_task:
-                self.pool.add( new_task )
+                self.pool.add_to_runahead_pool( new_task )
 
 
     def command_nudge( self ):
@@ -588,9 +589,15 @@ class scheduler(object):
     #___________________________________________________________________
 
     def set_suite_timer( self, reset=False ):
-        self.suite_timer_start = time.time()
+        self.suite_timer_timeout = time.time() + (       
+            self.config.cfg['cylc']['event hooks']['timeout']
+        )
         if flags.verbose:
-            print str(self.config.cfg['cylc']['event hooks']['timeout']) + " minute suite timer starts NOW:", get_current_time_string()
+            print "%s suite timer starts NOW: %s" % (
+                get_seconds_as_interval_string(
+                    self.config.cfg['cylc']['event hooks']['timeout']),
+                get_current_time_string()
+            )
 
 
     def reconfigure( self ):
@@ -723,7 +730,8 @@ class scheduler(object):
                     'Event Handlers', self.event_queue,
                     self.config.cfg['cylc']['event handler submission']['batch size'],
                     self.config.cfg['cylc']['event handler submission']['delay between batches'],
-                    self.suite )
+                    self.suite
+            )
             self.eventq_worker.start()
 
             self.poll_and_kill_queue = Queue()
@@ -732,7 +740,8 @@ class scheduler(object):
                     'Poll & Kill Commands', self.poll_and_kill_queue,
                     self.config.cfg['cylc']['poll and kill command submission']['batch size'],
                     self.config.cfg['cylc']['poll and kill command submission']['delay between batches'],
-                    self.suite )
+                    self.suite
+            )
             self.pollkq_worker.start()
 
             self.info_interface = info_interface( self.info_commands )
@@ -1027,11 +1036,12 @@ class scheduler(object):
     def check_suite_timer( self ):
         if self.already_timed_out:
             return
-        timeout = self.suite_timer_start + 60 * (
-            self.config.cfg['cylc']['event hooks']['timeout'])
-        if time.time() > timeout:
+        if time.time() > self.suite_timer_timeout:
             self.already_timed_out = True
-            message = 'suite timed out after ' + str( self.config.cfg['cylc']['event hooks']['timeout']) + ' minutes'
+            message = 'suite timed out after %s' % (
+                get_seconds_as_interval_string(
+                    self.config.cfg['cylc']['event hooks']['timeout'])
+            )
             self.log.warning( message )
             abort = self.config.cfg['cylc']['event hooks']['abort if timeout handler fails']
             self.run_event_handlers( 'timeout', abort, message )

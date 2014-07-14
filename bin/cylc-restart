@@ -457,7 +457,7 @@ where they got to while the suite was down."""
             else:
                 raise Exception( 'ERROR: unknown task state for ' + itask.id )
 
-            self.pool.add( itask )
+            self.pool.add_to_runahead_pool( itask )
 
 
 if __name__ == '__main__':

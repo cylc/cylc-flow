@@ -1,13 +1,14 @@
-title = "Cylc Admin Test Suite"
+title = "Old Cylc Admin Test Suite"
 
-#        B[T-6]-> B -> E   
-#                / \   
-#  X & A[T-6]-> A   -> D 
-#                \ /    
-#        C[T-6]-> C -> F 
-#       
+#        B[-PT6H]-> B -> E
+#                / \
+#  X & A[-PT6H]-> A   -> D
+#                \ /
+#        C[-PT6H]-> C -> F
+#
 
 [cylc]
+    cycle point format = %Y%m%d%H # (for old-style reference log)
     [[reference test]]
         required run mode = live
         expected task failures = X.2010010112
@@ -19,25 +20,24 @@ title = "Cylc Admin Test Suite"
     initial cycle time = 2010010106
 
     [[special tasks]]
-    start-up         = prep
-    cold-start       = ColdA, ColdB, ColdC
-    clock-triggered  = X(1)
+        cold-start       = ColdA, ColdB, ColdC
+        clock-triggered  = X(1)
 
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[R1]]]
+            graph = "prep => X & ColdA & ColdB & ColdC"
+        [[[T00,T06,T12,T18]]]
             graph = """
-      prep => X & ColdA & ColdB & ColdC
-
-      X => A => B => E
+      prep[^] => X => A => B => E
       A => C => F
       B & C => D
 
-      Warm[T-6]:succeed-all & Post[T-6]:succeed-all & X:fail => recover
+      Warm[-PT6H]:succeed-all & Post[-PT6H]:succeed-all & X:fail => recover
       Warm:succeed-all & Post:succeed-all => !recover
-    
-      ColdA | A[T-6] => A
-      ColdB | B[T-6] => B
-      ColdC | C[T-6] => C
+
+      ColdA | A[-PT6H] => A
+      ColdB | B[-PT6H] => B
+      ColdC | C[-PT6H] => C
                     """
 [runtime]
     [[root]]

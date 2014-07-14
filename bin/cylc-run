@@ -130,11 +130,11 @@ initial and final cycle point variables persists across suite restarts."""
                 submit_num=0, exists=False
             )
 
-            if itask.point is None:
+            if itask.point:
+                self.pool.add_to_runahead_pool( itask )
+            else:
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
                 del itask
-            else:
-                self.pool.add( itask )
 
     def load_tasks_warm( self ):
         if self.start_point is not None:
@@ -161,7 +161,7 @@ initial and final cycle point variables persists across suite restarts."""
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
 
-            self.pool.add( itask )
+            self.pool.add_to_runahead_pool( itask )
 
     def load_tasks_raw( self ):
         if self.start_point is not None:
@@ -187,7 +187,7 @@ initial and final cycle point variables persists across suite restarts."""
                 del itask
                 continue
 
-            self.pool.add( itask )
+            self.pool.add_to_runahead_pool( itask )
 
 if __name__ == '__main__':
     main("run", start)

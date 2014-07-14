@@ -15,9 +15,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test loadleveler directives
-#C:     This test requires a [directive-tests]loadleveler-host entry in 
-#C:     site/user config in order to run, otherwise it will be bypassed
+# Test loadleveler directives
+#     This test requires a [directive-tests]loadleveler-host entry in 
+#     site/user config in order to run, otherwise it will be bypassed
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

@@ -108,7 +108,7 @@ F.2010010106 submitted
 2014/01/07 17:36:20 INFO - [X.2010010200] -(current:submitted)> X.2010010200 submit_method_id=21265
 2014/01/07 17:36:20 INFO - [X.2010010200] -(current:submitted)> X.2010010200 started at 2014-01-07T17:36:20
 2014/01/07 17:36:21 INFO - [X.2010010200] -(current:running)> X.2010010200 succeeded at 2014-01-07T17:36:20
-2014/01/07 17:36:22 INFO - [X.2010010206] -triggered off []
+2014/01/07 17:36:22 INFO - [X.2010010206] -triggered off ['prep.2010010106']
 2014/01/07 17:36:22 INFO - [recover.2010010112] -(current:ready)> recover.2010010112 submitting now
 2014/01/07 17:36:22 INFO - [recover.2010010112] -(current:ready)> recover.2010010112 submission succeeded
 2014/01/07 17:36:22 INFO - [recover.2010010112] -(current:submitted)> recover.2010010112 submit_method_id=21338

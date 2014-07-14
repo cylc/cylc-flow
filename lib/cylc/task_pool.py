@@ -100,46 +100,53 @@ class pool(object):
                 self.myq[taskname] = queue
 
 
+    def add_to_runahead_pool( self, itask ):
+        """Add a new task to the runahead pool if possible.
+        Tasks whose recurrences allow them to spawn beyond the suite
+        stop point are added to the pool in the held state, ready to be
+        released if the suite stop point is changed."""
 
-    def add( self, itask ):
-
+        # do not add if a task with the same ID already exists
+        # e.g. an inserted task caught up with an existing one
         if self.id_exists( itask.id ):
-            # e.g. an inserted task caught up with an existing one with the same ID.
-            self.log.warning( itask.id + ' cannot be added: task ID already exists' )
+            self.log.warning( itask.id + ' cannot be added to pool: task ID already exists' )
+            del itask
             return False
 
-        # TODO ISO - no longer needed due to recurrence bounds?
+        # do not add if an inserted task is beyond its own stop point
+        # (note this is not the same as recurrence bounds)
         if itask.stop_point and itask.point > itask.stop_point:
-            itask.log( 'WARNING', "not adding (beyond my stop cycle)" )
+            self.log.info( itask.id + ' not adding to pool: beyond task stop cycle' )
+            del itask
             return False
-
-        # check cycle stop or hold conditions
+ 
+        # add in held state if beyond the suite stop point
         if self.stop_point and itask.point > self.stop_point:
-          #  itask.log( 'WARNING', "not adding (beyond suite stop cycle) " + str(self.stop_point) )
+            itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
             itask.reset_state_held()
-           # return
 
-        # TODO ISO -restore suite hold functionality
-        #if self.hold_time and itask.point > self.hold_time:
-        #    itask.log( 'DEBUG', "not adding (beyond suite hold cycle) " + str(self.hold_time) )
+        # add in held state if beyond the suite hold point
+        # TODO ISO -restore this functionality
+        #elif self.hold_time and itask.point > self.hold_time:
+        #    itask.log( 'NORMAL', "holding (beyond suite hold point) " + str(self.hold_time) )
         #    itask.reset_state_held()
-        #    return
 
-        # hold tasks with future triggers beyond the final cycle point
-        if self.task_has_future_trigger_overrun( itask ):
-            itask.log( "WARNING", "not adding (future trigger beyond stop cycle)" )
+        # add in held state if a future trigger goes beyond the suite stop point
+        # (note this only applies to tasks below the suite stop point themselves)
+        elif self.task_has_future_trigger_overrun( itask ):
+            itask.log( "NORMAL", "holding (future trigger beyond stop point)" )
             self.held_future_tasks.append( itask.id )
             itask.reset_state_held()
-            return
 
+        # add to the runahead pool
         self.runahead_pool[itask.id] = itask
-
         self.rhpool_changed = True
-
         return True
+
 
     def get_task_proxy( self, *args, **kwargs ):
         return self.config.get_task_proxy(*args, **kwargs)
+
 
     def release_runahead_tasks( self ):
 
@@ -443,12 +450,14 @@ class pool(object):
                     if itask.state.is_currently( 'retrying' ):
                         new_task.retry_delay = itask.retry_delay
                         new_task.retry_delays = itask.retry_delays
-                        new_task.retry_delay_timer_start = itask.retry_delay_timer_start
+                        new_task.retry_delay_timer_timeout = (
+                            itask.retry_delay_timer_timeout)
                     elif itask.state.is_currently( 'submit-retrying' ):
                         new_task.sub_retry_delay = itask.sub_retry_delay
                         new_task.sub_retry_delays = itask.sub_retry_delays
                         new_task.sub_retry_delays_orig = itask.sub_retry_delays_orig
-                        new_task.sub_retry_delay_timer_start = itask.sub_retry_delay_timer_start
+                        new_task.sub_retry_delay_timer_timeout = (
+                            itask.sub_retry_delay_timer_timeout)
 
                     new_task.try_number = itask.try_number
                     new_task.sub_try_number = itask.sub_try_number
@@ -456,7 +465,7 @@ class pool(object):
 
 
                     self.remove( itask, '(suite definition reload)' )
-                    self.add( new_task )
+                    self.add_to_runahead_pool( new_task )
 
         self.reconfiguring = found
 
@@ -635,7 +644,7 @@ class pool(object):
         itask.state.set_spawned()
         itask.log( 'DEBUG', 'forced spawning')
         new_task = itask.spawn( 'waiting' )
-        if new_task and self.add( new_task ):
+        if new_task and self.add_to_runahead_pool( new_task ):
             return new_task
         else:
             return None
