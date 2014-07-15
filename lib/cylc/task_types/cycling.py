@@ -50,8 +50,8 @@ class cycling( task ):
     # derived classes must override ready_to_spawn()
 
     def __init__( self, state, stop_point = None, validate = False ):
-        self.stop_point = stop_point
         task.__init__( self, state, validate )
+        self.stop_point = stop_point
 
     def next_point( self ):
         p_next = None
