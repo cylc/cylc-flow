@@ -146,8 +146,8 @@ LED suite control interface.
             warning_dialog(
                 'Bad filter regex: %s: error: %s' % (ftext, exc)).warn()
             self.t.filter = ""
-            return
-        self.t.filter = ftext
+        else:
+            self.t.filter = ftext
         self.t.action_required = True
 
     def toggle_grouping( self, toggle_item ):
