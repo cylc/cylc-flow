@@ -24,6 +24,7 @@ from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
 from cylc.TaskID import TaskID
 from util import EntryTempText
+from warning_dialog import warning_dialog
 
 class ControlLED(object):
     """
@@ -138,8 +139,15 @@ LED suite control interface.
         return True
 
     def check_filter_entry( self, e ):
-        ftxt = self.filter_entry.get_text()
-        self.t.filter = self.filter_entry.get_text()
+        ftext = self.filter_entry.get_text()
+        try:
+            re.compile(ftext)
+        except re.error as exc:
+            warning_dialog(
+                'Bad filter regex: %s: error: %s' % (ftext, exc)).warn()
+            self.t.filter = ""
+            return
+        self.t.filter = ftext
         self.t.action_required = True
 
     def toggle_grouping( self, toggle_item ):

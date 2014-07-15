@@ -147,14 +147,9 @@ class DotUpdater(threading.Thread):
             self.task_list.sort()
 
         if self.filter:
-            try:
-                self.task_list = [
-                    t for t in self.task_list if \
-                            self.filter in t or \
-                            re.search( self.filter, t )]
-            except:
-                # bad regex (TODO - dialog warn from main thread - idle_add?)
-                self.task_list = []
+            self.task_list = [
+                t for t in self.task_list
+                if self.filter in t or re.search( self.filter, t )]
         return True
 
     def set_led_headings( self ):
