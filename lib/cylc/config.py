@@ -856,16 +856,15 @@ class config( object ):
                 # instantiate a task
                 itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
             except TypeError, x:
-                raise
                 # This should not happen as we now explicitly catch use
                 # of synchronous special tasks in an asynchronous graph.
                 # But in principle a clash of multiply inherited base
                 # classes due to choice of "special task" modifiers
                 # could cause a TypeError.
-                raise SuiteConfigError, '(inconsistent use of special tasks?)'
+                raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
-                raise
-                raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
+                raise SuiteConfigError(
+                    'ERROR, failed to instantiate task %s: %s' % (name, x))
             if not itask.tag:
                 if flags.verbose:
                     print " + Task out of bounds for " + str(tag) + ": " + itask.name

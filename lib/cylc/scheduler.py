@@ -54,6 +54,7 @@ from batch_submit import event_batcher, poll_and_kill_batcher
 import subprocess
 from wallclock import (
     now, get_current_time_string, get_seconds_as_interval_string)
+from cycling import PointParsingError
 from cycling.loader import get_point
 import isodatetime.data
 import isodatetime.parsers
@@ -1153,14 +1154,20 @@ class scheduler(object):
 
 
     def set_stop_ctime( self, stop_string ):
-        self.log.info( "Setting stop cycle point: " + stop_string )
         self.stop_point = get_point(stop_string)
+        try:
+            self.stop_point.standardise()
+        except PointParsingError as exc:
+            self.log.critical(
+                "Cannot set stop cycle point: %s: %s" % (stop_string, exc))
+            return
+        self.log.info( "Setting stop cycle point: %s" % stop_string )
         self.pool.set_stop_point(self.stop_point)
 
 
     def set_stop_clock( self, unix_time, date_time_string ):
-        self.log.info( "Setting stop clock time: " + date_time_string +
-                       " (unix time: " + str(unix_time) + ")")
+        self.log.info( "Setting stop clock time: %s (unix time: %s)" % (
+                           date_time_string, unix_time))
         self.stop_clock_time = unix_time
         self.stop_clock_time_string = date_time_string
 
