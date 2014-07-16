@@ -398,11 +398,11 @@ class GraphUpdater(threading.Thread):
                 id = node.get_name()
                 name, ctime = id.split(TaskID.DELIM)
                 if self.filter_exclude:
-                    if re.match( self.filter_exclude, name ):
+                    if re.search( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
                             self.rem_nodes.append(node)
                 if self.filter_include:
-                    if not re.match( self.filter_include, name ):
+                    if not re.search( self.filter_include, name ):
                         if node not in self.rem_nodes:
                             self.rem_nodes.append(node)
                 if self.state_filter:
