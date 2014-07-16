@@ -85,17 +85,23 @@ class mp_pool(object):
 
     def __init__(self, pool_config):
         self.type = pool_config['pool type']
-        if self.type == 'process':
-            self.pool = multiprocessing.Pool(
-                    processes=pool_config['process pool size'])
+            pool_cls = multiprocessing.Pool 
+            if pool_config['process pool size'] is None:
+                # (Pool class does this anyway, but the result is not
+                # exposed via its public interface).
+                self.poolsize = multiprocessing.cpu_count()
+            else:
+                self.poolsize = pool_config['process pool size']
             self.current_process = multiprocessing.current_process
         else:
-            self.pool = multiprocessing.pool.ThreadPool(
-                    processes=pool_config['thread pool size'])
+            pool_cls = multiprocessing.pool.ThreadPool
+            self.poolsize = pool_config['thread pool size']
             self.current_process = multiprocessing.dummy.current_process
+
+        self.pool = pool_cls( processes=self.poolsize )
         if flags.debug:
             print "Initialized %s pool, size %d" % (
-                    self.type, self.pool_size())
+                    self.type, self.get_pool_size())
         self.unhandled_results = []
 
     def put_command(self, cmd_spec, callback, job_sub_method=None):
@@ -149,10 +155,9 @@ class mp_pool(object):
             print "joining %s pool" % self.type
         self.pool.join()
 
-    def pool_size(self):
+    def get_pool_size(self):
         """Return number of workers."""
-        # ACCESSES POOL INTERNAL STATE
-        return self.pool._processes
+        return self.poolsize
 
     def is_closed(self):
         """Is the pool closed?"""
