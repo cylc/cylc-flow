@@ -210,7 +210,7 @@ SPEC = {
     'scheduling' : {
         'initial cycle point'                 : vdr(vtype='cycletime'),
         'final cycle point'                   : vdr(vtype='cycletime'),
-        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
+        'cycling mode'                        : vdr(vtype='string', default=Calendar.MODE_GREGORIAN, options=Calendar.MODES.keys() + ["integer"] ),
         'runahead factor'                     : vdr(vtype='integer', default=2 ),
         'queues' : {
             'default' : {
