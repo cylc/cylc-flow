@@ -440,21 +440,22 @@ Dependency graph suite control interface.
         self.t.action_required = True
 
     def filter( self, w, excl_e, incl_e, fbox ):
-        excl = excl_e.get_text()
-        incl = incl_e.get_text()
-        if excl == '':
-            excl = None
-        if incl == '':
-            incl == None
-        for filt in excl, incl:
+        filters = {}
+        filters["excl"] = excl_e.get_text()
+        filters["incl"] = incl_e.get_text()
+        for filt_name, filt in filters.items():
             if not filt:
+                filters[filt_name] = None
                 continue
             try:
                 re.compile( filt )
-            except:
-                warning_dialog( "Bad Expression: " + filt ).warn()
-        self.t.filter_include = incl
-        self.t.filter_exclude = excl
+            except re.error as exc:
+                warning_dialog(
+                    'Bad filter regex: %s: error: %s' % (filt, exc)).warn()
+                filters[filt_name] = None
+
+        self.t.filter_include = filters["incl"]
+        self.t.filter_exclude = filters["excl"]
 
         fstates = []
         for b in fbox.get_children():
