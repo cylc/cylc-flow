@@ -33,4 +33,3 @@ run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.20140203T00+13
 sed -n '/_POINT=/p' $TEST_NAME.stdout > jobfile
 cmp_ok jobfile $TEST_SOURCE_DIR/cycling/foo.ref-jobfile
 purge_suite $SUITE_NAME
-rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME-submit

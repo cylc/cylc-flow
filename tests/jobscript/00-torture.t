@@ -35,4 +35,3 @@ echo "" >> jobfile
 sed 's/##suitename##/'$SUITE_NAME'/' $TEST_SOURCE_DIR/torture/foo.ref-jobfile > reffile
 cmp_ok jobfile reffile
 purge_suite $SUITE_NAME
-rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME-submit
