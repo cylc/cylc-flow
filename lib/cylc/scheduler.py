@@ -69,7 +69,6 @@ class request_handler( threading.Thread ):
         self.log = logging.getLogger( 'main' )
         self.log.info(  str(self.getName()) + " start (Request Handling)")
 
-
     def run( self ):
         while True:
             self.pyro.handleRequests(timeout=1)
@@ -160,7 +159,6 @@ class scheduler(object):
                 action="store_true", default=False, dest="reftest" )
 
         self.parse_commandline()
-
 
     def configure( self ):
         # read-only commands to expose directly to the network
@@ -310,7 +308,6 @@ class scheduler(object):
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
 
-
     def process_command_queue( self ):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
@@ -343,7 +340,6 @@ class scheduler(object):
                     self.do_process_tasks = True
             queue.task_done()
 
-
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
@@ -354,24 +350,17 @@ class scheduler(object):
         else:
             return False
 
-
-    #_________INFO_COMMANDS_____________________________________________
-
     def info_ping_suite( self ):
         return True
-
 
     def info_ping_task( self, task_id ):
         return self.pool.ping_task( task_id )
 
-
     def info_get_suite_info( self ):
         return [ self.config.cfg['title'], user ]
 
-
     def info_get_task_list( self, logit=True ):
         return self.config.get_task_name_list()
-
 
     def info_get_task_info( self, task_names ):
         info = {}
@@ -382,7 +371,6 @@ class scheduler(object):
                 info[ name ] = ['ERROR: no such task type']
         return info
 
-
     def info_get_all_families( self, exclude_root=False ):
         fams = self.config.get_first_parent_descendants().keys()
         if exclude_root:
@@ -390,15 +378,12 @@ class scheduler(object):
         else:
             return fams
 
-
     def info_get_triggering_families( self ):
         return self.config.triggering_families
-
 
     def info_get_first_parent_descendants( self ):
         # families for single-inheritance hierarchy based on first parents
         return deepcopy(self.config.get_first_parent_descendants())
-
 
     def info_do_live_graph_movie( self ):
         return ( self.config.cfg['visualization']['enable live graph movie'], self.suite_dir )
@@ -456,11 +441,9 @@ class scheduler(object):
             "seconds_since_unix_epoch"))
         self.set_stop_clock( stop_time_in_epoch_seconds, str(stop_point) )
 
-
     def command_set_stop_after_task( self, tid ):
         if TaskID.is_valid_id(tid):
             self.set_stop_task( tid )
-
 
     def command_release_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -468,7 +451,6 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.release_tasks( task_ids )
-
 
     def command_poll_tasks( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -485,10 +467,8 @@ class scheduler(object):
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.kill_tasks( task_ids )
 
-
     def command_release_suite( self ):
         self.release_suite()
-
 
     def command_hold_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -497,17 +477,14 @@ class scheduler(object):
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.hold_tasks( task_ids )
 
-
     def command_hold_suite( self ):
         self.hold_suite()
-
 
     def command_hold_after_tag( self, tag ):
         """TODO - not currently used, add to the cylc hold command"""
         # TODO ISO - USE VAR NAMES TO MAKE CLEAR STRING CTIME VS POINT
         self.hold_suite( tag )
         self.log.info( "The suite will pause when all tasks have passed " + tag )
-
 
     def command_set_verbosity( self, level ):
         # change logging verbosity:
@@ -530,10 +507,8 @@ class scheduler(object):
         flags.debug = ( level == 'debug' )
         return True, 'OK'
 
-
     def command_remove_cycle( self, tag, spawn ):
         self.pool.remove_entire_cycle( tag,spawn )
-
 
     def command_remove_task( self, name, tag, is_family, spawn ):
         matches = self.get_matching_tasks( name, is_family )
@@ -541,7 +516,6 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.remove_tasks( task_ids, spawn )
-
 
     def command_insert_task( self, name, tag, is_family, stop_string ):
         matches = self.get_matching_tasks( name, is_family )
@@ -562,11 +536,9 @@ class scheduler(object):
             if new_task:
                 self.pool.add_to_runahead_pool( new_task )
 
-
     def command_nudge( self ):
         # just to cause the task processing loop to be invoked
         pass
-
 
     def command_reload_suite( self ):
         self.reconfigure()
@@ -585,7 +557,6 @@ class scheduler(object):
                 get_current_time_string()
             )
 
-
     def reconfigure( self ):
         print "RELOADING the suite definition"
         self.configure_suite( reconfigure=True )
@@ -600,7 +571,6 @@ class scheduler(object):
 
         # update state dumper state
         self.state_dumper.set_cts( self.start_point, self.stop_point )
-
 
     def parse_commandline( self ):
         self.run_mode = self.options.run_mode
@@ -617,7 +587,6 @@ class scheduler(object):
         if self.options.genref:
             self.gen_reference_log = self.options.genref
 
-
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir,
@@ -632,7 +601,6 @@ class scheduler(object):
             raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
         except PortFileError,x:
             raise SchedulerError( str(x) )
-
 
     def configure_suite( self, reconfigure=False ):
         # LOAD SUITE CONFIG FILE
@@ -721,9 +689,7 @@ class scheduler(object):
 
             self.log.info( "port:" +  str( self.port ))
 
-
     def configure_suite_environment( self ):
-
         # static cylc and suite-specific variables:
         self.suite_env = {
                 'CYLC_UTC'               : str(flags.utc),
@@ -793,7 +759,6 @@ class scheduler(object):
         for var, val in cenv.items():
             os.environ[var] = val
 
-
     def configure_reftest( self, recon=False ):
         if self.gen_reference_log:
             self.config.cfg['cylc']['log resolved dependencies'] = True
@@ -822,7 +787,6 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['timeout'] = timeout
             self.config.cfg['cylc']['event hooks']['reset timer'] = False
 
-
     def run_event_handlers( self, name, fg, msg ):
         if self.run_mode != 'live' or \
                 ( self.run_mode == 'simulation' and \
@@ -847,7 +811,6 @@ class scheduler(object):
                         # TODO - this isn't true, it just means the
                         # shutdown handler run successfully:
                         print '\nSUITE REFERENCE TEST PASSED'
-
 
     def run( self ):
 
@@ -876,6 +839,7 @@ class scheduler(object):
             if self.shut_down_now:
                 warned = False
                 while not self.proc_pool.is_dead():
+                    self.proc_pool.handle_results_async()
                     if not warned:
                         print "Waiting for the command process pool to empty for shutdown"
                         print "(you can \"stop now\" to shut down immediately if you like)."
@@ -1000,7 +964,6 @@ class scheduler(object):
             if self.config.cfg['cylc']['event hooks']['abort on timeout']:
                 raise SchedulerError, 'Abort on suite timeout is set'
 
-
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
         process = False
@@ -1047,19 +1010,14 @@ class scheduler(object):
 
         return process
 
-
     def shutdown( self, reason='' ):
         msg = "Suite shutting down at " + get_current_time_string()
-
-        # The getattr() calls below are used in case the suite is not
-        # fully configured before the shutdown is called.
-
         if reason:
             msg += ' (' + reason + ')'
         print msg
 
-        if getattr(self, "log", None) is not None:
-            self.log.info( msg )
+        # The getattr() calls and if tests below are used in case the
+        # suite is not fully configured before the shutdown is called.
 
         if self.gen_reference_log:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
@@ -1069,7 +1027,8 @@ class scheduler(object):
             if not self.proc_pool.is_dead():
                 # e.g. KeyboardInterrupt
                 self.proc_pool.terminate()
-                self.proc_pool.join()
+            self.proc_pool.join()
+            self.proc_pool.handle_results_async()
 
         if self.pool:
             self.pool.shutdown()
@@ -1120,12 +1079,10 @@ class scheduler(object):
 
         print "DONE" # main thread exit
 
-
     def set_stop_ctime( self, stop_string ):
         self.log.info( "Setting stop cycle point: " + stop_string )
         self.stop_point = get_point(stop_string)
         self.pool.set_stop_point(self.stop_point)
-
 
     def set_stop_clock( self, unix_time, date_time_string ):
         self.log.info( "Setting stop clock time: " + date_time_string +
@@ -1157,14 +1114,12 @@ class scheduler(object):
             self.hold_suite_now = True
             self.pool.hold_all_tasks()
 
-
     def release_suite( self ):
         if self.hold_suite_now:
             self.log.info( "RELEASE: new tasks will be queued when ready")
             self.hold_suite_now = False
             self.hold_time = None
         self.pool.release_all_tasks()
-
 
     def will_stop_at( self ):
         if self.stop_point:
@@ -1176,17 +1131,14 @@ class scheduler(object):
         else:
             return None
 
-
     def clear_stop_times( self ):
         self.stop_point = None
         self.stop_clock_time = None
         self.stop_clock_time_description = None
         self.stop_task = None
 
-
     def paused( self ):
         return self.hold_suite_now
-
 
     def stopping( self ):
         if self.stop_point is not None or self.stop_clock_time is not None:
@@ -1194,10 +1146,8 @@ class scheduler(object):
         else:
             return False
 
-
     def will_pause_at( self ):
         return self.hold_time
-
 
     def command_trigger_task( self, name, tag, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -1205,7 +1155,6 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.trigger_tasks( task_ids )
-
 
     def get_matching_tasks( self, name, is_family=False ):
         """name can be a task or family name, or a regex to match
@@ -1238,9 +1187,7 @@ class scheduler(object):
                 for task in tasks:
                     if re.match( name, task ):
                         matches.append(task)
-
         return matches
-
 
     def command_reset_task_state( self, name, tag, state, is_family ):
         matches = self.get_matching_tasks( name, is_family )
@@ -1249,14 +1196,11 @@ class scheduler(object):
         task_ids = [ TaskID.get(i,tag) for i in matches ]
         self.pool.reset_task_states( task_ids, state )
 
-
     def command_add_prerequisite( self, task_id, message ):
         self.pool.add_prereq_to_task( task_id, message )
 
-
     def command_purge_tree( self, id, stop ):
         self.pool.purge_tree( id, get_point(stop) )
-
 
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config.cfg['scheduling']['special tasks']['include at start-up']
@@ -1312,7 +1256,6 @@ class scheduler(object):
             output_text += (" %d: " + amount_format) % (
                 minute_num, averages[minute_num])
         self.log.info( output_text )
-
 
     def _update_cpu_usage(self):
         p = subprocess.Popen(["ps", "-o%cpu= ", str(os.getpid())], stdout=subprocess.PIPE)
