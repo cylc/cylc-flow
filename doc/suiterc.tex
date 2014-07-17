@@ -604,8 +604,9 @@ a special runahead held state until slower tasks have caught up
 sufficiently.
 
 The default behaviour is to limit the number of tasks
-by only allowing up to \lstinline=N= (default 3) active cycle points at
-any time, up-adjusted if necessary for any future triggering.
+by only allowing up to \lstinline=N= (default 3) consecutive cycle
+points to be active at any time, up-adjusted if necessary for any
+future triggering.
 
 \lstinline=runahead limit= is deprecated in favour of specifying this
 maximum number of active cycle points (\ref{max active cycle points}).
@@ -628,12 +629,13 @@ a special runahead held state until slower tasks have caught up
 sufficiently.
 
 The default behaviour is to limit the number of tasks
-by only allowing up to \lstinline=N= (default 3) active cycle points at
-any time, up-adjusted if necessary for any future triggering.
+by only allowing up to \lstinline=N= (default 3) consecutive cycle
+points to be active at any time, up-adjusted if necessary for any
+future triggering.
 
 This input allows you to change \lstinline=N=, the maximum
-number of cycle points that can be active at once. This supersedes
-\ref{runahead limit}.
+number of consecutive cycle points that can be active at once. This
+supersedes \ref{runahead limit}.
 
 \begin{myitemize}
     \item {\em type:} integer

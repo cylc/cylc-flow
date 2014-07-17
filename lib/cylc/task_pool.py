@@ -63,6 +63,9 @@ class pool(object):
         self.minimum_runahead_limit = config.get_minimum_runahead_limit()
         self.max_num_active_cycle_points = (
             config.get_max_num_active_cycle_points())
+        self._prev_runahead_base_point = None
+        self._prev_runahead_sequence_points = None
+
         self.config = config
 
         self.pool = {}
@@ -162,6 +165,8 @@ class pool(object):
         if not self.runahead_pool:
             return
 
+        limit = self.max_num_active_cycle_points
+
         points = []
         for point, itasks in sorted(
                 self.get_tasks_by_point(all=True).items()):
@@ -174,13 +179,36 @@ class pool(object):
                 # We need to begin with an unfinished cycle point.
                 continue
             points.append(point)
-            
+
+        if not points:
+            return
+
+        # Get the earliest point with unfinished tasks.
         runahead_base_point = min(points)
+
+        # Get all cycling points possible after the runahead base point.
+        if (self._prev_runahead_base_point is not None and 
+                runahead_base_point == self._prev_runahead_base_point):
+            # Cache for speed.
+            sequence_points = self._prev_runahead_sequence_points
+        else:
+            sequence_points = []
+            for sequence in self.config.sequences:
+                point = runahead_base_point
+                for i in range(limit):
+                    point = sequence.get_next_point(point)
+                    if point is None:
+                        break
+                    sequence_points.append(point)
+            sequence_points = set(sequence_points)
+            self._prev_runahead_sequence_points = sequence_points
+            self._prev_runahead_base_point = runahead_base_point
+
+        points = set(points).union(sequence_points)
 
         if self.custom_runahead_limit is None:
             # Calculate which tasks to release based on a maximum number of
             # active cycle points (active meaning non-finished tasks).
-            limit = self.max_num_active_cycle_points
             latest_allowed_point = sorted(points)[:limit][-1]
             if self.minimum_runahead_limit is not None:
                 latest_allowed_point = max([
