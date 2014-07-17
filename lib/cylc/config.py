@@ -22,7 +22,7 @@ from cylc.cfgspec.suite import get_suitecfg
 from cylc.cycling.loader import (get_point, get_interval_cls,
                                  get_sequence, get_sequence_cls,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
-                                 get_backwards_compatibility_mode)
+                                 get_backwards_comp_mode)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -218,8 +218,8 @@ class config( object ):
 
         self.cli_start_point = get_point(self._cli_start_string)
 
-        flags.back_comp_cycling = (
-            get_backwards_compatibility_mode())
+        flags.backwards_comp_cycling = (
+            get_backwards_comp_mode())
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -1267,7 +1267,7 @@ class config( object ):
 
             if not my_taskdef_node.is_absolute:
                 if offset:
-                    if flags.back_comp_cycling:
+                    if flags.backwards_comp_cycling:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
                         if str(offset) in offset_seq_map:
                             seq_offset = offset_seq_map[str(offset)]
@@ -1625,7 +1625,7 @@ class config( object ):
                 graph_text = graph_text.rstrip()
                 section = get_sequence_cls().get_async_expr(first_point)
                 items.append((section, {"graph": graph_text}, [], True))
-        if not flags.back_comp_cycling:
+        if not flags.backwards_comp_cycling:
             if async_graph and has_non_async_graphs:
                 raise SuiteConfigError(
                     "Error: mixed async & cycling graphs is not allowed in " +

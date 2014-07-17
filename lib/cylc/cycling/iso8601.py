@@ -16,6 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Date-time cycling by point, interval, and sequence classes."""
+
 import re
 import isodatetime.data
 from isodatetime.dumpers import TimePointDumper
@@ -36,8 +38,6 @@ CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
 
 MEMOIZE_LIMIT = 10000
 
-interval_parser = TimeIntervalParser()
-
 OLD_STRPTIME_FORMATS_BY_LENGTH = {
     4: "%Y",
     6: "%Y%m",
@@ -49,12 +49,14 @@ OLD_STRPTIME_FORMATS_BY_LENGTH = {
 PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 
 
-# The following must be set by calling the init_from_cfg function.
-# TODO: this is yukky. Is there a better alternative?
-point_parser = None
-NUM_EXPANDED_YEAR_DIGITS = None
-DUMP_FORMAT = None
-ASSUMED_TIME_ZONE = None
+class SuiteSpecifics(object):
+
+    """Store suite-setup-specific constants and utilities here."""
+    ASSUMED_TIME_ZONE = None
+    DUMP_FORMAT = None
+    NUM_EXPANDED_YEAR_DIGITS = None
+    interval_parser = None
+    point_parser = None
 
 
 def memoize(function):
@@ -69,6 +71,7 @@ def memoize(function):
     """
     inputs_results = {}
     def _wrapper(*args):
+        """Cache results for function(*args)."""
         try:
             return inputs_results[args]
         except KeyError:
@@ -90,9 +93,11 @@ class ISO8601Point(PointBase):
 
     @classmethod
     def from_nonstandard_string(cls, point_string):
+        """Standardise a date-time string."""
         return ISO8601Point(str(point_parse(point_string))).standardise()
 
     def add(self, other):
+        """Add an Interval to self."""
         return ISO8601Point(self._iso_point_add(self.value, other.value))
 
     def __cmp__(self, other):
@@ -103,10 +108,12 @@ class ISO8601Point(PointBase):
         return self._iso_point_cmp(self.value, other.value)
 
     def standardise(self):
+        """Reformat self.value into a standard representation."""
         self.value = str(point_parse(self.value))
         return self
 
     def sub(self, other):
+        """Subtract a Point or Interval from self."""
         if isinstance(other, ISO8601Point):
             return ISO8601Interval(
                 self._iso_point_sub_point(self.value, other.value))
@@ -116,6 +123,7 @@ class ISO8601Point(PointBase):
     @staticmethod
     @memoize
     def _iso_point_add(point_string, interval_string):
+        """Add the parsed point_string to the parsed interval_string."""
         point = point_parse(point_string)
         interval = interval_parse(interval_string)
         return str(point + interval)
@@ -123,6 +131,7 @@ class ISO8601Point(PointBase):
     @staticmethod
     @memoize
     def _iso_point_cmp(point_string, other_point_string):
+        """Compare the parsed point_string to the other one."""
         point = point_parse(point_string)
         other_point = point_parse(other_point_string)
         return cmp(point, other_point)
@@ -130,6 +139,7 @@ class ISO8601Point(PointBase):
     @staticmethod
     @memoize
     def _iso_point_sub_interval(point_string, interval_string):
+        """Return the parsed point_string minus the parsed interval_string."""
         point = point_parse(point_string)
         interval = interval_parse(interval_string)
         return str(point - interval)
@@ -137,6 +147,7 @@ class ISO8601Point(PointBase):
     @staticmethod
     @memoize
     def _iso_point_sub_point(point_string, other_point_string):
+        """Return the difference between the two parsed point strings."""
         point = point_parse(point_string)
         other_point = point_parse(other_point_string)
         return str(point - other_point)
@@ -152,6 +163,7 @@ class ISO8601Interval(IntervalBase):
 
     @classmethod
     def get_null(cls):
+        """Return a null interval."""
         return ISO8601Interval("P0Y")
 
     def get_inferred_child(self, string):
@@ -167,37 +179,43 @@ class ISO8601Interval(IntervalBase):
         return ISO8601Interval(str(interval))
 
     def standardise(self):
+        """Format self.value into a standard representation."""
         self.value = str(interval_parse(self.value))
         return self
 
     def add(self, other):
+        """Add other to self (point or interval) c.f. ISO 8601."""
         if isinstance(other, ISO8601Interval):
             return ISO8601Interval(
                 self._iso_interval_add(self.value, other.value))
-        return ISO8601Point(
-                self._iso_point_add(other.value, self.value))
+        return other + self
 
     def cmp_(self, other):
+        """Compare another interval with this one."""
         return self._iso_interval_cmp(self.value, other.value)
 
     def sub(self, other):
+        """Subtract another interval from this one."""
         return ISO8601Interval(
             self._iso_interval_sub(self.value, other.value))
 
     def __abs__(self):
+        """Return an interval with absolute values of this one's values."""
         return ISO8601Interval(
             self._iso_interval_abs(self.value, self.NULL_INTERVAL_STRING))
 
-    def __mul__(self, m):
-        # the suite runahead limit is a multiple of the smallest sequence interval
-        return ISO8601Interval(self._iso_interval_mul(self.value, m))
+    def __mul__(self, factor):
+        """Return an interval with v * factor for v in this one's values."""
+        return ISO8601Interval(self._iso_interval_mul(self.value, factor))
 
     def __nonzero__(self):
+        """Return whether this interval has any non-null values."""
         return self._iso_interval_nonzero(self.value)
 
     @staticmethod
     @memoize
     def _iso_interval_abs(interval_string, other_interval_string):
+        """Return the absolute (non-negative) value of an interval_string."""
         interval = interval_parse(interval_string)
         other = interval_parse(other_interval_string)
         if interval < other:
@@ -207,6 +225,7 @@ class ISO8601Interval(IntervalBase):
     @staticmethod
     @memoize
     def _iso_interval_add(interval_string, other_interval_string):
+        """Return one parsed interval_string plus the other one."""
         interval = interval_parse(interval_string)
         other = interval_parse(other_interval_string)
         return str(interval + other)
@@ -214,6 +233,7 @@ class ISO8601Interval(IntervalBase):
     @staticmethod
     @memoize
     def _iso_interval_cmp(interval_string, other_interval_string):
+        """Compare one parsed interval_string with the other one."""
         interval = interval_parse(interval_string)
         other = interval_parse(other_interval_string)
         return cmp(interval, other)
@@ -221,6 +241,7 @@ class ISO8601Interval(IntervalBase):
     @staticmethod
     @memoize
     def _iso_interval_sub(interval_string, other_interval_string):
+        """Subtract one parsed interval_string from the other one."""
         interval = interval_parse(interval_string)
         other = interval_parse(other_interval_string)
         return str(interval - other)
@@ -228,20 +249,21 @@ class ISO8601Interval(IntervalBase):
     @staticmethod
     @memoize
     def _iso_interval_mul(interval_string, factor):
+        """Multiply one parsed interval_string's values by factor."""
         interval = interval_parse(interval_string)
         return str(interval * factor)
 
     @staticmethod
     @memoize
     def _iso_interval_nonzero(interval_string):
+        """Return whether the parsed interval_string is a null interval."""
         interval = interval_parse(interval_string)
         return bool(interval)
 
 
 class ISO8601Sequence(object):
-    """
-    A sequence of ISO8601 date time points separated by an interval.
-    """
+
+    """A sequence of ISO8601 date time points separated by an interval."""
 
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
@@ -249,6 +271,7 @@ class ISO8601Sequence(object):
 
     @classmethod
     def get_async_expr(cls, start_point=None):
+        """Express a one-off sequence at the initial cycle point."""
         if start_point is None:
             return "R1"
         return "R1/" + str(start_point)
@@ -271,40 +294,43 @@ class ISO8601Sequence(object):
 
         self.offset = ISO8601Interval.get_null()
 
-        i = convert_old_cycler_syntax(
+        recurrence_syntax = convert_old_cycler_syntax(
             dep_section, start_point=self.context_start_point)
 
-        if not i:
-            raise "ERROR: iso8601 cycling init!"
+        if not recurrence_syntax:
+            raise ValueError(
+                "ERROR: bad cycling sequence syntax: %s" % dep_section)
 
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
 
-        self.spec = i
+        self.spec = recurrence_syntax
         self.custom_point_parse_function = None
-        if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
+        if SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
             self.custom_point_parse_function = point_parse
 
         self.time_parser = CylcTimeParser(
             self.context_start_point, self.context_end_point,
-            num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
-            dump_format=DUMP_FORMAT,
+            num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
+            dump_format=SuiteSpecifics.DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function,
-            assumed_time_zone=ASSUMED_TIME_ZONE
+            assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
         )
-        self.recurrence = self.time_parser.parse_recurrence(i)
+        self.recurrence = self.time_parser.parse_recurrence(recurrence_syntax)
         self.step = ISO8601Interval(str(self.recurrence.interval))
         self.value = str(self.recurrence)
 
     def get_interval(self):
+        """Return the interval between points in this sequence."""
         return self.step
 
     def get_offset(self):
+        """Return the offset used for this sequence (deprecated)."""
         return self.offset
 
     def set_offset(self, offset):
-        """Alter state to offset the entire sequence."""
+        """Alter state to offset the entire sequence (deprecated)."""
         if self.recurrence.start_point is not None:
             self.recurrence.start_point -= interval_parse(str(offset))
         if self.recurrence.end_point is not None:
@@ -425,21 +451,21 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False,
             ("^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "D"),
             ("^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "M"),
             ("^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "Y")]:
-        m = re.search(re_old_format, dep_section)
-        if not m:
+        match = re.search(re_old_format, dep_section)
+        if not match:
             continue
         if only_detect_old:
             return True
-        anchor, step = m.groups()
+        anchor, step = match.groups()
         step = ISO8601Interval("P%s%s" % (step, unit))
         return _get_old_anchor_step_recurrence(anchor, step, start_point)
     # Check for the hourly syntax.
-    m = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
-    if m:
+    match = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
+    if match:
         # back compat 0,6,12 etc.
         if only_detect_old:
             return True
-        anchor = m.groups()[0]
+        anchor = match.groups()[0]
         return "T%02d/PT24H" % int(anchor)
     if only_detect_old:
         return False
@@ -456,9 +482,9 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def get_backwards_compatibility_mode():
+def get_backwards_comp_mode():
     """Return whether we are in the old cycling syntax regime."""
-    return DUMP_FORMAT == PREV_DATE_TIME_FORMAT
+    return SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT
 
 
 def init_from_cfg(cfg):
@@ -501,11 +527,9 @@ def init_from_cfg(cfg):
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
          assume_utc=False, cycling_mode="gregorian"):
-    """Initialise global variables (yuk)."""
-    global point_parser
-    global DUMP_FORMAT
-    global NUM_EXPANDED_YEAR_DIGITS
-    global ASSUMED_TIME_ZONE
+    """Initialise suite-setup-specific information."""
+
+    SuiteSpecifics.interval_parser = TimeIntervalParser()
 
     if cycling_mode == "360day":
         isodatetime.data.set_360_calendar()
@@ -519,32 +543,33 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             time_zone_hours_minutes = get_local_time_zone()
     else:       
         time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
-    ASSUMED_TIME_ZONE = time_zone_hours_minutes
-    NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
+    SuiteSpecifics.ASSUMED_TIME_ZONE = time_zone_hours_minutes
+    SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
-            DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
+            SuiteSpecifics.DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
         else:
-            DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
+            SuiteSpecifics.DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
         
     else:
-        DUMP_FORMAT = custom_dump_format
+        SuiteSpecifics.DUMP_FORMAT = custom_dump_format
         if u"±X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
                 'cycle point format',
                 ('cylc', 'cycle point format'),
-                DUMP_FORMAT
+                SuiteSpecifics.DUMP_FORMAT
             )
-    point_parser = TimePointParser(
+    SuiteSpecifics.point_parser = TimePointParser(
         allow_only_basic=False,
         allow_truncated=True,
-        num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
-        dump_format=DUMP_FORMAT,
+        num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
+        dump_format=SuiteSpecifics.DUMP_FORMAT,
         assumed_time_zone=time_zone_hours_minutes
     )
 
 
 def interval_parse(interval_string):
+    """Parse an interval_string into a proper TimeInterval class."""
     try:
         return _interval_parse(interval_string).copy()
     except Exception:
@@ -558,40 +583,47 @@ def interval_parse(interval_string):
 
 @memoize
 def _interval_parse(interval_string):
-    return interval_parser.parse(interval_string)
+    """Parse an interval_string into a proper TimeInterval object."""
+    return SuiteSpecifics.interval_parser.parse(interval_string)
 
 
 def point_parse(point_string):
+    """Parse a point_string into a proper TimePoint object."""
     return _point_parse(point_string).copy()
 
 
 @memoize
 def _point_parse(point_string):
-    if "%" in DUMP_FORMAT:
+    """Parse a point_string into a proper TimePoint object."""
+    if "%" in SuiteSpecifics.DUMP_FORMAT:
         try:
-            point = point_parser.strptime(point_string, DUMP_FORMAT)
+            point = SuiteSpecifics.point_parser.strptime(
+                point_string, SuiteSpecifics.DUMP_FORMAT)
         except ValueError as e:
             strptime_string = _get_old_strptime_format(point_string)
             if strptime_string is not None:
-                return point_parser.strptime(point_string, strptime_string)
+                return SuiteSpecifics.point_parser.strptime(
+                    point_string, strptime_string)
     try:
-        point = point_parser.parse(point_string)  # Fail?
+        point = SuiteSpecifics.point_parser.parse(point_string)  # Fail?
         return point
     except ValueError:
         strptime_string = _get_old_strptime_format(point_string)
         if strptime_string is None:
             raise
-        return point_parser.strptime(point_string, strptime_string)
+        return SuiteSpecifics.point_parser.strptime(point_string, strptime_string)
 
 
 def _get_old_strptime_format(point_string):
+    """Return an adjusted strptime format depending on the string length."""
     try:
         return OLD_STRPTIME_FORMATS_BY_LENGTH[len(point_string)]
     except KeyError:
         return None
 
 
-if __name__ == '__main__':
+def test():
+    """Run some simple tests for date-time cycling."""
     cylc_config = {"cylc": {"cycle point num expanded year digits": 0,
                             "cycle point format": None,
                             "cycle point time zone": None}}
@@ -617,3 +649,6 @@ if __name__ == '__main__':
      
     print
     print r.is_on_sequence(ISO8601Point('20100809T0005'))
+
+if __name__ == '__main__':
+    test()

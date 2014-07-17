@@ -16,6 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""This module provides base classes for cycling data objects."""
+
+
 class CyclerTypeError(TypeError):
 
     """An error raised when incompatible cycling types are wrongly mixed."""
@@ -50,9 +53,29 @@ class PointBase(object):
             raise TypeError(type(value))
         self.value = value
 
+    def add(self, other):
+        """Add other to self, returning a PointBase-derived object."""
+        raise NotImplementedError()
+
+    def cmp_(self, other):
+        """Compare self to other, returning a Python 'cmp'-like result."""
+        raise NotImplementedError()
+
     def standardise(self):
         """Format self.value into a standard representation."""
         return self
+
+    def sub(self, other):
+        """Subtract other from self, returning a Point or Interval.
+
+        If other is a Point, return an Interval.
+        If other is an Interval, return a Point.
+
+        ('Point' here is a PointBase-derived object, and 'Interval' an
+         IntervalBase-derived object)
+
+        """
+        raise NotImplementedError()
 
     def __str__(self):
         return self.value
@@ -116,8 +139,7 @@ class IntervalBase(object):
     def __abs__( self ):
         raise NotImplementedError()
 
-    def __mul__( self, m ):
-        # the suite runahead limit is a multiple of the smallest sequence interval
+    def __mul__( self, factor ):
         raise NotImplementedError()
 
     def __nonzero__(self):
@@ -128,9 +150,29 @@ class IntervalBase(object):
             raise TypeError(type(value))
         self.value = value
 
+    def add(self, other):
+        """Add other to self, returning a Point or Interval.
+
+        If other is a Point, return a Point.
+        If other is an Interval, return an Interval..
+
+        ('Point' here is a PointBase-derived object, and 'Interval' an
+         IntervalBase-derived object)
+
+        """
+        raise NotImplementedError()
+
+    def cmp_(self, other):
+        """Compare self to other, returning a Python 'cmp'-like result."""
+        raise NotImplementedError()
+
     def standardise(self):
         """Format self.value into a standard representation."""
         return self
+
+    def sub(self, other):
+        """Subtract other from self; return an IntervalBase-derived object."""
+        raise NotImplementedError()
 
     def is_null( self ):
         return (self == self.get_null())
