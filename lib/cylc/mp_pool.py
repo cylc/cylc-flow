@@ -85,6 +85,7 @@ class mp_pool(object):
 
     def __init__(self, pool_config):
         self.type = pool_config['pool type']
+        if self.type == 'process':
             pool_cls = multiprocessing.Pool 
             if pool_config['process pool size'] is None:
                 # (Pool class does this anyway, but the result is not
