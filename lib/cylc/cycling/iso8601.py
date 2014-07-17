@@ -19,7 +19,7 @@
 """Date-time cycling by point, interval, and sequence classes."""
 
 import re
-import isodatetime.data
+from isodatetime.data import Calendar, TimeInterval
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
@@ -176,7 +176,7 @@ class ISO8601Interval(IntervalBase):
                           "hours", "minutes", "seconds"]:
             if getattr(interval, attribute):
                 unit_amounts[attribute] = amount_per_unit
-        interval = isodatetime.data.TimeInterval(**unit_amounts)
+        interval = TimeInterval(**unit_amounts)
         return ISO8601Interval(str(interval))
 
     def standardise(self):
@@ -527,13 +527,13 @@ def init_from_cfg(cfg):
 
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
-         assume_utc=False, cycling_mode="gregorian"):
+         assume_utc=False, cycling_mode=None):
     """Initialise suite-setup-specific information."""
 
     SuiteSpecifics.interval_parser = TimeIntervalParser()
 
-    if cycling_mode == "360day":
-        isodatetime.data.set_360_calendar()
+    if cycling_mode in Calendar.default().MODES:
+        Calendar.default().set_mode(cycling_mode)
 
     if time_zone is None:
         if assume_utc:

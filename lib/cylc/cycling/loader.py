@@ -23,6 +23,7 @@ Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 
 from . import integer
 from . import iso8601
+from isodatetime.data import Calendar
 
 
 ISO8601_CYCLING_TYPE = 'iso8601'
@@ -108,7 +109,7 @@ def get_sequence_cls(cycling_type=None):
 def init_cyclers(cfg):
     """Initialise cycling specifics using the suite configuration (cfg)."""
     DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
-    if DefaultCycler.TYPE in ['360day', 'gregorian']:
+    if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
     for init_func in INIT_FUNCTIONS.values():
         init_func(cfg)
