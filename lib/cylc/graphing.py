@@ -60,9 +60,9 @@ class CGraphPlain( pygraphviz.AGraph ):
             if base:
                 # TODO - This is only called from cylc_add_edge in this
                 # base class ... should it also be called from add_node?
-                node.attr[ 'URL' ] = 'base:' + n
+                node.attr[ 'URL' ] = 'base:' + node_string
             else:
-                node.attr['URL'] = n
+                node.attr['URL'] = node_string
 
     def cylc_add_node( self, node_string, autoURL, **attr ):
         pygraphviz.AGraph.add_node( self, node_string, **attr )
