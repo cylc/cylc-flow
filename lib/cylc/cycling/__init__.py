@@ -126,7 +126,6 @@ class IntervalBase(object):
     TYPE = None
     TYPE_SORT_KEY = None
 
-
     @classmethod
     def get_null(cls):
         """Return a null interval."""
@@ -136,10 +135,10 @@ class IntervalBase(object):
         """For a given string, infer the offset given my instance units."""
         raise NotImplementedError()
 
-    def __abs__( self ):
+    def __abs__(self):
         raise NotImplementedError()
 
-    def __mul__( self, factor ):
+    def __mul__(self, factor):
         raise NotImplementedError()
 
     def __nonzero__(self):
@@ -174,10 +173,10 @@ class IntervalBase(object):
         """Subtract other from self; return an IntervalBase-derived object."""
         raise NotImplementedError()
 
-    def is_null( self ):
+    def is_null(self):
         return (self == self.get_null())
 
-    def __str__( self ):
+    def __str__(self):
         return self.value
 
     def __add__(self, other):
@@ -197,7 +196,7 @@ class IntervalBase(object):
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.sub(other)
 
-    def __neg__( self ):
+    def __neg__(self):
         return self * -1
 
 
@@ -206,7 +205,7 @@ class SequenceBase(object):
     """The base class for cycler sequences.
 
     Subclasses should accept a sequence-specific string, a
-    start context string, and a stop context string as 
+    start context string, and a stop context string as
     constructor arguments.
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
@@ -227,43 +226,39 @@ class SequenceBase(object):
     TYPE_SORT_KEY = None
 
     @classmethod
-    def get_async_expr( cls, start_point=0 ):
+    def get_async_expr(cls, start_point=0):
         """Express a one-off sequence at the initial cycle point."""
         raise NotImplementedError()
 
-    def __init__( self, dep_section, p_context_start, p_context_stop=None ):
-        """Parse state (start, stop, interval) from a graph section heading.
-        The start and stop points are always on-sequence, context points
-        might not be. If computed start and stop points are out of bounds,
-        they will be set to None. Context is used only initially, to defined 
-        the sequence bounds."""
+    def __init__(self, sequence_string, context_start, context_stop=None):
+        """Parse sequence string according to context point strings."""
         pass
 
-    def get_interval( self ):
+    def get_interval(self):
         """Return the cycling interval of this sequence."""
         raise NotImplementedError()
 
-    def get_offset( self ):
+    def get_offset(self):
         """Return the offset of this sequence (deprecated functionality)."""
         raise NotImplementedError()
 
-    def set_offset( self, i_offset ):
+    def set_offset(self, i_offset):
         """Shift the sequence by interval i_offset (deprecated)."""
         raise NotImplementedError()
 
-    def is_on_sequence( self, point ):
+    def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
         raise NotImplementedError()
 
-    def _get_point_in_bounds( self, point ):
+    def _get_point_in_bounds(self, point):
         """Return point, or None if out of bounds."""
         raise NotImplementedError()
 
-    def is_valid( self, point ):
+    def is_valid(self, point):
         """Is point on-sequence and in-bounds?"""
         raise NotImplementedError()
 
-    def get_prev_point( self, point ):
+    def get_prev_point(self, point):
         """Return the previous point < point, or None if out of bounds."""
         raise NotImplementedError()
 
@@ -271,22 +266,22 @@ class SequenceBase(object):
         """Return the largest point < some arbitrary point."""
         raise NotImplementedError()
 
-    def get_next_point( self, point ):
+    def get_next_point(self, point):
         """Return the next point > point, or None if out of bounds."""
         raise NotImplementedError()
 
-    def get_next_point_on_sequence( self, point ):
+    def get_next_point_on_sequence(self, point):
         """Return the next point > point assuming that point is on-sequence,
         or None if out of bounds."""
         raise NotImplementedError()next_point )
 
-    def get_first_point( self, point ):
+    def get_first_point(self, point):
         """Return the first point >= to point, or None if out of bounds."""
         raise NotImplementedError()
 
-    def get_stop_point( self ):
+    def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
         raise NotImplementedError()
 
-    def __eq__( self, other ):
+    def __eq__(self, other):
         raise NotImplementedError()

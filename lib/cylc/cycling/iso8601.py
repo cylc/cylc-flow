@@ -70,6 +70,7 @@ def memoize(function):
 
     """
     inputs_results = {}
+
     def _wrapper(*args):
         """Cache results for function(*args)."""
         try:
@@ -406,7 +407,7 @@ class ISO8601Sequence(SequenceBase):
             result = ISO8601Point(str(next_point))
         return result
 
-    def get_first_point( self, point):
+    def get_first_point(self, point):
         """Return the first point >= to poing, or None if out of bounds."""
         try:
             return ISO8601Point(self._cached_first_point_values[point.value])
@@ -424,7 +425,7 @@ class ISO8601Sequence(SequenceBase):
                 return ISO8601Point(first_point_value)
         return None
 
-    def get_stop_point( self ):
+    def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
         if (self.recurrence.repetitions is not None or (
                 (self.recurrence.start_point is not None or
@@ -505,7 +506,7 @@ def init_from_cfg(cfg):
         while dep_sections:
             dep_section = dep_sections.pop(0)
             if re.search("(?![^(]+\)),", dep_section):
-                dep_sections.extend([i.strip() for i in 
+                dep_sections.extend([i.strip() for i in
                                      re.split("(?![^(]+\)),", dep_section)])
                 continue
             if ((dep_section == "graph" and
@@ -541,7 +542,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         else:
             time_zone = get_local_time_zone_format(reduced_mode=True)
             time_zone_hours_minutes = get_local_time_zone()
-    else:       
+    else:
         time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
     SuiteSpecifics.ASSUMED_TIME_ZONE = time_zone_hours_minutes
     SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
@@ -550,7 +551,6 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             SuiteSpecifics.DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
         else:
             SuiteSpecifics.DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
-        
     else:
         SuiteSpecifics.DUMP_FORMAT = custom_dump_format
         if u"±X" not in custom_dump_format and num_expanded_year_digits:
@@ -611,7 +611,8 @@ def _point_parse(point_string):
         strptime_string = _get_old_strptime_format(point_string)
         if strptime_string is None:
             raise
-        return SuiteSpecifics.point_parser.strptime(point_string, strptime_string)
+        return SuiteSpecifics.point_parser.strptime(
+            point_string, strptime_string)
 
 
 def _get_old_strptime_format(point_string):
@@ -631,8 +632,8 @@ def test():
     p_start = ISO8601Point('20100808T00')
     p_stop = ISO8601Point('20100808T02')
     i = ISO8601Interval('PT6H')
-    print p_start - i 
-    print p_stop + i 
+    print p_start - i
+    print p_stop + i
 
     print
     r = ISO8601Sequence('PT10M', str(p_start), str(p_stop),)
@@ -642,11 +643,11 @@ def test():
     while p and p < p_stop:
         print ' + ' + str(p), r.is_on_sequence(p)
         p = r.get_next_point(p)
-    print 
+    print
     while p and p >= p_start:
         print ' + ' + str(p), r.is_on_sequence(p)
         p = r.get_prev_point(p)
-     
+
     print
     print r.is_on_sequence(ISO8601Point('20100809T0005'))
 
