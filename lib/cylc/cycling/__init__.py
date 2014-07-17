@@ -39,7 +39,7 @@ class PointBase(object):
     They should also provide self.cmp_, self.sub, self.add, and
     self.eq methods which should behave as __cmp__, __sub__,
     etc standard comparison methods. Note: "cmp_" not "cmp".
-    
+
     Subclasses may also provide an overridden self.standardise
     method to reprocess their value into a standard form.
 
@@ -199,3 +199,94 @@ class IntervalBase(object):
 
     def __neg__( self ):
         return self * -1
+
+
+class SequenceBase(object):
+
+    """The base class for cycler sequences.
+
+    Subclasses should accept a sequence-specific string, a
+    start context string, and a stop context string as 
+    constructor arguments.
+
+    Subclasses should provide values for TYPE and TYPE_SORT_KEY.
+    They should also provide get_async_expr, get_interval,
+    get_offset & set_offset (deprecated), is_on_sequence,
+    _get_point_in_bounds, is_valid, get_prev_point,
+    get_nearest_prev_point, get_next_point,
+    get_next_point_on_sequence, get_first_point, and
+    get_stop_point.
+
+    They should also provide a self.__eq__ implementation
+    which should return whether a SequenceBase-derived object
+    is equal to another (represents the same set of points).
+
+    """
+
+    TYPE = None
+    TYPE_SORT_KEY = None
+
+    @classmethod
+    def get_async_expr( cls, start_point=0 ):
+        """Express a one-off sequence at the initial cycle point."""
+        raise NotImplementedError()
+
+    def __init__( self, dep_section, p_context_start, p_context_stop=None ):
+        """Parse state (start, stop, interval) from a graph section heading.
+        The start and stop points are always on-sequence, context points
+        might not be. If computed start and stop points are out of bounds,
+        they will be set to None. Context is used only initially, to defined 
+        the sequence bounds."""
+        pass
+
+    def get_interval( self ):
+        """Return the cycling interval of this sequence."""
+        raise NotImplementedError()
+
+    def get_offset( self ):
+        """Return the offset of this sequence (deprecated functionality)."""
+        raise NotImplementedError()
+
+    def set_offset( self, i_offset ):
+        """Shift the sequence by interval i_offset (deprecated)."""
+        raise NotImplementedError()
+
+    def is_on_sequence( self, point ):
+        """Is point on-sequence, disregarding bounds?"""
+        raise NotImplementedError()
+
+    def _get_point_in_bounds( self, point ):
+        """Return point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def is_valid( self, point ):
+        """Is point on-sequence and in-bounds?"""
+        raise NotImplementedError()
+
+    def get_prev_point( self, point ):
+        """Return the previous point < point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_nearest_prev_point(self, point):
+        """Return the largest point < some arbitrary point."""
+        raise NotImplementedError()
+
+    def get_next_point( self, point ):
+        """Return the next point > point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_next_point_on_sequence( self, point ):
+        """Return the next point > point assuming that point is on-sequence,
+        or None if out of bounds."""
+        raise NotImplementedError()next_point )
+
+    def get_first_point( self, point ):
+        """Return the first point >= to point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_stop_point( self ):
+        """Return the last point in this sequence, or None if unbounded."""
+        raise NotImplementedError()
+
+    def __eq__( self, other ):
+        raise NotImplementedError()

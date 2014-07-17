@@ -25,7 +25,7 @@ from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
-from cylc.cycling import PointBase, IntervalBase
+from cylc.cycling import PointBase, IntervalBase, SequenceBase
 from parsec.validate import IllegalValueError
 
 # TODO - Consider copy vs reference of points, intervals, sequences
@@ -261,7 +261,7 @@ class ISO8601Interval(IntervalBase):
         return bool(interval)
 
 
-class ISO8601Sequence(object):
+class ISO8601Sequence(SequenceBase):
 
     """A sequence of ISO8601 date time points separated by an interval."""
 

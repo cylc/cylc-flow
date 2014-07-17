@@ -23,7 +23,7 @@ The same interface as for full ISO8601 date time cycling.
 
 import re
 
-from cylc.cycling import PointBase, IntervalBase
+from cylc.cycling import PointBase, IntervalBase, SequenceBase
 
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
@@ -144,7 +144,7 @@ class IntegerInterval(IntervalBase):
         return bool(int(self))
 
 
-class IntegerSequence( object ):
+class IntegerSequence( SequenceBase ):
     """Integer points at a regular interval."""
 
     TYPE = CYCLER_TYPE_INTEGER
