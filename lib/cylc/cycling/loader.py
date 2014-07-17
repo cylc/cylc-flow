@@ -23,7 +23,7 @@ Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 
 import integer
 import iso8601
-from isodatetime.date import Calendar
+from isodatetime.data import Calendar
 
 
 ISO8601_CYCLING_TYPE = 'iso8601'
