@@ -273,7 +273,7 @@ class SequenceBase(object):
     def get_next_point_on_sequence(self, point):
         """Return the next point > point assuming that point is on-sequence,
         or None if out of bounds."""
-        raise NotImplementedError()next_point )
+        raise NotImplementedError()
 
     def get_first_point(self, point):
         """Return the first point >= to point, or None if out of bounds."""
