@@ -222,7 +222,7 @@ class config( object ):
         if self.cfg['scheduling']['initial cycle point'] is None:
             # Note that we add this automatically for pure-async suites.
             raise SuiteConfigError(
-                "This suite needs an 'initial cycle point'.")
+                "This suite requires an initial cycle point.")
 
         initial_point = get_point(
             self.cfg['scheduling']['initial cycle point']).standardise()

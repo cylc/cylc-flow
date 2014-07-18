@@ -20,16 +20,16 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE no_initial_cycle_point
+install_suite $TEST_NAME_BASE no_final_cycle_point
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_fail $TEST_NAME cylc validate $SUITE_NAME
-grep_ok "This suite requires an initial cycle point\." \
+grep_ok "This suite requires a final cycle point\." \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME
-grep_ok "This suite requires an initial cycle point\." \
+grep_ok "This suite requires a final cycle point\." \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
