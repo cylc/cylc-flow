@@ -219,10 +219,14 @@ class config( object ):
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
 
-        if self.cfg['scheduling']['initial cycle point'] is not None:
-            initial_point = get_point(
-                self.cfg['scheduling']['initial cycle point']).standardise()
-            self.cfg['scheduling']['initial cycle point'] = str(initial_point)
+        if self.cfg['scheduling']['initial cycle point'] is None:
+            # Note that we add this automatically for pure-async suites.
+            raise SuiteConfigError(
+                "This suite needs an 'initial cycle point'.")
+
+        initial_point = get_point(
+            self.cfg['scheduling']['initial cycle point']).standardise()
+        self.cfg['scheduling']['initial cycle point'] = str(initial_point)
 
         if self.cfg['scheduling']['final cycle point'] is not None:
             final_point = get_point(
