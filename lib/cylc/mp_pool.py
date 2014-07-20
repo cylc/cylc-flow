@@ -35,7 +35,7 @@ TRUE=1
 FALSE=0
 POOL_CLOSED = Value('i',FALSE)
 
-# Job omission flag
+# Job skipped flag
 JOB_NOT_SUBMITTED=999
 
 def execute_shell_command(cmd_spec, current_process, job_sub_method=None):
@@ -52,7 +52,7 @@ def execute_shell_command(cmd_spec, current_process, job_sub_method=None):
         # Stop job submission commands if pool closed but continue others
         # till done (call pool.terminate() to stop all work immediately).
         if flags.debug:
-            print "[%s] omitting: %s" % (current_process().name, cmd_string)
+            print "[%s] skipping: %s" % (current_process().name, cmd_string)
         cmd_result['ERR'] = "job not submitted (pool closed)"
         cmd_result['EXIT'] = JOB_NOT_SUBMITTED
         return cmd_result
@@ -114,9 +114,11 @@ class mp_pool(object):
         except AssertionError:
             if flags.debug:
                 print "rejecting (pool closed): %s" % cmd_string
+            return False
         else:
             if callback:
                 self.unhandled_results.append((result,callback))
+            return True
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
@@ -131,10 +133,9 @@ class mp_pool(object):
         self.unhandled_results = still_to_do
 
     def close(self):
-        """Wrap pool closure.
-
-        This closes the pool to all new commands and stops job
-        submissions, but it does not stop other commands).
+        """Close the pool to new commands.
+        
+        Also stop existing job submissions, but not other commands.
         """
         if not (self.is_dead() or self.is_closed()):
             if flags.debug:
@@ -144,30 +145,30 @@ class mp_pool(object):
             POOL_CLOSED.value = TRUE
 
     def terminate(self):
-        """Wrap pool termination."""
+        """Kill all worker processes immediately."""
         if not self.is_dead():
             if flags.debug:
                 print "terminating %s pool" % self.type
             self.pool.terminate()
 
     def join(self):
-        """Wrap pool joining."""
+        """Join after workers have exited. Close or terminate first."""
         if flags.debug:
             print "joining %s pool" % self.type
         self.pool.join()
 
     def get_pool_size(self):
-        """Return number of workers."""
+        """Return the number of workers."""
         return self.poolsize
 
     def is_closed(self):
         """Is the pool closed?"""
-        # ACCESSES POOL INTERNAL STATE
+        # Warning: accesses multiprocessing.Pool internal state
         return self.pool._state == multiprocessing.pool.CLOSE
 
     def is_dead(self):
         """Have all my workers exited yet?"""
-        # ACCESSES POOL INTERNAL STATE
+        # Warning: accesses multiprocessing.Pool internal state
         for p in self.pool._pool:
             if p.is_alive():
                 return False

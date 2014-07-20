@@ -323,6 +323,7 @@ class pool(object):
                 # TODO - is this the right response?
                 itask.job_submission_failed( err=str(e) )
             else:
+                # Queue the job submission command for execution.
                 cmd_spec = ( CMD_TYPE_JOB_SUBMISSION, cmd )
                 self.proc_pool.put_command(
                         cmd_spec,
