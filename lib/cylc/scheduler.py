@@ -61,21 +61,20 @@ import isodatetime.data
 import isodatetime.parsers
 
 
-class request_handler( threading.Thread ):
-
-    def __init__( self, pyro ):
+class request_handler(threading.Thread):
+    def __init__(self, pyro):
         threading.Thread.__init__(self)
         self.pyro = pyro
         self.quit = False
-        self.log = logging.getLogger( 'main' )
-        self.log.info(  str(self.getName()) + " start (Request Handling)")
+        self.log = logging.getLogger('main')
+        self.log.debug("request handling thread starting")
 
-    def run( self ):
+    def run(self):
         while True:
             self.pyro.handleRequests(timeout=1)
             if self.quit:
                 break
-        self.log.info(  str(self.getName()) + " exit (Request Handling)")
+        self.log.debug("request handling thread exiting")
 
 
 class scheduler(object):
