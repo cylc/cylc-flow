@@ -662,10 +662,16 @@ class scheduler(object):
             self._start_string or self._cli_start_string or
             self.config.cfg['scheduling']['initial cycle point']
         )
+        if self.start_point is not None:
+            self.start_point.standardise()
+
         self.stop_point = get_point(
             self.options.stop_string or
             self.config.cfg['scheduling']['final cycle point']
         )
+        if self.stop_point is not None:
+            self.stop_point.standardise()
+
         if (not self.start_point and not self.is_restart and
             self.config.cycling_tasks):
             print >> sys.stderr, 'WARNING: No initial cycle point provided - no cycling tasks will be loaded.'

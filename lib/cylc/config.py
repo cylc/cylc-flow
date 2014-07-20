@@ -151,12 +151,15 @@ class config( object ):
                 'dependencies', {})
             if dependency_map.get('graph'):
                 # There is an async graph setting.
+                # If it is by itself, it is integer shorthand.
+                # If there are cycling graphs as well, it is handled as
+                # backwards-compatiblity for mixed-async suites.
+                just_has_async_graph = True
                 for item, value in dependency_map.items():
-                    if item == 'graph':
-                        continue
-                    if value.get('graph'):
+                    if item != 'graph' and value.get('graph'):
+                        just_has_async_graph = False
                         break
-                else:
+                if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
                         INTEGER_CYCLING_TYPE
@@ -216,7 +219,19 @@ class config( object ):
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
 
+        if self.cfg['scheduling']['initial cycle point'] is not None:
+            initial_point = get_point(
+                self.cfg['scheduling']['initial cycle point']).standardise()
+            self.cfg['scheduling']['initial cycle point'] = str(initial_point)
+
+        if self.cfg['scheduling']['final cycle point'] is not None:
+            final_point = get_point(
+                self.cfg['scheduling']['final cycle point']).standardise()
+            self.cfg['scheduling']['final cycle point'] = str(final_point)
+
         self.cli_start_point = get_point(self._cli_start_string)
+        if self.cli_start_point is not None:
+            self.cli_start_point.standardise()
 
         flags.back_comp_cycling = (
             get_backwards_compatibility_mode())
