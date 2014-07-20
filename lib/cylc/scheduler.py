@@ -1025,6 +1025,9 @@ class scheduler(object):
         # The getattr() calls and if tests below are used in case the
         # suite is not fully configured before the shutdown is called.
 
+        if getattr(self, "log", None) is not None:
+            self.log.info(msg)
+
         if self.gen_reference_log:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
