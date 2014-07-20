@@ -19,6 +19,7 @@
 import sys
 import TaskID
 from task_types import task
+from task_state import task_state
 from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
@@ -728,7 +729,7 @@ class pool(object):
 
     def reset_task_states( self, ids, state ):
         # we only allow resetting to a subset of available task states
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
+        if state not in task_state.legal_for_reset:
             raise SchedulerError, 'Illegal reset state: ' + state
 
         tasks = []

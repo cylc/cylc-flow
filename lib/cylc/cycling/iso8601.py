@@ -17,13 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import isodatetime.data
+from isodatetime.data import Calendar, TimeInterval
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
-from cylc.cycling import PointBase, IntervalBase
+from cylc.cycling import PointBase, IntervalBase, PointParsingError
 from parsec.validate import IllegalValueError
 
 # TODO - Consider copy vs reference of points, intervals, sequences
@@ -103,7 +103,10 @@ class ISO8601Point(PointBase):
         return self._iso_point_cmp(self.value, other.value)
 
     def standardise(self):
-        self.value = str(point_parse(self.value))
+        try:
+            self.value = str(point_parse(self.value))
+        except ValueError:
+            raise PointParsingError(type(self), self.value)
         return self
 
     def sub(self, other):
@@ -163,7 +166,7 @@ class ISO8601Interval(IntervalBase):
                           "hours", "minutes", "seconds"]:
             if getattr(interval, attribute):
                 unit_amounts[attribute] = amount_per_unit
-        interval = isodatetime.data.TimeInterval(**unit_amounts)
+        interval = TimeInterval(**unit_amounts)
         return ISO8601Interval(str(interval))
 
     def standardise(self):
@@ -500,15 +503,15 @@ def init_from_cfg(cfg):
 
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
-         assume_utc=False, cycling_mode="gregorian"):
+         assume_utc=False, cycling_mode=None):
     """Initialise global variables (yuk)."""
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
     global ASSUMED_TIME_ZONE
 
-    if cycling_mode == "360day":
-        isodatetime.data.set_360_calendar()
+    if cycling_mode in Calendar.default().MODES:
+        Calendar.default().set_mode(cycling_mode)
 
     if time_zone is None:
         if assume_utc:

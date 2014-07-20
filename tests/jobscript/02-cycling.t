@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE torture
+install_suite $TEST_NAME_BASE cycling
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -29,9 +29,7 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
-run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
-sed 's/\(export CYLC_.*=\).*/\1/g' $TEST_NAME.stdout > jobfile
-echo "" >> jobfile
-sed 's/##suitename##/'$SUITE_NAME'/' $TEST_SOURCE_DIR/torture/foo.ref-jobfile > reffile
-cmp_ok jobfile reffile
+run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.20140203T00+13
+sed -n '/_POINT=/p' $TEST_NAME.stdout > jobfile
+cmp_ok jobfile $TEST_SOURCE_DIR/cycling/foo.ref-jobfile
 purge_suite $SUITE_NAME

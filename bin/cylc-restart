@@ -143,14 +143,14 @@ where they got to while the suite was down."""
 
         nlines = len(lines)
         if nlines == 0:
-            raise Exception( "ERROR, empty suite state dump: " + file_name )
+            raise Exception( "ERROR, empty suite state dump: %s" % file_name )
         elif nlines < 3:
-            print >> sys.stderr, ("ERROR, The suite state dump contains only",
-                                  nlines, "lines:")
+            print >> sys.stderr, (
+                "ERROR, The suite state dump contains only %d lines" % nlines)
             for l in lines:
                 print ' ', l.rstrip()
             raise Exception(
-                "ERROR, incomplete suite state dump: " + file_name)
+                "ERROR, incomplete suite state dump: %s" % file_name)
        
         index = 0
         # run mode : <mode>
@@ -169,8 +169,8 @@ where they got to while the suite was down."""
 
         if self.run_mode == 'live' and old_run_mode != 'live':
             raise Exception(
-                "ERROR: cannot RESTART in " + self.run_mode + " from a " +
-                old_run_mode + " state dump"
+                "ERROR: cannot RESTART in %s from a %s state dump" % (
+                    self.run_mode, old_run_mode)
             )
 
         state_start_string = None
@@ -218,7 +218,7 @@ where they got to while the suite was down."""
         if line != 'Begin task states':
             raise Exception(
                 "ERROR, illegal state dump line " +
-                "(expected 'Begin task states'): " + line
+                "(expected 'Begin task states'): %s" % line
             )
 
         index += 1
@@ -262,9 +262,17 @@ where they got to while the suite was down."""
                 if self.start_point != state_start_point:
                     # the state dump doesn't lie about start cycles
                     if self.options.ignore_startcycle:
-                        print >> sys.stderr, "WARNING: ignoring old initial cycle", state_start_point, "; using suite.rc", self.start_point
+                        print >> sys.stderr, (
+                            "WARNING: ignoring old initial cycle " +
+                            "%s; using suite.rc %s" % (
+                                state_start_point, self.start_point)
+                        )
                     else:
-                        print >> sys.stderr, "WARNING: old initial cycle", state_start_point, "overriding suite.rc", self.start_point
+                        print >> sys.stderr, (
+                            "WARNING: old initial cycle " +
+                            "%s, overriding suite.rc %s" % (
+                                state_start_point, self.start_point)
+                        )
                         self.start_point = state_start_point
             else:
                 # reinstate the former start cycle
@@ -282,7 +290,10 @@ where they got to while the suite was down."""
             elif self.stop_point is not None:
                 # a stop cycle was given on the restart command line or suite.rc file
                 if self.stop_point != state_stop_point:
-                    print >> sys.stderr, "WARNING: overriding the old stop cycle", state_stop_point, "with", self.stop_point
+                    print >> sys.stderr, (
+                        "WARNING: overriding the old stop cycle "
+                        "%s with %s" % (state_stop_point, self.stop_point)
+                    )
             else:
                 # reinstate the old stop cycle
                 self.stop_point = state_stop_point
@@ -380,12 +391,17 @@ where they got to while the suite was down."""
                 )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)
-                print >> sys.stderr, "WARNING: ignoring task", name, "from the suite state dump file"
+                print >> sys.stderr, (
+                    "WARNING: ignoring task %s " % name +
+                    "from the suite state dump file")
                 print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
                 continue
             except Exception, x:
                 print >> sys.stderr, str(x)
-                print >> sys.stderr, "ERROR: could not load task", name, "from the suite state dump file"
+                print >> sys.stderr, (
+                    "ERROR: could not load task %s " % name +
+                    "from the suite state dump file"
+                )
                 # TODO: Is it safe to have "raise x" here?
                 continue
 
@@ -415,7 +431,10 @@ where they got to while the suite was down."""
                     user_at_host = row[0]
                     self.old_user_at_host_set.add(str(user_at_host))
                 else:
-                    print >> sys.stderr, "WARNING:", id, "failed to read user@host from run-db!"
+                    print >> sys.stderr, (
+                        "WARNING: %s " % id +
+                        "failed to read user@host from run-db!"
+                    )
 
                 # get submit_method_id and try_num from run-db
                 submit_method_id = try_num = None
@@ -423,10 +442,15 @@ where they got to while the suite was down."""
                 if row and row[0]:
                     submit_method_id, try_num = row
                 else:
-                    print >> sys.stderr, "WARNING:", id, "failed to read submit_method_id and try_num from run-db!"
+                    print >> sys.stderr, (
+                        "WARNING: %s " % id +
+                        "failed to read submit_method_id and try_num from " +
+                        "run-db!"
+                    )
 
                 if None in [ user_at_host, submit_method_id, try_num ]:
-                    print >> sys.stderr, "WARNING: cannot determine what happened to " + id
+                    print >> sys.stderr, (
+                        "WARNING: cannot determine what happened to %s" % id)
                 else:
                     # update the task proxy with submit ID etc.
                     itask.submit_method_id = submit_method_id
@@ -453,7 +477,8 @@ where they got to while the suite was down."""
                 itask.outputs.set_all_completed()
 
             else:
-                raise Exception( 'ERROR: unknown task state for ' + itask.id )
+                raise Exception(
+                    'ERROR: unknown task state for %s' % itask.id)
 
             self.pool.add_to_runahead_pool( itask )
 
