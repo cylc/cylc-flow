@@ -318,13 +318,13 @@ class pool(object):
                 itask.job_submission_succeeded( '','' )
                 continue
             try:
-                cmd = itask.get_command( overrides=self.wireless.get(itask.id))
+                cmd = itask.get_command(overrides=self.wireless.get(itask.id))
             except Exception, e:
                 # TODO - is this the right response?
-                itask.job_submission_failed( err=str(e) )
+                itask.job_submission_failed(err=str(e))
             else:
                 # Queue the job submission command for execution.
-                cmd_spec = ( CMD_TYPE_JOB_SUBMISSION, cmd )
+                cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
                 self.proc_pool.put_command(
                         cmd_spec,
                         itask.submission_command_callback,

@@ -1,16 +1,16 @@
-foo|1|submitting now||localhost
+foo|1|incrementing submit number||localhost
 foo|1|submission succeeded||localhost
 foo|1|output completed|started|localhost
 foo|1|started||localhost
 foo|1|output completed|succeeded|localhost
 foo|1|succeeded||localhost
-bar|1|submitting now||localhost
+bar|1|incrementing submit number||localhost
 bar|1|submission succeeded||localhost
 bar|1|output completed|started|localhost
 bar|1|started||localhost
 bar|1|output completed|succeeded|localhost
 bar|1|succeeded||localhost
-baz|1|submitting now||localhost
+baz|1|incrementing submit number||localhost
 baz|1|submission succeeded||localhost
 baz|1|output completed|started|localhost
 baz|1|started||localhost

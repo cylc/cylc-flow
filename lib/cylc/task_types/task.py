@@ -664,13 +664,14 @@ class task( object ):
                     copy( sitecfg.get( ['execution polling intervals'] )),
                    'execution', self.log )
 
-    def get_command( self, dry_run=False, overrides={} ):
-
-        self.log( 'NORMAL', "submitting now" )
-        self.record_db_event(event="submitting now")
-
+    def increment_submit_num(self):
+        self.log("DEBUG", "incrementing submit number")
         self.submit_num += 1
+        self.record_db_event(event="incrementing submit number")
         self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
+
+    def get_command( self, dry_run=False, overrides={} ):
+        self.increment_submit_num()
 
         rtconfig = pdeepcopy( self.__class__.rtconfig )
         poverride( rtconfig, overrides )
