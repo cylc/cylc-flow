@@ -32,7 +32,9 @@ Some notes:
  * To use a thread pool instead of a process pool:
    - use multiprocessing.pool.ThreadPool instead of pool.Pool
    - use multiprocessing.dummy.current_process() for current_process()
-   (very early versions of this module allowed a choice).
+   - note that lsof logic may be required to ensure job scripts are
+     closed properly after writing (see jobfile.py prior to cylc-6).
+  (early versions of this module gave a choice of process or thread).
 """
 
 # Command type flags.
