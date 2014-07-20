@@ -869,9 +869,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 return
             if not cylc.TaskID.is_valid_id( stoptask_id ):
                 warning_dialog(
-                    "ERROR: Bad task ID (" +
-                    cylc.TaskID.get( "TASK", "CYCLE_POINT") + "): " +
-                    stoptask_id,
+                    "ERROR: Bad task ID (%s): %s" % (
+                        cylc.TaskID.get( "TASK", "CYCLE_POINT"),
+                        stoptask_id
+                    ),
                     self.window
                 ).warn()
                 return

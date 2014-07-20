@@ -23,7 +23,7 @@ from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
-from cylc.cycling import PointBase, IntervalBase
+from cylc.cycling import PointBase, IntervalBase, PointParsingError
 from parsec.validate import IllegalValueError
 
 # TODO - Consider copy vs reference of points, intervals, sequences
@@ -103,7 +103,10 @@ class ISO8601Point(PointBase):
         return self._iso_point_cmp(self.value, other.value)
 
     def standardise(self):
-        self.value = str(point_parse(self.value))
+        try:
+            self.value = str(point_parse(self.value))
+        except ValueError:
+            raise PointParsingError(type(self), self.value)
         return self
 
     def sub(self, other):

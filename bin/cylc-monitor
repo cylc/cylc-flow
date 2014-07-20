@@ -146,6 +146,7 @@ try:
 
             task_ids = states.keys()
             n_tasks_all = len( task_ids )
+            task_ids.sort()
 
             seen_time = {}
             seen_name = {}

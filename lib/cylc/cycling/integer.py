@@ -18,7 +18,7 @@
 
 import re
 
-from cylc.cycling import PointBase, IntervalBase
+from cylc.cycling import PointBase, IntervalBase, PointParsingError
 
 """
 Integer cycling by point, interval, and sequence classes.
@@ -84,6 +84,14 @@ class IntegerPoint(PointBase):
 
     def add(self, other):
         return IntegerPoint(int(self) + int(other))
+
+    def standardise(self):
+        """Format self.value into a standard representation and check it."""
+        try:
+            self.value = str(int(self))
+        except (TypeError, ValueError):
+            raise PointParsingError(type(self), self.value)
+        return self
 
     def __int__(self):
         return int(self.value)
@@ -391,10 +399,6 @@ def init_from_cfg(cfg):
 if __name__ == '__main__':
 
     r = IntegerSequence( 'R/1/P3', 1, 10 )
-    #r = IntegerSequence( 'R/c2/P2', 1, 10 )
-    #r = IntegerSequence( 'R2/c2/P2', 1, 10 )
-    #r = IntegerSequence( 'R2/c4/c6', 1, 10 )
-    #r = IntegerSequence( 'R2/P2/c6', 1, 10 )
 
     r.set_offset( IntegerInterval('4') )
 
