@@ -161,11 +161,7 @@ SPEC = {
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
-        'shell command execution' : {
-            'pool type'                       : vdr( vtype='string', options=['thread','process'], default='process' ),
-            'process pool size'               : vdr( vtype='integer', default=None ),
-            'thread pool size'                : vdr( vtype='integer', default=4 ),
-            },
+        'process pool size'                   : vdr( vtype='integer', default=None ),
         'lockserver' : {
             'enable'                          : vdr( vtype='boolean', default=False ),
             'simultaneous instances'          : vdr( vtype='boolean', default=False ),

@@ -684,7 +684,7 @@ class scheduler(object):
             self.command_queue = comqueue( self.control_commands.keys() )
             self.pyro.connect( self.command_queue, 'command-interface' )
 
-            self.proc_pool = mp_pool( self.config.cfg['cylc']['shell command execution'])
+            self.proc_pool = mp_pool( self.config.cfg['cylc']['process pool size'])
             task.task.proc_pool = self.proc_pool
 
             self.info_interface = info_interface( self.info_commands )

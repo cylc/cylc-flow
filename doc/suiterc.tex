@@ -167,35 +167,13 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-
-\subsubsection[{[[}shell command execution{]]}]{[cylc] $\rightarrow$ [[shell command execution]]}
-\label{ProcessPool}
-
-Cylc job submission, event handler, and job poll and kill commands are
-executed by a pool of threads or processes.
-
-\paragraph[pool type]{[cylc] $\rightarrow$ [[shell command execution]] $\rightarrow$ pool type}
-
-\begin{myitemize}
-    \item {\em type:} string
-    \item {\em legal values:} `process' or `thread'
-    \item {\em default:} `process'
-\end{myitemize}
-
-\paragraph[process pool size]{[cylc] $\rightarrow$ [[shell command execution]] $\rightarrow$ process pool size}
-Number of process pool worker processes, if a process pool is chosen.
+\subsubsection[process pool size]{[cylc] $\rightarrow$ process pool size}
+Number of process pool worker processes used to execute shell commands
+(job submission, event handlers, job poll and kill commands).
 \begin{myitemize}
     \item {\em type:} integer
     \item {\em default:} None (number of processor cores on the suite host)
 \end{myitemize}
-
-\paragraph[thread pool size]{[cylc] $\rightarrow$ [[shell command execution]] $\rightarrow$ thread pool size}
-Number of thread pool workers, if a thread pool is chosen.
-\begin{myitemize}
-    \item {\em type:} integer
-    \item {\em default:} 4
-\end{myitemize}
-
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SuiteEventHandling}

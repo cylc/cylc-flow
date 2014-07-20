@@ -17,13 +17,23 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
+import logging
 import subprocess
-from multiprocessing import Value
-import multiprocessing.pool
+import multiprocessing
 
 import flags
- 
-"""Process or thread pool to execute shell commands."""
+
+"""Process pool to execute shell commands for the suite daemon.
+
+In debug mode, commands are printed to stdout before execution.
+
+Some notes:
+ * To print worker process ID, call multiprocessing.current_process()
+ * To use a thread pool instead of a process pool:
+   - use multiprocessing.pool.ThreadPool instead of pool.Pool
+   - use multiprocessing.dummy.current_process() for current_process()
+   (very early versions of this module allowed a choice).
+"""
 
 # Command type flags.
 CMD_TYPE_JOB_SUBMISSION=0
@@ -33,12 +43,12 @@ CMD_TYPE_EVENT_HANDLER=2
 # Shared memory flag
 TRUE=1
 FALSE=0
-POOL_CLOSED = Value('i',FALSE)
+POOL_CLOSED = multiprocessing.Value('i',FALSE)
 
 # Job skipped flag
 JOB_NOT_SUBMITTED=999
 
-def execute_shell_command(cmd_spec, current_process, job_sub_method=None):
+def execute_shell_command(cmd_spec, job_sub_method=None):
     """Execute a shell command and capture its output and exit status."""
 
     cmd_type, cmd_string = cmd_spec
@@ -47,20 +57,18 @@ def execute_shell_command(cmd_spec, current_process, job_sub_method=None):
             'EXIT': None,
             'OUT': None,
             'ERR': None}
+    # FOR TESTING PURPOSES try making command execution take a long time:
+    # time.sleep(5)
+
+    if flags.debug:
+        print cmd_string
 
     if POOL_CLOSED.value == TRUE and cmd_type == CMD_TYPE_JOB_SUBMISSION:
         # Stop job submission commands if pool closed but continue others
         # till done (call pool.terminate() to stop all work immediately).
-        if flags.debug:
-            print "[%s] skipping: %s" % (current_process().name, cmd_string)
-        cmd_result['ERR'] = "job not submitted (pool closed)"
+        cmd_result['ERR'] = "job submission skipped (pool closed)"
         cmd_result['EXIT'] = JOB_NOT_SUBMITTED
         return cmd_result
-    elif flags.debug:
-        print "[%s] executing: %s" % ( current_process().name, cmd_string)
-
-    # FOR TESTING PURPOSES try making command execution take a long time:
-    # time.sleep(5)
 
     try:
         p = subprocess.Popen(cmd_string, stdout=subprocess.PIPE,
@@ -77,32 +85,21 @@ def execute_shell_command(cmd_spec, current_process, job_sub_method=None):
             cmd_result['EXIT'] = p.wait()
             if cmd_result['EXIT'] is not None:
                 cmd_result['OUT'], cmd_result['ERR'] = p.communicate()
+
     return cmd_result
 
 
 class mp_pool(object):
-    """Use a process or thread pool to execute shell commands."""
+    """Use a process pool to execute shell commands."""
 
-    def __init__(self, pool_config):
-        self.type = pool_config['pool type']
-        if self.type == 'process':
-            pool_cls = multiprocessing.Pool 
-            if pool_config['process pool size'] is None:
-                # (Pool class does this anyway, but the result is not
-                # exposed via its public interface).
-                self.poolsize = multiprocessing.cpu_count()
-            else:
-                self.poolsize = pool_config['process pool size']
-            self.current_process = multiprocessing.current_process
-        else:
-            pool_cls = multiprocessing.pool.ThreadPool
-            self.poolsize = pool_config['thread pool size']
-            self.current_process = multiprocessing.dummy.current_process
-
-        self.pool = pool_cls( processes=self.poolsize )
-        if flags.debug:
-            print "Initialized %s pool, size %d" % (
-                    self.type, self.get_pool_size())
+    def __init__(self, pool_size=None):
+        self.pool_size = pool_size or multiprocessing.cpu_count()
+        # (The Pool class defaults to cpu_count anyway, but does not
+        # expose the result via its public interface).
+        self.log = logging.getLogger("main")
+        self.log.debug(
+            "Initializing process pool, size %d" % self.pool_size)
+        self.pool = multiprocessing.Pool(processes=self.pool_size)
         self.unhandled_results = []
 
     def put_command(self, cmd_spec, callback, job_sub_method=None):
@@ -110,15 +107,15 @@ class mp_pool(object):
         cmd_type, cmd_string = cmd_spec
         try:
             result = self.pool.apply_async(
-                execute_shell_command,(cmd_spec, self.current_process, job_sub_method))
-        except AssertionError:
-            if flags.debug:
-                print "rejecting (pool closed): %s" % cmd_string
-            return False
+                execute_shell_command,(cmd_spec, job_sub_method))
+        except AssertionError as e:
+            self.log.warning("%s\n  %s\n %s" % (
+                str(e),
+                "Rejecting command (pool closed)",
+                cmd_string))
         else:
             if callback:
                 self.unhandled_results.append((result,callback))
-            return True
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
@@ -134,12 +131,11 @@ class mp_pool(object):
 
     def close(self):
         """Close the pool to new commands.
-        
+
         Also stop existing job submissions, but not other commands.
         """
         if not (self.is_dead() or self.is_closed()):
-            if flags.debug:
-                print "closing %s pool" % self.type
+            self.log.debug("Closing process pool")
             self.pool.close()
             # Tell the workers to stop job submissions.
             POOL_CLOSED.value = TRUE
@@ -147,19 +143,13 @@ class mp_pool(object):
     def terminate(self):
         """Kill all worker processes immediately."""
         if not self.is_dead():
-            if flags.debug:
-                print "terminating %s pool" % self.type
+            self.log.debug("Terminating process pool")
             self.pool.terminate()
 
     def join(self):
         """Join after workers have exited. Close or terminate first."""
-        if flags.debug:
-            print "joining %s pool" % self.type
+        self.log.debug("Joining process pool")
         self.pool.join()
-
-    def get_pool_size(self):
-        """Return the number of workers."""
-        return self.poolsize
 
     def is_closed(self):
         """Is the pool closed?"""
@@ -178,21 +168,21 @@ class mp_pool(object):
 if __name__ == '__main__':
     """manual test playground"""
 
-    flags.debug = True
+    import sys
+    log = logging.getLogger("main")
+    log.setLevel(logging.INFO) # or logging.DEBUG
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    log.addHandler(handler)
 
     def print_result(result):
         if result['OUT']:
-            print 'RESULT>', result['OUT'].strip()
+            log.info( 'result> ' + result['OUT'].strip() )
         if result['ERR']:
-            print 'COMMAND FAILED:', result['CMD']
-            print result['ERR'].strip()
+            log.info( 'FAILED> ' + result['CMD'] )
+            log.info( result['ERR'].strip() )
 
-    pool_config = {
-            'pool type' : 'process',
-            'thread pool size' : 3,
-            'process pool size' : 3
-            }
-    pool = mp_pool(pool_config)
+    pool = mp_pool(3)
 
     for i in range(0,3):
         com = "sleep 5 && echo Hello from JOB " + str(i)
@@ -204,15 +194,15 @@ if __name__ == '__main__':
         com = "sleep 5 && echo Hello from HANDLER && badcommand"
         pool.put_command((CMD_TYPE_EVENT_HANDLER,com), print_result)
 
-    print '  sleeping'
+    log.info( '  sleeping' )
     time.sleep(3)
     pool.handle_results_async()
-    print '  sleeping'
+    log.info( '  sleeping' )
     time.sleep(3)
     pool.close()
     #pool.terminate()
     pool.handle_results_async()
-    print '  sleeping'
+    log.info( '  sleeping' )
     time.sleep(3)
     pool.join()
     pool.handle_results_async()
