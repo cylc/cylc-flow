@@ -17,20 +17,21 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import Queue
 import TaskID
-from batch_submit import task_batcher
 from task_types import task
 from task_state import task_state
 from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
+from mp_pool import CMD_TYPE_JOB_SUBMISSION
+
 import cylc.rundb
 from cylc.cycling.loader import (
     get_point, get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from CylcError import SchedulerError, TaskNotFoundError
 from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
+
 
 # All new task proxies (including spawned ones) are added first to the
 # runahead pool, which does not participate in dependency matching and 
@@ -40,18 +41,26 @@ from broadcast import broadcast
 # The check_stop() and remove_spent_cycling_task() have to consider
 # tasks in the runahead pool too.
 
-# TODO ISO -
-# Spawn-on-submit means a only one waiting instance of each task exists,
-# in the pool, so if a new stop cycle is set we just need to check
-# waiting pool tasks against the new stop cycle.
+# TODO ISO - spawn-on-submit means a only one waiting instance of each
+# task exists, in the pool, so if a new stop cycle is set we just need
+# to check waiting pool tasks against the new stop cycle.
+
+# NOTE pre cycl-6 close_fds=True in job submission was required to prevent
+# the process from hanging on to the file descriptor that used to write
+# the job script, the root cause of the random "text file busy" error.
+# TODO ISO - is this still needed?
+ 
+# Background jobs echo PID to stdout but do not detach. Read one line to
+# get PID then don't wait on the process.
+#  p.stderr.readline() blocks until the process
+#  finishes because nothing is written to stderr.
 
 # restart: runahead tasks are all in the 'waiting' state and will be
 # reloaded as such, on restart, into the runahead pool.
 
 
 class pool(object):
-
-    def __init__( self, suite, db, stop_point, config, pyro, log, run_mode ):
+    def __init__( self, suite, db, stop_point, config, pyro, log, run_mode, proc_pool ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -62,6 +71,8 @@ class pool(object):
 
         self.runahead_limit = config.get_runahead_limit()
         self.config = config
+
+        self.proc_pool = proc_pool
 
         self.runahead_pool = {}
         self.myq = {}
@@ -80,18 +91,8 @@ class pool(object):
 
         self.broker = broker()
 
-        self.jobqueue = Queue.Queue()
-
-        self.worker = task_batcher( 'Job Submission', self.jobqueue,
-                config.cfg['cylc']['job submission']['batch size'],
-                config.cfg['cylc']['job submission']['delay between batches'],
-                self.wireless, self.run_mode )
-
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
-
-        self.worker.start()
-
 
     def assign_queues( self ):
         """self.myq[taskname] = qfoo"""
@@ -126,8 +127,7 @@ class pool(object):
             itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
             itask.reset_state_held()
 
-        # add in held state if beyond the suite hold point
-        # TODO ISO -restore this functionality
+        # TODO ISO - restore this functionality
         #elif self.hold_time and itask.c_time > self.hold_time:
         #    itask.log( 'NORMAL', "holding (beyond suite hold point) " + str(self.hold_time) )
         #    itask.reset_state_held()
@@ -310,15 +310,27 @@ class pool(object):
                         itask.reset_manual_trigger()
                 # else leaved queued
 
-        n_ready = len(readytogo)
-        if n_ready > 0:
-            self.log.debug( '%d task(s) ready' % n_ready )
-            for itask in readytogo:
-                itask.set_state_ready()
-                self.jobqueue.put( itask )
+        self.log.debug( '%d task(s) ready' % len(readytogo) )
+
+        for itask in readytogo:
+            itask.set_state_ready()
+            if self.run_mode == 'simulation':
+                itask.job_submission_succeeded( '','' )
+                continue
+            try:
+                cmd = itask.get_command(overrides=self.wireless.get(itask.id))
+            except Exception, e:
+                # TODO - is this the right response?
+                itask.job_submission_failed(err=str(e))
+            else:
+                # Queue the job submission command for execution.
+                cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
+                self.proc_pool.put_command(
+                        cmd_spec,
+                        itask.submission_command_callback,
+                        itask.job_sub_method_name)
 
         return readytogo
-
 
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
@@ -491,7 +503,7 @@ class pool(object):
                 itask.poll()
 
 
-    def kill_all_tasks( self ):
+    def kill_active_tasks( self ):
         for itask in self.get_tasks():
             if itask.state.is_currently( 'submitted', 'running' ):
                 itask.kill()
@@ -778,9 +790,11 @@ class pool(object):
 
         i_cyc = False
         i_fut = False
+
         for itask in self.get_tasks( all=True ):
             i_cyc = True
-            # don't stop if a cycling task has not passed the stop cycle
+            # Don't stop if a cycling task has not passed the stop cycle
+            # (note finite recurrence tasks disappear once finished).
             if self.stop_point:
                 if itask.c_time <= self.stop_point:
                     if itask.state.is_currently('succeeded') and itask.has_spawned():
@@ -797,15 +811,6 @@ class pool(object):
                 # don't stop if there are cycling tasks and no stop cycle set
                 stop = False
                 break
-        if stop:
-            msg = "Stopping: "
-            if i_fut:
-                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_point)
-            if i_cyc:
-                msg += "\n  + all tasks have spawned past the final cycle " + str(self.stop_point)
-            print msg
-            self.log.info( msg )
-
         return stop
 
 
@@ -822,8 +827,6 @@ class pool(object):
     def shutdown( self ):
         if not self.no_active_tasks():
             self.log.warning( "some active tasks will be orphaned" )
-        self.worker.quit = True # (should be done already)
-        self.worker.join()
         self.pyro.disconnect( self.wireless )
         for itask in self.get_tasks():
             if itask.message_queue:
@@ -851,8 +854,7 @@ class pool(object):
         pp.add( msg )
         itask.prerequisites.add_requisites(pp)
 
-
-    def has_stop_task_succeeded( self, id ):
+    def task_succeeded( self, id ):
         res = False
         name, tag = TaskID.split(id)
         for itask in self.get_tasks():
@@ -860,11 +862,9 @@ class pool(object):
             # TODO ISO - check the following works
             if itask.name == name and get_point(itag) == get_point(tag):
                 if itask.state.is_currently('succeeded'):
-                    self.log.info( "Stop task " + id + " finished" )
                     res = True
                 break
         return res
-
 
     def ping_task( self, id ):
         found = False

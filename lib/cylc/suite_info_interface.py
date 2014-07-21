@@ -16,13 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import copy
-import sys, os
 import Pyro.core
-from CylcError import TaskNotFoundError, TaskStateError
-from job_submission.job_submit import job_submit
-from version import cylc_version
-from owner import user
 
 """Pyro interface for DIRECT READ-ONLY INTERACTION with a cylc suite.
 Any interaction that alters suite state in any way must go via the

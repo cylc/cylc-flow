@@ -103,6 +103,7 @@ __STATE__
 cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
+force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 running_task|2013092300|1|1|succeeded
@@ -117,7 +118,7 @@ force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
-output_states|2013092306|1|1|running
+output_states|2013092306|2|1|running
 output_states|2013092312|0|1|held
 running_task|2013092300|1|1|succeeded
 running_task|2013092306|1|1|succeeded
@@ -147,14 +148,13 @@ force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
-output_states|2013092306|1|1|succeeded
+output_states|2013092306|2|1|succeeded
 output_states|2013092312|0|1|held
 running_task|2013092300|1|1|succeeded
 running_task|2013092306|1|1|succeeded
 running_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
-tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
