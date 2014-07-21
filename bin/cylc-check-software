@@ -48,8 +48,6 @@ while getopts "h" opt; do
     esac
 done
 
-RES=0
-
 # Minimum Python version 2.6
 echo -n "Checking for Python >= 2.6 ... "
 PVER=$( python -V 2>&1 | awk '{print $2}' )
@@ -60,7 +58,6 @@ if sys.version_info < (2,6):
     sys.exit(1)
 EOF
 then
-    RES=$(( RES + 1 ))
     echo "ERROR: Python version too old"
 else
     echo "ok"
@@ -70,14 +67,12 @@ fi
 echo "Checking for non-Python packages:"
 echo -n " + Graphviz ... "
 if ! which dot > /dev/null 2>&1; then
-    RES=$(( RES + 1 ))
     echo "NOT FOUND"
 else
     echo "ok"
 fi
 echo -n " + sqlite ... "
 if ! which sqlite3 > /dev/null 2>&1; then
-    RES=$(( RES + 1 ))
     echo "NOT FOUND"
 else
     echo "ok"
@@ -98,7 +93,6 @@ for ITEM in $PKGS; do
 
     echo -n " + $NAME ... "
     if ! python -c "import $MODL" > /dev/null 2>&1; then
-        RES=$(( RES + 1 ))
         echo "NOT FOUND"
     else
         echo "ok"
