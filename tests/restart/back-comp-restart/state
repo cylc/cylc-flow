@@ -1,0 +1,15 @@
+run mode : live
+time : 2014:07:21:13:35:53
+initial cycle : 2014050100
+final cycle : (none)
+(dp1
+.
+Begin task states
+async_install.1 : status=succeeded, spawned=true
+bar.2014050206 : status=waiting, spawned=false
+baz.2014050200 : status=succeeded, spawned=true
+baz.2014050206 : status=waiting, spawned=false
+foo.2014050200 : status=succeeded, spawned=true
+foo.2014050206 : status=waiting, spawned=false
+qux.2014050206 : status=running, spawned=false
+wibble.2014050206 : status=waiting, spawned=false
