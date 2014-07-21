@@ -22,7 +22,9 @@ usage() {
     cat <<eof
 USAGE: cylc [admin] check-software
 
-Check that external software required by cylc is installed.
+Check that the external software required by cylc is installed.
+
+Minimum versions are not checked, except in the case of Python.
 
 Options:
   -h, --help   Print this help message and exit.
@@ -52,15 +54,10 @@ done
 echo -n "Checking for Python >= 2.6 ... "
 PVER=$( python -V 2>&1 | awk '{print $2}' )
 echo -n "found ${PVER} ... "
-if ! python - <<EOF
-import sys
-if sys.version_info < (2,6):
-    sys.exit(1)
-EOF
-then
-    echo "ERROR: Python version too old"
-else
+if python -c 'import sys; sys.exit(sys.version_info < (2,6))'; then
     echo "ok"
+else
+    echo "ERROR: Python version too old"
 fi
 
 # non-Python packages
