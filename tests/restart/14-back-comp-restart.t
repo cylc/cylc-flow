@@ -15,8 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a suite with pre-initial cycle dependencies and no
-# initial cycle time in suite definition, ref. github #957.
+# Test restarting a pre-Cylc-6 suite.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3
