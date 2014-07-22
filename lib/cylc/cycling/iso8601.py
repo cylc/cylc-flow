@@ -51,6 +51,7 @@ PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 
 # The following must be set by calling the init_from_cfg function.
 # TODO: this is yukky. Is there a better alternative?
+abbrev_util = None
 point_parser = None
 NUM_EXPANDED_YEAR_DIGITS = None
 DUMP_FORMAT = None
@@ -288,15 +289,14 @@ class ISO8601Sequence(object):
         self.custom_point_parse_function = None
         if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
             self.custom_point_parse_function = point_parse
-
-        self.time_parser = CylcTimeParser(
+        self.abbrev_util = CylcTimeParser(
             self.context_start_point, self.context_end_point,
             num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
             dump_format=DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function,
             assumed_time_zone=ASSUMED_TIME_ZONE
         )
-        self.recurrence = self.time_parser.parse_recurrence(i)
+        self.recurrence = self.abbrev_util.parse_recurrence(i)
         self.step = ISO8601Interval(str(self.recurrence.interval))
         self.value = str(self.recurrence)
 
@@ -384,7 +384,7 @@ class ISO8601Sequence(object):
         return result
 
     def get_first_point( self, point):
-        """Return the first point >= to poing, or None if out of bounds."""
+        """Return the first point >= to point, or None if out of bounds."""
         try:
             return ISO8601Point(self._cached_first_point_values[point.value])
         except KeyError:
@@ -399,6 +399,12 @@ class ISO8601Sequence(object):
                 self._cached_first_point_values[point.value] = (
                     first_point_value)
                 return ISO8601Point(first_point_value)
+        return None
+
+    def get_start_point( self ):
+        """Return the first point in this sequence, or None."""
+        for recurrence_iso_point in self.recurrence:
+            return ISO8601Point(str(recurrence_iso_point))
         return None
 
     def get_stop_point( self ):
@@ -505,6 +511,7 @@ def init_from_cfg(cfg):
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
          assume_utc=False, cycling_mode=None):
     """Initialise global variables (yuk)."""
+    global abbrev_util
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
@@ -545,6 +552,32 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         dump_format=DUMP_FORMAT,
         assumed_time_zone=time_zone_hours_minutes
     )
+    custom_point_parse_function = None
+    if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
+        custom_point_parse_function = point_parse
+    abbrev_util = CylcTimeParser(
+        None, None,
+        num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
+        dump_format=DUMP_FORMAT,
+        custom_point_parse_function=custom_point_parse_function,
+        assumed_time_zone=ASSUMED_TIME_ZONE
+    )
+
+
+def get_point_relative(offset_string, base_point):
+    """Create a point from offset_string applied to base_point."""
+    try:
+        interval = ISO8601Interval(
+            str(interval_parse(offset_string)))
+    except Exception:
+        pass
+    else:
+        return base_point + interval
+    return ISO8601Point(str(
+        abbrev_util.parse_timepoint(
+            offset_string, context_point=_point_parse(base_point.value)
+        )
+    ))
 
 
 def interval_parse(interval_string):

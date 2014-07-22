@@ -17,7 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import cylc.TaskID
-from cylc.cycling.loader import get_interval, get_interval_cls
+from cylc.cycling.loader import (
+    get_interval, get_interval_cls, get_point_relative)
 
 import re
 
@@ -46,7 +47,7 @@ where output x of foo may also have an offset:
         self.name = name
         self.msg = None
         self.intrinsic_offset = None
-        self.evaluation_offset = None
+        self.evaluation_offset_string = None
         self.cycle_point = None
         self.type = None
         self.cycling = False
@@ -81,8 +82,8 @@ where output x of foo may also have an offset:
     def set_cycle_point( self, cycle_point ):
         self.cycle_point = cycle_point
 
-    def set_offset( self, offset ):
-        self.evaluation_offset = get_interval( offset )
+    def set_offset_string( self, offset_string ):
+        self.evaluation_offset_string = offset_string
 
     def get( self, ctime ):
         if self.msg:
@@ -90,15 +91,17 @@ where output x of foo may also have an offset:
             preq = self.msg
             if self.intrinsic_offset:
                 ctime += self.intrinsic_offset
-            if self.evaluation_offset:
-                ctime -= self.evaluation_offset
+            if self.evaluation_offset_string:
+                ctime = get_point_relative(
+                    self.evaluation_offset_string, ctime)
             if self.cycle_point:
                 ctime = self.cycle_point
-            preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
+            preq = re.sub( '\[\s*[T\s*.*?\]', str(ctime), preq )
         else:
             # implicit output
-            if self.evaluation_offset:
-                ctime -= self.evaluation_offset
+            if self.evaluation_offset_string:
+                ctime = get_point_relative(
+                    self.evaluation_offset_string, ctime)
             if self.cycle_point:
                 ctime = self.cycle_point
             preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type

@@ -19,10 +19,11 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
-from cylc.cycling.loader import (get_point, get_interval_cls,
-                                 get_sequence, get_sequence_cls,
-                                 init_cyclers, INTEGER_CYCLING_TYPE,
-                                 get_backwards_compatibility_mode)
+from cylc.cycling.loader import (
+    get_point, get_point_relative, get_interval_cls, get_sequence,
+    get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
+    get_backwards_compatibility_mode
+)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -771,8 +772,9 @@ class config( object ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
-    def set_trigger( self, task_name, right, output_name=None, offset=None,
-                     cycle_point=None, suicide=False, base_interval=None ):
+    def set_trigger( self, task_name, right, output_name=None,
+                     offset_string=None, cycle_point=None,
+                     suicide=False, base_interval=None ):
         trig = triggerx(task_name)
         trig.set_suicide(suicide)
         if output_name:
@@ -809,8 +811,9 @@ class config( object ):
             # default: task succeeded
             trig.set_type( 'succeeded' )
 
-        if offset:
-            trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
+        if offset_string:
+            # TODO ISO - CONSISTENT SET_OFFSET INPUT 
+            trig.set_offset_string( offset_string )
 
         if cycle_point:
             trig.set_cycle_point( cycle_point )
@@ -1240,7 +1243,7 @@ class config( object ):
                 raise SuiteConfigError, str(x)
 
             name = my_taskdef_node.name
-            offset = my_taskdef_node.offset
+            offset_string = my_taskdef_node.offset_string
 
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root
@@ -1280,19 +1283,20 @@ class config( object ):
                         'status' : self.suite_polling_tasks[name][2] }
 
             if not my_taskdef_node.is_absolute:
-                if offset:
+                if offset_string:
                     if flags.back_comp_cycling:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
-                        if str(offset) in offset_seq_map:
-                            seq_offset = offset_seq_map[str(offset)]
+                        if offset_string in offset_seq_map:
+                            seq_offset = offset_seq_map[offset_string]
                         else:
                             seq_offset = get_sequence(
                                 section,
                                 self.cfg['scheduling']['initial cycle point'],
                                 self.cfg['scheduling']['final cycle point']
                             )
-                            seq_offset.set_offset(offset)
-                            offset_seq_map[str(offset)] = seq_offset
+                            seq_offset.set_offset(
+                                -get_interval(offset_string))
+                            offset_seq_map[offset_string] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)
                     # We don't handle implicit cycling in new-style cycling.
@@ -1326,22 +1330,31 @@ class config( object ):
             # (GraphNodeError checked above)
             cycle_point = None
             lnode = graphnode(left, base_interval=base_interval)
-            if lnode.intercycle:
-                self.taskdefs[lnode.name].intercycle = True
-                if (self.taskdefs[lnode.name].intercycle_offset is None or (
-                        lnode.offset is not None and
-                        lnode.offset >
-                        self.taskdefs[lnode.name].intercycle_offset)):
-                    self.taskdefs[lnode.name].intercycle_offset = lnode.offset
+            l_taskdef = self.taskdefs[lnode.name]
             if lnode.offset_is_from_ict:
+                print "Get point relative", lnode.offset_string, l_taskdef.ict
+                first_point = get_point_relative(
+                    lnode.offset_string, l_taskdef.ict)
                 last_point = seq.get_stop_point()
-                first_point = self.taskdefs[lnode.name].ict - lnode.offset
-                if first_point and last_point is not None:
-                    self.taskdefs[lnode.name].intercycle_offset = (last_point - first_point)
+                if last_point is None:
+                    # This dependency persists for the whole suite run.
+                    l_taskdef.intercycle_offsets.append(
+                        (None, seq))
                 else:
-                    self.taskdefs[lnode.name].intercycle_offset = None
+                    l_taskdef.intercycle_offsets.append(
+                        (str(-(last_point - first_point)), seq))
                 cycle_point = first_point
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, suicide, seq.get_interval() )
+            elif lnode.intercycle:
+                l_taskdef.intercycle = True
+                if lnode.offset_is_irregular:
+                    offset_tuple = (lnode.offset_string, seq)
+                else:
+                    offset_tuple = (lnode.offset_string, None)
+                l_taskdef.intercycle_offsets.append(offset_tuple)
+            trigger = self.set_trigger(
+                lnode.name, right, lnode.output, lnode.offset_string,
+                cycle_point, suicide, seq.get_interval()
+            )
             if not trigger:
                 continue
             if not conditional:

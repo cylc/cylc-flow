@@ -31,7 +31,8 @@ from outputs import outputs
 import TaskID
 from task_output_logs import logfiles
 from parsec.OrderedDict import OrderedDict
-from cycling.loader import get_interval_cls
+from cycling.loader import get_interval_cls, get_point_relative
+
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -63,7 +64,7 @@ class taskdef(object):
 
         # some defaults
         self.intercycle = False
-        self.intercycle_offset = get_interval_cls().get_null()
+        self.intercycle_offsets = []
         self.sequential = False
         self.cycling = False
         self.modifiers = []
@@ -99,6 +100,47 @@ class taskdef(object):
             if is_implicit:
                 self.implicit_sequences.append( sequence )
 
+    def extract_cleanup_cutoff( self, my_point, offset_sequence_tuples ):
+        """Extract a validity cutoff point from dependent task information."""
+        print "Extract cleanup cutoff", self.name, my_point
+        if not offset_sequence_tuples:
+            print "    not offset_seq_tuples: None"
+            return None
+        cutoff_points = []
+        for offset_string, sequence in offset_sequence_tuples:
+            print "    offset_string, sequence", offset_string, sequence.value
+            if offset_string is None:
+                # This indicates a dependency across the whole suite run.
+                return None
+            if sequence is None:
+                cutoff_points.append(
+                    get_point_relative(offset_string, my_point))
+                print "        cutoff point candidate:", cutoff_points[-1]
+                continue
+            dependent_point = sequence.get_start_point()
+            
+            matching_dependent_points = []
+            while dependent_point is not None:
+                target_point = (
+                    get_point_relative(offset_string, dependent_point))
+                print "    dependent, target:", dependent_point, target_point
+                if target_point > my_point:
+                    # Assume monotonic (target_point can never jump back).
+                    break
+                if target_point == my_point:
+                    matching_dependent_points.append(dependent_point)
+                    print "        cutoff point candidate:", cutoff_points[-1]
+                dependent_point = sequence.get_next_point_on_sequence(
+                    dependent_point)
+            if matching_dependent_points:
+                # Choose the largest of the dependent points.
+                cutoff_points.append(matching_dependent_points[-1])
+        if cutoff_points:
+            print "    cutoff point choice:", max(cutoff_points)
+            return max(cutoff_points)
+        print "    no cutoff points:", None
+        return None
+                
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
         # THIS IS NOT CURRENTLY USED, but may be useful in the future.
@@ -221,16 +263,18 @@ class taskdef(object):
                     if trig.cycling and not sequence.is_valid( sself.tag ):
                         # This trigger is not used in current cycle
                         continue
-                    if self.ict is None or \
-                            trig.evaluation_offset is None or \
-                                ( tag - trig.evaluation_offset ) >= self.ict:
-                            # i.c.t. can be None after a restart, if one
-                            # is not specified in the suite definition.
+                    if (self.ict is None or
+                            trig.evaluation_offset_string is None or
+                            (get_point_relative(
+                                trig.evaluation_offset_string, tag) >=
+                             self.ict)):
+                        # i.c.t. can be None after a restart, if one
+                        # is not specified in the suite definition.
 
-                            if trig.suicide:
-                                sp.add( trig.get( tag ))
-                            else:
-                                pp.add( trig.get( tag ))
+                        if trig.suicide:
+                            sp.add( trig.get( tag ))
+                        else:
+                            pp.add( trig.get( tag ))
 
             sself.prerequisites.add_requisites( pp )
             sself.suicide_prerequisites.add_requisites( sp )
@@ -270,7 +314,7 @@ class taskdef(object):
             sself.startup = startup
             sself.submit_num = submit_num
             sself.exists=exists
-            sself.intercycle_offset = self.intercycle_offset
+            sself.intercycle_offsets = self.intercycle_offsets
 
             if self.cycling and startup:
                 # adjust up to the first on-sequence cycle point
@@ -282,10 +326,8 @@ class taskdef(object):
                         adjusted.append( adj )
                 if adjusted:
                     sself.tag = min( adjusted )
-                    if sself.intercycle_offset is None:
-                        sself.cleanup_cutoff = None
-                    else:
-                        sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                    sself.cleanup_cutoff = self.extract_cleanup_cutoff(
+                        sself.tag, self.intercycle_offsets)
                     sself.id = TaskID.get( sself.name, str(sself.tag) )
                 else:
                     sself.tag = None
@@ -294,10 +336,8 @@ class taskdef(object):
                     return
             else:
                 sself.tag = start_point
-                if sself.intercycle_offset is None:
-                    sself.cleanup_cutoff = None
-                else:
-                    sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                sself.cleanup_cutoff = self.extract_cleanup_cutoff(
+                    sself.tag, self.intercycle_offsets)
                 sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.c_time = sself.tag

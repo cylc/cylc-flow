@@ -1,0 +1,21 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT2M
+[scheduling]
+    initial cycle point = 20000331T0100Z
+    final cycle point = 2001
+    [[dependencies]]
+        [[[R1/+P1M]]]
+            graph = "qux & flub"
+        [[[T00-P1M1D/P1M]]]
+            graph = "wibble => wobble"
+        [[[R10//P1D]]]
+            graph = "flub[^] => flob"
+        [[[02T06-P8DT6H/P1M]]]
+            graph = "foo[01T-P1W] & qux[^+P1M] => bar"
+        [[[01T-P1W/P1M]]]
+            graph = "foo => baz"
+[runtime]
+    [[root]]
+        command scripting = true
