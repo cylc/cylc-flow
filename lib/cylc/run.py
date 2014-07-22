@@ -23,6 +23,7 @@ from daemonize import daemonize
 from version import cylc_version
 from cfgspec.site import sitecfg
 import flags
+from exceptions import SchedulerStop, SchedulerError
 
 def print_blurb():
     lines = []
@@ -79,7 +80,26 @@ def main(name, start):
         #cProfile.run( 'server.run()', 'fooprof' )
         #   and see Python docs "The Python Profilers"
         #   for how to display the resulting stats.
-    except Exception, x:
+    except SchedulerStop, x:
+        # deliberate stop
+        print str(x)
+        server.shutdown()
+
+    except SchedulerError, x:
+        print >> sys.stderr, str(x)
+        server.shutdown()
+        sys.exit(1)
+
+    except KeyboardInterrupt as x:
+        import traceback
+        try:
+            server.shutdown(str(x))
+        except Exception as y:
+            # In case of exceptions in the shutdown method itself.
+            traceback.print_exc(y)
+            sys.exit(1)
+
+    except (KeyboardInterrupt,Exception) as x:
         import traceback
         traceback.print_exc(x)
         print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
@@ -96,5 +116,6 @@ def main(name, start):
             print >> sys.stderr, "use --debug to turn on exception tracebacks)"
             sys.exit(1)
     else:
+        # main loop ends (not used?)
         server.shutdown()
 

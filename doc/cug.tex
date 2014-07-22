@@ -386,7 +386,7 @@ previous section, emerges naturally at run time.
     \item {\bf Cylc}, the version associated with this document is: \input{cylc-version.txt}. % generated each time by doc/process
         \newline Cylc can be downloaded from from GitHub: \url{http://cylc.github.com/cylc}
     \item {\bf OS: A Linux or Unix variant (including, reportedly, Apple OS X).}
-    \item {\bf The Python Language, version 2.5 or later, but not 3.x yet}.
+    \item {\bf The Python Language, version 2.6 or later, but not 3.x yet}.
         \newline \url{http://python.org}
     \item {\bf Pyro-3 (Python Remote Objects), version 3.10$+$, latest
         tested 3.16}; not Pyro4 as yet. Pyro is used
@@ -582,7 +582,7 @@ installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc check-software
-Checking for Python >= 2.5 ... found 2.7.3 ... ok
+Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
@@ -671,7 +671,7 @@ processing) is installed:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc check-software
-Checking for Python >= 2.5 ... found 2.7.3 ... ok
+Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
@@ -4916,22 +4916,14 @@ intervals, not when task events actually occur.
 \subsubsection{Task Polling}
 
 Be careful to avoid spamming task hosts with polling commands. Each poll
-opens (and then closes) a new ssh connection. Polling subprocesses are
-batched by cylc, and the number invoked at once can be configured in the
-suite definition:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[cylc]
-    [[poll and kill command submission]]
-        batch size = 5  # default 10
-        delay between batches = 10 # seconds, default 0
-\end{lstlisting}
+opens (and then closes) a new ssh connection.
 
-Polling intervals are configurable here because they should be
-appropriate to the expected task run length. For instance, a task that
-typically takes an hour to run might be polled every 10 minutes
-initially, and then every minute toward the end of its run. Interval
-values are used in turn until the last value, which is used repeatedly
+Polling intervals are configurable under \lstinline=[runtime]= because
+they should may depend on the expected execution time. For instance, a
+task that typically takes an hour to run might be polled every 10
+minutes initially, and then every minute toward the end of its run.
+Interval values are used in turn until the last value, which is used
+repeatedly
 until finished:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5211,32 +5203,8 @@ finer-grained authentication in the future to allow suite owners to
 grant read-only access to others.
 
 
-\subsection{Ensemble Suites, Job Submission, and Network Timeouts}
-\label{MaxSimJobSub}
 
-\subsubsection{Parallel Submission Of Jobs Ready At The Same Time}
-
-Cylc now handles task job submission in a dedicated worker thread so
-that submission of many remote tasks at once does not impact cylc's
-performance or responsiveness.
-
-Further, for maximum efficiency, job submissions are batched inside the
-worker thread: batch members are submitted in parallel, and all members
-must complete (the job submission process, that is, not the submitted
-task) before the next batch is handled. There is a configurable delay
-between batches to avoid swamping the host system in the event that
-hundreds of tasks become ready at the same time:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[cylc]
-    [[job submission]]
-        batch size = 50 # default 10
-        delay between batches = 10 # seconds, default 0
-\end{lstlisting}
-Here a 120 task ensemble, for example, would be submitted in two batches
-of 50 followed by one of 20, with a 10 second delay between batches.
-
-\subsubsection{Network Connection Timeouts}
+\subsection{Network Connection Timeouts}
 
 A connection timeout can be set in site and user config files (see
 Section~\ref{SiteAndUserConfiguration}) so that messaging commands

@@ -31,17 +31,28 @@ class TaskStateError( Exception ):
 
 class task_state(object):
 
-    legal = [ 'waiting',
-              'held',
-              'queued',
-              'ready',
-              'submitted',
-              'submit-failed',
-              'submit-retrying',
-              'running',
-              'succeeded',
-              'failed',
-              'retrying' ]
+    legal = [
+        'waiting',
+        'held',
+        'queued',
+        'ready',
+        'submitted',
+        'submit-failed',
+        'submit-retrying',
+        'running',
+        'succeeded',
+        'failed',
+        'retrying'
+    ]
+
+    legal_for_reset = [
+        'waiting',
+        'held',
+        'ready',
+        'succeeded',
+        'failed',
+        'spawn'
+    ]
 
     @classmethod
     def is_legal( cls, state ):
@@ -75,7 +86,6 @@ class task_state(object):
             'retrying'   : "\033[1;35m",
             'held'       : "\033[1;37;43m",
             }
-    # spare: "\033[1;37;44m"
 
     ctrl_end = "\033[0m"
 

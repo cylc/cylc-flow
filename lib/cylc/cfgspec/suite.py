@@ -161,18 +161,7 @@ SPEC = {
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
-        'job submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='interval_seconds', vmin=0, default=0 ),
-            },
-        'event handler submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='interval_seconds', vmin=0, default=0  ),
-            },
-        'poll and kill command submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
-            },
+        'process pool size'                   : vdr( vtype='integer', default=None ),
         'lockserver' : {
             'enable'                          : vdr( vtype='boolean', default=False ),
             'simultaneous instances'          : vdr( vtype='boolean', default=False ),
@@ -365,7 +354,10 @@ def upg( cfg, descr ):
     )
     u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
             converter( lambda x:'2', 'using default runahead factor' ))
-    u.obsolete( '6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'] )
+    u.obsolete('6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'])
+    u.obsolete('6.0.0', ['cylc', 'job submission'])
+    u.obsolete('6.0.0', ['cylc', 'event handler submission'])
+    u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
     u.upgrade()
 
 class sconfig( config ):

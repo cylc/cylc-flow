@@ -219,7 +219,6 @@ send_a_broadcast_task|2013092306|1|1|succeeded
 send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
-tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

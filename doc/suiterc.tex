@@ -167,102 +167,12 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}job submission{]]}]{[cylc] $\rightarrow$ [[job submission]]}
-
-Tasks ready to submit are now queued for processing in a background
-worker thread, so submitting a lot of tasks at once does not hold cylc
-back.  In the job submission thread tasks are are batched, with members
-of each batch being submitted in parallel. Batches are processed serially,
-with a delay between batches, to avoid swamping the host system with too
-many simultaneous job submissions.
-
-The time required for a single task's job submission to complete
-typically depends on whether it is a remote task (for which an ssh
-connection must be established and used) and whether dynamic host
-selection is used (see~\ref{DynamicHostSelection} (a dynamic host
-selection command runs as part of the job submission command). The time
-taken for a batch of parallel job submissions to complete will be
-roughly the duration of the slowest member process.
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ batch size}
-
-The maximum number of tasks to be submitted in a single batch, in the
-job submission thread. cylc waits for all batch member job-submissions
-to complete before proceeding to the next batch.
-
+\subsubsection[process pool size]{[cylc] $\rightarrow$ process pool size}
+Number of process pool worker processes used to execute shell commands
+(job submission, event handlers, job poll and kill commands).
 \begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ delay between batches}
-
-It may cause a problem for some batch queue schedulers to submit too
-many jobs at once, so cylc allows a configurable delay between job
-submission batches.
-
-\begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second)
-    \item {\em default:} PT0S (0 seconds)
-\end{myitemize}
-
-\subsubsection[{[[}poll and kill command submission{]]}]{[cylc] $\rightarrow$ [[poll and kill command submission]]}
-
-Task poll and kill commands are queued to a worker thread that processes
-them in parallel, in batches to limit the number that can execute at
-once.
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ batch size}
-
-The maximum number of poll and kill commands to execute at once, before
-moving on to the next batch.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ delay between batches}
-
-How long to wait, expressed as an ISO 8601 duration/interval, before
-processing the next batch of poll and kill commands.
-
-\begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
-    \item {\em default:} PT0S (0 seconds)
-\end{myitemize}
-
-
-\subsubsection[{[[}event handler submission{]]}]{[cylc] $\rightarrow$ [[event handler submission]]}
-
-Task event handlers are queued to a worker thread that processes them in
-parallel, in batches to limit the number that can execute at once ({\em
-suite event handlers}, on the other hand, are executed as background
-sub-processes in the main thread, not queued to the task
-event handler thread).
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ batch size}
-
-The maximum number of event handlers to execute at once, before moving
-on to the next batch.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ delay between batches}
-
-How long to wait, expressed as an ISO 8601 duration/interval, before
-processing the next batch of event handlers.
-
-\begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT10S=, 10 seconds, \lstinline=PT1S=, 1 second) - minimum 0
- seconds.
-    \item {\em default:} PT0S (0 seconds)
+    \item {\em type:} integer
+    \item {\em default:} None (number of processor cores on the suite host)
 \end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
@@ -394,27 +304,29 @@ from running multiple distinct {\bf copies} of a suite simultaneously}.
 
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
-Variables defined here are exported into the environment in which cylc
-itself runs. They are then available to {\em local processes spawned
-directly by cylc}. Any variables read by task event handlers must be
-defined here, for instance, because event handlers are executed
-directly by cylc, not by running tasks. And similarly the {command
-lines} issued by cylc to invoke event handlers or to submit task
-job scripts could, in principle, make use of environment variables
-defined here.
-\paragraph{Warnings}
+Environment variables defined in this section are passed to suite and
+task event handlers.
 
 \begin{myitemize}
-    \item Cylc local variables are not available to
-        executing tasks unless you happen to choose a local direct job
-        submission method.  {\em Always use task runtime environments to
-        pass variables into the task execution environment
-        (\ref{AppendixTaskExecutionEnvironment}).}
-    \item Unlike task execution environment variables, which are written
-        to job scripts and interpreted by the shell at run time,
-        cylc local environment variables are written directly
-        to the environment by Python as literal strings {\em  so
-        shell variable expansion expressions cannot be used here.}
+    \item These variables are not passed to tasks - use task runtime
+        variables for that. Similarly, task runtime variables are not
+        available to event handlers - which are executed by cylc, not by
+        tasks, in response to task events.
+        
+    \item Cylc-defined environment variables such as
+        \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
+        handlers by default, but you can make them available by
+        extracting them to the cylc environment like this:
+\begin{lstlisting}
+[cylc]
+    [[environment]]
+        CYLC_SUITE_RUN_DIR = $CYLC_SUITE_RUN_DIR
+\end{lstlisting}
+
+    \item These variables - unlike task execution environment variables
+        which are written to job scripts and interpreted by the shell at
+        task run time - are not interpreted by the shell prior to use
+        so shell variable expansion expressions cannot be used here.
 \end{myitemize}
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
@@ -426,8 +338,8 @@ definition is preserved) and are not evaluated or manipulated by
 cylc, so any variable assignment expression that is legal in the
 shell in which cylc is running can be used (but see the warning
 above on variable expansions, which will not be evaluated).
-White space around the `$=$' is allowed (as far as cylc's suite.rc
-parser is concerned these are normal configuration items).
+White space around the `$=$' is allowed (as far as cylc's file 
+parser is concerned these are just suite configuration items).
 
 \begin{myitemize}
     \item {\em type:} string
