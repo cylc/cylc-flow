@@ -487,13 +487,15 @@ Dependency graph suite control interface.
         # TODO ISO - RESTORE OR REMOVE THIS FUNCTIONALITY
         #diff_pre = ctime - self.t.oldest_ctime.hours
         #diff_post = self.t.newest_ctime - ctime.hours
+        # ...
+        #start_entry.set_text(str(diff_pre))
+        #stop_entry.set_text(str(diff_post))
 
         # TODO - error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Pre (hours)' )
         box.pack_start( label, True )
         start_entry = gtk.Entry()
-        #start_entry.set_text(str(diff_pre))
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
@@ -501,7 +503,6 @@ Dependency graph suite control interface.
         label = gtk.Label( 'Post (hours)' )
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
-        #stop_entry.set_text(str(diff_post))
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 

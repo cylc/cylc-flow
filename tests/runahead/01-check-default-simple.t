@@ -40,6 +40,6 @@ fi
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-timeout
 LOG=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite/log
-run_ok $TEST_NAME grep 'Abort on suite timeout is set' $LOG
+grep_ok 'suite timed out after' $LOG
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

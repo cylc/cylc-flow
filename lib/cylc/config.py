@@ -156,12 +156,15 @@ class config( object ):
                 'dependencies', {})
             if dependency_map.get('graph'):
                 # There is an async graph setting.
+                # If it is by itself, it is integer shorthand.
+                # If there are cycling graphs as well, it is handled as
+                # backwards-compatiblity for mixed-async suites.
+                just_has_async_graph = True
                 for item, value in dependency_map.items():
-                    if item == 'graph':
-                        continue
-                    if value.get('graph'):
+                    if item != 'graph' and value.get('graph'):
+                        just_has_async_graph = False
                         break
-                else:
+                if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
                         INTEGER_CYCLING_TYPE
@@ -221,7 +224,19 @@ class config( object ):
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
 
+        if self.cfg['scheduling']['initial cycle point'] is not None:
+            initial_point = get_point(
+                self.cfg['scheduling']['initial cycle point']).standardise()
+            self.cfg['scheduling']['initial cycle point'] = str(initial_point)
+
+        if self.cfg['scheduling']['final cycle point'] is not None:
+            final_point = get_point(
+                self.cfg['scheduling']['final cycle point']).standardise()
+            self.cfg['scheduling']['final cycle point'] = str(final_point)
+
         self.cli_start_point = get_point(self._cli_start_string)
+        if self.cli_start_point is not None:
+            self.cli_start_point.standardise()
 
         flags.back_comp_cycling = (
             get_backwards_compatibility_mode())
@@ -875,16 +890,15 @@ class config( object ):
                 # instantiate a task
                 itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
             except TypeError, x:
-                raise
                 # This should not happen as we now explicitly catch use
                 # of synchronous special tasks in an asynchronous graph.
                 # But in principle a clash of multiply inherited base
                 # classes due to choice of "special task" modifiers
                 # could cause a TypeError.
-                raise SuiteConfigError, '(inconsistent use of special tasks?)'
+                raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
-                raise
-                raise SuiteConfigError, 'ERROR, failed to instantiate task ' + str(name)
+                raise SuiteConfigError(
+                    'ERROR, failed to instantiate task %s: %s' % (name, x))
             if not itask.tag:
                 if flags.verbose:
                     print " + Task out of bounds for " + str(tag) + ": " + itask.name

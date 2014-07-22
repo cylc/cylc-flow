@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python
+
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
 #C:
@@ -14,10 +15,16 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Basic test for state dumps.
-run_restart() {
-    suite_run_ok $TEST_NAME cylc restart --reference-test --debug $SUITE_NAME
-}
-. $(dirname $0)/test_impl
+
+class SchedulerStop( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
+class SchedulerError( Exception ):
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
 

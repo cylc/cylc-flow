@@ -100,6 +100,7 @@ __STATE__
 contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
+force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 running_task|2013092300|1|1|succeeded
@@ -112,7 +113,12 @@ contains_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 output_states|2013092300|1|1|succeeded
+<<<<<<< HEAD
 output_states|2013092306|1|1|running
+=======
+output_states|2013092306|2|1|running
+output_states|2013092312|0|1|held
+>>>>>>> c4a1c85afb063877cef367008f1b64954d248b6a
 running_task|2013092300|1|1|succeeded
 running_task|2013092306|1|1|succeeded
 tidy|2013092300|1|1|succeeded
@@ -139,7 +145,12 @@ contains_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
 output_states|2013092300|1|1|succeeded
+<<<<<<< HEAD
 output_states|2013092306|1|1|succeeded
+=======
+output_states|2013092306|2|1|succeeded
+output_states|2013092312|0|1|held
+>>>>>>> c4a1c85afb063877cef367008f1b64954d248b6a
 running_task|2013092300|1|1|succeeded
 running_task|2013092306|1|1|succeeded
 tidy|2013092300|1|1|succeeded

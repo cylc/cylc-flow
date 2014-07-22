@@ -1,36 +1,29 @@
-2014/03/08 22:59:58 INFO - Thread-2 start (Event Handlers)
-2014/03/08 22:59:58 INFO - port:7766
-2014/03/08 22:59:58 INFO - Suite starting at 2014-03-08 22:59:58.052065
-2014/03/08 22:59:58 INFO - Log event clock: real time
-2014/03/08 22:59:58 INFO - Run mode: live
-2014/03/08 22:59:58 INFO - Start tag: 2010080800
-2014/03/08 22:59:58 INFO - Stop tag: 2010080900
-2014/03/08 22:59:58 INFO - Thread-3 start (Poll & Kill Commands)
-2014/03/08 22:59:58 INFO - Thread-5 start (Request Handling)
-2014/03/08 22:59:58 INFO - Thread-4 start (Job Submission)
-2014/03/08 22:59:58 INFO - Restart /home/oliverh/cylc-run/rel/state/state.20140308T225926.605653Z
-2014/03/08 22:59:58 INFO - [bar.2010080800] -triggered off [None]
-2014/03/08 22:59:58 INFO - [foo.2010080900] -triggered off []
-2014/03/08 22:59:59 INFO - [bar.2010080800] -(current:ready)> bar.2010080800 submitting now
-2014/03/08 22:59:59 INFO - [foo.2010080900] -(current:ready)> foo.2010080900 submitting now
-2014/03/08 23:00:00 INFO - [bar.2010080800] -(current:ready)> bar.2010080800 submission succeeded
-2014/03/08 23:00:00 INFO - [bar.2010080800] -(current:submitted)> bar.2010080800 submit_method_id=39807
-2014/03/08 23:00:00 INFO - [bar.2010080800] -(current:submitted)> bar.2010080800 started at 2014-03-08T22:59:59
-2014/03/08 23:00:00 INFO - [bar.2010080800] -(current:running)> bar.2010080800 succeeded at 2014-03-08T22:59:59
-2014/03/08 23:00:00 INFO - [foo.2010080900] -(current:ready)> foo.2010080900 started at 2014-03-08T22:59:59
-2014/03/08 23:00:00 INFO - [foo.2010080900] -(current:running)> foo.2010080900 succeeded at 2014-03-08T22:59:59
-2014/03/08 23:00:00 WARNING - [foo.2010080900] -Assuming non-reported outputs were completed:
-foo.2010080900 submitted
-2014/03/08 23:00:01 INFO - [foo.2010080900] -(current:succeeded)> foo.2010080900 submission succeeded
-2014/03/08 23:00:01 INFO - [foo.2010080900] -(current:succeeded)> foo.2010080900 submit_method_id=39832
-2014/03/08 23:00:02 INFO - [bar.2010080900] -triggered off ['foo.2010080900']
-2014/03/08 23:00:03 INFO - [bar.2010080900] -(current:ready)> bar.2010080900 submitting now
-2014/03/08 23:00:03 INFO - [bar.2010080900] -(current:ready)> bar.2010080900 submission succeeded
-2014/03/08 23:00:03 INFO - [bar.2010080900] -(current:submitted)> bar.2010080900 submit_method_id=39896
-2014/03/08 23:00:03 INFO - [bar.2010080900] -(current:submitted)> bar.2010080900 started at 2014-03-08T23:00:02
-2014/03/08 23:00:03 INFO - [bar.2010080900] -(current:running)> bar.2010080900 succeeded at 2014-03-08T23:00:02
-2014/03/08 23:00:04 INFO - Stopping: 
+2014/03/21 11:39:23 INFO - port:7766
+2014/03/21 11:39:23 INFO - Suite starting at 2014-03-21 11:39:23.844665
+2014/03/21 11:39:23 INFO - Log event clock: real time
+2014/03/21 11:39:23 INFO - Run mode: live
+2014/03/21 11:39:23 INFO - Start tag: 2010080800
+2014/03/21 11:39:23 INFO - Stop tag: 2010080900
+2014/03/21 11:39:23 INFO - Thread-6 start (Request Handling)
+2014/03/21 11:39:23 INFO - Restart /home/oliverh/cylc-run/rel/state/state.20140321T113911.206692Z
+2014/03/21 11:39:24 INFO - [bar.2010080800] -submitting now
+2014/03/21 11:39:24 INFO - [foo.2010080900] -submitting now
+2014/03/21 11:39:24 INFO - [bar.2010080800] -triggered off ['foo.2010080800']
+2014/03/21 11:39:24 INFO - [foo.2010080900] -triggered off ['foo.2010080800']
+2014/03/21 11:39:25 INFO - [bar.2010080800] -submit_method_id=15591
+2014/03/21 11:39:25 INFO - [bar.2010080800] -submission succeeded
+2014/03/21 11:39:25 INFO - [foo.2010080900] -submit_method_id=15612
+2014/03/21 11:39:25 INFO - [foo.2010080900] -submission succeeded
+2014/03/21 11:39:26 INFO - [bar.2010080800] -(current:submitted)> bar.2010080800 started at 2014-03-21T11:39:24
+2014/03/21 11:39:26 INFO - [foo.2010080900] -(current:submitted)> foo.2010080900 started at 2014-03-21T11:39:25
+2014/03/21 11:39:27 INFO - [bar.2010080800] -(current:running)> bar.2010080800 succeeded at 2014-03-21T11:39:25
+2014/03/21 11:39:27 INFO - [foo.2010080900] -(current:running)> foo.2010080900 succeeded at 2014-03-21T11:39:26
+2014/03/21 11:39:28 INFO - [bar.2010080900] -submitting now
+2014/03/21 11:39:28 INFO - [bar.2010080900] -triggered off ['foo.2010080900']
+2014/03/21 11:39:29 INFO - [bar.2010080900] -submit_method_id=15682
+2014/03/21 11:39:29 INFO - [bar.2010080900] -submission succeeded
+2014/03/21 11:39:30 INFO - [bar.2010080900] -(current:submitted)> bar.2010080900 started at 2014-03-21T11:39:29
+2014/03/21 11:39:31 INFO - [bar.2010080900] -(current:running)> bar.2010080900 succeeded at 2014-03-21T11:39:30
+2014/03/21 11:39:31 INFO - Stopping: 
   + all cycling tasks have spawned past the final cycle 2010080900
-2014/03/08 23:00:04 INFO - Thread-4 exit (Job Submission)
-2014/03/08 23:00:05 INFO - Thread-2 exit (Event Handlers)
-2014/03/08 23:00:05 INFO - Thread-3 exit (Poll & Kill Commands)
+2014/03/21 11:39:31 INFO - Suite shutting down at 2014-03-21 11:39:31.155111
