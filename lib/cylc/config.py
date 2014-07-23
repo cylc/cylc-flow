@@ -19,11 +19,12 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
-from cylc.cycling.loader import (
-    get_point, get_point_relative, get_interval_cls, get_sequence,
-    get_sequence_cls, init_cyclers, INTEGER_CYCLING_TYPE,
-    get_backwards_compatibility_mode
-)
+from cylc.cycling.loader import (get_point, get_point_relative,
+                                 get_interval, get_interval_cls,
+                                 get_sequence, get_sequence_cls,
+                                 init_cyclers, INTEGER_CYCLING_TYPE,
+                                 ISO8601_CYCLING_TYPE,
+                                 get_backwards_compatibility_mode)
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -43,7 +44,9 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
+AUTO_RUNAHEAD_FACTOR = 2  # Factor to apply to the minimum cycling interval.
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
+NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
 try:
@@ -114,7 +117,8 @@ class config( object ):
         self.sequences = []
         self.actual_first_ctime = None
 
-        self.runahead_limit = None
+        self.custom_runahead_limit = None
+        self.max_num_active_cycle_points = None
 
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime = {
@@ -297,7 +301,7 @@ class config( object ):
         if not self.graph_found:
             raise SuiteConfigError, 'No suite dependency graph defined.'
 
-        self.compute_runahead_limit()
+        self.compute_runahead_limits()
 
         self.configure_queues()
 
@@ -320,8 +324,9 @@ class config( object ):
         self.cfg['visualization']['initial cycle point'] = vict
 
         vict_rh = None
-        if vict and self.runahead_limit:
-            vict_rh = str( get_point( vict ) + self.runahead_limit )
+        v_runahead_limit = self.custom_runahead_limit
+        if vict and v_runahead_limit:
+            vict_rh = str( get_point( vict ) + v_runahead_limit )
         
         vfct = self.cfg['visualization']['final cycle point'] or vict_rh or vict
         self.cfg['visualization']['final cycle point'] = vfct
@@ -560,43 +565,28 @@ class config( object ):
             for item, val in self.runtime[foo].items():
                 print '  ', '  ', item, val
 
-    def compute_runahead_limit( self ):
-        rfactor = self.cfg['scheduling']['runahead factor']
-        if not rfactor:
-            # no runahead limit!
-            return
-        try:
-            rfactor = int( rfactor )
-        except ValueError:
-            raise SuiteConfigError, "ERROR, illegal runahead limit: " + str(rfactor)
+    def compute_runahead_limits( self ):
+        """Extract the runahead limits information."""
 
-        rlim = None
-        intervals = []
-        offsets = []
-        for seq in self.sequences:
-            i = seq.get_interval()
-            if i:
-                intervals.append( i )
-            offsets.append( seq.get_offset() )
+        self.max_num_active_cycle_points = self.cfg['scheduling'][
+            'max active cycle points']
 
-        if intervals:
-            rlim = min( intervals ) * rfactor
-        if offsets:
-           min_offset = min( offsets )
-           if min_offset < get_interval_cls().get_null():
-               # future triggers...
-               if abs(min_offset) >= rlim:
-                   #... that extend past the default rl
-                   # set to offsets plus one minimum interval
-                   rlim = abs(min_offset) + rlim
+        limit = self.cfg['scheduling']['runahead limit']
+        if (limit is not None and limit.isdigit() and
+                get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE):
+            # Backwards-compatibility for raw number of hours.
+            limit = "PT%sH" % limit
 
-        self.runahead_limit = rlim
-        if flags.verbose:
-            print "Runahead limit:", self.runahead_limit
+        # The custom runahead limit is None if not user-configured.
+        self.custom_runahead_limit = get_interval(limit)
 
-    def get_runahead_limit( self ):
-        # may be None (no cycling tasks)
-        return self.runahead_limit
+    def get_custom_runahead_limit( self ):
+        """Return the custom runahead limit (may be None)."""
+        return self.custom_runahead_limit
+
+    def get_max_num_active_cycle_points( self ):
+        """Return the maximum allowed number of pool cycle points."""
+        return self.max_num_active_cycle_points
 
     def get_config( self, args, sparse=False ):
         return self.pcfg.get( args, sparse )
@@ -1300,6 +1290,8 @@ class config( object ):
                             offset_seq_map[offset_string] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)
+                        if seq_offset not in self.sequences:
+                            self.sequences.append(seq_offset)
                     # We don't handle implicit cycling in new-style cycling.
                 else:
                     self.taskdefs[ name ].add_sequence(seq)
@@ -1331,7 +1323,11 @@ class config( object ):
             # (GraphNodeError checked above)
             cycle_point = None
             lnode = graphnode(left, base_interval=base_interval)
-            l_taskdef = self.taskdefs[lnode.name]
+            ltaskdef = self.taskdefs[lnode.name]
+
+            if lnode.intercycle:
+                ltaskdef.intercycle = True
+
             if lnode.offset_is_from_ict:
                 print "Get point relative", lnode.offset_string, l_taskdef.ict
                 first_point = get_point_relative(
@@ -1339,19 +1335,19 @@ class config( object ):
                 last_point = seq.get_stop_point()
                 if last_point is None:
                     # This dependency persists for the whole suite run.
-                    l_taskdef.intercycle_offsets.append(
+                    ltaskdef.intercycle_offsets.append(
                         (None, seq))
                 else:
-                    l_taskdef.intercycle_offsets.append(
+                    ltaskdef.intercycle_offsets.append(
                         (str(-(last_point - first_point)), seq))
                 cycle_point = first_point
             elif lnode.intercycle:
-                l_taskdef.intercycle = True
+                ltaskdef.intercycle = True
                 if lnode.offset_is_irregular:
                     offset_tuple = (lnode.offset_string, seq)
                 else:
                     offset_tuple = (lnode.offset_string, None)
-                l_taskdef.intercycle_offsets.append(offset_tuple)
+                ltaskdef.intercycle_offsets.append(offset_tuple)
             trigger = self.set_trigger(
                 lnode.name, right, lnode.output, lnode.offset_string,
                 cycle_point, suicide, seq.get_interval()

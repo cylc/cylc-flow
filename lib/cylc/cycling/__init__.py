@@ -127,7 +127,6 @@ class IntervalBase(object):
         raise NotImplementedError()
 
     def __mul__( self, m ):
-        # the suite runahead limit is a multiple of the smallest sequence interval
         raise NotImplementedError()
 
     def __nonzero__(self):

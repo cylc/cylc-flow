@@ -1,7 +1,7 @@
 
 [scheduling]
-    initial cycle point = 2010080800
-    runahead factor = 4
+    initial cycle point = 20100808T00
+    runahead limit = P1D
     [[special tasks]]
         cold-start = cold
     [[dependencies]]

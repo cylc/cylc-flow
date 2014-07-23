@@ -117,6 +117,9 @@ class ISO8601Point(PointBase):
         return ISO8601Point(
             self._iso_point_sub_interval(self.value, other.value))
 
+    def __hash__(self):
+        return hash(self.value)
+
     @staticmethod
     @memoize
     def _iso_point_add(point_string, interval_string):
@@ -193,7 +196,6 @@ class ISO8601Interval(IntervalBase):
             self._iso_interval_abs(self.value, self.NULL_INTERVAL_STRING))
 
     def __mul__(self, m):
-        # the suite runahead limit is a multiple of the smallest sequence interval
         return ISO8601Interval(self._iso_interval_mul(self.value, m))
 
     def __nonzero__(self):

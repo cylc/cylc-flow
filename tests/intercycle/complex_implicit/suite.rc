@@ -1,6 +1,7 @@
 [scheduling]
     initial cycle time = 2014010100
     final cycle time = 2014010300
+    runahead limit = 24
     [[dependencies]] 
         [[[0]]] 
             graph = "foo[T-13] => bar" 
