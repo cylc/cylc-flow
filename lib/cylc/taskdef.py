@@ -129,7 +129,7 @@ class taskdef(object):
                     break
                 if target_point == my_point:
                     matching_dependent_points.append(dependent_point)
-                    print "        cutoff point candidate:", cutoff_points[-1]
+                    print "        cutoff point candidate:", dependent_point
                 dependent_point = sequence.get_next_point_on_sequence(
                     dependent_point)
             if matching_dependent_points:

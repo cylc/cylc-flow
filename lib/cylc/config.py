@@ -881,6 +881,7 @@ class config( object ):
                 # could cause a TypeError.
                 raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
+                raise
                 raise SuiteConfigError(
                     'ERROR, failed to instantiate task %s: %s' % (name, x))
             if not itask.tag:
