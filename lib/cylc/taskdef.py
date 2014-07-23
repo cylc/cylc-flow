@@ -63,7 +63,8 @@ class taskdef(object):
 
         # some defaults
         self.intercycle = False
-        self.intercycle_offset = get_interval_cls().get_null()
+        self.max_intercycle_offset = get_interval_cls().get_null()
+        self.min_intercycle_offset = get_interval_cls().get_null()
         self.sequential = False
         self.cycling = False
         self.modifiers = []
@@ -270,7 +271,7 @@ class taskdef(object):
             sself.startup = startup
             sself.submit_num = submit_num
             sself.exists=exists
-            sself.intercycle_offset = self.intercycle_offset
+            sself.max_intercycle_offset = self.max_intercycle_offset
 
             if self.cycling and startup:
                 # adjust up to the first on-sequence cycle point
@@ -282,10 +283,11 @@ class taskdef(object):
                         adjusted.append( adj )
                 if adjusted:
                     sself.tag = min( adjusted )
-                    if sself.intercycle_offset is None:
+                    if sself.max_intercycle_offset is None:
                         sself.cleanup_cutoff = None
                     else:
-                        sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                        sself.cleanup_cutoff = (
+                            sself.tag + sself.max_intercycle_offset)
                     sself.id = TaskID.get( sself.name, str(sself.tag) )
                 else:
                     sself.tag = None
@@ -294,10 +296,11 @@ class taskdef(object):
                     return
             else:
                 sself.tag = start_point
-                if sself.intercycle_offset is None:
+                if sself.max_intercycle_offset is None:
                     sself.cleanup_cutoff = None
                 else:
-                    sself.cleanup_cutoff = sself.tag + sself.intercycle_offset
+                    sself.cleanup_cutoff = (
+                        sself.tag + sself.max_intercycle_offset)
                 sself.id = TaskID.get( sself.name, str(sself.tag) )
 
             sself.c_time = sself.tag

@@ -1,0 +1,26 @@
+[cylc]
+    UTC mode = True
+    [[event hooks]]
+        timeout = 0.1
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
+    [[dependencies]]
+        # T00, T07, T14, ...
+        [[[PT7H]]]
+            graph = "foo => bar"
+        # T00, T12, T18... 
+        [[[T00, T12, T18]]]
+            graph = "foo"
+        # T04...
+        [[[T04]]]
+            graph = "run_ok"
+        # T05...
+        [[[T05]]]
+            graph = "never_run"
+[runtime]
+    [[foo]]
+        command scripting = false
+    [[bar]]
+        command scripting = true

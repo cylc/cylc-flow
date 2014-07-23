@@ -4,7 +4,7 @@
         timeout = 0.1
         abort on timeout = True
 [scheduling]
-    runahead factor = 3
+    runahead limit = PT18H
     initial cycle time = 20100101T00
     [[dependencies]]
         [[[PT6H]]]
