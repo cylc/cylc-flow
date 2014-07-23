@@ -71,7 +71,7 @@ class pool(object):
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.latest_prereq_point = None
-        self._prev_rh_stall_warning_base_point = None
+        self._prev_runahead_base_point = None
         self.max_num_active_cycle_points = (
             config.get_max_num_active_cycle_points())
         self._prev_runahead_base_point = None
@@ -221,15 +221,17 @@ class pool(object):
             # measured from the oldest non-finished task.
             latest_allowed_point = (
                 runahead_base_point + self.custom_runahead_limit)
-            if (self._prev_rh_stall_warning_point != runahead_base_point and
-                    self.latest_prereq_point > latest_allowed_point):
-                offset = self.latest_prereq_point - runahead_base_point
-                self.log.warning(
-                    'custom runahead limit of %s is less than '
-                    'future triggering offset %s: suite may stall.' % (
-                        self.custom_runahead_limit, offset)
-                )
-                self._prev_rh_stall_warning_point = runahead_base_point
+            
+            if (self._prev_runahead_base_point is None or
+                    self._prev_runahead_base_point != runahead_base_point):
+                if self.latest_prereq_point > latest_allowed_point:
+                    offset = self.latest_prereq_point - runahead_base_point
+                    self.log.warning(
+                        'custom runahead limit of %s is less than '
+                        'future triggering offset %s: suite may stall.' % (
+                            self.custom_runahead_limit, offset)
+                    )
+            self._prev_runahead_base_point = runahead_base_point
         
         for point, itask_id_map in self.runahead_pool.items():
             if point <= latest_allowed_point:

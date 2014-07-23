@@ -302,13 +302,17 @@ class taskdef(object):
                     cp = conditional_prerequisites( sself.id, self.ict )
                     for label in ctrig:
                         trig = ctrig[label]
-                        if self.ict is not None and trig.evaluation_offset is not None:
+                        if (self.ict is not None and
+                                trig.evaluation_offset_string is not None):
                             is_less_than_ict = (
-                                tag - trig.evaluation_offset < self.ict)
-                            cp.add( trig.get( tag ), label,
+                                get_point_relative(
+                                    trig.evaluation_offset_string, tag) <
+                                self.ict
+                            )
+                            cp.add( trig.get( tag )[0], label,
                                     is_less_than_ict)
                         else:
-                            cp.add( trig.get( tag ), label )
+                            cp.add( trig.get( tag )[0], label )
                     cp.set_condition( exp )
                     if ctrig[foo].suicide:
                         sself.suicide_prerequisites.add_requisites( cp )

@@ -97,7 +97,7 @@ where output x of foo may also have an offset:
                     self.evaluation_offset_string, ctime)
             if self.cycle_point:
                 ctime = self.cycle_point
-            preq = re.sub( '\[\s*[T\s*.*?\]', str(ctime), preq )
+            preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
         else:
             # implicit output
             if self.evaluation_offset_string:
