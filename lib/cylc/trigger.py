@@ -86,6 +86,7 @@ where output x of foo may also have an offset:
         self.evaluation_offset_string = offset_string
 
     def get( self, ctime ):
+        """Return a prerequisite string and the relevant point for ctime."""
         if self.msg:
             # explicit internal output ...
             preq = self.msg
@@ -105,4 +106,4 @@ where output x of foo may also have an offset:
             if self.cycle_point:
                 ctime = self.cycle_point
             preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
-        return preq
+        return preq, ctime

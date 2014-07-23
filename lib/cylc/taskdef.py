@@ -101,9 +101,8 @@ class taskdef(object):
             if is_implicit:
                 self.implicit_sequences.append( sequence )
 
-    def get_earliest_and_latest_dependent_points( self, my_point,
-                                                  offset_sequence_tuples):
-        """Extract the min and max dependent cycle points at my_point."""
+    def get_cleanup_cutoff_point( self, my_point, offset_sequence_tuples):
+        """Extract the max dependent cycle point for this point."""
         print "Extract cleanup cutoff", self.name, my_point
         if not offset_sequence_tuples:
             print "    not offset_seq_tuples: None"
@@ -207,6 +206,7 @@ class taskdef(object):
         tclass.mean_total_elapsed_time = None
 
         tclass.intercycle = self.intercycle
+        tclass.max_future_prereq_point = None
         tclass.follow_on = self.follow_on_task
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
@@ -275,10 +275,10 @@ class taskdef(object):
 
                         message, prereq_point = trig.get( tag )
                         if (prereq_point != tag and
-                                (self.max_future_prereq_point is None or
+                                (sself.max_future_prereq_point is None or
                                  prereq_point >
-                                 self.max_future_prereq_point)):
-                            self.max_future_prereq_point = prereq_point
+                                 sself.max_future_prereq_point)):
+                            sself.max_future_prereq_point = prereq_point
 
                         if trig.suicide:
                             sp.add( message )
@@ -335,7 +335,7 @@ class taskdef(object):
                         adjusted.append( adj )
                 if adjusted:
                     sself.tag = min( adjusted )
-                    sself.cleanup_cutoff = self.get_earliest_and_latest_dependent_points(
+                    sself.cleanup_cutoff = self.get_cleanup_cutoff_point(
                         sself.tag, self.intercycle_offsets)
                     sself.id = TaskID.get( sself.name, str(sself.tag) )
                 else:
@@ -345,7 +345,7 @@ class taskdef(object):
                     return
             else:
                 sself.tag = start_point
-                sself.cleanup_cutoff = self.get_earliest_and_latest_dependent_points(
+                sself.cleanup_cutoff = self.get_cleanup_cutoff_point(
                     sself.tag, self.intercycle_offsets)
                 sself.id = TaskID.get( sself.name, str(sself.tag) )
 

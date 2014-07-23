@@ -1329,7 +1329,6 @@ class config( object ):
                 ltaskdef.intercycle = True
 
             if lnode.offset_is_from_ict:
-                print "Get point relative", lnode.offset_string, l_taskdef.ict
                 first_point = get_point_relative(
                     lnode.offset_string, l_taskdef.ict)
                 last_point = seq.get_stop_point()

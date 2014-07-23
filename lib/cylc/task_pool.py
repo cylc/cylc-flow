@@ -70,7 +70,8 @@ class pool(object):
         self.db = db
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
-        self.minimum_runahead_limit = config.get_minimum_runahead_limit()
+        self.latest_prereq_point = None
+        self._prev_rh_stall_warning_base_point = None
         self.max_num_active_cycle_points = (
             config.get_max_num_active_cycle_points())
         self._prev_runahead_base_point = None
@@ -210,16 +211,25 @@ class pool(object):
             # Calculate which tasks to release based on a maximum number of
             # active cycle points (active meaning non-finished tasks).
             latest_allowed_point = sorted(points)[:limit][-1]
-            if self.minimum_runahead_limit is not None:
+            if self.latest_prereq_point is not None:
                 latest_allowed_point = max([
                     latest_allowed_point,
-                    runahead_base_point + self.minimum_runahead_limit
+                    self.latest_prereq_point
                 ])
         else:
             # Calculate which tasks to release based on a maximum duration
             # measured from the oldest non-finished task.
             latest_allowed_point = (
                 runahead_base_point + self.custom_runahead_limit)
+            if (self._prev_rh_stall_warning_point != runahead_base_point and
+                    self.latest_prereq_point > latest_allowed_point):
+                offset = self.latest_prereq_point - runahead_base_point
+                self.log.warning(
+                    'custom runahead limit of %s is less than '
+                    'future triggering offset %s: suite may stall.' % (
+                        self.custom_runahead_limit, offset)
+                )
+                self._prev_rh_stall_warning_point = runahead_base_point
         
         for point, itask_id_map in self.runahead_pool.items():
             if point <= latest_allowed_point:
@@ -250,7 +260,8 @@ class pool(object):
             self.log.warning(
                 '%s cannot be added (use --debug and see stderr)' % itask.id)
             return False
-
+        if itask.max_future_prereq_point is not None:
+            self.set_latest_prereq_point()
 
     def remove( self, itask, reason=None ):
         try:
@@ -284,6 +295,8 @@ class pool(object):
         if reason:
             msg += " (" + reason + ")"
         itask.log( 'DEBUG', msg )
+        if itask.max_future_prereq_point is not None:
+            self.set_latest_prereq_point()
         del itask
 
 
@@ -437,10 +450,10 @@ class pool(object):
                 interval = get_interval(interval)
         if interval is None:
             # No limit
-            self.log.warning( "setting NO runahead limit" )
+            self.log.warning( "setting NO custom runahead limit" )
             self.custom_runahead_limit = None
         else:
-            self.log.info( "setting runahead limit to " + str(interval) )
+            self.log.info( "setting custom runahead limit to %s" % interval )
             self.custom_runahead_limit = interval
         self.release_runahead_tasks()
 
@@ -463,12 +476,23 @@ class pool(object):
         return maxc
 
 
+    def set_latest_prereq_point(self):
+        """Calculate the latest required future trigger point."""
+        max_point = None
+        for itask in self.get_tasks():
+            if (itask.max_future_prereq_point is not None and
+                    (max_point is None or
+                     itask.max_future_prereq_point > max_point)):
+                max_point = itask.max_future_prereq_point
+        print "Latest prereq point", max_point
+        self.latest_prereq_point = max_point
+
+
     def reconfigure( self, config, stop_point ):
 
         self.reconfiguring = True
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
-        self.minimum_runahead_limit = config.get_minimum_runahead_limit()
         self.max_num_active_cycle_points = (
             config.get_max_num_active_cycle_points())
         self.config = config
