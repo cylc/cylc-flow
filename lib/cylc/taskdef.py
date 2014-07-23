@@ -31,7 +31,7 @@ from outputs import outputs
 import TaskID
 from task_output_logs import logfiles
 from parsec.OrderedDict import OrderedDict
-from cycling.loader import get_interval_cls, get_point_relative
+from cycling.loader import get_interval_cls, get_point_relative, get_interval
 
 
 class Error( Exception ):
@@ -109,13 +109,13 @@ class taskdef(object):
             return None
         cutoff_points = []
         for offset_string, sequence in offset_sequence_tuples:
-            print "    offset_string, sequence", offset_string, sequence.value
+            print "    offset_string, sequence", offset_string, str(sequence)
             if offset_string is None:
                 # This indicates a dependency across the whole suite run.
                 return None
             if sequence is None:
                 cutoff_points.append(
-                    get_point_relative(offset_string, my_point))
+                    my_point - get_interval(offset_string))
                 print "        cutoff point candidate:", cutoff_points[-1]
                 continue
             dependent_point = sequence.get_start_point()
@@ -137,8 +137,12 @@ class taskdef(object):
                 # Choose the largest of the dependent points.
                 cutoff_points.append(matching_dependent_points[-1])
         if cutoff_points:
-            print "    cutoff point choice:", max(cutoff_points)
-            return max(cutoff_points)
+            max_cutoff_point = max(cutoff_points)
+            print "    cutoff max:", max_cutoff_point
+            if max_cutoff_point < my_point:
+                print "    too low, defaulting to:", my_point
+                return my_point
+            return max_cutoff_point
         print "    no cutoff points:", None
         return None
                 

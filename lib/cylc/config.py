@@ -1330,7 +1330,7 @@ class config( object ):
 
             if lnode.offset_is_from_ict:
                 first_point = get_point_relative(
-                    lnode.offset_string, l_taskdef.ict)
+                    lnode.offset_string, ltaskdef.ict)
                 last_point = seq.get_stop_point()
                 if last_point is None:
                     # This dependency persists for the whole suite run.

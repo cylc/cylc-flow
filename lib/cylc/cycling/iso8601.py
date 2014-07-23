@@ -428,6 +428,9 @@ class ISO8601Sequence(object):
             return True
         return False
 
+    def __str__(self):
+        return self.value
+
 
 def convert_old_cycler_syntax(dep_section, only_detect_old=False,
                               start_point=None):

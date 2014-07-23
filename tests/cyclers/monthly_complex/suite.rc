@@ -6,16 +6,14 @@
     initial cycle point = 20000331T0100Z
     final cycle point = 2001
     [[dependencies]]
-     #   [[[R1/+P1M]]]
-     #       graph = "qux & flub"
-     #   [[[T00-P1M1D/P1M]]]
-     #       graph = "wibble => wobble"
-     #   [[[R10//P1D]]]
-     #       graph = "flub[^+P1M] => flob"
-        [[[02T06-P8DT6H/P1W]]]
-            graph = "foo[01T+P1W] => bar"
-        [[[01T+P1W/P1M]]]
-            graph = "foo => baz"
+        [[[20T-P2W/P1M]]]
+            graph = "foo"
+        [[[30T06+P8DT6H/P3W]]]
+            graph = "foo[20T-P2W] => bar"
+        [[[R1/+P1M]]]
+            graph = "flub"
+        [[[R4//P1D]]]
+            graph = "flub[^+P1M] & flob[-P1D] => flob"
 [runtime]
     [[root]]
         command scripting = true
