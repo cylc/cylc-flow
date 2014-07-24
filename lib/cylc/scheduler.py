@@ -944,7 +944,7 @@ class scheduler(object):
                 self.paused(),
                 self.will_pause_at(),
                 (self.shut_down_cleanly or self.shut_down_quickly),
-                self.will_stop_at(), self.pool.runahead_limit,
+                self.will_stop_at(), self.pool.custom_runahead_limit,
                 self.config.ns_defn_order)
 
     def process_resolved(self, tasks):

@@ -5598,21 +5598,6 @@ before re-triggering the task.
 Dummy mode is equivalent to commenting out each task's command scripting
 to expose the default scripting.
 
-\subsubsection{The Non-live-mode Accelerated Clock}
-
-In simulation and dummy mode cylc uses an accelerated clock with
-configurable rate and offset relative to the suite's initial cycle point.
-This affects the trigger time of any clock-triggered tasks in the suite,
-and the length of time between cycle points if simulating ``caught up''
-operation (without this a six-hour cycling suite, for instance, would
-wait six hours between cycles when simulating caught-up operation, even
-though the simulated or dummy tasks run very quickly). By configuring
-the initial clock offset you can quickly simulate how suites catch up
-and transition from delayed to real time operation.
-
-See Section~\ref{ClockConfig} for accelerated clock configuration
-settings.
-
 \subsubsection{Restarting Suites With A Different Run Mode?}
 
 The run mode is recorded in the suite state dump file. Cylc will not let
@@ -6781,9 +6766,6 @@ target suites - all suites are thus entirely isolated from one another.
 %
 %Each entry shows the time of logging, the name and cycle point of the
 %reporting task (in square brackets), and the logged message.
-%
-%In simulation mode, the logged time is the simulation mode accelerated clock time, not
-%real time.
 %
 %Existing log files are automatically rotated at start-up and,
 %individually, when they reach a size of 10 MB.  This maximum file

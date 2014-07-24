@@ -12,6 +12,7 @@ which should run to completion on restarting."""
 [scheduling]
     initial cycle time = 2010080800
     final cycle time = 2010080900
+    runahead limit = 12
     [[special tasks]]
         sequential = foo
     [[dependencies]]

@@ -46,6 +46,10 @@ machines this may result in some test failures due to timeouts intended
 to catch problems that can prevent a suite from shutting down normally.
 Use the "-j N" option to change the amount of concurrency.
 
+To output stderr from failed tests to the terminal, export
+CYLC_TEST_DEBUG=true before running this command. To perform comparison
+tests using `xxdiff -D`, export CYLC_TEST_DEBUG_CMP=true.
+
 For more information see "Reference Tests" in the User Guide.
 
 Options:
