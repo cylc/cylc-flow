@@ -237,6 +237,17 @@ function exists_fail() {
     fail $TEST_NAME
 }
 
+function graph_suite() {
+    SUITE_NAME=$1
+    OUTPUT_FILE=$2
+    shift 2
+    echo "$@" >/dev/tty
+    TEMP_OUTPUT_FILE=$(mktemp XXXX-$(basename $OUTPUT_FILE))
+    cylc graph --output-file="$TEMP_OUTPUT_FILE" "$SUITE_NAME" "$@"
+    sed -i "s/[.0-9]\+\( \|$\)//g" "$TEMP_OUTPUT_FILE"
+    sort $TEMP_OUTPUT_FILE >$OUTPUT_FILE
+}
+
 function init_suite() {
     SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
     SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${1}

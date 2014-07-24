@@ -1468,6 +1468,7 @@ class config( object ):
         startup_exclude_list = self.get_coldstart_task_list()
 
         stop = get_point( stop_str )
+        print "stop:", stop
 
         for e in self.edges:
             # Get initial cycle point for this sequence

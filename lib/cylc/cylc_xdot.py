@@ -72,7 +72,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, watch, orientation="TB" ):
+            template_vars_file, watch, orientation="TB",
+            should_hide=False ):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -169,7 +170,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
                     #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
                     break
 
-        self.show_all()
+        if not should_hide:
+            self.show_all()
         while True:
             if self.load_config():
                 break

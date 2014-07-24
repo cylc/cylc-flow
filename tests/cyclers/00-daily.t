@@ -18,12 +18,14 @@
 # Test intercycle dependencies.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate "$SUITE_NAME"
+graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
+cmp_ok "$SUITE_NAME.graph.plain" <"$TEST_SOURCE_DIR/$SUITE_NAME/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
