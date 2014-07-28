@@ -4,10 +4,11 @@
         timeout = 0.1
         abort on timeout = True
 [scheduling]
-    initial cycle time = 20100101T00
-    final cycle time = 20100105T00
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
     [[dependencies]]
-        [[[PT3H]]]
+        # Intervals are all 24 hours, but we really have a 6 hour repetition.
+        [[[T00, T06, T12, T18]]]
             graph = "foo => bar"
 [runtime]
     [[foo]]

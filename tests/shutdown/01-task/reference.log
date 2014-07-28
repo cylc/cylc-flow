@@ -59,6 +59,4 @@
 2013/10/31 01:28:27 INFO - Thread-4 exit (Job Submission)
 2013/10/31 01:28:27 INFO - Thread-2 exit (Event Handlers)
 2013/10/31 01:28:27 INFO - Thread-3 exit (Poll & Kill Commands)
-2013/10/31 01:28:27 INFO - [stopper.2010010106] -(setting:queued)
-2013/10/31 01:28:27 INFO - [stopper.2010010106] -(setting:submitting)
-2013/10/31 01:28:27 INFO - [stopper.2010010106] -triggered off ['a.2010010106']
+

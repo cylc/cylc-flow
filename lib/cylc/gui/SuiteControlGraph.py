@@ -444,21 +444,22 @@ Dependency graph suite control interface.
         self.t.action_required = True
 
     def filter( self, w, excl_e, incl_e, fbox ):
-        excl = excl_e.get_text()
-        incl = incl_e.get_text()
-        if excl == '':
-            excl = None
-        if incl == '':
-            incl == None
-        for filt in excl, incl:
+        filters = {}
+        filters["excl"] = excl_e.get_text()
+        filters["incl"] = incl_e.get_text()
+        for filt_name, filt in filters.items():
             if not filt:
+                filters[filt_name] = None
                 continue
             try:
                 re.compile( filt )
-            except:
-                warning_dialog( "Bad Expression: " + filt ).warn()
-        self.t.filter_include = incl
-        self.t.filter_exclude = excl
+            except re.error as exc:
+                warning_dialog(
+                    'Bad filter regex: %s: error: %s' % (filt, exc)).warn()
+                filters[filt_name] = None
+
+        self.t.filter_include = filters["incl"]
+        self.t.filter_exclude = filters["excl"]
 
         fstates = []
         for b in fbox.get_children():
@@ -490,13 +491,15 @@ Dependency graph suite control interface.
         # TODO ISO - RESTORE OR REMOVE THIS FUNCTIONALITY
         #diff_pre = ctime - self.t.oldest_ctime.hours
         #diff_post = self.t.newest_ctime - ctime.hours
+        # ...
+        #start_entry.set_text(str(diff_pre))
+        #stop_entry.set_text(str(diff_post))
 
         # TODO - error checking on date range given
         box = gtk.HBox()
         label = gtk.Label( 'Pre (hours)' )
         box.pack_start( label, True )
         start_entry = gtk.Entry()
-        #start_entry.set_text(str(diff_pre))
         box.pack_start (start_entry, True)
         vbox.pack_start( box )
 
@@ -504,7 +507,6 @@ Dependency graph suite control interface.
         label = gtk.Label( 'Post (hours)' )
         box.pack_start( label, True )
         stop_entry = gtk.Entry()
-        #stop_entry.set_text(str(diff_post))
         box.pack_start (stop_entry, True)
         vbox.pack_start( box )
 

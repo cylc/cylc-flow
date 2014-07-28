@@ -134,22 +134,22 @@ else:
     n_chosen = 0
 
     if options.print_year:
-        n_chosen +=1
+        n_chosen += 1
         if options.num_expanded_year_digits:
             template = u"±XCCYY"
         else:
             template = "CCYY"
 
     if options.print_month:
-        n_chosen +=1
+        n_chosen += 1
         template = "MM"
 
     if options.print_day:
-        n_chosen +=1
+        n_chosen += 1
         template = "DD"
 
     if options.print_hour:
-        n_chosen +=1
+        n_chosen += 1
         template = "%H"
 
     if n_chosen != 0 and n_chosen != 1:
@@ -177,7 +177,7 @@ except ValueError:
     try:
         cycle_point = cylc.cycling.iso8601.point_parse(cycle_point_string)
     except ValueError as exc:
-        parser.error( 'ERROR: invalid cycle: ' + str(exc) )
+        parser.error( 'ERROR: invalid cycle: %s' % exc )
 
 offset_props = {}
 
@@ -217,7 +217,7 @@ if options.offset:
         offset += isodatetime.parsers.TimeIntervalParser().parse(
             opt_offset) * sign_factor
     except ValueError as exc:
-        parser.error( 'ERROR: offset not valid: ' + str(exc) )
+        parser.error( 'ERROR: offset not valid: %s' % exc )
 cycle_point += offset
 if template is None:
     print cycle_point

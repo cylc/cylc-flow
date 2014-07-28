@@ -94,35 +94,6 @@ class jobfile(object):
         self.write_task_succeeded()
         self.write_eof()
         self.FILE.close()
-        # Wait for job file to properly close to prevent errors that look like
-        # this:
-        #     /bin/bash: SCRIPT: /bin/bash: bad interpreter: Text file busy
-        # which means that the OS thinks that the job file is still connected
-        # to a process when it is being executed.
-        try:
-            # lsof may hang or never return 0.
-            t_init_0 = time()
-            while time() - t_init_0 <= 10.0: # 10s should not take that long
-                proc = Popen(["lsof", path], stderr=PIPE, stdout=PIPE)
-                rc = 0
-                t_init = time()
-                while time() - t_init <= 2.0: # 2s should not take that long
-                    sleep(0.1)
-                    rc = proc.poll()
-                    if rc is not None:
-                        break
-                if rc:
-                    break
-                elif rc is None:
-                    if hasattr(proc, "kill"):
-                        proc.kill()
-                    else:
-                        os.kill(proc.pid, signal.SIGKILL)
-                    proc.wait()
-                    break
-                sleep(0.1)
-        except OSError: # OSError is triggered if "lsof" command not available
-            pass
 
     def write_header( self ):
         self.FILE.write( "#!" + self.jobconfig['job script shell'] )

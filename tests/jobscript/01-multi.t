@@ -94,6 +94,3 @@ grep -A1 "TASK COMMAND SCRIPTING" exp.jobfile > exp.task_cmd
 cmp_ok exp.task_cmd $TEST_SOURCE_DIR/multi/exp.cmd
 
 purge_suite $SUITE_NAME
-if [[ -n $SUITE_NAME ]]; then
-    rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME-submit
-fi

@@ -167,40 +167,19 @@ except Exception, x:
 method = None
 if options.wall_clock:
     method = 'stop after clock time'
-    prompt_text = 'Set shutdown at wall clock ' + options.wall_clock
+    prompt_text = 'Set shutdown at wall clock %s' % options.wall_clock
     shutdown_arg = options.wall_clock
 elif shutdown_at:
     # STOP argument detected
-    if not cylc.TaskID.is_valid_id( shutdown_arg ):
-        # not a task ID
-        # not a task ID or a date time;
-        # TODO ISO - MOVE THIS LOGIC INTO SCHEDULER AND TEST
-        try:
-            # is it a cycle point?
-            ##ct(shutdown_arg)
-            pass
-        except CycleTimeError,x:
-            # nope: is it an async integer point string?
-            try:
-                int( shutdown_arg )
-            except ValueError:
-                # nope: not task ID, date time, or CYCLE_POINT
-                raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
-            else:
-                # is probably an async CYCLE_POINT
-                method = 'stop after point'
-                prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
-                #print 'async'
-        else:
-            # is a cycle point
-            method = 'stop after point'
-            prompt_text = 'Set shutdown at cycle point ' + shutdown_arg
-            #print 'cycling'
-    else:
+    # TODO ISO: proper validation.
+    if cylc.TaskID.is_valid_id( shutdown_arg ):
         # is a task ID
         method = 'stop after task'
-        prompt_text = 'Set shutdown after task ' + shutdown_arg
-        #print 'task id'
+        prompt_text = 'Set shutdown after task %s' % shutdown_arg
+    else:
+        # not a task ID, may be a cycle point
+        method = 'stop after point'
+        prompt_text = 'Set shutdown at cycle point %s' % shutdown_arg
 
 if method:
     prompt( prompt_text + ' for ' + suite, options.force )
@@ -212,7 +191,7 @@ if method:
         sys.exit(x)
 
 elif options.now:
-    prompt( 'Shut down ' + suite + ' now', options.force )
+    prompt( 'Shut down %s now' % suite, options.force )
     try:
         result = proxy.put( 'stop now' )
     except Exception,x:
@@ -221,7 +200,7 @@ elif options.now:
         sys.exit(x)
 
 elif options.quick:
-    prompt( 'Shut down ' + suite + ' quickly', options.force )
+    prompt( 'Shut down %s quickly' % suite, options.force )
     try:
         result = proxy.put( 'stop quickly' )
     except Exception,x:
@@ -230,7 +209,7 @@ elif options.quick:
         sys.exit(x)
 
 else:
-    prompt( 'Shut down ' + suite, options.force )
+    prompt( 'Shut down %s' % suite, options.force )
     print "Telling the suite to shut down ..."
     try:
         result = proxy.put( 'stop cleanly', options.kill )

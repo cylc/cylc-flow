@@ -26,6 +26,16 @@ class CyclerTypeError(TypeError):
         return self.ERROR_MESSAGE.format(*self.args)
 
 
+class PointParsingError(ValueError):
+
+    """An error raised when a point has an incorrect value."""
+
+    ERROR_MESSAGE = "Incompatible value for {0}: {1}"
+
+    def __str__(self):
+        return self.ERROR_MESSAGE.format(*self.args)
+
+
 class PointBase(object):
 
     """The base class for single points in a cycler sequence.
@@ -51,7 +61,7 @@ class PointBase(object):
         self.value = value
 
     def standardise(self):
-        """Format self.value into a standard representation."""
+        """Format self.value into a standard representation and check it."""
         return self
 
     def __str__(self):
@@ -117,7 +127,6 @@ class IntervalBase(object):
         raise NotImplementedError()
 
     def __mul__( self, m ):
-        # the suite runahead limit is a multiple of the smallest sequence interval
         raise NotImplementedError()
 
     def __nonzero__(self):

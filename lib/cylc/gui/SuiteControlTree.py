@@ -78,19 +78,15 @@ Text Treeview suite control interface.
             state = re.sub( r'<.*?>', '', state )
         sres = state not in self.tfilter_states
 
-        try:
-            if not self.tfilt:
-                nres = True
-            elif self.tfilt in name:
-                # tfilt is any substring of name
-                nres = True
-            elif re.search( self.tfilt, name ):
-                # full regex match
-                nres = True
-            else:
-                nres = False
-        except:
-            warning_dialog( 'Bad filter regex? ' + self.tfilt ).warn()
+        if not self.tfilt:
+            nres = True
+        elif self.tfilt in name:
+            # tfilt is any substring of name
+            nres = True
+        elif re.search( self.tfilt, name ):
+            # full regex match
+            nres = True
+        else:
             nres = False
 
         if model.iter_has_child( iter ):
@@ -116,8 +112,15 @@ Text Treeview suite control interface.
         self.tmodelfilter.refilter()
 
     def check_filter_entry( self, e ):
-        ftxt = self.filter_entry.get_text()
-        self.tfilt = self.filter_entry.get_text()
+        ftext = self.filter_entry.get_text()
+        try:
+            re.compile(ftext)
+        except re.error as exc:
+            warning_dialog(
+                "Bad filter regex: '%s': error: %s" % (ftext, exc)).warn()
+            self.tfilt = ""
+        else:
+            self.tfilt = ftext
         self.tmodelfilter.refilter()
 
     def toggle_grouping( self, toggle_item ):

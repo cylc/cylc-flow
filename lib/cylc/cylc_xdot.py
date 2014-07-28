@@ -424,8 +424,10 @@ class MyDotWindow( CylcDotViewerCommon ):
             one = self.start_point_string
             two = self.stop_point_string
         else:
-            one = str( self.suiterc.cfg['visualization']['initial cycle point'])
-            two = str(self.suiterc.cfg['visualization']['final cycle point'])
+            one = str(
+                self.suiterc.cfg['visualization']['initial cycle point'])
+            two = str(
+                self.suiterc.cfg['visualization']['final cycle point'])
 
         graph = self.suiterc.get_graph( one, two,
                 raw=self.raw, group_nodes=group_nodes,

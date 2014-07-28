@@ -17,19 +17,21 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import Queue
 import TaskID
-from batch_submit import task_batcher
 from task_types import task
+from task_state import task_state
 from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
+from mp_pool import CMD_TYPE_JOB_SUBMISSION
+
 import cylc.rundb
 from cylc.cycling.loader import (
     get_point, get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from CylcError import SchedulerError, TaskNotFoundError
 from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
+
 
 # All new task proxies (including spawned ones) are added first to the
 # runahead pool, which does not participate in dependency matching and 
@@ -39,18 +41,26 @@ from broadcast import broadcast
 # The check_stop() and remove_spent_cycling_task() have to consider
 # tasks in the runahead pool too.
 
-# TODO ISO -
-# Spawn-on-submit means a only one waiting instance of each task exists,
-# in the pool, so if a new stop cycle is set we just need to check
-# waiting pool tasks against the new stop cycle.
+# TODO ISO - spawn-on-submit means a only one waiting instance of each
+# task exists, in the pool, so if a new stop cycle is set we just need
+# to check waiting pool tasks against the new stop cycle.
+
+# NOTE pre cycl-6 close_fds=True in job submission was required to prevent
+# the process from hanging on to the file descriptor that used to write
+# the job script, the root cause of the random "text file busy" error.
+# TODO ISO - is this still needed?
+ 
+# Background jobs echo PID to stdout but do not detach. Read one line to
+# get PID then don't wait on the process.
+#  p.stderr.readline() blocks until the process
+#  finishes because nothing is written to stderr.
 
 # restart: runahead tasks are all in the 'waiting' state and will be
 # reloaded as such, on restart, into the runahead pool.
 
 
 class pool(object):
-
-    def __init__( self, suite, db, stop_point, config, pyro, log, run_mode ):
+    def __init__( self, suite, db, stop_point, config, pyro, log, run_mode, proc_pool ):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -59,9 +69,17 @@ class pool(object):
         self.reconfiguring = False
         self.db = db
 
-        self.runahead_limit = config.get_runahead_limit()
+        self.custom_runahead_limit = config.get_custom_runahead_limit()
+        self.minimum_runahead_limit = config.get_minimum_runahead_limit()
+        self.max_num_active_cycle_points = (
+            config.get_max_num_active_cycle_points())
+        self._prev_runahead_base_point = None
+        self._prev_runahead_sequence_points = None
+
         self.config = config
 
+        self.pool = {}
+        self.proc_pool = proc_pool
         self.runahead_pool = {}
         self.myq = {}
         self.queues = {}
@@ -79,18 +97,8 @@ class pool(object):
 
         self.broker = broker()
 
-        self.jobqueue = Queue.Queue()
-
-        self.worker = task_batcher( 'Job Submission', self.jobqueue,
-                config.cfg['cylc']['job submission']['batch size'],
-                config.cfg['cylc']['job submission']['delay between batches'],
-                self.wireless, self.run_mode )
-
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
-
-        self.worker.start()
-
 
     def assign_queues( self ):
         """self.myq[taskname] = qfoo"""
@@ -125,8 +133,7 @@ class pool(object):
             itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
             itask.reset_state_held()
 
-        # add in held state if beyond the suite hold point
-        # TODO ISO -restore this functionality
+        # TODO ISO - restore this functionality
         #elif self.hold_time and itask.point > self.hold_time:
         #    itask.log( 'NORMAL', "holding (beyond suite hold point) " + str(self.hold_time) )
         #    itask.reset_state_held()
@@ -139,7 +146,8 @@ class pool(object):
             itask.reset_state_held()
 
         # add to the runahead pool
-        self.runahead_pool[itask.id] = itask
+        self.runahead_pool.setdefault(itask.point, {})
+        self.runahead_pool[itask.point][itask.id] = itask
         self.rhpool_changed = True
         return True
 
@@ -157,42 +165,100 @@ class pool(object):
         if not self.runahead_pool:
             return
 
-        runahead_base = None
-        for itask in self.get_tasks(all=True):
-            if itask.state.is_currently('failed', 'succeeded'):
+        limit = self.max_num_active_cycle_points
+
+        points = []
+        for point, itasks in sorted(
+                self.get_tasks_by_point(all=True).items()):
+            has_unfinished_itasks = False
+            for itask in itasks:
+                if not itask.state.is_currently('failed', 'succeeded'):
+                    has_unfinished_itasks = True
+                    break
+            if not points and not has_unfinished_itasks:
+                # We need to begin with an unfinished cycle point.
                 continue
-            if not runahead_base or itask.point < runahead_base:
-                runahead_base = itask.point
+            points.append(point)
 
-        # release tasks below the limit
-        if runahead_base:
-            for itask in self.runahead_pool.values():
-                if not self.runahead_limit or \
-                        itask.point - self.runahead_limit <= runahead_base:
-                    # release task to the appropriate queue
-                    # (no runahead limit implies R1 tasks only)
-                    queue = self.myq[itask.name]
-                    if queue not in self.queues:
-                        self.queues[queue] = {}
-                    self.queues[queue][itask.id] = itask
-                    self.pool_changed = True
-                    flags.pflag = True
-                    itask.log('DEBUG', "released to the task pool" )
-                    del self.runahead_pool[itask.id]
-                    self.rhpool_changed = True
-                    try:
-                        self.pyro.connect( itask.message_queue, itask.id )
-                    except Exception, x:
-                        if flags.debug:
-                            raise
-                        print >> sys.stderr, x
-                        self.log.warning( itask.id + ' cannot be added (use --debug and see stderr)' )
-                        return False
+        if not points:
+            return
 
+        # Get the earliest point with unfinished tasks.
+        runahead_base_point = min(points)
+
+        # Get all cycling points possible after the runahead base point.
+        if (self._prev_runahead_base_point is not None and 
+                runahead_base_point == self._prev_runahead_base_point):
+            # Cache for speed.
+            sequence_points = self._prev_runahead_sequence_points
+        else:
+            sequence_points = []
+            for sequence in self.config.sequences:
+                point = runahead_base_point
+                for i in range(limit):
+                    point = sequence.get_next_point(point)
+                    if point is None:
+                        break
+                    sequence_points.append(point)
+            sequence_points = set(sequence_points)
+            self._prev_runahead_sequence_points = sequence_points
+            self._prev_runahead_base_point = runahead_base_point
+
+        points = set(points).union(sequence_points)
+
+        if self.custom_runahead_limit is None:
+            # Calculate which tasks to release based on a maximum number of
+            # active cycle points (active meaning non-finished tasks).
+            latest_allowed_point = sorted(points)[:limit][-1]
+            if self.minimum_runahead_limit is not None:
+                latest_allowed_point = max([
+                    latest_allowed_point,
+                    runahead_base_point + self.minimum_runahead_limit
+                ])
+        else:
+            # Calculate which tasks to release based on a maximum duration
+            # measured from the oldest non-finished task.
+            latest_allowed_point = (
+                runahead_base_point + self.custom_runahead_limit)
+        
+        for point, itask_id_map in self.runahead_pool.items():
+            if point <= latest_allowed_point:
+                for itask in itask_id_map.values():
+                    self.release_runahead_task(itask)
+                    
+    def release_runahead_task(self, itask):
+        """Release itask to the appropriate queue in the active pool."""
+        queue = self.myq[itask.name]
+        if queue not in self.queues:
+            self.queues[queue] = {}
+        self.queues[queue][itask.id] = itask
+        self.pool.setdefault(itask.point, {})
+        self.pool[itask.point][itask.id] = itask
+        self.pool_changed = True
+        flags.pflag = True
+        itask.log('DEBUG', "released to the task pool" )
+        del self.runahead_pool[itask.point][itask.id]
+        if not self.runahead_pool[itask.point]:
+            del self.runahead_pool[itask.point]
+        self.rhpool_changed = True
+        try:
+            self.pyro.connect( itask.message_queue, itask.id )
+        except Exception, x:
+            if flags.debug:
+                raise
+            print >> sys.stderr, x
+            self.log.warning(
+                '%s cannot be added (use --debug and see stderr)' % itask.id)
+            return False
 
     def remove( self, itask, reason=None ):
-        if itask.id in self.runahead_pool:
-            del self.runahead_pool[itask.id]
+        try:
+            del self.runahead_pool[itask.point][itask.id]
+        except KeyError:
+            pass
+        else:
+            if not self.runahead_pool[itask.point]:
+                del self.runahead_pool[itask.point]
             self.rhpool_changed = True
             return
 
@@ -209,6 +275,9 @@ class pool(object):
         # remove from queue
         queue = self.myq[itask.name]
         del self.queues[queue][itask.id]
+        del self.pool[itask.point][itask.id]
+        if not self.pool[itask.point]:
+            del self.pool[itask.point]
         self.pool_changed = True
         msg = "task proxy removed"
         if reason:
@@ -235,17 +304,33 @@ class pool(object):
         if all:
             if self.rhpool_changed: 
                 self.rhpool_changed = False
-                self.rhpool_list = self.runahead_pool.values()
+                self.rhpool_list = []
+                for itask_id_maps in self.runahead_pool.values():
+                    self.rhpool_list.extend(itask_id_maps.values())
 
             return self.rhpool_list + self.pool_list
         else:
             return self.pool_list
 
+    def get_tasks_by_point( self, all=False ):
+        """Return a map of task proxies by cycle point."""
+        point_itasks = {}
+        for point, itask_id_map in self.pool.items():
+            point_itasks[point] = itask_id_map.values()
+
+        if not all:
+            return point_itasks
+        
+        for point, itask_id_map in self.runahead_pool.items():
+            point_itasks.setdefault(point, [])
+            point_itasks[point].extend(itask_id_map.values())
+        return point_itasks
 
     def id_exists( self, id ):
         """Check if task id is in the runahead_pool or pool"""
-        if id in self.runahead_pool:
-            return True
+        for point, itask_ids in self.runahead_pool.items():
+            if id in itask_ids:
+                return True
         for queue in self.queues:
             if id in self.queues[queue]:
                 return True
@@ -309,15 +394,27 @@ class pool(object):
                         itask.reset_manual_trigger()
                 # else leaved queued
 
-        n_ready = len(readytogo)
-        if n_ready > 0:
-            self.log.debug( '%d task(s) ready' % n_ready )
-            for itask in readytogo:
-                itask.set_state_ready()
-                self.jobqueue.put( itask )
+        self.log.debug( '%d task(s) ready' % len(readytogo) )
+
+        for itask in readytogo:
+            itask.set_state_ready()
+            if self.run_mode == 'simulation':
+                itask.job_submission_succeeded( '','' )
+                continue
+            try:
+                cmd = itask.get_command(overrides=self.wireless.get(itask.id))
+            except Exception, e:
+                # TODO - is this the right response?
+                itask.job_submission_failed(err=str(e))
+            else:
+                # Queue the job submission command for execution.
+                cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
+                self.proc_pool.put_command(
+                        cmd_spec,
+                        itask.submission_command_callback,
+                        itask.job_sub_method_name)
 
         return readytogo
-
 
     def task_has_future_trigger_overrun( self, itask ):
         # check for future triggers extending beyond the final cycle
@@ -340,36 +437,39 @@ class pool(object):
         if interval is None:
             # No limit
             self.log.warning( "setting NO runahead limit" )
-            self.runahead_limit = None
+            self.custom_runahead_limit = None
         else:
             self.log.info( "setting runahead limit to " + str(interval) )
-            self.runahead_limit = interval
+            self.custom_runahead_limit = interval
         self.release_runahead_tasks()
 
 
     def get_min_point( self ):
         """Return the minimum cycle point currently in the pool."""
-        points = [ t.point for t in self.get_tasks() ]
-        min_point = None
-        if points:
-            min_point = min(points)
-        return min_point
+        cycles = self.pool.keys()
+        minc = None
+        if cycles:
+            minc = min(cycles)
+        return minc
 
 
     def get_max_point( self ):
         """Return the maximum cycle point currently in the pool."""
-        points = [ t.point for t in self.get_tasks() ]
-        max_point = None
-        if points:
-            max_point = max(points)
-        return max_point
+        cycles = self.pool.keys()
+        maxc = None
+        if cycles:
+            maxc = max(cycles)
+        return maxc
 
 
     def reconfigure( self, config, stop_point ):
 
         self.reconfiguring = True
 
-        self.runahead_limit = config.get_runahead_limit()
+        self.custom_runahead_limit = config.get_custom_runahead_limit()
+        self.minimum_runahead_limit = config.get_minimum_runahead_limit()
+        self.max_num_active_cycle_points = (
+            config.get_max_num_active_cycle_points())
         self.config = config
         self.stop_point = stop_point  # TODO: Any point in using set_stop_point?
 
@@ -496,7 +596,7 @@ class pool(object):
                 itask.poll()
 
 
-    def kill_all_tasks( self ):
+    def kill_active_tasks( self ):
         for itask in self.get_tasks():
             if itask.state.is_currently( 'submitted', 'running' ):
                 itask.kill()
@@ -723,7 +823,7 @@ class pool(object):
 
     def reset_task_states( self, ids, state ):
         # we only allow resetting to a subset of available task states
-        if state not in [ 'ready', 'waiting', 'succeeded', 'failed', 'held', 'spawn' ]:
+        if state not in task_state.legal_for_reset:
             raise SchedulerError, 'Illegal reset state: ' + state
 
         tasks = []
@@ -783,9 +883,11 @@ class pool(object):
 
         i_cyc = False
         i_fut = False
+
         for itask in self.get_tasks( all=True ):
             i_cyc = True
-            # don't stop if a cycling task has not passed the stop cycle
+            # Don't stop if a cycling task has not passed the stop cycle
+            # (note finite recurrence tasks disappear once finished).
             if self.stop_point:
                 if itask.point <= self.stop_point:
                     if itask.state.is_currently('succeeded') and itask.has_spawned():
@@ -802,15 +904,6 @@ class pool(object):
                 # don't stop if there are cycling tasks and no stop cycle set
                 stop = False
                 break
-        if stop:
-            msg = "Stopping: "
-            if i_fut:
-                msg += "\n  + all future-triggered tasks have run as far as possible toward " + str(self.stop_point)
-            if i_cyc:
-                msg += "\n  + all tasks have spawned past the final cycle " + str(self.stop_point)
-            print msg
-            self.log.info( msg )
-
         return stop
 
 
@@ -827,8 +920,6 @@ class pool(object):
     def shutdown( self ):
         if not self.no_active_tasks():
             self.log.warning( "some active tasks will be orphaned" )
-        self.worker.quit = True # (should be done already)
-        self.worker.join()
         self.pyro.disconnect( self.wireless )
         for itask in self.get_tasks():
             if itask.message_queue:
@@ -856,8 +947,7 @@ class pool(object):
         pp.add( msg )
         itask.prerequisites.add_requisites(pp)
 
-
-    def has_stop_task_succeeded( self, id ):
+    def task_succeeded( self, id ):
         res = False
         name, point_string = TaskID.split(id)
         for itask in self.get_tasks():
@@ -866,11 +956,9 @@ class pool(object):
             if (itask.name == name and
                     get_point(point_string) == get_point(ipoint_string)):
                 if itask.state.is_currently('succeeded'):
-                    self.log.info( "Stop task " + id + " finished" )
                     res = True
                 break
         return res
-
 
     def ping_task( self, id ):
         found = False

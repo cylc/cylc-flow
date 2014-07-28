@@ -20,3 +20,4 @@ run_restart() {
     suite_run_ok $TEST_NAME cylc restart --reference-test --debug $SUITE_NAME
 }
 . $(dirname $0)/test_impl
+

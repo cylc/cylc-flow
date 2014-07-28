@@ -31,7 +31,7 @@ run_ok $TEST_NAME cylc run --debug $SUITE_NAME \
     -s START=$(date -u +%Y%m%dT%H00)Z -s HOUR=T$(date -u +%H) -s UTC_MODE=True
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-past
-NOW=$(date +%Y%m%dT%H00)Z
+NOW=$(date -u +%Y%m%dT%H00)Z
 START=$(cylc cycletime $NOW --offset-hour=-10)
 HOUR=T$(cylc cycletime $NOW --offset-hour=-10 --print-hour)
 run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START -s HOUR=$HOUR \
