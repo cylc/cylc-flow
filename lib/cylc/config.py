@@ -1286,7 +1286,7 @@ class config( object ):
                                 self.cfg['scheduling']['final cycle point']
                             )
                             seq_offset.set_offset(
-                                -get_interval(offset_string))
+                                get_interval(offset_string))
                             offset_seq_map[offset_string] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)

@@ -123,6 +123,7 @@ class graphnode( object ):
                 is_prev_cycling_format = True
                 # node looks like foo[T-6], foo[T-12]:fail...
                 name, sign, offset_string, outp = m.groups()
+                offset_string = sign + offset_string
                 prev_format = True
 
         if outp:

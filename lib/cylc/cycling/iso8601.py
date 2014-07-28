@@ -311,9 +311,9 @@ class ISO8601Sequence(object):
     def set_offset(self, offset):
         """Alter state to offset the entire sequence."""
         if self.recurrence.start_point is not None:
-            self.recurrence.start_point -= interval_parse(str(offset))
+            self.recurrence.start_point += interval_parse(str(offset))
         if self.recurrence.end_point is not None:
-            self.recurrence.end_point -= interval_parse(str(offset))
+            self.recurrence.end_point += interval_parse(str(offset))
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
