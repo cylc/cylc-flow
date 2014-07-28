@@ -13,8 +13,8 @@
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
         timeout = 3
 [scheduling]
-    initial cycle time = 2013092300
-    final cycle time   = 2013092306
+    initial cycle point = 2013092300
+    final cycle point   = 2013092306
     runahead limit = 2
     [[dependencies]]
         [[[0,6,12,18]]]

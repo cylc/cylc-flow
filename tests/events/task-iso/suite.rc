@@ -13,7 +13,7 @@ title = "test all event hooks"
         live mode suite timeout = PT45S
         suite shutdown event handler = log-check.sh
         expected task failures = bar.1, baz.1
- 
+
 [scheduling]
     [[dependencies]]
         graph = """
@@ -26,6 +26,8 @@ title = "test all event hooks"
         # make the event handler log available to gcylc:
         extra log files = {{ EVNTLOG }}
         command scripting = "true" # fast
+        [[[environment]]]
+            EVNTLOG = {{ EVNTLOG }}
 
     [[prep]]
         command scripting = """

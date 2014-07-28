@@ -76,24 +76,17 @@ retrying_task.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
 grep_ok "retrying_task|2013092300|1|2|retrying" $TEST_DIR/states-db-pre-restart-2013092300
-cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|waiting
 retrying_task|2013092300|2|2|retrying
-retrying_task|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
-cmp_ok $TEST_DIR/states-db-tidy-2013092300 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-tidy-2013092300 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|succeeded
-output_states|2013092306|0|1|waiting
 retrying_task|2013092300|4|3|succeeded
-retrying_task|2013092306|0|1|waiting
 tidy|2013092300|1|1|running
-tidy|2013092306|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
 run mode : live
@@ -110,28 +103,23 @@ retrying_task.2013092312 : status=held, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|1|2|retrying
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
-cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
-output_states|2013092312|0|1|held
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|2|2|retrying
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -152,19 +140,15 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
   order by name, cycle;" > $TEST_DIR/states-db
-cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
-output_states|2013092312|0|1|held
 retrying_task|2013092300|4|3|succeeded
 retrying_task|2013092306|4|3|succeeded
-retrying_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
-tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

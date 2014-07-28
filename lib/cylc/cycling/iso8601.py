@@ -25,7 +25,8 @@ from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
-from cylc.cycling import PointBase, IntervalBase, SequenceBase
+from cylc.cycling import (
+    PointBase, IntervalBase, SequenceBase, PointParsingError)
 from parsec.validate import IllegalValueError
 
 # TODO - Consider copy vs reference of points, intervals, sequences
@@ -110,7 +111,10 @@ class ISO8601Point(PointBase):
 
     def standardise(self):
         """Reformat self.value into a standard representation."""
-        self.value = str(point_parse(self.value))
+        try:
+            self.value = str(point_parse(self.value))
+        except ValueError:
+            raise PointParsingError(type(self), self.value)
         return self
 
     def sub(self, other):
@@ -120,6 +124,9 @@ class ISO8601Point(PointBase):
                 self._iso_point_sub_point(self.value, other.value))
         return ISO8601Point(
             self._iso_point_sub_interval(self.value, other.value))
+
+    def __hash__(self):
+        return hash(self.value)
 
     @staticmethod
     @memoize
@@ -408,7 +415,7 @@ class ISO8601Sequence(SequenceBase):
         return result
 
     def get_first_point(self, point):
-        """Return the first point >= to poing, or None if out of bounds."""
+        """Return the first point >= to point, or None if out of bounds."""
         try:
             return ISO8601Point(self._cached_first_point_values[point.value])
         except KeyError:

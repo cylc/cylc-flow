@@ -15,7 +15,6 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
 Integer cycling by point, interval, and sequence classes.
 The same interface as for full ISO8601 date time cycling.
@@ -23,7 +22,9 @@ The same interface as for full ISO8601 date time cycling.
 
 import re
 
-from cylc.cycling import PointBase, IntervalBase, SequenceBase
+from cylc.cycling import (
+    PointBase, IntervalBase, SequenceBase, PointParsingError)
+
 
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
@@ -43,8 +44,7 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 # absolute, or relative to some context, so a special character 'c'
 # is used to signify that context is required. '?' can be used for
 # the period in one-off (no-repeat) expressions, otherwise an arbitrary
-# given value will be ignored (an arbitrary interval is not stored as
-# it may affect the default runahead limit calculation).
+# given value will be ignored.
 #
 # 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
 # missing n means repeat indefinitely
@@ -86,6 +86,14 @@ class IntegerPoint(PointBase):
         if isinstance(other, IntegerPoint):
             return IntegerInterval(int(self) - int(other))
         return IntegerPoint(int(self) - int(other))
+
+    def standardise(self):
+        """Format self.value into a standard representation and check it."""
+        try:
+            self.value = str(int(self))
+        except (TypeError, ValueError):
+            raise PointParsingError(type(self), self.value)
+        return self
 
     def __int__(self):
         return int(self.value)

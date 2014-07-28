@@ -29,6 +29,16 @@ class CyclerTypeError(TypeError):
         return self.ERROR_MESSAGE.format(*self.args)
 
 
+class PointParsingError(ValueError):
+
+    """An error raised when a point has an incorrect value."""
+
+    ERROR_MESSAGE = "Incompatible value for {0}: {1}"
+
+    def __str__(self):
+        return self.ERROR_MESSAGE.format(*self.args)
+
+
 class PointBase(object):
 
     """The base class for single points in a cycler sequence.
@@ -62,7 +72,7 @@ class PointBase(object):
         raise NotImplementedError()
 
     def standardise(self):
-        """Format self.value into a standard representation."""
+        """Format self.value into a standard representation and check it."""
         return self
 
     def sub(self, other):

@@ -237,7 +237,7 @@ class TreeUpdater(threading.Thread):
                             )
                         )
                 if isinstance(meant, float):
-                    if not meant:
+                    if meant == 0:
                         # This is a very fast (sub-cylc-resolution) task.
                         meant = 1
                     meant = int(meant)

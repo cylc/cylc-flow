@@ -43,4 +43,3 @@
 2013/12/19 14:32:10 INFO - Thread-4 exit (Job Submission)
 2013/12/19 14:32:10 INFO - Thread-2 exit (Event Handlers)
 2013/12/19 14:32:10 INFO - Thread-3 exit (Poll & Kill Commands)
-2013/12/19 14:32:10 INFO - [t1.2013010600] -triggered off ['t1.2013010500']
