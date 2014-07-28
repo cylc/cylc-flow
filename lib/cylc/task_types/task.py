@@ -412,7 +412,8 @@ class task( object ):
             self.submit_method_id = self.job_sub_method.get_id( out, err )
             if self.submit_method_id:
                 self.log( 'NORMAL', 'submit_method_id=' + self.submit_method_id )
-                self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
+                self.record_db_update("task_states", self.name,
+                    str(self.point), submit_method_id=self.submit_method_id)
             out, err = self.job_sub_method.filter_output( out, err )
             self.job_submission_succeeded( out, err )
 

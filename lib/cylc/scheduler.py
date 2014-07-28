@@ -1101,9 +1101,10 @@ class scheduler(object):
             self.stop_point.standardise()
         except PointParsingError as exc:
             self.log.critical(
-                "Cannot set stop cycle point: %s: %s" % (stop_string, exc))
+                "Cannot set stop cycle point: %s: %s" % (
+                    stop_point_string, exc))
             return
-        self.log.info( "Setting stop cycle point: %s" % stop_string )
+        self.log.info( "Setting stop cycle point: %s" % stop_point_string )
         self.pool.set_stop_point(self.stop_point)
 
     def set_stop_clock( self, unix_time, date_time_string ):
