@@ -9,3 +9,6 @@
 [runtime]
     [[root]]
         command scripting = true
+[visualization]
+    initial cycle point = 2005W015T12
+    final cycle point = 2005W065T11-0100
