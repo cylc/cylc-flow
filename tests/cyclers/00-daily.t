@@ -29,7 +29,6 @@ run_ok $TEST_NAME cylc validate "$SUITE_NAME"
 TEST_NAME=$TEST_NAME_BASE-graph
 graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
 cmp_ok "$SUITE_NAME.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref"
-xxdiff -D "$SUITE_NAME.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
