@@ -2,8 +2,8 @@
 2014/03/21 11:39:23 INFO - Suite starting at 2014-03-21 11:39:23.844665
 2014/03/21 11:39:23 INFO - Log event clock: real time
 2014/03/21 11:39:23 INFO - Run mode: live
-2014/03/21 11:39:23 INFO - Start point: 2010080800
-2014/03/21 11:39:23 INFO - Stop point: 2010080900
+2014/03/21 11:39:23 INFO - Initial point: 2010080800
+2014/03/21 11:39:23 INFO - Final point: 2010080900
 2014/03/21 11:39:23 INFO - Thread-6 start (Request Handling)
 2014/03/21 11:39:23 INFO - Restart /home/oliverh/cylc-run/rel/state/state.20140321T113911.206692Z
 2014/03/21 11:39:24 INFO - [bar.2010080800] -submitting now
