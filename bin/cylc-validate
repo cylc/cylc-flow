@@ -61,7 +61,7 @@ if cylc.flags.verbose:
 
 try:
     config( suite, suiterc,
-            cli_start_string=options.ict,
+            cli_initial_point_string=options.ict,
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             validation=True, strict=options.strict,

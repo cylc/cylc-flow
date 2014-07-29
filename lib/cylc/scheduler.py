@@ -125,18 +125,20 @@ class scheduler(object):
 
         # TODO - stop task should be held by the task pool.
         self.stop_task = None
-
+        self.stop_point = None
         self.stop_clock_time = None  # When not None, in Unix time
         self.stop_clock_time_description = None  # Human-readable format.
 
-        self._start_string = None
-        self._stop_string = None
-        self._cli_start_string = None
+        self.initial_point = None
+        self.start_point = None
+        self._cli_initial_point_string = None
+        self._cli_start_point_string = None
 
         self.parser.add_option( "--until",
                 help=("Shut down after all tasks have PASSED " +
                       "this cycle point."),
-                metavar="CYCLE_POINT", action="store", dest="stop_string" )
+                metavar="CYCLE_POINT", action="store",
+                dest="final_point_string" )
 
         self.parser.add_option( "--hold", help="Hold (don't run tasks) "
                 "immediately on starting.",
@@ -244,10 +246,12 @@ class scheduler(object):
         else:
             self.log.info( 'Log event clock: accelerated' )
         self.log.info( 'Run mode: ' + self.run_mode )
-        self.log.info( 'Start point: ' + str(self.start_point) )
-        self.log.info( 'Stop point: ' + str(self.stop_point) )
+        self.log.info( 'Initial point: ' + str(self.initial_point) )
+        if self.start_point != self.initial_point:
+            self.log.info( 'Start point: ' + str(self.start_point) )
+        self.log.info( 'Final point: ' + str(self.final_point) )
 
-        self.pool = pool( self.suite, self.db, self.stop_point, self.config,
+        self.pool = pool( self.suite, self.db, self.final_point, self.config,
                           self.pyro, self.log, self.run_mode, self.proc_pool )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
@@ -262,7 +266,7 @@ class scheduler(object):
             self.config, self.run_mode, str(self.pool.get_min_point()))
         self.pyro.connect( self.suite_state, 'state_summary')
 
-        self.state_dumper.set_cts( self.start_point, self.stop_point )
+        self.state_dumper.set_cts( self.initial_point, self.final_point )
         self.configure_suite_environment()
 
         # Write suite contact environment variables.
@@ -518,17 +522,17 @@ class scheduler(object):
         self.pool.remove_tasks( task_ids, spawn )
 
     def command_insert_task( self, name, point_string, is_family,
-                             stop_string ):
+                             stop_point_string ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
 
         point = get_point(point_string)
-        if stop_string is None:
+        if stop_point_string is None:
             stop_point = None
         else:
-            stop_point = get_point(stop_string)
+            stop_point = get_point(stop_point_string)
 
         for task_id in task_ids:
             name, task_point_string = TaskID.split( task_id )
@@ -568,7 +572,7 @@ class scheduler(object):
         print "RELOADING the suite definition"
         self.configure_suite( reconfigure=True )
 
-        self.pool.reconfigure( self.config, self.stop_point )
+        self.pool.reconfigure( self.config, self.final_point )
 
         self.suite_state.config = self.config
         self.configure_suite_environment()
@@ -577,7 +581,7 @@ class scheduler(object):
             self.configure_reftest(recon=True)
 
         # update state dumper state
-        self.state_dumper.set_cts( self.start_point, self.stop_point )
+        self.state_dumper.set_cts( self.initial_point, self.final_point )
 
     def parse_commandline( self ):
         self.run_mode = self.options.run_mode
@@ -593,6 +597,7 @@ class scheduler(object):
 
         if self.options.genref:
             self.gen_reference_log = self.options.genref
+
 
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
@@ -613,34 +618,33 @@ class scheduler(object):
         # LOAD SUITE CONFIG FILE
 
         if self.is_restart:
-            self._cli_start_string = self.get_state_start_string()
+            self._cli_initial_point_string = (
+                self.get_state_initial_point_string())
             self.do_process_tasks = True
 
         self.config = config(
             self.suite, self.suiterc,
             self.options.templatevars,
             self.options.templatevars_file, run_mode=self.run_mode,
-            cli_start_string=(self._start_string or
-                              self._cli_start_string),
+            cli_initial_point_string=self._cli_initial_point_string,
+            cli_start_point_string=self._cli_start_point_string,
             is_restart=self.is_restart, is_reload=reconfigure
         )
 
-        # Initial and final cycle times - command line takes precedence
-        self.start_point = get_point(
-            self._start_string or self._cli_start_string or
-            self.config.cfg['scheduling']['initial cycle point']
-        )
-        if self.start_point is not None:
-            self.start_point.standardise()
+        # Initial and final cycle times - command line takes precedence.
+        # self.config already alters the 'initial cycle point' for CLI.
+        self.initial_point = self.config.initial_point
 
-        self.stop_point = get_point(
-            self.options.stop_string or
+        self.start_point = self.config.start_point
+
+        self.final_point = get_point(
+            self.options.final_point_string or
             self.config.cfg['scheduling']['final cycle point']
         )
-        if self.stop_point is not None:
-            self.stop_point.standardise()
+        if self.final_point is not None:
+            self.final_point.standardise()
 
-        if (not self.start_point and not self.is_restart and
+        if (not self.initial_point and not self.is_restart and
             self.config.cycling_tasks):
             print >> sys.stderr, 'WARNING: No initial cycle point provided - no cycling tasks will be loaded.'
 
@@ -649,7 +653,7 @@ class scheduler(object):
 
         if not reconfigure:
             self.state_dumper = dumper( self.suite, self.run_mode,
-                                        self.start_point, self.stop_point )
+                                        self.initial_point, self.final_point )
 
             run_dir = sitecfg.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
@@ -720,10 +724,10 @@ class scheduler(object):
                 'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
                 'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
                 'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
-                'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( self.start_point ), # may be "None"
-                'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( self.stop_point ), # may be "None"
-                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.start_point ), # may be "None"
-                'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.stop_point ), # may be "None"
+                'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( self.initial_point ), # may be "None"
+                'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( self.final_point ), # may be "None"
+                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.initial_point ), # may be "None"
+                'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.final_point ), # may be "None"
                 'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
                 }
 
@@ -788,8 +792,9 @@ class scheduler(object):
             self.config.cfg['cylc']['event hooks']['abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec( self.reflogfile )
-                self.start_point = get_point( spec.get_start_string() )
-                self.stop_point = get_point( spec.get_stop_string() )
+                self.initial_point = get_point( spec.get_initial_point_string() )
+                self.start_point = get_point( spec.get_start_point_string() ) or self.initial_point
+                self.final_point = get_point( spec.get_final_point_string() )
             self.ref_test_allowed_failures = self.config.cfg['cylc']['reference test']['expected task failures']
             if not self.config.cfg['cylc']['reference test']['allow task failures'] and len( self.ref_test_allowed_failures ) == 0:
                 self.config.cfg['cylc']['abort if any task fails'] = True
@@ -1151,6 +1156,8 @@ class scheduler(object):
             return self.stop_clock_time_description
         elif self.stop_task:
             return self.stop_task
+        elif self.final_point:
+            return self.final_point
         else:
             return None
 
@@ -1162,12 +1169,6 @@ class scheduler(object):
 
     def paused( self ):
         return self.hold_suite_now
-
-    def stopping( self ):
-        if self.stop_point is not None or self.stop_clock_time is not None:
-            return True
-        else:
-            return False
 
     def will_pause_at( self ):
         return self.hold_time

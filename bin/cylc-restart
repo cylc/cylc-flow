@@ -96,8 +96,8 @@ where they got to while the suite was down."""
 
         scheduler.parse_commandline( self )
 
-    def get_state_start_string( self ):
-        """Return the start string specified in the state file, if any."""
+    def get_state_initial_point_string( self ):
+        """Return the initial point string from the state file, if any."""
         return self.get_state_file_info()[0]
         
     def get_state_file_path( self ):

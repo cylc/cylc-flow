@@ -21,9 +21,9 @@ import re
 class prerequisites(object):
     """A container for other prerequisite types."""
 
-    def __init__( self, ict=None ):
+    def __init__( self, start_point=None ):
         self.container = []
-        self.ict = ict
+        self.start_point = start_point
 
     def add_requisites( self, reqs ):
         self.container.append( reqs )

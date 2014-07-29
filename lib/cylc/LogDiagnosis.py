@@ -20,10 +20,10 @@ class LogSpec( object ):
         self.lines = h.readlines()
         h.close()
 
-    def get_start_string( self ):
+    def get_initial_point_string( self ):
         found = False
         for line in self.lines:
-            m = re.search( 'Start point: (.*)$',line)
+            m = re.search( 'Initial point: (.*)$',line)
             if m:
                 found = True
                 point_string = m.groups()[0]
@@ -35,10 +35,24 @@ class LogSpec( object ):
         else:
             raise LogAnalyserError( "ERROR: logged start point not found" )
 
-    def get_stop_string( self ):
+    def get_start_point_string( self ):
         found = False
         for line in self.lines:
-            m = re.search( 'Stop point: (.*)$',line)
+            m = re.search( 'Start point: (.*)$',line)
+            if m:
+                found = True
+                point_string = m.groups()[0]
+                if point_string == "None":
+                    point_string = None
+                break
+        if found:
+            return point_string
+        return None
+
+    def get_final_point_string( self ):
+        found = False
+        for line in self.lines:
+            m = re.search( 'Final point: (.*)$',line)
             if m:
                 found = True
                 point_string = m.groups()[0]

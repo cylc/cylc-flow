@@ -48,7 +48,7 @@ class DefinitionError( Error ):
 
 class taskdef(object):
 
-    def __init__( self, name, rtcfg, run_mode, ict ):
+    def __init__( self, name, rtcfg, run_mode, start_point ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
@@ -56,7 +56,7 @@ class taskdef(object):
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
-        self.ict = ict
+        self.start_point = start_point
 
         self.sequences = []
         self.implicit_sequences = []  # Implicit sequences are deprecated.
@@ -178,8 +178,8 @@ class taskdef(object):
             # valid member of sequenceX's sequence of cycle points.
 
             # 1) non-conditional triggers
-            pp = plain_prerequisites( sself.id, self.ict )
-            sp = plain_prerequisites( sself.id, self.ict )
+            pp = plain_prerequisites( sself.id, self.start_point )
+            sp = plain_prerequisites( sself.id, self.start_point )
 
             if self.sequential:
                 # For tasks declared 'sequential' we automatically add a
@@ -222,16 +222,13 @@ class taskdef(object):
                     if trig.cycling and not sequence.is_valid( sself.point ):
                         # This trigger is not used in current cycle
                         continue
-                    if self.ict is None or \
-                            trig.evaluation_offset is None or \
-                                ( point - trig.evaluation_offset ) >= self.ict:
-                            # i.c.t. can be None after a restart, if one
-                            # is not specified in the suite definition.
+                    if trig.evaluation_offset is None or \
+                        ( point - trig.evaluation_offset ) >= self.start_point:
 
-                            if trig.suicide:
-                                sp.add( trig.get( point ))
-                            else:
-                                pp.add( trig.get( point ))
+                        if trig.suicide:
+                            sp.add( trig.get( point ))
+                        else:
+                            pp.add( trig.get( point ))
 
             sself.prerequisites.add_requisites( pp )
             sself.suicide_prerequisites.add_requisites( sp )
@@ -244,14 +241,15 @@ class taskdef(object):
                             not sequence.is_valid( sself.point)):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
-                    cp = conditional_prerequisites( sself.id, self.ict )
+                    cp = conditional_prerequisites( sself.id, self.start_point )
                     for label in ctrig:
                         trig = ctrig[label]
-                        if self.ict is not None and trig.evaluation_offset is not None:
-                            is_less_than_ict = (
-                                point - trig.evaluation_offset < self.ict)
+                        if trig.evaluation_offset is not None:
+                            is_less_than_start = (
+                                point - trig.evaluation_offset <
+                                self.start_point)
                             cp.add( trig.get( point ), label,
-                                    is_less_than_ict)
+                                    is_less_than_start)
                         else:
                             cp.add( trig.get( point ), label )
                     cp.set_condition( exp )
@@ -308,8 +306,8 @@ class taskdef(object):
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
             # prerequisites
-            sself.prerequisites = prerequisites( self.ict )
-            sself.suicide_prerequisites = prerequisites( self.ict )
+            sself.prerequisites = prerequisites( self.start_point )
+            sself.suicide_prerequisites = prerequisites( self.start_point )
             sself.add_prerequisites( sself.point )
 
             sself.logfiles = logfiles()
