@@ -32,8 +32,10 @@ for SDEF in $SDEFS; do
     TEST_NAME=$TEST_NAME_BASE-$TEST_NUMBER-"$SDEF_NAME"
     if [[ -n $RES ]]; then
         fail $TEST_NAME
-        echo "$SDEF failed validation" >$TEST_LOG_DIR/$TEST_NAME.stderr
-        echo "$RES" >$TEST_LOG_DIR/$TEST_NAME.stderr
+        echo "$SDEF failed validation" >$TEST_NAME.stderr
+        echo "$RES" >>$TEST_NAME.stderr
+        mkdir -p $TEST_LOG_DIR
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/
     else
         ok $TEST_NAME
     fi

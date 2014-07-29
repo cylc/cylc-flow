@@ -115,7 +115,7 @@ class config( object ):
         self.cycling_tasks = []
 
         self.sequences = []
-        self.actual_first_ctime = None
+        self.actual_first_point = None
 
         self.custom_runahead_limit = None
         self.max_num_active_cycle_points = None
@@ -320,7 +320,8 @@ class config( object ):
 
         # initial and final cycles for visualization
         vict = self.cfg['visualization']['initial cycle point'] or \
-                str( self.get_actual_first_ctime( self.cfg['scheduling']['initial cycle point'] ))
+                str(self.get_actual_first_point(
+                        self.cfg['scheduling']['initial cycle point']))
         self.cfg['visualization']['initial cycle point'] = vict
 
         vict_rh = None
@@ -885,10 +886,10 @@ class config( object ):
         for name in self.taskdefs.keys():
             type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
-            tag = get_point( self.cfg['scheduling']['initial cycle point'] )
+            start_point = get_point( self.cfg['scheduling']['initial cycle point'] )
             try:
                 # instantiate a task
-                itask = self.taskdefs[name].get_task_class()( tag, 'waiting', None, True, validate=True )
+                itask = self.taskdefs[name].get_task_class()( start_point, 'waiting', None, True, validate=True )
             except TypeError, x:
                 # This should not happen as we now explicitly catch use
                 # of synchronous special tasks in an asynchronous graph.
@@ -899,9 +900,9 @@ class config( object ):
             except Exception, x:
                 raise SuiteConfigError(
                     'ERROR, failed to instantiate task %s: %s' % (name, x))
-            if not itask.tag:
+            if itask.point is None:
                 if flags.verbose:
-                    print " + Task out of bounds for " + str(tag) + ": " + itask.name
+                    print " + Task out of bounds for " + str(start_point) + ": " + itask.name
                 continue
 
             # warn for purely-implicit-cycling tasks (these are deprecated).
@@ -1388,29 +1389,29 @@ class config( object ):
         expr = re.sub( '\+', 'x', expr ) # future triggers
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
 
-    def get_actual_first_ctime( self, start_ctime ):
+    def get_actual_first_point( self, start_point ):
         # Get actual first cycle point for the suite (get all
         # sequences to adjust the putative start time upward)
-        if self.actual_first_ctime:
+        if self.actual_first_point:
             # already computed
-            return self.actual_first_ctime
-        if isinstance(start_ctime, basestring):
-            ctime = get_point(start_ctime)
+            return self.actual_first_point
+        if isinstance(start_point, basestring):
+            point = get_point(start_point)
         else:
-            ctime = start_ctime
+            point = start_point
         adjusted = []
         for seq in self.sequences:
-            foo = seq.get_first_point( ctime )
+            foo = seq.get_first_point( point )
             if foo:
                 adjusted.append( foo )
         if len( adjusted ) > 0:
             adjusted.sort()
-            self.actual_first_ctime = adjusted[0]
+            self.actual_first_point = adjusted[0]
         else:
-            self.actual_first_ctime = ctime
-        return self.actual_first_ctime
+            self.actual_first_point = point
+        return self.actual_first_point
 
-    def get_graph_raw( self, start_ctime_str, stop_str, raw=False,
+    def get_graph_raw( self, start_point_string, stop_point_string, raw=False,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
@@ -1461,32 +1462,32 @@ class config( object ):
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = []
 
-        start_ctime = get_point( start_ctime_str )
+        start_point = get_point( start_point_string )
 
-        actual_first_ctime = self.get_actual_first_ctime( start_ctime )
+        actual_first_point = self.get_actual_first_point( start_point )
 
         startup_exclude_list = self.get_coldstart_task_list()
 
-        stop = get_point( stop_str )
+        stop = get_point( stop_point_string )
 
         for e in self.edges:
             # Get initial cycle point for this sequence
-            i_ctime = e.sequence.get_first_point( start_ctime )
-            if not i_ctime:
+            i_point = e.sequence.get_first_point( start_point )
+            if i_point is None:
                 # out of bounds
                 continue
-            ctime = deepcopy(i_ctime)
+            point = deepcopy(i_point)
 
             while True: 
                 # Loop over cycles generated by this sequence
-                if not ctime or ctime > stop:
+                if not point or point > stop:
                     break
 
-                not_initial_cycle = ( ctime != i_ctime )
+                not_initial_cycle = ( point != i_point )
 
-                r_id = e.get_right(ctime, start_ctime, not_initial_cycle, raw,
+                r_id = e.get_right(point, start_point, not_initial_cycle, raw,
                                    startup_exclude_list )
-                l_id = e.get_left( ctime, start_ctime, not_initial_cycle, raw,
+                l_id = e.get_left( point, start_point, not_initial_cycle, raw,
                                    startup_exclude_list,
                                    e.sequence.get_interval() )
 
@@ -1498,11 +1499,11 @@ class config( object ):
 
                 if l_id != None and not e.sasl:
                     # check that l_id is not earlier than start time
-                    tmp, lctime = TaskID.split(l_id)
+                    tmp, lpoint_string = TaskID.split(l_id)
                     ## NOTE BUG GITHUB #919
-                    ##sct = start_ctime
-                    sct = actual_first_ctime
-                    lct = get_point(lctime)
+                    ##sct = start_point
+                    sct = actual_first_point
+                    lct = get_point(lpoint_string)
                     if sct > lct:
                         action = False
 
@@ -1511,25 +1512,28 @@ class config( object ):
                     gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
 
                 # increment the cycle point
-                ctime = e.sequence.get_next_point_on_sequence( ctime )
+                point = e.sequence.get_next_point_on_sequence( point )
 
         return gr_edges
 
-    def get_graph( self, start_ctime, stop, raw=False, group_nodes=[],
-            ungroup_nodes=[], ungroup_recursive=False, group_all=False,
-            ungroup_all=False, ignore_suicide=False ):
+    def get_graph( self, start_point_string, stop_point_string, raw=False,
+                   group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+                   group_all=False, ungroup_all=False, ignore_suicide=False ):
 
-        gr_edges = self.get_graph_raw( start_ctime, stop, raw,
-                group_nodes, ungroup_nodes, ungroup_recursive,
-                group_all, ungroup_all )
+        gr_edges = self.get_graph_raw(
+            start_point_string, stop_point_string, raw,
+            group_nodes, ungroup_nodes, ungroup_recursive,
+            group_all, ungroup_all
+        )
 
         graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
         graph.add_edges( gr_edges, ignore_suicide )
 
         return graph
 
-    def get_node_labels( self, start_ctime, stop, raw ):
-        graph = self.get_graph( start_ctime, stop, raw=raw, ungroup_all=True )
+    def get_node_labels( self, start_point_string, stop_point_string, raw ):
+        graph = self.get_graph( start_point_string, stop_point_string,
+                                raw=raw, ungroup_all=True )
         return [ i.attr['label'].replace('\\n','.') for i in graph.nodes() ]
 
     def close_families( self, nlid, nrid ):
@@ -1538,18 +1542,18 @@ class config( object ):
 
         members = self.runtime['first-parent descendants']
 
-        lname, ltag = None, None
-        rname, rtag = None, None
+        lname, lpoint_string = None, None
+        rname, rpoint_string = None, None
         nr, nl = None, None
         if nlid:
             one, two = TaskID.split(nlid)
             lname = one
-            ltag = two
+            lpoint_string = two
             nl = nlid
         if nrid:
             one, two = TaskID.split(nrid)
             rname = one
-            rtag = two
+            rpoint_string = two
             nr = nrid
 
         # for nested families, only consider the outermost one
@@ -1565,14 +1569,15 @@ class config( object ):
             if lname in members[fam] and rname in members[fam]:
                 # l and r are both members of fam
                 #nl, nr = None, None  # this makes 'the graph disappear if grouping 'root'
-                nl,nr = TaskID.get(fam,ltag), TaskID.get(fam,rtag)
+                nl = TaskID.get(fam, lpoint_string)
+                nr = TaskID.get(fam, rpoint_string)
                 break
             elif lname in members[fam]:
                 # l is a member of fam
-                nl = TaskID.get(fam,ltag)
+                nl = TaskID.get(fam, lpoint_string)
             elif rname in members[fam]:
                 # r is a member of fam
-                nr = TaskID.get(fam,rtag)
+                nr = TaskID.get(fam, rpoint_string)
 
         return nl, nr
 
@@ -1767,24 +1772,28 @@ class config( object ):
 
         return taskd
 
-    def get_task_proxy( self, name, ctime, state, stopctime, startup, submit_num, exists ):
+    def get_task_proxy( self, name, point, state, stop_point, startup,
+                        submit_num, exists ):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
             raise TaskNotDefinedError("ERROR, No such task name: " + name )
-        return tdef.get_task_class()( ctime, state, stopctime, startup, submit_num=submit_num, exists=exists )
+        return tdef.get_task_class()( point, state, stop_point, startup,
+                                      submit_num=submit_num, exists=exists )
 
-    def get_task_proxy_raw( self, name, tag, state, stoptag, startup, submit_num, exists ):
+    def get_task_proxy_raw( self, name, point, state, stop_point, startup,
+                            submit_num, exists ):
         # Used by 'cylc submit' to submit tasks defined by runtime
         # config but not currently present in the graph (so we must
-        # assume that the given tag is valid for the task).
+        # assume that the given point is valid for the task).
         try:
             truntime = self.cfg['runtime'][name]
         except KeyError:
             raise TaskNotDefinedError("ERROR, task not defined: " + name )
         tdef = self.get_taskdef( name )
-        # TODO ISO - TEST THIS (did set 'tdef.hours' from tag)
-        return tdef.get_task_class()( tag, state, stoptag, startup, submit_num=submit_num, exists=exists )
+        # TODO ISO - TEST THIS (did set 'tdef.hours' from point)
+        return tdef.get_task_class()( point, state, stop_point, startup,
+                                      submit_num=submit_num, exists=exists )
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
