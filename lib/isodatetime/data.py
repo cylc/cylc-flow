@@ -1587,7 +1587,7 @@ class TimePoint(object):
             if self.time_zone.hours == 0 and self.time_zone.minutes == 0:
                 time_string += "Z"
             else:
-                time_string += u"±hh:mm"
+                time_string += u"+hh:mm"
         return date_string + time_string
 
     def _get_truncated_dump_format(self):
@@ -1660,7 +1660,7 @@ class TimePoint(object):
             if self.time_zone.hours == 0 and self.time_zone.minutes == 0:
                 time_string += "Z"
             else:
-                time_string += u"±hh:mm"
+                time_string += u"+hh:mm"
         if date_string == "YY":
             date_string = "-YY"
             time_string = time_string.replace(":", "")

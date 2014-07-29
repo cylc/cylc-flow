@@ -581,7 +581,7 @@ class TimeIntervalParser(object):
                     assumed_time_zone=(0, 0)
                 )
             except ISO8601SyntaxError:
-                raise
+                raise ISO8601SyntaxError("duration", expression)
             if timepoint.get_is_week_date():
                 raise ISO8601SyntaxError("duration", expression)
             result_map = {}
