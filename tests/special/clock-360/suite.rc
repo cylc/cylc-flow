@@ -1,0 +1,19 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    [[event hooks]]
+        abort on timeout = True
+        timeout = 0.5
+[scheduling]
+    initial cycle time = 20130101T00
+    final cycle time   = 20150101T00
+    cycling mode = 360day
+    [[special tasks]]
+        clock-triggered = clock(0)
+    [[dependencies]]
+        [[[T00]]]
+            graph = "clock"
+[runtime]
+    [[clock]]
+        command scripting = true
+
