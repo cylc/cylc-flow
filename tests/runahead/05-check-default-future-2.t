@@ -23,18 +23,18 @@ set_test_number 5
 install_suite $TEST_NAME_BASE default-future
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate -v --set=FUTURE_TRIGGER_START_POINT=T04 \
+run_ok $TEST_NAME cylc validate -v --set=FUTURE_TRIGGER_START_POINT=T02 \
     $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-run_fail $TEST_NAME cylc run --debug --set=FUTURE_TRIGGER_START_POINT=T04 \
+run_fail $TEST_NAME cylc run --debug --set=FUTURE_TRIGGER_START_POINT=T02 \
     $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-max-cycle
 DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
 run_ok $TEST_NAME sqlite3 $DB "select max(cycle) from task_states"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
-20100101T0200Z
+20100101T0800Z
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-timeout

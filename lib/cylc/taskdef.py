@@ -64,7 +64,7 @@ class taskdef(object):
 
         # some defaults
         self.intercycle = False
-        self.max_future_prereq_point = None
+        self.max_future_prereq_offset = None
         self.intercycle_offsets = []
         self.sequential = False
         self.cycling = False
@@ -210,7 +210,7 @@ class taskdef(object):
         tclass.mean_total_elapsed_time = None
 
         tclass.intercycle = self.intercycle
-        tclass.max_future_prereq_point = None
+        tclass.max_future_prereq_offset = None
         tclass.follow_on = self.follow_on_task
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
@@ -278,11 +278,12 @@ class taskdef(object):
                         # is not specified in the suite definition.
 
                         message, prereq_point = trig.get( point )
-                        if (prereq_point != point and
-                                (sself.max_future_prereq_point is None or
-                                 prereq_point >
-                                 sself.max_future_prereq_point)):
-                            sself.max_future_prereq_point = prereq_point
+                        prereq_offset = prereq_point - point
+                        if (prereq_offset > get_interval_cls().get_null() and
+                                (sself.max_future_prereq_offset is None or
+                                 prereq_offset >
+                                 sself.max_future_prereq_offset)):
+                            sself.max_future_prereq_offset = prereq_offset
 
                         if trig.suicide:
                             sp.add( message )
