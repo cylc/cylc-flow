@@ -42,7 +42,7 @@ class conditional_prerequisites(object):
         self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
-        self.target_tags = []   # list of target cycle points (tags)
+        self.target_point_strings = []   # list of target cycle points
         self.auto_label = 0
         self.excess_labels = []
         self.p_ict = p_ict
@@ -72,7 +72,7 @@ class conditional_prerequisites(object):
         self.satisfied[label]  = False
         m = re.match( self.__class__.CYCLE_POINT_RE, message )
         if m:
-            self.target_tags.append( m.groups()[0] )
+            self.target_point_strings.append( m.groups()[0] )
         if pre_initial:
             self.pre_initial_messages.append(label)
 
@@ -172,8 +172,8 @@ class conditional_prerequisites(object):
         for label in self.messages:
             self.satisfied[ label ] = False
 
-    def get_target_tags( self ):
+    def get_target_points( self ):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        return [get_point(p) for p in self.target_tags]
+        return [get_point(p) for p in self.target_point_strings]
 

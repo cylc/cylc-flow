@@ -45,11 +45,11 @@ class config_line:
         before the next is processed.
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
-    def __init__( self, source, match, oper, ctime, offset, dest=None,
+    def __init__( self, source, match, oper, point, offset, dest=None,
             mode=None, cheap=False ):
         self.source = source
         self.match = match
-        self.ctime = ctime
+        self.point = point
         self.offset = offset
         self.opern = oper
         self.destn = dest
@@ -99,14 +99,15 @@ class config_line:
         print "MATCH :", self.match
         print "ACTION:", self.opern
         # TODO ISO
-        foo = self.ctime - self.offset # offset is HOURS
-        print "CUTOFF:", self.ctime, '-', self.offset, '=', foo.get()
+        foo = self.point - self.offset # offset is HOURS
+        print "CUTOFF:", self.point, '-', self.offset, '=', foo.get()
         batch = batchproc( batchsize )
         for entry in os.listdir( self.source ):
             src_entries += 1
             entrypath = os.path.join( self.source, entry )
-            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset,
-                    self.destn, self.mode, self.cheap )
+            item = hkitem(
+                entrypath, self.match, self.opern, self.point, self.offset,
+                self.destn, self.mode, self.cheap )
             if not item.matches():
                 not_matched += 1
                 continue

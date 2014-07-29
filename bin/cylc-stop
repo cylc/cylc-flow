@@ -171,13 +171,14 @@ if options.wall_clock:
     shutdown_arg = options.wall_clock
 elif shutdown_at:
     # STOP argument detected
+    # TODO ISO: proper validation.
     if cylc.TaskID.is_valid_id( shutdown_arg ):
         # is a task ID
         method = 'stop after task'
         prompt_text = 'Set shutdown after task %s' % shutdown_arg
     else:
         # not a task ID, may be a cycle point
-        method = 'stop after tag'
+        method = 'stop after point'
         prompt_text = 'Set shutdown at cycle point %s' % shutdown_arg
 
 if method:

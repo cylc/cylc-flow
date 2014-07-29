@@ -101,7 +101,7 @@ sys.path.append( os.path.join( suite_dir, 'python' ))
 if not cylc.TaskID.is_valid_id( task_id ):
     sys.exit("Invalid task ID " + task_id )
 
-task_name, ctime = cylc.TaskID.split( task_id )
+task_name, point_string = cylc.TaskID.split( task_id )
 
 # load suite config
 try:
@@ -191,17 +191,23 @@ suite_task_env = {
 jobfile.jobfile.suite_env = suite_env
 jobfile.jobfile.suite_task_env = suite_task_env
 
-point = get_point(ctime)
+point = get_point(point_string)
 try:
     # try to get a graphed task of the given name
-    task_proxy = config.get_task_proxy( task_name, point, 'waiting', stopctime=None, startup=True, submit_num=0, exists=False )
+    task_proxy = config.get_task_proxy(
+        task_name, point, 'waiting', stop_point=None, startup=True,
+        submit_num=0, exists=False
+    )
 except TaskNotDefinedError, x:
     print >> sys.stderr, 'WARNING: "' + task_name + \
             '" type and validity are not constrained by the graph.'
     print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
     try:
         # try to get an ungraphed task of the given name
-        task_proxy = config.get_task_proxy_raw( task_name, point, 'waiting', stoptag=None, startup=True, submit_num=0, exists=False )
+        task_proxy = config.get_task_proxy_raw(
+            task_name, point, 'waiting', stop_point=None, startup=True,
+            submit_num=0, exists=False
+        )
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
