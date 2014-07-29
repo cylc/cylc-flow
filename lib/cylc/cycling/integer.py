@@ -401,7 +401,7 @@ def init_from_cfg(cfg):
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     # TODO ISO: needs to be done somehow? Is it meaningful?
-    raise NotImplementedError()
+    return base_point + IntegerInterval(offset_string)
 
 
 if __name__ == '__main__':
