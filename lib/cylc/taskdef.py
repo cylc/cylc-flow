@@ -355,7 +355,7 @@ class taskdef(object):
             else:
                 sself.point = start_point
                 sself.cleanup_cutoff = self.get_cleanup_cutoff_point(
-                    sself.tag, self.intercycle_offsets)
+                    sself.point, self.intercycle_offsets)
                 sself.id = TaskID.get( sself.name, str(sself.point) )
 
             if 'clocktriggered' in self.modifiers:
