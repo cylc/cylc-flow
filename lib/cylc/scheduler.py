@@ -523,11 +523,12 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i,tag) for i in matches ]
 
-        point = get_point(tag)
+        point = get_point(tag).standardise()
         if stop_string is None:
             stop_point = None
         else:
-            stop_point = get_point(stop_string)
+            stop_point = get_point(stop_string).standardise()
+        
 
         for task_id in task_ids:
             name, tag = TaskID.split( task_id )
