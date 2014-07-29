@@ -124,18 +124,18 @@ class pool(object):
 
         # do not add if an inserted task is beyond its own stop point
         # (note this is not the same as recurrence bounds)
-        if itask.stop_c_time and itask.c_time > itask.stop_c_time:
+        if itask.stop_point and itask.point > itask.stop_point:
             self.log.info( itask.id + ' not adding to pool: beyond task stop cycle' )
             del itask
             return False
  
         # add in held state if beyond the suite stop point
-        if self.stop_point and itask.c_time > self.stop_point:
+        if self.stop_point and itask.point > self.stop_point:
             itask.log( 'NORMAL', "holding (beyond suite stop point) " + str(self.stop_point) )
             itask.reset_state_held()
 
         # TODO ISO - restore this functionality
-        #elif self.hold_time and itask.c_time > self.hold_time:
+        #elif self.hold_time and itask.point > self.hold_time:
         #    itask.log( 'NORMAL', "holding (beyond suite hold point) " + str(self.hold_time) )
         #    itask.reset_state_held()
 
@@ -147,8 +147,8 @@ class pool(object):
             itask.reset_state_held()
 
         # add to the runahead pool
-        self.runahead_pool.setdefault(itask.c_time, {})
-        self.runahead_pool[itask.c_time][itask.id] = itask
+        self.runahead_pool.setdefault(itask.point, {})
+        self.runahead_pool[itask.point][itask.id] = itask
         self.rhpool_changed = True
         return True
 
@@ -244,14 +244,14 @@ class pool(object):
         if queue not in self.queues:
             self.queues[queue] = {}
         self.queues[queue][itask.id] = itask
-        self.pool.setdefault(itask.c_time, {})
-        self.pool[itask.c_time][itask.id] = itask
+        self.pool.setdefault(itask.point, {})
+        self.pool[itask.point][itask.id] = itask
         self.pool_changed = True
         flags.pflag = True
         itask.log('DEBUG', "released to the task pool" )
-        del self.runahead_pool[itask.c_time][itask.id]
-        if not self.runahead_pool[itask.c_time]:
-            del self.runahead_pool[itask.c_time]
+        del self.runahead_pool[itask.point][itask.id]
+        if not self.runahead_pool[itask.point]:
+            del self.runahead_pool[itask.point]
         self.rhpool_changed = True
         try:
             self.pyro.connect( itask.message_queue, itask.id )
@@ -265,14 +265,15 @@ class pool(object):
         if itask.max_future_prereq_point is not None:
             self.set_latest_prereq_point()
 
+
     def remove( self, itask, reason=None ):
         try:
-            del self.runahead_pool[itask.c_time][itask.id]
+            del self.runahead_pool[itask.point][itask.id]
         except KeyError:
             pass
         else:
-            if not self.runahead_pool[itask.c_time]:
-                del self.runahead_pool[itask.c_time]
+            if not self.runahead_pool[itask.point]:
+                del self.runahead_pool[itask.point]
             self.rhpool_changed = True
             return
 
@@ -289,9 +290,9 @@ class pool(object):
         # remove from queue
         queue = self.myq[itask.name]
         del self.queues[queue][itask.id]
-        del self.pool[itask.c_time][itask.id]
-        if not self.pool[itask.c_time]:
-            del self.pool[itask.c_time]
+        del self.pool[itask.point][itask.id]
+        if not self.pool[itask.point]:
+            del self.pool[itask.point]
         self.pool_changed = True
         msg = "task proxy removed"
         if reason:
@@ -436,7 +437,7 @@ class pool(object):
         # check for future triggers extending beyond the final cycle
         if not self.stop_point:
             return False
-        for pct in set(itask.prerequisites.get_target_tags()):
+        for pct in set(itask.prerequisites.get_target_points()):
             if pct > self.stop_point:
                 return True
         return False
@@ -460,8 +461,8 @@ class pool(object):
         self.release_runahead_tasks()
 
 
-    def get_min_ctime( self ):
-        """Return the minimum cycle currently in the pool."""
+    def get_min_point( self ):
+        """Return the minimum cycle point currently in the pool."""
         cycles = self.pool.keys()
         minc = None
         if cycles:
@@ -469,8 +470,8 @@ class pool(object):
         return minc
 
 
-    def get_max_ctime( self ):
-        """Return the maximum cycle currently in the pool."""
+    def get_max_point( self ):
+        """Return the maximum cycle point currently in the pool."""
         cycles = self.pool.keys()
         maxc = None
         if cycles:
@@ -548,7 +549,13 @@ class pool(object):
                         self.log.warning( 'orphaned task will not continue: ' + itask.id  )
                 else:
                     self.log.info( 'RELOADING TASK DEFINITION FOR ' + itask.id  )
-                    new_task = self.get_task_proxy( itask.name, itask.tag, itask.state.get_status(), None, itask.startup, submit_num=self.db.get_task_current_submit_num(itask.name, itask.tag), exists=self.db.get_task_state_exists(itask.name, itask.tag) )
+                    new_task = self.get_task_proxy(
+                        itask.name, itask.point, itask.state.get_status(),
+                        None, itask.startup,
+                        submit_num=self.db.get_task_current_submit_num(
+                            itask.name, str(itask.point)),
+                        exists=self.db.get_task_state_exists(
+                            itask.name, str(itask.point)) )
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
@@ -595,7 +602,7 @@ class pool(object):
         self.stop_point = stop_point
         for itask in self.get_tasks():
             # check cycle stop or hold conditions
-            if (self.stop_point and itask.c_time > self.stop_point and
+            if (self.stop_point and itask.point > self.stop_point and
                     itask.state.is_currently('waiting', 'queued')):
                 itask.log( 'WARNING',
                            "not running (beyond suite stop cycle) " +
@@ -656,12 +663,12 @@ class pool(object):
         # their stop time).
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
-                #if self.stop_point and itask.c_time > self.stop_point:
+                #if self.stop_point and itask.point > self.stop_point:
                 #    # this task has passed the suite stop time
                 #    itask.log( 'NORMAL', "Not releasing (beyond suite stop cycle) " + str(self.stop_point) )
-                #elif itask.stop_c_time and itask.c_time > itask.stop_c_time:
+                #elif itask.stop_point and itask.point > itask.stop_point:
                 #    # this task has passed its own stop time
-                #    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_c_time) )
+                #    itask.log( 'NORMAL', "Not releasing (beyond task stop cycle) " + str(itask.stop_point) )
                 #else:
                 # release this task
                 itask.reset_state_waiting()
@@ -802,11 +809,11 @@ class pool(object):
             # this has to consider tasks in the runahead pool too, e.g.
             # ones that have just spawned and not been released yet.
             if itask.state.is_currently('waiting', 'held' ):
-                if cutoff is None or itask.c_time < cutoff:
-                    cutoff = itask.c_time
+                if cutoff is None or itask.point < cutoff:
+                    cutoff = itask.point
             elif not itask.has_spawned():
                 # (e.g. 'ready')
-                nxt = itask.next_tag()
+                nxt = itask.next_point()
                 if nxt is not None and ( cutoff is None or nxt < cutoff ):
                     cutoff = nxt
         return cutoff
@@ -871,9 +878,9 @@ class pool(object):
                 self.force_spawn(itask)
 
 
-    def remove_entire_cycle( self, tag, spawn ):
+    def remove_entire_cycle( self, point, spawn ):
         for itask in self.get_tasks():
-            if itask.tag == tag:
+            if itask.point == point:
                 if spawn:
                     self.force_spawn( itask )
                 self.remove( itask, 'by request' )
@@ -910,7 +917,7 @@ class pool(object):
             # Don't stop if a cycling task has not passed the stop cycle
             # (note finite recurrence tasks disappear once finished).
             if self.stop_point:
-                if itask.c_time <= self.stop_point:
+                if itask.point <= self.stop_point:
                     if itask.state.is_currently('succeeded') and itask.has_spawned():
                         # ignore spawned succeeded tasks - their successors matter
                         pass
@@ -970,11 +977,12 @@ class pool(object):
 
     def task_succeeded( self, id ):
         res = False
-        name, tag = TaskID.split(id)
+        name, point_string = TaskID.split(id)
         for itask in self.get_tasks():
-            iname, itag = TaskID.split(itask.id)
+            iname, ipoint_string = TaskID.split(itask.id)
             # TODO ISO - check the following works
-            if itask.name == name and get_point(itag) == get_point(tag):
+            if (itask.name == name and
+                    get_point(point_string) == get_point(ipoint_string)):
                 if itask.state.is_currently('succeeded'):
                     res = True
                 break
@@ -1080,7 +1088,7 @@ class pool(object):
             self.match_dependencies()
             something_triggered = False
             for itask in sorted(self.get_tasks(all=True), key=lambda t: t.id):
-                if itask.tag > stop:
+                if itask.point > stop:
                     continue
                 if itask.ready_to_run():
                     something_triggered = True

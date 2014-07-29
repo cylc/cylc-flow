@@ -215,7 +215,7 @@ class taskdef(object):
 
         tclass.namespace_hierarchy = self.namespace_hierarchy
 
-        def tclass_add_prerequisites( sself, tag  ):
+        def tclass_add_prerequisites( sself, point  ):
             # NOTE: Task objects hold all triggers defined for the task
             # in all cycling graph sections in this data structure:
             #     self.triggers[sequence] = [list of triggers for this
@@ -237,7 +237,7 @@ class taskdef(object):
                 p_next = None
                 adjusted = []
                 for seq in self.sequences:
-                    nxt = seq.get_next_point(sself.c_time)
+                    nxt = seq.get_next_point(sself.point)
                     if nxt:
                         # may be None if beyond the sequence bounds
                         adjusted.append( nxt )
@@ -253,7 +253,7 @@ class taskdef(object):
                 p_prev = None
                 adjusted = []
                 for seq in self.sequences:
-                    prv = seq.get_nearest_prev_point(sself.c_time)
+                    prv = seq.get_nearest_prev_point(sself.point)
                     if prv:
                         # may be None if out of sequence bounds
                         adjusted.append( prv )
@@ -266,19 +266,19 @@ class taskdef(object):
 
             for sequence in self.triggers:
                 for trig in self.triggers[ sequence ]:
-                    if trig.cycling and not sequence.is_valid( sself.tag ):
+                    if trig.cycling and not sequence.is_valid( sself.point ):
                         # This trigger is not used in current cycle
                         continue
                     if (self.ict is None or
                             trig.evaluation_offset_string is None or
                             (get_point_relative(
-                                trig.evaluation_offset_string, tag) >=
+                                trig.evaluation_offset_string, point) >=
                              self.ict)):
                         # i.c.t. can be None after a restart, if one
                         # is not specified in the suite definition.
 
-                        message, prereq_point = trig.get( tag )
-                        if (prereq_point != tag and
+                        message, prereq_point = trig.get( point )
+                        if (prereq_point != point and
                                 (sself.max_future_prereq_point is None or
                                  prereq_point >
                                  sself.max_future_prereq_point)):
@@ -296,7 +296,8 @@ class taskdef(object):
             for sequence in self.cond_triggers.keys():
                 for ctrig, exp in self.cond_triggers[ sequence ]:
                     foo = ctrig.keys()[0]
-                    if ctrig[foo].cycling and not sequence.is_valid( sself.tag):
+                    if (ctrig[foo].cycling and
+                            not sequence.is_valid( sself.point)):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
                     cp = conditional_prerequisites( sself.id, self.ict )
@@ -306,13 +307,13 @@ class taskdef(object):
                                 trig.evaluation_offset_string is not None):
                             is_less_than_ict = (
                                 get_point_relative(
-                                    trig.evaluation_offset_string, tag) <
+                                    trig.evaluation_offset_string, point) <
                                 self.ict
                             )
-                            cp.add( trig.get( tag )[0], label,
+                            cp.add( trig.get( point )[0], label,
                                     is_less_than_ict)
                         else:
-                            cp.add( trig.get( tag )[0], label )
+                            cp.add( trig.get( point )[0], label )
                     cp.set_condition( exp )
                     if ctrig[foo].suicide:
                         sself.suicide_prerequisites.add_requisites( cp )
@@ -322,7 +323,7 @@ class taskdef(object):
         tclass.add_prerequisites = tclass_add_prerequisites
 
         # class init function
-        def tclass_init( sself, start_point, initial_state, stop_c_time=None,
+        def tclass_init( sself, start_point, initial_state, stop_point=None,
                          startup=False, validate=False, submit_num=0,
                          exists=False ):
 
@@ -342,22 +343,20 @@ class taskdef(object):
                         # may be None if out of sequence bounds
                         adjusted.append( adj )
                 if adjusted:
-                    sself.tag = min( adjusted )
+                    sself.point = min( adjusted )
                     sself.cleanup_cutoff = self.get_cleanup_cutoff_point(
-                        sself.tag, self.intercycle_offsets)
-                    sself.id = TaskID.get( sself.name, str(sself.tag) )
+                        sself.point, self.intercycle_offsets)
+                    sself.id = TaskID.get( sself.name, str(sself.point) )
                 else:
-                    sself.tag = None
+                    sself.point = None
                     # this task is out of sequence bounds (caller much
-                    # check for a tag of None)
+                    # check for a point of None)
                     return
             else:
-                sself.tag = start_point
+                sself.point = start_point
                 sself.cleanup_cutoff = self.get_cleanup_cutoff_point(
                     sself.tag, self.intercycle_offsets)
-                sself.id = TaskID.get( sself.name, str(sself.tag) )
-
-            sself.c_time = sself.tag
+                sself.id = TaskID.get( sself.name, str(sself.point) )
 
             if 'clocktriggered' in self.modifiers:
                 sself.real_time_delay =  float( self.clocktriggered_offset )
@@ -365,7 +364,7 @@ class taskdef(object):
             # prerequisites
             sself.prerequisites = prerequisites( self.ict )
             sself.suicide_prerequisites = prerequisites( self.ict )
-            sself.add_prerequisites( sself.tag )
+            sself.add_prerequisites( sself.point )
 
             sself.logfiles = logfiles()
             for lfile in self.rtconfig[ 'extra log files' ]:
@@ -374,17 +373,18 @@ class taskdef(object):
             # outputs
             sself.outputs = outputs( sself.id )
             for outp in self.outputs:
-                msg = outp.get( sself.tag )
+                msg = outp.get( sself.point )
                 if not sself.outputs.exists( msg ):
                     sself.outputs.add( msg )
             sself.outputs.register()
 
-            if stop_c_time:
+            if stop_point:
                 # cycling tasks with a final cycle point set
-                super( sself.__class__, sself ).__init__( initial_state, stop_c_time, validate=validate )
+                super( sself.__class__, sself ).__init__(
+                    initial_state, stop_point, validate=validate )
             else:
-                # TODO - TEMPORARY HACK FOR ASYNC
-                sself.stop_c_time = '99991231230000'
+                # TODO ISO - is this OK for vanished Async tasks?
+                sself.stop_point = None
                 super( sself.__class__, sself ).__init__( initial_state, validate=validate )
 
             sself.suite_polling_cfg = self.suite_polling_cfg

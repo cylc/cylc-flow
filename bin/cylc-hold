@@ -50,8 +50,9 @@ whole_suite = True
 if len(args) == 3:
     whole_suite = False
     name = args[1]
-    tag = args[2]
-    prompt( 'Hold task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
+    point_string = args[2]
+    prompt( 'Hold task(s) ' + name + ' at ' + point_string + ' in ' + suite,
+            options.force )
 elif len(args) == 1:
     prompt( 'Hold suite ' + suite, options.force )
 else:
@@ -64,7 +65,8 @@ try:
     if whole_suite:
         result = proxy.put( 'hold suite now' )
     else:
-        result = proxy.put( 'hold task now', name, tag, options.is_family )
+        result = proxy.put( 'hold task now', name, point_string,
+                            options.is_family )
 except Exception, x:
     if cylc.flags.debug:
         raise

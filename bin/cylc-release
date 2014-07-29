@@ -48,8 +48,11 @@ whole_suite = True
 if len(args) == 3:
     whole_suite = False
     name = args[1]
-    tag = args[2]
-    prompt( 'Release task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
+    point_string = args[2]
+    prompt(
+        'Release task(s) ' + name + ' at ' + point_string + ' in ' + suite,
+        options.force
+    )
 else:
     prompt( 'Release suite ' + suite, options.force )
 
@@ -60,7 +63,8 @@ try:
     if whole_suite:
         result = proxy.put( 'release suite' )
     else:
-        result = proxy.put( 'release task', name, tag, options.is_family )
+        result = proxy.put( 'release task', name, point_string,
+                            options.is_family )
 except Exception, x:
     if cylc.flags.debug:
         raise

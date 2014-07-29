@@ -1,8 +1,8 @@
 2012/08/23 14:34:52 INFO - Suite starting at 2012-08-23 14:34:52.034689
 2012/08/23 14:34:52 INFO - Log event clock: real time
 2012/08/23 14:34:52 INFO - Run mode: live
-2012/08/23 14:34:52 INFO - Start tag: 1
-2012/08/23 14:34:52 INFO - Stop tag: 1
+2012/08/23 14:34:52 INFO - Start point: 1
+2012/08/23 14:34:52 INFO - Stop point: 1
 2012/08/23 14:34:52 INFO - [foo.1] -job submitted
 2012/08/23 14:34:52 INFO - [foo.1] -triggered off []
 2012/08/23 14:34:52 INFO - [foo.1] -foo.1 started

@@ -37,7 +37,7 @@ def on_url_clicked( widget, url, event, window ):
     right_click_menu( event, url, type='live task', window=window )
 
 def right_click_menu( event, task_id, type='live task', window=None ):
-    name, ctime = cylc.TaskID.split( task_id )
+    name, point_string = cylc.TaskID.split( task_id )
 
     menu = gtk.Menu()
     menu_root = gtk.MenuItem( task_id )
@@ -180,22 +180,22 @@ if options.namespaces:
 else:
     # SUITE DEPENDENCY GRAPH
 
-    start_ctime = None
-    stop_ctime = None
+    start_point_string = None
+    stop_point_string = None
 
     if len(args) > 1:
         # got START
-        start_ctime = args[1]
+        start_point_string = args[1]
 
         if len(args) == 3:
             # got STOP
-            stop_ctime = args[2]
+            stop_point_string = args[2]
         else:
-            stop_ctime = start_ctime
+            stop_point_string = start_point_string
 
     window = MyDotWindow( suite, suiterc, options.templatevars,
                           options.templatevars_file, watchers,
-                          start_ctime, stop_ctime )
+                          start_point_string, stop_point_string )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 

@@ -4,8 +4,8 @@
 2013/12/16 12:09:21 INFO - Suite starting at 2013-12-16 12:09:21.568477
 2013/12/16 12:09:21 INFO - Log event clock: real time
 2013/12/16 12:09:21 INFO - Run mode: live
-2013/12/16 12:09:21 INFO - Start tag: 1
-2013/12/16 12:09:21 INFO - Stop tag: 1
+2013/12/16 12:09:21 INFO - Start point: 1
+2013/12/16 12:09:21 INFO - Stop point: 1
 2013/12/16 12:09:21 INFO - Thread-4 start (Job Submission)
 2013/12/16 12:09:21 INFO - Thread-5 start (Request Handling)
 2013/12/16 12:09:21 INFO - [echo_2.1] -triggered off []

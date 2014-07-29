@@ -23,32 +23,32 @@ class LogSpec( object ):
     def get_start_string( self ):
         found = False
         for line in self.lines:
-            m = re.search( 'Start tag: (.*)$',line)
+            m = re.search( 'Start point: (.*)$',line)
             if m:
                 found = True
-                tag = m.groups()[0]
-                if tag == "None":
-                    tag = None
+                point_string = m.groups()[0]
+                if point_string == "None":
+                    point_string = None
                 break
         if found:
-            return tag
+            return point_string
         else:
-            raise LogAnalyserError( "ERROR: logged start tag not found" )
+            raise LogAnalyserError( "ERROR: logged start point not found" )
 
     def get_stop_string( self ):
         found = False
         for line in self.lines:
-            m = re.search( 'Stop tag: (.*)$',line)
+            m = re.search( 'Stop point: (.*)$',line)
             if m:
                 found = True
-                tag = m.groups()[0]
-                if tag == "None":
+                point_string = m.groups()[0]
+                if point_string == "None":
                     return None
                 break
         if found:
-            return tag
+            return point_string
         else:
-            raise LogAnalyserError( "ERROR: logged stop tag not found" )
+            raise LogAnalyserError( "ERROR: logged stop point not found" )
 
 class LogAnalyser( object ):
     """Compare an existing reference log with the log from a new

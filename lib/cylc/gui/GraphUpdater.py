@@ -59,14 +59,14 @@ class GraphUpdater(threading.Thread):
         self.quit = False
         self.cleared = False
         self.ignore_suicide = False
-        self.focus_start_ctime = None
-        self.focus_stop_ctime = None
+        self.focus_start_point_string = None
+        self.focus_stop_point_string = None
         self.xdot = xdot
         self.first_update = False
         self.graph_disconnect = False
         self.action_required = True
-        self.oldest_ctime = None
-        self.newest_ctime = None
+        self.oldest_point_string = None
+        self.newest_point_string = None
         self.orientation = "TB"  # Top to Bottom ordering of nodes, by default.
         self.best_fit = False # If True, xdot will zoom to page size
         self.normal_fit = False # if True, xdot will zoom to 1.0 scale
@@ -280,19 +280,22 @@ class GraphUpdater(threading.Thread):
     def update_graph(self):
         # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
-        self.oldest_ctime = self.global_summary['oldest cycle time']
-        self.newest_ctime = self.global_summary['newest cycle time']
+        self.oldest_point_string = (
+            self.global_summary['oldest cycle point string'])
+        self.newest_point_string = (
+            self.global_summary['newest cycle point string']
 
-        if self.focus_start_ctime:
-            oldest = self.focus_start_ctime
-            newest = self.focus_stop_ctime
+        if self.focus_start_point_string:
+            oldest = self.focus_start_point_string
+            newest = self.focus_stop_point_string
         else:
-            oldest = self.oldest_ctime
-            newest = self.newest_ctime
+            oldest = self.oldest_point_string
+            newest = self.newest_point_string
 
         start_time = self.global_summary['start time']
 
         rawx = None
+        # TODO ISO: necessary to have checks here?
         if start_time == None or oldest > start_time:
             rawx = True
         else:
@@ -302,10 +305,9 @@ class GraphUpdater(threading.Thread):
         extra_node_ids = {}
 
         # TODO - remote connection exception handling?
-        # TODO ISO - ARE THE NEW str() CALLS REQUIRED HERE?
         try:
             res = self.updater.sinfo.get(
-                    'graph raw', str(oldest), str(newest),
+                    'graph raw', oldest, newest,
                     rawx, self.group, self.ungroup, self.ungroup_recursive,
                     self.group_all, self.ungroup_all)
         except Exception:  # PyroError
@@ -336,7 +338,7 @@ class GraphUpdater(threading.Thread):
         for id in self.state_summary:
             if not any( id in edge for edge in gr_edges ):
                 # this node is not present in the main graph
-                name, tag = cylc.TaskID.split( id )
+                name, point_string = cylc.TaskID.split( id )
                 if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
                     # must be a member of a collapsed family, don't graph it
                     omit.append(name)
@@ -364,7 +366,7 @@ class GraphUpdater(threading.Thread):
         # FAMILIES
         if needs_redraw:
             for node in self.graphw.nodes():
-                name, tag = cylc.TaskID.split( node.get_name() )
+                name, point_string = cylc.TaskID.split( node.get_name() )
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
@@ -386,7 +388,7 @@ class GraphUpdater(threading.Thread):
             # FILTERING:
             for node in self.graphw.nodes():
                 id = node.get_name()
-                name, ctime = cylc.TaskID.split( id )
+                name, point_string = cylc.TaskID.split( id )
                 if self.filter_exclude:
                     if re.search( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
@@ -422,7 +424,7 @@ class GraphUpdater(threading.Thread):
                 # Now that we have family state coloring with family
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
-                name, tag = cylc.TaskID.split( id )
+                name, point_string = cylc.TaskID.split( id )
                 if name in omit:
                     # (see above)
                     continue
