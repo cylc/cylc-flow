@@ -25,6 +25,7 @@ from cylc.cycling.loader import (get_point,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  ISO8601_CYCLING_TYPE,
                                  get_backwards_compatibility_mode)
+from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
 from output import outputx
@@ -254,11 +255,11 @@ class config( object ):
                     m = re.match( CLOCK_OFFSET_RE, item )
                     if m:
                         if (self.cfg['scheduling']['cycling mode'] !=
-                                ISO8601_CYCLING_TYPE):
+                                Calendar.MODE_GREGORIAN):
                             raise SuiteConfigError(
                                 "ERROR: clock-triggered tasks require " +
                                 "[scheduling]cycling mode=%s" %
-                                ISO8601_CYCLING_TYPE
+                                Calendar.MODE_GREGORIAN
                             )
                         name, offset = m.groups()
                         try:
