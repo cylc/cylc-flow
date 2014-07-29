@@ -49,7 +49,7 @@ sqlite3 $RUN_DIR/$SUITE_NAME/cylc-suite.db \
                  from task_states
                  order by name, cycle" > final-state
 
-cmp_ok final-state $TEST_SOURCE_DIR/pre-init/ref-state
+contains_ok final-state $TEST_SOURCE_DIR/pre-init/ref-state
 
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
