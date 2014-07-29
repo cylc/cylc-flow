@@ -253,6 +253,13 @@ class config( object ):
                 else:
                     m = re.match( CLOCK_OFFSET_RE, item )
                     if m:
+                        if (self.cfg['scheduling']['cycling mode'] !=
+                                ISO8601_CYCLING_TYPE):
+                            raise SuiteConfigError(
+                                "ERROR: clock-triggered tasks require " +
+                                "[scheduling]cycling mode=%s" %
+                                ISO8601_CYCLING_TYPE
+                            )
                         name, offset = m.groups()
                         try:
                             float( offset )
