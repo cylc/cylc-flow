@@ -1699,7 +1699,7 @@ class config( object ):
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]
             )
-        if not flags.back_compat_cycling:
+        if not flags.backwards_compat_cycling:
             if async_graph and has_non_async_graphs:
                 raise SuiteConfigError(
                     "Error: mixed async & cycling graphs is not allowed in " +
