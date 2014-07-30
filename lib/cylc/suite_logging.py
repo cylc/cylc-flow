@@ -75,7 +75,7 @@ class suite_log( object ):
 
 class ISO8601DateTimeFormatter(logging.Formatter):
 
-    """Format date/times with the local time zone."""
+    """Format date/times with the correct time zone."""
 
     def formatTime(self, record, datefmt=None):
         return get_time_string_from_unix_time(record.created)
