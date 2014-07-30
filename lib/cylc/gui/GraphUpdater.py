@@ -283,7 +283,7 @@ class GraphUpdater(threading.Thread):
         self.oldest_point_string = (
             self.global_summary['oldest cycle point string'])
         self.newest_point_string = (
-            self.global_summary['newest cycle point string']
+            self.global_summary['newest cycle point string'])
 
         if self.focus_start_point_string:
             oldest = self.focus_start_point_string
