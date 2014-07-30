@@ -46,7 +46,6 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-cat $TEST_NAME.stderr >/dev/tty
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-t1.1
 T1_JOB_FILE=$SUITE_RUN_DIR/log/job/t1.1.1
