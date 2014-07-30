@@ -261,7 +261,6 @@ class pool(object):
             self.log.warning(
                 '%s cannot be added (use --debug and see stderr)' % itask.id)
             return False
-        print "RELEASE RUNAHEAD", itask.id, itask.max_future_prereq_offset
         if itask.max_future_prereq_offset is not None:
             self.set_max_future_offset()
 
@@ -487,7 +486,6 @@ class pool(object):
                     (max_offset is None or
                      itask.max_future_prereq_offset > max_offset)):
                 max_offset = itask.max_future_prereq_offset
-        print "Max future offset", max_offset
         self.max_future_offset = max_offset
 
 
