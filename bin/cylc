@@ -214,8 +214,6 @@ utility_commands['checkvars'    ] = ['checkvars']
 utility_commands['random'       ] = ['random', 'rnd']
 utility_commands['housekeeping' ] = ['housekeeping']
 utility_commands['scp-transfer' ] = ['scp-transfer']
-utility_commands['lockserver'] = ['lockserver' ]
-utility_commands['lockclient'] = ['lockclient', 'lc' ]
 utility_commands['suite-state'] = ['suite-state']
 
 hook_commands = OrderedDict()
@@ -410,19 +408,17 @@ comsum[ 'nudge'      ] = 'Cause the cylc task processing loop to be invoked'
 comsum[ 'reload'     ] = 'Reload the suite definition at run time'
 comsum[ 'depend'     ] = 'Add prerequisites to tasks in a running suite'
 comsum[ 'set-runahead'   ] = 'Change the runahead limit in a running suite.'
-comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
-comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'set-verbosity'  ] = 'Change a running suite\'s logging verbosity'
 # discovery
 comsum[ 'ping'       ] = 'Check that a suite is running'
-comsum[ 'scan'       ] = 'Scan a host for running suites and lockservers'
+comsum[ 'scan'       ] = 'Scan a host for running suites'
 comsum[ 'check-versions' ] = 'Compare cylc versions on task host accounts'
 # task
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
-comsum[ 'started'    ] = 'Acquire a task lock and report started'
-comsum[ 'message'    ] = 'Report progress and completion of outputs'
-comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
-comsum[ 'failed'     ] = 'Release task lock and report failure'
+comsum[ 'started'    ] = '(task messaging) Report task started'
+comsum[ 'message'    ] = '(task messaging) Report task messages'
+comsum[ 'succeeded'  ] = '(task messaging) Report task succeeded'
+comsum[ 'failed'     ] = '(task messaging) Report task failed'
 comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
 comsum[ 'get-job-status' ] = '(Internal) Retrieve job status for a task'
 comsum[ 'job-kill' ] = '(Internal) Kill a job for a task'

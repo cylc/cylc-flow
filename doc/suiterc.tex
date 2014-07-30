@@ -267,42 +267,6 @@ suite will abort if the handler fails.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
-
-The cylc lockserver brokers suite and task locks on the network (these
-are somewhat analagous to traditional local {\em lock files}). It
-prevents multiple instances of a suite or task from being invoked
-at the same time (via scheduler instances or \lstinline=cylc submit=).
-
-See \lstinline=cylc lockserver --help= for
-how to run the lockserver, and \lstinline=cylc lockclient --help= for
-occasional manual lock management requirements.
-
-\paragraph[enable]{[cylc] $\rightarrow$ [[lockserver]] $\rightarrow$ enable}
-
-The lockserver is currently disabled by default. It is intended mainly for
-operational use.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
-\paragraph[simultaneous instances]{[cylc] $\rightarrow$ [[lockserver]] $\rightarrow$ simultaneous instances}
-
-By default the lockserver prevents multiple simultaneous instances of a
-suite from running even under different registered names. But allowing
-this may be desirable if the I/O paths of every task in the suite are
-dynamically configured to be suite specific (and similarly for the suite
-state dump and logging directories, by using suite identity variables in
-their directory paths). Note that {\em the lockserver cannot protect you
-from running multiple distinct {\bf copies} of a suite simultaneously}.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
 Environment variables defined in this section are passed to suite and

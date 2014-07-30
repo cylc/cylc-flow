@@ -26,11 +26,9 @@ usage = """cylc [task] succeeded [OPTIONS]
 This command is part of the cylc task messaging interface, used by
 running tasks to communicate progress to their parent suite.
 
-The succeeded command reports successful completion of task execution
-(and releases the task lock to the lockserver if necessary). It is
-automatically written to the end of task jobs scripts by cylc, except in
-the case of detaching tasks (suite.rc: 'manual completion = True'), in
-which case it must be called explicitly by final task scripting.
+The succeeded command reports successful completion of task execution.
+It is called automatically by task job scripts, except in the case of
+"detaching tasks" which must do their own completion messaging.
 
 Suite and task identity are determined from the task execution
 environment supplied by the suite (or by the single task 'submit'
