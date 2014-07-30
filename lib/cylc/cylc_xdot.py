@@ -286,8 +286,8 @@ class MyDotWindow( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file,  watch, point_string, stop_point_string,
-                 orientation="TB" ):
+                 template_vars_file,  watch, start_point_string,
+                 stop_point_string, orientation="TB" ):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
