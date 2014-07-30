@@ -212,7 +212,6 @@ utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars']
 utility_commands['random'       ] = ['random', 'rnd']
-utility_commands['housekeeping' ] = ['housekeeping']
 utility_commands['scp-transfer' ] = ['scp-transfer']
 utility_commands['lockserver'] = ['lockserver' ]
 utility_commands['lockclient'] = ['lockclient', 'lc' ]
@@ -317,7 +316,7 @@ catsum['discovery'   ]   = "Detect running suites."
 catsum['control'     ]   = "Suite start up, monitoring, and control."
 catsum['task'        ]   = "The task messaging interface."
 catsum['hook'        ]   = "Suite and task event hook scripts."
-catsum['utility'     ]   = "Cycle arithmetic and templating, housekeeping, etc."
+catsum['utility'     ]   = "Cycle arithmetic and templating, etc."
 
 usage = general_usage + """
 
@@ -432,8 +431,6 @@ comsum[ 'cycletime'    ] = 'Cycle point arithmetic and filename templating'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
 comsum[ 'random'       ] = 'Generate a random integer within a given range'
 comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
-comsum[ 'housekeeping' ] = (
-    'Parallel archiving and cleanup on cycle point offsets')
 comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
 comsum[ 'suite-state' ] = 'Query the task states in a suite'
 
