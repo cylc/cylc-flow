@@ -4,8 +4,8 @@
 2013/09/18 14:50:46 INFO - Suite starting at 2013-09-18 14:50:42.696077
 2013/09/18 14:50:46 INFO - Log event clock: accelerated
 2013/09/18 14:50:46 INFO - Run mode: dummy
-2013/09/18 14:50:46 INFO - Start tag: 1
-2013/09/18 14:50:47 INFO - Stop tag: 1
+2013/09/18 14:50:46 INFO - Start point: 1
+2013/09/18 14:50:47 INFO - Stop point: 1
 2013/09/18 14:50:47 INFO - Thread-4 start (Job Submission)
 2013/09/18 14:50:47 INFO - Thread-5 start (Request Handling)
 2013/09/18 14:50:49 DEBUG - [a.1] -task proxy added to the pool

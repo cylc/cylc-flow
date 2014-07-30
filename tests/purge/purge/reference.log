@@ -3,8 +3,8 @@
 2014/01/07 17:36:00 INFO - Suite starting at 2014-01-07 17:36:00.197836
 2014/01/07 17:36:00 INFO - Log event clock: real time
 2014/01/07 17:36:00 INFO - Run mode: live
-2014/01/07 17:36:00 INFO - Start tag: 2010010106
-2014/01/07 17:36:00 INFO - Stop tag: None
+2014/01/07 17:36:00 INFO - Start point: 2010010106
+2014/01/07 17:36:00 INFO - Stop point: None
 2014/01/07 17:36:00 INFO - Thread-3 start (Poll & Kill Commands)
 2014/01/07 17:36:00 INFO - Thread-5 start (Request Handling)
 2014/01/07 17:36:00 INFO - Thread-4 start (Job Submission)
@@ -17,7 +17,7 @@
 2014/01/07 17:36:02 INFO - [prep.2010010106] -(current:running)> Setting stop cycle 2010010206 at 2014-01-07T17:36:01
 2014/01/07 17:36:03 INFO - [prep.2010010106] -(current:running)> prep.2010010106 succeeded at 2014-01-07T17:36:02
 2014/01/07 17:36:03 INFO - Setting stop cycle time: 2010010206
-2014/01/07 17:36:03 INFO - Command succeeded: stop after tag(2010010206)
+2014/01/07 17:36:03 INFO - Command succeeded: stop after point(2010010206)
 2014/01/07 17:36:03 INFO - setting runahead limit to 30
 2014/01/07 17:36:03 INFO - Command succeeded: set runahead(30)
 2014/01/07 17:36:04 INFO - [ColdB.2010010106] -triggered off ['prep.2010010106']

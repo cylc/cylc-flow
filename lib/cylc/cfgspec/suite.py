@@ -175,10 +175,6 @@ SPEC = {
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
         'process pool size'                   : vdr( vtype='integer', default=None ),
-        'lockserver' : {
-            'enable'                          : vdr( vtype='boolean', default=False ),
-            'simultaneous instances'          : vdr( vtype='boolean', default=False ),
-            },
         'environment' : {
             '__MANY__'                        : vdr( vtype='string' ),
             },
@@ -343,7 +339,6 @@ def upg( cfg, descr ):
     # TODO - should abort if obsoleted items are encountered
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
-    # TODO - replace ISO version here:
     u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
     u.obsolete( '6.0.0', ['development'] )
     u.deprecate(
@@ -370,6 +365,7 @@ def upg( cfg, descr ):
     u.obsolete('6.0.0', ['cylc', 'job submission'])
     u.obsolete('6.0.0', ['cylc', 'event handler submission'])
     u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
+    u.obsolete('6.0.0', ['cylc', 'lockserver'])
     u.upgrade()
 
 class sconfig( config ):

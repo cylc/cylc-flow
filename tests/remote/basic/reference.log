@@ -1,8 +1,8 @@
 2012/08/24 13:40:20 INFO - Suite starting at 2012-08-24 13:40:20.373348
 2012/08/24 13:40:20 INFO - Log event clock: real time
 2012/08/24 13:40:20 INFO - Run mode: live
-2012/08/24 13:40:20 INFO - Start tag: None
-2012/08/24 13:40:20 INFO - Stop tag: None
+2012/08/24 13:40:20 INFO - Start point: None
+2012/08/24 13:40:20 INFO - Stop point: None
 2012/08/24 13:40:20 WARNING - Calling startup event handler in the foreground
 2012/08/24 13:40:20 INFO - [foo.1] -job submitted
 2012/08/24 13:40:20 INFO - [foo.1] -triggered off []

@@ -89,11 +89,11 @@ class prerequisites(object):
             for label in reqs.messages:
                 reqs.satisfied[ label ] = False
 
-    def get_target_tags( self ):
+    def get_target_points( self ):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        tags = []
+        points = []
         for reqs in self.container:
-            tags += reqs.get_target_tags()
-        return tags
+            points += reqs.get_target_points()
+        return points
 

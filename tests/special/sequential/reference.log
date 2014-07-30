@@ -3,8 +3,8 @@
 2014/01/07 16:58:20 INFO - Suite starting at 2014-01-07 16:58:20.689917
 2014/01/07 16:58:20 INFO - Log event clock: real time
 2014/01/07 16:58:20 INFO - Run mode: live
-2014/01/07 16:58:20 INFO - Start tag: 2010010100
-2014/01/07 16:58:20 INFO - Stop tag: 2010010118
+2014/01/07 16:58:20 INFO - Start point: 2010010100
+2014/01/07 16:58:20 INFO - Stop point: 2010010118
 2014/01/07 16:58:20 INFO - Thread-3 start (Poll & Kill Commands)
 2014/01/07 16:58:20 INFO - Thread-5 start (Request Handling)
 2014/01/07 16:58:20 INFO - Thread-4 start (Job Submission)
@@ -57,7 +57,7 @@
 2014/01/07 16:58:37 DEBUG - [foo.2010010106] -(setting:queued)
 2014/01/07 16:58:37 DEBUG - 1 task(s) ready
 2014/01/07 16:58:37 DEBUG - [foo.2010010106] -(setting:ready)
-2014/01/07 16:58:37 INFO - [foo.2010010106] -triggered off ['foo.2010010100', 'monitor.2010010100']
+2014/01/07 16:58:37 INFO - [foo.2010010106] -triggered off ['foo.2010010100']
 2014/01/07 16:58:37 DEBUG - [foo.2010010100] -task proxy removed
 2014/01/07 16:58:37 DEBUG - END TASK PROCESSING (took 0.007193 sec)
 2014/01/07 16:58:38 DEBUG - Job Submission batch 1/1 (1 members):
@@ -82,7 +82,7 @@
 2014/01/07 16:58:49 DEBUG - [foo.2010010112] -(setting:queued)
 2014/01/07 16:58:49 DEBUG - 1 task(s) ready
 2014/01/07 16:58:49 DEBUG - [foo.2010010112] -(setting:ready)
-2014/01/07 16:58:49 INFO - [foo.2010010112] -triggered off ['foo.2010010106', 'monitor.2010010100']
+2014/01/07 16:58:49 INFO - [foo.2010010112] -triggered off ['foo.2010010106']
 2014/01/07 16:58:49 DEBUG - [foo.2010010106] -task proxy removed
 2014/01/07 16:58:49 DEBUG - END TASK PROCESSING (took 0.007156 sec)
 2014/01/07 16:58:50 DEBUG - Job Submission batch 1/1 (1 members):
@@ -107,7 +107,7 @@
 2014/01/07 16:59:01 DEBUG - [foo.2010010118] -(setting:queued)
 2014/01/07 16:59:01 DEBUG - 1 task(s) ready
 2014/01/07 16:59:01 DEBUG - [foo.2010010118] -(setting:ready)
-2014/01/07 16:59:01 INFO - [foo.2010010118] -triggered off ['foo.2010010112', 'monitor.2010010100']
+2014/01/07 16:59:01 INFO - [foo.2010010118] -triggered off ['foo.2010010112']
 2014/01/07 16:59:02 DEBUG - [foo.2010010112] -task proxy removed
 2014/01/07 16:59:02 DEBUG - END TASK PROCESSING (took 0.012032 sec)
 2014/01/07 16:59:02 DEBUG - Job Submission batch 1/1 (1 members):

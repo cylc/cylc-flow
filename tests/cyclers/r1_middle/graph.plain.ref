@@ -1,0 +1,5 @@
+edge "foo.20140101T0010Z" "bar.20140101T0010Z" solid black
+graph 
+node "bar.20140101T0010Z" "bar\n20140101T0010Z" unfilled box black lightgrey
+node "foo.20140101T0010Z" "foo\n20140101T0010Z" unfilled box black lightgrey
+stop

@@ -103,7 +103,6 @@ parser.add_option( "--print-hour", help="Print only HH of result",
 
 (options, args) = parser.parse_args()
 
-# TODO ISO - THIS UTIL WILL BE COMPLETELY BROKEN
 if len( args ) == 0:
     # input cycle point must be defined in the environment.
     if 'CYLC_TASK_CYCLE_POINT' not in os.environ:

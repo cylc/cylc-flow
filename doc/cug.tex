@@ -1106,7 +1106,7 @@ usually a date/time or an integer representation:
 foo.20100808T00Z   # a task with a date/time cycle point
 bar.1              # a task with an integer cycle point (could be non-cycling)
 \end{lstlisting}
-Non-cycling tasks usually just have the tag \lstinline=1=, but this
+Non-cycling tasks usually just have the cycle point \lstinline=1=, but this
 still has to be used to target the task instance with cylc commands.
 
 \subsection{Job Submission: How Tasks Are Executed}
@@ -4459,11 +4459,9 @@ The cylc messaging commands are called like this:
 #!/bin/bash
 # ...
 if $SUCCESS; then
-    # release my task lock and report success
     cylc task succeeded
     exit 0
 else
-    # release my task lock and report failed
     cylc task failed "Input file X not found"
     exit 1
 fi
@@ -5991,10 +5989,9 @@ run, the only cycle point that can subsequently run is the next one. This
 is dangerous because if, accidentally or otherwise, the task runs for the
 wrong cycle point, its restart files will be corrupted such that the correct
 cycle point can no longer run (probably necessitating a cold-start).
-Instead, consider organising restart files by cycle point, through a file
+Instead, consider organising restart files by cycle point with a file
 or directory naming convention, and keep them in a simple rolling
-archive (cylc's filename templating and housekeeping utilities can easily
-do this for you). Then, given availability of external inputs, you can
+archive. Then, given availability of external inputs, you can
 easily rerun the task for any cycle point still in the restart archive.
 
 \subsection{Avoid Unnecessary Previous-Instance Dependence}
@@ -6548,58 +6545,6 @@ Graph lines can also be split up without line breaks, like this:
 \lstset{language=usage}
 \input{commands.tex}
 \lstset{language=transcript}
-
-\section{The Cylc Lockserver}
-\label{TheCylcLockserver}
-
-Each cylc user can optionally run his/her own lockserver to prevent
-accidental invocation of multiple instances of the same suite or task at
-the same time. The suite and task locks brokered by the lockserver are
-analogous to traditional lock files, but they work across a network,
-even for distributed suites containing tasks that start executing on one
-host and finish on another.
-
-Accidental invocation of multiple instances
-of the same suite or task at the same time can have serious consequences,
-so use of the lockserver should be considered for important operational
-suites, but it may be considered an unnecessary complication for general
-less critical usage, so it is currently disabled by default.
-
-To enable the lockserver:
-\lstset{language=suiterc}
-\begin{lstlisting}
-use lockserver = True
-\end{lstlisting}
-
-The suite will now abort at start-up if it cannot connect to the
-lockserver.  To start your lockserver daemon,
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc lockserver start
-\end{lstlisting}
-
-To check that it is running,
-\begin{lstlisting}
-shell$ cylc lockserver status
-\end{lstlisting}
-
-For detailed usage information,
-\begin{lstlisting}
-shell$ cylc lockserver --help
-\end{lstlisting}
-
-There is a command line client interface,
-\begin{lstlisting}
-shell$ cylc lockclient --help
-\end{lstlisting}
-for interrogating the lockserver and managing locks manually (e.g.\
-releasing locks if a suite was killed before it could clean up after
-itself).
-
-To watch suite locks being acquired and released as a suite runs,
-\begin{lstlisting}
-shell$ watch cylc lockclient --print
-\end{lstlisting}
 
 \section{The gcylc Graph View}
 \label{TheGraphBasedcontrolGUI}

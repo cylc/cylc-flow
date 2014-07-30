@@ -4,8 +4,8 @@
 2014-04-25T14:50:56 INFO - Suite starting at 2014-04-25T14:50:56.537588
 2014-04-25T14:50:56 INFO - Log event clock: real time
 2014-04-25T14:50:56 INFO - Run mode: live
-2014-04-25T14:50:56 INFO - Start tag: 2010010100
-2014-04-25T14:50:56 INFO - Stop tag: 2010010200
+2014-04-25T14:50:56 INFO - Start point: 2010010100
+2014-04-25T14:50:56 INFO - Stop point: 2010010200
 2014-04-25T14:50:56 INFO - Thread-4 start (Job Submission)
 2014-04-25T14:50:56 INFO - Thread-5 start (Request Handling)
 2014-04-25T14:50:56 INFO - Cold Start 2010010100
@@ -40,7 +40,7 @@
 2014-04-25T14:51:13 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=13582
 2014-04-25T14:51:14 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2014-04-25T14:51:13
 2014-04-25T14:51:14 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2014-04-25T14:51:13
-2014-04-25T14:51:15 INFO - [a.2010010106] -triggered off ['asynch.2010010100', 'c.2010010100']
+2014-04-25T14:51:15 INFO - [a.2010010106] -triggered off ['c.2010010100']
 2014-04-25T14:51:16 INFO - [a.2010010106] -(current:ready)> a.2010010106 submitting now
 2014-04-25T14:51:16 INFO - [a.2010010106] -(current:ready)> a.2010010106 submission succeeded
 2014-04-25T14:51:16 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=13771

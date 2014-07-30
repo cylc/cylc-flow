@@ -52,17 +52,17 @@ class state_summary( Pyro.core.ObjBase ):
 
         for task in tasks:
             task_summary[ task.id ] = task.get_state_summary()
-            name, ctime = TaskID.split( task.id )
-            ctime = str(ctime)
-            task_states.setdefault(ctime, {})
-            task_states[ctime][name] = task_summary[task.id]['state']
+            name, point_string = TaskID.split( task.id )
+            point_string = str(point_string)
+            task_states.setdefault(point_string, {})
+            task_states[point_string][name] = task_summary[task.id]['state']
             task_name_list.append(name)
 
         task_name_list = list(set(task_name_list))
 
         fam_states = {}
         all_states = []
-        for ctime, c_task_states in task_states.items():
+        for point_string, c_task_states in task_states.items():
             # For each cycle point, construct a family state tree
             # based on the first-parent single-inheritance tree
 
@@ -80,7 +80,7 @@ class state_summary( Pyro.core.ObjBase ):
                     c_fam_task_states[parent].append(state)
 
             for fam, child_states in c_fam_task_states.items():
-                f_id = TaskID.get( fam, ctime )
+                f_id = TaskID.get( fam, point_string )
                 state = extract_group_state(child_states)
                 if state is None:
                     continue
@@ -93,14 +93,16 @@ class state_summary( Pyro.core.ObjBase ):
                 family_summary[f_id] = {'name': fam,
                                         'description': description,
                                         'title': title,
-                                        'label': ctime,
+                                        'label': point_string,
                                         'state': state}
 
         all_states.sort()
 
         global_summary[ 'start time' ] = self.str_or_None(self.start_time)
-        global_summary[ 'oldest cycle time' ] = self.str_or_None(oldest)
-        global_summary[ 'newest cycle time' ] = self.str_or_None(newest)
+        global_summary[ 'oldest cycle point string' ] = (
+            self.str_or_None(oldest))
+        global_summary[ 'newest cycle point string' ] = (
+            self.str_or_None(newest))
         global_summary[ 'daemon time zone' ] = TIME_ZONE_STRING_LOCAL_BASIC
         global_summary[ 'last_updated' ] = time.time()
         global_summary[ 'run_mode' ] = self.run_mode
@@ -184,10 +186,10 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
             sub_states.setdefault( state, 0 )
             sub_states[state] += 1
         elif this_id in fam_state_summary:
-            name, ctime = TaskID.split( this_id )
+            name, point_string = TaskID.split( this_id )
             sub_text += prefix + fam_state_summary[this_id]['state']
             for child in reversed( sorted( id_family_map[name] ) ):
-                child_id = TaskID.get( child, ctime )
+                child_id = TaskID.get( child, point_string )
                 stack.insert( 0, ( child_id, depth + 1 ) )
         if not prefix_text:
             prefix_text = sub_text.strip()

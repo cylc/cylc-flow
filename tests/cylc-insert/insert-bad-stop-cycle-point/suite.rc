@@ -1,0 +1,27 @@
+
+title = "test insertion of a task with a bad cycle point."
+
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT10S
+
+[scheduling]
+    initial cycle time = 20140101T00
+    final cycle time   = 20140101T00 # 3 cycles
+    [[special tasks]]
+        exclude at start-up = foo
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                prep
+                foo => bar
+            """
+
+[runtime]
+    [[root]]
+        command scripting = "sleep 1" # quick
+    [[prep]]
+        # Insert the task with a bad cycle point
+        command scripting = cylc insert $CYLC_SUITE_NAME foo 20140101T00 soon
+

@@ -26,20 +26,20 @@ DATE_EXPRESSIONS = {
     "basic": {
         "complete": u"""
 CCYYMMDD
-±XCCYYMMDD
++XCCYYMMDD  # '+' stands for either '+' or '-'
 CCYYDDD
-±XCCYYDDD
++XCCYYDDD
 CCYYWwwD
-±XCCYYWwwD""",
++XCCYYWwwD""",
         "reduced": u"""
 CCYY-MM       # Deviation? Not clear if "basic" or "extended" in standard.
 CCYY
 CC
-±XCCYY-MM     # Deviation? Not clear if "basic" or "extended" in standard.
-±XCCYY
-±XCC
++XCCYY-MM     # Deviation? Not clear if "basic" or "extended" in standard.
++XCCYY
++XCC
 CCYYWww
-±XCCYYWww""",
++XCCYYWww""",
         "truncated": u"""
 -YYMM
 -YY
@@ -60,16 +60,16 @@ YYWww
     "extended": {
         "complete": u"""
 CCYY-MM-DD
-±XCCYY-MM-DD
++XCCYY-MM-DD
 CCYY-DDD
-±XCCYY-DDD
++XCCYY-DDD
 CCYY-Www-D
-±XCCYY-Www-D""",
++XCCYY-Www-D""",
         "reduced": u"""
 CCYY-MM
-±XCCYY-MM
++XCCYY-MM
 CCYY-Www
-±XCCYY-Www""",
++XCCYY-Www""",
         "truncated": u"""
 -YY-MM
 --MM-DD
@@ -154,18 +154,18 @@ hh             # Deviation? Not allowed in standard ?
 TIME_ZONE_EXPRESSIONS = {
     "basic": u"""
 Z
-±hh
-±hhmm
++hh
++hhmm
 """,
     "extended": u"""
 Z
-±hh             # Deviation? Not allowed in standard?
-±hh:mm
++hh             # Deviation? Not allowed in standard?
++hh:mm
 """
 }
 TIME_DESIGNATOR = "T"
 _DATE_TRANSLATE_INFO = [
-    (u"±", "(?P<year_sign>[-+])",
+    (u"\+(?=X)", "(?P<year_sign>[-+])",
      "%(year_sign)s", "year_sign"),
     (u"CC", "(?P<century>\d\d)",
      "%(century)02d", "century"),
@@ -221,13 +221,13 @@ _TIME_TRANSLATE_INFO = [
      "-", None)
 ]
 _TIME_ZONE_TRANSLATE_INFO = [
-    (u"(?<=±hh)mm", "(?P<time_zone_minute>\d\d)",
+    (u"mm", "(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    (u"(?<=±hh:)mm", "(?P<time_zone_minute>\d\d)",
+    (u"mm", "(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    (u"(?<=±)hh", "(?P<time_zone_hour>\d\d)",
+    (u"hh", "(?P<time_zone_hour>\d\d)",
      "%(time_zone_hour_abs)02d", "time_zone_hour_abs"),
-    (u"±", "(?P<time_zone_sign>[-+])",
+    (u"\+", "(?P<time_zone_sign>[-+])",
      "%(time_zone_sign)s", "time_zone_sign"),
     (u"Z", "(?P<time_zone_utc>Z)",
      "Z", None)

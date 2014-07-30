@@ -16,6 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""This module provides base classes for cycling data objects."""
+
+
 class CyclerTypeError(TypeError):
 
     """An error raised when incompatible cycling types are wrongly mixed."""
@@ -46,7 +49,7 @@ class PointBase(object):
     They should also provide self.cmp_, self.sub, self.add, and
     self.eq methods which should behave as __cmp__, __sub__,
     etc standard comparison methods. Note: "cmp_" not "cmp".
-    
+
     Subclasses may also provide an overridden self.standardise
     method to reprocess their value into a standard form.
 
@@ -60,14 +63,36 @@ class PointBase(object):
             raise TypeError(type(value))
         self.value = value
 
+    def add(self, other):
+        """Add other (interval) to self, returning a point."""
+        raise NotImplementedError()
+
+    def cmp_(self, other):
+        """Compare self to other point, returning a 'cmp'-like result."""
+        raise NotImplementedError()
+
     def standardise(self):
         """Format self.value into a standard representation and check it."""
         return self
 
+    def sub(self, other):
+        """Subtract other (interval or point), returning a point or interval.
+
+        If other is a Point, return an Interval.
+        If other is an Interval, return a Point.
+
+        ('Point' here is a PointBase-derived object, and 'Interval' an
+         IntervalBase-derived object)
+
+        """
+        raise NotImplementedError()
+
     def __str__(self):
+        # Stringify.
         return self.value
 
     def __cmp__(self, other):
+        # Compare to other point.
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
@@ -75,11 +100,13 @@ class PointBase(object):
         return self.cmp_(other)
 
     def __sub__(self, other):
+        # Subtract other (point or interval) from self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.sub(other)
 
     def __add__(self, other):
+        # Add other (point or interval) from self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.add(other)
@@ -113,7 +140,6 @@ class IntervalBase(object):
     TYPE = None
     TYPE_SORT_KEY = None
 
-
     @classmethod
     def get_null(cls):
         """Return a null interval."""
@@ -123,13 +149,16 @@ class IntervalBase(object):
         """For a given string, infer the offset given my instance units."""
         raise NotImplementedError()
 
-    def __abs__( self ):
+    def __abs__(self):
+        # Return an interval with absolute values for all properties.
         raise NotImplementedError()
 
-    def __mul__( self, m ):
+    def __mul__(self, factor):
+        # Return an interval with all properties multiplied by factor.
         raise NotImplementedError()
 
     def __nonzero__(self):
+        # Return True if the interval has any non-zero properties.
         raise NotImplementedError()
 
     def __init__(self, value):
@@ -137,22 +166,45 @@ class IntervalBase(object):
             raise TypeError(type(value))
         self.value = value
 
+    def add(self, other):
+        """Add other to self, returning a Point or Interval.
+
+        If other is a Point, return a Point.
+        If other is an Interval, return an Interval..
+
+        ('Point' here is a PointBase-derived object, and 'Interval' an
+         IntervalBase-derived object)
+
+        """
+        raise NotImplementedError()
+
+    def cmp_(self, other):
+        """Compare self to other (interval), returning a 'cmp'-like result."""
+        raise NotImplementedError()
+
     def standardise(self):
         """Format self.value into a standard representation."""
         return self
 
-    def is_null( self ):
+    def sub(self, other):
+        """Subtract other (interval) from self; return an interval."""
+        raise NotImplementedError()
+
+    def is_null(self):
         return (self == self.get_null())
 
-    def __str__( self ):
+    def __str__(self):
+        # Stringify.
         return self.value
 
     def __add__(self, other):
+        # Add other (point or interval) to self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.add(other)
 
     def __cmp__(self, other):
+        # Compare self to other (interval).
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
@@ -160,9 +212,99 @@ class IntervalBase(object):
         return self.cmp_(other)
 
     def __sub__(self, other):
+        # Subtract other (interval or point) from self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.sub(other)
 
-    def __neg__( self ):
+    def __neg__(self):
+        # Return an interval with all properties multiplied by -1.
         return self * -1
+
+
+class SequenceBase(object):
+
+    """The base class for cycler sequences.
+
+    Subclasses should accept a sequence-specific string, a
+    start context string, and a stop context string as
+    constructor arguments.
+
+    Subclasses should provide values for TYPE and TYPE_SORT_KEY.
+    They should also provide get_async_expr, get_interval,
+    get_offset & set_offset (deprecated), is_on_sequence,
+    _get_point_in_bounds, is_valid, get_prev_point,
+    get_nearest_prev_point, get_next_point,
+    get_next_point_on_sequence, get_first_point, and
+    get_stop_point.
+
+    They should also provide a self.__eq__ implementation
+    which should return whether a SequenceBase-derived object
+    is equal to another (represents the same set of points).
+
+    """
+
+    TYPE = None
+    TYPE_SORT_KEY = None
+
+    @classmethod
+    def get_async_expr(cls, start_point=0):
+        """Express a one-off sequence at the initial cycle point."""
+        raise NotImplementedError()
+
+    def __init__(self, sequence_string, context_start, context_stop=None):
+        """Parse sequence string according to context point strings."""
+        pass
+
+    def get_interval(self):
+        """Return the cycling interval of this sequence."""
+        raise NotImplementedError()
+
+    def get_offset(self):
+        """Deprecated: return the offset used for this sequence."""
+        raise NotImplementedError()
+
+    def set_offset(self, i_offset):
+        """Deprecated: alter state to offset the entire sequence."""
+        raise NotImplementedError()
+
+    def is_on_sequence(self, point):
+        """Is point on-sequence, disregarding bounds?"""
+        raise NotImplementedError()
+
+    def _get_point_in_bounds(self, point):
+        """Return point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def is_valid(self, point):
+        """Is point on-sequence and in-bounds?"""
+        raise NotImplementedError()
+
+    def get_prev_point(self, point):
+        """Return the previous point < point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_nearest_prev_point(self, point):
+        """Return the largest point < some arbitrary point."""
+        raise NotImplementedError()
+
+    def get_next_point(self, point):
+        """Return the next point > point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_next_point_on_sequence(self, point):
+        """Return the next point > point assuming that point is on-sequence,
+        or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_first_point(self, point):
+        """Return the first point >= to point, or None if out of bounds."""
+        raise NotImplementedError()
+
+    def get_stop_point(self):
+        """Return the last point in this sequence, or None if unbounded."""
+        raise NotImplementedError()
+
+    def __eq__(self, other):
+        # Return True if other (sequence) is equal to self.
+        raise NotImplementedError()

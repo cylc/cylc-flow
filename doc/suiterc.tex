@@ -74,23 +74,24 @@ To just alter the timezone used in the date/time cycle point format, see
 \ref{cycle-point-num-expanded-year-digits}.
 
 Cylc usually uses a \lstinline=CCYYMMDDThhmmZ= (\lstinline=Z= in the special
-case of UTC) or \lstinline=CCYYMMDDThhmm±hhmm= format for writing down
-date/time cycle points, which follows one of the basic formats outlined in the
-ISO 8601 standard. For example, a cycle point on the 3rd of February 2001 at
-4:50 in the morning, UTC (+0000 timezone), would be written
+case of UTC) or \lstinline=CCYYMMDDThhmm+hhmm= format (\lstinline=+= standing
+for \lstinline=+= or \lstinline=-= here) for writing down date/time cycle
+points, which follows one of the basic formats outlined in the ISO 8601
+standard. For example, a cycle point on the 3rd of February 2001 at 4:50 in
+the morning, UTC (+0000 timezone), would be written
 \lstinline=20010203T0450Z=. Similarly, for the the 3rd of February 2001 at
 4:50 in the morning, +1300 timezone, cylc would write
 \lstinline=20010203T0450+1300=.
 
 You may use the isodatetime library's syntax to write dates and times in ISO
 8601 formats - \lstinline=CC= for century, \lstinline=YY= for decade and
-decadal year, \lstinline=±X= for expanded year digits, thereafter following
-the ISO 8601 standard example notation except for fractional digits, which are
-represented as \lstinline=,ii= for \lstinline=hh=, \lstinline=,nn= for
-\lstinline=mm=, etc. For example, to write date/times as week dates with
-fractional hours, set cycle point format to \lstinline=CCYYWwwDThh,iiZ= e.g.
-\lstinline=1987W041T08,5Z= for 08:30 UTC on Monday on the fourth ISO week of
-1987.
+decadal year, \lstinline=+X= for expanded year digits and their positive or
+negative sign, thereafter following the ISO 8601 standard example notation
+except for fractional digits, which are represented as \lstinline=,ii= for
+\lstinline=hh=, \lstinline=,nn= for \lstinline=mm=, etc. For example, to write
+date/times as week dates with fractional hours, set cycle point format to
+\lstinline=CCYYWwwDThh,iiZ= e.g. \lstinline=1987W041T08,5Z= for 08:30 UTC on
+Monday on the fourth ISO week of 1987.
 
 You can also use a subset of the strptime/strftime POSIX standard - supported
 tokens are \lstinline=\%F=, \lstinline=\%H=, \lstinline=\%M=, \lstinline=\%S=,
@@ -266,42 +267,6 @@ suite will abort if the handler fails.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
-
-The cylc lockserver brokers suite and task locks on the network (these
-are somewhat analagous to traditional local {\em lock files}). It
-prevents multiple instances of a suite or task from being invoked
-at the same time (via scheduler instances or \lstinline=cylc submit=).
-
-See \lstinline=cylc lockserver --help= for
-how to run the lockserver, and \lstinline=cylc lockclient --help= for
-occasional manual lock management requirements.
-
-\paragraph[enable]{[cylc] $\rightarrow$ [[lockserver]] $\rightarrow$ enable}
-
-The lockserver is currently disabled by default. It is intended mainly for
-operational use.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
-\paragraph[simultaneous instances]{[cylc] $\rightarrow$ [[lockserver]] $\rightarrow$ simultaneous instances}
-
-By default the lockserver prevents multiple simultaneous instances of a
-suite from running even under different registered names. But allowing
-this may be desirable if the I/O paths of every task in the suite are
-dynamically configured to be suite specific (and similarly for the suite
-state dump and logging directories, by using suite identity variables in
-their directory paths). Note that {\em the lockserver cannot protect you
-from running multiple distinct {\bf copies} of a suite simultaneously}.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
 Environment variables defined in this section are passed to suite and
@@ -403,7 +368,7 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} string list (task IDs: \lstinline=name.tag=)
+    \item {\em type:} string list (task IDs: \lstinline=name.cycle_point=)
     \item {\em default:} (none)
     \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}

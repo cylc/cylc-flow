@@ -62,14 +62,16 @@ if options.state not in allowed_states:
     parser.error( "Illegal STATE value: " + options.state )
 
 name = args[1]
-tag = args[2]
+point_string = args[2]
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
-    prompt( 'Reset task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
-    result = proxy.put( 'reset task state', name, tag, options.state, options.is_family )
+    prompt( 'Reset task(s) ' + name + ' at ' + point_string + ' in ' + suite,
+            options.force )
+    result = proxy.put( 'reset task state', name, point_string, options.state,
+                        options.is_family )
 except Exception, x:
     if cylc.flags.debug:
         raise

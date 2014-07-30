@@ -55,7 +55,7 @@ dep = args[2]
 
 m = re.match( '^(\w+)'+cylc.TaskID.DELIM_RE+'(\w+)$', dep )
 if m:
-    #name, ctime = m.groups()
+    #name, point_string = m.groups()
     msg = dep + ' succeeded'
 else:
     msg = dep

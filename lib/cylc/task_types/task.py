@@ -199,7 +199,7 @@ class task( object ):
                          'name': self.name,
                          'description': self.description,
                          'title': self.title,
-                         'label': str(self.tag),
+                         'label': str(self.point),
                          'logfiles': self.logfiles.get_paths()}
 
         self.retries_configured = False
@@ -240,13 +240,14 @@ class task( object ):
         else:
             if not self.exists:
                 self.record_db_state(
-                    self.name, self.c_time,
+                    self.name, str(self.point),
                     time_created_string=get_current_time_string(),
                     submit_num=self.submit_num, try_num=self.try_number,
                     status=self.state.get_status()
                 )
             if self.submit_num > 0:
-                self.record_db_update("task_states", self.name, self.c_time,
+                self.record_db_update("task_states", self.name,
+                                      str(self.point),
                                       status=self.state.get_status())
 
     def log( self, priority, message ):
@@ -265,7 +266,10 @@ class task( object ):
             logger.warning( '-> ' + message )
 
     def record_db_event(self, event="", message=""):
-        call = cylc.rundb.RecordEventObject(self.name, str(self.c_time), self.submit_num, event, message, self.user_at_host)
+        call = cylc.rundb.RecordEventObject(
+            self.name, str(self.point), self.submit_num, event, message,
+            self.user_at_host
+        )
         self.db_queue.append(call)
         self.db_items = True
 
@@ -408,7 +412,8 @@ class task( object ):
             self.submit_method_id = self.job_sub_method.get_id( out, err )
             if self.submit_method_id:
                 self.log( 'NORMAL', 'submit_method_id=' + self.submit_method_id )
-                self.record_db_update("task_states", self.name, self.c_time, submit_method_id=self.submit_method_id)
+                self.record_db_update("task_states", self.name,
+                    str(self.point), submit_method_id=self.submit_method_id)
             out, err = self.job_sub_method.filter_output( out, err )
             self.job_submission_succeeded( out, err )
 
@@ -668,7 +673,8 @@ class task( object ):
         self.log("DEBUG", "incrementing submit number")
         self.submit_num += 1
         self.record_db_event(event="incrementing submit number")
-        self.record_db_update("task_states", self.name, self.c_time, submit_num=self.submit_num)
+        self.record_db_update("task_states", self.name, str(self.point),
+                              submit_num=self.submit_num)
 
     def get_command( self, dry_run=False, overrides={} ):
         self.increment_submit_num()
@@ -723,7 +729,7 @@ class task( object ):
             # generate automatic suite state polling command scripting
             comstr = "cylc suite-state " + \
                      " --task=" + self.suite_polling_cfg['task'] + \
-                     " --cycle=" + str(self.c_time) + \
+                     " --point=" + str(self.point) + \
                      " --status=" + self.suite_polling_cfg['status']
             if rtconfig['suite state polling']['user']:
                 comstr += " --user=" + rtconfig['suite state polling']['user']
@@ -781,7 +787,10 @@ class task( object ):
                 subprocess.check_call(cmd)
             self.__class__.suite_contact_env_hosts.append( self.task_host )
 
-        self.record_db_update("task_states", self.name, self.c_time, submit_method=module_name, host=self.user_at_host)
+        self.record_db_update(
+            "task_states", self.name, str(self.point),
+            submit_method=module_name, host=self.user_at_host
+        )
 
         jobconfig = {
                 'directives'             : rtconfig['directives'],
@@ -1127,9 +1136,11 @@ class task( object ):
             flags.iflag = True
             self.log( 'DEBUG', '(setting:' + status + ')' )
             self.state.set_status( status )
-            self.record_db_update("task_states", self.name, self.c_time,
-                                  submit_num=self.submit_num, try_num=self.try_number,
-                                  status=status)
+            self.record_db_update(
+                "task_states", self.name, str(self.point),
+                submit_num=self.submit_num, try_num=self.try_number,
+                status=status
+            )
 
     def update( self, reqs ):
         for req in reqs.get_list():
@@ -1145,11 +1156,11 @@ class task( object ):
 
     def spawn( self, state ):
         self.state.set_spawned()
-        next = self.next_tag()
+        next = self.next_point()
         if next:
             successor = self.__class__( next, state )
             # propagate task stop time
-            successor.stop_c_time = self.stop_c_time
+            successor.stop_point = self.stop_point
             return successor
         else:
             # next instance is out of the sequence bounds
@@ -1203,11 +1214,11 @@ class task( object ):
         if self.suicide_prerequisites.count() > 0:
             self.suicide_prerequisites.satisfy_me( outputs )
 
-    def adjust_tag( self, tag ):
-        # Override to modify initial tag if necessary.
-        return tag
+    def adjust_point( self, point ):
+        # Override to modify initial point if necessary.
+        return point
 
-    def next_tag( self ):
+    def next_point( self ):
         # derived classes override this to compute next valid cycle point.
         return None
 
