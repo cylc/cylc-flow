@@ -136,7 +136,7 @@ class graphnode( object ):
         else:
             self.intercycle = False
             self.offset = None
-        if not flags.backwards_comp_cycling and is_prev_cycling_format:
+        if not flags.backwards_compat_cycling and is_prev_cycling_format:
             raise GraphNodeError(
                 'Illegal graph offset (new-style cycling): ' + str(offset) +
                 ' should be ' + str(self.offset)

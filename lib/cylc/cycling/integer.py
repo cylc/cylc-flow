@@ -96,6 +96,7 @@ class IntegerPoint(PointBase):
         return self
 
     def __int__(self):
+        # Provide a nice way to use the string self.value in calculations.
         return int(self.value)
 
 
@@ -140,15 +141,19 @@ class IntegerInterval(IntervalBase):
         return IntegerInterval(int(self) - int(other))
 
     def __abs__(self):
+        # Return an interval with absolute values for all properties.
         return IntegerInterval(abs(int(self)))
 
     def __int__(self):
+        # Provide a nice way to use the string self.value in calculations.
         return int(self.value.replace("P", ""))
 
     def __mul__(self, factor):
+        # Return an interval with all properties multiplied by factor.
         return IntegerInterval(int(self) * factor)
 
     def __nonzero__(self):
+        # Return True if the interval has any non-zero properties.
         return bool(int(self))
 
 
@@ -167,7 +172,7 @@ class IntegerSequence(SequenceBase):
         """Parse state (start, stop, interval) from a graph section heading.
         The start and stop points are always on-sequence, context points
         might not be. If computed start and stop points are out of bounds,
-        they will be set to None. Context is used only initially, to define
+        they will be set to None. Context is used only initially to define
         the sequence bounds."""
 
         # start context always exists
@@ -185,9 +190,9 @@ class IntegerSequence(SequenceBase):
         self.i_offset = IntegerInterval('0')
 
         # 1) REPEAT/START/PERIOD: R([n])/([c])(i)/P(i)
-        match = FULL_RE_1.match(dep_section)
-        if match:
-            reps, context, start, step = match.groups()
+        results = FULL_RE_1.match(dep_section)
+        if results:
+            reps, context, start, step = results.groups()
             if context == 'c':
                 self.p_start = self.p_context_start + IntegerPoint(start)
             else:
@@ -209,10 +214,10 @@ class IntegerSequence(SequenceBase):
                         remainder)
         else:
             # 2) REPEAT/START/STOP: R(n)/([c])(i)/([c])(i)
-            match = FULL_RE_2.match(dep_section)
-            # match fails if n is not given
-            if match:
-                reps, context1, start, context2, stop = match.groups()
+            results = FULL_RE_2.match(dep_section)
+            # results fails if n in R(n) is not given
+            if results:
+                reps, context1, start, context2, stop = results.groups()
                 if context1 == 'c':
                     self.p_start = (
                         self.p_context_start + IntegerPoint(start))
@@ -239,10 +244,10 @@ class IntegerSequence(SequenceBase):
                     )
             else:
                 # 3) REPEAT/PERIOD/STOP: R(n)/P(i)/([c])i
-                match = FULL_RE_3.match(dep_section)
-                # match fails if n is not given
-                if match:
-                    reps, step, context, stop = match.groups()
+                results = FULL_RE_3.match(dep_section)
+                # results fails if n in R(n) is not given
+                if results:
+                    reps, step, context, stop = results.groups()
                     if context == 'c':
                         if self.p_context_stop:
                             self.p_stop = (
@@ -265,19 +270,21 @@ class IntegerSequence(SequenceBase):
 
                 else:
                     raise Exception(
-                        "ERROR, bad integer cycling format:" + dep_section)
+                        "ERROR, bad integer cycling format: %s" % dep_section)
 
         if self.i_step and self.i_step < IntegerInterval.get_null():
             # (TODO - this should be easy to handle but needs testing)
             raise Exception(
-                "ERROR, negative intervals not supported yet: " + self.i_step)
+                "ERROR, negative intervals not supported yet: %s" %
+                self.i_step
+            )
 
         if self.i_step and self.p_start < self.p_context_start:
             # start from first point >= context start
             remainder = (
                 int(self.p_context_start - self.p_start) % int(self.i_step))
             self.p_start = self.p_context_start + IntegerInterval(remainder)
-            # if step is None here, points will just be None (out of bounds)
+            # if i_step is None here, points will just be None (out of bounds)
 
         if (self.i_step and self.p_stop and self.p_context_stop and
                 self.p_stop > self.p_context_stop):
@@ -288,7 +295,7 @@ class IntegerSequence(SequenceBase):
                 self.p_context_stop - self.i_step +
                 IntegerInterval(remainder)
             )
-            # if step is None here, points will just be None (out of bounds)
+            # if i_step is None here, points will just be None (out of bounds)
 
     def get_interval(self):
         """Return the cycling interval of this sequence."""
@@ -296,11 +303,11 @@ class IntegerSequence(SequenceBase):
         return self.i_step
 
     def get_offset(self):
-        """Return the offset of this sequence (deprecated functionality)."""
+        """Deprecated: return the offset used for this sequence."""
         return self.i_offset
 
     def set_offset(self, i_offset):
-        """Shift the sequence by interval i_offset (deprecated)."""
+        """Deprecated: alter state to offset the entire sequence."""
         if not i_offset.value:
             # no offset
             return
@@ -409,6 +416,7 @@ class IntegerSequence(SequenceBase):
         return self.p_stop
 
     def __eq__(self, other):
+        # Return True if other (sequence) is equal to self.
         if self.i_step and not other.i_step or \
                 not self.i_step and other.i_step:
             return False

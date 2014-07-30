@@ -44,7 +44,7 @@ INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
 
 BACKWARDS_COMPATIBILITY_FUNCTIONS = {
     INTEGER_CYCLING_TYPE: lambda: True,
-    ISO8601_CYCLING_TYPE: iso8601.get_backwards_comp_mode
+    ISO8601_CYCLING_TYPE: iso8601.get_backwards_compat_mode
 }
 
 
@@ -55,7 +55,7 @@ class DefaultCycler(object):
     TYPE = None
 
 
-def get_backwards_comp_mode(*args, **kwargs):
+def get_backwards_compat_mode(*args, **kwargs):
     """Return whether we are in backwards compatibility cycling mode."""
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return BACKWARDS_COMPATIBILITY_FUNCTIONS[cycling_type](*args, **kwargs)

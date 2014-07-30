@@ -64,11 +64,11 @@ class PointBase(object):
         self.value = value
 
     def add(self, other):
-        """Add other to self, returning a PointBase-derived object."""
+        """Add other (interval) to self, returning a point."""
         raise NotImplementedError()
 
     def cmp_(self, other):
-        """Compare self to other, returning a Python 'cmp'-like result."""
+        """Compare self to other point, returning a 'cmp'-like result."""
         raise NotImplementedError()
 
     def standardise(self):
@@ -76,7 +76,7 @@ class PointBase(object):
         return self
 
     def sub(self, other):
-        """Subtract other from self, returning a Point or Interval.
+        """Subtract other (interval or point), returning a point or interval.
 
         If other is a Point, return an Interval.
         If other is an Interval, return a Point.
@@ -88,9 +88,11 @@ class PointBase(object):
         raise NotImplementedError()
 
     def __str__(self):
+        # Stringify.
         return self.value
 
     def __cmp__(self, other):
+        # Compare to other point.
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
@@ -98,11 +100,13 @@ class PointBase(object):
         return self.cmp_(other)
 
     def __sub__(self, other):
+        # Subtract other (point or interval) from self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.sub(other)
 
     def __add__(self, other):
+        # Add other (point or interval) from self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.add(other)
@@ -146,12 +150,15 @@ class IntervalBase(object):
         raise NotImplementedError()
 
     def __abs__(self):
+        # Return an interval with absolute values for all properties.
         raise NotImplementedError()
 
     def __mul__(self, factor):
+        # Return an interval with all properties multiplied by factor.
         raise NotImplementedError()
 
     def __nonzero__(self):
+        # Return True if the interval has any non-zero properties.
         raise NotImplementedError()
 
     def __init__(self, value):
@@ -172,7 +179,7 @@ class IntervalBase(object):
         raise NotImplementedError()
 
     def cmp_(self, other):
-        """Compare self to other, returning a Python 'cmp'-like result."""
+        """Compare self to other (interval), returning a 'cmp'-like result."""
         raise NotImplementedError()
 
     def standardise(self):
@@ -180,21 +187,24 @@ class IntervalBase(object):
         return self
 
     def sub(self, other):
-        """Subtract other from self; return an IntervalBase-derived object."""
+        """Subtract other (interval) from self; return an interval."""
         raise NotImplementedError()
 
     def is_null(self):
         return (self == self.get_null())
 
     def __str__(self):
+        # Stringify.
         return self.value
 
     def __add__(self, other):
+        # Add other (point or interval) to self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.add(other)
 
     def __cmp__(self, other):
+        # Compare self to other (interval).
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
@@ -202,11 +212,13 @@ class IntervalBase(object):
         return self.cmp_(other)
 
     def __sub__(self, other):
+        # Subtract other (interval or point) from self.
         if self.TYPE != other.TYPE:
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.sub(other)
 
     def __neg__(self):
+        # Return an interval with all properties multiplied by -1.
         return self * -1
 
 
@@ -249,11 +261,11 @@ class SequenceBase(object):
         raise NotImplementedError()
 
     def get_offset(self):
-        """Return the offset of this sequence (deprecated functionality)."""
+        """Deprecated: return the offset used for this sequence."""
         raise NotImplementedError()
 
     def set_offset(self, i_offset):
-        """Shift the sequence by interval i_offset (deprecated)."""
+        """Deprecated: alter state to offset the entire sequence."""
         raise NotImplementedError()
 
     def is_on_sequence(self, point):
@@ -294,4 +306,5 @@ class SequenceBase(object):
         raise NotImplementedError()
 
     def __eq__(self, other):
+        # Return True if other (sequence) is equal to self.
         raise NotImplementedError()

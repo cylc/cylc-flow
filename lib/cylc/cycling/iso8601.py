@@ -103,6 +103,7 @@ class ISO8601Point(PointBase):
         return ISO8601Point(self._iso_point_add(self.value, other.value))
 
     def __cmp__(self, other):
+        # Compare other (point) to self.
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
@@ -334,11 +335,11 @@ class ISO8601Sequence(SequenceBase):
         return self.step
 
     def get_offset(self):
-        """Return the offset used for this sequence (deprecated)."""
+        """Deprecated: return the offset used for this sequence."""
         return self.offset
 
     def set_offset(self, offset):
-        """Alter state to offset the entire sequence (deprecated)."""
+        """Deprecated: alter state to offset the entire sequence."""
         if self.recurrence.start_point is not None:
             self.recurrence.start_point -= interval_parse(str(offset))
         if self.recurrence.end_point is not None:
@@ -445,6 +446,7 @@ class ISO8601Sequence(SequenceBase):
         return None
 
     def __eq__(self, other):
+        # Return True if other (sequence) is equal to self.
         if self.TYPE != other.TYPE:
             return False
         if self.value == other.value:
@@ -459,21 +461,21 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False,
             ("^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "D"),
             ("^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "M"),
             ("^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "Y")]:
-        match = re.search(re_old_format, dep_section)
-        if not match:
+        results = re.search(re_old_format, dep_section)
+        if not results:
             continue
         if only_detect_old:
             return True
-        anchor, step = match.groups()
+        anchor, step = results.groups()
         step = ISO8601Interval("P%s%s" % (step, unit))
         return _get_old_anchor_step_recurrence(anchor, step, start_point)
     # Check for the hourly syntax.
-    match = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
-    if match:
+    results = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
+    if results:
         # back compat 0,6,12 etc.
         if only_detect_old:
             return True
-        anchor = match.groups()[0]
+        anchor = results.groups()[0]
         return "T%02d/PT24H" % int(anchor)
     if only_detect_old:
         return False
@@ -490,7 +492,7 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def get_backwards_comp_mode():
+def get_backwards_compat_mode():
     """Return whether we are in the old cycling syntax regime."""
     return SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT
 
